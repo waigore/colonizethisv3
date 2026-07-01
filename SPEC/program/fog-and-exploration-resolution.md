@@ -31,9 +31,9 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 1. For each Explorer with `currentWork.target == prospect` on tile T whose `remainingTurns` reaches **0** this tick, verify T is mineral-eligible.
 2. Add T to the player's prospected set. **Assign** only validates and sets `currentWork` (typically `totalTurns = 1` from `totalTurnsForWork`); the prospected-set mutation occurs at **completion**, same tick ordering as other civilian work. For pending civilian row display before resolution, shared logic duration preview returns `1` turn for `prospect` and `purchase_land` so panel turn counters stay deterministic.
 
-**Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as the Spy is there.
+**Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as at least one Spy from that owner remains there.
 
-**Fog decay (Spy):** When a Spy **leaves** an **other-faction** province (move or removal), start a timer for (Spy owner, that province) with duration = Spy fog decay turns (**fixed at 5 for current product, not ruleset-configurable**). **Do not start timers when a Spy leaves their own provinces.** At end of turn: decrement all spy-reveal timers; for each (player, province) where timer reaches 0, for each tile in that province, **only** if stored visibility is `fullyVisible`, set it to `fogged`; leave `unknown` and `fogged` unchanged. Explorer/Spy fog decay (below) uses the same downgrade rule when no Explorer/Spy remain and no Spy timer applies.
+**Fog decay (Spy):** **Immediate** — no grace timer. At end of turn, for each other-faction province where the player had Explorer/Spy presence, if **no** Explorer or Spy from that player remains, **only** tiles stored as `fullyVisible` become `fogged` (`unknown` / `fogged` unchanged). Multi-spy: fog reverts only when the last Spy from that owner leaves or is killed. Legacy `spyRevealTurnsByPlayer` is no longer written or decremented (save field may persist harmlessly). Refs #3834.
 
 **Fog decay** (End-of-turn phase):
 

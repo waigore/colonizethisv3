@@ -71,7 +71,7 @@ Evidence rules are evaluated during turn resolution (see [ai-events-and-dossier.
 - **Peace offer** — Peacemaker (+1).
 - **Land / naval battle victory (attacker)** — Warmonger per implemented rules.
 - **Isolationist** — AI refuses **call to arms** while still at peace with the defender (+2). `evidenceForIsolationistCallToArmsRefuse`. GP–GP **alliance** orders resolve immediately in current product (no separate accept/decline step); isolationist “alliance decline” evidence is represented by this **call-to-arms** refusal path until bilateral alliance negotiation exists.
-- **Tech thief** — Resolved **`steal_tech`** spy work: **+1** per attempt, **+2** additional on success (**+3** total on success). `evidenceForAiStealTechResolved`.
+- **Tech thief** — **Removed:** `steal_tech` spy work no longer exists (Refs #3834). Passive spy RP boost and counter-espionage replace prior evidence hooks; Tech Thief agenda evidence rules for steal attempts are retired until a replacement signal is specified.
 - **Envy** — AI completes a tech **or** an extraction **build_improvement** (tile with a resource in the extraction-cap set) in the **same tech-catalog category** the human most recently completed (research completion **or** extraction build), within **2** turns after that human completion (same turn counts): **+1** per qualifying completion, **max +3** total envy suspicion for that AI subject in that turn. Mirror tracking uses `Game.lastHumanCompletedResearchCategory` / `lastHumanResearchCategoryCompletionTurn` (historical JSON names); research phase calls `evidenceForEnvyResearchMirror`; extraction builds contribute category **gathering** via `envyMirrorTechCategoryForExtractionResource` in `colonizethis_data` / `tech_extraction.dart`.
 
 ---

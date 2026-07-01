@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_turn/src/turn/spy_resolver.dart';
 
 void main() {
@@ -41,19 +42,44 @@ void main() {
       expect(withCounter, greaterThan(without));
     });
 
-    test('records caught spy details when killed', () {
+    test('applies diplomacy penalty and lastInteractionTurn on kill', () {
       final game = _gameWithForeignSpy(garrisonRegiments: 8, seed: 99);
+      final relations = [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp2',
+          score: 50,
+          lastInteractionTurn: 0,
+        ),
+      ];
+      final gameWithRelations = game.copyWith(diplomacyRelations: relations);
       for (var i = 0; i < 500; i++) {
-        final result = resolveSpyPhase(game, random: Random(i));
-        if (result.caughtSpies.isEmpty) continue;
-        final caught = result.caughtSpies.single;
-        expect(caught.unitId, 'spy_enemy');
-        expect(caught.spyOwnerId, 'gp2');
-        expect(caught.territoryOwnerId, 'gp1');
-        expect(caught.provinceId, 'oldWorld|p2');
+        final result = resolveSpyPhase(gameWithRelations, random: Random(i));
+        if (result.killedSpyUnitIds.isEmpty) continue;
+        final rel = result.game.diplomacyRelations.single;
+        expect(rel.score, 42);
+        expect(rel.lastInteractionTurn, 3);
         return;
       }
       fail('expected at least one kill in 500 trials with max garrison');
+    });
+
+    test('defection clears work order and transfers ownership', () {
+      final game = _gameWithForeignSpy(
+        garrisonRegiments: 0,
+        ownerRunsCounterSpy: true,
+        seed: 1,
+      );
+      for (var i = 0; i < 2000; i++) {
+        final result = resolveSpyPhase(game, random: Random(i + 5000));
+        if (result.defectedSpyUnitIds.isEmpty) continue;
+        final spy = result.game.worldState.allUnitsById['spy_enemy']!;
+        expect(spy.ownerId, 'gp1');
+        expect(spy.currentWork, isNull);
+        expect(spy.status, UnitStatus.idle);
+        return;
+      }
+      fail('expected at least one defection in 2000 trials');
     });
   });
 

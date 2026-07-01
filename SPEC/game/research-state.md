@@ -39,6 +39,13 @@ Currently:
 - `researchSlots` = 3 (default)
 - Player tabs show `techUnlocked` only; display placeholder or empty for "currently researching" and "next paths".
 
+## Spy RP boost (Refs #3834)
+
+During Research (after pre-Research spy-resolution), each rival GP with at least one Spy from the researching player in that GP's territory (idle or `counter_spy`) adds **+15%** RP (`spyResearchBoostPerGp`, default 0.15) to each research slot whose tech that rival has unlocked (`techUnlocked[id] == true`) and whose funding is ≥ Low. Boost stacks additively per distinct rival GP. Spies killed in the same turn's spy-resolution sub-step do not contribute.
+
+- **Given** a player with a Spy in rival GP A's province researching tech T which GP A has unlocked and funding ≥ Low, **when** research resolution runs, **then** RP applied for tech T is `baseRP × 1.15`.
+- **Given** spies in rival GPs A and B both having tech T unlocked, **when** research resolution runs, **then** RP for tech T is `baseRP × 1.30`.
+
 ## Acceptance Criteria
 
 - **State on Player:** `techUnlocked` (map tech id → true) and `researchProgressByTechId` (map tech id → progress RP) exist; `researchSlots` (int, default 3) is defined.

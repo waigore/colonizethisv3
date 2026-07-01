@@ -36,6 +36,10 @@ The **formal alliance** flag is a **persisted treaty state**, distinct from the 
 
 While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace — **except** the GP–GP **auto-embassy** seeded at game start (see § GP–GP Rules), which survives war and peace.
 
+**Spy-death diplomacy penalty (Refs #3834 R8):** When a spy is killed in foreign territory during spy-resolution, apply **−8** to the relation score between spy owner and territory owner (stackable per kill). Sets `lastInteractionTurn` to the current turn, suppressing per-turn decay that same turn (skip-on-event).
+
+- Given a spy from GP A is killed in GP B's territory, when spy-resolution completes, then the relation score between A and B decreases by 8 and `lastInteractionTurn` is set to the current turn.
+
 ### War required for hostile actions
 
 - **Land invasion:** A Great Power must be at `AT_WAR` with the **owner** of a foreign province (Great Power, Minor Nation, or Tribe) before a **military** move order may enter that province as an attack, or the same turn must include a valid `Declare War` diplomatic order against that owner. Order validation and movement resolution enforce this uniformly for all owner types.

@@ -1,4 +1,4 @@
-// End-of-turn phase: victory check, era dialogue, Spy 5-turn fog decay, Explorer/Spy fog decay,
+// End-of-turn phase: victory check, era dialogue, immediate Explorer/Spy fog decay,
 // coastal sea zone full visibility. SPEC/program/turn-resolution-phase-details.md § End-of-turn.
 // Called from turn_resolver.resolveTurnForGame.
 
