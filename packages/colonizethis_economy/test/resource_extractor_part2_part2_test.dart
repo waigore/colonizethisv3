@@ -4,10 +4,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:logger/logger.dart';
 
-import 'resource_extractor_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
+  late final TileMapResult grainTileMap;
+
+  setUpAll(() {
+    grainTileMap = singleTileMap(Resource.grain);
+  });
+
   group('ResourceExtractor', () {
     test(
       'returns empty ExtractionTotals when player has no connected tiles',
@@ -39,7 +45,7 @@ void main() {
         Logger.level = Level.error;
         addTearDown(() => Logger.level = Level.off);
 
-        final tileMap = singleTileMap(Resource.grain);
+        final tileMap = grainTileMap;
         final tileState = TileMapState()
             .setImprovement('oldWorld|p1|0|0', 2)
             .setRoadLevel('oldWorld|p1|0|0', 2);
@@ -118,7 +124,7 @@ void main() {
     test(
       'tile extraction contribution excludes aggregate capital grain bonus',
       () {
-        final tileMap = singleTileMap(Resource.grain);
+        final tileMap = grainTileMap;
         final player = Player(
           id: 'pl1',
           displayName: 'Spain',
@@ -192,7 +198,7 @@ void main() {
     );
 
     test('tile extraction contribution is null for disconnected tile', () {
-      final tileMap = singleTileMap(Resource.grain);
+      final tileMap = grainTileMap;
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',

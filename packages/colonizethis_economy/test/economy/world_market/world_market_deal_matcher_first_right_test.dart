@@ -9,6 +9,13 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 /// formula and the purchased-tile index is covered by D1/D3 tests; this
 /// file exercises the matcher integration only.
 void main() {
+  late final PurchasedTileIndex frrIndex;
+  const frrTileKey = 'oldWorld|M1|0|0';
+
+  setUpAll(() {
+    frrIndex = frrMatcherTestIndex();
+  });
+
   group('DealMatcher.matchDeals — First Right of Refusal (#2992 D2)', () {
     // The three base AC #1 matcher scenarios (owning-GP priority override,
     // FRR-overrides-FTP, and the owning-GP-does-not-bid fallback) are pinned
@@ -19,7 +26,7 @@ void main() {
     // attribution edge cases, null index, multi-tile / multi-bid passes).
     test('partial FRR fill: residual offer quantity becomes available for '
         'other GPs at their normal priority tier', () {
-      const tileKey = 'oldWorld|M1|0|0';
+      const tileKey = frrTileKey;
       final result = DealMatcher.matchDeals(
         matcherInputs(
           offersByFactionId: {
@@ -32,7 +39,7 @@ void main() {
             'gpB': [matcherBid('timber', 10, priority: 1)],
           },
           tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-          purchasedTileIndex: frrMatcherTestIndex(),
+          purchasedTileIndex: frrIndex,
         ),
       );
 
@@ -58,7 +65,7 @@ void main() {
     test(
       'cargo limit caps FRR fill (per-buyer cumulative cargo still applies)',
       () {
-        const tileKey = 'oldWorld|M1|0|0';
+        const tileKey = frrTileKey;
         final result = DealMatcher.matchDeals(
           matcherInputs(
             offersByFactionId: {
@@ -70,7 +77,7 @@ void main() {
             },
             // Owning GP only has cargo for 3 units this turn.
             tradeCapacityByFactionId: {'gpA': 3, 'gpB': 100},
-            purchasedTileIndex: frrMatcherTestIndex(),
+            purchasedTileIndex: frrIndex,
           ),
         );
 
@@ -96,7 +103,7 @@ void main() {
 
     test('offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions', () {
-      const tileKey = 'oldWorld|M1|0|0';
+      const tileKey = frrTileKey;
       final result = DealMatcher.matchDeals(
         matcherInputs(
           offersByFactionId: {
@@ -108,7 +115,7 @@ void main() {
             'gpB': [matcherBid('timber', 10, priority: 1)],
           },
           tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-          purchasedTileIndex: frrMatcherTestIndex(tileKey: tileKey),
+          purchasedTileIndex: frrIndex,
         ),
       );
 
@@ -122,7 +129,7 @@ void main() {
     test('offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)', () {
       const offerTileKey = 'oldWorld|M2|7|3';
-      const indexTileKey = 'oldWorld|M1|0|0';
+      const indexTileKey = frrTileKey;
       final result = DealMatcher.matchDeals(
         matcherInputs(
           offersByFactionId: {
@@ -133,7 +140,7 @@ void main() {
             'gpB': [matcherBid('timber', 10, priority: 1)],
           },
           tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-          purchasedTileIndex: frrMatcherTestIndex(tileKey: indexTileKey),
+          purchasedTileIndex: frrIndex,
         ),
       );
 
@@ -147,7 +154,7 @@ void main() {
     test(
       'null purchasedTileIndex disables FRR (legacy behavior preserved)',
       () {
-        const tileKey = 'oldWorld|M1|0|0';
+        const tileKey = frrTileKey;
         final result = DealMatcher.matchDeals(
           matcherInputs(
             offersByFactionId: {
@@ -172,7 +179,7 @@ void main() {
     test(
       'multiple purchased tiles owned by the same GP each route through FRR',
       () {
-        const tileA = 'oldWorld|M1|0|0';
+        const tileA = frrTileKey;
         const tileB = 'oldWorld|M1|1|0';
         final index = PurchasedTileIndex.forTesting(const [
           PurchasedTileAttribution(
@@ -219,7 +226,7 @@ void main() {
     test(
       'FRR pass respects multiple bids from the owning GP in submission order',
       () {
-        const tileKey = 'oldWorld|M1|0|0';
+        const tileKey = frrTileKey;
         final result = DealMatcher.matchDeals(
           matcherInputs(
             offersByFactionId: {
@@ -234,7 +241,7 @@ void main() {
               ],
             },
             tradeCapacityByFactionId: {'gpA': 100},
-            purchasedTileIndex: frrMatcherTestIndex(),
+            purchasedTileIndex: frrIndex,
           ),
         );
 

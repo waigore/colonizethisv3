@@ -1446,11 +1446,12 @@ When a colony-holding Great Power `A` has an active `BoycottState { gpId: A, tar
 
 ### Inputs and computation
 
-- The blocked-commodity set is `boycottedColonySellableCommodityIds(game, buyerPlayerId, tileMapByRegion, topology)` (logic contract in `colonizethis_economy`, surfaced to AI via `ai_api.dart`). It:
+- The blocked-commodity set is `boycottedColonySellableCommodityIds(game, buyerPlayerId, tileMapByRegion, topology, connectivityByFactionId?, autoOffersByFactionId?)` (logic contract in `colonizethis_economy`, surfaced to AI via `ai_api.dart`). Optional `connectivityByFactionId` and `autoOffersByFactionId` let an outer planning pass reuse precomputed maps; when omitted, behavior is unchanged from the default path below. `runTreasuryPlanner` currently omits both optional maps (Refs #3831); callers may pass them when an outer pass already holds the same connectivity/auto-offer snapshot.
   1. Returns the empty set immediately when `Game.boycottStates` is empty, `Game.colonyStates` is empty, `tileMapByRegion` is empty/absent, or `topology` is absent (zero common-path cost; the planner's existing unit-test paths that omit tile maps are unaffected).
   2. Collects the colony Tribe ids blocked for `buyerPlayerId`: for every `BoycottState` whose `targetGpId == buyerPlayerId`, every `ColonyState` whose `colonyOfGpId` equals that boycott's `gpId`.
   3. Returns the empty set when no colony Tribe is blocked for the buyer.
-  4. Otherwise computes non-Great-Power connectivity (`resolveNonGreatPowerConnectivity`) and auto-offers (`computeNonGreatPowerAutoOffers`) and returns the union of `commodityId` over the auto-offers of the blocked colony Tribes.
+  4. When `autoOffersByFactionId` is supplied, returns the union of `commodityId` over the auto-offers of the blocked colony Tribes from that map (no connectivity or auto-offer recomputation).
+  5. Otherwise resolves non-Great-Power connectivity once (`resolveNonGreatPowerConnectivity`, or reuses `connectivityByFactionId` when supplied), then computes auto-offers **only for the blocked colony Tribe ids** (`computeNonGreatPowerAutoOffers` with a tribe-scoped connectivity subset — not every non-GP faction), and returns the union of `commodityId` over those offers.
 - This is **gated entirely behind the existence of a boycott targeting the planning GP**, which is a rare diplomatic state; the connectivity/auto-offer computation never runs on the common path, preserving the 15-second turn-resolution budget (`colonizethis-turn-resolution-budget.mdc`). The computation is deterministic for fixed inputs.
 
 ### Suppression rule

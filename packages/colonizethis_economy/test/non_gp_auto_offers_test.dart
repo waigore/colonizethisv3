@@ -20,7 +20,7 @@ import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'non_gp_extraction_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('computeNonGreatPowerAutoOffers (SPEC AC: minor/tribe auto-sell)', () {

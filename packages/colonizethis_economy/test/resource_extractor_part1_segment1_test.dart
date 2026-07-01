@@ -4,9 +4,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
 
-import 'resource_extractor_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
+  late final TileMapResult grainTileMap;
+
+  setUpAll(() {
+    grainTileMap = singleTileMap(Resource.grain);
+  });
+
   group('ResourceExtractor', () {
     test('stub connectivity: land totals and tech cap applied', () {
       final grid = [
@@ -51,7 +57,7 @@ void main() {
     });
 
     test('effective extraction capped by transport level', () {
-      final tileMap = singleTileMap(Resource.grain);
+      final tileMap = grainTileMap;
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 1);
@@ -67,7 +73,7 @@ void main() {
 
     test('effective extraction capped by player tech cap when improvement and '
         'transport are high', () {
-      final tileMap = singleTileMap(Resource.grain);
+      final tileMap = grainTileMap;
       final tileState = TileMapState()
           .setImprovement('oldWorld|p1|0|0', 4)
           .setRoadLevel('oldWorld|p1|0|0', 4);
@@ -92,7 +98,7 @@ void main() {
     test(
       'tech cap from extractionCapForUnlocked matches turn_resolver wiring',
       () {
-        final tileMap = singleTileMap(Resource.grain);
+        final tileMap = grainTileMap;
         final tileState = TileMapState()
             .setImprovement('oldWorld|p1|0|0', 4)
             .setRoadLevel('oldWorld|p1|0|0', 4);

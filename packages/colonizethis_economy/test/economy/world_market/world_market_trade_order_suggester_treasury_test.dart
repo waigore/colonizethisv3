@@ -3,6 +3,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Tests for `TradeOrderSuggester.suggest` treasury bid cap (rule 5).
 ///
 /// Per `SPEC/program/world-market-resolution.md` § Trade order suggestion API
@@ -11,10 +13,8 @@ void main() {
   group('TradeOrderSuggester.suggest — cumulative treasury cap (rule 5)', () {
     test('treasury budget is consumed across distinct bids in id order', () {
       final result = TradeOrderSuggester.suggest(
-        TradeSuggestionContext(
-          playerId: 'gp1',
+        suggesterCtx(
           bidTypeCap: 6,
-          tradeCargoCapacity: 100,
           treasuryBudgetForBids: 90,
           worldMarketState: WorldMarketState(
             prices: {
@@ -35,10 +35,7 @@ void main() {
 
     test('single bid is partial-capped by treasury', () {
       final result = TradeOrderSuggester.suggest(
-        TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           treasuryBudgetForBids: 90,
           worldMarketState: WorldMarketState(
             prices: {CommodityCatalog.timber.id: 30},
@@ -51,10 +48,7 @@ void main() {
 
     test('zero treasury budget suppresses bids entirely', () {
       final result = TradeOrderSuggester.suggest(
-        TradeSuggestionContext(
-          playerId: 'gp1',
-          bidTypeCap: 3,
-          tradeCargoCapacity: 100,
+        suggesterCtx(
           treasuryBudgetForBids: 0,
           worldMarketState: WorldMarketState(
             prices: {CommodityCatalog.timber.id: 30},

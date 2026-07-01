@@ -1,9 +1,9 @@
 // Shared fixture helpers for `non_gp_extraction_part*_test.dart`.
 //
-// Kept here (rather than inlined per file) so the suite stays inside the
-// 400-line `repo.logic_test_file_size` lint budget while still using the same
-// minimal-Game fixtures across the part-1 (positive / SPEC-AC) and part-2
-// (negative / boundary / aggregation) suites. Refs #2991 C2.
+// Kept in test_support (rather than inlined per file) so the suite stays inside
+// the 400-line `repo.domain_package_test_file_size` lint budget while still
+// using the same minimal-Game fixtures across the part-1 (positive / SPEC-AC)
+// and part-2 (negative / boundary / aggregation) suites. Refs #2991 C2; #3831.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

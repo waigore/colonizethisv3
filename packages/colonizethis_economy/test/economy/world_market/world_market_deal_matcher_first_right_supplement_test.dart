@@ -8,22 +8,28 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 /// #2992 D2 (split from [world_market_deal_matcher_first_right_test.dart] to
 /// satisfy repo logic test file size limits).
 void main() {
+  late final PurchasedTileIndex frrIndex;
+  const frrTileKey = 'oldWorld|M1|0|0';
+
+  setUpAll(() {
+    frrIndex = frrMatcherTestIndex();
+  });
+
   group('DealMatcher.matchDeals — FRR activity bookkeeping (#2992 D2)', () {
     test(
       'FRR fills count toward filledQuantity in the per-commodity activity',
       () {
-        const tileKey = 'oldWorld|M1|0|0';
         final result = DealMatcher.matchDeals(
           matcherInputs(
             offersByFactionId: {
-              'M1': [matcherOffer('timber', 10, originTileKey: tileKey)],
+              'M1': [matcherOffer('timber', 10, originTileKey: frrTileKey)],
             },
             bidsByFactionId: {
               'gpA': [matcherBid('timber', 6, priority: 5)],
               'gpB': [matcherBid('timber', 6, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-            purchasedTileIndex: frrMatcherTestIndex(),
+            purchasedTileIndex: frrIndex,
           ),
         );
 

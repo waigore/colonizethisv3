@@ -16,6 +16,7 @@ Game buildTreasuryBidBudgetGame({
   int treasury = 100,
   Map<CommodityId, int>? prices,
   Map<CommodityId, int>? stockpile,
+  WorldMarketState? worldMarketState,
 }) {
   return Game(
     id: 'test_treasury_bid_budget',
@@ -39,11 +40,22 @@ Game buildTreasuryBidBudgetGame({
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
-    worldMarketState: WorldMarketState(
-      prices: prices ?? const <CommodityId, int>{},
-    ),
+    worldMarketState:
+        worldMarketState ??
+        WorldMarketState(prices: prices ?? const <CommodityId, int>{}),
   );
 }
+
+/// Stockpile-player game builder for sellable-quantity suites (Refs #3831).
+///
+/// Thin wrapper over [buildTreasuryBidBudgetGame] with the sellable-suite
+/// treasury default and empty world-market prices.
+Game buildStockpilePlayerGame({Map<CommodityId, int>? stockpile}) =>
+    buildTreasuryBidBudgetGame(
+      treasury: 500,
+      stockpile: stockpile,
+      worldMarketState: const WorldMarketState(),
+    );
 
 /// Wraps a flat list of `TradeOrder` values into the per-player map shape
 /// expected by `Orders.tradeOrdersByPlayerId` for the canonical human

@@ -12,6 +12,8 @@ dependencies:
   colonizethis_data:
   colonizethis_economy:
   colonizethis_models:
+  colonizethis_test:
+  colonizethis_world:
 
 dev_dependencies:
   colonizethis_exception_lint:

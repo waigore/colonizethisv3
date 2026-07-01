@@ -148,7 +148,7 @@ rules:
 
   - rule_id: repo.economy_test_no_local_world_market_support
     group: testing
-    title: colonizethis_economy test/ must not host world_market_* or first_right_* test_support files (Refs #3823)
+    title: colonizethis_economy test/ must not host local domain test_support files (world_market, FRR, extraction; Refs #3823, #3831)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_no_local_world_market_support.dart
@@ -166,6 +166,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_file_size.dart
+
+  - rule_id: repo.economy_gp_treasury_rollup_shared
+    group: architecture
+    title: economy FRR and purchased-tile riches results must compose GpTreasuryCreditRollup (Refs #3831)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_gp_treasury_rollup_shared.dart
+
+  - rule_id: repo.economy_test_no_local_stockpile_game_builder
+    group: testing
+    title: colonizethis_economy world_market tests must not define local stockpile-player game builders (Refs #3831)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_stockpile_game_builder.dart
 
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing

@@ -40,6 +40,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'first_right_profit.dart';
 import 'gp_treasury_credit_accumulator.dart';
+import 'gp_treasury_credit_rollup.dart';
 import 'purchased_tile_index.dart';
 
 /// Per-deal credit record produced by [computeFirstRightCredits].
@@ -110,31 +111,30 @@ class FirstRightDealCredit {
 /// its entries matches the order in which each owning GP first appears
 /// in [creditedDeals].
 class FirstRightCreditsResult {
-  const FirstRightCreditsResult({
+  FirstRightCreditsResult({
     required this.creditedDeals,
-    required this.treasuryCreditByGpId,
-    this.embassyKickbackByGpId = const <String, double>{},
+    required Map<String, double> treasuryCreditByGpId,
+    Map<String, double> embassyKickbackByGpId = const <String, double>{},
     double? totalProfitTreasury,
     double? totalEmbassyKickback,
-  }) : _totalProfitTreasury = totalProfitTreasury,
-       _totalEmbassyKickback = totalEmbassyKickback;
+  }) : _profitRollup = GpTreasuryCreditRollup<double>(
+         treasuryCreditByGpId: treasuryCreditByGpId,
+         cachedGrandTotal: totalProfitTreasury,
+       ),
+       _kickbackRollup = GpTreasuryCreditRollup<double>(
+         treasuryCreditByGpId: embassyKickbackByGpId,
+         cachedGrandTotal: totalEmbassyKickback,
+       );
 
   /// Empty result. Returned when the input deal list is empty, the
   /// purchased-tile index is empty, or no deal is FRR-eligible.
-  static const FirstRightCreditsResult empty = FirstRightCreditsResult(
+  static final FirstRightCreditsResult empty = FirstRightCreditsResult(
     creditedDeals: <FirstRightDealCredit>[],
     treasuryCreditByGpId: <String, double>{},
   );
 
-  /// Precomputed grand total from the shared accumulator, when constructed via
-  /// [computeFirstRightCredits]. `null` for hand-built results (for example the
-  /// [empty] sentinel), which fall back to summing [treasuryCreditByGpId].
-  final double? _totalProfitTreasury;
-
-  /// Precomputed grand total of embassy kickbacks, when constructed via
-  /// [computeFirstRightCredits]. `null` for hand-built results, which fall
-  /// back to summing [embassyKickbackByGpId].
-  final double? _totalEmbassyKickback;
+  final GpTreasuryCreditRollup<double> _profitRollup;
+  final GpTreasuryCreditRollup<double> _kickbackRollup;
 
   /// Per-deal credit records in matcher emission order (deals without
   /// a non-zero `profitTreasury` are still included so callers can
@@ -146,14 +146,16 @@ class FirstRightCreditsResult {
   /// GP id (#3753 R8.2 — full relation-linear share, no 40% cap). Only these
   /// credits are deducted from the seller's proceeds before the treasury
   /// sink (R8.4).
-  final Map<String, double> treasuryCreditByGpId;
+  Map<String, double> get treasuryCreditByGpId =>
+      _profitRollup.treasuryCreditByGpId;
 
   /// Embassy-kickback treasury credits to apply to embassy-holding GPs that do
   /// **not** own the sourcing tile, keyed by GP id (#3753 R8.3 — 10% of the
   /// relation portion). Funded from the treasury-sink remainder, **not**
   /// deducted from the seller's proceeds (R8.4). Empty unless the caller
   /// supplies `embassyGpRelationsFor`.
-  final Map<String, double> embassyKickbackByGpId;
+  Map<String, double> get embassyKickbackByGpId =>
+      _kickbackRollup.treasuryCreditByGpId;
 
   /// Convenience: total overseas-profit treasury credited across every
   /// owning GP for this aggregation. Phase handlers and observer
@@ -162,27 +164,11 @@ class FirstRightCreditsResult {
   /// O(1) when produced by [computeFirstRightCredits] (the
   /// [GpTreasuryCreditAccumulator] maintains the total incrementally); falls
   /// back to re-summing [treasuryCreditByGpId] for hand-built results.
-  double get totalProfitTreasury {
-    final cached = _totalProfitTreasury;
-    if (cached != null) return cached;
-    var total = 0.0;
-    for (final amount in treasuryCreditByGpId.values) {
-      total += amount;
-    }
-    return total;
-  }
+  double get totalProfitTreasury => _profitRollup.grandTotal(0.0);
 
   /// Convenience: total embassy-kickback treasury credited across every
   /// embassy-holding non-owner GP for this aggregation (#3753 R8.3).
-  double get totalEmbassyKickback {
-    final cached = _totalEmbassyKickback;
-    if (cached != null) return cached;
-    var total = 0.0;
-    for (final amount in embassyKickbackByGpId.values) {
-      total += amount;
-    }
-    return total;
-  }
+  double get totalEmbassyKickback => _kickbackRollup.grandTotal(0.0);
 }
 
 /// Aggregates First Right of Refusal overseas-profit credits across a

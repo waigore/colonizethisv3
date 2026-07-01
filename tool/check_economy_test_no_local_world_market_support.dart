@@ -6,13 +6,13 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// SPEC: SPEC/program/repo-lint.md (Refs #3823).
 ///
-/// Forbid new package-local world-market / FRR test-support files under
+/// Forbid new package-local economy test-support files under
 /// `packages/colonizethis_economy/test/**`. Canonical home is
-/// `colonizethis_economy_test_support`.
+/// `colonizethis_economy_test_support` (Refs #3823, #3831).
 const String _economyTestPathPrefix = 'packages/colonizethis_economy/test/';
 
 final RegExp _forbiddenSupportBasename = RegExp(
-  r'^(world_market_.*|first_right_.*)_test_support\.dart$',
+  r'^(world_market_.*|first_right_.*|resource_extractor_.*|non_gp_extraction)_test_support\.dart$',
 );
 
 bool economyTestNoLocalWorldMarketSupportPathInScope(String slashPath) {
