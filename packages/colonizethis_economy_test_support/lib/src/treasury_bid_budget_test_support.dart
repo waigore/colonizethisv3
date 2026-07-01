@@ -1,10 +1,9 @@
 // Shared helpers for world-market treasury bid budget unit tests
-// (Refs #3093 — treasury bid cap slice). Extracted to keep each
-// `*_test.dart` file under the `repo.logic_test_file_size` 400-line cap.
+// (Refs #3093 — treasury bid cap slice; #3823 Phase 3).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'trade_order_factory.dart';
 
 /// Canonical human-player id used across the treasury-bid-budget test
 /// suites so per-player helpers can be shared between files.

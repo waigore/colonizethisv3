@@ -15,7 +15,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_treasury_bid_budget_test_support.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('worldMarketPlayerContextFromGame (Refs #3615 Cluster 2)', () {

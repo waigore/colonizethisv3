@@ -1,28 +1,8 @@
 /// Shared fixtures for the `computePurchasedTileRichesCredits` unit tests
-/// (Refs #2991 C5). Extracted so `purchased_tile_riches_test.dart` stays
-/// within the `repo.logic_test_file_size` 400-line limit.
+/// (Refs #2991 C5, #3823).
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import '../../test_fixtures.dart';
-
-/// Builds a single-region `tileMapByRegion` map for `oldWorld` placing
-/// [resource] at coordinates `(0, 0)` of province `M1`.
-Map<String, TileMapResult> tileMapByRegionForResource(Resource resource) {
-  return {'oldWorld': singleResourceTileMap(resource)};
-}
-
-/// 1×1 [TileMapResult] keyed to minor `M1` carrying [resource].
-TileMapResult singleResourceTileMap(Resource resource) => TileMapResult(
-  width: 1,
-  height: 1,
-  grid: [
-    ['M1'],
-  ],
-  resourceGrid: [
-    [resource],
-  ],
-);
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Canonical scenario: minor `M1` owns province `oldWorld|M1`; tile
 /// `oldWorld|M1|0|0` was previously purchased by `gpA`.

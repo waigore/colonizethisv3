@@ -7,25 +7,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 
-import 'test_fixtures.dart';
-
-/// A 1×1 tile map for a single [province] (local id, default `p1`) carrying
-/// [resource] (pass `null` for an empty/no-resource tile). Replaces the
-/// repeated `TileMapResult(width: 1, height: 1, grid: [['…']], resourceGrid:
-/// [[…]])` boilerplate across the resource-extractor suites. Refs #3661.
-TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) =>
-    TileMapResult(
-      width: 1,
-      height: 1,
-      grid: [
-        [province],
-      ],
-      resourceGrid: [
-        [resource],
-      ],
-    );
+export 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart'
+    show singleTileMap;
 
 /// `{playerId: ConnectivityResult(...)}` for the single-player extraction
 /// setup. Hoists the `{'pl1': ConnectivityResult(connected: {…})}` wrapper
