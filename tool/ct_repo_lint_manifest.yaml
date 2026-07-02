@@ -218,7 +218,7 @@ rules:
 
   - rule_id: repo.diplomacy_no_loop_upsert_relation
     group: architecture
-    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body (Refs #3825)
+    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body or inside loops (Refs #3825, #3837)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_no_loop_upsert_relation.dart

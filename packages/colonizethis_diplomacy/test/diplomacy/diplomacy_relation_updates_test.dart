@@ -149,6 +149,38 @@ void main() {
     });
   });
 
+  group('warStateRelationUpdater via RelationUpsertIndex', () {
+    test('positive: matches setWarStateForPair for a new pair', () {
+      final viaList = setWarStateForPair(
+        relations: const [],
+        gpId: 'gp1',
+        targetId: 'gp2',
+        turn: 3,
+      );
+      final index = RelationUpsertIndex(const []);
+      index.upsert(
+        'gp1',
+        'gp2',
+        warStateRelationUpdater('gp1', 'gp2', 3),
+      );
+      final viaIndex = index.toList();
+      expect(viaIndex, hasLength(1));
+      final rel = viaIndex.single;
+      expect(rel.state, viaList.single.state);
+      expect(rel.level, viaList.single.level);
+      expect(rel.score, viaList.single.score);
+      expect(rel.sinceTurn, viaList.single.sinceTurn);
+      expect(rel.formalAlliance, viaList.single.formalAlliance);
+    });
+
+    test('negative: peace updater requires an existing relation', () {
+      expect(
+        () => peaceRelationUpdater('gp1', 'gp2', 1)(null),
+        throwsA(isA<TypeError>()),
+      );
+    });
+  });
+
   group('RelationUpsertIndex', () {
     test('positive: updates an existing pair in place (canonical order)', () {
       final index = RelationUpsertIndex([rel('gp1', 'gp2', 40)]);

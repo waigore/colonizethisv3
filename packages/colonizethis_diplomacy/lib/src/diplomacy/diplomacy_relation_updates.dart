@@ -9,14 +9,15 @@ import 'diplomacy_relation_lookup.dart';
   return (id1: parts[0], id2: parts[1]);
 }
 
-List<DiplomacyRelation> setWarStateForPair({
-  required List<DiplomacyRelation> relations,
-  required String gpId,
-  required String targetId,
-  required int turn,
-}) {
+/// Updater applying declare-war relation state. Shared by [setWarStateForPair] and
+/// the batched [RelationUpsertIndex] path (Refs #3837).
+DiplomacyRelation Function(DiplomacyRelation?) warStateRelationUpdater(
+  String gpId,
+  String targetId,
+  int turn,
+) {
   final ids = canonicalPairIds(gpId, targetId);
-  return upsertRelation(relations, gpId, targetId, (existing) {
+  return (existing) {
     if (existing == null) {
       return DiplomacyRelation(
         factionId1: ids.id1,
@@ -38,7 +39,35 @@ List<DiplomacyRelation> setWarStateForPair({
       level: RelationLevel.hostile,
       formalAlliance: false,
     );
-  });
+  };
+}
+
+/// Updater applying offer-peace relation state. Shared by [applyPeaceForPair] and
+/// the batched [RelationUpsertIndex] path (Refs #3837).
+DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
+  String gpId,
+  String targetId,
+  int turn,
+) => (existing) {
+  return existing!.copyWith(
+    state: RelationState.atPeace,
+    sinceTurn: turn,
+    lastInteractionTurn: turn,
+  );
+};
+
+List<DiplomacyRelation> setWarStateForPair({
+  required List<DiplomacyRelation> relations,
+  required String gpId,
+  required String targetId,
+  required int turn,
+}) {
+  return upsertRelation(
+    relations,
+    gpId,
+    targetId,
+    warStateRelationUpdater(gpId, targetId, turn),
+  );
 }
 
 List<DiplomacyRelation> applyPeaceForPair({
@@ -47,13 +76,12 @@ List<DiplomacyRelation> applyPeaceForPair({
   required String targetId,
   required int turn,
 }) {
-  return upsertRelation(relations, gpId, targetId, (existing) {
-    return existing!.copyWith(
-      state: RelationState.atPeace,
-      sinceTurn: turn,
-      lastInteractionTurn: turn,
-    );
-  });
+  return upsertRelation(
+    relations,
+    gpId,
+    targetId,
+    peaceRelationUpdater(gpId, targetId, turn),
+  );
 }
 
 /// Updater applying a fixed Grant Aid relation modifier (+5, clamped). Shared by
