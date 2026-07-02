@@ -1,24 +1,6 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
-import 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
-import 'package:colonizethis_test/test.dart';
+part of 'capital_test.dart';
 
-/// Behaviour parity coverage for the unified faction-reassignment core
-/// (`_applyCapitalReassignmentForFaction`) introduced in Refs #3544 Step 2.
-/// Exercises the cross-faction threading and guard/throw parity that the
-/// single generic loop must preserve across Great Power, Minor, and Tribe
-/// paths. SPEC/game/capital-and-connectivity § Capital loss and reassignment.
-const _emptyTopology = MapTopology();
-
-CapitalTile _tile(String provinceId, int x, int y) => CapitalTile(
-  regionId: ProvinceId.regionIdFrom(provinceId),
-  provinceId: provinceId,
-  x: x,
-  y: y,
-);
-
-void main() {
+void _capital_and_gp_fall_reassignment_unified_testTests() {
   group('unified faction reassignment core (#3544)', () {
     test('reassigns both minor and tribe in a single pass', () {
       final game = Game(
@@ -61,14 +43,14 @@ void main() {
           MinorNation(
             id: 'm1',
             capitalProvinceId: 'oldWorld|mcap',
-            capitalTile: _tile('oldWorld|mcap', 0, 0),
+            capitalTile: _tile('oldWorld|mcap', x: 0, y: 0),
           ),
         ],
         tribes: [
           Tribe(
             id: 't1',
             capitalProvinceId: 'newWorld|tcap',
-            capitalTile: _tile('newWorld|tcap', 0, 0),
+            capitalTile: _tile('newWorld|tcap', x: 0, y: 0),
           ),
         ],
       );
@@ -103,7 +85,7 @@ void main() {
           MinorNation(
             id: 'm1',
             capitalProvinceId: 'oldWorld|mcap',
-            capitalTile: _tile('oldWorld|mcap', 0, 0),
+            capitalTile: _tile('oldWorld|mcap', x: 0, y: 0),
           ),
         ],
       );
@@ -142,7 +124,7 @@ void main() {
           Tribe(
             id: 't1',
             capitalProvinceId: 'newWorld|tcap',
-            capitalTile: _tile('newWorld|tcap', 0, 0),
+            capitalTile: _tile('newWorld|tcap', x: 0, y: 0),
           ),
         ],
       );

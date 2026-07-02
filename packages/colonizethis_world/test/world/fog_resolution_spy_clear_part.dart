@@ -1,13 +1,6 @@
-import 'package:colonizethis_world/src/world/fog_resolution.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_logic/src/constants.dart';
-import 'package:colonizethis_turn/src/turn/end_of_turn_resolver.dart';
+part of 'fog_resolution_test.dart';
 
-void main() {
+void _fog_resolution_spy_clear_testTests() {
 group('clearSpyRevealTimersForProvince', () {
     test('removes timers only for the given player and province', () {
       const ow = 'oldWorld';

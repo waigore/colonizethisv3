@@ -1,27 +1,6 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/capital_reassignment.dart';
-import 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/logic_validation_exception.dart';
-import 'package:colonizethis_test/test.dart';
+part of 'capital_test.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
-
-/// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
-///
-/// Exercises capital reassignment eligibility, runtime setters, and the
-/// deterministic reassignment province picker.
-/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
-CapitalTile _tile(String provinceId, {int x = 1, int y = 2}) => CapitalTile(
-  regionId: ProvinceId.regionIdFrom(provinceId),
-  provinceId: provinceId,
-  x: x,
-  y: y,
-);
-
-void main() {
+void _capital_reassignment_testTests() {
   group('evaluateCapitalReassignmentEligibility', () {
     test(
       'returns deterministic candidate when owner has provinces in region',

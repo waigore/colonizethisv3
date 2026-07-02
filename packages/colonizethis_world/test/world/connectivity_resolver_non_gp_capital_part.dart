@@ -1,12 +1,6 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_world/src/world/connectivity_blockade_target.dart';
+part of 'connectivity_resolver_test.dart';
 
-import '../world_test_support/world_test_support.dart';
-
-void main() {
+void _connectivity_resolver_non_gp_capital_testTests() {
 group('resolveNonGreatPowerConnectivity', () {
     test('minor with null capitalTile gets empty ConnectivityResult', () {
       const ow = 'oldWorld';

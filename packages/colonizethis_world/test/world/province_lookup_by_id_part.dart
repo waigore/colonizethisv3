@@ -1,17 +1,6 @@
-// ignore_for_file: deprecated_member_use
+part of 'province_lookup_test.dart';
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_world/src/world_constants.dart'
-    show kRegionNewWorld, kRegionOldWorld;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
-
-import '../world_test_support/province_lookup_test_support.dart';
-
-void main() {
+void _province_lookup_by_id_testTests() {
   group('WorldStateProvinceLookup.allProvincesById (Refs #2836 item 4)', () {
     test('contains provinces from both regions keyed by id', () {
       final ws = makeWorld(oldProvinces: [pOld], newProvinces: [pNew]);

@@ -1,13 +1,6 @@
-import 'package:colonizethis_world/src/world/fog_resolution.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_logic/src/constants.dart';
-import 'package:colonizethis_turn/src/turn/end_of_turn_resolver.dart';
+part of 'fog_resolution_test.dart';
 
-void main() {
+void _fog_resolution_distant_sea_integration_testTests() {
 group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
     test(
       'coastal pass after distant restores shore-adjacent sea from fogged',

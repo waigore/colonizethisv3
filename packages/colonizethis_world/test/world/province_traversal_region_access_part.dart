@@ -1,11 +1,6 @@
-import 'package:colonizethis_logic/src/constants.dart';
-import 'package:colonizethis_world/src/world/province_traversal.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+part of 'province_lookup_test.dart';
 
-void main() {
+void _province_traversal_region_access_testTests() {
   group('forEachWorldRegion', () {
     test('invokes action once per region', () {
       final world = TestFixtures.worldStateAtOrdersPhase(
