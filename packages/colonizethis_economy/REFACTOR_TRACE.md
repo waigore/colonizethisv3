@@ -116,7 +116,28 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/frr_credits_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/trade_order_validator_treasury_scenarios.dart`
 
+## Slice 6 — extraction scenario DSL and carry-forward bid notional
+
+| scenario_id | test description | source test file(s) | refs |
+|-------------|------------------|----------------|------|
+| re-connectivity-* | four connectivity/cap cases from part1 segment1 | `resource_extractor_part1_segment1_test.dart` | #3661 |
+| re-mineral-* | four mineral/town-dev cases from part1 segment2 | `resource_extractor_part1_segment2_test.dart` | — |
+| re-empty-connected | returns empty ExtractionTotals when player has no connected tiles | `resource_extractor_part2_part2_test.dart` | — |
+| re-overseas | overseas totals when connected tile in different region | `resource_extractor_part2_part1_test.dart` | — |
+| re-path-transport | effective yield capped by min transport level along path to capital | `resource_extractor_part2_part1_test.dart` | — |
+| non-gp-spec-* | five SPEC-AC cases | `non_gp_extraction_part1_test.dart` | #2991 |
+| non-gp-boundary-* | eight boundary/multi-faction cases | `non_gp_extraction_part2_test.dart` | #2991 |
+| carry-fwd-catalog | falls back to catalog default price when world price is missing | `world_market_carry_forward_bid_notional_test.dart` | #3122 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/resource_extractor_scenarios.dart` (`extractionScenario` DSL)
+- `colonizethis_economy_test_support/lib/src/non_gp_extraction_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/carry_forward_bid_notional_scenarios.dart`
+
+Helpers extended in `resource_extractor_test_support.dart`: `TileImprovementSpec`, `tileStateFromSpecs`, `tileMapFromGrids`, `overseasResourceExtractorGame`.
+
+Bespoke tests retained (topology/logging/town-rule/tile-contribution): `resource_extractor_part1_segment1_test.dart` (dual tech cap), `resource_extractor_part1_segment2_test.dart` (town-rule non-port), `resource_extractor_part2_part1_test.dart` (town-rule port, blockaded overseas), `resource_extractor_part2_part2_test.dart` (province-missing log, capital bonus, tile contribution).
+
 ## Deferred (follow-up slices)
 
-- Extraction scenario DSL for `resource_extractor_part*` / `non_gp_extraction_part*`
-- Carry-forward bid notional treasury cluster consolidation
+- None — #3836 ACs satisfied pending PR merge and verification

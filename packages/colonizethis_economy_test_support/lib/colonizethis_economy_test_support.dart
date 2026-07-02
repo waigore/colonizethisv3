@@ -9,6 +9,7 @@ library colonizethis_economy_test_support;
 
 export 'src/bid_spend_game_factory.dart';
 export 'src/boycott_blocked_commodities_test_support.dart';
+export 'src/carry_forward_bid_notional_scenarios.dart';
 export 'src/core_economy_test_support.dart';
 export 'src/deal_matcher_frr_scenarios.dart';
 export 'src/deal_matcher_priority_scenarios.dart';
@@ -19,7 +20,9 @@ export 'src/deal_matcher_treasury_scenarios.dart';
 export 'src/effective_market_price_scenarios.dart';
 export 'src/frr_credits_scenarios.dart';
 export 'src/frr_credits_test_support.dart';
+export 'src/non_gp_extraction_scenarios.dart';
 export 'src/non_gp_extraction_test_support.dart';
+export 'src/resource_extractor_scenarios.dart';
 export 'src/resource_extractor_test_support.dart';
 export 'src/staged_bid_spend_scenarios.dart';
 export 'src/tile_map_test_support.dart';
