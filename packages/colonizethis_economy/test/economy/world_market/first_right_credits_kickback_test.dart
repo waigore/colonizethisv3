@@ -1,4 +1,5 @@
 // Embassy overseas-profit kickback (#3753 R8.3) aggregation tests for
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 // `computeFirstRightCredits`.
 //
 // SPEC: `SPEC/game/world-market-first-right-of-refusal.md` § Profit formula
@@ -8,7 +9,7 @@
 // attribution (R8.6); the tile owner is excluded from the kickback (R8.5) but
 // still receives its full tile-owner share.
 
-import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
+
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';

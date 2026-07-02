@@ -1,4 +1,5 @@
-import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
+
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';

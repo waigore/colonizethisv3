@@ -1,4 +1,5 @@
 /// Unit tests for `computePurchasedTileRichesCredits` (Refs #2991 C5).
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 ///
 /// SPEC anchors:
 ///   - SPEC/game/world-market.md § First right of refusal § Riches handoff
@@ -8,8 +9,8 @@
 ///   - SPEC/program/turn-resolution-phase-details.md § Riches to treasury
 ///     (purchased-tile credits paragraph).
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_riches.dart';
+
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

@@ -20,7 +20,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
 import 'treasury_bid_budget.dart'
-    show bidTreasurySpendForOrder, effectiveMarketPriceForCommodityId;
+    show
+        bidTreasurySpendForOrder,
+        capBidQuantityForBudgets,
+        effectiveMarketPriceForCommodityId;
 import 'world_market_context_base.dart';
 
 /// Inputs for one [TradeOrderSuggester.suggest] pass.
@@ -173,21 +176,17 @@ class TradeOrderSuggester {
       if (admittedBidCount >= context.bidTypeCap) continue;
       final bidQuantity = -net; // need > available => positive deficit
       if (bidQuantity <= 0) continue;
-      if (remainingCargoBudget <= 0) continue;
-      var cappedQty = bidQuantity < remainingCargoBudget
-          ? bidQuantity
-          : remainingCargoBudget;
       final int? unitPrice = effectiveMarketPriceForCommodityId(
         commodityId: commodityId,
         worldMarket: context.worldMarketState,
         resourceRules: context._resourceRules,
       );
-      if (unitPrice != null && unitPrice > 0) {
-        final int maxAffordable = remainingTreasuryBudget ~/ unitPrice;
-        if (cappedQty > maxAffordable) {
-          cappedQty = maxAffordable;
-        }
-      }
+      final cappedQty = capBidQuantityForBudgets(
+        bidQuantity: bidQuantity,
+        remainingCargoBudget: remainingCargoBudget,
+        remainingTreasuryBudget: remainingTreasuryBudget,
+        unitPrice: unitPrice,
+      );
       if (cappedQty <= 0) continue;
       bids.add(
         TradeOrder(

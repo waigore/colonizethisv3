@@ -397,7 +397,7 @@ This is the **world-market**-scoped analogue of `tradeSlotsForGp` (which is per-
 
 Implementation: `packages/colonizethis_logic/lib/src/economy/world_market/trade_order_suggester.dart`, wired through `OrderSuggestionAPI.suggestTradeOrders` (default impl in `DefaultOrderSuggestionAPI`). Pure, deterministic, silent.
 
-The suggester returns a `TradeSuggestionResult` carrying parallel offer and bid `TradeOrder` lists that, by construction, pass `TradeOrderValidator.validate` against the same context numbers. Callers (UI prompts, AI `TreasuryPlanner` per Issue F / #2994) may apply additional ranking but never need to re-clamp for validity.
+The suggester returns a `TradeSuggestionResult` carrying parallel offer and bid `TradeOrder` lists that, by construction, pass `TradeOrderValidator.validate` against the same context numbers. Callers (UI prompts, AI `TreasuryPlanner` per Issue F / #2994) may apply additional ranking but never need to re-clamp for validity. Per-bid quantity clamping (cargo then treasury affordability) delegates to `capBidQuantityForBudgets` in `packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart` — the same helper family as validator-side `bidTreasurySpendForOrder`.
 
 ```dart
 class TradeSuggestionContext {

@@ -3,55 +3,19 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 void main() {
   group('applyTradeInterception', () {
     test('returns as-is when overseasDelivered is empty', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atWar,
-          ),
-        ],
-      );
+      final game = tradeInterceptionGame(defaultRelation: RelationState.atWar);
       final result = applyTradeInterception(game, 'p1', {}, seed: 42);
       expect(result.reducedDelivered, isEmpty);
       expect(result.updatedFleets, game.worldState.fleets);
     });
 
     test('returns full delivered when no enemies at war', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atPeace,
-          ),
-        ],
-      );
+      final game = tradeInterceptionGame();
       final delivered = {CommodityCatalog.grain.id: 10};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 42);
       expect(result.reducedDelivered[CommodityCatalog.grain.id], 10);
@@ -59,26 +23,7 @@ void main() {
     });
 
     test('returns full delivered when at war but no interceptor fleet', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atWar,
-          ),
-        ],
-      );
+      final game = tradeInterceptionGame(defaultRelation: RelationState.atWar);
       final delivered = {CommodityCatalog.grain.id: 12};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 7);
       expect(result.reducedDelivered[CommodityCatalog.grain.id], 12);
@@ -86,32 +31,16 @@ void main() {
     });
 
     test('reduces cargo when enemy has patrol fleet', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p2',
-              seaZoneId: 'sea1',
-              regionId: 'oldWorld',
-              shipTypeIds: ['carrack'],
-              mission: FleetMission.patrol,
-            ),
-          ],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atWar,
+      final game = tradeInterceptionGame(
+        defaultRelation: RelationState.atWar,
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'p2',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: ['carrack'],
+            mission: FleetMission.patrol,
           ),
         ],
       );
@@ -129,32 +58,16 @@ void main() {
     });
 
     test('is deterministic for a fixed seed', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p2',
-              seaZoneId: 'sea1',
-              regionId: 'oldWorld',
-              shipTypeIds: ['carrack'],
-              mission: FleetMission.patrol,
-            ),
-          ],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atWar,
+      final game = tradeInterceptionGame(
+        defaultRelation: RelationState.atWar,
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'p2',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: ['carrack'],
+            mission: FleetMission.patrol,
           ),
         ],
       );
@@ -169,52 +82,10 @@ void main() {
 
     // Slice B of #3470: privateering trade-raid bonus.
     // SPEC/program/naval-movement-resolution.md § Trade/Transport Interception.
-    Game gameWithEnemyPatrol({required bool enemyHasPrivateering}) => Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        fleets: [
-          Fleet(
-            id: 'enemy',
-            ownerId: 'p2',
-            seaZoneId: 'sea1',
-            regionId: 'oldWorld',
-            shipTypeIds: const ['sloop'],
-            mission: FleetMission.patrol,
-          ),
-          Fleet(
-            id: 'mine',
-            ownerId: 'p1',
-            seaZoneId: 'sea1',
-            regionId: 'oldWorld',
-            shipTypeIds: const ['fluyte'],
-          ),
-        ],
-      ),
-      players: [
-        const Player(id: 'p1', displayName: 'A', isHuman: true),
-        Player(
-          id: 'p2',
-          displayName: 'B',
-          isHuman: false,
-          techUnlocked: enemyHasPrivateering
-              ? const {kTechIdPrivateeringCompanies: true}
-              : const {},
-        ),
-      ],
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'p1',
-          factionId2: 'p2',
-          state: RelationState.atWar,
-        ),
-      ],
-    );
-
     test('enemy without privateering reduces cargo by the baseline', () {
-      final game = gameWithEnemyPatrol(enemyHasPrivateering: false);
+      final game = tradeInterceptionPrivateeringGame(
+        enemyHasPrivateering: false,
+      );
       final result = applyTradeInterception(
         game,
         'p1',
@@ -227,13 +98,13 @@ void main() {
 
     test('enemy with privateering reduces cargo more (strictly less kept)', () {
       final baseline = applyTradeInterception(
-        gameWithEnemyPatrol(enemyHasPrivateering: false),
+        tradeInterceptionPrivateeringGame(enemyHasPrivateering: false),
         'p1',
         {CommodityCatalog.grain.id: 100},
         seed: 42,
       );
       final boosted = applyTradeInterception(
-        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
         {CommodityCatalog.grain.id: 100},
         seed: 42,
@@ -247,13 +118,13 @@ void main() {
 
     test('privateering trade-raid result is deterministic for a fixed seed', () {
       final a = applyTradeInterception(
-        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
         {CommodityCatalog.grain.id: 100},
         seed: 999,
       );
       final b = applyTradeInterception(
-        gameWithEnemyPatrol(enemyHasPrivateering: true),
+        tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
         {CommodityCatalog.grain.id: 100},
         seed: 999,
@@ -265,39 +136,23 @@ void main() {
     });
 
     test('can remove merchant ships when interception triggers and RNG hits', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p2',
-              seaZoneId: 'sea1',
-              regionId: 'oldWorld',
-              shipTypeIds: ['carrack', 'carrack'],
-              mission: FleetMission.blockade,
-            ),
-            Fleet(
-              id: 'f2',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: 'oldWorld',
-              shipTypeIds: ['fluyte', 'fluyte', 'fluyte'],
-            ),
-          ],
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            state: RelationState.atWar,
+      final game = tradeInterceptionGame(
+        defaultRelation: RelationState.atWar,
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'p2',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: ['carrack', 'carrack'],
+            mission: FleetMission.blockade,
+          ),
+          Fleet(
+            id: 'f2',
+            ownerId: 'p1',
+            seaZoneId: 'sea1',
+            regionId: 'oldWorld',
+            shipTypeIds: ['fluyte', 'fluyte', 'fluyte'],
           ),
         ],
       );

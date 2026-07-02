@@ -181,6 +181,20 @@ rules:
     runner: dart
     script: tool/check_economy_test_no_local_stockpile_game_builder.dart
 
+  - rule_id: repo.economy_bid_quantity_cap_shared
+    group: architecture
+    title: economy trade_order_suggester must delegate bid quantity cap to capBidQuantityForBudgets in treasury_bid_budget.dart (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_bid_quantity_cap_shared.dart
+
+  - rule_id: repo.economy_test_no_src_imports
+    group: testing
+    title: colonizethis_economy test/ must not import package:colonizethis_economy/src/ (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_src_imports.dart
+
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing
     title: colonizethis_diplomacy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3715)
