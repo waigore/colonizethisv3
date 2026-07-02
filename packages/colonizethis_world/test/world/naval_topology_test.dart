@@ -256,6 +256,52 @@ void main() {
         contains('oldWorld|s1'),
       );
     });
+
+    test(
+      'seaZoneIdsAdjacentToProvince disambiguates duplicate local province ids by region',
+      () {
+        final multiRegion = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea2',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 'sea1'),
+            TopologyEdge(id1: 'p1', id2: 'sea2'),
+          ],
+        );
+        expect(
+          seaZoneIdsAdjacentToProvince(multiRegion, 'p1', regionId: 'oldWorld'),
+          {'sea1'},
+        );
+        expect(
+          seaZoneIdsAdjacentToProvince(multiRegion, 'p1', regionId: 'newWorld'),
+          {'sea2'},
+        );
+        expect(
+          seaZoneIdForProvince(multiRegion, 'p1', regionId: 'newWorld'),
+          'sea2',
+        );
+      },
+    );
   });
 
   group('fleetsInPortAtProvince', () {
