@@ -34,8 +34,9 @@ final _oldWorldBorderTopology = MapTopology(
   edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
 );
 
-/// Reactive scenarios from `event_dialogue_reactive_test.dart`.
-List<EventDialogueReactiveScenario> eventDialogueReactiveScenarios() => [
+/// Fort and human-attack reactive scenarios from `event_dialogue_reactive_test.dart`.
+List<EventDialogueReactiveScenario> eventDialogueReactiveFortAndAttackScenarios() =>
+    [
   EventDialogueReactiveScenario(
     label: 'returns empty when builder is AI',
     run: () {
@@ -229,6 +230,11 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveScenarios() => [
       expect(tribeEvents.single.situation, 'attack_on_tribe');
     },
   ),
+];
+
+/// Tech, capital, colony, and spy reactive scenarios.
+List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenarios() =>
+    [
   EventDialogueReactiveScenario(
     label: 'tech_discovered emits for AI discoverer only',
     run: () {
@@ -353,4 +359,10 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveScenarios() => [
       expect(events.single.leaderId, 'a1');
     },
   ),
+];
+
+/// Reactive scenarios from `event_dialogue_reactive_test.dart`.
+List<EventDialogueReactiveScenario> eventDialogueReactiveScenarios() => [
+  ...eventDialogueReactiveFortAndAttackScenarios(),
+  ...eventDialogueReactiveDiscoveryAndSpyScenarios(),
 ];

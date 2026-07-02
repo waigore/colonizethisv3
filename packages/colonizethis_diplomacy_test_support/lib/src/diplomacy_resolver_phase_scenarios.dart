@@ -19,8 +19,8 @@ class DiplomacyPhaseScenario {
 
 void runDiplomacyPhaseScenario(DiplomacyPhaseScenario scenario) => scenario.run();
 
-/// Part 1 scenarios from `diplomacy_resolver_phase_test_part1_test.dart`.
-List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
+/// Overture, alliance, and war/peace scenarios from part 1 integration tests.
+List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1WarPeaceScenarios() => [
   DiplomacyPhaseScenario(
     label: 'overture payments create consulate and embassy when treasury allows',
     run: () {
@@ -138,6 +138,10 @@ List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
       expect(rel.score, lessThan(60));
     },
   ),
+];
+
+/// Grant-aid scenarios from part 1 integration tests.
+List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1GrantAidScenarios() => [
   DiplomacyPhaseScenario(
     label: 'grantAid requires embassy and improves relations',
     run: () {
@@ -213,6 +217,10 @@ List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
       expect(() => resolveDiplomacyPhase(game, orders), throwsStateError);
     },
   ),
+];
+
+/// Join-empire scenarios from part 1 integration tests.
+List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1JoinEmpireScenarios() => [
   DiplomacyPhaseScenario(
     label:
         'join empire absorbs minor: provinces transfer, minor removed, cost deducted',
@@ -348,6 +356,13 @@ List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
       );
     },
   ),
+];
+
+/// Part 1 scenarios from `diplomacy_resolver_phase_test_part1_test.dart`.
+List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
+  ...diplomacyResolverPhasePart1WarPeaceScenarios(),
+  ...diplomacyResolverPhasePart1GrantAidScenarios(),
+  ...diplomacyResolverPhasePart1JoinEmpireScenarios(),
 ];
 
 /// Part 2 scenarios from `diplomacy_resolver_phase_test_part2_test.dart`.

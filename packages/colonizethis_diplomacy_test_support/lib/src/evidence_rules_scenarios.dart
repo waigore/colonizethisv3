@@ -241,8 +241,8 @@ List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
   ),
 ];
 
-/// Declare-war / offer-peace scenarios from `evidence_rules_war_peace_test.dart`.
-List<EvidenceRulesScenario> evidenceRulesWarPeaceScenarios() => [
+/// Declare-war scenarios from `evidence_rules_war_peace_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   EvidenceRulesScenario(
     label:
         'AI declaring war on weaker allied GP adds backstabber and warmonger evidence',
@@ -397,6 +397,10 @@ List<EvidenceRulesScenario> evidenceRulesWarPeaceScenarios() => [
       expect(entries, isEmpty);
     },
   ),
+];
+
+/// Offer-peace and follow-on war scenarios from `evidence_rules_war_peace_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   EvidenceRulesScenario(
     label: 'AI offering peace adds peacemaker evidence for human observer',
     run: () {
@@ -492,6 +496,12 @@ List<EvidenceRulesScenario> evidenceRulesWarPeaceScenarios() => [
       expect(entries.single.scoreDelta, 3);
     },
   ),
+];
+
+/// Declare-war / offer-peace scenarios from `evidence_rules_war_peace_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesWarPeaceScenarios() => [
+  ...evidenceRulesDeclareWarScenarios(),
+  ...evidenceRulesOfferPeaceScenarios(),
 ];
 
 /// Isolationist call-to-arms scenarios from `evidence_rules_isolationist_test.dart`.

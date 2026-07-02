@@ -16,8 +16,8 @@ class EventDialogueScenario {
 
 void runEventDialogueScenario(EventDialogueScenario scenario) => scenario.run();
 
-/// Battle / era / negotiation scenarios from `event_dialogue_test.dart`.
-List<EventDialogueScenario> eventDialogueCoreScenarios() => [
+/// Battle scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreBattleScenarios() => [
   EventDialogueScenario(
     label:
         'AI victor and AI loser both emit event with era from turn-time mapping',
@@ -151,6 +151,10 @@ List<EventDialogueScenario> eventDialogueCoreScenarios() => [
       expect(events.first.leaderId, 'gp2');
     },
   ),
+];
+
+/// Era-change and negotiation scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreEraAndNegotiationScenarios() => [
   EventDialogueScenario(
     label: 'maps year to dialogue era bands',
     run: () {
@@ -239,4 +243,10 @@ List<EventDialogueScenario> eventDialogueCoreScenarios() => [
       expect(e.mood, isNull);
     },
   ),
+];
+
+/// Battle / era / negotiation scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreScenarios() => [
+  ...eventDialogueCoreBattleScenarios(),
+  ...eventDialogueCoreEraAndNegotiationScenarios(),
 ];
