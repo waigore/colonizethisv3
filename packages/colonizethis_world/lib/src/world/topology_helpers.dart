@@ -279,7 +279,11 @@ Set<String> seaZoneIdsAdjacentToProvince(
     if (prov == null) continue;
     final other = id1 == prov ? id2 : id1;
     final node = nodeById[other];
-    if (node != null && node.type == TopologyNodeType.seaZone) out.add(other);
+    if (node == null || node.type != TopologyNodeType.seaZone) continue;
+    // When [regionId] is set, disambiguate duplicate local province ids (e.g. OW/NW
+    // both `p1`) by requiring the coastal sea zone to belong to that region.
+    if (regionId != null && node.regionId != regionId) continue;
+    out.add(other);
   }
   return out;
 }

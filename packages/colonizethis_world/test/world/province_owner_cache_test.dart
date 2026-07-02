@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void main() {
   const ow = kRegionOldWorld;

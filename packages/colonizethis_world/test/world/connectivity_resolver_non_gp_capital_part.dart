@@ -1,11 +1,7 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+part of 'connectivity_resolver_test.dart';
 
-/// Tests for [resolveNonGreatPowerConnectivity] (Refs #2991 C3 — part 2).
-void main() {
-  group('resolveNonGreatPowerConnectivity', () {
+void _connectivity_resolver_non_gp_capital_testTests() {
+group('resolveNonGreatPowerConnectivity', () {
     test('minor with null capitalTile gets empty ConnectivityResult', () {
       const ow = 'oldWorld';
       final grid = [
@@ -392,4 +388,5 @@ void main() {
       },
     );
   });
+
 }

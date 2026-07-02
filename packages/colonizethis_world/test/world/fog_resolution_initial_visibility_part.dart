@@ -1,11 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_world/src/world/fog_resolution.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
+part of 'fog_resolution_test.dart';
 
-void main() {
-  group('applyInitialVisibility coastal sea zone', () {
+void _fog_resolution_initial_visibility_testTests() {
+group('applyInitialVisibility coastal sea zone', () {
     test(
       'sets sea zone tiles adjacent to owned province to fullyVisible at game setup',
       () {
@@ -146,4 +142,5 @@ void main() {
       expect(out['gp2']![tileKeyS2], VisibilityLevel.fullyVisible.name);
     });
   });
+
 }

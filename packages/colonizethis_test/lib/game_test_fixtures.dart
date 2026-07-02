@@ -22,12 +22,21 @@ abstract final class TestFixtures {
     RegionData? oldWorld,
     RegionData? newWorld,
     TileMapState? tileState,
+    Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+        const {},
+    List<Army> armies = const [],
+    int nextArmySeq = 1,
+    List<Fleet> fleets = const [],
   }) {
     return WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: oldWorld ?? const RegionData(),
       newWorld: newWorld ?? const RegionData(),
       tileState: tileState ?? const TileMapState(),
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      armies: armies,
+      nextArmySeq: nextArmySeq,
+      fleets: fleets,
     );
   }
 
@@ -50,7 +59,9 @@ abstract final class TestFixtures {
     Map<String, Set<String>>? playerProspectedTiles,
     TileMapState? tileState,
     List<Army> armies = const [],
+    int nextArmySeq = 1,
     List<Fleet> fleets = const [],
+    Map<String, Map<String, int>> spyRevealTurnsByPlayer = const {},
     double richesCashMultiplier = 1.0,
     int capitalTileGrainBonusPerTurn = 5,
     List<MinorNation> minorNations = const [],
@@ -72,7 +83,9 @@ abstract final class TestFixtures {
       playerProspectedTiles: playerProspectedTiles ?? const {},
       tileState: tileState ?? const TileMapState(),
       armies: armies,
+      nextArmySeq: nextArmySeq,
       fleets: fleets,
+      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
     ),
     players: players,
     richesCashMultiplier: richesCashMultiplier,

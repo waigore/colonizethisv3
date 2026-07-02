@@ -1,48 +1,7 @@
-// Intentionally exercises the @Deprecated top-level province-lookup wrappers to
-// keep them covered while they delegate to the WorldState extension methods
-// during the deprecation window (Refs #3403 Phase 1, Step 2).
-// ignore_for_file: deprecated_member_use
+part of 'province_lookup_test.dart';
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_world/src/world_constants.dart'
-    show kRegionOldWorld;
-import 'package:colonizethis_test/test.dart';
-
-import '../test_fixtures.dart';
-
-/// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
-///
-/// Exercises the standalone province-lookup helpers and the
-/// [WorldStateProvinceLookup] extension in `lib/src/world/province_lookup.dart`.
-/// SPEC/game/world-model-identity.md.
-WorldState _world() => TestFixtures.worldStateAtOrdersPhase(
-  oldWorld: const RegionData(
-    provinces: [
-      Province(
-        id: 'oldWorld|p1',
-        regionId: 'oldWorld',
-        ownerId: 'gp1',
-        fortLevel: 2,
-      ),
-      Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp1'),
-    ],
-  ),
-  newWorld: const RegionData(
-    provinces: [
-      Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'gp2'),
-    ],
-  ),
-  tileKeysByRegionAndProvince: const {
-    'oldWorld': {
-      'oldWorld|p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
-    },
-  },
-);
-
-void main() {
-  group('province-list helpers', () {
+void _province_lookup_testTests() {
+group('province-list helpers', () {
     const provinces = [
       Province(id: 'oldWorld|p1', regionId: 'oldWorld', fortLevel: 2),
       Province(id: 'oldWorld|p2', regionId: 'oldWorld', fortLevel: 0),
@@ -76,8 +35,8 @@ void main() {
     });
   });
 
-  group('standalone lookup functions', () {
-    final world = _world();
+  group('province key resolution helpers', () {
+    final world = provinceLookupTestWorld();
 
     test('resolveToFullProvinceId returns prefixed, throws on short id', () {
       expect(resolveToFullProvinceId(world, 'oldWorld|p1'), 'oldWorld|p1');
@@ -85,22 +44,6 @@ void main() {
       // without tripping the unprefixed-province-id-literal AST lint.
       const shortId = 'p1';
       expect(() => resolveToFullProvinceId(world, shortId), throwsStateError);
-    });
-
-    test('getProvinceByRegion success and failure modes', () {
-      expect(getProvinceByRegion(world, 'oldWorld', 'p1').ownerId, 'gp1');
-      expect(
-        () => getProvinceByRegion(world, 'badRegion', 'p1'),
-        throwsStateError,
-      );
-      expect(
-        () => getProvinceByRegion(world, 'oldWorld', 'missing'),
-        throwsStateError,
-      );
-    });
-
-    test('getProvince resolves a prefixed id', () {
-      expect(getProvince(world, 'newWorld|n1').ownerId, 'gp2');
     });
 
     test('resolveProvinceRowForOwnershipTransfer matches legacy short id', () {
@@ -215,7 +158,7 @@ void main() {
   });
 
   group('WorldStateProvinceLookup extension', () {
-    final world = _world();
+    final world = provinceLookupTestWorld();
 
     test('tryGetRegionIdForLegacyProvinceKey resolves both regions', () {
       expect(world.tryGetRegionIdForLegacyProvinceKey('oldWorld|p1'), 'oldWorld');
@@ -259,7 +202,7 @@ void main() {
       final game = TestFixtures.singlePlayerGame(
         const Player(id: 'gp1', displayName: 'GP1', isHuman: true),
         gameId: 'g',
-        worldState: _world(),
+        worldState: provinceLookupTestWorld(),
       );
       expect(oldWorldProvinceCountOwnedBy(game, 'gp1'), 2);
       expect(oldWorldProvinceCountOwnedBy(game, 'gp2'), 0);
@@ -270,7 +213,7 @@ void main() {
     // equals both the prior `world.oldWorld.provinces` owner scan and the
     // cache accessor for the same faction id.
     test('matches the projection accessor and the prior old-world scan', () {
-      final world = _world();
+      final world = provinceLookupTestWorld();
       final game = TestFixtures.singlePlayerGame(
         const Player(id: 'gp1', displayName: 'GP1', isHuman: true),
         gameId: 'g',
@@ -293,6 +236,61 @@ void main() {
           reason: 'matches prior old-world owner scan for $id',
         );
       }
+    });
+  });
+
+  group('traverseProvinces', () {
+    test('yields provinces from both regions in old-then-new order', () {
+      final world = TestFixtures.worldStateAtOrdersPhase(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|p1', regionId: kRegionOldWorld, ownerId: 'gp1'),
+            Province(id: 'oldWorld|p2', regionId: kRegionOldWorld),
+          ],
+        ),
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'newWorld|p9', regionId: kRegionNewWorld, ownerId: 'gp2'),
+          ],
+        ),
+        tileKeysByRegionAndProvince: {
+          kRegionOldWorld: {
+            'oldWorld|p1': ['oldWorld|p1|0|0'],
+          },
+          kRegionNewWorld: {
+            'newWorld|p9': ['newWorld|p9|1|1'],
+          },
+        },
+      );
+
+      final entries = traverseProvinces(world).toList();
+      expect(entries.map((e) => e.provinceId), [
+        'oldWorld|p1',
+        'oldWorld|p2',
+        'newWorld|p9',
+      ]);
+      expect(entries[0].regionId, kRegionOldWorld);
+      expect(entries[0].tileKeys, ['oldWorld|p1|0|0']);
+      expect(entries[2].regionId, kRegionNewWorld);
+    });
+
+    test('where filter excludes provinces', () {
+      final world = TestFixtures.worldStateAtOrdersPhase(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|p1', regionId: kRegionOldWorld, ownerId: 'gp1'),
+            Province(id: 'oldWorld|p2', regionId: kRegionOldWorld),
+          ],
+        ),
+        newWorld: const RegionData(provinces: []),
+      );
+
+      final owned = traverseProvinces(
+        world,
+        where: (_, p) => p.ownerId != null,
+      ).map((e) => e.provinceId).toList();
+
+      expect(owned, ['oldWorld|p1']);
     });
   });
 }

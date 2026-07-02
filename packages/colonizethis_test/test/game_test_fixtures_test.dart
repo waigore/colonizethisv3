@@ -31,6 +31,51 @@ void main() {
       expect(ws.newWorld.provinces, isEmpty);
     });
 
+    test('worldStateAtOrdersPhase passes armies fleets and tile keys', () {
+      const armies = [
+        Army(
+          id: 'a1',
+          ownerId: 'p1',
+          regionId: 'oldWorld',
+          stationedProvinceId: 'oldWorld|p1',
+          regimentUnitIds: ['r1'],
+        ),
+      ];
+      final fleets = [
+        Fleet(
+          id: 'f1',
+          ownerId: 'p1',
+          regionId: 'oldWorld',
+          seaZoneId: 'oldWorld|sea1',
+        ),
+      ];
+      const tileKeys = {
+        'oldWorld': {'oldWorld|p1': ['oldWorld|p1|0|0']},
+      };
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        armies: armies,
+        fleets: fleets,
+        nextArmySeq: 3,
+        tileKeysByRegionAndProvince: tileKeys,
+      );
+      expect(ws.armies, armies);
+      expect(ws.fleets, fleets);
+      expect(ws.nextArmySeq, 3);
+      expect(ws.tileKeysByRegionAndProvince, tileKeys);
+    });
+
+    test('minimalGame passes spyRevealTurnsByPlayer and nextArmySeq', () {
+      const spy = {
+        'p1': {'oldWorld|p1': 2},
+      };
+      final game = TestFixtures.minimalGame(
+        spyRevealTurnsByPlayer: spy,
+        nextArmySeq: 4,
+      );
+      expect(game.worldState.spyRevealTurnsByPlayer, spy);
+      expect(game.worldState.nextArmySeq, 4);
+    });
+
     test('minimalGame passes resourceByTileKey into world state', () {
       const res = {'oldWorld|p|0|0': 'grain'};
       final game = TestFixtures.minimalGame(resourceByTileKey: res);

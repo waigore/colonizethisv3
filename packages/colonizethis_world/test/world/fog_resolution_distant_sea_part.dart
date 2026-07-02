@@ -1,12 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/constants.dart';
-import 'package:colonizethis_world/src/world/fog_resolution.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
+part of 'fog_resolution_test.dart';
 
-void main() {
-  group('applyDistantSeaZoneFogRevert', () {
+void _fog_resolution_distant_sea_testTests() {
+group('applyDistantSeaZoneFogRevert', () {
     test(
       'fogs open-ocean sea tiles when no owned coast and no fleet at sea',
       () {
@@ -345,4 +340,5 @@ void main() {
       expect(out['gp1']![tileSea2], VisibilityLevel.unknown.name);
     });
   });
+
 }

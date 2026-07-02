@@ -1,27 +1,6 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_world/src/world_constants.dart'
-    show kRegionOldWorld;
-import 'package:colonizethis_test/test.dart';
+part of 'capital_test.dart';
 
-/// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
-///
-/// Exercises terminal fall transfer for Great Powers, Minor Nations, and
-/// Tribes in `lib/src/world/capital_and_gp_fall_terminal.dart`.
-/// SPEC/game/capital-and-connectivity § terminal fall.
-Unit _unit(String id, String ownerId, String provinceId) => Unit(
-  id: id,
-  type: 'grenadiers',
-  ownerId: ownerId,
-  locationProvinceId: provinceId,
-);
-
-Fleet _fleet(String id, String ownerId) =>
-    Fleet(id: id, ownerId: ownerId, seaZoneId: 's1', regionId: 'oldWorld');
-
-void main() {
+void _capital_and_gp_fall_terminal_testTests() {
   group('applyFactionTerminalFall (Minor)', () {
     test('transfers provinces and assets to conqueror and removes faction', () {
       final game = Game(

@@ -4,22 +4,18 @@ import '../tool/check_world_no_top_level_province_lookup.dart';
 
 void main() {
   group('findWorldTopLevelProvinceLookupViolations', () {
-    test('ignores the canonical province_lookup.dart file', () {
+    test('flags reintroduced wrapper definitions in province_lookup.dart', () {
       const src = r'''
-@Deprecated('use the extension')
-Province? tryGetProvince(WorldState world, String fullProvinceId) =>
-    world.tryGetProvince(fullProvinceId);
-
-extension WorldStateProvinceLookup on WorldState {
-  Province getProvince(String fullProvinceId) =>
-      getProvinceByRegion('ow', fullProvinceId);
-}
+Province getProvince(WorldState world, String fullProvinceId) =>
+    world.getProvince(fullProvinceId);
 ''';
       final violations = findWorldTopLevelProvinceLookupViolations(
         relativePath: provinceLookupCanonicalPath,
         source: src,
       );
-      expect(violations, isEmpty);
+      expect(violations, hasLength(1));
+      expect(violations.single.kind, 'definition');
+      expect(violations.single.symbol, 'getProvince');
     });
 
     test('ignores files outside the world lib tree', () {
@@ -48,6 +44,7 @@ String? f(Game game, String id) {
       );
       expect(violations, hasLength(1));
       expect(violations.single.symbol, 'tryGetProvince');
+      expect(violations.single.kind, 'call');
     });
 
     test('accepts the extension-method form (qualified call target)', () {
@@ -66,7 +63,7 @@ bool g(WorldState ws, String id) => ws.getProvince(id).fortLevel > 0;
       expect(violations, isEmpty);
     });
 
-    test('flags each of the four deprecated symbols', () {
+    test('flags each of the four deprecated symbols as calls', () {
       const src = r'''
 void f(WorldState ws) {
   getProvince(ws, 'ow|p1');

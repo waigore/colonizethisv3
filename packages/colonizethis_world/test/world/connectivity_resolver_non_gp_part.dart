@@ -1,11 +1,7 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+part of 'connectivity_resolver_test.dart';
 
-/// Tests for [resolveNonGreatPowerConnectivity] (Refs #2991 C3 — part 1).
-void main() {
-  group('resolveNonGreatPowerConnectivity', () {
+void _connectivity_resolver_non_gp_testTests() {
+group('resolveNonGreatPowerConnectivity', () {
     test('empty map when no minors and no tribes', () {
       const ow = 'oldWorld';
       final grid = [
@@ -263,4 +259,5 @@ void main() {
       expect(result['tribe_iro']!.connected.contains('oldWorld|p2|0|1'), isFalse);
     });
   });
+
 }

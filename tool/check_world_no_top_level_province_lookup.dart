@@ -8,8 +8,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Top-level province-lookup wrappers that are `@Deprecated` in favour of the
-/// `WorldStateProvinceLookup` extension methods (Refs #3403 Phase 1 Step 2).
+/// Top-level province-lookup wrappers removed in favour of the
+/// `WorldStateProvinceLookup` extension methods (Refs #3403 / #3843).
 const Set<String> deprecatedTopLevelProvinceLookupSymbols = <String>{
   'getProvince',
   'tryGetProvince',
@@ -17,9 +17,6 @@ const Set<String> deprecatedTopLevelProvinceLookupSymbols = <String>{
   'tryGetProvinceByRegion',
 };
 
-/// The only `lib/` file allowed to reference these symbols unqualified: it both
-/// declares the deprecated wrappers and hosts the canonical extension whose
-/// methods call each other unqualified on `this`.
 const String provinceLookupCanonicalPath =
     'packages/colonizethis_world/lib/src/world/province_lookup.dart';
 
@@ -32,11 +29,15 @@ class WorldTopLevelProvinceLookupViolation {
     required this.path,
     required this.line,
     required this.symbol,
+    required this.kind,
   });
 
   final String path;
   final int line;
   final String symbol;
+
+  /// `call` for unqualified invocations; `definition` for reintroduced wrappers.
+  final String kind;
 }
 
 class _TopLevelProvinceLookupCallVisitor extends RecursiveAstVisitor<void> {
@@ -62,11 +63,41 @@ class _TopLevelProvinceLookupCallVisitor extends RecursiveAstVisitor<void> {
             path: relativePath,
             line: lineInfo.getLocation(node.methodName.offset).lineNumber,
             symbol: name,
+            kind: 'call',
           ),
         );
       }
     }
     super.visitMethodInvocation(node);
+  }
+}
+
+class _DeprecatedTopLevelProvinceLookupDefinitionVisitor
+    extends RecursiveAstVisitor<void> {
+  _DeprecatedTopLevelProvinceLookupDefinitionVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.out,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<WorldTopLevelProvinceLookupViolation> out;
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (deprecatedTopLevelProvinceLookupSymbols.contains(name)) {
+      out.add(
+        WorldTopLevelProvinceLookupViolation(
+          path: relativePath,
+          line: lineInfo.getLocation(node.name.offset).lineNumber,
+          symbol: name,
+          kind: 'definition',
+        ),
+      );
+    }
+    super.visitFunctionDeclaration(node);
   }
 }
 
@@ -80,8 +111,7 @@ findWorldTopLevelProvinceLookupViolations({
   required String source,
 }) {
   final normalized = relativePath.replaceAll('\\', '/');
-  if (!normalized.startsWith(worldLibScanPrefix) ||
-      normalized == provinceLookupCanonicalPath) {
+  if (!normalized.startsWith(worldLibScanPrefix)) {
     return const [];
   }
   final parsed = parseString(
@@ -90,6 +120,16 @@ findWorldTopLevelProvinceLookupViolations({
     throwIfDiagnostics: false,
   );
   final out = <WorldTopLevelProvinceLookupViolation>[];
+  if (normalized == provinceLookupCanonicalPath) {
+    parsed.unit.accept(
+      _DeprecatedTopLevelProvinceLookupDefinitionVisitor(
+        relativePath: normalized,
+        lineInfo: parsed.unit.lineInfo,
+        out: out,
+      ),
+    );
+    return out;
+  }
   parsed.unit.accept(
     _TopLevelProvinceLookupCallVisitor(
       relativePath: normalized,
@@ -126,21 +166,31 @@ int runCheckWorldNoTopLevelProvinceLookup(
 
   if (violations.isEmpty) {
     logI(
-      'check_world_no_top_level_province_lookup: no world-layer callers of '
-      'deprecated top-level province-lookup wrappers.',
+      'check_world_no_top_level_province_lookup: no world-layer callers or '
+      'definitions of deprecated top-level province-lookup wrappers.',
     );
     return 0;
   }
 
   violations.sort((a, b) {
     final byPath = a.path.compareTo(b.path);
-    return byPath != 0 ? byPath : a.line.compareTo(b.line);
+    if (byPath != 0) return byPath;
+    final byLine = a.line.compareTo(b.line);
+    if (byLine != 0) return byLine;
+    return a.kind.compareTo(b.kind);
   });
   logE(
     'check_world_no_top_level_province_lookup: found ${violations.length} '
     'regression(s):',
   );
   for (final v in violations) {
+    if (v.kind == 'definition') {
+      logE(
+        ' - ${v.path}:${v.line} top-level "${v.symbol}" wrapper definition; '
+        'use WorldStateProvinceLookup extension methods only. Refs #3843.',
+      );
+      continue;
+    }
     logE(
       ' - ${v.path}:${v.line} unqualified top-level "${v.symbol}(...)" call; '
       'use the WorldStateProvinceLookup extension method on WorldState '

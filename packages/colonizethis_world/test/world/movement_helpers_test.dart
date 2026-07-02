@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/movement.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
@@ -98,8 +98,7 @@ void main() {
         oldWorldUnits: [_civilian('u1', tileKey: 'oldWorld|p1|0|0')],
       );
       final result = applyCivilianTileMoveOrdersToWorldRegions(game, const {});
-      expect(result.oldWorld, same(game.worldState.oldWorld));
-      expect(result.newWorld, same(game.worldState.newWorld));
+      expect(result, same(game.worldState));
     });
 
     test('moves a civilian within the same region', () {
