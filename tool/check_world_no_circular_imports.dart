@@ -121,21 +121,92 @@ int runCheckWorldNoCircularImports(
   }
 
   final cycle = _findCycle(edges);
-  if (cycle == null) {
-    logI(
-      'check_world_no_circular_imports: ${nodes.length} '
-      '$_worldLibRelative Dart files form an acyclic import graph.',
+  if (cycle != null) {
+    logE(
+      'check_world_no_circular_imports: circular import detected in '
+      '$_worldLibRelative (each file must be understandable/testable in '
+      'isolation — break the cycle by extracting the shared symbol into a '
+      'third file):',
     );
+    final chain = cycle.map((n) => p.relative(n, from: repoRoot)).join('\n   -> ');
+    logE('   $chain');
+    return 1;
+  }
+
+  final decouplingCode = _checkWorldInternalDecouplingGuards(
+    repoRoot,
+    worldSrcDir: p.join(libDirPath, 'src', 'world'),
+    logE: (line) => logE(line),
+  );
+  if (decouplingCode != 0) {
+    return decouplingCode;
+  }
+
+  logI(
+    'check_world_no_circular_imports: ${nodes.length} '
+    '$_worldLibRelative Dart files form an acyclic import graph.',
+  );
+  return 0;
+}
+
+/// Structural guards formerly covered by `world_internal_decoupling_test.dart`
+/// (Refs #3544 C1 / #3843).
+int _checkWorldInternalDecouplingGuards(
+  String repoRoot, {
+  required String worldSrcDir,
+  required void Function(String line) logE,
+}) {
+  final provinceLookup = File(p.join(worldSrcDir, 'province_lookup.dart'));
+  final provinceOwnerCache = File(p.join(worldSrcDir, 'province_owner_cache.dart'));
+  if (!provinceLookup.existsSync() || !provinceOwnerCache.existsSync()) {
+    // Synthetic/minimal lib trees used by unit tests omit world helpers.
     return 0;
   }
 
-  logE(
-    'check_world_no_circular_imports: circular import detected in '
-    '$_worldLibRelative (each file must be understandable/testable in '
-    'isolation — break the cycle by extracting the shared symbol into a '
-    'third file):',
-  );
-  final chain = cycle.map((n) => p.relative(n, from: repoRoot)).join('\n   -> ');
-  logE('   $chain');
-  return 1;
+  final lookupSource = provinceLookup.readAsStringSync();
+  if (lookupSource.contains('province_owner_cache')) {
+    logE(
+      'check_world_no_circular_imports: province_lookup.dart must not import '
+      'province_owner_cache.dart (one-way edge only; Refs #3544 C1).',
+    );
+    return 1;
+  }
+
+  final ownerCacheSource = provinceOwnerCache.readAsStringSync();
+  if (!ownerCacheSource.contains("import 'province_lookup.dart'")) {
+    logE(
+      'check_world_no_circular_imports: province_owner_cache.dart must import '
+      'province_lookup.dart via a relative import.',
+    );
+    return 1;
+  }
+
+  final offenders = <String>[];
+  final worldDir = Directory(worldSrcDir);
+  for (final entity in worldDir.listSync(recursive: true)) {
+    if (entity is! File || !entity.path.endsWith('.dart')) continue;
+    final lines = entity.readAsLinesSync();
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i].trim();
+      if (!line.startsWith('import ') && !line.startsWith('export ')) continue;
+      if (line.contains('package:colonizethis_world/src/world/')) {
+        offenders.add(
+          '${p.relative(entity.path, from: repoRoot)}:${i + 1} -> $line',
+        );
+      }
+    }
+  }
+  if (offenders.isNotEmpty) {
+    logE(
+      'check_world_no_circular_imports: src/world/ files must reference '
+      'sibling src/world/ libraries via relative imports, not '
+      'package:colonizethis_world/src/world/ URIs. Offenders:',
+    );
+    for (final offender in offenders) {
+      logE(' - $offender');
+    }
+    return 1;
+  }
+
+  return 0;
 }

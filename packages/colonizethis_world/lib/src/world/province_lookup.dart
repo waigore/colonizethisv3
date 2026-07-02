@@ -136,9 +136,10 @@ Iterable<Province> allProvinces(WorldState world) => world.allProvinces();
 /// and is **region-scoped**: resolution happens only within the given region.
 /// SPEC/game/world-model-identity.md.
 ///
-/// [getProvince], [tryGetProvince], and [resolveToFullProvinceId] **require** prefixed id only;
-/// non-prefixed ids are invalid (no short-id resolution). Use [getProvinceByRegion]/[tryGetProvinceByRegion]
-/// for explicit (regionId, localId) lookup.
+/// [WorldStateProvinceLookup.getProvince], [WorldStateProvinceLookup.tryGetProvince],
+/// and [resolveToFullProvinceId] **require** prefixed id only; non-prefixed ids are invalid
+/// (no short-id resolution). Use [WorldStateProvinceLookup.getProvinceByRegion] /
+/// [WorldStateProvinceLookup.tryGetProvinceByRegion] for explicit (regionId, localId) lookup.
 
 /// Returns [provinceId] unchanged if it is prefixed (regionId|localId). Throws if not prefixed.
 /// No short-id resolution; SPEC/game/world-model-identity.md.
@@ -156,44 +157,6 @@ String toFullProvinceId(String regionId, String provinceId) {
       ? provinceId
       : ProvinceId.full(regionId, provinceId);
 }
-
-/// Deprecation message shared by the top-level province-lookup wrappers that
-/// the [WorldStateProvinceLookup] extension fully supersedes (Refs #3403 Phase
-/// 1 Step 2). The extension methods carry identical semantics; these standalone
-/// functions are kept as thin delegators for one release cycle before removal.
-const String _topLevelProvinceLookupDeprecation =
-    'Use the WorldStateProvinceLookup extension method on WorldState '
-    '(world.getProvinceByRegion / world.tryGetProvinceByRegion / '
-    'world.getProvince / world.tryGetProvince). The top-level wrappers are '
-    'scheduled for removal after one release cycle. Refs #3403.';
-
-/// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
-/// Throws [StateError] if the region is unknown or the province is not found.
-@Deprecated(_topLevelProvinceLookupDeprecation)
-Province getProvinceByRegion(
-  WorldState world,
-  String regionId,
-  String localId,
-) => world.getProvinceByRegion(regionId, localId);
-
-/// Optional region-scoped lookup: province in [regionId] with local id [localId], or null.
-@Deprecated(_topLevelProvinceLookupDeprecation)
-Province? tryGetProvinceByRegion(
-  WorldState world,
-  String regionId,
-  String localId,
-) => world.tryGetProvinceByRegion(regionId, localId);
-
-/// Returns the province for [fullProvinceId]. Requires full disambiguated id (regionId|localId);
-/// resolution is region-scoped. Throws [StateError] if id is not prefixed or province is not found.
-@Deprecated(_topLevelProvinceLookupDeprecation)
-Province getProvince(WorldState world, String fullProvinceId) =>
-    world.getProvince(fullProvinceId);
-
-/// Optional lookup by full id. Requires prefixed id; non-prefixed returns null. Region-scoped.
-@Deprecated(_topLevelProvinceLookupDeprecation)
-Province? tryGetProvince(WorldState world, String fullProvinceId) =>
-    world.tryGetProvince(fullProvinceId);
 
 /// Resolves a province row for transfer paths that accept either a prefixed id
 /// or a legacy short [Province.id] (tests and some fixtures).

@@ -35,7 +35,7 @@ group('province-list helpers', () {
     });
   });
 
-  group('standalone lookup functions', () {
+  group('province key resolution helpers', () {
     final world = provinceLookupTestWorld();
 
     test('resolveToFullProvinceId returns prefixed, throws on short id', () {
@@ -44,22 +44,6 @@ group('province-list helpers', () {
       // without tripping the unprefixed-province-id-literal AST lint.
       const shortId = 'p1';
       expect(() => resolveToFullProvinceId(world, shortId), throwsStateError);
-    });
-
-    test('getProvinceByRegion success and failure modes', () {
-      expect(getProvinceByRegion(world, 'oldWorld', 'p1').ownerId, 'gp1');
-      expect(
-        () => getProvinceByRegion(world, 'badRegion', 'p1'),
-        throwsStateError,
-      );
-      expect(
-        () => getProvinceByRegion(world, 'oldWorld', 'missing'),
-        throwsStateError,
-      );
-    });
-
-    test('getProvince resolves a prefixed id', () {
-      expect(getProvince(world, 'newWorld|n1').ownerId, 'gp2');
     });
 
     test('resolveProvinceRowForOwnershipTransfer matches legacy short id', () {
