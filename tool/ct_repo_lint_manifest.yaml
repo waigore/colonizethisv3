@@ -1073,7 +1073,7 @@ rules:
 
   - rule_id: repo.setup_test_default_init_options
     group: architecture
-    title: colonizethis_setup runInitGame tests must use defaultInitOptions from test support (no repeated InitGameOptions(cellSize: 8, renderPng: false) literals) (Refs #3840)
+    title: 'colonizethis_setup runInitGame tests must use defaultInitOptions from test support (no repeated InitGameOptions(cellSize: 8, renderPng: false) literals) (Refs #3840)'
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_setup_test_default_init_options.dart
