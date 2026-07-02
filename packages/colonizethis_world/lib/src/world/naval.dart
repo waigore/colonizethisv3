@@ -82,13 +82,8 @@ bool isAdjacentSeaZone(
   String toSeaZoneId,
 ) {
   if (fromSeaZoneId == toSeaZoneId) return false;
-  for (final e in topology.edges) {
-    if ((e.id1 == fromSeaZoneId && e.id2 == toSeaZoneId) ||
-        (e.id1 == toSeaZoneId && e.id2 == fromSeaZoneId)) {
-      return true;
-    }
-  }
-  return false;
+  final neighbors = topologyAdjacency(topology)[fromSeaZoneId];
+  return neighbors?.contains(toSeaZoneId) ?? false;
 }
 
 /// True when both ids are **sea-zone** topology nodes sharing an undirected edge (S–S only).
@@ -101,13 +96,8 @@ bool isAdjacentSeaSeaZone(
   final seas = seaZoneNodeIds(topology);
   if (!seas.contains(seaZoneIdA) || !seas.contains(seaZoneIdB)) return false;
   if (seaZoneIdA == seaZoneIdB) return false;
-  for (final e in topology.edges) {
-    if ((e.id1 == seaZoneIdA && e.id2 == seaZoneIdB) ||
-        (e.id1 == seaZoneIdB && e.id2 == seaZoneIdA)) {
-      return true;
-    }
-  }
-  return false;
+  final neighbors = seaZoneAdjacency(topology)[seaZoneIdA];
+  return neighbors?.contains(seaZoneIdB) ?? false;
 }
 
 /// Topology node id for [provinceId] in [regionId] (matches [MapTopology] edge endpoints).
@@ -139,14 +129,9 @@ List<String> adjacentSeaZoneIdsSeaOnly(
 ) {
   final seas = seaZoneNodeIds(topology);
   if (!seas.contains(currentSeaZoneId)) return const [];
-  final out = <String>{};
-  for (final e in topology.edges) {
-    final a = e.id1;
-    final b = e.id2;
-    if (a == currentSeaZoneId && seas.contains(b)) out.add(b);
-    if (b == currentSeaZoneId && seas.contains(a)) out.add(a);
-  }
-  return out.toList()..sort();
+  final neighbors = seaZoneAdjacency(topology)[currentSeaZoneId];
+  if (neighbors == null || neighbors.isEmpty) return const [];
+  return neighbors.toList()..sort();
 }
 
 /// True when [seaZoneId] has at least one S–S edge to a sea zone in another
@@ -156,12 +141,9 @@ bool isWarpZoneSeaZone(MapTopology topology, String seaZoneId) {
   if (sourceRegion == null) return false;
   final seaZoneIds = seaZoneNodeIds(topology);
   if (!seaZoneIds.contains(seaZoneId)) return false;
-  for (final e in topology.edges) {
-    final other = e.id1 == seaZoneId
-        ? e.id2
-        : (e.id2 == seaZoneId ? e.id1 : null);
-    if (other == null) continue;
-    if (!seaZoneIds.contains(other)) continue;
+  final neighbors = seaZoneAdjacency(topology)[seaZoneId];
+  if (neighbors == null) return false;
+  for (final other in neighbors) {
     final otherRegion = regionIdForSeaZone(topology, other);
     if (otherRegion != null && otherRegion != sourceRegion) return true;
   }
@@ -232,11 +214,9 @@ NavalMoveTopologyPicks navalMoveTopologyPicksForFleet({
 
 /// First sea zone id adjacent to [seaZoneId], or null if none. Used for naval retreat.
 String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
-  for (final e in topology.edges) {
-    if (e.id1 == seaZoneId) return e.id2;
-    if (e.id2 == seaZoneId) return e.id1;
-  }
-  return null;
+  final neighbors = nodesAdjacentTo(topology, seaZoneId);
+  if (neighbors.isEmpty) return null;
+  return neighbors.first;
 }
 
 String? _otherTopologyEdgeEndpoint(TopologyEdge e, String endpoint) {
