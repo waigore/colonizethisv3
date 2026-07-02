@@ -33,6 +33,7 @@ final List<RegExp> _bannedPrivateHelperPatterns = <RegExp>[
   RegExp(r'\b_provinceSeaZones\b'),
   RegExp(r'\b_anyCardinalNeighborCell\b'),
   RegExp(r'\b_isTileAdjacentToSeaZone\b'),
+  RegExp(r'\b_tileKeyAdjacentToProvinceSeaZone\b'),
 ];
 
 /// True when [line] is a pure comment line (`//`, `///`, or a `*` doc/block

@@ -3,6 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'faction_setup_helpers.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 import 'grid_bfs.dart';
@@ -18,7 +19,7 @@ Game assignProvinceTowns({
 }) {
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final ports = game.worldState.portsByProvinceSeaboard;
-  final capitalData = _collectCapitalData(game);
+  final capitalData = collectCapitalMapsByOwner(game);
   final coordToKey = _buildCoordToTileKeyByRegion(tileKeysByRegion);
 
   Province assignTownTile(Province p) {
@@ -42,37 +43,6 @@ Game assignProvinceTowns({
         units: region.units,
       ),
     ),
-  );
-}
-
-({
-  Map<String, String> capitalProvinceIdByOwner,
-  Map<String, String> capitalTileKeyByOwner,
-})
-_collectCapitalData(Game game) {
-  final capitalTileKeyByOwner = <String, String>{};
-  final capitalProvinceIdByOwner = <String, String>{};
-  for (final p in game.players) {
-    if (p.capitalProvinceId != null && p.capitalTile != null) {
-      capitalProvinceIdByOwner[p.id] = p.capitalProvinceId!;
-      capitalTileKeyByOwner[p.id] = p.capitalTile!.toTileKey();
-    }
-  }
-  for (final m in game.minorNations) {
-    if (m.capitalProvinceId != null && m.capitalTile != null) {
-      capitalProvinceIdByOwner[m.id] = m.capitalProvinceId!;
-      capitalTileKeyByOwner[m.id] = m.capitalTile!.toTileKey();
-    }
-  }
-  for (final t in game.tribes) {
-    if (t.capitalProvinceId != null && t.capitalTile != null) {
-      capitalProvinceIdByOwner[t.id] = t.capitalProvinceId!;
-      capitalTileKeyByOwner[t.id] = t.capitalTile!.toTileKey();
-    }
-  }
-  return (
-    capitalProvinceIdByOwner: capitalProvinceIdByOwner,
-    capitalTileKeyByOwner: capitalTileKeyByOwner,
   );
 }
 
@@ -140,7 +110,7 @@ String? _townTileKeyForProvince({
     );
     final coastalCandidates = tiles
         .where(
-          (tileKey) => _tileKeyAdjacentToProvinceSeaZone(
+          (tileKey) => tileKeyAdjacentToAnySeaZone(
             tileKey: tileKey,
             provinceId: province.id,
             seaZoneIds: seaZoneIds,
@@ -238,27 +208,3 @@ String? _portTileInProvince({
   return null;
 }
 
-bool _tileKeyAdjacentToProvinceSeaZone({
-  required String tileKey,
-  required String provinceId,
-  required Set<String> seaZoneIds,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Map<String, MapTopology> topologyByRegion,
-}) {
-  if (seaZoneIds.isEmpty) {
-    return false;
-  }
-  final regionId = ProvinceId.regionIdFrom(provinceId);
-  final map = tileMapByRegion[regionId];
-  final topology = topologyByRegion[regionId];
-  if (map == null || topology == null) {
-    return false;
-  }
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return false;
-  final provinceIds = provinceNodeIds(topology);
-  return anyCardinalNeighborCell(coords.x, coords.y, map, (cellId) {
-    if (provinceIds.contains(cellId)) return false;
-    return seaZoneIds.contains(cellId);
-  });
-}

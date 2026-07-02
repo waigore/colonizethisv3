@@ -1071,6 +1071,20 @@ rules:
     runner: dart
     script: tool/check_setup_test_no_duplicate_scaffolding.dart
 
+  - rule_id: repo.setup_test_default_init_options
+    group: architecture
+    title: 'colonizethis_setup runInitGame tests must use defaultInitOptions from test support (no repeated InitGameOptions(cellSize: 8, renderPng: false) literals) (Refs #3840)'
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_test_default_init_options.dart
+
+  - rule_id: repo.setup_dedup_faction_capital_collect
+    group: architecture
+    title: setup capital-map triple-faction collection must live in faction_setup_helpers.dart (Refs #3840)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_faction_capital_collect.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
