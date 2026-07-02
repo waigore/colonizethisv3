@@ -40,7 +40,7 @@ Game spyRevealFogGame({
       },
     ),
     players: [
-      Player(id: spyPlayerId, displayName: 'Spy', isHuman: true),
+      Player(id: spyPlayerId, displayName: 'Spymaster', isHuman: true),
       if (targetOwnerId != spyPlayerId)
         Player(id: targetOwnerId, displayName: 'Target', isHuman: false),
     ],
