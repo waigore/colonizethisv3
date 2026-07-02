@@ -60,8 +60,32 @@ Lint: `repo.economy_test_core_fixtures_shared` — blocks inline `Game(` in 17 g
 |------|-----------|
 | `resource_commodity_id_mapping_test.dart` | Enum→catalog guard only; no Player/Stockpile/Game fixtures |
 
+## Slice 3 — deal matcher, treasury available, validator cap scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-empty | no offers and no bids returns DealMatchResult.empty | `world_market_deal_matcher_test.dart` | — |
+| dm-offers-only | offers only (no bids) carries every offer forward, no deals | `world_market_deal_matcher_test.dart` | — |
+| dm-bids-only | bids only (no offers) carries every bid forward, no deals | `world_market_deal_matcher_test.dart` | — |
+| dm-basic-fill | single offer 10 vs single bid 5 fills 5, offer carries 5 forward | `world_market_deal_matcher_test.dart` | — |
+| dm-missing-price | missing price for commodity records pricePerUnit = 0.0 | `world_market_deal_matcher_test.dart` | — |
+| dm-zero-offer | zero-quantity offer emits no deal and no carry-forward | `world_market_deal_matcher_test.dart` | — |
+| dm-no-cargo | buyer with no tradeCapacity entry treated as zero cargo | `world_market_deal_matcher_test.dart` | — |
+| dm-cross-cargo | cross-commodity cargo partial fill + carry-forward | `world_market_deal_matcher_test.dart` | — |
+| dm-negative-cargo | negative tradeCapacity is clamped to zero | `world_market_deal_matcher_test.dart` | — |
+| dm-boycott-* | four boycott exclusion cases | `world_market_deal_matcher_boycott_test.dart` | #3753 |
+| treasury-available-* | ten treasuryAvailableForBidsByPlayer cases | `world_market_treasury_bid_budget_test.dart` | #3093 |
+| treasury-ui-* | five UI composition clamp cases | `world_market_treasury_bid_budget_test.dart` | #3093 |
+| validator-cap-* | thirteen validator rules 4–7 + precedence cases | `world_market_trade_order_validator_caps_test.dart` | #2989 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/deal_matcher_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/treasury_available_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/trade_order_validator_scenarios.dart`
+
 ## Deferred (follow-up slices)
 
-- `deal_matcher_scenarios.dart`, `trade_order_validator_scenarios.dart`, `frr_credits_scenarios.dart`
+- `deal_matcher_scenarios.dart` extensions for priority/treasury/FRR matcher files
+- `frr_credits_scenarios.dart`
 - Extraction scenario DSL for `resource_extractor_part*` / `non_gp_extraction_part*`
 - World-market test LOC ≥25% reduction vs baseline (carry-forward, validator, matcher, FRR clusters)
