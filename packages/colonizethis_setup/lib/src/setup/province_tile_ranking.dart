@@ -15,6 +15,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'tile_cell_scan.dart';
+
 /// Decides whether the cell at ([x], [y]) — whose canonical tile key is
 /// [tileKey] — is eligible for selection. The shared ranking helper computes
 /// the distance and ordering; callers supply only this predicate.
@@ -39,15 +41,12 @@ List<String> rankProvinceTileKeysByDistance({
       ? ProvinceId.localIdFrom(capital.provinceId)
       : capital.provinceId;
   final ranked = <(int dist, int y, int x, String key)>[];
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      if (map.cell(x, y) != localId) continue;
-      final key = CapitalTile.tileKey(regionId, capital.provinceId, x, y);
-      if (!accept(x, y, key)) continue;
-      final dist = (x - capital.x).abs() + (y - capital.y).abs();
-      ranked.add((dist, y, x, key));
-    }
-  }
+  forEachTileCell(map, regionId, (x, y, cellLocalId, tileKey) {
+    if (cellLocalId != localId) return;
+    if (!accept(x, y, tileKey)) return;
+    final dist = (x - capital.x).abs() + (y - capital.y).abs();
+    ranked.add((dist, y, x, tileKey));
+  });
   ranked.sort((a, b) {
     final c = a.$1.compareTo(b.$1);
     if (c != 0) return c;

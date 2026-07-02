@@ -51,3 +51,89 @@ String factionSetupTableRow({
   return '| $displayLabel ($factionId) | $typeLabel | $capital '
       '| ${ownedProvinceIds.join(", ")} |';
 }
+
+/// Visits players, then minor nations, then tribes in slot order — the
+/// canonical setup-faction iteration skeleton (Refs #3840).
+void forEachSetupFaction(
+  Game game, {
+  required void Function(Player player) onPlayer,
+  required void Function(MinorNation minorNation) onMinorNation,
+  required void Function(Tribe tribe) onTribe,
+}) {
+  for (final player in game.players) {
+    onPlayer(player);
+  }
+  for (final minor in game.minorNations) {
+    onMinorNation(minor);
+  }
+  for (final tribe in game.tribes) {
+    onTribe(tribe);
+  }
+}
+
+/// Capital province and tile-key maps for factions that have both set.
+/// Single source of truth for the triple-faction capital-collection loops
+/// previously duplicated in town assignment (Refs #3840).
+({
+  Map<String, String> capitalProvinceIdByOwner,
+  Map<String, String> capitalTileKeyByOwner,
+})
+collectCapitalMapsByOwner(Game game) {
+  final capitalTileKeyByOwner = <String, String>{};
+  final capitalProvinceIdByOwner = <String, String>{};
+
+  void addCapital(String id, String? provinceId, CapitalTile? tile) {
+    if (provinceId == null || tile == null) return;
+    capitalProvinceIdByOwner[id] = provinceId;
+    capitalTileKeyByOwner[id] = tile.toTileKey();
+  }
+
+  forEachSetupFaction(
+    game,
+    onPlayer: (p) => addCapital(p.id, p.capitalProvinceId, p.capitalTile),
+    onMinorNation: (m) => addCapital(m.id, m.capitalProvinceId, m.capitalTile),
+    onTribe: (t) => addCapital(t.id, t.capitalProvinceId, t.capitalTile),
+  );
+
+  return (
+    capitalProvinceIdByOwner: capitalProvinceIdByOwner,
+    capitalTileKeyByOwner: capitalTileKeyByOwner,
+  );
+}
+
+/// Civilian-owning factions for starting-unit spawn. Great Powers require a
+/// capital tile; minors and tribes may omit one.
+Iterable<
+  ({
+    String id,
+    String? capitalProvinceId,
+    CapitalTile? capitalTile,
+    bool requireCapitalTile,
+  })
+>
+setupCivilianOwnerRecords(Game game) sync* {
+  for (final player in game.players) {
+    yield (
+      id: player.id,
+      capitalProvinceId: player.capitalProvinceId,
+      capitalTile: player.capitalTile,
+      requireCapitalTile: true,
+    );
+  }
+  for (final minor in game.minorNations) {
+    yield (
+      id: minor.id,
+      capitalProvinceId: minor.capitalProvinceId,
+      capitalTile: minor.capitalTile,
+      requireCapitalTile: false,
+    );
+  }
+  for (final tribe in game.tribes) {
+    yield (
+      id: tribe.id,
+      capitalProvinceId: tribe.capitalProvinceId,
+      capitalTile: tribe.capitalTile,
+      requireCapitalTile: false,
+    );
+  }
+}

@@ -4,6 +4,8 @@ import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'init_game_orchestrator_test_support.dart';
+
 MapTopology _topology(String regionId, List<String> provinceIds) => MapTopology(
   nodes: <TopologyNode>[
     for (final id in provinceIds)
@@ -159,7 +161,7 @@ void main() {
       () {
         final init = runInitGame(
           config: GameSetupConfig.defaultConfig,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         expect(init.game.worldState.oldWorld.provinces.length, 60);

@@ -58,11 +58,13 @@ import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_faction_capital_collect.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_grid_bfs_coord_keys.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
+import 'check_setup_test_default_init_options.dart';
 import 'check_setup_test_no_duplicate_scaffolding.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
@@ -1028,6 +1030,10 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupGridBfsCoordKeys(repoRoot);
     case 'repo.setup_dedup_topology_adjacency':
       return runCheckSetupDedupTopologyAdjacency(repoRoot);
+    case 'repo.setup_dedup_faction_capital_collect':
+      return runCheckSetupDedupFactionCapitalCollect(repoRoot);
+    case 'repo.setup_test_default_init_options':
+      return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':
       return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
     default:
