@@ -83,9 +83,27 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/treasury_available_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/trade_order_validator_scenarios.dart`
 
+## Slice 4 — deal matcher priority/treasury/FRR/sell-priority scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-priority-* | five FTP/priority precedence cases | `world_market_deal_matcher_priority_test.dart` | #2989 |
+| dm-multi-* | two multi-commodity / carry-forward cases | `world_market_deal_matcher_priority_test.dart` | — |
+| dm-lock-recovery | lock-recovery seller priority | `world_market_deal_matcher_priority_test.dart` | #2924 |
+| dm-activity-* | two activity bookkeeping cases | `world_market_deal_matcher_priority_test.dart` | — |
+| dm-treasury-* | ten treasury-clamp cases | `world_market_deal_matcher_treasury_test.dart` | #3115 |
+| dm-frr-* | seven FRR matcher integration cases | `world_market_deal_matcher_first_right_test.dart` | #2992 |
+| dm-frr-activity | FRR filledQuantity activity case | `world_market_deal_matcher_first_right_supplement_test.dart` | #2992 |
+| dm-sell-priority-* | seven sell-priority relation cases | `world_market_deal_matcher_sell_priority_test.dart` | #3753 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/deal_matcher_priority_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/deal_matcher_treasury_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/deal_matcher_frr_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/deal_matcher_sell_priority_scenarios.dart`
+
 ## Deferred (follow-up slices)
 
-- `deal_matcher_scenarios.dart` extensions for priority/treasury/FRR matcher files
 - `frr_credits_scenarios.dart`
 - Extraction scenario DSL for `resource_extractor_part*` / `non_gp_extraction_part*`
-- World-market test LOC ≥25% reduction vs baseline (carry-forward, validator, matcher, FRR clusters)
+- World-market test LOC ≥25% reduction vs baseline (carry-forward, validator treasury clusters, FRR credits)
