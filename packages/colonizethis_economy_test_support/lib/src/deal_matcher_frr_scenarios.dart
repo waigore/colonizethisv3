@@ -11,6 +11,11 @@ const _frrTileKey = 'oldWorld|M1|0|0';
 
 /// FRR matcher integration from `world_market_deal_matcher_first_right_test.dart`.
 List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
+  ...dealMatcherFirstRightRoutingScenarios(),
+  ...dealMatcherFirstRightMultiBidScenarios(),
+];
+
+List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
   DealMatcherScenario(
     label:
         'partial FRR fill: residual offer quantity becomes available for '
@@ -143,6 +148,9 @@ List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
     },
     refs: '#2992',
   ),
+];
+
+List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
   DealMatcherScenario(
     label:
         'multiple purchased tiles owned by the same GP each route through FRR',

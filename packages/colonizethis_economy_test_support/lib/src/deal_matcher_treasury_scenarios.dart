@@ -9,6 +9,11 @@ import 'deal_matcher_test_support.dart';
 
 /// Treasury clamp scenarios from `world_market_deal_matcher_treasury_test.dart`.
 List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
+  ...dealMatcherTreasuryClampScenarios(),
+  ...dealMatcherTreasuryEdgeCaseScenarios(),
+];
+
+List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   DealMatcherScenario(
     label: 'truncates a single oversized bid to floor(treasury / price)',
     inputs: matcherInputs(
@@ -114,6 +119,9 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
     },
     refs: '#3115',
   ),
+];
+
+List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
   DealMatcherScenario(
     label:
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
