@@ -515,6 +515,13 @@ rules:
     runner: dart
     script: tool/check_turn_resume_param_budget.dart
 
+  - rule_id: repo.turn_test_no_duplicate_fixtures
+    group: testing
+    title: colonizethis_turn test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3842)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_no_duplicate_fixtures.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)

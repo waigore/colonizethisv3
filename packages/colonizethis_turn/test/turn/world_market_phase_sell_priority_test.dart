@@ -5,7 +5,7 @@ import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Phase-handler integration for the #3753 R7.3 sell-priority relation
 /// tiebreaker. Minor M1 auto-offers a limited quantity; two GPs bid for it at

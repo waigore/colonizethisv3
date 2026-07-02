@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Public-API coverage for the Theme B sink migration (Refs #3701): the four
 /// public resolver entry points and [TurnResolverConfig] thread a single

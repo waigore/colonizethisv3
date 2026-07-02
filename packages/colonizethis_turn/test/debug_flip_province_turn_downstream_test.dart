@@ -6,7 +6,7 @@ import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Regression for GitHub #2025 AC: after command-style canonical ownership
 /// transfer, persistence round-trip and named turn-resolution hooks stay usable

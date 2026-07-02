@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'economy_stockpile_preview_test_support.dart';
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Pending [RecruitWorkerOrder] costs feed the production-panel economy
 /// preview (#2692 S5; SPEC/program/order-projections.md § Production panel
