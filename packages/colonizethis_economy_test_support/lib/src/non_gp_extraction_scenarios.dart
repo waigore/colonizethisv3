@@ -208,6 +208,11 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
 
 /// Boundary / multi-faction cases from `non_gp_extraction_part2_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
+  ..._nonGpExtractionBoundarySkipScenarios(),
+  ..._nonGpExtractionBoundaryAggregationScenarios(),
+];
+
+List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
   NonGpExtractionScenario(
     label: 'empty minors and tribes lists yield an empty result and skip lookups',
     game: gameForNonGpExtractionTest(provinces: const []),
@@ -312,6 +317,9 @@ List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
     verify: (result) => expect(result, isEmpty),
     refs: '#2991',
   ),
+];
+
+List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => [
   NonGpExtractionScenario(
     label: 'minor and tribe in the same Game both produce per-faction totals '
         'keyed by their ids',
