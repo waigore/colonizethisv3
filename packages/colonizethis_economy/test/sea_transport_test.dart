@@ -3,14 +3,12 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('cargoHoldsForHomeFleet', () {
     test('returns 0 when no home fleet exists', () {
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        turnNumber: 0,
+      final game = minimalEconomyGame(
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
 
@@ -26,9 +24,7 @@ void main() {
         regionId: 'oldWorld',
         shipTypeIds: const ['carrack', 'fluyte'],
       );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        turnNumber: 0,
+      final game = minimalEconomyGame(
         fleets: [fleet],
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -49,9 +45,7 @@ void main() {
         regionId: 'oldWorld',
         shipTypeIds: const ['sloop'],
       );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        turnNumber: 0,
+      final game = minimalEconomyGame(
         fleets: [fleet],
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -74,9 +68,7 @@ void main() {
         regionId: 'oldWorld',
         shipTypeIds: const ['sloop'],
       );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        turnNumber: 0,
+      final game = minimalEconomyGame(
         fleets: [other, home],
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );

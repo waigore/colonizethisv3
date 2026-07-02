@@ -1,4 +1,5 @@
-import 'package:colonizethis_economy/src/economy/world_market/gp_treasury_credit_accumulator.dart';
+
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

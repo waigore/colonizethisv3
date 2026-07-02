@@ -12,6 +12,45 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'tile_map_test_support.dart';
 
+/// Per-tile improvement and road level for [tileStateFromSpecs].
+class TileImprovementSpec {
+  const TileImprovementSpec(
+    this.tileKey, {
+    this.improvement = 0,
+    this.roadLevel = 0,
+  });
+
+  final String tileKey;
+  final int improvement;
+  final int roadLevel;
+}
+
+/// Builds a [TileMapState] from [specs], applying only non-zero levels.
+TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
+  var state = TileMapState();
+  for (final TileImprovementSpec spec in specs) {
+    if (spec.improvement > 0) {
+      state = state.setImprovement(spec.tileKey, spec.improvement);
+    }
+    if (spec.roadLevel > 0) {
+      state = state.setRoadLevel(spec.tileKey, spec.roadLevel);
+    }
+  }
+  return state;
+}
+
+/// Builds a [TileMapResult] from parallel [grid] and [resourceGrid] rows.
+TileMapResult tileMapFromGrids({
+  required List<List<String>> grid,
+  required List<List<Resource?>> resourceGrid,
+}) =>
+    TileMapResult(
+      width: grid.first.length,
+      height: grid.length,
+      grid: grid,
+      resourceGrid: resourceGrid,
+    );
+
 /// `{playerId: ConnectivityResult(...)}` for the single-player extraction
 /// setup. Hoists the `{'pl1': ConnectivityResult(connected: {…})}` wrapper
 /// repeated across the resource-extractor suites; [pathTransportCap] and
@@ -68,6 +107,47 @@ Game resourceExtractorGame({
     ),
     tileState: tileState,
     playerProspectedTiles: playerProspectedTiles,
+    players: [player],
+  );
+}
+
+/// Single-player game with [oldWorld|p1] capital and an owned [newWorld|n1]
+/// province for overseas extraction scenarios.
+Game overseasResourceExtractorGame({
+  required TileMapState tileState,
+}) {
+  const playerId = 'pl1';
+  final player = Player(
+    id: playerId,
+    displayName: 'Spain',
+    isHuman: true,
+    capitalProvinceId: 'oldWorld|p1',
+    capitalTile: const CapitalTile(
+      regionId: 'oldWorld',
+      provinceId: 'oldWorld|p1',
+      x: 0,
+      y: 0,
+    ),
+  );
+  return TestFixtures.minimalGame(
+    id: 'g1',
+    capitalTileGrainBonusPerTurn: 0,
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: 'oldWorld|p1',
+          regionId: 'oldWorld',
+          ownerId: playerId,
+          townDevelopmentLevel: 4,
+        ),
+      ],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: playerId),
+      ],
+    ),
+    tileState: tileState,
     players: [player],
   );
 }

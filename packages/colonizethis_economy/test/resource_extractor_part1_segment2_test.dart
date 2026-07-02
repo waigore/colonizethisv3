@@ -6,115 +6,17 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+final TileMapResult _ironTileMap = singleTileMap(Resource.iron);
+final TileMapResult _grainTileMap = singleTileMap(Resource.grain);
+
 void main() {
-  late final TileMapResult ironTileMap;
-  late final TileMapResult grainTileMap;
-
-  setUpAll(() {
-    ironTileMap = singleTileMap(Resource.iron);
-    grainTileMap = singleTileMap(Resource.grain);
-  });
-
   group('ResourceExtractor', () {
-    test('extracts wool and copper when present on tile map', () {
-      final grid = [
-        ['p1', 'p1'],
-        ['p1', 'p1'],
-      ];
-      final resourceGrid = [
-        [Resource.wool, Resource.copper],
-        [Resource.timber, Resource.iron],
-      ];
-      final tileMap = TileMapResult(
-        width: 2,
-        height: 2,
-        grid: grid,
-        resourceGrid: resourceGrid,
-      );
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 1)
-          .setImprovement('oldWorld|p1|1|0', 1)
-          .setImprovement('oldWorld|p1|0|1', 1)
-          .setImprovement('oldWorld|p1|1|1', 1)
-          .setRoadLevel('oldWorld|p1|0|0', 1)
-          .setRoadLevel('oldWorld|p1|1|0', 1)
-          .setRoadLevel('oldWorld|p1|0|1', 1)
-          .setRoadLevel('oldWorld|p1|1|1', 1);
-      final connectedTiles = {
-        'oldWorld|p1|0|0',
-        'oldWorld|p1|1|0',
-        'oldWorld|p1|0|1',
-        'oldWorld|p1|1|1',
-      };
-      final game = resourceExtractorGame(
-        tileState: tileState,
-        playerProspectedTiles: {'pl1': connectedTiles},
-      );
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor(connectedTiles),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.land['wool'], 1);
-      expect(result['pl1']!.land['copper'], 1);
-      expect(result['pl1']!.land['timber'], 1);
-      expect(result['pl1']!.land['iron'], 1);
-    });
-
-    test('mineral tiles without prospected are excluded from extraction', () {
-      final tileMap = ironTileMap;
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 2)
-          .setRoadLevel('oldWorld|p1|0|0', 2);
-      final game = resourceExtractorGame(tileState: tileState);
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.land['iron'], isNull);
-      expect(result['pl1']!.land, isEmpty);
-    });
-
-    test('mineral from prospected tile counts in land', () {
-      final tileMap = ironTileMap;
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 2)
-          .setRoadLevel('oldWorld|p1|0|0', 2);
-      final game = resourceExtractorGame(
-        tileState: tileState,
-        playerProspectedTiles: {
-          'pl1': {'oldWorld|p1|0|0'},
-        },
-      );
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.land['iron'], 2);
-    });
-
-    test('effective extraction capped by province townDevelopmentLevel', () {
-      final tileMap = grainTileMap;
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 4)
-          .setRoadLevel('oldWorld|p1|0|0', 4);
-      final game = resourceExtractorGame(
-        tileState: tileState,
-        townDevelopmentLevel: 1,
-      );
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.land['grain'], 1);
-    });
+    for (final scenario in resourceExtractorMineralTownDevScenarios(
+      ironTileMap: _ironTileMap,
+      grainTileMap: _grainTileMap,
+    )) {
+      test(scenario.label, () => runResourceExtractorScenario(scenario));
+    }
 
     test('town-rule-only + non-port: townDevelopmentLevel does NOT cap yield', () {
       final grid = [
@@ -127,22 +29,17 @@ void main() {
         [null, Resource.grain, null],
         [null, null, null],
       ];
-      final tileMap = TileMapResult(
-        width: 3,
-        height: 3,
-        grid: grid,
-        resourceGrid: resourceGrid,
-      );
-      final cap = CapitalTile(
+      final tileMap = tileMapFromGrids(grid: grid, resourceGrid: resourceGrid);
+      const cap = CapitalTile(
         regionId: 'oldWorld',
         provinceId: 'oldWorld|p1',
         x: 0,
         y: 0,
       );
-      final tileState = TileMapState()
-          .setRoadLevel('oldWorld|p1|0|0', 1)
-          .setImprovement('oldWorld|p2|1|1', 4)
-          .setRoadLevel('oldWorld|p2|1|1', 0);
+      final tileState = tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+      ]);
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',
@@ -174,7 +71,7 @@ void main() {
         tileState: tileState,
         players: [player],
       );
-      final tileKey = 'oldWorld|p2|1|1';
+      const tileKey = 'oldWorld|p2|1|1';
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},

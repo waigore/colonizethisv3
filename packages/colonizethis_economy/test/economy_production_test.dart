@@ -3,16 +3,18 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Tests for economy_production.dart. SPEC/game/stockpiles-and-production.md.
 void main() {
   group('resolveProduction', () {
     test('consumes inputs and produces output per recipe', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.timber.id, 10)
-          .applyDelta(CommodityCatalog.iron.id, 10)
-          .applyDelta(CommodityCatalog.coal.id, 5);
-      // 20 peasants → 20 labour (idle counts from post-consumption).
-      const workers = WorkerPool(peasants: 20);
+      final stockpile = stockpileWithDeltas({
+        CommodityCatalog.timber.id: 10,
+        CommodityCatalog.iron.id: 10,
+        CommodityCatalog.coal.id: 5,
+      });
+      final workers = coreWorkerPool(peasants: 20);
 
       final result = resolveProduction(
         stockpile: stockpile,
