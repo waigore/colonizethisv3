@@ -94,6 +94,36 @@ Game gp1gp2DecayGame(
 DiplomacyFactionMembership diplomacyFactionMembership(Game game) =>
     DiplomacyFactionMembership.from(game);
 
+/// Linear-scan [getRelation] oracle for map-lookup parity tests (Refs #2268).
+DiplomacyRelation? linearScanGetRelation(
+  Game game,
+  String factionId1,
+  String factionId2,
+) {
+  final key = pairKey(factionId1, factionId2);
+  for (final r in game.diplomacyRelations) {
+    if (pairKey(r.factionId1, r.factionId2) == key) return r;
+  }
+  return null;
+}
+
+/// Linear-scan [getOverture] oracle for map-lookup parity tests (Refs #2268).
+OvertureState? linearScanGetOverture(Game game, String gpId, String targetId) {
+  for (final o in game.overtureStates) {
+    if (o.gpId == gpId && o.targetId == targetId) return o;
+  }
+  return null;
+}
+
+/// Linear-scan [provinceCountOwnedBy] oracle for histogram parity tests (Refs #2268).
+int linearScanProvinceCountOwnedBy(Game game, String factionId) {
+  var count = 0;
+  for (final p in allProvinces(game.worldState)) {
+    if (p.ownerId == factionId) count++;
+  }
+  return count;
+}
+
 /// Linear-scan relation lookup for asserting list equality in upsert tests.
 DiplomacyRelation? getRelationFromList(
   List<DiplomacyRelation> relations,
