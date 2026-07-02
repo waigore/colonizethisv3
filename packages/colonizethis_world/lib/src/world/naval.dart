@@ -219,44 +219,6 @@ String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
   return neighbors.first;
 }
 
-String? _otherTopologyEdgeEndpoint(TopologyEdge e, String endpoint) {
-  if (e.id1 == endpoint) return e.id2;
-  if (e.id2 == endpoint) return e.id1;
-  return null;
-}
-
-String? _seaZoneIdForProvinceInRegionTopology(
-  MapTopology topology,
-  String regionId,
-  String provinceId,
-  Map<String, TopologyNode> regionNodes,
-) {
-  final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
-      ? provinceId
-      : ProvinceId.full(regionId, provinceId);
-  var provinceNode = regionNodes[primaryProvinceKey];
-  if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
-    provinceNode = regionNodes[provinceId];
-  }
-  if (provinceNode == null || provinceNode.type != TopologyNodeType.province) {
-    return null;
-  }
-  for (final e in topology.edges) {
-    final String? other;
-    if (e.id1 == primaryProvinceKey || e.id2 == primaryProvinceKey) {
-      other = _otherTopologyEdgeEndpoint(e, primaryProvinceKey);
-    } else if (!ProvinceId.isPrefixed(provinceId) &&
-        (e.id1 == provinceId || e.id2 == provinceId)) {
-      other = _otherTopologyEdgeEndpoint(e, provinceId);
-    } else {
-      continue;
-    }
-    final otherNode = regionNodes[other];
-    if (otherNode?.type == TopologyNodeType.seaZone) return other;
-  }
-  return null;
-}
-
 /// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet and build_port.
 ///
 /// [provinceId] is usually the **local** province id (e.g. `p1`). When [provinceId] is already
@@ -271,23 +233,27 @@ String? seaZoneIdForProvince(
   String provinceId, {
   String? regionId,
 }) {
-  if (regionId != null) {
-    final regionNodes = indexTopologyNodesByRegion(topology)[regionId];
-    if (regionNodes == null) return null;
-    return _seaZoneIdForProvinceInRegionTopology(
-      topology,
-      regionId,
-      provinceId,
-      regionNodes,
-    );
+  final adjacent = seaZoneIdsAdjacentToProvince(
+    topology,
+    provinceId,
+    regionId: regionId,
+  );
+  if (adjacent.isEmpty) return null;
+  final nodeTypes = topologyNodeTypeById(topology);
+  final probeIds = <String>{
+    provinceId,
+    if (regionId != null && !ProvinceId.isPrefixed(provinceId))
+      ProvinceId.full(regionId, provinceId),
+  };
+  for (final probeId in probeIds) {
+    for (final neighborId in nodesAdjacentTo(topology, probeId)) {
+      if (adjacent.contains(neighborId) &&
+          nodeTypes[neighborId] == TopologyNodeType.seaZone) {
+        return neighborId;
+      }
+    }
   }
-  final nodesById = topologyNodesById(topology);
-  for (final e in topology.edges) {
-    if (e.id1 != provinceId && e.id2 != provinceId) continue;
-    final other = e.id1 == provinceId ? e.id2 : e.id1;
-    if (nodesById[other]?.type == TopologyNodeType.seaZone) return other;
-  }
-  return null;
+  return adjacent.first;
 }
 
 /// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
@@ -312,28 +278,17 @@ Set<String> provinceIdsAdjacentToSeaZone(
     regionId: effectiveRegion,
     seaZoneId: seaZoneId,
   );
+  final nodeTypes = topologyNodeTypeById(topology);
   final out = <String>{};
-  for (final e in topology.edges) {
-    final node1 = regionNodes[e.id1];
-    final node2 = regionNodes[e.id2];
-    // Reveal adjacency is region-bounded for the destination sea-zone region.
-    if (node1 == null || node2 == null) continue;
-
-    String? adjacentProvinceNodeId;
-    if (node1.type == TopologyNodeType.seaZone &&
-        node2.type == TopologyNodeType.province &&
-        canonicalizeSeaZoneId(regionId: effectiveRegion, seaZoneId: node1.id) ==
-            canonicalSeaZoneId) {
-      adjacentProvinceNodeId = node2.id;
-    } else if (node2.type == TopologyNodeType.seaZone &&
-        node1.type == TopologyNodeType.province &&
-        canonicalizeSeaZoneId(regionId: effectiveRegion, seaZoneId: node2.id) ==
-            canonicalSeaZoneId) {
-      adjacentProvinceNodeId = node1.id;
-    }
-
-    if (adjacentProvinceNodeId != null) {
-      out.add(adjacentProvinceNodeId);
+  for (final probeId in [
+    canonicalSeaZoneId,
+    if (canonicalSeaZoneId != seaZoneId) seaZoneId,
+  ]) {
+    for (final neighborId in nodesAdjacentTo(topology, probeId)) {
+      if (!regionNodes.containsKey(neighborId)) continue;
+      if (nodeTypes[neighborId] == TopologyNodeType.province) {
+        out.add(neighborId);
+      }
     }
   }
   return out;
