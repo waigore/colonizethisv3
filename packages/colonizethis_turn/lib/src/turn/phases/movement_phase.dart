@@ -21,17 +21,11 @@ Game runMovementPhase(
 
   final moveOrders = orders.moveOrdersByPlayerId;
   if (moveOrders.isNotEmpty) {
-    final tiled = applyCivilianTileMoveOrdersToWorldRegions(
-      state,
-      moveOrders,
-      onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
-    );
-    final oldWorld = tiled.oldWorld;
-    final newWorld = tiled.newWorld;
-    state = state.updateWorldState(
-      (ws) => ws.copyWith(
-        oldWorld: oldWorld,
-        newWorld: newWorld,
+    state = state.copyWith(
+      worldState: applyCivilianTileMoveOrdersToWorldRegions(
+        state,
+        moveOrders,
+        onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
       ),
     );
   }

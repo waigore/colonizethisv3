@@ -141,14 +141,14 @@ RegionUnitLists _applyCivilianMoveToWorkingUnitLists({
 
 /// Applies civilian [MoveOrder]s (tile destinations) across both world regions.
 /// Ignores military units and invalid payloads. Resolution assumes orders passed validation.
+/// Returns [game.worldState] with updated unit lists via [WorldState.mapBothRegionUnits].
 /// SPEC/program/movement.md; issue #1877.
-({RegionData oldWorld, RegionData newWorld})
-applyCivilianTileMoveOrdersToWorldRegions(
+WorldState applyCivilianTileMoveOrdersToWorldRegions(
   Game game,
   Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
-  if (moveOrdersByPlayerId.isEmpty) return _unchangedWorldRegions(game);
+  if (moveOrdersByPlayerId.isEmpty) return game.worldState;
   final result = _applyCivilianMoveOrders(
     game,
     moveOrdersByPlayerId,
@@ -160,21 +160,9 @@ applyCivilianTileMoveOrdersToWorldRegions(
       'applied=${result.totals.applied} ignored=${result.totals.ignored}',
     );
   }
-  return _toWorldRegions(game.worldState, result.lists);
-}
-
-({RegionData oldWorld, RegionData newWorld}) _unchangedWorldRegions(
-  Game game,
-) => (oldWorld: game.worldState.oldWorld, newWorld: game.worldState.newWorld);
-
-({RegionData oldWorld, RegionData newWorld}) _toWorldRegions(
-  WorldState base,
-  RegionUnitLists lists,
-) {
-  final ws = base.mapBothRegionUnits(
-    (regionId, _) => lists.unitListForRegion(regionId),
+  return game.worldState.mapBothRegionUnits(
+    (regionId, _) => result.lists.unitListForRegion(regionId),
   );
-  return (oldWorld: ws.oldWorld, newWorld: ws.newWorld);
 }
 
 CivilianMovePlayerOutcome _applyCivilianMoveOrders(

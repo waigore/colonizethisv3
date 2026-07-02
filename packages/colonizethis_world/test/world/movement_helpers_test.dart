@@ -98,8 +98,7 @@ void main() {
         oldWorldUnits: [_civilian('u1', tileKey: 'oldWorld|p1|0|0')],
       );
       final result = applyCivilianTileMoveOrdersToWorldRegions(game, const {});
-      expect(result.oldWorld, same(game.worldState.oldWorld));
-      expect(result.newWorld, same(game.worldState.newWorld));
+      expect(result, same(game.worldState));
     });
 
     test('moves a civilian within the same region', () {
