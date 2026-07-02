@@ -1,38 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart';
-import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_updates.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_relation_fixtures.dart';
-
-DiplomacyRelation? _linearScanGetRelation(
-  Game game,
-  String factionId1,
-  String factionId2,
-) {
-  final key = pairKey(factionId1, factionId2);
-  for (final r in game.diplomacyRelations) {
-    if (pairKey(r.factionId1, r.factionId2) == key) return r;
-  }
-  return null;
-}
-
-OvertureState? _linearScanGetOverture(Game game, String gpId, String targetId) {
-  for (final o in game.overtureStates) {
-    if (o.gpId == gpId && o.targetId == targetId) return o;
-  }
-  return null;
-}
-
-int _linearScanProvinceCountOwnedBy(Game game, String factionId) {
-  var count = 0;
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == factionId) count++;
-  }
-  return count;
-}
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 void main() {
   group('applyGrantAidModifier', () {
@@ -149,6 +119,38 @@ void main() {
     });
   });
 
+  group('warStateRelationUpdater via RelationUpsertIndex', () {
+    test('positive: matches setWarStateForPair for a new pair', () {
+      final viaList = setWarStateForPair(
+        relations: const [],
+        gpId: 'gp1',
+        targetId: 'gp2',
+        turn: 3,
+      );
+      final index = RelationUpsertIndex(const []);
+      index.upsert(
+        'gp1',
+        'gp2',
+        warStateRelationUpdater('gp1', 'gp2', 3),
+      );
+      final viaIndex = index.toList();
+      expect(viaIndex, hasLength(1));
+      final rel = viaIndex.single;
+      expect(rel.state, viaList.single.state);
+      expect(rel.level, viaList.single.level);
+      expect(rel.score, viaList.single.score);
+      expect(rel.sinceTurn, viaList.single.sinceTurn);
+      expect(rel.formalAlliance, viaList.single.formalAlliance);
+    });
+
+    test('negative: peace updater requires an existing relation', () {
+      expect(
+        () => peaceRelationUpdater('gp1', 'gp2', 1)(null),
+        throwsA(isA<TypeError>()),
+      );
+    });
+  });
+
   group('RelationUpsertIndex', () {
     test('positive: updates an existing pair in place (canonical order)', () {
       final index = RelationUpsertIndex([rel('gp1', 'gp2', 40)]);
@@ -258,7 +260,7 @@ void main() {
           if (a == b) continue;
           expect(
             getRelation(game, a, b),
-            _linearScanGetRelation(game, a, b),
+            linearScanGetRelation(game, a, b),
             reason: 'pair ($a,$b)',
           );
         }
@@ -281,11 +283,11 @@ void main() {
       final game = relationsOnlyGame(overtureStates: overtures);
       expect(
         getOverture(game, 'gp1', 't1'),
-        _linearScanGetOverture(game, 'gp1', 't1'),
+        linearScanGetOverture(game, 'gp1', 't1'),
       );
       expect(
         getOverture(game, 'gp2', 't1'),
-        _linearScanGetOverture(game, 'gp2', 't1'),
+        linearScanGetOverture(game, 'gp2', 't1'),
       );
       expect(getOverture(game, 'gp1', 'missing'), isNull);
     });
@@ -334,7 +336,7 @@ void main() {
       for (final id in owners) {
         expect(
           provinceCountOwnedBy(game, id),
-          _linearScanProvinceCountOwnedBy(game, id),
+          linearScanProvinceCountOwnedBy(game, id),
           reason: 'faction $id',
         );
       }

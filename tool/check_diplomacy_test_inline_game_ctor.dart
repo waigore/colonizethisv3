@@ -54,7 +54,8 @@ String? diplomacyTestInlineGameCtorViolationReason(String slashPath, String cont
     return null;
   }
   return "constructs Game(...) inline; import shared builders from "
-      "'support/diplomacy_game_fixtures.dart' (Refs #3825)";
+      "'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart' "
+      "(Refs #3825, #3837)";
 }
 
 String _stripLineComments(String content) {

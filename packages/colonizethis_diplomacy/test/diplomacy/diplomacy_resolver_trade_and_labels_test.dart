@@ -3,7 +3,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdTradeFairs;
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 void main() {
   group('tradeSlotsForGp', () {

@@ -42,7 +42,9 @@ Game _runWarAndPeaceOrders(
   void Function(DialogueEvent)? onDialogue,
   IntraTurnEventTally? eventTally,
 ) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Single per-phase relation index so each declare-war / offer-peace upsert is
+  // amortized O(1) instead of rebuilding the pair-key index per order (Refs #3837).
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   final warOrders = <({String gpId, DiplomaticOrder order})>[];
   final peaceOrders = <({String gpId, DiplomaticOrder order})>[];
   for (final entry in diploByPlayer.entries) {
@@ -56,9 +58,9 @@ Game _runWarAndPeaceOrders(
     }
   }
   for (final item in warOrders) {
-    final updated = _applyWarPhaseOrder(
+    game = _applyWarPhaseOrder(
       game: game,
-      relations: relations,
+      relationsIndex: relationsIndex,
       gpId: item.gpId,
       order: item.order,
       turn: turn,
@@ -67,13 +69,11 @@ Game _runWarAndPeaceOrders(
       onDialogue: onDialogue,
       eventTally: eventTally,
     );
-    game = updated.game;
-    relations = updated.relations;
   }
   for (final item in peaceOrders) {
-    final updated = _applyWarPhaseOrder(
+    game = _applyWarPhaseOrder(
       game: game,
-      relations: relations,
+      relationsIndex: relationsIndex,
       gpId: item.gpId,
       order: item.order,
       turn: turn,
@@ -82,8 +82,6 @@ Game _runWarAndPeaceOrders(
       onDialogue: onDialogue,
       eventTally: eventTally,
     );
-    game = updated.game;
-    relations = updated.relations;
   }
   return game;
 }
@@ -111,9 +109,9 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   return peaceOffersByPairKey;
 }
 
-({Game game, List<DiplomacyRelation> relations}) _applyWarPhaseOrder({
+Game _applyWarPhaseOrder({
   required Game game,
-  required List<DiplomacyRelation> relations,
+  required RelationUpsertIndex relationsIndex,
   required String gpId,
   required DiplomaticOrder order,
   required int turn,
@@ -125,7 +123,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   if (order.type == DiplomaticOrderType.declareWar) {
     return _applyDeclareWarOrder(
       game: game,
-      relations: relations,
+      relationsIndex: relationsIndex,
       gpId: gpId,
       order: order,
       turn: turn,
@@ -136,7 +134,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   if (order.type == DiplomaticOrderType.offerPeace) {
     return _applyOfferPeaceOrder(
       game: game,
-      relations: relations,
+      relationsIndex: relationsIndex,
       gpId: gpId,
       order: order,
       turn: turn,
@@ -146,12 +144,12 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       eventTally: eventTally,
     );
   }
-  return (game: game, relations: relations);
+  return game;
 }
 
-({Game game, List<DiplomacyRelation> relations}) _applyDeclareWarOrder({
+Game _applyDeclareWarOrder({
   required Game game,
-  required List<DiplomacyRelation> relations,
+  required RelationUpsertIndex relationsIndex,
   required String gpId,
   required DiplomaticOrder order,
   required int turn,
@@ -162,7 +160,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   final rel = getRelation(game, gpId, targetId);
   final atPeace = rel == null || rel.atPeace;
   if (!atPeace) {
-    return (game: game, relations: relations);
+    return game;
   }
   if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
     onDialogue(
@@ -176,14 +174,13 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     );
   }
   final evidence = evidenceForDeclareWar(game, gpId, targetId, turn);
-  var nextRelations = setWarStateForPair(
-    relations: relations,
-    gpId: gpId,
-    targetId: targetId,
-    turn: turn,
+  relationsIndex.upsert(
+    gpId,
+    targetId,
+    warStateRelationUpdater(gpId, targetId, turn),
   );
   var nextGame = game.copyWith(
-    diplomacyRelations: nextRelations,
+    diplomacyRelations: relationsIndex.toList(),
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
   nextGame = cancelSubsidiesBetweenGps(
@@ -205,12 +202,12 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     logMessage:
         'diplomacy war declared $gpId vs $targetId (scores reset to 20)',
   );
-  return (game: nextGame, relations: nextRelations);
+  return nextGame;
 }
 
-({Game game, List<DiplomacyRelation> relations}) _applyOfferPeaceOrder({
+Game _applyOfferPeaceOrder({
   required Game game,
-  required List<DiplomacyRelation> relations,
+  required RelationUpsertIndex relationsIndex,
   required String gpId,
   required DiplomaticOrder order,
   required int turn,
@@ -261,7 +258,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   final hasMutualOffer =
       !bothGreatPowers || offerers.length >= 2 || oneSidedGpPeace;
   if (rel == null || !rel.atWar) {
-    return (game: game, relations: relations);
+    return game;
   }
   var bothSidesAgreed = true;
   if (factionMembership.isGreatPower(targetId) &&
@@ -271,7 +268,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
         oneSidedGpPeace;
   }
   if (!bothSidesAgreed) {
-    return (game: game, relations: relations);
+    return game;
   }
 
   if (onDialogue != null && isAiControlledForEvidence(game, gpId)) {
@@ -287,21 +284,17 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   }
   final evidence = evidenceForOfferPeace(game, gpId, targetId, turn);
   if (!hasMutualOffer) {
-    return (
-      game: game.copyWith(
-        dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
-      ),
-      relations: relations,
+    return game.copyWith(
+      dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
     );
   }
-  var nextRelations = applyPeaceForPair(
-    relations: relations,
-    gpId: gpId,
-    targetId: targetId,
-    turn: turn,
+  relationsIndex.upsert(
+    gpId,
+    targetId,
+    peaceRelationUpdater(gpId, targetId, turn),
   );
   var nextGame = game.copyWith(
-    diplomacyRelations: nextRelations,
+    diplomacyRelations: relationsIndex.toList(),
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
   nextGame = logDiplomaticEvent(
@@ -315,5 +308,5 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     eventTally: eventTally,
     logMessage: 'diplomacy peace $gpId-$targetId',
   );
-  return (game: nextGame, relations: nextRelations);
+  return nextGame;
 }
