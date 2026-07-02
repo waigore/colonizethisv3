@@ -37,7 +37,7 @@ void main() {
       final player = playerWithStockpile(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.fabric.id, 3),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
@@ -81,7 +81,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -135,7 +135,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -180,7 +180,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 5),
         treasury: 1000,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -290,7 +290,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [

@@ -19,7 +19,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -39,7 +39,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -70,7 +70,7 @@ void main() {
           isHuman: true,
           stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
         );
-        final game = singlePlayerGame(player);
+        final game = TestFixtures.singlePlayerGame(player);
         final delta = previewStockpileNetDeltaByCommodityForPlayer(
           game: game,
           topology: const MapTopology(),
@@ -134,7 +134,7 @@ void main() {
         stockpile: stockpile,
         workerPool: workers,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -173,7 +173,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 2),
         treasury: 5000,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       const currentOrders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [

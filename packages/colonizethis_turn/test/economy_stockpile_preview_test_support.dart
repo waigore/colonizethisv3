@@ -44,17 +44,3 @@ void expectPhaseDeltasSumToNet({
     expect(sum, net[c] ?? 0, reason: 'commodity $c phase sum vs net');
   }
 }
-
-/// Back-compat wrapper; prefer [TestFixtures.singlePlayerGame].
-Game singlePlayerGame(Player player) => TestFixtures.singlePlayerGame(player);
-
-/// Back-compat wrapper; prefer [TestFixtures.singlePlayerWorkPreviewGame].
-Game singlePlayerWorkPreviewGame({
-  required Stockpile playerStockpile,
-  required List<Unit> units,
-  TileMapState tileState = const TileMapState(),
-}) => TestFixtures.singlePlayerWorkPreviewGame(
-  playerStockpile: playerStockpile,
-  units: units,
-  tileState: tileState,
-);

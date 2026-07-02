@@ -18,7 +18,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),

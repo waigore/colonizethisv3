@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Pending material-backed work targets (part 2 segment 2).
 /// SPEC/ui/production-panel.md, SPEC/game/stockpiles-and-production.md.
@@ -66,7 +67,7 @@ void main() {
             ];
 
         for (final t in targets) {
-          final game = singlePlayerWorkPreviewGame(
+          final game = TestFixtures.singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 50)
                 .applyDelta(CommodityCatalog.castIron.id, 50)
@@ -121,7 +122,7 @@ void main() {
         'mixed target list aggregates and keeps sequential affordability',
         () {
           const tileKey = 'oldWorld|ow|p1|0|0';
-          final game = singlePlayerWorkPreviewGame(
+          final game = TestFixtures.singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 30)
                 .applyDelta(CommodityCatalog.castIron.id, 20)
@@ -233,7 +234,7 @@ void main() {
         'later order does not deduct when earlier orders consume affordability',
         () {
           const tileKey = 'oldWorld|ow|p1|0|0';
-          final game = singlePlayerWorkPreviewGame(
+          final game = TestFixtures.singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 2)
                 .applyDelta(CommodityCatalog.castIron.id, 2),
