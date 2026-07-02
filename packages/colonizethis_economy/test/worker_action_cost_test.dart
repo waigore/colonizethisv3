@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Unit tests for `lib/src/economy/worker_action_cost.dart`.
 ///
 /// Pins the shared recruit/train affordability gate
@@ -15,7 +17,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Tied to the colonizethis_economy leaf-package coverage gate (Refs #3290).
 void main() {
   Player playerWithTech(Map<String, bool>? tech) =>
-      Player(id: 'p1', displayName: 'P1', isHuman: true, techUnlocked: tech);
+      corePlayer(techUnlocked: tech ?? const {});
 
   const apprenticeTech = <String, bool>{
     kTechIdApprenticeWorkers: true,
@@ -34,10 +36,9 @@ void main() {
     test(
       'peasant recruit needs only fabric (no tech, no peasant, no treasury)',
       () {
-        final stockpile = const Stockpile().applyDelta(
-          CommodityCatalog.fabric.id,
-          2,
-        );
+        final stockpile = stockpileWithDeltas({
+          CommodityCatalog.fabric.id: 2,
+        });
 
         final result = canAffordRecruitWorker(
           playerWithTech(null),

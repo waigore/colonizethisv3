@@ -101,18 +101,7 @@ void main() {
 
   group('applyExtractionForPlayers', () {
     test('applies per-player extraction to player stockpiles', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'A', isHuman: true),
-          Player(id: 'p2', displayName: 'B', isHuman: false),
-        ],
-      );
+      final game = minimalTwoPlayerGame();
       final extractedByPlayerId = {
         'p1': {CommodityCatalog.grain.id: 3, CommodityCatalog.iron.id: 1},
         'p2': {CommodityCatalog.iron.id: 2, CommodityCatalog.coal.id: 4},
@@ -142,13 +131,7 @@ void main() {
       var p1 = const Player(id: 'p1', displayName: 'A', isHuman: true).copyWith(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 7),
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+      final game = minimalTwoPlayerGame(
         players: [
           p1,
           const Player(id: 'p2', displayName: 'B', isHuman: false),
@@ -171,13 +154,7 @@ void main() {
     });
 
     test('empty extractedByPlayerId returns game unchanged', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+      final game = minimalTwoPlayerGame(
         players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
       );
 

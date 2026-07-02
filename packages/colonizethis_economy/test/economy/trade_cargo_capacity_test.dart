@@ -37,23 +37,7 @@ void main() {
 
   group('tradeCargoCapacityForGreatPower', () {
     test('returns full home fleet when tile maps are empty', () {
-      final game = Game(
-        id: 'g1',
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: false,
-            stockpile: Stockpile.empty,
-            treasury: 0,
-          ),
-        ],
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-      );
+      final game = minimalGpGame();
       expect(
         tradeCargoCapacityForGreatPower(
           game: game,
@@ -72,23 +56,7 @@ void main() {
   group('extractionById bypass (Refs #3517 Cluster 4)', () {
     // Player with no home fleet → cargo holds fall back to
     // `defaultCargoHoldsStub` (24).
-    Game gameWithGp(String id) => Game(
-      id: 'g1',
-      players: [
-        Player(
-          id: id,
-          displayName: id,
-          isHuman: false,
-          stockpile: Stockpile.empty,
-          treasury: 0,
-        ),
-      ],
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-    );
+    Game gameWithGp(String id) => minimalGpGame(playerId: id);
 
     // A non-empty tile map clears the `tileMapByRegion.isEmpty` guard without
     // contributing any extraction (its content is unused on the

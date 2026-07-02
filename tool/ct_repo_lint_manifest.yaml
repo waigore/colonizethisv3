@@ -195,6 +195,13 @@ rules:
     runner: dart
     script: tool/check_economy_test_no_src_imports.dart
 
+  - rule_id: repo.economy_test_core_fixtures_shared
+    group: testing
+    title: colonizethis_economy core tests must not inline Game(...) builders (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_core_fixtures_shared.dart
+
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing
     title: colonizethis_diplomacy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3715)

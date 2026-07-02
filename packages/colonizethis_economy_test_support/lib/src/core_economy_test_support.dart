@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Minimal player fixture for build-cost and worker-economy suites.
 Player corePlayer({
@@ -155,4 +156,65 @@ Fleet tradeInterceptionScanFleet({
 /// Resets the scan-fleet sequence counter between test groups.
 void resetTradeInterceptionScanFleetSeq() {
   _tradeInterceptionFleetSeq = 0;
+}
+
+/// Thin wrapper over [TestFixtures.minimalGame] for sea-transport suites.
+Game minimalEconomyGame({
+  String id = 'g1',
+  int turnNumber = 0,
+  List<Player>? players,
+  List<Fleet>? fleets,
+}) =>
+    TestFixtures.minimalGame(
+      id: id,
+      turnNumber: turnNumber,
+      players: players ??
+          const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
+      fleets: fleets ?? const [],
+    );
+
+/// Two-player game skeleton for extraction application tests.
+Game minimalTwoPlayerGame({
+  String id = 'g1',
+  int turnNumber = 0,
+  List<Player>? players,
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: players ??
+        const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: false),
+        ],
+  );
+}
+
+/// Single-GP game for trade-cargo-capacity suites.
+Game minimalGpGame({
+  String id = 'g1',
+  String playerId = 'gp1',
+  int turnNumber = 1,
+}) {
+  return Game(
+    id: id,
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerId,
+        isHuman: false,
+        stockpile: Stockpile.empty,
+        treasury: 0,
+      ),
+    ],
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+  );
 }
