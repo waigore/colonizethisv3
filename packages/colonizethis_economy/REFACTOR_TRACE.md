@@ -102,8 +102,21 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/deal_matcher_frr_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/deal_matcher_sell_priority_scenarios.dart`
 
+## Slice 5 — FRR credits and validator treasury scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-defensive-* | six defensive/skip branches | `first_right_credits_test.dart` | #2992 |
+| frr-aggregation-* | three multi-tile / precedence / determinism cases | `first_right_credits_aggregation_test.dart` | #3753 |
+| frr-kickback-* | five embassy kickback cases | `first_right_credits_kickback_test.dart` | #3753 |
+| validator-treasury-* | ten rule-5 treasury cap cases | `world_market_trade_order_validator_treasury_test.dart` | #3093, #3123 |
+| validator-context-treasury-* | six context-from-game treasury cases | `world_market_trade_order_validator_context_treasury_test.dart` | #3123, #3290 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/frr_credits_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/trade_order_validator_treasury_scenarios.dart`
+
 ## Deferred (follow-up slices)
 
-- `frr_credits_scenarios.dart`
 - Extraction scenario DSL for `resource_extractor_part*` / `non_gp_extraction_part*`
-- World-market test LOC ≥25% reduction vs baseline (carry-forward, validator treasury clusters, FRR credits)
+- Carry-forward bid notional treasury cluster consolidation
