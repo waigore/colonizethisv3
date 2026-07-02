@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
@@ -19,7 +19,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -39,7 +39,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -70,7 +70,7 @@ void main() {
           isHuman: true,
           stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
         );
-        final game = singlePlayerGame(player);
+        final game = TestFixtures.singlePlayerGame(player);
         final delta = previewStockpileNetDeltaByCommodityForPlayer(
           game: game,
           topology: const MapTopology(),
@@ -134,7 +134,7 @@ void main() {
         stockpile: stockpile,
         workerPool: workers,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -173,7 +173,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 2),
         treasury: 5000,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       const currentOrders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [

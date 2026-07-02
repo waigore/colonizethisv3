@@ -7,6 +7,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_logging.dart';
+import 'turn_resolution_seeds.dart';
 
 /// Spy killed during spy-resolution (Refs #3834 R9).
 class SpyCaughtDetail {
@@ -61,10 +62,7 @@ class SpyResolutionResult {
 /// Runs after Diplomacy and before Research. SPEC/program/turn-resolution-phases.md.
 SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
   final turn = game.worldState.turnState.turnNumber;
-  final rand = random ??
-      (game.globalGameSeed != null
-          ? Random(game.globalGameSeed! + turn * 7919)
-          : Random());
+  final rand = spyPhaseRandom(game, override: random);
   final ownerByProvince = ownerByProvinceIdMap(game.worldState);
   final garrisonByProvince = _garrisonRegimentCountByProvince(game);
   final counterEspGpIds = _greatPowersWithEmpireWideCounterEspionage(game);

@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_phase_treasury_clamp_test_support.dart';
+import '../support/world_market_test_support.dart';
 
 /// Phase-handler coverage for the world-market treasury clamp (Refs #3115).
 ///

@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'economy_stockpile_preview_test_support.dart';
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Pending [RecruitWorkerOrder] costs feed the production-panel economy
 /// preview (#2692 S5; SPEC/program/order-projections.md § Production panel
@@ -37,7 +37,7 @@ void main() {
       final player = playerWithStockpile(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.fabric.id, 3),
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
@@ -81,7 +81,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -135,7 +135,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -180,7 +180,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 5),
         treasury: 1000,
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -290,7 +290,7 @@ void main() {
           kTechIdSugarRefining: true,
         },
       );
-      final game = singlePlayerGame(player);
+      final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': const [

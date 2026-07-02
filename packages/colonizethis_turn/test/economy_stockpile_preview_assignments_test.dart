@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Skips / combined net preview scenarios (part 2 segment 3).
 /// SPEC/ui/production-panel.md, SPEC/game/stockpiles-and-production.md.
@@ -75,7 +75,7 @@ void main() {
                 .applyDelta(CommodityCatalog.bronze.id, 20)
                 .applyDelta(CommodityCatalog.steel.id, 20);
 
-            final missingUnitGame = singlePlayerWorkPreviewGame(
+            final missingUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [],
               tileState: const TileMapState().setImprovement(tileKey, 0),
@@ -102,7 +102,7 @@ void main() {
               reason: 'missing unit target=${t.target}',
             );
 
-            final busyUnitGame = singlePlayerWorkPreviewGame(
+            final busyUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -144,7 +144,7 @@ void main() {
               reason: 'busy unit target=${t.target}',
             );
 
-            final disallowedUnitGame = singlePlayerWorkPreviewGame(
+            final disallowedUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -179,7 +179,7 @@ void main() {
               reason: 'disallowed unit target=${t.target}',
             );
 
-            final invalidTileGame = singlePlayerWorkPreviewGame(
+            final invalidTileGame = TestFixtures.singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -219,7 +219,7 @@ void main() {
                 return acc.applyDelta(e.key, amount);
               },
             );
-            final insufficientGame = singlePlayerWorkPreviewGame(
+            final insufficientGame = TestFixtures.singlePlayerWorkPreviewGame(
               playerStockpile: insufficientStockpile,
               units: [
                 Unit(

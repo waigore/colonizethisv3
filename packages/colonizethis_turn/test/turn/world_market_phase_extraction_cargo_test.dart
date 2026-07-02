@@ -7,6 +7,8 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/world_market_test_support.dart';
+
 /// Cargo-released-by-extraction integration for the world market phase
 /// (Refs #2990 B2 / SPEC/game/world-market.md § Cargo — AC *Cargo released
 /// by under-used extraction*).
@@ -35,7 +37,7 @@ void main() {
           // (the released cargo) with the remaining 12 carrying forward.
           const buyerId = 'gpBuyer';
           const sellerId = 'gpSeller';
-          final game = _gameWithTwoGps(
+          final game = gameWithTwoGps(
             sellerStockpile: const Stockpile().applyDelta('timber', 30),
             sellerTreasury: 0,
             buyerTreasury: 100000,
@@ -112,7 +114,7 @@ void main() {
           // bid quantity should match.
           const buyerId = 'gpBuyer';
           const sellerId = 'gpSeller';
-          final game = _gameWithTwoGps(
+          final game = gameWithTwoGps(
             sellerStockpile: const Stockpile().applyDelta('timber', 10),
             sellerTreasury: 0,
             buyerTreasury: 100000,
@@ -179,7 +181,7 @@ void main() {
           // negative. This guards against accidental signed arithmetic.
           const buyerId = 'gpBuyer';
           const sellerId = 'gpSeller';
-          final game = _gameWithTwoGps(
+          final game = gameWithTwoGps(
             sellerStockpile: const Stockpile().applyDelta('timber', 5),
             sellerTreasury: 0,
             buyerTreasury: 1000,
@@ -241,7 +243,7 @@ void main() {
           // completely.
           const buyerId = 'gpBuyer';
           const sellerId = 'gpSeller';
-          final game = _gameWithTwoGps(
+          final game = gameWithTwoGps(
             sellerStockpile: const Stockpile().applyDelta('timber', 5),
             sellerTreasury: 0,
             buyerTreasury: 1000,
@@ -292,41 +294,5 @@ void main() {
         },
       );
     },
-  );
-}
-
-Game _gameWithTwoGps({
-  required Stockpile sellerStockpile,
-  required int sellerTreasury,
-  required int buyerTreasury,
-  required Map<CommodityId, int> marketPrices,
-}) {
-  return Game(
-    id: 'g1',
-    players: [
-      Player(
-        id: 'gpSeller',
-        displayName: 'Seller',
-        isHuman: false,
-        stockpile: sellerStockpile,
-        treasury: sellerTreasury,
-      ),
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    worldState: const WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.worldMarket,
-        turnNumber: 3,
-      ),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
   );
 }
