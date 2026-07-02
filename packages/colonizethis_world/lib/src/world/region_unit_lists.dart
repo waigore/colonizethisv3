@@ -1,4 +1,4 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show Unit;
+import 'package:colonizethis_models/colonizethis_models.dart' show Unit, WorldState;
 
 import '../world_constants.dart';
 
@@ -11,10 +11,37 @@ import '../world_constants.dart';
 /// `owUnits`/`nwUnits`) in each helper (Refs #3403 Phase 3).
 typedef RegionUnitLists = ({List<Unit> ow, List<Unit> nw});
 
+/// Running counters for civilian tile-move order application passes.
+typedef CivilianMoveTotals = ({int ordersSeen, int applied, int ignored});
+
+/// Outcome of applying one civilian [MoveOrder] to working [lists].
+typedef CivilianMoveOrderOutcome = ({
+  RegionUnitLists lists,
+  int applied,
+  int ignored,
+});
+
+/// Outcome of applying all civilian orders for one player.
+typedef CivilianMovePlayerOutcome = ({
+  RegionUnitLists lists,
+  CivilianMoveTotals totals,
+});
+
 extension RegionUnitListsAccess on RegionUnitLists {
   /// Returns the working unit list for [regionId]: [ow] for [kRegionOldWorld],
   /// otherwise [nw]. Replaces the repeated `regionId == kRegionOldWorld ? ow :
   /// nw` region-dispatch ternary across movement/migration helpers (Refs #3544).
   List<Unit> unitListForRegion(String regionId) =>
       regionId == kRegionOldWorld ? ow : nw;
+}
+
+extension WorldStateRegionUnitLists on WorldState {
+  /// Fresh mutable copies of both region unit lists for imperative staging
+  /// pipelines (civilian moves, army migration). Replaces
+  /// [WorldStateUnitLookup.mutableUnitListsByRegion] map unpacking at call
+  /// sites that only need the canonical `(ow, nw)` pair (Refs #3843).
+  RegionUnitLists mutableRegionUnitLists() => (
+        ow: List<Unit>.from(oldWorld.units),
+        nw: List<Unit>.from(newWorld.units),
+      );
 }
