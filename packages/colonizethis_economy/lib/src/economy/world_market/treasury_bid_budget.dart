@@ -219,3 +219,27 @@ int treasuryAvailableForBidsByPlayer({
   final int budget = treasury - pendingDeficit;
   return budget < 0 ? 0 : budget;
 }
+
+/// Caps [bidQuantity] by [remainingCargoBudget] and affordable treasury spend.
+///
+/// When [unitPrice] is null or non-positive, only the cargo cap applies.
+/// Used by [TradeOrderSuggester] for per-bid quantity clamping; the
+/// validator enforces the same constraints sequentially per order (rule 5).
+int capBidQuantityForBudgets({
+  required int bidQuantity,
+  required int remainingCargoBudget,
+  required int remainingTreasuryBudget,
+  required int? unitPrice,
+}) {
+  if (bidQuantity <= 0 || remainingCargoBudget <= 0) return 0;
+  var cappedQty = bidQuantity < remainingCargoBudget
+      ? bidQuantity
+      : remainingCargoBudget;
+  if (unitPrice != null && unitPrice > 0) {
+    final int maxAffordable = remainingTreasuryBudget ~/ unitPrice;
+    if (cappedQty > maxAffordable) {
+      cappedQty = maxAffordable;
+    }
+  }
+  return cappedQty <= 0 ? 0 : cappedQty;
+}

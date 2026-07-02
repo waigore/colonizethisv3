@@ -2,81 +2,25 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_world/src/game_player_lookup.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
+final TileMapResult _grainTileMap = singleTileMap(Resource.grain);
+
 void main() {
-  late final TileMapResult grainTileMap;
-
-  setUpAll(() {
-    grainTileMap = singleTileMap(Resource.grain);
-  });
-
   group('ResourceExtractor', () {
-    test('stub connectivity: land totals and tech cap applied', () {
-      final grid = [
-        ['p1', 'p1'],
-        ['p1', 'p1'],
-      ];
-      final resourceGrid = [
-        [Resource.grain, Resource.timber],
-        [Resource.iron, null],
-      ];
-      final tileMap = TileMapResult(
-        width: 2,
-        height: 2,
-        grid: grid,
-        resourceGrid: resourceGrid,
-      );
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 3)
-          .setImprovement('oldWorld|p1|1|0', 2)
-          .setImprovement('oldWorld|p1|0|1', 4)
-          .setRoadLevel('oldWorld|p1|0|0', 2)
-          .setRoadLevel('oldWorld|p1|1|0', 1)
-          .setRoadLevel('oldWorld|p1|0|1', 0);
-      final game = resourceExtractorGame(tileState: tileState);
-      final connectivity = connectivityFor({
-        'oldWorld|p1|0|0',
-        'oldWorld|p1|1|0',
-        'oldWorld|p1|0|1',
-      });
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivity,
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1'], isNotNull);
-      final tot = result['pl1']!;
-      expect(tot.overseas, isEmpty);
-      expect(tot.land['grain'], 2);
-      expect(tot.land['timber'], 1);
-      expect(tot.land['iron'], isNull);
-    });
-
-    test('effective extraction capped by transport level', () {
-      final tileMap = grainTileMap;
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 4)
-          .setRoadLevel('oldWorld|p1|0|0', 1);
-      final game = resourceExtractorGame(tileState: tileState);
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.land['grain'], 1);
-    });
+    for (final scenario in resourceExtractorConnectivityCapScenarios(
+      grainTileMap: _grainTileMap,
+    )) {
+      test(scenario.label, () => runResourceExtractorScenario(scenario));
+    }
 
     test('effective extraction capped by player tech cap when improvement and '
         'transport are high', () {
-      final tileMap = grainTileMap;
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 4)
-          .setRoadLevel('oldWorld|p1|0|0', 4);
+      final tileMap = _grainTileMap;
+      final tileState = tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
+      ]);
       final game = resourceExtractorGame(tileState: tileState);
       final resultCap2 = computeExtraction(
         game: game,
@@ -94,31 +38,5 @@ void main() {
       );
       expect(resultCap3['pl1']!.land['grain'], 3);
     });
-
-    test(
-      'tech cap from extractionCapForUnlocked matches turn_resolver wiring',
-      () {
-        final tileMap = grainTileMap;
-        final tileState = TileMapState()
-            .setImprovement('oldWorld|p1|0|0', 4)
-            .setRoadLevel('oldWorld|p1|0|0', 4);
-        const techUnlocked = {kTechIdSawMill: true, kTechIdSeedDrill: true};
-        final game = resourceExtractorGame(
-          tileState: tileState,
-          techUnlocked: techUnlocked,
-        );
-        final result = computeExtraction(
-          game: game,
-          tileMapByRegion: {'oldWorld': tileMap},
-          connectivityResult: connectivityFor({'oldWorld|p1|0|0'}),
-          techCapForPlayer: (playerId) {
-            final p = game.playerById(playerId);
-            return extractionCapForUnlocked(p?.techUnlocked);
-          },
-        );
-        expect(extractionCapForUnlocked(techUnlocked), 3);
-        expect(result['pl1']!.land['grain'], 3);
-      },
-    );
   });
 }

@@ -7,6 +7,8 @@ import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+final TileMapResult _grainTileMap = singleTileMap(Resource.grain);
+
 void main() {
   group('ResourceExtractor', () {
     test('town-rule-only + port: townDevelopmentLevel DOES cap yield', () {
@@ -18,22 +20,17 @@ void main() {
         [null, null],
         [null, Resource.grain],
       ];
-      final tileMap = TileMapResult(
-        width: 2,
-        height: 2,
-        grid: grid,
-        resourceGrid: resourceGrid,
-      );
-      final cap = CapitalTile(
+      final tileMap = tileMapFromGrids(grid: grid, resourceGrid: resourceGrid);
+      const cap = CapitalTile(
         regionId: 'oldWorld',
         provinceId: 'oldWorld|p1',
         x: 0,
         y: 0,
       );
-      final tileState = TileMapState()
-          .setRoadLevel('oldWorld|p1|0|0', 1)
-          .setImprovement('oldWorld|p2|1|1', 4)
-          .setRoadLevel('oldWorld|p2|1|1', 0);
+      final tileState = tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+      ]);
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',
@@ -66,7 +63,7 @@ void main() {
         portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
         players: [player],
       );
-      final tileKey = 'oldWorld|p2|1|1';
+      const tileKey = 'oldWorld|p2|1|1';
       final result = computeExtraction(
         game: game,
         tileMapByRegion: {'oldWorld': tileMap},
@@ -85,56 +82,10 @@ void main() {
       );
     });
 
-    test('overseas totals when connected tile in different region', () {
-      final tileMapNw = singleTileMap(Resource.sugarCane, province: 'n1');
-      final tileState = TileMapState()
-          .setImprovement('newWorld|n1|0|0', 1)
-          .setRoadLevel('newWorld|n1|0|0', 1);
-      final player = Player(
-        id: 'pl1',
-        displayName: 'Spain',
-        isHuman: true,
-        capitalProvinceId: 'oldWorld|p1',
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: 'oldWorld|p1',
-          x: 0,
-          y: 0,
-        ),
-      );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        capitalTileGrainBonusPerTurn: 0,
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'pl1',
-              townDevelopmentLevel: 4,
-            ),
-          ],
-        ),
-        newWorld: RegionData(
-          provinces: [
-            Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
-          ],
-        ),
-        tileState: tileState,
-        players: [player],
-      );
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {
-          'oldWorld': singleTileMap(null),
-          'newWorld': tileMapNw,
-        },
-        connectivityResult: connectivityFor({'newWorld|n1|0|0'}),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(result['pl1']!.overseas['sugarCane'], 1);
-      expect(result['pl1']!.land, isEmpty);
-    });
+    test(
+      overseasExtractionScenario().label,
+      () => runResourceExtractorScenario(overseasExtractionScenario()),
+    );
 
     test(
       'blockaded overseas port: connectivity excludes tile so overseas extraction zero',
@@ -196,12 +147,11 @@ void main() {
         );
         const ow = 'oldWorld', nw = 'newWorld';
         final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
-        final tileState = TileMapState()
-            .setImprovement('newWorld|n1|0|0', 1)
-            .setImprovement('newWorld|n1|1|0', 1)
-            .setRoadLevel('oldWorld|p1|0|0', 4)
-            .setRoadLevel('newWorld|n1|0|0', 4)
-            .setRoadLevel('newWorld|n1|1|0', 4);
+        final tileState = tileStateFromSpecs(const [
+          TileImprovementSpec('newWorld|n1|0|0', improvement: 1, roadLevel: 4),
+          TileImprovementSpec('newWorld|n1|1|0', improvement: 1, roadLevel: 4),
+          TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 4),
+        ]);
         final ports = {
           '$ow|p1|sea1': 'oldWorld|p1|0|0',
           '$nw|n1|sea2': 'newWorld|n1|0|0',
@@ -273,39 +223,11 @@ void main() {
       },
     );
 
-    test('effective yield capped by min transport level along path to capital', () {
-      // SPEC: effective yield = min(production, tech cap, town dev, min transport along path).
-      // When pathTransportCap is provided, it caps yield (e.g. path with road-1 segment → cap 1).
-      final tileMap = singleTileMap(Resource.grain);
-      final tileState = TileMapState()
-          .setImprovement('oldWorld|p1|0|0', 3)
-          .setRoadLevel('oldWorld|p1|0|0', 3);
-      final game = resourceExtractorGame(tileState: tileState);
-      final connectivity = resolveConnectivity(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        topology: MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [],
-        ),
-      );
-      expect(connectivity['pl1']!.pathTransportCap['oldWorld|p1|0|0'], 3);
-      final resultWithPathCap = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor(
-          {'oldWorld|p1|0|0'},
-          pathTransportCap: {'oldWorld|p1|0|0': 1},
-        ),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(resultWithPathCap['pl1']!.land['grain'], 1);
-    });
+    test(
+      pathTransportCapScenario(grainTileMap: _grainTileMap).label,
+      () => runResourceExtractorScenario(
+        pathTransportCapScenario(grainTileMap: _grainTileMap),
+      ),
+    );
   });
 }

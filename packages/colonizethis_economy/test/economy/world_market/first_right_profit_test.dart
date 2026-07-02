@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_economy/src/economy/world_market/first_right_profit.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
 
 void main() {
   group('FirstRightProfit constants', () {

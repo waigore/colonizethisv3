@@ -1,4 +1,5 @@
 // Issue-AC-mapped unit tests for World Market First Right of Refusal
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 // (#2992 D5).
 //
 // SPEC: `SPEC/game/world-market-first-right-of-refusal.md` (D2 priority
@@ -34,9 +35,9 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show DealMatcher, DealMatchInputs;
-import 'package:colonizethis_economy/src/economy/world_market/first_right_credits.dart';
-import 'package:colonizethis_economy/src/economy/world_market/first_right_profit.dart';
-import 'package:colonizethis_economy/src/economy/world_market/purchased_tile_index.dart';
+
+
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

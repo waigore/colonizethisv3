@@ -2,7 +2,14 @@
 library colonizethis_economy;
 
 export 'src/economy/build_cost.dart';
+export 'src/economy/commodity_totals.dart';
+export 'src/economy/cost_check.dart';
 export 'src/economy/economy_consumption.dart';
+export 'src/economy/economy_consumption_phases.dart';
+export 'src/economy/game_lookup_helpers.dart';
+export 'src/economy/tile_extraction_pipeline.dart';
+export 'src/economy/trade_interception_constants.dart';
+export 'src/economy/trade_interception_scan.dart';
 export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_production.dart';
@@ -21,6 +28,9 @@ export 'src/economy/world_market/boycott_blocked_commodities.dart';
 export 'src/economy/world_market/deal_matcher.dart';
 export 'src/economy/world_market/first_right_credits.dart';
 export 'src/economy/world_market/first_right_profit.dart';
+export 'src/economy/world_market/gp_treasury_credit_accumulator.dart';
+export 'src/economy/world_market/trade_order_admission.dart';
+export 'src/economy/world_market/world_market_context_base.dart';
 export 'src/economy/world_market/lock_recovery_minor_bids.dart';
 export 'src/economy/world_market/price_discovery.dart';
 export 'src/economy/world_market/purchased_tile_index.dart';
