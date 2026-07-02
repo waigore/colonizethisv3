@@ -19,6 +19,9 @@ import 'package:colonizethis_test/test.dart';
 /// (`turn_resolution_seeds.dart`). The `kTurnResolutionLcgMultiplier` token is
 /// the distinctive marker of the advance step (mask-only callers reference only
 /// `kTurnResolutionLcgMask`), so guarding it keeps inlined advance copies out.
+///
+/// Refs #3842: the spy-phase turn multiplier (`7919`) must live only in
+/// `kSpyPhaseSeedTurnMultiplier` (`turn_resolution_seeds.dart`).
 void main() {
   group('colonizethis_turn structure guards (Refs #3565)', () {
     final libDir = _turnLibDir();
@@ -73,6 +76,24 @@ void main() {
       );
     });
 
+    test('spy-phase seed turn multiplier lives only in turn_resolution_seeds',
+        () {
+      final pattern = RegExp(r'\b7919\b');
+      final offenders = _filesMatching(
+        libDir,
+        pattern,
+        allowed: 'turn_resolution_seeds.dart',
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'spy-phase seed mixing must reuse kSpyPhaseSeedTurnMultiplier '
+            '(turn_resolution_seeds.dart). Inlined copies found in:\n'
+            '${offenders.join('\n')}',
+      );
+    });
+
     test('deliverGameEvent dispatch lives only in TurnEventSink', () {
       // Theme B (Refs #3701): the game-event transport is centralized in
       // TurnEventSink.emit, so emitters and phase handlers depend on the sink
@@ -115,6 +136,13 @@ void main() {
         seeds.contains('int advanceTurnSeed('),
         isTrue,
         reason: 'advanceTurnSeed must remain defined in turn_resolution_seeds.dart',
+      );
+      expect(
+        seeds.contains('kSpyPhaseSeedTurnMultiplier'),
+        isTrue,
+        reason:
+            'kSpyPhaseSeedTurnMultiplier must remain defined in '
+            'turn_resolution_seeds.dart',
       );
       expect(
         RegExp(

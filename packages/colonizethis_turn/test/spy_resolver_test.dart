@@ -9,6 +9,14 @@ import 'package:colonizethis_turn/src/turn/spy_resolver.dart';
 
 void main() {
   group('resolveSpyPhase', () {
+    test('globalGameSeed drives deterministic spy outcomes without override', () {
+      final game = _gameWithForeignSpy(garrisonRegiments: 3, seed: 77);
+      final first = resolveSpyPhase(game);
+      final second = resolveSpyPhase(game);
+      expect(first.killedSpyUnitIds, second.killedSpyUnitIds);
+      expect(first.defectedSpyUnitIds, second.defectedSpyUnitIds);
+    });
+
     test('base 5% kill chance with zero garrison', () {
       final game = _gameWithForeignSpy(garrisonRegiments: 0, seed: 1);
       var kills = 0;

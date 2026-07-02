@@ -19,7 +19,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'minor_tribe_world_market_pipeline_integration_test_support.dart';
+import '../support/world_market_test_support.dart';
 import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
 
 void main() {

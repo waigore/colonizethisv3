@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 void expectPhaseDeltasSumToNet({
   required Game game,
@@ -44,17 +44,3 @@ void expectPhaseDeltasSumToNet({
     expect(sum, net[c] ?? 0, reason: 'commodity $c phase sum vs net');
   }
 }
-
-/// Back-compat wrapper; prefer [TestFixtures.singlePlayerGame].
-Game singlePlayerGame(Player player) => TestFixtures.singlePlayerGame(player);
-
-/// Back-compat wrapper; prefer [TestFixtures.singlePlayerWorkPreviewGame].
-Game singlePlayerWorkPreviewGame({
-  required Stockpile playerStockpile,
-  required List<Unit> units,
-  TileMapState tileState = const TileMapState(),
-}) => TestFixtures.singlePlayerWorkPreviewGame(
-  playerStockpile: playerStockpile,
-  units: units,
-  tileState: tileState,
-);
