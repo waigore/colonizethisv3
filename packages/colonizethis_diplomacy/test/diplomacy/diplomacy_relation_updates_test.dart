@@ -2,37 +2,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_lookup.dart';
 import 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_relation_updates.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/diplomacy_relation_fixtures.dart';
-
-DiplomacyRelation? _linearScanGetRelation(
-  Game game,
-  String factionId1,
-  String factionId2,
-) {
-  final key = pairKey(factionId1, factionId2);
-  for (final r in game.diplomacyRelations) {
-    if (pairKey(r.factionId1, r.factionId2) == key) return r;
-  }
-  return null;
-}
-
-OvertureState? _linearScanGetOverture(Game game, String gpId, String targetId) {
-  for (final o in game.overtureStates) {
-    if (o.gpId == gpId && o.targetId == targetId) return o;
-  }
-  return null;
-}
-
-int _linearScanProvinceCountOwnedBy(Game game, String factionId) {
-  var count = 0;
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == factionId) count++;
-  }
-  return count;
-}
 
 void main() {
   group('applyGrantAidModifier', () {
@@ -290,7 +262,7 @@ void main() {
           if (a == b) continue;
           expect(
             getRelation(game, a, b),
-            _linearScanGetRelation(game, a, b),
+            linearScanGetRelation(game, a, b),
             reason: 'pair ($a,$b)',
           );
         }
@@ -313,11 +285,11 @@ void main() {
       final game = relationsOnlyGame(overtureStates: overtures);
       expect(
         getOverture(game, 'gp1', 't1'),
-        _linearScanGetOverture(game, 'gp1', 't1'),
+        linearScanGetOverture(game, 'gp1', 't1'),
       );
       expect(
         getOverture(game, 'gp2', 't1'),
-        _linearScanGetOverture(game, 'gp2', 't1'),
+        linearScanGetOverture(game, 'gp2', 't1'),
       );
       expect(getOverture(game, 'gp1', 'missing'), isNull);
     });
@@ -366,7 +338,7 @@ void main() {
       for (final id in owners) {
         expect(
           provinceCountOwnedBy(game, id),
-          _linearScanProvinceCountOwnedBy(game, id),
+          linearScanProvinceCountOwnedBy(game, id),
           reason: 'faction $id',
         );
       }
