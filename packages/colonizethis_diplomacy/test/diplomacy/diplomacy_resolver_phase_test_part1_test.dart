@@ -3,8 +3,7 @@ import 'package:colonizethis_world/src/game_player_lookup.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
-import '../support/diplomacy_resolver_phase_test_support.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 void main() {
   group('resolveDiplomacyPhase', () {
 

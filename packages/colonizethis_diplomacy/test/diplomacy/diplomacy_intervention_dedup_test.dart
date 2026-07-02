@@ -2,7 +2,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Regression coverage for the O(1) intervention-choice lookup (Refs #3419 step
 /// 6). When one aggressor declares war on two Minors in the same turn and an AI

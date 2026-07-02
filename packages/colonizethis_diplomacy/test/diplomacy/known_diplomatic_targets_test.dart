@@ -3,7 +3,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Coverage for `knownDiplomaticTargetFactionIds` in `known_diplomatic_targets.dart`
 /// (Refs #3290 test migration — per-package coverage gate for
