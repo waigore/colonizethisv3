@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart' show Unit, WorldState;
 
 import '../world_constants.dart';
+import 'unit_lookup.dart';
 
 /// A pair of per-region working unit lists: [ow] for [kRegionOldWorld] and
 /// [nw] for [kRegionNewWorld].
@@ -40,8 +41,11 @@ extension WorldStateRegionUnitLists on WorldState {
   /// pipelines (civilian moves, army migration). Replaces
   /// [WorldStateUnitLookup.mutableUnitListsByRegion] map unpacking at call
   /// sites that only need the canonical `(ow, nw)` pair (Refs #3843).
-  RegionUnitLists mutableRegionUnitLists() => (
-        ow: List<Unit>.from(oldWorld.units),
-        nw: List<Unit>.from(newWorld.units),
-      );
+  RegionUnitLists mutableRegionUnitLists() {
+    final byRegion = mutableUnitListsByRegion();
+    return (
+      ow: byRegion[kRegionOldWorld]!,
+      nw: byRegion[kRegionNewWorld]!,
+    );
+  }
 }
