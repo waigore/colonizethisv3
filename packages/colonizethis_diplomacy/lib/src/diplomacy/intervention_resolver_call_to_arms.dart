@@ -90,14 +90,13 @@ Game _applyCallToArmsAccept(
   int turn, {
   IntraTurnEventTally? eventTally,
 }) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-  relations = setWarStateForPair(
-    relations: relations,
-    gpId: allyGpId,
-    targetId: aggressorGpId,
-    turn: turn,
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
+  relationsIndex.upsert(
+    allyGpId,
+    aggressorGpId,
+    warStateRelationUpdater(allyGpId, aggressorGpId, turn),
   );
-  var g = game.copyWith(diplomacyRelations: relations);
+  var g = game.copyWith(diplomacyRelations: relationsIndex.toList());
   g = cancelSubsidiesBetweenGps(
     g,
     allyGpId,

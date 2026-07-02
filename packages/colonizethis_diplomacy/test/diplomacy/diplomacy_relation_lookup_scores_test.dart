@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Coverage for the power-score, ship-count, leader-pick, attack-eligibility,
 /// and history-ordering helpers in `diplomacy_relation_lookup.dart`

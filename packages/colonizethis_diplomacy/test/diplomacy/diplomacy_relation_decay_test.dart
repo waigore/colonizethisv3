@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_relation_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Per-turn relation decay (Refs #3753 R9.3/R9.4): non-war pairs with no
 /// relation-score delta event this turn drift ±4 toward equilibrium 50, clamped

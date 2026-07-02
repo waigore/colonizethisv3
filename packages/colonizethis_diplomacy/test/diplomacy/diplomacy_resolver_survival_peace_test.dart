@@ -3,7 +3,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 const _gp2gp3AtWar = DiplomacyRelation(
   factionId1: 'gp2',

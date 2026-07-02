@@ -1,5 +1,5 @@
-name: colonizethis_diplomacy
-description: Diplomacy, overture, intervention, war, and dossier resolution for Colonize This.
+name: colonizethis_diplomacy_test_support
+description: Shared diplomacy test fixtures and scenario tables for colonizethis_diplomacy and sibling test suites.
 version: 0.0.1
 publish_to: none
 repository: https://github.com/colonizethisv3/colonizethisv3
@@ -9,21 +9,15 @@ environment:
   sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
-  logger: ^2.0.2
-  colonizethis_logger:
   colonizethis_data:
+  colonizethis_diplomacy:
   colonizethis_models:
+  colonizethis_test:
   colonizethis_world:
-  colonizethis_combat:
-  colonizethis_economy:
 
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
-  colonizethis_diplomacy_test_support:
-  colonizethis_economy_test_support:
-  colonizethis_logic:
   colonizethis_test:
-  coverage: ^1.15.0
   custom_lint: 0.8.1
   test: 1.30.0

@@ -2,8 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
-import '../support/diplomacy_relation_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Favoured trading partner lookup (Refs #3753 R7.1): the GP a Minor/Tribe
 /// trades with preferentially — the colony suzerain when colonised, else the

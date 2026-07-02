@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/diplomacy_game_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 /// Additive trade-deal relation boost (Refs #3753 R10): a faction pair that
 /// completed a Great-Power world-market trade deal the previous turn (recorded

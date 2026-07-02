@@ -239,7 +239,7 @@ rules:
 
   - rule_id: repo.diplomacy_no_loop_upsert_relation
     group: architecture
-    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body (Refs #3825)
+    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body or inside loops (Refs #3825, #3837)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_no_loop_upsert_relation.dart
@@ -257,6 +257,27 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_test_inline_game_ctor.dart
+
+  - rule_id: repo.diplomacy_test_no_src_imports
+    group: testing
+    title: colonizethis_diplomacy tests must not import package src/ paths (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_no_src_imports.dart
+
+  - rule_id: repo.diplomacy_test_file_size
+    group: testing
+    title: colonizethis_diplomacy test files must stay at or below 400 physical lines (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_file_size.dart
+
+  - rule_id: repo.diplomacy_test_support_package_only
+    group: testing
+    title: colonizethis_diplomacy fixtures must live in colonizethis_diplomacy_test_support, not test/support (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_support_package_only.dart
 
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture

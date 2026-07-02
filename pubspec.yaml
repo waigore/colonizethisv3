@@ -20,6 +20,7 @@ workspace:
   - packages/colonizethis_economy
   - packages/colonizethis_economy_test_support
   - packages/colonizethis_diplomacy
+  - packages/colonizethis_diplomacy_test_support
   - packages/colonizethis_setup
   - packages/colonizethis_orders
   - packages/colonizethis_turn
