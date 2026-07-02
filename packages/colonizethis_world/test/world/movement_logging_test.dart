@@ -3,7 +3,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:logger/logger.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 List<String> _civilianMovementMessages(List<LogEvent> events) => [
       for (final e in events)

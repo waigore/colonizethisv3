@@ -959,6 +959,13 @@ rules:
     runner: dart
     script: tool/check_orders_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.world_test_no_duplicate_fixtures
+    group: architecture
+    title: colonizethis_world tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3843)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_no_duplicate_fixtures.dart
+
   - rule_id: repo.ai_test_no_duplicate_scaffolding
     group: architecture
     title: colonizethis_ai tests must keep coherent scaffolding (no _test.dart in test/support/, no confusing test_fixtures.dart, no local TestFixtures) (Refs #3717)
