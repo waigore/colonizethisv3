@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'world_market_phase_first_right_credit_test_support.dart';
+import '../support/world_market_test_support.dart';
 
 /// Phase-handler integration for the First Right of Refusal overseas-profit
 /// treasury credit (Refs #2992 D4).
