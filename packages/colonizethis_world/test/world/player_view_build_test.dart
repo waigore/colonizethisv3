@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/logic_validation_exception.dart';
 import 'package:colonizethis_world/src/world/player_view.dart';
@@ -6,10 +5,12 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up):
 /// buildPlayerView / hasRevealedResourceForPlayer / panel intel gate. See
 /// SPEC/program/player-view.md, SPEC/program/fog-and-exploration-resolution.md.
-const _topology = MapTopology();
+const _topology = kEmptyMapTopology;
 
 Unit _spy({required String id, required String ownerId, required String loc}) =>
     Unit(id: id, type: kUnitTypeSpy, ownerId: ownerId, locationProvinceId: loc);

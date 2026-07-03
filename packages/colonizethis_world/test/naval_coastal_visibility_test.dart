@@ -4,11 +4,19 @@ import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'world_test_support/world_test_support.dart';
+
 void main() {
   const ow = 'oldWorld';
   const player = 'a';
   const enemy = 'b';
   const fullPid = '$ow|p1';
+
+  final coastalProvinceSeaTopology = provinceSeaZoneTopology(
+    regionId: ow,
+    provinceLocalId: 'p1',
+    seaZoneId: 'sea1',
+  );
 
   Game gameWithBuckets({
     Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
@@ -114,13 +122,7 @@ void main() {
   });
 
   group('revealTilesAfterMoveToSeaZone', () {
-    final topology = MapTopology(
-      nodes: const [
-        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
-      ],
-      edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
-    );
+    final topology = coastalProvinceSeaTopology;
 
     test('reveals coastal land tiles and all sea water tiles in the zone', () {
       final game = gameWithBuckets(
@@ -169,13 +171,7 @@ void main() {
   });
 
   group('coastalLandTilesForSeaZone', () {
-    final topology = MapTopology(
-      nodes: const [
-        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
-      ],
-      edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
-    );
+    final topology = coastalProvinceSeaTopology;
 
     test('returns coastal land tiles and sea-water tiles for the zone', () {
       final game = gameWithBuckets(
@@ -224,13 +220,7 @@ void main() {
   });
 
   group('coastalLandTileKeysFromNavalPresenceAtSea', () {
-    final topology = MapTopology(
-      nodes: const [
-        TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
-      ],
-      edges: const [TopologyEdge(id1: 'sea1', id2: 'p1')],
-    );
+    final topology = coastalProvinceSeaTopology;
 
     test(
       'returns coastal tiles for non-home fleets at sea owned by player',

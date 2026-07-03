@@ -7,26 +7,7 @@ group('ConnectivityResolver', () {
         'computeBlockadedPortProvincesByPlayer ignores non-blockade missions',
         () {
           const ow = 'oldWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: 'sea1', id2: 'p2')],
-          );
+          final topology = blockadeTargetProvinceTopology(regionId: ow);
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -75,39 +56,7 @@ group('ConnectivityResolver', () {
         () {
           const ow = 'oldWorld';
           const nw = 'newWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'n1',
-                regionId: nw,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-              TopologyNode(
-                id: 'sea2',
-                regionId: nw,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [
-              TopologyEdge(id1: 'sea1', id2: 'p2'),
-              TopologyEdge(id1: 'sea2', id2: 'n1'),
-            ],
-          );
+          final topology = dualRegionBlockadeTargetsTopology();
           final game = Game(
             id: 'g1',
             worldState: WorldState(

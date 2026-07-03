@@ -105,20 +105,10 @@ group('clearSpyRevealTimersForProvince', () {
       () {
         const ow = 'oldWorld';
         const tileKeySea = 'oldWorld|s1|1|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+        final topology = provinceSeaZoneTopology(
+          regionId: ow,
+          provinceLocalId: 'p1',
+          seaZoneId: 's1',
         );
         final game = Game(
           id: 'g1',
@@ -160,20 +150,10 @@ group('clearSpyRevealTimersForProvince', () {
       () {
         const ow = 'oldWorld';
         const tileKeySea = 'oldWorld|s1|1|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [], // p1 not adjacent to s1
+        final topology = provinceAndSeaUnlinkedTopology(
+          regionId: ow,
+          provinceLocalId: 'p1',
+          seaZoneId: 's1',
         );
         final game = Game(
           id: 'g1',
@@ -215,34 +195,7 @@ group('clearSpyRevealTimersForProvince', () {
         const ow = 'oldWorld';
         const tileKeyS1 = 'oldWorld|s1|1|0';
         const tileKeyS2 = 'oldWorld|s2|3|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'p2',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 's2',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 's1'),
-            TopologyEdge(id1: 'p2', id2: 's2'),
-          ],
-        );
+        final topology = dualProvinceDualSeaTopology(regionId: ow);
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -300,18 +253,7 @@ group('clearSpyRevealTimersForProvince', () {
         const ow = 'oldWorld';
         const tileKeyS1 = 'oldWorld|s1|1|0';
         const tileKeyS2 = 'oldWorld|s2|3|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
-            TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-            TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 's1'),
-            TopologyEdge(id1: 'p2', id2: 's2'),
-          ],
-        );
+        final topology = dualProvinceDualSeaTopology(regionId: ow);
         final game = Game(
           id: 'g1',
           worldState: WorldState(

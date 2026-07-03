@@ -3,6 +3,8 @@ import 'package:colonizethis_world/src/utils/graph_traversal.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Phase 2 of #3403: canonical topology-graph BFS shared by the sea-reachability
 /// planners. These tests exercise [bfsTopologyGraph] directly (the visitor
 /// hooks, expansion rules, and determinism) independent of the sea-reachable
@@ -18,7 +20,7 @@ void main() {
     test('fires onForeignProvinceDiscovered once at shortest distance', () {
       // enemy reachable directly (1) and via a sea detour (2). FIFO BFS must
       // discover it first via the direct edge -> distance 1, and only once.
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [_prov('own'), _prov('enemy'), _sea('sea')],
         edges: const [
           TopologyEdge(id1: 'own', id2: 'enemy'),
@@ -45,7 +47,7 @@ void main() {
     });
 
     test('does not expand through a foreign province', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [_prov('own'), _prov('enemy'), _prov('beyond')],
         edges: const [
           TopologyEdge(id1: 'own', id2: 'enemy'),
@@ -66,7 +68,7 @@ void main() {
     });
 
     test('emits onProvinceVisited/onSeaVisited once per expanded node', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [_prov('own'), _sea('sea'), _prov('ally'), _prov('enemy')],
         edges: const [
           TopologyEdge(id1: 'own', id2: 'sea'),
@@ -97,7 +99,7 @@ void main() {
 
     test('ignores unknown neighbour ids missing from the node-type map', () {
       // Adjacency references a node id absent from the topology node set.
-      const topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'own',
@@ -105,7 +107,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         ],
-        edges: [TopologyEdge(id1: 'own', id2: 'ghost')],
+        edges: const [TopologyEdge(id1: 'own', id2: 'ghost')],
       );
       final foreign = <String>{};
       bfsTopologyGraph(
@@ -121,7 +123,7 @@ void main() {
     });
 
     test('empty source set yields no traversal', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [_prov('own'), _prov('enemy')],
         edges: const [TopologyEdge(id1: 'own', id2: 'enemy')],
       );
@@ -139,7 +141,7 @@ void main() {
   });
 
   group('topology graph index caches (Refs #3403 Phase 2)', () {
-    final topology = MapTopology(
+    final topology = topologyFromGraph(
       nodes: [_prov('own'), _sea('sea'), _prov('enemy')],
       edges: const [
         TopologyEdge(id1: 'own', id2: 'sea'),
@@ -171,7 +173,7 @@ void main() {
     });
 
     test('seaZoneAdjacency only contains S–S edges and is cached', () {
-      final withSeaLink = MapTopology(
+      final withSeaLink = topologyFromGraph(
         nodes: [_sea('s1'), _sea('s2'), _prov('p1')],
         edges: const [
           TopologyEdge(id1: 's1', id2: 's2'),
@@ -188,7 +190,7 @@ void main() {
     });
 
     test('separate topology instances do not share cached indexes', () {
-      final other = MapTopology(nodes: [_prov('a')], edges: const []);
+      final other = topologyFromGraph(nodes: [_prov('a')], edges: const []);
       expect(
         identical(topologyAdjacency(topology), topologyAdjacency(other)),
         isFalse,

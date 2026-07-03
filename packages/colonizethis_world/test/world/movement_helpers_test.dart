@@ -5,6 +5,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Exercises land-move adjacency validation and civilian tile-move application
@@ -36,19 +38,9 @@ Game _gameWithUnits({
   newWorld: RegionData(units: newWorldUnits),
 );
 
-/// Local-id topology (`p1`–`p2`) for [isValidLandMove], which keys on node ids.
-MapTopology _localTopology() => const MapTopology(
-  nodes: [
-    TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-    TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
-    TopologyNode(id: 'p3', regionId: 'oldWorld', type: TopologyNodeType.province),
-  ],
-  edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
-);
-
 void main() {
   group('neighborProvinceIdsInRegion / isValidLandMoveInRegion', () {
-    final topology = _localTopology();
+    final topology = threeProvincePartialChainTopology(regionId: 'oldWorld');
 
     test('returns adjacent local ids within the region', () {
       final neighbors = neighborProvinceIdsInRegion(
@@ -77,7 +69,7 @@ void main() {
   });
 
   group('isValidLandMove', () {
-    final topology = _localTopology();
+    final topology = threeProvincePartialChainTopology(regionId: 'oldWorld');
 
     test('accepts adjacent provinces resolved through a single node', () {
       expect(isValidLandMove(topology, 'p1', 'p2'), isTrue);
@@ -180,7 +172,7 @@ void main() {
       );
       final result = applyMoveOrdersToRegion(
         region,
-        const MapTopology(),
+        kEmptyMapTopology,
         const {
           'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0')],
         },

@@ -1,8 +1,9 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_turn/src/turn/phases/movement_phase.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../world_test_support/world_test_support.dart';
 
 /// Integration path for GitHub #2010: split from Home Fleet (orders UI), then
 /// movement phase applies naval moves and ship reveal using combined topology.
@@ -13,7 +14,6 @@ void main() {
         'topology mixes Old World and New World edges', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
-      const nw = 'newWorld';
       final homeId = homeFleetIdFor(playerId);
       const seaOrigin = '$ow|seaOrigin';
       const seaDest = '$ow|seaDest';
@@ -22,39 +22,10 @@ void main() {
       const inlandTile = '$ow|pCoast|0|0';
       const seaDestWater = '$ow|seaDest|2|0';
 
-      final combinedTopology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: owCoastProv,
-            regionId: ow,
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: seaOrigin,
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: seaDest,
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: '$nw|p1',
-            regionId: nw,
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: '$nw|seaOther',
-            regionId: nw,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [
-          TopologyEdge(id1: owCoastProv, id2: seaDest),
-          TopologyEdge(id1: seaOrigin, id2: seaDest),
-          TopologyEdge(id1: '$nw|p1', id2: '$nw|seaOther'),
-        ],
+      final combinedTopology = homeFleetSplitMovementIntegrationTopology(
+        owCoastProv: owCoastProv,
+        seaOrigin: seaOrigin,
+        seaDest: seaDest,
       );
 
       final gameBeforeSplit = Game(

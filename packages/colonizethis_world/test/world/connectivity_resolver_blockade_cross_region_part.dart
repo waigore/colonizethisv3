@@ -8,26 +8,7 @@ group('ConnectivityResolver', () {
         () {
           const ow = 'oldWorld';
           const nw = 'newWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'n1',
-                regionId: nw,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea_ow',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: 'sea_ow', id2: 'n1')],
-          );
+          final topology = crossRegionOwSeaToNwProvinceTopology();
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -79,27 +60,7 @@ group('ConnectivityResolver', () {
         'computeBlockadedPortProvincesByPlayer cross-region: fleet in NW blockades OW port when at war',
         () {
           const ow = 'oldWorld';
-          const nw = 'newWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea_nw',
-                regionId: nw,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: 'sea_nw', id2: 'p2')],
-          );
+          final topology = crossRegionNwSeaToOwProvinceTopology();
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -117,7 +78,7 @@ group('ConnectivityResolver', () {
                   ownerId: 'p2',
                   seaZoneId: 'sea_nw',
                   inPortAtProvinceId: null,
-                  regionId: nw,
+                  regionId: 'newWorld',
                   mission: FleetMission.blockade,
                   targetProvinceId: '$ow|p2',
                 ),
@@ -147,34 +108,7 @@ group('ConnectivityResolver', () {
         'computeBlockadedPortProvincesByPlayer only at-war blockader counts: peace fleet does not add province',
         () {
           const ow = 'oldWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-              TopologyNode(
-                id: 'sea2',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [
-              TopologyEdge(id1: 'sea1', id2: 'p2'),
-              TopologyEdge(id1: 'sea2', id2: 'p2'),
-            ],
-          );
+          final topology = dualSeaZonesTargetProvinceTopology(regionId: ow);
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -238,26 +172,7 @@ group('ConnectivityResolver', () {
         'computeBlockadedPortProvincesByPlayer returns empty when at peace',
         () {
           const ow = 'oldWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: 'sea1', id2: 'p2')],
-          );
+          final topology = blockadeTargetProvinceTopology(regionId: ow);
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -306,26 +221,7 @@ group('ConnectivityResolver', () {
         'computeBlockadedPortProvincesByPlayer ignores fleet without targetProvinceId',
         () {
           const ow = 'oldWorld';
-          final topology = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: 'p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'p2',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: 'sea1', id2: 'p2')],
-          );
+          final topology = blockadeTargetProvinceTopology(regionId: ow);
           final game = Game(
             id: 'g1',
             worldState: WorldState(

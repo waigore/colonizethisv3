@@ -4,17 +4,11 @@ void _connectivity_resolver_non_gp_testTests() {
 group('resolveNonGreatPowerConnectivity', () {
     test('empty map when no minors and no tribes', () {
       const ow = 'oldWorld';
-      final grid = [
+      final tileMap = tileMapFromGrid([
         ['p1', 'p1'],
         ['p1', 'p1'],
-      ];
-      final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
+      ]);
+      final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -42,22 +36,12 @@ group('resolveNonGreatPowerConnectivity', () {
       'minor with capital and no roads: capital + 4-adjacent owned tiles connected',
       () {
         const ow = 'oldWorld';
-        final grid = [
+        final tileMap = tileMapFromGrid([
           ['p1', 'p1', 'p1'],
           ['p1', 'p1', 'p1'],
           ['p1', 'p1', 'p1'],
-        ];
-        final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
-        final topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [],
-        );
+        ]);
+        final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
         final cap = CapitalTile(
           regionId: ow,
           provinceId: '$ow|p1',
@@ -107,17 +91,11 @@ group('resolveNonGreatPowerConnectivity', () {
 
     test('tribe in NW: road chain extends connectivity beyond adjacency', () {
       const nw = 'newWorld';
-      final grid = [
+      final tileMap = tileMapFromGrid([
         ['p1', 'p1', 'p1'],
         ['p1', 'p1', 'p1'],
-      ];
-      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
+      ]);
+      final topology = singleProvinceTopology(regionId: nw, provinceLocalId: 'p1');
       final cap = CapitalTile(regionId: nw, provinceId: '$nw|p1', x: 0, y: 0);
       final tileState = TileMapState()
           .setRoadLevel('newWorld|p1|0|0', 1)
@@ -164,23 +142,14 @@ group('resolveNonGreatPowerConnectivity', () {
     test('multi-faction: keys map separately by minor id and tribe id', () {
       const ow = 'oldWorld';
       const nw = 'newWorld';
-      final owGrid = [
+      final owMap = tileMapFromGrid([
         ['p1', 'p1'],
         ['p2', 'p2'],
-      ];
-      final nwGrid = [
+      ]);
+      final nwMap = tileMapFromGrid([
         ['p3', 'p3'],
-      ];
-      final owMap = TileMapResult(width: 2, height: 2, grid: owGrid);
-      final nwMap = TileMapResult(width: 2, height: 1, grid: nwGrid);
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 'p3', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
+      ]);
+      final topology = threeProvinceDualRegionLandTopology();
       final capLux = CapitalTile(
         regionId: ow,
         provinceId: '$ow|p1',

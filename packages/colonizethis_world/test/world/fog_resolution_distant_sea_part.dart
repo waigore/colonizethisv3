@@ -7,29 +7,7 @@ group('applyDistantSeaZoneFogRevert', () {
       () {
         const ow = 'oldWorld';
         const tileSea2 = 'oldWorld|s2|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 's2',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 's1'),
-            TopologyEdge(id1: 's1', id2: 's2'),
-          ],
-        );
+        final topology = provinceSeaChainTopology(regionId: ow);
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -66,17 +44,7 @@ group('applyDistantSeaZoneFogRevert', () {
     test('does not fog sea zone while player fleet is at sea there', () {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
+      final topology = provinceSeaChainTopology(regionId: ow);
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -116,17 +84,7 @@ group('applyDistantSeaZoneFogRevert', () {
     test('other player fleet at sea does not block distant fog revert', () {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
+      final topology = provinceSeaChainTopology(regionId: ow);
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -173,43 +131,7 @@ group('applyDistantSeaZoneFogRevert', () {
         const ow = kRegionOldWorld;
         const nw = kRegionNewWorld;
         const tileNwSea = 'newWorld|nwSea|0|0';
-        final topologyOw = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 's2',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 's1'),
-            TopologyEdge(id1: 's1', id2: 's2'),
-          ],
-        );
-        final topologyNw = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'nwSea',
-              regionId: nw,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [],
-        );
-        final combined = MapTopology(
-          nodes: [...topologyOw.nodes, ...topologyNw.nodes],
-          edges: topologyOw.edges,
-        );
+        final topologies = owSeaChainWithIsolatedNwSea();
         final game = Game(
           id: 'g_fog_2023',
           worldState: WorldState(
@@ -250,8 +172,8 @@ group('applyDistantSeaZoneFogRevert', () {
         final out = applyDistantSeaZoneFogRevert(
           game,
           inputVis,
-          combined,
-          topologyByRegion: {ow: topologyOw, nw: topologyNw},
+          topologies.combined,
+          topologyByRegion: {ow: topologies.ow, nw: topologies.nw},
         );
 
         expect(out['gp1']![tileNwSea], VisibilityLevel.fogged.name);
@@ -261,17 +183,7 @@ group('applyDistantSeaZoneFogRevert', () {
     test('fogs distant sea when player fleet is in port only (not at sea)', () {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
+      final topology = provinceSeaChainTopology(regionId: ow);
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -311,12 +223,7 @@ group('applyDistantSeaZoneFogRevert', () {
     test('does not change unknown water tiles', () {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [],
-      );
+      final topology = isolatedSeaZoneTopology(regionId: ow, seaZoneId: 's2');
       final game = Game(
         id: 'g1',
         worldState: WorldState(
