@@ -285,7 +285,22 @@ D5 test now imports `DealMatcher` from `package:colonizethis_economy/colonizethi
 
 Module: `colonizethis_economy_test_support/lib/src/first_right_profit_scenarios.dart`
 
+## Phase 2 — Slice 10 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| consumption-* | twelve `resolveConsumption` rows | `economy_consumption_test.dart` | — |
+| military-food-* | five `consumeMilitaryFood` rows | `economy_consumption_phases_test.dart` | — |
+| navy-food-* | four `consumeNavyFood` rows | `economy_consumption_phases_test.dart` | — |
+| worker-food-* | four `consumeWorkerFood` rows | `economy_consumption_phases_test.dart` | — |
+| assign-luxury-* | four `assignWorkerLuxury` rows | `economy_consumption_phases_test.dart` | — |
+| food-units-* | two `consumeFoodUnits` rows | `economy_consumption_phases_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/consumption_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/consumption_phases_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
+- Remaining core economy suites (`build_cost_test.dart`, `economy_production_test.dart`, `worker_action_cost_test.dart`, `non_gp_auto_offers_test.dart`) → scenario tables
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations
