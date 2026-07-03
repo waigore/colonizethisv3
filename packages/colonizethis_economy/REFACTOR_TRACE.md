@@ -318,9 +318,18 @@ Module: `colonizethis_economy_test_support/lib/src/build_cost_scenarios.dart`
 
 Module: `colonizethis_economy_test_support/lib/src/economy_production_scenarios.dart`
 
+## Phase 2 — Slice 13 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| recruit-afford-* | eight `canAffordRecruitWorker` rows | `worker_action_cost_test.dart` | — |
+| recruit-apply-* | five `applyRecruitWorkerCostDeduction` rows | `worker_action_cost_test.dart` | — |
+
+Module: `colonizethis_economy_test_support/lib/src/worker_action_cost_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining core economy suites (`worker_action_cost_test.dart`, `non_gp_auto_offers_test.dart`) → scenario tables
+- Remaining core economy suite (`non_gp_auto_offers_test.dart`) → scenario tables
 - Deal-matcher treasury dedup (`treasury_bid_budget.dart` shared helpers + CI gate)
 - Extended inline-`Game(` guard for all `packages/colonizethis_economy/test/**`
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations
