@@ -16,6 +16,7 @@ export 'src/carry_forward_bid_notional_scenarios.dart';
 export 'src/consumption_phases_scenarios.dart';
 export 'src/consumption_scenarios.dart';
 export 'src/core_economy_test_support.dart';
+export 'src/economy_production_scenarios.dart';
 export 'src/deal_matcher_frr_scenarios.dart';
 export 'src/deal_matcher_priority_scenarios.dart';
 export 'src/deal_matcher_scenarios.dart';
