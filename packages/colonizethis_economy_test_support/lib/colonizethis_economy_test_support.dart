@@ -23,6 +23,7 @@ export 'src/effective_market_price_scenarios.dart';
 export 'src/frr_credits_scenarios.dart';
 export 'src/frr_credits_test_support.dart';
 export 'src/frr_issue_ac_d5_scenarios.dart';
+export 'src/first_right_profit_scenarios.dart';
 export 'src/gp_treasury_credit_accumulator_scenarios.dart';
 export 'src/lock_recovery_minor_bids_scenarios.dart';
 export 'src/lock_recovery_minor_bids_test_support.dart';

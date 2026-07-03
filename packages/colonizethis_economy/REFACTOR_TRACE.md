@@ -275,8 +275,17 @@ Modules:
 
 D5 test now imports `DealMatcher` from `package:colonizethis_economy/colonizethis_economy.dart` (no `colonizethis_logic` test import).
 
+## Phase 2 — Slice 9 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-rate-* | five `computeFirstRightProfitRate` rows | `first_right_profit_test.dart` | #3753 R8.2 |
+| frr-profit-* | eight `computeFirstRightProfit` rows | `first_right_profit_test.dart` | #2992 D3 |
+| embassy-kickback-* | seven `computeEmbassyKickback` rows | `first_right_profit_test.dart` | #3753 R8.3 |
+
+Module: `colonizethis_economy_test_support/lib/src/first_right_profit_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- `first_right_profit_test.dart` → hoist inline const tables to test_support (already table-looped locally)
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations
