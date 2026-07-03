@@ -7,7 +7,7 @@ import '../features/game/flame/region_map_component.dart'
 import '../l10n/l10n.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/ct_region_map.dart';
-import '../widgets/debug_init_game.dart';
+import '../test_support/seed42_init_game_result.dart';
 
 /// Builds InitGameMapViewData for the debug init game result, enriching it with
 /// per-tile visibility derived from the first player's PlayerView. Used by map
@@ -15,7 +15,7 @@ import '../widgets/debug_init_game.dart';
 
 /// [PlayerView] for the first great power in the debug init game; null if none.
 PlayerView? debugPlayerViewForFirstPlayer() {
-  final result = getDebugInitGameResult();
+  final result = loadSeed42InitGameResult();
   final game = result.game;
   if (game.players.isEmpty) {
     return null;
@@ -25,7 +25,7 @@ PlayerView? debugPlayerViewForFirstPlayer() {
 }
 
 InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
-  final result = getDebugInitGameResult();
+  final result = loadSeed42InitGameResult();
   final view = debugPlayerViewForFirstPlayer();
   if (view == null) {
     return result.mapViewData;

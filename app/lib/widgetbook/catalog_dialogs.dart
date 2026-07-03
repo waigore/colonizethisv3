@@ -682,7 +682,7 @@ List<WidgetbookNode> get productionCommodityBreakdownDialogDirectories => [
       WidgetbookUseCase(
         name: 'Default — debug game, mixed deltas',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -730,7 +730,7 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
       WidgetbookUseCase(
         name: 'Grant mode — treasury sufficient',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.first.id;
           final targetFactionId = game.players.length >= 2
@@ -763,7 +763,7 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
       WidgetbookUseCase(
         name: 'Subsidy mode — percent stepper',
         builder: (context) {
-          final base = getDebugInitGameResult().game;
+          final base = loadSeed42InitGameResult().game;
           final humanPlayerId = base.players.first.id;
           final targetFactionId = base.players.length >= 2
               ? base.players[1].id
