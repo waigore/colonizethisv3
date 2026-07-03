@@ -23,6 +23,8 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pEconDarkTokens';
 const _humanPlayerId = 'gp1';
@@ -120,31 +122,6 @@ PlayerView _omniscientViewForTiles(Iterable<String> keys) {
   );
 }
 
-Widget _darkOverlay({
-  required Game game,
-  required RegionMapViewData region,
-  required String displayId,
-  required String selectedTileKey,
-  required PlayerView playerView,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: SizedBox(
-        width: 800,
-        child: ProvinceSeaZoneDetailOverlay(
-          game: game,
-          region: region,
-          displayId: displayId,
-          selectedTileKey: selectedTileKey,
-          humanPlayerId: _humanPlayerId,
-          playerView: playerView,
-        ),
-      ),
-    ),
-  );
-}
-
 /// Finds the `Expanded(child: Text(...))` row label whose data contains the
 /// localized improved-tile suffix (`with ...`) and the `grain` resource id.
 /// The label string is `"{terrain}/grain with {impBase}"` per
@@ -194,12 +171,14 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               region: region,
               displayId: _fullProvinceId,
               selectedTileKey: tk,
+              humanPlayerId: _humanPlayerId,
               playerView: _omniscientViewForTiles([tk]),
+              shellWidth: 800,
             ),
           );
           await tester.pumpAndSettle();
@@ -242,12 +221,14 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               region: region,
               displayId: _fullProvinceId,
               selectedTileKey: tk,
+              humanPlayerId: _humanPlayerId,
               playerView: _omniscientViewForTiles([tk]),
+              shellWidth: 800,
             ),
           );
           await tester.pumpAndSettle();
@@ -291,12 +272,14 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               region: region,
               displayId: _fullProvinceId,
               selectedTileKey: tk,
+              humanPlayerId: _humanPlayerId,
               playerView: _omniscientViewForTiles([tk]),
+              shellWidth: 800,
             ),
           );
           await tester.pumpAndSettle();
@@ -354,12 +337,14 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               region: region,
               displayId: _fullProvinceId,
               selectedTileKey: tk,
+              humanPlayerId: _humanPlayerId,
               playerView: _omniscientViewForTiles([tk]),
+              shellWidth: 800,
             ),
           );
           await tester.pumpAndSettle();
