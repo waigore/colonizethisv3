@@ -48,10 +48,10 @@ int _attemptMatch({
   if (cargoLeft <= 0) return 0;
   final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
   if (desiredQty <= 0) return 0;
-  final maxAffordable = _maxAffordableQuantity(
-    bid: bid,
+  final maxAffordable = maxAffordableBidQuantity(
+    bidRemaining: bid.remaining,
     pricePerUnit: pricePerUnit,
-    remainingTreasury: remainingTreasury,
+    remainingTreasuryBudget: remainingTreasury[bid.factionId] ?? 0,
   );
   final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
   if (matchQty <= 0) {
@@ -76,11 +76,11 @@ int _attemptMatch({
   offer.remaining -= matchQty;
   bid.remaining -= matchQty;
   remainingCargo[bid.factionId] = cargoLeft - matchQty;
-  _decrementTreasury(
-    bid: bid,
+  decrementTreasuryForFill(
+    buyerFactionId: bid.factionId,
     matchQty: matchQty,
     pricePerUnit: pricePerUnit,
-    remainingTreasury: remainingTreasury,
+    remainingTreasuryByBuyerFactionId: remainingTreasury,
   );
   return matchQty;
 }

@@ -117,38 +117,3 @@ int _min3(int a, int b, int c) {
   return m;
 }
 
-/// Returns the maximum units the buyer can afford to purchase at
-/// [pricePerUnit] given their remaining treasury budget. The
-/// `pricePerUnit == 0` branch preserves legacy free-fill behavior on
-/// the missing-price defect path per
-/// `SPEC/program/world-market-resolution.md` § Step C (Refs #3115):
-/// returns a high cap (`bid.remaining`) so the other three clamps
-/// dominate.
-int _maxAffordableQuantity({
-  required _OrderState bid,
-  required double pricePerUnit,
-  required Map<String, int> remainingTreasury,
-}) {
-  if (pricePerUnit <= 0.0) return bid.remaining;
-  final treasuryLeft = remainingTreasury[bid.factionId] ?? 0;
-  if (treasuryLeft <= 0) return 0;
-  final affordable = (treasuryLeft / pricePerUnit).floor();
-  return affordable < 0 ? 0 : affordable;
-}
-
-/// Decrements the per-buyer running treasury tally after a successful
-/// match. Skips the decrement on the missing-price defect path so
-/// free-fill behavior is preserved (no treasury accounting when no
-/// notional is owed).
-void _decrementTreasury({
-  required _OrderState bid,
-  required int matchQty,
-  required double pricePerUnit,
-  required Map<String, int> remainingTreasury,
-}) {
-  if (pricePerUnit <= 0.0 || matchQty <= 0) return;
-  final notional = (matchQty * pricePerUnit).round();
-  final treasuryLeft = remainingTreasury[bid.factionId] ?? 0;
-  final next = treasuryLeft - notional;
-  remainingTreasury[bid.factionId] = next < 0 ? 0 : next;
-}

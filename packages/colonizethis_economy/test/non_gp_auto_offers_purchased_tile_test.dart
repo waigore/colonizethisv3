@@ -31,8 +31,7 @@ void main() {
           'keyed under the minor with originTileKey equal to the purchased '
           'tile key', () {
         const purchasedTileKey = 'oldWorld|m1|0|0';
-        final game = _gameWithMinorTile(
-          resource: Resource.timber,
+        final game = minorTileAutoOfferGame(
           tileKey: purchasedTileKey,
           improvementLevel: 1,
           roadLevel: 1,
@@ -67,7 +66,7 @@ void main() {
         () {
           const purchasedTileKey = 'oldWorld|m1|0|0';
           const unpurchasedTileKey = 'oldWorld|m1|1|0';
-          final game = _gameWithTwoMinorTimberTiles(
+          final game = twoMinorTimberTilesAutoOfferGame(
             purchasedTileKey: purchasedTileKey,
             unpurchasedTileKey: unpurchasedTileKey,
           );
@@ -75,7 +74,7 @@ void main() {
           final result = computeNonGreatPowerAutoOffers(
             game: game,
             tileMapByRegion: {
-              'oldWorld': _twoTileSameResourceMap(Resource.timber),
+              'oldWorld': twoTileSameResourceMap(Resource.timber),
             },
             connectivityByFactionId: const {
               'm1': ConnectivityResult(
@@ -107,8 +106,7 @@ void main() {
           'carries the originTileKey that the index can map back to the '
           'owning GP for FRR routing', () {
         const purchasedTileKey = 'oldWorld|m1|0|0';
-        final game = _gameWithMinorTile(
-          resource: Resource.timber,
+        final game = minorTileAutoOfferGame(
           tileKey: purchasedTileKey,
           improvementLevel: 1,
           roadLevel: 1,
@@ -138,8 +136,7 @@ void main() {
           'handoff (C5) routes the yield to the owning GP treasury in '
           'phase 3 instead', () {
         const purchasedTileKey = 'oldWorld|m1|0|0';
-        final game = _gameWithMinorTile(
-          resource: Resource.gold,
+        final game = minorTileAutoOfferGame(
           tileKey: purchasedTileKey,
           improvementLevel: 1,
           roadLevel: 1,
@@ -167,8 +164,7 @@ void main() {
           'spices route through the riches handoff (C5) instead of the '
           'world market', () {
         const purchasedTileKey = 'oldWorld|m1|0|0';
-        final game = _gameWithMinorTile(
-          resource: Resource.spices,
+        final game = minorTileAutoOfferGame(
           tileKey: purchasedTileKey,
           improvementLevel: 1,
           roadLevel: 1,
@@ -197,117 +193,3 @@ void main() {
   );
 }
 
-/// Builds a minimal [Game] with one Minor `m1` owning province `oldWorld|m1`
-/// and a single tile at [tileKey] carrying [resource]. The tile is improved
-/// to [improvementLevel] with road level [roadLevel]. Optional
-/// [purchasedTilesByTileKey] is forwarded to `WorldState`.
-Game _gameWithMinorTile({
-  required Resource resource,
-  required String tileKey,
-  required int improvementLevel,
-  required int roadLevel,
-  Map<String, String> purchasedTilesByTileKey = const {},
-}) {
-  const provinceId = 'oldWorld|m1';
-  return Game(
-    id: 'g_c6',
-    minorNations: const [
-      MinorNation(
-        id: 'm1',
-        capitalProvinceId: provinceId,
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: provinceId,
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-    players: const [Player(id: 'gpA', displayName: 'GP A', isHuman: true)],
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-            townDevelopmentLevel: 1,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          provinceId: ['oldWorld|m1|0|0'],
-        },
-      },
-      tileState: TileMapState()
-          .setImprovement(tileKey, improvementLevel)
-          .setRoadLevel(tileKey, roadLevel),
-      purchasedTilesByTileKey: purchasedTilesByTileKey,
-    ),
-  );
-}
-
-/// Variant of [_gameWithMinorTile] that hosts two timber tiles in the same
-/// province — one marked as purchased, one not — for the parity test.
-Game _gameWithTwoMinorTimberTiles({
-  required String purchasedTileKey,
-  required String unpurchasedTileKey,
-}) {
-  const provinceId = 'oldWorld|m1';
-  TileMapState tileState = const TileMapState();
-  for (final tileKey in [purchasedTileKey, unpurchasedTileKey]) {
-    tileState = tileState.setImprovement(tileKey, 1).setRoadLevel(tileKey, 1);
-  }
-  return Game(
-    id: 'g_c6_parity',
-    minorNations: const [
-      MinorNation(
-        id: 'm1',
-        capitalProvinceId: provinceId,
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: provinceId,
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-    players: const [Player(id: 'gpA', displayName: 'GP A', isHuman: true)],
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-            townDevelopmentLevel: 1,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          provinceId: [purchasedTileKey, unpurchasedTileKey],
-        },
-      },
-      tileState: tileState,
-      purchasedTilesByTileKey: {purchasedTileKey: 'gpA'},
-    ),
-  );
-}
-
-/// 2x1 tile map for province `m1` where both tiles carry [resource].
-TileMapResult _twoTileSameResourceMap(Resource resource) => TileMapResult(
-  width: 2,
-  height: 1,
-  grid: [
-    ['m1', 'm1'],
-  ],
-  resourceGrid: [
-    [resource, resource],
-  ],
-);
