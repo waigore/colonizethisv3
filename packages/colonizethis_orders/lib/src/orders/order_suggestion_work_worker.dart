@@ -144,7 +144,7 @@ List<String> _prioritizeFeedstockBuildImprovementCandidates({
 /// feedstock resource the player currently holds the **least** of sorts first,
 /// lexicographically tie-broken.
 ///
-/// Multi-input improvement recipes (`castIron_from_timber_iron_coal` consumes
+/// Multi-input improvement recipes (`castIron_from_iron` consumes
 /// `timber` **and** `iron`) only become feasible once every feedstock is on
 /// hand, but the worker pipeline emits a single `build_improvement` suggestion
 /// per Builder per pass. With a purely lexicographic front the lone suggestion

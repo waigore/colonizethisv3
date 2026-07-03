@@ -67,12 +67,9 @@ void main() {
     '(Refs #2847 H8 production allocation — S7-D castIron, PR #3289)',
     () {
       test(
-        'lock-recovery seller short castIron that owns a timber tile but no '
-        'unimproved fabric tile returns only the multi-input castIron',
+        'lock-recovery seller short castIron that owns only timber tile does '
+        'not stage castIron once the recipe is iron-only (Refs #3858)',
         () {
-          // The seller owns a `timber` tile (so it extracts castIron feedstock)
-          // but no `wool` / `cotton` tile, so the fabric improvement-cost gate
-          // is inactive and the prior self-need helper is empty here.
           final game = _stageableSellerGame();
           expect(
             selfLockRecoverySellerNeededProducibleImprovementInputs(
@@ -84,10 +81,9 @@ void main() {
           );
           expect(
             selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
-            equals({CommodityCatalog.castIron.id}),
+            isEmpty,
             reason:
-                'castIron is the only producible multi-input level-0 input; '
-                'single-input lumber is excluded',
+                'castIron is single-input; multi-input staging path is inactive',
           );
         },
       );

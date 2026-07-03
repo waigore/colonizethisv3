@@ -198,7 +198,7 @@ void _resolve_turn_economy_part1_segment2_partTests() {
             ],
             'p2': const [
               AssignedRecipe(
-                recipeId: 'castIron_from_timber_iron_coal',
+                recipeId: 'castIron_from_iron',
                 assignedLabour: 15,
               ),
             ],

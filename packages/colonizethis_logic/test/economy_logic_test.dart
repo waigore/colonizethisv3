@@ -77,7 +77,7 @@ void main() {
         idleLabour: WorkerIdleCounts(peasants: 10),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 20,
           ),
         ],

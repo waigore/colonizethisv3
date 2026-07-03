@@ -1213,7 +1213,7 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// **Re-pointed lever — now landed.** The binding precondition was **seller
 /// `timber` holdings**: the locked seller owns unimproved `timber` tiles but
 /// holds zero `timber`, so neither `lumber_from_timber` nor
-/// `castIron_from_timber_iron_coal` had feedstock. That lever is now
+/// `castIron_from_iron` had feedstock. That lever is now
 /// implemented: `sellerImprovementInputFeedstockExtractionResourceIds`
 /// (`full_ai_civilian_work_selection.dart`) extends the H8 feedstock-extraction
 /// gate (via `feedstockExtractionResourceIdsForPlayer`) to the seller's own
@@ -1314,7 +1314,7 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 ///
 /// **Decisive new localization:** `gpCastIronProductionAssignedTurns` is **0
 /// for every GP including gp5**, yet the only `castIron` recipe
-/// (`castIron_from_timber_iron_coal`) consumes only `timber` × 2 + `iron` × 2
+/// (`castIron_from_iron`) consumes only `timber` × 2 + `iron` × 2
 /// (no coal in `inputQuantities`) — so gp5's turn-99 holdings (71 / 64) make it
 /// **materially feasible**. This slice adds the missing per-turn signal,
 /// `gpCastIronRecipeFeasibleTurns` (built on the read-only pure helper
@@ -2060,7 +2060,7 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
       // Refs #2847 H8 castIron production-assignment localization (read-only).
-      // The castIron recipe `castIron_from_timber_iron_coal` consumes only
+      // The castIron recipe `castIron_from_iron` consumes only
       // `timber` + `iron` (no coal in `inputQuantities`), so it is materially
       // feasible whenever both feedstocks are on hand. This counter (built on
       // `stockpileAffordsAnyProductionRecipe`) splits a flat

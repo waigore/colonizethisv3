@@ -687,7 +687,7 @@ List<AssignedRecipe> _defaultAssignments(
       ),
     if (toCastIron > 0)
       AssignedRecipe(
-        recipeId: 'castIron_from_timber_iron_coal',
+        recipeId: 'castIron_from_iron',
         assignedLabour: toCastIron,
       ),
     if (toLumber > 0)
