@@ -249,7 +249,7 @@ class CivilianPanelWithMapStoryState
   @override
   void initState() {
     super.initState();
-    _game = getDebugInitGameResult().game;
+    _game = loadSeed42InitGameResult().game;
     _panelBus = AppEventBus.create();
     _sessionCommandSubs.addAll([
       _panelBus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
@@ -290,7 +290,7 @@ class CivilianPanelWithMapStoryState
         _cachedValidTileKeys != null) {
       return _cachedValidTileKeys;
     }
-    final result = getDebugInitGameResult();
+    final result = loadSeed42InitGameResult();
 
     Set<String> valid;
     if (_visibilityMode == CtMapVisibilityMode.playerConstrained) {
@@ -362,7 +362,7 @@ class CivilianPanelWithMapStoryState
 
   @override
   Widget build(BuildContext context) {
-    final baseResult = getDebugInitGameResult();
+    final baseResult = loadSeed42InitGameResult();
     final mapViewData = _visibilityMode == CtMapVisibilityMode.playerConstrained
         ? debugMapViewDataWithVisibilityForFirstPlayer()
         : baseResult.mapViewData;
@@ -473,7 +473,7 @@ class CivilianPanelAsBottomSheetStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final result = getDebugInitGameResult();
+    final result = loadSeed42InitGameResult();
     final game = result.game;
     final humanPlayerId = game.players.isNotEmpty
         ? game.players.first.id
@@ -573,7 +573,7 @@ class MilitaryPanelWithMapStoryState
 
   @override
   Widget build(BuildContext context) {
-    final result = getDebugInitGameResult();
+    final result = loadSeed42InitGameResult();
     final game = result.game;
     final mapViewData = result.mapViewData;
     final humanPlayerId = game.players.isNotEmpty

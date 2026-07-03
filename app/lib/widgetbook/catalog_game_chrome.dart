@@ -570,7 +570,7 @@ Widget _gameMapEmpireLeftRailStoryFrame({
   bool narrow = false,
   bool debugConsoleEnabled = false,
 }) {
-  final game = getDebugInitGameResult().game;
+  final game = loadSeed42InitGameResult().game;
   final humanId = game.players.isNotEmpty ? game.players.first.id : 'gp_human';
   return ProviderScope(
     overrides: [

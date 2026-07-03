@@ -8,7 +8,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       WidgetbookUseCase(
         name: 'With real game',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -60,7 +60,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
         // R22 screen list to Diplomacy.
         name: 'Mobile viewport — narrow rows (≤ 500 dp)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id

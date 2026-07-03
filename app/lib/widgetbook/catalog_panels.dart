@@ -58,8 +58,8 @@ List<WidgetbookNode> get productionPanelDirectories => [
 /// Mid-game [TechnologyScreen] fixture (Slots tab default) for Widgetbook.
 /// SPEC/ui/technology-panel.md § Widgetbook; Refs #2870 R22 / S9.
 ///
-/// Refs #3656: built from a lightweight hand-constructed [Game] instead of the
-/// ~7-11s procedural `getDebugInitGameResult()` map generator. The Technology
+/// Refs #3656: built from a lightweight hand-constructed [Game] instead of
+/// committed seed-42 fixtures via [loadSeed42InitGameResult]. The Technology
 /// screen reads only `game.players` plus the static `techCatalog`, so the
 /// slots/tree chrome renders identically without any generated map/topology
 /// data. The single human ([_kMidGameTechPlayerId]) carries the same id the
@@ -144,7 +144,7 @@ List<WidgetbookNode> get techTreeDirectories => [
       WidgetbookUseCase(
         name: 'Tech tree only (mid-game)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           if (game.players.isEmpty) {
             return Center(child: Text(appL10n(context).widgetbook_noPlayers));
@@ -242,7 +242,7 @@ Widget _technologySlotsStoryHost({
   required BuildContext context,
   required _TechnologySlotsStoryVariant variant,
 }) {
-  final result = getDebugInitGameResult();
+  final result = loadSeed42InitGameResult();
   final game = result.game;
   if (game.players.isEmpty) {
     return Center(child: Text(appL10n(context).widgetbook_noPlayers));
@@ -441,7 +441,7 @@ const List<ResearchFundingLevel> _kFundingPreviewLevels =
 /// persisted `researchSlotAssignments`. SPEC/ui/technology-panel.md
 /// § Slot occupancy + § Widgetbook. Refs #3512.
 Widget _technologyPersistedSlotStoryHost(BuildContext context) {
-  final result = getDebugInitGameResult();
+  final result = loadSeed42InitGameResult();
   final game = result.game;
   if (game.players.isEmpty) {
     return Center(child: Text(appL10n(context).widgetbook_noPlayers));
@@ -513,7 +513,7 @@ class _TechnologyPersistedSlotStoryState
 /// preview render and respond to taps. SPEC/ui/technology-panel.md
 /// § Widgetbook. Refs #3512.
 Widget _technologyFundingPreviewStoryHost(BuildContext context) {
-  final result = getDebugInitGameResult();
+  final result = loadSeed42InitGameResult();
   final game = result.game;
   if (game.players.isEmpty) {
     return Center(child: Text(appL10n(context).widgetbook_noPlayers));
@@ -800,7 +800,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -826,7 +826,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
         // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
         name: 'Mobile (360x640)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -858,7 +858,7 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -891,7 +891,7 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
         // (naval shares the same rule, no fixed sidebar).
         name: 'Mobile (360x640)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id

@@ -87,7 +87,7 @@ import '../features/shell/new_game_leader_selection_dialog.dart';
 import '../features/shell/new_game_setup_flow.dart';
 import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
-import '../widgets/debug_init_game.dart';
+import '../test_support/seed42_init_game_result.dart';
 import '../widgets/ct_back_button.dart';
 import '../widgets/ct_icon_action.dart';
 import '../widgets/ct_brass_divider.dart';
@@ -610,7 +610,7 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -641,7 +641,7 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
         // 50% height cap from `unitsPanelSheetConstraints` at 360 × 640 dp.
         name: 'Mobile (360x640)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -674,7 +674,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -711,7 +711,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
       WidgetbookUseCase(
         name: 'With locked units',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -749,7 +749,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
       WidgetbookUseCase(
         name: 'Low resources',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
