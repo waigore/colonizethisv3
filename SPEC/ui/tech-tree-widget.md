@@ -59,6 +59,17 @@ Each tech category in the catalog must have a mapped icon asset. Missing or inva
 
 - **Category legend:** The tree screen shows a compact legend explaining the colour for each tech category (e.g. gathering = green, transport = blue, etc.), using the same palette as the nodes.
 - **State legend:** The legend also explains node state visuals for the current player (Researched, In progress, Available, Locked), matching the styles in the Node states section below.
+- **GP pennant legend:** The legend includes an entry explaining GP nation-color pennants (sample highlighted + standard pennant + localized label). See [gp-nation-color-pennant.md](components/gp-nation-color-pennant.md).
+
+## GP nation-color pennants (Refs #3862)
+
+- **Scope:** Great Powers only (`isGreatPower`); fully unlocked techs only (`techUnlocked[techId] == true`); no fog-of-war.
+- **Placement:** Compact pennant row **below** each tech node label on the tree; inline after the tech display name in Choose-tech option rows.
+- **Ordering:** Context player first (when among researchers), then remaining GPs in `game.players` setup order.
+- **Highlight:** Context player’s pennant uses accent border; others use standard border.
+- **Empty:** No pennant row when no GP has unlocked the tech.
+- **Long-press:** Long-pressing a pennant row opens a modal listing researching GPs (pennant + `displayName`).
+- **Description dialog:** When at least one GP has unlocked the tech, the tap dialog adds a **“Researched by”** section with pennant + name rows (same ordering).
 
 ## Node states (current player only)
 
