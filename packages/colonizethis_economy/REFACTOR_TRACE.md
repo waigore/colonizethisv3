@@ -225,9 +225,22 @@ Modules:
 
 Module: `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart`
 
+## Phase 2 — Slice 6 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| suggester-treasury-* | three cumulative treasury cap (rule 5) rows | `world_market_trade_order_suggester_treasury_test.dart` | #3123 |
+| player-ctx-snapshot-* | four `worldMarketPlayerContextFromGame` snapshot rows | `world_market_player_context_test.dart` | #3615 |
+| player-ctx-factory-* | two factory parity rows over the shared snapshot | `world_market_player_context_test.dart` | #3615 |
+| player-ctx-suggestion-* | three `tradeSuggestionContextFromGame` behavior rows | `world_market_player_context_test.dart` | #3615 |
+
+Modules:
+- Extended `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart` (`tradeOrderSuggesterTreasuryCapScenarios`)
+- `colonizethis_economy_test_support/lib/src/player_context_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 9 imperative world-market test files → scenario tables
+- Remaining 7 imperative world-market test files → scenario tables
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
 - ≥15% test LOC reduction target (≤6,500 LOC)

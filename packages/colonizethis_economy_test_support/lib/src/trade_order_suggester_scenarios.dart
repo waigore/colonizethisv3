@@ -345,3 +345,60 @@ tradeOrderSuggesterValidatorCleanScenarios() => [
     },
   ),
 ];
+
+/// Treasury bid cap (rule 5) scenarios from
+/// `world_market_trade_order_suggester_treasury_test.dart` (Refs #3123).
+List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() =>
+    [
+      TradeOrderSuggesterScenario(
+        label: 'treasury budget is consumed across distinct bids in id order',
+        buildContext: () => suggesterCtx(
+          bidTypeCap: 6,
+          treasuryBudgetForBids: 90,
+          worldMarketState: WorldMarketState(
+            prices: {
+              CommodityCatalog.iron.id: 30,
+              CommodityCatalog.timber.id: 30,
+            },
+          ),
+          commodityNeedByCommodityId: {
+            CommodityCatalog.iron.id: 5,
+            CommodityCatalog.timber.id: 5,
+          },
+        ),
+        verify: (context, result) {
+          expect(result.bids, hasLength(1));
+          expect(result.bids.single.commodityId, CommodityCatalog.iron.id);
+          expect(result.bids.single.quantity, 3);
+        },
+        refs: '#3123',
+      ),
+      TradeOrderSuggesterScenario(
+        label: 'single bid is partial-capped by treasury',
+        buildContext: () => suggesterCtx(
+          treasuryBudgetForBids: 90,
+          worldMarketState: WorldMarketState(
+            prices: {CommodityCatalog.timber.id: 30},
+          ),
+          commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
+        ),
+        verify: (context, result) {
+          expect(result.bids.single.quantity, 3);
+        },
+        refs: '#3123',
+      ),
+      TradeOrderSuggesterScenario(
+        label: 'zero treasury budget suppresses bids entirely',
+        buildContext: () => suggesterCtx(
+          treasuryBudgetForBids: 0,
+          worldMarketState: WorldMarketState(
+            prices: {CommodityCatalog.timber.id: 30},
+          ),
+          commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
+        ),
+        verify: (context, result) {
+          expect(result.bids, isEmpty);
+        },
+        refs: '#3123',
+      ),
+    ];
