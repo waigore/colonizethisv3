@@ -37,4 +37,14 @@ void main() {
       AppThemes.editorialMonocle.colorScheme,
     );
   });
+
+  testWidgets('buildProvinceOverlayWithRevealedDemoTile mounts sample tile', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildProvinceOverlayWithRevealedDemoTile());
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
+  });
 }
