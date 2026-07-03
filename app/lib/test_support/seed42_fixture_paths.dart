@@ -11,6 +11,10 @@ const String kSeed42GameFixtureRepoPath =
 const String kSeed42MapViewFixtureRepoPath =
     'app/test/support/fixtures/seed42_map_view.json';
 
+/// Repo-relative path to the committed seed-42 per-region tile-map JSON fixture.
+const String kSeed42TileMapFixtureRepoPath =
+    'app/test/support/fixtures/seed42_tile_map.json';
+
 /// Candidate paths for [kSeed42GameFixtureRepoPath].
 const List<String> kSeed42GameFixtureCandidatePaths = <String>[
   'test/support/fixtures/seed42_game.json',
@@ -21,4 +25,10 @@ const List<String> kSeed42GameFixtureCandidatePaths = <String>[
 const List<String> kSeed42MapViewFixtureCandidatePaths = <String>[
   'test/support/fixtures/seed42_map_view.json',
   kSeed42MapViewFixtureRepoPath,
+];
+
+/// Candidate paths for [kSeed42TileMapFixtureRepoPath].
+const List<String> kSeed42TileMapFixtureCandidatePaths = <String>[
+  'test/support/fixtures/seed42_tile_map.json',
+  kSeed42TileMapFixtureRepoPath,
 ];
