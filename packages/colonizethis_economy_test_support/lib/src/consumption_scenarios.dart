@@ -27,6 +27,11 @@ void runConsumptionScenario(ConsumptionScenario scenario) {
 
 /// Canonical scenarios for [resolveConsumption].
 List<ConsumptionScenario> resolveConsumptionScenarios() => [
+  ..._resolveConsumptionWorkerFoodScenarios(),
+  ..._resolveConsumptionMilitaryLuxuryScenarios(),
+];
+
+List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ConsumptionScenario(
     label: 'peasants consume 1 food each (grain or meat)',
     run: () {
@@ -166,6 +171,9 @@ List<ConsumptionScenario> resolveConsumptionScenarios() => [
       expect(result.fullyFedShips, 0);
     },
   ),
+];
+
+List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   ConsumptionScenario(
     label: 'unknown ship type id throws ConsumptionUnknownShipTypeException',
     run: () {
