@@ -79,22 +79,12 @@ void main() {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                height: 900,
-                width: 480,
-                child: ArmySplitTestHarness(
-                  initialGame: initial,
-                  humanPlayerId: playerId,
-                  bus: bus,
-                ),
-              ),
-            ),
-          ),
+        await pumpArmySplitHarness(
+          tester,
+          initialGame: initial,
+          humanPlayerId: playerId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
         await tester.tap(homeTile);
@@ -192,22 +182,12 @@ void main() {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                height: 900,
-                width: 480,
-                child: ArmySplitTestHarness(
-                  initialGame: initial,
-                  humanPlayerId: playerId,
-                  bus: bus,
-                ),
-              ),
-            ),
-          ),
+        await pumpArmySplitHarness(
+          tester,
+          initialGame: initial,
+          humanPlayerId: playerId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
         await tester.tap(homeTile);

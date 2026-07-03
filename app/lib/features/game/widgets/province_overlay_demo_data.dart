@@ -1,32 +1,38 @@
 // Demo Game and region data for ProvinceSeaZoneDetailOverlay Widgetbook and tests.
-// Uses debug init result (generated map + initialized game). SPEC/ui/map-widget.md.
+// Uses committed seed-42 fixtures (Refs #3656, #3847). SPEC/ui/map-widget.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/test_support/seed42_fixture_loader.dart';
 
-/// Demo region for overlay (Old World from debug init result).
-RegionMapViewData get demoRegionForOverlay =>
-    getDebugInitGameResult().mapViewData.oldWorld;
+Game? _cachedDemoGame;
+InitGameMapViewData? _cachedDemoMapView;
 
-/// Demo game for overlay (from debug init result; matches demoRegionForOverlay).
-Game get demoGameForOverlay => getDebugInitGameResult().game;
+InitGameMapViewData get _demoMapView =>
+    _cachedDemoMapView ??= loadSeed42MapViewData();
+
+Game get _demoGame => _cachedDemoGame ??= loadSeed42Game();
+
+/// Demo region for overlay (Old World from seed-42 map-view fixture).
+RegionMapViewData get demoRegionForOverlay => _demoMapView.oldWorld;
+
+/// Demo game for overlay (matches [demoRegionForOverlay]).
+Game get demoGameForOverlay => _demoGame;
 
 /// [PlayerView] for the first player in [demoGameForOverlay] (fog-aware overlay).
 PlayerView get demoHumanPlayerViewForOverlay {
-  final result = getDebugInitGameResult();
   return buildPlayerView(
-    result.game,
-    result.combinedTopology,
-    result.game.players.first.id,
+    _demoGame,
+    _demoMapView.combinedTopology,
+    _demoGame.players.first.id,
   );
 }
 
 /// First land province prefixed id in Old World (for overlay story selectedId).
 String get sampleProvinceIdForOverlay {
-  final region = getDebugInitGameResult().mapViewData.oldWorld;
+  final region = _demoMapView.oldWorld;
   for (final cell in region.cells) {
     if (!cell.isSea) {
       return '${region.regionId}|${cell.regionCellId}';
@@ -37,8 +43,8 @@ String get sampleProvinceIdForOverlay {
 
 /// A full tile key in [sampleProvinceIdForOverlay] for Tile section demos/tests.
 String get sampleTileKeyForProvinceOverlay {
-  final game = getDebugInitGameResult().game;
-  final region = getDebugInitGameResult().mapViewData.oldWorld;
+  final game = _demoGame;
+  final region = _demoMapView.oldWorld;
   final provinceId = sampleProvinceIdForOverlay;
   final tiles =
       game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId];
@@ -51,7 +57,7 @@ String get sampleTileKeyForProvinceOverlay {
 
 /// First sea zone prefixed id in Old World (for overlay story selectedId).
 String get sampleSeaZoneIdForOverlay {
-  final region = getDebugInitGameResult().mapViewData.oldWorld;
+  final region = _demoMapView.oldWorld;
   for (final cell in region.cells) {
     if (cell.isSea) {
       return '${region.regionId}|${cell.regionCellId}';

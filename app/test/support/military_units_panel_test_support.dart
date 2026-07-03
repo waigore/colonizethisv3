@@ -2,13 +2,14 @@
 //
 // The `MilitaryUnitsPanel` test files (`military_units_panel_test.dart`,
 // `_display_test.dart`, `_army_test.dart`, `_army_split_test.dart`) each
-// previously re-declared an identical local `buildPanel(...)` closure (a plain
-// `MaterialApp` > `Scaffold` host for `MilitaryUnitsPanel`), identical
+// previously re-declared an identical local `buildPanel(...)` closure (a
+// `buildAppShell` > `Scaffold` host for `MilitaryUnitsPanel`), identical
 // `expandFirstArmyExpansion` / `expandAllArmyExpansions` `ExpansionTile`
-// helpers, and a byte-identical `_ArmySplitTestHarness` widget that mirrors the
-// running shell's `ArmySplitRequestedEvent` handling. Consolidating them here
-// keeps each test file's per-test fixtures and assertions local while removing
-// the copy-pasted shell, tree helpers, and bus wiring.
+// helpers, and an `ArmySplitTestHarness` widget that mirrors the running
+// shell's `ArmySplitRequestedEvent` handling (hosted via [pumpArmySplitHarness] >
+// [buildAppShell]). Consolidating them here keeps each test file's per-test
+// fixtures and assertions local while removing the copy-pasted shell, tree
+// helpers, and bus wiring.
 //
 // Refs #3730 (consolidate app test scaffolding; shared family setup).
 // SPEC: SPEC/ui/military-units-panel.md (panel behavior under test),
@@ -24,10 +25,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 
+import 'app_shell_harness.dart';
+
 /// Builds the canonical [MilitaryUnitsPanel] host used across the panel's
-/// widget tests: a plain [MaterialApp] > [Scaffold] wrapping the panel. When
-/// [bus] is omitted a fresh [AppEventBus] is created so tests that do not need
-/// to drive events still get a valid bus.
+/// widget tests: editorial-monocle [buildAppShell] > [Scaffold] wrapping the
+/// panel. When [bus] is omitted a fresh [AppEventBus] is created so tests that
+/// do not need to drive events still get a valid bus.
 Widget buildMilitaryPanel({
   required Game game,
   required String humanPlayerId,
@@ -35,8 +38,8 @@ Widget buildMilitaryPanel({
   MapTopology? topology,
   Orders draftOrders = const Orders(),
 }) {
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: MilitaryUnitsPanel(
         game: game,
         humanPlayerId: humanPlayerId,
@@ -68,6 +71,31 @@ Future<void> expandAllArmyExpansions(WidgetTester tester) async {
     await tester.tap(finder.at(i));
     await tester.pumpAndSettle();
   }
+}
+
+/// Tall viewport for army-split interaction tests ([ListView] rows need height).
+const Size kArmySplitTestViewport = Size(480, 900);
+
+/// Pumps [ArmySplitTestHarness] inside the canonical editorial-monocle
+/// [buildAppShell] > [Scaffold] host at [kArmySplitTestViewport].
+Future<void> pumpArmySplitHarness(
+  WidgetTester tester, {
+  required Game initialGame,
+  required String humanPlayerId,
+  required AppEventBus bus,
+}) {
+  return pumpAppShell(
+    tester,
+    viewport: kArmySplitTestViewport,
+    child: Scaffold(
+      body: ArmySplitTestHarness(
+        initialGame: initialGame,
+        humanPlayerId: humanPlayerId,
+        bus: bus,
+      ),
+    ),
+    settle: true,
+  );
 }
 
 /// Applies [ArmySplitRequestedEvent] like `AppEventHandlerScope` and rebuilds
