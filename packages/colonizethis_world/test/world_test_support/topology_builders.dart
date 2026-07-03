@@ -522,6 +522,120 @@ MapTopology twoProvinceLandTopology({
   );
 }
 
+/// Empty topology for legacy no-op move paths.
+const MapTopology kEmptyMapTopology = MapTopology();
+
+/// Three land provinces with a single [province1Id]–[province2Id] adjacency.
+MapTopology threeProvincePartialChainTopology({
+  required String regionId,
+  String province1Id = 'p1',
+  String province2Id = 'p2',
+  String province3Id = 'p3',
+}) {
+  return topologyFromGraph(
+    nodes: [
+      TopologyNode(
+        id: province1Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: province2Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: province3Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: [TopologyEdge(id1: province1Id, id2: province2Id)],
+  );
+}
+
+/// Prefixed-id adjacent provinces ([province1LocalId]–[province2LocalId] linked).
+MapTopology prefixedAdjacentProvincesTopology({
+  required String regionId,
+  String province1LocalId = 'p1',
+  String province2LocalId = 'p2',
+  String province3LocalId = 'p3',
+}) {
+  final p1 = '$regionId|$province1LocalId';
+  final p2 = '$regionId|$province2LocalId';
+  final p3 = '$regionId|$province3LocalId';
+  return topologyFromGraph(
+    nodes: [
+      prefixedProvinceNode(p1),
+      prefixedProvinceNode(p2),
+      prefixedProvinceNode(p3),
+    ],
+    edges: [TopologyEdge(id1: p1, id2: p2)],
+  );
+}
+
+/// OW/NW provinces + seas with cross-region S–S warp (prefixed node ids).
+MapTopology prefixedDualRegionNavalWarpTopology({
+  String owProvinceLocalId = 'p1',
+  String owSeaLocalId = 's1',
+  String nwProvinceLocalId = 'n1',
+  String nwSeaLocalId = 's2',
+}) {
+  final owP = '$kWorldTestOw|$owProvinceLocalId';
+  final owS = '$kWorldTestOw|$owSeaLocalId';
+  final nwP = '$kWorldTestNw|$nwProvinceLocalId';
+  final nwS = '$kWorldTestNw|$nwSeaLocalId';
+  return topologyFromGraph(
+    nodes: [
+      prefixedProvinceNode(owP),
+      prefixedSeaZoneNode(owS),
+      prefixedProvinceNode(nwP),
+      prefixedSeaZoneNode(nwS),
+    ],
+    edges: [
+      TopologyEdge(id1: owP, id2: owS),
+      TopologyEdge(id1: owS, id2: nwS),
+      TopologyEdge(id1: nwP, id2: nwS),
+    ],
+  );
+}
+
+/// Same local province id in two regions with region-scoped sea adjacency.
+MapTopology duplicateLocalProvinceIdsByRegionTopology({
+  String sharedLocalProvinceId = 'p1',
+  String owSeaLocalId = 'sea1',
+  String nwSeaLocalId = 'sea2',
+}) {
+  return topologyFromGraph(
+    nodes: [
+      TopologyNode(
+        id: sharedLocalProvinceId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owSeaLocalId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: sharedLocalProvinceId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwSeaLocalId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: sharedLocalProvinceId, id2: owSeaLocalId),
+      TopologyEdge(id1: sharedLocalProvinceId, id2: nwSeaLocalId),
+    ],
+  );
+}
+
 /// OW two provinces plus NW province (land only, multi-faction non-GP tests).
 MapTopology threeProvinceDualRegionLandTopology({
   String owProvince1Id = 'p1',
