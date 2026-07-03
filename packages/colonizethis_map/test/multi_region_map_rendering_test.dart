@@ -3,24 +3,16 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:image/image.dart' as img;
 
-void main() {
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-      TopologyNode(id: 's1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  );
+import 'support/init_game_map_view_fixtures.dart';
 
-  final smallResult = TileMapResult(
-    width: 4,
-    height: 3,
-    grid: [
-      ['p1', 'p1', 's1', 's1'],
-      ['p1', 's1', 's1', 's1'],
-      ['p1', 'p1', 's1', 's1'],
-    ],
-  );
+void main() {
+  final topology = singleProvinceAndSeaTopology('oldWorld');
+
+  final smallResult = mapTileGrid([
+    ['p1', 'p1', 's1', 's1'],
+    ['p1', 's1', 's1', 's1'],
+    ['p1', 'p1', 's1', 's1'],
+  ]);
 
   group('composeMultiRegionMapPng', () {
     test('returns non-empty PNG with combined dimensions', () {
