@@ -30,7 +30,6 @@ const Set<String> _grandfatheredInlineTopologyTestPaths = {
   'packages/colonizethis_world/test/world/naval_home_fleet_split_movement_resolve_integration_test.dart',
   'packages/colonizethis_world/test/world/naval_topology_test.dart',
   'packages/colonizethis_world/test/world/player_view_build_test.dart',
-  'packages/colonizethis_world/test/world/sea_reachable_provinces_test.dart',
 };
 
 final RegExp _inlineMapTopologyConstructor = RegExp(r'\bMapTopology\(');

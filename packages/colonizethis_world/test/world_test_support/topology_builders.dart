@@ -7,6 +7,28 @@ const String kWorldTestOw = 'oldWorld';
 /// Canonical new-world region id for world test support builders.
 const String kWorldTestNw = 'newWorld';
 
+/// Province topology node with a prefixed id (`regionId|localId`).
+TopologyNode prefixedProvinceNode(String prefixedId) => TopologyNode(
+  id: prefixedId,
+  regionId: ProvinceId.regionIdFrom(prefixedId),
+  type: TopologyNodeType.province,
+);
+
+/// Sea-zone topology node with a prefixed id (`regionId|localId`).
+TopologyNode prefixedSeaZoneNode(String prefixedId) => TopologyNode(
+  id: prefixedId,
+  regionId: ProvinceId.regionIdFrom(prefixedId),
+  type: TopologyNodeType.seaZone,
+);
+
+/// Explicit node/edge list for tests that need prefixed province ids.
+MapTopology topologyFromGraph({
+  required List<TopologyNode> nodes,
+  List<TopologyEdge> edges = const [],
+}) {
+  return MapTopology(nodes: nodes, edges: edges);
+}
+
 /// Single province adjacent to a sea zone in [regionId].
 MapTopology provinceSeaZoneTopology({
   required String regionId,
