@@ -28,6 +28,7 @@ export 'src/non_gp_auto_offers_test_support.dart';
 export 'src/non_gp_extraction_scenarios.dart';
 export 'src/non_gp_extraction_test_support.dart';
 export 'src/resource_extractor_scenarios.dart';
+export 'src/sellable_quantity_scenarios.dart';
 export 'src/resource_extractor_test_support.dart';
 export 'src/staged_bid_spend_scenarios.dart';
 export 'src/tile_map_test_support.dart';

@@ -160,9 +160,19 @@ Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treas
 
 Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
 
+## Phase 2 — Slice 2 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| offer-cap-* | four offerCapByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+| staged-offer-* | four stagedOfferQuantitiesByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+| sellable-headroom-* | ten sellableHeadroomByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+
+Module: `colonizethis_economy_test_support/lib/src/sellable_quantity_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 13 imperative world-market test files → scenario tables
+- Remaining 12 imperative world-market test files → scenario tables
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
 - ≥15% test LOC reduction target (≤6,500 LOC)
