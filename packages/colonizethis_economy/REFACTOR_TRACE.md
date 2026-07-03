@@ -300,7 +300,15 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/consumption_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/consumption_phases_scenarios.dart`
 
+## Phase 2 — Slice 11 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| build-cost-* | nine `canAffordBuild` / `applyBuildCostDeduction` rows | `build_cost_test.dart` | — |
+
+Module: `colonizethis_economy_test_support/lib/src/build_cost_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining core economy suites (`build_cost_test.dart`, `economy_production_test.dart`, `worker_action_cost_test.dart`, `non_gp_auto_offers_test.dart`) → scenario tables
+- Remaining core economy suites (`economy_production_test.dart`, `worker_action_cost_test.dart`, `non_gp_auto_offers_test.dart`) → scenario tables
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations

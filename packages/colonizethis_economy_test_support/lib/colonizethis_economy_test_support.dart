@@ -8,6 +8,7 @@
 library colonizethis_economy_test_support;
 
 export 'src/bid_spend_game_factory.dart';
+export 'src/build_cost_scenarios.dart';
 export 'src/bid_spend_parity_scenarios.dart';
 export 'src/boycott_blocked_commodities_scenarios.dart';
 export 'src/boycott_blocked_commodities_test_support.dart';
