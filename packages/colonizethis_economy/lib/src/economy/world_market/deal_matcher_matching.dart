@@ -29,9 +29,21 @@ int _attemptMatch({
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
   required bool isFirstRight,
+  Set<String> boycottBlockedPairKeys = const <String>{},
   bool ftp = false,
 }) {
   if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
+  // #3753 R6 boycott colony trade embargo: refuse to fill any offer↔bid pair
+  // the boycott blocks. The skip leaves both orders' remaining quantity intact
+  // so they carry forward and can still match unblocked counterparties. Empty
+  // set is the legacy no-op path. SPEC/program/world-market-resolution.md
+  // § Deal matching engine (boycott exclusion).
+  if (boycottBlockedPairKeys.isNotEmpty &&
+      boycottBlockedPairKeys.contains(
+        DealMatcher.pairKey(offer.factionId, bid.factionId),
+      )) {
+    return 0;
+  }
   final cargoLeft = remainingCargo[bid.factionId] ?? 0;
   if (cargoLeft <= 0) return 0;
   final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
@@ -99,6 +111,7 @@ int _runFirstRightMatching({
   required Map<String, int> remainingCargo,
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
+  Set<String> boycottBlockedPairKeys = const <String>{},
 }) {
   if (commodityOffers.isEmpty || commodityBids.isEmpty) return 0;
   var filledQuantity = 0;
@@ -128,6 +141,7 @@ int _runFirstRightMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: true,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
       );
     }
   }
@@ -165,9 +179,11 @@ int _runTierMatching({
   required CommodityId commodityId,
   required double pricePerUnit,
   required Set<String> ftpPairKeys,
+  required Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
   required Map<String, int> remainingCargo,
   required Map<String, int> remainingTreasury,
   required List<FilledDeal> filledOut,
+  Set<String> boycottBlockedPairKeys = const <String>{},
 }) {
   if (tierOffers.isEmpty || tierBids.isEmpty) return 0;
   var filledQuantity = 0;
@@ -175,7 +191,9 @@ int _runTierMatching({
   bool ftpEligible(_OrderState offer, _OrderState bid) =>
       ftpPairKeys.contains(DealMatcher.pairKey(offer.factionId, bid.factionId));
 
-  // Pass 1: FTP-eligible matches only.
+  // Pass 1: FTP-eligible matches only. Minor/Tribe sellers carry no GP–GP FTP
+  // pair, so the R7.3 reorder is a no-op here; the default order is retained
+  // for determinism.
   for (final offer in tierOffers) {
     if (offer.remaining <= 0) continue;
     for (final bid in tierBids) {
@@ -191,15 +209,26 @@ int _runTierMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: false,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
         ftp: true,
       );
     }
   }
 
-  // Pass 2: any remaining matches.
+  // Pass 2: any remaining matches. For Minor/Tribe seller offers, the buyer
+  // bids are reordered per the #3753 R7.3 sell-priority relation tiebreaker
+  // (`SPEC/program/world-market-resolution.md` § Step B item 4); GP-seller
+  // offers and minor/tribe sellers with no consulate-holding buyer keep the
+  // default bid order.
   for (final offer in tierOffers) {
     if (offer.remaining <= 0) continue;
-    for (final bid in tierBids) {
+    final orderedBids = _bidsOrderedForSeller(
+      offer: offer,
+      tierBids: tierBids,
+      sellPriorityRelationByMinorTribeSeller:
+          sellPriorityRelationByMinorTribeSeller,
+    );
+    for (final bid in orderedBids) {
       if (offer.remaining <= 0) break;
       if (bid.remaining <= 0) continue;
       filledQuantity += _attemptMatch(
@@ -211,10 +240,53 @@ int _runTierMatching({
         remainingTreasury: remainingTreasury,
         filledOut: filledOut,
         isFirstRight: false,
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
         ftp: ftpEligible(offer, bid),
       );
     }
   }
 
   return filledQuantity;
+}
+
+/// Returns the bid iteration order for [offer] under the #3753 R7.3
+/// sell-priority relation tiebreaker.
+///
+/// For a Minor/Tribe seller present in
+/// [sellPriorityRelationByMinorTribeSeller], consulate-holding buyers (those
+/// keyed in the seller's relation map) are placed first, sorted by descending
+/// relation score; ties break by ascending buyer faction id, then ascending
+/// faction-local index. Consulate-less buyers follow in their default order.
+/// GP sellers (and minor/tribe sellers with no consulate-holding buyer) return
+/// [tierBids] unchanged so the legacy ordering and determinism are preserved.
+List<_OrderState> _bidsOrderedForSeller({
+  required _OrderState offer,
+  required List<_OrderState> tierBids,
+  required Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
+}) {
+  final relations = sellPriorityRelationByMinorTribeSeller[offer.factionId];
+  if (relations == null || relations.isEmpty) return tierBids;
+
+  final holders = <_OrderState>[];
+  final nonHolders = <_OrderState>[];
+  for (final bid in tierBids) {
+    if (relations.containsKey(bid.factionId)) {
+      holders.add(bid);
+    } else {
+      nonHolders.add(bid);
+    }
+  }
+  if (holders.isEmpty) return tierBids;
+
+  holders.sort((a, b) {
+    final aRel = relations[a.factionId] ?? 0;
+    final bRel = relations[b.factionId] ?? 0;
+    final byRelationDesc = bRel.compareTo(aRel);
+    if (byRelationDesc != 0) return byRelationDesc;
+    final byFaction = a.factionId.compareTo(b.factionId);
+    if (byFaction != 0) return byFaction;
+    return a.factionLocalIndex.compareTo(b.factionLocalIndex);
+  });
+
+  return <_OrderState>[...holders, ...nonHolders];
 }

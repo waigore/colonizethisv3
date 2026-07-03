@@ -2,26 +2,20 @@
 /// Shared by diplomacy_resolver and order validators.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'package:colonizethis_combat/src/combat/military_strength.dart';
 import 'package:colonizethis_world/src/utils/expando_index.dart';
 import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 
+export 'diplomacy_relation_constants.dart';
+export 'diplomacy_relation_upsert.dart';
 export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 export 'package:colonizethis_world/src/world/province_owner_cache.dart'
     show oldWorldProvinceCountOwnedBy;
 
-/// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
-const int overtureConsulateCost = 500;
-const int overtureEmbassyCost = 1000;
-
-/// Join Empire cost: base + per-province. SPEC/game/diplomacy.md.
-const int joinEmpireBaseCost = 5000;
-const int joinEmpirePerProvinceCost = 2000;
+import 'diplomacy_relation_constants.dart';
 
 /// Returns the number of provinces owned by [factionId] (Minor or Tribe) in
 /// [game].
@@ -35,146 +29,10 @@ const int joinEmpirePerProvinceCost = 2000;
 int provinceCountOwnedBy(Game game, String factionId) =>
     ProvinceOwnerCache.of(game.worldState).countOwnedBy(factionId);
 
-/// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
-const int powerScoreProvinceWeight = 10;
-const int powerScoreRegimentWeight = 1;
-const int powerScoreShipWeight = 5;
-
-/// Total number of ships (sum of shipTypeIds.length) over all fleets owned by [factionId].
-int shipCountForFaction(Game game, String factionId) {
-  var count = 0;
-  for (final f in game.worldState.fleets) {
-    if (f.ownerId == factionId) count += f.shipTypeIds.length;
-  }
-  return count;
-}
-
-/// Absolute power score for a Great Power. SPEC/game/diplomacy.md § Great Power power score.
-/// Formula: provinceCount×W_province + round(regimentStrength)×W_regiment + shipCount×W_ship.
-int greatPowerPowerScore(Game game, String factionId) {
-  final provinces = provinceCountOwnedBy(game, factionId);
-  final regimentStrength = aggregateMilitaryStrengthForPlayer(game, factionId);
-  final ships = shipCountForFaction(game, factionId);
-  return provinces * powerScoreProvinceWeight +
-      regimentStrength.round() * powerScoreRegimentWeight +
-      ships * powerScoreShipWeight;
-}
-
-/// Great Power with strictly highest [greatPowerPowerScore], or `null` when tied
-/// or there are no players. SPEC/game/victory.md § Calendar campaign end.
-String? pickUniqueGreatPowerLeaderByPowerScore(Game game) {
-  if (game.players.isEmpty) return null;
-  final scores = <String, int>{
-    for (final p in game.players) p.id: greatPowerPowerScore(game, p.id),
-  };
-  var bestScore = -1;
-  for (final s in scores.values) {
-    if (s > bestScore) bestScore = s;
-  }
-  final leaders =
-      scores.entries
-          .where((e) => e.value == bestScore)
-          .map((e) => e.key)
-          .toList()
-        ..sort();
-  if (leaders.length != 1) return null;
-  return leaders.single;
-}
-
 /// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
 int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
   final n = provinceCountOwnedBy(game, targetId);
   return joinEmpireBaseCost + n * joinEmpirePerProvinceCost;
-}
-
-// --- Relation score bounds and thresholds. SPEC/game/diplomacy.md. ---
-
-/// Relation score range: min and max (inclusive).
-const int relationScoreMin = 0;
-const int relationScoreMax = 100;
-
-/// Neutral relation score; convergence target and default for new relations.
-const int relationScoreNeutral = 50;
-
-/// Level thresholds (inclusive max per band): Hostile ]0,25], Neutral ]25,50], Friendly ]50,75], Allied ]75,100].
-const int relationScoreLevelHostileMax = 25;
-const int relationScoreLevelNeutralMax = 50;
-const int relationScoreLevelFriendlyMax = 75;
-
-/// Minimum score for Friendly (and Allied). Join Empire and similar require >= this.
-const int relationScoreMinFriendly = 51;
-
-/// Minimum relation score for FTP acceptance (proposer and acceptor). SPEC/game/world-market.md.
-const int relationScoreMinFtp = 65;
-
-/// Alliance score band: when forming alliance, score is set/clamped to this range.
-const int relationScoreMinAllied = 76;
-
-/// Display label thresholds (inclusive max): Hostile ]0,29], Unfriendly ]29,49], Cordial ]49,69], Friendly ]69,100].
-const int relationScoreDisplayHostileMax = 29;
-const int relationScoreDisplayUnfriendlyMax = 49;
-const int relationScoreDisplayCordialMax = 69;
-
-/// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
-const int relationScoreWarDelta = 10;
-
-/// Reduced penalty when the aggressor has [kTechIdPropaganda]. SPEC/game/tech-tree-diplomacy-civilian.md.
-const int relationScoreWarDeltaReducedPropaganda = 5;
-
-/// Score penalty applied to third parties (e.g. intervention) reacting to [aggressorGpId]'s war declaration.
-int warDeclarationThirdPartyPenaltyDelta(Game game, String aggressorGpId) {
-  final u = game.playerById(aggressorGpId)?.techUnlocked;
-  if (u?[kTechIdPropaganda] == true) {
-    return relationScoreWarDeltaReducedPropaganda;
-  }
-  return relationScoreWarDelta;
-}
-
-/// Score drop on ally refusing a call to arms; alliance ends (no longer Allied). SPEC/game/diplomacy.md.
-const int callToArmsRefusalScorePenalty = 20;
-
-/// AI ally joins the war if B–A relation score is at least this (inclusive). SPEC/game/diplomacy.md.
-const int callToArmsAiAcceptMinRelationScore = 50;
-
-/// AI intervention probability by relation level (0–1). SPEC/game/diplomacy.md § Intervention.
-/// Relation score 0–25 (Hostile) → 0%, 26–50 (Neutral) → 25%, 51–75 (Friendly) → 50%, 76–100 (Allied) → 80%.
-const double kInterventionProbabilityNeutral = 0.25;
-const double kInterventionProbabilityFriendly = 0.5;
-const double kInterventionProbabilityAllied = 0.8;
-
-/// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
-const int grantAidDefaultAmount = 1000;
-
-/// Default Set Subsidy amount (UI + suggestions). Positive multiples of [setSubsidyAmountStep].
-const int setSubsidyDefaultAmount = 1000;
-
-/// Grant Aid step and multiple (pounds). Validation and UI stepper.
-const int grantAidAmountStep = 1000;
-
-/// Set Subsidy step and multiple (pounds). Validation and UI stepper.
-const int setSubsidyAmountStep = 100;
-
-/// Subsidy relation boost: +[subsidyBoostRelationPerStep] per [subsidyBoostDucatsPerStep] ducats, cap [subsidyBoostMax].
-const int subsidyBoostDucatsPerStep = 500;
-const int subsidyBoostRelationPerStep = 2;
-const int subsidyBoostMax = 8;
-
-/// Relation score thresholds for level. 0–25 Hostile, 26–50 Neutral, 51–75 Friendly, 76–100 Allied.
-RelationLevel scoreToLevel(int score) {
-  if (score <= relationScoreLevelHostileMax) return RelationLevel.hostile;
-  if (score <= relationScoreLevelNeutralMax) return RelationLevel.neutral;
-  if (score <= relationScoreLevelFriendlyMax) return RelationLevel.friendly;
-  return RelationLevel.allied;
-}
-
-/// One-word relation state for UI display. SPEC/game/diplomacy.md § Player-facing relation display.
-/// Score is hidden; UI shows this label: 0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly.
-String relationScoreToDisplayLabel(int score) {
-  final clamped = score.clamp(relationScoreMin, relationScoreMax);
-  if (clamped <= relationScoreDisplayHostileMax) return 'Hostile';
-  if (clamped <= relationScoreDisplayUnfriendlyMax) return 'Unfriendly';
-  if (clamped <= relationScoreDisplayCordialMax) return 'Cordial';
-  return 'Friendly';
 }
 
 /// Directed GP → Minor/Tribe overture rows, keyed by `_overtureLookupKey`.
@@ -197,100 +55,6 @@ String _overtureLookupKey(String gpId, String targetId) => '$gpId|$targetId';
 Map<String, OvertureState> _overtureStatesByLookupKey(Game game) =>
     _gameOvertureStatesByGpTargetIndex.get(game);
 
-/// Finds the relation, passes it (or null) to [updater], and replaces or
-/// appends the result.
-///
-/// **Soft-deprecated for batched/loop use in favour of [RelationUpsertIndex]**
-/// (Refs #3562 AC5). It is not annotated `@Deprecated` because it remains the
-/// correct primitive for a genuinely *single* isolated upsert, and a hard
-/// annotation would wrongly flag those legitimate call sites; instead the
-/// acceptable single-call-vs-batched guidance is documented here and at the
-/// remaining single-call sites.
-///
-/// Each call rebuilds the `pairKey → firstIndex` map and copies the whole
-/// relations list, so it is O(relations) per call. Use it only for a **single
-/// isolated upsert** (one accepted order / one resolver event). For **repeated**
-/// upserts in a loop — multiple orders, per-tribe first contact, batched phase
-/// mutations — prefer [RelationUpsertIndex], which builds the index once and
-/// keeps each upsert amortized O(1); calling [upsertRelation] in a loop silently
-/// reintroduces an O(relations²) pattern (Refs #3562 AC5).
-List<DiplomacyRelation> upsertRelation(
-  List<DiplomacyRelation> relations,
-  String factionId1,
-  String factionId2,
-  DiplomacyRelation Function(DiplomacyRelation?) updater,
-) {
-  final key = pairKey(factionId1, factionId2);
-  final firstIndexByPairKey = <String, int>{};
-  for (var i = 0; i < relations.length; i++) {
-    final r = relations[i];
-    final rk = pairKey(r.factionId1, r.factionId2);
-    firstIndexByPairKey.putIfAbsent(rk, () => i);
-  }
-  final idx = firstIndexByPairKey[key];
-  final existing = idx != null ? relations[idx] : null;
-  final updated = updater(existing);
-  final result = List<DiplomacyRelation>.from(relations);
-  if (idx != null) {
-    result[idx] = updated;
-  } else {
-    result.add(updated);
-  }
-  return result;
-}
-
-/// Mutable accumulator for repeated relation upserts in a single phase.
-///
-/// Builds the `pairKey → firstIndex` map **once** at construction and keeps it
-/// current as relations are appended, so each [upsert] is amortized O(1).
-/// This replaces calling the standalone [upsertRelation] in a loop, which
-/// rebuilt the whole index (and copied the entire list) on every call —
-/// O(relations²) across a phase (Refs #3419 step 5).
-///
-/// Produces results identical to applying [upsertRelation] sequentially over
-/// the same starting list and updaters; call [toList] for a defensive copy
-/// suitable for `copyWith`.
-class RelationUpsertIndex {
-  RelationUpsertIndex(List<DiplomacyRelation> relations)
-    : _relations = List<DiplomacyRelation>.from(relations) {
-    for (var i = 0; i < _relations.length; i++) {
-      final r = _relations[i];
-      _firstIndexByPairKey.putIfAbsent(
-        pairKey(r.factionId1, r.factionId2),
-        () => i,
-      );
-    }
-  }
-
-  final List<DiplomacyRelation> _relations;
-  final Map<String, int> _firstIndexByPairKey = <String, int>{};
-
-  /// Number of relations currently held.
-  int get length => _relations.length;
-
-  /// Finds the relation for the [factionId1]/[factionId2] pair, passes it (or
-  /// null) to [updater], and replaces or appends the result in place.
-  void upsert(
-    String factionId1,
-    String factionId2,
-    DiplomacyRelation Function(DiplomacyRelation?) updater,
-  ) {
-    final key = pairKey(factionId1, factionId2);
-    final idx = _firstIndexByPairKey[key];
-    final existing = idx != null ? _relations[idx] : null;
-    final updated = updater(existing);
-    if (idx != null) {
-      _relations[idx] = updated;
-    } else {
-      _relations.add(updated);
-      _firstIndexByPairKey[key] = _relations.length - 1;
-    }
-  }
-
-  /// Defensive copy of the accumulated relations for storing on a [Game].
-  List<DiplomacyRelation> toList() => List<DiplomacyRelation>.from(_relations);
-}
-
 /// Returns overture state for GP–Minor/Tribe, or null.
 OvertureState? getOverture(Game game, String gpId, String targetId) {
   return _overtureStatesByLookupKey(game)[_overtureLookupKey(gpId, targetId)];
@@ -302,6 +66,17 @@ bool hasEmbassyOverture(Game game, String gpId, String targetId) {
   return o != null && o.hasEmbassy;
 }
 
+/// Consulate-tier (or higher) overture from [gpId] toward [targetId].
+///
+/// Gate for the #3753 R7.3 world-market sell-priority relation tiebreaker
+/// (`SPEC/game/world-market.md` § Sell-priority relation tiebreaker): only
+/// buyers holding at least a `tradeConsulate` overture with a Minor/Tribe
+/// seller participate in the relation-score ordering.
+bool hasConsulateOverture(Game game, String gpId, String targetId) {
+  final o = getOverture(game, gpId, targetId);
+  return o != null && o.hasConsulate;
+}
+
 /// Bilateral FTP active between [factionId1] and [factionId2].
 bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
   return game.ftpPartnershipKeys.contains(pairKey(factionId1, factionId2));
@@ -310,6 +85,83 @@ bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
 /// Active FTP pair keys for world-market matching. SPEC/program/world-market-resolution.md.
 Set<String> ftpPairKeysFromGame(Game game) =>
     Set<String>.from(game.ftpPartnershipKeys);
+
+/// Canonical `pairKey` set of `(colonyTribeId, boycottedTargetGpId)` pairs the
+/// World Market deal matcher must refuse to fill (Refs #3753 R6 boycott colony
+/// trade embargo).
+///
+/// For every active `BoycottState { gpId: A, targetGpId: B }`, every Tribe `T`
+/// that is a colony of A (`ColonyState.colonyOfGpId == A`) contributes
+/// `pairKey(T, B)`. The key is symmetric, so the matcher's
+/// `pairKey(sellerFactionId, buyerFactionId)` lookup blocks trade in **both**
+/// directions between B and A's colony Tribes — B buying goods a colony Tribe
+/// sells, and a colony Tribe buying goods B sells. The result is empty when no
+/// boycott is active or no boycotting GP holds a colony, which the matcher
+/// treats as a no-op (legacy matching). SPEC/game/diplomacy.md § GP–Tribe Rules
+/// (Boycott); SPEC/program/world-market-resolution.md § Deal matching engine.
+Set<String> boycottBlockedTradePairKeys(Game game) {
+  if (game.boycottStates.isEmpty || game.colonyStates.isEmpty) {
+    return const <String>{};
+  }
+  final colonyTribesByGp = <String, List<String>>{};
+  for (final colony in game.colonyStates) {
+    colonyTribesByGp
+        .putIfAbsent(colony.colonyOfGpId, () => <String>[])
+        .add(colony.tribeId);
+  }
+  final keys = <String>{};
+  for (final boycott in game.boycottStates) {
+    final colonyTribes = colonyTribesByGp[boycott.gpId];
+    if (colonyTribes == null) continue;
+    for (final tribeId in colonyTribes) {
+      keys.add(pairKey(tribeId, boycott.targetGpId));
+    }
+  }
+  return keys;
+}
+
+/// Resolves the **favoured trading partner** of a Minor Nation or Tribe
+/// [minorOrTribeId] (Refs #3753 R7.1), or `null` when it is undefined.
+///
+/// This is a deterministic read-only lookup, distinct from the bilateral GP–GP
+/// Favored Trading Partner agreement ([hasFtpPartnership] / `ftpPartnershipKeys`):
+///
+/// - If [minorOrTribeId] is a **colony** Tribe (a [ColonyState] with
+///   `tribeId == minorOrTribeId` exists), its **suzerain** (`colonyOfGpId`) is
+///   the favoured partner regardless of any other Great Power's relation score.
+/// - Otherwise (independent Tribe or Minor Nation), the Great Power with the
+///   **highest decimal relation score** ([DiplomacyRelation.score]) toward
+///   [minorOrTribeId] among all Great Powers ([Game.players]) that hold a
+///   relation with it. Ties at the score break deterministically by **ascending
+///   faction id**.
+/// - When no Great Power holds a [DiplomacyRelation] with [minorOrTribeId] (and
+///   it is not a colony), the result is `null` (undefined).
+///
+/// The favoured trading partner, the world-market sell-priority relation
+/// tiebreaker (R7.3), first right of refusal (R7.2), and overseas profit-share
+/// (R8) are independent concepts. SPEC/game/diplomacy.md § Favoured trading
+/// partner (Refs #3753 R7.1).
+String? favouredTradingPartner(Game game, String minorOrTribeId) {
+  for (final colony in game.colonyStates) {
+    if (colony.tribeId == minorOrTribeId) return colony.colonyOfGpId;
+  }
+  String? best;
+  num? bestScore;
+  for (final player in game.players) {
+    final rel = getRelation(game, player.id, minorOrTribeId);
+    if (rel == null) continue;
+    final score = rel.score;
+    final isBetter =
+        bestScore == null ||
+        score > bestScore ||
+        (score == bestScore && player.id.compareTo(best!) < 0);
+    if (isBetter) {
+      bestScore = score;
+      best = player.id;
+    }
+  }
+  return best;
+}
 
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.

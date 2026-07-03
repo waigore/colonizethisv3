@@ -18,6 +18,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required Set<String> knownFactionIds,
   required DiplomacyFactionMembership factionMembership,
   required Map<String, OvertureState> playerOverturesByTargetId,
+  required bool playerHoldsColony,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -41,9 +42,25 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
+  // Break Alliance precedes Alliance/Declare War so a pair already in a formal
+  // alliance at peace is offered the voluntary break as its single non-economic
+  // candidate; the AI scoring layer decides whether to act (Refs #3758 R8).
+  // SPEC/program/order-suggestions.md § Diplomatic orders.
+  if (isGpTarget && rel != null && rel.formalAlliance && rel.atPeace) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.breakAlliance,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+  // Skip the alliance candidate when a formal alliance already exists for the
+  // pair: forming a duplicate treaty is invalid (the break candidate above is
+  // offered instead). SPEC/program/order-suggestions.md § Diplomatic orders.
   if (isGpTarget &&
       rel != null &&
       rel.atPeace &&
+      !rel.formalAlliance &&
       rel.level != RelationLevel.allied) {
     out.add(
       DiplomaticOrder(
@@ -73,15 +90,39 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
         ),
       );
     }
-    if (overtureRow.hasConsulate && treasury >= setSubsidyDefaultAmount) {
+    // SetSubsidy: percentage model (Refs #3753 R3), GP→Minor/Tribe only and
+    // Embassy-gated (R2). The percent is carried in `amount`; the percent model
+    // charges no upfront treasury cost. Matches the order validator.
+    if (targetIsMinorOrTribe && overtureRow.hasEmbassy) {
       out.add(
         DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: targetId,
-          amount: setSubsidyDefaultAmount,
+          amount: kSubsidyPercentDefault,
         ),
       );
     }
+  }
+
+  // Boycott candidate (Refs #3758 R8): a colony-holding GP may embargo another
+  // GP it is at peace with when no boycott for the pair already exists. Emitted
+  // in the independent pass so it can be suggested alongside (not in place of)
+  // the single non-economic candidate for the same target. The boycott
+  // validator enforces the same gates at acceptance time.
+  // SPEC/program/order-suggestions.md § Boycott candidate.
+  if (playerHoldsColony &&
+      isGpTarget &&
+      rel != null &&
+      rel.atPeace &&
+      !game.boycottStates.any(
+        (b) => b.gpId == playerId && b.targetGpId == targetId,
+      )) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: targetId,
+      ),
+    );
   }
 
   if (knownTargetIds.contains(targetId) && atPeace) {
@@ -95,6 +136,16 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
 
   return out;
 }
+
+/// Independent diplomatic candidates are appended in their own pass and do not
+/// consume (nor are consumed by) the single non-economic primary winner for a
+/// target: economic transfers (`grantAid`, `setSubsidy`) and the `boycott`
+/// colony trade embargo. SPEC/program/order-suggestions.md § Primary vs
+/// independent suggestions per target.
+bool _isIndependentDiplomaticCandidate(DiplomaticOrderType type) =>
+    type == DiplomaticOrderType.grantAid ||
+    type == DiplomaticOrderType.setSubsidy ||
+    type == DiplomaticOrderType.boycott;
 
 DiplomaticOrder? _establishOvertureSuggestionOrder({
   required Game game,
@@ -180,6 +231,12 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
   }
 
+  // One colony-ownership check per pass: gates boycott candidate enumeration
+  // for every target (Refs #3758 R8).
+  final playerHoldsColony = game.colonyStates.any(
+    (c) => c.colonyOfGpId == playerId,
+  );
+
   SuggestionPassContext.assertSharedValidatorPlayerId(
     sharedCandidateValidator,
     playerId,
@@ -225,6 +282,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       knownFactionIds: knownFactionIds,
       factionMembership: factionMembership,
       playerOverturesByTargetId: playerOverturesByTargetId,
+      playerHoldsColony: playerHoldsColony,
     );
     var trialOrders = workingOrders;
 
@@ -234,8 +292,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     passValidator = prefixPassValidator;
     var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
-      if (candidate.type == DiplomaticOrderType.grantAid ||
-          candidate.type == DiplomaticOrderType.setSubsidy) {
+      if (_isIndependentDiplomaticCandidate(candidate.type)) {
         continue;
       }
       if (!isDiplomaticOrderAcceptedWithValidator(
@@ -263,8 +320,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       passValidator = economicPassValidator;
     }
     for (final candidate in candidates) {
-      if (candidate.type != DiplomaticOrderType.grantAid &&
-          candidate.type != DiplomaticOrderType.setSubsidy) {
+      if (!_isIndependentDiplomaticCandidate(candidate.type)) {
         continue;
       }
       if (!isDiplomaticOrderAcceptedWithValidator(

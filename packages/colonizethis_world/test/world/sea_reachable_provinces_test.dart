@@ -4,17 +4,13 @@ import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_world/src/world/sea_reachable_provinces.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
 /// Sea-reachability BFS in `lib/src/world/sea_reachable_provinces.dart`.
 /// SPEC/ai/ai-architecture.md § Colonial expansion and SPEC/program/
 /// order-suggestions.md § COLONIAL phase planner (Refs #2509).
-TopologyNode _prov(String id, {String regionId = 'oldWorld'}) =>
-    TopologyNode(id: id, regionId: regionId, type: TopologyNodeType.province);
-
-TopologyNode _sea(String id, {String regionId = 'oldWorld'}) =>
-    TopologyNode(id: id, regionId: regionId, type: TopologyNodeType.seaZone);
-
 PlayerView _viewOwning(Map<String, String?> ownersByProvinceId) {
   final provincesById = <String, Province>{
     for (final entry in ownersByProvinceId.entries)
@@ -38,11 +34,11 @@ PlayerView _viewOwning(Map<String, String?> ownersByProvinceId) {
 void main() {
   group('reachableNonOwnedProvinceIdsViaSeas', () {
     test('reaches a foreign province across a sea zone from an owned anchor', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _sea('oldWorld|sea'),
-          _prov('oldWorld|enemy'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('oldWorld|sea'),
+          prefixedProvinceNode('oldWorld|enemy'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),
@@ -63,8 +59,11 @@ void main() {
     });
 
     test('ignores anchors the player does not actually own', () {
-      final topology = MapTopology(
-        nodes: [_prov('oldWorld|own'), _prov('oldWorld|enemy')],
+      final topology = topologyFromGraph(
+        nodes: [
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedProvinceNode('oldWorld|enemy'),
+        ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
         ],
@@ -83,11 +82,11 @@ void main() {
     });
 
     test('does not expand through a foreign province', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _prov('oldWorld|enemy'),
-          _prov('oldWorld|beyond'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedProvinceNode('oldWorld|enemy'),
+          prefixedProvinceNode('oldWorld|beyond'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
@@ -109,8 +108,11 @@ void main() {
     });
 
     test('skips unowned (ownerless) provinces', () {
-      final topology = MapTopology(
-        nodes: [_prov('oldWorld|own'), _prov('oldWorld|wild')],
+      final topology = topologyFromGraph(
+        nodes: [
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedProvinceNode('oldWorld|wild'),
+        ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|wild'),
         ],
@@ -129,12 +131,12 @@ void main() {
     });
 
     test('regionIdFilter restricts collected foreign provinces', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _sea('oldWorld|sea'),
-          _prov('newWorld|colony', regionId: 'newWorld'),
-          _prov('oldWorld|enemy'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('oldWorld|sea'),
+          prefixedProvinceNode('newWorld|colony'),
+          prefixedProvinceNode('oldWorld|enemy'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),
@@ -160,8 +162,11 @@ void main() {
 
   group('reachableNonOwnedProvinceDistancesViaSeas', () {
     test('a direct province-province border foreign province has distance 1', () {
-      final topology = MapTopology(
-        nodes: [_prov('oldWorld|own'), _prov('oldWorld|enemy')],
+      final topology = topologyFromGraph(
+        nodes: [
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedProvinceNode('oldWorld|enemy'),
+        ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
         ],
@@ -180,11 +185,11 @@ void main() {
     });
 
     test('counts each traversed edge, sea zone included', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _sea('oldWorld|sea'),
-          _prov('oldWorld|enemy'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('oldWorld|sea'),
+          prefixedProvinceNode('oldWorld|enemy'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),
@@ -206,11 +211,11 @@ void main() {
 
     test('keeps the shortest distance when multiple paths exist', () {
       // enemy reachable directly (1) and via a sea detour (3).
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _prov('oldWorld|enemy'),
-          _sea('oldWorld|sea'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedProvinceNode('oldWorld|enemy'),
+          prefixedSeaZoneNode('oldWorld|sea'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
@@ -232,12 +237,12 @@ void main() {
     });
 
     test('regionIdFilter restricts the distance map entries', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
-          _prov('oldWorld|own'),
-          _sea('oldWorld|sea'),
-          _prov('newWorld|colony', regionId: 'newWorld'),
-          _prov('oldWorld|enemy'),
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('oldWorld|sea'),
+          prefixedProvinceNode('newWorld|colony'),
+          prefixedProvinceNode('oldWorld|enemy'),
         ],
         edges: const [
           TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),

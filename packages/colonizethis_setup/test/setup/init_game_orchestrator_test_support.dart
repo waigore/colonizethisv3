@@ -11,6 +11,43 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/utils/graph_traversal.dart'
     show connectedComponentsInSubset;
 
+/// AC-11 regression seeds for locked full-init profile (#1830 / #1861).
+const lockedFullInitAc11Seeds = <int>[
+  101,
+  257,
+  509,
+  1009,
+  2003,
+  3001,
+  4001,
+  5003,
+  6007,
+  7001,
+  8011,
+  9001,
+  10007,
+  11003,
+  12007,
+  13001,
+  14009,
+  15013,
+  16001,
+  17011,
+];
+
+/// Runs [runInitGame] for each AC-11 seed and asserts locked full-init
+/// postconditions when procedural partitions match the locked profile.
+void runLockedFullInitAc11SeedBatch({
+  required void Function(InitGameResult result, int seed) assertResult,
+}) {
+  for (final seed in lockedFullInitAc11Seeds) {
+    final config = lockedFullInitConfig(seed: seed);
+    final result = runInitGame(config: config, options: defaultInitOptions);
+    assertResult(result, seed);
+    expectLockedFullInitAcWhenPartitionsMatch(result, seed: seed);
+  }
+}
+
 /// Shared init options for orchestrator tests (no PNG render, 8px cells).
 /// Replaces the `const InitGameOptions(cellSize: 8, renderPng: false)` literal
 /// repeated across nearly every orchestrator test (Refs #3712).

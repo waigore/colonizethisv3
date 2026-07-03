@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
+        explorerConsulateGateBlocksMinorTribeProvince,
         fleetsInPortAtProvince,
         foreignCivilianVisibleToPlayer,
         homeFleetIdFor,

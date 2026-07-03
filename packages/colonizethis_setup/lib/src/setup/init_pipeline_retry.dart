@@ -27,7 +27,8 @@ typedef InitPipelineOutcome = ({
 bool isRetriableInitTopologyCode(String code) =>
     code == 'assigner_exhausted' ||
     code == 'faction_component_bin_pack_failed' ||
-    code == 'assignment_remainder_not_connected';
+    code == 'assignment_remainder_not_connected' ||
+    code == 'tribe_missing_sea_bound_province';
 
 /// Result of the optional mode-specific error hook in
 /// [runInitPipelineWithRetries].

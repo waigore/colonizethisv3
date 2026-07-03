@@ -63,6 +63,8 @@ mixin _GameMapAreaLifecycle
       bus.on<ct_models.AppOvertureAdvancedEvent>().listen(
         _onAppOvertureAdvancedEvent,
       ),
+      bus.on<ct_models.AppSpyCaughtEvent>().listen(_onAppSpyCaughtEvent),
+      bus.on<ct_models.AppSpyDefectedEvent>().listen(_onAppSpyDefectedEvent),
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         _onTurnResolutionCompleteEvent,
       ),

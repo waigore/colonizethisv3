@@ -1,18 +1,10 @@
 // Observer seed-42 turn-150 colonial expansion + economy regression
 // gate (Refs #2848 / #2509 S7 / S4).
 //
-// Mirrors the structural pattern of
-// `seed42_observer_conquest_regression_test.dart` so the two
-// observer-tied integration tests stay easy to reason about together:
-//   - identical `runInitGame` + `runOrdersForGameFullAI` per-turn loop
-//   - identical `Timeout(Duration(minutes: 15))` for the long-running
-//     150-turn full-AI campaign
-//   - explicit `skip:` reason while the colonial expansion gates remain
-//     out of reach for seed 42 (Refs #2848 S0 baseline measurement: all
-//     30 `newWorld|` provinces tribe-owned and global extractable
-//     improvement ratio 0.039 = 32/812 — well below the 0.70 gate at
-//     turn 150 because GPs are stuck in EXPAND / COLONIAL and never
-//     acquire NW land; see #2848 § Subtask plan).
+// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+// step 2): the init / handoff / per-turn resolve loop is owned by
+// `test/support/seed42_observer_campaign.dart`; this test reads only the
+// campaign end game to assert the colonial expansion + improvement gates.
 //
 // Gate semantics pinned by this test (canonical source:
 // `tool/run_observer_game/lib/observer_colonial_verify.dart`):
@@ -34,14 +26,12 @@
 // `skip`ped until either (a) #2848 (or the follow-up filed alongside)
 // closes the colonial improvement gap on seed 42, or (b) the threshold
 // is lowered intentionally via a SPEC change.
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Mirrors `kObserverColonialMinImprovementRatio` from
 /// `tool/run_observer_game/lib/observer_colonial_verify.dart`. Kept as a
@@ -77,41 +67,10 @@ void main() {
     'GP-owned AND extractable improvement ratio >= '
     '$kColonialImprovementMinRatio',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
+      final campaign = runSeed42ObserverCampaign(
+        turns: kColonialRegressionTurns,
       );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
-      for (var t = 0; t < kColonialRegressionTurns; t++) {
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
-      }
+      final game = campaign.finalGame;
 
       // AC1: every newWorld| province owned by a Great Power gp1..gp6.
       final nwProvinces = game.worldState.newWorld.provinces;

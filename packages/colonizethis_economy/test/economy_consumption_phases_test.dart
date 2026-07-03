@@ -1,7 +1,9 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_economy/src/economy/economy_consumption_phases.dart';
+
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 /// Dedicated unit tests for the per-phase consumption helpers extracted from
 /// `economy_consumption.dart`. SPEC/game/workers-and-population.md.

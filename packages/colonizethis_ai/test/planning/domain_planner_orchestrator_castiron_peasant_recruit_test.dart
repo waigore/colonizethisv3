@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -89,7 +90,7 @@ void main() {
               recruitWorker: [peasantRecruit, peasantRecruit],
             ),
             economyPlan: kTestEconomyPlan,
-            phasePlan: phasePlan,
+            options: OrchestratorOptions(phasePlan: phasePlan),
           );
           final recruits =
               outcome.orders.recruitWorkerOrdersByPlayerId[_nationId] ?? [];
@@ -133,7 +134,7 @@ void main() {
               recruitWorker: [peasantRecruit, peasantRecruit],
             ),
             economyPlan: kTestEconomyPlan,
-            phasePlan: phasePlan,
+            options: OrchestratorOptions(phasePlan: phasePlan),
           );
           expect(
             outcome.orders.recruitWorkerOrdersByPlayerId[_nationId],
@@ -170,9 +171,9 @@ void main() {
               recruitWorker: [peasantRecruit],
             ),
             economyPlan: kTestEconomyPlan,
-            phasePlan: const PhasePlanOutcome(
+            options: OrchestratorOptions(phasePlan: const PhasePlanOutcome(
               phase: ObserverGoalPhase.expand,
-            ),
+            )),
           );
           expect(
             outcome.orders.recruitWorkerOrdersByPlayerId[_nationId],

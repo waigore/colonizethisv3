@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Tests that connectivity hot-path counters are recorded via the threaded
 /// `metrics` parameter (Refs #3544 AC3) and that no module-level mutable state
 /// captures counts when no instance is passed.
@@ -37,40 +39,23 @@ Game _singleProvinceGpGame() {
   );
 }
 
-MapTopology _singleProvinceTopology() {
-  const ow = 'oldWorld';
-  return MapTopology(
-    nodes: [
-      TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
-  );
-}
-
-Map<String, TileMapResult> _threeByThreeTileMap() {
-  return {
-    'oldWorld': TileMapResult(
-      width: 3,
-      height: 3,
-      grid: [
-        ['p1', 'p1', 'p1'],
-        ['p1', 'p1', 'p1'],
-        ['p1', 'p1', 'p1'],
-      ],
-    ),
-  };
-}
-
 void main() {
   group('Connectivity metrics parameter threading (Refs #3544 AC3)', () {
     test('records dequeue counters into the supplied metrics instance', () {
       final game = _singleProvinceGpGame();
       final metrics = ConnectivityHotPathMetrics();
+      final topology = singleProvinceTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
+      );
+      final tileMapByRegion = {
+        'oldWorld': uniformProvinceTileMap('p1', size: 3),
+      };
 
       final result = resolveConnectivity(
         game: game,
-        tileMapByRegion: _threeByThreeTileMap(),
-        topology: _singleProvinceTopology(),
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
         metrics: metrics,
       );
 
@@ -100,11 +85,18 @@ void main() {
         // former module-level test hook this could capture counts via the
         // global setter; with parameter threading it must stay at zero.
         final detached = ConnectivityHotPathMetrics();
+        final topology = singleProvinceTopology(
+          regionId: 'oldWorld',
+          provinceLocalId: 'p1',
+        );
+        final tileMapByRegion = {
+          'oldWorld': uniformProvinceTileMap('p1', size: 3),
+        };
 
         resolveConnectivity(
           game: game,
-          tileMapByRegion: _threeByThreeTileMap(),
-          topology: _singleProvinceTopology(),
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
         );
 
         expect(detached.townRuleWorklistDequeues, 0);

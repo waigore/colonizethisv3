@@ -8,37 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleSeaZoneIdForOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
-Widget _darkOverlay({
-  required String displayId,
-  String? selectedTileKey,
-  VoidCallback? onClose,
-}) {
-  final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        onClose: onClose,
-      ),
-    ),
-  );
-}
+import 'support/province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -61,7 +37,10 @@ void main() {
           // (avoids tile section commodity icons which would require additional
           // asset stubs and cause async decode churn unrelated to this contract).
           await tester.pumpWidget(
-            _darkOverlay(displayId: sampleProvinceIdForOverlay),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+            ),
           );
           await tester.pumpAndSettle();
 
@@ -75,7 +54,10 @@ void main() {
         'sea-zone header title resolves to --accent color with 0.05 letter-spacing',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            _darkOverlay(displayId: sampleSeaZoneIdForOverlay),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              displayId: sampleSeaZoneIdForOverlay,
+            ),
           );
           await tester.pumpAndSettle();
 
@@ -89,7 +71,10 @@ void main() {
         'close control border resolves to --accent-dim at 1 px width',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            _darkOverlay(displayId: sampleProvinceIdForOverlay),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+            ),
           );
           await tester.pumpAndSettle();
 
@@ -114,7 +99,10 @@ void main() {
         WidgetTester tester,
       ) async {
         await tester.pumpWidget(
-          _darkOverlay(displayId: sampleProvinceIdForOverlay),
+          buildProvinceOverlayDarkThemeShell(
+            game: demoGameForOverlay,
+            displayId: sampleProvinceIdForOverlay,
+          ),
         );
         await tester.pumpAndSettle();
 
@@ -127,7 +115,8 @@ void main() {
       ) async {
         int callCount = 0;
         await tester.pumpWidget(
-          _darkOverlay(
+          buildProvinceOverlayDarkThemeShell(
+            game: demoGameForOverlay,
             displayId: sampleProvinceIdForOverlay,
             onClose: () => callCount += 1,
           ),
@@ -144,7 +133,10 @@ void main() {
         'negative: header chrome does not introduce raw colorScheme.outline border on close control',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            _darkOverlay(displayId: sampleProvinceIdForOverlay),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+            ),
           );
           await tester.pumpAndSettle();
 
@@ -174,7 +166,10 @@ void main() {
         'negative: header title does not use a const TextStyle without --accent colour',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            _darkOverlay(displayId: sampleProvinceIdForOverlay),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+            ),
           );
           await tester.pumpAndSettle();
 

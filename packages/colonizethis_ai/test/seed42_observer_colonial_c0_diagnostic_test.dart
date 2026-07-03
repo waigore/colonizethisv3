@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -14,7 +13,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Seed-42 turn-150 COLONIAL-arm C0 diagnostic (Refs #2852).
 ///
@@ -68,6 +67,11 @@ import 'support/faithful_full_ai_test_handoff.dart';
 /// and copy the `C0_DIAGNOSTIC_JSON_*`-delimited block into a fresh
 /// comment on issue #2852 if the diagnostic surface shifts after a
 /// tuning slice lands.
+///
+/// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+/// step 2): the init / handoff / 150-turn resolve loop is owned by
+/// `test/support/seed42_observer_campaign.dart`; this test contributes only
+/// its per-turn `onBeforeResolve` phase / colonial-arm observations.
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -76,27 +80,11 @@ void main() {
   test(
     'seed 42 turn 150 C0 diagnostic: per-GP COLONIAL acquisition trace',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
       final gpIds = [for (var i = 1; i <= 6; i++) 'gp$i'];
 
       int nwCountOwnedBy(Game g, String gpId) => g.worldState.newWorld.provinces
           .where((p) => p.ownerId == gpId)
           .length;
-
-      final nwStart = <String, int>{
-        for (final gpId in gpIds) gpId: nwCountOwnedBy(game, gpId),
-      };
 
       // Per-GP rollups; populated as the simulation advances.
       final phaseCounts = <String, Map<ObserverGoalPhase, int>>{
@@ -149,179 +137,167 @@ void main() {
       const turns = 150;
       final cheapestRegimentCost = cheapestRegimentBuildTreasuryCost();
 
-      for (var t = 0; t < turns; t++) {
-        for (final gpId in gpIds) {
-          final view = buildPlayerView(game, topo, gpId);
-          final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
-          final outcome = runPhasePlanners(game: game, snapshot: snap);
+      final campaign = runSeed42ObserverCampaign(
+        turns: turns,
+        onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
+          for (final gpId in gpIds) {
+            final view = buildPlayerView(game, topology, gpId);
+            final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+            final outcome = runPhasePlanners(game: game, snapshot: snap);
 
-          phaseCounts[gpId]![outcome.phase] =
-              (phaseCounts[gpId]![outcome.phase] ?? 0) + 1;
+            phaseCounts[gpId]![outcome.phase] =
+                (phaseCounts[gpId]![outcome.phase] ?? 0) + 1;
 
-          if (outcome.phase == ObserverGoalPhase.colonial) {
-            firstColonialTurn[gpId] ??= t;
-            final counts = armEligibilityCounts[gpId]!;
-            counts['colonialTurns'] = counts['colonialTurns']! + 1;
+            if (outcome.phase == ObserverGoalPhase.colonial) {
+              firstColonialTurn[gpId] ??= turn;
+              final counts = armEligibilityCounts[gpId]!;
+              counts['colonialTurns'] = counts['colonialTurns']! + 1;
 
-            // Acquisition outcome.
-            final acq = outcome.colonialAcquisitionTarget;
-            if (acq == null) {
-              acquisitionMethodCounts[gpId]!['null'] =
-                  acquisitionMethodCounts[gpId]!['null']! + 1;
-            } else {
-              final key = acq.method.name;
-              acquisitionMethodCounts[gpId]![key] =
-                  (acquisitionMethodCounts[gpId]![key] ?? 0) + 1;
-              acquisitionTargetPicks[gpId]![acq.targetFactionId] =
-                  (acquisitionTargetPicks[gpId]![acq.targetFactionId] ?? 0) + 1;
-            }
+              // Acquisition outcome.
+              final acq = outcome.colonialAcquisitionTarget;
+              if (acq == null) {
+                acquisitionMethodCounts[gpId]!['null'] =
+                    acquisitionMethodCounts[gpId]!['null']! + 1;
+              } else {
+                final key = acq.method.name;
+                acquisitionMethodCounts[gpId]![key] =
+                    (acquisitionMethodCounts[gpId]![key] ?? 0) + 1;
+                acquisitionTargetPicks[gpId]![acq.targetFactionId] =
+                    (acquisitionTargetPicks[gpId]![acq.targetFactionId] ?? 0) +
+                        1;
+              }
 
-            final peaceKey = outcome.colonialPeaceTargetFactionIdsSorted.isEmpty
-                ? '(none)'
-                : outcome.colonialPeaceTargetFactionIdsSorted.join(',');
-            colonialPeacePicks[gpId]![peaceKey] =
-                (colonialPeacePicks[gpId]![peaceKey] ?? 0) + 1;
+              final peaceKey =
+                  outcome.colonialPeaceTargetFactionIdsSorted.isEmpty
+                  ? '(none)'
+                  : outcome.colonialPeaceTargetFactionIdsSorted.join(',');
+              colonialPeacePicks[gpId]![peaceKey] =
+                  (colonialPeacePicks[gpId]![peaceKey] ?? 0) + 1;
 
-            // Per-arm eligibility flags. Each flag is evaluated using
-            // the same helpers `planColonialAcquisition` consults so
-            // the diagnostic mirrors the planner's view exactly.
-            if (snap.colonial.invadableNewWorldProvinceIdsSorted.isEmpty) {
-              counts['nwInvadableEmpty'] = counts['nwInvadableEmpty']! + 1;
-              continue;
-            }
+              // Per-arm eligibility flags. Each flag is evaluated using
+              // the same helpers `planColonialAcquisition` consults so
+              // the diagnostic mirrors the planner's view exactly.
+              if (snap.colonial.invadableNewWorldProvinceIdsSorted.isEmpty) {
+                counts['nwInvadableEmpty'] = counts['nwInvadableEmpty']! + 1;
+                continue;
+              }
 
-            final invadable = snap.colonial.invadableNewWorldProvinceIdsSorted;
-            final provinceOwner = getProvinceOwnerMap(game);
-            final treasury = snap.economy.treasury;
-            final regiments = regimentCountForPlayer(game, gpId);
-            final prospected =
-                game.worldState.playerProspectedTiles[gpId] ?? const <String>{};
-            final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+              final invadable = snap.colonial.invadableNewWorldProvinceIdsSorted;
+              final provinceOwner = getProvinceOwnerMap(game);
+              final treasury = snap.economy.treasury;
+              final regiments = regimentCountForPlayer(game, gpId);
+              final prospected =
+                  game.worldState.playerProspectedTiles[gpId] ?? const <String>{};
+              final purchasedByTile = game.worldState.purchasedTilesByTileKey;
 
-            var arm1JoinEmpireEligible = false;
-            var arm2PurchaseLandEligible = false;
-            var arm3HasNonWarNonGpOwner = false;
-            for (final provinceId in invadable) {
-              final ownerId = provinceOwner[provinceId];
-              if (ownerId == null) continue;
-              if (game.playerById(ownerId) != null) continue;
+              var arm1JoinEmpireEligible = false;
+              var arm2PurchaseLandEligible = false;
+              var arm3HasNonWarNonGpOwner = false;
+              for (final provinceId in invadable) {
+                final ownerId = provinceOwner[provinceId];
+                if (ownerId == null) continue;
+                if (game.playerById(ownerId) != null) continue;
 
-              if (!arm1JoinEmpireEligible) {
-                final overture = getOverture(game, gpId, ownerId);
-                final relation = getRelation(game, gpId, ownerId);
-                if (overture != null &&
-                    overture.stage == OvertureStage.nap &&
-                    relation != null &&
-                    relation.score >= relationScoreMinFriendly &&
-                    treasury >= joinEmpireCostForMinorOrTribe(game, ownerId)) {
-                  arm1JoinEmpireEligible = true;
+                if (!arm1JoinEmpireEligible) {
+                  final overture = getOverture(game, gpId, ownerId);
+                  final relation = getRelation(game, gpId, ownerId);
+                  if (overture != null &&
+                      overture.stage == OvertureStage.nap &&
+                      relation != null &&
+                      relation.score >= relationScoreMinFriendly &&
+                      treasury >= joinEmpireCostForMinorOrTribe(game, ownerId)) {
+                    arm1JoinEmpireEligible = true;
+                  }
+                }
+
+                if (!arm2PurchaseLandEligible) {
+                  final relation = getRelation(game, gpId, ownerId);
+                  final overture = getOverture(game, gpId, ownerId);
+                  if ((relation == null || !relation.atWar) &&
+                      overture != null &&
+                      overture.hasEmbassy &&
+                      _provinceHasValidPurchaseLandTileForDiagnostic(
+                        world: game.worldState,
+                        provinceId: provinceId,
+                        treasury: treasury,
+                        prospected: prospected,
+                        purchasedByTile: purchasedByTile,
+                      )) {
+                    arm2PurchaseLandEligible = true;
+                  }
+                }
+
+                if (!arm3HasNonWarNonGpOwner) {
+                  final relation = getRelation(game, gpId, ownerId);
+                  if (relation == null || !relation.atWar) {
+                    arm3HasNonWarNonGpOwner = true;
+                  }
                 }
               }
 
-              if (!arm2PurchaseLandEligible) {
-                final relation = getRelation(game, gpId, ownerId);
-                final overture = getOverture(game, gpId, ownerId);
-                if ((relation == null || !relation.atWar) &&
-                    overture != null &&
-                    overture.hasEmbassy &&
-                    _provinceHasValidPurchaseLandTileForDiagnostic(
-                      world: game.worldState,
-                      provinceId: provinceId,
-                      treasury: treasury,
-                      prospected: prospected,
-                      purchasedByTile: purchasedByTile,
-                    )) {
-                  arm2PurchaseLandEligible = true;
-                }
-              }
-
-              if (!arm3HasNonWarNonGpOwner) {
-                final relation = getRelation(game, gpId, ownerId);
-                if (relation == null || !relation.atWar) {
-                  arm3HasNonWarNonGpOwner = true;
-                }
-              }
-            }
-
-            final arm2HasIdleMerchant = _hasIdleMerchantForDiagnostic(
-              game.worldState,
-              gpId,
-            );
-            final arm3RegimentsGte1 = regiments >= 1;
-            final arm3TreasuryGte = treasury >= cheapestRegimentCost;
-
-            if (arm1JoinEmpireEligible) {
-              counts['arm1JoinEmpireEligible'] =
-                  counts['arm1JoinEmpireEligible']! + 1;
-            }
-            if (arm2HasIdleMerchant) {
-              counts['arm2HasIdleMerchant'] =
-                  counts['arm2HasIdleMerchant']! + 1;
-              if (arm2PurchaseLandEligible) {
-                counts['arm2PurchaseLandEligible'] =
-                    counts['arm2PurchaseLandEligible']! + 1;
-              }
-            }
-            if (arm3RegimentsGte1) {
-              counts['arm3RegimentsGte1'] = counts['arm3RegimentsGte1']! + 1;
-            }
-            if (arm3TreasuryGte) {
-              counts['arm3TreasuryGteCheapestRegiment'] =
-                  counts['arm3TreasuryGteCheapestRegiment']! + 1;
-            }
-            if (arm3RegimentsGte1 &&
-                arm3TreasuryGte &&
-                arm3HasNonWarNonGpOwner) {
-              counts['arm3DeclareWarEligible'] =
-                  counts['arm3DeclareWarEligible']! + 1;
-            }
-          }
-
-          // Cache the terminal-turn snapshot fields for the final rollup.
-          if (t == turns - 1) {
-            final player = game.playerById(gpId);
-            lastSnapshotFields[gpId] = <String, Object?>{
-              'observerPhase': outcome.phase.name,
-              'oldWorldProvincesOwned': snap.conquest.oldWorldProvincesOwned,
-              'nwProvincesOwned': nwCountOwnedBy(game, gpId),
-              'nwInvadableCount':
-                  snap.colonial.invadableNewWorldProvinceIdsSorted.length,
-              'invadableProvinceCount':
-                  snap.conquest.invadableProvinceIdsSorted.length,
-              'treasury': player?.treasury,
-              'regimentCount': regimentCountForPlayer(game, gpId),
-              'idleMerchant': _hasIdleMerchantForDiagnostic(
+              final arm2HasIdleMerchant = _hasIdleMerchantForDiagnostic(
                 game.worldState,
                 gpId,
-              ),
-              'cheapestRegimentBuildTreasuryCost': cheapestRegimentCost,
-            };
+              );
+              final arm3RegimentsGte1 = regiments >= 1;
+              final arm3TreasuryGte = treasury >= cheapestRegimentCost;
+
+              if (arm1JoinEmpireEligible) {
+                counts['arm1JoinEmpireEligible'] =
+                    counts['arm1JoinEmpireEligible']! + 1;
+              }
+              if (arm2HasIdleMerchant) {
+                counts['arm2HasIdleMerchant'] =
+                    counts['arm2HasIdleMerchant']! + 1;
+                if (arm2PurchaseLandEligible) {
+                  counts['arm2PurchaseLandEligible'] =
+                      counts['arm2PurchaseLandEligible']! + 1;
+                }
+              }
+              if (arm3RegimentsGte1) {
+                counts['arm3RegimentsGte1'] = counts['arm3RegimentsGte1']! + 1;
+              }
+              if (arm3TreasuryGte) {
+                counts['arm3TreasuryGteCheapestRegiment'] =
+                    counts['arm3TreasuryGteCheapestRegiment']! + 1;
+              }
+              if (arm3RegimentsGte1 &&
+                  arm3TreasuryGte &&
+                  arm3HasNonWarNonGpOwner) {
+                counts['arm3DeclareWarEligible'] =
+                    counts['arm3DeclareWarEligible']! + 1;
+              }
+            }
+
+            // Cache the terminal-turn snapshot fields for the final rollup.
+            if (turn == turns - 1) {
+              final player = game.playerById(gpId);
+              lastSnapshotFields[gpId] = <String, Object?>{
+                'observerPhase': outcome.phase.name,
+                'oldWorldProvincesOwned': snap.conquest.oldWorldProvincesOwned,
+                'nwProvincesOwned': nwCountOwnedBy(game, gpId),
+                'nwInvadableCount':
+                    snap.colonial.invadableNewWorldProvinceIdsSorted.length,
+                'invadableProvinceCount':
+                    snap.conquest.invadableProvinceIdsSorted.length,
+                'treasury': player?.treasury,
+                'regimentCount': regimentCountForPlayer(game, gpId),
+                'idleMerchant': _hasIdleMerchantForDiagnostic(
+                  game.worldState,
+                  gpId,
+                ),
+                'cheapestRegimentBuildTreasuryCost': cheapestRegimentCost,
+              };
+            }
           }
-        }
+        },
+      );
 
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
-      }
-
+      final game = campaign.finalGame;
+      final nwStart = <String, int>{
+        for (final gpId in gpIds)
+          gpId: nwCountOwnedBy(campaign.initialGame, gpId),
+      };
       final nwGains = <String, int>{
         for (final gpId in gpIds)
           gpId: nwCountOwnedBy(game, gpId) - nwStart[gpId]!,

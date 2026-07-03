@@ -8,6 +8,7 @@ const List<TurnPhase> turnResolutionSequence = [
   TurnPhase.consumption,
   TurnPhase.production,
   TurnPhase.diplomacy,
+  TurnPhase.spyResolution,
   TurnPhase.research,
   TurnPhase.movement,
   TurnPhase.minorRegimentUpgrade,

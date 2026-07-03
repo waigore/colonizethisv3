@@ -70,7 +70,7 @@ void main() {
           work: [
             WorkOrder(
               unitId: 's1',
-              target: kWorkTargetStealTech,
+              target: kWorkTargetCounterSpy,
               targetTileKey: tileSpy,
             ),
             WorkOrder(

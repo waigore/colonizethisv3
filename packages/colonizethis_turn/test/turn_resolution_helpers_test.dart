@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -81,6 +83,32 @@ void main() {
     test('differs across turns for the same global seed', () {
       final game = gameWithSeed(999);
       expect(mixTurnSeed(game, 3), isNot(mixTurnSeed(game, 4)));
+    });
+  });
+
+  group('mixSpyPhaseSeed / spyPhaseRandom', () {
+    test('matches the legacy additive spy seed for a known global seed', () {
+      final game = gameWithSeed(12345);
+      expect(mixSpyPhaseSeed(game, 7), 12345 + 7 * kSpyPhaseSeedTurnMultiplier);
+    });
+
+    test('returns null when global seed is unset', () {
+      final game = gameWithSeed(null);
+      expect(mixSpyPhaseSeed(game, 3), isNull);
+    });
+
+    test('spyPhaseRandom is deterministic for identical inputs', () {
+      final game = gameWithSeed(42);
+      final a = spyPhaseRandom(game);
+      final b = spyPhaseRandom(game);
+      expect(a.nextInt(1 << 30), b.nextInt(1 << 30));
+    });
+
+    test('spyPhaseRandom honors override', () {
+      final game = gameWithSeed(1);
+      final override = Random(99);
+      final expected = override.nextInt(1000);
+      expect(spyPhaseRandom(game, override: Random(99)).nextInt(1000), expected);
     });
   });
 }

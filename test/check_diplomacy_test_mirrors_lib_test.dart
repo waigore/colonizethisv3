@@ -72,9 +72,9 @@ void main() {
       expect(reason, isNull);
     });
 
-    test('negative: a deeply nested support file is allowed', () {
+    test('negative: a deeply nested dossier file is allowed', () {
       final reason = diplomacyTestMirrorsLibViolationReason(
-        'packages/colonizethis_diplomacy/test/support/call_to_arms_fixtures.dart',
+        'packages/colonizethis_diplomacy/test/dossier/evidence_rules_test.dart',
       );
       expect(reason, isNull);
     });

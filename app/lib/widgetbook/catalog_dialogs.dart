@@ -682,7 +682,7 @@ List<WidgetbookNode> get productionCommodityBreakdownDialogDirectories => [
       WidgetbookUseCase(
         name: 'Default — debug game, mixed deltas',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -730,7 +730,7 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
       WidgetbookUseCase(
         name: 'Grant mode — treasury sufficient',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.first.id;
           final targetFactionId = game.players.length >= 2
@@ -761,15 +761,17 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Subsidy mode — below minimum',
+        name: 'Subsidy mode — percent stepper',
         builder: (context) {
-          final base = getDebugInitGameResult().game;
+          final base = loadSeed42InitGameResult().game;
           final humanPlayerId = base.players.first.id;
           final targetFactionId = base.players.length >= 2
               ? base.players[1].id
               : (base.minorNations.isNotEmpty
                     ? base.minorNations.first.id
                     : 'm1');
+          // Subsidy is a treasury-independent percentage (Refs #3753 R3); even
+          // with treasury 0 the percent stepper (5–20%) stays enabled.
           final game = base.copyWith(
             players: [
               base.players.first.copyWith(treasury: 0),

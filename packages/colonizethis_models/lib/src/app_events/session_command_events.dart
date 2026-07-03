@@ -360,6 +360,20 @@ class RemoveDiplomaticOrderRequestedEvent extends SessionCommandEvent {
   final String targetFactionId;
 }
 
+/// Immediate voluntary Break Alliance from the diplomacy panel (Refs #3811).
+///
+/// Applies break penalties inline during Orders phase without queuing a
+/// pending `DiplomaticOrder`. SPEC/ui/diplomacy-panel.md § Submitting an action.
+class BreakAllianceImmediatelyEvent extends SessionCommandEvent {
+  BreakAllianceImmediatelyEvent({
+    required this.playerId,
+    required this.targetFactionId,
+  });
+
+  final String playerId;
+  final String targetFactionId;
+}
+
 /// Negotiation UI mood input for portrait transitions.
 ///
 /// UI supplies deterministic negotiation inputs; session listeners compute the

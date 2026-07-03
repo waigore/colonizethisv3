@@ -9,10 +9,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
-        kWorkTargetStealTech;
+        kWorkTargetCounterSpy;
 void main() {
   group('WorkOrderCostCalculator', () {
-    test('calculateCost returns null for steal_tech, counter_spy, purchase_land', () {
+    test('calculateCost returns null for counter_spy, purchase_land', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -23,7 +23,6 @@ void main() {
         players: const [],
       );
       final calc = WorkOrderCostCalculator(game);
-      expect(calc.calculateCost(kWorkTargetStealTech, 'oldWorld|P1|0|0'), isNull);
       expect(calc.calculateCost(kWorkTargetCounterSpy, 'oldWorld|P1|0|0'), isNull);
       expect(calc.calculateCost(kWorkTargetPurchaseLand, 'oldWorld|P1|0|0'), isNull);
     });

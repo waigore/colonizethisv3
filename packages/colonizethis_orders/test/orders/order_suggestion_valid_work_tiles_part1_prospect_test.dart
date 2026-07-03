@@ -50,6 +50,14 @@ void main() {
           worldState: world,
           players: [player],
           tribes: [tribe],
+          // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
         final topology = MapTopology(
           nodes: const [
@@ -115,6 +123,14 @@ void main() {
           worldState: world,
           players: [player],
           tribes: [tribe],
+          // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
         final topology = MapTopology(
           nodes: const [
@@ -195,6 +211,14 @@ void main() {
           worldState: world,
           players: [player],
           tribes: [tribe],
+          // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
         final topology = MapTopology(
           nodes: const [

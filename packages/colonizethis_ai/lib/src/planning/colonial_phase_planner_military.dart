@@ -24,11 +24,14 @@ part of 'colonial_phase_planner.dart';
 /// shared instance ([defaultPlan]) without per-call allocations on the
 /// hot AI path. Value equality compares both list contents so tests can
 /// assert against literal constructions without relying on identity.
-class ColonialMilitaryPlan {
+final class ColonialMilitaryPlan extends PhaseDestinationResult {
   const ColonialMilitaryPlan({
-    required this.priorityDestinationProvinceIdsSorted,
-    required this.priorityTargetOwnerFactionIdsSorted,
-  });
+    required List<String> priorityDestinationProvinceIdsSorted,
+    required List<String> priorityTargetOwnerFactionIdsSorted,
+  })  : _priorityDestinationProvinceIdsSorted =
+            priorityDestinationProvinceIdsSorted,
+        _priorityTargetOwnerFactionIdsSorted =
+            priorityTargetOwnerFactionIdsSorted;
 
   /// Reusable "no override" plan returned for non-COLONIAL callers, GPs
   /// below the observer conquest quota, the empty-NW-invadable guard,
@@ -40,11 +43,15 @@ class ColonialMilitaryPlan {
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
 
+  final List<String> _priorityDestinationProvinceIdsSorted;
+  final List<String> _priorityTargetOwnerFactionIdsSorted;
+
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only) whose owners match the priority-arm filter for this
   /// turn. Sorted ascending so identical inputs yield identical lists
   /// (Refs #2509 Must-have #7). Empty for [defaultPlan].
-  final List<String> priorityDestinationProvinceIdsSorted;
+  List<String> get priorityDestinationProvinceIdsSorted =>
+      _priorityDestinationProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityDestinationProvinceIdsSorted]. Sorted ascending and
@@ -58,41 +65,19 @@ class ColonialMilitaryPlan {
   ///   - One or more entries (sorted at-war owners) when the at-war
   ///     fallback arm fires ([planColonialMilitary] § Priority 2).
   ///   - Empty for [defaultPlan].
-  final List<String> priorityTargetOwnerFactionIdsSorted;
+  @override
+  List<String> get priorityTargetOwnerFactionIdsSorted =>
+      _priorityTargetOwnerFactionIdsSorted;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ColonialMilitaryPlan &&
-          _colonialListEquals(
-            priorityDestinationProvinceIdsSorted,
-            other.priorityDestinationProvinceIdsSorted,
-          ) &&
-          _colonialListEquals(
-            priorityTargetOwnerFactionIdsSorted,
-            other.priorityTargetOwnerFactionIdsSorted,
-          );
-
-  @override
-  int get hashCode => Object.hash(
-    Object.hashAll(priorityDestinationProvinceIdsSorted),
-    Object.hashAll(priorityTargetOwnerFactionIdsSorted),
-  );
+  List<String> get priorityProvinceIdsSorted =>
+      _priorityDestinationProvinceIdsSorted;
 
   @override
   String toString() =>
       'ColonialMilitaryPlan('
       'priorityDestinationProvinceIdsSorted: $priorityDestinationProvinceIdsSorted, '
       'priorityTargetOwnerFactionIdsSorted: $priorityTargetOwnerFactionIdsSorted)';
-}
-
-bool _colonialListEquals(List<String> a, List<String> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }
 
 /// Returns the deterministic COLONIAL-phase conquest destination filter

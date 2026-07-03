@@ -89,7 +89,7 @@ void main() {
         expect(
           () => runInitGame(
             config: config,
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
+            options: defaultInitOptions,
           ),
           throwsA(
             isA<SetupConfigConstraintException>()
@@ -107,45 +107,19 @@ void main() {
     test(
       'AC-11 locked full-init profile: twenty fixed seeds complete setup',
       () {
-        const seeds = <int>[
-          101,
-          257,
-          509,
-          1009,
-          2003,
-          3001,
-          4001,
-          5003,
-          6007,
-          7001,
-          8011,
-          9001,
-          10007,
-          11003,
-          12007,
-          13001,
-          14009,
-          15013,
-          16001,
-          17011,
-        ];
-        expect(seeds.length, 20);
-        expect(seeds.toSet().length, 20);
+        expect(lockedFullInitAc11Seeds.length, 20);
+        expect(lockedFullInitAc11Seeds.toSet().length, 20);
 
-        for (final s in seeds) {
-          final config = lockedFullInitConfig(seed: s);
-          final result = runInitGame(config: config, options: defaultInitOptions);
+        runLockedFullInitAc11SeedBatch(assertResult: (result, seed) {
           final game = result.game;
           expect(
             game.worldState.oldWorld.provinces.length,
             60,
-            reason: 'seed=$s',
+            reason: 'seed=$seed',
           );
-          expect(game.players.length, 6, reason: 'seed=$s');
-          expect(game.minorNations.length, 6, reason: 'seed=$s');
-
-          expectLockedFullInitAcWhenPartitionsMatch(result, seed: s);
-        }
+          expect(game.players.length, 6, reason: 'seed=$seed');
+          expect(game.minorNations.length, 6, reason: 'seed=$seed');
+        });
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

@@ -74,36 +74,6 @@ OrderValidationResult? precheckUpgradeTown(
   return null;
 }
 
-OrderValidationResult? precheckStealTech(
-  WorkOrderTargetPrecheckContext ctx,
-  WorkOrder order,
-  String? targetProvinceId,
-  String? provinceOwnerId,
-  String unitType,
-) {
-  if (targetProvinceId == null) {
-    return OrderValidationResult.rejected('Invalid target for steal_tech');
-  }
-  final otherPlayer = ctx.game.otherGreatPowerAtCapitalProvince(
-    targetProvinceId,
-    ctx.playerId,
-  );
-  if (otherPlayer == null) {
-    return OrderValidationResult.rejected(
-      'steal_tech target must be another Great Power capital province',
-    );
-  }
-  final ourTech = ctx.player.techUnlocked ?? {};
-  final theirTech = otherPlayer.techUnlocked ?? {};
-  final hasTechWeLack = theirTech.entries.any(
-    (e) => e.value == true && ourTech[e.key] != true,
-  );
-  if (!hasTechWeLack) {
-    return OrderValidationResult.rejected('Target has no technology you lack');
-  }
-  return null;
-}
-
 OrderValidationResult? precheckCounterSpy(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder order,
@@ -248,7 +218,6 @@ OrderValidationResult? precheckBuildImprovement(
 /// Map dispatch for target-specific validation before generic work rules.
 final Map<String, WorkOrderTargetPrecheck> workOrderTargetPrechecks = {
   kWorkTargetUpgradeTown: precheckUpgradeTown,
-  kWorkTargetStealTech: precheckStealTech,
   kWorkTargetCounterSpy: precheckCounterSpy,
   kWorkTargetPurchaseLand: precheckPurchaseLand,
   kWorkTargetBuildImprovement: precheckBuildImprovement,

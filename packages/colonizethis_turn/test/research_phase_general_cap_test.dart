@@ -3,7 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'research_phase_test_support.dart';
+import 'support/research_phase_test_support.dart';
 
 int _generalCountFor(Game game, String playerId) =>
     game.generals.where((g) => g.ownerId == playerId).length;

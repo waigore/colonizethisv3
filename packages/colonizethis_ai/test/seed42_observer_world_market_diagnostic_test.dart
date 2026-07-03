@@ -16,10 +16,12 @@
 // or match offers that never raise treasury above the threshold (mis-tuned
 // urgency / undersized credit per deal).
 //
-// This test runs the same 100-turn `generateOrdersForGameFullAI` +
-// `validateOrdersAndResolveTurnFromTrustedOrders` loop as
-// `seed42_observer_conquest_s7d_diagnostic_test.dart` (Refs #2847 S7-D)
-// and records, **per Great Power per turn**, every link of the chain:
+// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+// step 2): the init / handoff / 100-turn resolve loop is owned by
+// `test/support/seed42_observer_campaign.dart`; this test contributes only
+// its per-turn `onBeforeResolve` / `onAfterResolve` observations.
+//
+// Records, **per Great Power per turn**, every link of the chain:
 //
 //   * Treasury at start and end of turn (delta attributable to filled
 //     deals as seller / buyer that turn).
@@ -178,15 +180,13 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
-import 'package:colonizethis_data/colonizethis_data.dart'
-    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 
 /// Great Power factionIds the diagnostic scopes to (`gp1..gp6`). Mirrors
 /// `kColonialPhaseEntryGreatPowerIds` in
@@ -370,6 +370,26 @@ List<Map<String, Object?>> _topNByQuantity(
   ];
 }
 
+/// Per-turn pre-resolve state stashed between harness callbacks.
+class _PendingWorldMarketTurn {
+  const _PendingWorldMarketTurn({
+    required this.preTurnSnapshot,
+    required this.emittedThisTurn,
+  });
+
+  final Map<String,
+      ({
+        int treasuryStart,
+        int cargo,
+        int bidTypeCap,
+        int cfOffers,
+        int cfBids,
+        ObserverGoalPhase phase,
+      })> preTurnSnapshot;
+  final Map<String, ({int offers, int bids, int offerQty, int bidQty})>
+      emittedThisTurn;
+}
+
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -379,18 +399,6 @@ void main() {
     'seed 42 turn 100 World-Market lock-recovery per-turn diagnostic '
     '(Refs #2924)',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
       final cheapest = cheapestRegimentBuildTreasuryCost();
 
       final perTurnRows = <String, List<_TurnRow>>{
@@ -403,163 +411,168 @@ void main() {
         for (final gpId in _kGreatPowerIds) gpId: <String, int>{},
       };
 
-      for (var t = 0; t < 100; t++) {
-        // Snapshot inputs *before* the turn resolves so the diagnostic
-        // reflects what the planner saw entering turn t+1: carry-forward
-        // residuals, cargo / bid-type cap, and the treasury the suggester
-        // gated on.
-        final preTurnSnapshot = <String, ({int treasuryStart, int cargo, int bidTypeCap,
-            int cfOffers, int cfBids, ObserverGoalPhase phase})>{};
-        for (final gpId in _kGreatPowerIds) {
-          final view = buildPlayerView(game, topo, gpId);
-          final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
-          final outcome = runPhasePlanners(game: game, snapshot: snap);
-          final player = game.playerById(gpId);
-          final treasuryStart = player?.treasury ?? 0;
-          final cargo = cargoHoldsForHomeFleet(game, gpId);
-          final bidTypeCap = worldMarketBidTypeCap(game, gpId);
-          final cfOffers = (game.worldMarketState
-                  .carryForwardOffersByFactionId[gpId] ??
-              const <TradeOrder>[]);
-          final cfBids = (game
-                  .worldMarketState.carryForwardBidsByFactionId[gpId] ??
-              const <TradeOrder>[]);
-          preTurnSnapshot[gpId] = (
-            treasuryStart: treasuryStart,
-            cargo: cargo < 0 ? 0 : cargo,
-            bidTypeCap: bidTypeCap,
-            cfOffers: cfOffers.length,
-            cfBids: cfBids.length,
-            phase: outcome.phase,
+      final pendingByTurn = <int, _PendingWorldMarketTurn>{};
+
+      runSeed42ObserverCampaign(
+        turns: 100,
+        onBeforeResolve: (turn, fullAi, game, topo, tileMap) {
+          // Snapshot inputs *before* the turn resolves so the diagnostic
+          // reflects what the planner saw entering turn t+1: carry-forward
+          // residuals, cargo / bid-type cap, and the treasury the suggester
+          // gated on.
+          final preTurnSnapshot = <String,
+              ({
+                int treasuryStart,
+                int cargo,
+                int bidTypeCap,
+                int cfOffers,
+                int cfBids,
+                ObserverGoalPhase phase,
+              })>{};
+          for (final gpId in _kGreatPowerIds) {
+            final view = buildPlayerView(game, topo, gpId);
+            final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
+            final outcome = runPhasePlanners(game: game, snapshot: snap);
+            final player = game.playerById(gpId);
+            final treasuryStart = player?.treasury ?? 0;
+            final cargo = cargoHoldsForHomeFleet(game, gpId);
+            final bidTypeCap = worldMarketBidTypeCap(game, gpId);
+            final cfOffers = (game.worldMarketState
+                    .carryForwardOffersByFactionId[gpId] ??
+                const <TradeOrder>[]);
+            final cfBids = (game
+                    .worldMarketState.carryForwardBidsByFactionId[gpId] ??
+                const <TradeOrder>[]);
+            preTurnSnapshot[gpId] = (
+              treasuryStart: treasuryStart,
+              cargo: cargo < 0 ? 0 : cargo,
+              bidTypeCap: bidTypeCap,
+              cfOffers: cfOffers.length,
+              cfBids: cfBids.length,
+              phase: outcome.phase,
+            );
+          }
+
+          // Capture trade-order emission per GP from the orders the
+          // orchestrator produced this turn (F7-wired
+          // `tradeOrdersByPlayerId`).
+          final emittedThisTurn = <String,
+              ({int offers, int bids, int offerQty, int bidQty})>{};
+          for (final gpId in _kGreatPowerIds) {
+            final orders = fullAi.orders.tradeOrdersByPlayerId[gpId] ??
+                const <TradeOrder>[];
+            var offers = 0;
+            var bids = 0;
+            var offerQty = 0;
+            var bidQty = 0;
+            for (final o in orders) {
+              switch (o.type) {
+                case TradeOrderType.offer:
+                  offers += 1;
+                  offerQty += o.quantity;
+                  offerQuantityByCommodityByGp[gpId]![o.commodityId] =
+                      (offerQuantityByCommodityByGp[gpId]![o.commodityId] ??
+                              0) +
+                          o.quantity;
+                case TradeOrderType.bid:
+                  bids += 1;
+                  bidQty += o.quantity;
+              }
+            }
+            emittedThisTurn[gpId] = (
+              offers: offers,
+              bids: bids,
+              offerQty: offerQty,
+              bidQty: bidQty,
+            );
+          }
+
+          // Stash per-turn pre-resolve + emission state for onAfterResolve.
+          pendingByTurn[turn] = _PendingWorldMarketTurn(
+            preTurnSnapshot: preTurnSnapshot,
+            emittedThisTurn: emittedThisTurn,
           );
-        }
+        },
+        onAfterResolve: (turn, resolved) {
+          final pending = pendingByTurn.remove(turn);
+          if (pending == null) {
+            fail(
+              'Refs #2924 per-turn diagnostic: missing pre-resolve snapshot '
+              'for turn $turn.',
+            );
+          }
 
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
-
-        // Capture trade-order emission per GP from the orders the
-        // orchestrator produced this turn (F7-wired
-        // `tradeOrdersByPlayerId`).
-        final emittedThisTurn = <String, ({int offers, int bids,
-            int offerQty, int bidQty})>{};
-        for (final gpId in _kGreatPowerIds) {
-          final orders = fullAi.orders.tradeOrdersByPlayerId[gpId] ??
-              const <TradeOrder>[];
-          var offers = 0;
-          var bids = 0;
-          var offerQty = 0;
-          var bidQty = 0;
-          for (final o in orders) {
-            switch (o.type) {
-              case TradeOrderType.offer:
-                offers += 1;
-                offerQty += o.quantity;
-                offerQuantityByCommodityByGp[gpId]![o.commodityId] =
-                    (offerQuantityByCommodityByGp[gpId]![o.commodityId] ?? 0) +
-                        o.quantity;
-              case TradeOrderType.bid:
-                bids += 1;
-                bidQty += o.quantity;
+          // Walk this turn's `lastTurnActivity` deals and attribute
+          // credit / debit to seller / buyer GP. `lastTurnActivity` is
+          // keyed by commodity id; each `MarketActivity.deals` carries
+          // every `FilledDeal` the matcher produced for that commodity
+          // this turn.
+          final dealCountsAsSeller = <String, int>{
+            for (final gpId in _kGreatPowerIds) gpId: 0,
+          };
+          final treasuryCreditedAsSeller = <String, int>{
+            for (final gpId in _kGreatPowerIds) gpId: 0,
+          };
+          final dealCountsAsBuyer = <String, int>{
+            for (final gpId in _kGreatPowerIds) gpId: 0,
+          };
+          final treasurySpentAsBuyer = <String, int>{
+            for (final gpId in _kGreatPowerIds) gpId: 0,
+          };
+          for (final activity
+              in resolved.worldMarketState.lastTurnActivity.values) {
+            for (final deal in activity.deals) {
+              final dealValue = (deal.quantity * deal.pricePerUnit).round();
+              if (dealCountsAsSeller.containsKey(deal.sellerFactionId)) {
+                dealCountsAsSeller[deal.sellerFactionId] =
+                    (dealCountsAsSeller[deal.sellerFactionId] ?? 0) + 1;
+                treasuryCreditedAsSeller[deal.sellerFactionId] =
+                    (treasuryCreditedAsSeller[deal.sellerFactionId] ?? 0) +
+                        dealValue;
+                sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
+                        deal.commodityId] =
+                    (sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
+                                deal.commodityId] ??
+                            0) +
+                        deal.quantity;
+              }
+              if (dealCountsAsBuyer.containsKey(deal.buyerFactionId)) {
+                dealCountsAsBuyer[deal.buyerFactionId] =
+                    (dealCountsAsBuyer[deal.buyerFactionId] ?? 0) + 1;
+                treasurySpentAsBuyer[deal.buyerFactionId] =
+                    (treasurySpentAsBuyer[deal.buyerFactionId] ?? 0) +
+                        dealValue;
+              }
             }
           }
-          emittedThisTurn[gpId] = (
-            offers: offers,
-            bids: bids,
-            offerQty: offerQty,
-            bidQty: bidQty,
-          );
-        }
 
-        final merged = mergeOrderLists(
-          humanOrders: const Orders(),
-          aiOrders: fullAi.orders,
-        );
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        final resolved = (result as TurnResolutionComplete).game;
-
-        // Walk this turn's `lastTurnActivity` deals and attribute
-        // credit / debit to seller / buyer GP. `lastTurnActivity` is
-        // keyed by commodity id; each `MarketActivity.deals` carries
-        // every `FilledDeal` the matcher produced for that commodity
-        // this turn.
-        final dealCountsAsSeller = <String, int>{
-          for (final gpId in _kGreatPowerIds) gpId: 0,
-        };
-        final treasuryCreditedAsSeller = <String, int>{
-          for (final gpId in _kGreatPowerIds) gpId: 0,
-        };
-        final dealCountsAsBuyer = <String, int>{
-          for (final gpId in _kGreatPowerIds) gpId: 0,
-        };
-        final treasurySpentAsBuyer = <String, int>{
-          for (final gpId in _kGreatPowerIds) gpId: 0,
-        };
-        for (final activity in resolved.worldMarketState.lastTurnActivity.values) {
-          for (final deal in activity.deals) {
-            final dealValue = (deal.quantity * deal.pricePerUnit).round();
-            if (dealCountsAsSeller.containsKey(deal.sellerFactionId)) {
-              dealCountsAsSeller[deal.sellerFactionId] =
-                  (dealCountsAsSeller[deal.sellerFactionId] ?? 0) + 1;
-              treasuryCreditedAsSeller[deal.sellerFactionId] =
-                  (treasuryCreditedAsSeller[deal.sellerFactionId] ?? 0) +
-                      dealValue;
-              sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
-                      deal.commodityId] =
-                  (sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
-                              deal.commodityId] ??
-                          0) +
-                      deal.quantity;
-            }
-            if (dealCountsAsBuyer.containsKey(deal.buyerFactionId)) {
-              dealCountsAsBuyer[deal.buyerFactionId] =
-                  (dealCountsAsBuyer[deal.buyerFactionId] ?? 0) + 1;
-              treasurySpentAsBuyer[deal.buyerFactionId] =
-                  (treasurySpentAsBuyer[deal.buyerFactionId] ?? 0) + dealValue;
-            }
+          for (final gpId in _kGreatPowerIds) {
+            final pre = pending.preTurnSnapshot[gpId]!;
+            final emit = pending.emittedThisTurn[gpId]!;
+            final treasuryEnd = resolved.playerById(gpId)?.treasury ?? 0;
+            perTurnRows[gpId]!.add(
+              _TurnRow(
+                turn: turn,
+                phase: pre.phase,
+                treasuryStart: pre.treasuryStart,
+                treasuryEnd: treasuryEnd,
+                tradeCargoCapacity: pre.cargo,
+                bidTypeCap: pre.bidTypeCap,
+                offersEmitted: emit.offers,
+                bidsEmitted: emit.bids,
+                offerQuantityTotal: emit.offerQty,
+                bidQuantityTotal: emit.bidQty,
+                carryForwardOffersCount: pre.cfOffers,
+                carryForwardBidsCount: pre.cfBids,
+                dealsAsSeller: dealCountsAsSeller[gpId] ?? 0,
+                treasuryCreditedAsSeller: treasuryCreditedAsSeller[gpId] ?? 0,
+                dealsAsBuyer: dealCountsAsBuyer[gpId] ?? 0,
+                treasurySpentAsBuyer: treasurySpentAsBuyer[gpId] ?? 0,
+              ),
+            );
           }
-        }
-
-        for (final gpId in _kGreatPowerIds) {
-          final pre = preTurnSnapshot[gpId]!;
-          final emit = emittedThisTurn[gpId]!;
-          final treasuryEnd = resolved.playerById(gpId)?.treasury ?? 0;
-          perTurnRows[gpId]!.add(
-            _TurnRow(
-              turn: t,
-              phase: pre.phase,
-              treasuryStart: pre.treasuryStart,
-              treasuryEnd: treasuryEnd,
-              tradeCargoCapacity: pre.cargo,
-              bidTypeCap: pre.bidTypeCap,
-              offersEmitted: emit.offers,
-              bidsEmitted: emit.bids,
-              offerQuantityTotal: emit.offerQty,
-              bidQuantityTotal: emit.bidQty,
-              carryForwardOffersCount: pre.cfOffers,
-              carryForwardBidsCount: pre.cfBids,
-              dealsAsSeller: dealCountsAsSeller[gpId] ?? 0,
-              treasuryCreditedAsSeller: treasuryCreditedAsSeller[gpId] ?? 0,
-              dealsAsBuyer: dealCountsAsBuyer[gpId] ?? 0,
-              treasurySpentAsBuyer: treasurySpentAsBuyer[gpId] ?? 0,
-            ),
-          );
-        }
-
-        game = resolved;
-      }
+        },
+      );
 
       // Build the structured rollup. Per-GP rollups consume only the
       // failing-GP commodity tables for top-5 commodity reporting; this

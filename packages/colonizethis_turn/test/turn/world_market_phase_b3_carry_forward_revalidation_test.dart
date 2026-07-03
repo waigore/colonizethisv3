@@ -5,7 +5,7 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_market_phase_b3_test_support.dart';
+import '../support/world_market_test_support.dart';
 
 /// Integration tests for the carry-forward re-validation branch of
 /// `worldMarketTurnPhaseHandler` (Refs #2990 B3 follow-up).

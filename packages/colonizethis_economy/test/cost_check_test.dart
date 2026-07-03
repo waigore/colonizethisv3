@@ -1,5 +1,7 @@
-import 'package:colonizethis_economy/src/economy/cost_check.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
 void main() {
   group('checkPreconditionsInOrder (Refs #3517 Cluster 2)', () {

@@ -7,6 +7,7 @@ import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
 import 'growth_stage.dart' show kGrowthStagePlannerEnabled;
 import 'strategic_ai.dart';
+import 'strategic_planning_input.dart';
 
 final _log = packageLogger();
 
@@ -84,19 +85,21 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   );
   final suggestionAPI = orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
   final traced = generateStrategicOrdersWithTrace(
-    game: game,
-    topology: topology,
-    nationId: playerId,
-    view: view,
-    config: config,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    tileMapByRegion: tileMapByRegion,
-    onDialogue: onDialogue,
-    onMood: onMood,
-    onStagedPlannerProgress: onStagedPlannerProgress,
-    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-    growthStagePlannerEnabled: growthStagePlannerEnabled,
+    StrategicPlanningInput(
+      game: game,
+      topology: topology,
+      nationId: playerId,
+      view: view,
+      config: config,
+      seeds: seeds,
+      suggestionAPI: suggestionAPI,
+      tileMapByRegion: tileMapByRegion,
+      onDialogue: onDialogue,
+      onMood: onMood,
+      onStagedPlannerProgress: onStagedPlannerProgress,
+      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      growthStagePlannerEnabled: growthStagePlannerEnabled,
+    ),
   );
   return traced;
 }

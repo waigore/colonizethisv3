@@ -5,6 +5,8 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/world_market_test_support.dart';
+
 /// Per-commodity Deal Book ledger emission tests for the World Market phase
 /// handler (Refs #2993 E6 / #2988 § UI Design — Deal Book).
 ///
@@ -22,7 +24,7 @@ void main() {
         'GP↔GP fill emits a FilledDeal on the resolved commodity activity',
         () {
           final acc = TurnPipelineState(
-            game: _gameWithTwoGps(
+            game: gameWithTwoGps(
               sellerStockpile: const Stockpile().applyDelta('timber', 10),
               sellerTreasury: 0,
               buyerTreasury: 1000,
@@ -75,7 +77,7 @@ void main() {
         'multi-commodity matching emits deals scoped to each commodity',
         () {
           final acc = TurnPipelineState(
-            game: _gameWithTwoGps(
+            game: gameWithTwoGps(
               sellerStockpile: const Stockpile()
                   .applyDelta('timber', 10)
                   .applyDelta('iron', 4),
@@ -155,7 +157,7 @@ void main() {
           // entry for the commodity must carry an empty deals list (not
           // null, not absent — the UI iterates deals.where(buyer/seller)).
           final acc = TurnPipelineState(
-            game: _gameWithTwoGps(
+            game: gameWithTwoGps(
               sellerStockpile: const Stockpile().applyDelta('timber', 10),
               sellerTreasury: 0,
               buyerTreasury: 0,
@@ -205,7 +207,7 @@ void main() {
           // `unfilledBidsByFactionId`. The activity deal list must contain
           // exactly the matched portion, not the residual.
           final acc = TurnPipelineState(
-            game: _gameWithTwoGps(
+            game: gameWithTwoGps(
               sellerStockpile: const Stockpile().applyDelta('timber', 3),
               sellerTreasury: 0,
               buyerTreasury: 1000,
@@ -261,7 +263,7 @@ void main() {
             prices: const {'timber': 30},
           );
           final acc = TurnPipelineState(
-            game: _gameWithTwoGps(
+            game: gameWithTwoGps(
               sellerStockpile: Stockpile.empty,
               sellerTreasury: 0,
               buyerTreasury: 0,
@@ -282,41 +284,5 @@ void main() {
         },
       );
     },
-  );
-}
-
-Game _gameWithTwoGps({
-  required Stockpile sellerStockpile,
-  required int sellerTreasury,
-  required int buyerTreasury,
-  required Map<CommodityId, int> marketPrices,
-}) {
-  return Game(
-    id: 'g1',
-    players: [
-      Player(
-        id: 'gpSeller',
-        displayName: 'Seller',
-        isHuman: false,
-        stockpile: sellerStockpile,
-        treasury: sellerTreasury,
-      ),
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    worldState: const WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.worldMarket,
-        turnNumber: 3,
-      ),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
   );
 }

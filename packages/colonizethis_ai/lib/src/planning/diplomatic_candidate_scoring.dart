@@ -21,13 +21,17 @@ import 'planning_helpers.dart'
         isAtWarWithAnyGreatPower,
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
+        kDiplomaticDefaultBaseScore,
         mutualExhaustedGpStalemateSideQualifies,
         orderTargetIsAtWarInvadableBlocker;
 import 'war_desire_calculator.dart';
 
+part 'diplomatic_scoring_context.dart';
 part 'diplomatic_candidate_scoring_offer_peace.dart';
+part 'diplomatic_candidate_scoring_declare_war_context.dart';
 part 'diplomatic_candidate_scoring_declare_war.dart';
 part 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
+part 'diplomatic_candidate_scoring_establish_overture.dart';
 
 final _log = packageLogger();
 
@@ -77,7 +81,7 @@ List<int> computeDiplomaticCandidateScores({
     (m) => _minorOwnsOldWorldProvinces(game, m.id),
   );
   final warDesireByTarget = <String, int>{};
-  int warDesireForTarget(String targetFactionId, int relationScore) {
+  int memoizedWarDesire(String targetFactionId, num relationScore) {
     return warDesireByTarget.putIfAbsent(
       targetFactionId,
       () => computeWarDesireScore(
@@ -88,26 +92,55 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+  final warDesireForTarget = memoizedWarDesire;
 
   return candidates.map((o) {
-    var s = 50;
+    var s = kDiplomaticDefaultBaseScore;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
         s = _scoreOfferPeaceDiplomaticOrder(
-          order: o,
-          nationId: nationId,
-          game: game,
-          snapshot: snapshot,
-          agendaId: agendaId,
-          thresholds: thresholds,
-          provinceOwner: provinceOwner,
-          invadableOwners: invadableOwners,
-          warDesireForTarget: warDesireForTarget,
+          DiplomaticScoringContext(
+            order: o,
+            nationId: nationId,
+            game: game,
+            snapshot: snapshot,
+            provinceOwner: provinceOwner,
+            currentTurn: currentTurn,
+            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+            warDesireForTarget: warDesireForTarget,
+          ),
+          OfferPeaceScoringParams(
+            agendaId: agendaId,
+            thresholds: thresholds,
+            invadableOwners: invadableOwners,
+          ),
         );
         break;
       case DiplomaticOrderType.alliance:
         s += getAgendaAllianceAcceptanceModifier(agendaId);
         s += (thresholds.allianceTendency - 50);
+        break;
+      case DiplomaticOrderType.breakAlliance:
+        // Voluntary alliance break (Refs #3758 R6). Backstabber/warmonger lean
+        // toward breaking (treaty-breaking modifier); the isolationist
+        // "cancels alliances" so its negative alliance-acceptance modifier
+        // inverts to a break boost, while peacemaker and high alliance-tendency
+        // personalities resist. SPEC/ai/hidden-agendas.md § Treaty breaking.
+        s += getAgendaTreatyBreakingModifier(agendaId);
+        s -= getAgendaAllianceAcceptanceModifier(agendaId);
+        s -= (thresholds.allianceTendency - 50);
+        break;
+      case DiplomaticOrderType.boycott:
+        // Boycott colony trade embargo against another GP (Refs #3758 R5). A
+        // hostile economic action: backstabber/warmonger agendas lean toward it
+        // (treaty-breaking modifier), the peacemaker resists (peace-acceptance
+        // +30 inverts to −30 while the warmonger −25 inverts to +25), and high
+        // warLikelihood personalities lean toward it. Deeper trade-volume /
+        // economic-damage weighting is a deferred follow-up (Refs #3758 R12).
+        // SPEC/ai/hidden-agendas.md § Treaty breaking (Boycott scoring).
+        s += getAgendaTreatyBreakingModifier(agendaId);
+        s -= getAgendaPeaceAcceptanceModifier(agendaId);
+        s += (thresholds.warLikelihood - 50);
         break;
       case DiplomaticOrderType.declareWar:
         s = _scoreDeclareWarDiplomaticOrder(
@@ -132,55 +165,23 @@ List<int> computeDiplomaticCandidateScores({
         );
         break;
       case DiplomaticOrderType.establishOverture:
-        {
-          if (shouldSuppressNewWorldColonialOrders(
-                snapshot: snapshot,
-                game: game,
-              ) &&
-              (isTribeFaction(game, o.targetFactionId) ||
-                  snapshot.colonial.preferredColonialTargetFactionIdsSorted
-                      .contains(o.targetFactionId) ||
-                  snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
-                    (pid) => provinceOwner[pid] == o.targetFactionId,
-                  ))) {
-            s = 0;
-            break;
-          }
-          if (_isDecisionOnCooldown(
+        s = _scoreEstablishOvertureDiplomaticOrder(
+          DiplomaticScoringContext(
+            order: o,
+            nationId: nationId,
             game: game,
-            actorFactionId: nationId,
-            targetFactionId: o.targetFactionId,
-            eventTypes: const [
-              DiplomaticEventType.overtureAccepted,
-              DiplomaticEventType.overtureRejected,
-            ],
-            cooldownTurns: improveRelationsCooldownTurns,
+            snapshot: snapshot,
+            provinceOwner: provinceOwner,
             currentTurn: currentTurn,
-          )) {
-            s = 0;
-            break;
-          }
-          final rel = snapshot.relations[o.targetFactionId];
-          final warDesire = warDesireForTarget(
-            o.targetFactionId,
-            rel?.score ?? 50,
-          );
-          final improveRelationsDesire = 100 - warDesire;
-          s += (improveRelationsDesire - 50);
-          s += (thresholds.allianceTendency - 50);
-          if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
-              .contains(o.targetFactionId)) {
-            s += kEstablishOvertureColonialTribeBonus;
-          }
-          final ownsInvadableNw = snapshot
-              .colonial
-              .invadableNewWorldProvinceIdsSorted
-              .any((pid) => provinceOwner[pid] == o.targetFactionId);
-          if (ownsInvadableNw && isTribeFaction(game, o.targetFactionId)) {
-            s += kEstablishOvertureColonialInvadableOwnerBonus;
-          }
-          break;
-        }
+            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+            warDesireForTarget: warDesireForTarget,
+          ),
+          EstablishOvertureScoringParams(
+            thresholds: thresholds,
+            improveRelationsCooldownTurns: improveRelationsCooldownTurns,
+          ),
+        );
+        break;
       default:
         break;
     }
@@ -221,6 +222,81 @@ Set<String> _activeOldWorldMinorConflictIds({
     }
   }
   return conflicts;
+}
+
+/// Predicts whether the (`nationId`, `targetFactionId`) relation pair will
+/// receive a same-turn relation-delta event that blocks per-turn decay (Refs
+/// #3753 R9.4). Uses the only deterministic planning-time signal available:
+/// diplomatic orders earlier Full-AI players already committed this turn
+/// ([sameTurnPriorDiplomaticOrders], keyed by acting player id). A prior order
+/// from the target faction directed back at this AI lands an event on the
+/// shared pair, so decay is skipped and the AI keeps full improve-relations
+/// urgency. The predicate is intentionally conservative — any prior order from
+/// the target toward this AI counts — so a false positive only preserves the
+/// pre-existing (non-decay-aware) urgency. Returns false when no prior orders
+/// are available.
+bool _pairHasScheduledRelationEventThisTurn({
+  required Orders? sameTurnPriorDiplomaticOrders,
+  required String nationId,
+  required String targetFactionId,
+}) {
+  if (sameTurnPriorDiplomaticOrders == null) return false;
+  final targetOrders =
+      sameTurnPriorDiplomaticOrders
+          .diplomaticOrdersByPlayerId[targetFactionId] ??
+      const <DiplomaticOrder>[];
+  for (final order in targetOrders) {
+    if (order.targetFactionId == nationId) return true;
+  }
+  return false;
+}
+
+/// Whether some other Great Power currently outranks [nationId] in hidden
+/// relation score with the Minor/Tribe [targetFactionId] — i.e. [nationId] is
+/// not (yet) the favoured trading partner for that seller (Refs #3758 S10/R11;
+/// #3753 R7). The favoured trading partner (highest GP→seller relation) wins
+/// the world-market sell-priority tiebreaker among consulate-holding buyers
+/// (`SPEC/game/world-market.md` § Favored Trading Partner), so a trailing AI
+/// has an incentive to invest in the relationship.
+///
+/// The active AI's own score defaults to [relationScoreNeutral] (50) when no
+/// relation row exists. Each other Great Power contributes a competing score
+/// **only** when it holds an existing relation row with the target (a GP with
+/// no contact contributes none). Returns `false` when [nationId]'s score is
+/// greater than or equal to every other Great Power's score (the AI is already
+/// the favoured partner, ties included). Pure and deterministic over [Game].
+bool _aiTrailsFavouredTradingPartner({
+  required Game game,
+  required String nationId,
+  required String targetFactionId,
+}) {
+  final favoured = favouredTradingPartner(game, targetFactionId);
+  if (favoured == null) return false;
+  return favoured != nationId;
+}
+
+/// Count of **non-empty resource tiles owned by [sellerId]** — a deterministic
+/// proxy for the Minor/Tribe seller's world-market sales volume (`Q × P`) used
+/// by the embassy-kickback overture valuation (Refs #3758 R7/R8 / S6; #3753
+/// R8.3). Iterates [WorldState.resourceByTileKey] (bounded by the count of
+/// resource-bearing tiles, far smaller than the global tile count), maps each
+/// tile to its province via [Unit.provinceIdFromTileKey], and counts tiles whose
+/// province is owned by [sellerId] per [provinceOwner]. Purchased tiles are
+/// **included** because their goods still sell on the world market and still
+/// pay the kickback to every embassy holder. Pure and deterministic over
+/// [Game]. SPEC/ai/phase-planner-architecture.md § Embassy-kickback overture.
+int _sellerSellableResourceTileCount({
+  required Game game,
+  required String sellerId,
+  required Map<String, String> provinceOwner,
+}) {
+  var count = 0;
+  for (final entry in game.worldState.resourceByTileKey.entries) {
+    if (entry.value.isEmpty) continue;
+    final provinceId = Unit.provinceIdFromTileKey(entry.key);
+    if (provinceOwner[provinceId] == sellerId) count++;
+  }
+  return count;
 }
 
 bool _isDecisionOnCooldown({

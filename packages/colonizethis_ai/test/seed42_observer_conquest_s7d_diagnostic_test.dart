@@ -29,7 +29,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/faithful_full_ai_test_handoff.dart';
+import 'support/seed42_observer_campaign.dart';
 import 'support/seed42_s7d_feedstock_helpers.dart';
 
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847).
@@ -65,6 +65,11 @@ import 'support/seed42_s7d_feedstock_helpers.dart';
 /// moment it becomes intervention-eligible, and the Step-0 lock-recovery
 /// metrics no longer reflect faithful full-AI observer semantics (Refs
 /// #2924, matching `seed42_observer_world_market_lock_recovery_regression_test`).
+///
+/// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+/// step 2): the init / handoff / 100-turn resolve loop is owned by
+/// `test/support/seed42_observer_campaign.dart`; this test contributes only
+/// its per-turn `onBeforeResolve` / `onAfterResolve` observations.
 ///
 /// ## S7-D findings (captured 2026-05-26)
 ///
@@ -1688,26 +1693,8 @@ void main() {
   test(
     'seed 42 turn 100 S7-D diagnostic: per-GP EXPAND arm decision trace',
     () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      var game = applyFaithfulFullAiTestHandoff(init.game);
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
-
       final gpIds = [for (var i = 1; i <= 6; i++) 'gp$i'];
       Map<String, int> zeroPerGp() => {for (final gpId in gpIds) gpId: 0};
-      final owStart = <String, int>{
-        for (final gpId in gpIds)
-          gpId: game.worldState.oldWorld.provinces
-              .where((p) => p.ownerId == gpId)
-              .length,
-      };
 
       // Per-GP rollups; populated as the simulation advances.
       final phaseCounts = <String, Map<ObserverGoalPhase, int>>{
@@ -2369,11 +2356,20 @@ void main() {
       // Treasury immediately after the previous turn resolved (seeded
       // from turn-0 pre-resolution treasury so the first crossing
       // detection compares against game start rather than zero).
-      final treasuryPrevTurn = <String, int>{
-        for (final gpId in gpIds) gpId: game.playerById(gpId)?.treasury ?? 0,
-      };
+      final treasuryPrevTurn = <String, int>{};
 
-      for (var t = 0; t < 100; t++) {
+      /// Per-turn scratch state shared between harness callbacks.
+      final pendingTurnScratch = <String, Object>{};
+
+      final campaign = runSeed42ObserverCampaign(
+        turns: 100,
+        onBeforeResolve: (turn, fullAi, game, topo, tileMap) {
+          if (turn == 0) {
+            for (final gpId in gpIds) {
+              treasuryPrevTurn[gpId] = game.playerById(gpId)?.treasury ?? 0;
+            }
+          }
+          final t = turn;
         final fabricStarvedThisTurn = <String>{};
         // Refs #2847 § fabric offer-side split: GPs whose castIron-labour
         // peasant-recruit fabric market path is active this turn.
@@ -2734,11 +2730,6 @@ void main() {
           }
         }
 
-        final fullAi = generateOrdersForGameFullAI(
-          game,
-          topo,
-          tileMapByRegion: tileMap,
-        );
         final merged = mergeOrderLists(
           humanOrders: const Orders(),
           aiOrders: fullAi.orders,
@@ -2853,18 +2844,12 @@ void main() {
           absentTurns: castIronMarketOfferAbsentTurns,
         );
 
-        final assignments = fullAi.economyPlansByPlayerId.map(
-          (pid, plan) => MapEntry(pid, plan.productionAssignments),
-        );
-        final result = validateOrdersAndResolveTurnFromTrustedOrders(
-          game: fullAi.game,
-          topology: topo,
-          orders: merged,
-          tileMapByRegion: tileMap,
-          defaultAssignmentsByPlayerId: assignments,
-        );
-        expect(result, isA<TurnResolutionComplete>());
-        game = (result as TurnResolutionComplete).game;
+        pendingTurnScratch['fabricStarvedThisTurn'] = fabricStarvedThisTurn;
+        },
+        onAfterResolve: (turn, game) {
+          final t = turn;
+          final fabricStarvedThisTurn =
+              pendingTurnScratch['fabricStarvedThisTurn']! as Set<String>;
 
         // Refs #2924 Step 0 — tally deals matched per GP from the
         // post-resolution world-market activity. `lastTurnActivity`
@@ -2952,8 +2937,16 @@ void main() {
             }
           }
         }
-      }
+        },
+      );
 
+      final game = campaign.finalGame;
+      final owStart = <String, int>{
+        for (final gpId in gpIds)
+          gpId: campaign.initialGame.worldState.oldWorld.provinces
+              .where((p) => p.ownerId == gpId)
+              .length,
+      };
       final gains = <String, int>{
         for (final gpId in gpIds)
           gpId:

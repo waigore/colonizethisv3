@@ -37,7 +37,7 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
-import 'check_map_gen_file_size.dart';
+import 'check_map_lib_file_size.dart';
 import 'check_map_gen_no_image_import.dart';
 import 'check_map_gen_stage_protocol.dart';
 import 'check_map_no_partfile_classes.dart';
@@ -46,6 +46,8 @@ import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
 import 'check_map_test_no_duplicate_view_fixtures.dart';
+import 'check_map_test_shared_topology_fixtures.dart';
+import 'check_map_test_view_builder_file_count.dart';
 import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
@@ -54,14 +56,17 @@ import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
 import 'check_economy_dedup_port_tile_keys.dart';
 import 'check_economy_world_market_admission_shared.dart';
+import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_map_clones.dart';
+import 'check_setup_dedup_faction_capital_collect.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_grid_bfs_coord_keys.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
+import 'check_setup_test_default_init_options.dart';
 import 'check_setup_test_no_duplicate_scaffolding.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
@@ -1001,6 +1006,8 @@ int? _tryRunLogicRuleInProcess({
       return runCheckEconomyDedupPortTileKeys(repoRoot);
     case 'repo.economy_dedup_credit_aggregation':
       return runCheckEconomyDedupCreditAggregation(repoRoot);
+    case 'repo.economy_bid_treasury_spend_shared':
+      return runCheckEconomyBidTreasurySpendShared(repoRoot);
     default:
       return null;
   }
@@ -1025,6 +1032,10 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupGridBfsCoordKeys(repoRoot);
     case 'repo.setup_dedup_topology_adjacency':
       return runCheckSetupDedupTopologyAdjacency(repoRoot);
+    case 'repo.setup_dedup_faction_capital_collect':
+      return runCheckSetupDedupFactionCapitalCollect(repoRoot);
+    case 'repo.setup_test_default_init_options':
+      return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':
       return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
     default:
@@ -1051,8 +1062,8 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapGenStageProtocol(repoRoot);
     case 'repo.map_gen_no_new_partfiles':
       return runCheckMapGenNoNewPartfiles(repoRoot);
-    case 'repo.map_gen_file_size':
-      return runCheckMapGenFileSize(repoRoot);
+    case 'repo.map_lib_file_size':
+      return runCheckMapLibFileSize(repoRoot);
     case 'repo.map_public_barrel_surface':
       return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.map_region_data_access_central':
@@ -1061,6 +1072,10 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapRegionDispatchCentral(repoRoot);
     case 'repo.map_test_no_duplicate_view_fixtures':
       return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
+    case 'repo.map_test_view_builder_file_count':
+      return runCheckMapTestViewBuilderFileCount(repoRoot);
+    case 'repo.map_test_shared_topology_fixtures':
+      return runCheckMapTestSharedTopologyFixtures(repoRoot);
     default:
       return null;
   }

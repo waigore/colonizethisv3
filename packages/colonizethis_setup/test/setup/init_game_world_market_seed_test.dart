@@ -7,6 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'init_game_orchestrator_test_support.dart';
+
 void main() {
   group('Initial worldMarketState seeding (Refs #3093)', () {
     test(
@@ -14,7 +16,7 @@ void main() {
       () {
         final result = runInitGame(
           config: GameSetupConfig.defaultConfig,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         final prices = result.game.worldMarketState.prices;
@@ -75,7 +77,7 @@ void main() {
       () {
         final result = runInitGame(
           config: GameSetupConfig.defaultConfig,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         final prices = result.game.worldMarketState.prices;
@@ -97,7 +99,7 @@ void main() {
       () {
         final result = runInitGame(
           config: GameSetupConfig.defaultConfig,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         final prices = result.game.worldMarketState.prices;
@@ -115,7 +117,7 @@ void main() {
       () {
         final result = runInitGame(
           config: GameSetupConfig.defaultConfig,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
 
         final wms = result.game.worldMarketState;
@@ -128,7 +130,7 @@ void main() {
     test('seeded prices round-trip through JSON', () {
       final result = runInitGame(
         config: GameSetupConfig.defaultConfig,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: defaultInitOptions,
       );
 
       final beforePrices = Map<CommodityId, int>.from(

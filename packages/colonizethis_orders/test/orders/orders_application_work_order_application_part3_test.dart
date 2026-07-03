@@ -217,71 +217,7 @@ void main() {
     });
 
     test(
-      'steal_tech completion clears currentWork after remainingTurns reach zero',
-      () {
-        const p2Capital = 'oldWorld|P2';
-        const capTileKey = 'oldWorld|P2|0|0';
-        final spy = Unit(
-          id: 'spy1',
-          type: kUnitTypeSpy,
-          ownerId: 'p1',
-          locationProvinceId: p2Capital,
-          tileKey: capTileKey,
-          status: UnitStatus.working,
-          currentWork: const CurrentWork(
-            workTarget: kWorkTargetStealTech,
-            tileKey: capTileKey,
-            totalTurns: 5,
-            remainingTurns: 1,
-          ),
-        );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-                Province(id: p2Capital, regionId: ow, ownerId: 'p2'),
-              ],
-              units: [spy],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                provinceId: [tileKey],
-                p2Capital: [capTileKey],
-              },
-            },
-          ),
-          players: [
-            const Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              capitalProvinceId: 'oldWorld|P1',
-            ),
-            Player(
-              id: 'p2',
-              displayName: 'P2',
-              isHuman: true,
-              capitalProvinceId: p2Capital,
-              techUnlocked: {'some_tech': true},
-            ),
-          ],
-        );
-        final next = applyBuildAndWorkOrders(
-          game,
-          Orders(buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]}),
-        );
-        final spyAfter = next.worldState.oldWorld.units.single;
-        expect(spyAfter.id, 'spy1');
-        expect(spyAfter.ownerId, 'p1');
-      },
-    );
-
-    test(
-      'counter_spy processWork runs and may remove enemy Spy in same province',
+      'counter_spy processWork keeps ongoing assignment without killing in build/work',
       () {
         const provId = 'oldWorld|P1';
         const tileKeyP1 = 'oldWorld|P1|0|0';
@@ -338,7 +274,8 @@ void main() {
         );
         final units = next.worldState.oldWorld.units;
         expect(units.any((u) => u.id == 'spy1'), isTrue);
-        expect(units.length, lessThanOrEqualTo(2));
+        expect(units.any((u) => u.id == 'spy2'), isTrue);
+        expect(units.length, 2);
       },
     );
   });

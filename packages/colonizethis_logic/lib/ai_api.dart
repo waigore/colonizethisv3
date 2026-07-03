@@ -53,6 +53,7 @@ export 'package:colonizethis_orders/colonizethis_orders.dart'
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show
         ExtractionTotals,
+        boycottedColonySellableCommodityIds,
         canAffordRecruitWorker,
         cargoHoldsForHomeFleet,
         carryForwardBidNotionalByPlayer,
@@ -68,15 +69,22 @@ export 'package:colonizethis_economy/colonizethis_economy.dart'
 export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show
         DiplomacyFactionMembership,
+        favouredTradingPartner,
         getOverture,
         getRelation,
         greatPowerPowerScore,
+        hasEmbassyOverture,
         joinEmpireCostForMinorOrTribe,
         knownDiplomaticTargetFactionIds,
         oldWorldProvinceCountOwnedBy,
         provinceCountOwnedBy,
+        relationDecayPerTurn,
         relationScoreMinFriendly,
-        shipCountForFaction;
+        relationScoreNeutral,
+        shipCountForFaction,
+        tradeDealRelationBoostBase,
+        tradeDealRelationBoostEmbassyBonus,
+        tradeDealRelationBoostPerSubsidyPercent;
 
 // colonizethis_turn (barrel-level re-exports).
 export 'package:colonizethis_turn/colonizethis_turn.dart'
@@ -91,8 +99,7 @@ export 'src/constants.dart'
         kMineralResourceIds,
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
-        kWorkTargetPurchaseLand,
-        kWorkTargetStealTech;
+        kWorkTargetPurchaseLand;
 
 // Justified deep `src/` exports — no domain-barrel alternative (Refs #3393
 // Phase 3). Each symbol below is required by `colonizethis_ai` but is not yet

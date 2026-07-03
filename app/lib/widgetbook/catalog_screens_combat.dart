@@ -7,7 +7,7 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -63,7 +63,7 @@ List<WidgetbookNode> get trainNavalDialogDirectories => [
       WidgetbookUseCase(
         name: 'Standalone',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players
@@ -132,7 +132,7 @@ class NavalPanelWithMapStoryState extends State<NavalPanelWithMapStory> {
   @override
   void initState() {
     super.initState();
-    final result = getDebugInitGameResult();
+    final result = loadSeed42InitGameResult();
     _game = result.game;
     _combinedTopology = result.combinedTopology;
     _navalBus = AppEventBus.create();
@@ -160,7 +160,7 @@ class NavalPanelWithMapStoryState extends State<NavalPanelWithMapStory> {
 
   @override
   Widget build(BuildContext context) {
-    final result = getDebugInitGameResult();
+    final result = loadSeed42InitGameResult();
     final mapViewData = result.mapViewData;
     final humanPlayerId = _game.players.isNotEmpty
         ? _game.players.first.id
@@ -266,7 +266,7 @@ class MapWithOverlayStoryState extends State<MapWithOverlayStory> {
     super.initState();
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
-    final game = getDebugInitGameResult().game;
+    final game = loadSeed42InitGameResult().game;
     final tiles = game
         .worldState
         .tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
@@ -287,7 +287,7 @@ class MapWithOverlayStoryState extends State<MapWithOverlayStory> {
     if (oldWidget.selectedId != widget.selectedId) {
       final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
       final region = mapViewData.oldWorld;
-      final game = getDebugInitGameResult().game;
+      final game = loadSeed42InitGameResult().game;
       final tiles = game
           .worldState
           .tileKeysByRegionAndProvince[region.regionId]?[widget.selectedId];
@@ -306,7 +306,7 @@ class MapWithOverlayStoryState extends State<MapWithOverlayStory> {
 
   @override
   Widget build(BuildContext context) {
-    final initResult = getDebugInitGameResult();
+    final initResult = loadSeed42InitGameResult();
     final game = initResult.game;
     final playerView = buildPlayerView(
       game,
@@ -493,7 +493,7 @@ List<WidgetbookNode> get victoryUiDirectories => [
       WidgetbookUseCase(
         name: 'Victory panel — military',
         builder: (context) {
-          final game = getDebugInitGameResult().game;
+          final game = loadSeed42InitGameResult().game;
           final victory = _sampleVictoryState(game);
           return _victoryStoryFrame(
             VictoryPanel(
@@ -507,7 +507,7 @@ List<WidgetbookNode> get victoryUiDirectories => [
       WidgetbookUseCase(
         name: 'Victory overlay — full scrim',
         builder: (context) {
-          final game = getDebugInitGameResult().game;
+          final game = loadSeed42InitGameResult().game;
           final victory = _sampleVictoryState(game);
           return _victoryStoryFrame(
             SizedBox(
@@ -544,7 +544,7 @@ List<WidgetbookNode> get playersBarDirectories => [
       WidgetbookUseCase(
         name: 'Default — debug game (wide)',
         builder: (context) {
-          final game = getDebugInitGameResult().game;
+          final game = loadSeed42InitGameResult().game;
           return _victoryStoryFrame(
             SizedBox(
               width: 400,
@@ -838,14 +838,14 @@ List<WidgetbookNode> get gameScreenDirectories => [
       WidgetbookUseCase(
         name: 'Default — no victory',
         builder: (context) {
-          final game = getDebugInitGameResult().game;
+          final game = loadSeed42InitGameResult().game;
           return _gameScreenProviderScope(game: game, victory: false);
         },
       ),
       WidgetbookUseCase(
         name: 'Victory',
         builder: (context) {
-          final game = getDebugInitGameResult().game;
+          final game = loadSeed42InitGameResult().game;
           return _gameScreenProviderScope(game: game, victory: true);
         },
       ),

@@ -18,7 +18,13 @@ Phase 1. Gather and validate orders; Great Powers only submit. Merge human and A
 
 ## Diplomacy
 
-Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs after Production and before Research/Movement so same-turn diplomacy ownership and relation changes are visible to downstream phases.
+Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs after Production and before Spy resolution so same-turn diplomacy ownership and relation changes are visible to downstream phases.
+
+---
+
+## Spy resolution
+
+Immediately after Diplomacy and before Research (Refs #3834): (1) kill rolls for foreign spies (5% base + garrison + empire-wide counter-esp bonus); (2) diplomacy -8 penalty per kill with `lastInteractionTurn` update; (3) 10% defection rolls for survivors when counter-espionage is active; (4) `SpyCaughtEvent` / `SpyDefectedEvent` emission. Research then applies passive spy RP boost from surviving spies in rival GP provinces. See [civilian-units.md](../game/civilian-units.md) § Spy mechanics.
 
 ---
 
@@ -90,7 +96,7 @@ Apply validated land MoveOrders; naval MoveOrders (dock only at owned provinces;
 
 ## End-of-turn
 
-(1) **Victory check** — If `Game.victory` is null, evaluate military victory: count Old World provinces per Great Power; if any GP has ≥31 OW provinces, set `Game.victory` (winner, type military, turn number). If victory already set, skip. See [victory.md](../game/victory.md) and [#86](https://github.com/waigore/colonizethisv3/issues/86). (2) **Era-change dialogue** — When the calendar era changes on the next turn, emit dialogue events per [dialogue-and-mood.md](../ai/dialogue-and-mood.md); skip this step when the campaign calendar cap applies on the current turn (no advance into the next calendar year). (3) **Spy 5-turn fog decay** — Decrement spy-reveal timers; for each (player, province) where timer reaches 0, set that province’s tiles to fogged for that player **only when the province is owned by another faction; timers for a player's own provinces are ignored and cleared without changing visibility**. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Fog decay (Spy). (4) **Explorer/Spy fog decay** — For each other-faction province where a player had Explorer/Spy, if none remain (and no Spy timer active), set tiles to fogged. (5) **Coastal sea zone full visibility** — For each Great Power (including human), set all tiles in sea zones adjacent (P–S in topology) to provinces that player fully owns to fullyVisible in WorldState. Runs after fog decay so visibility is consistent for all players. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Coastal sea zone full visibility, [fog-and-exploration.md](../game/fog-and-exploration.md). (6) **Turn advance / calendar cap** — If `Game.victory` is still null and the campaign calendar cap applies (last full turn whose start calendar year is the normative stop year **1800** for default `gdd01`; derived from `turnTimeMapping` per [turn-time-mapping.md](../game/turn-time-mapping.md) § Campaign calendar cap), set `Game.calendarCampaignHalted` true, keep `turnState.turnNumber` unchanged, and set phase to Orders. Otherwise increment turn number and set phase to Orders. (7) **Orders** — The current-turn order list is cleared after turn resolve (not carried over). The caller that owns the order list or OrderEngine clears it after TurnResolver returns. See [order-engine.md](order-engine.md) § End-of-turn order list. Merge and apply of orders for the next turn happen when that turn's Orders phase runs.
+(1) **Victory check** — If `Game.victory` is null, evaluate military victory: count Old World provinces per Great Power; if any GP has ≥31 OW provinces, set `Game.victory` (winner, type military, turn number). If victory already set, skip. See [victory.md](../game/victory.md) and [#86](https://github.com/waigore/colonizethisv3/issues/86). (2) **Era-change dialogue** — When the calendar era changes on the next turn, emit dialogue events per [dialogue-and-mood.md](../ai/dialogue-and-mood.md); skip this step when the campaign calendar cap applies on the current turn (no advance into the next calendar year). (3) **Immediate spy fog decay** — For each other-faction province, if no Spy owned by the player remains in that province, set tiles to fogged for that player (multi-spy presence tracked by count; fog reverts only when count drops to zero). No spy grace timer. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). (4) **Explorer fog decay** — For each other-faction province where a player had Explorer, if none remain, set tiles to fogged. (5) **Coastal sea zone full visibility** — For each Great Power (including human), set all tiles in sea zones adjacent (P–S in topology) to provinces that player fully owns to fullyVisible in WorldState. Runs after fog decay so visibility is consistent for all players. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Coastal sea zone full visibility, [fog-and-exploration.md](../game/fog-and-exploration.md). (6) **Turn advance / calendar cap** — If `Game.victory` is still null and the campaign calendar cap applies (last full turn whose start calendar year is the normative stop year **1800** for default `gdd01`; derived from `turnTimeMapping` per [turn-time-mapping.md](../game/turn-time-mapping.md) § Campaign calendar cap), set `Game.calendarCampaignHalted` true, keep `turnState.turnNumber` unchanged, and set phase to Orders. Otherwise increment turn number and set phase to Orders. (7) **Orders** — The current-turn order list is cleared after turn resolve (not carried over). The caller that owns the order list or OrderEngine clears it after TurnResolver returns. See [order-engine.md](order-engine.md) § End-of-turn order list. Merge and apply of orders for the next turn happen when that turn's Orders phase runs.
 
 ---
 
@@ -98,21 +104,17 @@ Apply validated land MoveOrders; naval MoveOrders (dock only at owned provinces;
 
 - **Phase ordering:** The implemented TurnResolver runs phases in the fixed sequence defined in [turn-resolution-phases.md](turn-resolution-phases.md); no extra phases mutate game state between these steps.
 - **Determinism:** Given the same starting WorldState, orders, ruleset, and random seeds, a full turn resolution (all phases) produces the same resulting WorldState and victory state.
-- **End-of-turn:** Military victory is evaluated once per turn (when `Game.victory` is null) and remains stable thereafter; era-change dialogue (skipped when the calendar cap ends the turn), fog decay (including Spy timers that only ever affect other-faction provinces), coastal sea zone full visibility (per fog-and-exploration-resolution), and turn/phase advance **or calendar halt** behave as described above.
+- **End-of-turn:** Military victory is evaluated once per turn (when `Game.victory` is null) and remains stable thereafter; era-change dialogue (skipped when the calendar cap ends the turn), immediate spy/explorer fog decay (no spy grace timer), coastal sea zone full visibility (per fog-and-exploration-resolution), and turn/phase advance **or calendar halt** behave as described above.
 
 ### Given–When–Then acceptance criteria
 
-- Given a Spy timer is active for (player, province) with `turnsLeft > 1` and the province is owned by another faction  
-  When the system runs the end-of-turn phase  
-  Then the timer for that (player, province) is decremented by 1 and tile visibility for that province remains unchanged for that player.
+- Given two Spies owned by the same player are present in the same foreign province  
+  When one Spy leaves and the other remains  
+  Then tile visibility for that province is unchanged for that player.
 
-- Given a Spy timer is active for (player, province) with `turnsLeft == 1` and the province is owned by another faction  
+- Given the last Spy owned by a player leaves a foreign province (or is killed)  
   When the system runs the end-of-turn phase  
-  Then the timer entry for that (player, province) is removed and all tiles in that province become fogged for that player.
-
-- Given a Spy timer is present for (player, province) where that province is owned by the same player (e.g. from an older save)  
-  When the system runs the end-of-turn phase  
-  Then the timer entry for that (player, province) is removed without changing tile visibility, so that all tiles in that province remain fully visible for that player.
+  Then all tiles in that province become fogged for that player immediately.
 
 - Given combat resolution completes and a player must undergo capital reassignment but the chosen province has an invalid or missing `townTileKey` per [capital-and-connectivity.md](../game/capital-and-connectivity.md)  
   When the Combat phase runs capital reassignment  

@@ -17,7 +17,7 @@
 // declare-war candidates when `nwAcquisitionWeight <= 0.0`, which the
 // default curve never produces. Hard structural suppression now requires
 // an explicit `priorityWeights.newWorldAcquisition == 0.0` override
-// (pinned by `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`).
+// (pinned by `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`).
 // DEVELOP still routes off the boolean DEVELOP resolver and remains
 // fully suppressed.
 //
@@ -329,7 +329,7 @@ void main() {
                 'structurally collapsing them. Hard-suppress is now '
                 'only reached via an explicit `priorityWeights.newWorldAcquisition '
                 '== 0.0` override, pinned by '
-                '`phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.',
+                '`phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.',
           );
         },
       );

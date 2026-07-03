@@ -42,32 +42,7 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
       bool requireCapitalTile,
     })
   >
-  civilianOwners() sync* {
-    for (final player in game.players) {
-      yield (
-        id: player.id,
-        capitalProvinceId: player.capitalProvinceId,
-        capitalTile: player.capitalTile,
-        requireCapitalTile: true,
-      );
-    }
-    for (final minor in game.minorNations) {
-      yield (
-        id: minor.id,
-        capitalProvinceId: minor.capitalProvinceId,
-        capitalTile: minor.capitalTile,
-        requireCapitalTile: false,
-      );
-    }
-    for (final tribe in game.tribes) {
-      yield (
-        id: tribe.id,
-        capitalProvinceId: tribe.capitalProvinceId,
-        capitalTile: tribe.capitalTile,
-        requireCapitalTile: false,
-      );
-    }
-  }
+  civilianOwners() => setupCivilianOwnerRecords(game);
 
   for (final owner in civilianOwners()) {
     final ownerId = owner.id;

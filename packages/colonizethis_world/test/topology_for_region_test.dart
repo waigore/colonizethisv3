@@ -2,25 +2,23 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'world_test_support/world_test_support.dart';
+
 void main() {
   group('topologyForRegion (Refs #2560)', () {
     test('returns override when topologyByRegion provides one', () {
-      const base = MapTopology(nodes: [], edges: []);
-      const override = MapTopology(
+      const base = kEmptyMapTopology;
+      final override = topologyFromGraph(
         nodes: [
-          TopologyNode(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
+          prefixedProvinceNode('oldWorld|p1'),
         ],
-        edges: [],
+        edges: const [],
       );
 
       final got = topologyForRegion(
         base,
         'oldWorld',
-        topologyByRegion: const {'oldWorld': override},
+        topologyByRegion: {'oldWorld': override},
       );
 
       expect(identical(got, override), isTrue);
@@ -29,7 +27,7 @@ void main() {
     test(
       'computes region subgraph and caches per (topology, regionId)',
       () {
-        final base = MapTopology(
+        final base = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'oldWorld|p1',
@@ -88,15 +86,15 @@ void main() {
     );
 
     test('returns empty topology when region has no nodes', () {
-      const base = MapTopology(
-        nodes: [
+      final base = topologyFromGraph(
+        nodes: const [
           TopologyNode(
             id: 'oldWorld|p1',
             regionId: 'oldWorld',
             type: TopologyNodeType.province,
           ),
         ],
-        edges: [],
+        edges: const [],
       );
 
       final missing = topologyForRegion(base, 'unknownRegion');
@@ -105,7 +103,7 @@ void main() {
     });
 
     test('override takes precedence over cached subgraph', () {
-      final base = MapTopology(
+      final base = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'oldWorld|p1',
@@ -117,7 +115,7 @@ void main() {
       );
 
       final computed = topologyForRegion(base, 'oldWorld');
-      const override = MapTopology(nodes: [], edges: []);
+      const override = kEmptyMapTopology;
       final overridden = topologyForRegion(
         base,
         'oldWorld',

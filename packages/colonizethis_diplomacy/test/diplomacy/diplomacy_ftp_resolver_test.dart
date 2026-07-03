@@ -5,42 +5,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
-
-Game _gpGameWithEmbassyPair({
-  int relationScore = 70,
-  Set<String> existingFtpKeys = const {},
-}) {
-  return Game(
-    id: 'ftp-test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: relationScore,
-        level: RelationLevel.friendly,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(gpId: 'gp1', targetId: 'gp2', stage: OvertureStage.embassy),
-      OvertureState(gpId: 'gp2', targetId: 'gp1', stage: OvertureStage.embassy),
-    ],
-    ftpPartnershipKeys: existingFtpKeys,
-  );
-}
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 void main() {
   group('processFtpProposals', () {
     test('establishes FTP when embassy both ways and score >= 65', () {
-      final game = _gpGameWithEmbassyPair();
+      final game = gpGpEmbassyGame();
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [
@@ -63,7 +33,7 @@ void main() {
     });
 
     test('AI target rejects when score below 65', () {
-      final game = _gpGameWithEmbassyPair(relationScore: 60);
+      final game = gpGpEmbassyGame(relationScore: 60);
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [
@@ -80,37 +50,10 @@ void main() {
     });
 
     test('human target suspends until FtpDecision supplied', () {
-      final game = Game(
+      final game = gpGpEmbassyGame(
         id: 'ftp-human',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'gp2',
-            score: 70,
-            level: RelationLevel.friendly,
-          ),
-        ],
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'gp2',
-            stage: OvertureStage.embassy,
-          ),
-          OvertureState(
-            gpId: 'gp2',
-            targetId: 'gp1',
-            stage: OvertureStage.embassy,
-          ),
-        ],
+        turnNumber: 1,
+        gp2Human: true,
       );
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
@@ -140,7 +83,7 @@ void main() {
 
   group('FTP break conditions', () {
     test('war clears FTP between the warring GPs', () {
-      var game = _gpGameWithEmbassyPair(
+      var game = gpGpEmbassyGame(
         existingFtpKeys: {pairKey('gp1', 'gp2')},
       );
       final orders = Orders(
@@ -165,7 +108,7 @@ void main() {
     });
 
     test('embassy loss clears FTP', () {
-      final game = _gpGameWithEmbassyPair(
+      final game = gpGpEmbassyGame(
         existingFtpKeys: {pairKey('gp1', 'gp2')},
       );
       final withoutEmbassy = game.copyWith(
@@ -190,7 +133,7 @@ void main() {
 
   group('ftpPairKeysFromGame + DealMatcher', () {
     test('FTP pair from game state fills before non-FTP at same priority', () {
-      final game = _gpGameWithEmbassyPair(
+      final game = gpGpEmbassyGame(
         existingFtpKeys: {pairKey('sellerFtp', 'buyerFtp')},
       );
       final ftpKeys = ftpPairKeysFromGame(game);

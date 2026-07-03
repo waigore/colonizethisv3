@@ -132,22 +132,12 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              height: 900,
-              width: 480,
-              child: ArmySplitTestHarness(
-                initialGame: _buildHomeArmyGame(),
-                humanPlayerId: kPanelTestHumanPlayerId,
-                bus: bus,
-              ),
-            ),
-          ),
-        ),
+      await pumpArmySplitHarness(
+        tester,
+        initialGame: _buildHomeArmyGame(),
+        humanPlayerId: kPanelTestHumanPlayerId,
+        bus: bus,
       );
-      await tester.pumpAndSettle();
 
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
 

@@ -3,7 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../world_test_support/world_test_support.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
@@ -36,28 +38,6 @@ WorldState _worldWith({
   armies: armies,
 );
 
-/// Two adjacent provinces `oldWorld|p1`–`oldWorld|p2` in a single-region topology.
-MapTopology _adjacentOldWorldTopology() => const MapTopology(
-  nodes: [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|p2',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|p3',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
-);
-
 void main() {
   group('armiesByIdForWorld', () {
     test('indexes armies by id', () {
@@ -69,7 +49,7 @@ void main() {
   });
 
   group('applyArmyMoveOrdersToRegion', () {
-    final topology = _adjacentOldWorldTopology();
+    final topology = prefixedAdjacentProvincesTopology(regionId: 'oldWorld');
 
     test('returns same world when there are no orders', () {
       final world = _worldWith(armies: [_army('a1')]);

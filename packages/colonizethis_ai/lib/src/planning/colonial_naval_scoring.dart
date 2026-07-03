@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'scored_candidate.dart';
 
 /// Sea zones in [kNewWorldRegionId] that border an invadable NW province.
 Set<String> newWorldSeaZonesAdjacentToInvadableProvinces(
@@ -118,33 +119,30 @@ List<NavalMoveOrder> sortNavalMovesForColonialPressure(
   ColonialSummary colonial, {
   List<String>? phasePriorityNwProvinceIdsSorted,
 }) {
-  final scored = candidates
-      .map(
-        (m) => (
-          move: m,
-          score: colonialNavalMoveScore(
-            m,
-            topology,
-            colonial,
-            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
-          ),
+  return sortByScore(
+    candidates.map(
+      (move) => ScoredCandidate(
+        item: move,
+        score: colonialNavalMoveScore(
+          move,
+          topology,
+          colonial,
+          phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
         ),
-      )
-      .toList();
-  scored.sort((a, b) {
-    final s = b.score.compareTo(a.score);
-    if (s != 0) return s;
-    final fleet = a.move.fleetId.compareTo(b.move.fleetId);
-    if (fleet != 0) return fleet;
-    final keyA = a.move.isDock
-        ? 'port:${a.move.destinationPortProvinceId}'
-        : (a.move.destinationSeaZoneId ?? '');
-    final keyB = b.move.isDock
-        ? 'port:${b.move.destinationPortProvinceId}'
-        : (b.move.destinationSeaZoneId ?? '');
-    return keyA.compareTo(keyB);
-  });
-  return scored.map((e) => e.move).toList();
+      ),
+    ),
+    (a, b) {
+      final fleet = a.fleetId.compareTo(b.fleetId);
+      if (fleet != 0) return fleet;
+      final keyA = a.isDock
+          ? 'port:${a.destinationPortProvinceId}'
+          : (a.destinationSeaZoneId ?? '');
+      final keyB = b.isDock
+          ? 'port:${b.destinationPortProvinceId}'
+          : (b.destinationSeaZoneId ?? '');
+      return keyA.compareTo(keyB);
+    },
+  );
 }
 
 /// Deterministic score for naval missions under colonial pressure.
@@ -205,31 +203,26 @@ List<NavalMissionOrder> sortNavalMissionsForColonialPressure(
   List<NavalMissionOrder> candidates, {
   List<String>? phasePriorityNwProvinceIdsSorted,
 }) {
-  final scored = candidates
-      .map(
-        (m) => (
-          mission: m,
-          score: colonialNavalMissionScore(
-            m,
-            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
-          ),
+  return sortByScore(
+    candidates.map(
+      (mission) => ScoredCandidate(
+        item: mission,
+        score: colonialNavalMissionScore(
+          mission,
+          phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
         ),
-      )
-      .toList();
-  scored.sort((a, b) {
-    final s = b.score.compareTo(a.score);
-    if (s != 0) return s;
-    final fleet = a.mission.fleetId.compareTo(b.mission.fleetId);
-    if (fleet != 0) return fleet;
-    final missionCmp = a.mission.mission.compareTo(b.mission.mission);
-    if (missionCmp != 0) return missionCmp;
-    final portA = a.mission.targetPortId ?? '';
-    final portB = b.mission.targetPortId ?? '';
-    final portCmp = portA.compareTo(portB);
-    if (portCmp != 0) return portCmp;
-    return (a.mission.targetProvinceId ?? '').compareTo(
-      b.mission.targetProvinceId ?? '',
-    );
-  });
-  return scored.map((e) => e.mission).toList();
+      ),
+    ),
+    (a, b) {
+      final fleet = a.fleetId.compareTo(b.fleetId);
+      if (fleet != 0) return fleet;
+      final missionCmp = a.mission.compareTo(b.mission);
+      if (missionCmp != 0) return missionCmp;
+      final portA = a.targetPortId ?? '';
+      final portB = b.targetPortId ?? '';
+      final portCmp = portA.compareTo(portB);
+      if (portCmp != 0) return portCmp;
+      return (a.targetProvinceId ?? '').compareTo(b.targetProvinceId ?? '');
+    },
+  );
 }

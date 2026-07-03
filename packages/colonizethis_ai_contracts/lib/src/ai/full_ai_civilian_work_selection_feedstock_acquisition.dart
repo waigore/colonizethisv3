@@ -178,7 +178,7 @@ Set<String> selfLockRecoverySellerStageableImprovementInputs(
     if (seller.stockpile.quantityOf(entry.key) >= entry.value) continue;
     final recipe = _lowestIdMultiInputRecipeProducingOutput(entry.key);
     if (recipe == null) continue;
-    if (!_ownsFeedstockResourceTile(
+    if (!ownsFeedstockResourceTile(
       game,
       playerId,
       recipe.inputQuantities.keys.toSet(),

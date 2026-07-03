@@ -294,208 +294,105 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
 }
 
-DiplomacyPlannerResult? _forcedInvadableGpDeclarePlannerResultIfNeeded({
+DiplomacyPlannerResult? _legacyDeclareWarShortcutResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
-  required String? Function({
-    required Game game,
-    required AIWorldSnapshot snapshot,
-  })
-  targetFor,
-  required String logLabel,
+  required _DeclareWarShortcut shortcut,
 }) {
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
-  final target = targetFor(game: ctx.game, snapshot: snapshot);
+  if (shortcut.preGate != null &&
+      !shortcut.preGate!(
+        game: ctx.game,
+        snapshot: snapshot,
+      )) {
+    return null;
+  }
+  final target = shortcut.targetFor(game: ctx.game, snapshot: snapshot);
   if (target == null) {
     return null;
   }
-  if (_log.infoEnabled) {
-    _log.i(
-      'diplomacy forced declareWar nationId=${ctx.nationId} '
-      '$logLabel=$target',
-    );
-  }
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: target,
-      ),
-    ]),
-    declaredWarTargetFactionId: target,
+  return _forcedDeclareWarPlannerResult(
+    ctx: ctx,
+    target: target,
+    logLabel: shortcut.logLabel,
   );
 }
 
-DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
+typedef _DeclareWarTargetSelector =
+    String? Function({
+      required Game game,
+      required AIWorldSnapshot snapshot,
+    });
+
+typedef _DeclareWarShortcutPreGate =
+    bool Function({
+      required Game game,
+      required AIWorldSnapshot snapshot,
+    });
+
+final class _DeclareWarShortcut {
+  const _DeclareWarShortcut({
+    required this.targetFor,
+    required this.logLabel,
+    this.preGate,
+  });
+
+  final _DeclareWarTargetSelector targetFor;
+  final String logLabel;
+  final _DeclareWarShortcutPreGate? preGate;
+}
+
+bool _plateauGpBlockerDeclarePreGate({
+  required Game game,
   required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
 }) {
   if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return null;
+    return false;
   }
   if (hasUninvadedOldWorldMinor(
-    game: ctx.game,
+    game: game,
     snapshot: snapshot,
   )) {
-    return null;
+    return false;
   }
-  if (!isOldWorldGpOnlyInvadableFrontier(
-    game: ctx.game,
+  return isOldWorldGpOnlyInvadableFrontier(
+    game: game,
     snapshot: snapshot,
-  )) {
-    return null;
-  }
-  return _forcedInvadableGpDeclarePlannerResultIfNeeded(
-    ctx: ctx,
-    snapshot: snapshot,
-    pass: pass,
-    targetFor: stalledGpBlockerDeclareWarTarget,
-    logLabel: 'gpBlocker',
   );
 }
 
-DiplomacyPlannerResult? _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) => _forcedInvadableGpDeclarePlannerResultIfNeeded(
-  ctx: ctx,
-  snapshot: snapshot,
-  pass: pass,
+const _legacyMinorDeclareWarShortcuts = <_DeclareWarShortcut>[
+  _DeclareWarShortcut(
+    targetFor: defaultStartOwMinorDeclareTarget,
+    logLabel: 'defaultStartMinor',
+  ),
+  _DeclareWarShortcut(
+    targetFor: plateauOwMinorDeclareTarget,
+    logLabel: 'plateauMinor',
+  ),
+  _DeclareWarShortcut(
+    targetFor: belowQuotaUninvadedMinorDeclareTarget,
+    logLabel: 'belowQuotaMinor',
+  ),
+  _DeclareWarShortcut(
+    targetFor: criticalWeakUninvadedMinorDeclareTarget,
+    logLabel: 'target',
+  ),
+];
+
+const _legacyGpBlockerDeclareWarShortcut = _DeclareWarShortcut(
+  targetFor: stalledGpBlockerDeclareWarTarget,
+  logLabel: 'gpBlocker',
+  preGate: _plateauGpBlockerDeclarePreGate,
+);
+
+const _legacyStalledGpDeclareWarShortcut = _DeclareWarShortcut(
   targetFor: stalledInvadableGpOwnerDeclareTarget,
   logLabel: 'stalledInvadableGp',
 );
-
-DiplomacyPlannerResult? _defaultStartOwMinorDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  final minorTarget = defaultStartOwMinorDeclareTarget(
-    game: ctx.game,
-    snapshot: snapshot,
-  );
-  if (minorTarget == null) {
-    return null;
-  }
-  if (_log.infoEnabled) {
-    _log.i(
-      'diplomacy forced declareWar nationId=${ctx.nationId} '
-      'defaultStartMinor=$minorTarget',
-    );
-  }
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: minorTarget,
-      ),
-    ]),
-    declaredWarTargetFactionId: minorTarget,
-  );
-}
-
-DiplomacyPlannerResult? _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  final minorTarget = belowQuotaUninvadedMinorDeclareTarget(
-    game: ctx.game,
-    snapshot: snapshot,
-  );
-  if (minorTarget == null) {
-    return null;
-  }
-  if (_log.infoEnabled) {
-    _log.i(
-      'diplomacy forced declareWar nationId=${ctx.nationId} '
-      'belowQuotaMinor=$minorTarget',
-    );
-  }
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: minorTarget,
-      ),
-    ]),
-    declaredWarTargetFactionId: minorTarget,
-  );
-}
-
-DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  final minorTarget = plateauOwMinorDeclareTarget(
-    game: ctx.game,
-    snapshot: snapshot,
-  );
-  if (minorTarget == null) {
-    return null;
-  }
-  if (_log.infoEnabled) {
-    _log.i(
-      'diplomacy forced declareWar nationId=${ctx.nationId} '
-      'plateauMinor=$minorTarget',
-    );
-  }
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: minorTarget,
-      ),
-    ]),
-    declaredWarTargetFactionId: minorTarget,
-  );
-}
-
-DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  final minorTarget = criticalWeakUninvadedMinorDeclareTarget(
-    game: ctx.game,
-    snapshot: snapshot,
-  );
-  if (minorTarget == null) {
-    return null;
-  }
-  if (_log.infoEnabled) {
-    _log.i(
-      'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
-    );
-  }
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: minorTarget,
-      ),
-    ]),
-    declaredWarTargetFactionId: minorTarget,
-  );
-}
 
 DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
   required PlannerContext ctx,
@@ -723,60 +620,37 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     // and `war_declaration_target_scoring_warmonger_test.dart`; the legacy
     // `colonial_pressure.dart` host was deleted in S1, the surviving
     // helpers are canonical in `expand_phase_planner.dart`).
-    final defaultStartMinorResult =
-        _defaultStartOwMinorDeclarePlannerResultIfNeeded(
-          ctx: ctx,
-          snapshot: snapshot,
-          pass: pass,
-        );
-    if (defaultStartMinorResult != null) {
-      return defaultStartMinorResult;
-    }
-    final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (plateauMinorResult != null) {
-      return plateauMinorResult;
-    }
-    final belowQuotaMinorResult =
-        _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded(
-          ctx: ctx,
-          snapshot: snapshot,
-          pass: pass,
-        );
-    if (belowQuotaMinorResult != null) {
-      return belowQuotaMinorResult;
-    }
-    final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (minorWarResult != null) {
-      return minorWarResult;
+    for (final shortcut in _legacyMinorDeclareWarShortcuts) {
+      final shortcutResult = _legacyDeclareWarShortcutResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+        shortcut: shortcut,
+      );
+      if (shortcutResult != null) {
+        return shortcutResult;
+      }
     }
     if (isOldWorldGpOnlyInvadableFrontier(
       game: ctx.game,
       snapshot: snapshot,
     )) {
-      final blockerDeclareResult =
-          _plateauGpBlockerDeclarePlannerResultIfNeeded(
-            ctx: ctx,
-            snapshot: snapshot,
-            pass: pass,
-          );
+      final blockerDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+        shortcut: _legacyGpBlockerDeclareWarShortcut,
+      );
       if (blockerDeclareResult != null) {
         return blockerDeclareResult;
       }
     }
-    final stalledGpDeclareResult =
-        _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
-          ctx: ctx,
-          snapshot: snapshot,
-          pass: pass,
-        );
+    final stalledGpDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+      shortcut: _legacyStalledGpDeclareWarShortcut,
+    );
     if (stalledGpDeclareResult != null) {
       return stalledGpDeclareResult;
     }

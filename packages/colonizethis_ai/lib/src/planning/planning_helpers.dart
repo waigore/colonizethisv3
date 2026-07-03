@@ -58,6 +58,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         isBelowObserverConquestQuota,
+        isCivilianBuildSpyTechStealPosture,
         isStalledOldWorldExpansion,
         kMutualExhaustedGpRegimentMax,
         kMutualExhaustedGpStalemateMinOw,
@@ -66,6 +67,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import '../util/ai_validation_exception.dart';
 import '../util/faction_query.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'observer_goal_phase.dart';
@@ -120,10 +122,12 @@ List<String> gpAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   required bool Function(String factionId) keep,
 }) {
-  return <String>[
-    for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
-      if (keep(factionId)) factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.greatPower,
+    keep: keep,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war minor-nation
@@ -157,11 +161,12 @@ List<String> minorAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   bool Function(String factionId)? keep,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isMinorFaction(game, factionId) && (keep == null || keep(factionId)))
-        factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.minorNation,
+    keep: keep,
+  );
 }
 
 /// Returns the deterministic ascending-sorted list of at-war tribe
@@ -195,11 +200,108 @@ List<String> tribeAtWarPeaceTargetsWhere({
   required AIWorldSnapshot snapshot,
   bool Function(String factionId)? keep,
 }) {
-  return <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (isTribeFaction(game, factionId) && (keep == null || keep(factionId)))
-        factionId,
-  ]..sort();
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.tribe,
+    keep: keep,
+  );
+}
+
+/// Returns the deterministic ascending-sorted list of at-war
+/// **non-Great-Power** `factionId`s (minors *and* tribes) that satisfy the
+/// optional caller-supplied [keep] predicate.
+///
+/// Non-GP analogue of [gpAtWarPeaceTargetsWhere] and the combined-faction
+/// companion of [minorAtWarPeaceTargetsWhere] / [tribeAtWarPeaceTargetsWhere];
+/// single source of truth for the repeated non-GP at-war peace-target
+/// collector skeleton
+/// `<String>[for (final id in snapshot.threats.atWarWith) if (game.playerById(id) == null && <keep>) id]..sort()`
+/// hosted by the EXPAND zero-regiment survival decider
+/// (`stalledZeroRegimentAllFactionPeaceTargets`). The caller supplies only its
+/// own per-faction [keep] predicate; the non-GP at-war filter (over
+/// [ThreatSummary.atWarWith]) and the ascending `factionId` sort are applied
+/// once here.
+///
+/// The non-GP membership test is [Game.playerById] `== null` — **not** the
+/// [isMinorFaction] / [isTribeFaction] membership predicates used by the
+/// minor- and tribe-only collectors. This is deliberate and
+/// behaviour-preserving: the replaced inline comprehension peaced every at-war
+/// faction that is not a current Great Power, including an at-war id that is no
+/// longer a registered minor or tribe (for example an absorbed faction still
+/// present in [ThreatSummary.atWarWith]). Routing through [isMinorFaction] /
+/// [isTribeFaction] instead would silently drop such ids and change the
+/// emitted peace set, so the bare `playerById == null` filter is retained
+/// verbatim. Great Powers in [ThreatSummary.atWarWith] are never returned.
+///
+/// When [keep] is `null` every at-war non-GP faction is kept, matching the
+/// inline comprehension that applied no extra per-faction filter beyond the
+/// non-GP membership test.
+///
+/// Pure and deterministic — identical inputs (and a pure [keep]) always yield
+/// identical lists (Refs #3749 step 5 expand-peace collector dedup).
+List<String> nonGreatPowerAtWarPeaceTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  bool Function(String factionId)? keep,
+}) {
+  return _filterAtWarTargetsWhere(
+    game: game,
+    snapshot: snapshot,
+    kind: _AtWarPeaceTargetKind.nonGreatPower,
+    keep: keep,
+  );
+}
+
+enum _AtWarPeaceTargetKind {
+  greatPower,
+  minorNation,
+  tribe,
+  nonGreatPower,
+}
+
+List<String> _filterAtWarTargetsWhere({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required _AtWarPeaceTargetKind kind,
+  bool Function(String factionId)? keep,
+}) {
+  switch (kind) {
+    case _AtWarPeaceTargetKind.greatPower:
+      final requiredKeep = keep;
+      if (requiredKeep == null) {
+        throw AiValidationException.value(
+          keep,
+          'keep',
+          'Great-power at-war peace targets require a keep predicate.',
+        );
+      }
+      return <String>[
+        for (final factionId in gpFactionIdsAtWarWith(game, snapshot))
+          if (requiredKeep(factionId)) factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.minorNation:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (isMinorFaction(game, factionId) &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.tribe:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (isTribeFaction(game, factionId) &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+    case _AtWarPeaceTargetKind.nonGreatPower:
+      return <String>[
+        for (final factionId in snapshot.threats.atWarWith)
+          if (game.playerById(factionId) == null &&
+              (keep == null || keep(factionId)))
+            factionId,
+      ]..sort();
+  }
 }
 
 /// Returns [factionIds] with [blocker] removed, sorted ascending by
@@ -255,6 +357,52 @@ List<String> peaceTargetsExcludingBlocker({
 /// (Refs #2509 Must-have #7).
 bool isAtWarWithAnyGreatPower(Game game, AIWorldSnapshot snapshot) =>
     snapshot.threats.atWarWith.any((id) => game.playerById(id) != null);
+
+/// Number of techs [player] has unlocked — the count of `true` flags in
+/// [Player.techUnlocked]. A `null` or empty map yields `0`.
+///
+/// Pure and deterministic for fixed inputs.
+int unlockedTechCount(Player player) {
+  final techs = player.techUnlocked;
+  if (techs == null) return 0;
+  var count = 0;
+  for (final unlocked in techs.values) {
+    if (unlocked) count++;
+  }
+  return count;
+}
+
+/// Whether the Great Power [activePlayerId] is **pursuing a tech-steal posture**
+/// (decision #10, SPEC/ai/civilian-build-planner.md § Live economy wiring): it
+/// has unlocked fewer techs than the most-advanced rival Great Power by at
+/// least [kCivilianBuildSpyTechStealDeficit], so the civilian Spy build receives
+/// the demand boost even at peace (passive RP posture; Refs #3834).
+///
+/// Iterates [Game.players] (Great Powers only — minor nations and tribes are not
+/// [Player] entries; the list is small and bounded) to find the maximum rival
+/// unlocked-tech count, then delegates the threshold comparison to the pure
+/// data helper [isCivilianBuildSpyTechStealPosture]. Returns `false` when
+/// [activePlayerId] is unknown or there are no rival Great Powers.
+///
+/// Pure and deterministic: identical [game] state and [activePlayerId] always
+/// yield the same result (no randomness, no ordering dependence).
+bool isPursuingTechStealPosture(Game game, String activePlayerId) {
+  final active = game.playerById(activePlayerId);
+  if (active == null) return false;
+  var maxRivalCount = 0;
+  var hasRival = false;
+  for (final player in game.players) {
+    if (player.id == activePlayerId) continue;
+    hasRival = true;
+    final count = unlockedTechCount(player);
+    if (count > maxRivalCount) maxRivalCount = count;
+  }
+  if (!hasRival) return false;
+  return isCivilianBuildSpyTechStealPosture(
+    ownUnlockedTechCount: unlockedTechCount(active),
+    maxRivalUnlockedTechCount: maxRivalCount,
+  );
+}
 
 /// Whether the active player's own Old World expansion is stalled.
 ///
@@ -413,6 +561,39 @@ int scaleWeightedBonus(double weight, int baseConstant) {
 /// Pure and deterministic — identical inputs always yield identical results
 /// (Refs #2509 Must-have #7).
 double clampPhaseWeightUpperUnit(double weight) => weight > 1.0 ? 1.0 : weight;
+
+/// Default diplomatic candidate scoring baseline before order-type bonuses apply.
+const int kDiplomaticDefaultBaseScore = 50;
+
+/// Resolves colonial-pressure weight/scale from an optional soft-phase weight,
+/// or maps [legacyColonialPressureActive] to `1.0` / `0.0` when the weight is
+/// null.
+///
+/// When [clampToUnitInterval] is `true`, non-null weights are clamped to
+/// `[0.0, 1.0]` (Refs #3822 build-pick cargo scale). When `false`, the resolved
+/// weight is returned unchanged for downstream `scaleWeightedBonus` callers.
+double colonialPressureScaleFromWeight({
+  required double? colonialPressureWeight,
+  required bool legacyColonialPressureActive,
+  bool clampToUnitInterval = false,
+}) {
+  if (colonialPressureWeight != null) {
+    return clampToUnitInterval
+        ? colonialPressureWeight.clamp(0.0, 1.0).toDouble()
+        : colonialPressureWeight;
+  }
+  return legacyColonialPressureActive ? 1.0 : 0.0;
+}
+
+/// Element-wise equality for sorted string-id lists in phase planner value types.
+bool planningListEquals(List<String> a, List<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
 
 /// Structural predicate: `true` only under [ObserverGoalPhase.colonial].
 ///

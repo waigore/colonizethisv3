@@ -103,7 +103,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await bindSurface(tester);
-      // Friendly band (score 90) AND a persisted formal alliance.
+      // High-relation band (score 90 → "Devoted") AND a formal alliance.
       await tester.pumpWidget(
         _panelHost(_gpRelationGame(score: 90, formalAlliance: true)),
       );
@@ -119,15 +119,16 @@ void main() {
       'badge absent for informal Allied band without a formal alliance',
       (WidgetTester tester) async {
         await bindSurface(tester);
-        // Score 90 is the informal RelationLevel.allied band, but no treaty.
+        // Score 90 is the informal RelationLevel.allied band (no treaty).
         await tester.pumpWidget(
           _panelHost(_gpRelationGame(score: 90, formalAlliance: false)),
         );
         await _pumpBuilt(tester);
 
         expect(find.text(kDiplomacyAllianceBadgeLabel), findsNothing);
-        // The informal high-relation row still shows the one-word label.
-        expect(find.textContaining('Friendly'), findsWidgets);
+        // The informal high-relation row still shows the one-word label
+        // (score 90 → step 10 → "Devoted" on the 10-step ladder, Refs #3753).
+        expect(find.textContaining('Devoted'), findsWidgets);
       },
     );
 
@@ -140,10 +141,11 @@ void main() {
       );
       await _pumpBuilt(tester);
 
-      // The treaty marker never reuses the informal relation band word.
+      // The treaty marker never reuses the informal relation band word
+      // (score 90 → step 10 → "Devoted", Refs #3753).
       expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
-      expect(kDiplomacyAllianceBadgeLabel, isNot('Friendly'));
-      expect(find.textContaining('Friendly'), findsWidgets);
+      expect(kDiplomacyAllianceBadgeLabel, isNot('Devoted'));
+      expect(find.textContaining('Devoted'), findsWidgets);
     });
   });
 }

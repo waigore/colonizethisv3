@@ -239,9 +239,12 @@ class ColonialAcquisitionTarget {
 ///   - [ColonialAcquisitionTarget] with
 ///     [AcquisitionMethod.purchaseLand] when no Join-Empire target is
 ///     reachable but the active player has at least one idle Merchant
-///     and the first NW province in the sorted list whose owner
-///     satisfies the embassy + non-war gates also contains at least
-///     one tile satisfying the per-tile `purchase_land` gates.
+///     and at least one NW province whose owner satisfies the embassy +
+///     non-war gates also contains a tile satisfying the per-tile
+///     `purchase_land` gates. Among all such eligible owners the arm
+///     selects the **highest relation score** (overseas-profit-aware,
+///     Refs #3758 R7 / S6), falling back to the sorted iteration order
+///     on equal relation scores.
 ///   - [ColonialAcquisitionTarget] with [AcquisitionMethod.declareWar]
 ///     when neither Join Empire nor `purchase_land` yields a target,
 ///     the active player holds at least one standing regiment and
@@ -292,34 +295,34 @@ ColonialAcquisitionTarget? planColonialAcquisition({
 
   final provinceOwner = getProvinceOwnerMap(game);
   final treasury = snapshot.economy.treasury;
+  // Own-colony exclusion (Refs #3758 R4 / S3; SPEC/ai/phase-planner-architecture.md
+  // § Own-colony exclusion): tribes that are already this player's colony stay
+  // in the game and keep owning NW provinces, so they remain in the invadable
+  // list. Skip them across every acquisition arm so the planner never
+  // re-targets, re-buys land in, or declares war on its own colony.
+  final ownColonyTribeIds = _ownColonyTribeIds(game, snapshot.playerId);
   final preferDeclareWarOverJoinEmpire = _personalityPrefersWarOverAlliance(
     personalityId,
   );
+  final searchContext = AcquisitionSearchContext(
+    game: game,
+    snapshot: snapshot,
+    invadable: invadable,
+    provinceOwner: provinceOwner,
+    treasury: treasury,
+    ownColonyTribeIds: ownColonyTribeIds,
+  );
 
-  ColonialAcquisitionTarget? tryJoinEmpire() => _findJoinEmpireTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
-  );
-  ColonialAcquisitionTarget? tryPurchaseLand() => _findPurchaseLandTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
-  );
+  ColonialAcquisitionTarget? tryJoinEmpire() =>
+      _findJoinEmpireTarget(searchContext);
+  ColonialAcquisitionTarget? tryPurchaseLand() =>
+      _findPurchaseLandTarget(searchContext);
   final waiveDeclareWarTreasuryGate = isNwLockRecoveryPathEActive(
     snapshot: snapshot,
     expandEconomyPlan: expandEconomyPlan,
   );
   ColonialAcquisitionTarget? tryDeclareWar() => _findDeclareWarTarget(
-    game: game,
-    snapshot: snapshot,
-    invadable: invadable,
-    provinceOwner: provinceOwner,
-    treasury: treasury,
+    searchContext,
     waiveTreasuryGate: waiveDeclareWarTreasuryGate,
   );
 
@@ -351,33 +354,50 @@ bool _personalityPrefersWarOverAlliance(String? personalityId) {
   return thresholds.warLikelihood > thresholds.allianceTendency;
 }
 
+/// Shared search inputs for the three colonial acquisition target finders
+/// (Refs #3822 Phase 3).
+final class AcquisitionSearchContext {
+  const AcquisitionSearchContext({
+    required this.game,
+    required this.snapshot,
+    required this.invadable,
+    required this.provinceOwner,
+    required this.treasury,
+    required this.ownColonyTribeIds,
+  });
+
+  final Game game;
+  final AIWorldSnapshot snapshot;
+  final List<String> invadable;
+  final Map<String, String> provinceOwner;
+  final int treasury;
+  final Set<String> ownColonyTribeIds;
+}
+
 /// Iterates [invadable] in distance order and returns the first
 /// [AcquisitionMethod.joinEmpire] candidate satisfying the four
 /// Join-Empire gates (non-GP owner, overture stage `nap`, relation
 /// score ≥ Friendly, treasury ≥ `joinEmpireCostForMinorOrTribe`).
-ColonialAcquisitionTarget? _findJoinEmpireTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
-}) {
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+ColonialAcquisitionTarget? _findJoinEmpireTarget(
+  AcquisitionSearchContext ctx,
+) {
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final overture = getOverture(game, snapshot.playerId, ownerId);
+    final overture = getOverture(ctx.game, ctx.snapshot.playerId, ownerId);
     if (overture == null) continue;
     if (overture.stage != OvertureStage.nap) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation == null || relation.score < relationScoreMinFriendly) {
       continue;
     }
 
-    final cost = joinEmpireCostForMinorOrTribe(game, ownerId);
-    if (treasury < cost) continue;
+    final cost = joinEmpireCostForMinorOrTribe(ctx.game, ownerId);
+    if (ctx.treasury < cost) continue;
 
     return ColonialAcquisitionTarget(
       targetFactionId: ownerId,
@@ -387,79 +407,97 @@ ColonialAcquisitionTarget? _findJoinEmpireTarget({
   return null;
 }
 
-/// Iterates [invadable] in distance order and returns the first
-/// [AcquisitionMethod.purchaseLand] candidate satisfying the Method 2
+/// Iterates [invadable] in distance order and returns the
+/// [AcquisitionMethod.purchaseLand] candidate whose owner has the
+/// **highest relation score** among all owners satisfying the Method 2
 /// gates (idle Merchant, embassy with owner, not at war, per-tile
 /// resource + treasury gates).
-ColonialAcquisitionTarget? _findPurchaseLandTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
-}) {
-  if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
+///
+/// Overseas-profit-aware selection (Refs #3758 R7 / S6;
+/// `SPEC/ai/phase-planner-architecture.md` § Overseas-profit-aware
+/// purchase-land target selection): buying land on a tribe/minor tile
+/// earns an ongoing overseas profit share `(relationScore / 100) × 0.40`
+/// (`SPEC/game/world-market.md` § Overseas profit), so a higher-relation
+/// owner yields a strictly larger share for the same future sales. The
+/// arm therefore prefers the highest-relation eligible owner rather than
+/// the first in iteration order. Ties (equal highest relation score) fall
+/// back to the [invadable] iteration order via a **strict** `>`
+/// comparison that keeps the earliest-encountered owner, preserving the
+/// legacy first-match deterministic tiebreak (Refs #2509 Must-have #7).
+/// A missing relation row contributes [relationScoreNeutral] (50),
+/// matching the score-default convention used elsewhere in the planners.
+ColonialAcquisitionTarget? _findPurchaseLandTarget(
+  AcquisitionSearchContext ctx,
+) {
+  if (!_hasIdleMerchant(ctx.game.worldState, ctx.snapshot.playerId)) {
     return null;
   }
   final prospected =
-      game.worldState.playerProspectedTiles[snapshot.playerId] ??
+      ctx.game.worldState.playerProspectedTiles[ctx.snapshot.playerId] ??
       const <String>{};
-  final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+  final purchasedByTile = ctx.game.worldState.purchasedTilesByTileKey;
 
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+  String? bestOwnerId;
+  num bestScore = 0;
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
 
-    final overture = getOverture(game, snapshot.playerId, ownerId);
+    final overture = getOverture(ctx.game, ctx.snapshot.playerId, ownerId);
     if (overture == null || !overture.hasEmbassy) continue;
 
     if (!_provinceHasValidPurchaseLandTile(
-      world: game.worldState,
+      world: ctx.game.worldState,
       provinceId: provinceId,
-      treasury: treasury,
+      treasury: ctx.treasury,
       prospected: prospected,
       purchasedByTile: purchasedByTile,
     )) {
       continue;
     }
 
-    return ColonialAcquisitionTarget(
-      targetFactionId: ownerId,
-      method: AcquisitionMethod.purchaseLand,
-    );
+    final num relationScore = relation?.score ?? relationScoreNeutral;
+    if (bestOwnerId == null || relationScore > bestScore) {
+      bestOwnerId = ownerId;
+      bestScore = relationScore;
+    }
   }
-  return null;
+
+  if (bestOwnerId == null) return null;
+  return ColonialAcquisitionTarget(
+    targetFactionId: bestOwnerId,
+    method: AcquisitionMethod.purchaseLand,
+  );
 }
 
 /// Iterates [invadable] in distance order and returns the first
 /// [AcquisitionMethod.declareWar] candidate satisfying the outer
 /// gates (regiments ≥ 1, treasury ≥ cheapest regiment cost) and the
 /// per-province gates (non-GP owner, not already at war).
-ColonialAcquisitionTarget? _findDeclareWarTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required List<String> invadable,
-  required Map<String, String> provinceOwner,
-  required int treasury,
+ColonialAcquisitionTarget? _findDeclareWarTarget(
+  AcquisitionSearchContext ctx, {
   required bool waiveTreasuryGate,
 }) {
-  if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
+  if (regimentCountForPlayer(ctx.game, ctx.snapshot.playerId) <= 0) {
     return null;
   }
-  if (!waiveTreasuryGate && treasury < _cheapestRegimentBuildTreasuryCost()) {
+  if (!waiveTreasuryGate &&
+      ctx.treasury < _cheapestRegimentBuildTreasuryCost()) {
     return null;
   }
 
-  for (final provinceId in invadable) {
-    final ownerId = provinceOwner[provinceId];
+  for (final provinceId in ctx.invadable) {
+    final ownerId = ctx.provinceOwner[provinceId];
     if (ownerId == null) continue;
-    if (game.playerById(ownerId) != null) continue;
+    if (ctx.game.playerById(ownerId) != null) continue;
+    if (ctx.ownColonyTribeIds.contains(ownerId)) continue;
 
-    final relation = getRelation(game, snapshot.playerId, ownerId);
+    final relation = getRelation(ctx.game, ctx.snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
 
     return ColonialAcquisitionTarget(
@@ -469,6 +507,20 @@ ColonialAcquisitionTarget? _findDeclareWarTarget({
   }
   return null;
 }
+
+/// Tribe ids that are already [playerId]'s own colony
+/// (`ColonyState.colonyOfGpId == playerId`).
+///
+/// Colony tribes stay in the game and keep owning NW provinces after Tribe
+/// Join Empire resolves, so they remain in the invadable list. The acquisition
+/// arms exclude these owners so the planner never re-targets its own colony
+/// (Refs #3758 R4 / S3; SPEC/ai/phase-planner-architecture.md § Own-colony
+/// exclusion; SPEC/game/diplomacy.md § GP–Tribe Join Empire → colony). Colonies
+/// of a different GP are intentionally not excluded.
+Set<String> _ownColonyTribeIds(Game game, String playerId) => <String>{
+  for (final colony in game.colonyStates)
+    if (colony.colonyOfGpId == playerId) colony.tribeId,
+};
 
 /// Iteration order over NW invadable provinces for
 /// [planColonialAcquisition], honoring the spec's adjacency-distance

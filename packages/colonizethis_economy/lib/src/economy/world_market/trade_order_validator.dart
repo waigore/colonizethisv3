@@ -20,7 +20,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/src/validation/order_validation_result.dart';
 import 'trade_order_admission.dart';
 import 'trade_order_validation_context.dart';
-import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
+import 'treasury_bid_budget.dart' show bidTreasurySpendForOrder;
 
 /// Validates a single player's full set of [TradeOrder] entries for the turn.
 class TradeOrderValidator {
@@ -111,7 +111,11 @@ class TradeOrderValidator {
           nextRunningBidTreasurySpend: runningBidTreasurySpend,
         );
       }
-      final int orderSpend = _bidOrderTreasurySpend(order, context);
+      final int orderSpend = bidTreasurySpendForOrder(
+        order: order,
+        worldMarket: context.worldMarketState,
+        resourceRules: context.resourceRules,
+      );
       if (runningBidTreasurySpend + orderSpend >
           context.treasuryBudgetForBids) {
         return (
@@ -150,16 +154,4 @@ class TradeOrderValidator {
     );
   }
 
-  static int _bidOrderTreasurySpend(
-    TradeOrder order,
-    TradeOrderValidationContext context,
-  ) {
-    final int? price = effectiveMarketPriceForCommodityId(
-      commodityId: order.commodityId,
-      worldMarket: context.worldMarketState,
-      resourceRules: context.resourceRules,
-    );
-    if (price == null) return 0;
-    return order.quantity * price;
-  }
 }

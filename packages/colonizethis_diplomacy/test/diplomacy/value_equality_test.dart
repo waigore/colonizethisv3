@@ -1,4 +1,4 @@
-import 'package:colonizethis_diplomacy/src/diplomacy/phase_types/value_equality.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Direct coverage for the shared [ValueEquality] mixin that backs the

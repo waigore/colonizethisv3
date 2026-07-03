@@ -40,6 +40,35 @@ abstract final class FactionAbsorptionEngine {
       kind: _AbsorptionKind.greatPower,
     );
   }
+
+  /// Marks Tribe [tribeId] as a colony of [gpId] via Tribe Join Empire.
+  ///
+  /// Unlike [absorbMinorOrTribeIntoGp], the Tribe is **not** absorbed: it stays
+  /// in [Game.tribes], its provinces/units/fleets are not transferred, and its
+  /// overtures/relations are preserved. Only the Join Empire cost is deducted
+  /// from the GP treasury and a [ColonyState] is recorded (one per Tribe; an
+  /// existing colony record for the same Tribe is replaced).
+  /// SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+  static Game markTribeAsColony(
+    Game game,
+    String gpId,
+    String tribeId,
+    int turn,
+  ) {
+    final cost = joinEmpireCostForMinorOrTribe(game, tribeId);
+    var players = List<Player>.from(game.players);
+    final gpIdx = indexByKey(players, (p) => p.id)[gpId] ?? -1;
+    players = debitPlayerTreasury(players, gpIdx, cost);
+
+    final colonies = game.colonyStates
+        .where((c) => c.tribeId != tribeId)
+        .toList()
+      ..add(
+        ColonyState(tribeId: tribeId, colonyOfGpId: gpId, sinceTurn: turn),
+      );
+
+    return game.withPlayers(players).copyWith(colonyStates: colonies);
+  }
 }
 
 enum _AbsorptionKind { minorOrTribe, greatPower }
@@ -103,17 +132,11 @@ Game _absorbIntoGp(
     final gpIdx = playerIndexById[gpId] ?? -1;
     final targetIdx = playerIndexById[absorbedFactionId] ?? -1;
     if (gpIdx < 0 || targetIdx < 0) return game;
-    players[gpIdx] = players[gpIdx].copyWith(
-      treasury: players[gpIdx].treasury - cost,
-    );
+    players = debitPlayerTreasury(players, gpIdx, cost);
     players.removeAt(targetIdx);
   } else {
     final gpIdx = playerIndexById[gpId] ?? -1;
-    if (gpIdx >= 0) {
-      players[gpIdx] = players[gpIdx].copyWith(
-        treasury: players[gpIdx].treasury - cost,
-      );
-    }
+    players = debitPlayerTreasury(players, gpIdx, cost);
   }
 
   final provinceIds = _sortedFullProvinceIdsOwnedBy(game, absorbedFactionId);
@@ -267,10 +290,29 @@ Game _absorbIntoGp(
       )
       .toList();
 
+  // When the removed GP held colonies, those Tribes lose their suzerain and
+  // become independent again (their favoured trading partner reverts to the
+  // relation-based lookup). Every boycott the removed GP issued, and every
+  // boycott directed at it, is meaningless once it leaves the game and is
+  // cleared. SPEC/game/diplomacy.md § GP–Tribe Rules (Join Empire → colony,
+  // Boycott) — colony relationship ends when the colonizing GP is removed
+  // (Refs #3753 R5.5 / R6.4).
+  final colonies = next.colonyStates
+      .where((c) => c.colonyOfGpId != absorbedFactionId)
+      .toList();
+  final boycotts = next.boycottStates
+      .where(
+        (b) =>
+            b.gpId != absorbedFactionId && b.targetGpId != absorbedFactionId,
+      )
+      .toList();
+
   return next.copyWith(
     overtureStates: overtures,
     diplomacyRelations: relations,
     subsidyStates: subsidies,
+    colonyStates: colonies,
+    boycottStates: boycotts,
     aiControlByGpId: aiControl,
     aiSeedByGpId: aiSeed,
     hiddenAgendaByGpId: hidden,

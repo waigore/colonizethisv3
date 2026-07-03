@@ -3,14 +3,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Tests for economy_riches_to_treasury.dart. SPEC/program/turn-resolution-phases.md.
 void main() {
   group('resolveRichesToTreasury', () {
     test('converts spices to treasury at base price', () {
-      var stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.spices.id,
-        4,
-      );
+      final stockpile = stockpileWithDeltas({CommodityCatalog.spices.id: 4});
 
       final result = resolveRichesToTreasury(stockpile: stockpile);
 
@@ -19,9 +18,10 @@ void main() {
     });
 
     test('converts multiple riches and sums treasury delta', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.spices.id, 2)
-          .applyDelta(CommodityCatalog.silver.id, 1);
+      final stockpile = stockpileWithDeltas({
+        CommodityCatalog.spices.id: 2,
+        CommodityCatalog.silver.id: 1,
+      });
 
       final result = resolveRichesToTreasury(stockpile: stockpile);
 
@@ -33,9 +33,10 @@ void main() {
     });
 
     test('non-riches in stockpile are unchanged', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 10)
-          .applyDelta(CommodityCatalog.gold.id, 2);
+      final stockpile = stockpileWithDeltas({
+        CommodityCatalog.grain.id: 10,
+        CommodityCatalog.gold.id: 2,
+      });
 
       final result = resolveRichesToTreasury(stockpile: stockpile);
 
@@ -48,10 +49,7 @@ void main() {
     });
 
     test('richesCashMultiplier scales treasury delta', () {
-      var stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.spices.id,
-        2,
-      );
+      final stockpile = stockpileWithDeltas({CommodityCatalog.spices.id: 2});
 
       final result = resolveRichesToTreasury(
         stockpile: stockpile,

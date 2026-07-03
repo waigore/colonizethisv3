@@ -50,23 +50,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
-/// Returns a province id (regionId|localId, e.g. `oldWorld|gpName_2`)
-/// owned by [ownerId] in the demo Old World. Province ids in the
-/// debug-init game are already in their prefixed form (see
-/// `colonizethis_logic` setup), so we return them as-is rather than
-/// re-prefixing. Test pre-condition: at least one such province exists;
-/// surface a test failure rather than silently fall back if not.
-String _ownedProvinceId({required Game game, required String ownerId}) {
-  for (final province in game.worldState.oldWorld.provinces) {
-    if (province.ownerId == ownerId) {
-      return province.id;
-    }
-  }
-  fail(
-    'Test setup: no province in oldWorld is owned by "$ownerId"; '
-    'cannot construct a human-owned province for the Naval section.',
-  );
-}
+import 'support/province_overlay_test_harness.dart';
 
 /// Returns the demo game with one extra fleet in port at [provinceId]
 /// (owned by [ownerId], region `oldWorld`) appended to
@@ -110,26 +94,6 @@ String _ownedProvinceId({required Game game, required String ownerId}) {
   return (game: game, orders: orders, fleetId: fleetId);
 }
 
-Widget _darkOverlay({
-  required Game game,
-  required String displayId,
-  required Orders draftOrders,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: displayId,
-        selectedTileKey: null,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: draftOrders,
-      ),
-    ),
-  );
-}
 
 /// Picks a non-empty sea-zone id to use as the pending move destination.
 /// `provincePanelPendingNavalLines` resolves the destination via
@@ -163,7 +127,7 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
@@ -176,7 +140,7 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: setup.game,
               displayId: ownedProvince,
               draftOrders: setup.orders,
@@ -219,7 +183,7 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
@@ -232,7 +196,7 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: setup.game,
               displayId: ownedProvince,
               draftOrders: setup.orders,
@@ -289,7 +253,7 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
@@ -307,7 +271,7 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: setup.game,
               displayId: ownedProvince,
               draftOrders: setup.orders,
@@ -356,7 +320,7 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
@@ -368,7 +332,7 @@ void main() {
           );
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: setup.game,
               displayId: ownedProvince,
               draftOrders: setup.orders,

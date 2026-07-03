@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 
 /// Shared scaffolding for the tile-map *generator* test suite
@@ -17,7 +18,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 /// pass-tuning knobs (mountain/terrain-seed/pattern factors, `clusterShape`,
 /// `voronoiNoiseScale`, `multiRegionResourceCapFraction`) keep their
 /// [TileMapParams] defaults. A test that needs one of those rare knobs can still
-/// construct [TileMapParams] directly. Refs #3746.
+/// construct [TileMapParams] directly. Refs #3746, #3846.
 TileMapParams genParams({
   int width = 100,
   int height = 100,
@@ -55,5 +56,58 @@ TileMapParams genParams({
     jitterProbability: jitterProbability,
     jitterMinProvinceSize: jitterMinProvinceSize,
     jitterNeighborSupportThreshold: jitterNeighborSupportThreshold,
+  );
+}
+
+/// Stable fingerprint of province, terrain, and resource grids for regression
+/// guards after map-package refactors (Refs #2489, #3846).
+String tileMapGenerationDigest(TileMapResult result) {
+  final buffer = StringBuffer();
+  for (var y = 0; y < result.height; y++) {
+    for (var x = 0; x < result.width; x++) {
+      buffer
+        ..write(result.cell(x, y))
+        ..write('|')
+        ..write(result.terrainAt(x, y)?.name ?? '')
+        ..write('|')
+        ..write(result.resourceAt(x, y)?.name ?? '')
+        ..write(';');
+    }
+  }
+  return buffer.toString().hashCode.toRadixString(16);
+}
+
+List<(String, TopologyNodeType, String)> topologyNodeKeys(
+  Iterable<TopologyNode> nodes,
+) =>
+    nodes.map((n) => (n.id, n.type, n.regionId)).toList();
+
+List<String> topologyEdgeKeys(Iterable<TopologyEdge> edges) => edges
+    .map((e) => '${e.id1}|${e.id2}')
+    .toList()
+  ..sort();
+
+/// Runs [TileMapGenerator.generate] with shared defaults for generator tests.
+(TileMapResult result, MapTopology topology) runTileMapGeneration({
+  TileMapParams? params,
+  int width = 100,
+  int height = 100,
+  int seed = 42,
+  int numProvinces = 8,
+  int numContinents = 2,
+  String regionId = 'oldWorld',
+  ResourceRules? resourceRules,
+}) {
+  final resolvedParams = params ??
+      genParams(
+        width: width,
+        height: height,
+        seed: seed,
+      );
+  return TileMapGenerator(params: resolvedParams).generate(
+    numProvinces: numProvinces,
+    numContinents: numContinents,
+    regionId: regionId,
+    resourceRules: resourceRules ?? ResourceRules.defaultRules,
   );
 }

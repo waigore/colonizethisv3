@@ -3,6 +3,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
+import 'init_game_orchestrator_test_support.dart';
+
 /// Refs #3176 — configurable Great Power human/AI slot assignment at init_game.
 ///
 /// SPEC: SPEC/program/game-setup-pipeline.md § Human/AI slot assignment.
@@ -37,7 +39,7 @@ void main() {
       () {
         final result = runInitGame(
           config: lockedConfig(),
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
         final game = result.game;
 
@@ -63,7 +65,7 @@ void main() {
       () {
         final result = runInitGame(
           config: lockedConfig(humanSlots: const <int>{}),
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
         final game = result.game;
 
@@ -85,7 +87,7 @@ void main() {
       () {
         final result = runInitGame(
           config: lockedConfig(humanSlots: const {2}),
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: defaultInitOptions,
         );
         final game = result.game;
 
@@ -110,7 +112,7 @@ void main() {
         expect(
           () => runInitGame(
             config: lockedConfig(humanSlots: const {6}),
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
+            options: defaultInitOptions,
           ),
           throwsA(
             isA<SetupConfigConstraintException>().having(
@@ -129,7 +131,7 @@ void main() {
         expect(
           () => runInitGame(
             config: lockedConfig(humanSlots: const {-1}),
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
+            options: defaultInitOptions,
           ),
           throwsA(
             isA<SetupConfigConstraintException>().having(

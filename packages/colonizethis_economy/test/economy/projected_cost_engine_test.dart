@@ -3,10 +3,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 void main() {
   group('ProjectedCostEngine work material', () {
     test('canAffordWorkMaterialCost is false when any commodity is short', () {
-      const stockpile = Stockpile(quantities: {'lumber': 1});
+      final stockpile = stockpileWithDeltas({'lumber': 1});
       const cost = <String, int>{'lumber': 2};
       expect(
         ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost),
@@ -15,7 +17,7 @@ void main() {
     });
 
     test('deductWorkMaterialCost reduces quantities', () {
-      const stockpile = Stockpile(quantities: {'lumber': 5, 'cast_iron': 3});
+      final stockpile = stockpileWithDeltas({'lumber': 5, 'cast_iron': 3});
       const cost = <String, int>{'lumber': 2, 'cast_iron': 1};
       final after = ProjectedCostEngine.deductWorkMaterialCost(stockpile, cost);
       expect(after.quantityOf('lumber'), 3);

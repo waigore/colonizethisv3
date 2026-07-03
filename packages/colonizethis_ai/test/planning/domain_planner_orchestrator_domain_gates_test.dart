@@ -22,6 +22,7 @@
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/domain_gate_data.dart';
 import 'package:colonizethis_ai/src/planning/domain_planner_outcome.dart';
 import 'package:colonizethis_ai/src/planning/naval_planner.dart';
@@ -164,7 +165,7 @@ DomainPlannerOutcome _runForPhase(PhasePlanOutcome plan) {
     seeds: AISeedBundle.fromTurnSeed(2832100),
     suggestionAPI: _conquestCandidateApi,
     economyPlan: _economyPlan,
-    phasePlan: plan,
+    options: OrchestratorOptions(phasePlan: plan),
   );
 }
 

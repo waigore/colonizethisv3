@@ -51,23 +51,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleSeaZoneIdForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
-/// Returns a province id (regionId|localId) owned by [ownerId] in the
-/// demo Old World. Province ids in the debug-init game are already in
-/// their prefixed form (see `colonizethis_logic` setup), so we return
-/// them as-is rather than re-prefixing. Surfaces a test failure if no
-/// such province exists rather than silently falling back.
-String _ownedProvinceId({required Game game, required String ownerId}) {
-  for (final province in game.worldState.oldWorld.provinces) {
-    if (province.ownerId == ownerId) {
-      return province.id;
-    }
-  }
-  fail(
-    'Test setup: no province in oldWorld is owned by "$ownerId"; '
-    'cannot construct a human-owned province for the empty-state '
-    'placeholder pins.',
-  );
-}
+import 'support/province_overlay_test_harness.dart';
 
 /// Returns a copy of [base] with every unit removed from both regions
 /// and every entry removed from `resourceByTileKey`, so the Economic /
@@ -93,26 +77,6 @@ Game _gameWithNoFleets(Game base) {
   return base.copyWith(worldState: ws.copyWith(fleets: const []));
 }
 
-Widget _darkOverlay({
-  required Game game,
-  required String displayId,
-  required Orders draftOrders,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: displayId,
-        selectedTileKey: null,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: draftOrders,
-      ),
-    ),
-  );
-}
 
 /// Returns every rendered `Text` whose `data == '—'` in the current
 /// widget tree, with a deterministic ordering. Used by the empty-state
@@ -142,14 +106,14 @@ void main() {
         (WidgetTester tester) async {
           final base = demoGameForOverlay;
           final humanId = base.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: base,
             ownerId: humanId,
           );
           final game = _sparseGame(base);
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               draftOrders: const Orders(),
@@ -197,7 +161,7 @@ void main() {
           final game = _gameWithNoFleets(base);
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: seaZoneId,
               draftOrders: const Orders(),
@@ -236,14 +200,14 @@ void main() {
         (WidgetTester tester) async {
           final base = demoGameForOverlay;
           final humanId = base.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: base,
             ownerId: humanId,
           );
           final game = _sparseGame(base);
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               draftOrders: const Orders(),

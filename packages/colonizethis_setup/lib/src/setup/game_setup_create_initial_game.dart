@@ -48,6 +48,7 @@ Game _buildInitialGame({
     minorIds: minorIds,
     tribeIds: tribeIds,
   );
+  final overtureStates = _buildInitialGpGpEmbassyOvertures(gpIds);
   final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
   return Game(
     id: gameId,
@@ -57,6 +58,7 @@ Game _buildInitialGame({
     tribes: tribes,
     turnTimeMapping: TurnTimeMapping.gdd01,
     diplomacyRelations: diplomacyRelations,
+    overtureStates: overtureStates,
     aiControlByGpId: aiControlByGpId,
     capitalTileGrainBonusPerTurn:
         config.startingResources.capitalTileGrainBonusPerTurn,
@@ -127,6 +129,22 @@ Map<CommodityId, int> _buildInitialStockpileQuantities(GameSetupConfig config) {
         (out[CommodityCatalog.paper.id] ?? 0) + startingResources.initialPaper;
   }
   return out;
+}
+
+/// Seeds every GP→GP directional pair at embassy tier at turn 0 (Refs #3753 R1).
+List<OvertureState> _buildInitialGpGpEmbassyOvertures(List<String> gpIds) {
+  if (gpIds.length < 2) return const [];
+  return <OvertureState>[
+    for (var i = 0; i < gpIds.length; i++)
+      for (var j = 0; j < gpIds.length; j++)
+        if (i != j)
+          OvertureState(
+            gpId: gpIds[i],
+            targetId: gpIds[j],
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+  ];
 }
 
 List<DiplomacyRelation> _buildInitialDiplomacyRelations({

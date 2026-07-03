@@ -20,7 +20,7 @@
 //
 // Region scoping is deterministic via `ProvinceId.regionIdFrom` — OW
 // `purchase_land` and OW `build_improvement` must never be filtered
-// under any phase. Pass-through targets (e.g. `steal_tech`) must never
+// under any phase. Pass-through targets (e.g. `counter_spy`) must never
 // be filtered under any phase either.
 //
 // Fixtures here construct `PhasePlanOutcome` instances directly so the
@@ -62,9 +62,9 @@ const WorkOrder _owBuildImprovement = WorkOrder(
   targetTileKey: 'oldWorld|gp1_home|3|3',
 );
 
-const WorkOrder _stealTechAnyRegion = WorkOrder(
+const WorkOrder _counterSpyAnyRegion = WorkOrder(
   unitId: 'u_spy_1',
-  target: 'steal_tech',
+  target: 'counter_spy',
   targetTileKey: 'newWorld|nw1|0|0',
 );
 
@@ -132,9 +132,9 @@ void main() {
       );
     });
 
-    test('keeps non-acquisition/non-improvement targets (e.g. steal_tech)', () {
+    test('keeps non-acquisition/non-improvement targets (e.g. counter_spy)', () {
       expect(
-        shouldSuppressWorkOrderFromPhasePlan(_stealTechAnyRegion, expand),
+        shouldSuppressWorkOrderFromPhasePlan(_counterSpyAnyRegion, expand),
         isFalse,
       );
     });
@@ -242,9 +242,9 @@ void main() {
       );
     });
 
-    test('keeps non-acquisition targets (e.g. steal_tech)', () {
+    test('keeps non-acquisition targets (e.g. counter_spy)', () {
       expect(
-        shouldSuppressWorkOrderFromPhasePlan(_stealTechAnyRegion, colonial),
+        shouldSuppressWorkOrderFromPhasePlan(_counterSpyAnyRegion, colonial),
         isFalse,
       );
     });

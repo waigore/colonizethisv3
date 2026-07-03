@@ -78,6 +78,9 @@ class Game {
     this.diplomacyRelations = const [],
     this.overtureStates = const [],
     this.subsidyStates = const [],
+    this.colonyStates = const [],
+    this.boycottStates = const [],
+    this.allianceBreakCooldowns = const [],
     this.aiControlByGpId = const {},
     this.aiSeedByGpId = const {},
     this.aiProfileByGpId = const {},
@@ -126,6 +129,20 @@ class Game {
 
   /// Active ongoing subsidies (payer -> target with amount per turn). Phase 4.
   final List<SubsidyState> subsidyStates;
+
+  /// Tribes that have become colonies of a Great Power via Tribe Join Empire.
+  /// The colony Tribe stays in [tribes]; its provinces/fleets are not transferred.
+  /// SPEC/game/diplomacy.md § GP–Minor/Tribe Rules (Join Empire → colony).
+  final List<ColonyState> colonyStates;
+
+  /// Active boycotts: a colony-holding Great Power blocking all trade between a
+  /// target Great Power and the issuer's colonies (Refs #3753 R6).
+  /// SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
+  final List<BoycottState> boycottStates;
+
+  /// Bilateral post-break overture cooldowns keyed by canonical GP pair
+  /// (Refs #3811). Active only while `sinceTurn == currentTurn`.
+  final List<AllianceBreakCooldownState> allianceBreakCooldowns;
 
   /// AI control: true = AI-controlled. When empty, use !player.isHuman. Phase 4.
   final Map<String, bool> aiControlByGpId;
@@ -220,12 +237,18 @@ class Game {
       'overtureStates': overtureStates.map((o) => o.toJson()).toList(),
     if (subsidyStates.isNotEmpty)
       'subsidyStates': subsidyStates.map((s) => s.toJson()).toList(),
+    if (colonyStates.isNotEmpty)
+      'colonyStates': colonyStates.map((c) => c.toJson()).toList(),
+    if (boycottStates.isNotEmpty)
+      'boycottStates': boycottStates.map((b) => b.toJson()).toList(),
+    if (allianceBreakCooldowns.isNotEmpty)
+      'allianceBreakCooldowns': allianceBreakCooldowns
+          .map((c) => c.toJson())
+          .toList(),
     if (aiControlByGpId.isNotEmpty) 'aiControlByGpId': aiControlByGpId,
     if (aiSeedByGpId.isNotEmpty) 'aiSeedByGpId': aiSeedByGpId,
     if (aiProfileByGpId.isNotEmpty)
-      'aiProfileByGpId': aiProfileByGpId.map(
-        (k, v) => MapEntry(k, v),
-      ),
+      'aiProfileByGpId': aiProfileByGpId.map((k, v) => MapEntry(k, v)),
     if (hiddenAgendaByGpId.isNotEmpty) 'hiddenAgendaByGpId': hiddenAgendaByGpId,
     if (dossierEvidenceEntries.isNotEmpty)
       'dossierEvidenceEntries': dossierEvidenceEntries
@@ -266,10 +289,26 @@ class Game {
       'debugDiplomacyUsedPairKeys': debugDiplomacyUsedPairKeys.toList()..sort(),
   };
 
+  static List<T> _parseModelList<T>(
+    dynamic raw,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    final list = raw as List<dynamic>? ?? const [];
+    return list
+        .map(
+          (e) =>
+              fromJson(Map<String, dynamic>.from(e as Map<dynamic, dynamic>)),
+        )
+        .toList();
+  }
+
   static Game fromJson(Map<String, dynamic> json) {
-    final playersList = json['players'] as List<dynamic>? ?? [];
-    final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
-    final tribesList = json['tribes'] as List<dynamic>? ?? [];
+    final players = _parseModelList(json['players'], Player.fromJson);
+    final minorNations = _parseModelList(
+      json['minorNations'],
+      MinorNation.fromJson,
+    );
+    final tribes = _parseModelList(json['tribes'], Tribe.fromJson);
     final turnTimeMappingRaw = json['turnTimeMapping'];
     final Map<String, dynamic>? turnTimeMappingJson =
         turnTimeMappingRaw is Map<dynamic, dynamic>
@@ -282,30 +321,42 @@ class Game {
             orElse: () => CombatMode.autoResolve,
           )
         : null;
-    final relationsList = json['diplomacyRelations'] as List<dynamic>? ?? [];
-    final diplomacyRelations = relationsList
-        .map(
-          (e) => DiplomacyRelation.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
+    final diplomacyRelations = _parseModelList(
+      json['diplomacyRelations'],
+      DiplomacyRelation.fromJson,
+    );
+    final overtureStates = _parseModelList(
+      json['overtureStates'],
+      OvertureState.fromJson,
+    );
+    // Subsidy save-load migration (Refs #3753 R3): the £/turn model is dropped
+    // in favour of percentages, and subsidies only exist GP→Minor/Tribe. On
+    // load, drop (a) legacy £-based subsidies (no valid `percent`) and (b) any
+    // GP→GP subsidy (target is a Great Power player). The player re-establishes
+    // valid subsidies under the percent model.
+    final greatPowerIds = players.map((p) => p.id).toSet();
+    final subsidyStates = _parseModelList(
+      json['subsidyStates'],
+      SubsidyState.fromJson,
+    )
+        .where(
+          (s) =>
+              isValidSubsidyPercent(s.percent) &&
+              !greatPowerIds.contains(s.targetId),
         )
         .toList();
-    final overtureList = json['overtureStates'] as List<dynamic>? ?? [];
-    final overtureStates = overtureList
-        .map(
-          (e) => OvertureState.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final subsidyList = json['subsidyStates'] as List<dynamic>? ?? [];
-    final subsidyStates = subsidyList
-        .map(
-          (e) => SubsidyState.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final colonyStates = _parseModelList(
+      json['colonyStates'],
+      ColonyState.fromJson,
+    );
+    final boycottStates = _parseModelList(
+      json['boycottStates'],
+      BoycottState.fromJson,
+    );
+    final allianceBreakCooldowns = _parseModelList(
+      json['allianceBreakCooldowns'],
+      AllianceBreakCooldownState.fromJson,
+    );
 
     final aiControlRaw =
         json['aiControlByGpId'] as Map<dynamic, dynamic>? ?? {};
@@ -329,23 +380,14 @@ class Game {
     final hiddenAgendaByGpId = hiddenAgendaRaw.map(
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
-    final evidenceList = json['dossierEvidenceEntries'] as List<dynamic>? ?? [];
-    final dossierEvidenceEntries = evidenceList
-        .map(
-          (e) => DossierEvidenceEntry.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
-    final diploHistoryList =
-        json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
-    final diplomaticHistoryEvents = diploHistoryList
-        .map(
-          (e) => DiplomaticEvent.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final dossierEvidenceEntries = _parseModelList(
+      json['dossierEvidenceEntries'],
+      DossierEvidenceEntry.fromJson,
+    );
+    final diplomaticHistoryEvents = _parseModelList(
+      json['diplomaticHistoryEvents'],
+      DiplomaticEvent.fromJson,
+    );
     final globalGameSeed = json['globalGameSeed'] as int?;
     final greatPowerColorOverrideRaw =
         json['greatPowerColorOverride'] as Map<dynamic, dynamic>?;
@@ -371,14 +413,7 @@ class Game {
         (json['richesCashMultiplier'] as num?)?.toDouble() ?? 1.0;
     final capitalTileGrainBonusPerTurn =
         (json['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5;
-    final generalsList = json['generals'] as List<dynamic>? ?? [];
-    final generals = generalsList
-        .map(
-          (e) => General.fromJson(
-            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-          ),
-        )
-        .toList();
+    final generals = _parseModelList(json['generals'], General.fromJson);
     final politicalGlyphRaw =
         json['politicalGlyphByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final politicalGlyphByPlayerId = politicalGlyphRaw.map(
@@ -398,34 +433,17 @@ class Game {
     final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
     final debugDiploKeysList =
         json['debugDiplomacyUsedPairKeys'] as List<dynamic>? ?? [];
-    final debugDiplomacyUsedPairKeys =
-        debugDiploKeysList.map((e) => e.toString()).toSet();
+    final debugDiplomacyUsedPairKeys = debugDiploKeysList
+        .map((e) => e.toString())
+        .toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
         Map<String, dynamic>.from(json['worldState'] as Map<dynamic, dynamic>),
       ),
-      players: playersList
-          .map(
-            (e) => Player.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
-      minorNations: minorNationsList
-          .map(
-            (e) => MinorNation.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
-      tribes: tribesList
-          .map(
-            (e) => Tribe.fromJson(
-              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
-            ),
-          )
-          .toList(),
+      players: players,
+      minorNations: minorNations,
+      tribes: tribes,
       generals: generals,
       turnTimeMapping: turnTimeMappingJson != null
           ? TurnTimeMapping.fromJson(turnTimeMappingJson)
@@ -435,6 +453,9 @@ class Game {
       diplomacyRelations: diplomacyRelations,
       overtureStates: overtureStates,
       subsidyStates: subsidyStates,
+      colonyStates: colonyStates,
+      boycottStates: boycottStates,
+      allianceBreakCooldowns: allianceBreakCooldowns,
       aiControlByGpId: aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId,
@@ -460,8 +481,7 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
       mapViewState: mapViewState,
-      calendarCampaignHalted:
-          json['calendarCampaignHalted'] as bool? ?? false,
+      calendarCampaignHalted: json['calendarCampaignHalted'] as bool? ?? false,
       infiniteMode: json['infiniteMode'] as bool? ?? false,
       worldMarketState: worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys,
@@ -482,6 +502,9 @@ class Game {
     List<DiplomacyRelation>? diplomacyRelations,
     List<OvertureState>? overtureStates,
     List<SubsidyState>? subsidyStates,
+    List<ColonyState>? colonyStates,
+    List<BoycottState>? boycottStates,
+    List<AllianceBreakCooldownState>? allianceBreakCooldowns,
     Map<String, bool>? aiControlByGpId,
     Map<String, int>? aiSeedByGpId,
     Map<String, String?>? aiProfileByGpId,
@@ -517,6 +540,10 @@ class Game {
       diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
       overtureStates: overtureStates ?? this.overtureStates,
       subsidyStates: subsidyStates ?? this.subsidyStates,
+      colonyStates: colonyStates ?? this.colonyStates,
+      boycottStates: boycottStates ?? this.boycottStates,
+      allianceBreakCooldowns:
+          allianceBreakCooldowns ?? this.allianceBreakCooldowns,
       aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
       aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
       aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
@@ -568,6 +595,9 @@ class Game {
           _listEquals(diplomacyRelations, other.diplomacyRelations) &&
           _listEquals(overtureStates, other.overtureStates) &&
           _listEquals(subsidyStates, other.subsidyStates) &&
+          _listEquals(colonyStates, other.colonyStates) &&
+          _listEquals(boycottStates, other.boycottStates) &&
+          _listEquals(allianceBreakCooldowns, other.allianceBreakCooldowns) &&
           _mapEquals(aiControlByGpId, other.aiControlByGpId) &&
           _mapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
           _nullableStringMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
@@ -613,7 +643,12 @@ class Game {
     Object.hashAll(combatModeByProvinceId.entries),
     Object.hashAll(diplomacyRelations),
     Object.hashAll(overtureStates),
-    Object.hashAll(subsidyStates),
+    Object.hash(
+      Object.hashAll(subsidyStates),
+      Object.hashAll(colonyStates),
+      Object.hashAll(boycottStates),
+      Object.hashAll(allianceBreakCooldowns),
+    ),
     Object.hashAll(aiControlByGpId.entries),
     Object.hashAll(aiSeedByGpId.entries),
     Object.hashAll(aiProfileByGpId.entries),
@@ -677,8 +712,7 @@ class Game {
   static bool _nullableStringMapEquals(
     Map<String, String?> a,
     Map<String, String?> b,
-  ) =>
-      _mapEquals(a, b);
+  ) => _mapEquals(a, b);
 
   static bool _listEquals<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;

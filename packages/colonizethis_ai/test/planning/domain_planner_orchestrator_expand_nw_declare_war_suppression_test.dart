@@ -49,6 +49,7 @@
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -67,7 +68,7 @@ const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 // (early-sprint plateau), which scoring-side migration in
 // `_declareWarSuppressedExpandColonialScore` treats as
 // "reachable at low priority" — see the PR's
-// `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+// `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
 // Tests that pin the strict hard-suppress regression contract
 // thread this explicit override through the orchestrator so
 // `nwAcquisitionWeight == 0.0` collapses NW colonial declare-war
@@ -322,9 +323,9 @@ void main() {
         // production curve `_curveWeightsForOw(7)` returns 0.05 and the
         // scoring path now keeps NW declare-war reachable at low
         // priority — see
-        // `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+        // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
         // This test continues to assert the strict regression contract.
-        phasePlan: _expandPhasePlanHardSuppressNw,
+        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
       );
 
       expect(
@@ -408,7 +409,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(turnSeed),
         suggestionAPI: _nwTribeDeclareWarApi,
         economyPlan: _economyPlan,
-        phasePlan: _expandPhasePlanHardSuppressNw,
+        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
       );
 
       final firstRun = runOnce(2509242);

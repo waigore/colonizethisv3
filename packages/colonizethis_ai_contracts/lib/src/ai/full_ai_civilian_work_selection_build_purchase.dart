@@ -6,32 +6,12 @@ part of 'full_ai_civilian_work_selection.dart';
 // of full_ai_civilian_work_selection.dart by concern to keep each library file
 // small; shares the parent library's private scope via `part`.
 
-/// Planner-internal score boost applied to an unimproved feedstock resource
-/// tile when the [regimentBuildInputFeedstockExtractionResourceIds] gate is
-/// active (Refs #2847 § H8-extraction). Sized above
-/// [kBuildImprovementExtractableResourceScore] plus the New World resource
-/// bonuses so a lock-recovery seller routes its Builder onto the feedstock
-/// tile ahead of any other extractable improvement. Planner-internal — not an
-/// `ai_victory_config.dart` constant — mirroring the economy-planner H8
-/// production boost and the #2847 "no new config constants" scope constraint.
-const int kRegimentBuildInputFeedstockExtractionScoreBoost = 600;
-
-/// Planner-internal score boost applied to an unimproved **fabric** feedstock
-/// resource tile (`wool` / `cotton`) when the growth-stage planner routes a
-/// bootstrap GP to establish fabric production before any other extraction
-/// (Refs #3371 AC1 growth-stage civilian-work feedstock routing). Sized above
-/// [kRegimentBuildInputFeedstockExtractionScoreBoost] and the New World resource
-/// bonuses so a low-labour GP improves a wool/cotton tile ahead of grain, New
-/// World, or H8 extraction work — closing the seed-42 gp3/gp5 fabric stall.
-/// Planner-internal — not an `ai_victory_config.dart` constant.
-const int kGrowthStageFabricFeedstockScoreBoost = 700;
-
-/// Planner-internal score boost applied to an unimproved **infrastructure**
-/// feedstock resource tile (`timber` / `iron` / `coal`) under the growth-stage
-/// planner (Refs #3371 AC2). Sized above the New World resource bonuses but
-/// below [kGrowthStageFabricFeedstockScoreBoost] so a maturing GP improves
-/// castIron/lumber feedstock only after fabric is secured.
-const int kGrowthStageInfraFeedstockScoreBoost = 520;
+// The civilian-work feedstock score boosts
+// ([kRegimentBuildInputFeedstockExtractionScoreBoost],
+// [kGrowthStageFabricFeedstockScoreBoost],
+// [kGrowthStageInfraFeedstockScoreBoost]) are GA-tunable constants in
+// `ai_victory_config.dart` / `ai_parameter_registry.dart` (Refs #3794);
+// behaviour is normative in SPEC/ai/civilian-work-planner.md.
 
 int _buildImprovementWorkScore(
   WorkOrder w,

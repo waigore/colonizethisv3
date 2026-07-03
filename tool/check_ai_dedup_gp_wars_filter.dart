@@ -30,6 +30,17 @@ import 'package:path/path.dart' as p;
 /// continue; … }` skip loop, `.atWarWith.contains(...)` membership tests, and
 /// `.atWarWith.any(...)` predicates that do *not* test `playerById(...) !=
 /// null` (for example the minor-owner / invadable predicate) are not matched.
+///
+/// A third pattern (Refs #3749 step 5) rejects the **non-GP** peace-collector
+/// comprehension `for (final … in EXPR.atWarWith) if (playerById(ID) == null)
+/// ID,` — the inline form that builds a minor + tribe peace-target list.
+/// Callers must use the shared
+/// `nonGreatPowerAtWarPeaceTargetsWhere(game: …, snapshot: …)` collector from
+/// `planning_helpers.dart` instead. Detection is scoped to the **collector**
+/// form (the `if (… == null) IDENTIFIER,` comprehension element); the
+/// `if (playerById(...) == null) continue;` skip loop (which iterates to
+/// process the *Great Powers*) ends in `continue;`/`{`, never a bare
+/// `identifier,`, so it is not matched.
 
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
@@ -49,6 +60,18 @@ final RegExp _inlineGpWarsFilter = RegExp(
 final RegExp _inlineGpWarsFunctionalFilter = RegExp(
   r'\.atWarWith\s*\.\s*(?:any|where)\s*\('
   r'[^;]{0,200}?playerById\s*\([^)]*\)\s*!=\s*null',
+);
+
+/// Non-GP peace-collector comprehension (Refs #3749 step 5):
+/// `for (final ID in EXPR.atWarWith) if (… playerById(ID) == null …) ID,`. The
+/// trailing `\w+\s*,` anchors on the comprehension **element** (a bare
+/// collected identifier followed by `,`), so the `if (playerById(...) == null)
+/// continue;` skip loop (which ends in `continue;`, after a `{`) is not
+/// matched.
+final RegExp _inlineNonGpPeaceCollector = RegExp(
+  r'for\s*\(\s*final\s+\w+\s+in\s+[^)]*\.atWarWith\s*\)\s*'
+  r'if\s*\([^;{]{0,120}?playerById\s*\([^)]*\)\s*==\s*null[^;{]{0,60}?\)\s*'
+  r'\w+\s*,',
 );
 
 void main(List<String> args) {
@@ -71,34 +94,59 @@ int runCheckAiDedupGpWarsFilter(
   }
 
   final allowedPath = p.normalize(p.join(root, _allowedRelative));
-  final violations = <String>[];
+  final gpViolations = <String>[];
+  final nonGpViolations = <String>[];
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     if (p.normalize(entity.path) == allowedPath) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
-    final match = _inlineGpWarsFilter.firstMatch(content) ??
+
+    final gpMatch = _inlineGpWarsFilter.firstMatch(content) ??
         _inlineGpWarsFunctionalFilter.firstMatch(content);
-    if (match == null) continue;
-    final lineNumber =
-        '\n'.allMatches(content.substring(0, match.start)).length + 1;
-    violations.add('$relative:$lineNumber');
+    if (gpMatch != null) {
+      final lineNumber =
+          '\n'.allMatches(content.substring(0, gpMatch.start)).length + 1;
+      gpViolations.add('$relative:$lineNumber');
+    }
+
+    final nonGpMatch = _inlineNonGpPeaceCollector.firstMatch(content);
+    if (nonGpMatch != null) {
+      final lineNumber =
+          '\n'.allMatches(content.substring(0, nonGpMatch.start)).length + 1;
+      nonGpViolations.add('$relative:$lineNumber');
+    }
   }
 
-  if (violations.isEmpty) {
+  if (gpViolations.isEmpty && nonGpViolations.isEmpty) {
     logI('check_ai_dedup_gp_wars_filter: no violations found.');
     return 0;
   }
 
-  logE(
-    'check_ai_dedup_gp_wars_filter: found ${violations.length} inline '
-    'GP-wars filter(s) in $_aiLibRelative. Use the shared '
-    '`gpFactionIdsAtWarWith(game, snapshot)` (for the id list/length) or '
-    '`isAtWarWithAnyGreatPower(game, snapshot)` (for the boolean presence '
-    'check) helper from src/planning/planning_helpers.dart instead.',
-  );
-  for (final v in violations) {
-    logE(' - $v');
+  if (gpViolations.isNotEmpty) {
+    logE(
+      'check_ai_dedup_gp_wars_filter: found ${gpViolations.length} inline '
+      'GP-wars filter(s) in $_aiLibRelative. Use the shared '
+      '`gpFactionIdsAtWarWith(game, snapshot)` (for the id list/length) or '
+      '`isAtWarWithAnyGreatPower(game, snapshot)` (for the boolean presence '
+      'check) helper from src/planning/planning_helpers.dart instead.',
+    );
+    for (final v in gpViolations) {
+      logE(' - $v');
+    }
   }
+
+  if (nonGpViolations.isNotEmpty) {
+    logE(
+      'check_ai_dedup_gp_wars_filter: found ${nonGpViolations.length} inline '
+      'non-GP peace-collector comprehension(s) in $_aiLibRelative. Use the '
+      'shared `nonGreatPowerAtWarPeaceTargetsWhere(game: ..., snapshot: ...)` '
+      'collector from src/planning/planning_helpers.dart instead.',
+    );
+    for (final v in nonGpViolations) {
+      logE(' - $v');
+    }
+  }
+
   return 1;
 }

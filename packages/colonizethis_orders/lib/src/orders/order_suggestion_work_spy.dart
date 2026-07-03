@@ -43,36 +43,6 @@ void addSpySuggestionsForUnit({
     candidateValidator: candidateValidator,
     workProbeBudget: workProbeBudget,
   );
-
-  if (!allowedTargets.contains(kWorkTargetStealTech)) return;
-  WorkSuggestionPipeline.run(
-    unit: unit,
-    unitType: type,
-    unitRegionId: unitRegionId,
-    atProvinceId: atProvinceId,
-    workTarget: kWorkTargetStealTech,
-    existingTargetsByUnit: existingTargetsByUnit,
-    suggestions: suggestions,
-    noCandidateReason: 'no_valid_tile',
-    candidatesProvider: () sync* {
-      for (final other in game.players) {
-        if (other.id == playerId || other.capitalProvinceId == null) continue;
-        final capProvinceId = other.capitalProvinceId!;
-        final capRegionId = ProvinceId.regionIdFrom(capProvinceId);
-        final capTiles =
-            tileKeysByRegion[capRegionId]?[capProvinceId] ?? const <String>[];
-        if (capTiles.isEmpty) continue;
-        yield WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetStealTech,
-          targetTileKey: capTiles.first,
-        );
-      }
-    },
-    candidateAcceptor: (candidate) =>
-        isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
-    probeBudget: workProbeBudget,
-  );
 }
 
 void _addCounterSpySuggestionIfEligible({

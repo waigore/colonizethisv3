@@ -365,10 +365,18 @@ void main() {
         final Key bodyKey = ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2');
         expect(tester.widget(find.byKey(bodyKey)), isA<Column>());
 
+        // Match the action cluster Wrap specifically via its normative 4 dp
+        // gaps (kDiplomacyActionWrapSpacing). The relation-meter Wrap in the
+        // info column (Refs #3753) is also start-aligned but carries the
+        // CtSpacing gaps, so it must not be conflated with the action cluster.
         final Finder startWrap = find.descendant(
           of: find.byKey(bodyKey),
           matching: find.byWidgetPredicate(
-            (Widget w) => w is Wrap && w.alignment == WrapAlignment.start,
+            (Widget w) =>
+                w is Wrap &&
+                w.alignment == WrapAlignment.start &&
+                w.spacing == kDiplomacyActionWrapSpacing &&
+                w.runSpacing == kDiplomacyActionWrapSpacing,
           ),
         );
         expect(startWrap, findsOneWidget);

@@ -36,7 +36,7 @@ Set<CommodityId> _regimentBuildInputFeedstockIds(
   };
   if (peasantRecruitFabricStaging &&
       isCastIronLabourPeasantRecruitFabricShort(projected)) {
-    missingInputs.add(CommodityCatalog.fabric.id);
+    missingInputs.add(kAiCommodityIds.fabric);
   }
   if (missingInputs.isEmpty) return const <CommodityId>{};
   final feedstock = <CommodityId>{};
@@ -226,7 +226,7 @@ void _addRegimentBuildInputDirectNeed({
   for (final input in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
     var targetQty = input.value;
     if (peasantRecruitFabricStaging &&
-        input.key == CommodityCatalog.fabric.id) {
+        input.key == kAiCommodityIds.fabric) {
       final peasantFabricCost =
           WorkerActionEconomyCatalog.peasant.materialCosts[input.key] ?? 0;
       if (peasantFabricCost > targetQty) {
@@ -280,7 +280,7 @@ int _feedstockQuantityForPeasantRecruitFabricStaging(
   Stockpile projected,
 ) {
   if (!isCastIronLabourPeasantRecruitFabricShort(projected)) return 0;
-  final fabricId = CommodityCatalog.fabric.id;
+  final fabricId = kAiCommodityIds.fabric;
   final required =
       WorkerActionEconomyCatalog.peasant.materialCosts[fabricId] ?? 0;
   if (required <= 0) return 0;

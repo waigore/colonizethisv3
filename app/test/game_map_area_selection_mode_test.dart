@@ -159,7 +159,6 @@ void main() {
         kWorkTargetBuildPort,
         kWorkTargetBuildFort,
         kWorkTargetBuildRail,
-        kWorkTargetStealTech,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
       ];

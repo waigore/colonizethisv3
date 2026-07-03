@@ -53,11 +53,11 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'observer_goal_phase.dart';
+import 'phase_filter_common.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
-        resolvePhaseColonialPressureActive,
         resolvePhaseNewWorldAcquisitionWeight,
         resolvePhaseOldWorldConquestWeight,
         scaleWeightedBonus;
@@ -88,7 +88,7 @@ import 'planning_helpers.dart'
 /// no order emission.
 bool resolvePhaseDiplomacyDeclareWarColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => resolvePhaseColonialPressureActive(phasePlan.phase);
+}) => phaseColonialPressureActiveFromPlan(phasePlan: phasePlan);
 
 /// When `true`, `_declareWarSuppressedDevelopPhaseScore`
 /// (`diplomatic_candidate_scoring_declare_war.dart`) returns

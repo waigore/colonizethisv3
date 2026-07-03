@@ -9,37 +9,64 @@ import 'diplomacy_relation_lookup.dart';
   return (id1: parts[0], id2: parts[1]);
 }
 
+/// Updater applying declare-war relation state. Shared by [setWarStateForPair] and
+/// the batched [RelationUpsertIndex] path (Refs #3837).
+DiplomacyRelation Function(DiplomacyRelation?) warStateRelationUpdater(
+  String gpId,
+  String targetId,
+  int turn,
+) {
+  final ids = canonicalPairIds(gpId, targetId);
+  return (existing) {
+    if (existing == null) {
+      return DiplomacyRelation(
+        factionId1: ids.id1,
+        factionId2: ids.id2,
+        score: 20,
+        level: RelationLevel.hostile,
+        state: RelationState.atWar,
+        sinceTurn: turn,
+        lastInteractionTurn: turn,
+      );
+    }
+    // War invariant (SPEC/game/diplomacy.md § Alliances): entering war clears
+    // any formal alliance for the pair — a treaty can never coexist with war.
+    return existing.copyWith(
+      state: RelationState.atWar,
+      sinceTurn: turn,
+      lastInteractionTurn: turn,
+      score: 20,
+      level: RelationLevel.hostile,
+      formalAlliance: false,
+    );
+  };
+}
+
+/// Updater applying offer-peace relation state. Shared by [applyPeaceForPair] and
+/// the batched [RelationUpsertIndex] path (Refs #3837).
+DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
+  String gpId,
+  String targetId,
+  int turn,
+) => (existing) {
+  return existing!.copyWith(
+    state: RelationState.atPeace,
+    sinceTurn: turn,
+    lastInteractionTurn: turn,
+  );
+};
+
 List<DiplomacyRelation> setWarStateForPair({
   required List<DiplomacyRelation> relations,
   required String gpId,
   required String targetId,
   required int turn,
 }) {
-  final ids = canonicalPairIds(gpId, targetId);
   return upsertRelation(
     relations,
     gpId,
     targetId,
-    (existing) {
-      if (existing == null) {
-        return DiplomacyRelation(
-          factionId1: ids.id1,
-          factionId2: ids.id2,
-          score: 20,
-          level: RelationLevel.hostile,
-          state: RelationState.atWar,
-          sinceTurn: turn,
-          lastInteractionTurn: turn,
-        );
-      }
-      return existing.copyWith(
-        state: RelationState.atWar,
-        sinceTurn: turn,
-        lastInteractionTurn: turn,
-        score: 20,
-        level: RelationLevel.hostile,
-      );
-    },
+    warStateRelationUpdater(gpId, targetId, turn),
   );
 }
 
@@ -53,13 +80,7 @@ List<DiplomacyRelation> applyPeaceForPair({
     relations,
     gpId,
     targetId,
-    (existing) {
-      return existing!.copyWith(
-        state: RelationState.atPeace,
-        sinceTurn: turn,
-        lastInteractionTurn: turn,
-      );
-    },
+    peaceRelationUpdater(gpId, targetId, turn),
   );
 }
 
@@ -140,3 +161,114 @@ List<DiplomacyRelation> applySubsidyBoost({
   );
 }
 
+/// Every Great Power (other than [breakerId] itself and any id in [exclude])
+/// for which [breakerId] holds a [DiplomacyRelation], sorted ascending for
+/// deterministic application order. Used by the unified alliance-break penalty
+/// (R11) to find the "every other GP" cascade targets. SPEC/game/diplomacy.md.
+List<String> otherRelatedGreatPowerIds(
+  Game game,
+  String breakerId,
+  Set<String> exclude,
+) {
+  final gpIds = {for (final p in game.players) p.id};
+  final out = <String>{};
+  for (final r in game.diplomacyRelations) {
+    if (!r.involvesNation(breakerId)) continue;
+    final other = r.factionId1 == breakerId ? r.factionId2 : r.factionId1;
+    if (other == breakerId) continue;
+    if (exclude.contains(other)) continue;
+    if (!gpIds.contains(other)) continue;
+    out.add(other);
+  }
+  final sorted = out.toList()..sort();
+  return sorted;
+}
+
+/// Applies the unified alliance-break relation penalty (R11): subtracts
+/// [allianceBreakAllyScorePenalty] from the [breakerId]↔[brokenWithAllyId] pair
+/// and clears that pair's `formalAlliance`, then subtracts
+/// [allianceBreakOtherGpScorePenalty] from [breakerId]↔every id in [otherGpIds]
+/// (which the caller has already filtered/sorted, excluding the broken-with ally
+/// and any non-cascade ids). Scores clamp to
+/// `[relationScoreMin, relationScoreMax]`; levels are recomputed.
+/// SPEC/game/diplomacy.md § Alliances.
+List<DiplomacyRelation> applyAllianceBreakPenalties({
+  required List<DiplomacyRelation> relations,
+  required String breakerId,
+  required String brokenWithAllyId,
+  required List<String> otherGpIds,
+  required int turn,
+}) {
+  final index = RelationUpsertIndex(relations);
+  index.upsert(
+    breakerId,
+    brokenWithAllyId,
+    _allianceBreakAllyUpdater(breakerId, brokenWithAllyId, turn),
+  );
+  for (final other in otherGpIds) {
+    index.upsert(
+      breakerId,
+      other,
+      _scoreDeltaUpdater(
+        breakerId,
+        other,
+        -allianceBreakOtherGpScorePenalty,
+        turn,
+      ),
+    );
+  }
+  return index.toList();
+}
+
+DiplomacyRelation Function(DiplomacyRelation?) _allianceBreakAllyUpdater(
+  String breakerId,
+  String brokenWithAllyId,
+  int turn,
+) {
+  final ids = canonicalPairIds(breakerId, brokenWithAllyId);
+  return (existing) {
+    final base = existing?.score ?? relationScoreNeutral;
+    final newScore = (base - allianceBreakAllyScorePenalty).clamp(
+      relationScoreMin,
+      relationScoreMax,
+    );
+    final newLevel = scoreToLevel(newScore);
+    if (existing == null) {
+      return DiplomacyRelation(
+        factionId1: ids.id1,
+        factionId2: ids.id2,
+        score: newScore,
+        level: newLevel,
+        lastInteractionTurn: turn,
+      );
+    }
+    return existing.copyWith(
+      score: newScore,
+      level: newLevel,
+      lastInteractionTurn: turn,
+      formalAlliance: false,
+    );
+  };
+}
+
+/// Applies the spy-caught diplomacy penalty between [spyOwnerId] and
+/// [territoryOwnerId]. SPEC/game/diplomacy.md; Refs #3834 R8.
+({List<DiplomacyRelation> relations, int penaltiesApplied})
+applySpyDeathDiplomacyPenalty({
+  required List<DiplomacyRelation> relations,
+  required String spyOwnerId,
+  required String territoryOwnerId,
+  required int turn,
+  int penalty = -8,
+}) {
+  if (spyOwnerId == territoryOwnerId) {
+    return (relations: relations, penaltiesApplied: 0);
+  }
+  final next = upsertRelation(
+    relations,
+    spyOwnerId,
+    territoryOwnerId,
+    _scoreDeltaUpdater(spyOwnerId, territoryOwnerId, penalty, turn),
+  );
+  return (relations: next, penaltiesApplied: 1);
+}

@@ -37,6 +37,17 @@ Set<String> _provinceSeaZones({required String provinceId}) => {};
       expect(violations.single.message, contains('_provinceSeaZones'));
     });
 
+    test('flags the towns _tileKeyAdjacentToProvinceSeaZone clone', () {
+      const src = r'''
+bool _tileKeyAdjacentToProvinceSeaZone({required String tileKey}) => false;
+''';
+      final violations = findSetupDedupTopologyAdjacencyViolations(
+        sourcesByPath: const {townsPath: src},
+      );
+      expect(violations, hasLength(1));
+      expect(violations.single.message, contains('_tileKeyAdjacentToProvinceSeaZone'));
+    });
+
     test('accepts delegation to world + shared helpers', () {
       const src = r'''
 final ids = provinceNodeIds(topology);

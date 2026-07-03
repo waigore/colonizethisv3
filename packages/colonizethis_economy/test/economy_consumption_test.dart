@@ -3,19 +3,17 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 /// Tests for economy_consumption.dart. SPEC/game/workers-and-population.md.
 void main() {
   group('resolveConsumption', () {
     test('peasants consume 1 food each (grain or meat)', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 5)
-          .applyDelta(CommodityCatalog.meat.id, 0);
-      const workers = WorkerPool(
-        peasants: 5,
-        apprentices: 0,
-        journeymen: 0,
-        masters: 0,
-      );
+      final stockpile = stockpileWithDeltas({
+        CommodityCatalog.grain.id: 5,
+        CommodityCatalog.meat.id: 0,
+      });
+      final workers = coreWorkerPool(peasants: 5);
 
       final result = resolveConsumption(stockpile: stockpile, workers: workers);
 

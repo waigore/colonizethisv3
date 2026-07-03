@@ -4,39 +4,15 @@ import 'package:colonizethis_test/test.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
 
-/// Stable fingerprint of province, terrain, and resource grids for regression
-/// guards after map-package refactors (Refs #2489).
-String tileMapGenerationDigest(TileMapResult result) {
-  final buffer = StringBuffer();
-  for (var y = 0; y < result.height; y++) {
-    for (var x = 0; x < result.width; x++) {
-      buffer
-        ..write(result.cell(x, y))
-        ..write('|')
-        ..write(result.terrainAt(x, y)?.name ?? '')
-        ..write('|')
-        ..write(result.resourceAt(x, y)?.name ?? '')
-        ..write(';');
-    }
-  }
-  return buffer.toString().hashCode.toRadixString(16);
-}
-
 void main() {
   group('tile map generation determinism', () {
     test(
       'seed 42 oldWorld 24x20 digest unchanged (Refs #2489)',
       () {
-        final params = genParams(
+        final (result, _) = runTileMapGeneration(
           width: 24,
           height: 20,
           seed: 42,
-        );
-        final (result, _) = TileMapGenerator(params: params).generate(
-          numProvinces: 8,
-          numContinents: 2,
-          regionId: 'oldWorld',
-          resourceRules: ResourceRules.defaultRules,
         );
         // Digest updated for the forest terrain split (#3573): R6 weights, the
         // guaranteed forest resource spawn (R3), and the hardwood clustering
@@ -67,6 +43,44 @@ void main() {
         resourceRules: ResourceRules.defaultRules,
       );
       expect(tileMapGenerationDigest(a), tileMapGenerationDigest(b));
+    });
+
+    test('fixed seed yields identical grid and topology on repeat (Refs #2489)', () {
+      const seed = 248_901;
+      final params = genParams(
+        width: 48,
+        height: 36,
+        seed: seed,
+        seaFraction: 0.55,
+      );
+      const numProvinces = 24;
+      const numContinents = 3;
+      const regionId = 'oldWorld';
+
+      final gen = TileMapGenerator(params: params);
+      final (firstResult, firstTopology) = gen.generate(
+        numProvinces: numProvinces,
+        numContinents: numContinents,
+        regionId: regionId,
+      );
+      final (secondResult, secondTopology) = gen.generate(
+        numProvinces: numProvinces,
+        numContinents: numContinents,
+        regionId: regionId,
+      );
+
+      expect(secondResult.width, firstResult.width);
+      expect(secondResult.height, firstResult.height);
+      expect(secondResult.grid, firstResult.grid);
+
+      expect(
+        topologyNodeKeys(secondTopology.nodes),
+        topologyNodeKeys(firstTopology.nodes),
+      );
+      expect(
+        topologyEdgeKeys(secondTopology.edges),
+        topologyEdgeKeys(firstTopology.edges),
+      );
     });
   });
 }

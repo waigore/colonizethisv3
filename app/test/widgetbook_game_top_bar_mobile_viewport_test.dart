@@ -20,46 +20,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories.whereType<WidgetbookFolder>().firstWhere(
-    (folder) => folder.name == folderName,
-    orElse: () =>
-        fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-  );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  final useCase = children.whereType<WidgetbookUseCase>().firstWhere(
-    (uc) => uc.name == useCaseName,
-    orElse: () => fail(
-      'Missing use case "$useCaseName" in folder "$folderName" '
-      '(got: ${children.map((c) => c.name).toList()})',
-    ),
-  );
-  return useCase;
-}
-
-Future<void> _pumpMobileViewport(
-  WidgetTester tester,
-  WidgetbookUseCase useCase,
-) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(360, 640));
-
-  await tester.pumpWidget(
-    MediaQuery(
-      data: const MediaQueryData(size: Size(360, 640)),
-      child: MaterialApp(
-        home: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
-      ),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 void main() {
   suppressLogsForTests();
@@ -71,7 +33,7 @@ void main() {
         'Mobile viewport — narrow bar (< 600 dp) is wired into '
         'gameTopBarDirectories',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             gameTopBarDirectories,
             folderName: 'Game Top Bar',
             useCaseName: 'Mobile viewport — narrow bar (< 600 dp)',
@@ -84,13 +46,13 @@ void main() {
         'Mobile viewport story pumps without exception and mounts narrow '
         'GameTopBar chrome',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             gameTopBarDirectories,
             folderName: 'Game Top Bar',
             useCaseName: 'Mobile viewport — narrow bar (< 600 dp)',
           );
 
-          await _pumpMobileViewport(tester, useCase);
+          await pumpWidgetbookUseCaseAtSize(tester, useCase);
 
           expect(
             tester.takeException(),

@@ -8,7 +8,6 @@ import 'work_order_handler.dart';
 final Map<String, WorkOrderHandler> workOrderHandlersByTarget =
     <String, WorkOrderHandler>{
       kWorkTargetPurchaseLand: purchaseLandWorkOrderHandler,
-      kWorkTargetStealTech: stealTechWorkOrderHandler,
       kWorkTargetCounterSpy: counterSpyWorkOrderHandler,
       kWorkTargetProspect: prospectWorkOrderHandler,
       kWorkTargetExplore: exploreWorkOrderHandler,

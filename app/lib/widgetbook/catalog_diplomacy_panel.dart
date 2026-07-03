@@ -8,7 +8,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       WidgetbookUseCase(
         name: 'With real game',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -60,7 +60,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
         // R22 screen list to Diplomacy.
         name: 'Mobile viewport — narrow rows (≤ 500 dp)',
         builder: (context) {
-          final result = getDebugInitGameResult();
+          final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
@@ -114,7 +114,132 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
       ),
     ],
   ),
+  // SPEC/ui/components/relation-meter.md — isolated stories for the shared
+  // 10-step gradient `RelationMeter`: the full ladder (one meter per step) and
+  // the half-open band boundary scores. Refs #3753 R13.
+  WidgetbookFolder(
+    name: 'Relation Meter',
+    children: [
+      WidgetbookUseCase(
+        name: 'Ladder (all 10 steps)',
+        builder: (context) => _relationMeterStory(
+          const <num>[5, 15, 25, 35, 45, 55, 65, 75, 85, 95],
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Band boundaries (0, 50, 90, 100)',
+        builder: (context) => _relationMeterStory(const <num>[0, 50, 90, 100]),
+      ),
+    ],
+  ),
+  // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster (Refs #3753
+  // R12) — isolated stories for `DiplomacyStandingChipCluster` covering the
+  // colony-Tribe standing (treaty + colony + boycott chips), an independent
+  // Minor with overseas holdings, and the empty (no-footprint) negative case.
+  WidgetbookFolder(
+    name: 'Diplomatic Standing Chips',
+    children: [
+      WidgetbookUseCase(
+        name: 'Colony Tribe (treaty + Colony + Boycott vs)',
+        builder: (context) => _standingChipsStory(
+          const DiplomaticStandingChips(
+            treatyLabels: [
+              kDiplomacyChipConsulate,
+              kDiplomacyChipEmbassy,
+              kDiplomacyChipNap,
+              kDiplomacyChipColony,
+            ],
+            boycottVsNames: ['Castile'],
+            overseasTileCount: 3,
+            overseasSharePercent: 60,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Minor overseas holdings (Overseas chip)',
+        builder: (context) => _standingChipsStory(
+          const DiplomaticStandingChips(
+            treatyLabels: [kDiplomacyChipConsulate, kDiplomacyChipEmbassy],
+            overseasTileCount: 2,
+            overseasSharePercent: 80,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Empty standing (no chips, zero footprint)',
+        builder: (context) =>
+            _standingChipsStory(const DiplomaticStandingChips()),
+      ),
+    ],
+  ),
 ];
+
+/// Renders a [DiplomacyStandingChipCluster] inside the editorial-monocle dark
+/// theme so reviewers can confirm the treaty / colony / boycott / overseas chip
+/// chrome and run-wrapping. SPEC/ui/diplomacy-panel.md § Diplomatic standing
+/// chip cluster (Refs #3753 R12).
+Widget _standingChipsStory(DiplomaticStandingChips chips) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: DiplomacyStandingChipCluster(chips: chips),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Renders a vertical stack of [RelationMeter] widgets at the given [scores]
+/// inside the editorial-monocle dark theme, each beside its hidden-score
+/// ladder label so reviewers can confirm the gradient + indicator alignment.
+/// SPEC/ui/components/relation-meter.md § Widgetbook.
+Widget _relationMeterStory(List<num> scores) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final score in scores)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RelationMeter(score: score),
+                      const SizedBox(width: 12),
+                      Text(
+                        relationScoreToDisplayLabel(score),
+                        style: TextStyle(
+                          color: relationMeterStepColor(
+                            relationScoreToMeterStep(score),
+                          ),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Renders a vertical stack of [RelativePowerLine] widgets at the given
 /// [percents] inside the editorial-monocle dark theme with full localization

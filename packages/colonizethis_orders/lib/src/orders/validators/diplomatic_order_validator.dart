@@ -4,12 +4,15 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import '../order_validation_result.dart';
 
 import 'diplomatic/alliance_validator.dart';
+import 'diplomatic/boycott_validator.dart';
+import 'diplomatic/break_alliance_validator.dart';
 import 'diplomatic/declare_war_validator.dart';
 import 'diplomatic/diplomatic_sub_validator.dart';
 import 'diplomatic/establish_ftp_validator.dart';
 import 'diplomatic/establish_overture_validator.dart';
 import 'diplomatic/grant_aid_validator.dart';
 import 'diplomatic/offer_peace_validator.dart';
+import 'diplomatic/revoke_boycott_validator.dart';
 import 'diplomatic/set_subsidy_validator.dart';
 import 'stateful_validator.dart';
 
@@ -75,6 +78,9 @@ class DiplomaticOrderValidator extends StatefulValidator {
         subValidatorContext,
       ),
       DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
+      DiplomaticOrderType.breakAlliance: breakAllianceSubValidator(
+        subValidatorContext,
+      ),
       DiplomaticOrderType.establishOverture: establishOvertureSubValidator(
         subValidatorContext,
       ),
@@ -83,6 +89,10 @@ class DiplomaticOrderValidator extends StatefulValidator {
       ),
       DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
       DiplomaticOrderType.setSubsidy: setSubsidySubValidator(
+        subValidatorContext,
+      ),
+      DiplomaticOrderType.boycott: boycottSubValidator(subValidatorContext),
+      DiplomaticOrderType.revokeBoycott: revokeBoycottSubValidator(
         subValidatorContext,
       ),
     };
@@ -138,14 +148,29 @@ class DiplomaticOrderValidator extends StatefulValidator {
   bool _canAddDiplomaticOrder(String targetId, DiplomaticOrderType type) {
     final existing = _typesByTarget[targetId] ?? const <DiplomaticOrderType>{};
     if (existing.contains(type)) return false;
+    // Boycott / revoke-boycott are standalone colony-trade-embargo actions,
+    // orthogonal to peace/war/alliance state (SPEC/game/diplomacy.md
+    // § Boycott): they neither block nor are blocked by other diplomatic
+    // orders toward the same target — only one of each per target per turn.
+    // SPEC/program/orders.md § Diplomatic orders.
+    const standalone = {
+      DiplomaticOrderType.boycott,
+      DiplomaticOrderType.revokeBoycott,
+    };
+    if (standalone.contains(type)) return true;
     const economic = {
       DiplomaticOrderType.grantAid,
       DiplomaticOrderType.setSubsidy,
     };
     final isEconomic = economic.contains(type);
-    final hasNonEconomic = existing.any((t) => !economic.contains(t));
+    final nonStandaloneExisting = existing.where(
+      (t) => !standalone.contains(t),
+    );
+    final hasNonEconomic = nonStandaloneExisting.any(
+      (t) => !economic.contains(t),
+    );
     if (hasNonEconomic && isEconomic) return false;
-    if (!isEconomic && existing.isNotEmpty) return false;
+    if (!isEconomic && nonStandaloneExisting.isNotEmpty) return false;
     return true;
   }
 

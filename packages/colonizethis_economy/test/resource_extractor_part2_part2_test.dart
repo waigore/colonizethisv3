@@ -4,27 +4,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:logger/logger.dart';
 
-import 'resource_extractor_test_support.dart';
-import 'test_fixtures.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+
+final TileMapResult _grainTileMap = singleTileMap(Resource.grain);
 
 void main() {
   group('ResourceExtractor', () {
-    test(
-      'returns empty ExtractionTotals when player has no connected tiles',
-      () {
-        final game = resourceExtractorGame(
-          tileState: const TileMapState(),
-        );
-        final result = computeExtraction(
-          game: game,
-          tileMapByRegion: const {},
-          connectivityResult: connectivityFor(const {}),
-          techCapForPlayer: (_) => 4,
-        );
-        expect(result['pl1']!.land, isEmpty);
-        expect(result['pl1']!.overseas, isEmpty);
-      },
-    );
+    for (final scenario in resourceExtractorEmptyConnectivityScenarios()) {
+      test(scenario.label, () => runResourceExtractorScenario(scenario));
+    }
 
     test(
       'skips connected tile and logs when province missing from region (world-model)',
@@ -39,10 +28,10 @@ void main() {
         Logger.level = Level.error;
         addTearDown(() => Logger.level = Level.off);
 
-        final tileMap = singleTileMap(Resource.grain);
-        final tileState = TileMapState()
-            .setImprovement('oldWorld|p1|0|0', 2)
-            .setRoadLevel('oldWorld|p1|0|0', 2);
+        final tileMap = _grainTileMap;
+        final tileState = tileStateFromSpecs(const [
+          TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
+        ]);
         final player = Player(
           id: 'pl1',
           displayName: 'Spain',
@@ -118,7 +107,7 @@ void main() {
     test(
       'tile extraction contribution excludes aggregate capital grain bonus',
       () {
-        final tileMap = singleTileMap(Resource.grain);
+        final tileMap = _grainTileMap;
         final player = Player(
           id: 'pl1',
           displayName: 'Spain',
@@ -144,12 +133,12 @@ void main() {
               ),
             ],
           ),
-          tileState: TileMapState()
-              .setImprovement('oldWorld|p1|0|0', 1)
-              .setRoadLevel('oldWorld|p1|0|0', 1),
+          tileState: tileStateFromSpecs(const [
+            TileImprovementSpec('oldWorld|p1|0|0', improvement: 1, roadLevel: 1),
+          ]),
           players: [player],
         );
-        final connected = {'oldWorld|p1|0|0'};
+        const connected = {'oldWorld|p1|0|0'};
         final contribution = computeTileExtractionContributionForPlayer(
           game: game,
           tileMapByRegion: {'oldWorld': tileMap},
@@ -192,7 +181,7 @@ void main() {
     );
 
     test('tile extraction contribution is null for disconnected tile', () {
-      final tileMap = singleTileMap(Resource.grain);
+      final tileMap = _grainTileMap;
       final player = Player(
         id: 'pl1',
         displayName: 'Spain',

@@ -858,6 +858,10 @@ abstract class AppLocalizations {
   /// Treasury and step line in diplomacy amount dialog.
   String diplomacy_treasuryStep(int treasury, int step);
 
+  /// Subsidy percentage step line in the diplomacy amount dialog (subsidy mode
+  /// is treasury-independent).
+  String diplomacy_subsidyStep(int step);
+
   /// Currency amount display in diplomacy amount dialog.
   String diplomacy_currencyAmount(int amount);
 
@@ -1293,6 +1297,11 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile explore shortcut action.
   String get provinceOverlay_tileExploreWithExplorerTooltip;
 
+  /// Tooltip shown on the disabled province tile Explore/Prospect inline actions
+  /// when the issuing Great Power holds no Consulate (or higher) with the owning
+  /// Minor/Tribe (Refs #3753 R4b).
+  String get provinceOverlay_tileConsulateRequiredForExploreTooltip;
+
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
@@ -1687,6 +1696,9 @@ abstract class AppLocalizations {
 
   /// One-word peace state in diplomacy UI.
   String get diplomacy_relationState_peace;
+
+  /// Accessibility label for the relation meter; embeds the ladder relation word.
+  String diplomacy_relationMeter_semanticsLabel(String relation);
 
   /// Tech tree dialog effect line (techEffectSummary_advanced_hull_design_0).
   String get techEffectSummary_advanced_hull_design_0;

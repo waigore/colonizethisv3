@@ -75,7 +75,7 @@ Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). R
 
 ## Implementation (TDD)
 
-**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, getProvinceByRegion, tryGetProvinceByRegion, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
+**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_world `WorldStateProvinceLookup` extension (`world.getProvince`, `world.tryGetProvince`, `world.getProvinceByRegion`, `world.tryGetProvinceByRegion`, `world.resolveToFullProvinceId`). Map and province identity in program layer: [map-data.md](../program/map-data.md).
 
 **Contract:** Lookup requires full disambiguated id or explicit (regionId, localId). No short-id resolution: `getProvince`, `tryGetProvince`, and `resolveToFullProvinceId` accept only prefixed ids (non-prefixed: getProvince/resolveToFullProvinceId throw, tryGetProvince returns null). Use prefixed id (`regionId|localId`) or `getProvinceByRegion`/`tryGetProvinceByRegion`. Resolution is region-scoped within the given region; the implementation does not search other regions.
 

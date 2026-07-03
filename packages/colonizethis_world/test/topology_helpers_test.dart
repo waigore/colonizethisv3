@@ -2,19 +2,21 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'world_test_support/world_test_support.dart';
+
 void main() {
   group('provinceNodeIds / provinceNodeIdsForRegion', () {
     test('return province ids by topology and region', () {
       const ow = 'oldWorld';
       const nw = 'newWorld';
-      const topology = MapTopology(
-        nodes: [
+      final topology = topologyFromGraph(
+        nodes: const [
           TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(id: 'p3', regionId: nw, type: TopologyNodeType.province),
           TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
         ],
-        edges: [],
+        edges: const [],
       );
 
       final all = provinceNodeIds(topology);
@@ -33,36 +35,22 @@ void main() {
 
   group('topologyUsesPrefixedIds', () {
     test('is true when any node id is prefixed', () {
-      const topologyWithPrefixed = MapTopology(
+      final topologyWithPrefixed = topologyFromGraph(
         nodes: [
-          TopologyNode(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
+          prefixedProvinceNode('oldWorld|p1'),
           TopologyNode(
             id: 'sea1',
             regionId: 'oldWorld',
             type: TopologyNodeType.seaZone,
           ),
         ],
-        edges: [],
+        edges: const [],
       );
 
-      const topologyWithoutPrefixed = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'sea1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [],
+      final topologyWithoutPrefixed = provinceSeaZoneTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
+        seaZoneId: 'sea1',
       );
 
       expect(topologyUsesPrefixedIds(topologyWithPrefixed), isTrue);
@@ -72,14 +60,14 @@ void main() {
 
   group('seaZoneNodeIds / seaZonesReachableBySeaPath', () {
     test('returns all sea zones and BFS over S–S edges', () {
-      const topology = MapTopology(
-        nodes: [
+      final topology = topologyFromGraph(
+        nodes: const [
           TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
           TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
           TopologyNode(id: 'sea3', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
         ],
-        edges: [
+        edges: const [
           TopologyEdge(id1: 'sea1', id2: 'sea2'),
           TopologyEdge(id1: 'sea2', id2: 'sea3'),
           // Province edge should be ignored by sea path logic.
@@ -100,15 +88,15 @@ void main() {
 
   group('seaZonesAdjacentToProvince', () {
     test('returns sea zones touching a province via P–S edges only', () {
-      const topology = MapTopology(
-        nodes: [
+      final topology = topologyFromGraph(
+        nodes: const [
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
           TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
           TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
           TopologyNode(id: 'sea3', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
         ],
-        edges: [
+        edges: const [
           // p1 touches sea1 and sea2
           TopologyEdge(id1: 'p1', id2: 'sea1'),
           TopologyEdge(id1: 'sea2', id2: 'p1'),
@@ -133,8 +121,8 @@ void main() {
 
   group('nodesAdjacentTo (Refs #2560)', () {
     test('returns all adjacent node ids regardless of node type', () {
-      const topology = MapTopology(
-        nodes: [
+      final topology = topologyFromGraph(
+        nodes: const [
           TopologyNode(
             id: 'sea1',
             regionId: 'oldWorld',
@@ -156,7 +144,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         ],
-        edges: [
+        edges: const [
           TopologyEdge(id1: 'sea1', id2: 'sea2'),
           TopologyEdge(id1: 'sea3', id2: 'sea1'),
           TopologyEdge(id1: 'p1', id2: 'sea1'),
@@ -178,8 +166,8 @@ void main() {
     });
 
     test('order follows topology.edges insertion order', () {
-      const topology = MapTopology(
-        nodes: [
+      final topology = topologyFromGraph(
+        nodes: const [
           TopologyNode(
             id: 'a',
             regionId: 'oldWorld',
@@ -196,7 +184,7 @@ void main() {
             type: TopologyNodeType.seaZone,
           ),
         ],
-        edges: [
+        edges: const [
           TopologyEdge(id1: 'a', id2: 'b'),
           TopologyEdge(id1: 'c', id2: 'a'),
         ],
@@ -214,7 +202,7 @@ void main() {
     // unchanged; only allocation churn is removed.
 
     test('provinceNodeIds returns the same Set instance on repeat calls', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'p1',
@@ -243,7 +231,7 @@ void main() {
     });
 
     test('seaZoneNodeIds returns the same Set instance on repeat calls', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'sea1',
@@ -269,7 +257,7 @@ void main() {
     test(
       'provinceNodeIdsForRegion returns the same Set instance for repeat region lookups',
       () {
-        final topology = MapTopology(
+        final topology = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'p1',
@@ -298,7 +286,7 @@ void main() {
     test(
       'provinceNodeIdsForRegion returns the same empty set sentinel for unknown regions',
       () {
-        final topology = MapTopology(
+        final topology = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'p1',
@@ -320,15 +308,9 @@ void main() {
     );
 
     test('cached province node sets are read-only', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
+      final topology = singleProvinceTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
       );
 
       final cached = provinceNodeIds(topology);
@@ -336,25 +318,13 @@ void main() {
     });
 
     test('separate MapTopology instances do not share cached results', () {
-      final t1 = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
+      final t1 = singleProvinceTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
       );
-      final t2 = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p2',
-            regionId: 'newWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
+      final t2 = singleProvinceTopology(
+        regionId: 'newWorld',
+        provinceLocalId: 'p2',
       );
 
       expect(provinceNodeIds(t1), equals(<String>{'p1'}));
@@ -363,4 +333,3 @@ void main() {
     });
   });
 }
-
