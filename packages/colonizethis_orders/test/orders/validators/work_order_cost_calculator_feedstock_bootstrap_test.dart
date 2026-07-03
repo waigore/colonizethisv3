@@ -5,14 +5,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 // Refs #2847: H8 feedstock bootstrap castIron waiver on level-0 build_improvement.
+// Refs #3858: castIron feedstock is iron-only; supplier gate exercises iron tiles.
 
 const _supplierId = 'gp1';
 const _sellerId = 'gp2';
-const _timberTile = 'oldWorld|gp1-s0|1|0';
 const _grainTile = 'oldWorld|gp1-s0|0|0';
+const _timberTile = 'oldWorld|gp1-s0|1|0';
+const _ironTile = 'oldWorld|gp1-s0|2|0';
 const _sellerWoolTile = 'oldWorld|gp2-p0|0|0';
 
-Game _twoPlayerFeedstockGateGame({required Stockpile supplierStockpile}) {
+Game _twoPlayerFeedstockGateGame({
+  required Stockpile supplierStockpile,
+  Stockpile sellerStockpile = const Stockpile(quantities: {'lumber': 1}),
+}) {
   const supplierOw = kObserverConquestMinOwProvincesPerGp;
   const sellerOw = 5;
   final provinces = <Province>[
@@ -35,19 +40,28 @@ Game _twoPlayerFeedstockGateGame({required Stockpile supplierStockpile}) {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(provinces: provinces, units: const []),
       newWorld: const RegionData(),
+      playerProspectedTiles: const {
+        _supplierId: {_ironTile},
+      },
       tileKeysByRegionAndProvince: const {
         kRegionOldWorld: {
-          'oldWorld|gp1-s0': [_grainTile, _timberTile],
+          'oldWorld|gp1-s0': [_grainTile, _timberTile, _ironTile],
           'oldWorld|gp2-p0': [_sellerWoolTile],
         },
       },
       resourceByTileKey: const {
         _grainTile: 'grain',
         _timberTile: 'timber',
+        _ironTile: 'iron',
         _sellerWoolTile: 'wool',
       },
       tileState: const TileMapState(
-        improvementByTile: {_grainTile: 0, _timberTile: 0, _sellerWoolTile: 0},
+        improvementByTile: {
+          _grainTile: 0,
+          _timberTile: 0,
+          _ironTile: 0,
+          _sellerWoolTile: 0,
+        },
       ),
     ),
     players: [
@@ -63,7 +77,7 @@ Game _twoPlayerFeedstockGateGame({required Stockpile supplierStockpile}) {
         displayName: 'Seller',
         isHuman: false,
         treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: const Stockpile(quantities: {'lumber': 1}),
+        stockpile: sellerStockpile,
       ),
     ],
   );
@@ -78,20 +92,20 @@ void main() {
       );
       expect(
         feedstockExtractionResourceIdsForPlayer(game, _supplierId),
-        contains('timber'),
+        contains('iron'),
       );
       expect(
         feedstockBootstrapBuildImprovementCastIronWaived(
           game,
           _supplierId,
-          _timberTile,
+          _ironTile,
         ),
         isTrue,
       );
       final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
           .calculateCost(
             kWorkTargetBuildImprovement,
-            _timberTile,
+            _ironTile,
             improvementLevel: 0,
           );
       expect(cost, equals({CommodityCatalog.lumber.id: 1}));
@@ -109,14 +123,14 @@ void main() {
           feedstockBootstrapBuildImprovementCastIronWaived(
             game,
             _supplierId,
-            _timberTile,
+            _ironTile,
           ),
           isFalse,
         );
         final cost = WorkOrderCostCalculator(game, playerId: _supplierId)
             .calculateCost(
               kWorkTargetBuildImprovement,
-              _timberTile,
+              _ironTile,
               improvementLevel: 0,
             );
         expect(cost![CommodityCatalog.lumber.id], 1);
@@ -154,6 +168,7 @@ void main() {
       () {
         final game = _twoPlayerFeedstockGateGame(
           supplierStockpile: Stockpile.empty,
+          sellerStockpile: Stockpile.empty,
         );
         expect(
           feedstockBootstrapBuildImprovementLumberWaived(

@@ -72,7 +72,7 @@ void main() {
       expect(
         labourForRecipe(
           plan,
-          ProductionRecipesCatalog.castIronFromTimberIronCoal.id,
+          ProductionRecipesCatalog.castIronFromIron.id,
         ),
         greaterThan(0),
       );
@@ -91,14 +91,14 @@ void main() {
       final stockHigh = stockLow.applyDelta(CommodityCatalog.castIron.id, 25);
 
       final scoreLow = stageScaledRecipeScore(
-        recipe: ProductionRecipesCatalog.castIronFromTimberIronCoal,
+        recipe: ProductionRecipesCatalog.castIronFromIron,
         stockpile: stockLow,
         workers: workers,
         agendaId: agenda,
         stage: matureStage,
       );
       final scoreHigh = stageScaledRecipeScore(
-        recipe: ProductionRecipesCatalog.castIronFromTimberIronCoal,
+        recipe: ProductionRecipesCatalog.castIronFromIron,
         stockpile: stockHigh,
         workers: workers,
         agendaId: agenda,

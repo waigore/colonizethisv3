@@ -54,10 +54,10 @@ WorkOrderCost get workOrderCostBuildRoad => {
       CommodityCatalog.castIron.id: 1,
     };
 
-/// Material cost for build_port. SPEC: lumber + metal (same as road).
+/// Material cost for build_port. SPEC: 5 lumber + 5 cast iron.
 WorkOrderCost get workOrderCostBuildPort => {
-      CommodityCatalog.lumber.id: 1,
-      CommodityCatalog.castIron.id: 1,
+      CommodityCatalog.lumber.id: 5,
+      CommodityCatalog.castIron.id: 5,
     };
 
 /// Material cost for build_fort at given level. SPEC siege-mechanics: 1=3 Lumber+3 Bronze, 2=4+4, 3=5 Steel+5 Lumber.

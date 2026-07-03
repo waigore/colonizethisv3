@@ -253,7 +253,7 @@ void main() {
           'setup': {
             'productionAssignments': [
               {'recipeId': 'lumber_from_timber', 'assignedLabour': 4},
-              {'recipeId': 'castIron_from_timber_iron_coal', 'assignedLabour': 5},
+              {'recipeId': 'castIron_from_iron', 'assignedLabour': 5},
             ],
           },
           'turns': [],
@@ -265,7 +265,7 @@ void main() {
         expect(scenario.setup!.productionAssignments!.length, 2);
         expect(scenario.setup!.productionAssignments![0].recipeId, 'lumber_from_timber');
         expect(scenario.setup!.productionAssignments![0].assignedLabour, 4);
-        expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_timber_iron_coal');
+        expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_iron');
         expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
       });
 

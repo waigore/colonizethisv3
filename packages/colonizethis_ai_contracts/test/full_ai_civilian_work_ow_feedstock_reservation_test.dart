@@ -8,8 +8,8 @@ import 'full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
 
 // Refs #2847 § H8-extraction supplier Old World feedstock unit reservation.
 //
-// The affluent supplier owns an unimproved Old World `iron` (mineral) tile and
-// `timber` tile on every gate-active turn, but its idle Builders / Explorers
+// The affluent supplier owns an unimproved Old World `iron` (mineral) tile on
+// every gate-active turn, but its idle Builders / Explorers
 // migrate to higher-scoring New World colonial work, so the feedstock tile is
 // never prospected / improved. `selectFullAiCivilianWorkOrders` must hold one
 // idle Builder and one idle Explorer out of New World work so they stay
@@ -25,7 +25,6 @@ Game _ironFeedstockGame({
   return twoPlayerSupplierFeedstockGame(
     sellerOw: sellerOw,
     resourceByTileKey: const {
-      supplierTimberTile: 'timber',
       _supplierIronTile: 'iron',
       supplierGrainTile: 'grain',
       sellerWoolTile: 'wool',
@@ -225,9 +224,8 @@ void main() {
         'no reservation when the supplier Old World feedstock tiles are all '
         'improved (gate self-clears)',
         () {
-          final improved = TileMapState()
-              .setImprovement(supplierTimberTile, 1)
-              .setImprovement(_supplierIronTile, 1);
+          final improved =
+              TileMapState().setImprovement(_supplierIronTile, 1);
           final game = _ironFeedstockGame(tileState: improved);
           final view = _supplierView(game, [_idleBuilder('b1')]);
           final suggestions = [
