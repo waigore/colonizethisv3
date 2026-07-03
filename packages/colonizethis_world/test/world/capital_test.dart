@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -12,12 +11,14 @@ import 'package:colonizethis_world/src/world/province_owner_cache.dart';
 import 'package:colonizethis_world/src/world_constants.dart'
     show kRegionOldWorld;
 
+import '../world_test_support/world_test_support.dart';
+
 part 'capital_and_gp_fall_reassignment_part.dart';
 part 'capital_and_gp_fall_reassignment_unified_part.dart';
 part 'capital_and_gp_fall_terminal_part.dart';
 part 'capital_reassignment_part.dart';
 
-const _emptyTopology = MapTopology();
+const _emptyTopology = kEmptyMapTopology;
 
 CapitalTile _tile(String provinceId, {int x = 1, int y = 2}) => CapitalTile(
   regionId: ProvinceId.regionIdFrom(provinceId),

@@ -636,6 +636,50 @@ MapTopology duplicateLocalProvinceIdsByRegionTopology({
   );
 }
 
+/// Combined OW/NW topology for home-fleet split + movement integration (#2010).
+MapTopology homeFleetSplitMovementIntegrationTopology({
+  String owCoastProv = 'oldWorld|pCoast',
+  String seaOrigin = 'oldWorld|seaOrigin',
+  String seaDest = 'oldWorld|seaDest',
+  String nwProvince = 'newWorld|p1',
+  String nwSea = 'newWorld|seaOther',
+}) {
+  return topologyFromGraph(
+    nodes: [
+      TopologyNode(
+        id: owCoastProv,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaOrigin,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: seaDest,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: nwProvince,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwSea,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: owCoastProv, id2: seaDest),
+      TopologyEdge(id1: seaOrigin, id2: seaDest),
+      TopologyEdge(id1: nwProvince, id2: nwSea),
+    ],
+  );
+}
+
 /// OW two provinces plus NW province (land only, multi-faction non-GP tests).
 MapTopology threeProvinceDualRegionLandTopology({
   String owProvince1Id = 'p1',

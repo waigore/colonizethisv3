@@ -17,16 +17,7 @@ const String worldTestSupportImport = 'world_test_support/';
 
 /// Files that still inline topology constructors before the migration
 /// completes. New test files must use `world_test_support/` builders instead.
-const Set<String> _grandfatheredInlineTopologyTestPaths = {
-  'packages/colonizethis_world/test/topology_for_region_test.dart',
-  'packages/colonizethis_world/test/topology_helpers_test.dart',
-  'packages/colonizethis_world/test/utils/bfs_topology_graph_test.dart',
-  'packages/colonizethis_world/test/world/capital_reassignment_part.dart',
-  'packages/colonizethis_world/test/world/capital_test.dart',
-  'packages/colonizethis_world/test/world/connectivity_metrics_threading_test.dart',
-  'packages/colonizethis_world/test/world/naval_home_fleet_split_movement_resolve_integration_test.dart',
-  'packages/colonizethis_world/test/world/player_view_build_test.dart',
-};
+const Set<String> _grandfatheredInlineTopologyTestPaths = {};
 
 final RegExp _inlineMapTopologyConstructor = RegExp(r'\bMapTopology\(');
 final RegExp _inlineTileMapResultConstructor = RegExp(r'\bTileMapResult\(');

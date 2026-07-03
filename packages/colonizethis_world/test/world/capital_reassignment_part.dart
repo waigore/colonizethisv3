@@ -20,7 +20,7 @@ void _capital_reassignment_testTests() {
           state: game,
           playerId: 'p1',
           regionId: 'oldWorld',
-          regionTopology: const MapTopology(),
+          regionTopology: kEmptyMapTopology,
         );
 
         expect(eligibility.eligible, isTrue);
@@ -44,7 +44,7 @@ void _capital_reassignment_testTests() {
         state: game,
         playerId: 'p1',
         regionId: 'oldWorld',
-        regionTopology: const MapTopology(),
+        regionTopology: kEmptyMapTopology,
       );
 
       expect(eligibility.eligible, isFalse);
@@ -71,7 +71,7 @@ void _capital_reassignment_testTests() {
           state: game,
           playerId: 'p1',
           regionId: kRegionOldWorld,
-          regionTopology: const MapTopology(),
+          regionTopology: kEmptyMapTopology,
         );
 
         final projectionIds = ProvinceOwnerCache.of(game.worldState)
@@ -105,7 +105,7 @@ void _capital_reassignment_testTests() {
         state: game,
         playerId: 'p1',
         regionId: kRegionOldWorld,
-        regionTopology: const MapTopology(),
+        regionTopology: kEmptyMapTopology,
         excludedProvinceId: 'oldWorld|P2',
       );
 
@@ -120,7 +120,7 @@ void _capital_reassignment_testTests() {
       expect(
         () => pickCapitalProvinceIdForReassignment(
           const [],
-          const MapTopology(),
+          kEmptyMapTopology,
         ),
         throwsA(isA<LogicValidationException>()),
       );
@@ -129,26 +129,16 @@ void _capital_reassignment_testTests() {
     test('picks first by ascending id when none are sea-bound', () {
       final picked = pickCapitalProvinceIdForReassignment(
         const ['oldWorld|b', 'oldWorld|a'],
-        const MapTopology(),
+        kEmptyMapTopology,
       );
       expect(picked, 'oldWorld|a');
     });
 
     test('prefers a sea-bound province when one exists', () {
-      const topology = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: 'b',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 's1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [TopologyEdge(id1: 'b', id2: 's1')],
+      final topology = provinceSeaZoneTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'b',
+        seaZoneId: 's1',
       );
 
       final picked = pickCapitalProvinceIdForReassignment(
