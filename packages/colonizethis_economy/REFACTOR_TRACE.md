@@ -170,9 +170,30 @@ Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/c
 
 Module: `colonizethis_economy_test_support/lib/src/sellable_quantity_scenarios.dart`
 
+## Phase 2 — Slice 3 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| pti-attrib-equality | equality holds across all four fields | `purchased_tile_index_test.dart` | — |
+| pti-attrib-inequality | inequality on any differing field | `purchased_tile_index_test.dart` | — |
+| pti-attrib-tostring | toString surfaces every field for trace logs | `purchased_tile_index_test.dart` | — |
+| pti-d1-1 | AC-D1-1 — empty world yields empty index | `purchased_tile_index_test.dart` | D1-1 |
+| pti-d1-2 | AC-D1-2 — minor-owned purchased tile resolves attribution | `purchased_tile_index_test.dart` | D1-2 |
+| pti-d1-3 | AC-D1-3 — tribe-owned purchased tile resolves attribution | `purchased_tile_index_test.dart` | D1-3 |
+| pti-d1-4 | AC-D1-4 — GP-owned province excludes attribution (post-conquest) | `purchased_tile_index_test.dart` | D1-4 |
+| pti-d1-5 | AC-D1-5 — unowned province excludes attribution | `purchased_tile_index_test.dart` | D1-5 |
+| pti-d1-6 | AC-D1-6 — unmapped tile key excludes attribution | `purchased_tile_index_test.dart` | D1-6 |
+| pti-d1-7 | AC-D1-7 — determinism: repeated builds return equal attributions | `purchased_tile_index_test.dart` | D1-7 |
+| pti-mixed-minor-tribe | mixed minor + tribe purchases coexist in the same index | `purchased_tile_index_test.dart` | — |
+| pti-empty-owning-gp | empty owningGpId entry is dropped defensively | `purchased_tile_index_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/purchased_tile_index_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/purchased_tile_index_test_support.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 12 imperative world-market test files → scenario tables
+- Remaining 11 imperative world-market test files → scenario tables
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
 - ≥15% test LOC reduction target (≤6,500 LOC)

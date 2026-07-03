@@ -33,6 +33,8 @@ export 'src/resource_extractor_test_support.dart';
 export 'src/staged_bid_spend_scenarios.dart';
 export 'src/tile_map_test_support.dart';
 export 'src/treasury_available_scenarios.dart';
+export 'src/purchased_tile_index_scenarios.dart';
+export 'src/purchased_tile_index_test_support.dart';
 export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';
 export 'src/treasury_bid_budget_scenarios.dart';
