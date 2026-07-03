@@ -35,30 +35,6 @@ import 'package:colonizethis_app/features/game/widgets/production_commodity_brea
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase findWidgetbookUseCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == folderName,
-        orElse: () =>
-            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-      );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  return children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$folderName" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-}
-
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();

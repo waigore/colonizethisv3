@@ -26,34 +26,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 import 'support/widgetbook_test_harness.dart';
 
-/// Locates the single use-case with [useCaseName] inside the
-/// [WidgetbookFolder] whose name matches [folderName], failing with a
-/// readable matcher message if the folder or use case is missing.
-WidgetbookUseCase findWidgetbookUseCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == folderName,
-        orElse: () =>
-            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-      );
-  final List<WidgetbookNode> children = folder.children ?? const [];
-  final useCase = children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$folderName" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-  return useCase;
-}
-
 void main() {
   suppressLogsForTests();
 

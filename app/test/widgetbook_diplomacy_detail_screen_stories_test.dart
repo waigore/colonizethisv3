@@ -52,8 +52,22 @@ void main() {
     testWidgets('S17 use cases are wired under the canonical folder + names', (
       WidgetTester tester,
     ) async {
-      expect(findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName).builder, isNotNull);
-      expect(findWidgetbookUseCase(subsidizedName, folderName: 'Main Menu', useCaseName: subsidizedName).builder, isNotNull);
+      expect(
+        findWidgetbookUseCase(
+          diplomacyDetailScreenDirectories,
+          folderName: _kFolder,
+          useCaseName: colonyName,
+        ).builder,
+        isNotNull,
+      );
+      expect(
+        findWidgetbookUseCase(
+          diplomacyDetailScreenDirectories,
+          folderName: _kFolder,
+          useCaseName: subsidizedName,
+        ).builder,
+        isNotNull,
+      );
     });
 
     testWidgets('colony story pumps and shows standing chips + relation meter', (
@@ -62,7 +76,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 900));
 
-      await _pumpUseCase(tester, findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName));
+      await _pumpUseCase(
+        tester,
+        findWidgetbookUseCase(
+          diplomacyDetailScreenDirectories,
+          folderName: _kFolder,
+          useCaseName: colonyName,
+        ),
+      );
 
       expect(tester.takeException(), isNull);
       expect(find.text('CURRENT RELATION'), findsOneWidget);
@@ -82,7 +103,14 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(600, 900));
 
-        await _pumpUseCase(tester, findWidgetbookUseCase(subsidizedName, folderName: 'Main Menu', useCaseName: subsidizedName));
+        await _pumpUseCase(
+          tester,
+          findWidgetbookUseCase(
+            diplomacyDetailScreenDirectories,
+            folderName: _kFolder,
+            useCaseName: subsidizedName,
+          ),
+        );
 
         expect(tester.takeException(), isNull);
         expect(find.text('CURRENT RELATION'), findsOneWidget);

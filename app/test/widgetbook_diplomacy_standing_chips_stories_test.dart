@@ -57,9 +57,30 @@ void main() {
     testWidgets('three use cases are wired under the canonical folder + names', (
       WidgetTester tester,
     ) async {
-      expect(findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName).builder, isNotNull);
-      expect(findWidgetbookUseCase(overseasName, folderName: 'Main Menu', useCaseName: overseasName).builder, isNotNull);
-      expect(findWidgetbookUseCase(emptyName, folderName: 'Main Menu', useCaseName: emptyName).builder, isNotNull);
+      expect(
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: colonyName,
+        ).builder,
+        isNotNull,
+      );
+      expect(
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: overseasName,
+        ).builder,
+        isNotNull,
+      );
+      expect(
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: emptyName,
+        ).builder,
+        isNotNull,
+      );
     });
 
     testWidgets('colony story pumps and shows Colony/Embassy/Boycott chips', (
@@ -68,7 +89,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 400));
 
-      await _pumpUseCase(tester, findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName));
+      await _pumpUseCase(
+        tester,
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: colonyName,
+        ),
+      );
 
       expect(tester.takeException(), isNull);
       expect(find.text(kDiplomacyChipColony), findsOneWidget);
@@ -85,7 +113,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 400));
 
-      await _pumpUseCase(tester, findWidgetbookUseCase(overseasName, folderName: 'Main Menu', useCaseName: overseasName));
+      await _pumpUseCase(
+        tester,
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: overseasName,
+        ),
+      );
 
       expect(tester.takeException(), isNull);
       expect(
@@ -100,7 +135,14 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 400));
 
-      await _pumpUseCase(tester, findWidgetbookUseCase(emptyName, folderName: 'Main Menu', useCaseName: emptyName));
+      await _pumpUseCase(
+        tester,
+        findWidgetbookUseCase(
+          diplomacyPanelDirectories,
+          folderName: _kFolder,
+          useCaseName: emptyName,
+        ),
+      );
 
       expect(tester.takeException(), isNull);
       expect(find.byType(Wrap), findsNothing);

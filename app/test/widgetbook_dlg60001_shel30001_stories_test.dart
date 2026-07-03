@@ -54,23 +54,6 @@ WidgetbookFolder _folder(
   );
 }
 
-WidgetbookUseCase findWidgetbookUseCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final children = _folder(
-    directories,
-    folderName: folderName,
-  ).children ?? const <WidgetbookNode>[];
-  return children.whereType<WidgetbookUseCase>().firstWhere(
-    (uc) => uc.name == useCaseName,
-    orElse: () => fail(
-      'Missing use case "$useCaseName" in folder "$folderName" '
-      '(got: ${children.map((c) => c.name).toList()})',
-    ),
-  );
-}
 
 /// Pumps a Widgetbook story without `pumpAndSettle`. The Game Initializing
 /// progress stories paint an indeterminate `CtLoadingIndicator` (Material
