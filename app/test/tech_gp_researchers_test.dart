@@ -48,11 +48,11 @@ void main() {
   group('gpPlayersWithTechUnlocked', () {
     test('returns only GPs with techUnlocked true', () {
       final game = multiGpGame(
-        gp1Tech: {'crop_rotation': true},
+        gp1Tech: {kTechIdCropRotation: true},
         gp2Tech: const {},
-        gp3Tech: {'crop_rotation': true},
+        gp3Tech: {kTechIdCropRotation: true},
       );
-      final researchers = gpPlayersWithTechUnlocked(game, 'crop_rotation');
+      final researchers = gpPlayersWithTechUnlocked(game, kTechIdCropRotation);
       expect(researchers.map((p) => p.id).toList(), ['gp1', 'gp3']);
     });
 
@@ -63,27 +63,27 @@ void main() {
             id: 'gp1',
             displayName: 'GP One',
             isHuman: true,
-            researchProgressByTechId: const {'crop_rotation': 10},
+            researchProgressByTechId: const {kTechIdCropRotation: 10},
           ),
         ],
       );
-      expect(gpPlayersWithTechUnlocked(game, 'crop_rotation'), isEmpty);
+      expect(gpPlayersWithTechUnlocked(game, kTechIdCropRotation), isEmpty);
     });
 
     test('returns empty when no GP unlocked tech', () {
       final game = buildPanelTestGame(players: [panelTestHumanPlayer()]);
-      expect(gpPlayersWithTechUnlocked(game, 'crop_rotation'), isEmpty);
+      expect(gpPlayersWithTechUnlocked(game, kTechIdCropRotation), isEmpty);
     });
   });
 
   group('orderGpResearchers', () {
     test('context player first then setup order', () {
       final game = multiGpGame(
-        gp1Tech: {'crop_rotation': true},
+        gp1Tech: {kTechIdCropRotation: true},
         gp2Tech: const {},
-        gp3Tech: {'crop_rotation': true},
+        gp3Tech: {kTechIdCropRotation: true},
       );
-      final researchers = gpPlayersWithTechUnlocked(game, 'crop_rotation');
+      final researchers = gpPlayersWithTechUnlocked(game, kTechIdCropRotation);
       final ordered = orderGpResearchers(
         researchers: researchers,
         contextPlayerId: 'gp1',
@@ -94,11 +94,11 @@ void main() {
 
     test('context absent uses setup order only', () {
       final game = multiGpGame(
-        gp1Tech: {'crop_rotation': true},
+        gp1Tech: {kTechIdCropRotation: true},
         gp2Tech: const {},
-        gp3Tech: {'crop_rotation': true},
+        gp3Tech: {kTechIdCropRotation: true},
       );
-      final researchers = gpPlayersWithTechUnlocked(game, 'crop_rotation');
+      final researchers = gpPlayersWithTechUnlocked(game, kTechIdCropRotation);
       final ordered = orderGpResearchers(
         researchers: researchers,
         contextPlayerId: 'gp2',

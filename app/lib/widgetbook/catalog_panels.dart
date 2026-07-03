@@ -148,7 +148,7 @@ List<WidgetbookNode> get techTreeDirectories => [
             id: 'gp1',
             displayName: 'England',
             isHuman: true,
-            techUnlocked: {'crop_rotation': true},
+            techUnlocked: {kTechIdCropRotation: true},
           );
           final game = Game(
             id: 'wb_tech_gp_pennants',
@@ -168,7 +168,7 @@ List<WidgetbookNode> get techTreeDirectories => [
             id: 'gp3',
             displayName: 'Spain',
             isHuman: false,
-            techUnlocked: {'crop_rotation': true},
+            techUnlocked: {kTechIdCropRotation: true},
           ),
             ],
           );
@@ -195,17 +195,17 @@ List<WidgetbookNode> get techTreeDirectories => [
                 id: 'gp1',
                 displayName: 'England',
                 isHuman: true,
-                techUnlocked: {'crop_rotation': true},
+                techUnlocked: {kTechIdCropRotation: true},
               ),
               const Player(
                 id: 'gp2',
                 displayName: 'France',
                 isHuman: false,
-                techUnlocked: {'crop_rotation': true},
+                techUnlocked: {kTechIdCropRotation: true},
               ),
             ],
           );
-          final tech = techById('crop_rotation');
+          final tech = techById(kTechIdCropRotation);
           return mobileViewport(
             context,
             MaterialApp(

@@ -26,7 +26,7 @@ void main() {
           id: 'gp1',
           displayName: 'GP One',
           isHuman: contextPlayerId == 'gp1',
-          techUnlocked: const {'crop_rotation': true},
+          techUnlocked: const {kTechIdCropRotation: true},
         ),
         Player(
           id: 'gp2',
@@ -37,7 +37,7 @@ void main() {
           id: 'gp3',
           displayName: 'GP Three',
           isHuman: false,
-          techUnlocked: const {'crop_rotation': true},
+          techUnlocked: const {kTechIdCropRotation: true},
         ),
       ],
     );
@@ -58,7 +58,7 @@ void main() {
         wrap(
           TechGpPennantRow(
             game: game,
-            techId: 'crop_rotation',
+            techId: kTechIdCropRotation,
             contextPlayerId: 'gp1',
           ),
         ),
@@ -82,7 +82,7 @@ void main() {
         wrap(
           TechGpPennantRow(
             game: game,
-            techId: 'desert_quarrying',
+            techId: kTechIdDynamite,
             contextPlayerId: 'gp1',
           ),
         ),
@@ -98,7 +98,7 @@ void main() {
         wrap(
           TechGpPennantRow(
             game: game,
-            techId: 'crop_rotation',
+            techId: kTechIdCropRotation,
             contextPlayerId: 'gp1',
           ),
         ),
@@ -142,7 +142,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final game = pennantFixtureGame(contextPlayerId: 'gp1');
-      final tech = techById('crop_rotation')!;
+      final tech = techById(kTechIdCropRotation)!;
       await tester.binding.setSurfaceSize(const Size(320, 640));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
