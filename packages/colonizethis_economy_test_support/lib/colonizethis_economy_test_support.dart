@@ -35,6 +35,7 @@ export 'src/tile_map_test_support.dart';
 export 'src/treasury_available_scenarios.dart';
 export 'src/purchased_tile_index_scenarios.dart';
 export 'src/purchased_tile_index_test_support.dart';
+export 'src/purchased_tile_riches_scenarios.dart';
 export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';
 export 'src/treasury_bid_budget_scenarios.dart';

@@ -191,9 +191,30 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/purchased_tile_index_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/purchased_tile_index_test_support.dart`
 
+## Phase 2 — Slice 4 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| ptr-c5-credit | AC purchased-tile riches handoff — credit: improved gold tile in minor province credits owning GP at improvementLevel × basePrice × multiplier | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-multiplier | multiplier is honoured: richesCashMultiplier=1.5 applies before truncation | `purchased_tile_riches_test.dart` | — |
+| ptr-non-riches | AC purchased-tile riches handoff — non-riches resource: timber tile produces no credit (commodities flow through world market instead) | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-unimproved | AC purchased-tile riches handoff — unimproved tile: improvementLevel=0 produces no credit even when the resource is in the riches set | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-no-transport | tile with no road and no port produces no credit (transport level 0 caps yield to 0) | `purchased_tile_riches_test.dart` | — |
+| ptr-port-yield | port-flagged tile yields even without road (port = transport 4) | `purchased_tile_riches_test.dart` | — |
+| ptr-post-conquest | AC purchased-tile riches handoff — post-conquest filter: when the purchased province is now owned by a Great Power, no credit is emitted (the index filters it out at build time) | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-tribe-spices | tribe-owned purchased tile producing spices credits the owning GP | `purchased_tile_riches_test.dart` | — |
+| ptr-multi-gp | multi-tile aggregation — distinct GPs each accrue their own credits | `purchased_tile_riches_test.dart` | — |
+| ptr-empty-index | empty index returns empty result (no work done) | `purchased_tile_riches_test.dart` | — |
+| ptr-empty-tilemaps | empty tileMapByRegion returns empty result | `purchased_tile_riches_test.dart` | — |
+| ptr-determinism | determinism — two calls with the same inputs return equal credits | `purchased_tile_riches_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/purchased_tile_riches_scenarios.dart`
+- Extended `colonizethis_economy_test_support/lib/src/purchased_tile_riches_test_support.dart` (post-conquest, tribe, multi-GP builders)
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 11 imperative world-market test files → scenario tables
+- Remaining 10 imperative world-market test files → scenario tables
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
 - ≥15% test LOC reduction target (≤6,500 LOC)
