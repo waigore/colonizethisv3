@@ -28,6 +28,8 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'purchased_tile_index.dart';
+import 'treasury_bid_budget.dart'
+    show decrementTreasuryForFill, maxAffordableBidQuantity;
 
 part 'deal_matcher_matching.dart';
 part 'deal_matcher_indexing.dart';
