@@ -138,6 +138,31 @@ Helpers extended in `resource_extractor_test_support.dart`: `TileImprovementSpec
 
 Bespoke tests retained (topology/logging/town-rule/tile-contribution): `resource_extractor_part1_segment1_test.dart` (dual tech cap), `resource_extractor_part1_segment2_test.dart` (town-rule non-port), `resource_extractor_part2_part1_test.dart` (town-rule port, blockaded overseas), `resource_extractor_part2_part2_test.dart` (province-missing log, capital bonus, tile contribution).
 
-## Deferred (follow-up slices)
+## Phase 2 — Slice 1 (Refs #3856)
 
-- None — #3836 ACs satisfied pending PR merge and verification
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| matcher-treasury-floor | floor(treasury / price) when price is positive | `world_market_matcher_treasury_budget_test.dart` | #3115 |
+| matcher-treasury-zero | zero treasury budget yields zero | `world_market_matcher_treasury_budget_test.dart` | #3115 |
+| matcher-treasury-free-fill | missing-price free-fill returns bid remaining | `world_market_matcher_treasury_budget_test.dart` | #3115 |
+| matcher-treasury-decrement | decrements running treasury tally after a priced fill | `world_market_matcher_treasury_budget_test.dart` | #3856 |
+| bid-spend-parity-* | four staged vs carry-forward parity rows | `world_market_bid_spend_shared_helper_test.dart` | #3427 |
+| lock-recovery-* | three lock-recovery minor auto-bid rows | `lock_recovery_minor_bids_test.dart` | #2924 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/matcher_treasury_budget_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/bid_spend_parity_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/lock_recovery_minor_bids_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/lock_recovery_minor_bids_test_support.dart`
+- `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_test_support.dart`
+
+Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_matching.dart` delegates (lint `repo.economy_deal_matcher_treasury_budget_shared`).
+
+Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
+
+## Deferred (phase 2 follow-up slices)
+
+- Remaining 13 imperative world-market test files → scenario tables
+- Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
+- `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
+- ≥15% test LOC reduction target (≤6,500 LOC)
