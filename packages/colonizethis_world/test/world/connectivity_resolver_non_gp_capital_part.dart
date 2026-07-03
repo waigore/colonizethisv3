@@ -4,16 +4,10 @@ void _connectivity_resolver_non_gp_capital_testTests() {
 group('resolveNonGreatPowerConnectivity', () {
     test('minor with null capitalTile gets empty ConnectivityResult', () {
       const ow = 'oldWorld';
-      final grid = [
+      final tileMap = tileMapFromGrid([
         ['p1', 'p1'],
-      ];
-      final tileMap = TileMapResult(width: 2, height: 1, grid: grid);
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
+      ]);
+      final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -46,16 +40,10 @@ group('resolveNonGreatPowerConnectivity', () {
 
     test('tribe with null capitalTile gets empty ConnectivityResult', () {
       const nw = 'newWorld';
-      final grid = [
+      final tileMap = tileMapFromGrid([
         ['p1'],
-      ];
-      final tileMap = TileMapResult(width: 1, height: 1, grid: grid);
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: [],
-      );
+      ]);
+      final topology = singleProvinceTopology(regionId: nw, provinceLocalId: 'p1');
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -86,32 +74,11 @@ group('resolveNonGreatPowerConnectivity', () {
       () {
         const ow = 'oldWorld';
         // Two-province OW: p1 inland (capital), p2 seaboard (port).
-        final grid = [
+        final tileMap = tileMapFromGrid([
           ['p1', 'p2'],
           ['p1', 'p2'],
-        ];
-        final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
-        final topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'p2',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          // p2 is sea-bound to sea1.
-          edges: [TopologyEdge(id1: 'p2', id2: 'sea1')],
-        );
+        ]);
+        final topology = inlandAndSeaboardProvincesTopology(regionId: ow);
         final cap = CapitalTile(
           regionId: ow,
           provinceId: '$ow|p1',
@@ -220,22 +187,8 @@ group('resolveNonGreatPowerConnectivity', () {
         // capitalTile values. Verify their `connected` sets are identical (the
         // shared Road and Town rules apply faction-agnostically).
         const ow = 'oldWorld';
-        final grid = [
-          ['p1', 'p1', 'p1'],
-          ['p1', 'p1', 'p1'],
-          ['p1', 'p1', 'p1'],
-        ];
-        final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
-        final topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [],
-        );
+        final tileMap = uniformProvinceTileMap('p1', size: 3);
+        final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
         final cap = CapitalTile(
           regionId: ow,
           provinceId: '$ow|p1',
@@ -314,25 +267,10 @@ group('resolveNonGreatPowerConnectivity', () {
       'GP and non-GP resolvers run independently — non-GP call does not return GP keys',
       () {
         const ow = 'oldWorld';
-        final grid = [
+        final tileMap = tileMapFromGrid([
           ['p1', 'p2'],
-        ];
-        final tileMap = TileMapResult(width: 2, height: 1, grid: grid);
-        final topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'p2',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [],
-        );
+        ]);
+        final topology = twoProvinceLandTopology(regionId: ow);
         final gpCap = CapitalTile(
           regionId: ow,
           provinceId: '$ow|p1',

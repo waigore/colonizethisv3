@@ -10,20 +10,10 @@ group('applyInitialVisibility coastal sea zone', () {
         const ow = 'oldWorld';
         const tileKeySea = 'oldWorld|s1|1|0';
         const tileKeyLand = 'oldWorld|p1|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+        final topology = provinceSeaZoneTopology(
+          regionId: ow,
+          provinceLocalId: 'p1',
+          seaZoneId: 's1',
         );
         final game = Game(
           id: 'g1',
@@ -74,18 +64,7 @@ group('applyInitialVisibility coastal sea zone', () {
       const tileKeyS2 = 'oldWorld|s2|3|0';
       const tileKeyP1 = 'oldWorld|p1|0|0';
       const tileKeyP2 = 'oldWorld|p2|2|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 'p2', id2: 's2'),
-        ],
-      );
+      final topology = dualProvinceDualSeaTopology(regionId: ow);
       final game = Game(
         id: 'g1',
         worldState: WorldState(

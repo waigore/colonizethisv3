@@ -7,20 +7,10 @@ group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
       () {
         const ow = 'oldWorld';
         const tileS1 = 'oldWorld|s1|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+        final topology = provinceSeaZoneTopology(
+          regionId: ow,
+          provinceLocalId: 'p1',
+          seaZoneId: 's1',
         );
         final game = Game(
           id: 'g1',
@@ -62,29 +52,7 @@ group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
         const ow = 'oldWorld';
         const tileS1 = 'oldWorld|s1|0|0';
         const tileS2 = 'oldWorld|s2|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 's2',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 's1'),
-            TopologyEdge(id1: 's1', id2: 's2'),
-          ],
-        );
+        final topology = provinceSeaChainTopology(regionId: ow);
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -135,31 +103,7 @@ group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
       const ow = kRegionOldWorld;
       const nw = kRegionNewWorld;
       const tileNwSea = 'newWorld|nwSea|0|0';
-      final topologyOw = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
-      final topologyNw = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'nwSea',
-            regionId: nw,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
-      );
-      final combined = MapTopology(
-        nodes: [...topologyOw.nodes, ...topologyNw.nodes],
-        edges: topologyOw.edges,
-      );
+      final topologies = owSeaChainWithIsolatedNwSea();
       final game = Game(
         id: 'g_eot_2023',
         worldState: WorldState(
@@ -203,8 +147,8 @@ group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
 
       final next = runEndOfTurnPhase(
         game,
-        topology: combined,
-        topologyByRegion: {ow: topologyOw, nw: topologyNw},
+        topology: topologies.combined,
+        topologyByRegion: {ow: topologies.ow, nw: topologies.nw},
       );
 
       expect(next.worldState.turnState.turnNumber, 6);
@@ -221,16 +165,7 @@ group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
         const ow = 'oldWorld';
         const nw = 'newWorld';
         const nwTile = 'newWorld|P2|0|0';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
+        final topology = dualRegionLandOnlyTopology();
         final game = Game(
           id: 'g1',
           worldState: WorldState(

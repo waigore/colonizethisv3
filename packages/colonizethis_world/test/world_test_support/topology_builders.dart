@@ -91,3 +91,439 @@ Map<String, TileMapResult> dualRegionUniformTileMaps({
     kWorldTestNw: uniformProvinceTileMap(nwProvinceId, size: size),
   };
 }
+
+/// [grid] must be rectangular; width/height derived from first row/column count.
+TileMapResult tileMapFromGrid(List<List<String>> grid) {
+  return TileMapResult(
+    width: grid.first.length,
+    height: grid.length,
+    grid: grid,
+  );
+}
+
+/// Single province with no adjacency edges.
+MapTopology singleProvinceTopology({
+  required String regionId,
+  required String provinceLocalId,
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: provinceLocalId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [],
+  );
+}
+
+/// Two provinces each adjacent to their own sea zone (no cross-province links).
+MapTopology dualProvinceDualSeaTopology({
+  required String regionId,
+  String province1Id = 'p1',
+  String province2Id = 'p2',
+  String sea1Id = 's1',
+  String sea2Id = 's2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: province1Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: province2Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: sea1Id,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: sea2Id,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: province1Id, id2: sea1Id),
+      TopologyEdge(id1: province2Id, id2: sea2Id),
+    ],
+  );
+}
+
+/// Province adjacent to near sea; near sea linked to distant sea (p1–s1–s2).
+MapTopology provinceSeaChainTopology({
+  required String regionId,
+  String provinceLocalId = 'p1',
+  String nearSeaId = 's1',
+  String distantSeaId = 's2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: provinceLocalId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nearSeaId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: distantSeaId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: provinceLocalId, id2: nearSeaId),
+      TopologyEdge(id1: nearSeaId, id2: distantSeaId),
+    ],
+  );
+}
+
+/// Province and sea zone nodes with no edge (intentionally unlinked).
+MapTopology provinceAndSeaUnlinkedTopology({
+  required String regionId,
+  String provinceLocalId = 'p1',
+  String seaZoneId = 's1',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: provinceLocalId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaZoneId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: const [],
+  );
+}
+
+/// Isolated sea zone (no province adjacency).
+MapTopology isolatedSeaZoneTopology({
+  required String regionId,
+  required String seaZoneId,
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: seaZoneId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: const [],
+  );
+}
+
+/// OW single province plus NW single province (land only, no sea).
+MapTopology dualRegionLandOnlyTopology({
+  String owProvinceId = 'p1',
+  String nwProvinceId = 'P2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owProvinceId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwProvinceId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [],
+  );
+}
+
+/// Merge node/edge lists from multiple topologies into one graph.
+MapTopology mergeTopologies(List<MapTopology> parts) {
+  return MapTopology(
+    nodes: [for (final part in parts) ...part.nodes],
+    edges: [for (final part in parts) ...part.edges],
+  );
+}
+
+/// OW province–sea chain plus isolated NW sea (GitHub #2023 fog revert tests).
+({
+  MapTopology combined,
+  MapTopology ow,
+  MapTopology nw,
+}) owSeaChainWithIsolatedNwSea({
+  String owProvinceId = 'p1',
+  String owNearSeaId = 's1',
+  String owDistantSeaId = 's2',
+  String nwSeaId = 'nwSea',
+}) {
+  final ow = provinceSeaChainTopology(
+    regionId: kWorldTestOw,
+    provinceLocalId: owProvinceId,
+    nearSeaId: owNearSeaId,
+    distantSeaId: owDistantSeaId,
+  );
+  final nw = isolatedSeaZoneTopology(
+    regionId: kWorldTestNw,
+    seaZoneId: nwSeaId,
+  );
+  return (combined: mergeTopologies([ow, nw]), ow: ow, nw: nw);
+}
+
+/// Blockade target: [idleProvinceId] unlinked; [seaZoneId] adjacent to [targetProvinceId].
+MapTopology blockadeTargetProvinceTopology({
+  required String regionId,
+  String idleProvinceId = 'p1',
+  String targetProvinceId = 'p2',
+  String seaZoneId = 'sea1',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: idleProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: targetProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaZoneId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: seaZoneId, id2: targetProvinceId)],
+  );
+}
+
+/// Two sea zones both adjacent to the same target province.
+MapTopology dualSeaZonesTargetProvinceTopology({
+  required String regionId,
+  String idleProvinceId = 'p1',
+  String targetProvinceId = 'p2',
+  String sea1Id = 'sea1',
+  String sea2Id = 'sea2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: idleProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: targetProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: sea1Id,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: sea2Id,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: sea1Id, id2: targetProvinceId),
+      TopologyEdge(id1: sea2Id, id2: targetProvinceId),
+    ],
+  );
+}
+
+/// OW sea zone adjacent to NW province (cross-region blockade topology).
+MapTopology crossRegionOwSeaToNwProvinceTopology({
+  String owProvinceId = 'p1',
+  String nwProvinceId = 'n1',
+  String owSeaId = 'sea_ow',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owProvinceId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwProvinceId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owSeaId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: owSeaId, id2: nwProvinceId)],
+  );
+}
+
+/// NW sea zone adjacent to OW province (cross-region blockade topology).
+MapTopology crossRegionNwSeaToOwProvinceTopology({
+  String owProvince1Id = 'p1',
+  String owProvince2Id = 'p2',
+  String nwSeaId = 'sea_nw',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owProvince1Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owProvince2Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwSeaId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: nwSeaId, id2: owProvince2Id)],
+  );
+}
+
+/// OW two provinces + NW province; each sea targets its region's blockade province.
+MapTopology dualRegionBlockadeTargetsTopology({
+  String owProvince1Id = 'p1',
+  String owProvince2Id = 'p2',
+  String nwProvinceId = 'n1',
+  String owSeaId = 'sea1',
+  String nwSeaId = 'sea2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owProvince1Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owProvince2Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwProvinceId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owSeaId,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: nwSeaId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: owSeaId, id2: owProvince2Id),
+      TopologyEdge(id1: nwSeaId, id2: nwProvinceId),
+    ],
+  );
+}
+
+/// Inland province plus seaboard province adjacent to [seaZoneId].
+MapTopology inlandAndSeaboardProvincesTopology({
+  required String regionId,
+  String inlandProvinceId = 'p1',
+  String seaboardProvinceId = 'p2',
+  String seaZoneId = 'sea1',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: inlandProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaboardProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaZoneId,
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: seaboardProvinceId, id2: seaZoneId)],
+  );
+}
+
+/// Two provinces in one region with no sea (connectivity parity tests).
+MapTopology twoProvinceLandTopology({
+  required String regionId,
+  String province1Id = 'p1',
+  String province2Id = 'p2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: province1Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: province2Id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [],
+  );
+}
+
+/// OW two provinces plus NW province (land only, multi-faction non-GP tests).
+MapTopology threeProvinceDualRegionLandTopology({
+  String owProvince1Id = 'p1',
+  String owProvince2Id = 'p2',
+  String nwProvinceId = 'p3',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owProvince1Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: owProvince2Id,
+        regionId: kWorldTestOw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: nwProvinceId,
+        regionId: kWorldTestNw,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [],
+  );
+}
