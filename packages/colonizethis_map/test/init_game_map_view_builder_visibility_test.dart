@@ -6,22 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'support/init_game_map_view_fixtures.dart';
 
 void main() {
-group('buildInitGameMapViewData visibility and unit presence', () {
+  group('buildInitGameMapViewData visibility and unit presence', () {
     test('applies visibilityByTile map to CellViewData.visibility', () {
-      final owMap = mapTileGrid([
-        ['p1', 'p1'],
-      ]);
-      final nwMap = mapTileGrid([
-        ['p1'],
-      ]);
-      final owTopology = regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1'],
-      );
-      final nwTopology = regionTopology(
-        regionId: 'newWorld',
-        provinceIds: const ['p1'],
-      );
       final game = minimalGame(
         id: 'visibility',
         oldWorldProvinces: const [
@@ -35,20 +21,25 @@ group('buildInitGameMapViewData visibility and unit presence', () {
           Player(id: 'gp2', displayName: 'GP2', isHuman: false),
         ],
       );
+      final scenario = dualRegionScenario(
+        game: game,
+        oldWorldGrid: const [
+          ['p1', 'p1'],
+        ],
+        oldWorldTopology: regionTopology(
+          regionId: 'oldWorld',
+          provinceIds: const ['p1'],
+        ),
+      );
 
       // Two tiles in OW: (0,0) and (1,0). One tile in NW: (0,0).
-      final visibilityByTile = <String, TileVisibility>{
-        'oldWorld|p1|0|0': TileVisibility.visible,
-        'oldWorld|p1|1|0': TileVisibility.fogged,
-        'newWorld|p1|0|0': TileVisibility.unrevealed,
-      };
-
-      final viewData = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-        cellSize: 8,
-        visibilityByTile: visibilityByTile,
+      final viewData = buildViewDataForScenario(
+        scenario,
+        visibilityByTile: const {
+          'oldWorld|p1|0|0': TileVisibility.visible,
+          'oldWorld|p1|1|0': TileVisibility.fogged,
+          'newWorld|p1|0|0': TileVisibility.unrevealed,
+        },
       );
 
       // Old World visibility mapping.
@@ -66,21 +57,6 @@ group('buildInitGameMapViewData visibility and unit presence', () {
     test(
       'province unit presence shows own province counts and hides other province without visible intel',
       () {
-        final owMap = mapTileGrid([
-          ['pOwn', 'pOther'],
-        ]);
-        final nwMap = mapTileGrid([
-          ['p1'],
-        ]);
-        final owTopology = regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['pOwn', 'pOther'],
-          edges: const [TopologyEdge(id1: 'pOwn', id2: 'pOther')],
-        );
-        final nwTopology = regionTopology(
-          regionId: 'newWorld',
-          provinceIds: const ['p1'],
-        );
         final game = minimalGame(
           id: 'presence_hidden_other',
           oldWorldProvinces: const [
@@ -121,18 +97,22 @@ group('buildInitGameMapViewData visibility and unit presence', () {
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),
           ],
         );
-
-        final visibilityByTile = <String, TileVisibility>{
-          'oldWorld|pOwn|0|0': TileVisibility.visible,
-          'oldWorld|pOther|1|0': TileVisibility.unrevealed,
-        };
-
-        final viewData = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
-          visibilityByTile: visibilityByTile,
+        final viewData = buildViewDataForScenario(
+          dualRegionScenario(
+            game: game,
+            oldWorldGrid: const [
+              ['pOwn', 'pOther'],
+            ],
+            oldWorldTopology: regionTopology(
+              regionId: 'oldWorld',
+              provinceIds: const ['pOwn', 'pOther'],
+              edges: const [TopologyEdge(id1: 'pOwn', id2: 'pOther')],
+            ),
+          ),
+          visibilityByTile: const {
+            'oldWorld|pOwn|0|0': TileVisibility.visible,
+            'oldWorld|pOther|1|0': TileVisibility.unrevealed,
+          },
         );
 
         final own =
@@ -158,20 +138,6 @@ group('buildInitGameMapViewData visibility and unit presence', () {
     test(
       'province unit presence exposes other province counts when tile is visible',
       () {
-        final owMap = mapTileGrid([
-          ['pOther'],
-        ]);
-        final nwMap = mapTileGrid([
-          ['p1'],
-        ]);
-        final owTopology = regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['pOther'],
-        );
-        final nwTopology = regionTopology(
-          regionId: 'newWorld',
-          provinceIds: const ['p1'],
-        );
         final game = minimalGame(
           id: 'presence_visible_other',
           oldWorldProvinces: const [
@@ -211,17 +177,20 @@ group('buildInitGameMapViewData visibility and unit presence', () {
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),
           ],
         );
-
-        final visibilityByTile = <String, TileVisibility>{
-          'oldWorld|pOther|0|0': TileVisibility.visible,
-        };
-
-        final viewData = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
-          visibilityByTile: visibilityByTile,
+        final viewData = buildViewDataForScenario(
+          dualRegionScenario(
+            game: game,
+            oldWorldGrid: const [
+              ['pOther'],
+            ],
+            oldWorldTopology: regionTopology(
+              regionId: 'oldWorld',
+              provinceIds: const ['pOther'],
+            ),
+          ),
+          visibilityByTile: const {
+            'oldWorld|pOther|0|0': TileVisibility.visible,
+          },
         );
 
         final other = viewData
