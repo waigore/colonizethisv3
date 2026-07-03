@@ -6,28 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'support/init_game_map_view_fixtures.dart';
 
 void main() {
-group('buildInitGameMapViewData region data', () {
+  group('buildInitGameMapViewData region data', () {
     test('returns InitGameMapViewData with oldWorld and newWorld regions', () {
-      final owMap = mapTileGrid([
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ]);
-      final nwMap = mapTileGrid([
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ]);
-      final owTopology = regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1'],
-        seaZoneIds: const ['s1'],
-        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
-      final nwTopology = regionTopology(
-        regionId: 'newWorld',
-        provinceIds: const ['p1'],
-        seaZoneIds: const ['s1'],
-        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
       final game = minimalGame(
         id: 'test',
         turnNumber: 1,
@@ -48,11 +28,8 @@ group('buildInitGameMapViewData region data', () {
         ],
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
       );
-
-      final viewData = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+      final viewData = buildViewDataForScenario(
+        provinceSeaDualRegionScenario(game: game),
         cellSize: 16,
       );
 
@@ -84,26 +61,6 @@ group('buildInitGameMapViewData region data', () {
     });
 
     test('copies seaZoneDisplayNameById into RegionMapViewData.seaZoneDisplayNameByPrefixedId', () {
-      final owMap = mapTileGrid([
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ]);
-      final nwMap = mapTileGrid([
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ]);
-      final owTopology = regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1'],
-        seaZoneIds: const ['s1'],
-        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
-      final nwTopology = regionTopology(
-        regionId: 'newWorld',
-        provinceIds: const ['p1'],
-        seaZoneIds: const ['s1'],
-        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
       final game = minimalGame(
         id: 'test',
         turnNumber: 1,
@@ -128,11 +85,8 @@ group('buildInitGameMapViewData region data', () {
         ],
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
       );
-
-      final viewData = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+      final viewData = buildViewDataForScenario(
+        provinceSeaDualRegionScenario(game: game),
         cellSize: 16,
       );
 
@@ -147,20 +101,6 @@ group('buildInitGameMapViewData region data', () {
     });
 
     test('invokes with seed configSummary and greatPowerColorOverride', () {
-      final owMap = mapTileGrid([
-        ['p1'],
-      ]);
-      final nwMap = mapTileGrid([
-        ['p1'],
-      ]);
-      final owTopology = regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1'],
-      );
-      final nwTopology = regionTopology(
-        regionId: 'newWorld',
-        provinceIds: const ['p1'],
-      );
       final game = minimalGame(
         id: 'g',
         oldWorldProvinces: const [
@@ -171,10 +111,17 @@ group('buildInitGameMapViewData region data', () {
         ],
         players: const [Player(id: 'gp1', displayName: 'GP', isHuman: false)],
       );
-      final viewData = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+      final viewData = buildViewDataForScenario(
+        dualRegionScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1'],
+          ],
+          oldWorldTopology: regionTopology(
+            regionId: 'oldWorld',
+            provinceIds: const ['p1'],
+          ),
+        ),
         cellSize: 8,
         seed: 123,
         configSummary: 'test config',
@@ -189,23 +136,10 @@ group('buildInitGameMapViewData region data', () {
     });
   });
 
-group('buildInitGameMapViewData extracted slice coverage', () {
+  group('buildInitGameMapViewData extracted slice coverage', () {
     test(
       'region setup maps owner/display and terrain palette from minimal data',
       () {
-        final tileMap = mapTileGrid(
-          [
-            ['p1'],
-          ],
-          terrainGrid: [
-            [TerrainType.hardwoodForest],
-          ],
-        );
-        final seaOnly = mapTileGrid([
-          ['s1'],
-        ]);
-        final topology = singleProvinceAndSeaTopology('oldWorld');
-        final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
         final game = minimalGame(
           id: 'slice-test',
           oldWorldProvinces: const [
@@ -221,15 +155,17 @@ group('buildInitGameMapViewData extracted slice coverage', () {
             Player(id: 'gp1', displayName: 'GP1', isHuman: false),
           ],
         );
-
-        final view = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': seaOnly},
-          topologyByRegion: {
-            'oldWorld': topology,
-            'newWorld': newWorldTopology,
-          },
-          cellSize: 8,
+        final view = buildViewDataForScenario(
+          oldWorldFocusedScenario(
+            game: game,
+            oldWorldGrid: const [
+              ['p1'],
+            ],
+            oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+            oldWorldTerrainGrid: const [
+              [TerrainType.hardwoodForest],
+            ],
+          ),
         );
 
         final cell = view.oldWorld.cells.single;
@@ -249,14 +185,6 @@ group('buildInitGameMapViewData extracted slice coverage', () {
     );
 
     test('overlay setup counts regiments, civilians, and in-port ships', () {
-      final tileMap = mapTileGrid([
-        ['p1'],
-      ]);
-      final seaOnly = mapTileGrid([
-        ['s1'],
-      ]);
-      final topology = singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
       final game = minimalGame(
         id: 'slice-test',
         oldWorldProvinces: const [
@@ -287,12 +215,14 @@ group('buildInitGameMapViewData extracted slice coverage', () {
           ),
         ],
       );
-
-      final view = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': seaOnly},
-        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
-        cellSize: 8,
+      final view = buildViewDataForScenario(
+        oldWorldFocusedScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1'],
+          ],
+          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+        ),
       );
 
       final presence =
@@ -304,17 +234,6 @@ group('buildInitGameMapViewData extracted slice coverage', () {
     });
 
     test('marker helpers expose capitals ports towns and warps', () {
-      final tileMap = mapTileGrid([
-        ['p1', 's1'],
-      ]);
-      final newWorldSea = mapTileGrid([
-        ['s9'],
-      ]);
-      final topology = singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = regionTopology(
-        regionId: 'newWorld',
-        seaZoneIds: const ['s9'],
-      );
       final game = minimalGame(
         id: 'slice-test',
         oldWorldProvinces: const [
@@ -340,12 +259,21 @@ group('buildInitGameMapViewData extracted slice coverage', () {
         ],
         portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
       );
-
-      final view = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': newWorldSea},
-        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
-        cellSize: 8,
+      final view = buildViewDataForScenario(
+        oldWorldFocusedScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1', 's1'],
+          ],
+          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+          newWorldGrid: const [
+            ['s9'],
+          ],
+          newWorldTopology: regionTopology(
+            regionId: 'newWorld',
+            seaZoneIds: const ['s9'],
+          ),
+        ),
         warpLinks: const [
           WarpLink(
             regionId: 'oldWorld',
@@ -369,14 +297,6 @@ group('buildInitGameMapViewData extracted slice coverage', () {
     });
 
     test('cell helper applies visibility and extraction overlays', () {
-      final tileMap = mapTileGrid([
-        ['p1'],
-      ]);
-      final seaOnly = mapTileGrid([
-        ['s1'],
-      ]);
-      final topology = singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = singleProvinceAndSeaTopology('newWorld');
       final game = minimalGame(
         id: 'slice-test',
         oldWorldProvinces: const [
@@ -384,12 +304,14 @@ group('buildInitGameMapViewData extracted slice coverage', () {
         ],
         newWorldProvinces: const [],
       );
-
-      final view = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': seaOnly},
-        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
-        cellSize: 8,
+      final view = buildViewDataForScenario(
+        oldWorldFocusedScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1'],
+          ],
+          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+        ),
         visibilityByTile: const {'oldWorld|p1|0|0': TileVisibility.fogged},
         resourceExtractionUnitsByTile: const {'oldWorld|p1|0|0': 9},
         resourceExtractionEffectiveUnitsByTile: const {'oldWorld|p1|0|0': 7},
@@ -406,17 +328,6 @@ group('buildInitGameMapViewData extracted slice coverage', () {
     test(
       'does not synthesize a Home Fleet marker when fleet entity is missing',
       () {
-        final tileMap = mapTileGrid([
-          ['p1', 's1'],
-        ]);
-        final newWorldSea = mapTileGrid([
-          ['s9'],
-        ]);
-        final topology = singleProvinceAndSeaTopology('oldWorld');
-        final newWorldTopology = regionTopology(
-          regionId: 'newWorld',
-          seaZoneIds: const ['s9'],
-        );
         final game = minimalGame(
           id: 'slice-test',
           oldWorldProvinces: const [
@@ -438,15 +349,21 @@ group('buildInitGameMapViewData extracted slice coverage', () {
           ],
           portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
         );
-
-        final view = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': newWorldSea},
-          topologyByRegion: {
-            'oldWorld': topology,
-            'newWorld': newWorldTopology,
-          },
-          cellSize: 8,
+        final view = buildViewDataForScenario(
+          oldWorldFocusedScenario(
+            game: game,
+            oldWorldGrid: const [
+              ['p1', 's1'],
+            ],
+            oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+            newWorldGrid: const [
+              ['s9'],
+            ],
+            newWorldTopology: regionTopology(
+              regionId: 'newWorld',
+              seaZoneIds: const ['s9'],
+            ),
+          ),
         );
 
         expect(view.oldWorld.fleetTileMarkers, isEmpty);
@@ -454,17 +371,6 @@ group('buildInitGameMapViewData extracted slice coverage', () {
     );
 
     test('keeps an empty Home Fleet marker when real fleet entity exists', () {
-      final tileMap = mapTileGrid([
-        ['p1', 's1'],
-      ]);
-      final newWorldSea = mapTileGrid([
-        ['s9'],
-      ]);
-      final topology = singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = regionTopology(
-        regionId: 'newWorld',
-        seaZoneIds: const ['s9'],
-      );
       final game = minimalGame(
         id: 'slice-test',
         oldWorldProvinces: const [
@@ -496,12 +402,21 @@ group('buildInitGameMapViewData extracted slice coverage', () {
         ],
         portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
       );
-
-      final view = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': newWorldSea},
-        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
-        cellSize: 8,
+      final view = buildViewDataForScenario(
+        oldWorldFocusedScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1', 's1'],
+          ],
+          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
+          newWorldGrid: const [
+            ['s9'],
+          ],
+          newWorldTopology: regionTopology(
+            regionId: 'newWorld',
+            seaZoneIds: const ['s9'],
+          ),
+        ),
       );
 
       expect(view.oldWorld.fleetTileMarkers, hasLength(1));
