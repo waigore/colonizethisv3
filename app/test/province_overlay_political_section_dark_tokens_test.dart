@@ -19,52 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay;
+    show demoGameForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
-/// Returns a province id (regionId|localId, e.g. `oldWorld|gpName_2`)
-/// owned by [ownerId] in the demo Old World. `Province.id` in the
-/// debug-init game is already the prefixed form (see
-/// `colonizethis_logic` setup), so the helper returns it as-is rather
-/// than re-prefixing. Test pre-condition: at least one such province
-/// exists; surface a test failure rather than silently fall back if
-/// not.
-String _ownedProvinceId({required Game game, required String ownerId}) {
-  for (final province in game.worldState.oldWorld.provinces) {
-    if (province.ownerId == ownerId) {
-      return province.id;
-    }
-  }
-  fail(
-    'Test setup: no province in oldWorld is owned by "$ownerId"; '
-    'cannot construct a human-owned province for the Political section.',
-  );
-}
-
-Widget _darkOverlay({
-  required Game game,
-  required String displayId,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: displayId,
-        selectedTileKey: null,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: const Orders(),
-      ),
-    ),
-  );
-}
+import 'support/province_overlay_test_harness.dart';
 
 Finder _findTextStartingWith(String prefix) => find.byWidgetPredicate(
   (Widget w) => w is Text && (w.data ?? '').startsWith(prefix),
@@ -86,13 +45,13 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
 
           await tester.pumpWidget(
-            _darkOverlay(game: game, displayId: ownedProvince),
+            buildProvinceOverlayDarkThemeShell(game: game, displayId: ownedProvince),
           );
           await tester.pumpAndSettle();
 
@@ -129,13 +88,13 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
 
           await tester.pumpWidget(
-            _darkOverlay(game: game, displayId: ownedProvince),
+            buildProvinceOverlayDarkThemeShell(game: game, displayId: ownedProvince),
           );
           await tester.pumpAndSettle();
 
@@ -166,13 +125,13 @@ void main() {
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
           final humanId = game.players.first.id;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: humanId,
           );
 
           await tester.pumpWidget(
-            _darkOverlay(game: game, displayId: ownedProvince),
+            buildProvinceOverlayDarkThemeShell(game: game, displayId: ownedProvince),
           );
           await tester.pumpAndSettle();
 

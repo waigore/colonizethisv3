@@ -24,6 +24,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/widgetbook_test_harness.dart';
 
 /// Normative inventory of the new DLG60001 stories that issue #2867 S13
 /// requires. Renaming or removing one must fail the inventory test below.
@@ -53,23 +54,6 @@ WidgetbookFolder _folder(
   );
 }
 
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final children = _folder(
-    directories,
-    folderName: folderName,
-  ).children ?? const <WidgetbookNode>[];
-  return children.whereType<WidgetbookUseCase>().firstWhere(
-    (uc) => uc.name == useCaseName,
-    orElse: () => fail(
-      'Missing use case "$useCaseName" in folder "$folderName" '
-      '(got: ${children.map((c) => c.name).toList()})',
-    ),
-  );
-}
 
 /// Pumps a Widgetbook story without `pumpAndSettle`. The Game Initializing
 /// progress stories paint an indeterminate `CtLoadingIndicator` (Material
@@ -134,7 +118,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -150,7 +134,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -168,7 +152,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -215,7 +199,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -244,7 +228,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -275,7 +259,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -297,7 +281,7 @@ void main() {
       (WidgetTester tester) async {
         await _pumpStory(
           tester,
-          _useCase(
+          findWidgetbookUseCase(
             gameInitializingDirectories,
             folderName: 'Game Initializing',
             useCaseName: kGameInitializingUseCaseNames[5],
@@ -335,7 +319,7 @@ void main() {
       (WidgetTester tester) async {
         await _pumpStory(
           tester,
-          _useCase(
+          findWidgetbookUseCase(
             gameInitializingDirectories,
             folderName: 'Game Initializing',
             useCaseName: kGameInitializingUseCaseNames[5],

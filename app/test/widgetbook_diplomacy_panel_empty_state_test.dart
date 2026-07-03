@@ -27,34 +27,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
 import 'support/widget_test_assets.dart';
-
-/// Locate the single use-case with [useCaseName] inside the
-/// [WidgetbookFolder] whose name matches [folderName], failing with a
-/// readable matcher message if the folder or use case is missing.
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == folderName,
-        orElse: () =>
-            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-      );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  final useCase = children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$folderName" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-  return useCase;
-}
+import 'support/widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -67,7 +40,7 @@ void main() {
       'use case is wired into diplomacyPanelDirectories under the canonical '
       'folder + name',
       (WidgetTester tester) async {
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           diplomacyPanelDirectories,
           folderName: 'Diplomacy Panel',
           useCaseName: 'No factions discovered (empty state)',
@@ -92,7 +65,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(800, 600));
 
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           diplomacyPanelDirectories,
           folderName: 'Diplomacy Panel',
           useCaseName: 'No factions discovered (empty state)',

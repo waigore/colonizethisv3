@@ -31,6 +31,8 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
 /// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
 /// with cell visibility overridden by [visibilityForCell]. Used to trigger
 /// fully-unrevealed (province / sea zone) and partially-revealed tile
@@ -70,28 +72,6 @@ RegionMapViewData _regionWith({
     greatPowerFactionIds: base.greatPowerFactionIds,
     terrainColors: base.terrainColors,
     unitMarkers: base.unitMarkers,
-  );
-}
-
-Widget _darkOverlay({
-  required RegionMapViewData region,
-  required String displayId,
-  String? selectedTileKey,
-}) {
-  final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: region,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: const Orders(),
-      ),
-    ),
   );
 }
 
@@ -186,7 +166,11 @@ void main() {
           '${region.regionId}|${region.cells.first.regionCellId}';
 
       await tester.pumpWidget(
-        _darkOverlay(region: region, displayId: provinceId),
+        buildProvinceOverlayDarkThemeShell(
+          game: demoGameForOverlay,
+          region: region,
+          displayId: provinceId,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -231,7 +215,11 @@ void main() {
       final seaZoneId = '${region.regionId}|${seaCell.regionCellId}';
 
       await tester.pumpWidget(
-        _darkOverlay(region: region, displayId: seaZoneId),
+        buildProvinceOverlayDarkThemeShell(
+          game: demoGameForOverlay,
+          region: region,
+          displayId: seaZoneId,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -283,7 +271,8 @@ void main() {
       final provinceId = '${region.regionId}|${targetCell.regionCellId}';
 
       await tester.pumpWidget(
-        _darkOverlay(
+        buildProvinceOverlayDarkThemeShell(
+          game: demoGameForOverlay,
           region: region,
           displayId: provinceId,
           selectedTileKey: selectedTileKey,

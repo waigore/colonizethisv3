@@ -20,6 +20,7 @@ import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
 import 'support/widget_test_assets.dart';
+import 'support/widgetbook_test_harness.dart';
 
 /// Normative inventory for issue #2860 S6 — renaming or removing a story
 /// must fail this list before reviewers lose a state × variant combination.
@@ -52,17 +53,6 @@ WidgetbookFolder _mainMenuFolder() {
   return mainMenuDirectories.whereType<WidgetbookFolder>().firstWhere(
     (folder) => folder.name == 'Main Menu',
     orElse: () => fail('Missing Widgetbook folder: Main Menu'),
-  );
-}
-
-WidgetbookUseCase _useCase(String useCaseName) {
-  final children = _mainMenuFolder().children ?? const <WidgetbookNode>[];
-  return children.whereType<WidgetbookUseCase>().firstWhere(
-    (uc) => uc.name == useCaseName,
-    orElse: () => fail(
-      'Missing use case "$useCaseName" in folder "Main Menu" '
-      '(got: ${children.map((c) => c.name).toList()})',
-    ),
   );
 }
 
@@ -106,7 +96,7 @@ void main() {
         testWidgets(
           '$useCaseName pumps under editorialMonocle without exceptions',
           (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, _useCase(useCaseName));
+            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
             expect(
               tester.takeException(),
               isNull,
@@ -122,7 +112,7 @@ void main() {
           '$useCaseName renders no Material ElevatedButton / TextButton / '
           'OutlinedButton chrome',
           (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, _useCase(useCaseName));
+            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
             expect(find.byType(ElevatedButton), findsNothing);
             expect(find.byType(TextButton), findsNothing);
             expect(find.byType(OutlinedButton), findsNothing);
@@ -132,7 +122,7 @@ void main() {
         testWidgets(
           '$useCaseName resolves editorial-monocle scaffold tokens',
           (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, _useCase(useCaseName));
+            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
             final ThemeData theme = Theme.of(
               tester.element(find.byType(CtMainMenu)),
             );
@@ -150,7 +140,7 @@ void main() {
           testWidgets(
             '$useCaseName (pixelArt) mounts collage + compass + divider chrome',
             (WidgetTester tester) async {
-              await _pumpEditorialMonocleStory(tester, _useCase(useCaseName));
+              await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
               expect(find.byType(CtMainMenuCollage), findsOneWidget);
               expect(find.byType(CtCompassRose), findsOneWidget);
               expect(find.byType(CtFleurDeLisOrnament), findsWidgets);
@@ -161,7 +151,7 @@ void main() {
           testWidgets(
             '$useCaseName (plain) omits pixelArt-only decorative chrome',
             (WidgetTester tester) async {
-              await _pumpEditorialMonocleStory(tester, _useCase(useCaseName));
+              await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
               expect(find.byType(CtMainMenuCollage), findsNothing);
               expect(find.byType(CtCompassRose), findsNothing);
               expect(find.byType(CtFleurDeLisOrnament), findsNothing);

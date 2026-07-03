@@ -33,30 +33,7 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
-
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == folderName,
-        orElse: () =>
-            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-      );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  return children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$folderName" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-}
+import 'support/widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -69,7 +46,7 @@ void main() {
         'Full availability is wired into productionPanelDirectories under '
         'the canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Full availability',
@@ -82,7 +59,7 @@ void main() {
         'Partial availability is wired into productionPanelDirectories under '
         'the canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Partial availability',
@@ -103,7 +80,7 @@ void main() {
           // but the wide layout matches the default story viewport).
           await tester.binding.setSurfaceSize(const Size(900, 700));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Full availability',
@@ -146,7 +123,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(1100, 900));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Full availability',

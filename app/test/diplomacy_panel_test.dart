@@ -1,7 +1,5 @@
 // Tests for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -12,132 +10,9 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-/// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
-/// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
-Future<void> _pumpPanelBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-/// Dialogs: `showDialog` from async bus listeners + route transition.
-/// Tall surface so diplomacy rows and action buttons are on-screen without
-/// calling `ensureVisible` (avoids long scroll pump loops on [ListView]).
-Future<void> _bindTallTestSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(800, 4000));
-}
-
-class _EventHandlingWrapper extends StatefulWidget {
-  const _EventHandlingWrapper({
-    required this.bus,
-    required this.child,
-    required this.navigatorKey,
-  });
-
-  final AppEventBus bus;
-  final Widget child;
-  final GlobalKey<NavigatorState> navigatorKey;
-
-  @override
-  State<_EventHandlingWrapper> createState() => _EventHandlingWrapperState();
-}
-
-class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _confirmSub;
-  StreamSubscription? _openDialogSub;
-
-  @override
-  void initState() {
-    super.initState();
-    // Defer showDialog past the pointer + emit stack. Opening a route synchronously
-    // from an onPressed that runs during gesture dispatch can hang the test binding.
-    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        final result = await showDialog<bool>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text(event.title),
-            content: Text(event.message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(event.cancelLabel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(event.confirmLabel),
-              ),
-            ],
-          ),
-        );
-        event.result(result ?? false);
-      });
-    });
-    _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        await showDialog<void>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text('dialog:${event.dialogId}'),
-            content: const Text('opened-via-bus'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _confirmSub?.cancel();
-    _openDialogSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-Widget buildPanel({
-  required Game game,
-  required String humanPlayerId,
-  required MapTopology topology,
-  Orders currentOrders = const Orders(),
-  AppEventBus? bus,
-}) {
-  final panelBus = bus ?? AppEventBus.create();
-  final navigatorKey = GlobalKey<NavigatorState>();
-  return MaterialApp(
-    navigatorKey: navigatorKey,
-    home: Scaffold(
-      body: _EventHandlingWrapper(
-        bus: panelBus,
-        navigatorKey: navigatorKey,
-        child: DiplomacyPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-          currentOrders: currentOrders,
-          bus: panelBus,
-        ),
-      ),
-    ),
-  );
-}
 
 Game _gameWithNoDiscoveredFactions() {
   const ow = 'oldWorld';
@@ -259,15 +134,15 @@ void main() {
     testWidgets('AC: Great Powers section when player has discovered GPs', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('Great Powers'), findsOneWidget);
     });
@@ -275,15 +150,15 @@ void main() {
     testWidgets('AC: Faction rows show name and kind', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Per-faction row → Row chrome: rows
       // render as flat gradient tiles, not nine-patch CtPanel frames.
@@ -301,15 +176,15 @@ void main() {
     testWidgets('AC: Relation state badge shows PEACE or WAR label', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Relation state badge: the badge
       // label is the uppercase string `WAR` or `PEACE`, never the
@@ -326,15 +201,15 @@ void main() {
     testWidgets(
       'AC: One-word 10-step ladder relation state shown, score hidden (Refs #3753)',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Fixture scores map onto the 10-step ladder: score 50 → Neutral
         // (step 6), score 20 → Distrustful (step 3).
@@ -350,15 +225,15 @@ void main() {
     testWidgets('AC-6/AC-10: overture and FTP buttons shown disabled when invalid', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('Consulate'), findsWidgets);
       expect(find.text('Embassy'), findsWidgets);
@@ -369,15 +244,15 @@ void main() {
     testWidgets('AC: Action buttons present for factions', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.byType(CtNinePatchButton), findsAtLeastNWidgets(1));
       expect(
@@ -392,7 +267,7 @@ void main() {
     testWidgets('AC: Pending orders show Cancel button, action button hidden', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       final otherGp = gameWithFactions.players.firstWhere(
         (p) => p.id != humanPlayerId,
       );
@@ -418,14 +293,14 @@ void main() {
         contains(DiplomaticOrderType.declareWar),
       );
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
           currentOrders: initialOrders,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('Cancel'), findsWidgets);
     });
@@ -434,15 +309,15 @@ void main() {
     testWidgets(
       'AC-1: Empty state shows all three section headings + tribe placeholder',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithNoDiscovered,
             humanPlayerId: 'gp1',
             topology: const MapTopology(nodes: [], edges: []),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // SPEC/ui/diplomacy-panel.md § Section headings (Refs #3341):
         // headings are always rendered even when their sections are empty.
@@ -458,15 +333,15 @@ void main() {
       'AC-5 (Refs #3341): tribe discovered by visibility renders under Tribes '
       'with no prior relation (no empty placeholder)',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: _gameWithTribeDiscoveredByVisibility(),
             humanPlayerId: 'gp1',
             topology: const MapTopology(nodes: [], edges: []),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         expect(find.text('Tribes'), findsOneWidget);
         expect(
@@ -485,15 +360,15 @@ void main() {
     );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.byType(ListView), findsOneWidget);
     });
@@ -503,15 +378,15 @@ void main() {
     testWidgets(
       'AC: default state — All button active (--accent), others inactive (--muted)',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final allButton = tester.widget<Text>(find.text('All'));
         expect(
@@ -539,21 +414,21 @@ void main() {
     testWidgets(
       'AC: tapping "Great Powers only" hides Minor Nation and Tribe rows',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Sanity: default "All" view includes the Great Powers heading.
         expect(find.text('Great Powers'), findsOneWidget);
 
         await tester.tap(find.text('Great Powers only'));
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         expect(
           find.text('Great Powers'),
@@ -585,21 +460,21 @@ void main() {
     testWidgets(
       'AC: tapping "Minors only" hides Great Power rows but keeps Minors and Tribes',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Sanity: GP section starts visible.
         expect(find.text('Great Powers'), findsOneWidget);
 
         await tester.tap(find.text('Minors only'));
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         expect(
           find.text('Great Powers'),
@@ -636,15 +511,15 @@ void main() {
     testWidgets('AC: mode bar renders all three filter labels', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('All'), findsOneWidget);
       expect(find.text('Great Powers only'), findsOneWidget);
@@ -656,15 +531,15 @@ void main() {
     testWidgets('AC: stronger GP relative-power line renders in --danger', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       final rows = buildDiplomacyRows(
         gameWithFactions,
@@ -705,15 +580,15 @@ void main() {
     testWidgets('AC: weaker/equal GP relative-power line renders in --success', (
       WidgetTester tester,
     ) async {
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        buildPanel(
+        buildDiplomacyPanel(
           game: gameWithFactions,
           humanPlayerId: humanPlayerId,
           topology: topology,
         ),
       );
-      await _pumpPanelBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       final rows = buildDiplomacyRows(
         gameWithFactions,
@@ -751,15 +626,15 @@ void main() {
     testWidgets(
       'AC: Great Power rows render the localized "Relative power:" prefix',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final rows = buildDiplomacyRows(
           gameWithFactions,
@@ -777,15 +652,15 @@ void main() {
     testWidgets(
       'absolute "Power: N" score label is no longer rendered on GP rows',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // SPEC: relative-power line replaces the absolute score. No row should
         // render text starting with "Power: ".
@@ -798,15 +673,15 @@ void main() {
     testWidgets(
       'AC: Section heading text resolves to --accent color',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final heading = tester.widget<Text>(find.text('Great Powers'));
         expect(
@@ -826,15 +701,15 @@ void main() {
     testWidgets(
       'AC: Section heading container exposes a 2 px --accent-dim bottom border',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final headingFinder = find.text('Great Powers');
         final decorated = find.ancestor(
@@ -855,15 +730,15 @@ void main() {
     testWidgets(
       'AC: GP badge background --accent-dim and foreground --bg-deep',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Only assert if the debug-init game actually has a GP row.
         final rows = buildDiplomacyRows(
@@ -902,15 +777,15 @@ void main() {
     testWidgets(
       'AC: Minor badge background --muted and foreground --bg-deep',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final rows = buildDiplomacyRows(
           gameWithFactions,
@@ -948,15 +823,15 @@ void main() {
     testWidgets(
       'AC: Tribe badge outlined with --muted border, transparent background',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final rows = buildDiplomacyRows(
           gameWithFactions,
@@ -1010,15 +885,15 @@ void main() {
     testWidgets(
       'AC: No badge uses raw Material chrome (Colors.blue/grey/orange)',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final allLabels = ['GP', 'Minor', 'Tribe'];
         for (final label in allLabels) {
