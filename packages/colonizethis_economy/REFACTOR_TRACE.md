@@ -238,9 +238,28 @@ Modules:
 - Extended `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart` (`tradeOrderSuggesterTreasuryCapScenarios`)
 - `colonizethis_economy_test_support/lib/src/player_context_scenarios.dart`
 
+## Phase 2 — Slice 7 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| pd-next-* | nine `PriceDiscovery.computeNextPrice` rows | `world_market_price_discovery_test.dart` | — |
+| pd-activity-* | four `PriceDiscovery.computeMarketActivity` rows | `world_market_price_discovery_test.dart` | — |
+| admission-rule3-* | four `commoditiesWithBidAndOffer` rows | `trade_order_admission_test.dart` | #3615 |
+| admission-rule4-* | five `admittedBidCommodityIdsInSubmissionOrder` rows | `trade_order_admission_test.dart` | #3615 |
+| ctx-base-* | two `WorldMarketContextBase` field-carrying rows | `world_market_context_base_test.dart` | #3396 |
+| gp-treasury-int-* | five int accumulator rows | `gp_treasury_credit_accumulator_test.dart` | — |
+| gp-treasury-double-* | three double accumulator rows | `gp_treasury_credit_accumulator_test.dart` | — |
+| boycott-blocked-* | seven `boycottedColonySellableCommodityIds` rows | `world_market_boycott_blocked_commodities_test.dart` | #3758 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/price_discovery_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/trade_order_admission_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/world_market_context_base_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/gp_treasury_credit_accumulator_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/boycott_blocked_commodities_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 7 imperative world-market test files → scenario tables
+- Remaining 3 imperative world-market test files → scenario tables (`world_market_trade_order_validator_test.dart`, `first_right_profit_test.dart`, `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`)
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
-- `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
-- ≥15% test LOC reduction target (≤6,500 LOC)
+- ≥15% test LOC reduction target (≤6,500 LOC) — met in prior slice; maintain on follow-up migrations
