@@ -11,12 +11,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 const supplierFeedstockId = 'gp1';
 const sellerFeedstockId = 'gp2';
 
-// The grain tile key is lexicographically smaller than the timber tile key, so
+// The grain tile key is lexicographically smaller than the iron tile key, so
 // ordinary build-improvement ordering (equal base score, lexicographic
 // tie-break) selects grain; only the active feedstock score boost flips the
-// supplier's Builder onto the timber tile.
+// supplier's Builder onto the iron tile.
 const supplierGrainTile = 'oldWorld|s0|0|0';
-const supplierTimberTile = 'oldWorld|s0|1|0';
+const supplierIronTile = 'oldWorld|s0|1|0';
 const sellerWoolTile = 'oldWorld|p0|0|0';
 
 /// Builds a game with a supplier owning [supplierOw] Old World provinces and a
@@ -31,7 +31,7 @@ Game twoPlayerSupplierFeedstockGame({
   int sellerTreasury = -1,
   Stockpile sellerStockpile = const Stockpile(quantities: {'lumber': 1}),
   Map<String, String> resourceByTileKey = const {
-    supplierTimberTile: 'timber',
+    supplierIronTile: 'iron',
     supplierGrainTile: 'grain',
     sellerWoolTile: 'wool',
   },
@@ -70,7 +70,7 @@ Game twoPlayerSupplierFeedstockGame({
         displayName: 'Supplier',
         isHuman: false,
         treasury: 100000,
-        // Supplier holds no timber/iron surplus — it must extract more.
+        // Supplier holds no iron surplus — it must extract more.
         stockpile: const Stockpile(),
       ),
       Player(

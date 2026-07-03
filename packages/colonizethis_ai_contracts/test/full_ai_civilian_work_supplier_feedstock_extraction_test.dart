@@ -11,14 +11,14 @@ void main() {
     'supplierImprovementInputFeedstockExtractionResourceIds '
     '(Refs #2847 H8-extraction supplier feedstock)',
     () {
-      test('active peer demand returns castIron feedstock {timber, iron}', () {
+      test('active peer demand returns castIron feedstock {iron}', () {
         final game = twoPlayerSupplierFeedstockGame();
         expect(
           supplierImprovementInputFeedstockExtractionResourceIds(
             game,
             supplierFeedstockId,
           ),
-          containsAll(<String>['timber', 'iron']),
+          containsAll(<String>['iron']),
         );
       });
 
@@ -83,7 +83,7 @@ void main() {
 
       test('returns empty when the supplier feedstock tile is already improved', () {
         final game = twoPlayerSupplierFeedstockGame(
-          tileState: TileMapState().setImprovement(supplierTimberTile, 1),
+          tileState: TileMapState().setImprovement(supplierIronTile, 1),
         );
         expect(
           supplierImprovementInputFeedstockExtractionResourceIds(
@@ -113,7 +113,7 @@ void main() {
     'selectFullAiCivilianWorkOrders supplier feedstock extraction '
     '(Refs #2847 H8-extraction supplier feedstock)',
     () {
-      test('supplier Builder prefers timber feedstock tile over grain', () {
+      test('supplier Builder prefers iron feedstock tile over grain', () {
         final game = twoPlayerSupplierFeedstockGame();
         final suggestions = [
           const WorkOrder(
@@ -124,7 +124,7 @@ void main() {
           const WorkOrder(
             unitId: 'b1',
             target: kWorkTargetBuildImprovement,
-            targetTileKey: supplierTimberTile,
+            targetTileKey: supplierIronTile,
           ),
         ];
         final r = selectFullAiCivilianWorkOrders(
@@ -133,7 +133,7 @@ void main() {
           game: game,
         );
         expect(r.workOrders, hasLength(1));
-        expect(r.workOrders.single.targetTileKey, supplierTimberTile);
+        expect(r.workOrders.single.targetTileKey, supplierIronTile);
       });
 
       test('supplier keeps ordinary ordering when no peer needs the input', () {
@@ -149,7 +149,7 @@ void main() {
           const WorkOrder(
             unitId: 'b1',
             target: kWorkTargetBuildImprovement,
-            targetTileKey: supplierTimberTile,
+            targetTileKey: supplierIronTile,
           ),
         ];
         final r = selectFullAiCivilianWorkOrders(
@@ -173,7 +173,7 @@ void main() {
           const WorkOrder(
             unitId: 'b1',
             target: kWorkTargetBuildImprovement,
-            targetTileKey: supplierTimberTile,
+            targetTileKey: supplierIronTile,
           ),
         ];
         final view = supplierBuilderView(game);

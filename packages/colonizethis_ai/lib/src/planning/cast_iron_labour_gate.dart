@@ -35,7 +35,13 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   )) {
     return false;
   }
+  return _isCastIronLabourPopulationBoundCore(game: game, playerId: playerId);
+}
 
+bool _isCastIronLabourPopulationBoundCore({
+  required Game game,
+  required String playerId,
+}) {
   final player = game.playerById(playerId);
   if (player == null) return false;
 
@@ -64,6 +70,16 @@ bool _lockRecoverySellerNeedsDomesticCastIronFromIron({
   required String playerId,
 }) {
   if (regimentCountForPlayer(game, playerId) != 0) return false;
+  return _belowQuotaSellerNeedsDomesticCastIronFromIron(
+    game: game,
+    playerId: playerId,
+  );
+}
+
+bool _belowQuotaSellerNeedsDomesticCastIronFromIron({
+  required Game game,
+  required String playerId,
+}) {
   if (!isBelowQuotaZeroNwSeller(game, playerId)) return false;
   final player = game.playerById(playerId);
   if (player == null) return false;
@@ -137,10 +153,13 @@ bool isCastIronLabourPeasantRecruitFabricMarketPathActive({
   required String playerId,
   required Stockpile projected,
 }) {
-  if (!isCastIronLabourPopulationBoundForLockRecoverySeller(
+  if (!_belowQuotaSellerNeedsDomesticCastIronFromIron(
     game: game,
     playerId: playerId,
   )) {
+    return false;
+  }
+  if (!_isCastIronLabourPopulationBoundCore(game: game, playerId: playerId)) {
     return false;
   }
   return isCastIronLabourPeasantRecruitFabricShort(projected);
