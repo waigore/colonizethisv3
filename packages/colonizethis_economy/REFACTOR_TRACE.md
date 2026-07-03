@@ -327,9 +327,21 @@ Module: `colonizethis_economy_test_support/lib/src/economy_production_scenarios.
 
 Module: `colonizethis_economy_test_support/lib/src/worker_action_cost_scenarios.dart`
 
+## Phase 2 — Slice 14 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| auto-offer-empty-* | two empty-fixture rows | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-per-tile | emits one priority-1 offer per non-riches tile with originTileKey set | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-minor-tribe | aggregates minor and tribe offers in the same result map | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-riches | excludes riches commodities (spices) per Requirement 11 | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-minerals | minerals stay excluded — no offer for iron tile | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-no-connectivity | factions with no connectivity entry omitted | `non_gp_auto_offers_test.dart` | #2991 C4 |
+
+Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining core economy suite (`non_gp_auto_offers_test.dart`) → scenario tables
-- Deal-matcher treasury dedup (`treasury_bid_budget.dart` shared helpers + CI gate)
-- Extended inline-`Game(` guard for all `packages/colonizethis_economy/test/**`
+- Deal-matcher treasury dedup — done (shared helpers + `repo.economy_deal_matcher_treasury_budget_shared`)
+- Extended inline-`Game(` guard — done (`repo.economy_test_no_inline_game` on all `test/**`)
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations
