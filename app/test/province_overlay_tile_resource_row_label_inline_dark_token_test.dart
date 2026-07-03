@@ -33,8 +33,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+
+import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pTileResLabelTest';
@@ -108,42 +109,6 @@ PlayerView _omniscientViewForTiles(Iterable<String> keys) {
   );
 }
 
-Widget _darkOverlayWithGrainTile() {
-  final tk = _tileKey(0, 0);
-  final game = _minimalGameWithGrainTile(tk);
-  final region = _regionWithCells(
-    const [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: _localProvinceId,
-        isSea: false,
-        terrainTypeId: 'plains',
-        resourceId: 'grain',
-        visibility: TileVisibility.visible,
-      ),
-    ],
-    1,
-    1,
-  );
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: SizedBox(
-        width: 800,
-        child: ProvinceSeaZoneDetailOverlay(
-          game: game,
-          region: region,
-          displayId: _fullProvinceId,
-          selectedTileKey: tk,
-          humanPlayerId: 'gp1',
-          playerView: _omniscientViewForTiles([tk]),
-        ),
-      ),
-    ),
-  );
-}
-
 /// Selects the Tile section's `ResourceLabelInline` widget by matching on
 /// its `labelStyle.color` token (`EditorialMonoclePalette.fg`). The
 /// Economic section row layout now also forwards `labelStyle` (improved
@@ -168,182 +133,224 @@ List<ResourceLabelInline> _tilePinnedLabels(WidgetTester tester) {
 void main() {
   suppressLogsForTests();
 
-  group(
-    'ProvinceSeaZoneDetailOverlay dark editorial-monocle Tile section '
-    'Resource row — ResourceLabelInline commodity-id label '
-    '(SPEC § Dark-theme Tile section body tokens — live-data body rows: '
-    'Resource row commodity-id label)',
-    () {
-      testWidgets(
-        'commodity-id label resolves to EditorialMonoclePalette.fg under '
+  group('ProvinceSeaZoneDetailOverlay dark editorial-monocle Tile section '
+      'Resource row — ResourceLabelInline commodity-id label '
+      '(SPEC § Dark-theme Tile section body tokens — live-data body rows: '
+      'Resource row commodity-id label)', () {
+    testWidgets('commodity-id label resolves to EditorialMonoclePalette.fg under '
         'editorialMonocle (positive AC: Resource row commodity-id label '
-        'colour)',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(_darkOverlayWithGrainTile());
-          await tester.pumpAndSettle();
+        'colour)', (WidgetTester tester) async {
+      final tk = _tileKey(0, 0);
+      final game = _minimalGameWithGrainTile(tk);
+      final region = _regionWithCells(
+        const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: _localProvinceId,
+            isSea: false,
+            terrainTypeId: 'plains',
+            resourceId: 'grain',
+            visibility: TileVisibility.visible,
+          ),
+        ],
+        1,
+        1,
+      );
+      await tester.pumpWidget(
+        buildProvinceOverlayDarkThemeShell(
+          game: game,
+          region: region,
+          displayId: _fullProvinceId,
+          selectedTileKey: tk,
+          humanPlayerId: 'gp1',
+          playerView: _omniscientViewForTiles([tk]),
+          shellWidth: 800,
+        ),
+      );
+      await tester.pumpAndSettle();
 
-          final tilePinned = _tilePinnedLabels(tester);
-          expect(
-            tilePinned,
-            hasLength(1),
-            reason:
-                'Expected exactly one fg-coloured ResourceLabelInline.labelStyle '
-                'in the overlay tree — the Tile section\'s commodity-id label. '
-                'The Economic section\'s improvable row mounts a '
-                'ResourceLabelInline with labelStyle.color == '
-                'EditorialMonoclePalette.muted (impLevel == 0 in this setup), so '
-                'filtering on the fg token isolates the Tile pin deterministically.',
-          );
-          expect(
-            tilePinned.single.labelStyle?.color,
-            EditorialMonoclePalette.fg,
-            reason:
-                'Tile Resource row ResourceLabelInline.labelStyle.color '
-                'must resolve to EditorialMonoclePalette.fg (SPEC AC '
-                '"Dark-theme Tile live-data — Resource row commodity-id '
-                'label colour").',
-          );
-
-          // The internal rendered `Text(label ?? commodityId)` must inherit
-          // that style verbatim. Find the `Text` widget whose data equals
-          // the commodity id ("grain") and whose own `style.color` equals
-          // `fg`. There is exactly one such `Text` because the Economic
-          // section row layout renders its commodity-id label without an
-          // explicit fg colour (it falls through to DefaultTextStyle).
-          final fgGrain = tester.widgetList<Text>(
-            find.byWidgetPredicate(
-              (Widget w) =>
-                  w is Text &&
-                  w.data == 'grain' &&
-                  w.style?.color == EditorialMonoclePalette.fg,
-            ),
-          );
-          expect(
-            fgGrain,
-            hasLength(1),
-            reason:
-                'Exactly one rendered "grain" Text widget must carry '
-                'style.color == EditorialMonoclePalette.fg (the Tile '
-                'commodity-id label inside ResourceLabelInline). Found '
-                '${fgGrain.length}. Check that the Tile call site still '
-                'forwards _fgBodyStyle() through '
-                'ResourceLabelInline.labelStyle.',
-          );
-        },
+      final tilePinned = _tilePinnedLabels(tester);
+      expect(
+        tilePinned,
+        hasLength(1),
+        reason:
+            'Expected exactly one fg-coloured ResourceLabelInline.labelStyle '
+            'in the overlay tree — the Tile section\'s commodity-id label. '
+            'The Economic section\'s improvable row mounts a '
+            'ResourceLabelInline with labelStyle.color == '
+            'EditorialMonoclePalette.muted (impLevel == 0 in this setup), so '
+            'filtering on the fg token isolates the Tile pin deterministically.',
+      );
+      expect(
+        tilePinned.single.labelStyle?.color,
+        EditorialMonoclePalette.fg,
+        reason:
+            'Tile Resource row ResourceLabelInline.labelStyle.color '
+            'must resolve to EditorialMonoclePalette.fg (SPEC AC '
+            '"Dark-theme Tile live-data — Resource row commodity-id '
+            'label colour").',
       );
 
-      testWidgets(
-        'commodity-id label regression guard — never falls through '
+      // The internal rendered `Text(label ?? commodityId)` must inherit
+      // that style verbatim. Find the `Text` widget whose data equals
+      // the commodity id ("grain") and whose own `style.color` equals
+      // `fg`. There is exactly one such `Text` because the Economic
+      // section row layout renders its commodity-id label without an
+      // explicit fg colour (it falls through to DefaultTextStyle).
+      final fgGrain = tester.widgetList<Text>(
+        find.byWidgetPredicate(
+          (Widget w) =>
+              w is Text &&
+              w.data == 'grain' &&
+              w.style?.color == EditorialMonoclePalette.fg,
+        ),
+      );
+      expect(
+        fgGrain,
+        hasLength(1),
+        reason:
+            'Exactly one rendered "grain" Text widget must carry '
+            'style.color == EditorialMonoclePalette.fg (the Tile '
+            'commodity-id label inside ResourceLabelInline). Found '
+            '${fgGrain.length}. Check that the Tile call site still '
+            'forwards _fgBodyStyle() through '
+            'ResourceLabelInline.labelStyle.',
+      );
+    });
+
+    testWidgets('commodity-id label regression guard — never falls through '
         'DefaultTextStyle and never resolves to Colors.white (the bare '
-        'dark Material bodyMedium fallback) under editorialMonocle',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(_darkOverlayWithGrainTile());
-          await tester.pumpAndSettle();
-
-          final tilePinned = _tilePinnedLabels(tester);
-          expect(
-            tilePinned,
-            isNotEmpty,
-            reason:
-                'Tile commodity-id label must be pinned via '
-                'ResourceLabelInline.labelStyle with '
-                'EditorialMonoclePalette.fg (SPEC regression guard); '
-                'no fg-coloured ResourceLabelInline.labelStyle is mounted '
-                'in the overlay tree, so the Tile call site is falling '
-                'through to DefaultTextStyle.',
-          );
-          final style = tilePinned.single.labelStyle;
-          expect(
-            style,
-            isNotNull,
-            reason:
-                'Tile ResourceLabelInline must declare a non-null '
-                'labelStyle so the rendered commodity-id Text does not '
-                'fall through DefaultTextStyle (SPEC AC "Dark-theme '
-                'Tile live-data — Resource row commodity-id label '
-                'Material fallback regression guard").',
-          );
-          expect(
-            style?.color,
-            isNotNull,
-            reason:
-                'Tile ResourceLabelInline.labelStyle.color must be '
-                'non-null per SPEC regression guard.',
-          );
-          expect(
-            style?.color,
-            isNot(Colors.white),
-            reason:
-                'Tile commodity-id label must not regress to the dark '
-                'Material bodyMedium `Colors.white` fallback (SPEC '
-                'regression guard).',
-          );
-          expect(
-            style?.color,
-            EditorialMonoclePalette.fg,
-            reason:
-                'Tile commodity-id label must resolve to '
-                'EditorialMonoclePalette.fg (SPEC regression guard '
-                'positive token pin).',
-          );
-        },
+        'dark Material bodyMedium fallback) under editorialMonocle', (
+      WidgetTester tester,
+    ) async {
+      final tk = _tileKey(0, 0);
+      final game = _minimalGameWithGrainTile(tk);
+      final region = _regionWithCells(
+        const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: _localProvinceId,
+            isSea: false,
+            terrainTypeId: 'plains',
+            resourceId: 'grain',
+            visibility: TileVisibility.visible,
+          ),
+        ],
+        1,
+        1,
       );
+      await tester.pumpWidget(
+        buildProvinceOverlayDarkThemeShell(
+          game: game,
+          region: region,
+          displayId: _fullProvinceId,
+          selectedTileKey: tk,
+          humanPlayerId: 'gp1',
+          playerView: _omniscientViewForTiles([tk]),
+          shellWidth: 800,
+        ),
+      );
+      await tester.pumpAndSettle();
 
-      testWidgets(
-        'ResourceLabelInline default labelStyle == null preserves '
+      final tilePinned = _tilePinnedLabels(tester);
+      expect(
+        tilePinned,
+        isNotEmpty,
+        reason:
+            'Tile commodity-id label must be pinned via '
+            'ResourceLabelInline.labelStyle with '
+            'EditorialMonoclePalette.fg (SPEC regression guard); '
+            'no fg-coloured ResourceLabelInline.labelStyle is mounted '
+            'in the overlay tree, so the Tile call site is falling '
+            'through to DefaultTextStyle.',
+      );
+      final style = tilePinned.single.labelStyle;
+      expect(
+        style,
+        isNotNull,
+        reason:
+            'Tile ResourceLabelInline must declare a non-null '
+            'labelStyle so the rendered commodity-id Text does not '
+            'fall through DefaultTextStyle (SPEC AC "Dark-theme '
+            'Tile live-data — Resource row commodity-id label '
+            'Material fallback regression guard").',
+      );
+      expect(
+        style?.color,
+        isNotNull,
+        reason:
+            'Tile ResourceLabelInline.labelStyle.color must be '
+            'non-null per SPEC regression guard.',
+      );
+      expect(
+        style?.color,
+        isNot(Colors.white),
+        reason:
+            'Tile commodity-id label must not regress to the dark '
+            'Material bodyMedium `Colors.white` fallback (SPEC '
+            'regression guard).',
+      );
+      expect(
+        style?.color,
+        EditorialMonoclePalette.fg,
+        reason:
+            'Tile commodity-id label must resolve to '
+            'EditorialMonoclePalette.fg (SPEC regression guard '
+            'positive token pin).',
+      );
+    });
+
+    testWidgets('ResourceLabelInline default labelStyle == null preserves '
         'existing call-site behaviour for unmigrated consumers (negative '
         'AC: opt-in pin must not regress production-panel chips and other '
-        'consumers that have not migrated to forward labelStyle)',
-        (WidgetTester tester) async {
-          // Mount ResourceLabelInline directly without `labelStyle` —
-          // mirrors the default call-site behaviour used by consumers
-          // that have not yet migrated to forward labelStyle (e.g.
-          // production-panel commodity chips). The Economic section row
-          // layout was migrated by a follow-up slice to forward
-          // labelStyle, but the widget's default behaviour must still
-          // preserve `labelStyle == null` and `Text(...)` `style: null`
-          // for unmigrated consumers.
-          await tester.pumpWidget(
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              home: const Scaffold(
-                body: ResourceLabelInline(commodityId: 'grain'),
-              ),
-            ),
-          );
-          await tester.pumpAndSettle();
-
-          final widget = tester.widget<ResourceLabelInline>(
-            find.byType(ResourceLabelInline),
-          );
-          expect(
-            widget.labelStyle,
-            isNull,
-            reason:
-                'Default ResourceLabelInline (without explicit '
-                'labelStyle) must keep `labelStyle == null` so unmigrated '
-                'consumers (e.g. production-panel commodity chips) '
-                'preserve their token contract and resolve their '
-                'commodity-id label through DefaultTextStyle (matching '
-                'pre-slice behaviour).',
-          );
-
-          final text = tester.widget<Text>(
-            find.byWidgetPredicate(
-              (Widget w) => w is Text && w.data == 'grain',
-            ),
-          );
-          expect(
-            text.style,
-            isNull,
-            reason:
-                'Default ResourceLabelInline must render its internal '
-                'Text with `style: null` so the rendered colour resolves '
-                'through DefaultTextStyle for unmigrated call sites '
-                '(opt-in pin path must not change the default).',
-          );
-        },
+        'consumers that have not migrated to forward labelStyle)', (
+      WidgetTester tester,
+    ) async {
+      // Mount ResourceLabelInline directly without `labelStyle` —
+      // mirrors the default call-site behaviour used by consumers
+      // that have not yet migrated to forward labelStyle (e.g.
+      // production-panel commodity chips). The Economic section row
+      // layout was migrated by a follow-up slice to forward
+      // labelStyle, but the widget's default behaviour must still
+      // preserve `labelStyle == null` and `Text(...)` `style: null`
+      // for unmigrated consumers.
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: const Scaffold(body: ResourceLabelInline(commodityId: 'grain')),
+        ),
       );
-    },
-  );
+      await tester.pumpAndSettle();
+
+      final widget = tester.widget<ResourceLabelInline>(
+        find.byType(ResourceLabelInline),
+      );
+      expect(
+        widget.labelStyle,
+        isNull,
+        reason:
+            'Default ResourceLabelInline (without explicit '
+            'labelStyle) must keep `labelStyle == null` so unmigrated '
+            'consumers (e.g. production-panel commodity chips) '
+            'preserve their token contract and resolve their '
+            'commodity-id label through DefaultTextStyle (matching '
+            'pre-slice behaviour).',
+      );
+
+      final text = tester.widget<Text>(
+        find.byWidgetPredicate((Widget w) => w is Text && w.data == 'grain'),
+      );
+      expect(
+        text.style,
+        isNull,
+        reason:
+            'Default ResourceLabelInline must render its internal '
+            'Text with `style: null` so the rendered colour resolves '
+            'through DefaultTextStyle for unmigrated call sites '
+            '(opt-in pin path must not change the default).',
+      );
+    });
+  });
 }
