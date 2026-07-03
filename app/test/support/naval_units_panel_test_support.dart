@@ -3,8 +3,8 @@
 // The five `app/test/naval_units_panel_part*_test.dart` files each previously
 // re-declared identical top-level `wireNavalSplitForWidgetTest` /
 // `wireNavalTransferForWidgetTest` event bridges plus an identical local
-// `buildPanel(...)` closure that wraps `NavalUnitsPanel` in a plain
-// `MaterialApp` > `Scaffold`. Consolidating them here keeps each part file's
+// `buildPanel(...)` closure that wraps `NavalUnitsPanel` in a
+// `buildAppShell` > `Scaffold`. Consolidating them here keeps each part file's
 // per-test fixtures and assertions local while removing the copy-pasted shell
 // and bus wiring.
 //
@@ -21,6 +21,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+
+import 'app_shell_harness.dart';
 
 /// Mirrors the running shell's handling of [NavalSplitFleetRequestedEvent] for
 /// widget tests: applies [applyNavalSplitFleet] to the latest game snapshot and
@@ -67,9 +69,9 @@ wireNavalTransferForWidgetTest({
 }
 
 /// Builds the canonical [NavalUnitsPanel] host used across the panel's widget
-/// tests: a plain [MaterialApp] > [Scaffold] wrapping the panel. When [bus] is
-/// omitted a fresh [AppEventBus] is created so tests that do not need to drive
-/// events still get a valid bus.
+/// tests: editorial-monocle [buildAppShell] > [Scaffold] wrapping the panel.
+/// When [bus] is omitted a fresh [AppEventBus] is created so tests that do not
+/// need to drive events still get a valid bus.
 Widget buildNavalPanel({
   required Game game,
   required String humanPlayerId,
@@ -79,8 +81,8 @@ Widget buildNavalPanel({
   String? locationScopeKey,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: NavalUnitsPanel(
         game: game,
         humanPlayerId: humanPlayerId,
