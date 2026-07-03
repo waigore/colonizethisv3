@@ -868,12 +868,12 @@ rules:
     runner: dart
     script: tool/check_map_no_partfile_classes.dart
 
-  - rule_id: repo.map_gen_file_size
+  - rule_id: repo.map_lib_file_size
     group: structure
-    title: colonizethis_map generation/view-layer source files must be 500 non-comment lines or fewer (Refs #3588)
+    title: colonizethis_map gen/view/render source files must be 500 non-comment lines or fewer (Refs #3588, #3846)
     spec: SPEC/program/repo-lint.md
     runner: dart
-    script: tool/check_map_gen_file_size.dart
+    script: tool/check_map_lib_file_size.dart
 
   - rule_id: repo.map_grid_ops_central
     group: structure
@@ -1035,6 +1035,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_test_no_duplicate_view_fixtures.dart
+
+  - rule_id: repo.map_test_view_builder_file_count
+    group: architecture
+    title: colonizethis_map init_game_map_view_builder_* test file count hard cap (Refs #3846)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_view_builder_file_count.dart
+
+  - rule_id: repo.map_test_shared_topology_fixtures
+    group: architecture
+    title: colonizethis_map render/visualizer tests must use shared topology fixtures (Refs #3846)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_shared_topology_fixtures.dart
 
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture

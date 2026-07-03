@@ -37,7 +37,7 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
-import 'check_map_gen_file_size.dart';
+import 'check_map_lib_file_size.dart';
 import 'check_map_gen_no_image_import.dart';
 import 'check_map_gen_stage_protocol.dart';
 import 'check_map_no_partfile_classes.dart';
@@ -46,6 +46,8 @@ import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
 import 'check_map_test_no_duplicate_view_fixtures.dart';
+import 'check_map_test_shared_topology_fixtures.dart';
+import 'check_map_test_view_builder_file_count.dart';
 import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
@@ -1060,8 +1062,8 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapGenStageProtocol(repoRoot);
     case 'repo.map_gen_no_new_partfiles':
       return runCheckMapGenNoNewPartfiles(repoRoot);
-    case 'repo.map_gen_file_size':
-      return runCheckMapGenFileSize(repoRoot);
+    case 'repo.map_lib_file_size':
+      return runCheckMapLibFileSize(repoRoot);
     case 'repo.map_public_barrel_surface':
       return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.map_region_data_access_central':
@@ -1070,6 +1072,10 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapRegionDispatchCentral(repoRoot);
     case 'repo.map_test_no_duplicate_view_fixtures':
       return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
+    case 'repo.map_test_view_builder_file_count':
+      return runCheckMapTestViewBuilderFileCount(repoRoot);
+    case 'repo.map_test_shared_topology_fixtures':
+      return runCheckMapTestSharedTopologyFixtures(repoRoot);
     default:
       return null;
   }

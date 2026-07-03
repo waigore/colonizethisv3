@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'support/init_game_map_view_fixtures.dart';
 
 void main() {
-  group('buildInitGameMapViewData visibility and unit presence', () {
+group('buildInitGameMapViewData visibility and unit presence', () {
     test('applies visibilityByTile map to CellViewData.visibility', () {
       final owMap = mapTileGrid([
         ['p1', 'p1'],

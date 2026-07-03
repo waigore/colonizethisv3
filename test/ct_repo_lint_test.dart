@@ -28,12 +28,12 @@ void main() {
       expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.turn_no_part_directives'));
       expect(ids, contains('repo.map_gen_no_new_partfiles'));
-      expect(ids, contains('repo.map_gen_file_size'));
+      expect(ids, contains('repo.map_lib_file_size'));
       expect(
         rules
-            .firstWhere((r) => r.ruleId == 'repo.map_gen_file_size')
+            .firstWhere((r) => r.ruleId == 'repo.map_lib_file_size')
             .script,
-        'tool/check_map_gen_file_size.dart',
+        'tool/check_map_lib_file_size.dart',
       );
       expect(
         rules

@@ -1,17 +1,16 @@
-// Map generation/view-layer non-comment line gate (`repo.map_gen_file_size`).
+// Map lib non-comment line gate (`repo.map_lib_file_size`).
 //
-// SPEC: SPEC/program/repo-lint.md (Refs #3588). The repository-wide
+// SPEC: SPEC/program/repo-lint.md (Refs #3588, #3846). The repository-wide
 // `repo.dart_file_non_comment_line_size` gate caps every Dart file at 1000
 // non-comment lines. This focused gate additionally caps the colonizethis_map
-// generation-layer (`lib/src/gen/**`) and view-layer (`lib/src/view/**`) source
-// families at 500 non-comment lines so the #3588 part-file decomposition keeps
-// each pass/concern small and individually testable; any regression is flagged
-// with a map-specific message that points at the right remediation (split by
-// concern per `colonizethis-code-review`).
+// generation-layer (`lib/src/gen/**`), view-layer (`lib/src/view/**`), and
+// render-layer (`lib/src/render/**`) source families at 500 non-comment lines
+// so part-file decomposition keeps each pass/concern small and individually
+// testable; any regression is flagged with a map-specific message that points
+// at the right remediation (split by concern per `colonizethis-code-review`).
 //
-// The gate asserts both scanned roots exist, so it cannot silently rot if the
-// generation/view layers move or are renamed (update [mapGenFileSizeScanRoots]
-// in that case).
+// The gate asserts all scanned roots exist, so it cannot silently rot if the
+// layers move or are renamed (update [mapLibFileSizeScanRoots] in that case).
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -24,21 +23,20 @@ const _maxNonCommentLines = 500;
 
 const _mapLibSrc = 'packages/colonizethis_map/lib/src';
 
-/// The generation/view-layer source roots gated at or below
-/// [_maxNonCommentLines] non-comment lines (Refs #3588 AC: no generation-layer
-/// or view-layer source file exceeds 500 non-comment lines after the part-file
-/// decomposition).
-const List<String> mapGenFileSizeScanRoots = <String>[
+/// The gen/view/render source roots gated at or below [_maxNonCommentLines]
+/// non-comment lines (Refs #3588, #3846).
+const List<String> mapLibFileSizeScanRoots = <String>[
   '$_mapLibSrc/gen',
   '$_mapLibSrc/view',
+  '$_mapLibSrc/render',
 ];
 
 /// Used by `ct_repo_lint`/tests; [info] / [err] default to stdout/stderr.
 ///
-/// [scanRoots] overrides the canonical [mapGenFileSizeScanRoots] set (tests
+/// [scanRoots] overrides the canonical [mapLibFileSizeScanRoots] set (tests
 /// point it at a temp tree). Returns `0` when every scanned root exists and
 /// every Dart file under it stays at or below the cap, `1` otherwise.
-int runCheckMapGenFileSize(
+int runCheckMapLibFileSize(
   String repoRoot, {
   Iterable<String>? scanRoots,
   void Function(String line)? info,
@@ -47,7 +45,7 @@ int runCheckMapGenFileSize(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
 
-  final roots = (scanRoots ?? mapGenFileSizeScanRoots)
+  final roots = (scanRoots ?? mapLibFileSizeScanRoots)
       .map((path) => path.replaceAll('\\', '/'))
       .toList(growable: false);
 
@@ -78,8 +76,8 @@ int runCheckMapGenFileSize(
 
   if (missing.isNotEmpty) {
     logE(
-      'check_map_gen_file_size: scanned root(s) not found (map gen/view layer '
-      'moved or renamed? update mapGenFileSizeScanRoots):',
+      'check_map_lib_file_size: scanned root(s) not found (map lib layer '
+      'moved or renamed? update mapLibFileSizeScanRoots):',
     );
     for (final relativeRoot in missing) {
       logE(' - $relativeRoot');
@@ -88,13 +86,13 @@ int runCheckMapGenFileSize(
   }
 
   if (violations.isEmpty) {
-    logI('check_map_gen_file_size: no violations found.');
+    logI('check_map_lib_file_size: no violations found.');
     return 0;
   }
 
   violations.sort();
   logE(
-    'check_map_gen_file_size: found ${violations.length} violation(s) '
+    'check_map_lib_file_size: found ${violations.length} violation(s) '
     '(cap $_maxNonCommentLines non-comment lines; split by concern per '
     'colonizethis-code-review):',
   );
@@ -104,11 +102,11 @@ int runCheckMapGenFileSize(
   return 1;
 }
 
-int maxMapGenFileNonCommentLinesForTests() => _maxNonCommentLines;
+int maxMapLibFileNonCommentLinesForTests() => _maxNonCommentLines;
 
 void main(List<String> args) {
   // Accept (and ignore) the strict `--files` incremental contract for CI
-  // uniformity; this is a fixed-root family gate over the gen/view layers.
+  // uniformity; this is a fixed-root family gate over the gen/view/render layers.
   repoLintStrictIncrementalFilesArgListOrExit(args);
-  exit(runCheckMapGenFileSize(Directory.current.path));
+  exit(runCheckMapLibFileSize(Directory.current.path));
 }
