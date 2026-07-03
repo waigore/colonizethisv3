@@ -212,9 +212,22 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/purchased_tile_riches_scenarios.dart`
 - Extended `colonizethis_economy_test_support/lib/src/purchased_tile_riches_test_support.dart` (post-conquest, tribe, multi-GP builders)
 
+## Phase 2 — Slice 5 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| suggester-empty-* | three empty / defensive-path rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-offer-* | four surplus-offer detection rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-bid-* | three deficit-bid detection rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-bid-cap-* | three bid type cap (rule 4) rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-cargo-* | three cumulative cargo cap (rule 5) rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-validator-* | two validator-clean-by-construction rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+
+Module: `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 10 imperative world-market test files → scenario tables
+- Remaining 9 imperative world-market test files → scenario tables
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
 - `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
 - ≥15% test LOC reduction target (≤6,500 LOC)

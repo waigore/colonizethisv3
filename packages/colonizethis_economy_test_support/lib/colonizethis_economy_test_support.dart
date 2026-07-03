@@ -40,6 +40,7 @@ export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';
 export 'src/treasury_bid_budget_scenarios.dart';
 export 'src/trade_order_factory.dart';
+export 'src/trade_order_suggester_scenarios.dart';
 export 'src/trade_order_suggester_test_support.dart';
 export 'src/trade_order_validator_scenarios.dart';
 export 'src/trade_order_validator_treasury_scenarios.dart';
