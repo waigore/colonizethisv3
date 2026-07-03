@@ -262,6 +262,8 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 | `military_units_panel_test` | 5 | Combined LOC ≫1000 |
 | `civilian_units_panel_test` | 3 | Combined LOC ≫1000 |
 
+**Seed-42 demo fixtures (Refs #3847):** `province_overlay_demo_data.dart` and overlay/Widgetbook consumers load committed seed-42 JSON via `app/lib/test_support/seed42_fixture_loader.dart` (and `map_view_serialization.dart`) instead of `getDebugInitGameResult()` where topology is not under test. Test suites re-export the same loaders from `app/test/support/game_fixture.dart` and `map_view_fixture.dart`.
+
 **Approved `app/test/support/` harness modules (Refs #3847):** Shared widget-test scaffolding MUST live under `app/test/support/` — not re-declared in individual test files. Canonical modules include `app_shell_harness.dart` (`buildAppShell`, `pumpAppShell`), `min_viewport_harness.dart`, `diplomacy_panel_test_support.dart`, `widgetbook_test_harness.dart`, `province_overlay_test_harness.dart`, `military_units_panel_test_support.dart`, `naval_units_panel_test_support.dart`, and the `panel_fixtures/` barrel. AST gates `check_app_test_no_duplicate_scaffolding.dart`, `check_app_test_no_duplicate_diplomacy_host.dart`, and the Widgetbook `_useCase` pattern in the scaffolding gate enforce this.
 
 **Low-risk e2e mirror barrel (Refs #3847):** Standalone `app/test/e2e_*_test.dart` files classified low-risk per issue #3847 (no timing/`pumpUntil`/`Stopwatch`, not AC-pin barrels, ≤2 top-level tests) MUST be covered by `app/test/e2e_low_risk_mirror_barrel_smoke_test.dart` and removed as standalone files. High-risk mirrors stay dedicated.
