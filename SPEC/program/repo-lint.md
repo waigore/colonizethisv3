@@ -252,6 +252,20 @@ Across tools that intentionally share skip logic, exclude at minimum:
 
 Large `app/test/**` widget/screen suites that are split into numbered fragments to stay under `repo.dart_file_non_comment_line_size` MUST use the single documented convention **`<family>_part<N>_test.dart`** (for example `military_units_panel_part1_test.dart`, matching the already-clean `province_panel_draft_orders_part2_test.dart` and the `order_merge_part1_test.dart` precedent above). The awkward double `_test` suffix `<family>_test_part<N>_test.dart` is **disallowed**. Standalone gate `tool/check_app_test_no_partn_double_suffix.dart` (paired test `test/check_app_test_no_partn_double_suffix_test.dart`, auto-discovered by the `dart test test/check_*_test.dart` step) flags any reintroduced double-suffix fragment (Refs #3730).
 
+**Stay-split families (Refs #3847):** The five baseline `*_partN_test.dart` families below remain split because post-harness combined non-comment LOC exceeds the merge trigger (≤1000 LOC, ≤5 top-level `group(`, ≤3 distinct `app/test/support/` imports). Re-verify before any merge:
+
+| Family | Parts | Stay-split reason |
+|--------|-------|-------------------|
+| `naval_units_panel_test` | 5 | Combined LOC ≫1000 |
+| `ct_region_map_widget_test` | 3 | Combined LOC ≫1000 |
+| `game_map_area_state_logic_test` | 3 | Combined LOC ≫1000 |
+| `military_units_panel_test` | 5 | Combined LOC ≫1000 |
+| `civilian_units_panel_test` | 3 | Combined LOC ≫1000 |
+
+**Approved `app/test/support/` harness modules (Refs #3847):** Shared widget-test scaffolding MUST live under `app/test/support/` — not re-declared in individual test files. Canonical modules include `app_shell_harness.dart` (`buildAppShell`, `pumpAppShell`), `min_viewport_harness.dart`, `diplomacy_panel_test_support.dart`, `widgetbook_test_harness.dart`, `province_overlay_test_harness.dart`, `military_units_panel_test_support.dart`, `naval_units_panel_test_support.dart`, and the `panel_fixtures/` barrel. AST gates `check_app_test_no_duplicate_scaffolding.dart`, `check_app_test_no_duplicate_diplomacy_host.dart`, and the Widgetbook `_useCase` pattern in the scaffolding gate enforce this.
+
+**Low-risk e2e mirror barrel (Refs #3847):** Standalone `app/test/e2e_*_test.dart` files classified low-risk per issue #3847 (no timing/`pumpUntil`/`Stopwatch`, not AC-pin barrels, ≤2 top-level tests) MUST be covered by `app/test/e2e_low_risk_mirror_barrel_smoke_test.dart` and removed as standalone files. High-risk mirrors stay dedicated.
+
 ### Scan contract vs lib-only checkers (GitHub #2014)
 
 **Domain collector** `collectRepoLintDomainDartFiles` in `tool/ct_repo_lint_scan_contract.dart` includes workspace **`packages/*/lib|test|integration_test`**, **`app/lib|test|integration_test`**, **`ctdev/lib|test`**, and **`tool/**`** Dart that passes `repoLintPathIsDomainLibSourceForScan` or `repoLintPathIsDomainTestOrIntegrationTestSourceForScan`: generated suffixes and `repoLintFixtureDirPathMarkers` paths are excluded; **repo-root `test/**`** (checker/tool tests) stays excluded so those files do not run production AST rules. Checkers using it include (non-exhaustive): `check_disallowed_ast_patterns`, `check_custom_exceptions`, `check_function_size`, `check_part_unit_size`, `check_control_flow_nesting_depth`; `check_debug_console_logic_contract_boundary` delegates to the disallowed-AST checker. Per-file guards in `check_disallowed_ast_patterns` use **`repoLintPathShouldSkipAstRuleFile`** (same exclusions except package `test/` is analyzed). `check_repeated_magic_numbers` remains scoped by its own SPEC (`SPEC/program/repeated-magic-numbers.md`) and excludes test trees.

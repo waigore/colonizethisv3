@@ -5,10 +5,11 @@
 // previously re-declared an identical local `buildPanel(...)` closure (a
 // `buildAppShell` > `Scaffold` host for `MilitaryUnitsPanel`), identical
 // `expandFirstArmyExpansion` / `expandAllArmyExpansions` `ExpansionTile`
-// helpers, and a byte-identical `_ArmySplitTestHarness` widget that mirrors the
-// running shell's `ArmySplitRequestedEvent` handling. Consolidating them here
-// keeps each test file's per-test fixtures and assertions local while removing
-// the copy-pasted shell, tree helpers, and bus wiring.
+// helpers, and an `ArmySplitTestHarness` widget that mirrors the running
+// shell's `ArmySplitRequestedEvent` handling (hosted via [pumpArmySplitHarness] >
+// [buildAppShell]). Consolidating them here keeps each test file's per-test
+// fixtures and assertions local while removing the copy-pasted shell, tree
+// helpers, and bus wiring.
 //
 // Refs #3730 (consolidate app test scaffolding; shared family setup).
 // SPEC: SPEC/ui/military-units-panel.md (panel behavior under test),
@@ -70,6 +71,31 @@ Future<void> expandAllArmyExpansions(WidgetTester tester) async {
     await tester.tap(finder.at(i));
     await tester.pumpAndSettle();
   }
+}
+
+/// Tall viewport for army-split interaction tests ([ListView] rows need height).
+const Size kArmySplitTestViewport = Size(480, 900);
+
+/// Pumps [ArmySplitTestHarness] inside the canonical editorial-monocle
+/// [buildAppShell] > [Scaffold] host at [kArmySplitTestViewport].
+Future<void> pumpArmySplitHarness(
+  WidgetTester tester, {
+  required Game initialGame,
+  required String humanPlayerId,
+  required AppEventBus bus,
+}) {
+  return pumpAppShell(
+    tester,
+    viewport: kArmySplitTestViewport,
+    child: Scaffold(
+      body: ArmySplitTestHarness(
+        initialGame: initialGame,
+        humanPlayerId: humanPlayerId,
+        bus: bus,
+      ),
+    ),
+    settle: true,
+  );
 }
 
 /// Applies [ArmySplitRequestedEvent] like `AppEventHandlerScope` and rebuilds
