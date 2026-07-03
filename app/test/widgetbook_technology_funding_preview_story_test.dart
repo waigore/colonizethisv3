@@ -28,6 +28,7 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:colonizethis_app/features/game/widgets/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_slot_funding_toggles.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'support/widgetbook_test_harness.dart';
 
 /// The three research slots seeded as assigned + editable by
 /// `technologyFundingPreviewFixture` (SPEC/ui/technology-panel.md § Widgetbook).
@@ -40,7 +41,7 @@ const String _kMobileUseCaseName = 'Slots — funding & turn preview (mobile)';
 /// Locate the single use case with [useCaseName] inside the [WidgetbookFolder]
 /// whose name matches [folderName], failing with a readable matcher message if
 /// the folder or use case is missing.
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -110,12 +111,12 @@ void main() {
     testWidgets(
       'both desktop + mobile use cases are wired into techTreeDirectories',
       (WidgetTester tester) async {
-        final desktop = _useCase(
+        final desktop = findWidgetbookUseCase(
           techTreeDirectories,
           folderName: _kFolderName,
           useCaseName: _kDesktopUseCaseName,
         );
-        final mobile = _useCase(
+        final mobile = findWidgetbookUseCase(
           techTreeDirectories,
           folderName: _kFolderName,
           useCaseName: _kMobileUseCaseName,
@@ -132,7 +133,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(900, 900));
 
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           techTreeDirectories,
           folderName: _kFolderName,
           useCaseName: _kDesktopUseCaseName,
@@ -151,7 +152,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(360, 640));
 
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           techTreeDirectories,
           folderName: _kFolderName,
           useCaseName: _kMobileUseCaseName,

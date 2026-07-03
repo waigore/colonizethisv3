@@ -9,13 +9,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-Future<void> _bindTallTestSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(800, 4000));
-}
 
 void main() {
   suppressLogsForTests();
@@ -480,7 +476,7 @@ void main() {
       const humanId = kPanelTestHumanPlayerId;
       final game = buildDiplomacyRichPanelTestGame();
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -530,7 +526,7 @@ void main() {
         },
       );
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -586,7 +582,7 @@ void main() {
         ],
       );
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -637,7 +633,7 @@ void main() {
         },
       );
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -709,7 +705,7 @@ void main() {
           .first
           .timeout(const Duration(seconds: 2));
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -766,7 +762,7 @@ void main() {
           .first
           .timeout(const Duration(seconds: 2));
 
-      await _bindTallTestSurface(tester);
+      await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

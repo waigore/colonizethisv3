@@ -18,8 +18,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -49,7 +50,7 @@ void main() {
       'Mobile viewport is wired into turnNewsDialogDirectories under the '
       'canonical folder + name',
       (WidgetTester tester) async {
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           turnNewsDialogDirectories,
           folderName: 'Turn news',
           useCaseName: 'Mobile viewport',
@@ -67,7 +68,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(360, 640));
 
-        final useCase = _useCase(
+        final useCase = findWidgetbookUseCase(
           turnNewsDialogDirectories,
           folderName: 'Turn news',
           useCaseName: 'Mobile viewport',

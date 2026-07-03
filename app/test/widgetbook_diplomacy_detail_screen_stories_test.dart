@@ -20,27 +20,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'support/widget_test_assets.dart';
+import 'support/widgetbook_test_harness.dart';
 
 const String _kFolder = 'Diplomacy Detail Screen';
-
-WidgetbookUseCase _useCase(String useCaseName) {
-  final folder = diplomacyDetailScreenDirectories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == _kFolder,
-        orElse: () => fail('Missing Widgetbook folder: $_kFolder'),
-      );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  return children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$_kFolder" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-}
 
 Future<void> _pumpUseCase(WidgetTester tester, WidgetbookUseCase useCase) async {
   await tester.pumpWidget(
@@ -70,8 +52,8 @@ void main() {
     testWidgets('S17 use cases are wired under the canonical folder + names', (
       WidgetTester tester,
     ) async {
-      expect(_useCase(colonyName).builder, isNotNull);
-      expect(_useCase(subsidizedName).builder, isNotNull);
+      expect(findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName).builder, isNotNull);
+      expect(findWidgetbookUseCase(subsidizedName, folderName: 'Main Menu', useCaseName: subsidizedName).builder, isNotNull);
     });
 
     testWidgets('colony story pumps and shows standing chips + relation meter', (
@@ -80,7 +62,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 900));
 
-      await _pumpUseCase(tester, _useCase(colonyName));
+      await _pumpUseCase(tester, findWidgetbookUseCase(colonyName, folderName: 'Main Menu', useCaseName: colonyName));
 
       expect(tester.takeException(), isNull);
       expect(find.text('CURRENT RELATION'), findsOneWidget);
@@ -100,7 +82,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(600, 900));
 
-        await _pumpUseCase(tester, _useCase(subsidizedName));
+        await _pumpUseCase(tester, findWidgetbookUseCase(subsidizedName, folderName: 'Main Menu', useCaseName: subsidizedName));
 
         expect(tester.takeException(), isNull);
         expect(find.text('CURRENT RELATION'), findsOneWidget);

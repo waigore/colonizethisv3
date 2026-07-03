@@ -13,49 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-Future<void> _pumpPanelBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-Widget _wrapPanel({
-  required Game game,
-  required String humanPlayerId,
-  required MapTopology topology,
-  required Size viewportSize,
-}) {
-  final bus = AppEventBus.create();
-  // Explicit MediaQuery inside the MaterialApp pins the viewport size that
-  // `MediaQuery.sizeOf(context).width` reads in `_DiplomacyRow.build`,
-  // mirroring the pattern in `screen_spec_acceptance_test.dart` and
-  // `game_screen_narrow_test.dart` for narrow-viewport widget tests.
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: viewportSize),
-      child: Scaffold(
-        body: DiplomacyPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-          currentOrders: const Orders(),
-          bus: bus,
-        ),
-      ),
-    ),
-  );
-}
-
-/// Wide test surface so unrelated wide-only chrome (e.g. the mode-bar Row)
-/// always fits without overflowing the render flex; the narrow-vs-wide
-/// behaviour we pin is driven by the `MediaQuery(size: viewportSize)`
-/// override injected by [_wrapPanel], not by the surface itself.
-Future<void> _bindStandardSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(900, 1600));
-}
 
 void main() {
   suppressLogsForTests();
@@ -99,16 +59,16 @@ void main() {
       'narrow boundary 500 dp: faction row body uses Column (info above '
       'actions, leading-aligned)',
       (WidgetTester tester) async {
-        await _bindStandardSurface(tester);
+        await bindDiplomacyStandardTestSurface(tester);
         await tester.pumpWidget(
-          _wrapPanel(
+          wrapDiplomacyPanelAtViewport(
             game: game,
             humanPlayerId: humanPlayerId,
             topology: topology,
             viewportSize: Size(kDiplomacyRowNarrowMaxWidth, 1200),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final Key bodyKey = ValueKey(
           '$kDiplomacyRowBodyKeyPrefix$firstNonHumanFactionId',
@@ -153,16 +113,16 @@ void main() {
       'narrow 480 dp: row body does NOT use the wide Row(Expanded info, '
       'actions) arrangement',
       (WidgetTester tester) async {
-        await _bindStandardSurface(tester);
+        await bindDiplomacyStandardTestSurface(tester);
         await tester.pumpWidget(
-          _wrapPanel(
+          wrapDiplomacyPanelAtViewport(
             game: game,
             humanPlayerId: humanPlayerId,
             topology: topology,
             viewportSize: const Size(480, 1200),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final Key bodyKey = ValueKey(
           '$kDiplomacyRowBodyKeyPrefix$firstNonHumanFactionId',
@@ -190,16 +150,16 @@ void main() {
     testWidgets(
       'wide 800 dp: faction row body uses Row(Expanded info, action cluster)',
       (WidgetTester tester) async {
-        await _bindStandardSurface(tester);
+        await bindDiplomacyStandardTestSurface(tester);
         await tester.pumpWidget(
-          _wrapPanel(
+          wrapDiplomacyPanelAtViewport(
             game: game,
             humanPlayerId: humanPlayerId,
             topology: topology,
             viewportSize: const Size(800, 1200),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final Key bodyKey = ValueKey(
           '$kDiplomacyRowBodyKeyPrefix$firstNonHumanFactionId',
@@ -227,16 +187,16 @@ void main() {
       'wide 600 dp: at least one Expanded sits directly inside the row body '
       '(wide info-column flex contract)',
       (WidgetTester tester) async {
-        await _bindStandardSurface(tester);
+        await bindDiplomacyStandardTestSurface(tester);
         await tester.pumpWidget(
-          _wrapPanel(
+          wrapDiplomacyPanelAtViewport(
             game: game,
             humanPlayerId: humanPlayerId,
             topology: topology,
             viewportSize: const Size(600, 1200),
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final Key bodyKey = ValueKey(
           '$kDiplomacyRowBodyKeyPrefix$firstNonHumanFactionId',

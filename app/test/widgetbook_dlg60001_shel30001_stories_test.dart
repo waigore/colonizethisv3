@@ -24,6 +24,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/widgetbook_test_harness.dart';
 
 /// Normative inventory of the new DLG60001 stories that issue #2867 S13
 /// requires. Renaming or removing one must fail the inventory test below.
@@ -53,7 +54,7 @@ WidgetbookFolder _folder(
   );
 }
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -134,7 +135,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -150,7 +151,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -168,7 +169,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               nextTurnConfirmationDialogDirectories,
               folderName: 'Next Turn Confirmation',
               useCaseName: useCaseName,
@@ -215,7 +216,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -244,7 +245,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -275,7 +276,7 @@ void main() {
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
-            _useCase(
+            findWidgetbookUseCase(
               gameInitializingDirectories,
               folderName: 'Game Initializing',
               useCaseName: useCaseName,
@@ -297,7 +298,7 @@ void main() {
       (WidgetTester tester) async {
         await _pumpStory(
           tester,
-          _useCase(
+          findWidgetbookUseCase(
             gameInitializingDirectories,
             folderName: 'Game Initializing',
             useCaseName: kGameInitializingUseCaseNames[5],
@@ -335,7 +336,7 @@ void main() {
       (WidgetTester tester) async {
         await _pumpStory(
           tester,
-          _useCase(
+          findWidgetbookUseCase(
             gameInitializingDirectories,
             folderName: 'Game Initializing',
             useCaseName: kGameInitializingUseCaseNames[5],

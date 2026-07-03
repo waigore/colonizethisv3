@@ -19,8 +19,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -52,7 +53,7 @@ void main() {
         'Debug mode (mobile) is wired into mapWidgetDirectories under the '
         'canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mapWidgetDirectories,
             folderName: 'Map Widget',
             useCaseName: 'Debug mode (mobile)',
@@ -70,7 +71,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(360, 640));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mapWidgetDirectories,
             folderName: 'Map Widget',
             useCaseName: 'Debug mode (mobile)',

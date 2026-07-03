@@ -24,11 +24,12 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/widgetbook_test_harness.dart';
 
 /// Locates the single use-case with [useCaseName] inside the
 /// [WidgetbookFolder] whose name matches [folderName], failing with a
 /// readable matcher message if the folder or use case is missing.
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -60,17 +61,17 @@ void main() {
     testWidgets(
       'Game Top Bar folder exposes default + disabled + observe variants',
       (WidgetTester tester) async {
-        final defaultStory = _useCase(
+        final defaultStory = findWidgetbookUseCase(
           gameTopBarDirectories,
           folderName: 'Game Top Bar',
           useCaseName: 'Default — hamburger + Next turn enabled',
         );
-        final disabledStory = _useCase(
+        final disabledStory = findWidgetbookUseCase(
           gameTopBarDirectories,
           folderName: 'Game Top Bar',
           useCaseName: 'Next turn disabled — turn resolution in progress',
         );
-        final observeStory = _useCase(
+        final observeStory = findWidgetbookUseCase(
           gameTopBarDirectories,
           folderName: 'Game Top Bar',
           useCaseName: 'Observe banner — observe-mode label',
@@ -91,7 +92,7 @@ void main() {
     testWidgets(
       'Game Top Bar disabled variant renders the bar with the muted button',
       (WidgetTester tester) async {
-        final disabledStory = _useCase(
+        final disabledStory = findWidgetbookUseCase(
           gameTopBarDirectories,
           folderName: 'Game Top Bar',
           useCaseName: 'Next turn disabled — turn resolution in progress',
@@ -121,7 +122,7 @@ void main() {
         ];
 
         for (final name in useCaseNames) {
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             gameTabBarDirectories,
             folderName: 'Game Tab Bar',
             useCaseName: name,
@@ -142,12 +143,12 @@ void main() {
     testWidgets(
       'Game Map Corner Controls folder exposes default + disabled variant',
       (WidgetTester tester) async {
-        final defaultStory = _useCase(
+        final defaultStory = findWidgetbookUseCase(
           gameMapCornerControlsDirectories,
           folderName: 'Game Map Corner Controls',
           useCaseName: 'Default — all three buttons enabled',
         );
-        final disabledStory = _useCase(
+        final disabledStory = findWidgetbookUseCase(
           gameMapCornerControlsDirectories,
           folderName: 'Game Map Corner Controls',
           useCaseName: 'Home-to-capital disabled (no human capital)',
@@ -180,7 +181,7 @@ void main() {
       'Game Map Corner Controls folder exposes narrow variant '
       '(Refs #2870 S9)',
       (WidgetTester tester) async {
-        final narrowStory = _useCase(
+        final narrowStory = findWidgetbookUseCase(
           gameMapCornerControlsDirectories,
           folderName: 'Game Map Corner Controls',
           useCaseName: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
@@ -218,7 +219,7 @@ void main() {
           'All toggles off',
         ];
         for (final name in useCaseNames) {
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             gameMapOptionsDialogDirectories,
             folderName: 'Game Map Options Dialog',
             useCaseName: name,
@@ -236,12 +237,12 @@ void main() {
     testWidgets(
       'Player Turn Event Feed Card folder exposes populated + empty variants',
       (WidgetTester tester) async {
-        final populatedStory = _useCase(
+        final populatedStory = findWidgetbookUseCase(
           playerTurnEventFeedCardDirectories,
           folderName: 'Player Turn Event Feed Card',
           useCaseName: 'Populated — three entries (top entry tappable)',
         );
-        final emptyStory = _useCase(
+        final emptyStory = findWidgetbookUseCase(
           playerTurnEventFeedCardDirectories,
           folderName: 'Player Turn Event Feed Card',
           useCaseName: 'Empty — no events this turn',
@@ -279,7 +280,7 @@ void main() {
           'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
         ];
         for (final name in narrowUseCaseNames) {
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             playerTurnEventFeedCardDirectories,
             folderName: 'Player Turn Event Feed Card',
             useCaseName: name,
@@ -311,17 +312,17 @@ void main() {
         const narrowUseCaseName =
             'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed';
 
-        final wideStory = _useCase(
+        final wideStory = findWidgetbookUseCase(
           gameMapEmpireLeftRailDirectories,
           folderName: 'Game Map Empire Left Rail',
           useCaseName: wideUseCaseName,
         );
-        final debugConsoleStory = _useCase(
+        final debugConsoleStory = findWidgetbookUseCase(
           gameMapEmpireLeftRailDirectories,
           folderName: 'Game Map Empire Left Rail',
           useCaseName: debugConsoleUseCaseName,
         );
-        final narrowStory = _useCase(
+        final narrowStory = findWidgetbookUseCase(
           gameMapEmpireLeftRailDirectories,
           folderName: 'Game Map Empire Left Rail',
           useCaseName: narrowUseCaseName,
@@ -368,17 +369,17 @@ void main() {
         const hiddenUseCaseName = 'Hidden — toggle-only (zoom + show button)';
         const narrowUseCaseName = 'Narrow — 90 × 70 dp grid (issue #2870 S3)';
 
-        final visibleStory = _useCase(
+        final visibleStory = findWidgetbookUseCase(
           gameRegionMinimapDirectories,
           folderName: 'Region Minimap',
           useCaseName: visibleUseCaseName,
         );
-        final hiddenStory = _useCase(
+        final hiddenStory = findWidgetbookUseCase(
           gameRegionMinimapDirectories,
           folderName: 'Region Minimap',
           useCaseName: hiddenUseCaseName,
         );
-        final narrowStory = _useCase(
+        final narrowStory = findWidgetbookUseCase(
           gameRegionMinimapDirectories,
           folderName: 'Region Minimap',
           useCaseName: narrowUseCaseName,
@@ -426,7 +427,7 @@ void main() {
         ];
 
         for (final name in useCaseNames) {
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             gameMapProvinceDetailSidePanelDirectories,
             folderName: 'Game Map Province Side Panel',
             useCaseName: name,
@@ -444,7 +445,7 @@ void main() {
     testWidgets(
       'Players Bar folder exposes wide-layout chip column (S12 story 6)',
       (WidgetTester tester) async {
-        final story = _useCase(
+        final story = findWidgetbookUseCase(
           playersBarDirectories,
           folderName: 'Players Bar',
           useCaseName: 'Default — debug game (wide)',
@@ -460,7 +461,7 @@ void main() {
     testWidgets(
       'Game Screen folder exposes wide integrated layout (S12 story 7)',
       (WidgetTester tester) async {
-        final story = _useCase(
+        final story = findWidgetbookUseCase(
           gameScreenDirectories,
           folderName: 'Game Screen',
           useCaseName: 'Default — no victory',
@@ -480,7 +481,7 @@ void main() {
         const useCaseNames = <String>['Default — open', 'Closed'];
 
         for (final name in useCaseNames) {
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             gameSideMenuDirectories,
             folderName: 'Game Side Menu',
             useCaseName: name,
@@ -498,7 +499,7 @@ void main() {
     testWidgets(
       'Victory folder exposes full scrim overlay (S12 story 12)',
       (WidgetTester tester) async {
-        final story = _useCase(
+        final story = findWidgetbookUseCase(
           victoryUiDirectories,
           folderName: 'Victory',
           useCaseName: 'Victory overlay — full scrim',
@@ -514,7 +515,7 @@ void main() {
     testWidgets(
       'Exit Confirm Dialog folder exposes default variant (S12 story 13)',
       (WidgetTester tester) async {
-        final story = _useCase(
+        final story = findWidgetbookUseCase(
           exitConfirmDialogDirectories,
           folderName: 'Exit Confirm Dialog',
           useCaseName: 'Default — danger Exit + brass Cancel',
@@ -567,7 +568,7 @@ void main() {
             ...gameMapProvinceDetailSidePanelDirectories,
             ...playerTurnEventFeedCardDirectories,
           ];
-          final story = _useCase(
+          final story = findWidgetbookUseCase(
             allDirectories,
             folderName: folder,
             useCaseName: useCase,

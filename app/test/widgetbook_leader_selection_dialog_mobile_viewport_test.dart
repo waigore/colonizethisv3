@@ -18,8 +18,9 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -50,7 +51,7 @@ void main() {
       testWidgets(
         'Default (mobile) is wired into newGameLeaderSelectionDialogDirectories',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             newGameLeaderSelectionDialogDirectories,
             folderName: 'New Game Leader Selection Dialog',
             useCaseName: 'Default (mobile)',
@@ -65,7 +66,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(360, 640));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             newGameLeaderSelectionDialogDirectories,
             folderName: 'New Game Leader Selection Dialog',
             useCaseName: 'Default (mobile)',

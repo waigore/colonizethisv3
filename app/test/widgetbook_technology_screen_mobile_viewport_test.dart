@@ -26,8 +26,9 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -82,7 +83,7 @@ void main() {
         'Mid-game slots (mobile) is wired into techTreeDirectories under the '
         'canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             techTreeDirectories,
             folderName: 'Tech Tree',
             useCaseName: 'Mid-game slots (mobile)',
@@ -98,7 +99,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(360, 640));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             techTreeDirectories,
             folderName: 'Tech Tree',
             useCaseName: 'Mid-game slots (mobile)',

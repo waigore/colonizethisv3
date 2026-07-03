@@ -32,35 +32,7 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
-
-/// Locate the single use-case with [useCaseName] inside the
-/// [WidgetbookFolder] whose name matches [folderName], failing with a
-/// readable matcher message if the folder or use case is missing. Mirrors
-/// the helper used by `widgetbook_diplomacy_panel_mobile_viewport_test.dart`.
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories
-      .whereType<WidgetbookFolder>()
-      .firstWhere(
-        (folder) => folder.name == folderName,
-        orElse: () =>
-            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-      );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  final useCase = children
-      .whereType<WidgetbookUseCase>()
-      .firstWhere(
-        (uc) => uc.name == useCaseName,
-        orElse: () => fail(
-          'Missing use case "$useCaseName" in folder "$folderName" '
-          '(got: ${children.map((c) => c.name).toList()})',
-        ),
-      );
-  return useCase;
-}
+import 'support/widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -73,7 +45,7 @@ void main() {
         'Full availability (mobile) is wired into productionPanelDirectories '
         'under the canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Full availability (mobile)',
@@ -91,7 +63,7 @@ void main() {
         'Partial availability (mobile) is wired into productionPanelDirectories '
         'under the canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Partial availability (mobile)',
@@ -111,7 +83,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(360, 640));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             productionPanelDirectories,
             folderName: 'Production Panel',
             useCaseName: 'Full availability (mobile)',

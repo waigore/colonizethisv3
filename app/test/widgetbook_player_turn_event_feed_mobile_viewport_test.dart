@@ -19,8 +19,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
+WidgetbookUseCase findWidgetbookUseCase(
   List<WidgetbookNode> directories, {
   required String folderName,
   required String useCaseName,
@@ -52,7 +53,7 @@ void main() {
       testWidgets(
         'Mobile viewport is wired into playerTurnEventFeedCardDirectories',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             playerTurnEventFeedCardDirectories,
             folderName: 'Player Turn Event Feed Card',
             useCaseName: 'Mobile viewport',
@@ -68,7 +69,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.binding.setSurfaceSize(const Size(360, 640));
 
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             playerTurnEventFeedCardDirectories,
             folderName: 'Player Turn Event Feed Card',
             useCaseName: 'Mobile viewport',
