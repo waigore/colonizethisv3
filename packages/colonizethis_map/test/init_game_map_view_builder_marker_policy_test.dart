@@ -49,25 +49,17 @@ void main() {
       required Game game,
       required Set<String>? civilianMarkerOwnerIds,
     }) {
-      final owMap = mapTileGrid(const [
-        ['p1', 'p2'],
-      ]);
-      final nwMap = mapTileGrid(const [
-        ['p1'],
-      ]);
-      final owTopology = regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1', 'p2'],
-      );
-      final nwTopology = regionTopology(
-        regionId: 'newWorld',
-        provinceIds: const ['p1'],
-      );
-      return buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-        cellSize: 8,
+      return buildViewDataForScenario(
+        dualRegionScenario(
+          game: game,
+          oldWorldGrid: const [
+            ['p1', 'p2'],
+          ],
+          oldWorldTopology: regionTopology(
+            regionId: 'oldWorld',
+            provinceIds: const ['p1', 'p2'],
+          ),
+        ),
         civilianMarkerOwnerIds: civilianMarkerOwnerIds,
       );
     }
@@ -167,23 +159,6 @@ void main() {
     test(
       'town markers: co-located port and town shifts port drawable to N sea cell',
       () {
-        final owMap = mapTileGrid([
-          ['p1', 's1'],
-          ['p1', 'p1'],
-        ]);
-        final nwMap = mapTileGrid([
-          ['p1'],
-        ]);
-        final owTopology = regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['p1'],
-          seaZoneIds: const ['s1'],
-          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-        );
-        final nwTopology = regionTopology(
-          regionId: 'newWorld',
-          provinceIds: const ['p1'],
-        );
         final game = minimalGame(
           id: 'townPortColoc',
           oldWorldProvinces: const [
@@ -197,12 +172,20 @@ void main() {
             'oldWorld|p1|seaboard': 'oldWorld|p1|1|1',
           },
         );
-
-        final viewData = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
+        final viewData = buildViewDataForScenario(
+          dualRegionScenario(
+            game: game,
+            oldWorldGrid: [
+              ['p1', 's1'],
+              ['p1', 'p1'],
+            ],
+            oldWorldTopology: regionTopology(
+              regionId: 'oldWorld',
+              provinceIds: const ['p1'],
+              seaZoneIds: const ['s1'],
+              edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+            ),
+          ),
         );
 
         final tm = viewData.oldWorld.townMarkers.single;
@@ -216,23 +199,6 @@ void main() {
     test(
       'town markers: isPort from seaboard key when value province segment mismatches',
       () {
-        final owMap = mapTileGrid([
-          ['p2', 'p2', 'p2'],
-          ['p2', 'p2', 's1'],
-        ]);
-        final nwMap = mapTileGrid([
-          ['p1'],
-        ]);
-        final owTopology = regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['p2'],
-          seaZoneIds: const ['s1'],
-          edges: const [TopologyEdge(id1: 'p2', id2: 's1')],
-        );
-        final nwTopology = regionTopology(
-          regionId: 'newWorld',
-          provinceIds: const ['p1'],
-        );
         final game = minimalGame(
           id: 'nonCapitalPortKey',
           oldWorldProvinces: const [
@@ -246,12 +212,20 @@ void main() {
             'oldWorld|p2|sb': 'oldWorld|p1|2|0',
           },
         );
-
-        final viewData = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
+        final viewData = buildViewDataForScenario(
+          dualRegionScenario(
+            game: game,
+            oldWorldGrid: [
+              ['p2', 'p2', 'p2'],
+              ['p2', 'p2', 's1'],
+            ],
+            oldWorldTopology: regionTopology(
+              regionId: 'oldWorld',
+              provinceIds: const ['p2'],
+              seaZoneIds: const ['s1'],
+              edges: const [TopologyEdge(id1: 'p2', id2: 's1')],
+            ),
+          ),
         );
 
         final tm = viewData.oldWorld.townMarkers.single;
@@ -268,20 +242,6 @@ void main() {
     test(
       'civilian markers include explicit owner ids when isHuman is false',
       () {
-        final owMap = mapTileGrid([
-          ['p1', 'p2', 'p3'],
-        ]);
-        final nwMap = mapTileGrid([
-          ['p1'],
-        ]);
-        final owTopology = regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['p1', 'p2', 'p3'],
-        );
-        final nwTopology = regionTopology(
-          regionId: 'newWorld',
-          provinceIds: const ['p1'],
-        );
         final game = minimalGame(
           id: 'observe_civilian_markers',
           oldWorldProvinces: const [
@@ -315,23 +275,28 @@ void main() {
             Player(id: 'gp2', displayName: 'France', isHuman: false),
           ],
         );
-
-        final defaultView = buildInitGameMapViewData(
+        final scenario = dualRegionScenario(
           game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
+          oldWorldGrid: const [
+            ['p1', 'p2', 'p3'],
+          ],
+          oldWorldTopology: regionTopology(
+            regionId: 'oldWorld',
+            provinceIds: const ['p1', 'p2', 'p3'],
+          ),
         );
-        expect(defaultView.oldWorld.civilianTileMarkers, isEmpty);
 
-        final observeView = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
-          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
-          cellSize: 8,
-          civilianMarkerOwnerIds: {'gp1', 'gp2'},
+        expect(
+          buildViewDataForScenario(scenario).oldWorld.civilianTileMarkers,
+          isEmpty,
         );
-        expect(observeView.oldWorld.civilianTileMarkers, hasLength(2));
+        expect(
+          buildViewDataForScenario(
+            scenario,
+            civilianMarkerOwnerIds: {'gp1', 'gp2'},
+          ).oldWorld.civilianTileMarkers,
+          hasLength(2),
+        );
       },
     );
   });

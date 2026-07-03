@@ -201,6 +201,92 @@ DualRegionViewScenario dualRegionViewScenario({
   );
 }
 
+/// Default single-tile new-world map for view-builder tests that focus on OW.
+TileMapResult defaultNewWorldMap() => mapTileGrid([
+      ['p1'],
+    ]);
+
+/// Default single-province new-world topology for view-builder tests.
+MapTopology defaultNewWorldTopology({List<String> provinceIds = const ['p1']}) {
+  return regionTopology(regionId: 'newWorld', provinceIds: provinceIds);
+}
+
+/// Shorthand [dualRegionViewScenario] with a default single-province new world.
+DualRegionViewScenario dualRegionScenario({
+  required Game game,
+  required List<List<String>> oldWorldGrid,
+  required MapTopology oldWorldTopology,
+  List<List<String>>? newWorldGrid,
+  MapTopology? newWorldTopology,
+  List<List<TerrainType?>>? oldWorldTerrainGrid,
+  List<List<Resource?>>? oldWorldResourceGrid,
+}) {
+  return dualRegionViewScenario(
+    game: game,
+    oldWorldMap: mapTileGrid(
+      oldWorldGrid,
+      terrainGrid: oldWorldTerrainGrid,
+      resourceGrid: oldWorldResourceGrid,
+    ),
+    newWorldMap: mapTileGrid(newWorldGrid ?? const [
+          ['p1'],
+        ]),
+    oldWorldTopology: oldWorldTopology,
+    newWorldTopology: newWorldTopology ?? defaultNewWorldTopology(),
+  );
+}
+
+/// OW-focused scenario with a sea-only new-world placeholder grid.
+DualRegionViewScenario oldWorldFocusedScenario({
+  required Game game,
+  required List<List<String>> oldWorldGrid,
+  required MapTopology oldWorldTopology,
+  List<List<String>> newWorldGrid = const [
+    ['s1'],
+  ],
+  MapTopology? newWorldTopology,
+  List<List<TerrainType?>>? oldWorldTerrainGrid,
+}) {
+  return dualRegionViewScenario(
+    game: game,
+    oldWorldMap: mapTileGrid(
+      oldWorldGrid,
+      terrainGrid: oldWorldTerrainGrid,
+    ),
+    newWorldMap: mapTileGrid(newWorldGrid),
+    oldWorldTopology: oldWorldTopology,
+    newWorldTopology:
+        newWorldTopology ?? singleProvinceAndSeaTopology('newWorld'),
+  );
+}
+
+/// Standard 2×2 province+sea grid in both regions (region/cell smoke tests).
+DualRegionViewScenario provinceSeaDualRegionScenario({required Game game}) {
+  final grid = [
+    ['p1', 's1'],
+    ['s1', 's1'],
+  ];
+  final topology = regionTopology(
+    regionId: 'oldWorld',
+    provinceIds: const ['p1'],
+    seaZoneIds: const ['s1'],
+    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+  );
+  final nwTopology = regionTopology(
+    regionId: 'newWorld',
+    provinceIds: const ['p1'],
+    seaZoneIds: const ['s1'],
+    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+  );
+  return dualRegionViewScenario(
+    game: game,
+    oldWorldMap: mapTileGrid(grid),
+    newWorldMap: mapTileGrid(grid),
+    oldWorldTopology: topology,
+    newWorldTopology: nwTopology,
+  );
+}
+
 /// Convenience wrapper for the common dual-region [buildInitGameMapViewData] call.
 InitGameMapViewData buildViewDataForScenario(
   DualRegionViewScenario scenario, {
