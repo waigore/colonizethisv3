@@ -64,12 +64,22 @@ List<DiplomaticOrder> diplomaticPanelActionCandidates({
   ];
 
   if (isGpTarget) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.alliance,
-        targetFactionId: targetId,
-      ),
-    );
+    final rel = getRelation(game, playerId, targetId);
+    if (rel?.formalAlliance ?? false) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: targetId,
+        ),
+      );
+    } else {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: targetId,
+        ),
+      );
+    }
   }
 
   if (isGpTarget || isMinorTribeTarget) {
@@ -102,9 +112,26 @@ List<DiplomaticOrder> diplomaticPanelActionCandidates({
     DiplomaticOrder(
       type: DiplomaticOrderType.setSubsidy,
       targetFactionId: targetId,
-      amount: setSubsidyDefaultAmount,
+      amount: kSubsidyPercentDefault,
     ),
   ]);
+
+  // Colony-trade embargo controls (Refs #3753 R6 / R14 / S14). The boycott
+  // target is always another Great Power, so these are enumerated on GP rows
+  // only; the validator probe (boycottSubValidator / revokeBoycottSubValidator)
+  // drives their enabled/disabled state per the disabled-button policy.
+  if (isGpTarget) {
+    out.addAll(<DiplomaticOrder>[
+      DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: targetId,
+      ),
+      DiplomaticOrder(
+        type: DiplomaticOrderType.revokeBoycott,
+        targetFactionId: targetId,
+      ),
+    ]);
+  }
 
   return out;
 }

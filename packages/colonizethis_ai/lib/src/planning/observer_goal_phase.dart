@@ -239,6 +239,96 @@ List<String> developPhaseGpPeaceTargets({
   return gpFactionIdsAtWarWith(game, snapshot);
 }
 
+/// Signature shared by every EXPAND-regime Great Power peace decider composed
+/// by the ordered registries below (Refs #3749 step 5 — expand-peace decider
+/// registry). Each decider is a pure projection of `(game, snapshot)` to the
+/// Great Power faction ids it votes to `offerPeace` toward this turn; the
+/// aggregators concatenate the deciders in registry order so the per-decider
+/// precedence is expressed once as data rather than as a hand-unrolled `yield*`
+/// chain. Multi-target deciders return a `List<String>` (assignable to this
+/// `Iterable<String>` return via covariant function subtyping); the three
+/// single-target deciders are adapted to this shape by the thin
+/// `_…PeaceDecider` wrappers below so their `String?` results join the same
+/// registry without changing their exported symbols. Pure and deterministic —
+/// identical inputs always yield identical output (Refs #2509 Must-have #7).
+typedef ExpandPeaceDecider =
+    Iterable<String> Function({
+      required Game game,
+      required AIWorldSnapshot snapshot,
+    });
+
+/// Adapts a `String?` single-target peace decider result to the
+/// [ExpandPeaceDecider] `Iterable<String>` shape: an empty list when no target
+/// is voted, else a single-element list. Keeps the underlying single-target
+/// deciders' exported `String?` symbols unchanged while letting them sit in the
+/// ordered registry alongside the multi-target collectors.
+Iterable<String> _singleTargetOrEmpty(String? target) =>
+    target == null ? const <String>[] : <String>[target];
+
+/// [ExpandPeaceDecider] wrapper for [stalledStrongerGpBlockerPeaceTarget].
+Iterable<String> _stalledStrongerGpBlockerPeaceDecider({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => _singleTargetOrEmpty(
+  stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
+);
+
+/// [ExpandPeaceDecider] wrapper for [unwinnableSoleGpFrontierPeaceTarget].
+Iterable<String> _unwinnableSoleGpFrontierPeaceDecider({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => _singleTargetOrEmpty(
+  unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+);
+
+/// [ExpandPeaceDecider] wrapper for [consolidateGainsSoleGpPeaceTarget].
+Iterable<String> _consolidateGainsSoleGpPeaceDecider({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => _singleTargetOrEmpty(
+  consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
+);
+
+/// Ordered survival / zero-regiment / mutual-exhausted peace deciders consumed
+/// by [survivalGreatPowerPeaceTargets] (Refs #3749 step 5). The list order is
+/// the canonical precedence and must match the legacy `yield*` order exactly;
+/// see [survivalGreatPowerPeaceTargets] for the per-decider contract.
+const List<ExpandPeaceDecider> kSurvivalGreatPowerPeaceDeciders =
+    <ExpandPeaceDecider>[
+      criticalWeakGpSurvivalPeaceTargets,
+      stalledZeroRegimentAllFactionPeaceTargets,
+      mutualZeroRegimentGpStalematePeaceTargets,
+      stalledZeroRegimentGpPeaceTargets,
+      mutualExhaustedBelowQuotaGpStalematePeaceTargets,
+    ];
+
+/// Ordered EXPAND-regime ratchet peace deciders consumed by
+/// [expandRatchetGreatPowerPeaceTargets] (Refs #3749 step 5). The list order is
+/// the canonical precedence and must match the legacy `yield*` order exactly,
+/// including the interleaved single-target deciders adapted via the
+/// `_…PeaceDecider` wrappers above; see [expandRatchetGreatPowerPeaceTargets]
+/// for the per-decider contract.
+const List<ExpandPeaceDecider> kExpandRatchetGreatPowerPeaceDeciders =
+    <ExpandPeaceDecider>[
+      stalledFutileGpPeaceTargets,
+      stalledGpBlockerFocusPeaceTargets,
+      stalledExpansionDistractionPeaceTargets,
+      multiFrontNonBlockerGpPeaceTargets,
+      criticalMultiFrontGpPeaceTargets,
+      weakHoldingsInvadableBlockerPeaceTargets,
+      _stalledStrongerGpBlockerPeaceDecider,
+      criticalOwHoldPeaceTargets,
+      stalledBelowQuotaGpLeadPeaceTargets,
+      belowQuotaPeerGpPeaceTargets,
+      defaultStartGpPeaceTargets,
+      defaultStartFutileMinorPeaceTargets,
+      nearQuotaHoldPeaceTargets,
+      quotaMetBelowQuotaAtWarPeaceTargets,
+      quotaMetFutileBelowQuotaGpPeaceTargets,
+      _unwinnableSoleGpFrontierPeaceDecider,
+      _consolidateGainsSoleGpPeaceDecider,
+    ];
+
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.
 ///
 /// Canonical home (Refs #2509 S1) for the legacy private
@@ -258,20 +348,9 @@ Iterable<String> survivalGreatPowerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) sync* {
-  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledZeroRegimentAllFactionPeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* mutualZeroRegimentGpStalematePeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
+  for (final decider in kSurvivalGreatPowerPeaceDeciders) {
+    yield* decider(game: game, snapshot: snapshot);
+  }
 }
 
 /// Legacy OW-expansion scoring ratchet peace aggregator (EXPAND / COLONIAL-lite only; Refs #2509 S10).
@@ -294,46 +373,8 @@ Iterable<String> expandRatchetGreatPowerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) sync* {
-  yield* stalledFutileGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledExpansionDistractionPeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* weakHoldingsInvadableBlockerPeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  final strongerBlocker = stalledStrongerGpBlockerPeaceTarget(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (strongerBlocker != null) {
-    yield strongerBlocker;
-  }
-  yield* criticalOwHoldPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot);
-  yield* belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot);
-  yield* nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot);
-  yield* quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot);
-  yield* quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot);
-  final unwinnable = unwinnableSoleGpFrontierPeaceTarget(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (unwinnable != null) {
-    yield unwinnable;
-  }
-  final consolidate = consolidateGainsSoleGpPeaceTarget(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (consolidate != null) {
-    yield consolidate;
+  for (final decider in kExpandRatchetGreatPowerPeaceDeciders) {
+    yield* decider(game: game, snapshot: snapshot);
   }
 }
 

@@ -4,7 +4,9 @@ import 'package:colonizethis_world/src/world/naval.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../world_test_support/world_test_support.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
@@ -13,35 +15,7 @@ import '../test_fixtures.dart';
 ///
 /// Two regions: `oldWorld` (province p1 + sea s1) and `newWorld` (province n1 +
 /// sea s2). s1–s2 is a cross-region S–S warp edge.
-MapTopology _topology() => const MapTopology(
-  nodes: [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|n1',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'newWorld|s2',
-      regionId: 'newWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: [
-    TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1'),
-    TopologyEdge(id1: 'oldWorld|s1', id2: 'newWorld|s2'),
-    TopologyEdge(id1: 'newWorld|n1', id2: 'newWorld|s2'),
-  ],
-);
+MapTopology _topology() => prefixedDualRegionNavalWarpTopology();
 
 Game _gameWithCapital(String? capital) => TestFixtures.minimalGame(
   id: 'g-naval',
@@ -256,6 +230,25 @@ void main() {
         contains('oldWorld|s1'),
       );
     });
+
+    test(
+      'seaZoneIdsAdjacentToProvince disambiguates duplicate local province ids by region',
+      () {
+        final multiRegion = duplicateLocalProvinceIdsByRegionTopology();
+        expect(
+          seaZoneIdsAdjacentToProvince(multiRegion, 'p1', regionId: 'oldWorld'),
+          {'sea1'},
+        );
+        expect(
+          seaZoneIdsAdjacentToProvince(multiRegion, 'p1', regionId: 'newWorld'),
+          {'sea2'},
+        );
+        expect(
+          seaZoneIdForProvince(multiRegion, 'p1', regionId: 'newWorld'),
+          'sea2',
+        );
+      },
+    );
   });
 
   group('fleetsInPortAtProvince', () {

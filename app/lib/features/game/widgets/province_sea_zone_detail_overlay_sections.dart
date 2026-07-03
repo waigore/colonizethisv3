@@ -495,6 +495,24 @@ Widget _buildTileSection({
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
 
+  // Refs #3753 R4b: when the Explore/Prospect inline action is disabled solely
+  // because the issuing GP holds no Consulate with the owning Minor/Tribe, the
+  // tooltip explains the gate ("Establish a consulate before exploring or
+  // prospecting") instead of the default action hint. Mirrors the order-engine
+  // submission gate via the shared predicate.
+  final tileOwnerId = _findProvince(game, provinceId)?.ownerId;
+  final consulateGated = explorerConsulateGateBlocksMinorTribeProvince(
+    game: game,
+    playerId: humanPlayerId,
+    provinceOwnerId: tileOwnerId,
+  );
+  final exploreTooltip = (!exploreActionEnabled && consulateGated)
+      ? l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip
+      : l10n.provinceOverlay_tileExploreWithExplorerTooltip;
+  final prospectTooltip = (!prospectActionEnabled && consulateGated)
+      ? l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip
+      : l10n.provinceOverlay_tileProspectWithExplorerTooltip;
+
   final prospectedRow = Row(
     children: [
       Expanded(
@@ -505,7 +523,7 @@ Widget _buildTileSection({
       ),
       if (showExploreActionIcon)
         CtIconAction(
-          tooltip: l10n.provinceOverlay_tileExploreWithExplorerTooltip,
+          tooltip: exploreTooltip,
           onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
           icon: Icons.explore,
           enabled: exploreActionEnabled,
@@ -515,7 +533,7 @@ Widget _buildTileSection({
         ),
       if (showProspectActionIcon)
         CtIconAction(
-          tooltip: l10n.provinceOverlay_tileProspectWithExplorerTooltip,
+          tooltip: prospectTooltip,
           onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
           icon: Icons.travel_explore,
           enabled: prospectActionEnabled,

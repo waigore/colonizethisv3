@@ -132,11 +132,11 @@ void main() {
     });
   });
 
-  group('setSubsidySubValidator', () {
-    test('rejects non-positive amount', () {
+  group('setSubsidySubValidator (percent model, Refs #3753 R3)', () {
+    test('rejects a zero percent', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
-          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          gpMinorGame(overtureStage: OvertureStage.embassy),
           'gp1',
         ),
       );
@@ -149,13 +149,13 @@ void main() {
         treasury: 5000,
       );
       expect(r.result.status, OrderValidationStatus.rejected);
-      expect(r.result.reason, contains('must be positive'));
+      expect(r.result.reason, contains('steps of'));
     });
 
-    test('rejects amount not a multiple of the step', () {
+    test('rejects a percent not a multiple of the step', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
-          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          gpMinorGame(overtureStage: OvertureStage.embassy),
           'gp1',
         ),
       );
@@ -163,15 +163,34 @@ void main() {
         order: DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: 'minor1',
-          amount: setSubsidyAmountStep + 1,
+          amount: kSubsidyPercentStep + 1,
         ),
         treasury: 5000,
       );
       expect(r.result.status, OrderValidationStatus.rejected);
-      expect(r.result.reason, contains('multiple of'));
+      expect(r.result.reason, contains('steps of'));
     });
 
-    test('rejects without consulate or embassy', () {
+    test('rejects a percent above the maximum', () {
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
+      );
+      final r = v.validate(
+        order: DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: 'minor1',
+          amount: kSubsidyPercentMax + kSubsidyPercentStep,
+        ),
+        treasury: 5000,
+      );
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('steps of'));
+    });
+
+    test('rejects without any overture', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.none),
@@ -182,15 +201,15 @@ void main() {
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: 'minor1',
-          amount: 100,
+          amount: 10,
         ),
         treasury: 5000,
       );
       expect(r.result.status, OrderValidationStatus.rejected);
-      expect(r.result.reason, contains('Consulate or Embassy required'));
+      expect(r.result.reason, contains('Embassy required'));
     });
 
-    test('accepts with consulate and debits treasury', () {
+    test('rejects with a Trade Consulate only (Refs #3753 R2)', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
@@ -201,15 +220,15 @@ void main() {
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: 'minor1',
-          amount: 100,
+          amount: 10,
         ),
         treasury: 5000,
       );
-      expect(r.result.status, OrderValidationStatus.accepted);
-      expect(r.treasury, 4900);
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('Embassy required'));
     });
 
-    test('rejects when treasury is below subsidy amount', () {
+    test('accepts with an embassy and leaves treasury unchanged', () {
       final v = setSubsidySubValidator(
         diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.embassy),
@@ -220,12 +239,32 @@ void main() {
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.setSubsidy,
           targetFactionId: 'minor1',
-          amount: 100,
+          amount: 10,
+        ),
+        treasury: 5000,
+      );
+      expect(r.result.status, OrderValidationStatus.accepted);
+      // Percent subsidies charge no upfront cost.
+      expect(r.treasury, 5000);
+    });
+
+    test('accepts with an embassy even when treasury is low (no upfront cost)',
+        () {
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
+      );
+      final r = v.validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: 'minor1',
+          amount: 20,
         ),
         treasury: 50,
       );
-      expect(r.result.status, OrderValidationStatus.rejected);
-      expect(r.result.reason, contains('Insufficient treasury'));
+      expect(r.result.status, OrderValidationStatus.accepted);
       expect(r.treasury, 50);
     });
   });

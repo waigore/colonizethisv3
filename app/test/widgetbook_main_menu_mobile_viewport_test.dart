@@ -29,51 +29,8 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:colonizethis_app/widgetbook/catalog.dart';
 
 import 'support/widget_test_assets.dart';
+import 'support/widgetbook_test_harness.dart';
 
-WidgetbookUseCase _useCase(
-  List<WidgetbookNode> directories, {
-  required String folderName,
-  required String useCaseName,
-}) {
-  final folder = directories.whereType<WidgetbookFolder>().firstWhere(
-    (folder) => folder.name == folderName,
-    orElse: () =>
-        fail('Missing Widgetbook folder: $folderName (got: $directories)'),
-  );
-  final children = folder.children ?? const <WidgetbookNode>[];
-  final useCase = children.whereType<WidgetbookUseCase>().firstWhere(
-    (uc) => uc.name == useCaseName,
-    orElse: () => fail(
-      'Missing use case "$useCaseName" in folder "$folderName" '
-      '(got: ${children.map((c) => c.name).toList()})',
-    ),
-  );
-  return useCase;
-}
-
-Future<void> _pumpMobileViewport(
-  WidgetTester tester,
-  WidgetbookUseCase useCase,
-) async {
-  // Match the surface bound by the production `mobileViewport` helper
-  // (`SizedBox(width: 360, height: 640)`) so the explicit MediaQuery the
-  // helper overlays maps to the surface bounds.
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(360, 640));
-
-  await tester.pumpWidget(
-    MediaQuery(
-      data: const MediaQueryData(size: Size(360, 640)),
-      child: MaterialApp(
-        home: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
-      ),
-    ),
-  );
-  // Drive past the post-mount frame so async font / image dependencies
-  // settle before the test ends.
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 void main() {
   suppressLogsForTests();
@@ -88,7 +45,7 @@ void main() {
         'Default (mobile) is wired into mainMenuDirectories under the '
         'canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mainMenuDirectories,
             folderName: 'Main Menu',
             useCaseName: 'Default (mobile)',
@@ -101,7 +58,7 @@ void main() {
         'Pixel art (mobile) is wired into mainMenuDirectories under the '
         'canonical folder + name',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mainMenuDirectories,
             folderName: 'Main Menu',
             useCaseName: 'Pixel art (mobile)',
@@ -113,12 +70,12 @@ void main() {
       testWidgets(
         'Default (mobile) builder pumps at 360 × 640 dp without exceptions',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mainMenuDirectories,
             folderName: 'Main Menu',
             useCaseName: 'Default (mobile)',
           );
-          await _pumpMobileViewport(tester, useCase);
+          await pumpWidgetbookUseCaseAtSize(tester, useCase);
           expect(
             tester.takeException(),
             isNull,
@@ -134,12 +91,12 @@ void main() {
         'Pixel art (mobile) builder pumps at 360 × 640 dp without exceptions '
         '(exercises ≤ 430 dp letter-spacing + compact padding rules)',
         (WidgetTester tester) async {
-          final useCase = _useCase(
+          final useCase = findWidgetbookUseCase(
             mainMenuDirectories,
             folderName: 'Main Menu',
             useCaseName: 'Pixel art (mobile)',
           );
-          await _pumpMobileViewport(tester, useCase);
+          await pumpWidgetbookUseCaseAtSize(tester, useCase);
           expect(
             tester.takeException(),
             isNull,

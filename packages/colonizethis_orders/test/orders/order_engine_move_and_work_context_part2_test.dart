@@ -46,6 +46,15 @@ void main() {
           ),
           players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+          // Refs #3753 R4: prospecting a Tribe province requires a Consulate
+          // (or higher) with that Tribe; without it the work is rejected.
+          overtureStates: const [
+            OvertureState(
+              gpId: 'p1',
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
 
         final engine = OrderEngine();
@@ -64,6 +73,69 @@ void main() {
         );
         expect(results.length, 1);
         expect(results[0].status, OrderValidationStatus.accepted);
+      },
+    );
+
+    test(
+      'work order prospect rejected in Tribe province without a consulate (Refs #3753 R4)',
+      () {
+        const ow = 'oldWorld';
+        const tileKey = 'oldWorld|P1|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'tribe1'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: kUnitTypeExplorer,
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'iron'},
+            playerVisibilityByTile: const {
+              'p1': {tileKey: 'fogged'},
+            },
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
+        );
+
+        final engine = OrderEngine();
+        engine.addWorkOrder(
+          'p1',
+          const WorkOrder(
+            unitId: 'u1',
+            target: kWorkTargetProspect,
+            targetTileKey: tileKey,
+          ),
+        );
+        final results = engine.validatePlayerOrdersWithContext(
+          game,
+          topology,
+          'p1',
+        );
+        expect(results.length, 1);
+        expect(results[0].status, OrderValidationStatus.rejected);
+        expect(results[0].reason, contains('Establish a consulate'));
       },
     );
 

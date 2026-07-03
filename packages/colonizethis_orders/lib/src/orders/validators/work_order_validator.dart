@@ -107,6 +107,14 @@ class WorkOrderValidator extends StatefulValidator {
             type: unit!.type,
             ownerId: ownerId,
           ),
+          () => rejectExplorerWithoutConsulateInMinorTribeProvince(
+            game: _context.game,
+            playerId: _context.playerId,
+            unitType: unit!.type,
+            workTarget: o.target,
+            provinceOwnerId: ownerId,
+            factionMembership: _context.factionMembership,
+          ),
           () => _validateDevExclusiveWorkTarget(o, unit!.type),
           () => _validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
           () {

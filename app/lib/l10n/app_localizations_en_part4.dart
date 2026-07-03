@@ -139,6 +139,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_relationState_peace => 'Peace';
 
   @override
+  String diplomacy_relationMeter_semanticsLabel(String relation) {
+    return 'Relation: $relation';
+  }
+
+  @override
   String get techEffectSummary_advanced_hull_design_0 =>
       'Improves: Frigate — high intercept, moderate flee (patrol/blockade)';
 

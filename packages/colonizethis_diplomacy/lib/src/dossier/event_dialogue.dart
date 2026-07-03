@@ -436,3 +436,25 @@ List<DialogueEvent> dialogueEventsForReactiveSpiesCaught(
     ),
   ];
 }
+
+/// Reactive dialogue for AI when a human spy defects via counter-espionage.
+List<DialogueEvent> dialogueEventsForReactiveSpiesDefected(
+  Game game, {
+  required String newOwnerId,
+  required String previousOwnerId,
+  required String provinceId,
+  required int turnNumber,
+  required int seed,
+}) {
+  if (!_isAiGp(game, newOwnerId)) return const [];
+  if (!_isHumanGp(game, previousOwnerId)) return const [];
+  return [
+    DialogueEvent(
+      leaderId: newOwnerId,
+      category: 'reactive',
+      situation: 'spies_defected',
+      era: _eraForTurn(game, turnNumber),
+      variables: {'otherNation': previousOwnerId, 'province': provinceId},
+    ),
+  ];
+}

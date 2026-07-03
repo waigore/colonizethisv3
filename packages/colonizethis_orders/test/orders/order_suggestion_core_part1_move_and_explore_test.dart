@@ -341,6 +341,14 @@ void main() {
           worldState: world,
           players: [player],
           tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+          // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'tribe1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
         );
         final topology = const MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, playerId);

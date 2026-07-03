@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_work_constants.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'orders_application_build_phase.dart';
 import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
@@ -237,7 +236,6 @@ BuildWorkState _processWorkUnits(
       continue;
     }
     if (cw.workTarget != kWorkTargetCounterSpy &&
-        cw.workTarget != kWorkTargetStealTech &&
         cw.workTarget != kWorkTargetExplore &&
         cw.workTarget != kWorkTargetPurchaseLand &&
         !isTileControlledByPlayer(current.game, u.ownerId, cw.tileKey)) {
@@ -248,13 +246,7 @@ BuildWorkState _processWorkUnits(
       continue;
     }
     if (cw.workTarget == kWorkTargetCounterSpy) {
-      current = _resolveCounterSpyTick(
-        current,
-        unitsById,
-        u,
-        rand,
-        oldWorldUnits: oldWorldUnits,
-      );
+      // Ongoing counter-espionage; kill/defection resolved in spyResolution phase.
       continue;
     }
     current = _advanceWorkUnitTick(
@@ -274,62 +266,6 @@ BuildWorkState _processWorkUnits(
   );
 }
 
-BuildWorkState _resolveCounterSpyTick(
-  BuildWorkState s,
-  Map<String, Unit> unitsById,
-  Unit u,
-  Random rand, {
-  required bool oldWorldUnits,
-}) {
-  final provinceId = u.locationProvinceId;
-  final friendlySpies = unitsById.values
-      .where(
-        (x) =>
-            x.ownerId == u.ownerId &&
-            isSpyUnit(x.type) &&
-            x.currentWork?.workTarget == kWorkTargetCounterSpy &&
-            x.locationProvinceId == provinceId,
-      )
-      .length;
-  final killChance =
-      (friendlySpies * counterSpyKillChancePercentPerSpy).clamp(
-        0,
-        counterSpyKillChanceCapPercent,
-      ) /
-      100.0;
-  final enemySpies = unitsById.entries.where((e) {
-    final x = e.value;
-    return x.ownerId != u.ownerId &&
-        isSpyUnit(x.type) &&
-        x.locationProvinceId == provinceId;
-  }).toList();
-  if (enemySpies.isEmpty || rand.nextDouble() >= killChance) {
-    return s;
-  }
-  final toRemove = enemySpies.first.key;
-  final removed = unitsById[toRemove];
-  if (s.onDialogue != null && removed != null) {
-    final events = dialogueEventsForReactiveSpiesCaught(
-      s.game,
-      speakerId: u.ownerId,
-      caughtSpyOwnerId: removed.ownerId,
-      provinceId: provinceId,
-      turnNumber: s.game.worldState.turnState.turnNumber,
-      seed: s.game.globalGameSeed ?? 0,
-    );
-    for (final e in events) {
-      s.onDialogue!(e);
-    }
-  }
-  if (removed?.currentWork != null) {
-    ordersApplicationLog.d('work cancelled unit=$toRemove reason=unit dead');
-  }
-  unitsById.remove(toRemove);
-  return s.copyWith(
-    work: s.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
-  );
-}
-
 BuildWorkState _advanceWorkUnitTick(
   BuildWorkState s,
   Map<String, Unit> unitsById,
@@ -343,18 +279,13 @@ BuildWorkState _advanceWorkUnitTick(
 }) {
   final nextRemaining = cw.remainingTurns - 1;
   if (nextRemaining <= 0) {
-    var next = s;
-    if (cw.workTarget == kWorkTargetStealTech) {
-      next = _resolveStealTechCompletion(next, u, cw, rand);
-    } else {
-      next = _applyCompletedWorkTarget(
-        next,
-        u,
-        cw,
-        getProvinces,
-        replaceProvinces,
-      );
-    }
+    var next = _applyCompletedWorkTarget(
+      s,
+      u,
+      cw,
+      getProvinces,
+      replaceProvinces,
+    );
     unitsById[unitKey] = cancelUnitWork(u, restoredTile: u.tileKey);
     return next.copyWith(
       work: next.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
@@ -366,56 +297,4 @@ BuildWorkState _advanceWorkUnitTick(
   return s.copyWith(
     work: s.work.withUnitsByIdForRegion(oldWorldUnits, unitsById),
   );
-}
-
-BuildWorkState _resolveStealTechCompletion(
-  BuildWorkState s,
-  Unit u,
-  CurrentWork cw,
-  Random rand,
-) {
-  final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
-  final otherPlayer = targetProvinceId == null
-      ? null
-      : s.game.otherGreatPowerAtCapitalProvince(targetProvinceId, u.ownerId);
-  var stealSuccess = false;
-  var game = s.game;
-  if (otherPlayer != null) {
-    final ourTech = game.playerById(u.ownerId)?.techUnlocked ?? {};
-    final theirTech = otherPlayer.techUnlocked ?? {};
-    final missing = theirTech.entries
-        .where((e) => e.value == true && ourTech[e.key] != true)
-        .map((e) => e.key)
-        .toList();
-    if (missing.isNotEmpty && rand.nextDouble() < spyTechStealChance) {
-      stealSuccess = true;
-      final granted = missing[rand.nextInt(missing.length)];
-      final player = game.playerById(u.ownerId);
-      if (player != null) {
-        final updated = Map<String, bool>.from(player.techUnlocked ?? {})
-          ..[granted] = true;
-        game = game.copyWith(
-          players: game.players
-              .map(
-                (p) =>
-                    p.id == u.ownerId ? p.copyWith(techUnlocked: updated) : p,
-              )
-              .toList(),
-        );
-      }
-    }
-  }
-  final turn = game.worldState.turnState.turnNumber;
-  final spyEvidence = evidenceForAiStealTechResolved(
-    game,
-    u.ownerId,
-    turn,
-    success: stealSuccess,
-  );
-  if (spyEvidence.isNotEmpty) {
-    game = game.copyWith(
-      dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...spyEvidence],
-    );
-  }
-  return s.copyWith(game: game);
 }

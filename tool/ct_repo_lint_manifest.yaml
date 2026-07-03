@@ -83,6 +83,27 @@ rules:
     runner: dart
     script: tool/check_ai_dedup_weight_scale_clamp.dart
 
+  - rule_id: repo.ai_dedup_colonial_pressure_scale
+    group: architecture
+    title: colonizethis_ai must use shared colonialPressureScaleFromWeight helper (Refs #3822)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_colonial_pressure_scale.dart
+
+  - rule_id: repo.ai_dedup_commodity_ids
+    group: architecture
+    title: colonizethis_ai must use kAiCommodityIds holder for fabric/castIron/lumber (Refs #3822)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_commodity_ids.dart
+
+  - rule_id: repo.ai_dedup_list_equals
+    group: architecture
+    title: colonizethis_ai must use shared planningListEquals helper (Refs #3822)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dedup_list_equals.dart
+
   - rule_id: repo.economy_cost_check_shared_helper
     group: architecture
     title: economy cost-check functions must use the shared checkPreconditionsInOrder helper (Refs #3517 Cluster 2)
@@ -118,6 +139,69 @@ rules:
     runner: dart
     script: tool/check_economy_test_duplicate_descriptions.dart
 
+  - rule_id: repo.economy_test_no_duplicate_fixtures
+    group: testing
+    title: colonizethis_economy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.economy_test_no_local_world_market_support
+    group: testing
+    title: colonizethis_economy test/ must not host local domain test_support files (world_market, FRR, extraction; Refs #3823, #3831)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_world_market_support.dart
+
+  - rule_id: repo.economy_bid_treasury_spend_shared
+    group: architecture
+    title: economy trade_order_validator must delegate bid spend to bidTreasurySpendForOrder in treasury_bid_budget.dart (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_bid_treasury_spend_shared.dart
+
+  - rule_id: repo.economy_test_file_size
+    group: testing
+    title: colonizethis_economy test files must stay at or below 400 physical lines (Refs #3823)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_file_size.dart
+
+  - rule_id: repo.economy_gp_treasury_rollup_shared
+    group: architecture
+    title: economy FRR and purchased-tile riches results must compose GpTreasuryCreditRollup (Refs #3831)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_gp_treasury_rollup_shared.dart
+
+  - rule_id: repo.economy_test_no_local_stockpile_game_builder
+    group: testing
+    title: colonizethis_economy world_market tests must not define local stockpile-player game builders (Refs #3831)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_stockpile_game_builder.dart
+
+  - rule_id: repo.economy_bid_quantity_cap_shared
+    group: architecture
+    title: economy trade_order_suggester must delegate bid quantity cap to capBidQuantityForBudgets in treasury_bid_budget.dart (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_bid_quantity_cap_shared.dart
+
+  - rule_id: repo.economy_test_no_src_imports
+    group: testing
+    title: colonizethis_economy test/ must not import package:colonizethis_economy/src/ (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_src_imports.dart
+
+  - rule_id: repo.economy_test_core_fixtures_shared
+    group: testing
+    title: colonizethis_economy core tests must not inline Game(...) builders (Refs #3836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_core_fixtures_shared.dart
+
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing
     title: colonizethis_diplomacy test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3715)
@@ -138,6 +222,62 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_phase_types_value_equality.dart
+
+  - rule_id: repo.diplomacy_event_logging_unified
+    group: architecture
+    title: colonizethis_diplomacy resolvers must use logDiplomaticEvent, not raw appendDiplomaticEvent (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_event_logging_unified.dart
+
+  - rule_id: repo.diplomacy_treasury_debit_shared
+    group: architecture
+    title: colonizethis_diplomacy lib treasury debits must route through debitPlayerTreasury (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_treasury_debit_shared.dart
+
+  - rule_id: repo.diplomacy_no_loop_upsert_relation
+    group: architecture
+    title: colonizethis_diplomacy lib must not call upsertRelation more than once per function body or inside loops (Refs #3825, #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_no_loop_upsert_relation.dart
+
+  - rule_id: repo.diplomacy_test_duplicate_descriptions
+    group: testing
+    title: colonizethis_diplomacy test descriptions must not duplicate across files (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_duplicate_descriptions.dart
+
+  - rule_id: repo.diplomacy_test_inline_game_ctor
+    group: testing
+    title: colonizethis_diplomacy tests must not construct Game(...) inline (Refs #3825)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_inline_game_ctor.dart
+
+  - rule_id: repo.diplomacy_test_no_src_imports
+    group: testing
+    title: colonizethis_diplomacy tests must not import package src/ paths (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_no_src_imports.dart
+
+  - rule_id: repo.diplomacy_test_file_size
+    group: testing
+    title: colonizethis_diplomacy test files must stay at or below 400 physical lines (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_file_size.dart
+
+  - rule_id: repo.diplomacy_test_support_package_only
+    group: testing
+    title: colonizethis_diplomacy fixtures must live in colonizethis_diplomacy_test_support, not test/support (Refs #3837)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_support_package_only.dart
 
   - rule_id: repo.ai_no_repeated_production_recipes_catalog_scan
     group: architecture
@@ -374,6 +514,13 @@ rules:
     spec: SPEC/program/turn-resume-config-dispatch.md
     runner: dart
     script: tool/check_turn_resume_param_budget.dart
+
+  - rule_id: repo.turn_test_no_duplicate_fixtures
+    group: testing
+    title: colonizethis_turn test/ must not re-add a local TestFixtures copy; use package:colonizethis_test/game_test_fixtures.dart (Refs #3842)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_no_duplicate_fixtures.dart
 
   - rule_id: repo.diplomacy_no_part_of
     group: structure
@@ -721,12 +868,12 @@ rules:
     runner: dart
     script: tool/check_map_no_partfile_classes.dart
 
-  - rule_id: repo.map_gen_file_size
+  - rule_id: repo.map_lib_file_size
     group: structure
-    title: colonizethis_map generation/view-layer source files must be 500 non-comment lines or fewer (Refs #3588)
+    title: colonizethis_map gen/view/render source files must be 500 non-comment lines or fewer (Refs #3588, #3846)
     spec: SPEC/program/repo-lint.md
     runner: dart
-    script: tool/check_map_gen_file_size.dart
+    script: tool/check_map_lib_file_size.dart
 
   - rule_id: repo.map_grid_ops_central
     group: structure
@@ -819,6 +966,20 @@ rules:
     runner: dart
     script: tool/check_orders_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.world_test_no_duplicate_fixtures
+    group: architecture
+    title: colonizethis_world tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3843)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_no_duplicate_fixtures.dart
+
+  - rule_id: repo.world_test_no_inline_topology_builder
+    group: architecture
+    title: colonizethis_world tests must not add new inline MapTopology/TileMapResult scaffolding outside world_test_support (Refs #3843)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_no_inline_topology_builder.dart
+
   - rule_id: repo.ai_test_no_duplicate_scaffolding
     group: architecture
     title: colonizethis_ai tests must keep coherent scaffolding (no _test.dart in test/support/, no confusing test_fixtures.dart, no local TestFixtures) (Refs #3717)
@@ -832,6 +993,27 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_test_mirrors_lib.dart
+
+  - rule_id: repo.ai_test_seed42_campaign_harness
+    group: testing
+    title: colonizethis_ai seed-42 Full-AI observer campaigns must use the shared runSeed42ObserverCampaign harness, not re-inlined init/resolve loops (Refs #3749)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_seed42_campaign_harness.dart
+
+  - rule_id: repo.ai_test_soft_weight_contract
+    group: testing
+    title: colonizethis_ai soft-weight wiring stays consolidated - only the parameterized contract files may use the *soft_weight_wiring_test.dart suffix (no new per-helper clones) (Refs #3749)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_soft_weight_contract.dart
+
+  - rule_id: repo.ai_expand_peace_decider_registry
+    group: architecture
+    title: colonizethis_ai EXPAND-regime peace targets must be composed via the ordered ExpandPeaceDecider registry in observer_goal_phase.dart, not hand-unrolled yield* decider chains (Refs #3749)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_peace_decider_registry.dart
 
   - rule_id: repo.orders_test_mirrors_lib
     group: structure
@@ -853,6 +1035,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_test_no_duplicate_view_fixtures.dart
+
+  - rule_id: repo.map_test_view_builder_file_count
+    group: architecture
+    title: colonizethis_map init_game_map_view_builder_* test file count hard cap (Refs #3846)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_view_builder_file_count.dart
+
+  - rule_id: repo.map_test_shared_topology_fixtures
+    group: architecture
+    title: colonizethis_map render/visualizer tests must use shared topology fixtures (Refs #3846)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_shared_topology_fixtures.dart
 
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture
@@ -909,6 +1105,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_setup_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.setup_test_default_init_options
+    group: architecture
+    title: 'colonizethis_setup runInitGame tests must use defaultInitOptions from test support (no repeated InitGameOptions(cellSize: 8, renderPng: false) literals) (Refs #3840)'
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_test_default_init_options.dart
+
+  - rule_id: repo.setup_dedup_faction_capital_collect
+    group: architecture
+    title: setup capital-map triple-faction collection must live in faction_setup_helpers.dart (Refs #3840)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_faction_capital_collect.dart
 
   - rule_id: repo.orders_file_size
     group: structure
@@ -1115,3 +1325,10 @@ rules:
     spec: SPEC/ui/tribe-first-contact-overlay.md
     runner: dart
     script: tool/check_dialogue_yarn_variable_bindings.dart
+
+  - rule_id: repo.dialogue_blocking_combined_step
+    group: ui_structure
+    title: "blocking Jenny dialogue overlays must use CtDialogueLineChoiceBody and register combined-step goldens (Refs #3628)"
+    spec: SPEC/ui/ct-dialogue-view.md
+    runner: dart
+    script: tool/check_dialogue_blocking_combined_step.dart

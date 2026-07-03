@@ -188,19 +188,21 @@ int _offerPeacePeaceTargetListAdjustments({
   return s;
 }
 
-int _scoreOfferPeaceDiplomaticOrder({
-  required DiplomaticOrder order,
-  required String nationId,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required String agendaId,
-  required PersonalityThresholds thresholds,
-  required Map<String, String> provinceOwner,
-  required Set<String> invadableOwners,
-  required int Function(String targetFactionId, int relationScore)
-  warDesireForTarget,
-}) {
-  var s = 50;
+int _scoreOfferPeaceDiplomaticOrder(
+  DiplomaticScoringContext ctx,
+  OfferPeaceScoringParams params,
+) {
+  final order = ctx.order;
+  final nationId = ctx.nationId;
+  final game = ctx.game;
+  final snapshot = ctx.snapshot;
+  final provinceOwner = ctx.provinceOwner;
+  final warDesireForTarget = ctx.warDesireForTarget;
+  final agendaId = params.agendaId;
+  final thresholds = params.thresholds;
+  final invadableOwners = params.invadableOwners;
+
+  var s = kDiplomaticDefaultBaseScore;
   final rel = snapshot.relations[order.targetFactionId];
   final warDesire = warDesireForTarget(order.targetFactionId, rel?.score ?? 50);
   // Lower peace desire when current war desire remains high.

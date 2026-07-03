@@ -337,33 +337,3 @@ List<DossierEvidenceEntry> evidenceForEnvyResearchMirror(
   }
   return entries;
 }
-
-/// Tech Thief agenda: resolved steal_tech spy work against another Great Power.
-/// **+1** per attempt, **+2** additional on success (**+3** total on success).
-/// SPEC/ai/hidden-agendas.md.
-List<DossierEvidenceEntry> evidenceForAiStealTechResolved(
-  Game game,
-  String aiSpyOwnerGpId,
-  int turnNumber, {
-  required bool success,
-}) {
-  final observers = _evidenceObservers(game, aiSpyOwnerGpId);
-  if (observers == null) return [];
-  final scoreDelta = success ? 3 : 1;
-  final entries = <DossierEvidenceEntry>[];
-  for (final observerId in observers) {
-    entries.add(
-      DossierEvidenceEntry(
-        observerId: observerId,
-        subjectId: aiSpyOwnerGpId,
-        agendaType: 'tech_thief',
-        turnNumber: turnNumber,
-        description: success
-            ? 'spy steal tech succeeded'
-            : 'spy steal tech attempt',
-        scoreDelta: scoreDelta,
-      ),
-    );
-  }
-  return entries;
-}

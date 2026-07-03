@@ -598,11 +598,13 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
   if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
     return const [];
   }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) == null) factionId,
-  ]..sort();
-  return targets;
+  // Route the non-GP (minor + tribe) at-war filter + ascending sort through the
+  // shared [nonGreatPowerAtWarPeaceTargetsWhere] collector (Refs #3749 step 5
+  // expand-peace collector dedup). Byte-identical to the inline
+  // `playerById == null` comprehension + `..sort()`: the collector keeps the
+  // bare non-GP `playerById == null` membership test (not the minor/tribe
+  // membership predicates) so absorbed-faction at-war ids are preserved.
+  return nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot);
 }
 
 /// Returns the sole at-war GP enemy when both sides are mutual-plateau peers

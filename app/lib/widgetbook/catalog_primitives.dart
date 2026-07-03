@@ -110,7 +110,7 @@ class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
 }
 
 ProviderScope _gameSideMenuProviderScope({required bool initialOpen}) {
-  final game = getDebugInitGameResult().game;
+  final game = loadSeed42InitGameResult().game;
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) {

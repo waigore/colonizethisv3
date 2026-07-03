@@ -35,6 +35,8 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
 /// Sentinel capital tile that never coincides with a real demo tile, used to
 /// force every faction's capital away from the tile under test so the town /
 /// ordinary branches are deterministic.
@@ -104,37 +106,6 @@ String _provinceDisplayName(Game g, String provinceId) {
   return provinceId;
 }
 
-Widget _darkOverlay({
-  required Game game,
-  required RegionMapViewData region,
-  required String displayId,
-  String? selectedTileKey,
-}) {
-  final humanPlayerId = game.players.first.id;
-  // Refs #3656: buildPlayerView ignores its topology argument, so an empty
-  // const MapTopology() replaces the ~11s getDebugInitGameResult() map
-  // generation with identical PlayerView output for these demo-data overlays.
-  final playerView = buildPlayerView(
-    game,
-    const MapTopology(),
-    humanPlayerId,
-  );
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: region,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: humanPlayerId,
-        playerView: playerView,
-        draftOrders: const Orders(),
-      ),
-    ),
-  );
-}
-
 /// Golden harness host: wraps the overlay in a keyed `RepaintBoundary` at a
 /// fixed size so the Tile-section designation line is pinned as a pixel
 /// baseline (mirrors `diplomacy_panel_goldens_test.dart`). Uses
@@ -150,11 +121,7 @@ Widget _goldenOverlay({
   // Refs #3656: buildPlayerView ignores its topology argument, so an empty
   // const MapTopology() replaces the ~11s getDebugInitGameResult() map
   // generation with identical PlayerView output for these demo-data overlays.
-  final playerView = buildPlayerView(
-    game,
-    const MapTopology(),
-    humanPlayerId,
-  );
+  final playerView = buildPlayerView(game, const MapTopology(), humanPlayerId);
   return MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: AppThemes.editorialMonocle,
@@ -359,11 +326,13 @@ void main() {
         );
 
         await tester.pumpWidget(
-          _darkOverlay(
+          buildProvinceOverlayDarkThemeShell(
             game: game,
             region: demoRegionForOverlay,
             displayId: provinceId,
             selectedTileKey: tileKey,
+            playerView: demoOverlayPlayerView(game),
+            draftOrders: const Orders(),
           ),
         );
         await tester.pumpAndSettle();
@@ -398,11 +367,13 @@ void main() {
         final expected = l10n.provinceOverlay_tileTownOf(provinceName);
 
         await tester.pumpWidget(
-          _darkOverlay(
+          buildProvinceOverlayDarkThemeShell(
             game: game,
             region: demoRegionForOverlay,
             displayId: provinceId,
             selectedTileKey: tileKey,
+            playerView: demoOverlayPlayerView(game),
+            draftOrders: const Orders(),
           ),
         );
         await tester.pumpAndSettle();
@@ -423,11 +394,13 @@ void main() {
         );
 
         await tester.pumpWidget(
-          _darkOverlay(
+          buildProvinceOverlayDarkThemeShell(
             game: game,
             region: demoRegionForOverlay,
             displayId: provinceId,
             selectedTileKey: tileKey,
+            playerView: demoOverlayPlayerView(game),
+            draftOrders: const Orders(),
           ),
         );
         await tester.pumpAndSettle();
@@ -450,11 +423,13 @@ void main() {
         );
 
         await tester.pumpWidget(
-          _darkOverlay(
+          buildProvinceOverlayDarkThemeShell(
             game: game,
             region: region,
             displayId: provinceId,
             selectedTileKey: tileKey,
+            playerView: demoOverlayPlayerView(game),
+            draftOrders: const Orders(),
           ),
         );
         await tester.pumpAndSettle();

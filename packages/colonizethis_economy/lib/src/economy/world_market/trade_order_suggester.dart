@@ -19,7 +19,11 @@ import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'trade_order_admission.dart' show isWorldMarketTradeableCommodity;
-import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
+import 'treasury_bid_budget.dart'
+    show
+        bidTreasurySpendForOrder,
+        capBidQuantityForBudgets,
+        effectiveMarketPriceForCommodityId;
 import 'world_market_context_base.dart';
 
 /// Inputs for one [TradeOrderSuggester.suggest] pass.
@@ -39,6 +43,7 @@ class TradeSuggestionContext extends WorldMarketContextBase {
     this.resourceRules,
     this.offerPriority = defaultOfferPriority,
     this.bidPriority = defaultBidPriority,
+    this.preferredBidCommodityId,
   });
 
   /// Default offer priority used when the caller does not specify one.
@@ -71,6 +76,16 @@ class TradeSuggestionContext extends WorldMarketContextBase {
 
   /// Catalog fallback prices when [worldMarketState] lacks an entry.
   final data.ResourceRules? resourceRules;
+
+  /// Optional ordering hint: when set and present among the candidate
+  /// commodities, this commodity is considered **first** (ahead of the default
+  /// alphabetical order) so a capped bid set ([bidTypeCap]) admits it before
+  /// other deficits. Used by the AI treasury planner to steer a bid toward a
+  /// faction whose completed deal earns a trade-deal relation boost
+  /// (Refs #3758 S9/R10; SPEC/ai/treasury-planner.md
+  /// § Trade-deal relation-boost-aware bid preference). `null` (the default)
+  /// preserves the legacy alphabetical ordering exactly.
+  final CommodityId? preferredBidCommodityId;
 
   data.ResourceRules get _resourceRules =>
       resourceRules ?? data.ResourceRules.defaultRules;
@@ -117,8 +132,14 @@ class TradeOrderSuggester {
     if (candidateCommodityIds.isEmpty) {
       return TradeSuggestionResult.empty;
     }
-    final orderedCommodityIds = candidateCommodityIds.toList(growable: false)
-      ..sort();
+    final sortedCommodityIds = candidateCommodityIds.toList()..sort();
+    // Refs #3758 S9/R10: when a preferred bid commodity is supplied and present,
+    // move it to the front so a capped bid set admits it ahead of other
+    // deficits. `null`/absent leaves the legacy alphabetical order untouched.
+    final orderedCommodityIds = _withPreferredCommodityFirst(
+      sortedCommodityIds,
+      context.preferredBidCommodityId,
+    );
 
     final offers = <TradeOrder>[];
     final bids = <TradeOrder>[];
@@ -155,21 +176,17 @@ class TradeOrderSuggester {
       if (admittedBidCount >= context.bidTypeCap) continue;
       final bidQuantity = -net; // need > available => positive deficit
       if (bidQuantity <= 0) continue;
-      if (remainingCargoBudget <= 0) continue;
-      var cappedQty = bidQuantity < remainingCargoBudget
-          ? bidQuantity
-          : remainingCargoBudget;
       final int? unitPrice = effectiveMarketPriceForCommodityId(
         commodityId: commodityId,
         worldMarket: context.worldMarketState,
         resourceRules: context._resourceRules,
       );
-      if (unitPrice != null && unitPrice > 0) {
-        final int maxAffordable = remainingTreasuryBudget ~/ unitPrice;
-        if (cappedQty > maxAffordable) {
-          cappedQty = maxAffordable;
-        }
-      }
+      final cappedQty = capBidQuantityForBudgets(
+        bidQuantity: bidQuantity,
+        remainingCargoBudget: remainingCargoBudget,
+        remainingTreasuryBudget: remainingTreasuryBudget,
+        unitPrice: unitPrice,
+      );
       if (cappedQty <= 0) continue;
       bids.add(
         TradeOrder(
@@ -180,12 +197,35 @@ class TradeOrderSuggester {
         ),
       );
       remainingCargoBudget -= cappedQty;
-      if (unitPrice != null && unitPrice > 0) {
-        remainingTreasuryBudget -= cappedQty * unitPrice;
-      }
+      remainingTreasuryBudget -= bidTreasurySpendForOrder(
+        order: TradeOrder(
+          commodityId: commodityId,
+          type: TradeOrderType.bid,
+          quantity: cappedQty,
+          priority: context.bidPriority,
+        ),
+        worldMarket: context.worldMarketState,
+        resourceRules: context._resourceRules,
+      );
       admittedBidCount += 1;
     }
 
     return TradeSuggestionResult(offers: offers, bids: bids);
+  }
+
+  /// Returns [sortedCommodityIds] with [preferred] moved to the front when it is
+  /// non-null and present; otherwise returns the list unchanged. Deterministic.
+  static List<CommodityId> _withPreferredCommodityFirst(
+    List<CommodityId> sortedCommodityIds,
+    CommodityId? preferred,
+  ) {
+    if (preferred == null || !sortedCommodityIds.contains(preferred)) {
+      return sortedCommodityIds;
+    }
+    return <CommodityId>[
+      preferred,
+      for (final id in sortedCommodityIds)
+        if (id != preferred) id,
+    ];
   }
 }

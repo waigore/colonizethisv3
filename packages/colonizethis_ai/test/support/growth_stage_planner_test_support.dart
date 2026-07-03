@@ -8,13 +8,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
-
 const kTestTopology = MapTopology(nodes: [], edges: []);
-const kTestConfig = AIConfig(
-  leaderId: 'victoria',
-  personalityId: 'victoria',
-  hiddenAgendaId: 'peacemaker',
-);
 final kTestSeeds = AISeedBundle.fromTurnSeed(3371);
 
 Game gameWithPlayer(Player player) => Game(

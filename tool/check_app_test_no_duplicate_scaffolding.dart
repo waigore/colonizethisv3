@@ -52,29 +52,36 @@ int runCheckAppTestNoDuplicateScaffolding(
   final violations = <String>[];
 
   for (final entity in appTestDir.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) {
+    if (entity is! File || !entity.path.endsWith('.dart')) {
       continue;
     }
     final relativePath = p
         .relative(entity.path, from: repoRoot)
         .replaceAll('\\', '/');
-    if (!_isGovernedMinViewportFile(relativePath)) {
-      continue;
-    }
     final content = entity.readAsStringSync();
     final parsed = parseString(content: content, path: relativePath);
-    final visitor = _ScaffoldingVisitor(
-      relativePath: relativePath,
-      lineInfo: parsed.unit.lineInfo,
-      violations: violations,
-    );
-    parsed.unit.accept(visitor);
+    if (_isGovernedMinViewportFile(relativePath)) {
+      final visitor = _ScaffoldingVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedWidgetbookUseCaseFile(relativePath)) {
+      final visitor = _WidgetbookUseCaseVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
-      'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport '
-      'scaffolding found.',
+      'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport or '
+      'widgetbook use-case scaffolding found.',
     );
     return 0;
   }
@@ -88,11 +95,24 @@ int runCheckAppTestNoDuplicateScaffolding(
     logE(' - $v');
   }
   logE(
-    '   Use pumpAtMinViewport / buildMinViewportApp from '
-    'app/test/support/min_viewport_harness.dart instead of re-declaring the '
-    'viewport shell.',
+    '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
+    'app/test/support/min_viewport_harness.dart. '
+    'Widgetbook: use findWidgetbookUseCase from '
+    'app/test/support/widgetbook_test_harness.dart.',
   );
   return 1;
+}
+
+/// True for `app/test/widgetbook_*_test.dart`, excluding support fixtures.
+bool _isGovernedWidgetbookUseCaseFile(String relativePath) {
+  final name = p.basename(relativePath);
+  if (!name.startsWith('widgetbook_') || !name.endsWith('_test.dart')) {
+    return false;
+  }
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  return true;
 }
 
 /// True for `app/test/**/*_320dp_min_viewport_test.dart`, excluding the shared
@@ -170,6 +190,41 @@ class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
       );
     }
     super.visitPropertyAccess(node);
+  }
+}
+
+class _WidgetbookUseCaseVisitor extends RecursiveAstVisitor<void> {
+  _WidgetbookUseCaseVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (name != '_useCase') {
+      super.visitFunctionDeclaration(node);
+      return;
+    }
+    final returnType = node.returnType;
+    if (returnType != null &&
+        returnType.toString().contains('WidgetbookUseCase')) {
+      _report(
+        node.name.offset,
+        'function "_useCase" duplicates widgetbook_test_harness.dart',
+      );
+    }
+    super.visitFunctionDeclaration(node);
   }
 }
 

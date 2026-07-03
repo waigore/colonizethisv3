@@ -547,6 +547,35 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           },
         );
       }),
+      bus.on<BreakAllianceImmediatelyEvent>().listen((e) {
+        _unlessTurnResolutionBlocksSession(
+          'BreakAllianceImmediatelyEvent',
+          () {
+            if (_rejectUiMutationIfObserving()) return;
+            final current = ref.read(currentGameProvider);
+            final result = applyBreakAllianceImmediately(
+              currentGame: current,
+              event: e,
+            );
+            final nextGame = result.game;
+            if (nextGame == null) {
+              _logEvent.w(result.message ?? 'Break Alliance rejected.');
+              _showSnackBar(
+                ShowSnackBarEvent(message: result.message ?? 'Break Alliance rejected.'),
+              );
+              return;
+            }
+            ref.read(currentGameProvider.notifier).setGame(nextGame);
+            ref
+                .read(gameServiceProvider)
+                .saveGame(
+                  ref
+                      .read(observeSessionProvider.notifier)
+                      .prepareGameForPersistence(nextGame),
+                );
+          },
+        );
+      }),
       bus.on<CombatModeChosenEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession( 'CombatModeChosenEvent', () {
           final g = ref.read(currentGameProvider);

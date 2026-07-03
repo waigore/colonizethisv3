@@ -11,7 +11,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Work target string constants for work orders. Used across order suggestion,
 /// validation, and application to avoid hardcoded string literals.
-const String kWorkTargetStealTech = 'steal_tech';
 const String kWorkTargetCounterSpy = 'counter_spy';
 const String kWorkTargetPurchaseLand = 'purchase_land';
 const String kWorkTargetExplore = 'explore';
@@ -26,7 +25,6 @@ const String kWorkTargetUpgradeTown = 'upgrade_town';
 /// Work targets that skip material-cost and tech validation (treasury-only or
 /// no-cost targets). Used by validators and cost calculators.
 const Set<String> kWorkTargetsWithoutMaterialCost = {
-  kWorkTargetStealTech,
   kWorkTargetCounterSpy,
   kWorkTargetPurchaseLand,
 };
@@ -34,7 +32,6 @@ const Set<String> kWorkTargetsWithoutMaterialCost = {
 /// Work targets that skip projected material-cost deduction during validation.
 /// [kWorkTargetPurchaseLand] treasury is charged on work completion instead.
 const Set<String> kWorkTargetsWithoutProjectedMaterialCost = {
-  kWorkTargetStealTech,
   kWorkTargetCounterSpy,
 };
 

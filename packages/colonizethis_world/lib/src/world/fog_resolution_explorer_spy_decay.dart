@@ -39,7 +39,7 @@ applySpyRevealTimerDecay(Game game) {
 }
 
 /// For each player, set tiles in other-faction provinces to fogged when no Explorer/Spy in that province.
-/// SPEC/program/fog-and-exploration-resolution.md.
+/// Immediate spy fog (no grace timer). SPEC/program/fog-and-exploration-resolution.md.
 Map<String, Map<String, String>> applyFogDecay(
   Game game, {
   MapTopology? navalCoastalIntelTopology,
@@ -67,20 +67,11 @@ Map<String, Map<String, String>> applyFogDecay(
           .add(u.locationProvinceId);
     }
   }
-  final provincesWithSpyTimerByPlayer = <String, Set<String>>{};
-  for (final entry in game.worldState.spyRevealTurnsByPlayer.entries) {
-    final playerId = entry.key;
-    final provinces = entry.value.keys;
-    if (provinces.isEmpty) continue;
-    provincesWithSpyTimerByPlayer[playerId] = provinces.toSet();
-  }
-
   final result = <String, Map<String, String>>{};
   for (final entry in game.worldState.playerVisibilityByTile.entries) {
     final playerId = entry.key;
     final visibility = Map<String, String>.from(entry.value);
     final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
-    final hasSpyTimerIn = provincesWithSpyTimerByPlayer[playerId] ?? const {};
     final navalCoastalIntel = navalCoastalIntelByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
@@ -89,7 +80,6 @@ Map<String, Map<String, String>> applyFogDecay(
       final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;
-      if (hasSpyTimerIn.contains(fullProvinceId)) continue;
       if (navalCoastalIntel.contains(tileKey)) continue;
       final cur = visibility[tileKey];
       if (cur != VisibilityLevel.fullyVisible.name) continue;

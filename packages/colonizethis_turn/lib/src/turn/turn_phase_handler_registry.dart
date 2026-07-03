@@ -24,6 +24,7 @@ final class TurnPhaseHandlerRegistry {
         TurnPhase.consumption: consumptionTurnPhaseHandler,
         TurnPhase.production: productionTurnPhaseHandler,
         TurnPhase.diplomacy: diplomacyTurnPhaseHandler,
+        TurnPhase.spyResolution: spyResolutionTurnPhaseHandler,
         TurnPhase.research: researchTurnPhaseHandler,
         TurnPhase.movement: movementTurnPhaseHandler,
         TurnPhase.minorRegimentUpgrade: minorRegimentUpgradeTurnPhaseHandler,

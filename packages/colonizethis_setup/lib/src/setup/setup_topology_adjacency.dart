@@ -18,6 +18,7 @@
 // (Refs #3740).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Visits the in-bounds 4-neighbor cell ids of ([x], [y]) in
@@ -59,4 +60,47 @@ bool tileAdjacentToSeaZone(
     if (ids.contains(cellId)) return false;
     return cellId == seaZoneId || cellId == seaZoneLocal;
   });
+}
+
+/// Whether tile ([x], [y]) in [map] is cardinally adjacent to any cell in
+/// [seaZoneIds], skipping province cells. Multi-zone variant of
+/// [tileAdjacentToSeaZone] for town-assignment seaboard scans (Refs #3840).
+bool tileAdjacentToAnySeaZone(
+  int x,
+  int y,
+  TileMapResult map,
+  MapTopology topology,
+  Set<String> seaZoneIds, {
+  Set<String>? provinceIds,
+}) {
+  if (seaZoneIds.isEmpty) return false;
+  final ids = provinceIds ?? provinceNodeIds(topology);
+  return anyCardinalNeighborCell(x, y, map, (cellId) {
+    if (ids.contains(cellId)) return false;
+    return seaZoneIds.contains(cellId);
+  });
+}
+
+/// Whether [tileKey] is cardinally adjacent to any sea zone in [seaZoneIds].
+bool tileKeyAdjacentToAnySeaZone({
+  required String tileKey,
+  required String provinceId,
+  required Set<String> seaZoneIds,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, MapTopology> topologyByRegion,
+}) {
+  if (seaZoneIds.isEmpty) return false;
+  final regionId = ProvinceId.regionIdFrom(provinceId);
+  final map = tileMapByRegion[regionId];
+  final topology = topologyByRegion[regionId];
+  if (map == null || topology == null) return false;
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return false;
+  return tileAdjacentToAnySeaZone(
+    coords.x,
+    coords.y,
+    map,
+    topology,
+    seaZoneIds,
+  );
 }

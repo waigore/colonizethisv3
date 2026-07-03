@@ -102,6 +102,7 @@ Canonical `situation` strings are stable for `dialogueKeyForEvent`.
 | reactive | attack_on_tribe | implemented | combat phase detection | Human attacks a Tribe province; AI speaker reacts when tied to the Tribe via an embassy or the informal `RelationLevel.allied` band (Minors/Tribes do not form formal Great-Power alliances). |
 | reactive | tech_first | implemented | research-complete detection | Human is first faction in match to unlock a tech. |
 | reactive | spies_caught | implemented | counter-spy kill resolution | AI owner of target province speaks when human spy is removed by counter-spy. |
+| reactive | spies_defected | implemented | counter-espionage defection resolution | AI defector speaks when a human spy defects via counter-espionage. |
 | reactive | colony_founded | deferred | n/a | Not separately observable as a player-action hook in current turn pipeline. |
 | reactive | threat_ignored | deferred | n/a | No canonical "threat issued/ignored" state transition is currently recorded. |
 | reactive | gift | deferred | n/a | No distinct gift action hook currently exists in diplomacy resolution. |

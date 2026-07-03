@@ -4,7 +4,7 @@ import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 const _playerId = 'gp1';
 const _ow = 'oldWorld';
@@ -82,7 +82,6 @@ WorkTargetSelectionSnapshot _snapshot(Game game) {
 /// Mirrors default-strategy keys in [PerPlayerWorkTargetSelectionCache].
 const _defaultWorkTargets = <String>[
   kWorkTargetExplore,
-  kWorkTargetStealTech,
   kWorkTargetCounterSpy,
   kWorkTargetPurchaseLand,
   kWorkTargetProspect,

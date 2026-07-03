@@ -89,6 +89,11 @@
 //   - Issue #2509 comment 2026-05-26 (turn-100 OW-conquest baseline +
 //     "instrument the per-turn trace" pickup for S7).
 
+// Migrated to the shared [runSeed42ObserverCampaign] harness (Refs #3749
+// step 2): the init / handoff / per-turn resolve loop is owned by
+// `test/support/seed42_observer_campaign.dart`; this test contributes only
+// its per-turn pre-resolution trace capture and invariant assertions.
+
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
@@ -98,13 +103,15 @@ import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
     show observerGoalPhaseFor;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
-        GameSetupConfig,
+        MapTopology,
         kObserverColonialLiteMinTurn,
         kObserverConquestMinOwProvincesPerGp;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
+
+import '../support/seed42_observer_campaign.dart';
 
 class _GpTurnTrace {
   const _GpTurnTrace({
@@ -138,6 +145,43 @@ class _GpTurnTrace {
       'adjacentOwners=$adjacentOwners';
 }
 
+/// Captures pre-resolution per-GP traces for one 1-based campaign turn.
+List<_GpTurnTrace> _captureGpTurnTraces({
+  required int turn,
+  required Game game,
+  required MapTopology topo,
+}) {
+  final perGp = <_GpTurnTrace>[];
+  for (var i = 1; i <= 6; i++) {
+    final gpId = 'gp$i';
+    final view = buildPlayerView(game, topo, gpId);
+    final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topo);
+    final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
+    final declareWarTarget = planExpandDeclareWar(
+      game: game,
+      snapshot: snapshot,
+    );
+    final player = game.playerById(gpId)!;
+    perGp.add(
+      _GpTurnTrace(
+        turn: turn,
+        gpId: gpId,
+        phase: phase,
+        declareWarTarget: declareWarTarget,
+        ownOw: snapshot.conquest.oldWorldProvincesOwned,
+        invadableCount: snapshot.conquest.invadableProvinceIdsSorted.length,
+        regimentCount: regimentCountForPlayer(game, gpId),
+        treasury: player.treasury,
+        atWarWith: List.of(snapshot.threats.atWarWith)..sort(),
+        adjacentOwners: List.of(
+          snapshot.conquest.adjacentOwnerFactionIdsSorted,
+        )..sort(),
+      ),
+    );
+  }
+  return perGp;
+}
+
 /// Number of full-AI turn resolutions to run.
 ///
 /// Captures pre-resolution per-GP traces at turns 1 .. [_kTurnsToResolve] + 1
@@ -152,83 +196,27 @@ void main() {
   test('seed 42 first $_kTurnsToResolve resolved turns: every below-quota '
       'pre-COLONIAL-lite Great Power stays in EXPAND (S7 multi-turn '
       'diagnostic)', () {
-    final init = runInitGame(
-      config: GameSetupConfig(seed: 42),
-      options: const InitGameOptions(
-        cellSize: 24,
-        renderPng: false,
-        skipFillLakes: false,
-      ),
-    );
-    var game = init.game.copyWith(
-      aiControlByGpId: {for (final p in init.game.players) p.id: true},
-    );
-    final topo = init.combinedTopology;
-    final tileMap = init.tileMapByRegion;
-
     final tracesByTurn = <int, List<_GpTurnTrace>>{};
+    MapTopology? topo;
 
-    for (var turn = 1; turn <= _kTurnsToResolve + 1; turn++) {
-      final perGp = <_GpTurnTrace>[];
-      for (var i = 1; i <= 6; i++) {
-        final gpId = 'gp$i';
-        final view = buildPlayerView(game, topo, gpId);
-        final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topo);
-        final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
-        final declareWarTarget = planExpandDeclareWar(
+    final result = runSeed42ObserverCampaign(
+      turns: _kTurnsToResolve,
+      onBeforeResolve: (harnessTurn, fullAi, game, topology, tileMap) {
+        topo = topology;
+        final turn = harnessTurn + 1;
+        tracesByTurn[turn] = _captureGpTurnTraces(
+          turn: turn,
           game: game,
-          snapshot: snapshot,
+          topo: topology,
         );
-        final player = game.playerById(gpId)!;
-        perGp.add(
-          _GpTurnTrace(
-            turn: turn,
-            gpId: gpId,
-            phase: phase,
-            declareWarTarget: declareWarTarget,
-            ownOw: snapshot.conquest.oldWorldProvincesOwned,
-            invadableCount: snapshot.conquest.invadableProvinceIdsSorted.length,
-            regimentCount: regimentCountForPlayer(game, gpId),
-            treasury: player.treasury,
-            atWarWith: List.of(snapshot.threats.atWarWith)..sort(),
-            adjacentOwners: List.of(
-              snapshot.conquest.adjacentOwnerFactionIdsSorted,
-            )..sort(),
-          ),
-        );
-      }
-      tracesByTurn[turn] = perGp;
+      },
+    );
 
-      if (turn > _kTurnsToResolve) {
-        break;
-      }
-
-      final fullAi = generateOrdersForGameFullAI(
-        game,
-        topo,
-        tileMapByRegion: tileMap,
-      );
-      final merged = mergeOrderLists(
-        humanOrders: const Orders(),
-        aiOrders: fullAi.orders,
-      );
-      final assignments = fullAi.economyPlansByPlayerId.map(
-        (pid, plan) => MapEntry(pid, plan.productionAssignments),
-      );
-      final result = validateOrdersAndResolveTurnFromTrustedOrders(
-        game: fullAi.game,
-        topology: topo,
-        orders: merged,
-        tileMapByRegion: tileMap,
-        defaultAssignmentsByPlayerId: assignments,
-      );
-      expect(
-        result,
-        isA<TurnResolutionComplete>(),
-        reason: 'Turn $turn resolution failed before invariant check.',
-      );
-      game = (result as TurnResolutionComplete).game;
-    }
+    tracesByTurn[_kTurnsToResolve + 1] = _captureGpTurnTraces(
+      turn: _kTurnsToResolve + 1,
+      game: result.finalGame,
+      topo: topo!,
+    );
 
     final traceTable = StringBuffer();
     for (var turn = 1; turn <= _kTurnsToResolve + 1; turn++) {

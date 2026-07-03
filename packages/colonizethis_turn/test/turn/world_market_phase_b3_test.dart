@@ -5,6 +5,8 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/world_market_test_support.dart';
+
 /// Integration tests for `worldMarketTurnPhaseHandler` covering the GP↔GP
 /// trade pipeline (Refs #2990 B3, B5). These assert SPEC-anchored behavior:
 ///
@@ -21,7 +23,7 @@ void main() {
     test('seller treasury credited, buyer debited, stockpile transferred at '
         'old price', () {
       final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
@@ -80,7 +82,7 @@ void main() {
     test('balanced volumes leave price unchanged this turn (price discovery '
         'rule: Δ=0 when bid==offer)', () {
       final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 20),
           sellerTreasury: 0,
           buyerTreasury: 1000,
@@ -125,7 +127,7 @@ void main() {
 
     test('partial fill carries unfilled bid forward into WorldMarketState', () {
       final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 3),
           sellerTreasury: 0,
           buyerTreasury: 1000,
@@ -191,7 +193,7 @@ void main() {
         },
       );
       final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 4),
           sellerTreasury: 0,
           buyerTreasury: 1000,
@@ -256,7 +258,7 @@ void main() {
       // and use a low-priority bid the seller can't satisfy.
       // Simpler: use insufficient seller stockpile so no fill happens.
       final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
+        game: gameWithTwoGps(
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 1000,
@@ -307,7 +309,7 @@ void main() {
       final priorMarket = WorldMarketState.empty.copyWith(
         prices: const {'timber': 30, 'iron': 80},
       );
-      final game = _gameWithTwoGps(
+      final game = gameWithTwoGps(
         sellerStockpile: Stockpile.empty,
         sellerTreasury: 0,
         buyerTreasury: 0,
@@ -332,40 +334,4 @@ void main() {
           reason: 'no GP treasury or stockpile mutations on empty turn');
     });
   });
-}
-
-Game _gameWithTwoGps({
-  required Stockpile sellerStockpile,
-  required int sellerTreasury,
-  required int buyerTreasury,
-  required Map<CommodityId, int> marketPrices,
-}) {
-  return Game(
-    id: 'g1',
-    players: [
-      Player(
-        id: 'gpSeller',
-        displayName: 'Seller',
-        isHuman: false,
-        stockpile: sellerStockpile,
-        treasury: sellerTreasury,
-      ),
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    worldState: const WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.worldMarket,
-        turnNumber: 3,
-      ),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
-  );
 }

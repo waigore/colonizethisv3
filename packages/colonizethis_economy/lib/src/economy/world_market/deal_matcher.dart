@@ -64,6 +64,27 @@ typedef DealMatchInputs = ({
 
   /// Treasury at phase start for lock-recovery sub-ordering (poorest first).
   Map<String, int> treasuryByFactionId,
+
+  /// #3753 R7.3 sell-priority relation tiebreaker. Maps a Minor/Tribe seller
+  /// faction id to the consulate-holding (or higher) buyer GPs and their
+  /// relation score with that seller (`SPEC/game/world-market.md` §
+  /// Sell-priority relation tiebreaker). When an offer's `sellerFactionId`
+  /// is present, its tier-bids are reordered so consulate-holding buyers are
+  /// served first by descending relation (ties by ascending buyer faction id,
+  /// then faction-local index), followed by consulate-less buyers in default
+  /// order. An empty map (or a seller absent from it — e.g. all GP sellers)
+  /// preserves the legacy ordering.
+  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller,
+
+  /// #3753 R6 boycott colony trade embargo. Canonical [DealMatcher.pairKey]
+  /// keys for every `(colonyTribeId, boycottedTargetGpId)` pair derived from
+  /// `Game.boycottStates` × `Game.colonyStates`. A match attempt whose
+  /// `pairKey(sellerFactionId, buyerFactionId)` is present is skipped (no
+  /// `FilledDeal`; both orders carry forward), blocking all trade between a
+  /// boycotted Great Power and the issuer's colony Tribes in both directions.
+  /// An empty set disables the exclusion (legacy behavior — identical
+  /// matching). SPEC/program/world-market-resolution.md § Deal matching engine.
+  Set<String> boycottBlockedPairKeys,
 });
 
 /// Internal mutable bookkeeping for a single order participating in matching.
@@ -186,6 +207,7 @@ class DealMatcher {
             remainingCargo: remainingCargo,
             remainingTreasury: remainingTreasury,
             filledOut: filled,
+            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
 
@@ -210,9 +232,12 @@ class DealMatcher {
             commodityId: commodityId,
             pricePerUnit: price,
             ftpPairKeys: inputs.ftpPairKeys,
+            sellPriorityRelationByMinorTribeSeller:
+                inputs.sellPriorityRelationByMinorTribeSeller,
             remainingCargo: remainingCargo,
             remainingTreasury: remainingTreasury,
             filledOut: filled,
+            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
       }

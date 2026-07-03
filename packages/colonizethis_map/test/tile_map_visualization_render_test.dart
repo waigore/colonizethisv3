@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:image/image.dart' as img;
 
+import 'support/init_game_map_view_fixtures.dart';
 import 'tile_map_visualization_test_fixtures.dart';
 
 /// Sea color and plains color from tile_map_visualization (for pixel assertions).
@@ -126,28 +127,10 @@ void main() {
 
     test('sea zone border is light blue when two sea zones are adjacent', () {
       const cellSize = 8;
-      final topologyWithTwoSeas = MapTopology(
-        nodes: [
-          const TopologyNode(
-            id: 's1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          const TopologyNode(
-            id: 's2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [const TopologyEdge(id1: 's1', id2: 's2')],
-      );
-      final resultWithTwoSeas = TileMapResult(
-        width: 2,
-        height: 1,
-        grid: [
-          ['s1', 's2'],
-        ],
-      );
+      final topologyWithTwoSeas = twoAdjacentSeaZonesTopology('oldWorld');
+      final resultWithTwoSeas = mapTileGrid([
+        ['s1', 's2'],
+      ]);
       final bytes = renderTileMapToPng(
         resultWithTwoSeas,
         topologyWithTwoSeas,

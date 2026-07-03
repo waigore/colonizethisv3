@@ -11,6 +11,8 @@ String diplomacyActionLabel(DiplomaticOrder order) {
       return 'Offer Peace';
     case DiplomaticOrderType.alliance:
       return 'Alliance';
+    case DiplomaticOrderType.breakAlliance:
+      return 'Break Alliance';
     case DiplomaticOrderType.establishOverture:
       return order.overtureStage != null
           ? diplomacyOvertureStageShortLabel(order.overtureStage!)
@@ -19,10 +21,14 @@ String diplomacyActionLabel(DiplomaticOrder order) {
       return 'Grant Aid';
     case DiplomaticOrderType.setSubsidy:
       return order.amount != null
-          ? 'Set Subsidy (£${order.amount})'
+          ? 'Set Subsidy (${order.amount}%)'
           : 'Set Subsidy';
     case DiplomaticOrderType.establishFtp:
       return 'Establish FTP';
+    case DiplomaticOrderType.boycott:
+      return 'Boycott';
+    case DiplomaticOrderType.revokeBoycott:
+      return 'Revoke Boycott';
   }
 }
 
@@ -41,8 +47,7 @@ extension DiplomacyOrderMutations on Orders {
   Orders appendDiplomaticOrderForPlayer(
     String playerId,
     DiplomaticOrder order,
-  ) =>
-      ordersWithAppendedDiplomaticOrder(this, playerId, order);
+  ) => ordersWithAppendedDiplomaticOrder(this, playerId, order);
 
   Orders removeDiplomaticOrderForPlayer(
     String playerId, {

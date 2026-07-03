@@ -33,6 +33,15 @@ void main() {
           Player(id: playerId, displayName: 'Human', isHuman: true),
         ],
         tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
+        // Refs #3753 R4: a Consulate is required to explore/prospect Tribe
+        // provinces; without it the p_target candidates are gated out.
+        overtureStates: const [
+          OvertureState(
+            gpId: playerId,
+            targetId: 'tribe1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(

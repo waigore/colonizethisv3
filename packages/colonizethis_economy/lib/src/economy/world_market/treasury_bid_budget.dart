@@ -68,6 +68,25 @@ int? effectiveMarketPriceForCommodityId({
   return resourceRules.defaultMarketPriceForCommodityId(commodityId);
 }
 
+/// Treasury spend for a single bid order: `quantity × effectiveMarketPrice`.
+///
+/// Returns `0` for offers, non-positive quantities, or when no effective
+/// price exists (`null` from [effectiveMarketPriceForCommodityId]).
+int bidTreasurySpendForOrder({
+  required TradeOrder order,
+  required WorldMarketState worldMarket,
+  required data.ResourceRules resourceRules,
+}) {
+  if (order.type != TradeOrderType.bid || order.quantity <= 0) return 0;
+  final int? price = effectiveMarketPriceForCommodityId(
+    commodityId: order.commodityId,
+    worldMarket: worldMarket,
+    resourceRules: resourceRules,
+  );
+  if (price == null) return 0;
+  return order.quantity * price;
+}
+
 /// Sum of `quantity × effectiveMarketPrice` across every staged
 /// `TradeOrderType.bid` for [playerId] in [orders].
 ///
@@ -107,15 +126,11 @@ int _sumBidSpend({
   if (orders == null || orders.isEmpty) return 0;
   int total = 0;
   for (final TradeOrder o in orders) {
-    if (o.type != TradeOrderType.bid) continue;
-    if (o.quantity <= 0) continue;
-    final int? price = effectiveMarketPriceForCommodityId(
-      commodityId: o.commodityId,
+    total += bidTreasurySpendForOrder(
+      order: o,
       worldMarket: game.worldMarketState,
       resourceRules: resourceRules,
     );
-    if (price == null) continue;
-    total += o.quantity * price;
   }
   return total;
 }
@@ -203,4 +218,28 @@ int treasuryAvailableForBidsByPlayer({
       : 0;
   final int budget = treasury - pendingDeficit;
   return budget < 0 ? 0 : budget;
+}
+
+/// Caps [bidQuantity] by [remainingCargoBudget] and affordable treasury spend.
+///
+/// When [unitPrice] is null or non-positive, only the cargo cap applies.
+/// Used by [TradeOrderSuggester] for per-bid quantity clamping; the
+/// validator enforces the same constraints sequentially per order (rule 5).
+int capBidQuantityForBudgets({
+  required int bidQuantity,
+  required int remainingCargoBudget,
+  required int remainingTreasuryBudget,
+  required int? unitPrice,
+}) {
+  if (bidQuantity <= 0 || remainingCargoBudget <= 0) return 0;
+  var cappedQty = bidQuantity < remainingCargoBudget
+      ? bidQuantity
+      : remainingCargoBudget;
+  if (unitPrice != null && unitPrice > 0) {
+    final int maxAffordable = remainingTreasuryBudget ~/ unitPrice;
+    if (cappedQty > maxAffordable) {
+      cappedQty = maxAffordable;
+    }
+  }
+  return cappedQty <= 0 ? 0 : cappedQty;
 }

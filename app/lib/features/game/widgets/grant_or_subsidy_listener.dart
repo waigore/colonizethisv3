@@ -56,10 +56,13 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
         widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
         final targetName = _targetName(event.targetFactionId);
         final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
+        // Subsidies are a percentage (Refs #3753 R3); grants are a £ amount.
+        final amountText =
+            event.isSubsidy ? '${event.amount}%' : '£${event.amount}';
         widget.bus.emit(
           ConfirmDialogEvent(
             title: actionName,
-            message: '$actionName of £${event.amount} to $targetName?',
+            message: '$actionName of $amountText to $targetName?',
             onResult: (confirmed) {
               if (confirmed) {
                 final orderType = event.isSubsidy

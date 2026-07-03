@@ -1,8 +1,9 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_economy/src/economy/game_lookup_helpers.dart';
 
-import 'test_fixtures.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Dedicated unit tests for the package-local `Game` lookup helpers.
 /// SPEC/game/world-model.md (prefixed province ids).

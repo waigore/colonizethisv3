@@ -38,45 +38,10 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 
-/// Returns a province id (regionId|localId) owned by [ownerId] in the demo
-/// Old World. A human-owned province guarantees the live Tile section path
-/// runs (the province is revealed for its owner, so the overlay does not
-/// take the fully-unrevealed obfuscation branch). Fails the test setup if no
-/// such province exists rather than silently falling back.
-String _ownedProvinceId({required Game game, required String ownerId}) {
-  for (final province in game.worldState.oldWorld.provinces) {
-    if (province.ownerId == ownerId) {
-      return province.id;
-    }
-  }
-  fail(
-    'Test setup: no province in oldWorld is owned by "$ownerId"; cannot '
-    'construct a human-owned province for the Tile placeholder pins.',
-  );
-}
+import 'support/province_overlay_test_harness.dart';
 
 /// Mounts the overlay under the editorial-monocle dark theme for [displayId]
 /// and [selectedTileKey].
-Widget _darkOverlay({
-  required Game game,
-  required String displayId,
-  required String? selectedTileKey,
-}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: const Orders(),
-      ),
-    ),
-  );
-}
 
 /// Resolves the rendered Tile-section body `Text` whose `data == [data]` by
 /// scoping the search to the `_buildSection('Tile', ...)` Column (the nearest
@@ -123,12 +88,12 @@ void main() {
         'EditorialMonoclePalette.muted',
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: game.players.first.id,
           );
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               selectedTileKey: null,
@@ -157,7 +122,7 @@ void main() {
         'EditorialMonoclePalette.muted',
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: game.players.first.id,
           );
@@ -168,7 +133,7 @@ void main() {
           final degenerateKey = '${demoRegionForOverlay.regionId}|unparsed';
 
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               selectedTileKey: degenerateKey,
@@ -195,14 +160,14 @@ void main() {
         'Material onSurface fallback',
         (WidgetTester tester) async {
           final game = demoGameForOverlay;
-          final ownedProvince = _ownedProvinceId(
+          final ownedProvince = ownedProvinceIdInOldWorld(
             game: game,
             ownerId: game.players.first.id,
           );
 
           // No-selection guidance prompt.
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               selectedTileKey: null,
@@ -224,7 +189,7 @@ void main() {
           // Degenerate em-dash placeholder.
           final degenerateKey = '${demoRegionForOverlay.regionId}|unparsed';
           await tester.pumpWidget(
-            _darkOverlay(
+            buildProvinceOverlayDarkThemeShell(
               game: game,
               displayId: ownedProvince,
               selectedTileKey: degenerateKey,

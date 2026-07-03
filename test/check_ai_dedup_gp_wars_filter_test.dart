@@ -124,6 +124,69 @@ void main() {
       expect(code, 0);
     });
 
+    test('fails when a lib file inlines the non-GP peace-collector', () {
+      final temp = Directory.systemTemp.createTempSync('ai_non_gp_collector_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      final aiLib = Directory(
+        p.join(temp.path, 'packages/colonizethis_ai/lib/src/planning'),
+      )..createSync(recursive: true);
+
+      File(p.join(aiLib.path, 'non_gp_collector.dart')).writeAsStringSync(
+        'List<String> f(game, snapshot) {\n'
+        '  final targets = <String>[\n'
+        '    for (final factionId in snapshot.threats.atWarWith)\n'
+        '      if (game.playerById(factionId) == null) factionId,\n'
+        '  ]..sort();\n'
+        '  return targets;\n'
+        '}\n',
+      );
+
+      final errLogs = <String>[];
+      final code = runCheckAiDedupGpWarsFilter(
+        temp.path,
+        info: (_) {},
+        err: errLogs.add,
+      );
+
+      expect(code, 1);
+      expect(errLogs.join('\n'), contains('non_gp_collector.dart'));
+      expect(
+        errLogs.join('\n'),
+        contains('nonGreatPowerAtWarPeaceTargetsWhere'),
+      );
+    });
+
+    test('does not flag the non-GP playerById == null skip loop', () {
+      // The `if (playerById(...) == null) continue;` skip loop iterates
+      // `atWarWith` to *process the Great Powers* (skipping non-GPs); it is
+      // not a non-GP collector and must not be flagged.
+      final temp = Directory.systemTemp.createTempSync('ai_non_gp_skip_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      final aiLib = Directory(
+        p.join(temp.path, 'packages/colonizethis_ai/lib/src/planning'),
+      )..createSync(recursive: true);
+
+      File(p.join(aiLib.path, 'skip_loop.dart')).writeAsStringSync(
+        'String? f(game, snapshot) {\n'
+        '  String? best;\n'
+        '  for (final factionId in snapshot.threats.atWarWith) {\n'
+        '    if (game.playerById(factionId) == null) continue;\n'
+        '    best = factionId;\n'
+        '  }\n'
+        '  return best;\n'
+        '}\n',
+      );
+
+      final code = runCheckAiDedupGpWarsFilter(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
+      expect(code, 0);
+    });
+
     test('does not flag an atWarWith.any predicate without playerById', () {
       // The non-GP `atWarWith.any(...)` predicate (e.g. the minor-owner /
       // invadable check) must not be mistaken for the GP-wars filter.

@@ -107,6 +107,70 @@ bool isAiControlledForEvidence(Game game, String playerId) {
   return (game: game.copyWith(overtureStates: kept), removed: removed);
 }
 
+/// Overture pair key for GP→target lookups (directional).
+String overturePairKey(String gpId, String targetId) => '$gpId\x1F$targetId';
+
+/// Directional GP→target overture lookup in a working [overtures] list.
+///
+/// Mirrors [getOverture] for resolver rolling state that has not yet been
+/// written back to [Game.overtureStates] (Refs #3825).
+OvertureState? findOvertureForGpTarget(
+  List<OvertureState> overtures,
+  String gpId,
+  String targetId,
+) {
+  for (final o in overtures) {
+    if (o.gpId == gpId && o.targetId == targetId) return o;
+  }
+  return null;
+}
+
+/// Index of the directional GP→target overture in [overtures], or -1.
+int indexOfOvertureForGpTarget(
+  List<OvertureState> overtures,
+  String gpId,
+  String targetId,
+) =>
+    overtures.indexWhere((o) => o.gpId == gpId && o.targetId == targetId);
+
+/// Applies GP–GP war overture rules (Refs #3753 R1): preserve `embassy`,
+/// downgrade `nap`/`joinEmpire` to `embassy`, remove stages below embassy.
+///
+/// Returns the updated game and overtures that changed (removed entirely or
+/// downgraded from a higher treaty tier) for `agreementsClearedOnWar` logging.
+({Game game, List<OvertureState> changed}) applyGpGpWarOvertureRules(
+  Game game,
+  String gpIdA,
+  String gpIdB,
+) {
+  final keys = {
+    overturePairKey(gpIdA, gpIdB),
+    overturePairKey(gpIdB, gpIdA),
+  };
+  final changed = <OvertureState>[];
+  final next = <OvertureState>[];
+  for (final o in game.overtureStates) {
+    final key = overturePairKey(o.gpId, o.targetId);
+    if (!keys.contains(key)) {
+      next.add(o);
+      continue;
+    }
+    switch (o.stage) {
+      case OvertureStage.embassy:
+        next.add(o);
+      case OvertureStage.nap:
+      case OvertureStage.joinEmpire:
+        changed.add(o);
+        next.add(o.copyWith(stage: OvertureStage.embassy));
+      case OvertureStage.tradeConsulate:
+      case OvertureStage.none:
+        changed.add(o);
+    }
+  }
+  if (changed.isEmpty) return (game: game, changed: const <OvertureState>[]);
+  return (game: game.copyWith(overtureStates: next), changed: changed);
+}
+
 /// Removes every overture that involves [factionId] on **either** side from
 /// [game] (i.e. `o.gpId == factionId || o.targetId == factionId`).
 ///

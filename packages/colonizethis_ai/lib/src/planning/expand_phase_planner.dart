@@ -117,6 +117,7 @@ import 'cast_iron_labour_gate.dart'
     show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'phase_destination_result.dart';
 import 'planning_helpers.dart'
     show
         anyInvadableProvinceOwnedByGreatPower,
@@ -130,8 +131,10 @@ import 'planning_helpers.dart'
         isOwnOldWorldExpansionStalled,
         minorAtWarPeaceTargetsWhere,
         mutualExhaustedGpStalemateSideQualifies,
+        nonGreatPowerAtWarPeaceTargetsWhere,
         oldWorldProvinceLeadOver,
         peaceTargetsExcludingBlocker,
+        planningListEquals,
         tribeAtWarPeaceTargetsWhere;
 
 part 'expand_phase_planner_peer_peace.dart';

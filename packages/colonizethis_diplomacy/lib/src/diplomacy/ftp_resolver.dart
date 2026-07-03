@@ -1,11 +1,10 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'diplomacy_logging.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
 /// Result of processing FTP proposals in the Diplomacy phase.
 class FtpProposalsResult {
@@ -79,7 +78,7 @@ Game clearFtpPartnerships(
     if (parts.length != 2) continue;
     final id1 = parts[0];
     final id2 = parts[1];
-    next = appendDiplomaticEvent(
+    next = logDiplomaticEvent(
       next,
       turn,
       DiplomaticEventType.ftpBroken,
@@ -88,11 +87,9 @@ Game clearFtpPartnerships(
       toFactionId: id2,
       reason: reason,
       eventTally: eventTally,
+      logMessage: 'diplomacy ftp broken $id1-$id2 reason=$reason',
     );
   }
-  diploLog.i(
-    'diplomacy ftp cleared count=${keysToRemove.length} reason=$reason',
-  );
   return next;
 }
 

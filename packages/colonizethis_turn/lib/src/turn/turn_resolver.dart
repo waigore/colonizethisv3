@@ -39,6 +39,7 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
     case TurnPhase.richesToTreasury:
     case TurnPhase.production:
     case TurnPhase.consumption:
+    case TurnPhase.spyResolution:
     case TurnPhase.research:
     case TurnPhase.diplomacy:
     case TurnPhase.movement:

@@ -1485,6 +1485,15 @@
       }
     }
   },
+  "diplomacy_subsidyStep": "Subsidy step: {step}% (5–20%).",
+  "@diplomacy_subsidyStep": {
+    "description": "Subsidy percentage step line in the diplomacy amount dialog (subsidy mode is treasury-independent).",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacy_currencyAmount": "£{amount}",
   "@diplomacy_currencyAmount": {
     "description": "Currency amount display in diplomacy amount dialog.",
@@ -2245,6 +2254,10 @@
   "@provinceOverlay_tileExploreWithExplorerTooltip": {
     "description": "Tooltip and semantics label for province tile explore shortcut action."
   },
+  "provinceOverlay_tileConsulateRequiredForExploreTooltip": "Establish a consulate before exploring or prospecting",
+  "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
+    "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
@@ -2637,7 +2650,7 @@
       }
     }
   },
-  "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {target}",
+  "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: {amount}% to {target}",
   "@diplomacy_panel_outgoingSubsidy": {
     "description": "Line showing active subsidy to another faction.",
     "placeholders": {
@@ -2658,7 +2671,7 @@
       }
     }
   },
-  "diplomacy_panel_pendingSubsidy": "Pending subsidy: £{amount}/turn (resolves end of turn)",
+  "diplomacy_panel_pendingSubsidy": "Pending subsidy: {amount}% (resolves end of turn)",
   "@diplomacy_panel_pendingSubsidy": {
     "description": "Pending subsidy line in diplomacy row.",
     "placeholders": {
@@ -3034,6 +3047,15 @@
   "diplomacy_relationState_peace": "Peace",
   "@diplomacy_relationState_peace": {
     "description": "One-word peace state in diplomacy UI."
+  },
+  "diplomacy_relationMeter_semanticsLabel": "Relation: {relation}",
+  "@diplomacy_relationMeter_semanticsLabel": {
+    "description": "Accessibility label for the relation meter widget; embeds the ladder relation word.",
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      }
+    }
   },
   "techEffectSummary_advanced_hull_design_0": "Improves: Frigate — high intercept, moderate flee (patrol/blockade)",
   "@techEffectSummary_advanced_hull_design_0": {

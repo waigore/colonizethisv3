@@ -1,6 +1,7 @@
 // Growth-stage civilian work candidate ordering. SPEC/ai/growth-stage-planner.md.
 
 
+import 'ai_commodity_ids.dart';
 import 'growth_stage.dart';
 import 'planning_imports.dart';
 
@@ -52,7 +53,7 @@ GrowthStageFeedstockPreference growthStageFeedstockPreference({
   if (!growthStagePlannerEnabled) return GrowthStageFeedstockPreference.none;
   final player = game.playerById(playerId);
   if (player == null) return GrowthStageFeedstockPreference.none;
-  final fabricHeld = player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+  final fabricHeld = player.stockpile.quantityOf(kAiCommodityIds.fabric);
   final wantsFabric =
       stage.workerGrowthPriority > 0.3 && fabricHeld < kReserveTarget;
   final wantsInfra = stage.infrastructurePriority > 0.3;
@@ -77,7 +78,7 @@ List<WorkOrder> prioritizeWorkOrdersForGrowthStage({
   final player = game.playerById(playerId);
   if (player == null || workCandidates.isEmpty) return workCandidates;
 
-  final fabricHeld = player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+  final fabricHeld = player.stockpile.quantityOf(kAiCommodityIds.fabric);
   final needsFabricBootstrap =
       stage.workerGrowthPriority > 0.5 && fabricHeld < kReserveTarget;
   final needsInfrastructure =

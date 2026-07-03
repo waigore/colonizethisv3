@@ -8,6 +8,7 @@
 // cargo hull under `CargoPreference.strongCargo`.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -377,7 +378,7 @@ void main() {
               productionAssignments: [],
               cargoPreference: CargoPreference.strongCargo,
             ),
-            phasePlan: phasePlan,
+            options: OrchestratorOptions(phasePlan: phasePlan),
           );
 
           final builds =

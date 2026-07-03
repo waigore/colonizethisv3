@@ -79,6 +79,41 @@ void main() {
       );
     });
 
+    test(
+      'AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps '
+      'alliance for breakAlliance only',
+      () {
+      final alliedGame = _gpMinorGame().copyWith(
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 90,
+            formalAlliance: true,
+          ),
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'minor1',
+            score: 50,
+          ),
+        ],
+      );
+      final candidates = diplomaticPanelActionCandidates(
+        game: alliedGame,
+        playerId: 'gp1',
+        targetId: 'gp2',
+      );
+      expect(
+        candidates.map((o) => o.type),
+        contains(DiplomaticOrderType.breakAlliance),
+      );
+      expect(
+        candidates.map((o) => o.type),
+        isNot(contains(DiplomaticOrderType.alliance)),
+      );
+    },
+    );
+
     test('Minor row omits alliance and FTP', () {
       final candidates = diplomaticPanelActionCandidates(
         game: _gpMinorGame(),
@@ -87,6 +122,37 @@ void main() {
       );
       expect(candidates.map((o) => o.type), isNot(contains(DiplomaticOrderType.alliance)));
       expect(candidates.map((o) => o.type), isNot(contains(DiplomaticOrderType.establishFtp)));
+    });
+
+    test('GP row includes boycott + revoke boycott (Refs #3753 S14)', () {
+      final candidates = diplomaticPanelActionCandidates(
+        game: _gpMinorGame(),
+        playerId: 'gp1',
+        targetId: 'gp2',
+      );
+      expect(
+        candidates.map((o) => o.type).toSet(),
+        containsAll(<DiplomaticOrderType>{
+          DiplomaticOrderType.boycott,
+          DiplomaticOrderType.revokeBoycott,
+        }),
+      );
+    });
+
+    test('Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)', () {
+      final candidates = diplomaticPanelActionCandidates(
+        game: _gpMinorGame(),
+        playerId: 'gp1',
+        targetId: 'minor1',
+      );
+      expect(
+        candidates.map((o) => o.type),
+        isNot(contains(DiplomaticOrderType.boycott)),
+      );
+      expect(
+        candidates.map((o) => o.type),
+        isNot(contains(DiplomaticOrderType.revokeBoycott)),
+      );
     });
   });
 
@@ -116,6 +182,85 @@ void main() {
       expect(consulate.enabled, isTrue, reason: consulate.rejectionReason);
       expect(embassy.enabled, isFalse);
       expect(embassy.rejectionReason, isNotEmpty);
+    });
+
+    DiplomaticPanelAction _actionOfType(
+      Game game,
+      String targetId,
+      DiplomaticOrderType type,
+    ) {
+      final actions = enumerateDiplomaticPanelActionsForTarget(
+        game: game,
+        topology: _topology,
+        playerId: 'gp1',
+        targetId: targetId,
+        currentOrders: const Orders(),
+      );
+      return actions.firstWhere((a) => a.order.type == type);
+    }
+
+    test('S14: boycott disabled when human holds no colony', () {
+      final boycott = _actionOfType(
+        _gpMinorGame(),
+        'gp2',
+        DiplomaticOrderType.boycott,
+      );
+      expect(boycott.enabled, isFalse);
+      expect(boycott.rejectionReason, isNotEmpty);
+    });
+
+    test('S14: boycott enabled when human holds a colony at peace', () {
+      final game = _gpMinorGame().copyWith(
+        colonyStates: const [
+          ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
+        ],
+      );
+      final boycott = _actionOfType(game, 'gp2', DiplomaticOrderType.boycott);
+      expect(boycott.enabled, isTrue, reason: boycott.rejectionReason);
+    });
+
+    test('S14: revoke enabled (and boycott disabled) with active boycott', () {
+      final game = _gpMinorGame().copyWith(
+        colonyStates: const [
+          ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
+        ],
+        boycottStates: const [
+          BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 1),
+        ],
+      );
+      final revoke = _actionOfType(
+        game,
+        'gp2',
+        DiplomaticOrderType.revokeBoycott,
+      );
+      final boycott = _actionOfType(game, 'gp2', DiplomaticOrderType.boycott);
+      expect(revoke.enabled, isTrue, reason: revoke.rejectionReason);
+      expect(boycott.enabled, isFalse);
+    });
+
+    test('S14: revoke disabled when no active boycott exists', () {
+      final revoke = _actionOfType(
+        _gpMinorGame(),
+        'gp2',
+        DiplomaticOrderType.revokeBoycott,
+      );
+      expect(revoke.enabled, isFalse);
+      expect(revoke.rejectionReason, isNotEmpty);
+    });
+
+    test('post-break cooldown disables alliance with deterministic reason (#3811)', () {
+      final game = _gpMinorGame().copyWith(
+        allianceBreakCooldowns: const [
+          AllianceBreakCooldownState(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            sinceTurn: 1,
+          ),
+        ],
+      );
+      final alliance = _actionOfType(game, 'gp2', DiplomaticOrderType.alliance);
+      expect(alliance.enabled, isFalse);
+      expect(alliance.rejectionReason, kAllianceBreakCooldownRejectionReason);
     });
 
     test('AC-10: invalid declare war / offer peace still enumerated', () {

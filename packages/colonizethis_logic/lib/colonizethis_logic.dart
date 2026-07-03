@@ -51,6 +51,10 @@ export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
 
 // Diplomacy
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/break_alliance_resolver.dart'
+    show applyVoluntaryAllianceBreak;
+export 'package:colonizethis_diplomacy/src/diplomacy/alliance_break_cooldown.dart'
+    show isAllianceBreakCooldownActive, kAllianceBreakCooldownRejectionReason;
 
 // Dossier (evidence rules, event dialogue)
 export 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';

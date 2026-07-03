@@ -39,6 +39,7 @@ import '../game_lookup_helpers.dart';
 import '../tile_extraction_pipeline.dart';
 import '../tile_extraction_yield.dart';
 import 'gp_treasury_credit_accumulator.dart';
+import 'gp_treasury_credit_rollup.dart';
 import 'purchased_tile_index.dart';
 
 /// Sentinel town-development cap passed to [computeEffectiveTileYield] from the
@@ -107,25 +108,24 @@ class PurchasedTileRichesCredit {
 /// riches-to-treasury phase handler applies on top of each GP's regular
 /// stockpile-driven cash-in.
 class PurchasedTileRichesResult {
-  const PurchasedTileRichesResult({
+  PurchasedTileRichesResult({
     required this.credits,
-    required this.treasuryCreditByGpId,
+    required Map<String, int> treasuryCreditByGpId,
     int? totalTreasuryCredit,
-  }) : _totalTreasuryCredit = totalTreasuryCredit;
+  }) : _rollup = GpTreasuryCreditRollup<int>(
+         treasuryCreditByGpId: treasuryCreditByGpId,
+         cachedGrandTotal: totalTreasuryCredit,
+       );
 
   /// Empty result. Returned when the purchased-tile index is empty,
   /// `tileMapByRegion` is empty, or no purchased tile resolves to a
   /// non-zero riches yield.
-  static const PurchasedTileRichesResult empty = PurchasedTileRichesResult(
+  static final PurchasedTileRichesResult empty = PurchasedTileRichesResult(
     credits: <PurchasedTileRichesCredit>[],
     treasuryCreditByGpId: <String, int>{},
   );
 
-  /// Precomputed grand total from the shared accumulator, when constructed via
-  /// [computePurchasedTileRichesCredits]. `null` for hand-built results (for
-  /// example the [empty] sentinel), which fall back to summing
-  /// [treasuryCreditByGpId].
-  final int? _totalTreasuryCredit;
+  final GpTreasuryCreditRollup<int> _rollup;
 
   /// Per-tile credit records (same order as
   /// [PurchasedTileIndex.attributions]).
@@ -134,7 +134,7 @@ class PurchasedTileRichesResult {
   /// Treasury-delta credits to add to each owning Great Power's
   /// treasury. Insertion order matches the order in which each owning
   /// GP first appears in [credits].
-  final Map<String, int> treasuryCreditByGpId;
+  Map<String, int> get treasuryCreditByGpId => _rollup.treasuryCreditByGpId;
 
   /// Convenience: total treasury credited across every owning GP for
   /// this aggregation.
@@ -142,15 +142,7 @@ class PurchasedTileRichesResult {
   /// O(1) when produced by [computePurchasedTileRichesCredits] (the
   /// [GpTreasuryCreditAccumulator] maintains the total incrementally); falls
   /// back to re-summing [treasuryCreditByGpId] for hand-built results.
-  int get totalTreasuryCredit {
-    final cached = _totalTreasuryCredit;
-    if (cached != null) return cached;
-    var total = 0;
-    for (final amount in treasuryCreditByGpId.values) {
-      total += amount;
-    }
-    return total;
-  }
+  int get totalTreasuryCredit => _rollup.grandTotal(0);
 
   bool get isEmpty => credits.isEmpty;
   bool get isNotEmpty => credits.isNotEmpty;

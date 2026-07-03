@@ -3,8 +3,6 @@
 // to keep each file under `repo.dart_file_non_comment_line_size` (1000
 // non-comment lines). SPEC/ui/diplomacy-panel.md § Per-faction row.
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,130 +13,9 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-/// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
-/// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
-Future<void> _pumpPanelBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-/// Dialogs: `showDialog` from async bus listeners + route transition.
-/// Tall surface so diplomacy rows and action buttons are on-screen without
-/// calling `ensureVisible` (avoids long scroll pump loops on [ListView]).
-Future<void> _bindTallTestSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(800, 4000));
-}
-
-class _EventHandlingWrapper extends StatefulWidget {
-  const _EventHandlingWrapper({
-    required this.bus,
-    required this.child,
-    required this.navigatorKey,
-  });
-
-  final AppEventBus bus;
-  final Widget child;
-  final GlobalKey<NavigatorState> navigatorKey;
-
-  @override
-  State<_EventHandlingWrapper> createState() => _EventHandlingWrapperState();
-}
-
-class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
-  StreamSubscription? _confirmSub;
-  StreamSubscription? _openDialogSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        final result = await showDialog<bool>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text(event.title),
-            content: Text(event.message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(event.cancelLabel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(event.confirmLabel),
-              ),
-            ],
-          ),
-        );
-        event.result(result ?? false);
-      });
-    });
-    _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        await showDialog<void>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text('dialog:${event.dialogId}'),
-            content: const Text('opened-via-bus'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _confirmSub?.cancel();
-    _openDialogSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-Widget _buildPanel({
-  required Game game,
-  required String humanPlayerId,
-  required MapTopology topology,
-  Orders currentOrders = const Orders(),
-  AppEventBus? bus,
-}) {
-  final panelBus = bus ?? AppEventBus.create();
-  final navigatorKey = GlobalKey<NavigatorState>();
-  return MaterialApp(
-    navigatorKey: navigatorKey,
-    home: Scaffold(
-      body: _EventHandlingWrapper(
-        bus: panelBus,
-        navigatorKey: navigatorKey,
-        child: DiplomacyPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-          currentOrders: currentOrders,
-          bus: panelBus,
-        ),
-      ),
-    ),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -190,19 +67,19 @@ void main() {
     testWidgets(
       'AC: WAR badge foreground resolves to --danger',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         final otherGp = gameWithFactions.players.firstWhere(
           (p) => p.id != humanPlayerId,
         );
         final warGame = gameWithWarRelation(gameWithFactions, otherGp.id);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: warGame,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final warText = find.text('WAR');
         expect(warText, findsAtLeastNWidgets(1));
@@ -223,15 +100,15 @@ void main() {
     testWidgets(
       'AC: PEACE badge foreground resolves to --success',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final peaceText = find.text('PEACE');
         if (peaceText.evaluate().isEmpty) {
@@ -256,19 +133,19 @@ void main() {
     testWidgets(
       'AC: WAR badge background derives from --danger hue at alpha 0.40',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         final otherGp = gameWithFactions.players.firstWhere(
           (p) => p.id != humanPlayerId,
         );
         final warGame = gameWithWarRelation(gameWithFactions, otherGp.id);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: warGame,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Mockup token: oklch(40% 0.06 20 / 0.4).
         final Color expectedBg =
@@ -295,15 +172,15 @@ void main() {
     testWidgets(
       'AC: PEACE badge background derives from --success hue at alpha 0.20',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final peaceText = find.text('PEACE');
         if (peaceText.evaluate().isEmpty) return;
@@ -331,15 +208,15 @@ void main() {
     testWidgets(
       'AC: Faction row paints --bg-deep → --surface vertical gradient and --border outline',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         // Locate the first AnimatedContainer that wraps a faction row
         // (the row chrome lives inside _DiplomacyRowChrome → MouseRegion →
@@ -388,15 +265,15 @@ void main() {
     testWidgets(
       'AC: Declare War button resolves border and label to --danger',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         final warBtn = find.text('Declare War');
         if (warBtn.evaluate().isEmpty) return;
@@ -417,15 +294,15 @@ void main() {
     testWidgets(
       'AC: Non-war action buttons do not opt into the danger variant',
       (WidgetTester tester) async {
-        await _bindTallTestSurface(tester);
+        await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
-          _buildPanel(
+          buildDiplomacyPanel(
             game: gameWithFactions,
             humanPlayerId: humanPlayerId,
             topology: topology,
           ),
         );
-        await _pumpPanelBuilt(tester);
+        await pumpDiplomacyPanelBuilt(tester);
 
         const nonWarLabels = [
           'Offer Peace',

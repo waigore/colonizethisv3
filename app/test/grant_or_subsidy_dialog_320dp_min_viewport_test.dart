@@ -224,9 +224,10 @@ void main() {
       testWidgets(
         'AC (positive) GrantOrSubsidyDialog (subsidy mode, treasury 5000) '
         '@ 320×640: no RenderFlex overflow exception, "Set subsidy" '
-        'title + Cancel + Submit labels render — the title flips to the '
-        'subsidy slot and the smaller setSubsidyAmountStep (= 100) keeps '
-        'both stepper buttons enabled at the same narrow viewport.',
+        'title + percent step line + Cancel + Submit labels render — the '
+        'title flips to the subsidy slot and the treasury-independent '
+        'percent stepper (5–20%, step 5) stays enabled at the same narrow '
+        'viewport (Refs #3753 R3).',
         (WidgetTester tester) async {
           final game = _buildGame(humanTreasury: 5 * grantAidAmountStep);
           final bus = AppEventBus.create();
@@ -245,11 +246,12 @@ void main() {
 
           expect(tester.takeException(), isNull);
           expect(find.text('Set subsidy'), findsOneWidget);
-          expect(find.textContaining('Treasury:'), findsOneWidget);
+          // Subsidy mode shows the percent step line, not the £ treasury copy.
+          expect(find.textContaining('Subsidy step:'), findsOneWidget);
+          expect(find.textContaining('Treasury:'), findsNothing);
           expect(find.text('Cancel'), findsOneWidget);
           expect(find.text('Submit'), findsOneWidget);
-          // Below-minimum hint MUST stay absent — treasury comfortably
-          // exceeds setSubsidyAmountStep (= 100).
+          // Below-minimum hint MUST stay absent — subsidy is treasury-independent.
           expect(
             find.byKey(const Key('grantOrSubsidyDialogWarning')),
             findsNothing,

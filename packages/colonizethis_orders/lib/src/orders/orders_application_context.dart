@@ -7,13 +7,24 @@ import 'orders_logging.dart';
 
 final ordersApplicationLog = ordersLog;
 
-/// Counter-spy: per-turn kill chance = (friendlySpies * [counterSpyKillChancePercentPerSpy])%,
-/// capped at [counterSpyKillChanceCapPercent]%. SPEC: work order resolution.
-const int counterSpyKillChancePercentPerSpy = 5;
-const int counterSpyKillChanceCapPercent = 30;
+/// Base per-turn kill chance for a spy in foreign territory (Refs #3834 R5).
+const int spyBaseKillChancePercent = 5;
 
-/// Per-turn chance (0–1) that a spy on steal_tech work successfully steals one tech from target.
-const double spyTechStealChance = 0.08;
+/// Per garrison regiment kill bonus, capped at [spyGarrisonKillChanceCapPercent] (R4).
+const int spyGarrisonKillChancePerRegiment = 1;
+const int spyGarrisonKillChanceCapPercent = 8;
+
+/// Empire-wide kill bonus when territory owner runs counter-espionage (R6).
+const int spyCounterEspionageKillBoostPercent = 5;
+
+/// Per-turn defection chance for enemy spies when counter-espionage is active (R7).
+const int spyDefectionChancePercent = 10;
+
+/// Diplomacy relation penalty per spy killed in foreign territory (R8).
+const int spyDeathDiplomacyPenalty = 8;
+
+/// Passive RP boost per rival GP with spy presence (R2); GA-tunable default 0.15.
+const double spyResearchBoostPerGp = 0.15;
 
 /// Old- and new-world unit-by-id snapshots for the work pipeline, folded into a
 /// single record so callers never branch on a separate `isOldWorld` boolean to

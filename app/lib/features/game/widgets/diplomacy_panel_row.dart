@@ -92,6 +92,7 @@ class _DiplomacyRow extends StatelessWidget {
         ..._buildRelativePowerLine(context),
         const SizedBox(height: 4),
         _buildRelationRow(context),
+        ..._buildStandingChips(context),
         ..._buildOptionalStatusLines(context),
       ],
     );
@@ -160,12 +161,10 @@ class _DiplomacyRow extends StatelessWidget {
     // SPEC/game/diplomacy.md § Player-facing relation display: show
     // one-word state, hide score.
     final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
-    final String overtureLabel = data.overture == null
-        ? ''
-        : _overtureStageLabel(data.overture!.stage);
-    // SPEC/ui/diplomacy-panel.md § Relation word styling (Refs #3621): the
-    // `·` separators and overture text stay `--muted`; only the relation
-    // word carries the level color + italic treatment.
+    // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster
+    // (Refs #3753 R12): the prior single inline overture-stage clause
+    // (`· {stage}`) is replaced by the standing chip cluster rendered under
+    // the relation line; only the relation word remains on this line.
     final TextStyle mutedStyle = bodySmall.copyWith(
       color: EditorialMonoclePalette.muted,
     );
@@ -173,16 +172,9 @@ class _DiplomacyRow extends StatelessWidget {
       color: diplomacyRelationWordColor(rel.score),
       fontStyle: FontStyle.italic,
     );
-    // Mockup `.f-relation`: the WAR/PEACE badge carries a 4 px right margin
-    // before the relation word (no leading `·`); the overture clause keeps a
-    // `·` separator. The leading single space here reproduces the badge gap.
     final List<InlineSpan> spans = <InlineSpan>[];
     if (relationStateLabel.isNotEmpty) {
-      spans.add(const TextSpan(text: ' '));
       spans.add(TextSpan(text: relationStateLabel, style: wordStyle));
-    }
-    if (overtureLabel.isNotEmpty) {
-      spans.add(TextSpan(text: ' · $overtureLabel'));
     }
     // SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625): a
     // persisted formal alliance (treaty) surfaces an explicit `ALLIANCE` badge
@@ -190,22 +182,45 @@ class _DiplomacyRow extends StatelessWidget {
     // distinct from a merely-Friendly informal relation. The informal
     // `RelationLevel.allied` score band never shows this badge on its own.
     final bool showAlliance = rel.formalAlliance;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
+    // SPEC/ui/diplomacy-panel.md § Relation meter (Refs #3753 R13): the WAR/PEACE
+    // badge, the optional ALLIANCE treaty badge, the 10-step gradient meter, and
+    // the one-word ladder label render in that order. A `Wrap` lets the cluster
+    // flow onto a second run on narrow info columns (e.g. a formal-alliance row
+    // at the 320 dp minimum viewport) instead of overflowing the Row. Each
+    // `Wrap` child is constrained to the column width, so the label still
+    // ellipsizes rather than clipping. The word keeps its level color (now
+    // meter-step aligned) and italic treatment.
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: CtSpacing.s,
+      runSpacing: CtSpacing.xs,
       children: [
         _RelationStateBadge(atWar: rel.atWar),
-        if (showAlliance) ...[CtGap.wm, const DiplomacyAllianceBadge()],
+        if (showAlliance) const DiplomacyAllianceBadge(),
+        RelationMeter(score: rel.score),
         if (spans.isNotEmpty)
-          Flexible(
-            child: Text.rich(
-              TextSpan(style: mutedStyle, children: spans),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
+          Text.rich(
+            TextSpan(style: mutedStyle, children: spans),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
       ],
     );
+  }
+
+  /// Renders the diplomatic standing chip cluster under the relation line
+  /// per SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster
+  /// (Refs #3753 R12). Returns no widgets when the faction has no active
+  /// overture/treaty/economic state, so a fresh discovered faction row is
+  /// unchanged.
+  List<Widget> _buildStandingChips(BuildContext context) {
+    if (data.standingChips.isEmpty) {
+      return const <Widget>[];
+    }
+    return <Widget>[
+      const SizedBox(height: 4),
+      DiplomacyStandingChipCluster(chips: data.standingChips),
+    ];
   }
 
   /// Shared style for the outgoing economic-diplomacy lines (active subsidy,
@@ -230,12 +245,12 @@ class _DiplomacyRow extends StatelessWidget {
     final l10n = appL10n(context);
     final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
-    if (data.activeSubsidyPerTurn != null) {
+    if (data.activeSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
         Text(
           l10n.diplomacy_panel_outgoingSubsidy(
-            data.activeSubsidyPerTurn!,
+            data.activeSubsidyPercent!,
             data.displayName,
           ),
           style: style,
@@ -251,11 +266,11 @@ class _DiplomacyRow extends StatelessWidget {
         ),
       ]);
     }
-    if (data.pendingSubsidyAmount != null) {
+    if (data.pendingSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
         Text(
-          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
+          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyPercent!),
           style: style,
         ),
       ]);
@@ -307,16 +322,6 @@ class _DiplomacyRow extends StatelessWidget {
   Widget _kindChip(BuildContext context, FactionKind kind) {
     return _FactionKindBadge(kind: kind);
   }
-
-  String _overtureStageLabel(OvertureStage stage) {
-    return switch (stage) {
-      OvertureStage.none => 'None',
-      OvertureStage.tradeConsulate => 'Consulate',
-      OvertureStage.embassy => 'Embassy',
-      OvertureStage.nap => 'NAP',
-      OvertureStage.joinEmpire => 'Join Empire',
-    };
-  }
 }
 
 class _ActionButton extends StatelessWidget {
@@ -337,12 +342,14 @@ class _ActionButton extends StatelessWidget {
   final String? rejectionReason;
 
   /// SPEC/ui/diplomacy-panel.md § Action button styling — destructive
-  /// `Declare War` action resolves both the button outline and the
-  /// engraved label to the canonical `--danger` token. Pending state
+  /// `Declare War` and `Break Alliance` actions resolve both the button outline
+  /// and the engraved label to the canonical `--danger` token. Pending state
   /// keeps the default brass chrome so the "Cancel" affordance still
   /// reads as a recoverable toggle.
-  bool get _isWarVariant =>
-      !isPending && order.type == DiplomaticOrderType.declareWar;
+  bool get _isDangerVariant =>
+      !isPending &&
+      (order.type == DiplomaticOrderType.declareWar ||
+          order.type == DiplomaticOrderType.breakAlliance);
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +383,7 @@ class _ActionButton extends StatelessWidget {
       // cluster flows left-to-right within the available row width instead of
       // each button expanding to the full run width as a vertical column.
       shrinkWrap: true,
-      dangerVariant: _isWarVariant,
+      dangerVariant: _isDangerVariant,
       child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;

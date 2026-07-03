@@ -200,3 +200,41 @@ class OvertureAdvancedEvent extends GameEvent {
   final String newStage;
   final int turnNumber;
 }
+
+/// Spy killed in foreign territory during spy-resolution sub-step. Refs #3834 R9.
+class SpyCaughtEvent extends GameEvent {
+  const SpyCaughtEvent({
+    required this.unitId,
+    required this.spyOwnerId,
+    required this.territoryOwnerId,
+    required this.provinceId,
+    required this.turnNumber,
+  });
+
+  final String unitId;
+  final String spyOwnerId;
+  final String territoryOwnerId;
+
+  /// Prefixed province id (`regionId|localId`).
+  final String provinceId;
+  final int turnNumber;
+}
+
+/// Enemy spy defected to counter-espionage runner during spy-resolution. Refs #3834 R9.
+class SpyDefectedEvent extends GameEvent {
+  const SpyDefectedEvent({
+    required this.unitId,
+    required this.previousOwnerId,
+    required this.newOwnerId,
+    required this.provinceId,
+    required this.turnNumber,
+  });
+
+  final String unitId;
+  final String previousOwnerId;
+  final String newOwnerId;
+
+  /// Prefixed province id (`regionId|localId`).
+  final String provinceId;
+  final int turnNumber;
+}

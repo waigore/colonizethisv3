@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const _provinceLevelTargets = <String>{'explore', 'steal_tech', 'counter_spy'};
+const _provinceLevelTargets = <String>{'explore', 'counter_spy'};
 
 const _excludedPaths = <String>{'tool/check_canonical_province_tile_keys.dart'};
 
@@ -43,7 +43,7 @@ int runCheckCanonicalProvinceTileKeys(
 
   logE(
     'ERROR: Found invalid province-level WorkOrder targetTileKey literals. '
-    'Use full tile keys (region|province|x|y) for explore/steal_tech/counter_spy.',
+    'Use full tile keys (region|province|x|y) for explore/counter_spy.',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line}:${v.column} ${v.message}');

@@ -73,7 +73,7 @@ void main() {
     expect(code, 0);
     expect(
       logs.join('\n'),
-      contains('no duplicated min-viewport scaffolding found'),
+      contains('no duplicated min-viewport or widgetbook use-case scaffolding found'),
     );
   });
 
@@ -175,5 +175,40 @@ Future<void> pumpAtMinViewport(WidgetTester tester, Size size) async {
     final joined = logs.join('\n');
     expect(joined, contains('a_screen_320dp_min_viewport_test.dart:'));
     expect(joined, contains('b_screen_320dp_min_viewport_test.dart:'));
+  });
+
+  test('fails when widgetbook _useCase helper is reintroduced', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_widgetbook_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'widgetbook_foo_stories_test.dart',
+      '''
+import 'package:widgetbook/widgetbook.dart';
+
+WidgetbookUseCase _useCase(
+  List<WidgetbookNode> directories, {
+  required String folderName,
+  required String useCaseName,
+}) {
+  throw UnimplementedError();
+}
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('function "_useCase" duplicates widgetbook_test_harness.dart'),
+    );
   });
 }

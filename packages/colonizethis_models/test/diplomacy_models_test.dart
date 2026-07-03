@@ -60,6 +60,63 @@ void main() {
       expect(restored.formalAlliance, isFalse);
     });
 
+    test('decimal score round-trips through JSON (0.1 precision)', () {
+      const fractional = DiplomacyRelation(
+        factionId1: 'A',
+        factionId2: 'B',
+        score: 73.5,
+      );
+      final restored = DiplomacyRelation.fromJson(fractional.toJson());
+      expect(restored.score, 73.5);
+      expect(restored.score, isA<double>());
+    });
+
+    test('legacy integer score migrates to decimal (x1.0) on load', () {
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 50,
+        'level': 'neutral',
+        'state': 'atPeace',
+      });
+      expect(restored.score, 50);
+      expect(restored.score, isA<double>());
+      expect(restored.score == 50.0, isTrue);
+    });
+
+    test('copyWith accepts a fractional decimal score', () {
+      final updated = relation.copyWith(score: 50.4);
+      expect(updated.score, 50.4);
+    });
+
+    test('fromJson drops formalAlliance for an at-war pair (war invariant)', () {
+      // SPEC/game/diplomacy.md § Alliances: formalAlliance can never coexist
+      // with atWar; an invalid legacy save is normalized on load.
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 80,
+        'level': 'allied',
+        'state': 'atWar',
+        'formalAlliance': true,
+      });
+      expect(restored.state, RelationState.atWar);
+      expect(restored.formalAlliance, isFalse);
+    });
+
+    test('fromJson keeps formalAlliance for an at-peace pair', () {
+      final restored = DiplomacyRelation.fromJson(const {
+        'factionId1': 'A',
+        'factionId2': 'B',
+        'score': 80,
+        'level': 'allied',
+        'state': 'atPeace',
+        'formalAlliance': true,
+      });
+      expect(restored.state, RelationState.atPeace);
+      expect(restored.formalAlliance, isTrue);
+    });
+
     test('formalAlliance round-trips through JSON when true', () {
       const allied = DiplomacyRelation(
         factionId1: 'A',
@@ -74,6 +131,18 @@ void main() {
       expect(restored.formalAlliance, isTrue);
       expect(allied.copyWith().formalAlliance, isTrue);
       expect(allied.copyWith(formalAlliance: false).formalAlliance, isFalse);
+    });
+  });
+
+  group('AllianceBreakCooldownState', () {
+    test('toJson/fromJson round-trips', () {
+      const cooldown = AllianceBreakCooldownState(
+        factionId1: 'gp1',
+        factionId2: 'gp2',
+        sinceTurn: 4,
+      );
+      final restored = AllianceBreakCooldownState.fromJson(cooldown.toJson());
+      expect(restored, cooldown);
     });
   });
 
@@ -174,23 +243,113 @@ void main() {
     });
   });
 
-  group('SubsidyState', () {
-    const subsidy = SubsidyState(payerId: 'gp1', targetId: 'mn1', amountPerTurn: 25);
+  group('SubsidyState (percent model, Refs #3753 R3)', () {
+    const subsidy = SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10);
 
     test('toJson/fromJson round-trips', () {
       final restored = SubsidyState.fromJson(subsidy.toJson());
       expect(restored, subsidy);
-      expect(restored.amountPerTurn, 25);
+      expect(restored.percent, 10);
+      expect(subsidy.toJson()['percent'], 10);
     });
 
     test('copyWith and equality', () {
-      final updated = subsidy.copyWith(amountPerTurn: 30);
-      expect(updated.amountPerTurn, 30);
+      final updated = subsidy.copyWith(percent: 15);
+      expect(updated.percent, 15);
       expect(updated.payerId, 'gp1');
       expect(subsidy == updated, isFalse);
       expect(subsidy.hashCode,
-          const SubsidyState(payerId: 'gp1', targetId: 'mn1', amountPerTurn: 25)
+          const SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10)
               .hashCode);
+    });
+
+    test('legacy £/turn save decodes to percent 0 (dropped by migration)', () {
+      final legacy = SubsidyState.fromJson(
+        const {'payerId': 'gp1', 'targetId': 'mn1', 'amountPerTurn': 500},
+      );
+      expect(legacy.percent, 0);
+      expect(isValidSubsidyPercent(legacy.percent), isFalse);
+    });
+
+    test('isValidSubsidyPercent enforces 5-20 step 5', () {
+      expect(isValidSubsidyPercent(5), isTrue);
+      expect(isValidSubsidyPercent(20), isTrue);
+      expect(isValidSubsidyPercent(10), isTrue);
+      expect(isValidSubsidyPercent(0), isFalse);
+      expect(isValidSubsidyPercent(7), isFalse);
+      expect(isValidSubsidyPercent(25), isFalse);
+    });
+  });
+
+  group('ColonyState', () {
+    const colony = ColonyState(
+      tribeId: 'tribe1',
+      colonyOfGpId: 'gp1',
+      sinceTurn: 4,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      final restored = ColonyState.fromJson(colony.toJson());
+      expect(restored, colony);
+      expect(restored.tribeId, 'tribe1');
+      expect(restored.colonyOfGpId, 'gp1');
+      expect(restored.sinceTurn, 4);
+    });
+
+    test('fromJson defaults sinceTurn to 0 when missing', () {
+      final restored = ColonyState.fromJson(const {
+        'tribeId': 'tribe1',
+        'colonyOfGpId': 'gp1',
+      });
+      expect(restored.sinceTurn, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = colony.copyWith(colonyOfGpId: 'gp2');
+      expect(updated.colonyOfGpId, 'gp2');
+      expect(updated.tribeId, 'tribe1');
+      expect(colony == updated, isFalse);
+      expect(
+        colony.hashCode,
+        const ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 4)
+            .hashCode,
+      );
+    });
+  });
+
+  group('BoycottState (Refs #3753 R6)', () {
+    const boycott = BoycottState(
+      gpId: 'gp1',
+      targetGpId: 'gp2',
+      sinceTurn: 5,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      final restored = BoycottState.fromJson(boycott.toJson());
+      expect(restored, boycott);
+      expect(restored.gpId, 'gp1');
+      expect(restored.targetGpId, 'gp2');
+      expect(restored.sinceTurn, 5);
+    });
+
+    test('fromJson defaults sinceTurn to 0 when missing', () {
+      final restored = BoycottState.fromJson(const {
+        'gpId': 'gp1',
+        'targetGpId': 'gp2',
+      });
+      expect(restored.sinceTurn, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = boycott.copyWith(targetGpId: 'gp3');
+      expect(updated.targetGpId, 'gp3');
+      expect(updated.gpId, 'gp1');
+      expect(boycott == updated, isFalse);
+      expect(
+        boycott.hashCode,
+        const BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 5)
+            .hashCode,
+      );
     });
   });
 

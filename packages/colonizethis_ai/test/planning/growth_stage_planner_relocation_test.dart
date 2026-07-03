@@ -3,6 +3,7 @@
 // to respect the per-file non-comment line budget.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_builder_relocation.dart';
 import 'package:colonizethis_ai/src/planning/growth_stage_work_priorities.dart';
 import 'package:colonizethis_ai/src/planning/move_planner.dart';
@@ -14,6 +15,7 @@ import 'package:colonizethis_test/test.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/growth_stage_planner_test_support.dart';
+import '../support/planner_test_helpers.dart';
 
 void main() {
   group('growth-stage Builder relocation — AC7 feedstock province', () {
@@ -175,7 +177,7 @@ void main() {
         nationId: 'gp1',
         view: view,
         snapshot: snapshot,
-        config: kTestConfig,
+        config: kTestAiConfig,
         primaryGoal: StrategicGoal.expand,
         seeds: kTestSeeds,
         suggestionAPI: const DefaultOrderSuggestionAPI(),
@@ -183,7 +185,7 @@ void main() {
           productionAssignments: [],
           cargoPreference: CargoPreference.none,
         ),
-        growthStagePlannerEnabled: true,
+        options: OrchestratorOptions(growthStagePlannerEnabled: true),
       );
       final moves = outcome.orders.moveOrdersByPlayerId['gp1'] ?? const [];
       expect(
@@ -380,7 +382,7 @@ void main() {
           game: game,
           topology: twoProvinceTopology,
           orders: const Orders(),
-          config: kTestConfig,
+          config: kTestAiConfig,
           primaryGoal: StrategicGoal.expand,
           seeds: kTestSeeds,
           suggestionAPI: api,

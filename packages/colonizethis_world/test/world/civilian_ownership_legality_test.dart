@@ -4,7 +4,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetBuildRoad;
 
-import '../test_fixtures.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 void main() {
   group('relocateIllegalCiviliansInChangedProvinces', () {
     const ow = 'oldWorld';

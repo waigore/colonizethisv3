@@ -4,12 +4,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../dossier/evidence_rules.dart'
     show evidenceForIsolationistCallToArmsRefuse;
-import 'diplomacy_logging.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_phase_result.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_shared_helpers.dart';
-import 'overture_resolver.dart';
 
 class CallToArmsResult {
   CallToArmsResult(this.game, {this.pendingCallToArms});
@@ -67,10 +66,7 @@ Game cancelSubsidiesBetweenGps(
       .toList();
   var g = game.copyWith(subsidyStates: subsidyStates);
   for (final s in cancelled) {
-    diploLog.i(
-      'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
-    );
-    g = appendDiplomaticEvent(
+    g = logDiplomaticEvent(
       g,
       turn,
       DiplomaticEventType.subsidyCancelled,
@@ -80,6 +76,8 @@ Game cancelSubsidiesBetweenGps(
       reason: 'war',
       wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
       eventTally: eventTally,
+      logMessage:
+          'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
     );
   }
   return g;
@@ -92,14 +90,13 @@ Game _applyCallToArmsAccept(
   int turn, {
   IntraTurnEventTally? eventTally,
 }) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-  relations = setWarStateForPair(
-    relations: relations,
-    gpId: allyGpId,
-    targetId: aggressorGpId,
-    turn: turn,
+  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
+  relationsIndex.upsert(
+    allyGpId,
+    aggressorGpId,
+    warStateRelationUpdater(allyGpId, aggressorGpId, turn),
   );
-  var g = game.copyWith(diplomacyRelations: relations);
+  var g = game.copyWith(diplomacyRelations: relationsIndex.toList());
   g = cancelSubsidiesBetweenGps(
     g,
     allyGpId,
@@ -127,42 +124,27 @@ Game _applyCallToArmsRefuse(
   String allyGpId,
   String defenderGpId,
   int turn, {
+  required String aggressorGpId,
+  required DiplomacyFactionMembership factionMembership,
   IntraTurnEventTally? eventTally,
 }) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-  // Single isolated upsert for one call-to-arms refusal (not a loop), so the
-  // standalone helper is acceptable here over RelationUpsertIndex (Refs #3562
-  // AC5).
-  relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
-    final base = existing?.score ?? relationScoreNeutral;
-    var newScore = (base - callToArmsRefusalScorePenalty).clamp(
-      relationScoreMin,
-      relationScoreMax,
-    );
-    var newLevel = scoreToLevel(newScore);
-    if (newLevel == RelationLevel.allied) {
-      newScore = relationScoreLevelFriendlyMax;
-      newLevel = RelationLevel.friendly;
-    }
-    final ids = canonicalPairIds(allyGpId, defenderGpId);
-    if (existing == null) {
-      return DiplomacyRelation(
-        factionId1: ids.id1,
-        factionId2: ids.id2,
-        score: newScore,
-        level: newLevel,
-        lastInteractionTurn: turn,
-      );
-    }
-    // Refusing a call to arms breaks the formal alliance (treaty) as well as
-    // dropping the relation score below Allied. SPEC/game/diplomacy.md.
-    return existing.copyWith(
-      score: newScore,
-      level: newLevel,
-      lastInteractionTurn: turn,
-      formalAlliance: false,
-    );
+  // Refusing a call to arms breaks the formal alliance with the defended ally
+  // and applies the unified alliance-break penalty (R11): −50 to the ally pair
+  // (alliance flag cleared) and −10 to every other Great Power the refuser has
+  // a relation with. The aggressor that triggered the call to arms is excluded
+  // from the −10 cascade (its relation is governed by the war rules, not the
+  // alliance break). SPEC/game/diplomacy.md § Alliances.
+  final otherGpIds = otherRelatedGreatPowerIds(game, allyGpId, {
+    defenderGpId,
+    aggressorGpId,
   });
+  final relations = applyAllianceBreakPenalties(
+    relations: game.diplomacyRelations,
+    breakerId: allyGpId,
+    brokenWithAllyId: defenderGpId,
+    otherGpIds: otherGpIds,
+    turn: turn,
+  );
   final refuseEvidence = evidenceForIsolationistCallToArmsRefuse(
     game,
     allyGpId,
@@ -249,6 +231,8 @@ Game _processCallToArmsForWarPair(
             allyGpId,
             defenderGpId,
             aiTurn,
+            aggressorGpId: aggressorGpId,
+            factionMembership: factionMembership,
             eventTally: eventTally,
           );
         }
@@ -258,6 +242,8 @@ Game _processCallToArmsForWarPair(
             allyGpId,
             defenderGpId,
             aiTurn,
+            aggressorGpId: aggressorGpId,
+            factionMembership: factionMembership,
             eventTally: eventTally,
           );
         }
@@ -276,6 +262,8 @@ Game _processCallToArmsForWarPair(
           allyGpId,
           defenderGpId,
           aiTurn,
+          aggressorGpId: aggressorGpId,
+          factionMembership: factionMembership,
           eventTally: eventTally,
         );
       },
@@ -304,6 +292,8 @@ Game _processCallToArmsForWarPair(
           allyGpId,
           defenderGpId,
           turn,
+          aggressorGpId: aggressorGpId,
+          factionMembership: factionMembership,
           eventTally: eventTally,
         );
       },

@@ -21,13 +21,13 @@ import '../perception/perception_snapshot.dart';
 import 'colonial_phase_planner.dart' show ColonialMilitaryPlan;
 import 'expand_phase_planner.dart' show ExpandMilitaryPlan;
 import 'observer_goal_phase.dart';
+import 'phase_filter_common.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_military_plans.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
         resolveFromPhasePlan,
-        resolvePhaseColonialPressureActive,
         resolvePhaseExpandOrColonialLiteActive,
         resolvePhaseNewWorldAcquisitionWeight,
         resolvePhaseOldWorldConquestWeight,
@@ -113,7 +113,8 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
             regionId: kNewWorldRegionId,
           );
 
-      final prioritizeColonialNwUnderLockRecovery = snapshot != null &&
+      final prioritizeColonialNwUnderLockRecovery =
+          snapshot != null &&
           isNwLockRecoveryPathEActive(
             snapshot: snapshot,
             expandEconomyPlan: plan.expandEconomyPlan,
@@ -156,7 +157,7 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
 /// scoring (issue #2509 § phase suppressions).
 bool resolvePhaseConquestColonialPressureActive({
   required PhasePlanOutcome phasePlan,
-}) => resolvePhaseColonialPressureActive(phasePlan.phase);
+}) => phaseColonialPressureActiveFromPlan(phasePlan: phasePlan);
 
 /// When `true`, NW invadable army-move destinations score `0` in the
 /// conquest destination scorer (legacy `shouldSuppressNewWorldDeclareWar

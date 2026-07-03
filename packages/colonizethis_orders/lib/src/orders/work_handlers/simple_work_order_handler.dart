@@ -59,21 +59,6 @@ bool _applyExploreWorkOrder(
   );
 }
 
-bool _applyStealTechWorkOrder(
-  WorkOrderExecutionContext context,
-  WorkOrder order,
-  Unit unit,
-  String targetTileKey,
-  bool hasValidTarget,
-) {
-  return tryAssignStealTechWorkOrder(
-    order: order,
-    unit: unit,
-    targetTileKey: targetTileKey,
-    updateUnit: context.updateUnit,
-  );
-}
-
 bool _applyCounterSpyWorkOrder(
   WorkOrderExecutionContext context,
   WorkOrder order,
@@ -171,11 +156,6 @@ final WorkOrderHandler exploreWorkOrderHandler = SimpleWorkOrderHandler(
 final WorkOrderHandler purchaseLandWorkOrderHandler = SimpleWorkOrderHandler(
   supportedTarget: kWorkTargetPurchaseLand,
   apply: _applyPurchaseLandWorkOrder,
-);
-
-final WorkOrderHandler stealTechWorkOrderHandler = SimpleWorkOrderHandler(
-  supportedTarget: kWorkTargetStealTech,
-  apply: _applyStealTechWorkOrder,
 );
 
 final WorkOrderHandler counterSpyWorkOrderHandler = SimpleWorkOrderHandler(

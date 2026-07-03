@@ -94,5 +94,35 @@ void main() {
       expect(e.winnerOwnerId, 'gp1');
       expect(e.side2Retreated, isTrue);
     });
+
+    test('SpyCaughtEvent has required fields', () {
+      const e = SpyCaughtEvent(
+        unitId: 'spy1',
+        spyOwnerId: 'gp1',
+        territoryOwnerId: 'gp2',
+        provinceId: 'oldWorld|p1',
+        turnNumber: 3,
+      );
+      expect(e.unitId, 'spy1');
+      expect(e.spyOwnerId, 'gp1');
+      expect(e.territoryOwnerId, 'gp2');
+      expect(e.provinceId, 'oldWorld|p1');
+      expect(e.turnNumber, 3);
+    });
+
+    test('SpyDefectedEvent has required fields', () {
+      const e = SpyDefectedEvent(
+        unitId: 'spy2',
+        previousOwnerId: 'gp1',
+        newOwnerId: 'gp2',
+        provinceId: 'oldWorld|p2',
+        turnNumber: 4,
+      );
+      expect(e.unitId, 'spy2');
+      expect(e.previousOwnerId, 'gp1');
+      expect(e.newOwnerId, 'gp2');
+      expect(e.provinceId, 'oldWorld|p2');
+      expect(e.turnNumber, 4);
+    });
   });
 }

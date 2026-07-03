@@ -237,6 +237,116 @@ class DiplomacyAllianceBadge extends StatelessWidget {
   }
 }
 
+/// A single diplomatic standing chip rendered in the
+/// [DiplomacyStandingChipCluster]. Mirrors the WAR/PEACE/ALLIANCE badge chrome
+/// (mono 9 sp, 1 × 5 dp padding, square 1 dp corners) so the cluster reads as
+/// a row of compact treaty/economic markers. SPEC/ui/diplomacy-panel.md
+/// § Diplomatic standing chip cluster (Refs #3753 R12).
+class _DiplomacyStandingChip extends StatelessWidget {
+  const _DiplomacyStandingChip({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foreground,
+          fontFamily: 'monospace',
+          fontFamilyFallback: const ['Courier'],
+          fontSize: 9,
+          letterSpacing: 0.4,
+          fontWeight: FontWeight.w600,
+          height: 1.0,
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact chip cluster listing every active diplomatic overture/treaty/
+/// economic state for a faction row (Refs #3753 R12 / S13). Rendered below the
+/// relation line on the panel row and inside the diplomacy detail screen's
+/// `CURRENT RELATION` card, replacing the prior single inline overture-stage
+/// clause. Renders nothing when no standing chip applies.
+///
+/// Chip families reuse the canonical editorial-monocle badge overlay tokens
+/// (no new palette tokens, no Material chrome) per
+/// SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster:
+///
+/// - Overture/treaty/colony chips → accent overlay (alliance-badge chrome).
+/// - Boycott chips → warm-red overlay (WAR relation-state chrome).
+/// - Overseas-holdings chip → cool-green overlay (PEACE relation-state chrome).
+class DiplomacyStandingChipCluster extends StatelessWidget {
+  const DiplomacyStandingChipCluster({super.key, required this.chips});
+
+  final DiplomaticStandingChips chips;
+
+  @override
+  Widget build(BuildContext context) {
+    if (chips.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final List<Widget> children = <Widget>[];
+    for (final String label in chips.treatyLabels) {
+      children.add(
+        _DiplomacyStandingChip(
+          label: label,
+          background: _kAllianceBadgeBackground,
+          foreground: EditorialMonoclePalette.accent,
+        ),
+      );
+    }
+    for (final String name in chips.boycottVsNames) {
+      children.add(
+        _DiplomacyStandingChip(
+          label: '$kDiplomacyChipBoycottVsPrefix$name',
+          background: _kWarBadgeBackground,
+          foreground: EditorialMonoclePalette.danger,
+        ),
+      );
+    }
+    for (final String name in chips.boycottedByNames) {
+      children.add(
+        _DiplomacyStandingChip(
+          label: '$kDiplomacyChipBoycottedByPrefix$name',
+          background: _kWarBadgeBackground,
+          foreground: EditorialMonoclePalette.danger,
+        ),
+      );
+    }
+    if (chips.overseasTileCount > 0) {
+      children.add(
+        _DiplomacyStandingChip(
+          label: '$kDiplomacyChipOverseasPrefix${chips.overseasTileCount} '
+              '\u00b7 ${chips.overseasSharePercent}%',
+          background: _kPeaceBadgeBackground,
+          foreground: EditorialMonoclePalette.success,
+        ),
+      );
+    }
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: CtSpacing.s,
+      runSpacing: CtSpacing.xs,
+      children: children,
+    );
+  }
+}
+
 /// Hover-aware faction row chrome per SPEC/ui/diplomacy-panel.md
 /// § Per-faction row → Row chrome. Paints a vertical
 /// `linear-gradient(180deg, --bg-deep, --surface)` background, a 1 px

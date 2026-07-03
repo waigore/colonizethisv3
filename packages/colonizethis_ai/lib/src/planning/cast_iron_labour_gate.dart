@@ -6,6 +6,8 @@
 // is below one run because the raw population ceiling itself is too small
 // (all workers fed — not a food-starvation case).
 
+import 'ai_commodity_ids.dart';
+import 'effective_labour_state.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart' show feasibleRuns;
 
@@ -39,12 +41,7 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   );
   if (!materialFeasible) return false;
 
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: player.workerPool,
-    stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
-  );
+  final effectiveLabour = EffectiveLabourState.fromGame(game, playerId).compute();
   if (feasibleRuns(
         recipe: recipe,
         stockpile: player.stockpile,
@@ -80,7 +77,7 @@ int otherGreatPowerFabricHeld(Game game, String playerId) {
   var total = 0;
   for (final player in game.players) {
     if (player.id == playerId) continue;
-    total += player.stockpile.quantityOf(CommodityCatalog.fabric.id);
+    total += player.stockpile.quantityOf(kAiCommodityIds.fabric);
   }
   return total;
 }
@@ -96,10 +93,10 @@ int otherGreatPowerFabricHeld(Game game, String playerId) {
 /// lock the S7-D diagnostic localized for gp5 (Refs #2847).
 bool isCastIronLabourPeasantRecruitFabricShort(Stockpile stockpile) {
   final required =
-      WorkerActionEconomyCatalog.peasant.materialCosts[CommodityCatalog.fabric.id] ??
+      WorkerActionEconomyCatalog.peasant.materialCosts[kAiCommodityIds.fabric] ??
       0;
   if (required <= 0) return false;
-  return stockpile.quantityOf(CommodityCatalog.fabric.id) < required;
+  return stockpile.quantityOf(kAiCommodityIds.fabric) < required;
 }
 
 /// True when [playerId] is a below-quota zero-NW lock-recovery seller in the
@@ -137,13 +134,8 @@ bool isDomesticFabricProductionLabourInfeasible({
   final player = game.playerById(playerId);
   if (player == null) return false;
 
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: player.workerPool,
-    stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
-  );
-  final fabricId = CommodityCatalog.fabric.id;
+  final effectiveLabour = EffectiveLabourState.fromGame(game, playerId).compute();
+  final fabricId = kAiCommodityIds.fabric;
   var anyMaterialFeasible = false;
   for (final recipe in ProductionRecipesCatalog.producing(fabricId)) {
     final materialFeasible = recipe.inputQuantities.entries.every(

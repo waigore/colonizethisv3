@@ -8,11 +8,14 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'diplomacy_event_logging.dart';
 import 'diplomacy_logging.dart';
 import 'diplomacy_phase_result.dart';
 
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 import 'alliance_resolver.dart';
+import 'boycott_resolver.dart';
+import 'break_alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';
 import 'diplomacy_subsidies_relations_resolver.dart';
@@ -21,6 +24,7 @@ import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
+export 'diplomacy_power_score.dart';
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
@@ -75,6 +79,10 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   // Single scan at phase start; each append uses O(1) tally (Refs #3419 step 7).
   final eventTally = IntraTurnEventTally.fromGame(game);
 
+  // Snapshot relation scores at phase start so end-of-phase decay can skip pairs
+  // modified by any event this turn (skip-on-event, Refs #3753 R9.4).
+  final phaseStartScores = snapshotRelationScores(game);
+
   // Snapshot of formal-alliance pairs at phase start (i.e. end of the preceding
   // turn, before this turn's Alliance orders resolve in step 4). Call to arms
   // (step 5c) gates on this snapshot so an alliance formed the same turn as a
@@ -118,8 +126,28 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   );
   factionMembership = DiplomacyFactionMembership.from(state);
 
+  // 3b. Process boycotts / revocations (Refs #3753 R6). Runs after Join
+  // Empire/Colony so colonies resolved this turn are visible to the colony gate.
+  state = processBoycotts(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+    eventTally: eventTally,
+  );
+
   // 4. Process alliance proposals and responses
   state = processAlliances(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+    eventTally: eventTally,
+  );
+
+  // 4a. Process voluntary alliance breaks (R11 unified penalty).
+  // SPEC/game/diplomacy.md § Alliances.
+  state = processBreakAlliances(
     state,
     diploByPlayer,
     turn,
@@ -198,9 +226,10 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = terminateAgreementsOnWar(state, eventTally: eventTally);
   state = breakFtpOnWar(state, turn, eventTally: eventTally);
   state = breakFtpOnEmbassyLoss(state, turn, eventTally: eventTally);
+  // 6b. Auto-cancel boycotts whose pair is now at war (Refs #3753 R6.4).
+  state = autoCancelBoycottsOnWar(state, turn, eventTally: eventTally);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
-  // Note: Convergence happens AFTER subsidies
   state = processOngoingSubsidies(
     state,
     turn,
@@ -208,16 +237,22 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     eventTally: eventTally,
   );
 
-  // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
-  state = applyRelationConvergence(state, turn);
-
-  // 9. Apply relation modifiers (grants, etc.)
+  // 8. Apply relation modifiers (grants, etc.)
   state = applyRelationModifiersAndUpdateScores(
     state,
     diploByPlayer,
     turn,
     eventTally: eventTally,
   );
+
+  // 8b. Apply the additive trade-deal relation boost (Refs #3753 R10) from the
+  // previous turn's completed world-market deals, before decay so trading pairs
+  // skip decay this turn (skip-on-event). SPEC/game/diplomacy.md § Relation Model.
+  state = applyTradeDealRelationBoosts(state, turn);
+
+  // 9. Apply per-turn relation decay (final step): ±4 toward 50 for non-war
+  // pairs not modified by any event this turn (skip-on-event). Refs #3753 R9.
+  state = applyRelationDecay(state, turn, phaseStartScores);
 
   diploLog.d('diplomacy phase end');
   return DiplomacyPhaseResult(state);

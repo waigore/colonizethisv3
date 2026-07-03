@@ -31,8 +31,9 @@ abstract class OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    bool includeCivilianBuilds,
+  });
   List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
     PlayerView view,
     Game game,

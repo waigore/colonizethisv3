@@ -11,7 +11,6 @@ const Map<String, String> _workTargetLabels = {
   kWorkTargetBuildPort: 'Build port',
   kWorkTargetBuildFort: 'Build fort',
   kWorkTargetBuildRail: 'Build rail',
-  kWorkTargetStealTech: 'Steal tech',
   kWorkTargetCounterSpy: 'Counter spy',
   kWorkTargetPurchaseLand: 'Purchase land',
 };
@@ -70,8 +69,7 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     }
     return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
-  if (order.target == kWorkTargetStealTech ||
-      order.target == kWorkTargetCounterSpy) {
+  if (order.target == kWorkTargetCounterSpy) {
     return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 

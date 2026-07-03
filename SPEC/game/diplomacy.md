@@ -12,9 +12,33 @@ Full diplomacy system: war/peace, alliances, overture chain for Minors/Tribes, r
 
 Per faction-pair: **relation state** (AT_PEACE | AT_WAR), **relation score** (0–100), **relation level** (Hostile 0–25, Neutral 26–50, Friendly 51–75, Allied 76–100), **formal alliance** flag, **sinceTurn**, **lastInteractionTurn**. Initial: all GP–GP at peace, score 50, formal alliance false. Updated by grants, trade, war, broken treaties.
 
+The **relation score** is a **decimal** value (fixed-point, 0.1 precision; represented as a `num`/`double`) in the inclusive range `[0.0, 100.0]`. Whole-number scores represent ordinary integer-valued relations; fractional values arise from decimal deltas (per-turn decay and additive-scaled trade-deal boosts). All **threshold comparisons** (level bands, Join Empire ≥ 51, Alliance ≥ 76, FTP, intervention probability, war-desire) operate on the **raw decimal value** with no intermediate rounding. **Save/load** round-trips the decimal. **Legacy saves** that stored an integer score are migrated on load by multiplying by `1.0` (an old score of `50` loads as `50.0`); no other field changes.
+
+**Per-turn relation decay (Refs #3753 R9.3/R9.4):** At the **end of the Diplomacy phase** (after all relation-modifier events for the turn have resolved), every faction-pair relation that is **not** `AT_WAR` drifts **±4.0 toward the equilibrium 50** — a score below 50 increases by `4.0`, a score above 50 decreases by `4.0`, and the step is **clamped to 50** when it would otherwise cross (for example `48.0 → 50.0`, `52.0 → 50.0`). A score already at `50.0` is unchanged. **Skip-on-event:** when **any** relation-score delta event applied to that pair the **same turn** — trade-deal boost, land purchase, grant aid, war declaration, peace, alliance form/break, call-to-arms refusal, or an intervention decision (intervene/protest/doNothing) — decay is **skipped** for that pair that turn (event deltas only; no double-application). A relation **created** this turn (first contact, a newly established overture, an alliance clamp) is treated as event-modified and does **not** decay on its creation turn. `AT_WAR` pairs keep their score **frozen** at the war-declaration value and never decay. The decay magnitude is the code constant `relationDecayPerTurn = 4.0`.
+
+- Given a non-`AT_WAR` faction-pair relation with score `40.0` that received no relation-score delta event this turn, when the Diplomacy phase ends, then the system sets the pair's score to `44.0` (`+4.0` toward 50).
+- Given a non-`AT_WAR` faction-pair relation with score `80.0` that received no relation-score delta event this turn, when the Diplomacy phase ends, then the system sets the pair's score to `76.0` (`−4.0` toward 50).
+- Given a non-`AT_WAR` faction-pair relation with score `48.0` that received no relation-score delta event this turn, when the Diplomacy phase ends, then the system sets the pair's score to `50.0` (clamped — the step does not cross 50).
+- Given a non-`AT_WAR` faction-pair relation with score `52.0` that received no relation-score delta event this turn, when the Diplomacy phase ends, then the system sets the pair's score to `50.0` (clamped).
+- Given a non-`AT_WAR` faction-pair relation with score `50.0` that received no relation-score delta event this turn, when the Diplomacy phase ends, then the system leaves the pair's score at `50.0` (no change at equilibrium).
+- Given a faction-pair that received a relation-score delta event this turn (for example a Grant Aid applied to that pair), when the Diplomacy phase ends, then the system does **not** apply decay to that pair (skip-on-event; only the event delta is reflected).
+- Given an `AT_WAR` faction-pair relation with score `30.0`, when the Diplomacy phase ends, then the system leaves the pair's score at `30.0` (war scores are frozen and never decay).
+
+**Trade-deal relation boost (Refs #3753 R10):** A faction pair that completed **at least one** world-market trade deal involving **at least one Great Power** is boosted in the **next** turn's Diplomacy phase, **before** decay (so the boosted pair is event-modified and skips that turn's decay). The boost is **volume-independent** and applied **once per pair per turn**: **`+2.0`** base, plus **`+0.4`** when an **Embassy** is in effect between the parties (code constants `tradeDealRelationBoostBase`, `tradeDealRelationBoostEmbassyBonus`). The score clamps to `[0.0, 100.0]`. `AT_WAR` pairs are skipped (war scores frozen). The deals are recorded by the World Market phase (`SPEC/program/world-market-resolution.md` § Step F) and consumed by the following Diplomacy phase, so the boost applies one turn after settlement. **Subsidy modifier (Refs #3753 R10):** when a percentage subsidy (R3) is in effect between the parties, **`+0.2` per subsidy percentage point** is added (code constant `tradeDealRelationBoostPerSubsidyPercent`), so a 10% subsidy adds `+2.0` (a 20% subsidy adds `+4.0`); counted once per pair.
+
+- Given a non-`AT_WAR` pair at score `50.0` with no Embassy that completed a Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system sets the pair's score to `52.0` and does not also apply decay to that pair this turn.
+- Given a non-`AT_WAR` pair at score `50.0` with an Embassy in effect that completed a Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system sets the pair's score to `52.4` (`+2.0` base `+0.4` Embassy).
+- Given a non-`AT_WAR` pair at score `99.0` that completed a Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system clamps the boosted score to `100.0`.
+- Given a pair that completed **no** Great-Power trade deal the previous turn, when the Diplomacy phase resolves, then the system applies **no** trade-deal boost to that pair.
+- Given an `AT_WAR` pair that completed a trade deal the previous turn, when the Diplomacy phase resolves, then the system applies **no** trade-deal boost (war scores frozen).
+
 The **formal alliance** flag is a **persisted treaty state**, distinct from the informal relation **level** `Allied` (score band 76–100). A formal alliance is created **only** when an `Alliance` diplomatic order resolves (`allianceFormed`) and is cleared on `allianceBroken` (e.g. a Call to Arms refusal). The informal `Allied` level (high relation score) does **not** by itself constitute a formal alliance and must **not** grant mutual-defence obligations. Old saves without the flag default to **formal alliance false**.
 
-While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace.
+While relationState is `AT_WAR` between a Great Power and any other faction, **no new overtures may be established** between that pair. Any existing overtures between that pair are **terminated when war begins** and are **not restored automatically** by later peace; the GP must rebuild the overture chain from `none` after peace — **except** the GP–GP **auto-embassy** seeded at game start (see § GP–GP Rules), which survives war and peace.
+
+**Spy-death diplomacy penalty (Refs #3834 R8):** When a spy is killed in foreign territory during spy-resolution, apply **−8** to the relation score between spy owner and territory owner (stackable per kill). Sets `lastInteractionTurn` to the current turn, suppressing per-turn decay that same turn (skip-on-event).
+
+- Given a spy from GP A is killed in GP B's territory, when spy-resolution completes, then the relation score between A and B decreases by 8 and `lastInteractionTurn` is set to the current turn.
 
 ### War required for hostile actions
 
@@ -23,10 +47,12 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 ### GP–GP Rules
 
+- **Auto-embassy at game start (Refs #3753 R1):** Every unordered Great Power pair is seeded at `OvertureStage.embassy` with `sinceTurn = 0` in **both** directions (`gpA → gpB` and `gpB → gpA`). Auto-establishment costs **no** treasury. The auto-embassy is **never revoked**, including when the pair enters `AT_WAR` or returns to peace. **NAP** and **Join Empire** stages between warring GPs are still cleared on war (downgraded to `embassy` when the pair was at NAP or Join Empire) and must be rebuilt after peace if desired. **Diplomatic Expertise** does **not** gate GP→GP Embassy.
 - **Overture chain (GP→GP):** Same four-stage chain as GP→Minor/Tribe: Trade Consulate → Embassy → Non-Aggression Pact → Join Empire. Each stage is a separate **Establish Overture** order; the target GP accepts or rejects at turn resolution. **Diplomatic Expertise** tech gates Embassy (and foreign civilian work) for **Minor/Tribe** targets only — GP→GP Embassy is **not** expertise-gated in current product (`establish_overture_validator.dart`). Grant Aid / Set Subsidy on GP rows require embassy-tier overture (`hasEmbassy`), same as Minors/Tribes.
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
-- **Alliances:** Offer/accept between GPs. A successful `Alliance` order sets the pair's **formal alliance** flag (treaty), clamps score into the Allied band, and records `allianceFormed`. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that holds a **formal alliance** with the **declared-upon** GP **at the end of the preceding turn** (i.e. before this turn's `Alliance` orders resolve) and is **at peace** (`AT_PEACE`) with that GP receives exactly **one** call to arms per aggressor–defender pair for that turn. The informal `RelationLevel.allied` band **alone** does **not** trigger call to arms; a formal alliance is required. An alliance **formed the same turn** as the war declaration does **not** grant mutual defence for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** the **formal alliance is cleared** (`allianceBroken` recorded), relation score between ally and defended GP drops by **20** (clamped 0–100), level no longer Allied (if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused` (and `allianceBroken` on refuse). Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
+- **Alliances:** Offer/accept between GPs. A successful `Alliance` order sets the pair's **formal alliance** flag (treaty), clamps score into the Allied band, and records `allianceFormed`. An `Alliance` order is valid only when **no** formal alliance already exists for the pair: while `formalAlliance == true`, a further `Alliance` order toward that GP is **rejected** (no duplicate treaty), and the AI does **not** suggest `Alliance` toward a GP it already holds a formal alliance with. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that holds a **formal alliance** with the **declared-upon** GP **at the end of the preceding turn** (i.e. before this turn's `Alliance` orders resolve) and is **at peace** (`AT_PEACE`) with that GP receives exactly **one** call to arms per aggressor–defender pair for that turn. The informal `RelationLevel.allied` band **alone** does **not** trigger call to arms; a formal alliance is required. An alliance **formed the same turn** as the war declaration does **not** grant mutual defence for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** the **formal alliance is cleared** (`allianceBroken` recorded) and the **unified alliance-break penalty** (see **Breaking an alliance** below) is applied — the refuser's relation with the defended ally drops by **50** and its relation with **every other Great Power it has a relation with** drops by **10**, except the **aggressor** that triggered this call to arms (whose relation is governed by the war rules, not the alliance break). All drops clamp 0–100. **Subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused` (and `allianceBroken` on refuse). Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon. **War invariant:** a pair can never hold `formalAlliance == true` while `AT_WAR`; any transition to `AT_WAR` (declare war, call-to-arms join, intervention) automatically clears that pair's `formalAlliance`, and saves are normalized on load so the flag is dropped for any at-war pair.
+- **Breaking an alliance (voluntary or by refusal):** A Great Power may end a **formal alliance** either voluntarily via a **Break Alliance** diplomatic order or implicitly by **refusing a call to arms**. Both paths apply the same **unified penalty**: the breaker's relation with the **broken-with ally** drops by **50** and its `formalAlliance` flag for that pair is cleared; the breaker's relation with **every other Great Power for which it holds a relation at the moment the break resolves** drops by **10** (the broken-with ally is excluded from the −10 cascade; for the call-to-arms-refusal path the aggressor is also excluded). All score changes clamp 0–100 and the relation level is recomputed. An `allianceBroken` event is recorded for the broken pair (the refusal path additionally records `callToArmsRefused`). The voluntary **Break Alliance** order is valid whenever a formal alliance exists; it is **not** tech-gated and has **no** treasury cost. Because entering `AT_WAR` clears the pair's `formalAlliance` (war invariant above), a Break Alliance is in practice only offered while the pair is **at peace** — an at-war pair holds no treaty to break and the order is rejected/ignored. Forming an alliance is unchanged (a separate `Alliance` order).
 - **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
 
 #### Nearly defeated (GP target)
@@ -80,10 +106,24 @@ The `knownDiplomaticTargetFactionIds` set (existing relations **and** non-`unkno
 
 - **War before hostile action:** Same as Minors — see **War required for hostile actions** above (military invasion and naval blockade require `AT_WAR` or same-turn `Declare War` on the Tribe as province owner).
 - **Overture chain:** Same as Minor but Join Empire creates a **colony** (provinces don't count toward victory; profit share and colonial government).
+- **Join Empire → colony (Refs #3753 R5):** When a GP resolves an `Establish Overture` at stage `Join Empire` against a **Tribe**, the Tribe does **not** leave the game and its provinces/units/fleets are **not** transferred. Instead the Tribe becomes a **colony** of that GP: a `ColonyState { tribeId, colonyOfGpId, sinceTurn }` is recorded on the `Game` (one per Tribe; re-resolution replaces the prior record), the Tribe **remains** in `tribes`, and overtures/relations with the Tribe are preserved. Only the Join Empire **cost** is deducted from the GP treasury. The colonizing GP is the Tribe's favoured trading partner while the colony stands. This differs from **GP–Minor** Join Empire, which keeps full **absorption** (province/unit/fleet transfer and faction removal). The colony relationship ends if the colonizing GP is removed from the game (currently only via **GP Join-Empire absorption** of a nearly-defeated GP): every `ColonyState` whose `colonyOfGpId` is the removed GP is dropped, so each former colony Tribe becomes **independent** again (its favoured trading partner reverts to the relation-based lookup, R7.1), and every `BoycottState` issued **by** or directed **at** the removed GP is cleared (Refs #3753 R5.5 / R6.4).
 - **Purchase land (Merchant):** Same as GP–Minor: requires **embassy** with that Tribe and **not at war**.
+- **Boycott (colony trade embargo) (Refs #3753 R6):** A GP that holds at least one colony (R5) may issue a **Boycott** diplomatic order against **another** Great Power. While the boycott is active, **all trade is blocked between the boycotted target GP and every Tribe that is a colony of the issuing GP** (world-market sales where the target GP buys goods a colony Tribe is selling; Merchant `purchase_land`, Grant Aid, and Set Subsidy from the target GP toward a colony Tribe). The boycott is keyed by the `(issuerGpId, targetGpId)` pair and recorded as a `BoycottState { gpId, targetGpId, sinceTurn }` on the `Game` (one active record per pair). Because a GP may hold multiple colonies, a single boycott against a target GP applies to all of the issuer's colonies; the affected Tribe set is derived from `ColonyState` at enforcement time (rather than pinned to one Tribe at order time).
+  - **Subsidy cancellation on apply (R6.2):** When a Boycott is applied, any active `SubsidyState` from the **target GP** to a Tribe that is a colony of the **issuing GP** is immediately cancelled (a `subsidyCancelled` event is appended).
+  - **Lifecycle (R6.4):** A boycott persists until (a) the issuer issues a **Revoke Boycott** for that pair (a `boycottRevoked` event is appended), or (b) the issuer and the target GP enter `AT_WAR` with each other — at which point the boycott is **auto-cancelled** during the same Diplomacy phase (a `boycottRevoked` event is appended) because the war rules already block trade. A boycott is one-sided (opt-in from the issuer); the target GP and colony Tribes have no accept/reject step.
 - Tribes react to nearby conquest (relation/trade effects).
 - **Intervention:** Same **Intervention** rules as for Minors (Embassy or purchased land; Diplomacy phase when a GP declares war on the Tribe).
 - **War and overtures:** If relationState becomes `AT_WAR` between a GP and a Tribe, any existing overture state between that GP and that Tribe is **cleared to `none`** and cannot be re-established while they remain at war. After peace, the GP must rebuild the overture chain from `none` if it wants to regain consulate/embassy/colony-level relations.
+
+### Favoured trading partner (Refs #3753 R7.1)
+
+The **favoured trading partner** of a Minor Nation or Tribe is a deterministic **lookup**, distinct from the bilateral GP–GP **Favored Trading Partner (FTP)** agreement (`establishFtp`, GP–GP only — see [world-market.md](world-market.md) § FTP). It identifies the single Great Power that the Minor/Tribe trades with preferentially:
+
+- **Colony Tribe:** the GP recorded as `ColonyState.colonyOfGpId` (the suzerain) is the favoured partner **regardless** of any other GP's relation score, for as long as the colony stands (R5).
+- **Independent Tribe or Minor Nation:** the GP with the **highest decimal relation score** with that Minor/Tribe among all Great Powers that hold a `DiplomacyRelation` with it. Ties at the relation score break deterministically by **ascending faction id**.
+- **No qualifying GP:** when no Great Power holds a `DiplomacyRelation` with the Minor/Tribe (and it is not a colony), the favoured trading partner is **undefined** (`null`).
+
+This lookup is a read-only query over `Game.colonyStates` and `Game.diplomacyRelations`; it does not itself transfer goods or treasury. The favoured trading partner (R7.1), the world-market sell-priority relation tiebreaker (R7.3, [world-market.md](world-market.md)), first right of refusal (R7.2, [world-market-first-right-of-refusal.md](world-market-first-right-of-refusal.md)), and overseas profit-share (R8) are **independent** concepts.
 
 ### GP AI policy for war vs. relations (Full AI only)
 
@@ -136,12 +176,15 @@ For **Minor/Tribe targets**, add:
 
 - **Declare War** — target faction; valid if AT_PEACE.
 - **Offer Peace** — target faction; valid if AT_WAR.
-- **Alliance** — target GP; propose, accept, or refuse.
+- **Alliance** — target GP; propose, accept, or refuse (forms a formal alliance).
+- **Break Alliance** — target GP; valid only when a **formal alliance** currently exists with that GP. Voluntarily ends the alliance and applies the unified alliance-break penalty (see **Breaking an alliance**). Valid at peace **or** at war; not tech-gated; no treasury cost. At most one Break Alliance per (player, target GP) per turn.
 - **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, **amount**: a **positive integer** in pounds (£). Valid if Embassy exists, treasury ≥ amount, and other diplomacy preconditions hold. Resolves as a **one-time** transfer: treasury deduction and relation update per resolver rules.
-- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if Consulate **or** Embassy exists and treasury meets validation (see resolver). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
+- **Set Subsidy** — target **Minor Nation or Tribe** only (no GP→GP subsidies), **percentage** (Refs #3753 R3): a whole percent in **5-point increments from 5% to 20%** (min `kSubsidyPercentMin = 5`, max `kSubsidyPercentMax = 20`, step `kSubsidyPercentStep = 5`). Carried in the order `amount` field. Valid only if an **Embassy** exists with the target — a Trade Consulate alone is **not** sufficient (Refs #3753 R2). The percent model charges **no upfront and no per-turn treasury payment**; its effect is the world-market price discount/surcharge plus the scaled trade-deal relation boost (R10). An ongoing `SubsidyState { payerId, targetId, percent }` persists until updated, cancelled, the pair goes `AT_WAR`, or the payer loses the Embassy with that Minor/Tribe (R3.5). One active subsidy per (GP, Minor/Tribe) pair.
+- **Boycott** — target **Great Power** only; valid only when the **issuing GP holds at least one colony** (a `ColonyState` with `colonyOfGpId == issuer` exists), the target is **another** Great Power **at peace** with the issuer, and **no** active boycott already exists for the `(issuer, target)` pair. Not tech-gated; no treasury cost. At most one Boycott per (issuer, target GP) per turn. See **Boycott (colony trade embargo)** below.
+- **Revoke Boycott** — target **Great Power**; valid only when an **active boycott** for the `(issuer, target)` pair exists. Removes the boycott. Not tech-gated; no treasury cost. At most one Revoke Boycott per (issuer, target GP) per turn.
 
-**Amount parameters (current product):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
+**Amount parameters:** **Grant Aid** uses a single integer `amount` in pounds: a **positive multiple of £1000** (minimum £1000). **Set Subsidy** uses `amount` as a **percentage** that must satisfy `isValidSubsidyPercent` (5–20, step 5). Validation and diplomacy resolution enforce these. Defaults in UI steppers and AI suggestions use **£1000** for Grant Aid and **5%** for Set Subsidy (`kSubsidyPercentDefault`).
 
 ### Turn Sequence
 
@@ -179,6 +222,30 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the Player controls a Great Power that already has an Embassy with a target Minor Nation or Tribe, is not at relation state `AT_WAR` with that faction, and has a Merchant unit assigned a `purchase_land` work order targeting a tile in that Minor or Tribe province  
   When the system validates the `purchase_land` work order during turn resolution  
   Then the system accepts the work order for execution and does not reject it for missing diplomatic prerequisites.
+
+- Given the Player controls a Great Power that holds only a Trade Consulate (no Embassy) with a target Minor Nation, is at relation state `AT_PEACE` with that Minor (Refs #3753 R2/R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `10`  
+  Then the system rejects the order at validation with a reason indicating an Embassy is required, and creates no `SubsidyState` for that pair.
+
+- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation and is at relation state `AT_PEACE` with that Minor (Refs #3753 R2/R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `10` (a multiple of 5 within 5–20)  
+  Then the system accepts the order at validation and records a `SubsidyState { payerId, targetId, percent: 10 }` with a `subsidySet` event; no treasury is deducted.
+
+- Given the Player controls a Great Power and the target is **another Great Power** (Refs #3753 R3)  
+  When the Player issues a `Set Subsidy` order against that Great Power  
+  Then the system rejects the order at validation with a reason indicating subsidies are only available for Minor Nations and Tribes, and creates no `SubsidyState`.
+
+- Given the Player controls a Great Power that holds an Embassy with a target Minor Nation (Refs #3753 R3)  
+  When the Player issues a `Set Subsidy` order against that Minor with a percentage of `7` (not a multiple of 5) or `25` (above the maximum)  
+  Then the system rejects the order at validation with a reason indicating the percentage must be 5–20 in steps of 5, and creates no `SubsidyState`.
+
+- Given an active `SubsidyState { payerId: A, targetId: M, percent: 10 }` exists and `A` loses the Embassy with `M` (Refs #3753 R3.5)  
+  When the Diplomacy phase processes ongoing subsidies  
+  Then the system removes the `SubsidyState` and appends a `subsidyCancelled` event for that pair.
+
+- Given any save containing a GP-to-GP subsidy or a legacy `amountPerTurn` (£/turn) subsidy (Refs #3753 R3)  
+  When the save is loaded  
+  Then the loaded game contains no GP→GP subsidy rows and no subsidy whose `percent` is invalid (the legacy £ subsidies are dropped; the player re-establishes them under the percent model).
 
 - Given the Player controls a Great Power with an Embassy with a Minor Nation or Tribe, a different Great Power has a valid `Declare War` order against that Minor or Tribe in the Diplomacy phase of turn index `t`, and war between aggressor and that Minor/Tribe is applied in that phase  
   When the system presents the Player with an Intervention choice and the Player selects **Intervene**  
@@ -227,9 +294,37 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - Given the same AI intervention context and the Bernoulli trial results in **do nothing**  
   When the Diplomacy phase applies that outcome  
   Then the system does not change the relation state or relation score between that AI Great Power and the declaring Great Power, and clears all overture state between that AI Great Power and that Minor/Tribe from the game state.
-- Given the Player controls a Great Power with a Non-Aggression Pact overture with a target Minor Nation or Tribe, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
-  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor or Tribe in the Diplomacy phase and the order is valid  
-  Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation or Tribe from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
+- Given the Player controls a Great Power with a Non-Aggression Pact overture with a target **Minor Nation**, relation score between that GP and that faction is at least 51 (Friendly or Allied), the target owns at least one province, and the Player’s treasury is at least the Join Empire cost (base cost + per-province cost × number of provinces owned by the target)  
+  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting that Minor Nation in the Diplomacy phase and the order is valid  
+  Then the system deducts exactly that Join Empire cost from the Player’s treasury, transfers ownership of all provinces owned by the target to the Player’s Great Power, transfers all units and fleets owned by the target to the Player’s Great Power, removes the target Minor Nation from the game, removes all overture state and diplomacy relations involving that target, and logs the outcome with the `logic:` prefix.
+
+- Given the Player controls Great Power `A` with a Non-Aggression Pact overture with a target **Tribe** `T`, relation score between `A` and `T` is at least 51, `T` owns at least one province, and `A`'s treasury is at least the Join Empire cost  
+  When the Player issues an `Establish Overture` order with overture stage `Join Empire` targeting `T` in the Diplomacy phase and the order is valid  
+  Then the system deducts exactly that Join Empire cost from `A`'s treasury, records a `ColonyState { tribeId: T, colonyOfGpId: A, sinceTurn: t }` on `Game.colonyStates`, does **not** transfer ownership of `T`'s provinces, units, or fleets, keeps `T` listed in `tribes`, and preserves all overture state and diplomacy relations involving `T`.
+
+- Given Tribe `T` is already a colony of Great Power `A` (a `ColonyState` for `T` exists)  
+  When a Tribe Join Empire overture for `T` resolves again (for the same or a different Great Power)  
+  Then `Game.colonyStates` contains exactly one `ColonyState` whose `tribeId` is `T` (the prior record is replaced, not duplicated).
+
+- Given Great Power `A` is the suzerain of colony Tribe `T` (a `ColonyState { tribeId: T, colonyOfGpId: A }` exists) and `A` is removed from the game when Great Power `B` absorbs `A` via GP Join Empire  
+  When the absorption resolves  
+  Then the system removes every `ColonyState` whose `colonyOfGpId` is `A` from `Game.colonyStates` (so `T` is independent again and `Game.colonyStates` contains no record for `T`), while `T` remains listed in `tribes`.
+
+- Given Tribe `T` is a colony of Great Power `A` (a `ColonyState { tribeId: T, colonyOfGpId: A }` exists) and another Great Power `B` holds a higher decimal relation score with `T` than `A` does  
+  When the favoured trading partner of `T` is resolved (R7.1)  
+  Then the system returns `A` (the suzerain), regardless of `B`'s higher relation score.
+
+- Given an independent Tribe `T` (no `ColonyState` for `T`) and Great Powers `A` and `B` hold decimal relation scores `72.0` and `68.0` respectively with `T`, and no other Great Power holds a relation with `T`  
+  When the favoured trading partner of `T` is resolved (R7.1)  
+  Then the system returns `A`; and given instead that `A` and `B` hold an **equal** decimal relation score with `T`, the system returns the Great Power with the smaller faction id.
+
+- Given a Minor Nation `M` for which **no** Great Power holds a `DiplomacyRelation` (and `M` is not a colony)  
+  When the favoured trading partner of `M` is resolved (R7.1)  
+  Then the system returns `null` (the favoured trading partner is undefined).
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists and Great Power `A` is removed from the game by GP Join-Empire absorption  
+  When the absorption resolves  
+  Then the system removes from `Game.boycottStates` every record whose `gpId` is `A` and every record whose `targetGpId` is `A` (boycotts the removed GP issued or that were directed at it), leaving boycotts between other GP pairs unchanged.
 
 - Given the Player controls a Great Power that currently has a Consulate or Embassy overture stage recorded with a target Minor Nation or Tribe and the current relation state between those two factions changes from `AT_PEACE` to `AT_WAR` in turn `t`  
   When the Diplomacy phase for turn `t` completes  
@@ -262,9 +357,81 @@ The following Given–When–Then criteria are testable conditions for diplomacy
   When another Great Power declares war on B during the Diplomacy phase of turn `t`  
   Then the system adds exactly one pending Call to Arms for A when A is human, or resolves A's join/refuse by the AI score rule when A is AI.
 
-- Given Great Power A holds a formal alliance with Great Power B and A **refuses** a Call to Arms in turn `t`  
+- Given Great Power A holds a formal alliance with Great Power B and A **refuses** a Call to Arms (defending B against aggressor D) in turn `t`  
   When the Diplomacy phase completes  
-  Then the system clears the A–B formal alliance flag, records an `allianceBroken` event for the A–B pair, applies the −20 relation-score refusal penalty (clamped 0–100), and keeps the relation level below Allied.
+  Then the system clears the A–B formal alliance flag, records an `allianceBroken` event for the A–B pair, subtracts 50 from A's relation with B (clamped 0–100), subtracts 10 from A's relation with every other Great Power for which A holds a relation **except** B and the aggressor D (each clamped 0–100), and leaves A's relation with D unchanged by this rule.
+
+- Given Great Powers A and B hold a **formal alliance** (`formalAlliance = true`) and A issues a `Break Alliance` diplomatic order targeting B in the Diplomacy phase of turn `t`  
+  When the Diplomacy phase resolves the order  
+  Then the system sets `formalAlliance = false` for the A–B pair, records an `allianceBroken` event for that pair, subtracts 50 from A's relation with B (clamped 0–100), and subtracts 10 from A's relation with every other Great Power for which A holds a relation at the time of the break, excluding B (each clamped 0–100).
+
+- Given Great Powers A and B do **not** hold a formal alliance (`formalAlliance = false`) and A issues a `Break Alliance` diplomatic order targeting B  
+  When the order is validated  
+  Then the system rejects the order with a reason indicating there is no formal alliance to break, does not change any relation score, and does not record an `allianceBroken` event.
+
+- Given Great Powers A and B hold a **formal alliance** (`formalAlliance = true`) at peace  
+  When the A–B pair transitions to `AT_WAR` by any path (declare war, call-to-arms join, or intervention)  
+  Then the system sets `formalAlliance = false` for the A–B pair (the war invariant — `formalAlliance == true` while `AT_WAR` is never permitted).
+
+- Given a save file persists a DiplomacyRelation with `state = atWar` and `formalAlliance = true` (an invalid legacy state)  
+  When the system loads that relation via `DiplomacyRelation.fromJson`  
+  Then the system normalizes the loaded relation to `formalAlliance = false` while leaving `state = atWar` unchanged.
+
+- Given Great Powers A and B are `AT_WAR` (so the war invariant has cleared any `formalAlliance`) and A issues a `Break Alliance` diplomatic order targeting B  
+  When the order is validated and the Diplomacy phase resolves it  
+  Then the system rejects/ignores the order with a reason indicating there is no formal alliance to break, does not change any relation score, and does not record an `allianceBroken` event.
+
+- Given Great Powers A and B hold a **formal alliance** (`formalAlliance = true`) at peace and A issues an `Alliance` diplomatic order targeting B  
+  When the order is validated  
+  Then the system rejects the order with a reason indicating a formal alliance already exists, does not change any relation score, and does not record an `allianceFormed` event.
+
+- Given AI-controlled Great Power A and Great Power B hold a **formal alliance** (`formalAlliance = true`) at peace  
+  When `suggestDiplomaticOrders` runs for A  
+  Then the suggestion list contains **no** `Alliance` order targeting B (the AI does not propose a duplicate treaty).
+
+- Given Great Power A holds a colony (a `ColonyState` with `colonyOfGpId == A` exists), Great Power B is another GP at peace with A, and no boycott for the `(A, B)` pair exists  
+  When A issues a `Boycott` diplomatic order targeting B and the Diplomacy phase resolves it  
+  Then the system records exactly one `BoycottState { gpId: A, targetGpId: B, sinceTurn: t }` on `Game.boycottStates` and appends a `boycottSet` event for the `(A, B)` pair.
+
+- Given Great Power A holds **no** colony (no `ColonyState` with `colonyOfGpId == A`)  
+  When A issues a `Boycott` diplomatic order targeting Great Power B  
+  Then the system rejects the order at validation with a reason indicating a colony is required, and records no `BoycottState`.
+
+- Given Great Power A holds a colony and is **at war** with Great Power B (relation state `AT_WAR`)  
+  When A issues a `Boycott` diplomatic order targeting B  
+  Then the system rejects the order at validation with a reason indicating the pair must be at peace, and records no `BoycottState`.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists and Great Power B has an active `SubsidyState { payerId: B, targetId: T }` where Tribe `T` is a colony of A  
+  When A issues a `Boycott` order targeting B and the Diplomacy phase resolves it (or the boycott is already applied this same phase)  
+  Then the system removes that `SubsidyState` and appends a `subsidyCancelled` event for the `(B, T)` pair.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists  
+  When A issues a `Revoke Boycott` diplomatic order targeting B and the Diplomacy phase resolves it  
+  Then the system removes the `(A, B)` `BoycottState` and appends a `boycottRevoked` event for that pair.
+
+- Given there is **no** active boycott for the `(A, B)` pair  
+  When A issues a `Revoke Boycott` diplomatic order targeting B  
+  Then the system rejects the order at validation with a reason indicating there is no active boycott to revoke, and changes no `BoycottState`.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists at the start of turn `t` and A and B enter `AT_WAR` during turn `t`  
+  When the Diplomacy phase of turn `t` completes  
+  Then the system removes the `(A, B)` `BoycottState` (auto-cancelled by war) and appends a `boycottRevoked` event for that pair.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A (`ColonyState { tribeId: T, colonyOfGpId: A }`), `T` submits a world-market offer for commodity `C`, and B submits a world-market bid for `C` at the same integer priority tier  
+  When the World Market phase (phase 13) matches deals  
+  Then the system emits no `FilledDeal` between seller `T` and buyer `B` for `C` (the boycott blocks all trade between B and A's colony Tribes) and both the `T` offer and the `B` bid carry forward at their unfilled quantity.
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A, B submits a world-market offer for commodity `C`, and `T` submits a world-market bid for `C` at the same integer priority tier  
+  When the World Market phase matches deals  
+  Then the system emits no `FilledDeal` between seller `B` and buyer `T` for `C` (the block is bidirectional between B and A's colony Tribes).
+
+- Given an active boycott `BoycottState { gpId: A, targetGpId: B }` exists, Tribe `T` is a colony of A, and a third Great Power `D` that holds no boycott against B submits a world-market bid for commodity `C` that `T` offers  
+  When the World Market phase matches deals  
+  Then the system still emits a `FilledDeal` between seller `T` and buyer `D` for `C` (the boycott blocks only trade involving the boycotted Great Power B, not trade between A's colony Tribes and other GPs).
+
+- Given the `Game` holds no `BoycottState`  
+  When the World Market phase matches deals  
+  Then the system applies no boycott exclusion and deal matching is identical to the pre-boycott behavior for the same offers and bids.
 
 - Given Great Powers A and B have **no** formal alliance at the start of turn `t` and A issues an `Alliance` order targeting B in turn `t`  
   When another Great Power declares war on B in the same Diplomacy phase of turn `t`  
@@ -273,9 +440,37 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
+- Given a legacy save file in which a faction-pair relation stored its score as the integer `50`  
+  When the system loads that save  
+  Then the system represents that pair's relation score as the decimal `50.0` (integer × 1.0) and uses that decimal value directly in all subsequent threshold comparisons.
+
+- Given a faction-pair relation whose decimal score is `73.5`  
+  When the system serializes that relation to a save and loads it back  
+  Then the restored relation score equals `73.5` exactly (decimal round-trip, no rounding).
+
+- Given a faction-pair relation whose decimal score is `50.6`  
+  When the system derives the relation level from the score  
+  Then the system derives `Friendly` (because `50.6` is strictly above the Neutral band maximum of `50`), with no rounding of the score to `51`.
+
 - Given the user views the diplomacy panel for a discovered faction with a diplomatic relation  
   When the panel displays the current relation  
-  Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
+  Then the system shows the **one-word relation state** drawn from the 10-word ladder keyed by the relation-meter step (see § Player-facing relation display — for example a score of `22.4` is step 3 → `Distrustful`), renders the 10-step gradient meter with its indicator on that step, and does **not** display the numeric relation score.
+
+- Given a relation score of `22.4`  
+  When the system derives the 10-step relation meter step via `relationScoreToMeterStep`  
+  Then the system returns step `3` (the band `[20, 30)` per the 10-step relation meter table).
+
+- Given a relation score of exactly `10`  
+  When the system derives the 10-step relation meter step  
+  Then the system returns step `2`, because each band is half-open `[low, high)` and the boundary value maps to the higher step (a score of `9.9` returns step `1`).
+
+- Given a relation score of exactly `100`  
+  When the system derives the 10-step relation meter step  
+  Then the system returns step `10`, because the final band `[90, 100]` is fully closed and includes the maximum score (a score of `90` also returns step `10`, and a score of `0` returns step `1`).
+
+- Given a relation score outside the valid range (for example `-5` or `105`)  
+  When the system derives the 10-step relation meter step  
+  Then the system clamps the score to `[0, 100]` first and returns step `1` for values below `0` and step `10` for values above `100`.
 
 - Given the user views the diplomacy panel and the list includes at least one other Great Power  
   When the panel displays each Great Power row  
@@ -294,7 +489,8 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 | Embassy cost | £1000 | |
 | Join Empire base cost | £5000 | One-time cost when enacting Join Empire. |
 | Join Empire per-province cost | £2000 | Added for each province owned by the target Minor/Tribe. Total cost = base + (province count × per-province). |
-| Call to arms refusal score penalty | 20 | Subtracted from ally–defender relation score; alliance ends (no longer Allied). |
+| Alliance break penalty (broken-with ally) | 50 | Subtracted from the breaker's relation with the broken-with ally on any alliance break (voluntary `Break Alliance` or call-to-arms refusal); alliance flag cleared. |
+| Alliance break penalty (every other GP) | 10 | Subtracted from the breaker's relation with every other Great Power it has a relation with on any alliance break (excludes the broken-with ally; for refusal also excludes the aggressor). |
 | Call to arms AI join threshold | 50 | AI ally joins the war if relation score with the defended ally is ≥ this value. |
 | Full AI war declaration cooldown (per GP-target pair) | 4 turns | Applies to AI-initiated `Declare War` re-attempts. |
 | Full AI improve-relations cooldown (per GP-target pair) | 2 turns | Applies to AI overture-driven relation improvement retries. |
@@ -303,16 +499,26 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI. Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
 
-The diplomacy panel shows instead a **one-word relation state** derived from the score:
+The diplomacy panel shows instead a **one-word relation state** drawn from the 10-word ladder keyed by the relation-meter step (§ 10-step relation meter). `relationScoreToDisplayLabel(score)` returns `relationMeterStepLabel(relationScoreToMeterStep(score))` — i.e. the word for the step the hidden score falls in (Refs #3753 R13.6). The legacy 4-band table is superseded by this decimal-aware 10-band ladder. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label and meter use these bands.
 
-| Score range | Display label |
-|-------------|---------------|
-| 0–29 | Hostile |
-| 30–49 | Unfriendly |
-| 50–69 | Cordial |
-| 70–100 | Friendly |
+#### 10-step relation meter
 
-The Flutter app uses this mapping for the player-facing label. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+For the diplomacy panel and detail screen, the hidden relation score additionally maps to a **10-step meter** (Refs #3753 R13). The score range `[0, 100]` is divided into **10 equal half-open bands** `[low, high)`; each boundary value maps to the **higher** step, and the final step is fully closed so the maximum score `100` is included:
+
+| Step | Score band | Ladder label |
+|------|------------|--------------|
+| 1 | `[0, 10)` | Hostile |
+| 2 | `[10, 20)` | Antagonistic |
+| 3 | `[20, 30)` | Distrustful |
+| 4 | `[30, 40)` | Unfriendly |
+| 5 | `[40, 50)` | Wary |
+| 6 | `[50, 60)` | Neutral |
+| 7 | `[60, 70)` | Cordial |
+| 8 | `[70, 80)` | Amicable |
+| 9 | `[80, 90)` | Friendly |
+| 10 | `[90, 100]` | Devoted |
+
+The step is derived by `relationScoreToMeterStep(score)` (`colonizethis_diplomacy`), operating on the **raw** score with no intermediate rounding; the score is first clamped to `[0, 100]`, so a value below `0` maps to step 1 and a value above `100` maps to step 10. The numeric step boundaries above are fixed by this rule. The **per-step label ladder** (10 distinct words, ordered hostile → friendly) is returned by `relationMeterStepLabel(step)` and drives `relationScoreToDisplayLabel`. The red→green gradient **colors** for the meter (and the matching word color) are a UI concern documented in [SPEC/ui/components/relation-meter.md](../ui/components/relation-meter.md); the meter and ladder are delivered on the diplomacy panel row and detail screen (Refs #3753 R13).
 
 ### Great Power power score
 

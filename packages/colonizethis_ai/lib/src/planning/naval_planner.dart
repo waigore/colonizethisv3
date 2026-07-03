@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'colonial_naval_scoring.dart';
+import 'planning_helpers.dart' show colonialPressureScaleFromWeight;
 import 'planning_imports.dart';
 import 'observer_goal_phase.dart';
 import '../perception/perception_snapshot.dart';
@@ -72,9 +73,12 @@ NavalRunGate computeNavalRunGate({
   // when treasury / NW / cargo predicates hold) the floor crosses
   // `kNavalRunMinWeight` and engages naval planning under EXPAND
   // recovery without requiring the GP to reach COLONIAL first.
-  final colonialPressureWeight = phasePlan != null
-      ? resolvePhaseNavalColonialPressureWeight(phasePlan: phasePlan)
-      : (hasColonialTargets ? 1.0 : 0.0);
+  final colonialPressureWeight = colonialPressureScaleFromWeight(
+    colonialPressureWeight: phasePlan != null
+        ? resolvePhaseNavalColonialPressureWeight(phasePlan: phasePlan)
+        : null,
+    legacyColonialPressureActive: hasColonialTargets,
+  );
   final colonialPressureBonus = navalColonialPressureWeightBonus(
     colonialPressureWeight: colonialPressureWeight,
   );

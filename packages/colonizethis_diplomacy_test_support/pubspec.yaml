@@ -1,0 +1,23 @@
+name: colonizethis_diplomacy_test_support
+description: Shared diplomacy test fixtures and scenario tables for colonizethis_diplomacy and sibling test suites.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/colonizethisv3/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  colonizethis_data:
+  colonizethis_diplomacy:
+  colonizethis_models:
+  colonizethis_test:
+  colonizethis_world:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: 0.8.1
+  test: 1.30.0

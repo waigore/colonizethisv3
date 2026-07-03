@@ -51,6 +51,12 @@ class GameEventLogger {
       OvertureAdvancedEvent e =>
         'turn=${e.turnNumber} offererGpId=${e.offererGpId} targetFactionId=${e.targetFactionId} '
             'newStage=${e.newStage}',
+      SpyCaughtEvent e =>
+        'turn=${e.turnNumber} unitId=${e.unitId} spyOwnerId=${e.spyOwnerId} '
+            'territoryOwnerId=${e.territoryOwnerId} provinceId=${e.provinceId}',
+      SpyDefectedEvent e =>
+        'turn=${e.turnNumber} unitId=${e.unitId} previousOwnerId=${e.previousOwnerId} '
+            'newOwnerId=${e.newOwnerId} provinceId=${e.provinceId}',
     };
   }
 }

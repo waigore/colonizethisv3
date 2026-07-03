@@ -1,4 +1,4 @@
-// End-of-turn phase: victory check, era dialogue, Spy 5-turn fog decay, Explorer/Spy fog decay,
+// End-of-turn phase: victory check, era dialogue, immediate Explorer/Spy fog decay,
 // coastal sea zone full visibility. SPEC/program/turn-resolution-phase-details.md § End-of-turn.
 // Called from turn_resolver.resolveTurnForGame.
 
@@ -46,13 +46,7 @@ Game runEndOfTurnPhase(
     _emitEraChangeDialogue(game, onDialogue);
   }
 
-  final (visibilityByTile, nextSpyTimers) = applySpyRevealTimerDecay(game);
-  var stateForFog = game.updateWorldState(
-    (ws) => ws.copyWith(
-      playerVisibilityByTile: visibilityByTile,
-      spyRevealTurnsByPlayer: nextSpyTimers,
-    ),
-  );
+  var stateForFog = game;
   var nextVisibility = applyFogDecay(
     stateForFog,
     navalCoastalIntelTopology: topology,
@@ -82,7 +76,6 @@ Game runEndOfTurnPhase(
               .updateTurnState((ts) => ts.copyWith(phase: TurnPhase.orders))
               .copyWith(
                 playerVisibilityByTile: nextVisibility,
-                spyRevealTurnsByPlayer: nextSpyTimers,
               ),
         );
     return _applyAiFirstContact(halted, topology);
@@ -99,7 +92,6 @@ Game runEndOfTurnPhase(
             )
             .copyWith(
               playerVisibilityByTile: nextVisibility,
-              spyRevealTurnsByPlayer: nextSpyTimers,
             ),
       )
       // Per-turn `/set_diplomacy` debug-mutation quota resets on turn advance.

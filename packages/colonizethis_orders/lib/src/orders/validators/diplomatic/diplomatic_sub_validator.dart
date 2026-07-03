@@ -21,6 +21,27 @@ import '../../order_validation_result.dart';
   return null;
 }
 
+/// Returns a rejection when a post-break bilateral cooldown blocks overture-class
+/// orders toward Great Power [targetId]; otherwise `null`.
+({OrderValidationResult result, int treasury})?
+rejectIfAllianceBreakCooldownActive({
+  required DiplomaticSubValidatorContext ctx,
+  required String targetId,
+  required int treasury,
+}) {
+  if (!isGreatPower(
+    ctx.game,
+    targetId,
+    factionMembership: ctx.factionMembership,
+  )) {
+    return null;
+  }
+  if (!isAllianceBreakCooldownActive(ctx.game, ctx.playerId, targetId)) {
+    return null;
+  }
+  return rejectDiplomaticSub(kAllianceBreakCooldownRejectionReason, treasury);
+}
+
 /// Returns a rejection when [relation] is at war; otherwise `null`.
 ({OrderValidationResult result, int treasury})? rejectDiplomaticSubIfAtWar({
   required DiplomacyRelation? relation,
@@ -117,6 +138,12 @@ import '../../order_validation_result.dart';
   if (amountRejection != null) return amountRejection;
 
   final overture = getOverture(ctx.game, ctx.playerId, order.targetFactionId);
+  final cooldownRejection = rejectIfAllianceBreakCooldownActive(
+    ctx: ctx,
+    targetId: order.targetFactionId,
+    treasury: treasury,
+  );
+  if (cooldownRejection != null) return cooldownRejection;
   if (!overtureGate(overture)) {
     return rejectDiplomaticSub(overtureRejectionReason, treasury);
   }

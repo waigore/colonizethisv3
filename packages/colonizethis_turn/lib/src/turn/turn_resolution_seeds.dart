@@ -3,6 +3,8 @@
 /// resolution stay aligned (e.g. overseas interception, combat dialogue).
 library;
 
+import 'dart:math';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Golden-ratio–derived 32-bit mix constant; common in hash / PRNG mixing.
@@ -29,3 +31,26 @@ int mixTurnSeed(Game game, int turn) =>
 int advanceTurnSeed(int seed) =>
     (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
     kTurnResolutionLcgMask;
+
+/// Turn-linear mix constant unique to the spy-resolution sub-phase.
+///
+/// Spy uses additive mixing (not XOR [mixTurnSeed]) so existing spy outcomes
+/// stay bit-identical for fixed `(globalGameSeed, turn)` pairs.
+const int kSpyPhaseSeedTurnMultiplier = 7919;
+
+/// Sub-seed for spy-resolution RNG on [turn].
+///
+/// Returns `null` when [Game.globalGameSeed] is unset (caller uses unseeded RNG).
+int? mixSpyPhaseSeed(Game game, int turn) {
+  final root = game.globalGameSeed;
+  if (root == null) return null;
+  return root + turn * kSpyPhaseSeedTurnMultiplier;
+}
+
+/// Deterministic [Random] for spy-resolution when [Game.globalGameSeed] is set.
+Random spyPhaseRandom(Game game, {Random? override}) {
+  if (override != null) return override;
+  final seed = mixSpyPhaseSeed(game, game.worldState.turnState.turnNumber);
+  if (seed == null) return Random();
+  return Random(seed);
+}

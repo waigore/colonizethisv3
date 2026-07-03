@@ -3,11 +3,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+
 void main() {
   group('build_cost', () {
     test('canAffordBuild returns false for unknown unit type', () {
-      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-      const workers = WorkerPool(peasants: 10);
+      final player = corePlayer();
+      final workers = coreWorkerPool(peasants: 10);
       const stockpile = Stockpile();
       const order = BuildUnitOrder(
         unitType: 'unknown_unit_xyz',
@@ -22,8 +24,8 @@ void main() {
     test(
       'applyBuildCostDeduction returns unchanged state for unknown unit type',
       () {
-        const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-        const workers = WorkerPool(peasants: 5);
+        final player = corePlayer();
+        final workers = coreWorkerPool(peasants: 5);
         const stockpile = Stockpile();
         const order = BuildUnitOrder(
           unitType: 'unknown_unit_xyz',
@@ -43,8 +45,8 @@ void main() {
     );
 
     test('civilian Builder: apply matches catalog after canAfford true', () {
-      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-      const workers = WorkerPool(peasants: 10);
+      final player = corePlayer();
+      final workers = coreWorkerPool(peasants: 10);
       final econ = CivilianEconomyCatalog.byId[kUnitTypeBuilder]!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
@@ -81,8 +83,8 @@ void main() {
     test(
       'military peasant_levies: apply matches catalog after canAfford true',
       () {
-        const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-        const workers = WorkerPool(peasants: 3);
+        final player = corePlayer();
+        final workers = coreWorkerPool(peasants: 3);
         final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
         var stockpile = const Stockpile();
         for (final e in econ.buildInputs.entries) {
@@ -118,8 +120,8 @@ void main() {
     );
 
     test('naval carrack: apply matches catalog after canAfford true', () {
-      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-      const workers = WorkerPool(peasants: 10);
+      final player = corePlayer();
+      final workers = coreWorkerPool(peasants: 10);
       final econ = ShipEconomyCatalog.byId['carrack']!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
@@ -154,8 +156,8 @@ void main() {
     });
 
     test('naval carrack: canAfford false when peasants are zero', () {
-      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-      const workers = WorkerPool(peasants: 0);
+      final player = corePlayer();
+      final workers = coreWorkerPool(peasants: 0);
       final econ = ShipEconomyCatalog.byId['carrack']!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
@@ -178,13 +180,8 @@ void main() {
     });
 
     test('naval fluyte: canAfford false when unlocking tech missing', () {
-      const player = Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        techUnlocked: {},
-      );
-      const workers = WorkerPool(peasants: 10);
+      final player = corePlayer(techUnlocked: const {});
+      final workers = coreWorkerPool(peasants: 10);
       final econ = ShipEconomyCatalog.byId['fluyte']!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
@@ -207,13 +204,8 @@ void main() {
     });
 
     test('military lancers: canAfford false when unlocking tech missing', () {
-      const player = Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        techUnlocked: {},
-      );
-      const workers = WorkerPool(peasants: 5);
+      final player = corePlayer(techUnlocked: const {});
+      final workers = coreWorkerPool(peasants: 5);
       final econ = RegimentEconomyCatalog.byId['lancers']!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
@@ -236,8 +228,8 @@ void main() {
     });
 
     test('military peasant_levies: canAfford false when peasants are zero', () {
-      const player = Player(id: 'p1', displayName: 'P', isHuman: true);
-      const workers = WorkerPool(peasants: 0);
+      final player = corePlayer();
+      final workers = coreWorkerPool(peasants: 0);
       final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {

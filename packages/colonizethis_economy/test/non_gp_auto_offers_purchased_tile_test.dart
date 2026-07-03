@@ -18,8 +18,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/src/world/connectivity_resolver.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group(
@@ -40,7 +42,7 @@ void main() {
         final result = computeNonGreatPowerAutoOffers(
           game: game,
           tileMapByRegion: {
-            'oldWorld': _singleResourceTileMap(Resource.timber),
+            'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
           },
           connectivityByFactionId: const {
             'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
@@ -116,7 +118,7 @@ void main() {
         final autoOffers = computeNonGreatPowerAutoOffers(
           game: game,
           tileMapByRegion: {
-            'oldWorld': _singleResourceTileMap(Resource.timber),
+            'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
           },
           connectivityByFactionId: const {
             'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
@@ -146,7 +148,7 @@ void main() {
 
         final result = computeNonGreatPowerAutoOffers(
           game: game,
-          tileMapByRegion: {'oldWorld': _singleResourceTileMap(Resource.gold)},
+          tileMapByRegion: {'oldWorld': singleResourceTileMap(Resource.gold, province: 'm1')},
           connectivityByFactionId: const {
             'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
           },
@@ -176,7 +178,7 @@ void main() {
         final result = computeNonGreatPowerAutoOffers(
           game: game,
           tileMapByRegion: {
-            'oldWorld': _singleResourceTileMap(Resource.spices),
+            'oldWorld': singleResourceTileMap(Resource.spices, province: 'm1'),
           },
           connectivityByFactionId: const {
             'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
@@ -297,18 +299,6 @@ Game _gameWithTwoMinorTimberTiles({
     ),
   );
 }
-
-/// 1x1 tile map for province `m1` carrying [resource].
-TileMapResult _singleResourceTileMap(Resource resource) => TileMapResult(
-  width: 1,
-  height: 1,
-  grid: [
-    ['m1'],
-  ],
-  resourceGrid: [
-    [resource],
-  ],
-);
 
 /// 2x1 tile map for province `m1` where both tiles carry [resource].
 TileMapResult _twoTileSameResourceMap(Resource resource) => TileMapResult(

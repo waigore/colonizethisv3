@@ -3,8 +3,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'ai_commodity_ids.dart';
 import 'growth_stage.dart'
     show GrowthStage, categoryPriorityForOutput, kStagePriorityBias;
+import 'scored_candidate.dart';
 
 /// Shortage target below which we consider a commodity "needed".
 const int kShortageThreshold = 8;
@@ -20,13 +22,7 @@ const double kAgendaWeight = 0.5;
 
 const int kVeryLargeRuns = 999999;
 
-/// A production recipe with its computed ranking score.
-class ScoredRecipe {
-  const ScoredRecipe({required this.recipe, required this.score});
-
-  final ProductionRecipe recipe;
-  final double score;
-}
+typedef ScoredRecipe = ScoredCandidate<ProductionRecipe>;
 
 /// Max full runs of [recipe] allowed by [stockpile] inputs and [remainingLabour].
 int feasibleRuns({
@@ -101,11 +97,11 @@ double _recipeChainScore(String outputId, WorkerPool workers) {
   if (outputId == CommodityCatalog.furHats.id) {
     return workers.masters > 0 ? 2.0 : 1.0;
   }
-  if (outputId == CommodityCatalog.lumber.id ||
-      outputId == CommodityCatalog.castIron.id) {
+  if (outputId == kAiCommodityIds.lumber ||
+      outputId == kAiCommodityIds.castIron) {
     return 0.8;
   }
-  if (outputId == CommodityCatalog.fabric.id) {
+  if (outputId == kAiCommodityIds.fabric) {
     return 0.5;
   }
   return 0.0;
@@ -114,14 +110,14 @@ double _recipeChainScore(String outputId, WorkerPool workers) {
 /// Agenda: warmonger favours military-related; industrial_trader / merchant favour trade goods.
 double _recipeAgendaScore(String agendaId, String outputId) {
   if (agendaId == 'warmonger' &&
-      (outputId == CommodityCatalog.castIron.id ||
-          outputId == CommodityCatalog.lumber.id)) {
+      (outputId == kAiCommodityIds.castIron ||
+          outputId == kAiCommodityIds.lumber)) {
     return 1.0;
   }
   if (agendaId != 'industrial_trader' && agendaId != 'merchant') {
     return 0.0;
   }
-  if (outputId == CommodityCatalog.fabric.id ||
+  if (outputId == kAiCommodityIds.fabric ||
       outputId == CommodityCatalog.refinedSugar.id ||
       outputId == CommodityCatalog.cigars.id ||
       outputId == CommodityCatalog.furHats.id) {
