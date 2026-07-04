@@ -58,7 +58,7 @@ import 'dart:io';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import '../integration_test/e2e_helpers.dart';
+import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 const String _integrationTestRelativePath =
     'integration_test/new_game_fleet_reaches_new_world_e2e_test.dart';

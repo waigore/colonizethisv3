@@ -1,16 +1,20 @@
+// Enforces one-way import graph among flame map submodules (Refs #3878 Phase 3).
+// SPEC: SPEC/program/repo-and-packages.md
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _flameRootRelative = 'app/lib/features/game/flame';
+const _flameRoot = 'app/lib/features/game/flame';
+const _mapAreaDir = '$_flameRoot/map_area';
+const _regionMapDir = '$_flameRoot/region_map';
+const _mapStateDir = '$_flameRoot/map_state';
+const _mapStateNeedle = '/map_state/';
+const _mapAreaNeedle = '/map_area/';
+const _allowedMapAreaImportSuffixes = <String>[
+  'map_area/map_area.dart',
+  'map_area/game_map_area.dart',
+];
 
-/// Enforces one-way import graph among Flame map submodules (Refs #3878 Phase 3):
-/// - `flame/map_area/` must not import `flame/map_state/`
-/// - `flame/region_map/` must not import `flame/map_state/`
-/// - `flame/map_state/` may import `flame/map_area/` only via the public barrel
-///   (`map_area/map_area.dart`).
-///
-/// SPEC: SPEC/program/repo-and-packages.md § App shell submodule layout
 int runCheckAppFlameMapImportBoundary(
   String repoRoot, {
   void Function(String line)? info,
@@ -18,49 +22,37 @@ int runCheckAppFlameMapImportBoundary(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final flameRoot = Directory(p.join(repoRoot, _flameRootRelative));
-  if (!flameRoot.existsSync()) {
-    logE('check_app_flame_map_import_boundary: missing $_flameRootRelative');
-    return 1;
-  }
-
   final violations = <String>[];
 
-  void scanDir(String relativeSubdir, bool Function(String importLine) isViolation) {
-    final dir = Directory(p.join(flameRoot.path, relativeSubdir));
-    if (!dir.existsSync()) return;
-    for (final entity in dir.listSync(recursive: true)) {
-      if (entity is! File || !entity.path.endsWith('.dart')) continue;
-      final relPath = p.relative(entity.path, from: repoRoot);
-      final lines = entity.readAsLinesSync();
-      for (var i = 0; i < lines.length; i++) {
-        final trimmed = lines[i].trim();
-        if (trimmed.startsWith('//') || !trimmed.startsWith('import ')) {
-          continue;
-        }
-        if (isViolation(trimmed)) {
-          violations.add('$relPath:${i + 1}: disallowed import in $relativeSubdir');
-        }
-      }
+  for (final relativeDir in [_mapAreaDir, _regionMapDir]) {
+    final dir = Directory(p.join(repoRoot, relativeDir));
+    if (!dir.existsSync()) {
+      violations.add('$relativeDir: expected flame map submodule directory');
+      continue;
+    }
+    for (final file in _dartFilesUnder(dir)) {
+      final relFile = p.relative(file.path, from: repoRoot);
+      _scanForForbiddenImport(
+        file: file,
+        relFile: relFile,
+        forbiddenNeedle: _mapStateNeedle,
+        reason: 'must not import flame/map_state',
+        violations: violations,
+      );
     }
   }
 
-  bool importsMapState(String line) =>
-      line.contains('/map_state/') ||
-      line.contains("import 'map_state/") ||
-      line.contains('features/game/flame/map_state/');
-
-  bool importsMapAreaNonPublic(String line) {
-    if (!line.contains('/map_area/') && !line.contains("import 'map_area/")) {
-      return false;
+  final mapStateDir = Directory(p.join(repoRoot, _mapStateDir));
+  if (mapStateDir.existsSync()) {
+    for (final file in _dartFilesUnder(mapStateDir)) {
+      final relFile = p.relative(file.path, from: repoRoot);
+      _scanMapStateMapAreaImports(
+        file: file,
+        relFile: relFile,
+        violations: violations,
+      );
     }
-    return !line.contains('/map_area/map_area.dart') &&
-        !line.contains("import 'map_area/map_area.dart'");
   }
-
-  scanDir('map_area', importsMapState);
-  scanDir('region_map', importsMapState);
-  scanDir('map_state', importsMapAreaNonPublic);
 
   if (violations.isEmpty) {
     logI('check_app_flame_map_import_boundary: no violations found.');
@@ -76,6 +68,58 @@ int runCheckAppFlameMapImportBoundary(
   return 1;
 }
 
-void main() {
-  exit(runCheckAppFlameMapImportBoundary(Directory.current.path));
+Iterable<File> _dartFilesUnder(Directory dir) sync* {
+  for (final entity in dir.listSync(recursive: true)) {
+    if (entity is File && entity.path.endsWith('.dart')) {
+      yield entity;
+    }
+  }
+}
+
+void _scanForForbiddenImport({
+  required File file,
+  required String relFile,
+  required String forbiddenNeedle,
+  required String reason,
+  required List<String> violations,
+}) {
+  final lines = file.readAsLinesSync();
+  for (var i = 0; i < lines.length; i++) {
+    final trimmed = lines[i].trim();
+    if (trimmed.startsWith('//')) continue;
+    if (!trimmed.startsWith('import ') && !trimmed.startsWith('export ')) {
+      continue;
+    }
+    if (!trimmed.contains(forbiddenNeedle)) continue;
+    violations.add('$relFile:${i + 1}: $reason');
+  }
+}
+
+void _scanMapStateMapAreaImports({
+  required File file,
+  required String relFile,
+  required List<String> violations,
+}) {
+  final lines = file.readAsLinesSync();
+  for (var i = 0; i < lines.length; i++) {
+    final trimmed = lines[i].trim();
+    if (trimmed.startsWith('//')) continue;
+    if (!trimmed.startsWith('import ') && !trimmed.startsWith('export ')) {
+      continue;
+    }
+    if (!trimmed.contains(_mapAreaNeedle)) continue;
+    final allowed = _allowedMapAreaImportSuffixes.any(trimmed.contains);
+    if (!allowed) {
+      violations.add(
+        '$relFile:${i + 1}: map_state may import map_area public exports only',
+      );
+    }
+  }
+}
+
+void main(List<String> args) {
+  final repoRoot = args.isNotEmpty
+      ? p.normalize(args.first)
+      : p.normalize(Directory.current.path);
+  exit(runCheckAppFlameMapImportBoundary(repoRoot));
 }

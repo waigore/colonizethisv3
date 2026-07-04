@@ -15,7 +15,7 @@
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey;
 import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

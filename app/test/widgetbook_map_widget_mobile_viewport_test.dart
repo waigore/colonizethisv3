@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'support/widgetbook_test_harness.dart';
 
 

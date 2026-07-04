@@ -32,7 +32,7 @@ const _excludedPaths = <String>{
   _workTargetConstantsOwnershipTestRelPath,
   'app/lib/l10n/app_localizations_en.dart',
   'app/lib/widgetbook.dart',
-  'app/lib/widgetbook/catalog.dart',
+  'widgetbook_host/lib/catalogs/catalog.dart',
   'packages/colonizethis_data/lib/src/work_order_costs.dart',
 };
 
