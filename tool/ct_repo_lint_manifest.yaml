@@ -973,6 +973,13 @@ rules:
     runner: dart
     script: tool/check_orders_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.orders_test_dedup_gp_minor_game
+    group: architecture
+    title: colonizethis_orders tests must not redefine GP–Minor game builders outside diplomatic_orders_test_fixtures.dart (Refs #3877)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_dedup_gp_minor_game.dart
+
   - rule_id: repo.world_test_no_duplicate_fixtures
     group: architecture
     title: colonizethis_world tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3843)
