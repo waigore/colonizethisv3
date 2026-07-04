@@ -123,6 +123,45 @@ Modules:
 - `colonizethis_combat_test_support/lib/src/quick_battle_siege_pipeline_test_support.dart` (`siegePipelineGame`, `siegePipelineBattleContext`)
 - `quick_battle_input_test_support.dart` — `siegeEmplacedGun`, `emplacedGuns` on `centerFrontQuickBattleInput`
 
-Deferred: perf/build QB suites, land resolver, naval, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+Deferred: perf/build QB suites, land resolver, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
 
 Combat test LOC: 5,677 → 5,336 physical lines (−341 in test files across slice 5).
+
+## Slice 6 — Naval combat scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| ncr-empty-fleets | returns empty when no fleets | `naval_combat_resolver_test.dart` | — |
+| ncr-peace-same-zone | returns empty when two factions in same zone but at peace | `naval_combat_resolver_test.dart` | — |
+| ncr-at-war-battle | returns one BattleContextSea when two at-war factions in same zone | `naval_combat_resolver_test.dart` | — |
+| nbs-mover-attacker | only mover is attacker when the other is not Patrol or Blockade | `naval_combat_resolver_test.dart` | — |
+| nbs-interceptor-attacker | interceptor is attacker when the other faction moved | `naval_combat_resolver_test.dart` | — |
+| nbs-lex-neither-moved | neither moved: lexicographically smaller ownerId is attacker | `naval_combat_resolver_test.dart` | — |
+| nbs-lex-both-moved | both moved: lexicographically smaller ownerId is attacker | `naval_combat_resolver_test.dart` | — |
+| ns-empty | returns 0 for empty list | `naval_combat_resolver_test.dart` | — |
+| ns-weighted-formula | uses configured weighted formula including durability | `naval_combat_resolver_test.dart` | — |
+| rsb-strength-ratio | returns surviving ships with casualties by strength ratio | `naval_combat_resolver_resolution_test.dart` | — |
+| rsb-zero-strength | returns all ships when total strength is zero | `naval_combat_resolver_resolution_test.dart` | — |
+| rsb-feeding-morale | feeding coverage multiplies raw naval strength like land combat morale | `naval_combat_resolver_resolution_test.dart` | — |
+| rsb-no-retreat | does not retreat when retreat is disallowed by topology/relation gate | `naval_combat_resolver_resolution_test.dart` | — |
+| anbr-replace-fleets | replaces fleets in zone with surviving sides | `naval_combat_resolver_resolution_test.dart` | — |
+| anbr-preserve-mission | preserves mission on recreated surviving fleets | `naval_combat_resolver_resolution_test.dart` | — |
+| nip-patrol | Patrol uses mission-factor * ratio | `naval_combat_resolver_resolution_test.dart` | — |
+| nip-blockade | Blockade uses mission-factor * ratio | `naval_combat_resolver_resolution_test.dart` | — |
+| nip-clamped | result is clamped 0.05-0.85 | `naval_combat_resolver_resolution_test.dart` | — |
+| npp-baseline | no privateering uses the baseline (unscaled) interceptor score | `naval_combat_resolver_privateering_test.dart` | #3470 |
+| npp-scaled | privateering scales interceptor score by 1.25 before clamp | `naval_combat_resolver_privateering_test.dart` | #3470 |
+| npp-higher-than-baseline | privateering yields strictly higher probability than baseline | `naval_combat_resolver_privateering_test.dart` | #3470 |
+| npp-clamped | privateering result remains within [0.05, 0.85] clamp | `naval_combat_resolver_privateering_test.dart` | #3470 |
+| fbi-at-least-as-often | interceptor with privateering intercepts at least as often | `naval_combat_resolver_privateering_test.dart` | #3470 |
+| fbi-deterministic | interception counts are deterministic for fixed seeds | `naval_combat_resolver_privateering_test.dart` | #3470 |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/naval_combat_test_support.dart` (`navalTwoPlayerGame`, `navalGameTwoFleetsAtWar`)
+- `colonizethis_combat_test_support/lib/src/naval_combat_resolver_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/naval_combat_resolution_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/naval_combat_privateering_scenarios.dart`
+
+Deferred: perf/build QB suites, land resolver, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+
+Combat test LOC: 5,336 → 4,756 physical lines (−580 in test files across slice 6).
