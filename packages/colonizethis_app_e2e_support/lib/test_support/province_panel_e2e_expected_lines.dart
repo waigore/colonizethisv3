@@ -38,11 +38,70 @@ String _roadRailTransportLevelPrimaryLine(int transportLevel) {
   return 'Road / railroad: transport level $transportLevel';
 }
 
+class _ProvincePanelWideExpectedCtx {
+  _ProvincePanelWideExpectedCtx({
+    required this.game,
+    required this.region,
+    required this.provinceId,
+    required this.humanPlayerId,
+    required this.playerView,
+    required this.draftOrders,
+    required this.selectedTileKey,
+    required this.regionId,
+    required this.province,
+    required this.military,
+    required this.civilian,
+    required this.visibleCivilianCount,
+    required this.fleetsInPort,
+    required this.resourceByTile,
+    required this.tileState,
+    required this.prospected,
+    required this.byResImproved,
+    required this.byResImprovable,
+    required this.resourceKeysSorted,
+  });
+
+  final Game game;
+  final RegionMapViewData region;
+  final String provinceId;
+  final String humanPlayerId;
+  final PlayerView playerView;
+  final Orders draftOrders;
+  final String selectedTileKey;
+  final String regionId;
+  final Province? province;
+  final List<Unit> military;
+  final List<Unit> civilian;
+  final int visibleCivilianCount;
+  final List<Fleet> fleetsInPort;
+  final Map<String, String> resourceByTile;
+  final TileMapState tileState;
+  final Set<String> prospected;
+  final Map<String, List<({String tileKey, String terrain, String impBase})>>
+  byResImproved;
+  final Map<String, List<({String tileKey, String terrain})>> byResImprovable;
+  final List<String> resourceKeysSorted;
+}
+
 /// In-order [Text.data] strings matching depth-first pre-order of the wide-layout panel
 /// (section titles and bodies) for a **land** province.
 List<String> provincePanelWideLayoutExpectedTexts(
   CtE2eLastPanelSnapshot snap,
   AppLocalizations l10n,
+) {
+  final ctx = _buildProvincePanelWideExpectedCtx(snap);
+  final out = <String>['Province', '×'];
+  _appendProvincePanelPoliticalSection(out, ctx, l10n);
+  _appendProvincePanelTileSection(out, ctx, l10n);
+  _appendProvincePanelEconomicSection(out, ctx, l10n);
+  _appendProvincePanelMilitarySection(out, ctx, l10n);
+  _appendProvincePanelCivilianSection(out, ctx, l10n);
+  _appendProvincePanelNavalSection(out, ctx, l10n);
+  return out;
+}
+
+_ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
+  CtE2eLastPanelSnapshot snap,
 ) {
   final game = snap.game;
   final region = snap.region;
@@ -140,61 +199,94 @@ List<String> provincePanelWideLayoutExpectedTexts(
     ...byResImprovable.keys,
   }.toList()..sort();
 
-  final out = <String>['Province', '×'];
+  return _ProvincePanelWideExpectedCtx(
+    game: game,
+    region: region,
+    provinceId: provinceId,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    draftOrders: draftOrders,
+    selectedTileKey: selectedTileKey,
+    regionId: regionId,
+    province: province,
+    military: military,
+    civilian: civilian,
+    visibleCivilianCount: visibleCivilianCount,
+    fleetsInPort: fleetsInPort,
+    resourceByTile: resourceByTile,
+    tileState: tileState,
+    prospected: prospected,
+    byResImproved: byResImproved,
+    byResImprovable: byResImprovable,
+    resourceKeysSorted: resourceKeysSorted,
+  );
+}
 
+void _appendProvincePanelSection(
+  List<String> out,
+  String title,
+  void Function() body,
+) {
   // Section headers render via CtSectionLabel under the dark editorial-
   // monocle theme (Refs #2865 S4), which upper-cases the label per SPEC
   // SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme section
   // labels. The expected text mirror must therefore upper-case the title
   // before adding it to the snapshot output.
-  void addSection(String title, void Function() body) {
-    out.add(title.toUpperCase());
-    body();
-  }
+  out.add(title.toUpperCase());
+  body();
+}
 
-  addSection('Political', () {
-    out.add('Name: ${province?.displayName ?? provinceId}');
-    out.add('Owner: ${_ownerName(game, province?.ownerId)}');
-    // Region and Capital are always-exact political intel rendered alongside
-    // Name / Owner regardless of fog (Refs #2865 Political section; mirrored
-    // here so the e2e snapshot stays in sync with
-    // province_sea_zone_detail_overlay_sections.dart `_buildPoliticalSection`).
-    out.add(l10n.provinceOverlay_region(_regionLabel(l10n, regionId)));
+void _appendProvincePanelPoliticalSection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Political', () {
+    out.add('Name: ${ctx.province?.displayName ?? ctx.provinceId}');
+    out.add('Owner: ${_ownerName(ctx.game, ctx.province?.ownerId)}');
+    out.add(l10n.provinceOverlay_region(_regionLabel(l10n, ctx.regionId)));
     out.add(
-      _isCapitalProvince(game, provinceId)
+      _isCapitalProvince(ctx.game, ctx.provinceId)
           ? l10n.provinceOverlay_capitalYes
           : l10n.provinceOverlay_capitalNo,
     );
     out.add(
       l10n.provinceOverlay_townDevelopment(
-        province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+        ctx.province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
       ),
     );
   });
+}
 
-  addSection('Tile', () {
-    final parsed = tryParseTileKey(selectedTileKey);
-    if (parsed == null || parsed.regionId != region.regionId) {
+void _appendProvincePanelTileSection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Tile', () {
+    final parsed = tryParseTileKey(ctx.selectedTileKey);
+    if (parsed == null || parsed.regionId != ctx.region.regionId) {
       out.add('—');
       return;
     }
     final x = parsed.x;
     final y = parsed.y;
-    if (x < 0 || x >= region.width || y < 0 || y >= region.height) {
+    if (x < 0 || x >= ctx.region.width || y < 0 || y >= ctx.region.height) {
       out.add('—');
       return;
     }
-    final cell = region.cellAt(x, y);
+    final cell = ctx.region.cellAt(x, y);
     if (cell.visibility == TileVisibility.unrevealed) {
       throw StateError(
-        'E2E tile $selectedTileKey should be revealed for capital',
+        'E2E tile ${ctx.selectedTileKey} should be revealed for capital',
       );
     }
-    final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
-    final visLevel = playerView.visibilityForTile(selectedTileKey);
+    final resourceRaw =
+        ctx.resourceByTile[ctx.selectedTileKey] ?? cell.resourceId;
+    final visLevel = ctx.playerView.visibilityForTile(ctx.selectedTileKey);
     final resourceVisible = resourceIdVisibleInPlayerView(
-      playerView,
-      selectedTileKey,
+      ctx.playerView,
+      ctx.selectedTileKey,
       resourceRaw,
     );
     final resourceLabel = resourceVisible ?? '—';
@@ -206,9 +298,11 @@ List<String> provincePanelWideLayoutExpectedTexts(
         : isProspectableTerrainId(cell.terrainTypeId);
     final prospectedLabel = !prospectable
         ? '—'
-        : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
-    final impLevel = tileState.improvementLevel(selectedTileKey);
-    final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
+        : (ctx.prospected.contains(ctx.selectedTileKey) ? 'yes' : 'no');
+    final impLevel = ctx.tileState.improvementLevel(ctx.selectedTileKey);
+    final roadLevel = cell.isSea
+        ? null
+        : ctx.tileState.roadLevel(ctx.selectedTileKey);
     final improvementLine = _improvementLabelForTileDetail(
       impLevel: impLevel,
       visLevel: visLevel,
@@ -220,9 +314,9 @@ List<String> provincePanelWideLayoutExpectedTexts(
     out.add('Terrain: $terrainStr');
     final designationLine = _tileDesignationLine(
       l10n: l10n,
-      game: game,
-      provinceId: provinceId,
-      selectedTileKey: selectedTileKey,
+      game: ctx.game,
+      provinceId: ctx.provinceId,
+      selectedTileKey: ctx.selectedTileKey,
     );
     if (designationLine != null) {
       out.add(designationLine);
@@ -240,13 +334,19 @@ List<String> provincePanelWideLayoutExpectedTexts(
         out.add(_kRoadRailPrimitiveVersusRailGloss);
       }
     }
-    out.add('Civilian units (province): $visibleCivilianCount');
+    out.add('Civilian units (province): ${ctx.visibleCivilianCount}');
   });
+}
 
-  addSection('Economic', () {
+void _appendProvincePanelEconomicSection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Economic', () {
     var wroteAny = false;
-    for (final resId in resourceKeysSorted) {
-      final improved = byResImproved[resId] ?? const [];
+    for (final resId in ctx.resourceKeysSorted) {
+      final improved = ctx.byResImproved[resId] ?? const [];
       for (final row in improved) {
         out.add(resId);
         out.add(
@@ -254,7 +354,7 @@ List<String> provincePanelWideLayoutExpectedTexts(
         );
         wroteAny = true;
       }
-      final improvable = byResImprovable[resId] ?? const [];
+      final improvable = ctx.byResImprovable[resId] ?? const [];
       for (final row in improvable) {
         out.add(resId);
         out.add(
@@ -267,34 +367,40 @@ List<String> provincePanelWideLayoutExpectedTexts(
       out.add('—');
     }
   });
+}
 
-  addSection('Military', () {
+void _appendProvincePanelMilitarySection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Military', () {
     final pending = provincePanelPendingMilitaryLines(
-      game: game,
-      orders: draftOrders,
-      provinceId: provinceId,
-      humanPlayerId: humanPlayerId,
+      game: ctx.game,
+      orders: ctx.draftOrders,
+      provinceId: ctx.provinceId,
+      humanPlayerId: ctx.humanPlayerId,
       l10n: l10n,
     );
-    if (military.isEmpty && pending.isEmpty) {
+    if (ctx.military.isEmpty && pending.isEmpty) {
       out.add('—');
       return;
     }
-    if (military.isEmpty) {
+    if (ctx.military.isEmpty) {
       for (final line in pending) {
         out.add(line);
       }
       return;
     }
     final byOwner = <String, List<Unit>>{};
-    for (final u in military) {
+    for (final u in ctx.military) {
       byOwner.putIfAbsent(u.ownerId, () => []).add(u);
     }
     final ownerIds = byOwner.keys.toList()
       ..sort((a, b) {
-        if (a == humanPlayerId) return -1;
-        if (b == humanPlayerId) return 1;
-        return _ownerName(game, a).compareTo(_ownerName(game, b));
+        if (a == ctx.humanPlayerId) return -1;
+        if (b == ctx.humanPlayerId) return 1;
+        return _ownerName(ctx.game, a).compareTo(_ownerName(ctx.game, b));
       });
     for (final oid in ownerIds) {
       final list = byOwner[oid]!;
@@ -302,7 +408,7 @@ List<String> provincePanelWideLayoutExpectedTexts(
       for (final u in list) {
         byType[u.type] = (byType[u.type] ?? 0) + 1;
       }
-      final name = _ownerName(game, oid);
+      final name = _ownerName(ctx.game, oid);
       out.add(name);
       for (final e in byType.entries) {
         final label = regimentTypeDisplayLabel(l10n, e.key);
@@ -313,14 +419,20 @@ List<String> provincePanelWideLayoutExpectedTexts(
       out.add(line);
     }
   });
+}
 
-  addSection('Civilian', () {
-    final visible = civilian
+void _appendProvincePanelCivilianSection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Civilian', () {
+    final visible = ctx.civilian
         .where(
           (u) => foreignCivilianVisibleToPlayer(
             unit: u,
-            viewerPlayerId: humanPlayerId,
-            view: playerView,
+            viewerPlayerId: ctx.humanPlayerId,
+            view: ctx.playerView,
           ),
         )
         .toList();
@@ -329,9 +441,9 @@ List<String> provincePanelWideLayoutExpectedTexts(
       return;
     }
     final workList =
-        draftOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
+        ctx.draftOrders.workOrdersByPlayerId[ctx.humanPlayerId] ?? const [];
     for (final u in visible) {
-      if (u.ownerId == humanPlayerId) {
+      if (u.ownerId == ctx.humanPlayerId) {
         WorkOrder? pending;
         for (final o in workList) {
           if (o.unitId == u.id) {
@@ -348,29 +460,35 @@ List<String> provincePanelWideLayoutExpectedTexts(
           );
         }
       } else {
-        final o = _ownerName(game, u.ownerId);
+        final o = _ownerName(ctx.game, u.ownerId);
         out.add(
           '$o — ${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}',
         );
       }
     }
   });
+}
 
-  addSection('Naval', () {
+void _appendProvincePanelNavalSection(
+  List<String> out,
+  _ProvincePanelWideExpectedCtx ctx,
+  AppLocalizations l10n,
+) {
+  _appendProvincePanelSection(out, 'Naval', () {
     final pending = provincePanelPendingNavalLines(
-      game: game,
-      orders: draftOrders,
-      provinceId: provinceId,
-      humanPlayerId: humanPlayerId,
+      game: ctx.game,
+      orders: ctx.draftOrders,
+      provinceId: ctx.provinceId,
+      humanPlayerId: ctx.humanPlayerId,
       l10n: l10n,
     );
-    if (fleetsInPort.isEmpty && pending.isEmpty) {
+    if (ctx.fleetsInPort.isEmpty && pending.isEmpty) {
       out.add('—');
       return;
     }
-    if (fleetsInPort.isNotEmpty) {
-      for (final f in fleetsInPort) {
-        final ownerName = _ownerName(game, f.ownerId);
+    if (ctx.fleetsInPort.isNotEmpty) {
+      for (final f in ctx.fleetsInPort) {
+        final ownerName = _ownerName(ctx.game, f.ownerId);
         final byType = <String, int>{};
         for (final s in f.ships) {
           byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
@@ -393,8 +511,6 @@ List<String> provincePanelWideLayoutExpectedTexts(
       out.add(line);
     }
   });
-
-  return out;
 }
 
 Province? _findProvince(Game game, String provinceId) {
