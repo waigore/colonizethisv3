@@ -163,6 +163,7 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Option rows (when at least one choosable tech exists):** Vertical column where each option is a tappable row containing:
   - Tech category icon at 22 px (resolved via `techCategoryIconAssetPath`, omitted when null).
   - Tech display name in body font / `--fg` / 600 weight (per mockup `.t-name`).
+  - **GP pennants (Refs #3862):** Inline immediately after the tech display name, compact nation-color pennants for each GP that has fully unlocked the tech (see [gp-nation-color-pennant.md](components/gp-nation-color-pennant.md)); context player highlighted; long-press opens researcher list.
   - Subtitle line in mono font / `--muted` carrying era, category, and cost in research points (existing `technologyPanel_pickSubtitle` content; rendered in mono / muted style per mockup `.t-cost`).
   - Tapping the row assigns that tech via `applyAssignTechToSlot` and closes the dialog.
 - **Empty state (no choosable techs):** Single italic muted line `"No techs available to research"` (existing `technologyPanel_noTechsAvailable`) replaces the option list. The Close button (below) is still rendered.

@@ -875,7 +875,7 @@ cannot extract `castIron`'s feedstock domestically either, because extracting an
 resource tile itself costs the `lumber` + `castIron` it is missing (the same
 deadlock). The non-deadlocking escape is to buy the **production feedstock** of
 `castIron` (`timber` + `iron`, raw materials suppliers do release) and produce
-`castIron` from it via `castIron_from_timber_iron_coal`
+`castIron` from it via `castIron_from_iron`
 (`ProductionRecipesCatalog`).
 
 `kDomesticProductionImprovementInputIds` (`treasury_planner.dart`) lists the
@@ -917,7 +917,7 @@ preserved by construction.
   feedstock commodity (`timber` or `iron`) and emits **no** `TradeOrderType.bid`
   for `castIron` itself (the market structurally lacks `castIron` supply).
 - Given an otherwise identical lock-recovery seller that already holds the
-  `timber` + `iron` needed for one `castIron_from_timber_iron_coal` run, when
+  `timber` + `iron` needed for one `castIron_from_iron` run, when
   `runTreasuryPlanner` runs, then it emits **no** `castIron` feedstock bid and
   **no** direct `castIron` bid that turn (production is pending), while any other
   missing improvement-input (`lumber`) is still bid directly.

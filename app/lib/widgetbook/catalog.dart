@@ -54,6 +54,7 @@ import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/widgets/technology_panel.dart';
+import '../features/game/widgets/technology_panel_orders.dart';
 import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/screens/trade_screen.dart';

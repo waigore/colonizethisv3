@@ -53,17 +53,42 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 20),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 20,
           ),
         ],
       );
 
-      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 4);
-      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 2);
-      // Cast iron no longer consumes coal; coal remains unchanged.
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 5);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10);
+      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 0);
       expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5);
+    },
+  ),
+  EconomyProductionScenario(
+    label: 'iron-only castIron recipe ignores timber (Refs #3858)',
+    refs: '#3858',
+    run: () {
+      final stockpile = stockpileWithDeltas({
+        CommodityCatalog.iron.id: 4,
+      });
+      const workers = WorkerPool(peasants: 10);
+
+      final result = resolveProduction(
+        stockpile: stockpile,
+        workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 10),
+        assignments: const [
+          AssignedRecipe(
+            recipeId: 'castIron_from_iron',
+            assignedLabour: 10,
+          ),
+        ],
+      );
+
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 2);
+      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 0);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 0);
     },
   ),
   EconomyProductionScenario(
@@ -71,9 +96,8 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
     run: () {
       final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.timber.id, 4)
-          .applyDelta(CommodityCatalog.iron.id, 20)
+          .applyDelta(CommodityCatalog.iron.id, 4)
           .applyDelta(CommodityCatalog.coal.id, 20);
-      // 20 peasants → 20 labour; inputs (timber) are the limiting factor.
       const workers = WorkerPool(peasants: 20);
 
       final result = resolveProduction(
@@ -82,15 +106,15 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 20),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 100,
           ),
         ],
       );
 
-      // 2 timber per run => max 2 runs by timber
       expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 0);
+      expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 0);
+      expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 4);
     },
   ),
   EconomyProductionScenario(
@@ -108,14 +132,13 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 10),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 7,
           ),
         ],
       );
 
-      // labourPerOutput = 5; 7 ~/ 5 = 1 run
-      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 1);
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 3);
     },
   ),
   EconomyProductionScenario(
@@ -133,7 +156,7 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 3, apprentices: 2),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 20,
           ),
         ],
@@ -150,7 +173,6 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
           .applyDelta(CommodityCatalog.timber.id, 20)
           .applyDelta(CommodityCatalog.iron.id, 20)
           .applyDelta(CommodityCatalog.coal.id, 10);
-      // 25 peasants → 25 labour; first assignment uses 15, second can use remaining 10.
       const workers = WorkerPool(peasants: 25);
 
       final result = resolveProduction(
@@ -159,14 +181,14 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 25),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 15,
           ),
           AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
         ],
       );
 
-      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 3);
+      expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 7);
       expect(result.stockpile.quantityOf(CommodityCatalog.lumber.id), 5);
     },
   ),
@@ -207,7 +229,7 @@ List<EconomyProductionScenario> _resolveProductionEdgeScenarios() => [
         idleLabour: WorkerIdleCounts(peasants: 5),
         assignments: const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
+            recipeId: 'castIron_from_iron',
             assignedLabour: 0,
           ),
         ],

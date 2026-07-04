@@ -111,11 +111,11 @@ void main() {
         // a fresh game.
         expect(rules.defaultMarketPriceForCommodityId('lumber'), 60);
         expect(rules.defaultMarketPriceForCommodityId('fabric'), 80);
-        expect(rules.defaultMarketPriceForCommodityId('castIron'), 220);
+        expect(rules.defaultMarketPriceForCommodityId('castIron'), 160);
         expect(rules.defaultMarketPriceForCommodityId('refinedSugar'), 70);
         expect(rules.defaultMarketPriceForCommodityId('cigars'), 120);
         expect(rules.defaultMarketPriceForCommodityId('furHats'), 110);
-        expect(rules.defaultMarketPriceForCommodityId('steel'), 530);
+        expect(rules.defaultMarketPriceForCommodityId('steel'), 410);
         expect(rules.defaultMarketPriceForCommodityId('paper'), 90);
         expect(rules.defaultMarketPriceForCommodityId('bronze'), 145);
       });
@@ -161,7 +161,7 @@ void main() {
         );
         expect(
           rules.defaultMarketPriceForCommodityId('castIron'),
-          timberPrice * 2 + ironPrice! * 2,
+          ironPrice! * 2,
         );
         expect(
           rules.defaultMarketPriceForCommodityId('refinedSugar'),

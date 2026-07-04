@@ -18,7 +18,6 @@ void main() {
         return twoPlayerSupplierFeedstockGame(
           sellerOw: sellerOw,
           resourceByTileKey: const {
-            supplierTimberTile: 'timber',
             supplierGrainTile: 'grain',
             supplierIronTile: 'iron',
             sellerWoolTile: 'wool',

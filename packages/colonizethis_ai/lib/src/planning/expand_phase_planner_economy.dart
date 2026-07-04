@@ -71,7 +71,7 @@ class ExpandEconomyPlan {
 
   /// True when the orchestrator should emit at least one peasant
   /// [RecruitWorkerOrder] before the build pass so a lock-recovery seller
-  /// can grow raw labour toward a `castIron_from_timber_iron_coal` run
+  /// can grow raw labour toward a `castIron_from_iron` run
   /// (Refs #2847 § castIron labour population-bound fork).
   ///
   /// Set when [forceCheapestRegimentBuild] would also be true and

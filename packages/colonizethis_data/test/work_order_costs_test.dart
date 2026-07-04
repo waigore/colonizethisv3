@@ -101,10 +101,11 @@ void main() {
   });
 
   group('workOrderCostBuildPort', () {
-    test('1 lumber + 1 cast iron (SPEC)', () {
+    test('build_port returns 5 lumber + 5 cast iron (SPEC)', () {
       final cost = workOrderCostBuildPort;
-      expect(cost[CommodityCatalog.lumber.id], 1);
-      expect(cost[CommodityCatalog.castIron.id], 1);
+      expect(cost[CommodityCatalog.lumber.id], 5);
+      expect(cost[CommodityCatalog.castIron.id], 5);
+      expect(cost.length, 2);
     });
   });
 
@@ -178,7 +179,8 @@ void main() {
     test('build_port returns port cost', () {
       final cost = workOrderMaterialCost(kWorkTargetBuildPort);
       expect(cost, isNotNull);
-      expect(cost![CommodityCatalog.lumber.id], 1);
+      expect(cost![CommodityCatalog.lumber.id], 5);
+      expect(cost[CommodityCatalog.castIron.id], 5);
     });
     test('build_fort returns fort cost for fortLevel', () {
       final cost = workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: 0);

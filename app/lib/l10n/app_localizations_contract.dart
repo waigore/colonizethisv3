@@ -1202,6 +1202,15 @@ abstract class AppLocalizations {
   /// Legend state label for locked techs.
   String get techTree_stateLocked;
 
+  /// Tech description dialog section listing GPs that unlocked the tech.
+  String get techTree_researchedBy;
+
+  /// Tech tree legend entry explaining GP nation-color pennant indicators.
+  String get techTree_legendGpPennants;
+
+  /// Long-press modal title listing GPs that have unlocked a tech.
+  String get techTree_researchersDialogTitle;
+
   /// Map debug/story toggle label for full map visibility.
   String get mapDebug_fullVisibility;
 

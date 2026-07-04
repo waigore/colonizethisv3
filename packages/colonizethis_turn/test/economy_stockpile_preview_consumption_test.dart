@@ -44,8 +44,8 @@ void main() {
                 target: kWorkTargetBuildPort,
                 unitType: kUnitTypeEngineer,
                 cost: {
-                  CommodityCatalog.lumber.id: 1,
-                  CommodityCatalog.castIron.id: 1,
+                  CommodityCatalog.lumber.id: 5,
+                  CommodityCatalog.castIron.id: 5,
                 },
               ),
               (
@@ -218,8 +218,8 @@ void main() {
           );
           final pending =
               phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
-          expect(pending[CommodityCatalog.lumber.id], -9);
-          expect(pending[CommodityCatalog.castIron.id], -4);
+          expect(pending[CommodityCatalog.lumber.id], -13);
+          expect(pending[CommodityCatalog.castIron.id], -8);
           expect(pending[CommodityCatalog.bronze.id], -3);
           expect(pending[CommodityCatalog.steel.id], -2);
           expectPhaseDeltasSumToNet(

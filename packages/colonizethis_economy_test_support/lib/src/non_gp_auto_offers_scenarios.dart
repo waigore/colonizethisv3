@@ -39,6 +39,11 @@ void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
 
 /// Canonical scenarios from `non_gp_auto_offers_test.dart` (Issue #2991 C4).
 List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
+  ..._nonGpAutoOffersEmptyScenarios(),
+  ..._nonGpAutoOffersOfferScenarios(),
+];
+
+List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
   NonGpAutoOffersScenario(
     label: 'empty when no minors and no tribes are configured',
     game: gameForNonGpExtractionTest(provinces: const []),
@@ -62,6 +67,34 @@ List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
     verify: (result) => expect(result, isEmpty),
     refs: '#2991 C4',
   ),
+  NonGpAutoOffersScenario(
+    label: 'factions with no connectivity entry do not appear in the auto-offer map',
+    game: gameForNonGpExtractionTest(
+      provinces: [
+        capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
+      ],
+      tileState: tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|m1|0|0', improvement: 1),
+      ]),
+      minorNations: [testMinor()],
+    ),
+    tileMapByRegion: {
+      'oldWorld': tileMapAllInProvinceForNonGpExtractionTest(
+        provinceId: 'oldWorld|m1',
+        width: 1,
+        height: 1,
+        resources: const [
+          [Resource.timber],
+        ],
+      ),
+    },
+    connectivityByFactionId: const {},
+    verify: (result) => expect(result, isEmpty),
+    refs: '#2991 C4',
+  ),
+];
+
+List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
   NonGpAutoOffersScenario(
     label: 'emits one priority-1 offer per non-riches tile with originTileKey set',
     game: gameForNonGpExtractionTest(
@@ -230,31 +263,6 @@ List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
       expect(result['m1'], hasLength(1));
       expect(result['m1']!.first.commodityId, equals('grain'));
     },
-    refs: '#2991 C4',
-  ),
-  NonGpAutoOffersScenario(
-    label: 'factions with no connectivity entry do not appear in the auto-offer map',
-    game: gameForNonGpExtractionTest(
-      provinces: [
-        capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-      ],
-      tileState: tileStateFromSpecs(const [
-        TileImprovementSpec('oldWorld|m1|0|0', improvement: 1),
-      ]),
-      minorNations: [testMinor()],
-    ),
-    tileMapByRegion: {
-      'oldWorld': tileMapAllInProvinceForNonGpExtractionTest(
-        provinceId: 'oldWorld|m1',
-        width: 1,
-        height: 1,
-        resources: const [
-          [Resource.timber],
-        ],
-      ),
-    },
-    connectivityByFactionId: const {},
-    verify: (result) => expect(result, isEmpty),
     refs: '#2991 C4',
   ),
 ];

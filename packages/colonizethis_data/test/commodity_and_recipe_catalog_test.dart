@@ -84,18 +84,19 @@ void main() {
     });
 
     test('recipe structure is consistent with spec', () {
-      final castIron = ProductionRecipesCatalog.castIronFromTimberIronCoal;
-      expect(castIron.labourPerOutput > 0, isTrue);
-      expect(
-        castIron.inputQuantities[CommodityCatalog.timber.id],
-        2,
-      );
+      final castIron = ProductionRecipesCatalog.castIronFromIron;
+      expect(castIron.id, 'castIron_from_iron');
+      expect(castIron.labourPerOutput, 2);
       expect(
         castIron.inputQuantities[CommodityCatalog.iron.id],
         2,
       );
       expect(
-        castIron.inputQuantities.containsKey(CommodityCatalog.coal.id),
+        castIron.inputQuantities.containsKey(CommodityCatalog.timber.id),
+        isFalse,
+      );
+      expect(
+        ProductionRecipesCatalog.byId.containsKey('castIron_from_timber_iron_coal'),
         isFalse,
       );
     });
