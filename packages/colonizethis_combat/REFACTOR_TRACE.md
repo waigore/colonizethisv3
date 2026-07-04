@@ -28,4 +28,33 @@ Package: `colonizethis_combat_test_support` workspace package created; `colonize
 
 Lint: `repo.combat_test_no_local_support` — forbids `*_test_support.dart` under `packages/colonizethis_combat/test/**`.
 
-Deferred: `repo.combat_test_duplicate_descriptions` — blocked until `combat_resolver_test_part1_*` duplicate descriptions are resolved during resolver scenario migration (slice 2+).
+Deferred: `repo.combat_test_duplicate_descriptions` — blocked until `combat_resolver_test_part1_*` duplicate descriptions are resolved during resolver scenario migration (slice 3+).
+
+## Slice 2 — military-strength scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| ms-empty-army | returns 0 for empty army | `military_strength_test.dart` | — |
+| ms-gp-medals | calculates strength for Great Power units with medals | `military_strength_test.dart` | — |
+| ms-minor-era | uses effective military level for Minor Nation | `military_strength_test.dart` | — |
+| ms-tribe-era | uses effective military level for Tribe | `military_strength_test.dart` | — |
+| ms-gp-era4 | Great Power uses era 4 (does not downgrade era 3 units) | `military_strength_test.dart` | — |
+| ms-unknown-regiment | skips units with unknown regiment types | `military_strength_test.dart` | — |
+| ms-ow-nw | aggregates units from both Old World and New World | `military_strength_test.dart` | — |
+| ms-owner-filter | only includes units owned by the specified player | `military_strength_test.dart` | — |
+| ms-medal-multipliers | applies medal multiplier correctly (0-4 medals) | `military_strength_test.dart` | — |
+| ms-deterministic | is deterministic - same inputs produce same output | `military_strength_test.dart` | — |
+| ms-non-negative | returns non-negative value | `military_strength_test.dart` | — |
+| as-list-units | aggregates strength for a list of units | `military_strength_test.dart` | — |
+| as-era-downgrade | downgrades units when era exceeds effective era | `military_strength_test.dart` | — |
+| eef-gp | returns 4 for Great Power | `military_strength_test.dart` | — |
+| eef-minor | returns effectiveMilitaryLevel for Minor Nation | `military_strength_test.dart` | — |
+| eef-tribe | returns effectiveMilitaryLevel for Tribe (capped at 1 in-game) | `military_strength_test.dart` | — |
+| eef-unknown | returns 4 for unknown faction | `military_strength_test.dart` | — |
+| cf-empty | returns 0 when unit list is empty | `military_strength_test.dart` | — |
+| cf-share | counts cavalry share over all unit ids | `military_strength_test.dart` | — |
+| cf-missing-denominator | missing units still count toward denominator | `military_strength_test.dart` | — |
+
+Module: `colonizethis_combat_test_support/lib/src/military_strength_scenarios.dart`
+
+Combat test LOC: 6,481 → 6,170 physical lines (−311 in test files; ≥15% target deferred to later slices).

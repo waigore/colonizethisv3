@@ -6,4 +6,5 @@
 library colonizethis_combat_test_support;
 
 export 'src/effective_strength_scenarios.dart';
+export 'src/military_strength_scenarios.dart';
 export 'src/military_strength_test_support.dart';
