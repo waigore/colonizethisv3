@@ -258,8 +258,90 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/gp_treasury_credit_accumulator_scenarios.dart`
 - `colonizethis_economy_test_support/lib/src/boycott_blocked_commodities_scenarios.dart`
 
+## Phase 2 — Slice 8 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| d5-ac1-* | three AC #1 owning-GP FRR matcher rows | `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` | #2992 D5 |
+| d5-ac2-* | AC #2 relation-75 credit row | `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` | #2992 D5 |
+| d5-ac3-* | AC #3 relation-100 full-share row | `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` | #2992 D5 |
+| d5-ac4-* | two AC #4 zero-credit / FRR-exclusion rows | `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` | #2992 D5 |
+| d5-ac5-* | two AC #5 multi-GP attribution rows | `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` | #2992 D5 |
+| validator-rules-* | sixteen rules 1–3 + empty/accept rows | `world_market_trade_order_validator_test.dart` | #2989 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/frr_issue_ac_d5_scenarios.dart`
+- Extended `colonizethis_economy_test_support/lib/src/trade_order_validator_scenarios.dart` (`tradeOrderValidatorRulesScenarios`)
+
+D5 test now imports `DealMatcher` from `package:colonizethis_economy/colonizethis_economy.dart` (no `colonizethis_logic` test import).
+
+## Phase 2 — Slice 9 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-rate-* | five `computeFirstRightProfitRate` rows | `first_right_profit_test.dart` | #3753 R8.2 |
+| frr-profit-* | eight `computeFirstRightProfit` rows | `first_right_profit_test.dart` | #2992 D3 |
+| embassy-kickback-* | seven `computeEmbassyKickback` rows | `first_right_profit_test.dart` | #3753 R8.3 |
+
+Module: `colonizethis_economy_test_support/lib/src/first_right_profit_scenarios.dart`
+
+## Phase 2 — Slice 10 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| consumption-* | twelve `resolveConsumption` rows | `economy_consumption_test.dart` | — |
+| military-food-* | five `consumeMilitaryFood` rows | `economy_consumption_phases_test.dart` | — |
+| navy-food-* | four `consumeNavyFood` rows | `economy_consumption_phases_test.dart` | — |
+| worker-food-* | four `consumeWorkerFood` rows | `economy_consumption_phases_test.dart` | — |
+| assign-luxury-* | four `assignWorkerLuxury` rows | `economy_consumption_phases_test.dart` | — |
+| food-units-* | two `consumeFoodUnits` rows | `economy_consumption_phases_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/consumption_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/consumption_phases_scenarios.dart`
+
+## Phase 2 — Slice 11 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| build-cost-* | nine `canAffordBuild` / `applyBuildCostDeduction` rows | `build_cost_test.dart` | — |
+
+Module: `colonizethis_economy_test_support/lib/src/build_cost_scenarios.dart`
+
+## Phase 2 — Slice 12 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| production-recipe-* | five `resolveProduction` recipe/labour rows | `economy_production_test.dart` | — |
+| production-edge-* | three `resolveProduction` edge-case rows | `economy_production_test.dart` | — |
+| effective-labour-* | three `effectiveLabourForWorkers` rows | `economy_production_test.dart` | — |
+
+Module: `colonizethis_economy_test_support/lib/src/economy_production_scenarios.dart`
+
+## Phase 2 — Slice 13 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| recruit-afford-* | eight `canAffordRecruitWorker` rows | `worker_action_cost_test.dart` | — |
+| recruit-apply-* | five `applyRecruitWorkerCostDeduction` rows | `worker_action_cost_test.dart` | — |
+
+Module: `colonizethis_economy_test_support/lib/src/worker_action_cost_scenarios.dart`
+
+## Phase 2 — Slice 14 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| auto-offer-empty-* | two empty-fixture rows | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-per-tile | emits one priority-1 offer per non-riches tile with originTileKey set | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-minor-tribe | aggregates minor and tribe offers in the same result map | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-riches | excludes riches commodities (spices) per Requirement 11 | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-minerals | minerals stay excluded — no offer for iron tile | `non_gp_auto_offers_test.dart` | #2991 C4 |
+| auto-offer-no-connectivity | factions with no connectivity entry omitted | `non_gp_auto_offers_test.dart` | #2991 C4 |
+
+Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 3 imperative world-market test files → scenario tables (`world_market_trade_order_validator_test.dart`, `first_right_profit_test.dart`, `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`)
-- Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
-- ≥15% test LOC reduction target (≤6,500 LOC) — met in prior slice; maintain on follow-up migrations
+- Deal-matcher treasury dedup — done (shared helpers + `repo.economy_deal_matcher_treasury_budget_shared`)
+- Extended inline-`Game(` guard — done (`repo.economy_test_no_inline_game` on all `test/**`)
+- ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations

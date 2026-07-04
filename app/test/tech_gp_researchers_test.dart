@@ -119,5 +119,17 @@ void main() {
       final color = gpMapColorForPlayer(game, 'gp1');
       expect(color, const Color(0xFFC82828));
     });
+
+    test('falls back to factionOwnershipColorMapForOldWorld without override', () {
+      final game = buildPanelTestGame(
+        players: [
+          panelTestHumanPlayer(),
+          const Player(id: 'gp2', displayName: 'GP Two', isHuman: false),
+        ],
+      );
+      final color = gpMapColorForPlayer(game, 'gp1');
+      // Sorted gp ids → gp1 is index 0 in regionPalette (180, 80, 80).
+      expect(color, const Color(0xFFB45050));
+    });
   });
 }

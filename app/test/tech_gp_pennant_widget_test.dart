@@ -50,6 +50,27 @@ void main() {
   );
 
   group('TechGpPennantRow', () {
+    testWidgets('context gp2 does not highlight any pennant', (
+      WidgetTester tester,
+    ) async {
+      final game = pennantFixtureGame(contextPlayerId: 'gp2');
+      await tester.pumpWidget(
+        wrap(
+          TechGpPennantRow(
+            game: game,
+            techId: kTechIdCropRotation,
+            contextPlayerId: 'gp2',
+          ),
+        ),
+      );
+      for (final id in ['gp1', 'gp3']) {
+        final pennant = tester.widget<GpNationColorPennant>(
+          find.byKey(ValueKey<String>('tech_gp_pennant_crop_rotation_$id')),
+        );
+        expect(pennant.highlighted, isFalse);
+      }
+    });
+
     testWidgets('renders two pennants with context player highlighted first', (
       WidgetTester tester,
     ) async {
@@ -134,6 +155,41 @@ void main() {
       expect(find.text('Researched by'), findsOneWidget);
       expect(find.text('GP One'), findsWidgets);
       expect(find.text('GP Three'), findsOneWidget);
+    });
+  });
+
+  group('observe context player highlight', () {
+    testWidgets('gp4 context highlights gp4 pennant only', (
+      WidgetTester tester,
+    ) async {
+      final game = buildPanelTestGame(
+        players: [
+          const Player(id: 'gp1', displayName: 'GP One', isHuman: false),
+          const Player(id: 'gp2', displayName: 'GP Two', isHuman: false),
+          const Player(id: 'gp3', displayName: 'GP Three', isHuman: false),
+          Player(
+            id: 'gp4',
+            displayName: 'GP Four',
+            isHuman: true,
+            techUnlocked: const {kTechIdCropRotation: true},
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        wrap(
+          TechGpPennantRow(
+            game: game,
+            techId: kTechIdCropRotation,
+            contextPlayerId: 'gp4',
+          ),
+        ),
+      );
+      final gp4Pennant = tester.widget<GpNationColorPennant>(
+        find.byKey(
+          const ValueKey<String>('tech_gp_pennant_crop_rotation_gp4'),
+        ),
+      );
+      expect(gp4Pennant.highlighted, isTrue);
     });
   });
 
