@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
+import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -54,21 +55,51 @@ Game gameWithTwoGps({
   );
 }
 
+TurnResolverConfig worldMarketPhaseConfig({
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) =>
+    TurnResolverConfig(
+      topology: topology,
+      orders: orders,
+      tileMapByRegion: tileMapByRegion,
+    );
+
+/// Runs [worldMarketTurnPhaseHandler] on turn [turnNumber] and returns the pipeline.
+TurnPipelineState runWorldMarketPhasePipeline({
+  required Game game,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runTurnPhaseHandlerPipeline(
+      handler: worldMarketTurnPhaseHandler,
+      game: game,
+      config: worldMarketPhaseConfig(
+        orders: orders,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      ),
+      turnNumber: turnNumber,
+    );
+
 /// Runs [worldMarketTurnPhaseHandler] on turn [turnNumber] and returns the game.
 Game runWorldMarketPhase({
   required Game game,
   required Orders orders,
   MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
   int turnNumber = 3,
-}) {
-  final config = TurnResolverConfig(topology: topology, orders: orders);
-  return runTurnPhaseHandler(
-    handler: worldMarketTurnPhaseHandler,
-    game: game,
-    config: config,
-    turnNumber: turnNumber,
-  );
-}
+}) =>
+    runWorldMarketPhasePipeline(
+      game: game,
+      orders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      turnNumber: turnNumber,
+    ).game;
 
 /// Runs [worldMarketTurnPhaseHandler] for turn 3 with trade orders only.
 Game runWorldMarketFrrCreditPhase({

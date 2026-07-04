@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 
 import '../tool/check_turn_integration_no_part_fragments.dart';
 import '../tool/check_turn_test_phase_harness.dart';
+import '../tool/check_turn_world_market_test_support.dart';
 
 void main() {
   group('runCheckTurnIntegrationNoPartFragments', () {
@@ -112,6 +113,53 @@ void main() {
         );
 
         final exitCode = runCheckTurnTestPhaseHarness(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+  });
+
+  group('runCheckTurnWorldMarketTestSupport', () {
+    test('fails when world-market test calls handler without support import', () {
+      final temp = Directory.systemTemp.createTempSync('turn-wm-violation-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'world_market_phase_sample_test.dart'),
+          'final next = worldMarketTurnPhaseHandler(acc, config, 3);\n',
+        );
+
+        final exitCode = runCheckTurnWorldMarketTestSupport(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 1);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes when support import is present', () {
+      final temp = Directory.systemTemp.createTempSync('turn-wm-ok-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'world_market_phase_sample_test.dart'),
+          "import '../support/world_market_test_support.dart';\n"
+          'final next = runWorldMarketPhase(game: g, orders: o);\n',
+        );
+
+        final exitCode = runCheckTurnWorldMarketTestSupport(
           temp.path,
           info: (_) {},
           err: (_) {},

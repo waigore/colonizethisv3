@@ -1,13 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolution_sequence.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../support/turn_phase_test_harness.dart';
+import '../support/world_market_test_support.dart';
 
 void main() {
   group('World Market phase position (Refs #2990 B0+B1+B4)', () {
@@ -78,14 +75,9 @@ void main() {
           newWorld: const RegionData(),
         ),
       );
-      const config = TurnResolverConfig(
-        topology: MapTopology(nodes: [], edges: []),
-        orders: Orders(),
-      );
-      final next = runTurnPhaseHandlerPipeline(
-        handler: worldMarketTurnPhaseHandler,
+      final next = runWorldMarketPhasePipeline(
         game: game,
-        config: config,
+        orders: const Orders(),
       );
       expect(
         next.game,

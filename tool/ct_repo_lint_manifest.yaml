@@ -571,6 +571,13 @@ rules:
     runner: dart
     script: tool/check_turn_test_phase_harness.dart
 
+  - rule_id: repo.turn_world_market_test_support
+    group: testing
+    title: colonizethis_turn world-market tests must import world_market_test_support when invoking worldMarketTurnPhaseHandler (Refs #3876)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_world_market_test_support.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)
