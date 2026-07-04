@@ -1,11 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
-import '../support/turn_phase_test_harness.dart';
 
 /// Per-commodity Deal Book ledger emission tests for the World Market phase
 /// handler (Refs #2993 E6 / #2988 § UI Design — Deal Book).
@@ -53,12 +51,10 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: config.orders,
+          );
 
           final activity = next.worldMarketState.lastTurnActivity['timber']!;
           expect(activity.deals, hasLength(1));
@@ -120,12 +116,10 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: config.orders,
+          );
 
           final timberDeals =
               next.worldMarketState.lastTurnActivity['timber']!.deals;
@@ -178,12 +172,10 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: config.orders,
+          );
 
           final activity = next.worldMarketState.lastTurnActivity['timber']!;
           expect(activity.filledQuantity, 0);
@@ -236,12 +228,10 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: config.orders,
+          );
 
           final activity = next.worldMarketState.lastTurnActivity['timber']!;
           expect(activity.filledQuantity, 3);
@@ -273,12 +263,10 @@ void main() {
             orders: const Orders(),
           );
 
-          final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: config.orders,
+          );
 
           expect(next.worldMarketState.lastTurnActivity, isEmpty);
         },

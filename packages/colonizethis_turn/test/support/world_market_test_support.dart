@@ -101,6 +101,43 @@ Game runWorldMarketPhase({
       turnNumber: turnNumber,
     ).game;
 
+/// Like [runWorldMarketPhasePipeline] but preserves pre-seeded pipeline fields
+/// on [pipeline] (e.g. overseas extraction tonnage for world-market tests).
+TurnPipelineState runWorldMarketPhasePipelineFrom({
+  required TurnPipelineState pipeline,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runTurnPhaseHandlerPipelineFrom(
+      handler: worldMarketTurnPhaseHandler,
+      pipeline: pipeline,
+      config: worldMarketPhaseConfig(
+        orders: orders,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      ),
+      turnNumber: turnNumber,
+    );
+
+/// Like [runWorldMarketPhase] but preserves pre-seeded pipeline fields on
+/// [pipeline].
+Game runWorldMarketPhaseFrom({
+  required TurnPipelineState pipeline,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runWorldMarketPhasePipelineFrom(
+      pipeline: pipeline,
+      orders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      turnNumber: turnNumber,
+    ).game;
+
 /// Runs [worldMarketTurnPhaseHandler] for turn 3 with trade orders only.
 Game runWorldMarketFrrCreditPhase({
   required Game game,

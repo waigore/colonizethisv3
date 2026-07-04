@@ -1,14 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show defaultCargoHoldsStub;
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
-import '../support/turn_phase_test_harness.dart';
 
 /// Cargo-released-by-extraction integration for the world market phase
 /// (Refs #2990 B2 / SPEC/game/world-market.md § Cargo — AC *Cargo released
@@ -79,10 +77,9 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandlerFrom(
-            handler: worldMarketTurnPhaseHandler,
+          final next = runWorldMarketPhaseFrom(
             pipeline: acc,
-            config: config,
+            orders: config.orders,
           );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
@@ -152,10 +149,9 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandlerFrom(
-            handler: worldMarketTurnPhaseHandler,
+          final next = runWorldMarketPhaseFrom(
             pipeline: acc,
-            config: config,
+            orders: config.orders,
           );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
@@ -220,10 +216,9 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandlerFrom(
-            handler: worldMarketTurnPhaseHandler,
+          final next = runWorldMarketPhaseFrom(
             pipeline: acc,
-            config: config,
+            orders: config.orders,
           );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
@@ -278,10 +273,9 @@ void main() {
             ),
           );
 
-          final next = runTurnPhaseHandlerFrom(
-            handler: worldMarketTurnPhaseHandler,
+          final next = runWorldMarketPhaseFrom(
             pipeline: acc,
-            config: config,
+            orders: config.orders,
           );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);

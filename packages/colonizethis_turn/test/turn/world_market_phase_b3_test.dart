@@ -1,11 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
-import '../support/turn_phase_test_harness.dart';
 
 /// Integration tests for `worldMarketTurnPhaseHandler` covering the GP↔GP
 /// trade pipeline (Refs #2990 B3, B5). These assert SPEC-anchored behavior:
@@ -52,12 +50,10 @@ void main() {
         ),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
@@ -111,12 +107,10 @@ void main() {
         ),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       expect(next.worldMarketState.prices['timber'], 30);
       expect(
@@ -156,12 +150,10 @@ void main() {
         ),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.stockpile.quantityOf('timber'), 3);
@@ -214,12 +206,10 @@ void main() {
         ),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(
@@ -287,12 +277,10 @@ void main() {
         ),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       // Quantity-zero offers are filtered upstream of matching by the
       // handler; bid carries forward intact since no compatible offer exists.
@@ -320,12 +308,10 @@ void main() {
         orders: const Orders(),
       );
 
-      final next = runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
-          game: game,
-          config: config,
-          turnNumber: 3,
-        );
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       expect(next.worldMarketState.prices, equals(priorMarket.prices));
       expect(next.worldMarketState.lastTurnActivity, isEmpty);
