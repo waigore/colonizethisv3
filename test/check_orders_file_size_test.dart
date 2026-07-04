@@ -19,6 +19,7 @@ void main() {
       0,
       reason:
           'orders_application.dart and orders_application_completed_work.dart '
+          'and other orders hot files '
           'must stay at or below '
           '${maxOrdersFileNonCommentLinesForTests()} non-comment lines.\n'
           '${logs.join('\n')}',

@@ -109,6 +109,7 @@ void main() {
         playerId: gpId,
         treasury: 1000,
         civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
       );
       final result = precheckUpgradeTown(
         ctx,

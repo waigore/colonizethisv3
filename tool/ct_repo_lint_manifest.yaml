@@ -769,7 +769,7 @@ rules:
 
   - rule_id: repo.orders_no_cross_package_src_imports
     group: architecture
-    title: colonizethis_orders/lib must not import another colonizethis package's src/ tree (Refs #3543)
+    title: colonizethis_orders/lib must not import or export another colonizethis package's src/ tree (Refs #3543, #3877)
     spec: SPEC/program/logic-package-barrel-contracts.md
     runner: dart
     script: tool/check_orders_no_cross_package_src_imports.dart
