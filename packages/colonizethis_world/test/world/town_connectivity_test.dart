@@ -4,6 +4,8 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Coverage for town-tile connectivity (Refs #3872).
 void main() {
   group('effectiveTownTileKeyForProvince', () {
@@ -82,14 +84,10 @@ void main() {
           },
         },
       );
-      final map = TileMapResult(
-        width: 3,
-        height: 2,
-        grid: const [
-          ['p1', 'p1', 'p1'],
-          ['p1', 'p1', 'p1'],
-        ],
-      );
+      final map = tileMapFromGrid(const [
+        ['p1', 'p1', 'p1'],
+        ['p1', 'p1', 'p1'],
+      ]);
       final connected = resolveTownConnectedTileKeysForProvince(
         provinceId: provinceId,
         townTileKey: townKey,
@@ -212,13 +210,7 @@ void main() {
         },
         tileState: tileState,
       );
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: const [
-          ['x'],
-        ],
-      );
+      final tileMap = uniformProvinceTileMap('x', size: 1);
       final byProvince = resolveTownConnectedTileKeysByProvince(
         game: game,
         tileMapByRegion: {ow: tileMap},
