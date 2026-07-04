@@ -22,8 +22,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'incremental_candidate_validator.dart';
 import 'order_validators.dart';
+import 'order_validator_factory.dart';
 import 'unit_type_helpers.dart';
-import 'validator_bundle.dart';
 
 extension IncrementalCandidateValidatorPrefixReplay
     on IncrementalCandidateValidator {
