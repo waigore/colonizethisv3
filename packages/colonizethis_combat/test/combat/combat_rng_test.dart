@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_combat/src/combat/deterministic_rng.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -11,16 +12,8 @@ List<int> _take(Random rng, int n) =>
 List<int> _takeDet(DeterministicRng rng, int n) =>
     List<int>.generate(n, (_) => rng.nextInt(1 << 30));
 
-Game _buildGame({int? seed, required int turn}) => Game(
-  id: 'g',
-  globalGameSeed: seed,
-  worldState: WorldState(
-    turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: const [],
-);
+Game _buildGame({int? seed, required int turn}) =>
+    landResolverSeededEmptyGame(globalGameSeed: seed, turnNumber: turn);
 
 void main() {
   group('combat_rng factories (#3448)', () {
