@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';

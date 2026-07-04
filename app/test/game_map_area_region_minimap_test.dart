@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'

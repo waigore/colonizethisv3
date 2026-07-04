@@ -25,7 +25,7 @@ import 'package:flutter/widgets.dart';
 import '../../../../providers/map_province_panel_provider.dart'
     show displayProvinceOrSeaIdFromTileKey;
 import '../../../core/services/game_service.dart' show GameMapData;
-import 'game_map_area_state_logic.dart';
+import 'map_state/map_state.dart';
 import 'per_player_work_target_selection_cache.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`

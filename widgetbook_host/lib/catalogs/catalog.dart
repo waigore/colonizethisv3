@@ -73,9 +73,9 @@ import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';

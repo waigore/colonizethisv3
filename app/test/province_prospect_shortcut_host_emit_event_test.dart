@@ -19,7 +19,7 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';

@@ -1,10 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/game_map_area_civilian_draft_projection.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_area_fleet_draft_projection.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_area_province_action_states.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, VisibilityLevel;
