@@ -27,6 +27,12 @@ void runCombatResolverLimitsScenario(CombatResolverLimitsScenario scenario) {
 
 /// Deployment limits and general-medal scenarios (part 1 limits).
 List<CombatResolverLimitsScenario> combatResolverLimitsScenarios() => [
+  ..._combatResolverDeploymentLimitScenarios(),
+  ..._combatResolverGeneralMedalScenarios(),
+];
+
+List<CombatResolverLimitsScenario> _combatResolverDeploymentLimitScenarios() =>
+    [
   CombatResolverLimitsScenario(
     scenarioId: 'crl-deployment-cap-base-10',
     label:
@@ -152,6 +158,9 @@ List<CombatResolverLimitsScenario> combatResolverLimitsScenarios() => [
       );
     },
   ),
+];
+
+List<CombatResolverLimitsScenario> _combatResolverGeneralMedalScenarios() => [
   CombatResolverLimitsScenario(
     scenarioId: 'crl-winning-general-medal',
     label: 'assigned winning general gains +1 medal immediately and persists',

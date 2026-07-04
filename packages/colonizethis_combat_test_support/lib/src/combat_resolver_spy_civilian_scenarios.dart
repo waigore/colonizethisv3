@@ -31,6 +31,13 @@ const _ow = 'oldWorld';
 /// Scenarios for spy timers, purchased land, and civilian relocation.
 List<CombatResolverSpyCivilianScenario> combatResolverSpyCivilianScenarios() =>
     [
+      ..._combatResolverSpyConquestScenarios(),
+      ..._combatResolverCivilianRelocationScenarios(),
+      ..._combatResolverGeneralMoraleAuraScenarios(),
+    ];
+
+List<CombatResolverSpyCivilianScenario> _combatResolverSpyConquestScenarios() =>
+    [
       CombatResolverSpyCivilianScenario(
         scenarioId: 'crsc-spy-timer-cleared',
         label: 'combat conquest clears Spy timer for new owner province',
@@ -161,6 +168,10 @@ List<CombatResolverSpyCivilianScenario> combatResolverSpyCivilianScenarios() =>
           );
         },
       ),
+    ];
+
+List<CombatResolverSpyCivilianScenario>
+    _combatResolverCivilianRelocationScenarios() => [
       CombatResolverSpyCivilianScenario(
         scenarioId: 'crsc-relocate-working-civilian',
         label:
@@ -341,6 +352,10 @@ List<CombatResolverSpyCivilianScenario> combatResolverSpyCivilianScenarios() =>
           expect(relocated.assignedTileKey, isNull);
         },
       ),
+    ];
+
+List<CombatResolverSpyCivilianScenario>
+    _combatResolverGeneralMoraleAuraScenarios() => [
       CombatResolverSpyCivilianScenario(
         scenarioId: 'crsc-general-medal-morale-aura',
         label:

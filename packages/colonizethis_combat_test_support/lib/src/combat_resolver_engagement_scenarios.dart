@@ -29,6 +29,12 @@ void runCombatResolverEngagementScenario(
 /// Scenarios for [resolveEngagement] and [resolveBattleContext] (part 1).
 List<CombatResolverEngagementScenario> combatResolverEngagementScenarios() =>
     [
+      ..._combatResolverEngagementOutcomeScenarios(),
+      ..._combatResolverEngagementContextScenarios(),
+    ];
+
+List<CombatResolverEngagementScenario>
+    _combatResolverEngagementOutcomeScenarios() => [
       CombatResolverEngagementScenario(
         scenarioId: 'cre-attacker-wins-decisively',
         label: 'attacker wins decisively when much stronger',
@@ -154,6 +160,10 @@ List<CombatResolverEngagementScenario> combatResolverEngagementScenarios() =>
           );
         },
       ),
+    ];
+
+List<CombatResolverEngagementScenario>
+    _combatResolverEngagementContextScenarios() => [
       CombatResolverEngagementScenario(
         scenarioId: 'cre-feeding-morale-penalty',
         label:

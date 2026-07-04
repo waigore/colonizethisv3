@@ -28,6 +28,12 @@ void runCombatResolverProbabilisticScenario(
 /// Scenarios for [resolveEngagementProbabilistic].
 List<CombatResolverProbabilisticScenario>
     combatResolverProbabilisticScenarios() => [
+          ..._combatResolverProbabilisticCoreScenarios(),
+          ..._combatResolverProbabilisticOutcomeScenarios(),
+        ];
+
+List<CombatResolverProbabilisticScenario>
+    _combatResolverProbabilisticCoreScenarios() => [
           CombatResolverProbabilisticScenario(
             scenarioId: 'crp-same-seed-identical',
             label: 'same seed produces identical outcome',
@@ -158,6 +164,10 @@ List<CombatResolverProbabilisticScenario>
               );
             },
           ),
+        ];
+
+List<CombatResolverProbabilisticScenario>
+    _combatResolverProbabilisticOutcomeScenarios() => [
           CombatResolverProbabilisticScenario(
             scenarioId: 'crp-per-round-details',
             label: 'outcome includes per-round details',
