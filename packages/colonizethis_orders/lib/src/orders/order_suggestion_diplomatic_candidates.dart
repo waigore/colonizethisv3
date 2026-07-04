@@ -1,81 +1,68 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
-/// Per-target inputs shared by diplomatic suggestion candidate builders.
-final class DiplomaticSuggestionTargetContext {
-  const DiplomaticSuggestionTargetContext({
-    required this.game,
-    required this.playerId,
-    required this.player,
+import 'validators/diplomatic/diplomatic_sub_validator.dart';
+
+/// Per-target view inputs for diplomatic suggestion candidate builders.
+final class DiplomaticSuggestionTargetView {
+  const DiplomaticSuggestionTargetView({
     required this.targetId,
+    required this.player,
     required this.knownTargetIds,
     required this.knownFactionIds,
-    required this.factionMembership,
     required this.playerOverturesByTargetId,
     required this.playerHoldsColony,
   });
 
-  final Game game;
-  final String playerId;
-  final Player player;
   final String targetId;
+  final Player player;
   final Set<String> knownTargetIds;
   final Set<String> knownFactionIds;
-  final DiplomacyFactionMembership factionMembership;
   final Map<String, OvertureState> playerOverturesByTargetId;
   final bool playerHoldsColony;
 
   int get treasury => player.treasury;
-
-  DiplomacyRelation? get relation =>
-      getRelation(game, playerId, targetId);
-
-  bool get atWar => relation?.atWar ?? false;
-
-  bool get atPeace => relation == null || relation!.atPeace;
-
-  bool get isGpTarget => game.playerById(targetId) != null;
-
-  bool get targetIsMinorOrTribe => isMinorOrTribe(
-    game,
-    targetId,
-    factionMembership: factionMembership,
-  );
 }
 
 DiplomaticOrder? offerPeaceSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  if (!ctx.knownTargetIds.contains(ctx.targetId) || !ctx.atWar) {
+  final rel = getRelation(ctx.game, ctx.playerId, target.targetId);
+  if (!target.knownTargetIds.contains(target.targetId) ||
+      rel?.atWar != true) {
     return null;
   }
   return DiplomaticOrder(
     type: DiplomaticOrderType.offerPeace,
-    targetFactionId: ctx.targetId,
+    targetFactionId: target.targetId,
   );
 }
 
 DiplomaticOrder? breakAllianceSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  final rel = ctx.relation;
-  if (!ctx.isGpTarget || rel == null || !rel.formalAlliance || !rel.atPeace) {
+  final rel = getRelation(ctx.game, ctx.playerId, target.targetId);
+  final isGpTarget = ctx.game.playerById(target.targetId) != null;
+  if (!isGpTarget || rel == null || !rel.formalAlliance || !rel.atPeace) {
     return null;
   }
   return DiplomaticOrder(
     type: DiplomaticOrderType.breakAlliance,
-    targetFactionId: ctx.targetId,
+    targetFactionId: target.targetId,
   );
 }
 
 DiplomaticOrder? allianceSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  final rel = ctx.relation;
-  if (!ctx.isGpTarget ||
+  final rel = getRelation(ctx.game, ctx.playerId, target.targetId);
+  final isGpTarget = ctx.game.playerById(target.targetId) != null;
+  if (!isGpTarget ||
       rel == null ||
       !rel.atPeace ||
       rel.formalAlliance ||
@@ -84,100 +71,131 @@ DiplomaticOrder? allianceSuggestionCandidate(
   }
   return DiplomaticOrder(
     type: DiplomaticOrderType.alliance,
-    targetFactionId: ctx.targetId,
+    targetFactionId: target.targetId,
   );
 }
 
 DiplomaticOrder? establishOvertureSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  if (!ctx.targetIsMinorOrTribe ||
-      !ctx.knownFactionIds.contains(ctx.targetId)) {
+  final factionMembership =
+      ctx.factionMembership ?? DiplomacyFactionMembership.from(ctx.game);
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    ctx.game,
+    target.targetId,
+    factionMembership: factionMembership,
+  );
+  if (!targetIsMinorOrTribe ||
+      !target.knownFactionIds.contains(target.targetId)) {
     return null;
   }
   return _establishOvertureSuggestionOrder(
-    game: ctx.game,
-    playerId: ctx.playerId,
-    targetId: ctx.targetId,
-    treasury: ctx.treasury,
+    ctx: ctx,
+    targetId: target.targetId,
+    treasury: target.treasury,
   );
 }
 
-List<DiplomaticOrder> economicDiplomaticSuggestionCandidates(
-  DiplomaticSuggestionTargetContext ctx,
+List<DiplomaticOrder> grantAidSuggestionCandidates(
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  final out = <DiplomaticOrder>[];
-  final overtureRow = ctx.playerOverturesByTargetId[ctx.targetId];
-  if (overtureRow == null) return out;
+  final overtureRow = target.playerOverturesByTargetId[target.targetId];
+  if (overtureRow == null ||
+      !overtureRow.hasEmbassy ||
+      target.treasury < grantAidDefaultAmount) {
+    return const [];
+  }
+  return [
+    DiplomaticOrder(
+      type: DiplomaticOrderType.grantAid,
+      targetFactionId: target.targetId,
+      amount: grantAidDefaultAmount,
+    ),
+  ];
+}
 
-  if (overtureRow.hasEmbassy && ctx.treasury >= grantAidDefaultAmount) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.grantAid,
-        targetFactionId: ctx.targetId,
-        amount: grantAidDefaultAmount,
-      ),
-    );
+List<DiplomaticOrder> setSubsidySuggestionCandidates(
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
+) {
+  final factionMembership =
+      ctx.factionMembership ?? DiplomacyFactionMembership.from(ctx.game);
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    ctx.game,
+    target.targetId,
+    factionMembership: factionMembership,
+  );
+  final overtureRow = target.playerOverturesByTargetId[target.targetId];
+  if (!targetIsMinorOrTribe ||
+      overtureRow == null ||
+      !overtureRow.hasEmbassy) {
+    return const [];
   }
-  if (ctx.targetIsMinorOrTribe && overtureRow.hasEmbassy) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.setSubsidy,
-        targetFactionId: ctx.targetId,
-        amount: kSubsidyPercentDefault,
-      ),
-    );
-  }
-  return out;
+  return [
+    DiplomaticOrder(
+      type: DiplomaticOrderType.setSubsidy,
+      targetFactionId: target.targetId,
+      amount: kSubsidyPercentDefault,
+    ),
+  ];
 }
 
 DiplomaticOrder? boycottSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  final rel = ctx.relation;
-  if (!ctx.playerHoldsColony ||
-      !ctx.isGpTarget ||
+  final rel = getRelation(ctx.game, ctx.playerId, target.targetId);
+  final isGpTarget = ctx.game.playerById(target.targetId) != null;
+  if (!target.playerHoldsColony ||
+      !isGpTarget ||
       rel == null ||
       !rel.atPeace ||
       ctx.game.boycottStates.any(
-        (b) => b.gpId == ctx.playerId && b.targetGpId == ctx.targetId,
+        (b) => b.gpId == ctx.playerId && b.targetGpId == target.targetId,
       )) {
     return null;
   }
   return DiplomaticOrder(
     type: DiplomaticOrderType.boycott,
-    targetFactionId: ctx.targetId,
+    targetFactionId: target.targetId,
   );
 }
 
 DiplomaticOrder? declareWarSuggestionCandidate(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  if (!ctx.knownTargetIds.contains(ctx.targetId) || !ctx.atPeace) {
+  final rel = getRelation(ctx.game, ctx.playerId, target.targetId);
+  final atPeace = rel == null || rel.atPeace;
+  if (!target.knownTargetIds.contains(target.targetId) || !atPeace) {
     return null;
   }
   return DiplomaticOrder(
     type: DiplomaticOrderType.declareWar,
-    targetFactionId: ctx.targetId,
+    targetFactionId: target.targetId,
   );
 }
 
 /// Per-target suggestion order: first candidate that passes the order engine wins.
 /// SPEC/program/order-suggestions.md § Diplomatic orders.
 List<DiplomaticOrder> diplomaticCandidatesForTargetOrdered(
-  DiplomaticSuggestionTargetContext ctx,
+  DiplomaticSubValidatorContext ctx,
+  DiplomaticSuggestionTargetView target,
 ) {
-  if (ctx.targetId == ctx.playerId) return const <DiplomaticOrder>[];
+  if (target.targetId == ctx.playerId) return const <DiplomaticOrder>[];
 
   final out = <DiplomaticOrder>[];
   for (final candidate in <DiplomaticOrder?>[
-    offerPeaceSuggestionCandidate(ctx),
-    breakAllianceSuggestionCandidate(ctx),
-    allianceSuggestionCandidate(ctx),
-    establishOvertureSuggestionCandidate(ctx),
-    ...economicDiplomaticSuggestionCandidates(ctx),
-    boycottSuggestionCandidate(ctx),
-    declareWarSuggestionCandidate(ctx),
+    offerPeaceSuggestionCandidate(ctx, target),
+    breakAllianceSuggestionCandidate(ctx, target),
+    allianceSuggestionCandidate(ctx, target),
+    establishOvertureSuggestionCandidate(ctx, target),
+    ...grantAidSuggestionCandidates(ctx, target),
+    ...setSubsidySuggestionCandidates(ctx, target),
+    boycottSuggestionCandidate(ctx, target),
+    declareWarSuggestionCandidate(ctx, target),
   ]) {
     if (candidate != null) out.add(candidate);
   }
@@ -185,11 +203,12 @@ List<DiplomaticOrder> diplomaticCandidatesForTargetOrdered(
 }
 
 DiplomaticOrder? _establishOvertureSuggestionOrder({
-  required Game game,
-  required String playerId,
+  required DiplomaticSubValidatorContext ctx,
   required String targetId,
   required int treasury,
 }) {
+  final game = ctx.game;
+  final playerId = ctx.playerId;
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   if (atWar) return null;
@@ -207,10 +226,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
   if (next == OvertureStage.tradeConsulate ||
       next == OvertureStage.embassy ||
       next == OvertureStage.nap) {
-    final submitter = game.playerById(playerId);
-    if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
-      return null;
-    }
+    if (!ctx.hasDiplomaticExpertise) return null;
   }
   if (next == OvertureStage.joinEmpire) {
     final score = rel?.score ?? relationScoreNeutral;

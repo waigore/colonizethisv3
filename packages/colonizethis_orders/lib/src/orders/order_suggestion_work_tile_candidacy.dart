@@ -7,8 +7,8 @@ import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
-import 'order_suggestion_work_tile_candidacy_prefilter.dart';
 import 'order_work_constants.dart';
+import 'order_suggestion_work_tile_candidacy_prefilter.dart';
 import 'partial_province_reveal.dart';
 import 'unit_type_helpers.dart';
 
