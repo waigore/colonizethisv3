@@ -274,3 +274,28 @@ Modules:
 Lib: `combatSideMoraleMultiplier` in `combat_resolver_support.dart` (feeding × general-medal assembly for land auto-resolve; naval path remains feeding-only).
 
 Combat test LOC: 2,623 → 1,921 physical lines (−702 in test files across slice 10).
+
+## Slice 11 — Battle general assignment and combat mode selection tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| bga-second-attack-excludes-general | second attack in same phase excludes general already used as attacker | `battle_general_assignment_test.dart` | — |
+| bga-defender-pool-not-filtered | defender pool not filtered by attack ledger for same faction | `battle_general_assignment_test.dart` | — |
+| bga-battle-rng-matches | battleAssignmentRng matches for auto and QB same context | `battle_general_assignment_test.dart` | — |
+| bgb-binds-distinct-then-fallback | binds distinct attacker/defender generals per context, then falls back when each faction pool is exhausted | `battle_general_assignment_bind_phase_test.dart` | — |
+| bgb-respects-pre-bound-ledger | respects generals already bound in the ledger before this pass | `battle_general_assignment_bind_phase_test.dart` | — |
+| cms-not-siege-no-fort | returns false when not a siege (no fort) | `combat_mode_selection_test.dart` | — |
+| cms-siege-not-capital | returns false when siege but province is not a capital | `combat_mode_selection_test.dart` | — |
+| cms-siege-gp-capital | returns true when siege of GP capital | `combat_mode_selection_test.dart` | — |
+| cms-capital-siege-qb | capital siege always returns QuickBattle | `combat_mode_selection_test.dart` | — |
+| cms-default-mode | uses default when no per-battle override | `combat_mode_selection_test.dart` | — |
+| cms-per-battle-override | uses per-battle override when provided | `combat_mode_selection_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/battle_general_assignment_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/battle_general_assignment_bind_phase_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/combat_mode_selection_scenarios.dart`
+
+Completes §5 remaining resolver integration suites (battle general assignment + combat mode selection).
+
+Combat test LOC: 1,921 → 1,580 physical lines (−341 in test files across slice 11).

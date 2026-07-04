@@ -30,3 +30,6 @@ export 'src/combat_resolver_limits_scenarios.dart';
 export 'src/combat_resolver_part2_scenarios.dart';
 export 'src/combat_resolver_probabilistic_scenarios.dart';
 export 'src/combat_resolver_spy_civilian_scenarios.dart';
+export 'src/battle_general_assignment_scenarios.dart';
+export 'src/battle_general_assignment_bind_phase_scenarios.dart';
+export 'src/combat_mode_selection_scenarios.dart';
