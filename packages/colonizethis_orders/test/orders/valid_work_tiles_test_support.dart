@@ -11,6 +11,7 @@ abstract final class ValidWorkTilesTestSupport {
   ValidWorkTilesTestSupport._();
 
   static const ow = 'oldWorld';
+  static const nw = 'newWorld';
   static const playerId = 'gp1';
   static const emptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -28,14 +29,33 @@ abstract final class ValidWorkTilesTestSupport {
     stage: OvertureStage.tradeConsulate,
   );
 
+  static OvertureState embassyOverture({
+    String targetId = 'minor1',
+    int sinceTurn = 0,
+  }) =>
+      OvertureState(
+        gpId: playerId,
+        targetId: targetId,
+        stage: OvertureStage.embassy,
+        sinceTurn: sinceTurn,
+      );
+
   static Map<String, Map<String, List<String>>> tileKeysByProvince(
-    Map<String, List<String>> provinceTiles,
-  ) =>
-      {ow: provinceTiles};
+    Map<String, List<String>> provinceTiles, {
+    String regionId = ow,
+  }) =>
+      {regionId: provinceTiles};
 
-  static String provinceId(String localId) => '$ow|$localId';
+  static String provinceId(String localId, {String regionId = ow}) =>
+      '$regionId|$localId';
 
-  static String tileKey(String localId, int x, int y) => '$ow|$localId|$x|$y';
+  static String tileKey(
+    String localId,
+    int x,
+    int y, {
+    String regionId = ow,
+  }) =>
+      '$regionId|$localId|$x|$y';
 
   static Unit explorerUnit({
     String id = 'u1',
@@ -49,6 +69,34 @@ abstract final class ValidWorkTilesTestSupport {
         ownerId: ownerId,
         locationProvinceId: locationProvinceId,
         tileKey: tileKey,
+      );
+
+  static Unit builderUnit({
+    String id = 'u1',
+    String ownerId = playerId,
+    required String locationProvinceId,
+    String? tileKey,
+  }) =>
+      Unit(
+        id: id,
+        type: kUnitTypeBuilder,
+        ownerId: ownerId,
+        locationProvinceId: locationProvinceId,
+        tileKey: tileKey,
+      );
+
+  static Player playerWithTreasury({int treasury = 500}) => Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        treasury: treasury,
+      );
+
+  static Player playerWithBuildStockpile() => Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        stockpile: Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
       );
 
   static Game minimalValidWorkTilesGame({
