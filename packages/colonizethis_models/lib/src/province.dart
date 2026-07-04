@@ -1,5 +1,17 @@
 import 'province_id.dart';
 
+/// Valid town development levels (1–4). Level 0 is abolished (Refs #3870).
+const int kTownDevelopmentLevelMin = 1;
+const int kTownDevelopmentLevelMax = 4;
+
+/// Coerces legacy saves and clamps out-of-range values to 1–4.
+int normalizeTownDevelopmentLevel(int? raw) {
+  final value = raw ?? kTownDevelopmentLevelMin;
+  if (value < kTownDevelopmentLevelMin) return kTownDevelopmentLevelMin;
+  if (value > kTownDevelopmentLevelMax) return kTownDevelopmentLevelMax;
+  return value;
+}
+
 /// One map province in a region. SPEC/game/world-model.
 /// Phase 3: fortLevel (0–3), terrain for combat. SPEC/game/siege-mechanics.md.
 /// Town: townTileKey and townDevelopmentLevel for extraction. SPEC/game/capital-and-connectivity.md.
@@ -12,7 +24,7 @@ class Province {
     this.fortLevel = 0,
     this.terrain = 'plains',
     this.townTileKey,
-    this.townDevelopmentLevel = 0,
+    this.townDevelopmentLevel = kTownDevelopmentLevelMin,
   });
 
   final String id;
@@ -31,7 +43,7 @@ class Province {
   /// Tile key of the province's town (for extraction connectivity). Set at game init. SPEC/game/capital-and-connectivity.md.
   final String? townTileKey;
 
-  /// Town development level 0–4. Raised by Builder upgrade_town work. Limits extraction. SPEC/game/extraction-and-improvements.md.
+  /// Town development level 1–4. Raised by Builder upgrade_town work. Limits extraction. SPEC/game/extraction-and-improvements.md.
   final int townDevelopmentLevel;
 
   Map<String, dynamic> toJson() => {
@@ -42,7 +54,8 @@ class Province {
     if (fortLevel != 0) 'fortLevel': fortLevel,
     if (terrain != 'plains') 'terrain': terrain,
     if (townTileKey != null) 'townTileKey': townTileKey,
-    if (townDevelopmentLevel != 0) 'townDevelopmentLevel': townDevelopmentLevel,
+    if (townDevelopmentLevel != kTownDevelopmentLevelMin)
+      'townDevelopmentLevel': townDevelopmentLevel,
   };
 
   static Province fromJson(Map<String, dynamic> json) {
@@ -58,7 +71,9 @@ class Province {
       fortLevel: (json['fortLevel'] as int?) ?? 0,
       terrain: json['terrain'] as String? ?? 'plains',
       townTileKey: json['townTileKey'] as String?,
-      townDevelopmentLevel: (json['townDevelopmentLevel'] as int?) ?? 0,
+      townDevelopmentLevel: normalizeTownDevelopmentLevel(
+        json['townDevelopmentLevel'] as int?,
+      ),
     );
   }
 

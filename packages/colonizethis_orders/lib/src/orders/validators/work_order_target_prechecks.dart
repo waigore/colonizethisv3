@@ -71,6 +71,15 @@ OrderValidationResult? precheckUpgradeTown(
       'National Bureaucracy tech required for upgrade_town',
     );
   }
+  if (targetProvinceId != null) {
+    final province = ctx.game.worldState.tryGetProvince(targetProvinceId);
+    if (province != null &&
+        province.townDevelopmentLevel >= kTownDevelopmentLevelMax) {
+      return OrderValidationResult.rejected(
+        'Town development level already at maximum (4)',
+      );
+    }
+  }
   return null;
 }
 

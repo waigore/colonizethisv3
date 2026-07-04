@@ -678,6 +678,8 @@ void main() {
               isCoastal: false,
               isPort: false,
               touchesSea: false,
+              townDevelopmentLevel: 1,
+              townIconStyle: 'euro',
             ),
           ],
           factionColors: base.factionColors,

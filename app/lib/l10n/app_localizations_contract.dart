@@ -1389,6 +1389,9 @@ abstract class AppLocalizations {
   /// Political section capital row when the province is not a faction capital.
   String get provinceOverlay_capitalNo;
 
+  /// Political section town development row (integer 1–4). Refs #3870.
+  String provinceOverlay_townDevelopment(int level);
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 
