@@ -24,3 +24,6 @@ export 'src/quick_battle_build_test_support.dart';
 export 'src/quick_battle_perf_invariants_scenarios.dart';
 export 'src/conflict_detection_test_support.dart';
 export 'src/conflict_detection_scenarios.dart';
+export 'src/combat_resolver_test_support.dart';
+export 'src/combat_resolver_engagement_scenarios.dart';
+export 'src/combat_resolver_limits_scenarios.dart';

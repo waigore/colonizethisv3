@@ -1071,6 +1071,20 @@ rules:
     runner: dart
     script: tool/check_combat_test_no_local_support.dart
 
+  - rule_id: repo.combat_test_core_fixtures_shared
+    group: architecture
+    title: colonizethis_combat tests must use colonizethis_combat_test_support game builders, not inline Game(...) (Refs #3865)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_core_fixtures_shared.dart
+
+  - rule_id: repo.combat_test_duplicate_descriptions
+    group: architecture
+    title: colonizethis_combat tests must not repeat identical test descriptions across files (Refs #3865)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_duplicate_descriptions.dart
+
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture
     title: setup init pipelines must delegate map+setup retry loop to runInitPipelineWithRetries (Refs #3449)

@@ -3,6 +3,7 @@
 // >=90% per-package coverage gate are in scope per issue F5).
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_combat/src/combat/leader_bonus_helpers.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -18,32 +19,7 @@ BattleContext _ctx(String provinceId) => BattleContext(
   terrain: 'plains',
 );
 
-Game _game() => Game(
-  id: 'g1',
-  globalGameSeed: 7,
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-    oldWorld: RegionData(
-      provinces: const [
-        Province(id: 'p1', regionId: 'oldWorld', ownerId: 'def'),
-        Province(id: 'p2', regionId: 'oldWorld', ownerId: 'def'),
-        Province(id: 'p3', regionId: 'oldWorld', ownerId: 'def'),
-      ],
-      units: const [],
-    ),
-    newWorld: const RegionData(),
-  ),
-  players: const [
-    Player(id: 'att', displayName: 'Att', isHuman: true),
-    Player(id: 'def', displayName: 'Def', isHuman: true),
-  ],
-  // medals 9 must clamp to the 0..4 range on assignment.
-  generals: const [
-    General(id: 'gatt1', ownerId: 'att', medals: 9),
-    General(id: 'gatt2', ownerId: 'att', medals: 2),
-    General(id: 'gdef1', ownerId: 'def', medals: 3),
-  ],
-);
+Game _game() => bindGeneralsPhaseGame();
 
 void main() {
   group('bindGeneralsForCombatPhase', () {

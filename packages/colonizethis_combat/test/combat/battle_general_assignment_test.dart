@@ -1,3 +1,4 @@
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_combat/src/combat/leader_bonus_helpers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -8,22 +9,10 @@ void main() {
     test(
         'second attack in same phase excludes general already used as attacker',
         () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'def'),
-              Province(id: 'p2', regionId: 'oldWorld', ownerId: 'def'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'att', displayName: 'Att', isHuman: true),
-          Player(id: 'def', displayName: 'Def', isHuman: true),
+      final game = landResolverMultiProvinceGame(
+        provinces: const [
+          Province(id: 'p1', regionId: 'oldWorld', ownerId: 'def'),
+          Province(id: 'p2', regionId: 'oldWorld', ownerId: 'def'),
         ],
         generals: const [
           General(id: 'g1', ownerId: 'att', medals: 2),
@@ -73,22 +62,10 @@ void main() {
     test('defender pool not filtered by attack ledger for same faction', () {
       final ledger = CombatPhaseGeneralLedger()
         ..attackCommanderGeneralIdsByFaction['att'] = {'g1'};
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'px', regionId: 'oldWorld', ownerId: 'att'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'att', displayName: 'Att', isHuman: true),
-          Player(id: 'def', displayName: 'Def', isHuman: true),
-        ],
+      final game = landResolverBattleGame(
+        provinceId: 'px',
+        units: const [],
+        players: landResolverHumanPlayers,
         generals: const [
           General(id: 'g1', ownerId: 'att', medals: 1),
         ],
@@ -113,15 +90,9 @@ void main() {
     });
 
     test('battleAssignmentRng matches for auto and QB same context', () {
-      final game = Game(
-        id: 'g1',
+      final game = landResolverSeededEmptyGame(
         globalGameSeed: 99,
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
+        turnNumber: 7,
       );
       const ctx = BattleContext(
         provinceId: 'oldWorld|P9',

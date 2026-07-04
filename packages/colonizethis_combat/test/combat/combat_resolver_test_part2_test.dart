@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -6,44 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('resolveEngagement', () {
     test('battle tie-break is deterministic for same seed and context', () {
-      Game makeGame() => Game(
-        id: 'g1',
-        globalGameSeed: 1234,
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def'),
-            ],
-            units: [
-              Unit(
-                id: 'a1',
-                type: 'pikemen',
-                ownerId: 'attA',
-                locationProvinceId: 'p',
-              ),
-              Unit(
-                id: 'a2',
-                type: 'pikemen',
-                ownerId: 'attB',
-                locationProvinceId: 'p',
-              ),
-              Unit(
-                id: 'd1',
-                type: 'pikemen',
-                ownerId: 'def',
-                locationProvinceId: 'p',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'attA', displayName: 'A', isHuman: true),
-          Player(id: 'attB', displayName: 'B', isHuman: true),
-          Player(id: 'def', displayName: 'D', isHuman: true),
-        ],
-      );
+      Game makeGame() => landResolverTieBreakGame();
       const ctx = BattleContext(
         provinceId: 'p',
         regionId: 'oldWorld',
@@ -75,38 +39,23 @@ void main() {
         'great power defender: recovered regiments match most-advanced infantry era 4',
         () {
           const provinceId = 'ma_gp';
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 1,
+          final game = landResolverMutualAnnihilationGame(
+            provinceId: provinceId,
+            defenderOwnerId: 'def',
+            units: [
+              Unit(
+                id: 'aStrong',
+                type: 'rifle_infantry',
+                ownerId: 'att1',
+                locationProvinceId: provinceId,
               ),
-              oldWorld: RegionData(
-                provinces: const [
-                  Province(
-                    id: provinceId,
-                    regionId: 'oldWorld',
-                    ownerId: 'def',
-                  ),
-                ],
-                units: [
-                  Unit(
-                    id: 'aStrong',
-                    type: 'rifle_infantry',
-                    ownerId: 'att1',
-                    locationProvinceId: provinceId,
-                  ),
-                  Unit(
-                    id: 'd1',
-                    type: 'guards',
-                    ownerId: 'def',
-                    locationProvinceId: provinceId,
-                  ),
-                ],
+              Unit(
+                id: 'd1',
+                type: 'guards',
+                ownerId: 'def',
+                locationProvinceId: provinceId,
               ),
-              newWorld: const RegionData(),
-            ),
+            ],
             players: const [
               Player(id: 'att1', displayName: 'A1', isHuman: true),
               Player(id: 'att2', displayName: 'A2', isHuman: true),
@@ -145,41 +94,27 @@ void main() {
         'minor nation effective era 3: recovered regiments are grenadiers',
         () {
           const provinceId = 'ma_minor';
-          final game = Game(
-            id: 'g1',
+          final game = landResolverMutualAnnihilationGame(
+            provinceId: provinceId,
+            defenderOwnerId: 'minor1',
+            turnNumber: 2,
             minorNations: const [
               MinorNation(id: 'minor1', effectiveMilitaryLevel: 3),
             ],
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 2,
+            units: [
+              Unit(
+                id: 'aStrong',
+                type: 'regulars',
+                ownerId: 'att1',
+                locationProvinceId: provinceId,
               ),
-              oldWorld: RegionData(
-                provinces: const [
-                  Province(
-                    id: provinceId,
-                    regionId: 'oldWorld',
-                    ownerId: 'minor1',
-                  ),
-                ],
-                units: [
-                  Unit(
-                    id: 'aStrong',
-                    type: 'regulars',
-                    ownerId: 'att1',
-                    locationProvinceId: provinceId,
-                  ),
-                  Unit(
-                    id: 'd1',
-                    type: 'grenadiers',
-                    ownerId: 'minor1',
-                    locationProvinceId: provinceId,
-                  ),
-                ],
+              Unit(
+                id: 'd1',
+                type: 'grenadiers',
+                ownerId: 'minor1',
+                locationProvinceId: provinceId,
               ),
-              newWorld: const RegionData(),
-            ),
+            ],
             players: const [
               Player(id: 'att1', displayName: 'A1', isHuman: true),
               Player(id: 'att2', displayName: 'A2', isHuman: true),
@@ -215,32 +150,25 @@ void main() {
 
       test('tribe effective era 1: recovered regiments are arquebusiers', () {
         const provinceId = 'ma_tribe';
-        final game = Game(
-          id: 'g1',
+        final game = landResolverMutualAnnihilationGame(
+          provinceId: provinceId,
+          defenderOwnerId: 'tr1',
+          turnNumber: 3,
           tribes: const [Tribe(id: 'tr1')],
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: provinceId, regionId: 'oldWorld', ownerId: 'tr1'),
-              ],
-              units: [
-                Unit(
-                  id: 'aStrong',
-                  type: 'bowmen',
-                  ownerId: 'att1',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
-                  id: 'd1',
-                  type: 'pikemen',
-                  ownerId: 'tr1',
-                  locationProvinceId: provinceId,
-                ),
-              ],
+          units: [
+            Unit(
+              id: 'aStrong',
+              type: 'bowmen',
+              ownerId: 'att1',
+              locationProvinceId: provinceId,
             ),
-            newWorld: const RegionData(),
-          ),
+            Unit(
+              id: 'd1',
+              type: 'pikemen',
+              ownerId: 'tr1',
+              locationProvinceId: provinceId,
+            ),
+          ],
           players: const [
             Player(id: 'att1', displayName: 'A1', isHuman: true),
             Player(id: 'att2', displayName: 'A2', isHuman: true),

@@ -28,7 +28,9 @@ Package: `colonizethis_combat_test_support` workspace package created; `colonize
 
 Lint: `repo.combat_test_no_local_support` — forbids `*_test_support.dart` under `packages/colonizethis_combat/test/**`.
 
-Deferred: `repo.combat_test_duplicate_descriptions` — blocked until `combat_resolver_test_part1_*` duplicate descriptions are resolved during resolver scenario migration (slice 3+).
+Lint: `repo.combat_test_core_fixtures_shared` and `repo.combat_test_duplicate_descriptions` — added slice 9 (Refs #3865).
+
+Deferred: part2/probabilistic table migration during resolver scenario hoisting (slice 9+).
 
 ## Slice 2 — military-strength scenario tables
 
@@ -212,3 +214,33 @@ Modules:
 Deferred: land resolver (`combat_resolver_test_part*`); inline `Game(` gate; lib multiplier helper.
 
 Combat test LOC: 4,156 → 3,803 physical lines (−353 in test files across slice 8).
+
+## Slice 9 — Land resolver engagement/limits tables, inline Game gate, duplicate-description gate
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| cre-attacker-wins-decisively | attacker wins decisively when much stronger | `combat_resolver_test_part1_test.dart` | — |
+| cre-defender-wins | defender wins when much stronger | `combat_resolver_test_part1_test.dart` | — |
+| cre-siege-modifiers | siege modifiers apply when fortLevel >= 1 | `combat_resolver_test_part1_test.dart` | — |
+| cre-feeding-morale-penalty | low attacker feeding coverage penalises strength via morale multiplier | `combat_resolver_test_part1_test.dart` | — |
+| cre-leader-keys-resolve-path | leader keys from Game produce correct multipliers in resolveEngagement path | `combat_resolver_test_part1_test.dart` | — |
+| cre-new-world-context | resolveBattleContext updates newWorld when regionId is newWorld | `combat_resolver_test_part1_test.dart` | — |
+| crl-deployment-cap-base-10 | deployment limit caps participating regiments per side (base 10, no Nationalism) | `combat_resolver_test_part1_limits_test.dart` | — |
+| crl-deployment-cap-nationalism-12 | deployment limit with Nationalism tech is 12 (attacker has 13 units, ≥1 does not participate) | `combat_resolver_test_part1_limits_test.dart` | — |
+| crl-winning-general-medal | assigned winning general gains +1 medal immediately and persists | `combat_resolver_test_part1_limits_test.dart` | — |
+| crl-leader-fallback-no-general | leader fallback medals apply when no uncommitted general exists | `combat_resolver_test_part1_limits_test.dart` | — |
+| crl-general-medal-cap-4 | general medals are capped at 4 on immediate engagement win | `combat_resolver_test_part1_limits_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/combat_resolver_test_support.dart`
+- `colonizethis_combat_test_support/lib/src/combat_resolver_engagement_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/combat_resolver_limits_scenarios.dart`
+- `quick_battle_input_test_support.dart` — `quickBattleInputBuilderGame`, `quickBattleInputBuilderContext`
+
+Removed duplicate file: `combat_resolver_test_part1_deployment_and_general_medals_test.dart` (scenarios consolidated into limits table).
+
+CI gates added: `repo.combat_test_core_fixtures_shared`, `repo.combat_test_duplicate_descriptions`.
+
+Deferred: part2/probabilistic table migration; lib multiplier helper.
+
+Combat test LOC: 3,803 → 2,623 physical lines (−1,180 in test files across slice 9; 30 `*_test.dart` files).

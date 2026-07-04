@@ -1,3 +1,4 @@
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -9,46 +10,35 @@ void main() {
       const provinceId = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: provinceId, regionId: ow, ownerId: 'def'),
-            ],
-            units: [
-              Unit(
-                id: 'att1',
-                type: 'grenadiers',
-                ownerId: 'att',
-                locationProvinceId: provinceId,
-              ),
-              Unit(
-                id: 'def1',
-                type: 'peasant_levies',
-                ownerId: 'def',
-                locationProvinceId: provinceId,
-              ),
-            ],
+      final game = combatSpyTimerGame(
+        provinceId: provinceId,
+        regionId: ow,
+        defenderOwnerId: 'def',
+        units: [
+          Unit(
+            id: 'att1',
+            type: 'grenadiers',
+            ownerId: 'att',
+            locationProvinceId: provinceId,
           ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'att': {tileKey: 'fullyVisible'},
-          },
-          spyRevealTurnsByPlayer: const {
-            'att': {provinceId: 3},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              provinceId: [tileKey],
-            },
-          },
-        ),
-        players: const [
-          Player(id: 'att', displayName: 'Att', isHuman: true),
-          Player(id: 'def', displayName: 'Def', isHuman: true),
+          Unit(
+            id: 'def1',
+            type: 'peasant_levies',
+            ownerId: 'def',
+            locationProvinceId: provinceId,
+          ),
         ],
+        playerVisibilityByTile: const {
+          'att': {tileKey: 'fullyVisible'},
+        },
+        spyRevealTurnsByPlayer: const {
+          'att': {provinceId: 3},
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            provinceId: [tileKey],
+          },
+        },
       );
 
       const ctx = BattleContext(
@@ -82,37 +72,32 @@ void main() {
       const provinceId = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [
-              Unit(
-                id: 'att1',
-                type: 'grenadiers',
-                ownerId: 'gp2',
-                locationProvinceId: provinceId,
-              ),
-              Unit(
-                id: 'def1',
-                type: 'peasant_levies',
-                ownerId: 'minor1',
-                locationProvinceId: provinceId,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          purchasedTilesByTileKey: const {tileKey: 'gp1'},
-        ),
+      final game = combatResolverMinimalGame(
         players: const [
           Player(id: 'gp1', displayName: 'Investor', isHuman: true),
           Player(id: 'gp2', displayName: 'Aggressor', isHuman: false),
         ],
         minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: provinceId, regionId: ow, ownerId: 'minor1'),
+          ],
+          units: [
+            Unit(
+              id: 'att1',
+              type: 'grenadiers',
+              ownerId: 'gp2',
+              locationProvinceId: provinceId,
+            ),
+            Unit(
+              id: 'def1',
+              type: 'peasant_levies',
+              ownerId: 'minor1',
+              locationProvinceId: provinceId,
+            ),
+          ],
+        ),
+        purchasedTilesByTileKey: const {tileKey: 'gp1'},
       );
 
       const ctx = BattleContext(
@@ -147,48 +132,7 @@ void main() {
         const cCapProvince = '$ow|C1';
         const cCapTile = '$ow|C1|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: provinceId, regionId: ow, ownerId: 'def'),
-                Province(id: cCapProvince, regionId: ow, ownerId: 'civ'),
-              ],
-              units: [
-                Unit(
-                  id: 'att1',
-                  type: 'grenadiers',
-                  ownerId: 'att',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
-                  id: 'def1',
-                  type: 'peasant_levies',
-                  ownerId: 'def',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
-                  id: 'civ1',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'civ',
-                  locationProvinceId: provinceId,
-                  tileKey: tileKey,
-                  status: UnitStatus.working,
-                  currentWork: CurrentWork(
-                    workTarget: kWorkTargetBuildRoad,
-                    tileKey: tileKey,
-                    totalTurns: 2,
-                    remainingTurns: 1,
-                  ),
-                  originTileKey: tileKey,
-                  assignedTileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = combatResolverMinimalGame(
           players: const [
             Player(id: 'att', displayName: 'Attacker', isHuman: true),
             Player(id: 'def', displayName: 'Defender', isHuman: true),
@@ -205,6 +149,42 @@ void main() {
               ),
             ),
           ],
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'def'),
+              Province(id: cCapProvince, regionId: ow, ownerId: 'civ'),
+            ],
+            units: [
+              Unit(
+                id: 'att1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: provinceId,
+              ),
+              Unit(
+                id: 'def1',
+                type: 'peasant_levies',
+                ownerId: 'def',
+                locationProvinceId: provinceId,
+              ),
+              Unit(
+                id: 'civ1',
+                type: kUnitTypeBuilder,
+                ownerId: 'civ',
+                locationProvinceId: provinceId,
+                tileKey: tileKey,
+                status: UnitStatus.working,
+                currentWork: CurrentWork(
+                  workTarget: kWorkTargetBuildRoad,
+                  tileKey: tileKey,
+                  totalTurns: 2,
+                  remainingTurns: 1,
+                ),
+                originTileKey: tileKey,
+                assignedTileKey: tileKey,
+              ),
+            ],
+          ),
         );
 
         const ctx = BattleContext(
@@ -246,42 +226,7 @@ void main() {
         const cCapProvince = '$ow|C1';
         const cCapTile = '$ow|C1|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: provinceId, regionId: ow, ownerId: 'def'),
-                Province(id: cCapProvince, regionId: ow, ownerId: 'civ'),
-              ],
-              units: [
-                Unit(
-                  id: 'att1',
-                  type: 'grenadiers',
-                  ownerId: 'att',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
-                  id: 'def1',
-                  type: 'peasant_levies',
-                  ownerId: 'def',
-                  locationProvinceId: provinceId,
-                ),
-                Unit(
-                  id: 'civ1',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'civ',
-                  locationProvinceId: provinceId,
-                  tileKey: tileKey,
-                  status: UnitStatus.idle,
-                  originTileKey: tileKey,
-                  assignedTileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = combatResolverMinimalGame(
           players: const [
             Player(id: 'att', displayName: 'Attacker', isHuman: true),
             Player(id: 'def', displayName: 'Defender', isHuman: true),
@@ -298,6 +243,36 @@ void main() {
               ),
             ),
           ],
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: provinceId, regionId: ow, ownerId: 'def'),
+              Province(id: cCapProvince, regionId: ow, ownerId: 'civ'),
+            ],
+            units: [
+              Unit(
+                id: 'att1',
+                type: 'grenadiers',
+                ownerId: 'att',
+                locationProvinceId: provinceId,
+              ),
+              Unit(
+                id: 'def1',
+                type: 'peasant_levies',
+                ownerId: 'def',
+                locationProvinceId: provinceId,
+              ),
+              Unit(
+                id: 'civ1',
+                type: kUnitTypeBuilder,
+                ownerId: 'civ',
+                locationProvinceId: provinceId,
+                tileKey: tileKey,
+                status: UnitStatus.idle,
+                originTileKey: tileKey,
+                assignedTileKey: tileKey,
+              ),
+            ],
+          ),
         );
 
         const ctx = BattleContext(
