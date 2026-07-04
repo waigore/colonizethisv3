@@ -439,7 +439,10 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) => expect(result, equals(<CommodityId, int>{'timber': 1})),
+    verify: (result) => expect(
+      result['m1'],
+      equals(<CommodityId, int>{'timber': 1}),
+    ),
     refs: '#2991 #3870',
   ),
 ];
