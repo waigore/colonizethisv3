@@ -74,7 +74,8 @@ OrderValidationResult? precheckUpgradeTown(
   }
   if (targetProvinceId != null) {
     final province = ctx.game.worldState.tryGetProvince(targetProvinceId);
-    if (province != null && province.townDevelopmentLevel >= 4) {
+    if (province != null &&
+        province.townDevelopmentLevel >= kTownDevelopmentLevelMax) {
       return OrderValidationResult.rejected(
         'Town development level already at maximum (4)',
       );

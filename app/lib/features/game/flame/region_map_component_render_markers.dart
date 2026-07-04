@@ -314,7 +314,10 @@ extension _CtRegionMapRenderMarkers on CtRegionMapComponent {
         cell: cell,
         cx: town.x,
         cy: town.y,
-        icon: TownIconCache.townIconId,
+        icon: TownIconCache.townIconIdForMarker(
+          townIconStyle: town.townIconStyle,
+          townDevelopmentLevel: town.townDevelopmentLevel,
+        ),
       );
     }
 

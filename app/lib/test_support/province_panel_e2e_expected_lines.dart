@@ -165,6 +165,11 @@ List<String> provincePanelWideLayoutExpectedTexts(
           ? l10n.provinceOverlay_capitalYes
           : l10n.provinceOverlay_capitalNo,
     );
+    out.add(
+      l10n.provinceOverlay_townDevelopment(
+        province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+      ),
+    );
   });
 
   addSection('Tile', () {
