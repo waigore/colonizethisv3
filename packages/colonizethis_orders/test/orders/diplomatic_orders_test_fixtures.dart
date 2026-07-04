@@ -6,6 +6,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 const emptyTopology = MapTopology(nodes: [], edges: []);
 
+/// Default GP treasury for order-engine diplomatic validation tests.
+const gpMinorOrderEngineTreasury = 5000;
+
 /// Parameterized GP + Minor Nation fixture used across diplomatic validator,
 /// order-engine, and panel-action tests.
 Game gpMinorGame({
@@ -94,22 +97,6 @@ Game gpMinorGame({
     overtureStates: resolvedOvertureStates,
   );
 }
-
-/// Panel-action and order-engine tests that previously used [gpMinorBaseGame].
-Game gpMinorBaseGame({
-  RelationState relationState = RelationState.atPeace,
-  int relationScore = 50,
-  OvertureStage overtureStage = OvertureStage.none,
-  int treasury = 5000,
-  Map<String, bool>? techUnlocked,
-}) =>
-    gpMinorGame(
-      relationState: relationState,
-      relationScore: relationScore,
-      overtureStage: overtureStage,
-      treasury: treasury,
-      techUnlocked: techUnlocked,
-    );
 
 /// GP + Minor + second GP with provinces for diplomatic panel action tests.
 Game gpMinorPanelActionsGame() => gpMinorGame(

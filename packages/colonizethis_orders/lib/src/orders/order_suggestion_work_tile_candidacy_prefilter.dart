@@ -12,8 +12,6 @@ import 'orders_application_helpers.dart';
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
 // ---------------------------------------------------------------------------
 
-/// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
-/// Returns a set of candidate tile keys that pass work-target requirements.
 Set<String> preFilterWorkTargetTiles({
   required Game game,
   required String workTarget,
@@ -48,8 +46,6 @@ Set<String> preFilterWorkTargetTiles({
   return result;
 }
 
-/// Iterates every tile in land provinces (prefixed province ids), skipping sea zones.
-/// Used by work-target pre-filtering; per-tile logic lives in [onTile].
 void _forEachPrefixedProvinceTile({
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required void Function(String provinceId, String tileKey) onTile,
@@ -65,7 +61,6 @@ void _forEachPrefixedProvinceTile({
   }
 }
 
-/// All land tiles in owned provinces with prefixed ids (build_port, counter_spy pre-filter).
 void _addAllTilesInOwnedPrefixedProvinces({
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Set<String> ownedProvinceIds,
@@ -81,10 +76,6 @@ void _addAllTilesInOwnedPrefixedProvinces({
   }
 }
 
-/// Adds candidate tiles for upgrade_town/build_fort: town tiles in owned provinces.
-///
-/// Iterates [ownedProvinceIds] with O(1) [WorldState.tryGetProvince] lookups
-/// instead of scanning every province in both regions (Refs #2394).
 void _addCandidateTilesForTownWork({
   required Game game,
   required Set<String> ownedProvinceIds,
@@ -100,7 +91,6 @@ void _addCandidateTilesForTownWork({
   }
 }
 
-/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
 class _WorkTilePrefilterCtx {
   _WorkTilePrefilterCtx({
     required this.game,
