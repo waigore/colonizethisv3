@@ -18,7 +18,7 @@ Monorepo layout:
 
 - **`AppEventHandlerScope`** (`app/lib/core/services/app_event_handler_scope.dart`) binds session-scoped bus listeners. Session subscriptions are split into `part` files by event family (observe, civilian work, naval/army, diplomacy, debug), each capped at 500 non-comment lines (`repo.app_event_handler_part_size`).
 - **`DebugCommandSessionHandler`** and **`ObserveModeSessionHandler`** apply ctdev/debug and observe-mode session mutations without importing feature panels.
-- Planned **`colonizethis_app_e2e_support`** workspace package (Phase 1) will host E2E/widget mirror helpers currently under `app/integration_test/` and `app/test/e2e_*`.
+- **`colonizethis_app_e2e_support`** (`packages/colonizethis_app_e2e_support`) hosts E2E/widget mirror helpers (`e2e_helpers.dart`, `e2e_test_shared*.dart`, panel expected-line fixtures) previously under `app/integration_test/` and `app/test/e2e_*`. `app/test` retains only barrel/contract tests (≤10 `e2e_*.dart` files); integration scenarios import the support package. Seed-42 demo fixtures remain in `app/lib/test_support/` (production/widgetbook consumers).
 
 ---
 

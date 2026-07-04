@@ -431,6 +431,13 @@ rules:
     runner: dart
     script: tool/check_app_event_handler_part_size.dart
 
+  - rule_id: repo.app_e2e_helper_location
+    group: architecture
+    title: E2E helpers and mirror tests must live in colonizethis_app_e2e_support
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_app_e2e_helper_location.dart
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
