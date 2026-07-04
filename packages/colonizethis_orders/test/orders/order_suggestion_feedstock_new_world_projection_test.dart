@@ -10,8 +10,9 @@ import 'package:colonizethis_test/test.dart';
 // `ProvinceOwnerCache.countOwnedByInRegion(playerId, kRegionNewWorld)`.
 const _supplierId = 'gp1';
 const _sellerId = 'gp2';
-const _timberTile = 'oldWorld|gp1-s0|1|0';
 const _grainTile = 'oldWorld|gp1-s0|0|0';
+const _timberTile = 'oldWorld|gp1-s0|1|0';
+const _ironTile = 'oldWorld|gp1-s0|2|0';
 const _sellerWoolTile = 'oldWorld|gp2-p0|0|0';
 
 Game _feedstockGateGame({int sellerNw = 0}) {
@@ -45,19 +46,28 @@ Game _feedstockGateGame({int sellerNw = 0}) {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(provinces: provinces),
       newWorld: RegionData(provinces: newWorldProvinces),
+      playerProspectedTiles: const {
+        _supplierId: {_ironTile},
+      },
       tileKeysByRegionAndProvince: const {
         kRegionOldWorld: {
-          'oldWorld|gp1-s0': [_grainTile, _timberTile],
+          'oldWorld|gp1-s0': [_grainTile, _timberTile, _ironTile],
           'oldWorld|gp2-p0': [_sellerWoolTile],
         },
       },
       resourceByTileKey: const {
         _grainTile: 'grain',
         _timberTile: 'timber',
+        _ironTile: 'iron',
         _sellerWoolTile: 'wool',
       },
       tileState: const TileMapState(
-        improvementByTile: {_grainTile: 0, _timberTile: 0, _sellerWoolTile: 0},
+        improvementByTile: {
+          _grainTile: 0,
+          _timberTile: 0,
+          _ironTile: 0,
+          _sellerWoolTile: 0,
+        },
       ),
     ),
     players: [
@@ -89,7 +99,7 @@ void main() {
           _feedstockGateGame(),
           _supplierId,
         ),
-        containsAll(<String>['timber', 'iron']),
+        contains('iron'),
       );
 
       final game = _feedstockGateGame(sellerNw: 1);

@@ -160,9 +160,106 @@ Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treas
 
 Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
 
+## Phase 2 — Slice 2 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| offer-cap-* | four offerCapByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+| staged-offer-* | four stagedOfferQuantitiesByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+| sellable-headroom-* | ten sellableHeadroomByCommodityId rows | `world_market_sellable_quantity_test.dart` | #3093 |
+
+Module: `colonizethis_economy_test_support/lib/src/sellable_quantity_scenarios.dart`
+
+## Phase 2 — Slice 3 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| pti-attrib-equality | equality holds across all four fields | `purchased_tile_index_test.dart` | — |
+| pti-attrib-inequality | inequality on any differing field | `purchased_tile_index_test.dart` | — |
+| pti-attrib-tostring | toString surfaces every field for trace logs | `purchased_tile_index_test.dart` | — |
+| pti-d1-1 | AC-D1-1 — empty world yields empty index | `purchased_tile_index_test.dart` | D1-1 |
+| pti-d1-2 | AC-D1-2 — minor-owned purchased tile resolves attribution | `purchased_tile_index_test.dart` | D1-2 |
+| pti-d1-3 | AC-D1-3 — tribe-owned purchased tile resolves attribution | `purchased_tile_index_test.dart` | D1-3 |
+| pti-d1-4 | AC-D1-4 — GP-owned province excludes attribution (post-conquest) | `purchased_tile_index_test.dart` | D1-4 |
+| pti-d1-5 | AC-D1-5 — unowned province excludes attribution | `purchased_tile_index_test.dart` | D1-5 |
+| pti-d1-6 | AC-D1-6 — unmapped tile key excludes attribution | `purchased_tile_index_test.dart` | D1-6 |
+| pti-d1-7 | AC-D1-7 — determinism: repeated builds return equal attributions | `purchased_tile_index_test.dart` | D1-7 |
+| pti-mixed-minor-tribe | mixed minor + tribe purchases coexist in the same index | `purchased_tile_index_test.dart` | — |
+| pti-empty-owning-gp | empty owningGpId entry is dropped defensively | `purchased_tile_index_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/purchased_tile_index_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/purchased_tile_index_test_support.dart`
+
+## Phase 2 — Slice 4 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| ptr-c5-credit | AC purchased-tile riches handoff — credit: improved gold tile in minor province credits owning GP at improvementLevel × basePrice × multiplier | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-multiplier | multiplier is honoured: richesCashMultiplier=1.5 applies before truncation | `purchased_tile_riches_test.dart` | — |
+| ptr-non-riches | AC purchased-tile riches handoff — non-riches resource: timber tile produces no credit (commodities flow through world market instead) | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-unimproved | AC purchased-tile riches handoff — unimproved tile: improvementLevel=0 produces no credit even when the resource is in the riches set | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-no-transport | tile with no road and no port produces no credit (transport level 0 caps yield to 0) | `purchased_tile_riches_test.dart` | — |
+| ptr-port-yield | port-flagged tile yields even without road (port = transport 4) | `purchased_tile_riches_test.dart` | — |
+| ptr-post-conquest | AC purchased-tile riches handoff — post-conquest filter: when the purchased province is now owned by a Great Power, no credit is emitted (the index filters it out at build time) | `purchased_tile_riches_test.dart` | #2991 C5 |
+| ptr-tribe-spices | tribe-owned purchased tile producing spices credits the owning GP | `purchased_tile_riches_test.dart` | — |
+| ptr-multi-gp | multi-tile aggregation — distinct GPs each accrue their own credits | `purchased_tile_riches_test.dart` | — |
+| ptr-empty-index | empty index returns empty result (no work done) | `purchased_tile_riches_test.dart` | — |
+| ptr-empty-tilemaps | empty tileMapByRegion returns empty result | `purchased_tile_riches_test.dart` | — |
+| ptr-determinism | determinism — two calls with the same inputs return equal credits | `purchased_tile_riches_test.dart` | — |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/purchased_tile_riches_scenarios.dart`
+- Extended `colonizethis_economy_test_support/lib/src/purchased_tile_riches_test_support.dart` (post-conquest, tribe, multi-GP builders)
+
+## Phase 2 — Slice 5 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| suggester-empty-* | three empty / defensive-path rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-offer-* | four surplus-offer detection rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-bid-* | three deficit-bid detection rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-bid-cap-* | three bid type cap (rule 4) rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-cargo-* | three cumulative cargo cap (rule 5) rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+| suggester-validator-* | two validator-clean-by-construction rows | `world_market_trade_order_suggester_test.dart` | #2989 |
+
+Module: `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart`
+
+## Phase 2 — Slice 6 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| suggester-treasury-* | three cumulative treasury cap (rule 5) rows | `world_market_trade_order_suggester_treasury_test.dart` | #3123 |
+| player-ctx-snapshot-* | four `worldMarketPlayerContextFromGame` snapshot rows | `world_market_player_context_test.dart` | #3615 |
+| player-ctx-factory-* | two factory parity rows over the shared snapshot | `world_market_player_context_test.dart` | #3615 |
+| player-ctx-suggestion-* | three `tradeSuggestionContextFromGame` behavior rows | `world_market_player_context_test.dart` | #3615 |
+
+Modules:
+- Extended `colonizethis_economy_test_support/lib/src/trade_order_suggester_scenarios.dart` (`tradeOrderSuggesterTreasuryCapScenarios`)
+- `colonizethis_economy_test_support/lib/src/player_context_scenarios.dart`
+
+## Phase 2 — Slice 7 (Refs #3856)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| pd-next-* | nine `PriceDiscovery.computeNextPrice` rows | `world_market_price_discovery_test.dart` | — |
+| pd-activity-* | four `PriceDiscovery.computeMarketActivity` rows | `world_market_price_discovery_test.dart` | — |
+| admission-rule3-* | four `commoditiesWithBidAndOffer` rows | `trade_order_admission_test.dart` | #3615 |
+| admission-rule4-* | five `admittedBidCommodityIdsInSubmissionOrder` rows | `trade_order_admission_test.dart` | #3615 |
+| ctx-base-* | two `WorldMarketContextBase` field-carrying rows | `world_market_context_base_test.dart` | #3396 |
+| gp-treasury-int-* | five int accumulator rows | `gp_treasury_credit_accumulator_test.dart` | — |
+| gp-treasury-double-* | three double accumulator rows | `gp_treasury_credit_accumulator_test.dart` | — |
+| boycott-blocked-* | seven `boycottedColonySellableCommodityIds` rows | `world_market_boycott_blocked_commodities_test.dart` | #3758 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/price_discovery_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/trade_order_admission_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/world_market_context_base_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/gp_treasury_credit_accumulator_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/boycott_blocked_commodities_scenarios.dart`
+
 ## Deferred (phase 2 follow-up slices)
 
-- Remaining 13 imperative world-market test files → scenario tables
+- Remaining 3 imperative world-market test files → scenario tables (`world_market_trade_order_validator_test.dart`, `first_right_profit_test.dart`, `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`)
 - Core economy suites (`economy_consumption_test.dart`, etc.) → scenario tables
-- `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart` migration
-- ≥15% test LOC reduction target (≤6,500 LOC)
+- ≥15% test LOC reduction target (≤6,500 LOC) — met in prior slice; maintain on follow-up migrations

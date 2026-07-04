@@ -36,7 +36,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4; prospect-required minerals → tile must be prospected (same gate as extraction / `purchase_land`) |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
-| build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |
+| build_port | Engineer | 5 lumber + 5 cast iron | Config | Coastal/river; transport 4 |
 | build_fort | Engineer | Per siege-mechanics | Config (1+ turn per level) | Town tile; fort level 1–3 |
 | build_rail | Rail Builder | 2 lumber + 2 steel | Config | Road 1–2→4; rail tech vs terrain |
 | counter_spy | Spy | — | Ongoing | Target = **owned province**; one spy on `counter_spy` anywhere grants empire-wide +5% kill bonus and 10%/turn defection chance against enemy spies in all owned provinces (Refs #3834) |

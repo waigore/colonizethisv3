@@ -67,7 +67,7 @@ Game _regimentRebuildProductionGame({
 /// (`regimentBuildInputFeedstockImprovementInputCost`) is active: recovered
 /// treasury, zero regiments, 3 Old World provinces, zero New World, missing
 /// `fabric`, and an owned **unimproved** `wool` resource tile. Holds
-/// `timber` + `iron` so the `castIron_from_timber_iron_coal` recipe is feasible,
+/// `timber` + `iron` so the `castIron_from_iron` recipe is feasible,
 /// and zero `castIron`. Refs #2847 § H8-extraction castIron residual.
 Game _castIronImprovementInputGame({
   required int treasury,
@@ -182,7 +182,7 @@ Game _supplierCastIronSourceGame({
 /// gate is active, with **configurable** `timber` / `iron` feedstock so a test
 /// can pin the partial-feedstock state where the single-input
 /// `lumber_from_timber` recipe would otherwise drain the `timber` the
-/// multi-input `castIron_from_timber_iron_coal` recipe is assembling
+/// multi-input `castIron_from_iron` recipe is assembling
 /// (Refs #2847 § H8-extraction feedstock co-availability). When [gateActive] is
 /// false the unimproved feedstock tile is removed, so the seller is no longer a
 /// reserve-target GP (negative control — no feedstock reservation).
@@ -228,7 +228,7 @@ Game _castIronFeedstockCoavailabilityGame({
 /// A below-quota zero-NW lock-recovery seller whose **fabric** improvement-cost
 /// gate is inactive — it owns a `castIron`-feedstock (`timber`) tile but **no**
 /// unimproved `wool` / `cotton` tile — yet co-holds `timber` + `iron` so the
-/// `castIron_from_timber_iron_coal` recipe is materially feasible. This is the
+/// `castIron_from_iron` recipe is materially feasible. This is the
 /// seed-42 gp5 profile after its fabric feedstock tile has been improved: the
 /// prior `selfLockRecoverySellerNeededProducibleImprovementInputs` set is empty
 /// here, so only the new stageable path can assign the domestic castIron run.
@@ -296,11 +296,11 @@ PhasePlanOutcome _expandForceRegimentBuildPlan({
 /// Lock-recovery seller holding one `fabric` (enough for regiment build but
 /// short the 2-`fabric` peasant recruit row) with wool feedstock for a
 /// domestic fabric run, castIron material-feasible yet labour-population-bound
-/// (2 peasants < castIron run labour). Refs #2847 castIron-labour peasant-recruit
+/// (1 peasant < castIron run labour of 2). Refs #2847 castIron-labour peasant-recruit
 /// fabric bootstrap.
 Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
   const ow = 'oldWorld';
-  const tileTimber = 'oldWorld|seller_0|2|0';
+  const tileIron = 'oldWorld|seller_0|2|0';
   return Game(
     id: 'g-h8-peasant-recruit-fabric',
     worldState: WorldState(
@@ -312,10 +312,10 @@ Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
         ],
       ),
       newWorld: const RegionData(provinces: []),
-      resourceByTileKey: const {tileTimber: 'timber'},
+      resourceByTileKey: const {tileIron: 'iron'},
       tileKeysByRegionAndProvince: const {
         ow: {
-          '$ow|seller_0': [tileTimber],
+          '$ow|seller_0': [tileIron],
         },
       },
     ),
@@ -328,11 +328,10 @@ Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
         treasury: cheapestRegimentBuildTreasuryCost(),
         stockpile: Stockpile.empty
             .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.timber.id, 2)
-            .applyDelta(CommodityCatalog.iron.id, 2)
+            .applyDelta(CommodityCatalog.iron.id, 4)
             .applyDelta(CommodityCatalog.wool.id, 10)
             .applyDelta(CommodityCatalog.fabric.id, fabricHeld),
-        workerPool: const WorkerPool(peasants: 2),
+        workerPool: const WorkerPool(peasants: 1),
       ),
     ],
   );
@@ -536,7 +535,7 @@ void main() {
 
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'When the seller must produce castIron domestically (no market '
               'supply) and holds the timber + iron feedstock, the production '
@@ -580,7 +579,7 @@ void main() {
           seeds: seeds,
         );
         final castIronId =
-            ProductionRecipesCatalog.castIronFromTimberIronCoal.id;
+            ProductionRecipesCatalog.castIronFromIron.id;
         int castIronLabour(EconomyPlan plan) => plan.productionAssignments
             .where((a) => a.recipeId == castIronId)
             .fold<int>(0, (sum, a) => sum + a.assignedLabour);
@@ -598,7 +597,7 @@ void main() {
     int castIronLabour(EconomyPlan plan) => plan.productionAssignments
         .where(
           (a) =>
-              a.recipeId == ProductionRecipesCatalog.castIronFromTimberIronCoal.id,
+              a.recipeId == ProductionRecipesCatalog.castIronFromIron.id,
         )
         .fold<int>(0, (sum, a) => sum + a.assignedLabour);
 
@@ -617,7 +616,7 @@ void main() {
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'A supplier that is not a locked seller must over-produce castIron '
               'for release while a peer lock-recovery seller still needs the '
@@ -756,13 +755,9 @@ void main() {
     );
 
     test(
-      'reserve-target GP withholds timber from the competing lumber recipe '
-      'while assembling a castIron run (Refs #2847 H8-extraction feedstock '
-      'co-availability)',
+      'iron-only castIron no longer reserves timber for co-availability '
+      '(Refs #3858)',
       () {
-        // 2 timber + 0 iron: enough timber for one lumber_from_timber run but
-        // not yet a castIron run. The reserve must withhold the 2 timber so the
-        // single-input lumber recipe cannot drain it.
         final game = _castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
@@ -777,10 +772,10 @@ void main() {
         );
         expect(
           lumberLabour(plan),
-          0,
+          greaterThan(0),
           reason:
-              'With the castIron reserve active, the 2 held timber are withheld '
-              'from lumber_from_timber so they carry over toward a castIron run.',
+              'With iron-only castIron the timber feedstock reserve is inactive; '
+              'lumber_from_timber may consume held timber.',
         );
       },
     );
@@ -837,7 +832,7 @@ void main() {
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'With timber + iron co-available the reserved feedstock lets the '
               'boosted castIron recipe run.',
@@ -879,16 +874,9 @@ void main() {
     );
 
     test(
-      'single-input lumber is excluded from the castIron feedstock reserve so '
-      'co-availability is preserved even when the seller also needs lumber '
-      '(Refs #2847 H8-extraction S7-D lumber re-localization)',
+      'iron-only castIron and lumber no longer compete on timber feedstock '
+      '(Refs #3858)',
       () {
-        // 2 timber + 2 iron: exactly one castIron run is co-available. Even
-        // though the seller is now also short lumber (so lumber is in the
-        // domestic production set), lumber is single-input and must be excluded
-        // from the feedstock reserve — otherwise it would drain the 2 timber the
-        // castIron run is assembling. The reserve withholds the timber from
-        // lumber_from_timber, and the castIron run proceeds.
         final game = _castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
@@ -903,17 +891,14 @@ void main() {
         );
         expect(
           lumberLabour(plan),
-          0,
+          greaterThan(0),
           reason:
-              'Single-input lumber must not be a reserve target; the 2 timber '
-              'stay withheld for the multi-input castIron run.',
+              'Single-input lumber and iron-only castIron use disjoint feedstock; '
+              'timber is not reserved for castIron co-availability.',
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
-          reason:
-              'With timber + iron co-available the reserved feedstock lets the '
-              'boosted castIron recipe run despite the concurrent lumber need.',
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
         );
       },
     );
@@ -956,7 +941,7 @@ void main() {
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id),
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'A recovered lock-recovery seller that no longer owns an '
               'unimproved fabric tile but still co-holds timber + iron and owns '
@@ -1047,8 +1032,8 @@ void main() {
     );
 
     test(
-      'castIron-labour peasant-recruit fabric boost stages fabric when one unit '
-      'is held but recruit cost is two (Refs #2847)',
+      'castIron-labour peasant-recruit fabric boost leaves assignments empty '
+      'when one peasant cannot run 2-labour recipes (Refs #3858)',
       () {
         final game = _castIronLabourPeasantRecruitFabricStagingGame(
           fabricHeld: 1,
@@ -1066,18 +1051,17 @@ void main() {
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.fabricFromWool.id),
+          isEmpty,
           reason:
-              'One fabric is enough for regiment build but not the 2-fabric '
-              'peasant recruit row; the castIron-labour fabric boost must still '
-              'stage domestic fabric production.',
+              'One effective labour cannot satisfy the 2-labour fabric or '
+              'castIron rows; population-bound staging waits for a recruit.',
         );
       },
     );
 
     test(
-      'castIron-labour fabric pre-pass wins over castIron when labour is tight '
-      '(Refs #2847)',
+      'castIron-labour fabric pre-pass defers to castIron when both recipes '
+      'need only two labour and the seller holds four peasants (Refs #3858)',
       () {
         final base = _castIronLabourPeasantRecruitFabricStagingGame(
           fabricHeld: 0,
@@ -1098,14 +1082,14 @@ void main() {
         );
         expect(
           _assignedRecipeIds(plan),
-          contains(ProductionRecipesCatalog.fabricFromWool.id),
+          contains(ProductionRecipesCatalog.castIronFromIron.id),
         );
         expect(
           _assignedRecipeIds(plan),
-          isNot(contains(ProductionRecipesCatalog.castIronFromTimberIronCoal.id)),
+          isNot(contains(ProductionRecipesCatalog.fabricFromWool.id)),
           reason:
-              'With only four effective labour the fabric pre-pass must '
-              'consume two before castIron can claim the full five.',
+              'With iron-only castIron at 2 labour the planner assigns castIron '
+              'before fabric when both are feasible on four peasants.',
         );
       },
     );

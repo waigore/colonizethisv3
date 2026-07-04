@@ -151,7 +151,7 @@ void main() {
       'seller already holding the castIron production feedstock emits no '
       'castIron or feedstock bid, but still bids a missing direct input (lumber)',
       () {
-        // Enough timber + iron for one castIron_from_timber_iron_coal run, but
+        // Enough timber + iron for one castIron_from_iron run, but
         // zero lumber: castIron is produced domestically (no bid), lumber is
         // still acquired directly from the market.
         final orders = _run(
