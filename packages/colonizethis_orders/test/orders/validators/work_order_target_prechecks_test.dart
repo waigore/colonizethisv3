@@ -114,6 +114,7 @@ void main() {
             kWorkTargetCounterSpy,
             kWorkTargetPurchaseLand,
             kWorkTargetBuildImprovement,
+            kWorkTargetUpgradeTown,
           }),
         );
       },

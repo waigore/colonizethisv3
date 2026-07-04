@@ -144,3 +144,36 @@ Map<String, List<TradeOrder>> computeMinorTribeAutoOffers({
     connectivityByFactionId: connectivity,
   );
 }
+
+Map<String, List<TradeOrder>> computeMinorTribeTownManufacturingAutoOffers({
+  required Game game,
+  required TurnResolverConfig config,
+}) {
+  final tileMaps = config.tileMapByRegion;
+  if (tileMaps == null || tileMaps.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  if (game.minorNations.isEmpty && game.tribes.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  final gpConnectivity = resolveConnectivity(
+    game: game,
+    tileMapByRegion: tileMaps,
+    topology: config.topology,
+  );
+  final nonGpConnectivity = resolveNonGreatPowerConnectivity(
+    game: game,
+    tileMapByRegion: tileMaps,
+    topology: config.topology,
+  );
+  final bonus = computeTownManufacturingBonusForGame(
+    game: game,
+    tileMapByRegion: tileMaps,
+    gpConnectivityByPlayerId: gpConnectivity,
+    nonGpConnectivityByFactionId: nonGpConnectivity,
+  );
+  return townManufacturingBonusToAutoOffers(
+    game: game,
+    bonusByFactionId: bonus.bonusByFactionId,
+  );
+}

@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_work_constants.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_helpers.dart';
 
@@ -223,6 +224,39 @@ void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
   );
 }
 
+void _prefilterWtUpgradeTown(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+  _addMinorTribeTownTilesForEmbassyUpgrade(c);
+}
+
+void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterCtx c) {
+  final factionMembership =
+      c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (c.ownedProvinceIds.contains(provinceId)) continue;
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) continue;
+      final ownerId = province.ownerId;
+      if (ownerId == null || ownerId == c.playerId) continue;
+      if (!factionMembership.isMinorOrTribe(ownerId)) continue;
+      final rel = getRelation(c.game, c.playerId, ownerId);
+      if (rel?.atWar == true) continue;
+      final overture = getOverture(c.game, c.playerId, ownerId);
+      if (overture == null || !overture.hasEmbassy) continue;
+      final townTileKey = province.townTileKey;
+      if (townTileKey == null || townTileKey.isEmpty) continue;
+      c.result.add(townTileKey);
+    }
+  }
+}
+
 void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
   _addAllTilesInOwnedPrefixedProvinces(
     tileKeysByRegion: c.tileKeysByRegion,
@@ -299,7 +333,7 @@ final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
       kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
       kWorkTargetBuildRoad: _prefilterWtBuildRoad,
       'build_rail': _prefilterWtBuildRail,
-      kWorkTargetUpgradeTown: _prefilterWtTownWork,
+      kWorkTargetUpgradeTown: _prefilterWtUpgradeTown,
       kWorkTargetBuildFort: _prefilterWtTownWork,
       kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
       kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,

@@ -55,6 +55,17 @@ Game runExtractionPhase(
       return extractionCapForUnlocked(player?.techUnlocked);
     },
   );
+  final nonGpConnectivity = resolveNonGreatPowerConnectivity(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  final townBonus = computeTownManufacturingBonusForGame(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    gpConnectivityByPlayerId: connectivity,
+    nonGpConnectivityByFactionId: nonGpConnectivity,
+  );
   var currentState = state;
   // Not [Game.mapPlayers]: [currentState] (fleets) may change between players.
   final updatedPlayers = <Player>[];
@@ -106,6 +117,10 @@ Game runExtractionPhase(
         currentState = currentState.withFleets(interception.updatedFleets);
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
+    }
+    final manufacturingBonus = townBonus.bonusByFactionId[player.id];
+    if (manufacturingBonus != null && manufacturingBonus.isNotEmpty) {
+      stockpile = applyExtractionToStockpile(stockpile, manufacturingBonus);
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
