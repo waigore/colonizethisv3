@@ -135,12 +135,26 @@ extractionAutoTransportFixture({
             regionId: nw,
             ownerId: 'pl1',
             townDevelopmentLevel: 4,
+            townTileKey: '$nw|n1|0|0',
           ),
         ],
       ),
       tileState: tileState,
       portsByProvinceSeaboard: ports,
       fleets: [homeFleet, ...extraFleets],
+      tileKeysByRegionAndProvince: {
+        ow: {
+          '$ow|p1': ['$ow|p1|0|0'],
+        },
+        nw: {
+          '$nw|n1': [
+            '$nw|n1|0|0',
+            '$nw|n1|1|0',
+            '$nw|n1|0|1',
+            '$nw|n1|1|1',
+          ],
+        },
+      },
     ),
     players: [
       Player(

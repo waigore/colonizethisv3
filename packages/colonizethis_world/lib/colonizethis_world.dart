@@ -29,6 +29,7 @@ export 'package:colonizethis_world/src/world/connectivity_metrics.dart'
     show ConnectivityHotPathMetrics;
 export 'package:colonizethis_world/src/world/faction_membership.dart';
 export 'package:colonizethis_world/src/world/game_world_mutations.dart';
+export 'package:colonizethis_world/src/world/town_connectivity.dart';
 export 'package:colonizethis_world/src/world/unit_lookup.dart';
 export 'package:colonizethis_world/src/world/minor_military_parity.dart';
 export 'package:colonizethis_world/src/world/movement.dart';

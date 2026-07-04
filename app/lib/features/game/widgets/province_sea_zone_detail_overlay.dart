@@ -71,6 +71,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.buildImprovementActionEnabled = false,
     this.onBuildImprovementTap,
     this.omniscientDetail = false,
+    this.townProductionBonusByCommodity = const {},
   });
 
   final Game game;
@@ -98,6 +99,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   /// When true, show full tile/province intel from raw [Game] (global observe).
   final bool omniscientDetail;
+
+  /// Projected town manufacturing bonus for the displayed province (Economic section).
+  final Map<String, int> townProductionBonusByCommodity;
 
   bool _isSeaZone(String id) {
     final regionPart = prefixedIdRegionSegment(id);
@@ -152,6 +156,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       buildImprovementActionEnabled: buildImprovementActionEnabled,
       onBuildImprovementTap: onBuildImprovementTap,
       omniscientDetail: omniscientDetail,
+      townProductionBonusByCommodity: townProductionBonusByCommodity,
     );
   }
 
@@ -322,6 +327,7 @@ _OverlayContent _provinceContent({
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
+  Map<String, int> townProductionBonusByCommodity = const {},
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
@@ -492,6 +498,7 @@ _OverlayContent _provinceContent({
           byResImproved: byResImproved,
           byResImprovable: byResImprovable,
           onHighlightTile: onHighlightTile,
+          townProductionBonusByCommodity: townProductionBonusByCommodity,
         )
       : _buildSection(
           l10n.provinceOverlay_sectionEconomic,
