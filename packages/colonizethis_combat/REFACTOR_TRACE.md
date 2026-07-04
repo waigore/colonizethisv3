@@ -187,6 +187,28 @@ Modules:
 - `colonizethis_combat_test_support/lib/src/quick_battle_build_test_support.dart`
 - `quick_battle_input_test_support.dart` — `perfSiegeQuickBattleInput`
 
-Deferred: land resolver, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+Deferred: land resolver; inline `Game(` gate; lib multiplier helper.
 
 Combat test LOC: 4,756 → 4,156 physical lines (−600 in test files across slice 7).
+
+## Slice 8 — Land conflict-detection scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| cd-two-factions-same-province | returns one battle when two factions in same province | `conflict_detection_test.dart` | — |
+| cd-new-world-conflict | detects conflict in newWorld when two factions and move order | `conflict_detection_test.dart` | — |
+| cd-single-faction | returns no battle when only one faction in province | `conflict_detection_test.dart` | — |
+| cd-multiple-provinces | multiple provinces with conflicts return multiple battles | `conflict_detection_test.dart` | — |
+| cd-civilians-no-battle | civilians alone do not trigger battles | `conflict_detection_test.dart` | — |
+| cd-unowned-non-mover-defender | unowned province: defender is non-mover when two factions present | `conflict_detection_test.dart` | — |
+| cd-unowned-lex-first-defender | unowned province: defender is lexicographically first when all moved in | `conflict_detection_test.dart` | — |
+| cd-new-world-only-units | returns no battles when oldWorld has no units | `conflict_detection_test.dart` | — |
+| cd-army-move-attacker | army move order contributes moved-in attacker detection | `conflict_detection_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/conflict_detection_test_support.dart`
+- `colonizethis_combat_test_support/lib/src/conflict_detection_scenarios.dart`
+
+Deferred: land resolver (`combat_resolver_test_part*`); inline `Game(` gate; lib multiplier helper.
+
+Combat test LOC: 4,156 → 3,803 physical lines (−353 in test files across slice 8).
