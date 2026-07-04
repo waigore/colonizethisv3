@@ -14,6 +14,12 @@ Monorepo layout:
 - **Standalone CLI tools** (e.g. topology description, map generation) live under **`tool/`**. Run from the **project root** via **Melos**: `melos run <tool_name> -- [args]` (paths in args are relative to repo root). The repo uses a root Dart workspace and Melos for scripts; see [.cursor/rules/colonizethis-tools.mdc](../../.cursor/rules/colonizethis-tools.mdc). Tools may depend on colonizethis_data or a shared reader to load topology.
 - **No `server/`** in current scope.
 
+### App shell submodule layout (Refs #3878)
+
+- **`AppEventHandlerScope`** (`app/lib/core/services/app_event_handler_scope.dart`) binds session-scoped bus listeners. Session subscriptions are split into `part` files by event family (observe, civilian work, naval/army, diplomacy, debug), each capped at 500 non-comment lines (`repo.app_event_handler_part_size`).
+- **`DebugCommandSessionHandler`** and **`ObserveModeSessionHandler`** apply ctdev/debug and observe-mode session mutations without importing feature panels.
+- Planned **`colonizethis_app_e2e_support`** workspace package (Phase 1) will host E2E/widget mirror helpers currently under `app/integration_test/` and `app/test/e2e_*`.
+
 ---
 
 ## Package list and responsibilities

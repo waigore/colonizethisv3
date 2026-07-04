@@ -21,6 +21,7 @@ import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import '../../features/game/shell_player_context.dart';
+import 'debug_command_session_handler.dart';
 import 'observe_mode_session_handler.dart';
 
 import 'app_event_handler.dart';
@@ -47,6 +48,12 @@ import 'debug_command_helpers.dart' show DebugCommandResult;
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
 
 part 'app_event_handler_scope_dialog_builders.dart';
+part 'app_event_handler_scope_session_helpers.dart';
+part 'app_event_handler_scope_session_subscriptions_observe.dart';
+part 'app_event_handler_scope_session_subscriptions_civilian.dart';
+part 'app_event_handler_scope_session_subscriptions_naval_army.dart';
+part 'app_event_handler_scope_session_subscriptions_diplomacy.dart';
+part 'app_event_handler_scope_session_subscriptions_debug.dart';
 part 'app_event_handler_scope_session_subscriptions.dart';
 
 const String trainCiviliansDialogId = 'train_civilians';
