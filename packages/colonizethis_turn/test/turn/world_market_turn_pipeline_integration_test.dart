@@ -210,10 +210,12 @@ TurnResolutionResult _runPipelineWithHandlers({
       ),
       turn,
     );
-    if (outcome is TurnPhaseStepExit) {
-      return outcome.result;
+    switch (outcome) {
+      case TurnPhaseStepExit(:final result):
+        return result;
+      case TurnPhaseStepContinue(:final pipeline):
+        acc = pipeline;
     }
-    acc = (outcome as TurnPhaseStepContinue).pipeline;
   }
   return TurnResolutionComplete(acc.game);
 }
