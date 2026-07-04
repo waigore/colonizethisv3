@@ -32,7 +32,7 @@ dependencies:
   widgetbook: ^3.23.0
   google_fonts: ^8.1.0
   intl: ^0.20.2
-  window_manager: ^0.5.1
+  window_manager: ^0.5.2
 
 dev_dependencies:
   colonizethis_test:
