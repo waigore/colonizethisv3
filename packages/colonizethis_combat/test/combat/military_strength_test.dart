@@ -1,11 +1,10 @@
 // Copyright 2024 Robert W. Guenther
 // SPDX-License-Identifier: Apache-2.0
 
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-import 'military_strength_test_support.dart';
 
 void main() {
   group('aggregateMilitaryStrengthForPlayer', () {
