@@ -2,6 +2,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+/// Shared turn-package game builders for phase tests (Refs #3876).
+///
+/// Research scenarios were previously in `research_phase_test_support.dart`;
+/// hoisted here so turn-local fixtures live in one module per #3876 step 4.
+
 /// Shared fixtures for research-phase tests (Refs #2216).
 Game researchPhaseTestBaseGame({
   required int treasury,
