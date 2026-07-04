@@ -87,3 +87,23 @@ Modules:
 - `colonizethis_combat_test_support/lib/src/quick_battle_emplaced_guns_test_support.dart` (`emplacedGun` builder)
 
 Combat test LOC: 6,170 → 6,053 physical lines (−117 in test files across slice 3).
+
+## Slice 4 — Quick Battle resolver scenario tables + input builders
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| qbr-deterministic-seed | deterministic for same seed | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-stronger-attacker-wins | stronger attacker tends to win | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-custom-round-actions | custom roundActions override default Volley Fire | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-fort-level | fort level applies wall and damage reduction | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-stronger-defender-holds | stronger defender tends to hold | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-lane-terrain-actions | uses lane terrain modifiers and actions | `quick_battle_resolver_resolve_test.dart` | — |
+| qbr-initiative-ordering | initiative ordering is deterministic and affects sequencing | `quick_battle_resolver_resolve_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/quick_battle_resolver_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_input_test_support.dart` (`centerFrontQuickBattleInput`, `centerFrontQuickBattleDeployment`, `quickBattleUnitIds`)
+
+Combat test LOC: 6,019 → 5,677 physical lines (−342 in test files across slice 4).
+
+Deferred: siege/perf/build QB suites, land resolver, naval, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
