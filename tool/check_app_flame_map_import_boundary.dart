@@ -14,6 +14,34 @@ const _allowedMapAreaImportSuffixes = <String>[
   'map_area/map_area.dart',
 ];
 
+const _legacyShimFileNames = <String>[
+  'game_map_area.dart',
+  'game_map_area_background.dart',
+  'game_map_area_civilian_draft_projection.dart',
+  'game_map_area_fleet_draft_projection.dart',
+  'game_map_area_province_action_states.dart',
+  'game_map_area_state_logic.dart',
+  'region_map_component.dart',
+  'region_map_boundary_visibility.dart',
+  'region_map_province_overlay_geometry.dart',
+  'region_map_viewport_snapshot.dart',
+];
+
+const _legacyImportNeedles = <String>[
+  'features/game/flame/game_map_area.dart',
+  'features/game/flame/game_map_area_',
+  'features/game/flame/region_map_component.dart',
+  'features/game/flame/region_map_boundary_visibility.dart',
+  'features/game/flame/region_map_province_overlay_geometry.dart',
+  'features/game/flame/region_map_viewport_snapshot.dart',
+];
+
+const _legacyImportScanRoots = <String>[
+  'app/lib',
+  'app/test',
+  'widgetbook_host/lib',
+];
+
 int runCheckAppFlameMapImportBoundary(
   String repoRoot, {
   void Function(String line)? info,
@@ -46,6 +74,31 @@ int runCheckAppFlameMapImportBoundary(
     for (final file in _dartFilesUnder(mapStateDir)) {
       final relFile = p.relative(file.path, from: repoRoot);
       _scanMapStateMapAreaImports(
+        file: file,
+        relFile: relFile,
+        violations: violations,
+      );
+    }
+  }
+
+  final flameRootDir = Directory(p.join(repoRoot, _flameRoot));
+  if (flameRootDir.existsSync()) {
+    for (final name in _legacyShimFileNames) {
+      final shim = File(p.join(flameRootDir.path, name));
+      if (shim.existsSync()) {
+        violations.add(
+          '${p.relative(shim.path, from: repoRoot)}: legacy flame re-export shim must be removed (use map_area/, map_state/, or region_map/ barrels)',
+        );
+      }
+    }
+  }
+
+  for (final scanRoot in _legacyImportScanRoots) {
+    final dir = Directory(p.join(repoRoot, scanRoot));
+    if (!dir.existsSync()) continue;
+    for (final file in _dartFilesUnder(dir)) {
+      final relFile = p.relative(file.path, from: repoRoot);
+      _scanForLegacyShimImports(
         file: file,
         relFile: relFile,
         violations: violations,
@@ -112,6 +165,34 @@ void _scanMapStateMapAreaImports({
       violations.add(
         '$relFile:${i + 1}: map_state may import map_area public exports only',
       );
+    }
+  }
+}
+
+void _scanForLegacyShimImports({
+  required File file,
+  required String relFile,
+  required List<String> violations,
+}) {
+  final lines = file.readAsLinesSync();
+  for (var i = 0; i < lines.length; i++) {
+    final trimmed = lines[i].trim();
+    if (trimmed.startsWith('//')) continue;
+    if (!trimmed.startsWith('import ') && !trimmed.startsWith('export ')) {
+      continue;
+    }
+    for (final needle in _legacyImportNeedles) {
+      if (!trimmed.contains(needle)) continue;
+      if (needle == 'features/game/flame/game_map_area_') {
+        if (trimmed.contains('/map_state/') ||
+            trimmed.contains('/map_area/')) {
+          continue;
+        }
+      }
+      violations.add(
+        '$relFile:${i + 1}: import legacy flame shim path; use map_area/, map_state/, or region_map/ barrels',
+      );
+      break;
     }
   }
 }

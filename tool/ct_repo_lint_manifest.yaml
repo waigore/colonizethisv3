@@ -440,7 +440,7 @@ rules:
 
   - rule_id: repo.app_flame_map_import_boundary
     group: architecture
-    title: flame map submodules must follow one-way import graph (map_area/region_map vs map_state)
+    title: flame map submodules must follow one-way import graph and forbid legacy root shims
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_flame_map_import_boundary.dart

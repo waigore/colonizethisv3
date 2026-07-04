@@ -34,8 +34,7 @@ import '../dialogue/tribe_first_contact_overlay.dart';
 import '../dialogue/tribe_first_contact_sync.dart';
 import 'exit_confirm_dialog.dart';
 import 'game_canvas.dart';
-import 'game_map_area.dart';
-import 'game_map_area_state_logic.dart';
+import 'map_state/map_state.dart';
 import 'game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import 'next_turn_confirmation_dialog.dart';

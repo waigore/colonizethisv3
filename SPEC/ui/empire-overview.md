@@ -1,7 +1,7 @@
 # Empire Overview (in-game shell)
 
 **Screen ID:** `MAP10001` — stable; do not reassign.
-**SPEC/ui** — In-game map shell (region tabs, map widget, HUD). Implementation: `app/lib/features/game/flame/game_map_area.dart`.
+**SPEC/ui** — In-game map shell (region tabs, map widget, HUD). Implementation: `app/lib/features/game/flame/map_state/game_map_area.dart`.
 **Widgetbook:** `Map Widget` → `app/lib/widgetbook/catalog.dart`. Host orchestration: [`game-screen.md`](game-screen.md).
 
 **Mockup:** [mockups/MAP10001-empire-overview.html](mockups/MAP10001-empire-overview.html)
@@ -53,7 +53,7 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 
 ## Map area
 
-- **Background chrome:** The map stack paints a non-interactive backdrop behind [CtRegionMap](../../app/lib/widgets/ct_region_map.dart) via [GameMapAreaBackground](../../app/lib/features/game/flame/game_map_area_background.dart). The surface fills with `--bg-deep`, adds two low-opacity radial washes (mockup `.map-area` ellipses), and overlays a **48 dp** square grid at **60%** opacity with lines tinted from `--border` at **8%** alpha (mockup `.map-grid`). No hard-coded light-theme hex literals; the grid must not intercept pointer events.
+- **Background chrome:** The map stack paints a non-interactive backdrop behind [CtRegionMap](../../app/lib/widgets/ct_region_map.dart) via [GameMapAreaBackground](../../app/lib/features/game/flame/map_area/game_map_area_background.dart). The surface fills with `--bg-deep`, adds two low-opacity radial washes (mockup `.map-area` ellipses), and overlays a **48 dp** square grid at **60%** opacity with lines tinted from `--border` at **8%** alpha (mockup `.map-grid`). No hard-coded light-theme hex literals; the grid must not intercept pointer events.
 - **Content:** One instance of the map widget per active view. When the user switches tabs, the map widget is updated or swapped to show the selected region's map.
 - **Layers:** Base tile layer always; **province overlay** (province/sea boundary strokes), **province ownership** (Great Power land tint), and **political** overlay togglable by the user where the shell exposes them (see Map display options). **Base layer display mode** and related map tools sit in a **horizontal icon row** at the **bottom-left** of the map (see below). **Empire actions** (Production, units, Diplomacy, Technology) use an **always-visible icon column** along the **left** of the map (east of the edge-swipe strip); see [empire-buttons.md](empire-buttons.md).
 - **Interaction:** Pan, zoom (fit-relative continuous band per [map-widget.md](map-widget.md) § Viewport, scale, pan, zoom), tap/click for province selection. Map widget fires `onProvinceSelected`; the Empire overview screen responds (e.g. show province details in a panel or bottom sheet; content TBD).
@@ -117,7 +117,7 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 ### Region minimap (in-game map stack)
 
-- **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
+- **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/map_state/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
 - **Wide shell + province panel:** When the viewport is **not** narrow (side panel layout) and the province detail panel is **open** (`mapProvincePanelProvider.overlayOpen`), the minimap stack’s **horizontal inset from the right** increases by the **province panel width (320 dp)** so the minimap and its zoom slider stay **above** the panel column and remain usable. When the panel is closed, use the normal corner inset only.
 
 ### Narrow layout: province detail above map chrome
