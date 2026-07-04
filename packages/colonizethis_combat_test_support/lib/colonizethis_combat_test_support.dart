@@ -19,3 +19,6 @@ export 'src/naval_combat_test_support.dart';
 export 'src/naval_combat_resolver_scenarios.dart';
 export 'src/naval_combat_resolution_scenarios.dart';
 export 'src/naval_combat_privateering_scenarios.dart';
+export 'src/quick_battle_build_siege_scenarios.dart';
+export 'src/quick_battle_build_test_support.dart';
+export 'src/quick_battle_perf_invariants_scenarios.dart';

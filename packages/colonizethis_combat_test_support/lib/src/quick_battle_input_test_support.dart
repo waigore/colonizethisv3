@@ -1,6 +1,7 @@
 // Shared Quick Battle input builders for table-driven scenarios (Refs #3865).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Center-front lane deployment used across resolver and siege scenario suites.
 QuickBattleDeployment centerFrontQuickBattleDeployment({
@@ -85,3 +86,26 @@ QuickBattleEmplacedGun siegeEmplacedGun(String id, {required int hp}) {
 /// Generates sequential unit ids (`prefix0`, `prefix1`, …).
 List<String> quickBattleUnitIds(String prefix, int count) =>
     List.generate(count, (i) => '$prefix$i');
+
+/// Siege input for perf-invariant scenarios (Refs #2316 P1 #8 / #9).
+QuickBattleInput perfSiegeQuickBattleInput({
+  required int seed,
+  required int fortLevel,
+  required List<QuickBattleEmplacedGun> guns,
+  required int attackerRegiments,
+  required int defenderRegiments,
+  int maxRounds = 3,
+  String provinceId = 'p-perf',
+  String regionId = kRegionOldWorld,
+}) {
+  return centerFrontQuickBattleInput(
+    attackerUnitIds: quickBattleUnitIds('att-', attackerRegiments),
+    defenderUnitIds: quickBattleUnitIds('def-', defenderRegiments),
+    seed: seed,
+    maxRounds: maxRounds,
+    fortLevel: fortLevel,
+    provinceId: provinceId,
+    regionId: regionId,
+    emplacedGuns: guns,
+  );
+}

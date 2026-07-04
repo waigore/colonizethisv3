@@ -165,3 +165,28 @@ Modules:
 Deferred: perf/build QB suites, land resolver, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
 
 Combat test LOC: 5,336 → 4,756 physical lines (−580 in test files across slice 6).
+
+## Slice 7 — Quick Battle perf-invariant and build/siege scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| qbpi-three-guns-sorted-id-parity | three small guns drained over multiple rounds keep sorted-id parity | `quick_battle_resolver_perf_invariants_test.dart` | #2316 P1 #8 |
+| qbpi-asymmetric-gun-hp-round-robin | asymmetric gun HP still allocates damage in sorted-id round-robin order | `quick_battle_resolver_perf_invariants_test.dart` | #2316 P1 #8 |
+| qbpi-attacker-first-cache-bit-identical | attacker-acts-first siege duplicate runs are bit-identical | `quick_battle_resolver_perf_invariants_test.dart` | #2316 P1 #9 |
+| qbpi-defender-first-cache-bit-identical | defender-acts-first siege duplicate runs are bit-identical | `quick_battle_resolver_perf_invariants_test.dart` | #2316 P1 #9 |
+| qbpi-non-siege-initiative-ordering | non-siege battle outcomes are unchanged across initiative orderings | `quick_battle_resolver_perf_invariants_test.dart` | #2316 P1 #9 |
+| qbbs-build-from-context | builds input from BattleContext | `quick_battle_resolver_build_and_siege_test.dart` | — |
+| qbbs-napoleon-bonus | attacker with napoleon bonus wins more often than with reserve (same seed) | `quick_battle_resolver_build_and_siege_test.dart` | — |
+| qbbs-spawn-guns-fort-level | buildQuickBattleInput spawns guns by fort level and stable ids | `quick_battle_resolver_build_and_siege_test.dart` | COL-151 |
+| qbbs-resolve-duplicate-emplaced | resolveQuickBattle duplicate runs match emplaced outcomes | `quick_battle_resolver_build_and_siege_test.dart` | — |
+| qbbs-apply-fort-downgrade | applyQuickBattleResultToGame downgrades fort when flag set without flip | `quick_battle_resolver_build_and_siege_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/quick_battle_perf_invariants_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_build_siege_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_build_test_support.dart`
+- `quick_battle_input_test_support.dart` — `perfSiegeQuickBattleInput`
+
+Deferred: land resolver, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+
+Combat test LOC: 4,756 → 4,156 physical lines (−600 in test files across slice 7).
