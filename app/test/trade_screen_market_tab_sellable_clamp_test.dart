@@ -161,9 +161,9 @@ void main() {
 
     testWidgets(
       'canonical AC (Refs #3093): stockpile=10 timber, production '
-      'allocation consumes 3 timber (paper_from_timber @ 3 labour), '
-      'staged offer 2 → `(5)` readout and `+` can only grow the offer '
-      'by 5 (staged quantity caps at 7 = stockpile − reservation)',
+      'allocation consumes 2 timber (paper_from_timber @ 2 labour), '
+      'staged offer 2 → `(6)` readout and `+` can only grow the offer '
+      'by 6 (staged quantity caps at 8 = stockpile − reservation)',
       (tester) async {
         final ProviderContainer container = await _pumpTradeScreen(
           tester,
@@ -182,37 +182,37 @@ void main() {
               ],
             },
           ),
-          // paper_from_timber consumes 3 timber per run, 3 labour per
-          // output; desired output 1 → assigned labour 3 → runs 1 →
-          // 3 timber reserved.
+          // paper_from_timber consumes 2 timber per run, 2 labour per
+          // output; desired output 1 → assigned labour 2 → runs 1 →
+          // 2 timber reserved.
           initialDesiredOutputByRecipe: const <String, int>{
             'paper_from_timber': 1,
           },
         );
 
-        // Sellable headroom = max(0, 10 - 3) - 2 = 5.
+        // Sellable headroom = max(0, 10 - 2) - 2 = 6.
         expect(
           tester
               .widget<Text>(
                   find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
               .data,
           // ignore: avoid_hardcoded_strings_in_widgets
-          '(5)',
+          '(6)',
         );
 
-        // The offer cap (stockpile − reservation) is 7, so 5 +-taps
-        // grow the staged offer from 2 to 7 (= cap). Per the issue AC:
-        // "offer increment cannot exceed 5" — i.e. the player gains
-        // at most +5 units before saturating, which lands the staged
-        // quantity at 7 (matching the cap).
-        for (int i = 0; i < 5; i++) {
+        // The offer cap (stockpile − reservation) is 8, so 6 +-taps
+        // grow the staged offer from 2 to 8 (= cap). Per the issue AC:
+        // "offer increment cannot exceed 6" — i.e. the player gains
+        // at most +6 units before saturating, which lands the staged
+        // quantity at 8 (matching the cap).
+        for (int i = 0; i < 6; i++) {
           await tester
               .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
           await tester.pump();
         }
-        expect(_stagedOrder(container, _timber)?.quantity, 7,
-            reason: 'Five +-taps grow the staged offer from 2 to 7 '
-                '(= 10 stockpile − 3 industry allocation).');
+        expect(_stagedOrder(container, _timber)?.quantity, 8,
+            reason: 'Six +-taps grow the staged offer from 2 to 8 '
+                '(= 10 stockpile − 2 industry allocation).');
         expect(
           tester
               .widget<Text>(
@@ -223,13 +223,13 @@ void main() {
           reason: 'At cap, sellable readout drops to (0).',
         );
 
-        // Next + tap is a silent no-op; quantity stays at 7.
+        // Next + tap is a silent no-op; quantity stays at 8.
         await tester
             .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
         await tester.pump();
-        expect(_stagedOrder(container, _timber)?.quantity, 7,
+        expect(_stagedOrder(container, _timber)?.quantity, 8,
             reason: 'Tapping `+` at saturation must not exceed the offer '
-                'cap of 7 (= 10 stockpile − 3 industry allocation).');
+                'cap of 8 (= 10 stockpile − 2 industry allocation).');
       },
     );
 
@@ -240,9 +240,9 @@ void main() {
         final ProviderContainer container = await _pumpTradeScreen(
           tester,
           game: _buildGame(
-            stockpile: const <CommodityId, int>{'timber': 6},
+            stockpile: const <CommodityId, int>{'timber': 4},
           ),
-          // Two runs of paper_from_timber consume 6 timber.
+          // Two runs of paper_from_timber consume 4 timber.
           initialDesiredOutputByRecipe: const <String, int>{
             'paper_from_timber': 2,
           },
@@ -286,8 +286,8 @@ void main() {
                   find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
               .data,
           // ignore: avoid_hardcoded_strings_in_widgets
-          '(7)',
-          reason: 'Timber sellable = 10 - 3 (paper reservation) = 7.',
+          '(8)',
+          reason: 'Timber sellable = 10 - 2 (paper reservation) = 8.',
         );
         expect(
           tester
