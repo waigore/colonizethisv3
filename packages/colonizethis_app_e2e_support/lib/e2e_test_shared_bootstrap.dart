@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app_e2e_support/e2e_support_validation_exception.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 /// Loads and decodes each path with bounded concurrency (overlapping I/O +
@@ -29,7 +30,7 @@ Future<List<String>> e2eDecodePngAssetPathsParallel(
   int batchSize = 64,
 }) async {
   if (batchSize <= 0) {
-    throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+    throw E2eSupportValidationException('batchSize must be positive');
   }
   final failures = <String>[];
   for (var i = 0; i < assetPaths.length; i += batchSize) {
