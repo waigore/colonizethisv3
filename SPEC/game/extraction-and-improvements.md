@@ -107,6 +107,26 @@ Acceptance criteria (naming only):
 
 Each province has one **town** tile assigned at game init (see [capital-and-connectivity.md](capital-and-connectivity.md) § Town per province). A tile's resources are extractable only if the tile is **connected to the capital** per connectivity rules (**Road rule** or **Town rule**). **`townTileKey` does not by itself mean “connected”**; adjacency uses the Town rule in [capital-and-connectivity.md](capital-and-connectivity.md). **Town development level** (raised by Builder `upgrade_town` work) **limits yield** per § Extraction formula and town development cap; it **does not** decide connectivity. If multiple paths exist from a tile to the capital, the **maximum** path transport cap determines the transport constraint.
 
+### Town manufacturing bonus (Refs #3872)
+
+When `Province.townDevelopmentLevel` is **2** or **4**, connected raw extraction from **town-connected** tiles in that province can produce bonus manufactured commodities during the **Extraction** phase — no labour, no input consumption, no cargo cost for bonus output.
+
+- **Multipliers (replacement):** level **2** → **1**; level **4** → **2**. Levels **1** and **3** grant none.
+- **Recipe eligibility:** every recipe input commodity must be a **`rawMaterial`** per [commodity-catalog.md](commodity-catalog.md); tech gating matches Production phase (`ProductionRecipesCatalog.isRecipeAvailableForPlayer`).
+- **Input:** this turn’s **actually extracted** raw quantities from **town-connected** tiles that also pass capital extraction rules. Overseas raw counts only when **cargo-delivered**; undelivered overseas raw does not feed bonus input.
+- **Formula (per recipe, per province):** `bonusOutput = floor(limitingInputQty / 4) × multiplier`, where limiting input is `min` across recipe inputs of delivered town-connected raw in that province.
+- **Destination:** Great Powers → central stockpile; Minors/Tribes → system-authored world-market offers (parallel to raw auto-offers). Bonus manufactured output **does not consume cargo holds**.
+
+**Town-tile connectivity** (distinct from capital connectivity): tile `T` in province `P` is town-connected iff `T` is in `P` and either (a) **4-adjacent** to `P.townTileKey` (capital tile aliases town in capital provinces), or (b) reachable via a path of tiles in `P` with transport level ≥ 1. Capital connectivity remains prerequisite for any extraction.
+
+**Acceptance criteria**
+
+- Given a GP province at town development level **2** with **4 town-connected timber** extracted this turn, when the Extraction phase runs, then the System credits **+1 `lumber`** without consuming timber or labour.
+- Given the same with level **4** and **4 timber**, when the Extraction phase runs, then the System credits **+2 `lumber`** (not +3).
+- Given town development level **3**, when the Extraction phase runs, then the System credits **zero** town manufacturing bonus for that province.
+- Given a tile is capital-connected but **not** town-connected, when Extraction runs, then raw may reach the stockpile but **does not** count toward town bonus input.
+- Given a Minor province at level **2** qualifies for **+1 cigars**, when Extraction and World Market phases run, then the System emits a **system-authored offer** for cigars under that minor’s faction id.
+
 ### Mineral Prospecting Gate
 
 Iron, copper, tin, coal, silver, gold, gems, diamonds require prospecting before extraction. Tile must be (a) connected and (b) prospected by that player. Non-minerals do not require prospecting. See [fog-and-exploration.md](fog-and-exploration.md).

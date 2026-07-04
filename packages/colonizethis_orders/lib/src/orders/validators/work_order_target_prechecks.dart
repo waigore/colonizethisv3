@@ -57,6 +57,7 @@ typedef WorkOrderTargetPrecheck =
 const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
   ...kWorkTargetsWithoutMaterialCost,
   kWorkTargetBuildImprovement,
+  kWorkTargetUpgradeTown,
 };
 
 OrderValidationResult? precheckUpgradeTown(
@@ -77,6 +78,39 @@ OrderValidationResult? precheckUpgradeTown(
         province.townDevelopmentLevel >= kTownDevelopmentLevelMax) {
       return OrderValidationResult.rejected(
         'Town development level already at maximum (4)',
+      );
+    }
+    if (province != null) {
+      final townKey = province.townTileKey;
+      if (townKey == null ||
+          townKey.isEmpty ||
+          townKey != order.targetTileKey) {
+        return OrderValidationResult.rejected(
+          'upgrade_town target must be the province town tile',
+        );
+      }
+    }
+  }
+  if (provinceOwnerId != null && provinceOwnerId != ctx.playerId) {
+    if (!isMinorOrTribe(
+      ctx.game,
+      provinceOwnerId,
+      factionMembership: ctx.factionMembership,
+    )) {
+      return OrderValidationResult.rejected(
+        'upgrade_town target must be an owned or Minor/Tribe province town',
+      );
+    }
+    final rel = getRelation(ctx.game, ctx.playerId, provinceOwnerId);
+    if (rel?.atWar == true) {
+      return OrderValidationResult.rejected(
+        'Cannot upgrade town: at war with that faction',
+      );
+    }
+    final overture = getOverture(ctx.game, ctx.playerId, provinceOwnerId);
+    if (overture == null || !overture.hasEmbassy) {
+      return OrderValidationResult.rejected(
+        'Cannot upgrade town: embassy required with that Minor/Tribe',
       );
     }
   }

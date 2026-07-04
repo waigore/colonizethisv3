@@ -105,6 +105,11 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       buildImprovementEnabled: buildImprovementState.enabled,
       bus: ref.read(appEventBusProvider),
     );
+    final townProductionBonus = provinceTownProductionBonusPreview(
+      game: game,
+      provinceId: displayId,
+      mapData: mapData,
+    );
     Widget overlay = ProvinceSeaZoneDetailOverlay(
       game: game,
       region: region,
@@ -113,6 +118,7 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       humanPlayerId: humanPlayerId,
       playerView: playerView,
       draftOrders: draftOrders,
+      townProductionBonusByCommodity: townProductionBonus,
       onHighlightTile: (k) =>
           ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(k),
       onClose: () => ref.read(mapProvincePanelProvider.notifier).closeOverlay(),

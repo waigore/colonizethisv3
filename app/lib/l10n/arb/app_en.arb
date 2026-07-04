@@ -2484,6 +2484,19 @@
   "@provinceOverlay_sectionEconomic": {
     "description": "Province overlay section heading for economic details."
   },
+  "provinceOverlay_townProductionHeading": "Town production",
+  "@provinceOverlay_townProductionHeading": {
+    "description": "Subheading within the Economic section for projected town manufacturing bonus commodities."
+  },
+  "provinceOverlay_townProductionQuantity": "+{quantity}",
+  "@provinceOverlay_townProductionQuantity": {
+    "description": "Signed quantity label for a projected town manufacturing bonus commodity row.",
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_sectionMilitary": "Military",
   "@provinceOverlay_sectionMilitary": {
     "description": "Province overlay section heading for military details."
