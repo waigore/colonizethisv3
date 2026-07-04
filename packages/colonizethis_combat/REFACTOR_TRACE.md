@@ -106,4 +106,23 @@ Modules:
 
 Combat test LOC: 6,019 → 5,677 physical lines (−342 in test files across slice 4).
 
-Deferred: siege/perf/build QB suites, land resolver, naval, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+## Slice 5 — Quick Battle siege and initiative scenario tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| qbs-conquest-fort-downgrade | Scenario: concentrated fire destroys battery before garrison — conquest + fort downgrade | `quick_battle_siege_scenarios_test.dart` | — |
+| qbs-battery-absorbs-volleys | Scenario: battery absorbs volleys — partial HP loss, fort stands | `quick_battle_siege_scenarios_test.dart` | — |
+| qbs-two-gun-round-robin | Scenario: two-gun battery — round-robin damage (sorted by id) | `quick_battle_siege_scenarios_test.dart` | — |
+| qbs-triple-battery | Scenario: triple battery (fort 3) — each piece tracked independently | `quick_battle_siege_scenarios_test.dart` | — |
+| qbs-no-virtual-guns | Scenario: no virtual guns — legacy aggregate emplaced lump still applies | `quick_battle_siege_scenarios_test.dart` | — |
+| qbs-pipeline-build-apply | Scenario: pipeline buildQuickBattleInput → resolve → apply reduces fort on conquest | `quick_battle_siege_scenarios_test.dart` | — |
+| qbi-cavalry-attacker-first | Scenario: cavalry-heavy attacker gains first action and trades better | `quick_battle_siege_scenarios_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/quick_battle_siege_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_siege_pipeline_test_support.dart` (`siegePipelineGame`, `siegePipelineBattleContext`)
+- `quick_battle_input_test_support.dart` — `siegeEmplacedGun`, `emplacedGuns` on `centerFrontQuickBattleInput`
+
+Deferred: perf/build QB suites, land resolver, naval, conflict-detection tables; inline `Game(` gate; lib multiplier helper.
+
+Combat test LOC: 5,677 → 5,336 physical lines (−341 in test files across slice 5).

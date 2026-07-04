@@ -41,6 +41,7 @@ QuickBattleInput centerFrontQuickBattleInput({
   double defenderCavalryShare = 0.0,
   QuickBattleDeployment? attackerDeployment,
   QuickBattleDeployment? defenderDeployment,
+  List<QuickBattleEmplacedGun> emplacedGuns = const [],
 }) {
   return QuickBattleInput(
     attackerFactionId: attackerFactionId,
@@ -63,8 +64,21 @@ QuickBattleInput centerFrontQuickBattleInput({
           cohesion: defenderCohesion,
           laneTerrain: defenderLaneTerrain,
         ),
+    emplacedGuns: emplacedGuns,
     seed: seed,
     maxRounds: maxRounds,
+  );
+}
+
+/// Immutable emplaced gun with siege-scenario defaults (rng 11, att/def 2.0).
+QuickBattleEmplacedGun siegeEmplacedGun(String id, {required int hp}) {
+  return QuickBattleEmplacedGun(
+    id: id,
+    maxHp: hp,
+    hp: hp,
+    attackStrength: 2.0,
+    defenseStrength: 2.0,
+    rng: 11,
   );
 }
 

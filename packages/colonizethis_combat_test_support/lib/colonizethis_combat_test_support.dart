@@ -13,3 +13,5 @@ export 'src/quick_battle_emplaced_guns_scenarios.dart';
 export 'src/quick_battle_emplaced_guns_test_support.dart';
 export 'src/quick_battle_input_test_support.dart';
 export 'src/quick_battle_resolver_scenarios.dart';
+export 'src/quick_battle_siege_pipeline_test_support.dart';
+export 'src/quick_battle_siege_scenarios.dart';

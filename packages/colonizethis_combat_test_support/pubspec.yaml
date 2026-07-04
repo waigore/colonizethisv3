@@ -10,8 +10,10 @@ environment:
 
 dependencies:
   colonizethis_combat:
+  colonizethis_logic:
   colonizethis_models:
   colonizethis_test:
+  colonizethis_world:
 
 dev_dependencies:
   colonizethis_exception_lint:
