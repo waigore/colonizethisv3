@@ -26,6 +26,13 @@ void runMilitaryStrengthScenario(MilitaryStrengthScenario scenario) {
 
 /// Scenarios for [aggregateMilitaryStrengthForPlayer].
 List<MilitaryStrengthScenario> aggregateMilitaryStrengthForPlayerScenarios() => [
+  ..._aggregateMilitaryStrengthForPlayerFactionScenarios(),
+  ..._aggregateMilitaryStrengthForPlayerFilteringScenarios(),
+  ..._aggregateMilitaryStrengthForPlayerMultiplierScenarios(),
+];
+
+List<MilitaryStrengthScenario>
+_aggregateMilitaryStrengthForPlayerFactionScenarios() => [
   MilitaryStrengthScenario(
     scenarioId: 'ms-empty-army',
     label: 'returns 0 for empty army',
@@ -121,6 +128,10 @@ List<MilitaryStrengthScenario> aggregateMilitaryStrengthForPlayerScenarios() => 
       expect(strength, equals(18.0));
     },
   ),
+];
+
+List<MilitaryStrengthScenario>
+_aggregateMilitaryStrengthForPlayerFilteringScenarios() => [
   MilitaryStrengthScenario(
     scenarioId: 'ms-unknown-regiment',
     label: 'skips units with unknown regiment types',
@@ -189,6 +200,10 @@ List<MilitaryStrengthScenario> aggregateMilitaryStrengthForPlayerScenarios() => 
       expect(prussiaStrength, equals(9.0));
     },
   ),
+];
+
+List<MilitaryStrengthScenario>
+_aggregateMilitaryStrengthForPlayerMultiplierScenarios() => [
   MilitaryStrengthScenario(
     scenarioId: 'ms-medal-multipliers',
     label: 'applies medal multiplier correctly (0-4 medals)',
