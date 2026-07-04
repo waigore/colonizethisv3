@@ -27,6 +27,7 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -110,6 +111,7 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -173,6 +175,7 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -249,6 +252,7 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(

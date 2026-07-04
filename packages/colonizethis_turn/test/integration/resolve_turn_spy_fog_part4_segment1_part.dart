@@ -9,6 +9,7 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -82,6 +83,7 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyNwP1 = 'newWorld|P1|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -174,6 +176,7 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -238,6 +241,7 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
