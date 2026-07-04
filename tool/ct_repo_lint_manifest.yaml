@@ -424,6 +424,13 @@ rules:
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
 
+  - rule_id: repo.app_event_handler_part_size
+    group: architecture
+    title: app_event_handler_scope part files must not exceed 500 non-comment lines
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_app_event_handler_part_size.dart
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
