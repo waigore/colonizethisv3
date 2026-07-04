@@ -1,0 +1,616 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'build_rail_work_rules.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
+import 'order_suggestion_context.dart';
+import 'order_suggestion_helpers.dart';
+import 'order_work_constants.dart';
+import 'orders_application_helpers.dart';
+import 'partial_province_reveal.dart';
+import 'unit_type_helpers.dart';
+
+// ---------------------------------------------------------------------------
+// Work-tile candidate index — shared pre-filtering for work-target tile scans.
+// Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
+// ---------------------------------------------------------------------------
+
+/// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
+/// Returns a set of candidate tile keys that pass work-target requirements.
+Set<String> _preFilterWorkTargetTiles({
+  required Game game,
+  required String workTarget,
+  required String playerId,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Map<String, String> resourceByTile,
+  required Map<String, String> purchasedTiles,
+  required Set<String> ownedProvinceIds,
+  Set<String>? exploreProvinceScope,
+  Map<String, TileMapResult>? tileMapByRegion,
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  final result = <String>{};
+  final ctx = _WorkTilePrefilterCtx(
+    game: game,
+    playerId: playerId,
+    tileKeysByRegion: tileKeysByRegion,
+    resourceByTile: resourceByTile,
+    purchasedTiles: purchasedTiles,
+    ownedProvinceIds: ownedProvinceIds,
+    exploreProvinceScope: exploreProvinceScope,
+    tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
+    result: result,
+  );
+  final op = _workTargetPrefilters[workTarget];
+  if (op != null) {
+    op(ctx);
+  } else {
+    _prefilterWorkTargetDefault(ctx);
+  }
+  return result;
+}
+
+Set<String> rawCandidateTilesForWorkTarget({
+  required Game game,
+  required String playerId,
+  required String workTarget,
+  Set<String>? exploreProvinceScope,
+  Map<String, TileMapResult>? tileMapByRegion,
+
+  /// When non-null, must match the ids of provinces owned by [playerId] (same
+  /// as the default path, which reads them from [ProvinceOwnerCache]). Callers
+  /// that invoke this repeatedly in one suggestion pass should supply a shared
+  /// set to avoid O(targets × provinces) rescans (Refs #2394).
+  Set<String>? playerOwnedProvinceIds,
+
+  /// When non-null, [kWorkTargetPurchaseLand] prefilter reuses this snapshot
+  /// instead of calling [DiplomacyFactionMembership.from] again (Refs #2394 —
+  /// same pass often already built membership for incremental validation).
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  final world = game.worldState;
+  final ownedProvinceIds =
+      playerOwnedProvinceIds ??
+      <String>{
+        for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
+          p.id,
+      };
+  return _preFilterWorkTargetTiles(
+    game: game,
+    workTarget: workTarget,
+    playerId: playerId,
+    tileKeysByRegion: world.tileKeysByRegionAndProvince,
+    resourceByTile: world.resourceByTileKey,
+    purchasedTiles: world.purchasedTilesByTileKey,
+    ownedProvinceIds: ownedProvinceIds,
+    exploreProvinceScope: exploreProvinceScope,
+    tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
+  );
+}
+
+/// Iterates every tile in land provinces (prefixed province ids), skipping sea zones.
+/// Used by work-target pre-filtering; per-tile logic lives in [onTile].
+void _forEachPrefixedProvinceTile({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required void Function(String provinceId, String tileKey) onTile,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      for (final tileKey in provinceEntry.value) {
+        onTile(provinceId, tileKey);
+      }
+    }
+  }
+}
+
+/// All land tiles in owned provinces with prefixed ids (build_port, counter_spy pre-filter).
+void _addAllTilesInOwnedPrefixedProvinces({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> ownedProvinceIds,
+  required Set<String> result,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (!ownedProvinceIds.contains(provinceId)) continue;
+      result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+/// Adds candidate tiles for upgrade_town/build_fort: town tiles in owned provinces.
+///
+/// Iterates [ownedProvinceIds] with O(1) [WorldState.tryGetProvince] lookups
+/// instead of scanning every province in both regions (Refs #2394).
+void _addCandidateTilesForTownWork({
+  required Game game,
+  required Set<String> ownedProvinceIds,
+  required Set<String> result,
+}) {
+  final world = game.worldState;
+  for (final provinceId in ownedProvinceIds) {
+    final province = world.tryGetProvince(provinceId);
+    if (province == null) continue;
+    final townTileKey = province.townTileKey;
+    if (townTileKey == null || townTileKey.isEmpty) continue;
+    result.add(townTileKey);
+  }
+}
+
+/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
+class _WorkTilePrefilterCtx {
+  _WorkTilePrefilterCtx({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    required this.exploreProvinceScope,
+    required this.tileMapByRegion,
+    this.factionMembership,
+    required this.result,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Set<String>? exploreProvinceScope;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final DiplomacyFactionMembership? factionMembership;
+  final Set<String> result;
+}
+
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
+
+void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+  final player = c.game.playerById(c.playerId);
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = c.game.worldState.tileState;
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final roadLevel = tileState.roadLevel(tileKey);
+      if (roadLevel != 1 && roadLevel != 2) return;
+      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
+      if (rejectionReasonForBuildRailOrder(
+            techUnlocked: tech,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          ) !=
+          null) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtUpgradeTown(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+  _addMinorTribeTownTilesForEmbassyUpgrade(c);
+}
+
+void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterCtx c) {
+  final factionMembership =
+      c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (c.ownedProvinceIds.contains(provinceId)) continue;
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) continue;
+      final ownerId = province.ownerId;
+      if (ownerId == null || ownerId == c.playerId) continue;
+      if (!factionMembership.isMinorOrTribe(ownerId)) continue;
+      final rel = getRelation(c.game, c.playerId, ownerId);
+      if (rel?.atWar == true) continue;
+      final overture = getOverture(c.game, c.playerId, ownerId);
+      if (overture == null || !overture.hasEmbassy) continue;
+      final townTileKey = province.townTileKey;
+      if (townTileKey == null || townTileKey.isEmpty) continue;
+      c.result.add(townTileKey);
+    }
+  }
+}
+
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+  _addAllTilesInOwnedPrefixedProvinces(
+    tileKeysByRegion: c.tileKeysByRegion,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+  final factionMembership =
+      c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) return;
+      final ownerId = province.ownerId;
+      if (ownerId == null) return;
+      if (factionMembership.isGreatPower(ownerId)) return;
+      if (!factionMembership.isMinorOrTribe(ownerId)) {
+        return;
+      }
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      final existingBuyer = c.game.worldState.purchaserOfTile(tileKey);
+      if (existingBuyer != null) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  final scoped = c.exploreProvinceScope;
+  if (scoped != null) {
+    for (final regionEntry in c.tileKeysByRegion.entries) {
+      for (final provinceEntry in regionEntry.value.entries) {
+        if (!scoped.contains(provinceEntry.key)) continue;
+        c.result.addAll(provinceEntry.value);
+      }
+    }
+    return;
+  }
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+  final prospected = c.game.worldState.prospectedTilesForPlayer(c.playerId);
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      if (prospected.contains(tileKey)) return;
+      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
+    <String, _WorkTilePrefilterOp>{
+      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
+      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
+      'build_rail': _prefilterWtBuildRail,
+      kWorkTargetUpgradeTown: _prefilterWtUpgradeTown,
+      kWorkTargetBuildFort: _prefilterWtTownWork,
+      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
+      kWorkTargetExplore: _prefilterWtExplore,
+      kWorkTargetProspect: _prefilterWtProspect,
+    };
+
+// ---------------------------------------------------------------------------
+// Valid work-order tile keys — pre-filter + incremental validation probe.
+// ---------------------------------------------------------------------------
+
+/// Returns the set of tile keys that are valid targets for a work order
+/// (unitId, workTarget) given [currentOrders]. Used by the app to highlight
+/// valid tiles when the player is assigning work. SPEC/ui/civilian-units-panel.md.
+Set<String> getValidWorkOrderTileKeys(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  String unitId,
+  String workTarget,
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+
+  /// When callers evaluate many tile highlights for the same player and
+  /// [currentOrders], they may pass a shared [PlayerView] (Refs #2394).
+  PlayerView? view,
+
+  /// Optional pass snapshot; must match [game] when supplied.
+  OrderResolutionContext? resolution,
+
+  /// Optional faction snapshot; must match [game] when supplied.
+  DiplomacyFactionMembership? factionMembership,
+
+  /// When non-null, must match `(game, topology, playerId, currentOrders, …)`.
+  IncrementalCandidateValidator? sharedCandidateValidator,
+
+  /// When non-null, must match [view.provincesById] owned by [playerId].
+  Set<String>? playerOwnedProvinceIds,
+}) {
+  assert(
+    view == null || view.playerId == playerId,
+    'view.playerId must match playerId',
+  );
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match playerId',
+  );
+
+  final effectiveView = view ?? buildPlayerView(game, topology, playerId);
+  final probe = _prepareWorkOrderTileKeyProbe(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    view: effectiveView,
+    unitId: unitId,
+    workTarget: workTarget,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+    resolution: resolution,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
+    playerOwnedProvinceIds: playerOwnedProvinceIds,
+    applyExploreProvinceScope: false,
+  );
+  if (probe == null) return const {};
+
+  final valid = _collectValidWorkOrderTileKeys(
+    probe: probe,
+    tileKeysToProbe: probe.rawCandidateTileKeys,
+  );
+  orderSuggestionLog.d(
+    'getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}',
+  );
+  return valid;
+}
+
+/// Returns the set of tile keys that are valid targets for a work order,
+/// filtering by work-target-specific criteria and visibility BEFORE calling
+/// the order engine for efficiency.
+///
+/// Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
+///
+/// When [sharedCandidateValidator] is non-null, it must have been built for the
+/// same `game`, `topology`, `view.playerId`, `currentOrders`, and
+/// `tileMapByRegion` as this call (amortizes [buildPlayerView] / validator setup
+/// across multi-unit enumeration; Refs #2394).
+Set<String> getValidWorkOrderTileKeysWithVisibility({
+  required Game game,
+  required MapTopology topology,
+  required PlayerView view,
+  required String unitId,
+  required String workTarget,
+  required Orders currentOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+
+  /// Optional pass snapshot; must match [game] when supplied.
+  OrderResolutionContext? resolution,
+
+  /// When non-null, must match ids from [view.provincesById] owned by the player.
+  /// Callers that invoke this many times per pass should supply a shared set to
+  /// avoid O(calls × provinces) [allProvinces] rescans (Refs #2394).
+  Set<String>? playerOwnedProvinceIds,
+}) {
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == view.playerId,
+  );
+
+  final probe = _prepareWorkOrderTileKeyProbe(
+    game: game,
+    topology: topology,
+    playerId: view.playerId,
+    view: view,
+    unitId: unitId,
+    workTarget: workTarget,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+    resolution: resolution,
+    sharedCandidateValidator: sharedCandidateValidator,
+    playerOwnedProvinceIds: playerOwnedProvinceIds,
+    applyExploreProvinceScope: true,
+  );
+  if (probe == null) return const {};
+
+  return _collectValidWorkOrderTileKeys(
+    probe: probe,
+    tileKeysToProbe: sortedVisibleWorkTargetCandidates(
+      view,
+      probe.rawCandidateTileKeys,
+    ),
+  );
+}
+
+class _WorkOrderTileKeyProbe {
+  const _WorkOrderTileKeyProbe({
+    required this.unitId,
+    required this.workTarget,
+    required this.reservedForPicker,
+    required this.candidateValidator,
+    required this.rawCandidateTileKeys,
+  });
+
+  final String unitId;
+  final String workTarget;
+  final Set<String> reservedForPicker;
+  final IncrementalCandidateValidator candidateValidator;
+  final Set<String> rawCandidateTileKeys;
+}
+
+_WorkOrderTileKeyProbe? _prepareWorkOrderTileKeyProbe({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required PlayerView view,
+  required String unitId,
+  required String workTarget,
+  required Orders currentOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  OrderResolutionContext? resolution,
+  DiplomacyFactionMembership? factionMembership,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  Set<String>? playerOwnedProvinceIds,
+  required bool applyExploreProvinceScope,
+}) {
+  final unit = game.worldState.tryGetUnitById(unitId);
+  if (unit == null || unit.ownerId != playerId) return null;
+  if (unit.currentWork != null) return null;
+  if (playerHasPendingWorkOrderForUnit(currentOrders, playerId, unitId)) {
+    return null;
+  }
+  if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return null;
+
+  final effectiveFactionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      factionMembership ??
+      DiplomacyFactionMembership.from(game);
+  final effectiveResolution =
+      resolution ??
+      (sharedCandidateValidator != null
+          ? (
+              view: sharedCandidateValidator.view,
+              unitsById: sharedCandidateValidator.unitsById,
+              provinceById: sharedCandidateValidator.view.provincesById,
+            )
+          : orderResolutionContextFromView(view, game));
+  final effectiveOwnedProvinceIds =
+      playerOwnedProvinceIds ??
+      <String>{
+        for (final e in effectiveResolution.provinceById.entries)
+          if (e.value.ownerId == playerId) e.key,
+      };
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+        resolution: effectiveResolution,
+        factionMembership: effectiveFactionMembership,
+      );
+  final raw = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: playerId,
+    workTarget: workTarget,
+    exploreProvinceScope: applyExploreProvinceScope &&
+            workTarget == kWorkTargetExplore
+        ? partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view)
+        : null,
+    tileMapByRegion: tileMapByRegion,
+    playerOwnedProvinceIds: effectiveOwnedProvinceIds,
+    factionMembership: effectiveFactionMembership,
+  );
+
+  return _WorkOrderTileKeyProbe(
+    unitId: unitId,
+    workTarget: workTarget,
+    reservedForPicker: devExclusiveReservedTileKeysForPlayer(
+      game,
+      currentOrders,
+      playerId,
+      ignorePendingWorkOrderUnitId: unitId,
+    ),
+    candidateValidator: candidateValidator,
+    rawCandidateTileKeys: raw,
+  );
+}
+
+Set<String> _collectValidWorkOrderTileKeys({
+  required _WorkOrderTileKeyProbe probe,
+  required Iterable<String> tileKeysToProbe,
+}) {
+  final valid = <String>{};
+  for (final tileKey in tileKeysToProbe) {
+    if (isDevExclusiveWorkTarget(probe.workTarget) &&
+        probe.reservedForPicker.contains(tileKey)) {
+      continue;
+    }
+    final candidate = WorkOrder(
+      unitId: probe.unitId,
+      target: probe.workTarget,
+      targetTileKey: tileKey,
+    );
+    if (isWorkOrderAcceptedWithValidator(probe.candidateValidator, candidate)) {
+      valid.add(tileKey);
+    }
+  }
+  return valid;
+}
+
+List<String> sortedVisibleWorkTargetCandidates(
+  PlayerView view,
+  Set<String> rawCandidates,
+) {
+  final list = <String>[];
+  for (final tk in rawCandidates) {
+    final visibility = view.visibilityForTile(tk);
+    if (visibility == VisibilityLevel.fullyVisible ||
+        visibility == VisibilityLevel.fogged) {
+      list.add(tk);
+    }
+  }
+  list.sort();
+  return list;
+}
