@@ -8,3 +8,6 @@ library colonizethis_combat_test_support;
 export 'src/effective_strength_scenarios.dart';
 export 'src/military_strength_scenarios.dart';
 export 'src/military_strength_test_support.dart';
+export 'src/quick_battle_action_modifiers_scenarios.dart';
+export 'src/quick_battle_emplaced_guns_scenarios.dart';
+export 'src/quick_battle_emplaced_guns_test_support.dart';

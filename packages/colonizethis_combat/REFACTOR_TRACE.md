@@ -58,3 +58,32 @@ Deferred: `repo.combat_test_duplicate_descriptions` — blocked until `combat_re
 Module: `colonizethis_combat_test_support/lib/src/military_strength_scenarios.dart`
 
 Combat test LOC: 6,481 → 6,170 physical lines (−311 in test files; ≥15% target deferred to later slices).
+
+## Slice 3 — Quick Battle action-modifier and emplaced-gun tables
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| qam-neutral | no actions yields neutral 1.0 modifiers | `quick_battle_action_modifiers_test.dart` | — |
+| qam-volley | volleyFire raises casualties dealt only | `quick_battle_action_modifiers_test.dart` | — |
+| qam-entrench | defendEntrench lowers casualties taken only | `quick_battle_action_modifiers_test.dart` | — |
+| qam-maneuver | maneuver raises offense only | `quick_battle_action_modifiers_test.dart` | — |
+| qam-fallback | fallBackRefuseFlank lowers offense and casualties taken | `quick_battle_action_modifiers_test.dart` | — |
+| qam-assault | assaultCharge raises offense and casualties taken | `quick_battle_action_modifiers_test.dart` | — |
+| qam-combined | combined actions sum deltas in order | `quick_battle_action_modifiers_test.dart` | — |
+| qam-assault-clamp-high | repeated assaultCharge clamps offense to 1.5 upper bound | `quick_battle_action_modifiers_test.dart` | — |
+| qam-fallback-clamp-low | repeated fallBackRefuseFlank clamps casualties taken to 0.5 floor | `quick_battle_action_modifiers_test.dart` | — |
+| meg-from-input | copies all fields from immutable input gun | `quick_battle_emplaced_guns_test.dart` | — |
+| ags-sum-alive | sums attack+defense over alive guns and skips dead | `quick_battle_emplaced_guns_test.dart` | — |
+| ags-empty | empty list yields 0.0 | `quick_battle_emplaced_guns_test.dart` | — |
+| sah-sum-hp | sums hp over alive guns only | `quick_battle_emplaced_guns_test.dart` | — |
+| rrd-noop | non-positive amount is a no-op | `quick_battle_emplaced_guns_test.dart` | — |
+| rrd-round-robin | distributes damage round-robin by id order | `quick_battle_emplaced_guns_test.dart` | — |
+| rrd-skip-dead | skips fully destroyed guns and keeps damaging survivors | `quick_battle_emplaced_guns_test.dart` | — |
+| rrd-overkill | damage exceeding total HP drives all guns to zero | `quick_battle_emplaced_guns_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/quick_battle_action_modifiers_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_emplaced_guns_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/quick_battle_emplaced_guns_test_support.dart` (`emplacedGun` builder)
+
+Combat test LOC: 6,170 → 6,053 physical lines (−117 in test files across slice 3).
