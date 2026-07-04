@@ -574,6 +574,11 @@ jobs:
           fi
           flutter test "${rel_tests[@]}" --no-pub "${coverage_args[@]}" \
             --reporter=compact -j 1 --no-track-widget-creation
+          if [ "$SHARD_INDEX" = "0" ]; then
+            cd "$GITHUB_WORKSPACE/app"
+            flutter test ../packages/colonizethis_app_e2e_support/test/ \
+              --no-pub --reporter=compact -j 1 --no-track-widget-creation
+          fi
 
       - name: Upload shard coverage
         if: |

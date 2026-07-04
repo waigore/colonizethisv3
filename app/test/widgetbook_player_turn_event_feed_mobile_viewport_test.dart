@@ -14,7 +14,7 @@
 //     `SPEC/ui/mobile-adaptation.md` § 6.
 
 import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

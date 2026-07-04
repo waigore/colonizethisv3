@@ -55,7 +55,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../integration_test/e2e_helpers.dart';
+import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 void main() {
   suppressLogsForTests();
