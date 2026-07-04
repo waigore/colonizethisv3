@@ -3,11 +3,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'orders_application_test_support.dart';
+
 void main() {
   group('applyBuildAndWorkOrders work order application (part 4)', () {
-    const ow = 'oldWorld';
-    const provinceId = 'oldWorld|P1';
-    const tileKey = 'oldWorld|P1|0|0';
+    const ow = OrdersApplicationTestSupport.ow;
+    const provinceId = OrdersApplicationTestSupport.provinceId;
+    const tileKey = OrdersApplicationTestSupport.tileKey;
 
     test('unknown work target is skipped and unit stays idle', () {
       final unit = Unit(
@@ -17,17 +19,9 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+        units: [unit],
       );
       final orders = Orders(
         workOrdersByPlayerId: {
@@ -56,20 +50,13 @@ void main() {
           locationProvinceId: provinceId,
           tileKey: tileKey,
         );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            const Player(
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
+          players: const [
+            Player(
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
@@ -110,28 +97,17 @@ void main() {
           tileKey: tileKey,
         );
         final cost = workOrderCostBuildRoad;
-        var stockpile = const Stockpile();
-        for (final e in cost.entries) {
-          stockpile = stockpile.applyDelta(e.key, e.value);
-        }
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
           players: [
             Player(
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
-              stockpile: stockpile,
+              stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
             ),
           ],
         );
