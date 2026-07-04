@@ -344,7 +344,7 @@ Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
     ...kResourceIconIds.map(
       (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
     ),
-    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kTownIconIds.map(townIconCache.assetPath),
     ...kProvinceLabelIconIds.map(
       (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
     ),

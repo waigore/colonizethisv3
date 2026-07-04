@@ -1,237 +1,76 @@
 # Town and Port Icons — SPEC/ui/town-port-icons.md
 
-**SPEC/ui** — Pixel art icons for towns and ports on the map widget. Renders **town** icons at `province.townTileKey` and **port** icons at authoritative port tiles from `portsByProvinceSeaboard`, with an offset rule when the port shares a tile with the town or capital. Tapping either icon emits `OpenProvinceDetailPanelEvent` via the app event bus. Replaces the legacy blue-square port markers. Design contract: GitHub [#1361](https://github.com/waigore/colonizethisv3/issues/1361).
+**SPEC/ui** — Pixel art icons for towns and ports on the map widget. Renders **level- and style-aware town** icons at `province.townTileKey` and **port** icons at authoritative port tiles from `portsByProvinceSeaboard`. Town development level valid range is **1–4** (Refs #3870). Tapping either icon emits `OpenProvinceDetailPanelEvent` via the app event bus.
 
 ---
 
 ## Overview
 
-Towns and ports are displayed as distinct pixel art icons on the map when the province has a `townTileKey`. Town and port markers both use 64×64 assets. Port provinces render **two** icons: the town glyph on the canonical town tile and the port glyph on a computed drawable cell (see below).
+Towns use **16** distinct 64×64 glyphs: **4 development levels × 3 architectural styles**. Port provinces render town + port glyphs. Port icon unchanged (`ui_icon_com_port.png`).
 
-| Icon Type | Description | Asset File |
-|-----------|-------------|------------|
-| **Port** | Harbor/port icon | `ui_icon_com_port.png` (64 folder) |
-| **Town (all towns)** | Town/village icon for inland and coastal towns | `ui_icon_com_town_inland_64.png` |
+| Style | When |
+|-------|------|
+| `euro` | Great Power Old World, Minor Nation Old World, unowned Old World |
+| `colonial` | Great Power New World, unowned New World |
+| `tribal` | Tribe-owned (any region) |
+
+Style resolution (`townIconStyleForProvince` in `colonizethis_map`):
+
+1. If `ownerId` maps to **Tribe** → `tribal`
+2. Else if `regionId == newWorld` and (`ownerId` is null/unowned **or** `ownerId` maps to **Great Power**) → `colonial`
+3. Else → `euro`
 
 ---
 
 ## Asset Files
 
-Icons are stored in `app/assets/icons/64/` following the existing resource icon naming convention.
+Pattern: `app/assets/icons/64/ui_icon_com_town_{style}_{level}_64.png`  
+Cache id: `town_{style}_{level}` where `{style}` ∈ `euro` | `colonial` | `tribal`, `{level}` ∈ `1`–`4`.
 
-| Icon | File | Description |
-|------|------|-------------|
-| Port | `ui_icon_com_port.png` | Harbor with ships/anchors |
-| Town (all towns) | `ui_icon_com_town_inland_64.png` | Upscaled inland village/house cluster |
+| Example file | Cache id |
+|--------------|----------|
+| `ui_icon_com_town_euro_1_64.png` | `town_euro_1` |
+| `ui_icon_com_town_colonial_3_64.png` | `town_colonial_3` |
+| `ui_icon_com_town_tribal_4_64.png` | `town_tribal_4` |
+| `ui_icon_com_port.png` | `port` |
+
+Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 
 ### Asset and Render Requirements
 
-- **Format:** Town icon is 64×64 PNG with RGBA transparency; port icon is 64×64 PNG.
-- **Style:** Colonial-era pixel art matching `ui_icon_com_*.png` resource icons
-- **Background:** Transparent (no circular badge or background shape)
-- **Positioning:** Town icon renders at 64×64 centered on the town tile; port icon renders at native 64×64.
+- **Format:** 64×64 PNG, RGBA transparent.
+- **Style:** Colonial-era pixel art; level progression increases cluster size / silhouette height monotonically within each style set.
+- **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
+- **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
 
 ---
 
-## Rendering
-
-### Position — town icon
-
-On the tile from `province.townTileKey` (same centering as before):
-- `cx = townTileX * cellSize + cellSize / 2`
-- `cy = townTileY * cellSize + cellSize / 2`
-
-**Town glyph:** always `town_inland_64` for all towns (inland and sea-touching). This applies even when the province is a port (port uses a separate icon).
-
-### Position — port icon (drawable cell)
-
-Authoritative **port land tile** comes from `WorldState.portsByProvinceSeaboard` **values** (tile key `regionId|localProvinceId|x|y`). **Drawable** harbor/fleet coordinates are always a **sea** map cell (topology `seaZoneIds`); **no** silent land fallback (GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761)).
-
-1. Parse `(px, py)` from the port tile key.
-2. If `tileMap.cell(px, py)` is in `seaZoneIds`, the drawable cell is `(px, py)`.
-3. Otherwise scan **orthogonal** neighbors of **`(px, py)`** in fixed order **North, East, South, West** and use the **first** cell whose map cell id is in `seaZoneIds`.
-4. If no such cell exists, implementation **throws** (data/spec violation for content authors). Do **not** draw on land and do **not** scan from the town tile or capital tile as origin.
-
-**Port province matching:** `isPort` / port town wiring resolves the owning province from the **seaboard map key** (`fullProvinceId|seaZoneId` or legacy `localProvinceId|seaZoneId`) when present, so non-capital ports stay consistent even if a stale value tile key repeats the wrong `localProvinceId` segment.
-
-Implementation populates `TownMarkerView.portIconX` / `portIconY` when `isPort` is true (`colonizethis_map` `computePortDrawableSeaCellForMap`).
-
-### View data (`TownMarkerView`)
+## View data (`TownMarkerView`)
 
 | Field | Meaning |
 |-------|--------|
-| `x`, `y` | Town tile (canonical) |
-| `provinceId` | **Local** province id (e.g. `p1`) for prefixed bus events |
-| `isPort` | Province has a port in `portsByProvinceSeaboard` |
-| `isCoastal` | Sea-touching and **not** a port (legacy semantic for tests/tools) |
-| `touchesSea` | Province has a P↔S edge; drives **town** coastal vs inland glyph |
-| `portIconX`, `portIconY` | Set when `isPort`; drawable cell for **port** sprite |
+| `townDevelopmentLevel` | Province level 1–4 for glyph selection |
+| `townIconStyle` | `euro`, `colonial`, or `tribal` |
+| (existing fields) | `x`, `y`, `provinceId`, `isPort`, `portIconX/Y`, … |
 
-### Visibility
-
-- Town icon uses visibility of the **town** cell and applies regardless of province ownership (player, AI, unowned), subject only to visibility/fog rules.
-- Port icon uses visibility of the **port drawable** cell (typically sea when offset).
-- Fogged tiles render icons at reduced opacity; unrevealed tiles show no icon.
-
-### Layer Order
-
-Icons are rendered in the same layer as capitals and warp zone indicators:
-
-1. Base tiles (terrain)
-2. Resource icons
-3. Improvement/road labels
-4. Province/sea zone borders
-5. Hover province glow
-6. Political faction borders
-7. **Capitals** (gold circles - unchanged)
-8. **Town** glyphs, then **port** glyphs (ports drawn after towns so the harbor icon reads on top when stacked on fallback)
-9. Warp zone indicators
-10. Hover selector
-11. Valid tile glow / highlighted tile
-
-### Coastal detection (map view builder)
-
-Coastal provinces are derived from topology edges where exactly one endpoint is in `seaZoneIds` from sea-zone nodes (not from string prefixes like `sea`).
-
-### Port Marker Change
-
-The legacy blue filled square port markers (`_paintPorts` method) are **removed**. Port rendering uses the `port` pixel icon at `portIconX`/`portIconY` for provinces with ports.
-
----
-
-## Interactivity
-
-### Tap Behavior
-
-When the user taps a town or port icon:
-
-1. The map widget emits `OpenProvinceDetailPanelEvent(provinceId)` via `AppEventBus`
-2. The event carries the **prefixed province id** (e.g., `"oldWorld|p1"`)
-3. No callback is used for this communication — event bus only
-
-### Hit Testing
-
-- A tap resolves to a grid cell; **town hit** if `(x,y)` matches `TownMarkerView.x/y` or **port hit** if it matches `portIconX/portIconY` when `isPort`.
-- Port and town hits share the same **`OpenProvinceDetailPanelEvent`** / detail flow (equivalent to tapping the town).
-
-### No Hover State
-
-Unlike resource icons, town/port icons do not have a distinct hover state (scale, brightness change). The province border glow and selector already provide hover feedback.
-
----
-
-## Event Bus Integration
-
-### New Event
-
-```dart
-/// Request to open the province/sea zone detail overlay for [provinceId].
-/// Emitted by the map widget when user taps a town or port icon.
-/// SPEC/ui/province-sea-zone-detail-overlay.md.
-class OpenProvinceDetailPanelEvent extends UIActionEvent {
-  const OpenProvinceDetailPanelEvent(this.provinceId);
-  final String provinceId;
-}
-```
-
-### Event Flow
-
-```
-[CtRegionMap] tap on town/port icon
-    ↓
-emit OpenProvinceDetailPanelEvent(provinceId) via AppEventBus
-    ↓
-[GameMapArea] listens on bus.on<OpenProvinceDetailPanelEvent>()
-    ↓
-Updates _selectedDetailId via setState()
-    ↓
-[GameMapCanvasStack] re-renders with new selectedDetailId
-    ↓
-ProvinceSeaZoneDetailOverlay shown
-```
-
-### Coupling
-
-- `CtRegionMap` (Flame component) has NO coupling to `ProvinceSeaZoneDetailOverlay`
-- `CtRegionMap` only knows about `AppEventBus` interface
-- `GameMapArea` listens to bus and manages state independently
-- The event bus is injectable via Riverpod for testing
+Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)`.
 
 ---
 
 ## Acceptance Criteria (Given–When–Then)
 
-### Icon Rendering
+- **Given** a province with `townDevelopmentLevel` **L** (1–4) and style **S** per style resolution, **when** the map renders the town tile in full visibility, **then** the glyph is `town_{S}_{L}`.
+- **Given** `townDevelopmentLevel` changes after turn resolution, **when** the map refreshes, **then** the matching level glyph renders without reload.
+- **Given** a fogged town tile, **when** the map renders, **then** the icon shows the **true** level (reduced opacity only).
+- **Given** an unrevealed town tile, **when** the map renders, **then** **no** town icon is drawn.
+- **Given** each style, **when** opaque pixel counts and `maxColumnHeight` are measured on levels 1–4, **then** both strictly increase **1 < 2 < 3 < 4**.
 
-- **Given** a province with `townTileKey` and a port whose tile differs from town and capital, **when** the map renders, **then** the `port` icon is at `portIconX/portIconY` matching that port tile and the town glyph is on the town tile.
-- **Given** a port land tile (whether or not it equals town/capital) and an orthogonal sea cell exists in N→E→S→W order **from that port tile**, **when** the map renders, **then** `portIconX/portIconY` is that sea cell.
-- **Given** a port land tile with **no** orthogonal sea cell in `seaZoneIds`, **when** the map builds, **then** the implementation **throws** with a diagnosable error (no land drawable).
-- **Given** a province with `townTileKey` that **touches sea** (topology), **when** the map renders, **then** the `town_inland_64` glyph is on the town tile (including port provinces).
-- **Given** a province with `townTileKey` that does **not** touch sea, **when** the map renders, **then** the `town_inland_64` glyph is on the town tile.
-- **Given** a province with `townTileKey` (player-owned or non-player-owned), **when** the map renders in full visibility mode, **then** a town icon is displayed for that province.
-- **Given** a province with `townTileKey` set that is coastal **non-port**, **when** the map renders, **then** `isCoastal` is true on `TownMarkerView` and only the town icon is shown (no port sprite).
-- **Given** a province without a town (`townTileKey` is null), **when** the map renders, **then** no town icon is displayed for that province.
-- **Given** a non-player province with `townTileKey` in full visibility mode, **when** the map renders, **then** its town icon is displayed.
-- **Given** player-constrained visibility mode for a non-player province with `townTileKey`, **when** the town tile visibility is `visible` or `fogged`, **then** the town icon is displayed (fogged styling applies); **when** `unrevealed`, **then** no icon is shown.
-- **Given** a map widget in player-constrained visibility mode, **when** a town icon is on a fogged tile, **then** the icon is rendered at reduced opacity.
-- **Given** a map widget in player-constrained visibility mode, **when** a town icon is on an unrevealed tile, **then** no icon is rendered.
-
-### Icon Replacement
-
-- **Given** the map renders a port marker, **when** the new pixel art icons are implemented, **then** the legacy blue square port marker is no longer rendered for provinces with ports.
-- **Given** the map renders a port, **when** the icon is rendered, **then** the `port` icon visually identifies it as a trade hub.
-- **Given** the map renders a coastal town (non-port coastal province), **when** the icon is rendered, **then** it uses the same inland town icon as inland towns.
-
-### Interactivity
-
-- **Given** the user taps the town tile or the port drawable tile for that marker, **when** the tap resolves to that cell, **then** the map emits `OpenProvinceDetailPanelEvent` with the correct prefixed province id via `AppEventBus`.
-- **Given** the user taps on a town or port icon, **when** the icon is tapped, **then** no callback is invoked — only the event bus event is emitted.
-- **Given** the user taps on a town or port icon, **when** the `AppEventBus` is not connected, **then** the app does not crash (event is fire-and-forget).
-
-### Event Bus Coupling
-
-- **Given** `CtRegionMap` is configured with an `AppEventBus`, **when** a town icon is tapped, **then** `CtRegionMap` has no direct reference to `ProvinceSeaZoneDetailOverlay`.
-- **Given** `GameMapArea` listens to `OpenProvinceDetailPanelEvent`, **when** the event is emitted, **then** `GameMapArea` updates its `selectedDetailId` state independently.
+(Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
 ---
 
 ## Implementation Notes
 
-### Icon Loading
-
-Icons are loaded via the existing `ResourceIconCache` pattern:
-- `TownIconCache` singleton for town/coastal icons
-- Icons loaded in `onLoad()` of `CtRegionMapComponent`
-- Cache stores `Map<String, Image>` keyed by icon type (`port`, `town_inland_64`)
-
-### Existing Code Changes
-
-1. **`region_map_component.dart`** (render parts: `SPEC/program/map-region-map-render.md`):
-   - Add `onTownIconTapped` callback parameter
-   - Replace `_paintPorts()` with `_paintTowns()` method
-   - Add `_getTownAtTile()` helper for tap detection
-   - Add `Image` fields for town icons via `TownIconCache`
-
-2. **`ct_region_map.dart`**:
-   - Accept `AppEventBus` provider
-   - Pass bus to `CtRegionMapComponent`
-   - Wire `onTownIconTapped` to emit `OpenProvinceDetailPanelEvent` via bus
-
-3. **`game_map_canvas_stack.dart`**:
-   - Accept `AppEventBus` provider
-   - Pass bus to `CtRegionMap`
-
-4. **`game_map_area.dart`**:
-   - Subscribe to `OpenProvinceDetailPanelEvent` via bus
-   - Pass bus to `GameMapCanvasStack`
-
-5. **`app_events.dart`**:
-   - Add `OpenProvinceDetailPanelEvent` class
-
----
-
-## Dependencies
-
-- `app/assets/icons/64/ui_icon_com_port.png`
-- `app/assets/icons/64/ui_icon_com_town_inland_64.png`
-- `AppEventBus` from `colonizethis_models`
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`).
+- `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
+- Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).

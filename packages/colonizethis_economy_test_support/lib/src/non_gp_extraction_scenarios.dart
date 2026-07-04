@@ -413,13 +413,12 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
     refs: '#2991',
   ),
   NonGpExtractionScenario(
-    label: 'tile in a province whose town development level is 0 yields 0 '
-        'in the capital province (town dev cap is a hard floor)',
+    label: 'capital province at minimum town development level 1 caps yield to 1',
     game: gameForNonGpExtractionTest(
       provinces: [
         capitalProvinceForNonGpExtractionTest(
           provinceId: 'oldWorld|m1',
-          townDev: 0,
+          townDev: 1,
         ),
       ],
       tileState: tileStateFromSpecs(const [
@@ -440,7 +439,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) => expect(result, isEmpty),
-    refs: '#2991',
+    verify: (result) => expect(result, equals(<CommodityId, int>{'timber': 1})),
+    refs: '#2991 #3870',
   ),
 ];

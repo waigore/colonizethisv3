@@ -2409,6 +2409,15 @@
   "@provinceOverlay_capitalNo": {
     "description": "Political section capital row when the province is not a faction capital."
   },
+  "provinceOverlay_townDevelopment": "Town development: {level}",
+  "@provinceOverlay_townDevelopment": {
+    "description": "Political section town development row (1–4). Refs #3870.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_indentedCount": "  {label}: {count}",
   "@provinceOverlay_indentedCount": {
     "description": "Indented count line used in military summary lists.",

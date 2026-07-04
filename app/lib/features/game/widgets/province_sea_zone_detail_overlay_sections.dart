@@ -365,6 +365,7 @@ Widget _buildPoliticalSection({
   required String ownerName,
   required String regionLabel,
   required bool isCapital,
+  required int townDevelopmentLevel,
 }) {
   // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
   // tokens). Every body row declares TextStyle.color explicitly via the
@@ -389,6 +390,10 @@ Widget _buildPoliticalSection({
           isCapital
               ? l10n.provinceOverlay_capitalYes
               : l10n.provinceOverlay_capitalNo,
+          style: bodyStyle,
+        ),
+        Text(
+          l10n.provinceOverlay_townDevelopment(townDevelopmentLevel),
           style: bodyStyle,
         ),
       ],

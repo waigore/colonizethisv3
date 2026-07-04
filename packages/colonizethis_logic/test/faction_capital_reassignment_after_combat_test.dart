@@ -104,7 +104,7 @@ void main() {
         expect(next.worldState.tileState, tileStateBefore);
         final p2 = next.worldState.oldWorld.provinces
             .firstWhere((p) => p.id == '$ow|P2');
-        expect(p2.townDevelopmentLevel, 0);
+        expect(p2.townDevelopmentLevel, kTownDevelopmentLevelMin);
       },
     );
 

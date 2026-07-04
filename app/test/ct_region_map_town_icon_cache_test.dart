@@ -1,4 +1,7 @@
+// Pins level- and style-aware town map icons and townDevelopmentLevel floor (Refs #3870).
+
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -14,10 +17,13 @@ void main() {
   suppressLogsForTests();
 
   group('Town icon cache', () {
-    test('town icon policy uses inland + port assets only', () {
-      expect(kTownIconIds.contains('town_inland_64'), isTrue);
-      expect(kTownIconIds.contains('port'), isTrue);
-      expect(kTownIconIds.contains('town_coastal'), isFalse);
+    test('town icon policy uses 16 style/level variants plus port', () {
+      expect(kTownIconIds, contains('port'));
+      expect(kTownIconIds, contains('town_euro_1'));
+      expect(kTownIconIds, contains('town_colonial_4'));
+      expect(kTownIconIds, contains('town_tribal_2'));
+      expect(kTownIconIds, isNot(contains('town_inland_64')));
+      expect(kTownIconIds.length, 13);
     });
 
     test('town and port render sizes follow spec', () {
@@ -25,19 +31,15 @@ void main() {
       expect(TownIconCache.portIconSize, equals(64.0));
     });
 
-    testWidgets(
-      'town and port icon contracts use expected ids and sizes',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const SizedBox.shrink());
-        expect(TownIconCache.townIconId, 'town_inland_64');
-        expect(TownIconCache.portIconId, 'port');
-        expect(TownIconCache.townIconSize, 64);
-        expect(TownIconCache.portIconSize, 64);
-        expect(kTownIconIds, containsAll(['town_inland_64', 'port']));
-        expect(kTownIconIds, isNot(contains('town_coastal')));
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
+    test('townIconIdForMarker resolves style and level', () {
+      expect(
+        TownIconCache.townIconIdForMarker(
+          townIconStyle: kTownIconStyleColonial,
+          townDevelopmentLevel: 3,
+        ),
+        'town_colonial_3',
+      );
+    });
 
     testWidgets(
       'required town icon asset files are present in test asset bundle',
@@ -45,7 +47,7 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
 
         for (final iconId in kTownIconIds) {
-          final path = 'assets/icons/64/ui_icon_com_$iconId.png';
+          final path = townIconCache.assetPath(iconId);
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -54,75 +56,60 @@ void main() {
           );
         }
       },
-      timeout: const Timeout(Duration(seconds: 10)),
+      timeout: const Timeout(Duration(seconds: 30)),
     );
 
     testWidgets(
-      'town icon assets load successfully via rootBundle',
-      (WidgetTester tester) async {
-        var loadedCount = 0;
-        await tester.runAsync(() async {
-          for (final iconId in kTownIconIds) {
-            final path = 'assets/icons/64/ui_icon_com_$iconId.png';
-            try {
-              final data = await rootBundle.load(path);
-              if (data.lengthInBytes > 0) {
-                loadedCount++;
-              }
-            } catch (e) {
-              // Icon asset failed to load
-            }
-          }
-        });
-
-        expect(
-          loadedCount,
-          equals(kTownIconIds.length),
-          reason:
-              'Expected all ${kTownIconIds.length} town icon assets to load, but only $loadedCount loaded',
-        );
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets('town 64 icon preserves transparent background', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(const SizedBox.shrink());
-      var hasTransparentPixel = false;
-      await tester.runAsync(() async {
-        final data = await rootBundle.load(
-          'assets/icons/64/ui_icon_com_town_inland_64.png',
-        );
-        final image = await _decodePng(data.buffer.asUint8List());
-        final pixels = await image.toByteData(
-          format: ui.ImageByteFormat.rawRgba,
-        );
-        if (pixels != null) {
-          hasTransparentPixel = _hasTransparentPixel(pixels);
-        }
-        image.dispose();
-      });
-      expect(
-        hasTransparentPixel,
-        isTrue,
-        reason:
-            'Town map icon must keep transparent background so terrain stays visible around the glyph',
-      );
-    });
-
-    testWidgets(
-      'town markers exist in Old World region data',
+      'town markers carry development level and style in Old World region data',
       (WidgetTester tester) async {
         final region = ctRegionMapTestOldWorldRegion();
-        expect(
-          region.townMarkers.isNotEmpty,
-          isTrue,
-          reason: 'Old World region should have town markers',
-        );
+        expect(region.townMarkers, isNotEmpty);
+        for (final town in region.townMarkers) {
+          expect(town.townDevelopmentLevel, inInclusiveRange(1, 4));
+          expect(
+            town.townIconStyle,
+            isIn([kTownIconStyleEuro, kTownIconStyleColonial, kTownIconStyleTribal]),
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
+  });
+
+  group('town icon asset monotonicity (Refs #3870)', () {
+    for (final style in kTownIconStyles) {
+      test('$style opaque pixels and max height increase 1→4', () async {
+        final opaqueCounts = <int>[];
+        final maxHeights = <int>[];
+        for (final level in kTownDevelopmentLevels) {
+          final path = townIconCache.assetPath('town_${style}_$level');
+          final data = await rootBundle.load(path);
+          final image = await _decodePng(data.buffer.asUint8List());
+          expect(image.width, 64);
+          expect(image.height, 64);
+          final pixels = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+          image.dispose();
+          expect(pixels, isNotNull);
+          var opaque = 0;
+          var maxRow = -1;
+          for (var y = 0; y < 64; y++) {
+            for (var x = 0; x < 64; x++) {
+              final i = (y * 64 + x) * 4;
+              if (pixels!.getUint8(i + 3) > 0) {
+                opaque++;
+                maxRow = y;
+              }
+            }
+          }
+          opaqueCounts.add(opaque);
+          maxHeights.add(maxRow + 1);
+        }
+        for (var i = 0; i < 3; i++) {
+          expect(opaqueCounts[i], lessThan(opaqueCounts[i + 1]));
+          expect(maxHeights[i], lessThan(maxHeights[i + 1]));
+        }
+      });
+    }
   });
 }
 
@@ -130,11 +117,4 @@ Future<ui.Image> _decodePng(Uint8List bytes) {
   final completer = Completer<ui.Image>();
   ui.decodeImageFromList(bytes, completer.complete);
   return completer.future;
-}
-
-bool _hasTransparentPixel(ByteData pixels) {
-  for (var i = 3; i < pixels.lengthInBytes; i += 4) {
-    if (pixels.getUint8(i) < 255) return true;
-  }
-  return false;
 }

@@ -241,6 +241,8 @@ class TownMarkerView {
     required this.isCoastal,
     required this.isPort,
     required this.touchesSea,
+    required this.townDevelopmentLevel,
+    required this.townIconStyle,
     this.portIconX,
     this.portIconY,
   });
@@ -260,6 +262,12 @@ class TownMarkerView {
   /// Province has a P↔S topology edge (sea-touching). Used for the town glyph
   /// on [x]/[y] (coastal vs inland) even when [isPort] is true.
   final bool touchesSea;
+
+  /// Province town development level (1–4) for level-aware town glyph. Refs #3870.
+  final int townDevelopmentLevel;
+
+  /// Town icon style id (`euro`, `colonial`, `tribal`). Refs #3870.
+  final String townIconStyle;
 
   /// When [isPort] is true, grid coordinates for the port icon (may differ from
   /// [x]/[y] when the port tile matches town or capital). SPEC/ui/town-port-icons.md.
