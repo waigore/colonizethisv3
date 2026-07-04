@@ -16,7 +16,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
         kUnitTypeBuilder;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,

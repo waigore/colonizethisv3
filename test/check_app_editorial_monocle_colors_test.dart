@@ -214,7 +214,7 @@ const fallback = TextStyle(color: Colors.white);
       addTearDown(() => temp.deleteSync(recursive: true));
 
       const flameRenderer =
-          'app/lib/features/game/flame/region_map_component_render_core.dart';
+          'app/lib/features/game/flame/region_map/region_map_component_render_core.dart';
       const palette =
           'app/lib/features/game/flame/resource_icon_disc_palette.dart';
 
@@ -634,9 +634,9 @@ class Clean extends StatelessWidget {
 
     test('skips canonical Flame renderer + palette files', () {
       const skipped = <String>[
-        'app/lib/features/game/flame/region_map_component_render_core.dart',
-        'app/lib/features/game/flame/region_map_component_render_political.dart',
-        'app/lib/features/game/flame/region_map_component_render_markers.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
         'app/lib/features/game/flame/game_region_minimap.dart',
         'app/lib/features/game/flame/resource_icon_disc_palette.dart',
       ];

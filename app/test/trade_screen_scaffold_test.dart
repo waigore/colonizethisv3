@@ -10,7 +10,7 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart' show CtMapVisibilityMode;
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart' show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_panel.dart';

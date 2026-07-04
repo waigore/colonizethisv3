@@ -16,11 +16,12 @@ import 'package:path/path.dart' as p;
 ///
 /// Four sub-checks (any violation flips the rule red):
 ///
-/// 1. Production code under `app/lib/**` (excluding `app/lib/widgetbook/**`)
-///    must not call the `AppEventBus()` singleton factory — use the
-///    `appEventBusProvider` (or an `AppEventBus.create()` instance held by
-///    the owning widget/service) so test containers can dispose without
-///    closing the legacy global bus.
+/// 1. Production code under `app/lib/**` must not call the `AppEventBus()`
+///    singleton factory — use the `appEventBusProvider` (or an
+///    `AppEventBus.create()` instance held by the owning widget/service) so
+///    test containers can dispose without closing the legacy global bus.
+///    Widgetbook catalog stories live under `widgetbook_host/lib/catalogs/`
+///    and are outside this scan root.
 ///
 /// 2. `appNavigatorKey.currentContext`, `appNavigatorKey.currentState`, and
 ///    any other property access on `appNavigatorKey` is restricted to
@@ -67,8 +68,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
-  'app/lib/features/game/flame/game_map_area_turn_resolution.dart',
-  'app/lib/features/game/flame/game_map_area_build.dart',
+  // Paths updated when `game_map_area` parts moved under `flame/map_state/`
+  // (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build.dart',
   'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
@@ -120,7 +123,6 @@ const Set<String> _allowedPostFrameBusEmitFiles = <String>{
 };
 
 const _scanRoot = 'app/lib';
-const _excludedRoot = 'app/lib/widgetbook';
 const _featuresRoot = 'app/lib/features';
 
 const _closePanelEventName = 'ClosePanelEvent';
@@ -176,9 +178,6 @@ int runCheckAppEventBusDecoupling(
     final relativePath = p.posix.joinAll(
       p.split(p.relative(entity.path, from: root)),
     );
-    if (relativePath.startsWith('$_excludedRoot/')) {
-      continue;
-    }
     final content = entity.readAsStringSync();
     final parsed = parseString(content: content, path: relativePath);
     final visitor = _AppEventBusDecouplingVisitor(

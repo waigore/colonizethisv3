@@ -18,7 +18,12 @@ Monorepo layout:
 
 - **`AppEventHandlerScope`** (`app/lib/core/services/app_event_handler_scope.dart`) binds session-scoped bus listeners. Session subscriptions are split into `part` files by event family (observe, civilian work, naval/army, diplomacy, debug), each capped at 500 non-comment lines (`repo.app_event_handler_part_size`).
 - **`DebugCommandSessionHandler`** and **`ObserveModeSessionHandler`** apply ctdev/debug and observe-mode session mutations without importing feature panels.
-- Planned **`colonizethis_app_e2e_support`** workspace package (Phase 1) will host E2E/widget mirror helpers currently under `app/integration_test/` and `app/test/e2e_*`.
+- **`colonizethis_app_e2e_support`** (`packages/colonizethis_app_e2e_support`) hosts E2E/widget mirror helpers (`e2e_helpers.dart`, `e2e_test_shared*.dart`, panel expected-line fixtures) previously under `app/integration_test/` and `app/test/e2e_*`. `app/test` retains only barrel/contract tests (≤10 `e2e_*.dart` files); integration scenarios import the support package. Seed-42 demo fixtures remain in `app/lib/test_support/` (production/widgetbook consumers).
+- **`features/game/flame/map_area/`** — `GameMapAreaBackground` and other render-only map chrome. Public barrel: `map_area/map_area.dart`. Legacy import paths under `flame/game_map_area_background.dart` re-export the submodule.
+- **`features/game/flame/map_state/`** — `GameMapArea` widget stack, selection, province actions, turn-feed hooks, and draft projections. Public barrel: `map_state/map_state.dart`. Legacy import paths under `flame/game_map_area*.dart` re-export the submodule.
+- **`features/game/flame/region_map/`** — `RegionMapComponent` Flame render stack and viewport helpers. Public barrel: `region_map/region_map.dart`. Legacy import paths under `flame/region_map*.dart` re-export the submodule.
+- **Import boundary (`repo.app_flame_map_import_boundary`):** `map_area/` and `region_map/` must not import `map_state/`; `map_state/` may import `map_area` public exports only (`map_area/map_area.dart`).
+- **Widgetbook catalogs** (`widgetbook_host/lib/catalogs/`) — dev-only Widgetbook stories and catalog `part` files. `app/lib/widgetbook.dart` is a thin re-export shim for local `flutter run -t lib/widgetbook.dart`; production analyze scope for `app/lib/features`, `app/lib/core`, and `app/lib/widgets` excludes relocated catalogs (`repo.app_widgetbook_catalog_location`).
 
 ---
 

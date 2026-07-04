@@ -176,6 +176,9 @@ bool _shouldSkipAppEditorialMonocleColorsFile(String relativePath) {
   if (_appEditorialMonocleColorsAllowedFiles.contains(relativePath)) {
     return true;
   }
+  if (_isFlameCanvasRendererAllowlisted(relativePath)) {
+    return true;
+  }
   for (final prefix in _appEditorialMonocleColorsAllowedDirPrefixes) {
     if (relativePath.startsWith(prefix)) {
       return true;
@@ -207,14 +210,23 @@ final RegExp bannedColorLiteralPattern = RegExp(
   r'\bconst\s+Color\s*\(\s*0x',
 );
 
+bool _isFlameCanvasRendererAllowlisted(String relativePath) {
+  if (!relativePath.startsWith('app/lib/features/game/flame/')) {
+    return false;
+  }
+  final baseName = p.basename(relativePath);
+  if (_appEditorialMonocleColorsAllowedFlameBasenames.contains(baseName)) {
+    return true;
+  }
+  return baseName.startsWith('region_map_component_render_');
+}
+
+const Set<String> _appEditorialMonocleColorsAllowedFlameBasenames = <String>{
+  'game_region_minimap.dart',
+  'resource_icon_disc_palette.dart',
+};
+
 const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
-  // Flame canvas renderers — `Paint().color` / `TextPaint(...)`-style draws.
-  'app/lib/features/game/flame/region_map_component_render_core.dart',
-  'app/lib/features/game/flame/region_map_component_render_political.dart',
-  'app/lib/features/game/flame/region_map_component_render_markers.dart',
-  'app/lib/features/game/flame/game_region_minimap.dart',
-  // Pixel-art palette data (per-resource hue lookup table).
-  'app/lib/features/game/flame/resource_icon_disc_palette.dart',
   // Dev-tooling screens previously allowlisted under #2914 Risks / edge cases:
   // SYS10001 (Debug Log Viewer, `debug_log_viewer_screen.dart`) was promoted
   // out of the allowlist by this slice (Refs #2914 S3 — `_levelColor` row
