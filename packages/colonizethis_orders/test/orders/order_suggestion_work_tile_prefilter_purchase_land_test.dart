@@ -1,6 +1,6 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_orders/src/orders/order_suggestion_work_tile_prefilter.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_work_tile_candidacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
