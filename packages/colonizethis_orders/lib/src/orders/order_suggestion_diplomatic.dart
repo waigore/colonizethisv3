@@ -7,6 +7,7 @@ import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_diplomatic_candidates.dart';
 import 'order_suggestion_pass_context.dart';
+import 'validators/diplomatic/diplomatic_sub_validator.dart';
 
 /// Independent diplomatic candidates are appended in their own pass and do not
 /// consume (nor are consumed by) the single non-economic primary winner for a
@@ -77,6 +78,12 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     ...playerOverturesByTargetId.keys,
   };
 
+  final subValidatorContext = DiplomaticSubValidatorContext(
+    game: game,
+    playerId: playerId,
+    factionMembership: factionMembership,
+  );
+
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
   var passValidator = sharedCandidateValidator != null
@@ -95,18 +102,18 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
-    final targetCtx = DiplomaticSuggestionTargetContext(
-      game: game,
-      playerId: playerId,
-      player: player,
+    final targetView = DiplomaticSuggestionTargetView(
       targetId: targetId,
+      player: player,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
-      factionMembership: factionMembership,
       playerOverturesByTargetId: playerOverturesByTargetId,
       playerHoldsColony: playerHoldsColony,
     );
-    final candidates = diplomaticCandidatesForTargetOrdered(targetCtx);
+    final candidates = diplomaticCandidatesForTargetOrdered(
+      subValidatorContext,
+      targetView,
+    );
     var trialOrders = workingOrders;
 
     final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
