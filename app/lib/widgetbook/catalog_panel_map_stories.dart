@@ -25,6 +25,30 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Standalone — town production preview',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          return SizedBox(
+            width: 320,
+            height: 480,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              townProductionBonusByCommodity: {
+                CommodityCatalog.lumber.id: 1,
+                CommodityCatalog.fabric.id: 2,
+              },
+              onClose: () {},
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — sea zone',
         builder: (context) {
           final game = demoGameForOverlay;
