@@ -99,6 +99,11 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       buildImprovementEnabled: buildImprovementState.enabled,
       bus: ref.read(appEventBusProvider),
     );
+    final townProductionBonus = provinceTownProductionBonusPreview(
+      game: game,
+      provinceId: displayId,
+      mapData: mapData,
+    );
     final overlay = SizedBox(
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
@@ -110,6 +115,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         humanPlayerId: humanPlayerId,
         playerView: playerView,
         draftOrders: draftOrders,
+        townProductionBonusByCommodity: townProductionBonus,
         onHighlightTile: (k) => ref
             .read(mapProvincePanelProvider.notifier)
             .setSecondaryHighlight(k),

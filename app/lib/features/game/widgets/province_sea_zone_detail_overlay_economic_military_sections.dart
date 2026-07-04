@@ -23,6 +23,7 @@ Widget _buildEconomicSection({
   required Map<String, List<({String tileKey, String terrain})>>
   byResImprovable,
   void Function(String?)? onHighlightTile,
+  Map<String, int> townProductionBonusByCommodity = const {},
 }) {
   final children = <Widget>[];
 
@@ -87,9 +88,43 @@ Widget _buildEconomicSection({
     }
   }
 
-  if (children.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionEconomic, _emptyBodyDashText());
+  children.add(
+    Padding(
+      padding: const EdgeInsets.only(top: CtSpacing.m / 2),
+      child: Text(
+        l10n.provinceOverlay_townProductionHeading,
+        style: TextStyle(
+          color: EditorialMonoclePalette.fg,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+  if (townProductionBonusByCommodity.isEmpty) {
+    children.add(_emptyBodyDashText());
+  } else {
+    final commodityIds = townProductionBonusByCommodity.keys.toList()..sort();
+    for (final commodityId in commodityIds) {
+      final qty = townProductionBonusByCommodity[commodityId] ?? 0;
+      if (qty <= 0) continue;
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(left: CtSpacing.m / 2),
+          child: Row(
+            children: [
+              ResourceIcon(commodityId: commodityId, size: 20),
+              const SizedBox(width: CtSpacing.m / 2),
+              Text(
+                '+$qty',
+                style: TextStyle(color: EditorialMonoclePalette.fg),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
+
   return _buildSection(
     l10n.provinceOverlay_sectionEconomic,
     Column(

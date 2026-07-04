@@ -249,15 +249,102 @@ void main() {
       expect(offers['m1']!.single.quantity, 2);
     });
 
-    test('townManufacturingBonusToAutoOffers skips Great Powers', () {
-      final game = TestFixtures.minimalGame();
-      final offers = townManufacturingBonusToAutoOffers(
-        game: game,
-        bonusByFactionId: {
-          'h1': {CommodityCatalog.lumber.id: 3},
+    test('previewTownManufacturingBonusByProvince matches live bonusByProvinceId when connectivity resolves',
+        () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|p1';
+      const townKey = '$provinceId|0|0';
+      const timberTile = '$provinceId|1|0';
+      final game = TestFixtures.minimalGame(
+        players: const [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+            capitalTile: CapitalTile(
+              regionId: ow,
+              provinceId: provinceId,
+              x: 0,
+              y: 0,
+            ),
+            techUnlocked: {kTechIdCircularSaw: true},
+          ),
+        ],
+        capitalTileGrainBonusPerTurn: 0,
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: provinceId,
+              regionId: ow,
+              ownerId: 'pl1',
+              townDevelopmentLevel: 4,
+              townTileKey: townKey,
+            ),
+          ],
+        ),
+        tileKeysByRegionAndProvince: {
+          ow: {provinceId: [townKey, timberTile]},
         },
+        tileState: tileStateFromSpecs([
+          const TileImprovementSpec(timberTile, improvement: 4, roadLevel: 4),
+          const TileImprovementSpec(townKey, roadLevel: 1),
+        ]),
       );
-      expect(offers, isEmpty);
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: const [
+          ['p1', 'p1'],
+        ],
+        resourceGrid: const [
+          [null, Resource.timber],
+        ],
+        terrainGrid: const [
+          [null, TerrainType.hardwoodForest],
+        ],
+      );
+      final tileMaps = {ow: tileMap};
+      const topology = MapTopology();
+      final gpConnectivity = resolveConnectivity(
+        game: game,
+        tileMapByRegion: tileMaps,
+        topology: topology,
+      );
+      final nonGpConnectivity = resolveNonGreatPowerConnectivity(
+        game: game,
+        tileMapByRegion: tileMaps,
+        topology: topology,
+      );
+      final live = computeTownManufacturingBonusForGame(
+        game: game,
+        tileMapByRegion: tileMaps,
+        gpConnectivityByPlayerId: gpConnectivity,
+        nonGpConnectivityByFactionId: nonGpConnectivity,
+      );
+      final preview = previewTownManufacturingBonusByProvince(
+        game: game,
+        topology: topology,
+        tileMapByRegion: tileMaps,
+      );
+      expect(preview, live.bonusByProvinceId);
+      expect(
+        preview[provinceId]?[CommodityCatalog.lumber.id],
+        live.bonusByFactionId['pl1']?[CommodityCatalog.lumber.id],
+      );
+    });
+
+    test('previewTownManufacturingBonusByProvince returns empty without tile maps',
+        () {
+      final game = TestFixtures.minimalGame();
+      expect(
+        previewTownManufacturingBonusByProvince(
+          game: game,
+          topology: const MapTopology(),
+          tileMapByRegion: null,
+        ),
+        isEmpty,
+      );
     });
   });
 }

@@ -286,8 +286,46 @@ void _applyOverseasCargoDeliveryToProvinces({
   }
 }
 
+/// Per-province manufactured bonus keyed by full province id.
+typedef ProvinceManufacturingBonus = Map<String, Map<CommodityId, int>>;
+
+/// Preview per-province town manufacturing bonus for the province overlay and
+/// order projections. SPEC/program/order-projections.md § Town manufacturing bonus preview.
+///
+/// Returns only provinces with a strictly positive bonus quantity. Empty when
+/// [tileMapByRegion] is null or empty (same as zero extraction preview).
+ProvinceManufacturingBonus previewTownManufacturingBonusByProvince({
+  required Game game,
+  required MapTopology topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
+    return const {};
+  }
+  final gpConnectivity = resolveConnectivity(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  final nonGpConnectivity = resolveNonGreatPowerConnectivity(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  return computeTownManufacturingBonusForGame(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    gpConnectivityByPlayerId: gpConnectivity,
+    nonGpConnectivityByFactionId: nonGpConnectivity,
+  ).bonusByProvinceId;
+}
+
 /// Computes per-province then per-faction town manufacturing bonus maps.
-({ProvinceDeliveredRawExtraction deliveredRawByProvince, FactionManufacturingBonus bonusByFactionId})
+({
+  ProvinceDeliveredRawExtraction deliveredRawByProvince,
+  ProvinceManufacturingBonus bonusByProvinceId,
+  FactionManufacturingBonus bonusByFactionId,
+})
 computeTownManufacturingBonusForGame({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -342,6 +380,7 @@ computeTownManufacturingBonusForGame({
 
   return (
     deliveredRawByProvince: deliveredRawByProvince,
+    bonusByProvinceId: bonusByProvince,
     bonusByFactionId: bonusByFactionId,
   );
 }

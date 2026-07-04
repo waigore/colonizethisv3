@@ -544,6 +544,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_sectionEconomic => 'Economic';
 
   @override
+  String get provinceOverlay_townProductionHeading => 'Town production';
+
+  @override
   String get provinceOverlay_sectionMilitary => 'Military';
 
   @override

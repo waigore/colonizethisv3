@@ -81,6 +81,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   bool buildImprovementActionEnabled = false,
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
+  Map<String, int> townProductionBonusByCommodity = const {},
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -102,6 +103,7 @@ Widget buildProvinceOverlayDarkThemeShell({
     buildImprovementActionEnabled: buildImprovementActionEnabled,
     onBuildImprovementTap: onBuildImprovementTap,
     omniscientDetail: omniscientDetail,
+    townProductionBonusByCommodity: townProductionBonusByCommodity,
   );
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
@@ -135,6 +137,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   bool buildImprovementActionEnabled = false,
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
+  Map<String, int> townProductionBonusByCommodity = const {},
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -158,6 +161,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       buildImprovementActionEnabled: buildImprovementActionEnabled,
       onBuildImprovementTap: onBuildImprovementTap,
       omniscientDetail: omniscientDetail,
+      townProductionBonusByCommodity: townProductionBonusByCommodity,
     ),
   );
   await tester.pump();
