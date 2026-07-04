@@ -28,10 +28,10 @@ The following recipes are defined for current product:
 | Fabric (cotton) | fabric (1) | cotton ×2 | 2 |
 | Cast Iron | castIron (1) | iron ×2 | 2 |
 | Refined Sugar | refinedSugar (1) | sugarCane ×2 | 2 |
-| Cigars | cigars (1) | tobacco ×3 | 3 |
+| Cigars | cigars (1) | tobacco ×2 | 2 |
 | Fur Hats | furHats (1) | furs ×2 | 2 |
-| Steel | steel (1) | castIron ×2, coal ×1 | 5 |
-| Paper | paper (1) | timber ×3 | 3 |
+| Steel | steel (1) | iron ×1, coal ×1 | 2 |
+| Paper | paper (1) | timber ×2 | 2 |
 | Bronze | bronze (1) | copper ×1, tin ×1 | 3 |
 
 ---

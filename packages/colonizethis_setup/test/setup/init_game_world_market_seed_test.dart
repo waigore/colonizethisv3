@@ -108,7 +108,7 @@ void main() {
         expect(prices['iron'], 80);
         expect(prices['lumber'], 60);
         expect(prices['castIron'], 160);
-        expect(prices['steel'], 410);
+        expect(prices['steel'], 170);
       },
     );
 

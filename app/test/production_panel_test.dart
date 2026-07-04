@@ -242,6 +242,20 @@ void main() {
     });
 
     testWidgets(
+      'normalized recipe labels show updated input quantities (Refs #3873)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        expect(find.textContaining('Tobacco ×2'), findsOneWidget);
+        expect(find.textContaining('Timber ×2'), findsAtLeastNWidgets(2));
+        expect(find.textContaining('Iron ×1, Coal ×1'), findsOneWidget);
+        expect(find.textContaining('×3'), findsNothing);
+        expect(find.textContaining('Cast Iron'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'Allocation rows show right-aligned affordance max · bottleneck',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildPanel(player: fullPlayer));
