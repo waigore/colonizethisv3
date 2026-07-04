@@ -7,7 +7,7 @@ import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
 import '../../../core/services/game_service.dart';
-import 'flame/region_map_component.dart' show CtMapVisibilityMode;
+import 'flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.
 class ShellPlayerContext {

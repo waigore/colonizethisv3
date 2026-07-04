@@ -10,7 +10,7 @@
 // - Global observe, no player chrome: returns an ObserveModeNotDefinedPanel
 //   titled with the supplied title.
 
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/observe_mode_not_defined_panel.dart';

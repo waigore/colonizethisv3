@@ -3,15 +3,15 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
 import '../../features/game/flame/ct_region_map_game.dart';
-import '../../features/game/flame/region_map_component.dart'
+import '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
-import '../../features/game/flame/region_map_viewport_snapshot.dart'
+import '../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 import '../../features/game/widgets/chrome/region_map_game_viewport.dart';
 export '../../features/game/flame/ct_region_map_game.dart' show CtRegionMapGame;
-export '../../features/game/flame/region_map_component.dart'
+export '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, assertCtMapPlayerViewRequired;
-export '../../features/game/flame/region_map_viewport_snapshot.dart'
+export '../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 
 /// Narrow, non-widget binding surface for region-map Flame integrations.

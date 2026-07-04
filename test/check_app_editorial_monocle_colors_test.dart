@@ -637,7 +637,6 @@ class Clean extends StatelessWidget {
         'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
         'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
         'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
-        'app/lib/features/game/flame/region_map_component_render_core.dart',
         'app/lib/features/game/flame/game_region_minimap.dart',
         'app/lib/features/game/flame/resource_icon_disc_palette.dart',
       ];

@@ -12,7 +12,6 @@ const _mapStateNeedle = '/map_state/';
 const _mapAreaNeedle = '/map_area/';
 const _allowedMapAreaImportSuffixes = <String>[
   'map_area/map_area.dart',
-  'map_area/game_map_area.dart',
 ];
 
 int runCheckAppFlameMapImportBoundary(
