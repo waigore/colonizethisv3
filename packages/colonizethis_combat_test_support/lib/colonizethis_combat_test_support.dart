@@ -27,3 +27,6 @@ export 'src/conflict_detection_scenarios.dart';
 export 'src/combat_resolver_test_support.dart';
 export 'src/combat_resolver_engagement_scenarios.dart';
 export 'src/combat_resolver_limits_scenarios.dart';
+export 'src/combat_resolver_part2_scenarios.dart';
+export 'src/combat_resolver_probabilistic_scenarios.dart';
+export 'src/combat_resolver_spy_civilian_scenarios.dart';

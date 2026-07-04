@@ -244,3 +244,33 @@ CI gates added: `repo.combat_test_core_fixtures_shared`, `repo.combat_test_dupli
 Deferred: part2/probabilistic table migration; lib multiplier helper.
 
 Combat test LOC: 3,803 → 2,623 physical lines (−1,180 in test files across slice 9; 30 `*_test.dart` files).
+
+## Slice 10 — Part2/probabilistic/spy-civilian tables, lib morale multiplier
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| crp-same-seed-identical | same seed produces identical outcome | `combat_resolver_probabilistic_test.dart` | — |
+| crp-rounds-bounded | rounds bounded by maxCombatRounds | `combat_resolver_probabilistic_test.dart` | — |
+| crp-strong-attacker-wins-majority | strong attacker tends to win over many trials | `combat_resolver_probabilistic_test.dart` | — |
+| crp-per-round-details | outcome includes per-round details | `combat_resolver_probabilistic_test.dart` | — |
+| crp-mutual-annihilation-possible | can produce mutualAnnihilation when both sides eliminated | `combat_resolver_probabilistic_test.dart` | — |
+| crp-stalemate-possible | can produce stalemate when rounds end with both sides remaining | `combat_resolver_probabilistic_test.dart` | — |
+| crp2-tie-break-deterministic | battle tie-break is deterministic for same seed and context | `combat_resolver_test_part2_test.dart` | — |
+| crp2-gp-garrison-recovery-era4 | great power defender: recovered regiments match most-advanced infantry era 4 | `combat_resolver_test_part2_test.dart` | — |
+| crp2-minor-garrison-recovery-era3 | minor nation effective era 3: recovered regiments are grenadiers | `combat_resolver_test_part2_test.dart` | — |
+| crp2-tribe-garrison-recovery-era1 | tribe effective era 1: recovered regiments are arquebusiers | `combat_resolver_test_part2_test.dart` | — |
+| crsc-spy-timer-cleared | combat conquest clears Spy timer for new owner province | `combat_resolver_test_part2_spy_civilian_test.dart` | — |
+| crsc-purchased-land-cleared | combat conquest clears purchased land for conquered province | `combat_resolver_test_part2_spy_civilian_test.dart` | — |
+| crsc-relocate-working-civilian | combat conquest relocates illegal foreign civilian in changed province to owner capital | `combat_resolver_test_part2_spy_civilian_test.dart` | — |
+| crsc-relocate-idle-civilian | combat conquest relocates idle foreign civilian with stale assignment tracking but no currentWork to owner capital | `combat_resolver_test_part2_spy_civilian_test.dart` | — |
+| crsc-general-medal-morale-aura | general medals provide morale aura bonus (5% per medal, max 20%) | `combat_resolver_test_part2_spy_civilian_test.dart` | — |
+
+Modules:
+- `colonizethis_combat_test_support/lib/src/combat_resolver_probabilistic_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/combat_resolver_part2_scenarios.dart`
+- `colonizethis_combat_test_support/lib/src/combat_resolver_spy_civilian_scenarios.dart`
+- `combat_resolver_test_support.dart` — `probResolverUnit` builder
+
+Lib: `combatSideMoraleMultiplier` in `combat_resolver_support.dart` (feeding × general-medal assembly for land auto-resolve; naval path remains feeding-only).
+
+Combat test LOC: 2,623 → 1,921 physical lines (−702 in test files across slice 10).

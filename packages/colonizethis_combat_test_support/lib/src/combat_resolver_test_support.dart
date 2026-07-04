@@ -318,6 +318,23 @@ Game combatSpyTimerGame({
   );
 }
 
+/// Minimal [Unit] for probabilistic resolver scenario tables.
+Unit probResolverUnit({
+  required String id,
+  required String type,
+  String ownerId = 'att',
+  String provinceId = 'p',
+  int medals = 0,
+}) {
+  return Unit(
+    id: id,
+    type: type,
+    ownerId: ownerId,
+    locationProvinceId: provinceId,
+    medals: medals,
+  );
+}
+
 /// Standard single-province [BattleContext] for land resolver tests.
 BattleContext landResolverBattleContext({
   String provinceId = 'p',
