@@ -92,7 +92,7 @@ void main() {
         final p2 = next.worldState.oldWorld.provinces.firstWhere(
           (p) => p.id == 'oldWorld|P2',
         );
-        expect(p2.townDevelopmentLevel, 0);
+        expect(p2.townDevelopmentLevel, kTownDevelopmentLevelMin);
       },
     );
 
@@ -178,7 +178,7 @@ void main() {
         final n2 = next.worldState.newWorld.provinces.firstWhere(
           (p) => p.id == 'newWorld|N2',
         );
-        expect(n2.townDevelopmentLevel, 0);
+        expect(n2.townDevelopmentLevel, kTownDevelopmentLevelMin);
       },
     );
 

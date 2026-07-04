@@ -71,7 +71,8 @@ OpportunitySummary _buildOpportunitySummary(
     if (p.ownerId == null || p.ownerId!.isEmpty) {
       unclaimed++;
       richUnexploited++;
-    } else if (p.ownerId != view.playerId && p.townDevelopmentLevel > 0) {
+    } else if (p.ownerId != view.playerId &&
+        p.townDevelopmentLevel > kTownDevelopmentLevelMin) {
       richUnexploited++;
     }
   }

@@ -502,6 +502,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_capitalNo => 'Capital: No';
 
   @override
+  String provinceOverlay_townDevelopment(int level) {
+    return 'Town development: $level';
+  }
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }

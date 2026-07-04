@@ -482,6 +482,8 @@ _OverlayContent _provinceContent({
     ownerName: _ownerName(l10n, game, province?.ownerId),
     regionLabel: provinceOverlayRegionLabel(l10n, regionId),
     isCapital: provinceOverlayIsCapital(game, provinceId),
+    townDevelopmentLevel: province?.townDevelopmentLevel ??
+        kTownDevelopmentLevelMin,
   );
   final economic = showsFullIntel
       ? _buildEconomicSection(

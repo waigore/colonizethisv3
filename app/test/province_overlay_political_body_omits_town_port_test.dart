@@ -1,16 +1,8 @@
 // Pins the Political body composition for ProvinceSeaZoneDetailOverlay:
-// the section renders exactly Name / Owner / Region / Capital and
-// intentionally omits a town-development-level row and a port-status row
-// (Refs #2865).
+// the section renders Name / Owner / Region / Capital / Town development
+// (Refs #3870).
 //
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-// § Province overlay content `Political / Economic / Naval` and
-// § Acceptance criteria — "Political body omits town-development level and
-// port status". Town development is economic intel surfaced elsewhere and
-// no province-level world-state field carries port status, so the
-// always-exact Political body must not surface either field. This is the
-// negative regression guard for that AC (the positive Region + Capital row
-// rendering is pinned by province_overlay_political_region_capital_test.dart).
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -31,45 +23,44 @@ void main() {
   group('ProvinceSeaZoneDetailOverlay Political body composition '
       '(SPEC § Province overlay content / § Acceptance criteria)', () {
     testWidgets(
-      'Political body renders exactly Name / Owner / Region / Capital rows',
+      'Political body renders Name / Owner / Region / Capital / Town development',
       (WidgetTester tester) async {
         final game = demoGameForOverlay;
         final humanId = game.players.first.id;
         final owned = ownedProvinceIdInOldWorld(game: game, ownerId: humanId);
+        Province? province;
+        for (final p in [
+          ...game.worldState.oldWorld.provinces,
+          ...game.worldState.newWorld.provinces,
+        ]) {
+          if (p.id == owned) {
+            province = p;
+            break;
+          }
+        }
+        expect(province, isNotNull);
 
         await tester.pumpWidget(
           buildProvinceOverlayDarkThemeShell(game: game, displayId: owned),
         );
         await tester.pumpAndSettle();
 
-        // Each always-exact Political row renders exactly once.
+        expect(_textWhere((d) => d.startsWith('Name:')), findsOneWidget);
+        expect(_textWhere((d) => d.startsWith('Owner:')), findsOneWidget);
+        expect(_textWhere((d) => d.startsWith('Region:')), findsOneWidget);
+        expect(_textWhere((d) => d.startsWith('Capital:')), findsOneWidget);
         expect(
-          _textWhere((d) => d.startsWith('Name:')),
+          _textWhere(
+            (d) => d == 'Town development: ${province!.townDevelopmentLevel}',
+          ),
           findsOneWidget,
-          reason: 'Political body must render the Name row.',
-        );
-        expect(
-          _textWhere((d) => d.startsWith('Owner:')),
-          findsOneWidget,
-          reason: 'Political body must render the Owner row.',
-        );
-        expect(
-          _textWhere((d) => d.startsWith('Region:')),
-          findsOneWidget,
-          reason: 'Political body must render the Region row.',
-        );
-        expect(
-          _textWhere((d) => d.startsWith('Capital:')),
-          findsOneWidget,
-          reason:
-              'Political body must render the Capital row '
-              '(Capital: Yes or Capital: No).',
+          reason: 'Political body must show true town development level.',
         );
       },
     );
 
     testWidgets(
-      'Political body omits any town-development-level or port-status row',
+      'Political body omits port-status row',
       (WidgetTester tester) async {
         final game = demoGameForOverlay;
         final humanId = game.players.first.id;
@@ -80,30 +71,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Negative regression guard for SPEC § Acceptance criteria
-        // ("Political body omits town-development level and port status").
-        // With no tile selected, the Tile section renders only its
-        // guidance prompt, so the Tile "port or railroad" road caption is
-        // not present; any of these substrings would indicate a leaked
-        // town-development or port-status row.
-        expect(
-          _textWhere((d) => d.toLowerCase().contains('development level')),
-          findsNothing,
-          reason:
-              'Political body must not surface a town-development-level '
-              'row (town development is economic intel surfaced elsewhere).',
-        );
         expect(
           _textWhere((d) => d.toLowerCase().contains('port status')),
           findsNothing,
-          reason:
-              'Political body must not surface a port-status row '
-              '(no province-level world-state field carries port status).',
-        );
-        expect(
-          _textWhere((d) => d.toLowerCase().startsWith('town')),
-          findsNothing,
-          reason: 'Political body must not surface a town-development row.',
         );
       },
     );
