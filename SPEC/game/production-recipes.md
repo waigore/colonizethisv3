@@ -54,7 +54,7 @@ The gate is enforced wherever recipe availability is evaluated for a player: pro
 - Wool or Cotton ×2 → Fabric.
 - Sugar Cane ×2 → Refined Sugar.
 
-Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per turn. One labour per resource input consumed.
+Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per turn. One labour per resource input consumed. **Bronze** is a pre-existing catalogue exception (2 inputs, labour 3); out of scope for input-quantity normalization issues unless a separate GDD change updates that row.
 
 ---
 
