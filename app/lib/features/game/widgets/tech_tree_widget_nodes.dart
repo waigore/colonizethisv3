@@ -57,12 +57,16 @@ class _TechTreeEdgePainter extends CustomPainter {
 
 class _TechNode extends StatelessWidget {
   const _TechNode({
+    required this.game,
     required this.tech,
+    required this.contextPlayerId,
     required this.state,
     required this.onTap,
   });
 
+  final Game game;
   final TechDefinition tech;
+  final String contextPlayerId;
   final _TechNodeState state;
   final VoidCallback onTap;
 
@@ -84,10 +88,20 @@ class _TechNode extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: _buildNodeLabel(style.locked),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildNodeLabel(style.locked),
+                TechGpPennantRow(
+                  game: game,
+                  techId: tech.id,
+                  contextPlayerId: contextPlayerId,
+                  compact: true,
+                ),
+              ],
             ),
           ),
         ),
