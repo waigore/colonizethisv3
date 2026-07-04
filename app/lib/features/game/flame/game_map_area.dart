@@ -24,7 +24,7 @@ import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
 import '../shell_player_context.dart';
-import 'region_map_component.dart' show BaseLayerDisplayMode;
+import 'region_map/region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
@@ -32,7 +32,7 @@ import '../../../core/services/ai_profile_resolution.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
-import 'region_map_viewport_snapshot.dart';
+import 'region_map/region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
 

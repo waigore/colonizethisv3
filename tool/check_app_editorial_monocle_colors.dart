@@ -209,9 +209,9 @@ final RegExp bannedColorLiteralPattern = RegExp(
 
 const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // Flame canvas renderers — `Paint().color` / `TextPaint(...)`-style draws.
-  'app/lib/features/game/flame/region_map_component_render_core.dart',
-  'app/lib/features/game/flame/region_map_component_render_political.dart',
-  'app/lib/features/game/flame/region_map_component_render_markers.dart',
+  'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
+  'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
+  'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
   'app/lib/features/game/flame/game_region_minimap.dart',
   // Pixel-art palette data (per-resource hue lookup table).
   'app/lib/features/game/flame/resource_icon_disc_palette.dart',

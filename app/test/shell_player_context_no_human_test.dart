@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

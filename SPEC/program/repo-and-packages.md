@@ -18,7 +18,8 @@ Monorepo layout:
 
 - **`AppEventHandlerScope`** (`app/lib/core/services/app_event_handler_scope.dart`) binds session-scoped bus listeners. Session subscriptions are split into `part` files by event family (observe, civilian work, naval/army, diplomacy, debug), each capped at 500 non-comment lines (`repo.app_event_handler_part_size`).
 - **`DebugCommandSessionHandler`** and **`ObserveModeSessionHandler`** apply ctdev/debug and observe-mode session mutations without importing feature panels.
-- Planned **`colonizethis_app_e2e_support`** workspace package (Phase 1) will host E2E/widget mirror helpers currently under `app/integration_test/` and `app/test/e2e_*`.
+- **`features/game/flame/region_map/`** — Flame region-map render stack (`region_map_component.dart` + `part` render files, viewport snapshot, overlay geometry). Public API: `region_map/region_map.dart`. Render code must not import `flame/map_state/` (`repo.app_flame_map_import_boundary`).
+- Planned **`colonizethis_app_e2e_support`** workspace package (Phase 1) hosts E2E/widget mirror helpers currently under `app/integration_test/` and `app/test/e2e_*`.
 
 ---
 

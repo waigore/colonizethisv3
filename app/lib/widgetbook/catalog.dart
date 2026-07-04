@@ -73,9 +73,9 @@ import '../features/game/flame/game_region_minimap.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/exit_confirm_dialog.dart';
-import '../features/game/flame/region_map_viewport_snapshot.dart';
+import '../features/game/flame/region_map/region_map_viewport_snapshot.dart';
 import '../features/game/flame/victory_overlay.dart';
-import '../features/game/flame/region_map_component.dart'
+import '../features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/move_army_dialog.dart';
 import '../features/game/widgets/move_fleet_dialog.dart';

@@ -8,7 +8,7 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
         kRegionMinimapGestureKey,
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
-import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot, kRegionMapZoomMultiplierMax;
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';

@@ -12,7 +12,7 @@ import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.d
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,

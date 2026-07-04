@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app/features/game/flame/region_map_boundary_visibility.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_boundary_visibility.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 

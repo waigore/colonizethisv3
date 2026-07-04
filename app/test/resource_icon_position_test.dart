@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show resourceIconDisplaySizePx;
 import 'package:colonizethis_test/test.dart';
 

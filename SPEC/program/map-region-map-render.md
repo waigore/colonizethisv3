@@ -4,7 +4,7 @@
 
 ## Library parts
 
-`app/lib/features/game/flame/region_map_component.dart` is a single library; the class stays one type. Rendering is split into **`part` files**, each using a **named `extension … on CtRegionMapComponent`** so private members stay library-private (no mixins, no widened visibility).
+`app/lib/features/game/flame/region_map/region_map_component.dart` is a single library; the class stays one type. Rendering is split into **`part` files**, each using a **named `extension … on CtRegionMapComponent`** so private members stay library-private (no mixins, no widened visibility).
 
 | Part | Extension (name) | Primary responsibility |
 |------|-------------------|-------------------------|

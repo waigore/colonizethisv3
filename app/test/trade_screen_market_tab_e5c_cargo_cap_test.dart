@@ -31,7 +31,7 @@
 //    warning still mount with live text values; the chip / stepper
 //    taps are blocked by the existing `IgnorePointer` wrapper.
 
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
