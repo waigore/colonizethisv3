@@ -177,11 +177,11 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
     ),
     (
       label: 'industry-allocation reservation: stockpile 10 timber, '
-          'production consumes 3 timber, staged offer 2 → sellable 5 '
+          'production consumes 2 timber, staged offer 2 → sellable 6 '
           '(canonical AC for Refs #3093 sellable definition)',
       stockpile: {'timber': 10},
       orders: [offerOrder('timber', 2)],
-      productionInputConsumptionByCommodityId: {'timber': 3},
+      productionInputConsumptionByCommodityId: {'timber': 2},
       useEmptyProductionMap: false,
       verify: _verifySellableHeadroomIndustryReservation,
       refs: '#3093',
@@ -269,9 +269,9 @@ void _verifySellableHeadroomSubtractsStaged(Map<CommodityId, int> sellable) {
 void _verifySellableHeadroomIndustryReservation(Map<CommodityId, int> sellable) {
   expect(
     sellable['timber'],
-    5,
+    6,
     reason:
-        'Canonical AC: max(0, 10 - 3) - 2 = 5. Offer chip / `+` '
+        'Canonical AC: max(0, 10 - 2) - 2 = 6. Offer chip / `+` '
         'stepper must clamp at this sellable headroom.',
   );
 }

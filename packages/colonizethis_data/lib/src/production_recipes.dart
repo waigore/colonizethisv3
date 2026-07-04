@@ -95,15 +95,15 @@ class ProductionRecipesCatalog {
     labourPerOutput: 2,
   );
 
-  /// 3 tobacco → 1 cigars.
+  /// 2 tobacco → 1 cigars.
   static final ProductionRecipe cigarsFromTobacco = ProductionRecipe(
     id: 'cigars_from_tobacco',
     outputCommodityId: CommodityCatalog.cigars.id,
     outputQuantity: 1,
     inputQuantities: {
-      CommodityCatalog.tobacco.id: 3,
+      CommodityCatalog.tobacco.id: 2,
     },
-    labourPerOutput: 3,
+    labourPerOutput: 2,
   );
 
   /// 2 furs → 1 furHats.
@@ -117,27 +117,27 @@ class ProductionRecipesCatalog {
     labourPerOutput: 2,
   );
 
-  /// 2 castIron + 1 coal → 1 steel.
-  static final ProductionRecipe steelFromCastIronCoal = ProductionRecipe(
-    id: 'steel_from_castIron_coal',
+  /// 1 iron + 1 coal → 1 steel.
+  static final ProductionRecipe steelFromIronCoal = ProductionRecipe(
+    id: 'steel_from_iron_coal',
     outputCommodityId: CommodityCatalog.steel.id,
     outputQuantity: 1,
     inputQuantities: {
-      CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.iron.id: 1,
       CommodityCatalog.coal.id: 1,
     },
-    labourPerOutput: 5,
+    labourPerOutput: 2,
   );
 
-  /// 3 timber → 1 paper.
+  /// 2 timber → 1 paper.
   static final ProductionRecipe paperFromTimber = ProductionRecipe(
     id: 'paper_from_timber',
     outputCommodityId: CommodityCatalog.paper.id,
     outputQuantity: 1,
     inputQuantities: {
-      CommodityCatalog.timber.id: 3,
+      CommodityCatalog.timber.id: 2,
     },
-    labourPerOutput: 3,
+    labourPerOutput: 2,
   );
 
   /// 1 copper + 1 tin → 1 bronze.
@@ -161,7 +161,7 @@ class ProductionRecipesCatalog {
     lumberFromTimber,
     cigarsFromTobacco,
     furHatsFromFurs,
-    steelFromCastIronCoal,
+    steelFromIronCoal,
     paperFromTimber,
     bronzeFromCopperTin,
   ];
