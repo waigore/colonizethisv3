@@ -68,8 +68,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
-  'app/lib/features/game/flame/game_map_area_turn_resolution.dart',
-  'app/lib/features/game/flame/game_map_area_build.dart',
+  // Paths updated when `game_map_area` parts moved under `flame/map_area/`
+  // (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/map_area/game_map_area_turn_resolution.dart',
+  'app/lib/features/game/flame/map_area/game_map_area_build.dart',
   'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
