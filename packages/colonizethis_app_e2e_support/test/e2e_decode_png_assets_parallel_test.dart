@@ -7,6 +7,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app_e2e_support/e2e_support_validation_exception.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared_bootstrap.dart';
 
 void main() {
@@ -43,14 +44,14 @@ void main() {
         const <String>['assets/icons/64/missing.png'],
         batchSize: 0,
       ),
-      throwsArgumentError,
+      throwsA(isA<E2eSupportValidationException>()),
     );
     expect(
       () => e2eDecodePngAssetPathsParallel(
         const <String>['assets/icons/64/missing.png'],
         batchSize: -3,
       ),
-      throwsArgumentError,
+      throwsA(isA<E2eSupportValidationException>()),
     );
   });
 
