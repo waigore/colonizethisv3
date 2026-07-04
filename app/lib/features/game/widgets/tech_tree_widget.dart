@@ -10,11 +10,15 @@ import 'package:flutter/material.dart';
 import '../../../config/app_assets.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/tech_gp_researchers.dart';
 import '../utils/tech_ui_helpers.dart';
+import 'tech_gp_pennant_row.dart';
+import 'tech_researchers_list_dialog.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
+import '../../../widgets/gp_nation_color_pennant.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'tech_effect_summary_lookup.dart';
 
@@ -61,7 +65,7 @@ const Map<String, String> _categoryIcons = {
 };
 
 const double _nodeWidth = 100;
-const double _nodeHeight = 44;
+const double _nodeHeight = 68;
 const double _layerGap = 140;
 const double _rowGap = 52;
 const double _edgeStrokeWidth = 2;
@@ -125,7 +129,7 @@ class TechTreeWidget extends StatelessWidget {
             horizontal: CtSpacing.l,
             vertical: CtSpacing.m,
           ),
-          child: _TechTreeLegend(l10n: l10n),
+          child: _TechTreeLegend(game: game, l10n: l10n),
         ),
         const Divider(height: 1),
         Expanded(
@@ -208,7 +212,9 @@ class TechTreeWidget extends StatelessWidget {
         width: _nodeWidth,
         height: _nodeHeight,
         child: _TechNode(
+          game: game,
           tech: tech,
+          contextPlayerId: player.id,
           state: state,
           onTap: () => _showTechDialog(context, tech),
         ),
@@ -375,6 +381,7 @@ class TechTreeWidget extends StatelessWidget {
                 ),
               ),
             ],
+            ..._researchedBySection(context, tech.id, l10n, theme),
             CtGap.ml,
             Align(
               alignment: Alignment.centerRight,
@@ -411,6 +418,61 @@ class TechTreeWidget extends StatelessWidget {
       );
     }
     return list;
+  }
+
+  List<Widget> _researchedBySection(
+    BuildContext context,
+    String techId,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    final researchers = orderGpResearchers(
+      researchers: gpPlayersWithTechUnlocked(game, techId),
+      contextPlayerId: player.id,
+      game: game,
+    );
+    if (researchers.isEmpty) {
+      return const [];
+    }
+    return [
+      CtGap.m,
+      GestureDetector(
+        onLongPress: () => TechResearchersListDialog.show(
+          context,
+          game: game,
+          techId: techId,
+          contextPlayerId: player.id,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.techTree_researchedBy,
+              style: theme.textTheme.labelLarge,
+            ),
+            for (final gp in researchers)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    GpNationColorPennant(
+                      color: gpMapColorForPlayer(game, gp.id),
+                      highlighted: gp.id == player.id,
+                    ),
+                    const SizedBox(width: CtSpacing.m),
+                    Expanded(
+                      child: Text(
+                        gp.displayName ?? gp.id,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 
   static String _humanizeId(String id) {

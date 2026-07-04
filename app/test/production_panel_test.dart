@@ -482,7 +482,7 @@ void main() {
     testWidgets(
       'allocation cross-row: lumber maxed disables cast iron increment',
       (WidgetTester tester) async {
-        const castIronId = 'castIron_from_timber_iron_coal';
+        const castIronId = 'castIron_from_iron';
         final castIronIndex = ProductionRecipesCatalog.all.indexWhere(
           (r) => r.id == castIronId,
         );

@@ -197,10 +197,17 @@ rules:
 
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
-    title: colonizethis_economy core tests must not inline Game(...) builders (Refs #3836)
+    title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_core_fixtures_shared.dart
+
+  - rule_id: repo.economy_deal_matcher_treasury_budget_shared
+    group: architecture
+    title: economy deal matcher must delegate treasury affordability to treasury_bid_budget.dart (Refs #3856)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_deal_matcher_treasury_shared.dart
 
   - rule_id: repo.diplomacy_test_no_duplicate_fixtures
     group: testing
@@ -1056,6 +1063,27 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_test_mirrors_lib.dart
+
+  - rule_id: repo.combat_test_no_local_support
+    group: architecture
+    title: colonizethis_combat tests must not ship package-local *_test_support.dart files (Refs #3865)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_no_local_support.dart
+
+  - rule_id: repo.combat_test_core_fixtures_shared
+    group: architecture
+    title: colonizethis_combat tests must use colonizethis_combat_test_support game builders, not inline Game(...) (Refs #3865)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_core_fixtures_shared.dart
+
+  - rule_id: repo.combat_test_duplicate_descriptions
+    group: architecture
+    title: colonizethis_combat tests must not repeat identical test descriptions across files (Refs #3865)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_duplicate_descriptions.dart
 
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture

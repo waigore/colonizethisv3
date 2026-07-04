@@ -68,3 +68,14 @@ double moraleMultiplierForGeneralMedals(int generalMedals) {
   return kMoraleMultiplierBaseFromGenerals +
       (capped * kMoraleMultiplierPerGeneralMedal);
 }
+
+/// Combined feeding × general-medal morale multiplier for one engagement side.
+/// Leader bonuses are applied separately via [resolveEngagement] parameters.
+/// Naval auto-resolve uses feeding coverage only (intentionally narrower path).
+double combatSideMoraleMultiplier({
+  required double feedingCoverage,
+  required int generalMedals,
+}) {
+  return moraleMultiplierForFeedingCoverage(feedingCoverage) *
+      moraleMultiplierForGeneralMedals(generalMedals);
+}

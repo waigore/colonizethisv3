@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Shared `Game` fixture and unit shorthand for `military_strength_test.dart`.
+/// Shared `Game` fixture and unit shorthand for military-strength tests.
 ///
 /// Almost every test in that file constructs a `Game` with a fixed orders-phase
 /// `WorldState`, then varies units in the Old/New World and the faction

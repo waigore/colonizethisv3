@@ -2094,6 +2094,18 @@
   "@techTree_stateLocked": {
     "description": "Legend state label for locked techs."
   },
+  "techTree_researchedBy": "Researched by",
+  "@techTree_researchedBy": {
+    "description": "Tech description dialog section listing GPs that unlocked the tech."
+  },
+  "techTree_legendGpPennants": "GP nation-color pennants (highlighted = you)",
+  "@techTree_legendGpPennants": {
+    "description": "Tech tree legend entry explaining GP nation-color pennant indicators."
+  },
+  "techTree_researchersDialogTitle": "Researched by",
+  "@techTree_researchersDialogTitle": {
+    "description": "Long-press modal title listing GPs that have unlocked a tech."
+  },
   "mapDebug_fullVisibility": "Full visibility",
   "@mapDebug_fullVisibility": {
     "description": "Map debug/story toggle label for full map visibility."

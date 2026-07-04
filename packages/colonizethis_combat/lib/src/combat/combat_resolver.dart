@@ -116,12 +116,6 @@ Game resolveBattleContext(
       attacker.side.factionId,
     );
     final defenderLeaderMult = leaderBonusForFaction(game, defenderFactionId);
-    final attackerGeneralMorale = moraleMultiplierForGeneralMedals(
-      attacker.side.generalMedals,
-    );
-    final defenderGeneralMorale = moraleMultiplierForGeneralMedals(
-      currentDefenderMedals,
-    );
     final outcome = resolveEngagement(
       attackerUnits: cappedAttackerUnits,
       defenderUnits: cappedDefenderUnits,
@@ -129,12 +123,14 @@ Game resolveBattleContext(
       fortLevel: ctx.fortLevel,
       terrain: ctx.terrain,
       defenderEffectiveMilitaryLevel: defenderEffectiveLevel,
-      attackerMoraleMultiplier:
-          moraleMultiplierForFeedingCoverage(attackerCoverage) *
-          attackerGeneralMorale,
-      defenderMoraleMultiplier:
-          moraleMultiplierForFeedingCoverage(defenderCoverage) *
-          defenderGeneralMorale,
+      attackerMoraleMultiplier: combatSideMoraleMultiplier(
+        feedingCoverage: attackerCoverage,
+        generalMedals: attacker.side.generalMedals,
+      ),
+      defenderMoraleMultiplier: combatSideMoraleMultiplier(
+        feedingCoverage: defenderCoverage,
+        generalMedals: currentDefenderMedals,
+      ),
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );

@@ -142,6 +142,88 @@ List<WidgetbookNode> get techTreeDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Multi-GP pennants (crop_rotation)',
+        builder: (context) {
+          const basePlayer = Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: true,
+            techUnlocked: {kTechIdCropRotation: true},
+          );
+          final game = Game(
+            id: 'wb_tech_gp_pennants',
+            worldState: WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: [
+              basePlayer,
+          const Player(
+            id: 'gp2',
+            displayName: 'France',
+            isHuman: false,
+          ),
+          const Player(
+            id: 'gp3',
+            displayName: 'Spain',
+            isHuman: false,
+            techUnlocked: {kTechIdCropRotation: true},
+          ),
+            ],
+          );
+          return MaterialApp(
+            theme: AppThemes.editorialMonocle,
+            home: Scaffold(
+              body: TechTreeWidget(game: game, player: basePlayer),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Choose-tech with pennants (mobile)',
+        builder: (context) {
+          final game = Game(
+            id: 'wb_choose_tech_pennants',
+            worldState: WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: [
+              const Player(
+                id: 'gp1',
+                displayName: 'England',
+                isHuman: true,
+                techUnlocked: {kTechIdCropRotation: true},
+              ),
+              const Player(
+                id: 'gp2',
+                displayName: 'France',
+                isHuman: false,
+                techUnlocked: {kTechIdCropRotation: true},
+              ),
+            ],
+          );
+          final tech = techById(kTechIdCropRotation);
+          return mobileViewport(
+            context,
+            MaterialApp(
+              theme: AppThemes.editorialMonocle,
+              home: Scaffold(
+                body: ChooseTechDialog(
+                  game: game,
+                  contextPlayerId: 'gp1',
+                  slotIndex: 0,
+                  availableTechs: tech != null ? [tech] : const [],
+                  onSelect: (_) {},
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
         name: 'Tech tree only (mid-game)',
         builder: (context) {
           final result = loadSeed42InitGameResult();

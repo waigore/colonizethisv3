@@ -5,8 +5,9 @@ part of 'tech_tree_widget.dart';
 enum _TechLegendStateKind { researched, inProgress, available, locked }
 
 class _TechTreeLegend extends StatelessWidget {
-  const _TechTreeLegend({required this.l10n});
+  const _TechTreeLegend({required this.game, required this.l10n});
 
+  final Game game;
   final AppLocalizations l10n;
 
   @override
@@ -20,6 +21,27 @@ class _TechTreeLegend extends StatelessWidget {
         _buildCategoryLegendWrap(),
         CtGap.m,
         _buildStateLegendWrap(),
+        CtGap.m,
+        _buildGpPennantLegend(context),
+      ],
+    );
+  }
+
+  Widget _buildGpPennantLegend(BuildContext context) {
+    final sampleColor = game.players.isNotEmpty
+        ? gpMapColorForPlayer(game, game.players.first.id)
+        : EditorialMonoclePalette.muted;
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        GpNationColorPennant(color: sampleColor, highlighted: true),
+        GpNationColorPennant(color: sampleColor),
+        Text(
+          l10n.techTree_legendGpPennants,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
@@ -44,34 +66,38 @@ class _TechTreeLegend extends StatelessWidget {
   }
 
   List<Widget> _stateLegendSamples() {
-    return const [
+    return [
       _StateLegendSample(
+        game: game,
         kind: _TechLegendStateKind.researched,
-        state: _TechNodeState(
+        state: const _TechNodeState(
           researched: true,
           inProgress: false,
           available: false,
         ),
       ),
       _StateLegendSample(
+        game: game,
         kind: _TechLegendStateKind.inProgress,
-        state: _TechNodeState(
+        state: const _TechNodeState(
           researched: false,
           inProgress: true,
           available: false,
         ),
       ),
       _StateLegendSample(
+        game: game,
         kind: _TechLegendStateKind.available,
-        state: _TechNodeState(
+        state: const _TechNodeState(
           researched: false,
           inProgress: false,
           available: true,
         ),
       ),
       _StateLegendSample(
+        game: game,
         kind: _TechLegendStateKind.locked,
-        state: _TechNodeState(
+        state: const _TechNodeState(
           researched: false,
           inProgress: false,
           available: false,
@@ -143,8 +169,13 @@ class _LegendChip extends StatelessWidget {
 }
 
 class _StateLegendSample extends StatelessWidget {
-  const _StateLegendSample({required this.kind, required this.state});
+  const _StateLegendSample({
+    required this.game,
+    required this.kind,
+    required this.state,
+  });
 
+  final Game game;
   final _TechLegendStateKind kind;
   final _TechNodeState state;
 
@@ -166,9 +197,17 @@ class _StateLegendSample extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 72,
-          height: 24,
-          child: _TechNode(tech: dummyTech, state: state, onTap: () {}),
+          width: _nodeWidth,
+          height: _nodeHeight,
+          child: _TechNode(
+            game: game,
+            tech: dummyTech,
+            contextPlayerId: game.players.isNotEmpty
+                ? game.players.first.id
+                : 'gp1',
+            state: state,
+            onTap: () {},
+          ),
         ),
         const SizedBox(width: 4),
         Text(
