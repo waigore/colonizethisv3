@@ -7,7 +7,10 @@ import 'order_engine_validate_diplomatic_test_support.dart';
 void main() {
   group('OrderEngine validateDiplomatic relation and overture rules', () {
     test('declareWar rejected when already at war', () {
-      final game = gpMinorBaseGame(relationState: RelationState.atWar);
+      final game = gpMinorGame(
+        relationState: RelationState.atWar,
+        treasury: gpMinorOrderEngineTreasury,
+      );
       final engine = OrderEngine();
       final result = engine.addDiplomaticOrderWithContext(
         game,
@@ -23,7 +26,10 @@ void main() {
     });
 
     test('offerPeace rejected when not at war', () {
-      final game = gpMinorBaseGame(relationState: RelationState.atPeace);
+      final game = gpMinorGame(
+        relationState: RelationState.atPeace,
+        treasury: gpMinorOrderEngineTreasury,
+      );
       final engine = OrderEngine();
       final result = engine.addDiplomaticOrderWithContext(
         game,
@@ -39,7 +45,7 @@ void main() {
     });
 
     test('establishOverture rejected when target is at war with GP', () {
-      final game = gpMinorBaseGame(
+      final game = gpMinorGame(
         relationState: RelationState.atWar,
         overtureStage: OvertureStage.none,
         treasury: overtureConsulateCost + 100,
@@ -62,7 +68,7 @@ void main() {
     test(
       'establishOverture trade consulate rejected without diplomatic_expertise',
       () {
-        final game = gpMinorBaseGame(
+        final game = gpMinorGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.none,
           treasury: overtureConsulateCost + 100,
@@ -85,7 +91,7 @@ void main() {
     );
 
     test('establishOverture consulate rejected when treasury too low', () {
-      final game = gpMinorBaseGame(
+      final game = gpMinorGame(
         relationState: RelationState.atPeace,
         overtureStage: OvertureStage.none,
         treasury: overtureConsulateCost - 1,
@@ -106,7 +112,7 @@ void main() {
     });
 
     test('establishOverture embassy requires existing consulate', () {
-      final game = gpMinorBaseGame(
+      final game = gpMinorGame(
         relationState: RelationState.atPeace,
         overtureStage: OvertureStage.none,
         treasury: overtureEmbassyCost + 1000,
@@ -127,7 +133,7 @@ void main() {
     });
 
     test('establishOverture second order for same faction in same turn rejected', () {
-      final game = gpMinorBaseGame(
+      final game = gpMinorGame(
         relationState: RelationState.atPeace,
         overtureStage: OvertureStage.none,
         treasury: overtureConsulateCost * 3,

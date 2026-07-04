@@ -1,2 +1,2 @@
 export 'diplomatic_orders_test_fixtures.dart'
-    show emptyTopology, gpMinorBaseGame, gpMinorGame;
+    show emptyTopology, gpMinorGame, gpMinorOrderEngineTreasury;
