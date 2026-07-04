@@ -1,11 +1,4 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
-
-import 'build_rail_work_rules.dart';
-import 'order_work_constants.dart';
-import 'orders_application_helpers.dart';
+part of 'order_suggestion_work_tile_candidacy.dart';
 
 // ---------------------------------------------------------------------------
 // Work-target tile pre-filtering (shared by candidacy index and tile-keys API).

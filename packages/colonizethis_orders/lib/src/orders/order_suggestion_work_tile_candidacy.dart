@@ -3,14 +3,17 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'build_rail_work_rules.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_work_constants.dart';
-import 'order_suggestion_work_tile_candidacy_prefilter.dart';
+import 'orders_application_helpers.dart';
 import 'partial_province_reveal.dart';
 import 'unit_type_helpers.dart';
+
+part 'order_suggestion_work_tile_candidacy_prefilter.dart';
 
 // ---------------------------------------------------------------------------
 // Work-tile candidate index — shared pre-filtering for work-target tile scans.
