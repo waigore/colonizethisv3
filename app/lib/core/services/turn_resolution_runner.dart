@@ -1,14 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/ai_profile_resolution.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'turn_resolution_result_codec.dart';
+import 'turn_resolution_worker_isolate.dart';
 
 final _runnerLog = packageLogger('logic');
 
@@ -126,10 +127,10 @@ class TurnResolutionRunner {
       'logic: turn_resolution_runner session_start sessionId=$sessionId '
       'gameId=${game.id} turnTraceEnabled=$turnTraceEnabled '
       'payloadBytes='
-      'game:${_safeJsonUtf8Bytes(gameJson)},'
-      'orders:${_safeJsonUtf8Bytes(ordersJson)},'
-      'topology:${_safeJsonUtf8Bytes(topologyJson)},'
-      'tileMap:${_safeJsonUtf8Bytes(tileMapJson)}',
+      'game:${safeTurnResolutionJsonUtf8Bytes(gameJson)},'
+      'orders:${safeTurnResolutionJsonUtf8Bytes(ordersJson)},'
+      'topology:${safeTurnResolutionJsonUtf8Bytes(topologyJson)},'
+      'tileMap:${safeTurnResolutionJsonUtf8Bytes(tileMapJson)}',
     );
 
     Future<void> tearDownSession() async {
@@ -198,11 +199,11 @@ class TurnResolutionRunner {
             _runnerLog.i(
               'logic: turn_resolution_runner session_complete sessionId=$sessionId '
               'outcome=success elapsedMs=${sessionStopwatch.elapsedMilliseconds} '
-              'messageBytes=${_safeJsonUtf8Bytes(message)} '
+              'messageBytes=${safeTurnResolutionJsonUtf8Bytes(message)} '
               'workerToMainMs=${portTransitMs ?? -1}',
             );
             final decodeStopwatch = Stopwatch()..start();
-            final decodedResult = _decodeTurnResolutionResult(
+            final decodedResult = decodeTurnResolutionResult(
               Map<String, dynamic>.from(
                 message['result'] as Map<Object?, Object?>,
               ),
@@ -273,7 +274,7 @@ class TurnResolutionRunner {
             _runnerLog.i(
               'logic: turn_resolution_runner decode_complete sessionId=$sessionId '
               'decodeMs=${decodeStopwatch.elapsedMilliseconds} '
-              'resultType=${_resultTypeName(decodedResult)} '
+              'resultType=${turnResolutionResultTypeName(decodedResult)} '
               'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
             );
           } catch (e, st) {
@@ -317,7 +318,7 @@ class TurnResolutionRunner {
         }
       });
 
-      Isolate.spawn<Map<String, Object?>>(_turnResolutionIsolateMain, {
+      Isolate.spawn<Map<String, Object?>>(turnResolutionWorkerIsolateMain, {
             'sendPort': receivePort.sendPort,
             'game': gameJson,
             'orders': ordersJson,
@@ -371,327 +372,5 @@ class TurnResolutionRunner {
       done: doneCompleter.future,
       dispose: cleanup,
     );
-  }
-}
-
-void _turnResolutionIsolateMain(Map<String, Object?> args) {
-  unawaited(_turnResolutionIsolateBody(args));
-}
-
-Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
-  final sendPort = args['sendPort']! as SendPort;
-  final workerStopwatch = Stopwatch()..start();
-  try {
-    final decodeStopwatch = Stopwatch()..start();
-    final game = Game.fromJson(
-      Map<String, dynamic>.from(args['game']! as Map<Object?, Object?>),
-    );
-    final humanOrders = Orders.fromJson(
-      Map<String, dynamic>.from(args['orders']! as Map<Object?, Object?>),
-    );
-    final topology = MapTopology.fromJson(
-      Map<String, dynamic>.from(args['topology']! as Map<Object?, Object?>),
-    );
-    final rawTileMap = Map<String, dynamic>.from(
-      args['tileMapByRegion']! as Map<Object?, Object?>,
-    );
-    final tileMapByRegion = rawTileMap.map<String, TileMapResult>(
-      (key, value) => MapEntry(
-        key,
-        TileMapResult.fromJson(
-          Map<String, dynamic>.from(value as Map<Object?, Object?>),
-        ),
-      ),
-    );
-    final turnTraceEnabled = args['turnTraceEnabled'] == true;
-    final turnTraceRootDirectory =
-        (args['turnTraceRootDirectory'] as String?) ?? kCtTurnTraceDirectory;
-    final aiProfiles = decodeAiProfilesFromIsolate(args['aiProfiles']);
-    _runnerLog.i(
-      'logic: turn_resolution_worker start gameId=${game.id} '
-      'turnTraceEnabled=$turnTraceEnabled decodeMs=${decodeStopwatch.elapsedMilliseconds}',
-    );
-    sendPort.send(<String, Object?>{
-      'kind': 'phase',
-      'phase': 'aiPlanning',
-      'marker': 'start',
-    });
-    final aiStopwatch = Stopwatch()..start();
-    final fullAi = generateOrdersForGameFullAI(
-      game,
-      topology,
-      tileMapByRegion: tileMapByRegion,
-      profiles: aiProfiles,
-      onStagedPlannerProgress: (String phase) {
-        sendPort.send(<String, Object?>{
-          'kind': 'phase',
-          'phase': phase,
-          'marker': 'start',
-        });
-      },
-    );
-    _runnerLog.i(
-      'logic: turn_resolution_worker ai_complete gameId=${game.id} '
-      'aiMs=${aiStopwatch.elapsedMilliseconds}',
-    );
-    sendPort.send(<String, Object?>{
-      'kind': 'phase',
-      'phase': 'aiMerge',
-      'marker': 'start',
-    });
-    final mergeStopwatch = Stopwatch()..start();
-    final mergedOrders = mergeOrderLists(
-      humanOrders: humanOrders,
-      aiOrders: fullAi.orders,
-    );
-    _runnerLog.d(
-      'logic: turn_resolution_worker merge_complete gameId=${game.id} '
-      'mergeMs=${mergeStopwatch.elapsedMilliseconds}',
-    );
-    final traceStartedAt = turnTraceEnabled ? DateTime.now().toUtc() : null;
-    final phaseTraces = <TurnTracePhaseTrace>[];
-    final traceRuntime = turnTraceEnabled ? TurnTraceRuntime() : null;
-    final resolveStopwatch = Stopwatch()..start();
-    final result = validateOrdersAndResolveTurnFromTrustedOrders(
-      game: fullAi.game,
-      topology: topology,
-      orders: mergedOrders,
-      tileMapByRegion: tileMapByRegion,
-      onPhaseProgress: (phase, marker) {
-        sendPort.send({
-          'kind': 'phase',
-          'phase': phase.name,
-          'marker': marker.name,
-        });
-      },
-      onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
-      turnTraceRuntime: traceRuntime,
-    );
-    _runnerLog.i(
-      'logic: turn_resolution_worker resolve_complete gameId=${game.id} '
-      'resultType=${_resultTypeName(result)} '
-      'resolveMs=${resolveStopwatch.elapsedMilliseconds}',
-    );
-
-    String? exportedTracePath;
-    int exportMs = 0;
-    if (turnTraceEnabled &&
-        traceStartedAt != null &&
-        result is TurnResolutionComplete) {
-      final exportStopwatch = Stopwatch()..start();
-      final now = DateTime.now().toUtc();
-      final document = TurnTraceMergedDocument(
-        schemaVersion: kTurnTraceSchemaVersionV1,
-        meta: TurnTraceMeta(
-          gameId: game.id,
-          turnNumber: game.worldState.turnState.turnNumber,
-          traceEnabled: true,
-          source: 'app_turn_worker',
-          exportedAt: now.toIso8601String(),
-          turnStartAt: traceStartedAt.toIso8601String(),
-          turnEndAt: now.toIso8601String(),
-        ),
-        ai: List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
-        turnResolution: TurnTraceResolutionSection(
-          phases: List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
-        ),
-      );
-      final file = await TurnTraceFileExporter(
-        rootDirectory: turnTraceRootDirectory,
-      ).export(document);
-      exportedTracePath = file.path;
-      exportMs = exportStopwatch.elapsedMilliseconds;
-      _runnerLog.i(
-        'logic: turn_resolution_worker trace_export_complete gameId=${game.id} '
-        'exportMs=$exportMs path=$exportedTracePath',
-      );
-    }
-
-    final encodedResult = _encodeTurnResolutionResult(result);
-    final workerFinishedAtUtc = DateTime.now().toUtc();
-    _runnerLog.i(
-      'logic: turn_resolution_worker success_ready gameId=${game.id} '
-      'elapsedMs=${workerStopwatch.elapsedMilliseconds} '
-      'resultBytes=${_safeJsonUtf8Bytes(encodedResult)} '
-      'exportMs=$exportMs',
-    );
-    sendPort.send(<String, Object?>{
-      'kind': 'success',
-      'result': encodedResult,
-      if (traceStartedAt != null)
-        'turnTraceStartedAtUtc': traceStartedAt.toIso8601String(),
-      if (exportedTracePath != null) 'turnTraceExportPath': exportedTracePath,
-      'workerFinishedAtUtc': workerFinishedAtUtc.toIso8601String(),
-    });
-  } catch (e, st) {
-    _runnerLog.e(
-      'logic: turn_resolution_worker failed '
-      'elapsedMs=${workerStopwatch.elapsedMilliseconds}',
-      error: e,
-      stackTrace: st,
-    );
-    sendPort.send({
-      'kind': 'error',
-      'error': e.toString(),
-      'stackTrace': st.toString(),
-    });
-  }
-}
-
-int _safeJsonUtf8Bytes(Object? value) {
-  try {
-    return utf8.encode(jsonEncode(value)).length;
-  } catch (_) {
-    return -1;
-  }
-}
-
-String _resultTypeName(TurnResolutionResult result) {
-  return switch (result) {
-    TurnResolutionComplete() => 'complete',
-    TurnResolutionPendingOvertures() => 'pendingOvertures',
-    TurnResolutionPendingFtp() => 'pendingFtp',
-    TurnResolutionPendingIntervention() => 'pendingIntervention',
-    TurnResolutionPendingCallToArms() => 'pendingCallToArms',
-  };
-}
-
-Map<String, Object?> _encodeTurnResolutionResult(TurnResolutionResult result) {
-  switch (result) {
-    case TurnResolutionComplete():
-      return {'type': 'complete', 'game': result.game.toJson()};
-    case TurnResolutionPendingOvertures():
-      return {
-        'type': 'pendingOvertures',
-        'game': result.game.toJson(),
-        'pendingOvertures': result.pendingOvertures
-            .map(
-              (offer) => {
-                'offererGpId': offer.offererGpId,
-                'targetFactionId': offer.targetFactionId,
-                'stage': offer.stage.name,
-              },
-            )
-            .toList(growable: false),
-      };
-    case TurnResolutionPendingFtp():
-      return {
-        'type': 'pendingFtp',
-        'game': result.game.toJson(),
-        'pendingFtpOffers': result.pendingFtpOffers
-            .map(
-              (offer) => {
-                'proposerGpId': offer.proposerGpId,
-                'targetGpId': offer.targetGpId,
-              },
-            )
-            .toList(growable: false),
-      };
-    case TurnResolutionPendingIntervention():
-      return {
-        'type': 'pendingIntervention',
-        'game': result.game.toJson(),
-        'pendingInterventions': result.pendingInterventions
-            .map(
-              (prompt) => {
-                'aggressorGpId': prompt.aggressorGpId,
-                'defenderMinorOrTribeId': prompt.defenderMinorOrTribeId,
-                'interveningGpId': prompt.interveningGpId,
-              },
-            )
-            .toList(growable: false),
-      };
-    case TurnResolutionPendingCallToArms():
-      return {
-        'type': 'pendingCallToArms',
-        'game': result.game.toJson(),
-        'pendingCallToArms': result.pendingCallToArms
-            .map(
-              (pending) => {
-                'allyGpId': pending.allyGpId,
-                'defenderGpId': pending.defenderGpId,
-                'aggressorGpId': pending.aggressorGpId,
-              },
-            )
-            .toList(growable: false),
-      };
-  }
-}
-
-TurnResolutionResult _decodeTurnResolutionResult(Map<String, dynamic> json) {
-  final game = Game.fromJson(
-    Map<String, dynamic>.from(json['game'] as Map<Object?, Object?>),
-  );
-  final type = json['type'] as String;
-  switch (type) {
-    case 'complete':
-      return TurnResolutionComplete(game);
-    case 'pendingOvertures':
-      final list = (json['pendingOvertures'] as List<dynamic>)
-          .map(
-            (entry) =>
-                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
-          )
-          .map(
-            (entry) => OvertureOffer(
-              offererGpId: entry['offererGpId'] as String,
-              targetFactionId: entry['targetFactionId'] as String,
-              stage: OvertureStage.values.byName(entry['stage'] as String),
-            ),
-          )
-          .toList(growable: false);
-      return TurnResolutionPendingOvertures(game: game, pendingOvertures: list);
-    case 'pendingFtp':
-      final ftpList = (json['pendingFtpOffers'] as List<dynamic>)
-          .map(
-            (entry) =>
-                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
-          )
-          .map(
-            (entry) => FtpOffer(
-              proposerGpId: entry['proposerGpId'] as String,
-              targetGpId: entry['targetGpId'] as String,
-            ),
-          )
-          .toList(growable: false);
-      return TurnResolutionPendingFtp(game: game, pendingFtpOffers: ftpList);
-    case 'pendingIntervention':
-      final list = (json['pendingInterventions'] as List<dynamic>)
-          .map(
-            (entry) =>
-                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
-          )
-          .map(
-            (entry) => InterventionPrompt(
-              aggressorGpId: entry['aggressorGpId'] as String,
-              defenderMinorOrTribeId: entry['defenderMinorOrTribeId'] as String,
-              interveningGpId: entry['interveningGpId'] as String,
-            ),
-          )
-          .toList(growable: false);
-      return TurnResolutionPendingIntervention(
-        game: game,
-        pendingInterventions: list,
-      );
-    case 'pendingCallToArms':
-      final list = (json['pendingCallToArms'] as List<dynamic>)
-          .map(
-            (entry) =>
-                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
-          )
-          .map(
-            (entry) => CallToArmsPending(
-              allyGpId: entry['allyGpId'] as String,
-              defenderGpId: entry['defenderGpId'] as String,
-              aggressorGpId: entry['aggressorGpId'] as String,
-            ),
-          )
-          .toList(growable: false);
-      return TurnResolutionPendingCallToArms(
-        game: game,
-        pendingCallToArms: list,
-      );
-    default:
-      throw StateError('Unknown turn resolution result type: $type');
   }
 }
