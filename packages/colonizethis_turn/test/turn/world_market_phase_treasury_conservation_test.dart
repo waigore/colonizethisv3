@@ -1,9 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/turn_phase_test_harness.dart';
 
 /// Treasury-conservation coverage for the World Market phase (Refs #2924).
 ///
@@ -88,7 +89,6 @@ void main() {
         final game = _gameWithBuyerAndMinor(buyerTreasury: 1000, timberPrice: 30);
         final before = _totalGpTreasury(game.players);
 
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: Orders(
@@ -100,9 +100,12 @@ void main() {
         );
 
         final next =
-            (worldMarketTurnPhaseHandler(acc, config, 3) as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+            runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
         final after = _totalGpTreasury(next.players);
         // One unit filled at price 30, credited to no faction (sink).
@@ -184,16 +187,16 @@ void main() {
 
         final beforeTotal = _totalGpTreasury(freshGame().players);
 
-        final runA =
-            (worldMarketTurnPhaseHandler(TurnPipelineState(game: freshGame()),
-                    config(), 3) as TurnPhaseStepContinue)
-                .pipeline
-                .game;
-        final runB =
-            (worldMarketTurnPhaseHandler(TurnPipelineState(game: freshGame()),
-                    config(), 3) as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final runA = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: freshGame(),
+          config: config(),
+        );
+        final runB = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: freshGame(),
+          config: config(),
+        );
 
         expect(_totalGpTreasury(runA.players), lessThanOrEqualTo(beforeTotal),
             reason: 'the market never increases the Great-Power treasury pool');
@@ -241,14 +244,15 @@ Game _runGpPhase({
     ),
     worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
   );
-  final acc = TurnPipelineState(game: game);
   final config = TurnResolverConfig(
     topology: const MapTopology(nodes: [], edges: []),
     orders: orders,
   );
-  return (worldMarketTurnPhaseHandler(acc, config, 3) as TurnPhaseStepContinue)
-      .pipeline
-      .game;
+  return runTurnPhaseHandler(
+    handler: worldMarketTurnPhaseHandler,
+    game: game,
+    config: config,
+  );
 }
 
 Game _gameWithBuyerAndMinor({

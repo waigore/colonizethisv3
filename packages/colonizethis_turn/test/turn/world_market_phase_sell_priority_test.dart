@@ -2,10 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../support/turn_phase_test_harness.dart';
 
 /// Phase-handler integration for the #3753 R7.3 sell-priority relation
 /// tiebreaker. Minor M1 auto-offers a limited quantity; two GPs bid for it at
@@ -78,14 +79,14 @@ Game _runPhase({
   required Game game,
   required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
 }) {
-  final acc = TurnPipelineState(game: game);
-  final config = TurnResolverConfig(
-    topology: const MapTopology(nodes: [], edges: []),
-    orders: Orders(tradeOrdersByPlayerId: tradeOrdersByPlayerId),
+  return runTurnPhaseHandler(
+    handler: worldMarketTurnPhaseHandler,
+    game: game,
+    config: TurnResolverConfig(
+      topology: const MapTopology(nodes: [], edges: []),
+      orders: Orders(tradeOrdersByPlayerId: tradeOrdersByPlayerId),
+    ),
   );
-  return (worldMarketTurnPhaseHandler(acc, config, 3) as TurnPhaseStepContinue)
-      .pipeline
-      .game;
 }
 
 List<TradeOrder> _minorOffer(int quantity) => [

@@ -1,11 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
+import '../support/turn_phase_test_harness.dart';
 
 /// Integration tests for the carry-forward re-validation branch of
 /// `worldMarketTurnPhaseHandler` (Refs #2990 B3 follow-up).
@@ -39,14 +39,12 @@ void main() {
           ],
         },
       );
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 2),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -63,10 +61,12 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
@@ -118,14 +118,12 @@ void main() {
           ],
         },
       );
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 30),
           sellerTreasury: 0,
           buyerTreasury: 100000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -142,10 +140,12 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
@@ -194,14 +194,12 @@ void main() {
           ],
         },
       );
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 5),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -218,10 +216,12 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
@@ -264,23 +264,23 @@ void main() {
           ],
         },
       );
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 100000,
           marketPrices: const {'timber': 30, 'iron': 80},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: const Orders(),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
       // The 10-iron bid was dropped, the 20-timber bid survived. With no
       // offers this turn the surviving bid carries forward again.

@@ -1,12 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 import '../turn/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import 'turn_phase_test_harness.dart';
 
 const kEmptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -59,12 +59,13 @@ Game runWorldMarketPhase({
   MapTopology topology = kEmptyTopology,
   int turnNumber = 3,
 }) {
-  final acc = TurnPipelineState(game: game);
   final config = TurnResolverConfig(topology: topology, orders: orders);
-  return (worldMarketTurnPhaseHandler(acc, config, turnNumber)
-          as TurnPhaseStepContinue)
-      .pipeline
-      .game;
+  return runTurnPhaseHandler(
+    handler: worldMarketTurnPhaseHandler,
+    game: game,
+    config: config,
+    turnNumber: turnNumber,
+  );
 }
 
 /// Runs [worldMarketTurnPhaseHandler] for turn 3 with trade orders only.

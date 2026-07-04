@@ -12,10 +12,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/turn_phase_test_harness.dart';
 
 void main() {
   group(
@@ -30,7 +31,6 @@ void main() {
             buyerTreasury: 1000,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
             topology: const MapTopology(nodes: [], edges: []),
             orders: Orders(
@@ -49,10 +49,12 @@ void main() {
           );
 
           final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
+              runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
           final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
           expect(buyer.treasury, equals(1000 - 1 * 30));
@@ -99,7 +101,6 @@ void main() {
             buyerTreasury: 0,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
             topology: const MapTopology(nodes: [], edges: []),
             orders: const Orders(),
@@ -107,10 +108,12 @@ void main() {
           );
 
           final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
+              runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
           expect(
             next.worldMarketState.carryForwardOffersByFactionId['m1'],
@@ -134,17 +137,18 @@ void main() {
             buyerTreasury: 0,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
             topology: const MapTopology(nodes: [], edges: []),
             orders: const Orders(),
           );
 
           final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
+              runTurnPhaseHandler(
+          handler: worldMarketTurnPhaseHandler,
+          game: game,
+          config: config,
+          turnNumber: 3,
+        );
 
           expect(
             next.worldMarketState.lastTurnActivity,

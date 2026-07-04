@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
+import '../support/turn_phase_test_harness.dart';
 
 /// Cargo-released-by-extraction integration for the world market phase
 /// (Refs #2990 B2 / SPEC/game/world-market.md § Cargo — AC *Cargo released
@@ -78,10 +79,11 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runTurnPhaseHandlerFrom(
+            handler: worldMarketTurnPhaseHandler,
+            pipeline: acc,
+            config: config,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(
@@ -150,10 +152,11 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runTurnPhaseHandlerFrom(
+            handler: worldMarketTurnPhaseHandler,
+            pipeline: acc,
+            config: config,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(
@@ -217,10 +220,11 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runTurnPhaseHandlerFrom(
+            handler: worldMarketTurnPhaseHandler,
+            pipeline: acc,
+            config: config,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(buyer.stockpile.quantityOf('timber'), 0);
@@ -274,10 +278,11 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runTurnPhaseHandlerFrom(
+            handler: worldMarketTurnPhaseHandler,
+            pipeline: acc,
+            config: config,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(
