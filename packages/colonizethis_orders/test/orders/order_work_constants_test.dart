@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' as barrel;
-import 'package:colonizethis_logic/src/constants.dart' as core_constants;
+import 'package:colonizethis_logic/colonizethis_logic.dart' as core_constants;
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart'
     as order_constants;
 import 'package:colonizethis_test/test.dart';

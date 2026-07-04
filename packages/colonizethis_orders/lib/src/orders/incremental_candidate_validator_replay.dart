@@ -42,7 +42,7 @@ extension IncrementalCandidateValidatorPrefixReplay
       return false;
     }
     if (cache.postRecruitWorkerPrefixEconomy == null) {
-      final prefixValidator = RecruitWorkerOrderValidator.withProjectedEconomy(
+      final prefixValidator = createProjectedRecruitWorkerValidator(
         player: player,
         stockpile: player.stockpile,
         treasury: player.treasury,
@@ -66,7 +66,7 @@ extension IncrementalCandidateValidatorPrefixReplay
       );
     }
     final snap = cache.postRecruitWorkerPrefixEconomy!;
-    final candidateValidator = RecruitWorkerOrderValidator.withProjectedEconomy(
+    final candidateValidator = createProjectedRecruitWorkerValidator(
       player: player,
       stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
       treasury: snap.treasury,
@@ -87,16 +87,11 @@ extension IncrementalCandidateValidatorPrefixReplay
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
     if (cache.postBuildPrefixEconomy == null) {
-      final prefixValidator = BuildOrderValidator.withProjectedEconomy(
+      final prefixValidator = createProjectedBuildValidator(
         game: game,
         player: player,
         stockpile: player.stockpile,
-        treasury:
-            player.treasury +
-            pendingRichesTreasuryDelta(
-              stockpile: player.stockpile,
-              richesCashMultiplier: game.richesCashMultiplier,
-            ),
+        treasury: player.treasury,
         workerPool: player.workerPool,
       );
       for (final existing in builds) {
@@ -120,16 +115,11 @@ extension IncrementalCandidateValidatorPrefixReplay
     final candidateStockpile = Stockpile(
       quantities: snap.stockpile.copyQuantities(),
     );
-    final candidateValidator = BuildOrderValidator.withProjectedEconomy(
+    final candidateValidator = createProjectedBuildValidator(
       game: game,
       player: player,
       stockpile: candidateStockpile,
-      treasury:
-          snap.treasury +
-          pendingRichesTreasuryDelta(
-            stockpile: candidateStockpile,
-            richesCashMultiplier: game.richesCashMultiplier,
-          ),
+      treasury: snap.treasury,
       workerPool: snap.workers,
     );
     return candidateValidator
@@ -231,7 +221,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final membership = factionMembershipSnapshot;
 
     if (cache.postDiplomaticPrefixState == null) {
-      final prefixValidator = DiplomaticOrderValidator(
+      final prefixValidator = createProjectedDiplomaticValidator(
         game: game,
         playerId: playerId,
         initialTreasury: economy.treasury,
@@ -278,16 +268,11 @@ extension IncrementalCandidateValidatorProjection
     if (cached != null) {
       return cached;
     }
-    final buildValidator = BuildOrderValidator.withProjectedEconomy(
+    final buildValidator = createProjectedBuildValidator(
       game: game,
       player: player,
       stockpile: player.stockpile,
-      treasury:
-          player.treasury +
-          pendingRichesTreasuryDelta(
-            stockpile: player.stockpile,
-            richesCashMultiplier: game.richesCashMultiplier,
-          ),
+      treasury: player.treasury,
       workerPool: player.workerPool,
     );
     final builds =
