@@ -115,7 +115,7 @@ Widget _buildEconomicSection({
               ResourceIcon(commodityId: commodityId, size: 20),
               const SizedBox(width: CtSpacing.m / 2),
               Text(
-                '+$qty',
+                l10n.provinceOverlay_townProductionQuantity(qty),
                 style: TextStyle(color: EditorialMonoclePalette.fg),
               ),
             ],

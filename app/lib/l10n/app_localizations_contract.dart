@@ -1424,6 +1424,9 @@ abstract class AppLocalizations {
   /// Subheading within the Economic section for town manufacturing bonus preview.
   String get provinceOverlay_townProductionHeading;
 
+  /// Signed quantity for a projected town manufacturing bonus commodity row.
+  String provinceOverlay_townProductionQuantity(int quantity);
+
   /// Province overlay section heading for military details.
   String get provinceOverlay_sectionMilitary;
 
