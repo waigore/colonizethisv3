@@ -1,12 +1,12 @@
 // Keeps the Widgetbook catalog split by **UI domain**, not by an arbitrary
 // size-based index (Refs #3546 item 6 / AC). The catalog library
-// (`app/lib/widgetbook/catalog.dart`) is composed of `part` files; before this
+// (`widgetbook_host/lib/catalogs/catalog.dart`) is composed of `part` files; before this
 // gate they were named `catalog_part1.dart` … `catalog_part9.dart`, split only
 // to stay under the `repo.part_unit_size` line cap. That numbering hid which
 // surface family (panels, screens, dialogs, chrome, primitives, …) each file
 // registered and produced non-obvious cross-part coupling.
 //
-// This gate forbids any `app/lib/widgetbook/**` Dart file whose name matches the
+// This gate forbids any `widgetbook_host/lib/catalogs/**` Dart file whose name matches the
 // `catalog_part<N>.dart` numbered pattern. New catalog parts must use a
 // descriptive domain name (for example `catalog_panels.dart`,
 // `catalog_dialogs.dart`, `catalog_primitives.dart`). When a single domain
@@ -19,7 +19,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Directory holding the Widgetbook catalog library and its `part` files.
-const String widgetbookCatalogDirPath = 'app/lib/widgetbook';
+const String widgetbookCatalogDirPath = 'widgetbook_host/lib/catalogs';
 
 /// Matches numbered catalog fragment file names such as `catalog_part1.dart`
 /// or `catalog_part12.dart`. Case-insensitive on the `part` token for safety.

@@ -2,12 +2,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
-import '../features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
-import '../l10n/l10n.dart';
-import '../widgets/ct_choice_chip.dart';
-import '../widgets/ct_region_map.dart';
-import '../test_support/seed42_init_game_result.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
+import 'package:colonizethis_app/widgets/ct_region_map.dart';
+import 'package:colonizethis_app/test_support/seed42_init_game_result.dart';
 
 /// Builds InitGameMapViewData for the debug init game result, enriching it with
 /// per-tile visibility derived from the first player's PlayerView. Used by map

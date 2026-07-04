@@ -125,7 +125,7 @@ class C {}
       const excluded = <String>[
         'app/lib/l10n/app_localizations.dart',
         'app/lib/test_support/region_fixtures.dart',
-        'app/lib/widgetbook/catalog_panels.dart',
+        'widgetbook_host/lib/catalogs/catalog_panels.dart',
         'app/lib/features/game/model.g.dart',
         'app/lib/features/game/region_test.dart',
       ];
@@ -175,7 +175,7 @@ const b = 'newWorld';
         'app/lib/features/game/region_test.dart',
         'app/lib/l10n/app_localizations_en.dart',
         'app/lib/test_support/region_fixtures.dart',
-        'app/lib/widgetbook/catalog_panels.dart',
+        'widgetbook_host/lib/catalogs/catalog_panels.dart',
       ];
       for (final rel in skipped) {
         expect(

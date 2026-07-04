@@ -17,7 +17,7 @@ import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app/widgets/ct_fleur_de_lis_ornament.dart';
 import 'package:colonizethis_app/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 
 import 'support/widget_test_assets.dart';
 import 'support/widgetbook_test_harness.dart';

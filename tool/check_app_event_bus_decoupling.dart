@@ -16,11 +16,12 @@ import 'package:path/path.dart' as p;
 ///
 /// Four sub-checks (any violation flips the rule red):
 ///
-/// 1. Production code under `app/lib/**` (excluding `app/lib/widgetbook/**`)
-///    must not call the `AppEventBus()` singleton factory — use the
-///    `appEventBusProvider` (or an `AppEventBus.create()` instance held by
-///    the owning widget/service) so test containers can dispose without
-///    closing the legacy global bus.
+/// 1. Production code under `app/lib/**` must not call the `AppEventBus()`
+///    singleton factory — use the `appEventBusProvider` (or an
+///    `AppEventBus.create()` instance held by the owning widget/service) so
+///    test containers can dispose without closing the legacy global bus.
+///    Widgetbook catalog stories live under `widgetbook_host/lib/catalogs/`
+///    and are outside this scan root.
 ///
 /// 2. `appNavigatorKey.currentContext`, `appNavigatorKey.currentState`, and
 ///    any other property access on `appNavigatorKey` is restricted to
@@ -120,7 +121,6 @@ const Set<String> _allowedPostFrameBusEmitFiles = <String>{
 };
 
 const _scanRoot = 'app/lib';
-const _excludedRoot = 'app/lib/widgetbook';
 const _featuresRoot = 'app/lib/features';
 
 const _closePanelEventName = 'ClosePanelEvent';
@@ -176,9 +176,6 @@ int runCheckAppEventBusDecoupling(
     final relativePath = p.posix.joinAll(
       p.split(p.relative(entity.path, from: root)),
     );
-    if (relativePath.startsWith('$_excludedRoot/')) {
-      continue;
-    }
     final content = entity.readAsStringSync();
     final parsed = parseString(content: content, path: relativePath);
     final visitor = _AppEventBusDecouplingVisitor(

@@ -22,6 +22,7 @@ Monorepo layout:
 - **`features/game/flame/map_area/`** — `GameMapArea` widget stack, state logic, and draft projections. Public barrel: `map_area/map_area.dart`. Legacy import paths under `flame/game_map_area*.dart` re-export the submodule.
 - **`features/game/flame/region_map/`** — `RegionMapComponent` Flame render stack and viewport helpers. Public barrel: `region_map/region_map.dart`. Legacy import paths under `flame/region_map*.dart` re-export the submodule.
 - **Import boundary (`repo.app_flame_map_import_boundary`):** `map_area/` and `region_map/` must not import `map_state/`; when `map_state/` is added, it may import `map_area` public exports only (`map_area.dart` or `game_map_area.dart`).
+- **Widgetbook catalogs** (`widgetbook_host/lib/catalogs/`) — dev-only Widgetbook stories and catalog `part` files. `app/lib/widgetbook.dart` is a thin re-export shim for local `flutter run -t lib/widgetbook.dart`; production analyze scope for `app/lib/features`, `app/lib/core`, and `app/lib/widgets` excludes relocated catalogs (`repo.app_widgetbook_catalog_location`).
 
 ---
 
