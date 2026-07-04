@@ -17,7 +17,6 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'order_effects_projector.dart';
 import 'order_resolution_context.dart';
 import 'order_validator_factory.dart';
-import 'validator_bundle.dart';
 
 /// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
 /// Returns the new rejected flag (true if any result was rejected).

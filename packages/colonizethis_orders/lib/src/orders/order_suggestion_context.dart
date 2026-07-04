@@ -5,7 +5,8 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 
-export 'package:colonizethis_diplomacy/src/diplomacy/overture_stage_helpers.dart';
+export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show OvertureStageChain;
 
 final orderSuggestionLog = CtLogger('orders.order_suggestion');
 

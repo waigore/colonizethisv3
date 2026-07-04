@@ -46,6 +46,7 @@ void main() {
         playerId: 'p1',
         treasury: 0,
         civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
       );
       final order = WorkOrder(
         unitId: 'u1',
@@ -88,6 +89,7 @@ void main() {
         playerId: 'p1',
         treasury: 0,
         civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
       );
       final order = WorkOrder(
         unitId: 'b1',
@@ -145,6 +147,7 @@ void main() {
         playerId: 'p1',
         treasury: 1000,
         civilianEmbassyWorkAllowed: (_, __) => false,
+        devExclusiveTiles: const {},
       );
       final order = WorkOrder(
         unitId: 'b1',
@@ -203,6 +206,7 @@ void main() {
               treasury: 500,
               civilianEmbassyWorkAllowed: (_, __) => false,
               factionMembership: withSnap ? membership : null,
+              devExclusiveTiles: const {},
             );
         final order = WorkOrder(
           unitId: 'merchant1',
@@ -262,6 +266,7 @@ void main() {
         playerId: 'p1',
         treasury: 0,
         civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
       );
       final order = WorkOrder(
         unitId: 'b1',
@@ -278,6 +283,111 @@ void main() {
       expect(r, isNotNull);
       expect(r!.status, OrderValidationStatus.rejected);
       expect(r.reason, contains('prospected'));
+    });
+
+    test('precheckDefaultForeignProvince rejects builder in foreign province', () {
+      const ow = 'oldWorld';
+      const ownProvinceId = '$ow|P1';
+      const foreignProvinceId = '$ow|P2';
+      const foreignTileKey = '$foreignProvinceId|0|0';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: ownProvinceId, regionId: ow, ownerId: 'p1'),
+              Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {foreignProvinceId: [foreignTileKey]},
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: ownProvinceId,
+          ),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      final player = game.players.first;
+      final ctx = WorkOrderTargetPrecheckContext(
+        game: game,
+        player: player,
+        playerId: 'p1',
+        treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
+      );
+      final order = WorkOrder(
+        unitId: 'b1',
+        target: kWorkTargetBuildRoad,
+        targetTileKey: foreignTileKey,
+      );
+      final r = runWorkOrderTargetPrecheck(
+        ctx,
+        order,
+        foreignProvinceId,
+        'p2',
+        kUnitTypeBuilder,
+      );
+      expect(r, isNotNull);
+      expect(r!.reason, contains('foreign province'));
+    });
+
+    test('precheckDevExclusiveTileConflict rejects duplicate dev work tile', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$provinceId|0|0';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {provinceId: [tileKey]},
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+          ),
+        ],
+      );
+      final player = game.players.single;
+      final ctx = WorkOrderTargetPrecheckContext(
+        game: game,
+        player: player,
+        playerId: 'p1',
+        treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: {tileKey},
+      );
+      final order = WorkOrder(
+        unitId: 'b1',
+        target: kWorkTargetBuildRoad,
+        targetTileKey: tileKey,
+      );
+      final r = runWorkOrderTargetPrecheck(
+        ctx,
+        order,
+        provinceId,
+        'p1',
+        kUnitTypeBuilder,
+      );
+      expect(r, isNotNull);
+      expect(r!.reason, contains('development or purchase work'));
     });
   });
 }

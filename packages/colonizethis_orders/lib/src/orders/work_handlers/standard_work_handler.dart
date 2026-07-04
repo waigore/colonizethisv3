@@ -35,50 +35,49 @@ _StandardWorkTargetConfig _fixedMaterialWorkTargetConfig(String target) =>
       totalTurnsFn: () => totalTurnsForWork(target),
     );
 
+_StandardWorkTargetConfig _buildImprovementWorkTargetConfig({
+  required Game game,
+  required String targetTileKey,
+  required Unit unit,
+  required TileMapState tileState,
+}) =>
+    _StandardWorkTargetConfig(
+      allowedForUnitType: (t) =>
+          isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
+      costFn: () => WorkOrderCostCalculator(
+        game,
+        playerId: unit.ownerId,
+      ).calculateCost(
+        kWorkTargetBuildImprovement,
+        targetTileKey,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+      ),
+      totalTurnsFn: () => totalTurnsForWork(
+        kWorkTargetBuildImprovement,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+      ),
+    );
+
+_StandardWorkTargetConfig _buildFortWorkTargetConfig({
+  required Unit unit,
+  required Map<String, Province> provincesById,
+}) {
+  final prov = provincesById[unit.locationProvinceId];
+  final fortLevel = prov?.fortLevel ?? 0;
+  return _StandardWorkTargetConfig(
+    allowedForUnitType: (t) =>
+        isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
+    costFn: () =>
+        workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: fortLevel),
+    totalTurnsFn: () =>
+        totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
+  );
+}
+
 final Map<String, _StandardWorkTargetConfigBuilder>
 _standardWorkTargetConfigBuilders = {
-  kWorkTargetBuildImprovement:
-      ({
-        required game,
-        required targetTileKey,
-        required unit,
-        required tileState,
-        required provincesById,
-      }) => _StandardWorkTargetConfig(
-        allowedForUnitType: (t) =>
-            isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
-        costFn: () => WorkOrderCostCalculator(
-          game,
-          playerId: unit.ownerId,
-        ).calculateCost(
-          kWorkTargetBuildImprovement,
-          targetTileKey,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-        totalTurnsFn: () => totalTurnsForWork(
-          kWorkTargetBuildImprovement,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-      ),
-  kWorkTargetBuildFort:
-      ({
-        required game,
-        required targetTileKey,
-        required unit,
-        required tileState,
-        required provincesById,
-      }) {
-        final prov = provincesById[unit.locationProvinceId];
-        final fortLevel = prov?.fortLevel ?? 0;
-        return _StandardWorkTargetConfig(
-          allowedForUnitType: (t) =>
-              isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
-          costFn: () =>
-              workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: fortLevel),
-          totalTurnsFn: () =>
-              totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
-        );
-      },
+  kWorkTargetBuildImprovement: _buildImprovementWorkTargetConfigBuilder,
+  kWorkTargetBuildFort: _buildFortWorkTargetConfigBuilder,
   kWorkTargetBuildRoad: _fixedMaterialWorkTargetConfigBuilder(
     kWorkTargetBuildRoad,
   ),
@@ -92,6 +91,29 @@ _standardWorkTargetConfigBuilders = {
     kWorkTargetUpgradeTown,
   ),
 };
+
+_StandardWorkTargetConfig _buildImprovementWorkTargetConfigBuilder({
+  required Game game,
+  required String targetTileKey,
+  required Unit unit,
+  required TileMapState tileState,
+  required Map<String, Province> provincesById,
+}) =>
+    _buildImprovementWorkTargetConfig(
+      game: game,
+      targetTileKey: targetTileKey,
+      unit: unit,
+      tileState: tileState,
+    );
+
+_StandardWorkTargetConfig _buildFortWorkTargetConfigBuilder({
+  required Game game,
+  required String targetTileKey,
+  required Unit unit,
+  required TileMapState tileState,
+  required Map<String, Province> provincesById,
+}) =>
+    _buildFortWorkTargetConfig(unit: unit, provincesById: provincesById);
 
 _StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
   String target,

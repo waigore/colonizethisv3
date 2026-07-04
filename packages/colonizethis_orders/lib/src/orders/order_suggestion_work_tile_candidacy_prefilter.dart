@@ -1,15 +1,20 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'order_work_constants.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'build_rail_work_rules.dart';
+import 'order_work_constants.dart';
 import 'orders_application_helpers.dart';
+
+// ---------------------------------------------------------------------------
+// Work-target tile pre-filtering (shared by candidacy index and tile-keys API).
+// Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
+// ---------------------------------------------------------------------------
 
 /// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
 /// Returns a set of candidate tile keys that pass work-target requirements.
-Set<String> _preFilterWorkTargetTiles({
+Set<String> preFilterWorkTargetTiles({
   required Game game,
   required String workTarget,
   required String playerId,
@@ -41,45 +46,6 @@ Set<String> _preFilterWorkTargetTiles({
     _prefilterWorkTargetDefault(ctx);
   }
   return result;
-}
-
-Set<String> rawCandidateTilesForWorkTarget({
-  required Game game,
-  required String playerId,
-  required String workTarget,
-  Set<String>? exploreProvinceScope,
-  Map<String, TileMapResult>? tileMapByRegion,
-
-  /// When non-null, must match the ids of provinces owned by [playerId] (same
-  /// as the default path, which reads them from [ProvinceOwnerCache]). Callers
-  /// that invoke this repeatedly in one suggestion pass should supply a shared
-  /// set to avoid O(targets × provinces) rescans (Refs #2394).
-  Set<String>? playerOwnedProvinceIds,
-
-  /// When non-null, [kWorkTargetPurchaseLand] prefilter reuses this snapshot
-  /// instead of calling [DiplomacyFactionMembership.from] again (Refs #2394 —
-  /// same pass often already built membership for incremental validation).
-  DiplomacyFactionMembership? factionMembership,
-}) {
-  final world = game.worldState;
-  final ownedProvinceIds =
-      playerOwnedProvinceIds ??
-      <String>{
-        for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
-          p.id,
-      };
-  return _preFilterWorkTargetTiles(
-    game: game,
-    workTarget: workTarget,
-    playerId: playerId,
-    tileKeysByRegion: world.tileKeysByRegionAndProvince,
-    resourceByTile: world.resourceByTileKey,
-    purchasedTiles: world.purchasedTilesByTileKey,
-    ownedProvinceIds: ownedProvinceIds,
-    exploreProvinceScope: exploreProvinceScope,
-    tileMapByRegion: tileMapByRegion,
-    factionMembership: factionMembership,
-  );
 }
 
 /// Iterates every tile in land provinces (prefixed province ids), skipping sea zones.

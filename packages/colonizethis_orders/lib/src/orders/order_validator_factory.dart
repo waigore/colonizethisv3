@@ -5,6 +5,25 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_resolution_context.dart';
 import 'validator_bundle.dart';
 
+export 'validator_bundle.dart'
+    show
+        OrderValidators,
+        createOrderValidators,
+        createProjectedBuildValidator,
+        createProjectedDiplomaticValidator,
+        createProjectedRecruitWorkerValidator,
+        createWorkOrderValidator;
+
+/// Canonical entry for validator construction shared by full-pass
+/// [runOrderValidationPhases] and incremental candidate replay (Refs #3877).
+///
+/// Full-pass validation supplies an [OrderValidatorFactory] (typically
+/// [createOrderValidators]). Incremental probes call the per-category
+/// [createProjectedRecruitWorkerValidator], [createProjectedBuildValidator],
+/// [createWorkOrderValidator], and [createProjectedDiplomaticValidator]
+/// factories exported here — the same helpers [createOrderValidators] uses
+/// internally so both paths stay aligned.
+
 /// Builds the per-bundle [OrderValidators] for one validation slice.
 ///
 /// [resolution] threads the canonical [OrderResolutionContext] record

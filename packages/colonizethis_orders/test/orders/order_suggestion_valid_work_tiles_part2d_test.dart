@@ -3,35 +3,52 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'valid_work_tiles_test_support.dart';
+
 void main() {
   group('getValidWorkOrderTileKeys', () {
     test(
       'suggestWorkOrders explore includes partially revealed province when first sorted entry tile is unknown but later tile is fogged',
       () {
-        const playerId = 'gp1';
-        const nw = 'newWorld';
-        const provHome = '$nw|home';
-        const provTarget = '$nw|tribe1';
-        final tileHome = '$nw|home|0|0';
-        final t0 = '$nw|tribe1|0|0';
-        final t1 = '$nw|tribe1|1|0';
-
-        final player = const Player(
-          id: playerId,
-          displayName: 'GP',
-          isHuman: false,
+        final provHome = ValidWorkTilesTestSupport.provinceId(
+          'home',
+          regionId: ValidWorkTilesTestSupport.nw,
         );
-        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
-        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
+        final provTarget = ValidWorkTilesTestSupport.provinceId(
+          'tribe1',
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final tileHome = ValidWorkTilesTestSupport.tileKey(
+          'home',
+          0,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final t0 = ValidWorkTilesTestSupport.tileKey(
+          'tribe1',
+          0,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final t1 = ValidWorkTilesTestSupport.tileKey(
+          'tribe1',
+          1,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+
+        final pHome = Province(
+          id: provHome,
+          regionId: ValidWorkTilesTestSupport.nw,
+          ownerId: ValidWorkTilesTestSupport.playerId,
+        );
         final pTarget = Province(
           id: provTarget,
-          regionId: nw,
+          regionId: ValidWorkTilesTestSupport.nw,
           ownerId: 'tribe1',
         );
-        final explorer = Unit(
+        final explorer = ValidWorkTilesTestSupport.explorerUnit(
           id: 'ex1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
         );
@@ -39,46 +56,50 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: const RegionData(),
           newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
-          tileKeysByRegionAndProvince: {
-            nw: {
+          tileKeysByRegionAndProvince:
+              ValidWorkTilesTestSupport.tileKeysByProvince(
+            {
               provHome: [tileHome],
               provTarget: [t0, t1],
             },
-          },
+            regionId: ValidWorkTilesTestSupport.nw,
+          ),
           playerVisibilityByTile: {
-            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+            ValidWorkTilesTestSupport.playerId: {
+              tileHome: 'fullyVisible',
+              t0: 'unknown',
+              t1: 'fogged',
+            },
           },
         );
         final game = Game(
           id: 'g1916e1',
           worldState: world,
-          players: [player],
-          tribes: [tribe],
+          players: const [ValidWorkTilesTestSupport.defaultPlayer],
+          tribes: const [ValidWorkTilesTestSupport.defaultTribe],
           // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
-          overtureStates: const [
-            OvertureState(
-              gpId: playerId,
-              targetId: 'tribe1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
+          overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
         );
         final topology = MapTopology(
           nodes: const [
             TopologyNode(
               id: 'home',
-              regionId: nw,
+              regionId: 'newWorld',
               type: TopologyNodeType.province,
             ),
             TopologyNode(
               id: 'tribe1',
-              regionId: nw,
+              regionId: 'newWorld',
               type: TopologyNodeType.province,
             ),
           ],
           edges: const [TopologyEdge(id1: 'home', id2: 'tribe1')],
         );
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final suggestions = suggestWorkOrders(
           view,
           game,
@@ -101,26 +122,46 @@ void main() {
     test(
       'suggestWorkOrders explore excludes partially revealed province when no bundled entry tile passes move validation',
       () {
-        const playerId = 'gp1';
-        const nw = 'newWorld';
-        const provHome = '$nw|home';
-        const provTarget = '$nw|gp2p';
-        final tileHome = '$nw|home|0|0';
-        final t0 = '$nw|gp2p|0|0';
-        final t1 = '$nw|gp2p|1|0';
-
-        final player = const Player(
-          id: playerId,
-          displayName: 'GP',
-          isHuman: false,
+        final provHome = ValidWorkTilesTestSupport.provinceId(
+          'home',
+          regionId: ValidWorkTilesTestSupport.nw,
         );
+        final provTarget = ValidWorkTilesTestSupport.provinceId(
+          'gp2p',
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final tileHome = ValidWorkTilesTestSupport.tileKey(
+          'home',
+          0,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final t0 = ValidWorkTilesTestSupport.tileKey(
+          'gp2p',
+          0,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+        final t1 = ValidWorkTilesTestSupport.tileKey(
+          'gp2p',
+          1,
+          0,
+          regionId: ValidWorkTilesTestSupport.nw,
+        );
+
         final gp2 = const Player(id: 'gp2', displayName: 'P2', isHuman: false);
-        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
-        final pTarget = Province(id: provTarget, regionId: nw, ownerId: 'gp2');
-        final explorer = Unit(
+        final pHome = Province(
+          id: provHome,
+          regionId: ValidWorkTilesTestSupport.nw,
+          ownerId: ValidWorkTilesTestSupport.playerId,
+        );
+        final pTarget = Province(
+          id: provTarget,
+          regionId: ValidWorkTilesTestSupport.nw,
+          ownerId: 'gp2',
+        );
+        final explorer = ValidWorkTilesTestSupport.explorerUnit(
           id: 'ex1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
         );
@@ -128,37 +169,47 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: const RegionData(),
           newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
-          tileKeysByRegionAndProvince: {
-            nw: {
+          tileKeysByRegionAndProvince:
+              ValidWorkTilesTestSupport.tileKeysByProvince(
+            {
               provHome: [tileHome],
               provTarget: [t0, t1],
             },
-          },
+            regionId: ValidWorkTilesTestSupport.nw,
+          ),
           playerVisibilityByTile: {
-            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+            ValidWorkTilesTestSupport.playerId: {
+              tileHome: 'fullyVisible',
+              t0: 'unknown',
+              t1: 'fogged',
+            },
           },
         );
         final game = Game(
           id: 'g1916e2',
           worldState: world,
-          players: [player, gp2],
+          players: [ValidWorkTilesTestSupport.defaultPlayer, gp2],
         );
         final topology = MapTopology(
           nodes: const [
             TopologyNode(
               id: 'home',
-              regionId: nw,
+              regionId: 'newWorld',
               type: TopologyNodeType.province,
             ),
             TopologyNode(
               id: 'gp2p',
-              regionId: nw,
+              regionId: 'newWorld',
               type: TopologyNodeType.province,
             ),
           ],
           edges: const [TopologyEdge(id1: 'home', id2: 'gp2p')],
         );
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final suggestions = suggestWorkOrders(
           view,
           game,

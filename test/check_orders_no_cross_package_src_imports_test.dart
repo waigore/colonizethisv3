@@ -67,6 +67,44 @@ void main() {
       expect(code, 0);
     });
 
+    test('fails on a deep src export of a sibling colonizethis package', () {
+      final temp = Directory.systemTemp.createTempSync('orders_src_export_bad_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeOrdersLibFile(
+        temp.path,
+        'src/orders/order_suggestion_context.dart',
+        "export 'package:colonizethis_diplomacy/src/diplomacy/overture_stage_helpers.dart';\n",
+      );
+
+      final errLogs = <String>[];
+      final code = runCheckOrdersNoCrossPackageSrcImports(
+        temp.path,
+        err: errLogs.add,
+      );
+      expect(code, 1);
+      expect(
+        errLogs.join('\n'),
+        contains('export package:colonizethis_diplomacy/src/diplomacy/overture_stage_helpers.dart'),
+      );
+    });
+
+    test('allows barrel exports and self-package src exports', () {
+      final temp = Directory.systemTemp.createTempSync('orders_src_export_ok_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeOrdersLibFile(
+        temp.path,
+        'src/orders/order_suggestion_context.dart',
+        "export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show OvertureStageChain;\n"
+        "export 'package:colonizethis_orders/src/orders/internal_helper.dart';\n",
+      );
+
+      final code = runCheckOrdersNoCrossPackageSrcImports(
+        temp.path,
+        err: (_) {},
+      );
+      expect(code, 0);
+    });
+
     test('skips generated files', () {
       final temp = Directory.systemTemp.createTempSync('orders_src_gen_');
       addTearDown(() => temp.deleteSync(recursive: true));

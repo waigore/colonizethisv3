@@ -3,24 +3,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'orders_application_test_support.dart';
+
 void main() {
   group('applyBuildAndWorkOrders work order application', () {
-    const ow = 'oldWorld';
-    const provinceId = 'oldWorld|P1';
-    const tileKey = 'oldWorld|P1|0|0';
-
-    TileMapResult tileMapWithTerrain(TerrainType terrain) {
-      return TileMapResult(
-        width: 1,
-        height: 1,
-        grid: const [
-          ['P1'],
-        ],
-        terrainGrid: [
-          [terrain],
-        ],
-      );
-    }
+    const ow = OrdersApplicationTestSupport.ow;
+    const provinceId = OrdersApplicationTestSupport.provinceId;
+    const tileKey = OrdersApplicationTestSupport.tileKey;
 
     test(
       'prospect adds tile to playerProspectedTiles when terrain eligible',
@@ -32,19 +21,11 @@ void main() {
           locationProvinceId: provinceId,
           tileKey: tileKey,
         );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -60,7 +41,11 @@ void main() {
         final next = applyBuildAndWorkOrders(
           game,
           orders,
-          tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.hills)},
+          tileMapByRegion: {
+            ow: OrdersApplicationTestSupport.tileMapWithTerrain(
+              TerrainType.hills,
+            ),
+          },
         );
         expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
         final explorerAfter = next.worldState.oldWorld.units.single;
@@ -80,17 +65,9 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+        units: [unit],
       );
       final orders = Orders(
         workOrdersByPlayerId: {
@@ -106,7 +83,11 @@ void main() {
       final next = applyBuildAndWorkOrders(
         game,
         orders,
-        tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.plains)},
+        tileMapByRegion: {
+          ow: OrdersApplicationTestSupport.tileMapWithTerrain(
+            TerrainType.plains,
+          ),
+        },
       );
       final prospected =
           next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
@@ -123,20 +104,12 @@ void main() {
           locationProvinceId: provinceId,
           tileKey: tileKey,
         );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: {tileKey: 'iron'},
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
+          resourceByTileKey: {tileKey: 'iron'},
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -165,20 +138,12 @@ void main() {
           locationProvinceId: provinceId,
           tileKey: tileKey,
         );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: {tileKey: 'grain'},
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
+          resourceByTileKey: {tileKey: 'grain'},
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -210,29 +175,18 @@ void main() {
           tileKey: tileKey,
         );
         final cost = workOrderCostBuildImprovement(0);
-        var stockpile = const Stockpile();
-        for (final e in cost.entries) {
-          stockpile = stockpile.applyDelta(e.key, e.value);
-        }
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: {tileKey: 'grain'},
-          ),
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [unit],
+          resourceByTileKey: {tileKey: 'grain'},
           players: [
             Player(
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
-              stockpile: stockpile,
+              stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
             ),
           ],
         );
@@ -267,33 +221,22 @@ void main() {
           tileKey: tileKey,
         );
         final cost = workOrderCostBuildFort(1);
-        var stockpile = const Stockpile();
-        for (final e in cost.entries) {
-          stockpile = stockpile.applyDelta(e.key, e.value);
-        }
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: provinceId,
-                  regionId: ow,
-                  ownerId: 'p1',
-                  fortLevel: 1,
-                ),
-              ],
-              units: [unit],
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          provinces: [
+            Province(
+              id: provinceId,
+              regionId: ow,
+              ownerId: 'p1',
+              fortLevel: 1,
             ),
-            newWorld: const RegionData(),
-          ),
+          ],
+          units: [unit],
           players: [
             Player(
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
-              stockpile: stockpile,
+              stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
               techUnlocked: const {kTechIdMineEngineering: true},
             ),
           ],

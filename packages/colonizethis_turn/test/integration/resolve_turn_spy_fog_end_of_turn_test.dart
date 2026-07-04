@@ -8,6 +8,9 @@ import '../support/turn_resolver_test_harness.dart';
 part 'resolve_turn_spy_fog_part4_segment1_part.dart';
 part 'resolve_turn_spy_fog_part4_segment2_part.dart';
 
+/// Spy-resolution uses [Game.globalGameSeed]; unset seeds make kill rolls flaky.
+const _spyFogIntegrationSeed = 0;
+
 void main() {
   _resolve_turn_spy_fog_part4_segment1_partTests();
   _resolve_turn_spy_fog_part4_segment2_partTests();

@@ -5,137 +5,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
+import 'order_suggestion_diplomatic_candidates.dart';
 import 'order_suggestion_pass_context.dart';
-
-/// Per-target suggestion order: first candidate that passes the order engine wins.
-/// SPEC/program/order-suggestions.md § Diplomatic orders.
-List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
-  required Game game,
-  required String playerId,
-  required Player player,
-  required String targetId,
-  required Set<String> knownTargetIds,
-  required Set<String> knownFactionIds,
-  required DiplomacyFactionMembership factionMembership,
-  required Map<String, OvertureState> playerOverturesByTargetId,
-  required bool playerHoldsColony,
-}) {
-  final treasury = player.treasury;
-  final out = <DiplomaticOrder>[];
-  if (targetId == playerId) return out;
-
-  final rel = getRelation(game, playerId, targetId);
-  final atWar = rel?.atWar ?? false;
-  final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.playerById(targetId) != null;
-  final targetIsMinorOrTribe = isMinorOrTribe(
-    game,
-    targetId,
-    factionMembership: factionMembership,
-  );
-
-  if (knownTargetIds.contains(targetId) && atWar) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.offerPeace,
-        targetFactionId: targetId,
-      ),
-    );
-  }
-  // Break Alliance precedes Alliance/Declare War so a pair already in a formal
-  // alliance at peace is offered the voluntary break as its single non-economic
-  // candidate; the AI scoring layer decides whether to act (Refs #3758 R8).
-  // SPEC/program/order-suggestions.md § Diplomatic orders.
-  if (isGpTarget && rel != null && rel.formalAlliance && rel.atPeace) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.breakAlliance,
-        targetFactionId: targetId,
-      ),
-    );
-  }
-  // Skip the alliance candidate when a formal alliance already exists for the
-  // pair: forming a duplicate treaty is invalid (the break candidate above is
-  // offered instead). SPEC/program/order-suggestions.md § Diplomatic orders.
-  if (isGpTarget &&
-      rel != null &&
-      rel.atPeace &&
-      !rel.formalAlliance &&
-      rel.level != RelationLevel.allied) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.alliance,
-        targetFactionId: targetId,
-      ),
-    );
-  }
-  if (targetIsMinorOrTribe && knownFactionIds.contains(targetId)) {
-    final overtureOrder = _establishOvertureSuggestionOrder(
-      game: game,
-      playerId: playerId,
-      targetId: targetId,
-      treasury: treasury,
-    );
-    if (overtureOrder != null) out.add(overtureOrder);
-  }
-
-  final overtureRow = playerOverturesByTargetId[targetId];
-  if (overtureRow != null) {
-    if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
-      out.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.grantAid,
-          targetFactionId: targetId,
-          amount: grantAidDefaultAmount,
-        ),
-      );
-    }
-    // SetSubsidy: percentage model (Refs #3753 R3), GP→Minor/Tribe only and
-    // Embassy-gated (R2). The percent is carried in `amount`; the percent model
-    // charges no upfront treasury cost. Matches the order validator.
-    if (targetIsMinorOrTribe && overtureRow.hasEmbassy) {
-      out.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.setSubsidy,
-          targetFactionId: targetId,
-          amount: kSubsidyPercentDefault,
-        ),
-      );
-    }
-  }
-
-  // Boycott candidate (Refs #3758 R8): a colony-holding GP may embargo another
-  // GP it is at peace with when no boycott for the pair already exists. Emitted
-  // in the independent pass so it can be suggested alongside (not in place of)
-  // the single non-economic candidate for the same target. The boycott
-  // validator enforces the same gates at acceptance time.
-  // SPEC/program/order-suggestions.md § Boycott candidate.
-  if (playerHoldsColony &&
-      isGpTarget &&
-      rel != null &&
-      rel.atPeace &&
-      !game.boycottStates.any(
-        (b) => b.gpId == playerId && b.targetGpId == targetId,
-      )) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.boycott,
-        targetFactionId: targetId,
-      ),
-    );
-  }
-
-  if (knownTargetIds.contains(targetId) && atPeace) {
-    out.add(
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: targetId,
-      ),
-    );
-  }
-
-  return out;
-}
 
 /// Independent diplomatic candidates are appended in their own pass and do not
 /// consume (nor are consumed by) the single non-economic primary winner for a
@@ -146,48 +17,6 @@ bool _isIndependentDiplomaticCandidate(DiplomaticOrderType type) =>
     type == DiplomaticOrderType.grantAid ||
     type == DiplomaticOrderType.setSubsidy ||
     type == DiplomaticOrderType.boycott;
-
-DiplomaticOrder? _establishOvertureSuggestionOrder({
-  required Game game,
-  required String playerId,
-  required String targetId,
-  required int treasury,
-}) {
-  final rel = getRelation(game, playerId, targetId);
-  final atWar = rel?.atWar ?? false;
-  if (atWar) return null;
-
-  final existing = getOverture(game, playerId, targetId);
-  final current = existing?.stage ?? OvertureStage.none;
-  final next = current.next;
-  if (next == null) return null;
-  if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
-    final cost = next == OvertureStage.tradeConsulate
-        ? overtureConsulateCost
-        : overtureEmbassyCost;
-    if (treasury < cost) return null;
-  }
-  if (next == OvertureStage.tradeConsulate ||
-      next == OvertureStage.embassy ||
-      next == OvertureStage.nap) {
-    // O(1) player lookup (Refs #2394); minor/tribe overture stages require tech.
-    final submitter = game.playerById(playerId);
-    if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
-      return null;
-    }
-  }
-  if (next == OvertureStage.joinEmpire) {
-    final score = rel?.score ?? relationScoreNeutral;
-    if (score < relationScoreMinFriendly) return null;
-    final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-    if (treasury < cost) return null;
-  }
-  return DiplomaticOrder(
-    type: DiplomaticOrderType.establishOverture,
-    targetFactionId: targetId,
-    overtureStage: next,
-  );
-}
 
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
 /// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
@@ -214,8 +43,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     topology: topology,
   );
 
-  // One membership snapshot for this pass: O(1) minor/tribe checks per target
-  // and GP id sets without repeated list scans (Refs #2394).
   final factionMembership = DiplomacyFactionMembership.from(game);
   final otherGps = factionMembership.greatPowerIds.difference({playerId});
   final knownTargets = <String>{
@@ -224,15 +51,12 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
-  // First matching overture row per target (same order as legacy linear scan).
   final playerOverturesByTargetId = <String, OvertureState>{};
   for (final o in game.overtureStates) {
     if (o.gpId != playerId) continue;
     playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
   }
 
-  // One colony-ownership check per pass: gates boycott candidate enumeration
-  // for every target (Refs #3758 R8).
   final playerHoldsColony = game.colonyStates.any(
     (c) => c.colonyOfGpId == playerId,
   );
@@ -255,8 +79,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
-  // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
-  // setup once for the whole suggestion pass (Refs #2394).
   var passValidator = sharedCandidateValidator != null
       ? (sharedCandidateValidator.basePrefix == workingOrders
             ? sharedCandidateValidator
@@ -273,7 +95,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
-    final candidates = _diplomaticCandidatesForTargetOrdered(
+    final targetCtx = DiplomaticSuggestionTargetContext(
       game: game,
       playerId: playerId,
       player: player,
@@ -284,10 +106,9 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       playerOverturesByTargetId: playerOverturesByTargetId,
       playerHoldsColony: playerHoldsColony,
     );
+    final candidates = diplomaticCandidatesForTargetOrdered(targetCtx);
     var trialOrders = workingOrders;
 
-    // One incremental validator per trial prefix: amortizes validator setup
-    // across all candidates in the pass (Refs #2394).
     final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
     passValidator = prefixPassValidator;
     var prefixPassAcceptedOrder = false;
@@ -311,8 +132,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       break;
     }
 
-    // Rebind only when the non-economic pass changed the trial prefix; when
-    // it did not accept anything, economic probes share [prefixPassValidator].
     final economicPassValidator = prefixPassAcceptedOrder
         ? prefixPassValidator.forBasePrefix(trialOrders)
         : prefixPassValidator;
@@ -338,9 +157,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
 
     workingOrders = trialOrders;
-    // Keep [passValidator] aligned with accumulated **workingOrders** before the
-    // next target (including economic-only accepts that did not update
-    // [passValidator] in the primary/economic split above). Refs #2394.
     passValidator = passValidator.forBasePrefix(workingOrders);
   }
 
@@ -415,9 +231,6 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
           factionMembership: factionMembership,
         );
 
-  // Candidate enumeration expresses the at-peace + non-self filter; the shared
-  // emitter probes each against the fixed pass validator and collects in target
-  // order before the final sort (Refs #3714).
   emitAcceptedCandidates<DiplomaticOrder>(
     candidates: [
       for (final targetId in sortedTargetIds)

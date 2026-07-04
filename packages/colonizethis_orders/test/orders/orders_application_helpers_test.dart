@@ -1,5 +1,5 @@
 import 'package:colonizethis_orders/src/orders/orders_application_helpers.dart';
-import 'package:colonizethis_logic/src/constants.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

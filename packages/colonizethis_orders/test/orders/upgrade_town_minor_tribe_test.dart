@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_orders/src/orders/order_suggestion_work_tile_prefilter.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_work_tile_candidacy.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_orders/src/orders/validators/work_order_target_prechecks.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -109,6 +109,7 @@ void main() {
         playerId: gpId,
         treasury: 1000,
         civilianEmbassyWorkAllowed: (_, _) => false,
+        devExclusiveTiles: const {},
       );
       final result = precheckUpgradeTown(
         ctx,
