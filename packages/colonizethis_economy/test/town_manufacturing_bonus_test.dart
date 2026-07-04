@@ -19,12 +19,30 @@ void main() {
   });
 
   group('isTownManufacturingRecipeEligible', () {
-    test('steel recipe excluded when input includes manufactured castIron', () {
+    test('recipe excluded when any input is manufactured', () {
       expect(
         isTownManufacturingRecipeEligible(
-          ProductionRecipesCatalog.steelFromCastIronCoal,
+          ProductionRecipe(
+            id: 'test_steel_from_castIron',
+            outputCommodityId: CommodityCatalog.steel.id,
+            outputQuantity: 1,
+            inputQuantities: {
+              CommodityCatalog.castIron.id: 2,
+              CommodityCatalog.coal.id: 1,
+            },
+            labourPerOutput: 5,
+          ),
         ),
         isFalse,
+      );
+    });
+
+    test('steel from iron and coal is eligible (all raw inputs)', () {
+      expect(
+        isTownManufacturingRecipeEligible(
+          ProductionRecipesCatalog.steelFromIronCoal,
+        ),
+        isTrue,
       );
     });
 
