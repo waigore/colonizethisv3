@@ -23,6 +23,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../utils/tech_ui_helpers.dart';
+import 'tech_gp_pennant_row.dart';
 
 /// Icon size used in Choose-tech dialog rows. Mirrors the mockup
 /// `.tech-option img` width/height (22 px). Refs #2864 S4.
@@ -77,6 +78,8 @@ void showChooseTechDialog({
     barrierColor: EditorialMonoclePalette.dialogScrim,
     builder: (ctx) {
       return ChooseTechDialog(
+        game: game,
+        contextPlayerId: player.id,
         slotIndex: slotIndex,
         availableTechs: availableTechs,
         onSelect: (tech) {
@@ -103,11 +106,15 @@ void showChooseTechDialog({
 class ChooseTechDialog extends StatelessWidget {
   const ChooseTechDialog({
     super.key,
+    required this.game,
+    required this.contextPlayerId,
     required this.slotIndex,
     required this.availableTechs,
     required this.onSelect,
   });
 
+  final Game game;
+  final String contextPlayerId;
   final int slotIndex;
   final List<TechDefinition> availableTechs;
   final void Function(TechDefinition tech) onSelect;
@@ -141,6 +148,8 @@ class ChooseTechDialog extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: _ChooseTechOptionRow(
+                      game: game,
+                      contextPlayerId: contextPlayerId,
                       tech: tech,
                       onTap: () => onSelect(tech),
                     ),
@@ -177,8 +186,15 @@ class _ChooseTechEmptyMessage extends StatelessWidget {
 }
 
 class _ChooseTechOptionRow extends StatelessWidget {
-  const _ChooseTechOptionRow({required this.tech, required this.onTap});
+  const _ChooseTechOptionRow({
+    required this.game,
+    required this.contextPlayerId,
+    required this.tech,
+    required this.onTap,
+  });
 
+  final Game game;
+  final String contextPlayerId;
   final TechDefinition tech;
   final VoidCallback onTap;
 
@@ -207,7 +223,13 @@ class _ChooseTechOptionRow extends StatelessWidget {
                 ),
                 CtGap.wm,
               ],
-              Expanded(child: _ChooseTechOptionLabels(tech: tech)),
+              Expanded(
+                child: _ChooseTechOptionLabels(
+                  game: game,
+                  contextPlayerId: contextPlayerId,
+                  tech: tech,
+                ),
+              ),
             ],
           ),
         ),
@@ -217,8 +239,14 @@ class _ChooseTechOptionRow extends StatelessWidget {
 }
 
 class _ChooseTechOptionLabels extends StatelessWidget {
-  const _ChooseTechOptionLabels({required this.tech});
+  const _ChooseTechOptionLabels({
+    required this.game,
+    required this.contextPlayerId,
+    required this.tech,
+  });
 
+  final Game game;
+  final String contextPlayerId;
   final TechDefinition tech;
 
   @override
@@ -228,13 +256,26 @@ class _ChooseTechOptionLabels extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          techDisplayName(tech.id),
-          style: TextStyle(
-            color: EditorialMonoclePalette.fg,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: CtSpacing.s,
+          runSpacing: 2,
+          children: [
+            Text(
+              techDisplayName(tech.id),
+              style: TextStyle(
+                color: EditorialMonoclePalette.fg,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            TechGpPennantRow(
+              game: game,
+              techId: tech.id,
+              contextPlayerId: contextPlayerId,
+              compact: true,
+            ),
+          ],
         ),
         const SizedBox(height: 2),
         Text(

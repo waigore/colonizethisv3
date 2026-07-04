@@ -38,16 +38,15 @@ class ProductionRecipe {
 }
 
 class ProductionRecipesCatalog {
-  /// 2 timber + 2 iron → 1 castIron.
-  static final ProductionRecipe castIronFromTimberIronCoal = ProductionRecipe(
-    id: 'castIron_from_timber_iron_coal',
+  /// 2 iron → 1 castIron (original-game smelting balance).
+  static final ProductionRecipe castIronFromIron = ProductionRecipe(
+    id: 'castIron_from_iron',
     outputCommodityId: CommodityCatalog.castIron.id,
     outputQuantity: 1,
     inputQuantities: {
-      CommodityCatalog.timber.id: 2,
       CommodityCatalog.iron.id: 2,
     },
-    labourPerOutput: 5,
+    labourPerOutput: 2,
   );
 
   /// 2 wool → 1 fabric.
@@ -155,7 +154,7 @@ class ProductionRecipesCatalog {
 
   /// All production recipes available in Phase 2.
   static final List<ProductionRecipe> all = [
-    castIronFromTimberIronCoal,
+    castIronFromIron,
     fabricFromWool,
     fabricFromCotton,
     refinedSugarFromSugarCane,

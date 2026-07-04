@@ -43,24 +43,20 @@ void main() {
     });
 
     test(
-        'multi-input recipe (castIron_from_timber_iron_coal: timber 2, '
-        'iron 2 — coal removed; labour 5 -> runs 1) populates every '
-        'input commodity', () {
-      // castIron_from_timber_iron_coal recipe at the time of writing
-      // consumes 2 timber + 2 iron per run (5 labour per output).
+        'single-input recipe (castIron_from_iron: iron 2, '
+        'labour 2 -> runs 1) populates input commodity', () {
       final consumption =
           productionInputConsumptionByCommodityIdForAssignments(
         const [
           AssignedRecipe(
-            recipeId: 'castIron_from_timber_iron_coal',
-            assignedLabour: 5,
+            recipeId: 'castIron_from_iron',
+            assignedLabour: 2,
           ),
         ],
       );
-      expect(consumption[CommodityCatalog.timber.id], 2);
       expect(consumption[CommodityCatalog.iron.id], 2);
-      expect(consumption.containsKey(CommodityCatalog.coal.id), isFalse,
-          reason: 'castIron recipe no longer lists coal as an input.');
+      expect(consumption.containsKey(CommodityCatalog.timber.id), isFalse);
+      expect(consumption.containsKey(CommodityCatalog.coal.id), isFalse);
     });
 
     test('floor(assignedLabour / labourPerOutput) — fractional runs drop', () {

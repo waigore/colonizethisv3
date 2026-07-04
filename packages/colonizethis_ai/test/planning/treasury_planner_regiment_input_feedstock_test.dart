@@ -26,7 +26,7 @@ import 'package:colonizethis_test/test.dart';
 const _fabricId = 'fabric';
 const _woolId = 'wool';
 const _playerId = 'gp1';
-const _tileTimber = 'oldWorld|p0|2|0';
+const _tileIron = 'oldWorld|p0|2|0';
 
 Game _lockRecoverySellerGame({
   required int treasury,
@@ -217,7 +217,6 @@ void main() {
         int woolHeld = 20,
       }) {
         var stockpile = Stockpile.empty
-            .applyDelta(CommodityCatalog.timber.id, 2)
             .applyDelta(CommodityCatalog.iron.id, 2)
             .applyDelta(CommodityCatalog.grain.id, 10);
         if (woolHeld > 0) {
@@ -241,10 +240,10 @@ void main() {
               ],
             ),
             newWorld: const RegionData(provinces: []),
-            resourceByTileKey: const {_tileTimber: 'timber'},
+            resourceByTileKey: const {_tileIron: 'iron'},
             tileKeysByRegionAndProvince: const {
               kRegionOldWorld: {
-                'oldWorld|p0': [_tileTimber],
+                'oldWorld|p0': [_tileIron],
               },
             },
           ),
@@ -256,7 +255,7 @@ void main() {
               capitalProvinceId: 'oldWorld|p0',
               stockpile: stockpile,
               treasury: threshold,
-              workerPool: const WorkerPool(peasants: 2),
+              workerPool: const WorkerPool(peasants: 1),
             ),
           ],
           worldMarketState: WorldMarketState.withDefaultPrices(const {

@@ -95,8 +95,8 @@ void main() {
     test(
       'population-bound peasant-fabric path retains fabric even with a regiment',
       () {
-        // Mirrors cast_iron_labour_gate_test population-bound fixture: timber +
-        // iron + coal on hand, one peasant (labour-walled castIron), fabric < 2.
+        // Mirrors cast_iron_labour_gate_test population-bound fixture: iron on
+        // hand, one peasant (labour-walled castIron), fabric < 2.
         final game = Game(
           id: 'g-offerable-fabric-pop-bound',
           worldState: WorldState(
@@ -112,7 +112,7 @@ void main() {
               ],
             ),
             newWorld: const RegionData(provinces: []),
-            resourceByTileKey: const {'oldWorld|p0|2|0': 'timber'},
+            resourceByTileKey: const {'oldWorld|p0|2|0': 'iron'},
             tileKeysByRegionAndProvince: const {
               kRegionOldWorld: {
                 'oldWorld|p0': ['oldWorld|p0|2|0'],
@@ -135,11 +135,9 @@ void main() {
               isHuman: false,
               capitalProvinceId: 'oldWorld|p0',
               treasury: cheapestRegimentBuildTreasuryCost(),
-              workerPool: const WorkerPool(peasants: 2),
+              workerPool: const WorkerPool(peasants: 1),
               stockpile: Stockpile.empty
-                  .applyDelta('timber', 2)
                   .applyDelta('iron', 2)
-                  .applyDelta('coal', 1)
                   .applyDelta(CommodityCatalog.fabric.id, 1)
                   .applyDelta('grain', 10),
             ),

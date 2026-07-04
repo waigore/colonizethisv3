@@ -1,4 +1,5 @@
 import 'package:colonizethis_combat/src/combat/pre_combat_index.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -25,16 +26,8 @@ Game _game({
   ],
   List<Army> armies = const [],
   RegionData? oldWorld,
-}) => Game(
-  id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: oldWorld ?? const RegionData(),
-    newWorld: const RegionData(),
-    armies: armies,
-  ),
-  players: players,
-);
+}) =>
+    preCombatIndexGame(players: players, armies: armies, oldWorld: oldWorld);
 
 void main() {
   group('resolveArmyMoveDestinationProvinceId (#3448)', () {

@@ -198,7 +198,7 @@ void _resolve_turn_economy_part1_segment2_partTests() {
             ],
             'p2': const [
               AssignedRecipe(
-                recipeId: 'castIron_from_timber_iron_coal',
+                recipeId: 'castIron_from_iron',
                 assignedLabour: 15,
               ),
             ],
@@ -216,7 +216,7 @@ void _resolve_turn_economy_part1_segment2_partTests() {
           final player2 = next.playerById('p2')!;
           expect(player1.stockpile.quantityOf(CommodityCatalog.lumber.id), 5);
           expect(player1.stockpile.quantityOf(CommodityCatalog.castIron.id), 0);
-          expect(player2.stockpile.quantityOf(CommodityCatalog.castIron.id), 3);
+          expect(player2.stockpile.quantityOf(CommodityCatalog.castIron.id), 7);
           expect(player2.stockpile.quantityOf(CommodityCatalog.lumber.id), 0);
         });
   });

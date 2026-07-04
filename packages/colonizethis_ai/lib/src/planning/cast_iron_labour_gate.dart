@@ -7,17 +7,20 @@
 // (all workers fed — not a food-starvation case).
 
 import 'ai_commodity_ids.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'effective_labour_state.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart' show feasibleRuns;
+import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart'
+    show isBelowQuotaZeroNwSeller;
 
 const String kCastIronCommodityId = 'castIron';
 
 /// True when [playerId] is a below-quota zero-NW lock-recovery seller that
 /// still needs domestically produced [kCastIronCommodityId], holds enough
-/// feedstock for one `castIron_from_timber_iron_coal` run, yet cannot assign
+/// feedstock for one `castIron_from_iron` run, yet cannot assign
 /// that run because even fully-fed workers supply less labour than
-/// [ProductionRecipesCatalog.castIronFromTimberIronCoal.labourPerOutput].
+/// [ProductionRecipesCatalog.castIronFromIron.labourPerOutput].
 ///
 /// Scoped to sellers the H8 castIron chain already routes (`regimentCount ==
 /// 0`, below OW quota, zero NW provinces) so healthy +6 baseline GPs holding
@@ -26,16 +29,23 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
   required Game game,
   required String playerId,
 }) {
-  final stageable = selfLockRecoverySellerStageableImprovementInputs(
-    game,
-    playerId,
-  );
-  if (!stageable.contains(kCastIronCommodityId)) return false;
+  if (!_lockRecoverySellerNeedsDomesticCastIronFromIron(
+    game: game,
+    playerId: playerId,
+  )) {
+    return false;
+  }
+  return _isCastIronLabourPopulationBoundCore(game: game, playerId: playerId);
+}
 
+bool _isCastIronLabourPopulationBoundCore({
+  required Game game,
+  required String playerId,
+}) {
   final player = game.playerById(playerId);
   if (player == null) return false;
 
-  final recipe = ProductionRecipesCatalog.castIronFromTimberIronCoal;
+  final recipe = ProductionRecipesCatalog.castIronFromIron;
   final materialFeasible = recipe.inputQuantities.entries.every(
     (e) => player.stockpile.quantityOf(e.key) >= e.value,
   );
@@ -53,6 +63,38 @@ bool isCastIronLabourPopulationBoundForLockRecoverySeller({
 
   final rawLabour = player.workerPool.labourSupplyPerTurn;
   return rawLabour < recipe.labourPerOutput && effectiveLabour == rawLabour;
+}
+
+bool _lockRecoverySellerNeedsDomesticCastIronFromIron({
+  required Game game,
+  required String playerId,
+}) {
+  if (regimentCountForPlayer(game, playerId) != 0) return false;
+  return _belowQuotaSellerNeedsDomesticCastIronFromIron(
+    game: game,
+    playerId: playerId,
+  );
+}
+
+bool _belowQuotaSellerNeedsDomesticCastIronFromIron({
+  required Game game,
+  required String playerId,
+}) {
+  if (!isBelowQuotaZeroNwSeller(game, playerId)) return false;
+  final player = game.playerById(playerId);
+  if (player == null) return false;
+  final castIronNeeded =
+      workOrderCostBuildImprovement(0)[kCastIronCommodityId] ?? 0;
+  if (castIronNeeded <= 0) return false;
+  if (player.stockpile.quantityOf(kCastIronCommodityId) >= castIronNeeded) {
+    return false;
+  }
+  final recipe = ProductionRecipesCatalog.castIronFromIron;
+  return ownsFeedstockResourceTile(
+    game,
+    playerId,
+    recipe.inputQuantities.keys.toSet(),
+  );
 }
 
 /// Total `fabric` held in the stockpiles of every great power **other than**
@@ -111,10 +153,13 @@ bool isCastIronLabourPeasantRecruitFabricMarketPathActive({
   required String playerId,
   required Stockpile projected,
 }) {
-  if (!isCastIronLabourPopulationBoundForLockRecoverySeller(
+  if (!_belowQuotaSellerNeedsDomesticCastIronFromIron(
     game: game,
     playerId: playerId,
   )) {
+    return false;
+  }
+  if (!_isCastIronLabourPopulationBoundCore(game: game, playerId: playerId)) {
     return false;
   }
   return isCastIronLabourPeasantRecruitFabricShort(projected);

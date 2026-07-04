@@ -281,6 +281,16 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get techTree_stateLocked => 'Locked';
 
   @override
+  String get techTree_researchedBy => 'Researched by';
+
+  @override
+  String get techTree_legendGpPennants =>
+      'GP nation-color pennants (highlighted = you)';
+
+  @override
+  String get techTree_researchersDialogTitle => 'Researched by';
+
+  @override
   String get mapDebug_fullVisibility => 'Full visibility';
 
   @override

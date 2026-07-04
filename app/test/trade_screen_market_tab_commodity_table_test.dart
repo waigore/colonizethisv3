@@ -403,7 +403,7 @@ void main() {
         'renders the live `WorldMarketState.prices` integer price for a '
         'seeded commodity (timber=30 → `30`) and falls back to the resource '
         'catalog default for both unseeded raw resources (iron → `80`) and '
-        'manufactured commodities (lumber → `60`, castIron → `220`) — '
+        'manufactured commodities (lumber → `60`, castIron → `160`) — '
         '`SPEC/game/commodity-catalog.md` § Manufactured base prices, '
         'Refs #3093',
         (tester) async {
@@ -492,7 +492,7 @@ void main() {
           // price slot reads the input-cost-derived base price from
           // SPEC/game/commodity-catalog.md § Manufactured base prices.
           // Lumber's canonical recipe (`timber x 2` at 30 each) yields
-          // 60; castIron's (`timber x 2 + iron x 2`) yields 220.
+          // 60; castIron's (`iron x 2`) yields 160.
           final lumberRow = find.byKey(
             TradeScreen.marketCommodityRowKey(CommodityCatalog.lumber.id),
           );
@@ -533,10 +533,10 @@ void main() {
           );
           expect(castIronRow, findsOneWidget);
           expect(
-            find.descendant(of: castIronRow, matching: find.text('220')),
+            find.descendant(of: castIronRow, matching: find.text('160')),
             findsOneWidget,
             reason:
-                'Refs #3093 — castIron base price `220` per '
+                'Refs #3093 — castIron base price `160` per '
                 'SPEC/game/commodity-catalog.md § Manufactured base prices '
                 '(`timber x 2 + iron x 2` = `60 + 160`).',
           );

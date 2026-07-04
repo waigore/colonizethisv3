@@ -192,7 +192,7 @@ Set<String> selfLockRecoverySellerStageableImprovementInputs(
 
 /// The production recipe with the lowest `id` whose output is [outputId] and
 /// which consumes more than one distinct input commodity (e.g.
-/// `castIron_from_timber_iron_coal`), or `null` when none exists. Single-input
+/// `castIron_from_iron`), or `null` when none exists. Single-input
 /// recipes (e.g. `lumber_from_timber`) are excluded — they have no
 /// feedstock-co-availability problem. Deterministic over the static
 /// `ProductionRecipesCatalog`.

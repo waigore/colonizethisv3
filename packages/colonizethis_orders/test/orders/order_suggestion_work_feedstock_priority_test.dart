@@ -19,16 +19,17 @@ import 'package:colonizethis_test/test.dart';
 // an above-quota affluent supplier (`_supplierId`) and a below-quota zero-NW
 // lock-recovery seller (`_sellerId`) that needs the `castIron` improvement
 // input but holds none, so the supplier-side feedstock-extraction gate for
-// `_supplierId` returns `{timber, iron}`.
+// `_supplierId` returns `{iron}` (castIron is iron-only per #3858).
 const _supplierId = 'gp1';
 const _sellerId = 'gp2';
 
-// The grain tile key is lexicographically smaller than the timber tile key, so
-// ordinary build-improvement suggestion ordering (lexicographic) would emit the
-// grain tile. Only the feedstock-priority reordering promotes the unimproved
-// `timber` feedstock tile ahead of it.
+// The grain tile key is lexicographically smaller than the iron feedstock tile,
+// so ordinary build-improvement suggestion ordering (lexicographic) would emit
+// the grain tile. Only the feedstock-priority reordering promotes the
+// unimproved `iron` feedstock tile ahead of it.
 const _supplierGrainTile = 'oldWorld|gp1-s0|0|0';
 const _supplierTimberTile = 'oldWorld|gp1-s0|1|0';
+const _supplierIronTile = 'oldWorld|gp1-s0|2|0';
 const _sellerWoolTile = 'oldWorld|gp2-p0|0|0';
 
 /// Builds a two-player world that activates the supplier-side feedstock gate
@@ -66,23 +67,33 @@ Game _game({int sellerOw = 5, int supplierCastIron = 0}) {
       _supplierId: {
         _supplierGrainTile: 'fullyVisible',
         _supplierTimberTile: 'fullyVisible',
+        _supplierIronTile: 'fullyVisible',
       },
+    },
+    playerProspectedTiles: const {
+      _supplierId: {_supplierIronTile},
     },
     tileKeysByRegionAndProvince: const {
       kRegionOldWorld: {
-        'oldWorld|gp1-s0': [_supplierGrainTile, _supplierTimberTile],
+        'oldWorld|gp1-s0': [
+          _supplierGrainTile,
+          _supplierTimberTile,
+          _supplierIronTile,
+        ],
         'oldWorld|gp2-p0': [_sellerWoolTile],
       },
     },
     resourceByTileKey: const {
       _supplierGrainTile: 'grain',
       _supplierTimberTile: 'timber',
+      _supplierIronTile: 'iron',
       _sellerWoolTile: 'wool',
     },
     tileState: TileMapState(
       improvementByTile: const {
         _supplierGrainTile: 0,
         _supplierTimberTile: 0,
+        _supplierIronTile: 0,
         _sellerWoolTile: 0,
       },
     ),
@@ -209,7 +220,7 @@ Game _coAvailGame({int supplierTimberHeld = 13, int supplierIronHeld = 0}) {
         displayName: 'Seller',
         isHuman: false,
         treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: const Stockpile(quantities: {'lumber': 1}),
+        stockpile: const Stockpile(),
       ),
     ],
   );
@@ -247,28 +258,28 @@ void main() {
     () {
       test(
         'supplier gate active: the emitted build_improvement suggestion '
-        'targets the unimproved timber feedstock tile, not the lex-first grain '
+        'targets the unimproved iron feedstock tile, not the lex-first grain '
         'tile',
         () {
           final game = _game();
           // Precondition: the supplier-side feedstock gate is active.
           expect(
             feedstockExtractionResourceIdsForPlayer(game, _supplierId),
-            containsAll(<String>['timber', 'iron']),
+            contains('iron'),
           );
 
           final improvements = _buildImprovementSuggestions(game);
           expect(improvements, isNotEmpty);
           expect(
             improvements.map((o) => o.targetTileKey),
-            contains(_supplierTimberTile),
+            contains(_supplierIronTile),
             reason:
-                'feedstock-priority ordering must surface the timber tile as a '
+                'feedstock-priority ordering must surface the iron tile as a '
                 'build_improvement suggestion',
           );
           // The single emitted suggestion is the feedstock tile (the pipeline
           // emits only the first accepted candidate per Builder per target).
-          expect(improvements.single.targetTileKey, _supplierTimberTile);
+          expect(improvements.single.targetTileKey, _supplierIronTile);
         },
       );
 
@@ -301,12 +312,12 @@ void main() {
             feedstockBootstrapBuildImprovementCastIronWaived(
               game,
               _supplierId,
-              _supplierTimberTile,
+              _supplierIronTile,
             ),
             isTrue,
           );
           final improvements = _buildImprovementSuggestions(game);
-          expect(improvements.single.targetTileKey, _supplierTimberTile);
+          expect(improvements.single.targetTileKey, _supplierIronTile);
         },
       );
 
@@ -319,7 +330,7 @@ void main() {
             .map((o) => o.targetTileKey)
             .toList();
         expect(first, equals(second));
-        expect(first.single, _supplierTimberTile);
+        expect(first.single, _supplierIronTile);
       });
     },
   );

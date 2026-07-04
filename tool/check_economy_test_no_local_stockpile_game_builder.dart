@@ -4,22 +4,26 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// SPEC: SPEC/program/repo-lint.md (Refs #3831).
+/// SPEC: SPEC/program/repo-lint.md (Refs #3831, #3856).
 ///
-/// Forbid local stockpile-player `_buildGame` / `buildGame` helpers under
-/// `packages/colonizethis_economy/test/economy/world_market/` when they
-/// duplicate the shared test_support builder shape.
-const _worldMarketTestPrefix =
-    'packages/colonizethis_economy/test/economy/world_market/';
+/// Forbid local stockpile-player game builders under
+/// `packages/colonizethis_economy/test/**` when they duplicate the shared
+/// test_support builder shape.
+const _economyTestPrefix = 'packages/colonizethis_economy/test/';
 
 final RegExp _forbiddenLocalGameBuilder = RegExp(
   r'^\s*Game\s+_?buildGame\s*\(',
   multiLine: true,
 );
 
+final RegExp _forbiddenLocalGameWithFactory = RegExp(
+  r'^\s*Game\s+_gameWith\w*\s*\(',
+  multiLine: true,
+);
+
 bool economyTestNoLocalStockpileGameBuilderPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
-  return normalized.startsWith(_worldMarketTestPrefix) &&
+  return normalized.startsWith(_economyTestPrefix) &&
       normalized.endsWith('_test.dart');
 }
 
@@ -27,6 +31,10 @@ String? economyTestLocalStockpileGameBuilderViolationReason(String content) {
   if (_forbiddenLocalGameBuilder.hasMatch(content)) {
     return 'use buildStockpilePlayerGame / buildTreasuryBidBudgetGame from '
         'colonizethis_economy_test_support instead (Refs #3831)';
+  }
+  if (_forbiddenLocalGameWithFactory.hasMatch(content)) {
+    return 'use shared game builders from colonizethis_economy_test_support '
+        'instead of local _gameWith* factories (Refs #3856)';
   }
   return null;
 }

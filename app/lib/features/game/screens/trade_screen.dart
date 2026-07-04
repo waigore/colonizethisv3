@@ -283,7 +283,7 @@ class TradeScreen extends ConsumerWidget {
   /// the right edge of the price digits shares a vertical column across
   /// the commodity list. Sized to fit [marketRowPriceCoinIconSize] +
   /// [marketRowPriceColumnInnerGap] + three-digit catalog default prices
-  /// (e.g. manufactured `steel` at `530`) at [titleSmall] without clipping.
+  /// (e.g. manufactured `steel` at `410`) at [titleSmall] without clipping.
   static const double marketRowPriceColumnWidth = 64;
 
   /// Horizontal gap between the treasury-coin glyph and the price text

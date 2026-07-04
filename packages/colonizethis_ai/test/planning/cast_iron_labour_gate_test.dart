@@ -5,15 +5,13 @@ import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
         isCastIronLabourPopulationBoundForLockRecoverySeller,
         isDomesticFabricProductionLabourInfeasible,
         otherGreatPowerFabricHeld;
-import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
-    show selfLockRecoverySellerStageableImprovementInputs;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 const _playerId = 'gp5';
-const _tileTimber = 'oldWorld|p0|2|0';
+const _tileIron = 'oldWorld|p0|2|0';
 
 Game _lockRecoverySellerGame({
   required WorkerPool workerPool,
@@ -34,10 +32,10 @@ Game _lockRecoverySellerGame({
         ],
       ),
       newWorld: const RegionData(),
-      resourceByTileKey: const {_tileTimber: 'timber'},
+      resourceByTileKey: const {_tileIron: 'iron'},
       tileKeysByRegionAndProvince: const {
         kRegionOldWorld: {
-          'oldWorld|p0': [_tileTimber],
+          'oldWorld|p0': [_tileIron],
         },
       },
     ),
@@ -60,15 +58,10 @@ void main() {
       'positive: material-feasible castIron with fed workers below one run',
       () {
         final game = _lockRecoverySellerGame(
-          workerPool: const WorkerPool(peasants: 2),
+          workerPool: const WorkerPool(peasants: 1),
           stockpile: Stockpile.empty
-              .applyDelta(CommodityCatalog.timber.id, 2)
-              .applyDelta(CommodityCatalog.iron.id, 2)
+              .applyDelta(CommodityCatalog.iron.id, 4)
               .applyDelta(CommodityCatalog.grain.id, 10),
-        );
-        expect(
-          selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
-          contains(CommodityCatalog.castIron.id),
         );
         expect(
           isCastIronLabourPopulationBoundForLockRecoverySeller(
@@ -84,10 +77,9 @@ void main() {
       'negative: enough peasants to run castIron when fully fed',
       () {
         final game = _lockRecoverySellerGame(
-          workerPool: const WorkerPool(peasants: 5),
+          workerPool: const WorkerPool(peasants: 2),
           stockpile: Stockpile.empty
-              .applyDelta(CommodityCatalog.timber.id, 2)
-              .applyDelta(CommodityCatalog.iron.id, 2)
+              .applyDelta(CommodityCatalog.iron.id, 4)
               .applyDelta(CommodityCatalog.grain.id, 10),
         );
         expect(
@@ -133,8 +125,7 @@ void main() {
               isHuman: false,
               workerPool: const WorkerPool(peasants: 1),
               stockpile: Stockpile.empty
-                  .applyDelta(CommodityCatalog.timber.id, 2)
-                  .applyDelta(CommodityCatalog.iron.id, 2),
+                  .applyDelta(CommodityCatalog.iron.id, 4),
             ),
           ],
         );
@@ -154,8 +145,7 @@ void main() {
       final game = _lockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
-            .applyDelta('timber', 2)
-            .applyDelta('iron', 2)
+            .applyDelta('iron', 4)
             .applyDelta('coal', 1)
             .applyDelta('wool', 5)
             .applyDelta('grain', 10),
@@ -173,8 +163,7 @@ void main() {
       final game = _lockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 2),
         stockpile: Stockpile.empty
-            .applyDelta('timber', 2)
-            .applyDelta('iron', 2)
+            .applyDelta('iron', 4)
             .applyDelta('coal', 1)
             .applyDelta('wool', 5)
             .applyDelta('grain', 20),
@@ -192,8 +181,7 @@ void main() {
       final game = _lockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
-            .applyDelta('timber', 2)
-            .applyDelta('iron', 2)
+            .applyDelta('iron', 4)
             .applyDelta('coal', 1)
             .applyDelta('grain', 10),
       );
@@ -210,10 +198,9 @@ void main() {
   group('isCastIronLabourPeasantRecruitFabricMarketPathActive (Refs #2847)', () {
     test('true for population-bound seller short peasant fabric cost', () {
       final game = _lockRecoverySellerGame(
-        workerPool: const WorkerPool(peasants: 2),
+        workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
-            .applyDelta('timber', 2)
-            .applyDelta('iron', 2)
+            .applyDelta('iron', 4)
             .applyDelta('coal', 1)
             .applyDelta('fabric', 1)
             .applyDelta('grain', 10),
@@ -230,10 +217,9 @@ void main() {
 
     test('false when fabric meets peasant recruit cost', () {
       final game = _lockRecoverySellerGame(
-        workerPool: const WorkerPool(peasants: 2),
+        workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
-            .applyDelta('timber', 2)
-            .applyDelta('iron', 2)
+            .applyDelta('iron', 4)
             .applyDelta('coal', 1)
             .applyDelta('fabric', 2)
             .applyDelta('grain', 10),

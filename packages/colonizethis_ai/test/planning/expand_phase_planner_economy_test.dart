@@ -596,7 +596,7 @@ void main() {
       'castIron-labour peasant recruit flag without forceRebuild (Refs #2847)',
       () {
         const ow = 'oldWorld';
-        const tileTimber = 'oldWorld|gp1_0|2|0';
+        const tileIron = 'oldWorld|gp1_0|2|0';
         final base = buildExpandGame(
           gameIdLabel: 'expand-phase-planner-economy',
           players: [
@@ -604,10 +604,9 @@ void main() {
               treasury: cheapestRegimentBuildTreasuryCost(),
               stockpile: Stockpile.empty
                   .applyDelta(CommodityCatalog.grain.id, 30)
-                  .applyDelta(CommodityCatalog.timber.id, 2)
                   .applyDelta(CommodityCatalog.iron.id, 2)
                   .applyDelta(CommodityCatalog.wool.id, 10),
-            ).copyWith(workerPool: const WorkerPool(peasants: 2)),
+            ).copyWith(workerPool: const WorkerPool(peasants: 1)),
           ],
           oldWorldProvinces: [
             for (var i = 0; i < 5; i++)
@@ -620,10 +619,10 @@ void main() {
         );
         final game = base.copyWith(
           worldState: base.worldState.copyWith(
-            resourceByTileKey: const {tileTimber: 'timber'},
+            resourceByTileKey: const {tileIron: 'iron'},
             tileKeysByRegionAndProvince: const {
               ow: {
-                '$ow|gp1_0': [tileTimber],
+                '$ow|gp1_0': [tileIron],
               },
             },
           ),

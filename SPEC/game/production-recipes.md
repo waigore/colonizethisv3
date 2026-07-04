@@ -26,7 +26,7 @@ The following recipes are defined for current product:
 | Lumber | lumber (1) | timber ×2 | 2 |
 | Fabric (wool) | fabric (1) | wool ×2 | 2 |
 | Fabric (cotton) | fabric (1) | cotton ×2 | 2 |
-| Cast Iron | castIron (1) | timber ×2, iron ×2 | 5 |
+| Cast Iron | castIron (1) | iron ×2 | 2 |
 | Refined Sugar | refinedSugar (1) | sugarCane ×2 | 2 |
 | Cigars | cigars (1) | tobacco ×3 | 3 |
 | Fur Hats | furHats (1) | furs ×2 | 2 |
@@ -50,7 +50,7 @@ The gate is enforced wherever recipe availability is evaluated for a player: pro
 
 ## Examples
 
-- Timber ×2, Iron ×2 → Cast Iron (labour per unit from constants).
+- Iron ×2 → Cast Iron (labour per unit from constants).
 - Wool or Cotton ×2 → Fabric.
 - Sugar Cane ×2 → Refined Sugar.
 

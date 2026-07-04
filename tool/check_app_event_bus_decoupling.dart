@@ -76,6 +76,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
   'app/lib/features/game/flame/exit_confirm_dialog.dart',
   'app/lib/features/game/widgets/tech_tree_widget.dart',
+  // GP researchers list modal split from tech pennant row / tree surfaces
+  // (Refs #3862). Same local-by-design rationale as tech detail in
+  // `tech_tree_widget.dart` — `SPEC/program/app-ui-wiring.md` § "Local by design".
+  'app/lib/features/game/widgets/tech_researchers_list_dialog.dart',
   'app/lib/features/game/widgets/technology_panel.dart',
   // Bottom-sheet split out of `technology_panel.dart` to keep the panel
   // file under the 700-line `repo.game_widgets_file_size` cap. Same

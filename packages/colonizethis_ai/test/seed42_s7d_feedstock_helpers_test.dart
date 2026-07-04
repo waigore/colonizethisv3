@@ -56,7 +56,7 @@ Game _game({
 }
 
 void main() {
-  final castIron = ProductionRecipesCatalog.castIronFromTimberIronCoal;
+  final castIron = ProductionRecipesCatalog.castIronFromIron;
   final lumber = ProductionRecipesCatalog.lumberFromTimber;
   final fabricFromWool = ProductionRecipesCatalog.fabricFromWool;
   final timberId = CommodityCatalog.timber.id;
