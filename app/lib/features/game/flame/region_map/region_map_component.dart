@@ -25,6 +25,7 @@ import '../render/warp_zone_edge_geometry.dart';
 
 
 part 'region_map_component_shared.dart';
+part 'region_map_component_shared_visibility.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
 part 'region_map_component_render_core_overlays.dart';
