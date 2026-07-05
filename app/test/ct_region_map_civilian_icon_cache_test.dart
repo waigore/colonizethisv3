@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

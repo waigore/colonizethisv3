@@ -502,6 +502,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_capitalNo => 'Capital: No';
 
   @override
+  String provinceOverlay_townDevelopment(int level) {
+    return 'Town development: $level';
+  }
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }
@@ -539,6 +544,14 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_sectionEconomic => 'Economic';
 
   @override
+  String get provinceOverlay_townProductionHeading => 'Town production';
+
+  @override
+  String provinceOverlay_townProductionQuantity(int quantity) {
+    return '+$quantity';
+  }
+
+  @override
   String get provinceOverlay_sectionMilitary => 'Military';
 
   @override
@@ -567,6 +580,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String mapControls_cargoHold(String used, String capacity) {
     return '$used/$capacity';
   }
+
+  @override
+  String get mapControls_playersBarToggle => 'Players bar';
 
   @override
   String common_percent(int value) {

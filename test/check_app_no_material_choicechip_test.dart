@@ -127,7 +127,7 @@ Widget b() => MyChoiceChip(label: const Text('b'));
       const allowed = <String>[
         'app/lib/features/game/widgets/chrome/ct_thing.dart',
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
       ];
       for (final rel in allowed) {
         File('${temp.path}/$rel')

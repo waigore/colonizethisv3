@@ -4,7 +4,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'e2e_helpers.dart';
+import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 /// Fast PR quality-gate smoke for the critical first-user-action path:
 /// main menu **New Game** → default leaders → **Start** → interactive game

@@ -41,15 +41,21 @@ void emitDebug() {
       },
     );
 
-    test('ignores AppEventBus() under app/lib/widgetbook/', () {
-      final root = _writeAppFile(
-        'app/lib/widgetbook/catalog_demo.dart',
-        '''
+    test('does not scan widgetbook_host catalog stories', () {
+      final root = Directory.systemTemp.createTempSync('bus-widgetbook-host-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      File(p.join(root.path, 'app/lib/.keep'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('');
+      File(
+        p.join(root.path, 'widgetbook_host/lib/catalogs/catalog_demo.dart'),
+      )
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final bus = AppEventBus();
-''',
-      );
+''');
       final stdoutLines = <String>[];
       final code = runCheckAppEventBusDecoupling(
         root.path,

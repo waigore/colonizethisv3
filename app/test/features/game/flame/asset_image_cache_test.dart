@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/features/game/flame/asset_image_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/asset_image_cache.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 

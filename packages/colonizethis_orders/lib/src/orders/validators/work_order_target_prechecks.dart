@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../build_rail_work_rules.dart';
 import '../order_work_constants.dart';
 import '../diplomatic_access_helpers.dart';
+import '../unit_type_helpers.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import '../order_validation_result.dart';
@@ -18,6 +19,7 @@ class WorkOrderTargetPrecheckContext {
     required this.playerId,
     required this.treasury,
     required this.civilianEmbassyWorkAllowed,
+    required this.devExclusiveTiles,
     this.factionMembership,
     this.tileMapByRegion,
   });
@@ -26,6 +28,9 @@ class WorkOrderTargetPrecheckContext {
   final Player player;
   final String playerId;
   final int treasury;
+
+  /// Tiles already reserved by accepted dev-exclusive work for this player.
+  final Set<String> devExclusiveTiles;
 
   /// Per-region tile maps, used to resolve terrain for terrain-dependent caps
   /// (e.g. the scrub-forest timber level-1 hard cap, R4 / issue #3573). May be
@@ -57,6 +62,7 @@ typedef WorkOrderTargetPrecheck =
 const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
   ...kWorkTargetsWithoutMaterialCost,
   kWorkTargetBuildImprovement,
+  kWorkTargetUpgradeTown,
 };
 
 OrderValidationResult? precheckUpgradeTown(
@@ -70,6 +76,48 @@ OrderValidationResult? precheckUpgradeTown(
     return OrderValidationResult.rejected(
       'National Bureaucracy tech required for upgrade_town',
     );
+  }
+  if (targetProvinceId != null) {
+    final province = ctx.game.worldState.tryGetProvince(targetProvinceId);
+    if (province != null &&
+        province.townDevelopmentLevel >= kTownDevelopmentLevelMax) {
+      return OrderValidationResult.rejected(
+        'Town development level already at maximum (4)',
+      );
+    }
+    if (province != null) {
+      final townKey = province.townTileKey;
+      if (townKey == null ||
+          townKey.isEmpty ||
+          townKey != order.targetTileKey) {
+        return OrderValidationResult.rejected(
+          'upgrade_town target must be the province town tile',
+        );
+      }
+    }
+  }
+  if (provinceOwnerId != null && provinceOwnerId != ctx.playerId) {
+    if (!isMinorOrTribe(
+      ctx.game,
+      provinceOwnerId,
+      factionMembership: ctx.factionMembership,
+    )) {
+      return OrderValidationResult.rejected(
+        'upgrade_town target must be an owned or Minor/Tribe province town',
+      );
+    }
+    final rel = getRelation(ctx.game, ctx.playerId, provinceOwnerId);
+    if (rel?.atWar == true) {
+      return OrderValidationResult.rejected(
+        'Cannot upgrade town: at war with that faction',
+      );
+    }
+    final overture = getOverture(ctx.game, ctx.playerId, provinceOwnerId);
+    if (overture == null || !overture.hasEmbassy) {
+      return OrderValidationResult.rejected(
+        'Cannot upgrade town: embassy required with that Minor/Tribe',
+      );
+    }
   }
   return null;
 }
@@ -215,6 +263,65 @@ OrderValidationResult? precheckBuildImprovement(
   return null;
 }
 
+OrderValidationResult? precheckExplorerConsulateInMinorTribe(
+  WorkOrderTargetPrecheckContext ctx,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
+) {
+  return rejectExplorerWithoutConsulateInMinorTribeProvince(
+    game: ctx.game,
+    playerId: ctx.playerId,
+    unitType: unitType,
+    workTarget: order.target,
+    provinceOwnerId: provinceOwnerId,
+    factionMembership: ctx.factionMembership,
+  );
+}
+
+OrderValidationResult? precheckDefaultForeignProvince(
+  WorkOrderTargetPrecheckContext ctx,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
+) {
+  if (isExplorerUnit(unitType) ||
+      kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(order.target)) {
+    return null;
+  }
+  final controlled = isTileControlledByPlayer(
+    ctx.game,
+    ctx.playerId,
+    order.targetTileKey,
+  );
+  final embassyWork = ctx.civilianEmbassyWorkAllowed(unitType, provinceOwnerId);
+  if (controlled || embassyWork) {
+    return null;
+  }
+  return OrderValidationResult.rejected('Cannot work in foreign province');
+}
+
+OrderValidationResult? precheckDevExclusiveTileConflict(
+  WorkOrderTargetPrecheckContext ctx,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
+) {
+  if (!isDevExclusiveUnitType(unitType) ||
+      !isDevExclusiveWorkTarget(order.target)) {
+    return null;
+  }
+  if (!ctx.devExclusiveTiles.contains(order.targetTileKey)) {
+    return null;
+  }
+  return OrderValidationResult.rejected(
+    'Tile already has development or purchase work for this player',
+  );
+}
+
 /// Map dispatch for target-specific validation before generic work rules.
 final Map<String, WorkOrderTargetPrecheck> workOrderTargetPrechecks = {
   kWorkTargetUpgradeTown: precheckUpgradeTown,
@@ -223,7 +330,15 @@ final Map<String, WorkOrderTargetPrecheck> workOrderTargetPrechecks = {
   kWorkTargetBuildImprovement: precheckBuildImprovement,
 };
 
-/// Runs the precheck registered for [order.target], if any.
+/// Shared territory checks that run for every work target after any
+/// target-specific precheck (Refs #3877).
+const List<WorkOrderTargetPrecheck> _sharedWorkOrderTargetPrechecks = [
+  precheckExplorerConsulateInMinorTribe,
+  precheckDefaultForeignProvince,
+  precheckDevExclusiveTileConflict,
+];
+
+/// Runs target-specific prechecks, then shared territory rules.
 OrderValidationResult? runWorkOrderTargetPrecheck(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder order,
@@ -231,9 +346,30 @@ OrderValidationResult? runWorkOrderTargetPrecheck(
   String? provinceOwnerId,
   String unitType,
 ) {
-  final fn = workOrderTargetPrechecks[order.target];
-  if (fn == null) {
-    return null;
+  final targetFn = workOrderTargetPrechecks[order.target];
+  if (targetFn != null) {
+    final targetResult = targetFn(
+      ctx,
+      order,
+      targetProvinceId,
+      provinceOwnerId,
+      unitType,
+    );
+    if (targetResult != null) {
+      return targetResult;
+    }
   }
-  return fn(ctx, order, targetProvinceId, provinceOwnerId, unitType);
+  for (final sharedFn in _sharedWorkOrderTargetPrechecks) {
+    final sharedResult = sharedFn(
+      ctx,
+      order,
+      targetProvinceId,
+      provinceOwnerId,
+      unitType,
+    );
+    if (sharedResult != null) {
+      return sharedResult;
+    }
+  }
+  return null;
 }

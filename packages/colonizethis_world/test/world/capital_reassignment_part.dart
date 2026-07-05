@@ -278,7 +278,7 @@ void _capital_reassignment_testTests() {
       final cap = next.tryGetProvince('oldWorld|cap');
       final other = next.tryGetProvince('oldWorld|other');
       expect(cap?.townDevelopmentLevel, 4);
-      expect(other?.townDevelopmentLevel, 0);
+      expect(other?.townDevelopmentLevel, kTownDevelopmentLevelMin);
     });
 
     test('accepts a bare local capital id', () {

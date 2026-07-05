@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         kWorkTargetBuildImprovement,

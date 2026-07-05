@@ -185,7 +185,7 @@ Widget fallback() => ListTile(title: const Text('x'));
 
       const devTools = <String>[
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
       ];
 
       for (final rel in devTools) {
@@ -320,7 +320,7 @@ Widget probe() => ListTile(title: const Text('x'));
     test('skips the dev-tooling screens (SYS10001 + SYS20001)', () {
       const skipped = <String>[
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
       ];
       for (final path in skipped) {
         expect(

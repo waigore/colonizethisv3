@@ -8,7 +8,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/province_detail_panel_slide_transition.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_panel_slide_transition.dart';
 
 void main() {
   suppressLogsForTests();

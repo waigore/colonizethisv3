@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:colonizethis_app/widgetbook.dart';
 
 void main() {
   suppressLogsForTests();

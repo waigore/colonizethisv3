@@ -5,6 +5,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Old World region id for two-province integration setups in turn tests.
 const turnTestOldWorldRegionId = 'oldWorld';
 
+/// Fixed [Game.globalGameSeed] for spy/fog integration tests so spy-resolution
+/// kill rolls stay deterministic (unset seed uses [Random] per
+/// [spyPhaseRandom]).
+const turnTestSpyFogGameSeed = 42;
+
 /// Two adjacent Old World provinces connected by a topology edge.
 MapTopology twoAdjacentOldWorldProvinceTopology({
   String id1 = 'P1',

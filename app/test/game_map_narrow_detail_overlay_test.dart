@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_panel.dart'
     show CtPanel;

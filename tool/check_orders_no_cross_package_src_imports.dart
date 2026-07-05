@@ -18,6 +18,11 @@ final _packageImport = RegExp(
   r"import\s+'package:colonizethis_([a-z_]+)/([^']+)'",
 );
 
+/// Matches `export 'package:colonizethis_<pkg>/<path>'` (Refs #3877).
+final _packageExport = RegExp(
+  r"export\s+'package:colonizethis_([a-z_]+)/([^']+)'",
+);
+
 void main() {
   exit(runCheckOrdersNoCrossPackageSrcImports(Directory.current.path));
 }
@@ -41,12 +46,21 @@ int runCheckOrdersNoCrossPackageSrcImports(
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     if (_isGenerated(entity.path)) continue;
     final relative = p.relative(entity.path, from: repoRoot);
-    for (final match in _packageImport.allMatches(entity.readAsStringSync())) {
+    final content = entity.readAsStringSync();
+    for (final match in _packageImport.allMatches(content)) {
       final pkg = match.group(1)!;
       final inPackagePath = match.group(2)!;
       if (pkg == 'orders') continue;
       if (inPackagePath == 'src' || inPackagePath.startsWith('src/')) {
-        violations.add('$relative -> package:colonizethis_$pkg/$inPackagePath');
+        violations.add('$relative -> import package:colonizethis_$pkg/$inPackagePath');
+      }
+    }
+    for (final match in _packageExport.allMatches(content)) {
+      final pkg = match.group(1)!;
+      final inPackagePath = match.group(2)!;
+      if (pkg == 'orders') continue;
+      if (inPackagePath == 'src' || inPackagePath.startsWith('src/')) {
+        violations.add('$relative -> export package:colonizethis_$pkg/$inPackagePath');
       }
     }
   }
@@ -57,7 +71,7 @@ int runCheckOrdersNoCrossPackageSrcImports(
 
   logE(
     'check_orders_no_cross_package_src_imports: '
-    'colonizethis_orders/lib must not import another package\'s src/ tree '
+    'colonizethis_orders/lib must not import or export another package\'s src/ tree '
     '(use the owning package barrel):',
   );
   for (final v in violations) {

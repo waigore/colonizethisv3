@@ -32,9 +32,13 @@ dependencies:
   widgetbook: ^3.23.0
   google_fonts: ^8.1.0
   intl: ^0.20.2
-  window_manager: ^0.5.1
+  window_manager: ^0.5.2
 
 dev_dependencies:
+  widgetbook_host:
+    path: ../widgetbook_host
+  colonizethis_app_e2e_support:
+    path: ../packages/colonizethis_app_e2e_support
   colonizethis_test:
   flutter_test:
     sdk: flutter

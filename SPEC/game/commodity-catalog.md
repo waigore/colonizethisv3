@@ -45,10 +45,10 @@ When a recipe accepts an interchangeable raw input (the two `fabric` recipes acc
 | `fabric` | `wool × 2` (`40 × 2 = 80`; cotton variant is `90`, cheaper input is used) | `80` | `80` |
 | `castIron` | `iron × 2` (`80 + 80`) | `160` | `160` |
 | `refinedSugar` | `sugarCane × 2` (`35 × 2 = 70`) | `70` | `70` |
-| `cigars` | `tobacco × 3` (`40 × 3 = 120`) | `120` | `120` |
+| `cigars` | `tobacco × 2` (`40 × 2 = 80`) | `80` | `80` |
 | `furHats` | `furs × 2` (`55 × 2 = 110`) | `110` | `110` |
-| `steel` | `castIron × 2 + coal × 1` (`160 × 2 + 90`) | `410` | `410` |
-| `paper` | `timber × 3` (`30 × 3 = 90`) | `90` | `90` |
+| `steel` | `iron × 1 + coal × 1` (`80 + 90 = 170`) | `170` | `170` |
+| `paper` | `timber × 2` (`30 × 2 = 60`) | `60` | `60` |
 | `bronze` | `copper × 1 + tin × 1` (`70 + 75`) | `145` | `145` |
 
 These prices are consumed via `ResourceRules.defaultMarketPriceForCommodityId(commodityId)` so the Trade UI, `effectiveMarketPriceForCommodityId`, the bid-validator, and the AI treasury planner all read a non-null fallback for every manufactured commodity before in-game price discovery first runs. World-market price-discovery floors continue to anchor at the **raw-resource** `defaultMarketPrice` map only — manufactured prices act as the initial market reading and are not used to recompute the per-commodity price floor.
@@ -93,7 +93,7 @@ By **permanent game design**, each player’s **central stockpile** is **unbound
 
 - Given the active ruleset uses the standard economy profile and `ResourceRules.defaultRules` is loaded  
   When the System queries `defaultMarketPriceForCommodityId(commodityId)` for any manufactured commodity id in `{ 'lumber', 'fabric', 'castIron', 'refinedSugar', 'cigars', 'furHats', 'steel', 'paper', 'bronze' }`  
-  Then the System returns the matching integer base price from the table under § Manufactured base prices (`lumber=60`, `fabric=80`, `castIron=160`, `refinedSugar=70`, `cigars=120`, `furHats=110`, `steel=410`, `paper=90`, `bronze=145`), and these prices remain constant between turns until in-game price discovery first updates them on `WorldMarketState.prices`
+  Then the System returns the matching integer base price from the table under § Manufactured base prices (`lumber=60`, `fabric=80`, `castIron=160`, `refinedSugar=70`, `cigars=80`, `furHats=110`, `steel=170`, `paper=60`, `bronze=145`), and these prices remain constant between turns until in-game price discovery first updates them on `WorldMarketState.prices`
 
 - Given the same ruleset and the System queries `defaultMarketPriceForCommodityId(commodityId)` for any id that is neither a raw-resource id (i.e. an entry on the `Resource` enum) nor a manufactured-commodity id enumerated under § Manufactured base prices (for example `'gold'`, `'spices'`, or `'not_a_commodity'`)  
   When the call evaluates the catalog  

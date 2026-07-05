@@ -214,9 +214,9 @@ const fallback = TextStyle(color: Colors.white);
       addTearDown(() => temp.deleteSync(recursive: true));
 
       const flameRenderer =
-          'app/lib/features/game/flame/region_map_component_render_core.dart';
+          'app/lib/features/game/flame/region_map/region_map_component_render_core.dart';
       const palette =
-          'app/lib/features/game/flame/resource_icon_disc_palette.dart';
+          'app/lib/features/game/flame/render/resource_icon_disc_palette.dart';
 
       for (final rel in [flameRenderer, palette]) {
         File('${temp.path}/$rel')
@@ -248,7 +248,7 @@ const debug = TextStyle(color: Colors.white);
         addTearDown(() => temp.deleteSync(recursive: true));
 
         const debugConsole =
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
         File('${temp.path}/$debugConsole')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -268,7 +268,7 @@ const sample = TextStyle(color: Colors.white);
         expect(
           logs.join('\n'),
           contains(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart:3: '
             'Colors.white',
           ),
         );
@@ -634,11 +634,11 @@ class Clean extends StatelessWidget {
 
     test('skips canonical Flame renderer + palette files', () {
       const skipped = <String>[
-        'app/lib/features/game/flame/region_map_component_render_core.dart',
-        'app/lib/features/game/flame/region_map_component_render_political.dart',
-        'app/lib/features/game/flame/region_map_component_render_markers.dart',
-        'app/lib/features/game/flame/game_region_minimap.dart',
-        'app/lib/features/game/flame/resource_icon_disc_palette.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
+        'app/lib/features/game/flame/minimap/game_region_minimap.dart',
+        'app/lib/features/game/flame/render/resource_icon_disc_palette.dart',
       ];
       for (final path in skipped) {
         expect(
@@ -655,7 +655,7 @@ class Clean extends StatelessWidget {
       () {
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
           ),
           isFalse,
         );

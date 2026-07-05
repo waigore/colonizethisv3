@@ -3,28 +3,23 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'valid_work_tiles_test_support.dart';
+
 void main() {
   group('getValidWorkOrderTileKeys', () {
     test(
       'getValidWorkOrderTileKeysWithVisibility prospect excludes non-mineral '
       'and already prospected',
       () {
-        const playerId = 'gp1';
-        const ow = 'oldWorld';
-        const provinceId = '$ow|p1';
-        const grassTile = 'oldWorld|p1|0|0';
-        const ironTile = 'oldWorld|p1|1|0';
-        final player = const Player(
-          id: playerId,
-          displayName: 'GP',
-          isHuman: false,
+        final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+        final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+        final p1 = Province(
+          id: provinceId,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: 'tribe1',
         );
-        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
-        final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
-        final unit = Unit(
-          id: 'u1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
+        final unit = ValidWorkTilesTestSupport.explorerUnit(
           locationProvinceId: provinceId,
           tileKey: grassTile,
         );
@@ -32,32 +27,28 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(provinces: [p1], units: [unit]),
           newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            playerId: {grassTile: 'fogged', ironTile: 'fogged'},
-          },
-          resourceByTileKey: const {grassTile: 'grain', ironTile: 'iron'},
-          playerProspectedTiles: const {
-            playerId: {ironTile},
-          },
-          tileKeysByRegionAndProvince: {
-            ow: {
-              provinceId: [grassTile, ironTile],
+          playerVisibilityByTile: {
+            ValidWorkTilesTestSupport.playerId: {
+              grassTile: 'fogged',
+              ironTile: 'fogged',
             },
           },
+          resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
+          playerProspectedTiles: {
+            ValidWorkTilesTestSupport.playerId: {ironTile},
+          },
+          tileKeysByRegionAndProvince:
+              ValidWorkTilesTestSupport.tileKeysByProvince(
+            {provinceId: [grassTile, ironTile]},
+          ),
         );
         final game = Game(
           id: 'g1',
           worldState: world,
-          players: [player],
-          tribes: [tribe],
+          players: const [ValidWorkTilesTestSupport.defaultPlayer],
+          tribes: const [ValidWorkTilesTestSupport.defaultTribe],
           // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
-          overtureStates: const [
-            OvertureState(
-              gpId: playerId,
-              targetId: 'tribe1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
+          overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
         );
         final topology = MapTopology(
           nodes: const [
@@ -69,7 +60,11 @@ void main() {
           ],
           edges: const [],
         );
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final valid = getValidWorkOrderTileKeysWithVisibility(
           game: game,
           topology: topology,
@@ -86,21 +81,14 @@ void main() {
     test(
       'getValidWorkOrderTileKeysWithVisibility prospect includes eligible tile',
       () {
-        const playerId = 'gp1';
-        const ow = 'oldWorld';
-        const provinceId = '$ow|p1';
-        const ironTile = 'oldWorld|p1|0|0';
-        final player = const Player(
-          id: playerId,
-          displayName: 'GP',
-          isHuman: false,
+        final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+        final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final p1 = Province(
+          id: provinceId,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: 'tribe1',
         );
-        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
-        final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
-        final unit = Unit(
-          id: 'u1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
+        final unit = ValidWorkTilesTestSupport.explorerUnit(
           locationProvinceId: provinceId,
           tileKey: ironTile,
         );
@@ -108,29 +96,22 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(provinces: [p1], units: [unit]),
           newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            playerId: {ironTile: 'fogged'},
+          playerVisibilityByTile: {
+            ValidWorkTilesTestSupport.playerId: {ironTile: 'fogged'},
           },
-          resourceByTileKey: const {ironTile: 'iron'},
-          tileKeysByRegionAndProvince: {
-            ow: {
-              provinceId: [ironTile],
-            },
-          },
+          resourceByTileKey: {ironTile: 'iron'},
+          tileKeysByRegionAndProvince:
+              ValidWorkTilesTestSupport.tileKeysByProvince(
+            {provinceId: [ironTile]},
+          ),
         );
         final game = Game(
           id: 'g1',
           worldState: world,
-          players: [player],
-          tribes: [tribe],
+          players: const [ValidWorkTilesTestSupport.defaultPlayer],
+          tribes: const [ValidWorkTilesTestSupport.defaultTribe],
           // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
-          overtureStates: const [
-            OvertureState(
-              gpId: playerId,
-              targetId: 'tribe1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
+          overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
         );
         final topology = MapTopology(
           nodes: const [
@@ -142,7 +123,11 @@ void main() {
           ],
           edges: const [],
         );
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final valid = getValidWorkOrderTileKeysWithVisibility(
           game: game,
           topology: topology,
@@ -159,26 +144,19 @@ void main() {
       'getValidWorkOrderTileKeysWithVisibility prospect excludes wool on hills '
       'when tile map marks hills (terrain-only eligibility must not apply)',
       () {
-        const playerId = 'gp1';
-        const ow = 'oldWorld';
-        const provinceId = '$ow|p1';
-        const woolTile = 'oldWorld|p1|0|0';
-        final player = const Player(
-          id: playerId,
-          displayName: 'GP',
-          isHuman: false,
+        final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+        final woolTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final p1 = Province(
+          id: provinceId,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: 'tribe1',
         );
-        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
-        final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
-        final unit = Unit(
-          id: 'u1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
+        final unit = ValidWorkTilesTestSupport.explorerUnit(
           locationProvinceId: provinceId,
           tileKey: woolTile,
         );
         final tileMapByRegion = <String, TileMapResult>{
-          ow: TileMapResult(
+          ValidWorkTilesTestSupport.ow: TileMapResult(
             width: 1,
             height: 1,
             grid: const [
@@ -196,29 +174,22 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(provinces: [p1], units: [unit]),
           newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            playerId: {woolTile: 'fogged'},
+          playerVisibilityByTile: {
+            ValidWorkTilesTestSupport.playerId: {woolTile: 'fogged'},
           },
-          resourceByTileKey: const {woolTile: 'wool'},
-          tileKeysByRegionAndProvince: {
-            ow: {
-              provinceId: [woolTile],
-            },
-          },
+          resourceByTileKey: {woolTile: 'wool'},
+          tileKeysByRegionAndProvince:
+              ValidWorkTilesTestSupport.tileKeysByProvince(
+            {provinceId: [woolTile]},
+          ),
         );
         final game = Game(
           id: 'g1',
           worldState: world,
-          players: [player],
-          tribes: [tribe],
+          players: const [ValidWorkTilesTestSupport.defaultPlayer],
+          tribes: const [ValidWorkTilesTestSupport.defaultTribe],
           // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
-          overtureStates: const [
-            OvertureState(
-              gpId: playerId,
-              targetId: 'tribe1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
+          overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
         );
         final topology = MapTopology(
           nodes: const [
@@ -230,7 +201,11 @@ void main() {
           ],
           edges: const [],
         );
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final valid = getValidWorkOrderTileKeysWithVisibility(
           game: game,
           topology: topology,

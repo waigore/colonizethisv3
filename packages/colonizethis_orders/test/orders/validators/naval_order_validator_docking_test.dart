@@ -1,59 +1,36 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
-import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'naval_order_validator_test_support.dart';
 
 void main() {
   group('NavalOrderValidator', () {
-    const ow = 'oldWorld';
-
     test(
       'validateNavalMove dock accept when at sea adjacent owned province',
       () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'P1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
+        final topology = navalOrderValidatorTestTopology(
+          nodes: [
+            navalOrderValidatorTestSeaNode('sea1'),
+            navalOrderValidatorTestProvinceNode('P1'),
           ],
           edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = navalOrderValidatorTestGame(
+          oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+          fleets: [navalOrderValidatorTestFleetAtSea()],
         );
-        final validator = NavalOrderValidator(
+        final validator = navalOrderValidatorForTest(
           game: game,
           topology: topology,
-          playerId: 'p1',
         );
         final result = validator.validateNavalMove(
-          NavalMoveOrder(fleetId: 'f1', destinationPortProvinceId: '$ow|P1'),
+          NavalMoveOrder(
+            fleetId: 'f1',
+            destinationPortProvinceId:
+                ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
+          ),
           previousRejected: false,
         );
         expect(result.status, OrderValidationStatus.accepted);
@@ -64,45 +41,20 @@ void main() {
     test(
       'validateNavalMove dock accept when port province id is local (unprefixed)',
       () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'P1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
+        final topology = navalOrderValidatorTestTopology(
+          nodes: [
+            navalOrderValidatorTestSeaNode('sea1'),
+            navalOrderValidatorTestProvinceNode('P1'),
           ],
           edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = navalOrderValidatorTestGame(
+          oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+          fleets: [navalOrderValidatorTestFleetAtSea()],
         );
-        final validator = NavalOrderValidator(
+        final validator = navalOrderValidatorForTest(
           game: game,
           topology: topology,
-          playerId: 'p1',
         );
         final result = validator.validateNavalMove(
           NavalMoveOrder(fleetId: 'f1', destinationPortProvinceId: 'P1'),
@@ -114,45 +66,27 @@ void main() {
     );
 
     test('validateNavalMove dock reject when fleet in port', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+      final topology = navalOrderValidatorTestTopology(
+        nodes: [
+          navalOrderValidatorTestSeaNode('sea1'),
+          navalOrderValidatorTestProvinceNode('P1'),
         ],
         edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: null,
-              inPortAtProvinceId: '$ow|P1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = navalOrderValidatorTestGame(
+        oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+        fleets: [navalOrderValidatorTestFleetInPort()],
       );
-      final validator = NavalOrderValidator(
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMove(
-        NavalMoveOrder(fleetId: 'f1', destinationPortProvinceId: '$ow|P1'),
+        NavalMoveOrder(
+          fleetId: 'f1',
+          destinationPortProvinceId:
+              ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
+        ),
         previousRejected: false,
       );
       expect(result.status, OrderValidationStatus.rejected);
@@ -160,47 +94,33 @@ void main() {
     });
 
     test('validateNavalMove dock reject when port province not owned', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+      final topology = navalOrderValidatorTestTopology(
+        nodes: [
+          navalOrderValidatorTestSeaNode('sea1'),
+          navalOrderValidatorTestProvinceNode('P1'),
         ],
         edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p2')],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
+      final game = navalOrderValidatorTestGame(
+        oldWorldProvinces: [
+          navalOrderValidatorTestOwnedProvince('P1', ownerId: 'p2'),
+        ],
+        fleets: [navalOrderValidatorTestFleetAtSea()],
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: true),
         ],
       );
-      final validator = NavalOrderValidator(
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMove(
-        NavalMoveOrder(fleetId: 'f1', destinationPortProvinceId: '$ow|P1'),
+        NavalMoveOrder(
+          fleetId: 'f1',
+          destinationPortProvinceId:
+              ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
+        ),
         previousRejected: false,
       );
       expect(result.status, OrderValidationStatus.rejected);
@@ -208,49 +128,26 @@ void main() {
     });
 
     test('validateNavalMove dock reject when port province not found', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
+      final topology = navalOrderValidatorTestTopology(
+        nodes: [navalOrderValidatorTestSeaNode('sea1')],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = navalOrderValidatorTestGame(
+        fleets: [navalOrderValidatorTestFleetAtSea()],
       );
-      final validator = NavalOrderValidator(
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMove(
         NavalMoveOrder(
           fleetId: 'f1',
-          destinationPortProvinceId: '$ow|Nonexistent',
+          destinationPortProvinceId:
+              ProvinceId.full(kNavalOrderValidatorTestRegionId, 'Nonexistent'),
         ),
         previousRejected: false,
       );
       expect(result.status, OrderValidationStatus.rejected);
       expect(result.reason, 'Port province not found');
     });
-
   });
 }

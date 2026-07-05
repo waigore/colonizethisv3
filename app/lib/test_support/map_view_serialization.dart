@@ -15,6 +15,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
     show MapTopology, TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kTownDevelopmentLevelMin;
 
 /// Current fixture schema version. Bump when the serialized shape changes so a
 /// stale committed fixture fails fast in the round-trip guard.
@@ -221,6 +223,8 @@ Map<String, dynamic> _townMarkerToJson(TownMarkerView m) {
   };
   if (m.portIconX != null) json['portIconX'] = m.portIconX;
   if (m.portIconY != null) json['portIconY'] = m.portIconY;
+  json['townDevelopmentLevel'] = m.townDevelopmentLevel;
+  json['townIconStyle'] = m.townIconStyle;
   return json;
 }
 
@@ -231,6 +235,9 @@ TownMarkerView _townMarkerFromJson(Map<String, dynamic> json) => TownMarkerView(
   isCoastal: json['isCoastal'] as bool,
   isPort: json['isPort'] as bool,
   touchesSea: json['touchesSea'] as bool,
+  townDevelopmentLevel:
+      (json['townDevelopmentLevel'] as int?) ?? kTownDevelopmentLevelMin,
+  townIconStyle: json['townIconStyle'] as String? ?? kTownIconStyleEuro,
   portIconX: json['portIconX'] as int?,
   portIconY: json['portIconY'] as int?,
 );

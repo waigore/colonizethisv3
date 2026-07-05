@@ -117,9 +117,9 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // forward") and are excluded from price discovery aggregation (handled
   // implicitly by `aggregateNewQuantitiesPerCommodity` keying on
   // `newOffersByFactionId` only — auto-offers live in their own map).
-  final autoOffersByFactionId = computeMinorTribeAutoOffers(
-    game: game,
-    config: config,
+  final autoOffersByFactionId = mergeOrdersByFaction(
+    computeMinorTribeAutoOffers(game: game, config: config),
+    computeMinorTribeTownManufacturingAutoOffers(game: game, config: config),
   );
 
   // Lock-recovery minor auto-bids (Refs #2924 F15): when any GP is below the

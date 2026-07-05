@@ -24,21 +24,21 @@ void main() {
 
     test(
         'sums input quantity x runs per commodity (paper_from_timber: '
-        'labour 3 -> runs 1 -> consumes 3 timber)', () {
-      // paper_from_timber recipe: inputQuantities = {timber: 3},
-      // labourPerOutput = 3. Assigned labour = 3 → runs = 1 → 3 timber
+        'labour 2 -> runs 1 -> consumes 2 timber)', () {
+      // paper_from_timber recipe: inputQuantities = {timber: 2},
+      // labourPerOutput = 2. Assigned labour = 2 → runs = 1 → 2 timber
       // reserved. This is the canonical AC example from #3093:
-      //   "industry allocation reserving 3"
+      //   "industry allocation reserving 2"
       final consumption =
           productionInputConsumptionByCommodityIdForAssignments(
         const [
           AssignedRecipe(
             recipeId: 'paper_from_timber',
-            assignedLabour: 3,
+            assignedLabour: 2,
           ),
         ],
       );
-      expect(consumption[CommodityCatalog.timber.id], 3);
+      expect(consumption[CommodityCatalog.timber.id], 2);
       expect(consumption.length, 1);
     });
 
@@ -60,8 +60,8 @@ void main() {
     });
 
     test('floor(assignedLabour / labourPerOutput) — fractional runs drop', () {
-      // paper_from_timber: labourPerOutput = 3. Assigned labour = 8 →
-      // runs = floor(8/3) = 2 → 6 timber consumed.
+      // paper_from_timber: labourPerOutput = 2. Assigned labour = 8 →
+      // runs = floor(8/2) = 4 → 8 timber consumed.
       final consumption =
           productionInputConsumptionByCommodityIdForAssignments(
         const [
@@ -71,18 +71,18 @@ void main() {
           ),
         ],
       );
-      expect(consumption[CommodityCatalog.timber.id], 6);
+      expect(consumption[CommodityCatalog.timber.id], 8);
     });
 
     test('multiple recipes contributing to the same input sum together', () {
-      // paper_from_timber (3 labour → 3 timber) +
-      // lumber_from_timber (4 labour → runs 2 → 4 timber) = 7 timber.
+      // paper_from_timber (2 labour → 2 timber) +
+      // lumber_from_timber (4 labour → runs 2 → 4 timber) = 6 timber.
       final consumption =
           productionInputConsumptionByCommodityIdForAssignments(
         const [
           AssignedRecipe(
             recipeId: 'paper_from_timber',
-            assignedLabour: 3,
+            assignedLabour: 2,
           ),
           AssignedRecipe(
             recipeId: 'lumber_from_timber',
@@ -90,7 +90,7 @@ void main() {
           ),
         ],
       );
-      expect(consumption[CommodityCatalog.timber.id], 7);
+      expect(consumption[CommodityCatalog.timber.id], 6);
     });
 
     test(
@@ -118,18 +118,18 @@ void main() {
           ),
           AssignedRecipe(
             recipeId: 'paper_from_timber',
-            assignedLabour: 3,
+            assignedLabour: 2,
           ),
         ],
       );
-      expect(consumption[CommodityCatalog.timber.id], 3);
+      expect(consumption[CommodityCatalog.timber.id], 2);
       expect(consumption.length, 1);
     });
 
     test(
         'sub-labourPerOutput assignment contributes zero (runs = 0; '
         'commodity absent from map, not present with value 0)', () {
-      // paper_from_timber needs 3 labour per run; 1 labour → runs 0
+      // paper_from_timber needs 2 labour per run; 1 labour → runs 0
       // → no consumption. The commodity should NOT appear as a 0
       // entry — callers treat absence as 0.
       final consumption =
@@ -143,6 +143,24 @@ void main() {
       );
       expect(consumption.containsKey(CommodityCatalog.timber.id), isFalse);
       expect(consumption, isEmpty);
+    });
+
+    test(
+        'steel_from_iron_coal consumes iron and coal per normalized recipe '
+        '(Refs #3873)',
+        () {
+      final consumption =
+          productionInputConsumptionByCommodityIdForAssignments(
+        const [
+          AssignedRecipe(
+            recipeId: 'steel_from_iron_coal',
+            assignedLabour: 2,
+          ),
+        ],
+      );
+      expect(consumption[CommodityCatalog.iron.id], 1);
+      expect(consumption[CommodityCatalog.coal.id], 1);
+      expect(consumption.containsKey(CommodityCatalog.castIron.id), isFalse);
     });
   });
 }

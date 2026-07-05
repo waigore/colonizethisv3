@@ -1,7 +1,7 @@
 # Victory Overlay
 
 **Screen ID:** `OVL20001` — stable; do not reassign.
-**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
+**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
 **Widgetbook:** `Victory` → `app/lib/widgetbook/catalog.dart`. Game model: [victory.md](../game/victory.md). Return target: [main-menu.md](main-menu.md). Host: [`game-screen.md`](game-screen.md).
 
 **Mockup:** [mockups/OVL20001-game-victory-overlay.html](mockups/OVL20001-game-victory-overlay.html)
@@ -14,7 +14,7 @@
 | `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel` via [`CtFullScreenDialogueShell`](../components/ct-full-screen-dialogue-shell.md) (`wrapBodyInDialogShell: false`). Owns `_dismissed` so "View final state" hides the overlay without a route change. |
 | `VictoryPanel` | `StatelessWidget` | `game`, `victory`, `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational brass-bordered panel (2px `--accent` border + asymmetric corner brackets + `surface-lite → bg-deep` vertical gradient). Resolves winner display name and victory-type label. |
 
-Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
+Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
 
 ---
 

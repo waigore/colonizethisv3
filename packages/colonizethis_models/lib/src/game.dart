@@ -1,3 +1,4 @@
+import 'advanced_start_type.dart';
 import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
@@ -101,6 +102,7 @@ class Game {
     this.worldMarketState = WorldMarketState.empty,
     this.ftpPartnershipKeys = const {},
     this.debugDiplomacyUsedPairKeys = const {},
+    this.advancedStartType,
   });
 
   final String id;
@@ -219,6 +221,10 @@ class Game {
   /// turn advance. Debug tool only. SPEC/ui/debug-console-panel.md.
   final Set<String> debugDiplomacyUsedPairKeys;
 
+  /// Advanced-start preset when the campaign began after turn 0.
+  /// Null for standard turn-0 games and legacy saves. SPEC/game/advanced-starts.md.
+  final AdvancedStartType? advancedStartType;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -287,6 +293,8 @@ class Game {
       'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
     if (debugDiplomacyUsedPairKeys.isNotEmpty)
       'debugDiplomacyUsedPairKeys': debugDiplomacyUsedPairKeys.toList()..sort(),
+    if (advancedStartType != null)
+      'advancedStartType': advancedStartType!.toJson(),
   };
 
   static List<T> _parseModelList<T>(
@@ -486,6 +494,9 @@ class Game {
       worldMarketState: worldMarketState,
       ftpPartnershipKeys: ftpPartnershipKeys,
       debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
+      advancedStartType: json['advancedStartType'] != null
+          ? AdvancedStartTypeJson.fromJson(json['advancedStartType'] as String?)
+          : null,
     );
   }
 
@@ -525,6 +536,7 @@ class Game {
     WorldMarketState? worldMarketState,
     Set<String>? ftpPartnershipKeys,
     Set<String>? debugDiplomacyUsedPairKeys,
+    AdvancedStartType? advancedStartType,
   }) {
     return Game(
       id: id ?? this.id,
@@ -575,6 +587,7 @@ class Game {
       ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
       debugDiplomacyUsedPairKeys:
           debugDiplomacyUsedPairKeys ?? this.debugDiplomacyUsedPairKeys,
+      advancedStartType: advancedStartType ?? this.advancedStartType,
     );
   }
 
@@ -628,7 +641,8 @@ class Game {
           _setEquals(
             debugDiplomacyUsedPairKeys,
             other.debugDiplomacyUsedPairKeys,
-          );
+          ) &&
+          advancedStartType == other.advancedStartType;
 
   @override
   int get hashCode => Object.hash(
@@ -674,6 +688,7 @@ class Game {
       worldMarketState,
       Object.hashAll(ftpPartnershipKeys),
       Object.hashAll(debugDiplomacyUsedPairKeys),
+      advancedStartType,
     ),
   );
 

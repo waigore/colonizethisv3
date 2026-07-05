@@ -4,7 +4,7 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart'
-    show assignHiddenAgendasForGame;
+    show applyAdvancedStartBootstrap, assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';

@@ -48,8 +48,9 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 1. **Connectivity:** Recompute per-player connectivity.
 2. **Extract:** Run resource extractor; obtain land and overseas totals.
-3. **Land:** Add same-region totals to each player's stockpile.
-4. **Sea:** Allocate overseas totals to stockpile by priority, capped by **cargo holds** (see § Cargo holds); any overseas quantity beyond that cap is not delivered this turn.
+3. **Town manufacturing bonus:** After raw extraction totals, compute per-province town-connected delivered raw and credit bonus manufactured goods (GP stockpile; non-GP world-market offers). See [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Town manufacturing bonus.
+4. **Land:** Add same-region totals to each player's stockpile.
+5. **Sea:** Allocate overseas totals to stockpile by priority, capped by **cargo holds** (see § Cargo holds); any overseas quantity beyond that cap is not delivered this turn.
 
 ---
 

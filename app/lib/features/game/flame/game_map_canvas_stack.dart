@@ -11,13 +11,13 @@ import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../widgets/chrome/ct_nine_patch_button.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
-import 'region_map_component.dart'
+import 'region_map/region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
-import 'game_map_province_detail_side_panel.dart';
+import 'overlays/game_map_province_detail_side_panel.dart';
 import 'per_player_work_target_selection_cache.dart';
-import 'region_map_viewport_snapshot.dart';
+import 'region_map/region_map_viewport_snapshot.dart';
 
 /// Compact minimum tap-target height applied to the selection-prompt
 /// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline

@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/src/constants.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/work_suggestion_pipeline.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

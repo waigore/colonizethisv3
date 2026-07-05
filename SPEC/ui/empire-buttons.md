@@ -24,7 +24,7 @@ Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live 
 
 ## Display
 
-- **All viewports:** Empire actions appear as an **icon column** on the **left** of the map ([GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart)), **always visible**, same order as the table below. **Tooltip** (or equivalent) shows the full label on hover; **Semantics** expose the label for accessibility.
+- **All viewports:** Empire actions appear as an **icon column** on the **left** of the map ([GameMapEmpireLeftRail](../../app/lib/features/game/flame/controls/game_map_empire_left_rail.dart)), **always visible**, same order as the table below. **Tooltip** (or equivalent) shows the full label on hover; **Semantics** expose the label for accessibility.
 - **Debug gate:** `debug_console` appears only when compile-time flag `CT_DEBUG_CONSOLE=true` is supplied. Production/default builds omit this icon.
 - **Top bar:** Shows hamburger (opens **Debug log** menu only), turn counter/button, and region tabs. **No** empire buttons in the top bar.
 - **Edge swipe:** A narrow strip at the **left** edge of the map still opens the **hamburger** menu (Debug log); the empire rail begins **to the right** of that strip so both coexist.
@@ -56,7 +56,7 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 
 ### Acceptance criteria (left rail chrome)
 
-- **Given** the in-game map is rendered on the wide layout (`MediaQuery.size.width ≥ kNarrowBreakpoint`), **when** [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart) lays out the six core empire buttons (`production`, `civilian_units`, `military_units`, `naval_units`, `diplomacy`, `technology`), **then** every visible rail icon button paints a **36 × 36 dp** square surface.
+- **Given** the in-game map is rendered on the wide layout (`MediaQuery.size.width ≥ kNarrowBreakpoint`), **when** [GameMapEmpireLeftRail](../../app/lib/features/game/flame/controls/game_map_empire_left_rail.dart) lays out the six core empire buttons (`production`, `civilian_units`, `military_units`, `naval_units`, `diplomacy`, `technology`), **then** every visible rail icon button paints a **36 × 36 dp** square surface.
 - **Given** the rail is rendered, **when** the chrome painter resolves a single rail button's surface, **then** the surface paints `CtGradients.railButtonGradient` (vertical gradient from `EditorialMonoclePalette.surfaceLite` to `EditorialMonoclePalette.bgDeep`) and a **1 dp** outline in `EditorialMonoclePalette.border`.
 - **Given** the rail is rendered, **when** the chrome painter resolves a rail button's icon glyph, **then** the glyph paints `StrictAssetIcon` at exactly **24 × 24 dp** in native full colour and is **not** wrapped in a `ColorFiltered` / `ColorFilter.mode(..., BlendMode.srcIn)` node.
 - **Given** the rail is rendered and idle, **when** the descendant widget tree of any rail button is enumerated, **then** no rail button icon glyph node applies a `BlendMode.srcIn` (or equivalent single-colour) filter over the pixel-art asset.
@@ -66,7 +66,7 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 
 ### Narrow rail measurements (`< kNarrowBreakpoint`)
 
-When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host (`GameMapArea`) constructs [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart) with `narrow: true`. The rail then renders at the narrow measurements defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host (`GameMapArea`) constructs [GameMapEmpireLeftRail](../../app/lib/features/game/flame/controls/game_map_empire_left_rail.dart) with `narrow: true`. The rail then renders at the narrow measurements defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
 
 - **Tap target:** **26 × 26 dp** per button (mockup `.empire-btn @media (max-width:600px) { width:26px; height:26px }`).
 - **Vertical gap:** **2 dp** between consecutive buttons (tightened from the wide `3 dp` value so the six-icon column still fits the shorter narrow chrome stack).

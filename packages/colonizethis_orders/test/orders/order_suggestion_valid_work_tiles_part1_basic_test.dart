@@ -2,28 +2,25 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import 'valid_work_tiles_test_support.dart';
 
 void main() {
   group('getValidWorkOrderTileKeys', () {
     test('returns empty for unknown unit id', () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
-        oldWorld: const RegionData(provinces: [], units: []),
-        tileKeysByRegionAndProvince: {
-          ow: {
-            '$ow|p1': ['oldWorld|p1|0|0'],
+      final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
+        tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+          {
+            ValidWorkTilesTestSupport.provinceId('p1'): [
+              ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
+            ],
           },
-        },
+        ),
       );
-      final topology = const MapTopology(nodes: [], edges: []);
       final valid = getValidWorkOrderTileKeys(
         game,
-        topology,
-        playerId,
+        ValidWorkTilesTestSupport.emptyTopology,
+        ValidWorkTilesTestSupport.playerId,
         'no-such-unit',
         kWorkTargetExplore,
         const Orders(),
@@ -32,33 +29,31 @@ void main() {
     });
 
     test('returns empty when workTarget not allowed for unit type', () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
-      final unit = Unit(
-        id: 'u1',
-        type: kUnitTypeExplorer,
-        ownerId: playerId,
-        locationProvinceId: '$ow|p1',
-        tileKey: 'oldWorld|p1|0|0',
+      final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+      final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+      final unit = ValidWorkTilesTestSupport.explorerUnit(
+        locationProvinceId: provinceId,
+        tileKey: tile,
       );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+      final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
         oldWorld: RegionData(
-          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          provinces: [
+            Province(
+              id: provinceId,
+              regionId: ValidWorkTilesTestSupport.ow,
+              ownerId: ValidWorkTilesTestSupport.playerId,
+            ),
+          ],
           units: [unit],
         ),
-        tileKeysByRegionAndProvince: {
-          ow: {
-            '$ow|p1': ['oldWorld|p1|0|0'],
-          },
-        },
+        tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+          {provinceId: [tile]},
+        ),
       );
-      final topology = const MapTopology(nodes: [], edges: []);
       final valid = getValidWorkOrderTileKeys(
         game,
-        topology,
-        playerId,
+        ValidWorkTilesTestSupport.emptyTopology,
+        ValidWorkTilesTestSupport.playerId,
         'u1',
         kWorkTargetBuildImprovement,
         const Orders(),
@@ -67,23 +62,23 @@ void main() {
     });
 
     test('returns empty for unknown unit id with visibility', () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
-        oldWorld: const RegionData(provinces: [], units: []),
-        tileKeysByRegionAndProvince: {
-          ow: {
-            '$ow|p1': ['oldWorld|p1|0|0'],
+      final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
+        tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+          {
+            ValidWorkTilesTestSupport.provinceId('p1'): [
+              ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
+            ],
           },
-        },
+        ),
       );
-      final topology = const MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, playerId);
+      final view = buildPlayerView(
+        game,
+        ValidWorkTilesTestSupport.emptyTopology,
+        ValidWorkTilesTestSupport.playerId,
+      );
       final valid = getValidWorkOrderTileKeysWithVisibility(
         game: game,
-        topology: topology,
+        topology: ValidWorkTilesTestSupport.emptyTopology,
         view: view,
         unitId: 'no-such-unit',
         workTarget: kWorkTargetExplore,
@@ -95,39 +90,35 @@ void main() {
     test(
       'returns empty when workTarget not allowed for unit type with visibility',
       () {
-        const playerId = 'gp1';
-        const ow = 'oldWorld';
-        final unit = Unit(
-          id: 'u1',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
-          locationProvinceId: '$ow|p1',
-          tileKey: 'oldWorld|p1|0|0',
+        final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+        final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final unit = ValidWorkTilesTestSupport.explorerUnit(
+          locationProvinceId: provinceId,
+          tileKey: tile,
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                '$ow|p1': ['oldWorld|p1|0|0'],
-              },
-            },
+        final game = ValidWorkTilesTestSupport.validWorkTilesGame(
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: provinceId,
+                regionId: ValidWorkTilesTestSupport.ow,
+                ownerId: ValidWorkTilesTestSupport.playerId,
+              ),
+            ],
+            units: [unit],
           ),
-          players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+          tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+            {provinceId: [tile]},
+          ),
         );
-        final topology = const MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(
+          game,
+          ValidWorkTilesTestSupport.emptyTopology,
+          ValidWorkTilesTestSupport.playerId,
+        );
         final valid = getValidWorkOrderTileKeysWithVisibility(
           game: game,
-          topology: topology,
+          topology: ValidWorkTilesTestSupport.emptyTopology,
           view: view,
           unitId: 'u1',
           workTarget: kWorkTargetBuildImprovement,
@@ -138,42 +129,45 @@ void main() {
     );
 
     test('filters by visibility before order engine validation', () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
+      final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+      final p2 = ValidWorkTilesTestSupport.provinceId('p2');
+      final tileP1 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+      final tileP2 = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
       final unit = Unit(
         id: 'u1',
         type: 'Colonist',
-        ownerId: playerId,
-        locationProvinceId: '$ow|p1',
-        tileKey: 'oldWorld|p1|0|0',
+        ownerId: ValidWorkTilesTestSupport.playerId,
+        locationProvinceId: p1,
+        tileKey: tileP1,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
-            ],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              '$ow|p1': ['oldWorld|p1|0|0'],
-              '$ow|p2': ['oldWorld|p2|0|0'],
-            },
+      final game = ValidWorkTilesTestSupport.validWorkTilesGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: p1,
+              regionId: ValidWorkTilesTestSupport.ow,
+              ownerId: ValidWorkTilesTestSupport.playerId,
+            ),
+          ],
+          units: [unit],
+        ),
+        tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+          {
+            p1: [tileP1],
+            p2: [tileP2],
           },
         ),
-        players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
       );
-      final topology = const MapTopology(nodes: [], edges: []);
 
-      final viewWithFullVisibility = buildPlayerView(game, topology, playerId);
+      final viewWithFullVisibility = buildPlayerView(
+        game,
+        ValidWorkTilesTestSupport.emptyTopology,
+        ValidWorkTilesTestSupport.playerId,
+      );
 
       final validWithVisibility = getValidWorkOrderTileKeysWithVisibility(
         game: game,
-        topology: topology,
+        topology: ValidWorkTilesTestSupport.emptyTopology,
         view: viewWithFullVisibility,
         unitId: 'u1',
         workTarget: kWorkTargetBuildImprovement,
@@ -182,8 +176,8 @@ void main() {
 
       final validWithoutVisibility = getValidWorkOrderTileKeys(
         game,
-        topology,
-        playerId,
+        ValidWorkTilesTestSupport.emptyTopology,
+        ValidWorkTilesTestSupport.playerId,
         'u1',
         kWorkTargetBuildImprovement,
         const Orders(),

@@ -134,7 +134,7 @@ class CtGradients {
   );
 
   /// Vertical gradient for compact icon-only chrome on the in-game map,
-  /// notably the [GameMapEmpireLeftRail](../features/game/flame/game_map_empire_left_rail.dart)
+  /// notably the [GameMapEmpireLeftRail](../features/game/flame/controls/game_map_empire_left_rail.dart)
   /// dark editorial-monocle buttons (`SPEC/ui/empire-buttons.md` § Styling,
   /// `SPEC/ui/mockups/GAME10001-game-screen.html` `.empire-btn`).
   ///

@@ -2,6 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'feedstock_common.dart';
+
+export 'feedstock_common.dart';
 
 // Feedstock-extraction resource-id gates for the below-quota zero-NW
 // lock-recovery seller / supplier roles (Refs #2847 § H8-extraction).
@@ -14,33 +17,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 // future `colonizethis_ai_contracts`) depends on `orders`, not the reverse
 // (Refs #3290 § orders↔ai bidirectional-edge break;
 // `.cursor/rules/colonizethis-logic-ai-decoupling.mdc`).
-
-int regimentCountForPlayer(Game game, String playerId) {
-  var count = 0;
-  for (final unit in allUnitsFromWorld(game.worldState)) {
-    if (unit.ownerId != playerId) continue;
-    if (RegimentEconomyCatalog.byId.containsKey(unit.type)) {
-      count++;
-    }
-  }
-  return count;
-}
-
-/// Production-recipe feedstock commodity ids for recipes whose output is in
-/// [neededOutputs]. Shared by the regiment-build-input and improvement-input
-/// feedstock-extraction gates (Refs #3500).
-Set<String> feedstockCommodityIdsForRecipeOutputs(
-  Set<CommodityId> neededOutputs,
-) {
-  if (neededOutputs.isEmpty) return const <String>{};
-  final feedstock = <String>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    if (neededOutputs.contains(recipe.outputCommodityId)) {
-      feedstock.addAll(recipe.inputQuantities.keys);
-    }
-  }
-  return feedstock;
-}
 
 int _newWorldProvinceCountOwnedBy(Game game, String playerId) {
   return ProvinceOwnerCache.of(
