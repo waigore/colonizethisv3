@@ -53,22 +53,9 @@ test(
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
             expect(
@@ -156,6 +143,7 @@ test(
                   edges: const [],
                 ),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
             expect(
@@ -210,22 +198,9 @@ test(
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 
@@ -282,22 +257,9 @@ test(
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 

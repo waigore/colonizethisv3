@@ -32,6 +32,7 @@ test(
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: 42,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -218,6 +219,7 @@ test(
                   edges: const [],
                 ),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 
@@ -254,6 +256,7 @@ test(
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: 42,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
