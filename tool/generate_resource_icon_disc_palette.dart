@@ -37,7 +37,7 @@ const String _iconsDirPath = 'app/assets/icons/64';
 /// Optional design-time output: commodity dominant hues from icons.
 /// Region-map extraction discs use fixed gold/brown (SPEC/ui/map-widget.md).
 const String _outputPath =
-    'app/lib/features/game/flame/resource_icon_disc_palette.dart';
+    'app/lib/features/game/flame/render/resource_icon_disc_palette.dart';
 
 void main() {
   final out = StringBuffer()

@@ -216,7 +216,7 @@ const fallback = TextStyle(color: Colors.white);
       const flameRenderer =
           'app/lib/features/game/flame/region_map/region_map_component_render_core.dart';
       const palette =
-          'app/lib/features/game/flame/resource_icon_disc_palette.dart';
+          'app/lib/features/game/flame/render/resource_icon_disc_palette.dart';
 
       for (final rel in [flameRenderer, palette]) {
         File('${temp.path}/$rel')
@@ -638,7 +638,7 @@ class Clean extends StatelessWidget {
         'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
         'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
         'app/lib/features/game/flame/minimap/game_region_minimap.dart',
-        'app/lib/features/game/flame/resource_icon_disc_palette.dart',
+        'app/lib/features/game/flame/render/resource_icon_disc_palette.dart',
       ];
       for (final path in skipped) {
         expect(
