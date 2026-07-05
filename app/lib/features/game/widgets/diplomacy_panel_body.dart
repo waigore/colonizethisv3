@@ -42,63 +42,54 @@ class _DiplomacyPanelBody extends StatelessWidget {
         // heading is always rendered (subject to the mode-bar filter),
         // even when the section has no rows. An empty visible section
         // renders placeholder copy beneath its heading.
-        if (showGps) ...[
-          _DiplomacySectionHeader(
+        if (showGps)
+          ..._diplomacySectionWidgets(
             title: l10n.diplomacy_section_greatPowers,
-            isFirst: firstShownKind == FactionKind.greatPower,
+            rows: gps,
+            emptyText: l10n.diplomacy_panel_noGreatPowers,
+            kind: FactionKind.greatPower,
           ),
-          if (gps.isEmpty)
-            _DiplomacyEmptySectionPlaceholder(
-              text: l10n.diplomacy_panel_noGreatPowers,
-            )
-          else
-            ...gps.map(
-              (r) => _DiplomacyRow(
-                data: r,
-                onAction: onAction,
-                onTap: () => onTap(r),
-                readOnly: readOnly,
-              ),
-            ),
-        ],
-        if (showMinors) ...[
-          _DiplomacySectionHeader(
+        if (showMinors)
+          ..._diplomacySectionWidgets(
             title: l10n.diplomacy_section_minorNations,
-            isFirst: firstShownKind == FactionKind.minor,
+            rows: minors,
+            emptyText: l10n.diplomacy_panel_noMinorNations,
+            kind: FactionKind.minor,
           ),
-          if (minors.isEmpty)
-            _DiplomacyEmptySectionPlaceholder(
-              text: l10n.diplomacy_panel_noMinorNations,
-            )
-          else
-            ...minors.map(
-              (r) => _DiplomacyRow(
-                data: r,
-                onAction: onAction,
-                onTap: () => onTap(r),
-                readOnly: readOnly,
-              ),
-            ),
-        ],
-        if (showTribes) ...[
-          _DiplomacySectionHeader(
+        if (showTribes)
+          ..._diplomacySectionWidgets(
             title: l10n.diplomacy_section_tribes,
-            isFirst: firstShownKind == FactionKind.tribe,
+            rows: tribes,
+            emptyText: l10n.diplomacy_panel_noTribes,
+            kind: FactionKind.tribe,
           ),
-          if (tribes.isEmpty)
-            _DiplomacyEmptySectionPlaceholder(text: l10n.diplomacy_panel_noTribes)
-          else
-            ...tribes.map(
-              (r) => _DiplomacyRow(
-                data: r,
-                onAction: onAction,
-                onTap: () => onTap(r),
-                readOnly: readOnly,
-              ),
-            ),
-        ],
       ],
     );
+  }
+
+  List<Widget> _diplomacySectionWidgets({
+    required String title,
+    required List<DiplomacyRowData> rows,
+    required String emptyText,
+    required FactionKind kind,
+  }) {
+    return [
+      _DiplomacySectionHeader(
+        title: title,
+        isFirst: firstShownKind == kind,
+      ),
+      if (rows.isEmpty)
+        _DiplomacyEmptySectionPlaceholder(text: emptyText)
+      else
+        ...rows.map(
+          (r) => _DiplomacyRow(
+            data: r,
+            onAction: onAction,
+            onTap: () => onTap(r),
+            readOnly: readOnly,
+          ),
+        ),
+    ];
   }
 }
 
