@@ -39,9 +39,30 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 ### Asset and Render Requirements
 
 - **Format:** 64×64 PNG, RGBA transparent.
-- **Style:** Colonial-era pixel art; level progression increases cluster size / silhouette height monotonically within each style set.
+- **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
+- **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources).
 - **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
 - **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
+
+### Visual progression (complexity-only tier ladder)
+
+All styles: centered cluster, transparent background, no circular badge, colonial 16th/17th c. pixel art, single-color black outline, medium shading.
+
+**On-map size rule:** The axis-aligned bounding box of opaque pixels for level **1** must be within **±2 px** of level **4** on each axis (width, height, min-x, min-y) and center offset for the same style.
+
+| Level | Tier name | Mandatory visual elements |
+|-------|-----------|----------------------------|
+| **1** | Hamlet | **2–3** ground structures spread across the full 48×48 inner box; **zero** spires/towers/totems; simplest roof shapes; **same silhouette extent** as levels 2–4 |
+| **2** | Village | **4–5** structures; **one** low central roof or bell-cote; **no** thin spire |
+| **3** | Town | **6+** structures; **one** tower or spire; visible wall segment or market enclosure |
+| **4** | City | **8+** structures; **2+** towers/spires/totems; grandest enclosure |
+
+**Automatable proxy tests:**
+
+- **Complexity (required):** For each style, opaque pixel count strictly increases **1 < 2 < 3 < 4**.
+- **Size parity (required):** For each style, level-1 vs level-4 bbox width/height/min-x/min-y and center offset differ by at most **2 px**.
+- **Height floor (required):** Level-1 `maxColumnHeight` ≥ **75%** of level-4 `maxColumnHeight` (prevents tiny silhouettes).
+- **Removed:** Strict `maxColumnHeight(1) < maxColumnHeight(2) < …` — height must **not** be the primary differentiation axis.
 
 ---
 
@@ -63,7 +84,10 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 - **Given** `townDevelopmentLevel` changes after turn resolution, **when** the map refreshes, **then** the matching level glyph renders without reload.
 - **Given** a fogged town tile, **when** the map renders, **then** the icon shows the **true** level (reduced opacity only).
 - **Given** an unrevealed town tile, **when** the map renders, **then** **no** town icon is drawn.
-- **Given** each style, **when** opaque pixel counts and `maxColumnHeight` are measured on levels 1–4, **then** both strictly increase **1 < 2 < 3 < 4**.
+- **Given** level-**1** and level-**4** town glyphs of the same style rendered at 64×64 on the map, **when** a player views them side-by-side, **then** level **1** appears **the same map scale** as level **4** (not noticeably smaller or distant).
+- **Given** each style, **when** opaque pixel counts are measured on levels 1–4, **then** counts strictly increase **1 < 2 < 3 < 4**.
+- **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **2 px** (size parity).
+- **Given** each style, **when** `maxColumnHeight` is measured on levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes).
 
 (Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
