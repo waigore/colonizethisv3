@@ -70,6 +70,7 @@ part 'game_map_area_turn_feed.dart';
 part 'game_map_area_events.dart';
 part 'game_map_area_e2e.dart';
 part 'game_map_area_lifecycle.dart';
+part 'game_map_area_build_overlays.dart';
 part 'game_map_area_build.dart';
 
 final _gameMapNextTurnUiLog = packageLogger('logic');
@@ -98,4 +99,5 @@ class _GameMapAreaState extends ConsumerState<GameMapArea>
         _GameMapAreaEvents,
         _GameMapAreaE2e,
         _GameMapAreaLifecycle,
+        _GameMapAreaBuildOverlays,
         _GameMapAreaBuild {}
