@@ -1,6 +1,11 @@
-part of 'resolve_turn_spy_fog_end_of_turn_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _resolve_turn_spy_fog_part4_segment2_partTests() {
+import '../support/turn_resolver_test_harness.dart';
+
+void main() {
   group('part4_segment2_spy_fog_test', () {
     test(
           'Spy leaving other-faction province fogs immediately at end-of-turn',
@@ -27,7 +32,6 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -111,7 +115,6 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -175,7 +178,6 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -252,7 +254,6 @@ void _resolve_turn_spy_fog_part4_segment2_partTests() {
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(

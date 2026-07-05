@@ -3,13 +3,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
+import 'support/economy_stockpile_preview_pending_work_scenarios.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
 void main() {
   suppressLogsForTests();
-
 
   group('previewStockpilePhaseDeltasByCommodityForPlayer', () {
     test('unknown player yields empty maps per phase', () {
@@ -216,5 +216,87 @@ void main() {
       );
     });
 
+    group('pending material-backed work targets', () {
+      test(
+        'deducts each supported target in pending build costs phase',
+        runPendingWorkTargetDeductionScenarios,
+      );
+
+      test(
+        'mixed target list aggregates and keeps sequential affordability',
+        runMixedWorkTargetAggregationScenario,
+      );
+
+      test(
+        'later order does not deduct when earlier orders consume affordability',
+        runSequentialAffordabilityScenario,
+      );
+
+      test(
+        'skips target when unit missing busy disallowed invalid tile or unaffordable',
+        runPendingWorkTargetSkipScenarios,
+      );
+    });
+
+    test('combined: extraction + riches + consumption + production', () {
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 100)
+          .applyDelta(CommodityCatalog.meat.id, 100)
+          .applyDelta(CommodityCatalog.timber.id, 20)
+          .applyDelta(CommodityCatalog.gems.id, 1);
+      const workers = WorkerPool(peasants: 2);
+      final player = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: stockpile,
+        workerPool: workers,
+      );
+      final game = TestFixtures.minimalGame(
+        id: 't',
+        players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
+      );
+      final delta = previewStockpileNetDeltaByCommodityForPlayer(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'p1',
+        inputs: economyPreviewInputs(
+          extractedByPlayerId: {
+            'p1': {CommodityCatalog.grain.id: 5},
+          },
+          defaultAssignmentsByPlayerId: {
+            'p1': const [
+              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
+            ],
+          },
+        ),
+      );
+      expect(delta[CommodityCatalog.gems.id], -1);
+      expect(delta[CommodityCatalog.timber.id], -2);
+      expect(delta[CommodityCatalog.lumber.id], 1);
+      expect(delta[CommodityCatalog.grain.id], 2);
+      expectPhaseDeltasSumToNet(
+        game: game,
+        playerId: 'p1',
+        extractedByPlayerId: {
+          'p1': {CommodityCatalog.grain.id: 5},
+        },
+        defaultAssignmentsByPlayerId: {
+          'p1': const [
+            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
+          ],
+        },
+      );
+    });
   });
 }
