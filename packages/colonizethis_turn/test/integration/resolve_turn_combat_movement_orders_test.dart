@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part2_part2_segment2_test', () {
-    test('naval move order targeting home fleet does not move it', () {
+  group('combat movement', () {
+    group('combat_part2_part2_segment2_test', () {
+test('naval move order targeting home fleet does not move it', () {
           final topology = MapTopology(
             nodes: const [
               TopologyNode(
@@ -270,5 +270,6 @@ void main() {
           expect(next.worldState.fleets.single.seaZoneId, 'sea2');
           expect(next.worldState.fleets.single.mission, FleetMission.none);
         });
+    });
   });
 }

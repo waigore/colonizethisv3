@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part2_part1_dialogue_order_engine_test', () {
-    test('endOfTurn era transition invokes onDialogue with event era_change', () {
+  group('combat movement', () {
+    group('combat_part2_dialogue_order_engine_test', () {
+test('endOfTurn era transition invokes onDialogue with event era_change', () {
           // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
           final topology = MapTopology(
             nodes: const [
@@ -270,21 +270,7 @@ void main() {
         test(
           'resolveTurnForGameFromOrderEngine integrates order engine output',
           () {
-            final topology = MapTopology(
-              nodes: [
-                const TopologyNode(
-                  id: 'P1',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-                const TopologyNode(
-                  id: 'P2',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-            );
+            final topology = twoAdjacentOldWorldProvinceTopology();
 
             const ow = 'oldWorld';
             final gameBase = Game(
@@ -341,5 +327,6 @@ void main() {
             );
           },
         );
+    });
   });
 }

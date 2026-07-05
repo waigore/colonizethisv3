@@ -2,29 +2,15 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part2_part2_segment1_test', () {
-    test(
+  group('combat resolution', () {
+    group('combat_part2_part2_segment1_test', () {
+test(
           'validateOrdersAndResolveTurn filters invalid order and applies only valid move',
           () {
-            final topology = MapTopology(
-              nodes: [
-                const TopologyNode(
-                  id: 'P1',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-                const TopologyNode(
-                  id: 'P2',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-            );
+            final topology = twoAdjacentOldWorldProvinceTopology();
             const ow = 'oldWorld';
             final game = Game(
               id: 'g1',
@@ -293,5 +279,6 @@ void main() {
           expect(fleet.seaZoneId, 'sea1');
           expect(fleet.inPortAtProvinceId, isNull);
         });
+    });
   });
 }
