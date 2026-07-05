@@ -18,6 +18,8 @@ import 'region_map/region_map_viewport_snapshot.dart'
         kRegionMapZoomMultiplierMin;
 
 part 'ct_region_map_game_camera.dart';
+part 'ct_region_map_game_props.dart';
+part 'ct_region_map_game_viewport.dart';
 
 // ignore_for_file: deprecated_member_use
 
@@ -182,152 +184,59 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
     double? zoomMultiplier,
-  }) {
-    var regionChanged = false;
-    if (region != null) {
-      regionChanged = region.regionId != this.region.regionId;
-      this.region = region;
-    }
-    if (showPoliticalOverlay != null) {
-      this.showPoliticalOverlay = showPoliticalOverlay;
-    }
-    if (showProvinceOverlay != null) {
-      this.showProvinceOverlay = showProvinceOverlay;
-    }
-    if (showProvinceOwnershipTint != null) {
-      this.showProvinceOwnershipTint = showProvinceOwnershipTint;
-    }
-    if (showProvinceNamesLayer != null) {
-      this.showProvinceNamesLayer = showProvinceNamesLayer;
-    }
-    if (visibilityMode != null) {
-      this.visibilityMode = visibilityMode;
-    }
-    if (baseLayerDisplayMode != null) {
-      this.baseLayerDisplayMode = baseLayerDisplayMode;
-    }
-    if (clearSelectedTileKey) {
-      this.selectedTileKey = null;
-    } else if (selectedTileKey != null) {
-      this.selectedTileKey = selectedTileKey;
-    }
-    if (clearSelectedCivilianTileKey) {
-      this.selectedCivilianTileKey = null;
-    } else if (selectedCivilianTileKey != null) {
-      this.selectedCivilianTileKey = selectedCivilianTileKey;
-    }
-    if (clearSecondaryHighlightTileKey) {
-      this.secondaryHighlightTileKey = null;
-    } else if (secondaryHighlightTileKey != null) {
-      this.secondaryHighlightTileKey = secondaryHighlightTileKey;
-    }
-    if (clearValidTileKeys) {
-      this.validTileKeys = null;
-    } else if (validTileKeys != null) {
-      this.validTileKeys = validTileKeys;
-    }
-    this.onTileSelected = onTileSelected;
-    this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
-    this.onCivilianTileTapped = onCivilianTileTapped;
-    this.onFleetMarkerTapped = onFleetMarkerTapped;
-    this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
-    this.playerViewForResources = playerViewForResources;
-    if (onViewportSnapshotChanged != null) {
-      this.onViewportSnapshotChanged = onViewportSnapshotChanged;
-    }
-    if (zoomMultiplier != null) {
-      _zoomMultiplier = zoomMultiplier;
-    }
-
-    assertCtMapPlayerViewRequired(
-      visibilityMode: this.visibilityMode,
-      playerViewForResources: this.playerViewForResources,
-    );
-
-    if (_mapLoaded) {
-      _mapComponent
-        ..region = this.region
-        ..cellSize = cellSizePx
-        ..showPoliticalOverlay = this.showPoliticalOverlay
-        ..showProvinceOverlay = this.showProvinceOverlay
-        ..showProvinceOwnershipTint = this.showProvinceOwnershipTint
-        ..showProvinceNamesLayer = this.showProvinceNamesLayer
-        ..visibilityMode = this.visibilityMode
-        ..baseLayerDisplayMode = this.baseLayerDisplayMode
-        ..selectedTileKey = this.selectedTileKey
-        ..selectedCivilianTileKey = this.selectedCivilianTileKey
-        ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
-        ..validTileKeys = this.validTileKeys
-        ..playerViewForResources = this.playerViewForResources
-        ..onFleetMarkerTapped = onFleetMarkerTapped;
-      if (regionChanged || zoomMultiplier != null) {
-        _syncCameraZoomFromMultiplier();
-      } else {
-        _emitViewportSnapshot();
-      }
-    }
-  }
+  }) =>
+      _ctRegionMapGameUpdateProps(
+        this,
+        region: region,
+        showPoliticalOverlay: showPoliticalOverlay,
+        showProvinceOverlay: showProvinceOverlay,
+        showProvinceOwnershipTint: showProvinceOwnershipTint,
+        showProvinceNamesLayer: showProvinceNamesLayer,
+        visibilityMode: visibilityMode,
+        baseLayerDisplayMode: baseLayerDisplayMode,
+        selectedTileKey: selectedTileKey,
+        selectedCivilianTileKey: selectedCivilianTileKey,
+        secondaryHighlightTileKey: secondaryHighlightTileKey,
+        clearSelectedTileKey: clearSelectedTileKey,
+        clearSelectedCivilianTileKey: clearSelectedCivilianTileKey,
+        clearSecondaryHighlightTileKey: clearSecondaryHighlightTileKey,
+        validTileKeys: validTileKeys,
+        clearValidTileKeys: clearValidTileKeys,
+        onTileSelected: onTileSelected,
+        onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+        onCivilianTileTapped: onCivilianTileTapped,
+        onFleetMarkerTapped: onFleetMarkerTapped,
+        onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+        playerViewForResources: playerViewForResources,
+        onViewportSnapshotChanged: onViewportSnapshotChanged,
+        zoomMultiplier: zoomMultiplier,
+      );
 
   /// Sets the camera center in world space (used by the region minimap). Clamped to the map.
-  void setCameraCenterWorld(double x, double y) {
-    camera.viewfinder.position = Vector2(x, y);
-    _clampCameraToMap();
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
+  void setCameraCenterWorld(double x, double y) =>
+      _ctRegionMapGameSetCameraCenterWorld(this, x, y);
 
   /// Pans the camera center in world space (used by the region minimap). Clamped each step.
-  void panCameraWorld(double dx, double dy) {
-    if (dx == 0 && dy == 0) return;
-    camera.viewfinder.position += Vector2(dx, dy);
-    _clampCameraToMap();
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
+  void panCameraWorld(double dx, double dy) =>
+      _ctRegionMapGamePanCameraWorld(this, dx, dy);
 
   /// Centers the camera on the given tile key, if valid.
-  void centerOnTileKey(String tileKey) {
-    final parsed = tryParseTileKey(tileKey);
-    if (parsed == null || parsed.regionId != region.regionId) return;
-    final x = parsed.x;
-    final y = parsed.y;
-    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
-    final worldX = x * cellSizePx + cellSizePx / 2;
-    final worldY = y * cellSizePx + cellSizePx / 2;
-    camera.moveTo(Vector2(worldX, worldY));
-    _clampCameraToMap();
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
+  void centerOnTileKey(String tileKey) =>
+      _ctRegionMapGameCenterOnTileKey(this, tileKey);
 
   /// Pan the camera by a Flutter offset (in logical pixels).
-  void panBy(Offset delta) {
-    if (delta == Offset.zero) return;
-    final z = camera.viewfinder.zoom;
-    if (z <= 0 || !z.isFinite) return;
-    camera.viewfinder.position -= Vector2(delta.dx, delta.dy) / z;
-    _clampCameraToMap();
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
+  void panBy(Offset delta) => _ctRegionMapGamePanBy(this, delta);
 
   /// Zoom the camera by [factor] (>1 zooms in, <1 zooms out) on [zoomMultiplier].
-  void zoomBy(double factor) {
-    _zoomMultiplier = (_zoomMultiplier * factor).clamp(
-      kRegionMapZoomMultiplierMin,
-      kRegionMapZoomMultiplierMax,
-    );
-    _syncCameraZoomFromMultiplier();
-  }
+  void zoomBy(double factor) => _ctRegionMapGameZoomBy(this, factor);
 
   /// Absolute fit-relative multiplier from the shell (slider). SPEC/ui/map-widget.md.
-  void setZoomMultiplierAbsolute(double multiplier) {
-    _zoomMultiplier = multiplier.clamp(
-      kRegionMapZoomMultiplierMin,
-      kRegionMapZoomMultiplierMax,
-    );
-    _syncCameraZoomFromMultiplier();
-  }
+  void setZoomMultiplierAbsolute(double multiplier) =>
+      _ctRegionMapGameSetZoomMultiplierAbsolute(this, multiplier);
+
+  /// Update hover state from a widget-local position.
+  void updateHoverFromLocal(Offset localPosition) =>
+      _ctRegionMapGameUpdateHoverFromLocal(this, localPosition);
 
   @override
   void onGameResize(Vector2 size) {
@@ -336,19 +245,6 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     final previousSize = _lastCanvasSize;
     _lastCanvasSize = size.clone();
     _handleGameResize(size, previousSize);
-  }
-
-  /// Update hover state from a widget-local position.
-  void updateHoverFromLocal(Offset localPosition) {
-    if (!_mapLoaded || size == Vector2.zero()) return;
-
-    final z = camera.viewfinder.zoom;
-    if (z <= 0 || !z.isFinite) return;
-    final screen = Vector2(localPosition.dx, localPosition.dy);
-    final halfView = size / 2;
-    final world = camera.viewfinder.position + (screen - halfView) / z;
-
-    _mapComponent.updateHoverFromWorld(world);
   }
 
   @override
