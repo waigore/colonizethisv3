@@ -223,6 +223,12 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
     sharedCandidateValidator: sharedCandidateValidator,
   );
 
+  final subValidatorContext = DiplomaticSubValidatorContext(
+    game: game,
+    playerId: playerId,
+    factionMembership: factionMembership,
+  );
+
   final sortedTargetIds = knownTargetIds.toList()..sort();
   var passValidator = sharedCandidateValidator != null
       ? (sharedCandidateValidator.basePrefix == currentOrders
@@ -241,13 +247,19 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   emitAcceptedCandidates<DiplomaticOrder>(
     candidates: [
       for (final targetId in sortedTargetIds)
-        if (targetId != playerId &&
-            (getRelation(game, playerId, targetId)?.atPeace ?? true))
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: targetId,
+        if (targetId != playerId)
+          declareWarSuggestionCandidate(
+            subValidatorContext,
+            DiplomaticSuggestionTargetView(
+              targetId: targetId,
+              player: view.player,
+              knownTargetIds: knownTargetIds,
+              knownFactionIds: knownFactionIds,
+              playerOverturesByTargetId: const {},
+              playerHoldsColony: false,
+            ),
           ),
-    ],
+    ].whereType<DiplomaticOrder>(),
     accept: (candidate) =>
         isDiplomaticOrderAcceptedWithValidator(passValidator, candidate),
     into: suggestions,
