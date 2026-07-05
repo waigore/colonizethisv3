@@ -47,5 +47,32 @@ void main() {
       expect(advancedStartCargoShipCount(AdvancedStartType.turns50), 1);
       expect(advancedStartCargoShipCount(AdvancedStartType.turns100), 6);
     });
+
+    test('NW reveal, prospect, and diplomacy tier helpers match SPEC', () {
+      expect(
+        advancedStartNwRevealFraction(AdvancedStartType.turns50),
+        kAdvancedStart50TurnNwRevealFraction,
+      );
+      expect(
+        advancedStartNwRevealFraction(AdvancedStartType.turns100),
+        1.0,
+      );
+      expect(
+        advancedStartProspectFraction(AdvancedStartType.turns50),
+        0.50,
+      );
+      expect(
+        advancedStartProspectFraction(AdvancedStartType.turns100),
+        0.75,
+      );
+      expect(
+        advancedStartDiplomacyOvertureStage(AdvancedStartType.turns50),
+        OvertureStage.tradeConsulate,
+      );
+      expect(
+        advancedStartDiplomacyOvertureStage(AdvancedStartType.turns100),
+        OvertureStage.embassy,
+      );
+    });
   });
 }

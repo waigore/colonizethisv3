@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
@@ -46,6 +47,42 @@ void main() {
           homeFleet!.ships.where((s) => s.typeId == kAdvancedStartCargoShipTypeId),
           hasLength(1),
         );
+        expect(
+          getOverture(game, player.id, game.minorNations.first.id)!.stage,
+          OvertureStage.tradeConsulate,
+        );
+      }
+    });
+
+    test('turns50 locked profile reveals NW tiles for each GP', () {
+      final result = runInitGame(
+        config: GameSetupConfig(
+          advancedStart: AdvancedStartType.turns50,
+        ),
+        options: defaultInitOptions,
+      );
+      final game = result.game;
+      final totalNwProvinces = game.worldState.newWorld.provinces.length;
+
+      for (final player in game.players) {
+        final visibility =
+            game.worldState.playerVisibilityByTile[player.id] ?? const {};
+        final visibleNwProvinces = game.worldState.newWorld.provinces
+            .where((p) {
+              final provinceKey = ProvinceId.isPrefixed(p.id)
+                  ? p.id
+                  : ProvinceId.full(p.regionId, p.id);
+              final tileKeys = game
+                      .worldState
+                      .tileKeysByRegionAndProvince[kRegionNewWorld]?[provinceKey] ??
+                  const [];
+              return tileKeys.any(
+                (tk) => visibility[tk] == VisibilityLevel.fullyVisible.name,
+              );
+            })
+            .length;
+        expect(visibleNwProvinces, greaterThan(0));
+        expect(visibleNwProvinces, lessThanOrEqualTo(totalNwProvinces));
       }
     });
 
@@ -66,6 +103,10 @@ void main() {
             .where((f) => f.id == homeFleetIdFor(player.id))
             .singleOrNull;
         expect(homeFleet!.ships, hasLength(6));
+        expect(
+          getOverture(game, player.id, game.minorNations.first.id)!.stage,
+          OvertureStage.embassy,
+        );
       }
     });
   });

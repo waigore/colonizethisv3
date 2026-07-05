@@ -133,6 +133,9 @@ InitGameResult runInitGame({
   var gameForView = applyAdvancedStartBootstrap(
     game: setupResult.game,
     config: config,
+    topologyOldWorld: setupResult.topologyByRegion[kRegionOldWorld],
+    topologyNewWorld: setupResult.topologyByRegion[kRegionNewWorld],
+    warpLinks: warpLinks,
   );
 
   // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids

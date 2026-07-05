@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
@@ -8,6 +9,7 @@ Game _gpGameWithCapital({
   required Player player,
   List<Unit> oldWorldUnits = const [],
   List<Fleet> fleets = const [],
+  List<MinorNation> minorNations = const [],
 }) {
   return Game(
     id: 'g1',
@@ -18,6 +20,7 @@ Game _gpGameWithCapital({
       fleets: fleets,
     ),
     players: [player],
+    minorNations: minorNations,
   );
 }
 
@@ -62,7 +65,7 @@ void main() {
       expect(out.players.single.workerPool.peasants, 4);
     });
 
-    test('turns50 applies economy, civilians, regiments, and galleon', () {
+    test('turns50 applies economy, civilians, regiments, galleon, and diplomacy', () {
       const player = Player(
         id: 'gp1',
         displayName: 'England',
@@ -79,6 +82,9 @@ void main() {
       );
       final game = _gpGameWithCapital(
         player: player,
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
         oldWorldUnits: [
           Unit(
             id: 'gp1_explorer_1',
@@ -109,7 +115,26 @@ void main() {
         advancedStart: AdvancedStartType.turns50,
       );
 
-      final out = applyAdvancedStartBootstrap(game: game, config: config);
+      final out = applyAdvancedStartBootstrap(
+        game: game,
+        config: config,
+        topologyOldWorld: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: kRegionOldWorld,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: kRegionOldWorld,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'p1', id2: 's1')],
+        ),
+        topologyNewWorld: const MapTopology(nodes: [], edges: []),
+      );
 
       expect(out.advancedStartType, AdvancedStartType.turns50);
       expect(out.worldState.turnState.turnNumber, 50);
@@ -132,6 +157,10 @@ void main() {
       expect(fleet, isNotNull);
       expect(fleet!.ships, hasLength(1));
       expect(fleet.ships.single.typeId, kAdvancedStartCargoShipTypeId);
+      expect(
+        getOverture(out, 'gp1', 'minor1')!.stage,
+        OvertureStage.tradeConsulate,
+      );
     });
 
     test('turns100 applies apprentices, civilians, 12 regiments, 6 galleons', () {
@@ -147,12 +176,31 @@ void main() {
           y: 0,
         ),
       );
-      final game = _gpGameWithCapital(player: player);
+      final game = _gpGameWithCapital(
+        player: player,
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
+      );
       final config = GameSetupConfig(
         advancedStart: AdvancedStartType.turns100,
       );
 
-      final out = applyAdvancedStartBootstrap(game: game, config: config);
+      final out = applyAdvancedStartBootstrap(
+        game: game,
+        config: config,
+        topologyOldWorld: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: kRegionOldWorld,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        ),
+        topologyNewWorld: const MapTopology(nodes: [], edges: []),
+      );
 
       expect(out.advancedStartType, AdvancedStartType.turns100);
       expect(out.worldState.turnState.turnNumber, 100);
@@ -160,6 +208,7 @@ void main() {
       expect(_countUnitsOfType(out, 'gp1', kUnitTypeRailBuilder), 1);
       expect(_countMilitaryRegiments(out, 'gp1'), 12);
       expect(_homeFleet(out, 'gp1')!.ships, hasLength(6));
+      expect(getOverture(out, 'gp1', 'minor1')!.stage, OvertureStage.embassy);
     });
 
     test('non-locked profile skips bootstrap', () {

@@ -3,17 +3,23 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'advanced_start_bootstrap_diplomacy.dart';
 import 'advanced_start_bootstrap_units.dart';
+import 'advanced_start_bootstrap_world.dart';
 import 'setup_logging.dart';
 
 /// Mutates a fully initialized turn-0 [Game] per [config.advancedStart].
 ///
-/// Implemented steps: turn number, tech unlocks, treasury, workforce (1–4);
-/// civilians, regiments, cargo ships (5–7). Returns [game] unchanged when
-/// [AdvancedStartType.none] or when the config is not the locked full-init profile.
+/// Implemented steps: turn/techs/treasury/workforce (1–4); civilians/regiments/
+/// ships (5–6); diplomacy (7); NW exploration/prospecting (8–9). Returns [game]
+/// unchanged when [AdvancedStartType.none] or when the config is not the locked
+/// full-init profile.
 Game applyAdvancedStartBootstrap({
   required Game game,
   required GameSetupConfig config,
+  MapTopology? topologyOldWorld,
+  MapTopology? topologyNewWorld,
+  List<WarpLink> warpLinks = const [],
 }) {
   final startType = config.advancedStart;
   if (startType == AdvancedStartType.none) {
@@ -60,6 +66,29 @@ Game applyAdvancedStartBootstrap({
   updated = applyAdvancedStartUnitsAndShips(
     game: updated,
     startType: startType,
+  );
+
+  var encounteredTribeIds = <String>{};
+  if (topologyOldWorld != null && topologyNewWorld != null) {
+    final worldResult = applyAdvancedStartWorldKnowledge(
+      game: updated,
+      startType: startType,
+      topologyOldWorld: topologyOldWorld,
+      topologyNewWorld: topologyNewWorld,
+      warpLinks: warpLinks,
+    );
+    updated = worldResult.game;
+    encounteredTribeIds = worldResult.encounteredTribeIds;
+  } else {
+    setupLog.w(
+      'logic: advanced start NW exploration skipped — missing topology',
+    );
+  }
+
+  updated = applyAdvancedStartDiplomacy(
+    game: updated,
+    startType: startType,
+    encounteredTribeIds: encounteredTribeIds,
   );
 
   setupLog.i(

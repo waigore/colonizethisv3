@@ -150,6 +150,39 @@ int advancedStartCargoShipCount(AdvancedStartType type) {
 /// Advanced-start cargo ship type id (Galleon per SPEC/game/advanced-starts.md).
 const String kAdvancedStartCargoShipTypeId = 'galleon';
 
+/// NW province reveal target (50-turn: midpoint of 50–75% range). SPEC/game/advanced-starts.md.
+const double kAdvancedStart50TurnNwRevealFraction = 0.625;
+
+const double kAdvancedStart100TurnNwRevealFraction = 1.0;
+
+const double kAdvancedStart50TurnProspectFraction = 0.50;
+
+const double kAdvancedStart100TurnProspectFraction = 0.75;
+
+double advancedStartNwRevealFraction(AdvancedStartType type) {
+  return switch (type) {
+    AdvancedStartType.none => 0,
+    AdvancedStartType.turns50 => kAdvancedStart50TurnNwRevealFraction,
+    AdvancedStartType.turns100 => kAdvancedStart100TurnNwRevealFraction,
+  };
+}
+
+double advancedStartProspectFraction(AdvancedStartType type) {
+  return switch (type) {
+    AdvancedStartType.none => 0,
+    AdvancedStartType.turns50 => kAdvancedStart50TurnProspectFraction,
+    AdvancedStartType.turns100 => kAdvancedStart100TurnProspectFraction,
+  };
+}
+
+OvertureStage advancedStartDiplomacyOvertureStage(AdvancedStartType type) {
+  return switch (type) {
+    AdvancedStartType.none => OvertureStage.none,
+    AdvancedStartType.turns50 => OvertureStage.tradeConsulate,
+    AdvancedStartType.turns100 => OvertureStage.embassy,
+  };
+}
+
 void validateAdvancedStartTechList(Iterable<String> techIds) {
   final idSet = techIds.toSet();
   final catalog = techCatalog;
