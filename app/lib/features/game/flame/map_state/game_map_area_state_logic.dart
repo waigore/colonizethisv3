@@ -7,6 +7,10 @@ import 'game_map_area_civilian_draft_projection.dart';
 import 'game_map_area_fleet_draft_projection.dart';
 import 'game_map_area_province_action_states.dart';
 
+part 'game_map_area_state_logic_work_targets.dart';
+part 'game_map_area_state_logic_draft_projection.dart';
+part 'game_map_area_state_logic_province_actions.dart';
+
 /// Resolved mount-time / home-to-capital auto-center target for the in-game
 /// shell. SPEC/ui/empire-overview.md § Initial map viewport (shell entry).
 class ShellEntryAutoCenter {
@@ -83,37 +87,9 @@ class GameMapAreaStateLogic {
     return tileKey;
   }
 
-  static const Set<String> kCacheFirstWorkTargets = {
-    kWorkTargetExplore,
-    kWorkTargetCounterSpy,
-    kWorkTargetPurchaseLand,
-    kWorkTargetProspect,
-    kWorkTargetBuildImprovement,
-    kWorkTargetUpgradeTown,
-    kWorkTargetBuildRoad,
-    kWorkTargetBuildPort,
-    kWorkTargetBuildFort,
-    kWorkTargetBuildRail,
-  };
+  static const Set<String> kCacheFirstWorkTargets =
+      GameMapAreaStateLogicWorkTargets.kCacheFirstWorkTargets;
 
-  static const Set<String> _runtimeConflictProtectedCacheTargets = {
-    kWorkTargetExplore,
-    kWorkTargetCounterSpy,
-    kWorkTargetPurchaseLand,
-    kWorkTargetProspect,
-    kWorkTargetBuildImprovement,
-    kWorkTargetUpgradeTown,
-    kWorkTargetBuildRoad,
-    kWorkTargetBuildPort,
-    kWorkTargetBuildFort,
-    kWorkTargetBuildRail,
-  };
-
-  /// Filters stale conflict tiles from app-cached work-target selections.
-  ///
-  /// This is a post-cache set-subtraction guard only: it does not recompute
-  /// valid tiles and applies only to targets that use worker-family stale-tile
-  /// protection.
   static Set<String> filterCacheSelectionForRuntimeStaleTileConflicts({
     required Set<String> cachedTileKeys,
     required ct_models.Game game,
@@ -121,50 +97,17 @@ class GameMapAreaStateLogic {
     required String playerId,
     required String selectedUnitId,
     required String workTarget,
-  }) {
-    if (cachedTileKeys.isEmpty ||
-        !_runtimeConflictProtectedCacheTargets.contains(workTarget)) {
-      return cachedTileKeys;
-    }
-    final conflicting = <String>{};
-    final pending = currentOrders.workOrdersByPlayerId[playerId] ?? const [];
-    for (final order in pending) {
-      if (order.targetTileKey.isEmpty || order.unitId == selectedUnitId) {
-        continue;
-      }
-      if (!_runtimeConflictProtectedCacheTargets.contains(order.target)) {
-        continue;
-      }
-      conflicting.add(order.targetTileKey);
-    }
-    for (final unit in [
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ]) {
-      if (unit.ownerId != playerId || unit.id == selectedUnitId) {
-        continue;
-      }
-      final currentWork = unit.currentWork;
-      if (currentWork == null || currentWork.tileKey.isEmpty) {
-        continue;
-      }
-      if (!_runtimeConflictProtectedCacheTargets.contains(
-        currentWork.workTarget,
-      )) {
-        continue;
-      }
-      conflicting.add(currentWork.tileKey);
-    }
-    if (conflicting.isEmpty) {
-      return cachedTileKeys;
-    }
-    return cachedTileKeys.difference(conflicting);
-  }
+  }) =>
+      GameMapAreaStateLogicWorkTargets
+          .filterCacheSelectionForRuntimeStaleTileConflicts(
+        cachedTileKeys: cachedTileKeys,
+        game: game,
+        currentOrders: currentOrders,
+        playerId: playerId,
+        selectedUnitId: selectedUnitId,
+        workTarget: workTarget,
+      );
 
-  /// Resolves selectable work-target tile keys for the civilian map picker.
-  ///
-  /// [kCacheFirstWorkTargets] read from [workTargetSelectionCache] only (no
-  /// live `getValidWorkOrderTileKeysWithVisibility` fallback in that path).
   static Set<String> resolveValidTileKeysForCivilianWorkSelection({
     required String workTarget,
     required PerPlayerWorkTargetSelectionCache workTargetSelectionCache,
@@ -175,70 +118,39 @@ class GameMapAreaStateLogic {
     required PlayerView playerView,
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
-  }) {
-    if (kCacheFirstWorkTargets.contains(workTarget)) {
-      return filterCacheSelectionForRuntimeStaleTileConflicts(
-        cachedTileKeys: workTargetSelectionCache.get(humanPlayerId, workTarget),
+  }) =>
+      GameMapAreaStateLogicWorkTargets.resolveValidTileKeysForCivilianWorkSelection(
+        workTarget: workTarget,
+        workTargetSelectionCache: workTargetSelectionCache,
+        humanPlayerId: humanPlayerId,
+        selectedUnitId: selectedUnitId,
         game: game,
         currentOrders: currentOrders,
-        playerId: humanPlayerId,
-        selectedUnitId: selectedUnitId,
-        workTarget: workTarget,
+        playerView: playerView,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
       );
-    }
-    return getValidWorkOrderTileKeysWithVisibility(
-      game: game,
-      topology: topology,
-      view: playerView,
-      unitId: selectedUnitId,
-      workTarget: workTarget,
-      currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
-    );
-  }
 
   static ct_models.Orders addHumanWorkOrder({
     required ct_models.Orders orders,
     required String humanPlayerId,
     required ct_models.WorkOrder workOrder,
-  }) {
-    final prior = List<ct_models.WorkOrder>.from(
-      orders.workOrdersByPlayerId[humanPlayerId] ??
-          const <ct_models.WorkOrder>[],
-    )..removeWhere((o) => o.unitId == workOrder.unitId);
-    prior.add(workOrder);
-    final movesWithoutUnit = List<ct_models.MoveOrder>.from(
-      orders.moveOrdersByPlayerId[humanPlayerId] ??
-          const <ct_models.MoveOrder>[],
-    )..removeWhere((o) => o.unitId == workOrder.unitId);
-    return orders.copyWith(
-      moveOrdersByPlayerId: {
-        ...orders.moveOrdersByPlayerId,
-        humanPlayerId: movesWithoutUnit,
-      },
-      workOrdersByPlayerId: {
-        ...orders.workOrdersByPlayerId,
-        humanPlayerId: prior,
-      },
-    );
-  }
+  }) =>
+      GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
+        orders: orders,
+        humanPlayerId: humanPlayerId,
+        workOrder: workOrder,
+      );
 
-  /// Returns the post-assignment civilian selection key.
-  /// Keeps selection only when the selected key already points at the assigned
-  /// marker tile; otherwise clears stale blink state.
   static String? selectionAfterWorkAssignment({
     required String? currentSelectedCivilianTileKey,
     required String assignedTileKey,
-  }) {
-    if (currentSelectedCivilianTileKey == assignedTileKey) {
-      return currentSelectedCivilianTileKey;
-    }
-    return null;
-  }
+  }) =>
+      GameMapAreaStateLogicWorkTargets.selectionAfterWorkAssignment(
+        currentSelectedCivilianTileKey: currentSelectedCivilianTileKey,
+        assignedTileKey: assignedTileKey,
+      );
 
-  /// Projects player-owned civilian markers using current-turn pending orders.
-  ///
-  /// Thin forwarder to [GameMapAreaCivilianDraftProjection.project] (#2575).
   static RegionMapViewData projectCivilianMarkersForHumanDraft({
     required RegionMapViewData region,
     required ct_models.Game game,
@@ -246,7 +158,7 @@ class GameMapAreaStateLogic {
     required String humanPlayerId,
     Set<String>? civilianMarkerOwnerIds,
   }) =>
-      GameMapAreaCivilianDraftProjection.project(
+      GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -254,9 +166,6 @@ class GameMapAreaStateLogic {
         civilianMarkerOwnerIds: civilianMarkerOwnerIds,
       );
 
-  /// Projects fleet marker tiles using human naval move drafts.
-  ///
-  /// Thin forwarder to [GameMapAreaFleetDraftProjection.project] (#2575).
   static RegionMapViewData projectFleetMarkersForHumanDraft({
     required RegionMapViewData region,
     required ct_models.Game game,
@@ -266,7 +175,7 @@ class GameMapAreaStateLogic {
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
   }) =>
-      GameMapAreaFleetDraftProjection.project(
+      GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -276,7 +185,6 @@ class GameMapAreaStateLogic {
         combinedTopology: combinedTopology,
       );
 
-  /// Civilian and fleet draft marker projection for one [RegionMapViewData].
   static RegionMapViewData projectHumanDraftMarkersForRegion({
     required RegionMapViewData baseRegion,
     required ct_models.Game game,
@@ -286,33 +194,18 @@ class GameMapAreaStateLogic {
     Map<String, MapTopology>? topologyByRegion,
     MapTopology? combinedTopology,
     Set<String>? civilianMarkerOwnerIds,
-  }) {
-    var projected = GameMapAreaCivilianDraftProjection.project(
-      region: baseRegion,
-      game: game,
-      orders: orders,
-      humanPlayerId: humanPlayerId,
-      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
-    );
-    if (tileMapByRegion != null &&
-        topologyByRegion != null &&
-        combinedTopology != null) {
-      projected = GameMapAreaFleetDraftProjection.project(
-        region: projected,
+  }) =>
+      GameMapAreaStateLogicDraftProjection.projectHumanDraftMarkersForRegion(
+        baseRegion: baseRegion,
         game: game,
         orders: orders,
         humanPlayerId: humanPlayerId,
         tileMapByRegion: tileMapByRegion,
         topologyByRegion: topologyByRegion,
         combinedTopology: combinedTopology,
+        civilianMarkerOwnerIds: civilianMarkerOwnerIds,
       );
-    }
-    return projected;
-  }
 
-  /// Returns province-overlay prospect action visibility + enablement.
-  ///
-  /// Thin forwarder to [GameMapAreaProvinceActionStates.prospect] (#2575).
   static ({bool showIcon, bool enabled, bool hasExplorerUnits})
   provinceProspectActionState({
     required ct_models.Game game,
@@ -323,7 +216,7 @@ class GameMapAreaStateLogic {
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) =>
-      GameMapAreaProvinceActionStates.prospect(
+      GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
@@ -341,7 +234,7 @@ class GameMapAreaStateLogic {
     required Map<String, TileMapResult>? tileMapByRegion,
     required ct_models.Orders currentOrders,
   }) =>
-      GameMapAreaProvinceActionStates.buildExploreEligibleTileKeyCache(
+      GameMapAreaStateLogicProvinceActions.buildExploreEligibleTileKeyCache(
         game: game,
         humanPlayerId: humanPlayerId,
         playerView: playerView,
@@ -359,7 +252,7 @@ class GameMapAreaStateLogic {
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
   }) =>
-      GameMapAreaProvinceActionStates.explore(
+      GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
@@ -368,9 +261,6 @@ class GameMapAreaStateLogic {
         cachedExploreEligibleTileKeys: cachedExploreEligibleTileKeys,
       );
 
-  /// SPEC anchor: `SPEC/program/order-suggestions.md` § Authoritative pipeline
-  /// references this method by name; the forwarder keeps that reference valid
-  /// after the #2575 module split.
   static ({bool showIcon, bool enabled, bool hasBuilderUnits})
   provinceBuildImprovementActionState({
     required ct_models.Game game,
@@ -382,7 +272,7 @@ class GameMapAreaStateLogic {
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
-      GameMapAreaProvinceActionStates.buildImprovement(
+      GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
