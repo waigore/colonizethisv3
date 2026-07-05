@@ -5,7 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
-import 'order_suggestion_work_tile_candidacy.dart';
+import 'work_tile_candidacy/work_tile_candidacy.dart';
 
 /// Per-unit civilian work availability for UI (Refs #2133).
 /// SPEC/program/order-suggestions.md § Selected-unit availability.

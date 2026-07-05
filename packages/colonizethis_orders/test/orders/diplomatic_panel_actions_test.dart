@@ -7,13 +7,24 @@ import 'diplomatic_orders_test_fixtures.dart';
 
 const _topology = emptyTopology;
 
+Game _panelActionsGame() => gpMinorGame(
+      gameId: 'g',
+      turnNumber: 1,
+      treasury: 5000,
+      gp1DisplayName: 'A',
+      minorDisplayName: 'Bavaria',
+      includeSecondGp: true,
+      includeProvinces: true,
+      overtureStates: const [],
+    );
+
 void main() {
   suppressLogsForTests();
 
   group('diplomaticPanelActionCandidates', () {
     test('GP row includes alliance, FTP, and four overture stages', () {
       final candidates = diplomaticPanelActionCandidates(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         playerId: 'gp1',
         targetId: 'gp2',
       );
@@ -42,7 +53,7 @@ void main() {
       'AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps '
       'alliance for breakAlliance only',
       () {
-      final alliedGame = gpMinorPanelActionsGame().copyWith(
+      final alliedGame = _panelActionsGame().copyWith(
         diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -75,7 +86,7 @@ void main() {
 
     test('Minor row omits alliance and FTP', () {
       final candidates = diplomaticPanelActionCandidates(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         playerId: 'gp1',
         targetId: 'minor1',
       );
@@ -85,7 +96,7 @@ void main() {
 
     test('GP row includes boycott + revoke boycott (Refs #3753 S14)', () {
       final candidates = diplomaticPanelActionCandidates(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         playerId: 'gp1',
         targetId: 'gp2',
       );
@@ -100,7 +111,7 @@ void main() {
 
     test('Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)', () {
       final candidates = diplomaticPanelActionCandidates(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         playerId: 'gp1',
         targetId: 'minor1',
       );
@@ -118,7 +129,7 @@ void main() {
   group('enumerateDiplomaticPanelActionsForTarget', () {
     test('AC-6: minor at none shows all overture stages; only consulate enabled', () {
       final actions = enumerateDiplomaticPanelActionsForTarget(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         topology: _topology,
         playerId: 'gp1',
         targetId: 'minor1',
@@ -160,7 +171,7 @@ void main() {
 
     test('S14: boycott disabled when human holds no colony', () {
       final boycott = _actionOfType(
-        gpMinorPanelActionsGame(),
+        _panelActionsGame(),
         'gp2',
         DiplomaticOrderType.boycott,
       );
@@ -169,7 +180,7 @@ void main() {
     });
 
     test('S14: boycott enabled when human holds a colony at peace', () {
-      final game = gpMinorPanelActionsGame().copyWith(
+      final game = _panelActionsGame().copyWith(
         colonyStates: const [
           ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
         ],
@@ -179,7 +190,7 @@ void main() {
     });
 
     test('S14: revoke enabled (and boycott disabled) with active boycott', () {
-      final game = gpMinorPanelActionsGame().copyWith(
+      final game = _panelActionsGame().copyWith(
         colonyStates: const [
           ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
         ],
@@ -199,7 +210,7 @@ void main() {
 
     test('S14: revoke disabled when no active boycott exists', () {
       final revoke = _actionOfType(
-        gpMinorPanelActionsGame(),
+        _panelActionsGame(),
         'gp2',
         DiplomaticOrderType.revokeBoycott,
       );
@@ -208,7 +219,7 @@ void main() {
     });
 
     test('post-break cooldown disables alliance with deterministic reason (#3811)', () {
-      final game = gpMinorPanelActionsGame().copyWith(
+      final game = _panelActionsGame().copyWith(
         allianceBreakCooldowns: const [
           AllianceBreakCooldownState(
             factionId1: 'gp1',
@@ -224,7 +235,7 @@ void main() {
 
     test('AC-10: invalid declare war / offer peace still enumerated', () {
       final actions = enumerateDiplomaticPanelActionsForTarget(
-        game: gpMinorPanelActionsGame(),
+        game: _panelActionsGame(),
         topology: _topology,
         playerId: 'gp1',
         targetId: 'gp2',

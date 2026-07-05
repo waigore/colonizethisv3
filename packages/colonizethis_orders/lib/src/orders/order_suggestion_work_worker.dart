@@ -6,7 +6,7 @@ import 'feedstock_extraction_targets.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
-import 'order_suggestion_work_tile_candidacy.dart';
+import 'work_tile_candidacy/work_tile_candidacy.dart';
 import 'order_work_constants.dart';
 import 'unit_type_helpers.dart';
 import 'work_suggestion_pipeline.dart';
