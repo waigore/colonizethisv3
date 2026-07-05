@@ -1,7 +1,7 @@
 
 part of 'region_map_component.dart';
 
-extension _CtRegionMapRenderMarkers on CtRegionMapComponent {
+extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
   void _paintValidTilesGlow(Canvas canvas) {
     final keys = validTileKeys!;
     final t = _hoverAnimationT;

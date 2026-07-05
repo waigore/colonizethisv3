@@ -25,15 +25,18 @@ import '../render/warp_zone_edge_geometry.dart';
 
 
 part 'region_map_component_shared.dart';
+part 'region_map_component_shared_visibility_halos.dart';
+part 'region_map_component_shared_visibility_labels.dart';
 part 'region_map_component_shared_visibility.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
 part 'region_map_component_render_core_base_tiles.dart';
+part 'region_map_component_render_core_transport_feature.dart';
 part 'region_map_component_render_core_overlays.dart';
 part 'region_map_component_render_political_labels_province.dart';
 part 'region_map_component_render_political_labels_sea.dart';
 part 'region_map_component_render_political_borders.dart';
-part 'region_map_component_render_markers.dart';
+part 'region_map_component_render_markers_selection.dart';
 part 'region_map_component_render_markers_settlements.dart';
 part 'region_map_component_render_markers_units.dart';
 
