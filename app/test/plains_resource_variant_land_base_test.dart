@@ -4,7 +4,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 
 Future<(int r, int g, int b, int a)> _pixelStraightRgba(
   ui.Image image,
