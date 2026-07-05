@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';

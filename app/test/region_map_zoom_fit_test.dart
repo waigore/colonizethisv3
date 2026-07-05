@@ -1,9 +1,9 @@
-import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map_viewport_snapshot.dart';
-import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
