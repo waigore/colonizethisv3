@@ -33,24 +33,26 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestDiplomaticOrders player=${view.playerId}');
-  final playerId = view.playerId;
-  final suggestions = <DiplomaticOrder>[];
-  final player = view.player;
-
-  final knownFactionIds = knownDiplomaticTargetFactionIds(
+  final pass = SuggestionPassContext.forPlayerView(
     view: view,
     game: game,
     topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestDiplomaticOrders',
+    tileMapByRegion: tileMapByRegion,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
+  final playerId = pass.playerId;
+  final suggestions = <DiplomaticOrder>[];
+  final player = view.player;
 
-  final factionMembership = DiplomacyFactionMembership.from(game);
-  final otherGps = factionMembership.greatPowerIds.difference({playerId});
-  final knownTargets = <String>{
-    ...otherGps.where(knownFactionIds.contains),
-    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
-  };
-  final knownTargetIds = knownTargets.toSet();
+  final targets = resolveDiplomaticSuggestionTargetIds(
+    view: view,
+    game: game,
+    topology: topology,
+    factionMembership: pass.factionMembership,
+    playerId: playerId,
+  );
 
   final playerOverturesByTargetId = <String, OvertureState>{};
   for (final o in game.overtureStates) {
@@ -62,51 +64,29 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     (c) => c.colonyOfGpId == playerId,
   );
 
-  SuggestionPassContext.assertSharedValidatorPlayerId(
-    sharedCandidateValidator,
-    playerId,
-  );
-  final diplomaticResolution = effectiveOrderResolutionContext(
-    view: view,
-    game: game,
-    sharedCandidateValidator: sharedCandidateValidator,
-  );
-
-  final unionTargets = <String>{
-    ...knownTargets,
-    ...otherGps,
-    ...playerOverturesByTargetId.keys,
-  };
-
   final subValidatorContext = DiplomaticSubValidatorContext(
     game: game,
     playerId: playerId,
-    factionMembership: factionMembership,
+    factionMembership: pass.factionMembership,
   );
+
+  final unionTargets = <String>{
+    ...targets.knownTargetIds,
+    ...targets.otherGpIds,
+    ...playerOverturesByTargetId.keys,
+  };
 
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
-  var passValidator = sharedCandidateValidator != null
-      ? (sharedCandidateValidator.basePrefix == workingOrders
-            ? sharedCandidateValidator
-            : sharedCandidateValidator.forBasePrefix(workingOrders))
-      : buildIncrementalCandidateValidator(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-          baseOrders: workingOrders,
-          tileMapByRegion: tileMapByRegion,
-          resolution: diplomaticResolution,
-          factionMembership: factionMembership,
-        );
+  var passValidator = pass.candidateValidator;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
     final targetView = DiplomaticSuggestionTargetView(
       targetId: targetId,
       player: player,
-      knownTargetIds: knownTargetIds,
-      knownFactionIds: knownFactionIds,
+      knownTargetIds: targets.knownTargetIds,
+      knownFactionIds: targets.knownFactionIds,
       playerOverturesByTargetId: playerOverturesByTargetId,
       playerHoldsColony: playerHoldsColony,
     );
@@ -178,9 +158,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     if (stageCmp != 0) return stageCmp;
     return (a.amount ?? 0).compareTo(b.amount ?? 0);
   });
-  orderSuggestionLog.d(
-    'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
-  );
+  pass.logExit(candidateCount: suggestions.length);
   return suggestions;
 }
 
@@ -195,54 +173,34 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  orderSuggestionLog.d('suggestDeclareWarOrders player=${view.playerId}');
-  final playerId = view.playerId;
-  final suggestions = <DiplomaticOrder>[];
-
-  final knownFactionIds = knownDiplomaticTargetFactionIds(
+  final pass = SuggestionPassContext.forPlayerView(
     view: view,
     game: game,
     topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: 'suggestDeclareWarOrders',
+    tileMapByRegion: tileMapByRegion,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
+  final playerId = pass.playerId;
+  final suggestions = <DiplomaticOrder>[];
 
-  final factionMembership = DiplomacyFactionMembership.from(game);
-  final otherGps = factionMembership.greatPowerIds.difference({playerId});
-  final knownTargets = <String>{
-    ...otherGps.where(knownFactionIds.contains),
-    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
-  };
-  final knownTargetIds = knownTargets.toSet();
-
-  SuggestionPassContext.assertSharedValidatorPlayerId(
-    sharedCandidateValidator,
-    playerId,
-  );
-  final declareWarResolution = effectiveOrderResolutionContext(
+  final targets = resolveDiplomaticSuggestionTargetIds(
     view: view,
     game: game,
-    sharedCandidateValidator: sharedCandidateValidator,
+    topology: topology,
+    factionMembership: pass.factionMembership,
+    playerId: playerId,
   );
 
   final subValidatorContext = DiplomaticSubValidatorContext(
     game: game,
     playerId: playerId,
-    factionMembership: factionMembership,
+    factionMembership: pass.factionMembership,
   );
 
-  final sortedTargetIds = knownTargetIds.toList()..sort();
-  var passValidator = sharedCandidateValidator != null
-      ? (sharedCandidateValidator.basePrefix == currentOrders
-            ? sharedCandidateValidator
-            : sharedCandidateValidator.forBasePrefix(currentOrders))
-      : buildIncrementalCandidateValidator(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-          baseOrders: currentOrders,
-          tileMapByRegion: tileMapByRegion,
-          resolution: declareWarResolution,
-          factionMembership: factionMembership,
-        );
+  final sortedTargetIds = targets.knownTargetIds.toList()..sort();
+  final passValidator = pass.candidateValidator;
 
   emitAcceptedCandidates<DiplomaticOrder>(
     candidates: [
@@ -253,8 +211,8 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
             DiplomaticSuggestionTargetView(
               targetId: targetId,
               player: view.player,
-              knownTargetIds: knownTargetIds,
-              knownFactionIds: knownFactionIds,
+              knownTargetIds: targets.knownTargetIds,
+              knownFactionIds: targets.knownFactionIds,
               playerOverturesByTargetId: const {},
               playerHoldsColony: false,
             ),
@@ -266,8 +224,6 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   );
 
   suggestions.sort((a, b) => a.targetFactionId.compareTo(b.targetFactionId));
-  orderSuggestionLog.d(
-    'suggestDeclareWarOrders player=$playerId candidates=${suggestions.length}',
-  );
+  pass.logExit(candidateCount: suggestions.length);
   return suggestions;
 }
