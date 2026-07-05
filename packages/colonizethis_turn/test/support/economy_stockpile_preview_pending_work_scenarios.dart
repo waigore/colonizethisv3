@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
-import '../economy_stockpile_preview_test_support.dart';
+import 'economy_stockpile_preview_test_support.dart';
 
 void runPendingWorkTargetSkipScenarios() {
   for (final t in kMaterialBackedWorkTargets) {

@@ -98,6 +98,34 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
+
+    test('fails for unexpected integration entrypoint beyond four domains', () {
+      final temp = Directory.systemTemp.createTempSync('turn-int-extra-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'resolve_turn_economy_test.dart'),
+          "void main() {}\n",
+        );
+        _writeDartFile(
+          p.join(dir.path, 'resolve_turn_economy_continued_test.dart'),
+          "void main() {}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckTurnIntegrationNoPartFragments(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('unexpected integration entrypoint'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
   });
 
   group('runCheckTurnTestPhaseHarness', () {
