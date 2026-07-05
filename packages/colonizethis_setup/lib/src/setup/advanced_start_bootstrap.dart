@@ -3,12 +3,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'advanced_start_bootstrap_units.dart';
 import 'setup_logging.dart';
 
 /// Mutates a fully initialized turn-0 [Game] per [config.advancedStart].
 ///
-/// Steps implemented incrementally; this slice covers turn number, tech unlocks,
-/// treasury, and workforce (bootstrap steps 1–4). Returns [game] unchanged when
+/// Implemented steps: turn number, tech unlocks, treasury, workforce (1–4);
+/// civilians, regiments, cargo ships (5–7). Returns [game] unchanged when
 /// [AdvancedStartType.none] or when the config is not the locked full-init profile.
 Game applyAdvancedStartBootstrap({
   required Game game,
@@ -50,14 +51,23 @@ Game applyAdvancedStartBootstrap({
     turnState: game.worldState.turnState.copyWith(turnNumber: turnNumber),
   );
 
-  setupLog.i(
-    'logic: advanced start ${startType.name} applied turn=$turnNumber '
-    'techs=${techIds.length} treasury=${tier.treasury}',
-  );
-
-  return game.copyWith(
+  var updated = game.copyWith(
     players: updatedPlayers,
     worldState: updatedWorldState,
     advancedStartType: startType,
   );
+
+  updated = applyAdvancedStartUnitsAndShips(
+    game: updated,
+    startType: startType,
+  );
+
+  setupLog.i(
+    'logic: advanced start ${startType.name} applied turn=$turnNumber '
+    'techs=${techIds.length} treasury=${tier.treasury} '
+    'regiments=${advancedStartRegimentCount(startType)} '
+    'ships=${advancedStartCargoShipCount(startType)}',
+  );
+
+  return updated;
 }

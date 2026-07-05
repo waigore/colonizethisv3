@@ -28,6 +28,8 @@ Two fixed **advanced start** presets let players begin a campaign at turn **50**
 | Regiments | 6 (best available types) | 12 |
 | Cargo ships | 1 Galleon minimum per GP | `ceil(extractionVolume / shipCargo × 1.15)` from NW dev |
 
+Constants: `advancedStartCivilianCounts`, `advancedStartRegimentCount`, `advancedStartCargoShipCount`, `advancedStartRegimentTypeIds` in `colonizethis_data`.
+
 50-turn cargo ships use a **fixed minimum of one Galleon** per GP (head start for planned colonization; no GP-owned NW provinces at this tier).
 
 ## Fixed technology lists
@@ -50,8 +52,8 @@ Ordered steps (full issue #3895):
 2. Unlock fixed tech list per tier.
 3. Set treasury and workforce per tier table.
 4. Assign civilian units (tier table).
-5. Assign upgraded regiments (best buildable type per military category from unlocked techs; highest era, tie-break highest FPN+FPM).
-6. Assign cargo ships per tier rule.
+5. Assign upgraded regiments (best buildable type per military branch from unlocked techs; highest era, tie-break highest FPN+FPM; balanced across infantry/cavalry/artillery).
+6. Assign cargo ships per tier rule (Galleon; fixed minimum until NW dev step supplies extraction volume).
 7. Pre-establish consulates / embassies.
 8. NW exploration (contiguous flood-fill from warp-link entry).
 9. NW prospecting (% of prospectable tiles).
@@ -59,12 +61,12 @@ Ordered steps (full issue #3895):
 11. Player + minor tile development and roads.
 12. NW province town → OW capital connectivity.
 
-**Implementation status:** Steps **1–3** (turn, techs, treasury, workforce) are implemented; remaining steps are follow-up on #3895.
+**Implementation status:** Steps **1–7** (turn, techs, treasury, workforce, civilians, regiments, cargo ships) are implemented; remaining steps are follow-up on #3895.
 
-## Acceptance criteria (partial — foundation slice)
+## Acceptance criteria (partial — foundation + units slice)
 
 - Given advanced start `none`, when init completes, then `Game.advancedStartType` is null and `turnNumber` is 0.
-- Given advanced start `turns50` on the locked profile, when init completes, then every GP has exactly 23 listed techs unlocked, 16 peasants, 20,000 treasury, and `turnNumber` is 50.
-- Given advanced start `turns100` on the locked profile, when init completes, then every GP has exactly 45 listed techs unlocked, 16 peasants and 4 apprentices, 40,000 treasury, and `turnNumber` is 100.
+- Given advanced start `turns50` on the locked profile, when init completes, then every GP has exactly 23 listed techs unlocked, 16 peasants, 20,000 treasury, tier civilian counts, 6 upgraded regiments, at least 1 Galleon in the home fleet, and `turnNumber` is 50.
+- Given advanced start `turns100` on the locked profile, when init completes, then every GP has exactly 45 listed techs unlocked, 16 peasants and 4 apprentices, 40,000 treasury, tier civilian counts including Rail Builder, 12 upgraded regiments, at least 6 Galleons in the home fleet, and `turnNumber` is 100.
 - Given advanced start ≠ `none` on a non-locked profile, when bootstrap runs, then the System returns the turn-0 game unchanged and logs a warning.
 - Given an advanced-start game is saved and reloaded, when loaded, then `advancedStartType`, turn, techs, treasury, and workforce match the saved state.

@@ -32,5 +32,20 @@ void main() {
       expect(p100.peasants, 16);
       expect(p100.apprentices, 4);
     });
+
+    test('civilian, regiment, and ship tables match SPEC', () {
+      expect(
+        advancedStartCivilianCounts(AdvancedStartType.turns50),
+        kAdvancedStart50TurnCivilianCounts,
+      );
+      expect(
+        advancedStartCivilianCounts(AdvancedStartType.turns100),
+        kAdvancedStart100TurnCivilianCounts,
+      );
+      expect(advancedStartRegimentCount(AdvancedStartType.turns50), 6);
+      expect(advancedStartRegimentCount(AdvancedStartType.turns100), 12);
+      expect(advancedStartCargoShipCount(AdvancedStartType.turns50), 1);
+      expect(advancedStartCargoShipCount(AdvancedStartType.turns100), 6);
+    });
   });
 }
