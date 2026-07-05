@@ -39,6 +39,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
@@ -253,6 +254,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameScreenDirectories,
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
+  ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,
   ...gameMapOptionsDialogDirectories,
