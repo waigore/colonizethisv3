@@ -98,35 +98,71 @@ class GameMapControls extends StatelessWidget {
           cargoNotDefined: cargoNotDefined,
           isCargoUsedReliable: isCargoUsedReliable,
           cargoHoldLabel: cargoHoldLabel,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PlayersBarToggleButton(
-                tooltip: l10n.mapControls_playersBarToggle,
-                showPlayersBar: showPlayersBar,
-                onPressed: onTogglePlayersBar,
-              ),
-              const SizedBox(width: GameTabBar.clusterTrailingGap),
-              if (playerTurnEventsFeedNotDefined)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    kObserveNotDefinedLabel,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                )
-              else
-                PlayerTurnEventsFeedToggleButton(
-                  eventCount: playerTurnEventsFeedCount,
-                  tooltip: l10n.playerTurnFeed_eventsChip(
-                    playerTurnEventsFeedCount,
-                  ),
-                  showFeed: showPlayerTurnEventsFeed,
-                  onPressed: onTogglePlayerTurnEventsFeed,
-                ),
-            ],
+          trailing: _GameMapControlsTabBarTrailing(
+            playersBarToggleTooltip: l10n.mapControls_playersBarToggle,
+            showPlayersBar: showPlayersBar,
+            onTogglePlayersBar: onTogglePlayersBar,
+            playerTurnEventsFeedNotDefined: playerTurnEventsFeedNotDefined,
+            playerTurnEventsFeedCount: playerTurnEventsFeedCount,
+            playerTurnEventsFeedTooltip: l10n.playerTurnFeed_eventsChip(
+              playerTurnEventsFeedCount,
+            ),
+            showPlayerTurnEventsFeed: showPlayerTurnEventsFeed,
+            onTogglePlayerTurnEventsFeed: onTogglePlayerTurnEventsFeed,
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _GameMapControlsTabBarTrailing extends StatelessWidget {
+  const _GameMapControlsTabBarTrailing({
+    required this.playersBarToggleTooltip,
+    required this.showPlayersBar,
+    required this.onTogglePlayersBar,
+    required this.playerTurnEventsFeedNotDefined,
+    required this.playerTurnEventsFeedCount,
+    required this.playerTurnEventsFeedTooltip,
+    required this.showPlayerTurnEventsFeed,
+    required this.onTogglePlayerTurnEventsFeed,
+  });
+
+  final String playersBarToggleTooltip;
+  final bool showPlayersBar;
+  final VoidCallback onTogglePlayersBar;
+  final bool playerTurnEventsFeedNotDefined;
+  final int playerTurnEventsFeedCount;
+  final String playerTurnEventsFeedTooltip;
+  final bool showPlayerTurnEventsFeed;
+  final VoidCallback onTogglePlayerTurnEventsFeed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PlayersBarToggleButton(
+          tooltip: playersBarToggleTooltip,
+          showPlayersBar: showPlayersBar,
+          onPressed: onTogglePlayersBar,
+        ),
+        const SizedBox(width: GameTabBar.clusterTrailingGap),
+        if (playerTurnEventsFeedNotDefined)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              kObserveNotDefinedLabel,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          )
+        else
+          PlayerTurnEventsFeedToggleButton(
+            eventCount: playerTurnEventsFeedCount,
+            tooltip: playerTurnEventsFeedTooltip,
+            showFeed: showPlayerTurnEventsFeed,
+            onPressed: onTogglePlayerTurnEventsFeed,
+          ),
       ],
     );
   }
