@@ -515,13 +515,19 @@ jobs:
           cd app
           flutter pub get
           flutter config --enable-linux-desktop
-          xvfb-run -a flutter test \
+          # One scenario per `flutter test` invocation: Linux desktop integration
+          # tests cannot reliably restart the device between files in one run.
+          for scenario in \
             integration_test/new_game_advanced_start_50_e2e_test.dart \
-            integration_test/new_game_advanced_start_100_e2e_test.dart \
-            -d linux \
-            --dart-define=CT_E2E=true \
-            --dart-define=CT_E2E_LOCKED_FULL_INIT=true \
-            --no-pub
+            integration_test/new_game_advanced_start_100_e2e_test.dart
+          do
+            xvfb-run -a flutter test \
+              "$scenario" \
+              -d linux \
+              --dart-define=CT_E2E=true \
+              --dart-define=CT_E2E_LOCKED_FULL_INIT=true \
+              --no-pub
+          done
 
   # Always-selective app-test matrix per SPEC/program/ci-app-selective-tests.md.
   #

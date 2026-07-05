@@ -116,7 +116,7 @@ Acceptance criteria (Given–When–Then):
 - Given `CT_E2E=true`, `CT_E2E_LOCKED_FULL_INIT=true`, and a clean checkout on `dev`, When `new_game_advanced_start_50_e2e_test.dart` runs on Linux desktop and selects `50 Turns In (1598)` in DLG10001, Then the map HUD next-turn control displays turn **50** and calendar year **1598**.
 - Given the same compile-time flags, When `new_game_advanced_start_100_e2e_test.dart` runs and selects `100 Turns In (1698)`, Then the map HUD next-turn control displays turn **100** and calendar year **1698**.
 - Given asset preload has completed, When the init path exceeds the 120 s cap at any checkpoint, Then the test fails fast via `e2eMakeWallClockGuard` with attributable step/elapsed metadata.
-- Given a PR whose changed paths match the `tests` filter, When `quality.yml` runs, Then the `app_e2e_advanced_start` job executes both scenarios under `xvfb-run` with the locked-full-init defines.
+- Given a PR whose changed paths match the `tests` filter, When `quality.yml` runs, Then the `app_e2e_advanced_start` job executes both scenarios under `xvfb-run` with the locked-full-init defines, each in its own `flutter test` invocation (Linux desktop integration tests do not reliably restart between files in one run).
 
 ## Expectations helper
 
