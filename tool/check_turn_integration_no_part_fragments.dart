@@ -21,21 +21,13 @@ final RegExp _legacySegmentTestFilename = RegExp(
 );
 
 /// Canonical domain entrypoints under `test/integration/` (Refs #3876).
-/// Split across multiple standalone files to satisfy the 400-line domain test
-/// file cap while avoiding Dart `part of` fragments.
+/// Scenario bodies live in `test/support/integration/*_scenarios.dart` so each
+/// domain entrypoint stays thin while respecting the 400-line test file cap.
 const Set<String> kTurnIntegrationDomainEntrypoints = {
-  'resolve_turn_combat_movement_dialogue_test.dart',
-  'resolve_turn_combat_movement_orders_test.dart',
-  'resolve_turn_combat_movement_test.dart',
-  'resolve_turn_combat_resolution_continued_test.dart',
-  'resolve_turn_combat_resolution_test.dart',
-  'resolve_turn_diplomacy_victory_endgame_test.dart',
-  'resolve_turn_diplomacy_victory_overtures_test.dart',
+  'resolve_turn_combat_test.dart',
   'resolve_turn_diplomacy_victory_test.dart',
-  'resolve_turn_economy_continued_test.dart',
   'resolve_turn_economy_test.dart',
   'resolve_turn_spy_fog_end_of_turn_test.dart',
-  'resolve_turn_spy_fog_end_of_turn_visibility_test.dart',
 };
 
 /// True when [slashPath] is under the turn integration test directory.
