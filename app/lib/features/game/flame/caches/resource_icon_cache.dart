@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import '../../../config/app_assets.dart';
+import '../../../../config/app_assets.dart';
 import 'asset_image_cache.dart';
 
 /// Resource IDs for which icons exist (excludes commodities without tile resources).

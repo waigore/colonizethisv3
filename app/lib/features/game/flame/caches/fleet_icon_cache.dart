@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import '../../../config/app_assets.dart';
+import '../../../../config/app_assets.dart';
 import 'asset_image_cache.dart';
 
 /// 64px fleet map marker; keep in sync with [FleetIconCache.assetPath].

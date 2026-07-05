@@ -176,7 +176,7 @@ Widget fallback() => Card(child: const Text('x'));
 
       const devScreens = <String>[
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
       ];
       for (final rel in devScreens) {
         File('${temp.path}/$rel')
@@ -246,7 +246,7 @@ Widget bypass() => Card(child: const Text('x'));
       );
       expect(
         shouldSkipAppNoMaterialCardFile(
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
         ),
         isTrue,
       );

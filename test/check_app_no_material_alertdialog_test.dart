@@ -204,7 +204,7 @@ Widget fallback() => AlertDialog(title: const Text('x'), actions: const []);
       addTearDown(() => temp.deleteSync(recursive: true));
 
       const debugConsole =
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
       for (final rel in [debugConsole]) {
         File('${temp.path}/$rel')
@@ -354,7 +354,7 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
 
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       const skipped = <String>[
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
       ];
       for (final path in skipped) {
         expect(

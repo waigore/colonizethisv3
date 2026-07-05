@@ -80,9 +80,9 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';

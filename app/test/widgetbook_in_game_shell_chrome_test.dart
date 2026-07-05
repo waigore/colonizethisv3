@@ -6,14 +6,13 @@
 // removed or renamed.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
-import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
+import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
-import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/players_bar_toggle_button.dart';

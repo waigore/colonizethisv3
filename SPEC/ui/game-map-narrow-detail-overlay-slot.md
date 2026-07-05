@@ -1,6 +1,6 @@
 # Game Map Narrow Detail Overlay Slot
 
-**SPEC/ui** — Narrow-layout bottom host for [`ProvinceSeaZoneDetailOverlay`](province-sea-zone-detail-overlay.md) on viewports where the map uses a full-width stack (see [`in-game-shell-narrow.md`](in-game-shell-narrow.md)). Reads [`mapProvincePanelProvider`](../program/app-ui-wiring.md) only; does not own map selection logic. Authority for overlay content: [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md). Source: `app/lib/features/game/flame/game_map_narrow_detail_overlay.dart`.
+**SPEC/ui** — Narrow-layout bottom host for [`ProvinceSeaZoneDetailOverlay`](province-sea-zone-detail-overlay.md) on viewports where the map uses a full-width stack (see [`in-game-shell-narrow.md`](in-game-shell-narrow.md)). Reads [`mapProvincePanelProvider`](../program/app-ui-wiring.md) only; does not own map selection logic. Authority for overlay content: [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md). Source: `app/lib/features/game/flame/overlays/game_map_narrow_detail_overlay.dart`.
 
 ---
 
@@ -69,7 +69,7 @@ The 1.5 dp `--accent-dim` top border required by the same row is provided by `Pr
 
 - **Enter:** When `overlayOpen` becomes `true` and a non-empty `displayId` resolves, the slot mounts `ProvinceSeaZoneDetailOverlay` with a **200 ms** `SlideTransition` from `Offset(0, 1)` → `Offset.zero` (`Curves.easeOut` on enter). The motion slides the bottom sheet **up** from below the viewport; no fade-only transition.
 - **Exit:** When `overlayOpen` becomes `false` (close control) or the slot would return `SizedBox.shrink()` for an empty `displayId`, the outgoing panel uses the reverse slide (`Offset.zero` → `Offset(0, 1)`, `Curves.easeIn`, same **200 ms** duration) before unmounting. `selectedTileKey` retention follows [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) § Interaction.
-- **Implementation:** Shared helper `ProvinceDetailPanelSlideTransition` in `app/lib/features/game/flame/province_detail_panel_slide_transition.dart` (`AnimatedSwitcher` + `SlideTransition`; axis `bottom` for this host).
+- **Implementation:** Shared helper `ProvinceDetailPanelSlideTransition` in `app/lib/features/game/flame/overlays/province_detail_panel_slide_transition.dart` (`AnimatedSwitcher` + `SlideTransition`; axis `bottom` for this host).
 
 ---
 

@@ -10,16 +10,16 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import '../gp_ownership_tint_layer.dart';
-import '../civilian_icon_cache.dart';
-import '../fleet_icon_cache.dart';
+import '../render/gp_ownership_tint_layer.dart';
+import '../caches/civilian_icon_cache.dart';
+import '../caches/fleet_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
-import '../resource_icon_cache.dart';
-import '../province_label_icon_cache.dart';
+import '../caches/resource_icon_cache.dart';
+import '../caches/province_label_icon_cache.dart';
 import '../tilesets/tilesets.dart';
-import '../town_icon_cache.dart';
-import '../warp_zone_edge_geometry.dart';
+import '../caches/town_icon_cache.dart';
+import '../render/warp_zone_edge_geometry.dart';
 
 
 

@@ -31,7 +31,7 @@ import 'package:path/path.dart' as p;
 /// 1. **Dev-tooling screens** — `SYS10001` Debug Log Viewer
 ///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) and
 ///    `SYS20001` Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) are
+///    (`app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart`) are
 ///    operator-only surfaces; implementing Ct-* catalog widgets there is
 ///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
 ///    sibling `repo.app_no_material_*` rules so the Material-widget ban family
@@ -166,7 +166,7 @@ const Set<String> _appNoMaterialDialogAllowedFiles = <String>{
   // Mirrors the sibling repo.app_no_material_* allowlists so the
   // Material-widget ban family stays scope-uniform across rules.
   'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-  'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+  'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
 };
 
 const Set<String> _appNoMaterialDialogAllowedDirPrefixes = <String>{

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Shows the "End turn?" confirmation dialog (DLG60001).
 ///

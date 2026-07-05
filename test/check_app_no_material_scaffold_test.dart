@@ -231,7 +231,7 @@ Widget fallback() => Scaffold(body: const SizedBox.shrink());
       addTearDown(() => temp.deleteSync(recursive: true));
 
       const debugConsole =
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
       File('${temp.path}/$debugConsole')
         ..createSync(recursive: true)
@@ -415,7 +415,7 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       expect(
         shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
         ),
         isTrue,
       );

@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
-import '../../../config/app_assets.dart';
-import '../../../config/ct_new_town_icons.dart';
+import '../../../../config/app_assets.dart';
+import '../../../../config/ct_new_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.

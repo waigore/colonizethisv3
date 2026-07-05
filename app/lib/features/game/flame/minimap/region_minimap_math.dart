@@ -1,6 +1,6 @@
 import 'dart:ui' show Offset, Rect, Size;
 
-import 'region_map/region_map_viewport_snapshot.dart';
+import '../region_map/region_map_viewport_snapshot.dart';
 
 /// Top-left corner of the main-map viewport rectangle on the minimap (logical px).
 Offset minimapViewportTopLeft({

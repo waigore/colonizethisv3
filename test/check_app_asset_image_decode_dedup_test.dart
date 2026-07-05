@@ -140,6 +140,6 @@ void main() {
 }
 
 Directory _flameDir(Directory temp) {
-  return Directory(p.join(temp.path, 'app/lib/features/game/flame'))
+  return Directory(p.join(temp.path, 'app/lib/features/game/flame/caches'))
     ..createSync(recursive: true);
 }

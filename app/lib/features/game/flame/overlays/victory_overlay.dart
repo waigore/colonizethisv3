@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../../../config/constants.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/ct_full_screen_dialogue_shell.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../config/constants.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_brass_divider.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
 ///
