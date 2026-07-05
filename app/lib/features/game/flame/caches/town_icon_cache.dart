@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../../config/app_assets.dart';
+import '../../../../config/ct_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -39,11 +40,32 @@ class TownIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) {
+    return assetPathFor(assetId, useCandidateLevel1: kCtNewTownIconsEnabled);
+  }
+
+  /// Resolves the bundle path for [assetId].
+  ///
+  /// When [useCandidateLevel1] is true, level-1 town glyphs load from the S9b
+  /// candidate filenames so local preview does not overwrite production assets
+  /// (Refs #3870 S9b).
+  static String assetPathFor(
+    String assetId, {
+    bool useCandidateLevel1 = kCtNewTownIconsEnabled,
+  }) {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
+    if (useCandidateLevel1 && _isLevel1TownAssetId(assetId)) {
+      return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_candidate_64.png';
+    }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
   }
+
+  static bool _isLevel1TownAssetId(String assetId) =>
+      assetId.endsWith('_1') &&
+      (assetId.startsWith('town_euro_') ||
+          assetId.startsWith('town_colonial_') ||
+          assetId.startsWith('town_tribal_'));
 
   @override
   String get loadLogLabel => 'town/port icons';

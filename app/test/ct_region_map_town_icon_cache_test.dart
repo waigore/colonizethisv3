@@ -41,6 +41,57 @@ void main() {
       );
     });
 
+    test('assetPathFor uses production paths by default', () {
+      expect(
+        TownIconCache.assetPathFor('town_euro_1', useCandidateLevel1: false),
+        'assets/icons/64/ui_icon_com_town_euro_1_64.png',
+      );
+      expect(
+        TownIconCache.assetPathFor('town_euro_2', useCandidateLevel1: false),
+        'assets/icons/64/ui_icon_com_town_euro_2_64.png',
+      );
+      expect(
+        TownIconCache.assetPathFor('port', useCandidateLevel1: false),
+        'assets/icons/64/ui_icon_com_port.png',
+      );
+    });
+
+    test('assetPathFor uses candidate paths for level-1 when preview flag on', () {
+      expect(
+        TownIconCache.assetPathFor('town_euro_1', useCandidateLevel1: true),
+        'assets/icons/64/ui_icon_com_town_euro_1_candidate_64.png',
+      );
+      expect(
+        TownIconCache.assetPathFor('town_colonial_1', useCandidateLevel1: true),
+        'assets/icons/64/ui_icon_com_town_colonial_1_candidate_64.png',
+      );
+      expect(
+        TownIconCache.assetPathFor('town_euro_3', useCandidateLevel1: true),
+        'assets/icons/64/ui_icon_com_town_euro_3_64.png',
+      );
+    });
+
+    testWidgets(
+      'candidate level-1 town icon assets are present in test bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        for (final style in kTownIconStyles) {
+          final path = TownIconCache.assetPathFor(
+            'town_${style}_1',
+            useCandidateLevel1: true,
+          );
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Candidate town icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
     testWidgets(
       'required town icon asset files are present in test asset bundle',
       (WidgetTester tester) async {

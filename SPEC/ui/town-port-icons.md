@@ -34,6 +34,8 @@ Cache id: `town_{style}_{level}` where `{style}` ∈ `euro` | `colonial` | `trib
 | `ui_icon_com_town_tribal_4_64.png` | `town_tribal_4` |
 | `ui_icon_com_port.png` | `port` |
 
+**S9b candidate preview (Refs #3870):** Separate filenames for level-1 only: `ui_icon_com_town_{style}_1_candidate_64.png`. Loaded when compile-time flag `CT_NEW_TOWN_ICONS=true` (`kCtNewTownIconsEnabled` in `app/lib/config/ct_town_icons.dart`); default `false` keeps production S9a-reverted level-1 paths. Candidate assets are for local/ctdev on-map review before promotion to default filenames.
+
 Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 
 ### Asset and Render Requirements
@@ -89,6 +91,8 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 - **Given** the three level-**1** town PNGs after **S9a**, **when** loaded from the asset bundle, **then** file byte lengths match the pre-#3892 #3871 hamlets (`bed8a84a`) and decode as readable pixel-art (opaque count > 100 per icon).
 - **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **2 px** (size parity). *(S9b; tests skipped until S9b.)*
 - **Given** each style, **when** `maxColumnHeight` is measured on levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes). *(S9b; tests skipped until S9b.)*
+- **Given** the app is built with default compile flags (`CT_NEW_TOWN_ICONS` unset or `false`), **when** `TownIconCache` resolves a level-**1** town asset path, **then** the path uses the production filename `ui_icon_com_town_{style}_1_64.png`.
+- **Given** the app is built with `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** `TownIconCache` resolves a level-**1** town asset path, **then** the path uses the candidate filename `ui_icon_com_town_{style}_1_candidate_64.png`; levels **2–4** and **port** still use production filenames.
 
 (Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
@@ -96,6 +100,6 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Implementation Notes
 
-- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`).
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level-**1** bundle paths switch via `kCtNewTownIconsEnabled` (`CT_NEW_TOWN_ICONS` dart-define); see **S9b candidate preview** above.
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).
