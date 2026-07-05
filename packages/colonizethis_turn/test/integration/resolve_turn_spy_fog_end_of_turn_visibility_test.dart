@@ -32,7 +32,7 @@ test(
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: 42,
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -116,6 +116,7 @@ test(
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -179,6 +180,7 @@ test(
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -256,7 +258,7 @@ test(
 
             final game = Game(
               id: 'g1',
-              globalGameSeed: 42,
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
