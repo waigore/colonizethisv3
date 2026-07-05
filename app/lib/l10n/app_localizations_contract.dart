@@ -238,6 +238,16 @@ abstract class AppLocalizations {
   /// Helper text for infinite mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeHelper;
 
+  String get shell_leaderDialog_advancedStartLabel;
+
+  String get shell_leaderDialog_advancedStartNone;
+
+  String get shell_leaderDialog_advancedStart50;
+
+  String get shell_leaderDialog_advancedStart100;
+
+  String get shell_leaderDialog_advancedStartDisabledHelper;
+
   /// Static slider label for terrain noise variation in the new-game leader
   /// dialog. The live percent value is rendered separately via
   /// [shell_leaderDialog_terrainVariationValue].

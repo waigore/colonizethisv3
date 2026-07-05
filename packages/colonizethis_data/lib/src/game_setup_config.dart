@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/package_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'starting_resources_config.dart';
 
@@ -27,6 +28,7 @@ class GameSetupConfig {
     Set<int>? humanGreatPowerSlotIndices,
     Set<String>? initTownRoadWiringRegionIds,
     this.aiProfileByGpId = const {},
+    this.advancedStart = AdvancedStartType.none,
   }) : humanGreatPowerSlotIndices =
            humanGreatPowerSlotIndices ?? const {0},
        initTownRoadWiringRegionIds =
@@ -112,6 +114,9 @@ class GameSetupConfig {
   /// gpId → blessed profile name for AI slots; absent or null = normal AI.
   /// Chosen at new-game setup only. Refs #3444.
   final Map<String, String?> aiProfileByGpId;
+
+  /// Advanced-start preset (turn 0 / 50 / 100). SPEC/game/advanced-starts.md.
+  final AdvancedStartType advancedStart;
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();

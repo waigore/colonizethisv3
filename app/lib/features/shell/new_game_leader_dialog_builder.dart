@@ -76,6 +76,7 @@ DialogBuilder buildNewGameLeaderSelectionDialog(
             infiniteMode,
             terrainVariation,
             aiProfileByGpId,
+            advancedStart,
           ) {
             final navCtx = navigatorKey.currentContext;
             if (navCtx == null) {
@@ -101,6 +102,7 @@ DialogBuilder buildNewGameLeaderSelectionDialog(
               initTownRoadWiringRegionIds:
                   baseConfig.initTownRoadWiringRegionIds,
               aiProfileByGpId: aiProfileByGpId,
+              advancedStart: advancedStart,
             );
             unawaited(
               runNewGameSetupAfterLeaderPick(
