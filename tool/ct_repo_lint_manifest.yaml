@@ -557,6 +557,27 @@ rules:
     runner: dart
     script: tool/check_turn_test_no_duplicate_fixtures.dart
 
+  - rule_id: repo.turn_integration_no_part_fragments
+    group: testing
+    title: colonizethis_turn test/integration/ must not use part / part of fragments (Refs #3876)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_integration_no_part_fragments.dart
+
+  - rule_id: repo.turn_test_no_inline_run_phase
+    group: testing
+    title: colonizethis_turn phase tests must use turn_phase_test_harness instead of inline TurnPhaseStepContinue casts (Refs #3876)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_phase_harness.dart
+
+  - rule_id: repo.turn_world_market_test_support
+    group: testing
+    title: colonizethis_turn world-market tests must import world_market_test_support when invoking worldMarketTurnPhaseHandler (Refs #3876)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_world_market_test_support.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)

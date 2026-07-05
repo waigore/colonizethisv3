@@ -1,6 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -22,14 +20,12 @@ void main() {
   group('worldMarketTurnPhaseHandler — GP↔GP fills (Refs #2990 B3)', () {
     test('seller treasury credited, buyer debited, stockpile transferred at '
         'old price', () {
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ),
-      );
+        );
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -54,10 +50,10 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
@@ -81,14 +77,12 @@ void main() {
 
     test('balanced volumes leave price unchanged this turn (price discovery '
         'rule: Δ=0 when bid==offer)', () {
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 20),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ),
-      );
+        );
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -113,10 +107,10 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       expect(next.worldMarketState.prices['timber'], 30);
       expect(
@@ -126,14 +120,12 @@ void main() {
     });
 
     test('partial fill carries unfilled bid forward into WorldMarketState', () {
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 3),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ),
-      );
+        );
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -158,10 +150,10 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.stockpile.quantityOf('timber'), 3);
@@ -192,14 +184,12 @@ void main() {
           ],
         },
       );
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 4),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -216,10 +206,10 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(
@@ -257,14 +247,12 @@ void main() {
       // so we instead constrain the buyer via empty stockpile / no fleet
       // and use a low-priority bid the seller can't satisfy.
       // Simpler: use insufficient seller stockpile so no fill happens.
-      final acc = TurnPipelineState(
-        game: gameWithTwoGps(
+      final game = gameWithTwoGps(
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket),
-      );
+        ).copyWith(worldMarketState: priorMarket);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: Orders(
@@ -289,10 +277,10 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       // Quantity-zero offers are filtered upstream of matching by the
       // handler; bid carries forward intact since no compatible offer exists.
@@ -315,16 +303,15 @@ void main() {
         buyerTreasury: 0,
         marketPrices: const {'timber': 30, 'iron': 80},
       ).copyWith(worldMarketState: priorMarket);
-      final acc = TurnPipelineState(game: game);
       final config = TurnResolverConfig(
         topology: const MapTopology(nodes: [], edges: []),
         orders: const Orders(),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
+      final next = runWorldMarketPhase(
+        game: game,
+        orders: config.orders,
+      );
 
       expect(next.worldMarketState.prices, equals(priorMarket.prices));
       expect(next.worldMarketState.lastTurnActivity, isEmpty);

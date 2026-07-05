@@ -7,6 +7,9 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 import '../turn/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import 'turn_phase_test_harness.dart';
+
+export 'world_market_trade_scenario_fixtures.dart';
 
 const kEmptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -52,20 +55,88 @@ Game gameWithTwoGps({
   );
 }
 
+TurnResolverConfig worldMarketPhaseConfig({
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) =>
+    TurnResolverConfig(
+      topology: topology,
+      orders: orders,
+      tileMapByRegion: tileMapByRegion,
+    );
+
+/// Runs [worldMarketTurnPhaseHandler] on turn [turnNumber] and returns the pipeline.
+TurnPipelineState runWorldMarketPhasePipeline({
+  required Game game,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runTurnPhaseHandlerPipeline(
+      handler: worldMarketTurnPhaseHandler,
+      game: game,
+      config: worldMarketPhaseConfig(
+        orders: orders,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      ),
+      turnNumber: turnNumber,
+    );
+
 /// Runs [worldMarketTurnPhaseHandler] on turn [turnNumber] and returns the game.
 Game runWorldMarketPhase({
   required Game game,
   required Orders orders,
   MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
   int turnNumber = 3,
-}) {
-  final acc = TurnPipelineState(game: game);
-  final config = TurnResolverConfig(topology: topology, orders: orders);
-  return (worldMarketTurnPhaseHandler(acc, config, turnNumber)
-          as TurnPhaseStepContinue)
-      .pipeline
-      .game;
-}
+}) =>
+    runWorldMarketPhasePipeline(
+      game: game,
+      orders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      turnNumber: turnNumber,
+    ).game;
+
+/// Like [runWorldMarketPhasePipeline] but preserves pre-seeded pipeline fields
+/// on [pipeline] (e.g. overseas extraction tonnage for world-market tests).
+TurnPipelineState runWorldMarketPhasePipelineFrom({
+  required TurnPipelineState pipeline,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runTurnPhaseHandlerPipelineFrom(
+      handler: worldMarketTurnPhaseHandler,
+      pipeline: pipeline,
+      config: worldMarketPhaseConfig(
+        orders: orders,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      ),
+      turnNumber: turnNumber,
+    );
+
+/// Like [runWorldMarketPhase] but preserves pre-seeded pipeline fields on
+/// [pipeline].
+Game runWorldMarketPhaseFrom({
+  required TurnPipelineState pipeline,
+  required Orders orders,
+  MapTopology topology = kEmptyTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  int turnNumber = 3,
+}) =>
+    runWorldMarketPhasePipelineFrom(
+      pipeline: pipeline,
+      orders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      turnNumber: turnNumber,
+    ).game;
 
 /// Runs [worldMarketTurnPhaseHandler] for turn 3 with trade orders only.
 Game runWorldMarketFrrCreditPhase({

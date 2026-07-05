@@ -1,9 +1,10 @@
 import 'package:colonizethis_turn/src/turn/phases/extraction_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/turn_phase_test_harness.dart';
 
 import '../extraction_auto_transport_test_fixtures.dart';
 
@@ -164,17 +165,17 @@ void main() {
             nwImprovementLevel: 1,
           );
           final topology = crossRegionSeaTopologyForExtractionTests();
-          final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
           );
-
-          final next =
-              (extractionTurnPhaseHandler(acc, config, 0)
-                      as TurnPhaseStepContinue)
-                  .pipeline;
+          final next = runTurnPhaseHandlerPipeline(
+            handler: extractionTurnPhaseHandler,
+            game: game,
+            config: config,
+            turnNumber: 0,
+          );
 
           expect(
             next.overseasExtractionShippedTonnageByPlayerId['pl1'],
@@ -202,7 +203,6 @@ void main() {
               newWorld: RegionData(),
             ),
           );
-          final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
             topology: const MapTopology(nodes: [], edges: []),
             orders: const Orders(),
@@ -211,10 +211,12 @@ void main() {
             },
           );
 
-          final next =
-              (extractionTurnPhaseHandler(acc, config, 0)
-                      as TurnPhaseStepContinue)
-                  .pipeline;
+          final next = runTurnPhaseHandlerPipeline(
+            handler: extractionTurnPhaseHandler,
+            game: game,
+            config: config,
+            turnNumber: 0,
+          );
 
           expect(next.overseasExtractionShippedTonnageByPlayerId, isEmpty);
         },

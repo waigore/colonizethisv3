@@ -1,6 +1,11 @@
-part of 'resolve_turn_spy_fog_end_of_turn_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _resolve_turn_spy_fog_part4_segment1_partTests() {
+import '../support/turn_resolver_test_harness.dart';
+
+void main() {
   group('part4_segment1_test', () {
     test(
           'endOfTurn fog decay does not apply when Explorer is in other-faction province',
@@ -9,7 +14,6 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -83,7 +87,6 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyNwP1 = 'newWorld|P1|0|0';
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -176,7 +179,6 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -241,7 +243,6 @@ void _resolve_turn_spy_fog_part4_segment1_partTests() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
-              globalGameSeed: _spyFogIntegrationSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
