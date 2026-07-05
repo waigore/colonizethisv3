@@ -32,6 +32,7 @@ part 'region_map_component_render_core_overlays.dart';
 part 'region_map_component_render_political_labels.dart';
 part 'region_map_component_render_political_borders.dart';
 part 'region_map_component_render_markers.dart';
+part 'region_map_component_render_markers_settlements.dart';
 
 final _log = packageLogger();
 
