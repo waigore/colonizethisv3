@@ -9,12 +9,12 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../core/services/game_service.dart' show GameMapData;
-import 'per_player_work_target_selection_cache.dart';
-import 'province_action_state_calculator.dart';
+import '../../../../core/services/game_service.dart' show GameMapData;
+import '../per_player_work_target_selection_cache.dart';
+import '../province_action_state_calculator.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
-import '../widgets/province_sea_zone_detail_overlay.dart';
+import '../../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
 ///

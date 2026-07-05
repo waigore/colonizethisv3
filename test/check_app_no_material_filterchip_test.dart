@@ -198,7 +198,7 @@ Widget fallback() => FilterChip(
       addTearDown(() => temp.deleteSync(recursive: true));
 
       const debugConsole =
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
       File('${temp.path}/$debugConsole')
         ..createSync(recursive: true)
@@ -384,7 +384,7 @@ Widget probe() => FilterChip(
     test('skips canonical dev-tooling screen SYS20001', () {
       expect(
         shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
         ),
         isTrue,
         reason: 'expected the Debug Console Overlay to be allowlisted',

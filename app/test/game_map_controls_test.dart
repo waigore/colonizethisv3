@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app/features/game/flame/game_map_controls.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey;
 import 'package:colonizethis_app/l10n/l10n.dart';

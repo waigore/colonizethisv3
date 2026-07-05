@@ -36,7 +36,7 @@ import '../../config/routes.dart';
 import '../../config/ct_e2e.dart';
 import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
-import '../../features/game/flame/exit_confirm_dialog.dart';
+import '../../features/game/flame/overlays/exit_confirm_dialog.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';

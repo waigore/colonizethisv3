@@ -1,9 +1,9 @@
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// Show the Android-back exit-to-main-menu confirmation dialog.
 ///

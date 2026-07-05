@@ -7,7 +7,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/features/game/flame/gp_ownership_tint_layer.dart';
+import 'package:colonizethis_app/features/game/flame/render/gp_ownership_tint_layer.dart';
 
 RegionMapViewData _minimalRegion({
   required List<CellViewData> cells,

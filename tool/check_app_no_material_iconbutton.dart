@@ -24,7 +24,7 @@ import 'package:path/path.dart' as p;
 ///
 /// 1. **Dev-tooling screens** — `SYS20001`
 ///    Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`)
+///    (`app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart`)
 ///    was promoted out of the allowlist after migrating its close
 ///    affordance to `CtIconAction`; see
 ///    `SPEC/ui/debug-console-panel.md` § Visual chrome.

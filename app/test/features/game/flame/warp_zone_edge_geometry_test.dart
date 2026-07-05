@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/warp_zone_edge_geometry.dart';
+import 'package:colonizethis_app/features/game/flame/render/warp_zone_edge_geometry.dart';
 
 void main() {
   suppressLogsForTests();

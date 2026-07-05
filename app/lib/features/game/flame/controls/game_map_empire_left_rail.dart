@@ -3,16 +3,16 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/routes.dart';
-import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/debug_console_provider.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import 'game_screen_shared.dart';
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../game_screen_shared.dart';
 
 /// Always-visible icon column for empire actions on the in-game map.
 ///

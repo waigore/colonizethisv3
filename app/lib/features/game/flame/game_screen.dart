@@ -32,16 +32,16 @@ import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import '../dialogue/tribe_first_contact_overlay.dart';
 import '../dialogue/tribe_first_contact_sync.dart';
-import 'exit_confirm_dialog.dart';
+import 'overlays/exit_confirm_dialog.dart';
 import 'game_canvas.dart';
 import 'map_state/map_state.dart';
 import 'game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
-import 'next_turn_confirmation_dialog.dart';
-import 'turn_resolution_processing_dialog.dart';
-import 'turn_resolution_progress_labels.dart';
+import 'overlays/next_turn_confirmation_dialog.dart';
+import 'overlays/turn_resolution_processing_dialog.dart';
+import 'overlays/turn_resolution_progress_labels.dart';
 import 'turn_resolution_result_applier.dart';
-import 'victory_overlay.dart';
+import 'overlays/victory_overlay.dart';
 
 final _gameScreenLog = packageLogger('logic');
 

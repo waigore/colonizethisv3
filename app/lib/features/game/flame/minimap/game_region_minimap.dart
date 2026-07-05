@@ -5,17 +5,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../providers/region_minimap_provider.dart';
-import 'region_map/region_map_viewport_snapshot.dart'
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../providers/region_minimap_provider.dart';
+import '../region_map/region_map_viewport_snapshot.dart'
     show
         RegionMapViewportSnapshot,
         kRegionMapZoomMultiplierMax,
         kRegionMapZoomMultiplierMin;
-import '../../../widgets/ct_slider.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import 'game_screen_shared.dart';
+import '../../../../widgets/ct_slider.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../game_screen_shared.dart';
 import 'region_minimap_math.dart';
 
 /// Terrain base colors for the region minimap (flat fills). SPEC/ui/empire-overview.md § Region minimap.
@@ -348,7 +348,7 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
 ///
 /// Mirrors mockup `.minimap-toggle`
 /// (`SPEC/ui/mockups/GAME10001-game-screen.html`) and the
-/// [GameMapCornerControls](game_map_corner_controls.dart) chrome family
+/// [GameMapCornerControls](../controls/game_map_corner_controls.dart) chrome family
 /// per `SPEC/ui/empire-overview.md` § Region minimap chrome
 /// (dark editorial-monocle): a flat `--bg-deep` surface with a 1 px
 /// `--border` outline, centered glyph tinted via `ColorFiltered(srcIn)`
@@ -372,7 +372,7 @@ class _MinimapToggleButton extends StatefulWidget {
   static const double iconSize = 20;
 
   /// Hover/press transition duration. Matches
-  /// [GameMapCornerControls](game_map_corner_controls.dart) so the row
+  /// [GameMapCornerControls](../controls/game_map_corner_controls.dart) so the row
   /// of map chrome reads as one editorial-monocle family.
   static const Duration animationDuration = Duration(milliseconds: 120);
   static const Curve animationCurve = Curves.easeOut;

@@ -1,8 +1,8 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
+import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show
         gameMapWideOverlayRightInset,
@@ -13,7 +13,6 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
 import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
-import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
