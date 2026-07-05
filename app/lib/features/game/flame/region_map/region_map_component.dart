@@ -47,6 +47,7 @@ part 'region_map_component_render_markers_settlements_towns.dart';
 part 'region_map_component_render_markers_settlements_warp.dart';
 part 'region_map_component_render_markers_units_civilian.dart';
 part 'region_map_component_render_markers_units_fleet.dart';
+part 'region_map_component_interaction.dart';
 
 final _log = packageLogger();
 
@@ -188,134 +189,14 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   /// Updates hover state from a world-space position.
-  void updateHoverFromWorld(Vector2 worldPosition) {
-    final local = worldPosition - absoluteTopLeftPosition;
-    final x = (local.x / cellSize).floor();
-    final y = (local.y / cellSize).floor();
-    _setHoverFromCell(x, y);
-  }
-
-  void _setHoverFromCell(int x, int y) {
-    int? nx;
-    int? ny;
-    if (x >= 0 && x < region.width && y >= 0 && y < region.height) {
-      final cell = region.cellAt(x, y);
-      final isUnrevealed =
-          visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.unrevealed;
-      if (!isUnrevealed) {
-        nx = x;
-        ny = y;
-      }
-    }
-    final prevId = _hoveredTileX != null && _hoveredTileY != null
-        ? '${region.regionId}|${region.cellAt(_hoveredTileX!, _hoveredTileY!).regionCellId}'
-        : null;
-    final nextId = nx != null && ny != null
-        ? '${region.regionId}|${region.cellAt(nx, ny).regionCellId}'
-        : null;
-    if (prevId != nextId) {
-      onProvinceHovered?.call(nextId);
-    }
-    final nextTileKey = nx != null && ny != null
-        ? '${region.regionId}|${region.cellAt(nx, ny).regionCellId}|$nx|$ny'
-        : null;
-    onTileHovered?.call(nextTileKey);
-    _hoveredTileX = nx;
-    _hoveredTileY = ny;
-    _hoveredProvinceId = nx != null && ny != null
-        ? region.cellAt(nx, ny).regionCellId
-        : null;
-  }
+  void updateHoverFromWorld(Vector2 worldPosition) =>
+      _ctRegionMapComponentUpdateHoverFromWorld(this, worldPosition);
 
   /// Handles a tap at the given world-space position.
   /// Reports province selection and the tapped tile (so overlay can show tile
   /// details on mobile where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
-  void handleTapAtWorld(Vector2 worldPosition) {
-    final local = worldPosition - absoluteTopLeftPosition;
-    final x = (local.x / cellSize).floor();
-    final y = (local.y / cellSize).floor();
-    if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
-    final cell = region.cellAt(x, y);
-    final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
-    if (validTileKeys != null) {
-      // Work target mode: only valid tile taps commit selection.
-      if (validTileKeys!.isNotEmpty && validTileKeys!.contains(tileKey)) {
-        onTileTapped?.call(tileKey);
-      }
-      return;
-    }
-    final tappedFleet = _getFleetMarkerAtTile(x, y);
-    if (tappedFleet != null) {
-      onFleetMarkerTapped?.call(
-        tappedFleet.locationScopeKey,
-        tappedFleet.fleetIds.isNotEmpty ? tappedFleet.fleetIds.first : null,
-        tappedFleet.tileKey,
-      );
-      return;
-    }
-    final tappedCivilian = _getCivilianMarkerAtTile(x, y);
-    if (tappedCivilian != null) {
-      onCivilianTileTapped?.call(tappedCivilian.tileKey);
-      return;
-    }
-    if (selectedCivilianTileKey != null) {
-      onCivilianTileSelectionCleared?.call();
-    }
-    // Not in work target mode: allow province selection.
-    // Town or port icon hit (port may be on an adjacent sea tile). SPEC/ui/town-port-icons.md.
-    final tappedTown = _getTownAtTile(x, y);
-    if (tappedTown != null) {
-      final provinceId = '${region.regionId}|${tappedTown.provinceId}';
-      onTownIconTapped?.call(provinceId);
-    }
-    onMapTileTappedForDetail?.call(tileKey);
-    final provinceIdForSelection = tappedTown != null
-        ? '${region.regionId}|${tappedTown.provinceId}'
-        : '${region.regionId}|${cell.regionCellId}';
-    onProvinceSelected?.call(provinceIdForSelection);
-  }
-
-  FleetTileMarkerView? _getFleetMarkerAtTile(int x, int y) {
-    for (final marker in region.fleetTileMarkers) {
-      if (marker.x != x || marker.y != y) {
-        continue;
-      }
-      return marker;
-    }
-    return null;
-  }
-
-  CivilianTileMarkerView? _getCivilianMarkerAtTile(int x, int y) {
-    for (final marker in region.civilianTileMarkers) {
-      if (marker.x != x || marker.y != y) continue;
-      final cell = region.cellAt(x, y);
-      final isUnrevealed =
-          visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.unrevealed;
-      if (isUnrevealed) {
-        return null;
-      }
-      return marker;
-    }
-    return null;
-  }
-
-  TownMarkerView? _getTownAtTile(int x, int y) {
-    for (final town in region.townMarkers) {
-      if (town.x == x && town.y == y) {
-        return town;
-      }
-      if (town.isPort) {
-        final px = town.portIconX;
-        final py = town.portIconY;
-        if (px != null && py != null && px == x && py == y) {
-          return town;
-        }
-      }
-    }
-    return null;
-  }
+  void handleTapAtWorld(Vector2 worldPosition) =>
+      _ctRegionMapComponentHandleTapAtWorld(this, worldPosition);
 
   @override
   void render(Canvas canvas) {
