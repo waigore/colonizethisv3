@@ -146,6 +146,33 @@ List<WidgetbookNode> get gameTabBarDirectories => [
           showFeed: true,
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Players bar toggle — on (active accent)',
+        builder: (context) => _gameTabBarStoryFrame(showPlayersBar: true),
+      ),
+      WidgetbookUseCase(
+        name: 'Players bar toggle — off (dim)',
+        builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
+      ),
+    ],
+  ),
+];
+
+/// Standalone players-bar toggle chrome. SPEC/ui/empire-overview.md § Players
+/// bar toggle (issue #3898). Mirrors the 28 × 22 dp bordered surface beside
+/// the news toggle on `GameTabBar`.
+List<WidgetbookNode> get playersBarToggleDirectories => [
+  WidgetbookFolder(
+    name: 'Players Bar Toggle',
+    children: [
+      WidgetbookUseCase(
+        name: 'On — accent glyph + border',
+        builder: (context) => _playersBarToggleStoryFrame(showPlayersBar: true),
+      ),
+      WidgetbookUseCase(
+        name: 'Off — dim glyph',
+        builder: (context) => _playersBarToggleStoryFrame(showPlayersBar: false),
+      ),
     ],
   ),
 ];
@@ -264,15 +291,16 @@ MaterialApp _gameTopBarStoryFrame({required Widget child}) {
 }
 
 /// Tab-bar story frame: full-width chrome under the dark scaffold so the
-/// row layout (region tabs + treasury/cargo cluster + news toggle) reads
-/// the same way it does in production where `GameTabBar` mounts under
-/// `GameTopBar` inside `GameMapControls`'s `Column`.
+/// row layout (region tabs + treasury/cargo cluster + players-bar toggle +
+/// news toggle) reads the same way it does in production where `GameTabBar`
+/// mounts under `GameTopBar` inside `GameMapControls`'s `Column`.
 Widget _gameTabBarStoryFrame({
   int regionIndex = 0,
   int treasury = 12345,
   int? treasuryDelta,
   int unreadBadgeCount = 0,
   bool showFeed = false,
+  bool showPlayersBar = true,
 }) {
   return MaterialApp(
     debugShowCheckedModeBanner: false,
@@ -294,6 +322,7 @@ Widget _gameTabBarStoryFrame({
                 treasuryDelta: treasuryDelta,
                 unreadBadgeCount: unreadBadgeCount,
                 showFeed: showFeed,
+                showPlayersBar: showPlayersBar,
               ),
             ],
           ),
@@ -310,6 +339,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.treasuryDelta,
     required this.unreadBadgeCount,
     required this.showFeed,
+    required this.showPlayersBar,
   });
 
   final int regionIndex;
@@ -317,6 +347,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int? treasuryDelta;
   final int unreadBadgeCount;
   final bool showFeed;
+  final bool showPlayersBar;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -325,6 +356,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
 class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
   late int _regionIndex = widget.regionIndex;
   late bool _showFeed = widget.showFeed;
+  late bool _showPlayersBar = widget.showPlayersBar;
 
   @override
   Widget build(BuildContext context) {
@@ -345,15 +377,47 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       isCargoUsedReliable: true,
       // ignore: avoid_hardcoded_strings_in_widgets
       cargoHoldLabel: '3/12',
-      trailing: PlayerTurnEventsFeedToggleButton(
-        eventCount: displayedCount,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        tooltip: 'Player turn events',
-        showFeed: _showFeed,
-        onPressed: () => setState(() => _showFeed = !_showFeed),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          PlayersBarToggleButton(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            tooltip: 'Players bar',
+            showPlayersBar: _showPlayersBar,
+            onPressed: () => setState(() => _showPlayersBar = !_showPlayersBar),
+          ),
+          const SizedBox(width: GameTabBar.clusterTrailingGap),
+          PlayerTurnEventsFeedToggleButton(
+            eventCount: displayedCount,
+            // ignore: avoid_hardcoded_strings_in_widgets
+            tooltip: 'Player turn events',
+            showFeed: _showFeed,
+            onPressed: () => setState(() => _showFeed = !_showFeed),
+          ),
+        ],
       ),
     );
   }
+}
+
+Widget _playersBarToggleStoryFrame({required bool showPlayersBar}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    home: Scaffold(
+      backgroundColor: EditorialMonoclePalette.bgDeep,
+      body: SafeArea(
+        child: Center(
+          child: PlayersBarToggleButton(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            tooltip: 'Players bar',
+            showPlayersBar: showPlayersBar,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Corner controls frame: dark scaffold with the row anchored bottom-left,

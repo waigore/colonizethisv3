@@ -534,9 +534,9 @@ List<WidgetbookNode> get victoryUiDirectories => [
 ];
 
 /// Players bar stories. SPEC/ui/empire-overview.md § Players bar
-/// (issue #2861 S6). Renders the floating Great-Power chip column from the
-/// in-game map stack against a representative map-background scrim so the
-/// dark editorial-monocle chrome reads in isolation.
+/// (issue #2861 S6, #3898 power scores + emphasis). Renders the floating
+/// Great-Power chip column from the in-game map stack against a representative
+/// map-background scrim so the dark editorial-monocle chrome reads in isolation.
 List<WidgetbookNode> get playersBarDirectories => [
   WidgetbookFolder(
     name: 'Players Bar',
@@ -554,6 +554,57 @@ List<WidgetbookNode> get playersBarDirectories => [
                   ColoredBox(color: EditorialMonoclePalette.bgDeep),
                   GameMapPlayersBar(game: game),
                 ],
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Human GP highlighted — power scores',
+        builder: (context) {
+          final result = loadSeed42InitGameResult();
+          final game = result.game;
+          final humanId = game.players
+              .firstWhere(
+                (p) => p.isHuman,
+                orElse: () => game.players.first,
+              )
+              .id;
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 400,
+              height: 320,
+              child: Stack(
+                children: [
+                  ColoredBox(color: EditorialMonoclePalette.bgDeep),
+                  GameMapPlayersBar(
+                    game: game,
+                    highlightPlayerId: humanId,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow — embedded below feed anchor',
+        builder: (context) {
+          final game = loadSeed42InitGameResult().game;
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 360,
+              height: 280,
+              child: ColoredBox(
+                color: EditorialMonoclePalette.bgDeep,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 56, left: 8, right: 8),
+                  child: GameMapPlayersBar(
+                    game: game,
+                    narrow: true,
+                    embedded: true,
+                  ),
+                ),
               ),
             ),
           );

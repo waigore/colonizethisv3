@@ -1,3 +1,5 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show greatPowerPowerScore;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -8,61 +10,54 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../flame/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 
-/// Floating column of per–Great-Power chips at the top-right of the in-game
-/// map stack.
+/// Floating column of per–Great-Power chips on the in-game map stack.
 ///
-/// SPEC: `SPEC/ui/empire-overview.md` § Players bar. Issue #2861 S6
-/// (game-screen players bar). Hidden on narrow viewports per
-/// `SPEC/ui/mobile-adaptation.md` / issue #2870; this widget renders the
-/// wide-only baseline.
-///
-/// The chip column is non-interactive: pointer events pass through to the
-/// map layer beneath. All colours resolve from
-/// [EditorialMonoclePalette]; the per-player swatch matches the canonical
-/// map ownership tint via [factionOwnershipColorMapForOldWorld].
+/// SPEC: `SPEC/ui/empire-overview.md` § Players bar. Issue #3898.
 class GameMapPlayersBar extends StatelessWidget {
-  const GameMapPlayersBar({super.key, required this.game});
+  const GameMapPlayersBar({
+    super.key,
+    required this.game,
+    this.highlightPlayerId,
+    this.narrow = false,
+    this.embedded = false,
+    this.rightInset,
+    this.topInsetOverride,
+  });
 
   final Game game;
+  final String? highlightPlayerId;
+  final bool narrow;
+  final bool embedded;
+  final double? rightInset;
+  final double? topInsetOverride;
 
-  /// Vertical inset from the top of the map stack to the first chip row
-  /// (mockup `top:78px`, sits below the 36 + 34 + 8 dp chrome band).
-  static const double topInset = 78;
-
-  /// Horizontal inset from the right edge of the map stack.
-  static const double rightInset = 6;
-
-  /// Vertical gap between consecutive chip rows.
+  static const double wideTopInset = 78;
+  static const double narrowTopInset = 56;
+  static const double rightInsetDefault = 6;
   static const double chipGap = 3;
+  static const double chipMinWidth = 88;
+  static const double narrowStackGap = 4;
 
-  /// Minimum width for each chip row so 1- and 4-digit scores line up.
-  static const double chipMinWidth = 80;
-
-  /// Returns the deterministic, GP-only player roster used by the bar.
-  ///
-  /// Visible for tests and integration. Tribes/minor-nation entries are
-  /// excluded (the chip column tracks Great Powers only); the result is
-  /// sorted by [Player.id] ascending so chip order is stable across builds.
   static List<Player> greatPowerRoster(Game game) {
     final tribeIds = <String>{for (final tribe in game.tribes) tribe.id};
     final roster = game.players
         .where((player) => !tribeIds.contains(player.id))
         .toList(growable: false);
     return List<Player>.from(roster)
-      ..sort((a, b) => a.id.compareTo(b.id));
+      ..sort((a, b) {
+        final scoreCompare = greatPowerPowerScore(
+          game,
+          b.id,
+        ).compareTo(greatPowerPowerScore(game, a.id));
+        if (scoreCompare != 0) {
+          return scoreCompare;
+        }
+        return a.id.compareTo(b.id);
+      });
   }
 
-  /// Counts Old World provinces currently owned by [playerId]; used as the
-  /// chip's score (military-victory progress, threshold 31+).
-  static int oldWorldProvinceCountFor(Game game, String playerId) {
-    var count = 0;
-    for (final province in game.worldState.oldWorld.provinces) {
-      if (province.ownerId == playerId) {
-        count += 1;
-      }
-    }
-    return count;
-  }
+  static int powerScoreFor(Game game, String playerId) =>
+      greatPowerPowerScore(game, playerId);
 
   Color _swatchColorFor(
     Map<String, (int r, int g, int b)> ownershipColors,
@@ -75,8 +70,7 @@ class GameMapPlayersBar extends StatelessWidget {
     return Color.fromRGBO(tuple.$1, tuple.$2, tuple.$3, 1.0);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildChipColumn(BuildContext context) {
     final roster = greatPowerRoster(game);
     if (roster.isEmpty) {
       return const SizedBox.shrink();
@@ -84,16 +78,21 @@ class GameMapPlayersBar extends StatelessWidget {
     final ownershipColors = factionOwnershipColorMapForOldWorld(game);
     final scoreFormat = NumberFormat.decimalPattern('en_US');
     final theme = Theme.of(context);
-    final nameStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-        .copyWith(
+    final mutedNameStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
           color: EditorialMonoclePalette.muted,
           fontWeight: FontWeight.w500,
           fontSize: 10,
         );
-    final scoreStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-        .copyWith(
+    final accentNameStyle = mutedNameStyle.copyWith(
+      color: EditorialMonoclePalette.accent,
+      fontWeight: FontWeight.w600,
+    );
+    final scoreStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
           color: EditorialMonoclePalette.accentDim,
           fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+          fontFamily: 'monospace',
           fontSize: 9,
         );
     final chips = <Widget>[];
@@ -102,32 +101,43 @@ class GameMapPlayersBar extends StatelessWidget {
       if (i > 0) {
         chips.add(const SizedBox(height: chipGap));
       }
+      final highlight = highlightPlayerId != null &&
+          highlightPlayerId == player.id;
       chips.add(
         _PlayerChip(
           key: Key('$kGameMapPlayerChipKeyPrefix${player.id}'),
           name: player.displayName,
-          score: scoreFormat.format(
-            oldWorldProvinceCountFor(game, player.id),
-          ),
+          score: scoreFormat.format(powerScoreFor(game, player.id)),
           swatchColor: _swatchColorFor(ownershipColors, player.id),
           minWidth: chipMinWidth,
-          nameStyle: nameStyle,
+          nameStyle: highlight ? accentNameStyle : mutedNameStyle,
           scoreStyle: scoreStyle,
         ),
       );
     }
-    return Positioned(
-      key: kGameMapPlayersBarKey,
-      top: topInset,
-      right: rightInset,
-      child: IgnorePointer(
-        ignoring: true,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: chips,
-        ),
+    return IgnorePointer(
+      ignoring: true,
+      child: Column(
+        key: kGameMapPlayersBarKey,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: chips,
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final column = _buildChipColumn(context);
+    if (embedded) {
+      return column;
+    }
+    final top = topInsetOverride ?? (narrow ? narrowTopInset : wideTopInset);
+    final right = rightInset ?? rightInsetDefault;
+    return Positioned(
+      top: top,
+      right: right,
+      child: column,
     );
   }
 }

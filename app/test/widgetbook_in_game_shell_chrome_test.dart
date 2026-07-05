@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
@@ -91,6 +92,8 @@ void main() {
           'Negative treasury delta (red)',
           'News toggle — unread badge',
           'News toggle — feed open (no badge)',
+          'Players bar toggle — on (active accent)',
+          'Players bar toggle — off (dim)',
         ];
 
         for (final name in useCaseNames) {
@@ -104,10 +107,31 @@ void main() {
           );
           await tester.pump();
           expect(find.byType(GameTabBar), findsOneWidget);
+          expect(find.byType(PlayersBarToggleButton), findsOneWidget);
           expect(
             find.byType(PlayerTurnEventsFeedToggleButton),
             findsOneWidget,
           );
+        }
+      },
+    );
+
+    testWidgets(
+      'Players Bar Toggle folder exposes on and off chrome variants',
+      (WidgetTester tester) async {
+        const useCaseNames = <String>['On — accent glyph + border', 'Off — dim glyph'];
+
+        for (final name in useCaseNames) {
+          final story = findWidgetbookUseCase(
+            playersBarToggleDirectories,
+            folderName: 'Players Bar Toggle',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          expect(find.byType(PlayersBarToggleButton), findsOneWidget);
         }
       },
     );
@@ -417,16 +441,24 @@ void main() {
     testWidgets(
       'Players Bar folder exposes wide-layout chip column (S12 story 6)',
       (WidgetTester tester) async {
-        final story = findWidgetbookUseCase(
-          playersBarDirectories,
-          folderName: 'Players Bar',
-          useCaseName: 'Default — debug game (wide)',
-        );
-        await tester.pumpWidget(
-          story.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        expect(find.byType(GameMapPlayersBar), findsOneWidget);
+        const useCaseNames = <String>[
+          'Default — debug game (wide)',
+          'Human GP highlighted — power scores',
+          'Narrow — embedded below feed anchor',
+        ];
+
+        for (final name in useCaseNames) {
+          final story = findWidgetbookUseCase(
+            playersBarDirectories,
+            folderName: 'Players Bar',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          expect(find.byType(GameMapPlayersBar), findsOneWidget);
+        }
       },
     );
 
