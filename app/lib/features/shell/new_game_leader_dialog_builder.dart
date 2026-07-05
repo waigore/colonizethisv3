@@ -48,9 +48,11 @@ DialogBuilder buildNewGameLeaderSelectionDialog(
   GlobalKey<NavigatorState> navigatorKey,
 ) {
   return (ctx, params) {
-    final baseConfig = kCtE2EEnabled
-        ? _ctE2eNewGameLeaderTemplateConfig()
-        : GameSetupConfig.defaultConfig;
+    final baseConfig = kCtE2ELockedFullInitEnabled
+        ? GameSetupConfig.defaultConfig
+        : (kCtE2EEnabled
+              ? _ctE2eNewGameLeaderTemplateConfig()
+              : GameSetupConfig.defaultConfig);
     final naming = defaultNamingConfig;
     final initialSelections = <String, String>{};
     for (final gpId in baseConfig.selectedGreatPowerIds) {

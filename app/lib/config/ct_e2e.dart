@@ -5,6 +5,15 @@ import 'package:flutter/material.dart';
 /// **SPEC:** `SPEC/program/e2e-integration-tests.md`.
 const bool kCtE2EEnabled = bool.fromEnvironment('CT_E2E', defaultValue: false);
 
+/// When true with [kCtE2EEnabled], DLG10001 uses [GameSetupConfig.defaultConfig]
+/// (locked full-init profile) so advanced-start presets are selectable in e2e.
+/// Pass `--dart-define=CT_E2E_LOCKED_FULL_INIT=true` for advanced-start scenarios.
+/// **SPEC:** `SPEC/program/e2e-integration-tests.md` § Advanced-start scenarios.
+const bool kCtE2ELockedFullInitEnabled = bool.fromEnvironment(
+  'CT_E2E_LOCKED_FULL_INIT',
+  defaultValue: false,
+);
+
 // ignore: public_member_api_docs — keys are documented in SPEC/program/e2e-integration-tests.md
 /// Opens province detail for the human capital tile (same as a map tap) without Flame hit-testing.
 const Key kCtE2EOpenCapitalProvinceDetailKey = Key(
