@@ -35,6 +35,8 @@ void main() {
           playerTurnEventsFeedCount: 0,
           showPlayerTurnEventsFeed: false,
           onTogglePlayerTurnEventsFeed: () {},
+          showPlayersBar: true,
+          onTogglePlayersBar: () {},
         ),
       ),
     );

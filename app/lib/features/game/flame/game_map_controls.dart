@@ -4,6 +4,7 @@ import '../../../providers/observe_session_provider.dart';
 import '../widgets/game_top_bar.dart';
 import '../widgets/game_tab_bar.dart';
 import '../widgets/player_turn_event_feed.dart';
+import '../widgets/players_bar_toggle_button.dart';
 
 /// Top bar and tab bar for the in-game map shell.
 ///
@@ -26,6 +27,8 @@ class GameMapControls extends StatelessWidget {
     required this.playerTurnEventsFeedCount,
     required this.showPlayerTurnEventsFeed,
     required this.onTogglePlayerTurnEventsFeed,
+    required this.showPlayersBar,
+    required this.onTogglePlayersBar,
     this.isCargoUsedReliable = true,
     this.observeBannerLabel,
     this.treasuryNotDefined = false,
@@ -50,6 +53,8 @@ class GameMapControls extends StatelessWidget {
   final int playerTurnEventsFeedCount;
   final bool showPlayerTurnEventsFeed;
   final VoidCallback onTogglePlayerTurnEventsFeed;
+  final bool showPlayersBar;
+  final VoidCallback onTogglePlayersBar;
   final bool isCargoUsedReliable;
   final String? observeBannerLabel;
   final bool treasuryNotDefined;
@@ -93,15 +98,25 @@ class GameMapControls extends StatelessWidget {
           cargoNotDefined: cargoNotDefined,
           isCargoUsedReliable: isCargoUsedReliable,
           cargoHoldLabel: cargoHoldLabel,
-          trailing: playerTurnEventsFeedNotDefined
-              ? Padding(
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PlayersBarToggleButton(
+                tooltip: l10n.mapControls_playersBarToggle,
+                showPlayersBar: showPlayersBar,
+                onPressed: onTogglePlayersBar,
+              ),
+              const SizedBox(width: GameTabBar.clusterTrailingGap),
+              if (playerTurnEventsFeedNotDefined)
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     kObserveNotDefinedLabel,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 )
-              : PlayerTurnEventsFeedToggleButton(
+              else
+                PlayerTurnEventsFeedToggleButton(
                   eventCount: playerTurnEventsFeedCount,
                   tooltip: l10n.playerTurnFeed_eventsChip(
                     playerTurnEventsFeedCount,
@@ -109,6 +124,8 @@ class GameMapControls extends StatelessWidget {
                   showFeed: showPlayerTurnEventsFeed,
                   onPressed: onTogglePlayerTurnEventsFeed,
                 ),
+            ],
+          ),
         ),
       ],
     );

@@ -110,14 +110,15 @@ void main() {
     );
   }
 
-  group('GameMapPlayersBar narrow-viewport gating (Refs #2870 S3)', () {
+  group('GameMapPlayersBar narrow-viewport gating (Refs #3898)', () {
     testWidgets(
-      'positive: bar is absent from the widget tree below kNarrowBreakpoint',
+      'positive: bar mounts below feed anchor when showPlayersBar is true',
       (WidgetTester tester) async {
-        // Sanity check on the breakpoint itself; if this constant changes,
-        // every narrow-viewport AC across the app needs revisiting.
         expect(kNarrowBreakpoint, 600.0);
         const double narrowWidth = kNarrowBreakpoint - 1.0;
+        final game = baseGame.copyWith(
+          mapViewState: baseGame.mapViewState.copyWith(showPlayersBar: true),
+        );
 
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(narrowWidth * dpr, 700 * dpr);
@@ -125,21 +126,40 @@ void main() {
 
         await tester.pumpWidget(
           buildGameScreen(
-            game: baseGame,
+            game: game,
             width: narrowWidth,
             height: 700,
           ),
         );
         await tester.pump();
 
-        expect(
-          find.byKey(kGameMapPlayersBarKey),
-          findsNothing,
-          reason:
-              'Players bar must be hidden on viewports < kNarrowBreakpoint per '
-              'SPEC/ui/empire-overview.md § Players bar and '
-              'SPEC/ui/mobile-adaptation.md § In-game shell (issue #2870 S3).',
+        expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'positive: bar hidden on narrow when showPlayersBar is false',
+      (WidgetTester tester) async {
+        const double narrowWidth = kNarrowBreakpoint - 1.0;
+        final game = baseGame.copyWith(
+          mapViewState: baseGame.mapViewState.copyWith(showPlayersBar: false),
         );
+
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(narrowWidth * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          buildGameScreen(
+            game: game,
+            width: narrowWidth,
+            height: 700,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byKey(kGameMapPlayersBarKey), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );
