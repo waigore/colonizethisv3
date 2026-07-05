@@ -233,6 +233,19 @@ void main() {
         expect((level1.bboxMinY - level4.bboxMinY).abs(), lessThanOrEqualTo(2));
       });
 
+      test(
+        '$style candidate level-1 max column height is at least 75% of level 4',
+        () async {
+          final level1 = await _loadCandidateTownIconStats(style);
+          final level4 = await _loadTownIconStats('town_${style}_4');
+
+          expect(
+            level1.maxColumnHeight,
+            greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
+          );
+        },
+      );
+
       test('$style candidate opaque count stays below level 2', () async {
         final candidate = await _loadCandidateTownIconStats(style);
         final level2 = await _loadTownIconStats('town_${style}_2');
