@@ -189,14 +189,13 @@ Future<_TownIconStats> _loadTownIconStats(String iconId) async {
     var rowOpaque = 0;
     for (var x = 0; x < 64; x++) {
       final i = (y * 64 + x) * 4;
-      if (pixels!.getUint8(i + 3) > 0) {
-        opaque++;
-        rowOpaque++;
-        if (x < minX) minX = x;
-        if (y < minY) minY = y;
-        if (x > maxX) maxX = x;
-        if (y > maxY) maxY = y;
-      }
+      if (pixels!.getUint8(i + 3) == 0) continue;
+      opaque++;
+      rowOpaque++;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
     }
     if (rowOpaque > maxColumnHeight) {
       maxColumnHeight = rowOpaque;
