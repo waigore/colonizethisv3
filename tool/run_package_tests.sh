@@ -48,6 +48,14 @@ declare -a bg_pids=()
 for pkg_dir in "${tasks[@]}"; do
   echo "  [$task_idx] $pkg_dir"
 
+  pkg_short="${pkg_dir##*/}"
+  pkg_concurrency="$TEST_CONCURRENCY"
+  # Coverage collection under -j4 can dispose VM service connections on CI
+  # runners when loading heavy suggestion suites (colonizethis_orders).
+  if [ "$pkg_short" = "colonizethis_orders" ]; then
+    pkg_concurrency=2
+  fi
+
   (
     cd "$ROOT/$pkg_dir"
     rm -rf coverage
@@ -55,7 +63,7 @@ for pkg_dir in "${tasks[@]}"; do
     # falls through to the rc.* write below; otherwise the parent never sees
     # the failure (rc.* missing => failure-check loop silently passes).
     set +e
-    dart test --coverage=coverage -j "$TEST_CONCURRENCY" --reporter=compact \
+    dart test --coverage=coverage -j "$pkg_concurrency" --reporter=compact \
       --test-randomize-ordering-seed=42
     rc=$?
     set -e

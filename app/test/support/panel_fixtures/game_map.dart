@@ -115,7 +115,7 @@ Game buildGameScreenSpecsTestGame() {
 /// `_applyCapitalCenter` (`game_map_area_view.dart`) sets the highlight
 /// unconditionally, and both the camera move (`ct_region_map_game.dart`
 /// `centerOnTileKey`) and the highlight ring paint
-/// (`region_map_component_render_markers.dart` `_paintTileOutlineRing`) safely
+/// (`region_map_component_render_markers_selection.dart` `_paintTileOutlineRing`) safely
 /// no-op when the capital tile falls outside the mounted region bounds.
 ///
 /// The fixture provides a single human ([kPanelTestHumanPlayerId]) so
