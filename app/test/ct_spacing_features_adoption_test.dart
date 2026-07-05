@@ -385,7 +385,9 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/screens/trade_screen.dart',
   'lib/features/game/screens/trade_screen_deal_book.dart',
   'lib/features/game/widgets/civilian_units_panel.dart',
-  'lib/features/game/widgets/civilian_units_panel_support.dart',
+  // civilian_units_panel_support.dart was split into part files; the
+  // token-eligible `EdgeInsets` callsites live in the unit-row part.
+  'lib/features/game/widgets/civilian_units_panel_support_unit_row.dart',
   'lib/features/game/widgets/diplomacy_dialogs.dart',
   'lib/features/game/widgets/diplomacy_panel.dart',
   'lib/features/game/widgets/diplomacy_panel_chrome.dart',
