@@ -19,7 +19,7 @@ export 'order_suggestion_recruit_worker.dart'
         isRecruitWorkerOrderAcceptedWithValidator,
         suggestRecruitWorkerOrders;
 export 'order_suggestion_research.dart' show suggestResearchOrders;
-export 'order_suggestion_work_tile_keys.dart'
+export 'order_suggestion_work_tile_candidacy.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'order_suggestion_army_move.dart'
     show
