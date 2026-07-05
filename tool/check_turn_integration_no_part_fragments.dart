@@ -15,6 +15,20 @@ final RegExp _legacySegmentPartFilename = RegExp(
   r'_part\d+_segment\d+_part\.dart$',
 );
 
+/// Legacy per-segment integration test filenames (pre-collapse standalone files).
+final RegExp _legacySegmentTestFilename = RegExp(
+  r'_part\d+_segment\d+_test\.dart$',
+);
+
+/// Canonical domain entrypoints under `test/integration/` (Refs #3876).
+const Set<String> kTurnIntegrationDomainEntrypoints = {
+  'resolve_turn_combat_movement_test.dart',
+  'resolve_turn_combat_resolution_test.dart',
+  'resolve_turn_diplomacy_victory_test.dart',
+  'resolve_turn_economy_test.dart',
+  'resolve_turn_spy_fog_end_of_turn_test.dart',
+};
+
 /// True when [slashPath] is under the turn integration test directory.
 bool turnIntegrationNoPartFragmentsPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
@@ -39,6 +53,20 @@ int runCheckTurnIntegrationNoPartFragments(
     final content = file.readAsStringSync();
     if (_legacySegmentPartFilename.hasMatch(fileName)) {
       violations.add('$rel: legacy integration fragment filename (Refs #3876)');
+      continue;
+    }
+    if (_legacySegmentTestFilename.hasMatch(fileName)) {
+      violations.add(
+        '$rel: legacy integration segment test filename — collapse into '
+        'domain entrypoints (Refs #3876)',
+      );
+      continue;
+    }
+    if (!kTurnIntegrationDomainEntrypoints.contains(fileName)) {
+      violations.add(
+        '$rel: unexpected integration entrypoint — allowed: '
+        '${kTurnIntegrationDomainEntrypoints.join(', ')} (Refs #3876)',
+      );
       continue;
     }
     for (final lineNumber in turnNoPartDirectiveLineNumbers(content)) {
