@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'setup_logging.dart';
+import 'gp_old_world_tile_scan.dart';
 
 bool _isGpOwnedCivilianOrMilitaryUnit(Unit unit, String gpId) {
   if (unit.ownerId != gpId) return false;
@@ -90,7 +91,7 @@ Game applyAdvancedStartUnitsAndShips({
   final civilianCounts = advancedStartCivilianCounts(startType);
   final regimentCount = advancedStartRegimentCount(startType);
   final shipCount = advancedStartCargoShipCount(startType);
-  final gpIds = game.players.map((p) => p.id).toSet();
+  final gpIds = gpIdsSortedFromPlayers(game).toSet();
 
   var unitsByRegion = game.worldState.mutableUnitListsByRegion();
   for (final regionId in unitsByRegion.keys.toList()) {
