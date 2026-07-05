@@ -3,14 +3,12 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'build_rail_work_rules.dart';
-import 'order_work_constants.dart';
-import 'orders_application_helpers.dart';
+import '../build_rail_work_rules.dart';
+import '../order_work_constants.dart';
+import '../orders_application_helpers.dart';
 
-// ---------------------------------------------------------------------------
-// Work-target tile pre-filtering (shared by candidacy index and tile-keys API).
+// Work-target tile pre-filtering (work-tile candidacy submodule).
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
-// ---------------------------------------------------------------------------
 
 Set<String> preFilterWorkTargetTiles({
   required Game game,

@@ -8,7 +8,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
-import 'order_suggestion_work_tile_candidacy.dart';
+import 'work_tile_candidacy/work_tile_candidacy.dart';
 
 /// Inputs for populating per-player work-target tile selection caches.
 ///

@@ -97,15 +97,3 @@ Game gpMinorGame({
     overtureStates: resolvedOvertureStates,
   );
 }
-
-/// GP + Minor + second GP with provinces for diplomatic panel action tests.
-Game gpMinorPanelActionsGame() => gpMinorGame(
-      gameId: 'g',
-      turnNumber: 1,
-      treasury: 5000,
-      gp1DisplayName: 'A',
-      minorDisplayName: 'Bavaria',
-      includeSecondGp: true,
-      includeProvinces: true,
-      overtureStates: const [],
-    );
