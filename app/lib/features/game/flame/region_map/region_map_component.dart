@@ -25,12 +25,14 @@ import '../render/warp_zone_edge_geometry.dart';
 
 
 part 'region_map_component_shared.dart';
+part 'region_map_component_shared_visibility.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
 part 'region_map_component_render_core_overlays.dart';
 part 'region_map_component_render_political_labels.dart';
 part 'region_map_component_render_political_borders.dart';
 part 'region_map_component_render_markers.dart';
+part 'region_map_component_render_markers_settlements.dart';
 
 final _log = packageLogger();
 

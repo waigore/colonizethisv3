@@ -263,6 +263,23 @@ OrderValidationResult? precheckBuildImprovement(
   return null;
 }
 
+OrderValidationResult? precheckExplorerConsulateInMinorTribe(
+  WorkOrderTargetPrecheckContext ctx,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
+) {
+  return rejectExplorerWithoutConsulateInMinorTribeProvince(
+    game: ctx.game,
+    playerId: ctx.playerId,
+    unitType: unitType,
+    workTarget: order.target,
+    provinceOwnerId: provinceOwnerId,
+    factionMembership: ctx.factionMembership,
+  );
+}
+
 OrderValidationResult? precheckDefaultForeignProvince(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder order,
@@ -316,6 +333,7 @@ final Map<String, WorkOrderTargetPrecheck> workOrderTargetPrechecks = {
 /// Shared territory checks that run for every work target after any
 /// target-specific precheck (Refs #3877).
 const List<WorkOrderTargetPrecheck> _sharedWorkOrderTargetPrechecks = [
+  precheckExplorerConsulateInMinorTribe,
   precheckDefaultForeignProvince,
   precheckDevExclusiveTileConflict,
 ];

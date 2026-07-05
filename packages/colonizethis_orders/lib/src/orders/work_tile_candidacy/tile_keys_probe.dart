@@ -9,7 +9,7 @@ import '../order_suggestion_helpers.dart';
 import '../order_work_constants.dart';
 import '../partial_province_reveal.dart';
 import '../unit_type_helpers.dart';
-import 'prefilter.dart';
+import 'work_tile_candidate_index.dart';
 
 // Work-tile candidate index and tile-keys probe API.
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
@@ -39,17 +39,18 @@ Set<String> rawCandidateTilesForWorkTarget({
         for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
           p.id,
       };
-  return preFilterWorkTargetTiles(
+  return WorkTileCandidateIndex(
     game: game,
-    workTarget: workTarget,
     playerId: playerId,
     tileKeysByRegion: world.tileKeysByRegionAndProvince,
     resourceByTile: world.resourceByTileKey,
     purchasedTiles: world.purchasedTilesByTileKey,
     ownedProvinceIds: ownedProvinceIds,
-    exploreProvinceScope: exploreProvinceScope,
     tileMapByRegion: tileMapByRegion,
     factionMembership: factionMembership,
+  ).candidateTilesForWorkTarget(
+    workTarget,
+    exploreProvinceScope: exploreProvinceScope,
   );
 }
 
