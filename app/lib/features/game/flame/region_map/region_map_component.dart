@@ -17,10 +17,8 @@ import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import '../caches/resource_icon_cache.dart';
 import '../caches/province_label_icon_cache.dart';
-import '../terrain_tileset.dart';
+import '../tilesets/tilesets.dart';
 import '../caches/town_icon_cache.dart';
-import '../transport_overlay_mask.dart';
-import '../transport_overlay_tileset.dart';
 import '../warp_zone_edge_geometry.dart';
 
 

@@ -9,7 +9,7 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 import 'package:flutter/services.dart';
 
-import 'caches/asset_image_cache.dart';
+import '../caches/asset_image_cache.dart';
 
 final _log = packageLogger();
 

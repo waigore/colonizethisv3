@@ -18,9 +18,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         CtMapVisibilityMode,
         extractionIndicatorRectsForIconRect,
         paintResourceExtractionDiscIndicators;
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 void main() {

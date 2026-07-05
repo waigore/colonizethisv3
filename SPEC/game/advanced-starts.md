@@ -63,7 +63,7 @@ Ordered steps (full issue #3895):
 11. Player + minor tile development and roads.
 12. NW province town → OW capital connectivity.
 
-**Implementation status:** Steps **1–12** and Hive save/load round-trip for advanced-start state are implemented. Full issue closure awaits PR merge and verify-github-issue on #3895.
+**Implementation status:** Steps **1–12** and Hive save/load round-trip for advanced-start state are implemented on `dev` (PR #3897). Full issue closure awaits `verify-github-issue` on #3895.
 
 ## Acceptance criteria (partial — foundation + units slice)
 
