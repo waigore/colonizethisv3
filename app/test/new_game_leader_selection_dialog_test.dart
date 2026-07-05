@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,6 +73,7 @@ void main() {
         bool infiniteMode,
         double terrainVariation,
         Map<String, String?> aiProfileByGpId,
+        AdvancedStartType advancedStart,
       )
       onConfirmed,
     }) async {
@@ -126,7 +128,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -154,7 +156,7 @@ void main() {
     testWidgets(
       'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
 
         // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
         // the dialog frame is pinned to the refreshed mockup
@@ -175,7 +177,7 @@ void main() {
         await pumpDialog(
           tester,
           surfaceSize: const Size(900, 2000),
-          onConfirmed: (_, _, _, _, _, _) {},
+          onConfirmed: (_, _, _, _, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -201,7 +203,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _, _, _) {},
+        onConfirmed: (_, _, _, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -229,7 +231,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, seed, infiniteMode, _, __) {
+        onConfirmed: (ids, leaders, seed, infiniteMode, _, __, ___) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
@@ -284,7 +286,7 @@ void main() {
                         blessedProfileNames: const ['aggressive_v2'],
                         onCancel: () => Navigator.of(ctx).pop(),
                         onConfirmed:
-                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                            (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
                       ),
                     );
                   },
@@ -340,7 +342,7 @@ void main() {
                         blessedProfileNames: const ['aggressive_v2'],
                         onCancel: () => Navigator.of(ctx).pop(),
                         onConfirmed:
-                            (_, _, _, _, _, profiles) => gotProfiles = profiles,
+                            (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
                       ),
                     );
                   },
@@ -369,7 +371,7 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _, _, _) {
+        onConfirmed: (_, _, _, _, _, _, _) {
           confirmed = true;
         },
       );
@@ -388,7 +390,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _, _, __) {
+        onConfirmed: (ids, leaders, _, _, _, __, ___) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -411,7 +413,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -425,7 +427,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -441,7 +443,7 @@ void main() {
       bool? gotInfiniteMode;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, infiniteMode, _, __) =>
+        onConfirmed: (_, _, _, infiniteMode, _, __, ___) =>
             gotInfiniteMode = infiniteMode,
       );
       final toggle = find.byType(CtToggleSwitch);
@@ -453,10 +455,116 @@ void main() {
       expect(gotInfiniteMode, isTrue);
     });
 
+    group('Advanced start selector (Refs #3895)', () {
+      testWidgets('default Start emits AdvancedStartType.none', (
+        WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+              gotAdvancedStart = advancedStart,
+        );
+        expect(find.text('Advanced start'), findsOneWidget);
+        expect(find.text('None (Turn 0)'), findsOneWidget);
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.none);
+      });
+
+      testWidgets('selecting 50 Turns In forwards AdvancedStartType.turns50', (
+        WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+              gotAdvancedStart = advancedStart,
+        );
+        final advancedDropdown = find.widgetWithText(
+          CtDropdown<AdvancedStartType>,
+          'None (Turn 0)',
+        );
+        await tester.ensureVisible(advancedDropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(advancedDropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('50 Turns In (1598)').last);
+        await tester.pumpAndSettle();
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.turns50);
+      });
+
+      testWidgets(
+        'non-locked profile shows disabled helper and Start emits none',
+        (WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        addTearDown(tester.view.reset);
+        tester.view.physicalSize = const Size(900, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppThemes.colonial,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return TextButton(
+                    onPressed: () {
+                      final baseConfig = GameSetupConfig(
+                        numProvincesOldWorld: 24,
+                        numProvincesNewWorld: 12,
+                      );
+                      final naming = defaultNamingConfig;
+                      final initial = <String, String>{};
+                      for (final gpId in baseConfig.selectedGreatPowerIds) {
+                        final gp = naming.gpById(gpId);
+                        if (gp != null && gp.leaderVariants.isNotEmpty) {
+                          initial[gpId] = gp.defaultLeaderVariantId;
+                        }
+                      }
+                      showDialog<void>(
+                        context: context,
+                        builder: (ctx) => NewGameLeaderSelectionDialog(
+                          baseConfig: baseConfig,
+                          naming: naming,
+                          initialLeaderByGpId: initial,
+                          blessedProfileNames: const [],
+                          onCancel: () => Navigator.of(ctx).pop(),
+                          onConfirmed:
+                              (_, _, _, _, _, __, advancedStart) =>
+                                  gotAdvancedStart = advancedStart,
+                        ),
+                      );
+                    },
+                    child: const Text('open'),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Advanced start requires the standard six-power campaign profile.',
+          ),
+          findsOneWidget,
+        );
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.none);
+      });
+    });
+
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         expect(find.byType(CtSlider), findsOneWidget);
         expect(find.text('Terrain variation:'), findsOneWidget);
         // Live percent value rendered separately from the static label.
@@ -471,7 +579,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
         await ensureTapStart(tester);
@@ -485,7 +593,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -507,7 +615,7 @@ void main() {
         double? gotTerrainVariation;
         await pumpDialog(
           tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __) =>
+          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
 
@@ -544,6 +652,7 @@ void main() {
           bool infiniteMode,
           double terrainVariation,
           Map<String, String?> aiProfileByGpId,
+          AdvancedStartType advancedStart,
         )?
         onConfirmed,
       }) async {
@@ -578,7 +687,7 @@ void main() {
                           initialLeaderByGpId: initial,
                           blessedProfileNames: const [],
                           onCancel: () => Navigator.of(ctx).pop(),
-                          onConfirmed: onConfirmed ?? (_, _, _, _, _, _) {},
+                          onConfirmed: onConfirmed ?? (_, _, _, _, _, _, _) {},
                         ),
                       );
                     },
@@ -789,7 +898,7 @@ void main() {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
-          await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
           final titleFinder = find.byKey(
             const ValueKey<String>('leaderSelectionDialogTitle'),
           );
@@ -811,7 +920,7 @@ void main() {
       testWidgets('renders exactly one CtBrassDivider keyed below the title', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final dividerFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogBrassDivider'),
         );
@@ -833,7 +942,7 @@ void main() {
       testWidgets('intro paints --muted italic body color', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final introFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogIntro'),
         );
@@ -847,7 +956,7 @@ void main() {
           '(regression guard against unstyled headings)', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _) {});
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final Text title = tester.widget<Text>(
           find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
         );
@@ -907,7 +1016,7 @@ void main() {
                         initialLeaderByGpId: initial,
                         blessedProfileNames: const [],
                         onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: (_, _, _, _, _, _) {},
+                        onConfirmed: (_, _, _, _, _, _, _) {},
                       ),
                     );
                   },

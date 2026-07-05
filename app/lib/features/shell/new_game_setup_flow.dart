@@ -79,6 +79,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       startingResources: templateConfig.startingResources,
       initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
       aiProfileByGpId: templateConfig.aiProfileByGpId,
+      advancedStart: templateConfig.advancedStart,
     );
 
     final outcome = await _showNewGameProgressDialog(

@@ -2,6 +2,7 @@
 // OpenDialogEvent id `new_game_leader_selection`. SPEC/ui/new-game-leader-selection-dialog.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
@@ -65,6 +66,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     bool infiniteMode,
     double terrainVariation,
     Map<String, String?> aiProfileByGpId,
+    AdvancedStartType advancedStart,
   )
   onConfirmed;
 
@@ -113,6 +115,7 @@ class _NewGameLeaderSelectionDialogState
   late Map<String, String> _leaderByGpId;
   late final TextEditingController _seedController;
   bool _infiniteMode = false;
+  AdvancedStartType _advancedStart = AdvancedStartType.none;
   double _terrainVariation =
       NewGameLeaderSelectionDialog.defaultTerrainVariation;
   final Map<int, String?> _profileBySlot = <int, String?>{};
@@ -295,6 +298,8 @@ class _NewGameLeaderSelectionDialogState
           const SizedBox(height: CtSpacing.ml),
           _buildSeedField(theme, l10n, styles),
           const SizedBox(height: CtSpacing.ml),
+          _buildAdvancedStartField(theme, l10n, styles),
+          const SizedBox(height: CtSpacing.ml),
           _buildInfiniteModeTile(theme, l10n, styles),
           const SizedBox(height: CtSpacing.ml),
           _buildTerrainVariationField(
@@ -420,6 +425,58 @@ class _NewGameLeaderSelectionDialogState
     );
   }
 
+  bool get _advancedStartEnabled => widget.baseConfig.isLockedFullInitProfile;
+
+  String _advancedStartLabel(AppLocalizations l10n, AdvancedStartType type) {
+    return switch (type) {
+      AdvancedStartType.none => l10n.shell_leaderDialog_advancedStartNone,
+      AdvancedStartType.turns50 => l10n.shell_leaderDialog_advancedStart50,
+      AdvancedStartType.turns100 => l10n.shell_leaderDialog_advancedStart100,
+    };
+  }
+
+  Widget _buildAdvancedStartField(
+    ThemeData theme,
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_advancedStartLabel,
+          style: styles.fieldLabel,
+        ),
+        const SizedBox(height: CtSpacing.m / 2),
+        AbsorbPointer(
+          absorbing: !_advancedStartEnabled,
+          child: Opacity(
+            opacity: _advancedStartEnabled ? 1 : 0.5,
+            child: CtDropdown<AdvancedStartType>(
+              value: _advancedStart,
+              items: AdvancedStartType.values,
+              itemLabel: (type) => _advancedStartLabel(l10n, type),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() => _advancedStart = value);
+              },
+            ),
+          ),
+        ),
+        if (!_advancedStartEnabled) ...[
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            l10n.shell_leaderDialog_advancedStartDisabledHelper,
+            style: styles.helper,
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildInfiniteModeTile(
     ThemeData theme,
     AppLocalizations l10n,
@@ -500,6 +557,7 @@ class _NewGameLeaderSelectionDialogState
       _infiniteMode,
       _terrainVariation,
       _aiProfileByGpIdForCallback(),
+      _advancedStartEnabled ? _advancedStart : AdvancedStartType.none,
     );
   }
 

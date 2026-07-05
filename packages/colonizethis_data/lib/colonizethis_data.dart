@@ -2,6 +2,8 @@
 /// Topology and tile map formats: SPEC/program/map-data.md.
 library colonizethis_data;
 
+export 'src/advanced_start_tables.dart';
+export 'src/advanced_start_regiments.dart';
 export 'src/combat_config.dart';
 export 'src/regiment_type_display_name.dart';
 export 'src/ship_type_display_name.dart';

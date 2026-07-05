@@ -239,6 +239,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'The game will continue indefinitely';
 
   @override
+  String get shell_leaderDialog_advancedStartLabel => 'Advanced start';
+
+  @override
+  String get shell_leaderDialog_advancedStartNone => 'None (Turn 0)';
+
+  @override
+  String get shell_leaderDialog_advancedStart50 => '50 Turns In (1598)';
+
+  @override
+  String get shell_leaderDialog_advancedStart100 => '100 Turns In (1698)';
+
+  @override
+  String get shell_leaderDialog_advancedStartDisabledHelper =>
+      'Advanced start requires the standard six-power campaign profile.';
+
+  @override
   String get shell_leaderDialog_terrainVariationLabel => 'Terrain variation:';
 
   @override
