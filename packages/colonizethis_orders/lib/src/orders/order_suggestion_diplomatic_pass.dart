@@ -131,3 +131,35 @@ void acceptDiplomaticCandidatesForTarget({
   state.workingOrders = trialOrders;
   state.passValidator = state.passValidator.forBasePrefix(state.workingOrders);
 }
+
+/// Declare-war-only pass: one [declareWar] candidate per target with no prefix
+/// trial orders so establish-overture does not block war (Refs #2504, #3877).
+void acceptDeclareWarCandidatesForTargets({
+  required Iterable<String> sortedTargetIds,
+  required String playerId,
+  required DiplomaticSuggestionPassInputs inputs,
+  required DiplomaticSuggestionPassState state,
+}) {
+  for (final targetId in sortedTargetIds) {
+    if (targetId == playerId) continue;
+    final candidate = declareWarSuggestionCandidate(
+      inputs.subValidatorContext,
+      DiplomaticSuggestionTargetView(
+        targetId: targetId,
+        player: inputs.player,
+        knownTargetIds: inputs.knownTargetIds,
+        knownFactionIds: inputs.knownFactionIds,
+        playerOverturesByTargetId: inputs.playerOverturesByTargetId,
+        playerHoldsColony: inputs.playerHoldsColony,
+      ),
+    );
+    if (candidate == null) continue;
+    if (!isDiplomaticOrderAcceptedWithValidator(
+      state.passValidator,
+      candidate,
+    )) {
+      continue;
+    }
+    state.suggestions.add(candidate);
+  }
+}

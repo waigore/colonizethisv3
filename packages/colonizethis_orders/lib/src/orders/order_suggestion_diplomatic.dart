@@ -128,34 +128,30 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
     playerId: playerId,
   );
 
-  final subValidatorContext = DiplomaticSubValidatorContext(
-    game: game,
-    playerId: playerId,
-    factionMembership: pass.factionMembership,
+  final passInputs = DiplomaticSuggestionPassInputs(
+    subValidatorContext: DiplomaticSubValidatorContext(
+      game: game,
+      playerId: playerId,
+      factionMembership: pass.factionMembership,
+    ),
+    knownTargetIds: targets.knownTargetIds,
+    knownFactionIds: targets.knownFactionIds,
+    playerOverturesByTargetId: const {},
+    playerHoldsColony: false,
+    player: view.player,
   );
 
   final sortedTargetIds = targets.knownTargetIds.toList()..sort();
-  final passValidator = pass.candidateValidator;
-
-  emitAcceptedCandidates<DiplomaticOrder>(
-    candidates: [
-      for (final targetId in sortedTargetIds)
-        if (targetId != playerId)
-          declareWarSuggestionCandidate(
-            subValidatorContext,
-            DiplomaticSuggestionTargetView(
-              targetId: targetId,
-              player: view.player,
-              knownTargetIds: targets.knownTargetIds,
-              knownFactionIds: targets.knownFactionIds,
-              playerOverturesByTargetId: const {},
-              playerHoldsColony: false,
-            ),
-          ),
-    ].whereType<DiplomaticOrder>(),
-    accept: (candidate) =>
-        isDiplomaticOrderAcceptedWithValidator(passValidator, candidate),
-    into: suggestions,
+  final passState = DiplomaticSuggestionPassState(
+    workingOrders: currentOrders,
+    passValidator: pass.candidateValidator,
+    suggestions: suggestions,
+  );
+  acceptDeclareWarCandidatesForTargets(
+    sortedTargetIds: sortedTargetIds,
+    playerId: playerId,
+    inputs: passInputs,
+    state: passState,
   );
 
   suggestions.sort((a, b) => a.targetFactionId.compareTo(b.targetFactionId));
