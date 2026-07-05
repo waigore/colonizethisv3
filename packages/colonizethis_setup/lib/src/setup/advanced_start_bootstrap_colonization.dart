@@ -39,6 +39,40 @@ Map<String, int> _tribeProvinceCounts(Game game) {
   return counts;
 }
 
+void _enqueueUnvisitedNeighbors({
+  required String current,
+  required Map<String, Set<String>> provinceNeighbours,
+  required Set<String> visited,
+  required List<String> queue,
+}) {
+  final nextIds = provinceNeighbours[current]?.toList() ?? const [];
+  nextIds.sort();
+  for (final next in nextIds) {
+    if (!visited.add(next)) continue;
+    queue.add(next);
+  }
+}
+
+bool _tryAssignNwProvince({
+  required String current,
+  required String playerId,
+  required Game game,
+  required Map<String, String> assignedToGp,
+  required Map<String, int> tribeCounts,
+  required List<String> collected,
+}) {
+  if (assignedToGp.containsKey(current)) return false;
+
+  final tribeOwner = _tribeOwnerForLocalProvince(game, current);
+  if (tribeOwner == null) return false;
+  if ((tribeCounts[tribeOwner] ?? 0) <= 1) return false;
+
+  assignedToGp[current] = playerId;
+  collected.add(current);
+  tribeCounts[tribeOwner] = tribeCounts[tribeOwner]! - 1;
+  return true;
+}
+
 Game applyAdvancedStartNwColonization({
   required Game game,
   required AdvancedStartType startType,
@@ -87,23 +121,22 @@ Game applyAdvancedStartNwColonization({
 
     while (head < queue.length && collected.length < targetCount) {
       final current = queue[head++];
-      if (assignedToGp.containsKey(current)) continue;
+      final assigned = _tryAssignNwProvince(
+        current: current,
+        playerId: player.id,
+        game: game,
+        assignedToGp: assignedToGp,
+        tribeCounts: tribeCounts,
+        collected: collected,
+      );
+      if (!assigned) continue;
 
-      final tribeOwner = _tribeOwnerForLocalProvince(game, current);
-      if (tribeOwner == null) continue;
-      if ((tribeCounts[tribeOwner] ?? 0) <= 1) continue;
-
-      assignedToGp[current] = player.id;
-      collected.add(current);
-      tribeCounts[tribeOwner] = tribeCounts[tribeOwner]! - 1;
-
-      final nextIds = provinceNeighbours[current]?.toList() ?? const [];
-      nextIds.sort();
-      for (final next in nextIds) {
-        if (visited.add(next)) {
-          queue.add(next);
-        }
-      }
+      _enqueueUnvisitedNeighbors(
+        current: current,
+        provinceNeighbours: provinceNeighbours,
+        visited: visited,
+        queue: queue,
+      );
     }
 
     if (collected.length < targetCount) {

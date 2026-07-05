@@ -69,6 +69,49 @@ String? _hubTileKeyForProvince({
   return null;
 }
 
+Game _applyPlayerProvinceDevelopment({
+  required Game game,
+  required String playerId,
+  required String regionId,
+  required Province province,
+  required double fraction,
+  required Set<String> prospected,
+  required TileMapResult map,
+  required Map<String, List<String>> tileKeysByProvince,
+}) {
+  final tileKeys = tileKeysByProvince[province.id] ?? const [];
+  final candidates = _rankDevelopableTileKeys(
+    tileKeys: tileKeys,
+    resourceByTileKey: game.worldState.resourceByTileKey,
+    prospectedTileKeys: prospected,
+  );
+  if (candidates.isEmpty) return game;
+
+  final target = (candidates.length * fraction).ceil();
+  final selected = candidates.take(target).toList();
+  var tileState = game.worldState.tileState;
+  for (final key in selected) {
+    tileState = tileState.setImprovement(key, 1);
+  }
+  var updated = game.withTileState(tileState);
+
+  final hub = _hubTileKeyForProvince(
+    game: updated,
+    province: province,
+    ownerId: playerId,
+  );
+  if (hub == null) return updated;
+
+  return _wireRoadsFromTilesToHub(
+    game: updated,
+    regionId: regionId,
+    ownerId: playerId,
+    hubTileKey: hub,
+    fromTileKeys: selected,
+    map: map,
+  );
+}
+
 Game _wireRoadsFromTilesToHub({
   required Game game,
   required String regionId,
@@ -129,35 +172,15 @@ Game applyAdvancedStartPlayerDevelopment({
 
       for (final province in game.worldState.provincesForRegion(regionId)) {
         if (province.ownerId != player.id) continue;
-        final tileKeys = tileKeysByProvince[province.id] ?? const [];
-        final candidates = _rankDevelopableTileKeys(
-          tileKeys: tileKeys,
-          resourceByTileKey: game.worldState.resourceByTileKey,
-          prospectedTileKeys: prospected,
-        );
-        if (candidates.isEmpty) continue;
-
-        final target = (candidates.length * fraction).ceil();
-        final selected = candidates.take(target).toList();
-        var tileState = updated.worldState.tileState;
-        for (final key in selected) {
-          tileState = tileState.setImprovement(key, 1);
-        }
-        updated = updated.withTileState(tileState);
-
-        final hub = _hubTileKeyForProvince(
+        updated = _applyPlayerProvinceDevelopment(
           game: updated,
-          province: province,
-          ownerId: player.id,
-        );
-        if (hub == null) continue;
-        updated = _wireRoadsFromTilesToHub(
-          game: updated,
+          playerId: player.id,
           regionId: regionId,
-          ownerId: player.id,
-          hubTileKey: hub,
-          fromTileKeys: selected,
+          province: province,
+          fraction: fraction,
+          prospected: prospected,
           map: map,
+          tileKeysByProvince: tileKeysByProvince,
         );
       }
     }

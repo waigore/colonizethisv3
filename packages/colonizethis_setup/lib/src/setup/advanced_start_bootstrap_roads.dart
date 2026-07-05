@@ -100,6 +100,42 @@ Set<String> pathTileKeysTowardHub({
   return out;
 }
 
+(int x, int y)? _closestSeaboardTileInProvince({
+  required TileMapResult map,
+  required MapTopology topology,
+  required String localProvinceId,
+  required String seaZoneId,
+  required Set<String> provinceIds,
+  required int inlandX,
+  required int inlandY,
+}) {
+  int? bestDist;
+  int? bestX;
+  int? bestY;
+  for (var y = 0; y < map.height; y++) {
+    for (var x = 0; x < map.width; x++) {
+      if (map.cell(x, y) != localProvinceId) continue;
+      if (!tileAdjacentToSeaZone(
+        x,
+        y,
+        map,
+        topology,
+        seaZoneId,
+        provinceIds: provinceIds,
+      )) {
+        continue;
+      }
+      final dist = (x - inlandX).abs() + (y - inlandY).abs();
+      if (bestDist != null && dist >= bestDist) continue;
+      bestDist = dist;
+      bestX = x;
+      bestY = y;
+    }
+  }
+  if (bestX == null || bestY == null) return null;
+  return (bestX, bestY);
+}
+
 TileMapState wireRoadPathsOnOwnedTiles({
   required TileMapState tileState,
   required Iterable<String> pathTileKeys,
@@ -155,32 +191,18 @@ WorldState applySeaboardPortAndRoadToTile({
       continue;
     }
 
-    int? bestDist;
-    int? bestX;
-    int? bestY;
-    for (var y = 0; y < map.height; y++) {
-      for (var x = 0; x < map.width; x++) {
-        if (map.cell(x, y) != localProvinceId) continue;
-        if (!tileAdjacentToSeaZone(
-          x,
-          y,
-          map,
-          topology,
-          seaZoneId,
-          provinceIds: provinceIds,
-        )) {
-          continue;
-        }
-        final dist = (x - coords.x).abs() + (y - coords.y).abs();
-        if (bestDist == null || dist < bestDist) {
-          bestDist = dist;
-          bestX = x;
-          bestY = y;
-        }
-      }
-    }
-    if (bestX == null || bestY == null) continue;
+    final seaboard = _closestSeaboardTileInProvince(
+      map: map,
+      topology: topology,
+      localProvinceId: localProvinceId,
+      seaZoneId: seaZoneId,
+      provinceIds: provinceIds,
+      inlandX: coords.x,
+      inlandY: coords.y,
+    );
+    if (seaboard == null) continue;
 
+    final (bestX, bestY) = seaboard;
     final portKey = CapitalTile.tileKey(
       regionId,
       provinceId,
