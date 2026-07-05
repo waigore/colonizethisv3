@@ -159,6 +159,27 @@ const double kAdvancedStart50TurnProspectFraction = 0.50;
 
 const double kAdvancedStart100TurnProspectFraction = 0.75;
 
+/// NW provinces assigned per GP at 100-turn advanced start.
+const int kAdvancedStart100TurnNwColonizationCount = 6;
+
+const double kAdvancedStart50TurnDevelopmentFraction = 0.25;
+
+const double kAdvancedStart100TurnDevelopmentFraction = 0.50;
+
+/// Non-prospect resource ids eligible for advanced-start development.
+const Set<String> kAdvancedStartDevelopableResourceIds = {
+  'grain',
+  'meat',
+  'wool',
+  'horses',
+  'timber',
+  'sugarCane',
+  'tobacco',
+  'cotton',
+  'furs',
+  'spices',
+};
+
 double advancedStartNwRevealFraction(AdvancedStartType type) {
   return switch (type) {
     AdvancedStartType.none => 0,
@@ -172,6 +193,39 @@ double advancedStartProspectFraction(AdvancedStartType type) {
     AdvancedStartType.none => 0,
     AdvancedStartType.turns50 => kAdvancedStart50TurnProspectFraction,
     AdvancedStartType.turns100 => kAdvancedStart100TurnProspectFraction,
+  };
+}
+
+double advancedStartDevelopmentFraction(AdvancedStartType type) {
+  return switch (type) {
+    AdvancedStartType.none => 0,
+    AdvancedStartType.turns50 => kAdvancedStart50TurnDevelopmentFraction,
+    AdvancedStartType.turns100 => kAdvancedStart100TurnDevelopmentFraction,
+  };
+}
+
+int advancedStartNwColonizationCount(AdvancedStartType type) {
+  return switch (type) {
+    AdvancedStartType.none => 0,
+    AdvancedStartType.turns50 => 0,
+    AdvancedStartType.turns100 => kAdvancedStart100TurnNwColonizationCount,
+  };
+}
+
+/// Lower rank = higher selection priority (food, then luxury, timber, minerals).
+int advancedStartDevelopableTilePriority(String resourceId) {
+  return switch (resourceId) {
+    'grain' || 'meat' => 0,
+    'wool' ||
+    'horses' ||
+    'sugarCane' ||
+    'tobacco' ||
+    'cotton' ||
+    'furs' ||
+    'spices' =>
+      1,
+    'timber' => 2,
+    _ => 3,
   };
 }
 

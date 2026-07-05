@@ -2,6 +2,8 @@
 library colonizethis_setup;
 
 export 'src/setup/advanced_start_bootstrap.dart';
+export 'src/setup/advanced_start_bootstrap_colonization.dart';
+export 'src/setup/advanced_start_bootstrap_development.dart';
 export 'src/setup/advanced_start_bootstrap_diplomacy.dart';
 export 'src/setup/advanced_start_bootstrap_world.dart';
 export 'src/setup/capital_choice.dart';

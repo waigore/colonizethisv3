@@ -73,6 +73,14 @@ void main() {
         advancedStartDiplomacyOvertureStage(AdvancedStartType.turns100),
         OvertureStage.embassy,
       );
+      expect(
+        advancedStartDevelopmentFraction(AdvancedStartType.turns50),
+        kAdvancedStart50TurnDevelopmentFraction,
+      );
+      expect(
+        advancedStartNwColonizationCount(AdvancedStartType.turns100),
+        kAdvancedStart100TurnNwColonizationCount,
+      );
     });
   });
 }

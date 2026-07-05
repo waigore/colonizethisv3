@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'advanced_start_nw_topology.dart';
 import 'game_setup_topology.dart';
 import 'setup_logging.dart';
 
@@ -16,118 +17,6 @@ class AdvancedStartWorldKnowledgeResult {
 
   final Game game;
   final Set<String> encounteredTribeIds;
-}
-
-Map<String, Set<String>> _adjacency(MapTopology topology) {
-  final adj = <String, Set<String>>{
-    for (final n in topology.nodes) n.id: <String>{},
-  };
-  for (final edge in topology.edges) {
-    adj[edge.id1]!.add(edge.id2);
-    adj[edge.id2]!.add(edge.id1);
-  }
-  return adj;
-}
-
-Map<String, TopologyNodeType> _nodeTypes(MapTopology topology) {
-  return {for (final n in topology.nodes) n.id: n.type};
-}
-
-Set<String> _provincesAdjacentToSeaZone(
-  Map<String, Set<String>> adjacency,
-  Map<String, TopologyNodeType> nodeTypes,
-  String localSeaZoneId,
-) {
-  final adjacent = adjacency[localSeaZoneId];
-  if (adjacent == null) return const {};
-  return {
-    for (final id in adjacent)
-      if (nodeTypes[id] == TopologyNodeType.province) id,
-  };
-}
-
-List<String> _nwSeaZonesFromCapital({
-  required String capitalLocalProvinceId,
-  required MapTopology topologyOldWorld,
-  required List<WarpLink> warpLinks,
-}) {
-  final owAdj = _adjacency(topologyOldWorld);
-  final distances = <String, int>{capitalLocalProvinceId: 0};
-  final queue = [capitalLocalProvinceId];
-  var head = 0;
-  while (head < queue.length) {
-    final current = queue[head++];
-    final nextDist = distances[current]! + 1;
-    for (final next in owAdj[current] ?? const {}) {
-      if (distances.containsKey(next)) continue;
-      distances[next] = nextDist;
-      queue.add(next);
-    }
-  }
-
-  int? minDist;
-  final candidateOwSeas = <String>{};
-  for (final link in warpLinks) {
-    if (link.regionId != kRegionOldWorld ||
-        link.otherRegionId != kRegionNewWorld) {
-      continue;
-    }
-    final dist = distances[link.seaZoneId];
-    if (dist == null) continue;
-    if (minDist == null || dist < minDist) {
-      minDist = dist;
-      candidateOwSeas
-        ..clear()
-        ..add(link.seaZoneId);
-    } else if (dist == minDist) {
-      candidateOwSeas.add(link.seaZoneId);
-    }
-  }
-
-  final nwSeaLocalIds = <String>{};
-  for (final link in warpLinks) {
-    if (link.regionId != kRegionOldWorld ||
-        link.otherRegionId != kRegionNewWorld) {
-      continue;
-    }
-    if (candidateOwSeas.contains(link.seaZoneId)) {
-      nwSeaLocalIds.add(link.otherSeaZoneId);
-    }
-  }
-  return nwSeaLocalIds.toList()..sort();
-}
-
-List<String> _floodFillProvinces({
-  required Map<String, Set<String>> provinceNeighbours,
-  required List<String> seedLocalIds,
-  required int targetCount,
-}) {
-  if (targetCount <= 0 || seedLocalIds.isEmpty) return const [];
-
-  final visited = <String>{...seedLocalIds};
-  final queue = List<String>.from(seedLocalIds)..sort();
-  final collected = <String>[];
-
-  var head = 0;
-  while (head < queue.length && collected.length < targetCount) {
-    final current = queue[head++];
-    collected.add(current);
-    final nextIds = provinceNeighbours[current]?.toList() ?? const [];
-    nextIds.sort();
-    for (final next in nextIds) {
-      if (visited.add(next)) {
-        queue.add(next);
-      }
-    }
-  }
-
-  if (collected.length < targetCount) {
-    setupLog.w(
-      'logic: advanced start NW flood-fill reached ${collected.length}/'
-      '$targetCount provinces from seeds=$seedLocalIds',
-    );
-  }
-  return collected;
 }
 
 Set<String> _prospectTilesForPlayer({
@@ -174,8 +63,6 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
   final targetProvinceCount = (totalNwProvinces * revealFraction).ceil();
 
   final nwProvinceNeighbours = provinceNeighboursFromTopology(topologyNewWorld);
-  final nwAdj = _adjacency(topologyNewWorld);
-  final nwTypes = _nodeTypes(topologyNewWorld);
 
   final visibilityByPlayer = {
     for (final entry in game.worldState.playerVisibilityByTile.entries)
@@ -196,12 +83,13 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
     if (capitalProvinceId == null) continue;
     final capitalLocalId = ProvinceId.localIdFrom(capitalProvinceId);
 
-    final nwSeaZones = _nwSeaZonesFromCapital(
+    final seeds = advancedStartNwEntryProvinceLocalIds(
       capitalLocalProvinceId: capitalLocalId,
       topologyOldWorld: topologyOldWorld,
+      topologyNewWorld: topologyNewWorld,
       warpLinks: warpLinks,
     );
-    if (nwSeaZones.isEmpty) {
+    if (seeds.isEmpty) {
       setupLog.w(
         'logic: advanced start NW reveal skipped for ${player.id} — '
         'no warp entry from capital sea',
@@ -209,20 +97,17 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       continue;
     }
 
-    final entryProvinces = <String>{};
-    for (final seaId in nwSeaZones) {
-      entryProvinces.addAll(
-        _provincesAdjacentToSeaZone(nwAdj, nwTypes, seaId),
-      );
-    }
-    final seeds = entryProvinces.toList()..sort();
-    if (seeds.isEmpty) continue;
-
-    final revealedLocalIds = _floodFillProvinces(
+    final revealedLocalIds = advancedStartFloodFillProvinces(
       provinceNeighbours: nwProvinceNeighbours,
       seedLocalIds: seeds,
       targetCount: targetProvinceCount,
     );
+    if (revealedLocalIds.length < targetProvinceCount) {
+      setupLog.w(
+        'logic: advanced start NW flood-fill reached ${revealedLocalIds.length}/'
+        '$targetProvinceCount provinces for ${player.id}',
+      );
+    }
 
     final playerVisibility =
         visibilityByPlayer.putIfAbsent(player.id, () => <String, String>{});

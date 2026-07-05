@@ -2,7 +2,10 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'advanced_start_bootstrap_colonization.dart';
+import 'advanced_start_bootstrap_development.dart';
 import 'advanced_start_bootstrap_diplomacy.dart';
 import 'advanced_start_bootstrap_units.dart';
 import 'advanced_start_bootstrap_world.dart';
@@ -10,16 +13,16 @@ import 'setup_logging.dart';
 
 /// Mutates a fully initialized turn-0 [Game] per [config.advancedStart].
 ///
-/// Implemented steps: turn/techs/treasury/workforce (1–4); civilians/regiments/
-/// ships (5–6); diplomacy (7); NW exploration/prospecting (8–9). Returns [game]
-/// unchanged when [AdvancedStartType.none] or when the config is not the locked
-/// full-init profile.
+/// Returns [game] unchanged when [AdvancedStartType.none] or when the config is
+/// not the locked full-init profile.
 Game applyAdvancedStartBootstrap({
   required Game game,
   required GameSetupConfig config,
   MapTopology? topologyOldWorld,
   MapTopology? topologyNewWorld,
   List<WarpLink> warpLinks = const [],
+  Map<String, TileMapResult> tileMapByRegion = const {},
+  Map<String, MapTopology> topologyByRegion = const {},
 }) {
   final startType = config.advancedStart;
   if (startType == AdvancedStartType.none) {
@@ -90,6 +93,39 @@ Game applyAdvancedStartBootstrap({
     startType: startType,
     encounteredTribeIds: encounteredTribeIds,
   );
+
+  if (topologyOldWorld != null &&
+      topologyNewWorld != null &&
+      tileMapByRegion.isNotEmpty) {
+    final topoByRegion = topologyByRegion.isNotEmpty
+        ? topologyByRegion
+        : {
+            kRegionOldWorld: topologyOldWorld,
+            kRegionNewWorld: topologyNewWorld,
+          };
+
+    updated = applyAdvancedStartNwColonization(
+      game: updated,
+      startType: startType,
+      topologyOldWorld: topologyOldWorld,
+      topologyNewWorld: topologyNewWorld,
+      warpLinks: warpLinks,
+      tileMapByRegion: tileMapByRegion,
+      topologyByRegion: topoByRegion,
+    );
+
+    updated = applyAdvancedStartDevelopment(
+      game: updated,
+      startType: startType,
+      tileMapByRegion: tileMapByRegion,
+      topologyByRegion: topoByRegion,
+    );
+  } else if (startType != AdvancedStartType.none) {
+    setupLog.w(
+      'logic: advanced start colonization/development skipped — '
+      'missing tile maps',
+    );
+  }
 
   setupLog.i(
     'logic: advanced start ${startType.name} applied turn=$turnNumber '

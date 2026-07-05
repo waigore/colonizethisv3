@@ -63,14 +63,15 @@ Ordered steps (full issue #3895):
 11. Player + minor tile development and roads.
 12. NW province town → OW capital connectivity.
 
-**Implementation status:** Steps **1–9** (turn through NW prospecting) are implemented; colonization, development, and NW roads remain follow-up on #3895.
+**Implementation status:** Steps **1–12** are implemented (turn through NW roads). Save/load integration ACs remain follow-up on #3895.
 
 ## Acceptance criteria (partial — foundation + units slice)
 
 - Given advanced start `none`, when init completes, then `Game.advancedStartType` is null and `turnNumber` is 0.
 - Given advanced start `turns50` on the locked profile, when init completes, then every GP has exactly 23 listed techs unlocked, 16 peasants, 20,000 treasury, tier civilian counts, 6 upgraded regiments, at least 1 Galleon in the home fleet, and `turnNumber` is 50.
-- Given advanced start `turns50` on the locked profile, when init completes, then every GP has consulates with all OW minors, at least `kAdvancedStart50TurnNwRevealFraction` of NW provinces fully visible (contiguous from warp entry), and ≥50% of prospectable tiles in those provinces prospected.
+- Given advanced start `turns50` on the locked profile, when init completes, then every GP has consulates with all OW minors, at least `kAdvancedStart50TurnNwRevealFraction` of NW provinces fully visible (contiguous from warp entry), ≥50% of prospectable tiles in those provinces prospected, and 25% of developable tiles at improvement level 1 in owned provinces with road links to town or capital.
+- Given advanced start `turns50` on the locked profile, when init completes, then 25% of developable tiles in each OW minor province are purchased by a GP (round-robin) at improvement level 1 and recorded in `purchasedTilesByTileKey`.
 - Given advanced start `turns100` on the locked profile, when init completes, then every GP has exactly 45 listed techs unlocked, 16 peasants and 4 apprentices, 40,000 treasury, tier civilian counts including Rail Builder, 12 upgraded regiments, at least 6 Galleons in the home fleet, and `turnNumber` is 100.
-- Given advanced start `turns100` on the locked profile, when init completes, then every GP has embassies with all OW minors and encountered tribes, 100% NW provinces visible, and ≥75% of prospectable tiles prospected.
+- Given advanced start `turns100` on the locked profile, when init completes, then every GP has embassies with all OW minors and encountered tribes, 100% NW provinces visible, ≥75% of prospectable tiles prospected, 6 contiguous NW provinces owned per GP (tribes retain ≥1 province each), 50% of developable tiles at improvement level 1 in owned provinces (OW + NW) with road links, and 50% of minor developable tiles purchased and developed.
 - Given advanced start ≠ `none` on a non-locked profile, when bootstrap runs, then the System returns the turn-0 game unchanged and logs a warning.
 - Given an advanced-start game is saved and reloaded, when loaded, then `advancedStartType`, turn, techs, treasury, and workforce match the saved state.
