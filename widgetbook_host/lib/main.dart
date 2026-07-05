@@ -1,7 +1,5 @@
-import 'package:colonizethis_app/widgetbook.dart';
-import 'package:flutter/material.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 
 void main() {
-  runApp(const CtWidgetbookApp());
+  bootstrapWidgetbook();
 }
-

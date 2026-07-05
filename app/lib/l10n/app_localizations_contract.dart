@@ -238,6 +238,16 @@ abstract class AppLocalizations {
   /// Helper text for infinite mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeHelper;
 
+  String get shell_leaderDialog_advancedStartLabel;
+
+  String get shell_leaderDialog_advancedStartNone;
+
+  String get shell_leaderDialog_advancedStart50;
+
+  String get shell_leaderDialog_advancedStart100;
+
+  String get shell_leaderDialog_advancedStartDisabledHelper;
+
   /// Static slider label for terrain noise variation in the new-game leader
   /// dialog. The live percent value is rendered separately via
   /// [shell_leaderDialog_terrainVariationValue].
@@ -1389,6 +1399,9 @@ abstract class AppLocalizations {
   /// Political section capital row when the province is not a faction capital.
   String get provinceOverlay_capitalNo;
 
+  /// Political section town development row (integer 1–4). Refs #3870.
+  String provinceOverlay_townDevelopment(int level);
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 
@@ -1418,6 +1431,12 @@ abstract class AppLocalizations {
   /// Province overlay section heading for economic details.
   String get provinceOverlay_sectionEconomic;
 
+  /// Subheading within the Economic section for town manufacturing bonus preview.
+  String get provinceOverlay_townProductionHeading;
+
+  /// Signed quantity for a projected town manufacturing bonus commodity row.
+  String provinceOverlay_townProductionQuantity(int quantity);
+
   /// Province overlay section heading for military details.
   String get provinceOverlay_sectionMilitary;
 
@@ -1444,6 +1463,9 @@ abstract class AppLocalizations {
 
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
+
+  /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
+  String get mapControls_playersBarToggle;
 
   /// Percentage label with no space before percent sign.
   String common_percent(int value);

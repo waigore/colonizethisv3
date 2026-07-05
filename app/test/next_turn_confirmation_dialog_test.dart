@@ -2,7 +2,7 @@
 // confirmation dialog (universal #2867 dialog pattern).
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';

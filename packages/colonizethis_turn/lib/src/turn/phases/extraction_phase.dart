@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import '../economy_phase_sequence.dart';
+import '../turn_phase_handler_helpers.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../turn_resolution_seeds.dart';
@@ -54,6 +55,17 @@ Game runExtractionPhase(
       final player = state.playerById(playerId);
       return extractionCapForUnlocked(player?.techUnlocked);
     },
+  );
+  final nonGpConnectivity = resolveNonGreatPowerConnectivity(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  final townBonus = computeTownManufacturingBonusForGame(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    gpConnectivityByPlayerId: connectivity,
+    nonGpConnectivityByFactionId: nonGpConnectivity,
   );
   var currentState = state;
   // Not [Game.mapPlayers]: [currentState] (fleets) may change between players.
@@ -107,6 +119,10 @@ Game runExtractionPhase(
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
     }
+    final manufacturingBonus = townBonus.bonusByFactionId[player.id];
+    if (manufacturingBonus != null && manufacturingBonus.isNotEmpty) {
+      stockpile = applyExtractionToStockpile(stockpile, manufacturingBonus);
+    }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
   return currentState.withPlayers(updatedPlayers);
@@ -134,15 +150,8 @@ TurnPhaseStepOutcome extractionTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) {
-  final shippedTonnageByPlayerId = <String, int>{};
-  return TurnPhaseStepContinue(
-    runEconomyExtractionStep(
-      acc,
-      economyPhaseStepContextFromConfig(
-        config,
-        overseasShippedTonnageOut: shippedTonnageByPlayerId,
-      ),
-    ),
-  );
-}
+) =>
+    economyPhaseHandlerFromStep(
+      runEconomyExtractionStep,
+      recordOverseasTonnage: true,
+    )(acc, config, turn);

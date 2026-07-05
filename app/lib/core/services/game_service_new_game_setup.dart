@@ -22,8 +22,12 @@ Game _gameServiceCreateNewGame(
       effectiveSeed: effectiveSeed,
     );
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(
+  final bootstrappedSetup = _gameServiceSetupResultAfterAdvancedStartBootstrap(
     setupResult,
+    cfg,
+  );
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    bootstrappedSetup,
     effectiveSeed,
     aiProfileByGpId: cfg.aiProfileByGpId,
   );
@@ -83,8 +87,12 @@ Future<Game> _gameServiceCreateNewGameAsync(
     reportPhase(3);
     await yieldUi();
   }
-  final result = _gameServiceSetupResultWithFinalizedGame(
+  final bootstrappedSetup = _gameServiceSetupResultAfterAdvancedStartBootstrap(
     setupResult,
+    cfg,
+  );
+  final result = _gameServiceSetupResultWithFinalizedGame(
+    bootstrappedSetup,
     effectiveSeed,
     aiProfileByGpId: cfg.aiProfileByGpId,
   );
@@ -95,6 +103,28 @@ Future<Game> _gameServiceCreateNewGameAsync(
   ctAppPerfInstant('newGameAsync.complete');
   log.i('newGameAsync complete gameId=$gameId');
   return result.game;
+}
+
+GameSetupResult _gameServiceSetupResultAfterAdvancedStartBootstrap(
+  GameSetupResult setup,
+  GameSetupConfig cfg,
+) {
+  final bootstrappedGame = applyAdvancedStartBootstrap(
+    game: setup.game,
+    config: cfg,
+    topologyOldWorld: setup.topologyByRegion[kRegionOldWorld],
+    topologyNewWorld: setup.topologyByRegion[kRegionNewWorld],
+    warpLinks: setup.warpLinks ?? const [],
+    tileMapByRegion: setup.tileMapByRegion,
+    topologyByRegion: setup.topologyByRegion,
+  );
+  return GameSetupResult(
+    game: bootstrappedGame,
+    tileMapByRegion: setup.tileMapByRegion,
+    topologyByRegion: setup.topologyByRegion,
+    combinedTopology: setup.combinedTopology,
+    warpLinks: setup.warpLinks,
+  );
 }
 
 GameSetupResult _gameServiceSetupResultWithFinalizedGame(

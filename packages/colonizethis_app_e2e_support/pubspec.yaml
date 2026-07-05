@@ -1,0 +1,31 @@
+name: colonizethis_app_e2e_support
+description: Shared E2E/widget mirror helpers and contract tests for colonizethis_app integration scenarios.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/colonizethisv3/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  colonizethis_app:
+    path: ../../app
+  colonizethis_data:
+  colonizethis_logic:
+  colonizethis_map:
+  colonizethis_models:
+  colonizethis_test:
+  flutter:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: 0.8.1
+  flutter_lints: ^6.0.0

@@ -77,6 +77,20 @@ All non-viewed players use empty production assignments in this preview path unl
 
 ---
 
+## Town manufacturing bonus preview (implemented)
+
+`colonizethis_economy` exposes `previewTownManufacturingBonusByProvince` (re-exported via `colonizethis_logic` / `colonizethis_turn`) for the province overlay **Town production** row and any other per-province bonus readout.
+
+**Inputs:** `Game`, `MapTopology`, optional `tileMapByRegion` (empty/null → empty map, matching zero-extraction preview).
+
+**Process:** Resolves GP and non-GP capital connectivity, town-connected tile sets, town-connected delivered raw extraction (including overseas cargo allocation), then evaluates eligible recipes per province using the same `computeTownManufacturingBonusForGame` path as the live Extraction phase.
+
+**Output:** `Map<fullProvinceId, Map<CommodityId, int>>` — only provinces with strictly positive bonus quantities; zeros omitted.
+
+**Invariant:** For the same `Game`, topology, and tile maps, `previewTownManufacturingBonusByProvince` per-province values equal the live Extraction-phase town manufacturing bonus for that turn snapshot.
+
+---
+
 ## Determinism
 
 Same inputs → same outputs. No RNG in the projection path unless the turn resolver uses a seed; if so, the projection must use a fixed or passed seed for reproducibility.
@@ -93,3 +107,4 @@ Same inputs → same outputs. No RNG in the projection path unless the turn reso
 - Given a list of `AssignedRecipe`s for player `P`, when `productionInputConsumptionByCommodityIdForAssignments` runs, then for each assignment with `assignedLabour > 0` and a known recipe the helper computes `runs = floor(assignedLabour / recipe.labourPerOutput)` (matching `resolveProduction`'s labour-budget math) and adds `inputQuantity * runs` to the returned map for every recipe input commodity. Assignments with zero or negative labour, unknown recipe ids, or `labourPerOutput <= 0` contribute nothing. The result is the canonical per-commodity industry-allocation reservation passed into `offerCapByCommodityId(productionInputConsumptionByCommodityId: ...)` — the Trade UI sellable readout, the validator backfill, and the AI treasury planner all derive from the same projection so the offer cap stays consistent across surfaces.
 - Given a game with multiple players and only player `P` has desired output entries, when `previewStockpileNetDeltaByCommodityForPlayer` runs, then production assignments for every non-`P` player are treated as empty for this preview.
 - Given fixed `Game`, topology, tile maps (or `extractedByPlayerId`), and assignments for player `P`, when `previewStockpilePhaseDeltasByCommodityForPlayer` runs, then for every commodity id `c`, the sum of deltas over `EconomyPreviewStockpilePhase.values` equals the value returned by `previewStockpileNetDeltaByCommodityForPlayer` for `c`, or zero if that key is omitted from the net map.
+- Given a fixed `Game`, `MapTopology`, and non-empty `tileMapByRegion`, when `previewTownManufacturingBonusByProvince` runs and the live Extraction phase computes town manufacturing bonus on the same snapshot, then for every full province id `P` and commodity id `c`, the preview map value for `(P, c)` equals the live per-province bonus quantity (or both are absent when zero).

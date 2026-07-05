@@ -254,7 +254,7 @@ Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
         addTearDown(() => temp.deleteSync(recursive: true));
 
         const debugConsole =
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
         File('${temp.path}/$debugConsole')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -274,7 +274,7 @@ Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
         expect(
           logs.join('\n'),
           contains(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart:3: '
             'IconButton(',
           ),
         );
@@ -421,7 +421,7 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
       () {
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
           ),
           isFalse,
         );

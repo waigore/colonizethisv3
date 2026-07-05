@@ -63,7 +63,7 @@ void main() {
               initialLeaderByGpId: initial,
               blessedProfileNames: const [],
               onCancel: () {},
-              onConfirmed: (_, _, _, _, _, _) {},
+              onConfirmed: (_, _, _, _, _, _, _) {},
             ),
           ),
         ),

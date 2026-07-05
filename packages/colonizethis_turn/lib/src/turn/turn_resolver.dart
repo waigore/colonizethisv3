@@ -14,6 +14,8 @@ export 'economy_preview_pipeline.dart'
         emptyEconomyPreviewInputs,
         previewStockpileNetDeltaByCommodityForPlayer,
         previewStockpilePhaseDeltasByCommodityForPlayer;
+export 'package:colonizethis_economy/colonizethis_economy.dart'
+    show previewTownManufacturingBonusByProvince;
 import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';

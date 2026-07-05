@@ -5,7 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/region_map_province_overlay_geometry.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_province_overlay_geometry.dart';
 
 RegionMapViewData _region({
   required int width,

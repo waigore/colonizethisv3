@@ -202,10 +202,10 @@ class ResourceRules {
   /// | `fabric`         | `wool x 2`   (40 * 2)                   | 80         |
   /// | `castIron`       | `iron x 2` (80 + 80)                    | 160        |
   /// | `refinedSugar`   | `sugarCane x 2` (35 * 2)                | 70         |
-  /// | `cigars`         | `tobacco x 3` (40 * 3)                  | 120        |
+  /// | `cigars`         | `tobacco x 2` (40 * 2)                  | 80         |
   /// | `furHats`        | `furs x 2` (55 * 2)                     | 110        |
-  /// | `steel`          | `castIron x 2 + coal x 1` (320 + 90)    | 410        |
-  /// | `paper`          | `timber x 3` (30 * 3)                   | 90         |
+  /// | `steel`          | `iron x 1 + coal x 1` (80 + 90)         | 170        |
+  /// | `paper`          | `timber x 2` (30 * 2)                   | 60         |
   /// | `bronze`         | `copper x 1 + tin x 1` (70 + 75)        | 145        |
   static const Map<String, int> _defaultManufacturedMarketPrice =
       <String, int>{
@@ -213,10 +213,10 @@ class ResourceRules {
     'fabric': 80,
     'castIron': 160,
     'refinedSugar': 70,
-    'cigars': 120,
+    'cigars': 80,
     'furHats': 110,
-    'steel': 410,
-    'paper': 90,
+    'steel': 170,
+    'paper': 60,
     'bronze': 145,
   };
 }

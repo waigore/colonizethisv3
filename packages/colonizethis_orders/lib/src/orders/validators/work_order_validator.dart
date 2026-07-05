@@ -102,20 +102,6 @@ class WorkOrderValidator extends StatefulValidator {
             ownerId: ownerId,
             type: unit!.type,
           ),
-          () => _validateForeignProvinceWork(
-            o: o,
-            type: unit!.type,
-            ownerId: ownerId,
-          ),
-          () => rejectExplorerWithoutConsulateInMinorTribeProvince(
-            game: _context.game,
-            playerId: _context.playerId,
-            unitType: unit!.type,
-            workTarget: o.target,
-            provinceOwnerId: ownerId,
-            factionMembership: _context.factionMembership,
-          ),
-          () => _validateDevExclusiveWorkTarget(o, unit!.type),
           () => _validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
           () {
             if (!workOrderVisibilityOk(
@@ -214,6 +200,7 @@ class WorkOrderValidator extends StatefulValidator {
       player: _context.player,
       playerId: _context.playerId,
       treasury: treasuryState,
+      devExclusiveTiles: _context.devExclusiveTiles,
       civilianEmbassyWorkAllowed: (unitType, provinceOwnerId) =>
           civilianEmbassyWorkAllowedInMinorTribeProvince(
             game: _context.game,
@@ -232,49 +219,6 @@ class WorkOrderValidator extends StatefulValidator {
       targetProvinceId,
       ownerId,
       type,
-    );
-  }
-
-  OrderValidationResult? _validateForeignProvinceWork({
-    required WorkOrder o,
-    required String type,
-    required String? ownerId,
-  }) {
-    if (isExplorerUnit(type) ||
-        kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(o.target)) {
-      return null;
-    }
-    final controlled = isTileControlledByPlayer(
-      _context.game,
-      _context.playerId,
-      o.targetTileKey,
-    );
-    final embassyWork = civilianEmbassyWorkAllowedInMinorTribeProvince(
-      game: _context.game,
-      playerId: _context.playerId,
-      player: _context.player,
-      unitType: type,
-      provinceOwnerId: ownerId,
-      factionMembership: _context.factionMembership,
-    );
-    if (controlled || embassyWork) {
-      return null;
-    }
-    return OrderValidationResult.rejected('Cannot work in foreign province');
-  }
-
-  OrderValidationResult? _validateDevExclusiveWorkTarget(
-    WorkOrder o,
-    String type,
-  ) {
-    if (!isDevExclusiveUnitType(type) || !isDevExclusiveWorkTarget(o.target)) {
-      return null;
-    }
-    if (!_context.devExclusiveTiles.contains(o.targetTileKey)) {
-      return null;
-    }
-    return OrderValidationResult.rejected(
-      'Tile already has development or purchase work for this player',
     );
   }
 

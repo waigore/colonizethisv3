@@ -43,7 +43,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/game_side_menu.dart` | Game Side Menu | active |
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade_screen.dart` | Trade Screen | draft |
-| `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/game_map_area.dart` | Map Widget | active |
+| `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/civilian_units_panel.dart` | Civilian Units Panel | active |
 | `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/military_units_panel.dart` | Military Units Panel | active |
@@ -63,7 +63,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
 | `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
-| `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/victory_overlay.dart` | Victory | active |
+| `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/overlays/victory_overlay.dart` | Victory | active |
 | `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
 | `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | `app/lib/features/game/dialogue/call_to_arms_dialogue_overlay.dart` | Call to Arms Dialogue Overlay | active |
 | `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |

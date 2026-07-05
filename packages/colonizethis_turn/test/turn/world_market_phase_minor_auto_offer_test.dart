@@ -11,11 +11,10 @@
 // legacy GP↔GP behavior so the existing direct-handler tests stay green.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/world_market_test_support.dart';
 
 void main() {
   group(
@@ -26,13 +25,13 @@ void main() {
         "bid; minor receives no treasury (sink); buyer's stockpile and "
         'treasury reflect the deal',
         () {
-          final game = _gameWithBuyerAndMinor(
+          final game = minorTimberAutoOfferPipelineGame(
             buyerTreasury: 1000,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
-          final config = TurnResolverConfig(
-            topology: const MapTopology(nodes: [], edges: []),
+
+          final next = runWorldMarketPhase(
+            game: game,
             orders: Orders(
               tradeOrdersByPlayerId: {
                 'gpBuyer': [
@@ -45,14 +44,8 @@ void main() {
                 ],
               },
             ),
-            tileMapByRegion: {'oldWorld': _minorTimberTileMap()},
+            tileMapByRegion: {'oldWorld': minorTimberTileMapByRegion()['oldWorld']!},
           );
-
-          final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
 
           final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
           expect(buyer.treasury, equals(1000 - 1 * 30));
@@ -95,22 +88,16 @@ void main() {
         'offer disappears at end of turn (Step E: minor/tribe auto-offers '
         'do not carry forward)',
         () {
-          final game = _gameWithBuyerAndMinor(
+          final game = minorTimberAutoOfferPipelineGame(
             buyerTreasury: 0,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
-          final config = TurnResolverConfig(
-            topology: const MapTopology(nodes: [], edges: []),
-            orders: const Orders(),
-            tileMapByRegion: {'oldWorld': _minorTimberTileMap()},
-          );
 
-          final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
+          final next = runWorldMarketPhase(
+            game: game,
+            orders: const Orders(),
+            tileMapByRegion: {'oldWorld': minorTimberTileMapByRegion()['oldWorld']!},
+          );
 
           expect(
             next.worldMarketState.carryForwardOffersByFactionId['m1'],
@@ -130,21 +117,15 @@ void main() {
         'auto-offer pipeline is dormant when `tileMapByRegion` is absent — '
         'GP↔GP legacy direct-handler path stays unaffected',
         () {
-          final game = _gameWithBuyerAndMinor(
+          final game = minorTimberAutoOfferPipelineGame(
             buyerTreasury: 0,
             timberPrice: 30,
           );
-          final acc = TurnPipelineState(game: game);
-          final config = TurnResolverConfig(
-            topology: const MapTopology(nodes: [], edges: []),
+
+          final next = runWorldMarketPhase(
+            game: game,
             orders: const Orders(),
           );
-
-          final next =
-              (worldMarketTurnPhaseHandler(acc, config, 3)
-                      as TurnPhaseStepContinue)
-                  .pipeline
-                  .game;
 
           expect(
             next.worldMarketState.lastTurnActivity,
@@ -158,68 +139,5 @@ void main() {
         },
       );
     },
-  );
-}
-
-Game _gameWithBuyerAndMinor({
-  required int buyerTreasury,
-  required int timberPrice,
-}) {
-  final minorProvince = Province(
-    id: 'oldWorld|m1',
-    regionId: 'oldWorld',
-    ownerId: 'm1',
-    townDevelopmentLevel: 1,
-  );
-  return Game(
-    id: 'g_auto_offer',
-    players: [
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    minorNations: const [
-      MinorNation(
-        id: 'm1',
-        capitalProvinceId: 'oldWorld|m1',
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: 'oldWorld|m1',
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-    worldState: WorldState(
-      turnState: const TurnState(
-        phase: TurnPhase.worldMarket,
-        turnNumber: 3,
-      ),
-      oldWorld: RegionData(provinces: [minorProvince]),
-      newWorld: const RegionData(),
-      tileState: TileMapState()
-          .setImprovement('oldWorld|m1|0|0', 1)
-          .setRoadLevel('oldWorld|m1|0|0', 1),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(
-      prices: {'timber': timberPrice},
-    ),
-  );
-}
-
-TileMapResult _minorTimberTileMap() {
-  return TileMapResult(
-    width: 1,
-    height: 1,
-    grid: [
-      ['m1'],
-    ],
-    resourceGrid: [
-      [Resource.timber],
-    ],
   );
 }

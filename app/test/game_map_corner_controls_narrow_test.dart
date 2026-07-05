@@ -11,7 +11,7 @@
 // wide-layout 32 × 32 dp + 3 dp gap contract still holds.
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';

@@ -25,7 +25,7 @@ import 'ct_repo_lint_scan_contract.dart';
 ///
 /// SPEC: `SPEC/program/repo-lint.md`.
 const _decodeHelperRelative =
-    'app/lib/features/game/flame/asset_image_cache.dart';
+    'app/lib/features/game/flame/caches/asset_image_cache.dart';
 const _decodeMethodName = 'decodeImageFromList';
 const _cacheBaseName = 'AssetImageCache';
 const _iconCacheFileSuffix = '_icon_cache.dart';

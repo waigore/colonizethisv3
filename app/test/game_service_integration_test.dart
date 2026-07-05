@@ -241,5 +241,55 @@ void main() {
         updated.worldState.turnState.turnNumber,
       );
     });
+
+    test(
+      'createNewGameAsync applies advanced start on locked profile (turns50)',
+      () async {
+        final config = GameSetupConfig(
+          seed: 42,
+          advancedStart: AdvancedStartType.turns50,
+        );
+        final game = await service.createNewGameAsync(
+          id: 'g_advanced_50',
+          config: config,
+        );
+        expect(game.advancedStartType, AdvancedStartType.turns50);
+        expect(game.worldState.turnState.turnNumber, 50);
+        expect(game.players.first.treasury, 20000);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    test(
+      'createNewGameAsync applies advanced start on locked profile (turns100)',
+      () async {
+        final config = GameSetupConfig(
+          seed: 42,
+          advancedStart: AdvancedStartType.turns100,
+        );
+        final game = await service.createNewGameAsync(
+          id: 'g_advanced_100',
+          config: config,
+        );
+        expect(game.advancedStartType, AdvancedStartType.turns100);
+        expect(game.worldState.turnState.turnNumber, 100);
+        expect(game.players.first.treasury, 40000);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    test(
+      'createNewGame with advanced start none leaves turn-0 game on locked profile',
+      () {
+        final config = GameSetupConfig(
+          seed: 42,
+          advancedStart: AdvancedStartType.none,
+        );
+        final game = service.createNewGame(id: 'g_advanced_none', config: config);
+        expect(game.advancedStartType, isNull);
+        expect(game.worldState.turnState.turnNumber, 0);
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
   });
 }

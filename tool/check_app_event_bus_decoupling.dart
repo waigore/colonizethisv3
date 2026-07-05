@@ -16,11 +16,12 @@ import 'package:path/path.dart' as p;
 ///
 /// Four sub-checks (any violation flips the rule red):
 ///
-/// 1. Production code under `app/lib/**` (excluding `app/lib/widgetbook/**`)
-///    must not call the `AppEventBus()` singleton factory — use the
-///    `appEventBusProvider` (or an `AppEventBus.create()` instance held by
-///    the owning widget/service) so test containers can dispose without
-///    closing the legacy global bus.
+/// 1. Production code under `app/lib/**` must not call the `AppEventBus()`
+///    singleton factory — use the `appEventBusProvider` (or an
+///    `AppEventBus.create()` instance held by the owning widget/service) so
+///    test containers can dispose without closing the legacy global bus.
+///    Widgetbook catalog stories live under `widgetbook_host/lib/catalogs/`
+///    and are outside this scan root.
 ///
 /// 2. `appNavigatorKey.currentContext`, `appNavigatorKey.currentState`, and
 ///    any other property access on `appNavigatorKey` is restricted to
@@ -64,17 +65,25 @@ const Set<String> _appNavigatorKeyAllowedPathPrefixes = <String>{
 const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Local by design — `SPEC/program/app-ui-wiring.md` line 84.
   'app/lib/features/game/widgets/civilian_units_panel_support.dart',
+  // Work-target assignment bottom sheet split from
+  // `civilian_units_panel_support.dart` to keep panel parts under the
+  // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
+  // the parent file — `SPEC/program/app-ui-wiring.md` § "Local by design"
+  // (Refs #3878 Phase 3).
+  'app/lib/features/game/widgets/civilian_units_panel_support_unit_row.dart',
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
-  'app/lib/features/game/flame/game_map_area_turn_resolution.dart',
-  'app/lib/features/game/flame/game_map_area_build.dart',
-  'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
+  // Paths updated when `game_map_area` parts moved under `flame/map_state/`
+  // (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build.dart',
+  'app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
   // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
-  'app/lib/features/game/flame/exit_confirm_dialog.dart',
+  'app/lib/features/game/flame/overlays/exit_confirm_dialog.dart',
   'app/lib/features/game/widgets/tech_tree_widget.dart',
   // GP researchers list modal split from tech pennant row / tree surfaces
   // (Refs #3862). Same local-by-design rationale as tech detail in
@@ -95,6 +104,13 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
   'app/lib/features/game/widgets/naval_units_panel.dart',
+  // Split / move fleet and home-transfer dialogs extracted from
+  // `naval_units_panel.dart` to keep panel parts under the
+  // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
+  // the parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
+  // (Refs #3878 Phase 3).
+  'app/lib/features/game/widgets/naval_units_panel_support_dialogs.dart',
+  'app/lib/features/game/widgets/naval_units_panel_support_home_transfer.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
   'app/lib/features/game/widgets/military_units_panel.dart',
@@ -120,7 +136,6 @@ const Set<String> _allowedPostFrameBusEmitFiles = <String>{
 };
 
 const _scanRoot = 'app/lib';
-const _excludedRoot = 'app/lib/widgetbook';
 const _featuresRoot = 'app/lib/features';
 
 const _closePanelEventName = 'ClosePanelEvent';
@@ -176,9 +191,6 @@ int runCheckAppEventBusDecoupling(
     final relativePath = p.posix.joinAll(
       p.split(p.relative(entity.path, from: root)),
     );
-    if (relativePath.startsWith('$_excludedRoot/')) {
-      continue;
-    }
     final content = entity.readAsStringSync();
     final parsed = parseString(content: content, path: relativePath);
     final visitor = _AppEventBusDecouplingVisitor(

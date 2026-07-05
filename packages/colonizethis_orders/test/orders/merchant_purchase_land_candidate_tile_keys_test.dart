@@ -1,6 +1,6 @@
 import 'package:colonizethis_orders/src/orders/order_suggestion_helpers.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';

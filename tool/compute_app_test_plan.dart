@@ -136,6 +136,9 @@ bool _hasIrreducibleFallbackTrigger(Set<String> changedFiles) {
     if (fallbackExact.contains(path)) {
       return true;
     }
+    if (path.startsWith('packages/colonizethis_app_e2e_support/')) {
+      return true;
+    }
     if (path.startsWith('app/') &&
         !_isAppLibFile(path) &&
         !_isAppTestDart(path)) {

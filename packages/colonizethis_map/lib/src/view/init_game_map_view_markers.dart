@@ -13,6 +13,7 @@ import '../sea_zone_centroid_tile.dart';
 import '../tile_key_util.dart';
 import '../tile_map_capital_markers.dart';
 import '../tile_map_grid.dart';
+import 'town_icon_style.dart';
 import 'init_game_map_view_data.dart';
 
 /// Stateless builders for the marker overlays of a single region's view data.
@@ -344,6 +345,12 @@ class InitGameMapViewMarkers {
           isCoastal: touchesSea && !hasPort,
           isPort: hasPort,
           touchesSea: touchesSea,
+          townDevelopmentLevel: p.townDevelopmentLevel,
+          townIconStyle: townIconStyleForProvince(
+            regionId: regionId,
+            ownerId: p.ownerId,
+            game: game,
+          ),
           portIconX: portIconX,
           portIconY: portIconY,
         ),

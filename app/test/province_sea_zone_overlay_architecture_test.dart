@@ -39,10 +39,10 @@ const String _overlayEconomicMilitaryRelativePath =
 const String _ctRegionMapRelativePath = 'lib/widgets/ct_region_map.dart';
 
 const String _sidePanelHostRelativePath =
-    'lib/features/game/flame/game_map_province_detail_side_panel.dart';
+    'lib/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 
 const String _narrowOverlayHostRelativePath =
-    'lib/features/game/flame/game_map_narrow_detail_overlay.dart';
+    'lib/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 
 /// Matches any `import` line that pulls in `ct_region_map.dart` (relative or
 /// package import). The overlay must never import the Flame map widget per

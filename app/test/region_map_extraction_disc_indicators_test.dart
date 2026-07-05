@@ -9,18 +9,17 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,
         extractionIndicatorRectsForIconRect,
         paintResourceExtractionDiscIndicators;
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
+import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 void main() {

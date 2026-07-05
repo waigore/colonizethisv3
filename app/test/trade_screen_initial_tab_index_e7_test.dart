@@ -20,7 +20,7 @@
 
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

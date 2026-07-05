@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

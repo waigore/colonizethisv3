@@ -197,7 +197,9 @@ BuildWorkState _completedWorkUpgradeTown(CompletedWorkContext ctx) {
   return _updateProvinceAtUnitLocation(
     ctx,
     (p) => p.copyWith(
-      townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
+      townDevelopmentLevel: normalizeTownDevelopmentLevel(
+        p.townDevelopmentLevel + 1,
+      ),
     ),
   );
 }

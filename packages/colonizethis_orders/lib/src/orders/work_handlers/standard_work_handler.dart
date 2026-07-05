@@ -19,90 +19,23 @@ class _StandardWorkTargetConfig {
   final int Function() totalTurnsFn;
 }
 
-typedef _StandardWorkTargetConfigBuilder =
-    _StandardWorkTargetConfig Function({
-      required Game game,
-      required String targetTileKey,
-      required Unit unit,
-      required TileMapState tileState,
-      required Map<String, Province> provincesById,
-    });
+/// Declarative cost/turn strategy for each standard build work target (Refs
+/// #3877). Fixed-material targets share one resolver; improvement and fort
+/// retain context-sensitive cost/turn wiring.
+enum _StandardWorkTargetKind {
+  fixedMaterial,
+  improvement,
+  fort,
+}
 
-_StandardWorkTargetConfig _fixedMaterialWorkTargetConfig(String target) =>
-    _StandardWorkTargetConfig(
-      allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
-      costFn: () => workOrderMaterialCost(target),
-      totalTurnsFn: () => totalTurnsForWork(target),
-    );
-
-final Map<String, _StandardWorkTargetConfigBuilder>
-_standardWorkTargetConfigBuilders = {
-  kWorkTargetBuildImprovement:
-      ({
-        required game,
-        required targetTileKey,
-        required unit,
-        required tileState,
-        required provincesById,
-      }) => _StandardWorkTargetConfig(
-        allowedForUnitType: (t) =>
-            isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
-        costFn: () => WorkOrderCostCalculator(
-          game,
-          playerId: unit.ownerId,
-        ).calculateCost(
-          kWorkTargetBuildImprovement,
-          targetTileKey,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-        totalTurnsFn: () => totalTurnsForWork(
-          kWorkTargetBuildImprovement,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-      ),
-  kWorkTargetBuildFort:
-      ({
-        required game,
-        required targetTileKey,
-        required unit,
-        required tileState,
-        required provincesById,
-      }) {
-        final prov = provincesById[unit.locationProvinceId];
-        final fortLevel = prov?.fortLevel ?? 0;
-        return _StandardWorkTargetConfig(
-          allowedForUnitType: (t) =>
-              isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
-          costFn: () =>
-              workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: fortLevel),
-          totalTurnsFn: () =>
-              totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
-        );
-      },
-  kWorkTargetBuildRoad: _fixedMaterialWorkTargetConfigBuilder(
-    kWorkTargetBuildRoad,
-  ),
-  kWorkTargetBuildPort: _fixedMaterialWorkTargetConfigBuilder(
-    kWorkTargetBuildPort,
-  ),
-  kWorkTargetBuildRail: _fixedMaterialWorkTargetConfigBuilder(
-    kWorkTargetBuildRail,
-  ),
-  kWorkTargetUpgradeTown: _fixedMaterialWorkTargetConfigBuilder(
-    kWorkTargetUpgradeTown,
-  ),
+const Map<String, _StandardWorkTargetKind> _standardWorkTargetKinds = {
+  kWorkTargetBuildImprovement: _StandardWorkTargetKind.improvement,
+  kWorkTargetBuildFort: _StandardWorkTargetKind.fort,
+  kWorkTargetBuildRoad: _StandardWorkTargetKind.fixedMaterial,
+  kWorkTargetBuildPort: _StandardWorkTargetKind.fixedMaterial,
+  kWorkTargetBuildRail: _StandardWorkTargetKind.fixedMaterial,
+  kWorkTargetUpgradeTown: _StandardWorkTargetKind.fixedMaterial,
 };
-
-_StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
-  String target,
-) =>
-    ({
-      required game,
-      required targetTileKey,
-      required unit,
-      required tileState,
-      required provincesById,
-    }) => _fixedMaterialWorkTargetConfig(target);
 
 const _StandardWorkTargetConfig _unsupportedStandardWorkTargetConfig =
     _StandardWorkTargetConfig(
@@ -119,14 +52,52 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   required TileMapState tileState,
   required Map<String, Province> provincesById,
 }) {
-  final builder = _standardWorkTargetConfigBuilders[target];
-  if (builder == null) return _unsupportedStandardWorkTargetConfig;
-  return builder(
-    game: game,
-    targetTileKey: targetTileKey,
-    unit: unit,
-    tileState: tileState,
-    provincesById: provincesById,
+  final kind = _standardWorkTargetKinds[target];
+  if (kind == null) return _unsupportedStandardWorkTargetConfig;
+  return switch (kind) {
+    _StandardWorkTargetKind.fixedMaterial => _StandardWorkTargetConfig(
+      allowedForUnitType: (t) =>
+          isWorkOrderTargetAllowedForUnitType(t, target),
+      costFn: () => workOrderMaterialCost(target),
+      totalTurnsFn: () => totalTurnsForWork(target),
+    ),
+    _StandardWorkTargetKind.improvement => _StandardWorkTargetConfig(
+      allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(
+        t,
+        kWorkTargetBuildImprovement,
+      ),
+      costFn: () => WorkOrderCostCalculator(
+        game,
+        playerId: unit.ownerId,
+      ).calculateCost(
+        kWorkTargetBuildImprovement,
+        targetTileKey,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+      ),
+      totalTurnsFn: () => totalTurnsForWork(
+        kWorkTargetBuildImprovement,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+      ),
+    ),
+    _StandardWorkTargetKind.fort => _fortWorkTargetConfig(
+      unit: unit,
+      provincesById: provincesById,
+    ),
+  };
+}
+
+_StandardWorkTargetConfig _fortWorkTargetConfig({
+  required Unit unit,
+  required Map<String, Province> provincesById,
+}) {
+  final fortLevel = provincesById[unit.locationProvinceId]?.fortLevel ?? 0;
+  return _StandardWorkTargetConfig(
+    allowedForUnitType: (t) =>
+        isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
+    costFn: () =>
+        workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: fortLevel),
+    totalTurnsFn: () =>
+        totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
   );
 }
 

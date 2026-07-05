@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, Player;
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 

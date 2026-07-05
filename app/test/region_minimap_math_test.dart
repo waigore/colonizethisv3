@@ -1,7 +1,7 @@
 import 'dart:ui' show Offset, Size;
 
-import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart';
-import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_viewport_snapshot.dart';
+import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 

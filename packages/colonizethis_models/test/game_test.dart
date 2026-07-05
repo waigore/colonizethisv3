@@ -20,6 +20,21 @@ void main() {
       expect(game2.worldState.turnState.turnNumber, 1);
     });
 
+    test('advancedStartType round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        advancedStartType: AdvancedStartType.turns50,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.advancedStartType, AdvancedStartType.turns50);
+    });
+
     test('calendarCampaignHalted round-trip JSON', () {
       final game = Game(
         id: 'g1',
@@ -341,6 +356,7 @@ void main() {
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
           showPlayerTurnEventsFeed: true,
+          showPlayersBar: false,
         ),
       );
       final roundTrip = Game.fromJson(game.toJson());
@@ -349,12 +365,14 @@ void main() {
       expect(roundTrip.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
       expect(roundTrip.mapViewState.showPlayerTurnEventsFeed, isTrue);
+      expect(roundTrip.mapViewState.showPlayersBar, isFalse);
 
       final legacyJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
       final legacy = Game.fromJson(legacyJson);
       expect(legacy.mapViewState, MapViewState.defaults);
       expect(legacy.mapViewState.showPlayerTurnEventsFeed, isFalse);
+      expect(legacy.mapViewState.showPlayersBar, isTrue);
     });
 
     test('copyWith id and players', () {

@@ -29,6 +29,9 @@ const _ordersLibDir = 'packages/colonizethis_orders/lib/src/orders';
 const List<String> ordersFileSizeGatedFiles = <String>[
   '$_ordersLibDir/orders_application.dart',
   '$_ordersLibDir/orders_application_completed_work.dart',
+  '$_ordersLibDir/validators/work_order_validator.dart',
+  '$_ordersLibDir/order_engine_validation.dart',
+  '$_ordersLibDir/order_suggestion_diplomatic.dart',
 ];
 
 /// Used by `ct_repo_lint`/tests; [info] / [err] default to stdout/stderr.

@@ -28,7 +28,7 @@ import 'package:path/path.dart' as p;
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
 /// 1. **Dev-tooling screens** — `SYS20001` Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) are
+///    (`app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart`) are
 ///    operator-only surfaces; implementing Ct-* catalog widgets there is
 ///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
 ///    sibling `repo.app_no_material_iconbutton`,
@@ -180,7 +180,7 @@ const Set<String> _appNoMaterialChipAllowedFiles = <String>{
   // repo.app_no_material_scaffold, repo.app_no_material_filterchip, and
   // repo.app_no_material_switchlisttile allowlists so the
   // Material-widget ban family stays scope-uniform across rules.
-  'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+  'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
 };
 
 const Set<String> _appNoMaterialChipAllowedDirPrefixes = <String>{

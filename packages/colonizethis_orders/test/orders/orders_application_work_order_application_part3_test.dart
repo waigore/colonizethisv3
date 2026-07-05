@@ -3,11 +3,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'orders_application_test_support.dart';
+
 void main() {
   group('applyBuildAndWorkOrders work order application', () {
-    const ow = 'oldWorld';
-    const provinceId = 'oldWorld|P1';
-    const tileKey = 'oldWorld|P1|0|0';
+    const ow = OrdersApplicationTestSupport.ow;
+    const provinceId = OrdersApplicationTestSupport.provinceId;
+    const tileKey = OrdersApplicationTestSupport.tileKey;
 
     test('build_fort with sufficient materials deducts materials', () {
       final unit = Unit(
@@ -18,33 +20,22 @@ void main() {
         tileKey: tileKey,
       );
       final cost = workOrderCostBuildFort(0);
-      var stockpile = const Stockpile();
-      for (final e in cost.entries) {
-        stockpile = stockpile.applyDelta(e.key, e.value);
-      }
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ow,
-                ownerId: 'p1',
-                fortLevel: 0,
-              ),
-            ],
-            units: [unit],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: ow,
+            ownerId: 'p1',
+            fortLevel: 0,
           ),
-          newWorld: const RegionData(),
-        ),
+        ],
+        units: [unit],
         players: [
           Player(
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
-            stockpile: stockpile,
+            stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
           ),
         ],
       );
@@ -76,25 +67,18 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ow,
-                ownerId: 'p1',
-                fortLevel: 1,
-              ),
-            ],
-            units: [unit],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: ow,
+            ownerId: 'p1',
+            fortLevel: 1,
           ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          const Player(
+        ],
+        units: [unit],
+        players: const [
+          Player(
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
@@ -126,25 +110,18 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ow,
-                ownerId: 'p1',
-                fortLevel: 2,
-              ),
-            ],
-            units: [unit],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: ow,
+            ownerId: 'p1',
+            fortLevel: 2,
           ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          const Player(
+        ],
+        units: [unit],
+        players: const [
+          Player(
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
@@ -183,23 +160,16 @@ void main() {
           remainingTurns: 1,
         ),
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ow,
-                ownerId: 'p1',
-                townDevelopmentLevel: 1,
-              ),
-            ],
-            units: [unit],
+      final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: ow,
+            ownerId: 'p1',
+            townDevelopmentLevel: 1,
           ),
-          newWorld: const RegionData(),
-        ),
+        ],
+        units: [unit],
         players: [
           Player(
             id: 'p1',
@@ -219,8 +189,8 @@ void main() {
     test(
       'counter_spy processWork keeps ongoing assignment without killing in build/work',
       () {
-        const provId = 'oldWorld|P1';
-        const tileKeyP1 = 'oldWorld|P1|0|0';
+        const provId = OrdersApplicationTestSupport.provinceId;
+        const tileKeyP1 = OrdersApplicationTestSupport.tileKey;
         final p1Spy = Unit(
           id: 'spy1',
           type: kUnitTypeSpy,
@@ -242,22 +212,16 @@ void main() {
           locationProvinceId: provId,
           tileKey: tileKeyP1,
         );
-        final game = Game(
-          id: 'g',
+        final game = OrdersApplicationTestSupport.workOrderApplicationGame(
+          turnNumber: 1,
           globalGameSeed: 12345,
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [Province(id: provId, regionId: ow, ownerId: 'p1')],
-              units: [p1Spy, p2Spy],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                provId: [tileKeyP1],
-              },
+          provinces: [Province(id: provId, regionId: ow, ownerId: 'p1')],
+          units: [p1Spy, p2Spy],
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provId: [tileKeyP1],
             },
-          ),
+          },
           players: const [
             Player(id: 'p1', displayName: 'P1', isHuman: true),
             Player(id: 'p2', displayName: 'P2', isHuman: true),

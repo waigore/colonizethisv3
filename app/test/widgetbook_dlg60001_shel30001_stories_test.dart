@@ -13,10 +13,10 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

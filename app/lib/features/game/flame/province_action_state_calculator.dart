@@ -3,7 +3,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../core/services/game_service.dart' show GameMapData;
-import 'game_map_area_state_logic.dart';
+import 'map_state/map_state.dart';
 import 'per_player_work_target_selection_cache.dart';
 
 /// Explore / prospect inline action state shape (shared by both overlay slots).
