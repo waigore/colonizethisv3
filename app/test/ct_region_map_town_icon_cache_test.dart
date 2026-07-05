@@ -209,6 +209,14 @@ void main() {
   });
 
   group('S9b candidate level-1 town icons (Refs #3870)', () {
+    test('candidate level-1 assets differ from production S9a hamlets', () async {
+      for (final style in kTownIconStyles) {
+        final production = await _loadTownIconBytes('town_${style}_1');
+        final candidate = await _loadCandidateTownIconBytes(style);
+        expect(candidate, isNot(equals(production)), reason: style);
+      }
+    });
+
     testWidgets(
       'candidate level-1 PNGs are present in the asset bundle',
       (WidgetTester tester) async {
