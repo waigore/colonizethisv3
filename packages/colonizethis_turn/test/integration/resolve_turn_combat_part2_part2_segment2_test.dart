@@ -1,6 +1,11 @@
-part of 'resolve_turn_combat_movement_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _resolve_turn_combat_part2_part2_segment2_partTests() {
+import '../support/turn_resolver_test_harness.dart';
+
+void main() {
   group('part2_part2_segment2_test', () {
     test('naval move order targeting home fleet does not move it', () {
           final topology = MapTopology(

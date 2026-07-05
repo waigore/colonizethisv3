@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show defaultCargoHoldsStub;
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
 import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -78,10 +77,10 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runWorldMarketPhaseFrom(
+            pipeline: acc,
+            orders: config.orders,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(
@@ -150,10 +149,10 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runWorldMarketPhaseFrom(
+            pipeline: acc,
+            orders: config.orders,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(
@@ -217,10 +216,10 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runWorldMarketPhaseFrom(
+            pipeline: acc,
+            orders: config.orders,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(buyer.stockpile.quantityOf('timber'), 0);
@@ -274,10 +273,10 @@ void main() {
             ),
           );
 
-          final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                  as TurnPhaseStepContinue)
-              .pipeline
-              .game;
+          final next = runWorldMarketPhaseFrom(
+            pipeline: acc,
+            orders: config.orders,
+          );
 
           final buyer = next.players.firstWhere((p) => p.id == buyerId);
           expect(

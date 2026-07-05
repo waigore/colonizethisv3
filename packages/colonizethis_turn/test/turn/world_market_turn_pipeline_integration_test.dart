@@ -1,9 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
 import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
+import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
+import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../support/turn_phase_test_harness.dart';
 
 /// Full-turn pipeline integration for World Market phase 13 (Refs #2990 B5).
 ///
@@ -207,10 +210,12 @@ TurnResolutionResult _runPipelineWithHandlers({
       ),
       turn,
     );
-    if (outcome is TurnPhaseStepExit) {
-      return outcome.result;
+    switch (outcome) {
+      case TurnPhaseStepExit(:final result):
+        return result;
+      case TurnPhaseStepContinue(:final pipeline):
+        acc = pipeline;
     }
-    acc = (outcome as TurnPhaseStepContinue).pipeline;
   }
   return TurnResolutionComplete(acc.game);
 }

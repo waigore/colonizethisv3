@@ -9,12 +9,12 @@
 ///     riches handoff — credit/non-riches/unimproved/post-conquest".
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_turn/src/turn/phases/riches_to_treasury_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import '../support/turn_phase_test_harness.dart';
 import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
 
 void main() {
@@ -28,18 +28,16 @@ void main() {
           gpATreasury: 100,
           gpAStockpileGold: 0,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.gold),
         );
-
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         // Stockpile gold was 0 → still 0; the credit applied is the
@@ -63,18 +61,16 @@ void main() {
           gpATreasury: 100,
           gpAStockpileGold: 2,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.gold),
         );
-
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         // Own stockpile gold (2) cashed in at basePrice + 1 unit from the
@@ -95,18 +91,17 @@ void main() {
           gpATreasury: 100,
           gpAStockpileGold: 1,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.timber),
         );
 
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         // Only own stockpile (1 gold) is cashed in; no purchased-tile
@@ -126,18 +121,17 @@ void main() {
           gpATreasury: 0,
           gpAStockpileGold: 0,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.silver),
         );
 
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         expect(gpA.treasury, equals(0));
@@ -183,18 +177,16 @@ void main() {
               .setImprovement(tileKey, 1)
               .setRoadLevel(tileKey, 1),
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.gold),
         );
-
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         expect(
@@ -215,18 +207,16 @@ void main() {
           gpATreasury: 0,
           gpAStockpileGold: 0,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.gold),
         );
-
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         expect(
           next.players.where((p) => p.id == 'M1'),
@@ -246,18 +236,17 @@ void main() {
           gpATreasury: 100,
           gpAStockpileGold: 2,
         );
-        final acc = TurnPipelineState(game: game);
         // No tileMapByRegion — handler should skip purchased-tile riches.
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
         );
 
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         expect(gpA.stockpile.quantityOf('gold'), equals(0));
@@ -284,18 +273,17 @@ void main() {
           gpAStockpileGold: 0,
           richesCashMultiplier: 1.5,
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
           tileMapByRegion: tileMapByRegionForResource(Resource.spices),
         );
 
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         // 1 × basePrice('spices') = 50; × 1.5 = 75 truncated.
@@ -316,17 +304,16 @@ void main() {
             ),
           ],
         );
-        final acc = TurnPipelineState(game: game);
         final config = TurnResolverConfig(
           topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
         );
 
-        final next =
-            (richesToTreasuryTurnPhaseHandler(acc, config, 3)
-                    as TurnPhaseStepContinue)
-                .pipeline
-                .game;
+        final next = runTurnPhaseHandler(
+          handler: richesToTreasuryTurnPhaseHandler,
+          game: game,
+          config: config,
+        );
 
         final gpA = next.players.firstWhere((p) => p.id == 'gpA');
         expect(gpA.treasury, equals(42));

@@ -1,11 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../support/world_market_test_support.dart';
 
 /// Phase-handler integration for the #3753 R7.3 sell-priority relation
 /// tiebreaker. Minor M1 auto-offers a limited quantity; two GPs bid for it at
@@ -16,102 +15,11 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 /// SPEC anchors:
 /// - `SPEC/game/world-market.md` § Sell-priority relation tiebreaker.
 /// - `SPEC/program/world-market-resolution.md` § Step B item 4 + ACs.
-const _ow = 'oldWorld';
-const _minorProvinceId = '$_ow|M1';
-const _tileKey = '$_ow|M1|0|0';
-
-Game _sellPriorityGame({
-  required int gpHighRelation,
-  required int gpLowRelation,
-  required List<OvertureState> overtureStates,
-  String minorSellerId = 'M1',
-}) {
-  return TestFixtures.minimalGame(
-    players: const [
-      Player(
-        id: 'gpHigh',
-        displayName: 'GP High',
-        isHuman: false,
-        treasury: 1000,
-        stockpile: Stockpile.empty,
-      ),
-      Player(
-        id: 'gpLow',
-        displayName: 'GP Low',
-        isHuman: false,
-        treasury: 1000,
-        stockpile: Stockpile.empty,
-      ),
-    ],
-    oldWorld: const RegionData(
-      provinces: [
-        Province(id: _minorProvinceId, regionId: _ow, ownerId: 'M1'),
-      ],
-    ),
-    tileKeysByRegionAndProvince: const {
-      _ow: {
-        _minorProvinceId: [_tileKey],
-      },
-    },
-    minorNations: const [MinorNation(id: 'M1', displayName: 'Minor 1')],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gpHigh',
-        factionId2: minorSellerId,
-        score: gpHighRelation,
-      ),
-      DiplomacyRelation(
-        factionId1: 'gpLow',
-        factionId2: minorSellerId,
-        score: gpLowRelation,
-      ),
-    ],
-    overtureStates: overtureStates,
-  ).copyWith(
-    worldMarketState: WorldMarketState.empty.copyWith(
-      prices: const {'timber': 10},
-    ),
-  );
-}
-
-Game _runPhase({
-  required Game game,
-  required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
-}) {
-  final acc = TurnPipelineState(game: game);
-  final config = TurnResolverConfig(
-    topology: const MapTopology(nodes: [], edges: []),
-    orders: Orders(tradeOrdersByPlayerId: tradeOrdersByPlayerId),
-  );
-  return (worldMarketTurnPhaseHandler(acc, config, 3) as TurnPhaseStepContinue)
-      .pipeline
-      .game;
-}
-
-List<TradeOrder> _minorOffer(int quantity) => [
-  TradeOrder(
-    commodityId: 'timber',
-    type: TradeOrderType.offer,
-    quantity: quantity,
-    priority: 1,
-    originTileKey: _tileKey,
-  ),
-];
-
-List<TradeOrder> _bid(int quantity) => [
-  TradeOrder(
-    commodityId: 'timber',
-    type: TradeOrderType.bid,
-    quantity: quantity,
-    priority: 1,
-  ),
-];
-
 void main() {
   group('worldMarketTurnPhaseHandler — #3753 R7.3 sell-priority', () {
     test('higher-relation consulate-holding buyer wins limited supply', () {
-      final next = _runPhase(
-        game: _sellPriorityGame(
+      final next = runWorldMarketTradePhase(
+        game: sellPriorityMinorTimberGame(
           gpHighRelation: 80,
           gpLowRelation: 40,
           overtureStates: const [
@@ -128,9 +36,9 @@ void main() {
           ],
         ),
         tradeOrdersByPlayerId: {
-          'M1': _minorOffer(5),
-          'gpLow': _bid(5),
-          'gpHigh': _bid(5),
+          'M1': minorTimberOffer(quantity: 5, originTileKey: frrCreditTestTileKey),
+          'gpLow': gpTimberBid(quantity: 5),
+          'gpHigh': gpTimberBid(quantity: 5),
         },
       );
 
@@ -159,8 +67,8 @@ void main() {
     });
 
     test('consulate-less higher-relation buyer falls back behind holder', () {
-      final next = _runPhase(
-        game: _sellPriorityGame(
+      final next = runWorldMarketTradePhase(
+        game: sellPriorityMinorTimberGame(
           gpHighRelation: 90,
           gpLowRelation: 30,
           // gpHigh holds NO overture with M1 (consulate-less); only gpLow does.
@@ -173,9 +81,9 @@ void main() {
           ],
         ),
         tradeOrdersByPlayerId: {
-          'M1': _minorOffer(5),
-          'gpLow': _bid(5),
-          'gpHigh': _bid(5),
+          'M1': minorTimberOffer(quantity: 5, originTileKey: frrCreditTestTileKey),
+          'gpLow': gpTimberBid(quantity: 5),
+          'gpHigh': gpTimberBid(quantity: 5),
         },
       );
 
@@ -195,8 +103,8 @@ void main() {
     });
 
     test('embassy (higher than consulate) satisfies the gate', () {
-      final next = _runPhase(
-        game: _sellPriorityGame(
+      final next = runWorldMarketTradePhase(
+        game: sellPriorityMinorTimberGame(
           gpHighRelation: 70,
           gpLowRelation: 95,
           overtureStates: const [
@@ -213,9 +121,9 @@ void main() {
           ],
         ),
         tradeOrdersByPlayerId: {
-          'M1': _minorOffer(5),
-          'gpHigh': _bid(5),
-          'gpLow': _bid(5),
+          'M1': minorTimberOffer(quantity: 5, originTileKey: frrCreditTestTileKey),
+          'gpHigh': gpTimberBid(quantity: 5),
+          'gpLow': gpTimberBid(quantity: 5),
         },
       );
 
@@ -278,7 +186,7 @@ void main() {
             ),
           );
 
-      final next = _runPhase(
+      final next = runWorldMarketTradePhase(
         game: game,
         tradeOrdersByPlayerId: {
           'gpSell': [
@@ -289,8 +197,8 @@ void main() {
               priority: 1,
             ),
           ],
-          'gpA': _bid(5),
-          'gpZ': _bid(5),
+          'gpA': gpTimberBid(quantity: 5),
+          'gpZ': gpTimberBid(quantity: 5),
         },
       );
 
