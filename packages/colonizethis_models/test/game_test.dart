@@ -20,6 +20,21 @@ void main() {
       expect(game2.worldState.turnState.turnNumber, 1);
     });
 
+    test('advancedStartType round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        advancedStartType: AdvancedStartType.turns50,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.advancedStartType, AdvancedStartType.turns50);
+    });
+
     test('calendarCampaignHalted round-trip JSON', () {
       final game = Game(
         id: 'g1',

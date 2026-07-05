@@ -341,7 +341,7 @@ void main() {
                 initialLeaderByGpId: defaultInitialLeaderByGpId(),
                 blessedProfileNames: const [],
                 onCancel: () {},
-                onConfirmed: (_, _, _, _, _, _) {},
+                onConfirmed: (_, _, _, _, _, _, _) {},
               ),
             ),
           ),

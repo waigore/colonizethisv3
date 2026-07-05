@@ -32,6 +32,8 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Capital-Choice Phase:** Runs **during** setup (after province assignment): each GP's capital is **auto-chosen** (sea-bound province + tile) per [capital-choice-phase.md](capital-choice-phase.md). **current product:** There is **no** in-game UI for Great Powers to confirm or override capital after auto-choice; that UI is deferred. Minor Nations and Tribes do not participate; their capitals are assigned at setup.
 
+**Advanced start (optional):** When `GameSetupConfig.advancedStart` is not `none`, the setup pipeline runs `applyAdvancedStartBootstrap` after standard turn-0 state creation. Presets, tier tables, and tech lists: [advanced-starts.md](advanced-starts.md). UI: [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md).
+
 ## Configurable Values
 
 | Parameter | Default | Source |

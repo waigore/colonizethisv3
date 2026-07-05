@@ -1,6 +1,7 @@
 /// Game setup, init-game orchestration, and province assignment (Refs #3290).
 library colonizethis_setup;
 
+export 'src/setup/advanced_start_bootstrap.dart';
 export 'src/setup/capital_choice.dart';
 export 'src/setup/effective_setup_seed.dart';
 export 'src/setup/full_assignment_verification.dart';

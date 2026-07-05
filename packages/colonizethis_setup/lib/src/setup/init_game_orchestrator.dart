@@ -9,6 +9,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'hidden_agenda_assignment.dart';
+import 'advanced_start_bootstrap.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'setup_constants.dart';
@@ -129,13 +130,18 @@ InitGameResult runInitGame({
   final warpLinks = pipelineResult.warpLinks;
   final setupResult = pipelineResult.setupResult;
 
+  var gameForView = applyAdvancedStartBootstrap(
+    game: setupResult.game,
+    config: config,
+  );
+
   // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids
   // so colour overrides can be keyed by Player.id for map builders and saves.
   final semanticToPlayerId = <String, String>{};
-  for (var i = 0; i < setupResult.game.players.length; i++) {
+  for (var i = 0; i < gameForView.players.length; i++) {
     if (i >= config.selectedGreatPowerIds.length) break;
     final semanticId = config.selectedGreatPowerIds[i];
-    final playerId = setupResult.game.players[i].id;
+    final playerId = gameForView.players[i].id;
     semanticToPlayerId[semanticId] = playerId;
   }
 
@@ -155,7 +161,7 @@ InitGameResult runInitGame({
   }
 
   final mergedGpColorTuples = <String, (int r, int g, int b)>{};
-  final baseOverride = setupResult.game.greatPowerColorOverride;
+  final baseOverride = gameForView.greatPowerColorOverride;
   if (baseOverride != null) {
     baseOverride.forEach((playerId, rgb) {
       if (rgb.length >= 3) {
@@ -171,7 +177,7 @@ InitGameResult runInitGame({
       : mergedGpColorTuples;
 
   final mapViewData = buildInitGameMapViewData(
-    game: setupResult.game,
+    game: gameForView,
     tileMapByRegion: setupResult.tileMapByRegion,
     topologyByRegion: setupResult.topologyByRegion,
     cellSize: options.cellSize,
@@ -186,10 +192,10 @@ InitGameResult runInitGame({
       ? renderInitGameMapToPngFromViewData(viewData: mapViewData)
       : Uint8List(0);
 
-  final markdown = formatInitGameSetupMarkdown(setupResult.game);
+  final markdown = formatInitGameSetupMarkdown(gameForView);
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
-  var game = setupResult.game;
+  var game = gameForView;
   final gpColorOverrideList = mapColorTuples?.map(
     (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
   );

@@ -331,6 +331,26 @@
   "@shell_leaderDialog_infiniteModeHelper": {
     "description": "Helper text for infinite mode in the new-game leader dialog."
   },
+  "shell_leaderDialog_advancedStartLabel": "Advanced start",
+  "@shell_leaderDialog_advancedStartLabel": {
+    "description": "Label for the advanced-start preset dropdown in the new-game leader dialog."
+  },
+  "shell_leaderDialog_advancedStartNone": "None (Turn 0)",
+  "@shell_leaderDialog_advancedStartNone": {
+    "description": "Advanced-start dropdown option for standard turn-0 start."
+  },
+  "shell_leaderDialog_advancedStart50": "50 Turns In (1598)",
+  "@shell_leaderDialog_advancedStart50": {
+    "description": "Advanced-start dropdown option for the 50-turn preset."
+  },
+  "shell_leaderDialog_advancedStart100": "100 Turns In (1698)",
+  "@shell_leaderDialog_advancedStart100": {
+    "description": "Advanced-start dropdown option for the 100-turn preset."
+  },
+  "shell_leaderDialog_advancedStartDisabledHelper": "Advanced start requires the standard six-power campaign profile.",
+  "@shell_leaderDialog_advancedStartDisabledHelper": {
+    "description": "Helper when advanced start is disabled for non-locked map profiles."
+  },
 
   "shell_leaderDialog_terrainVariationLabel": "Terrain variation:",
   "@shell_leaderDialog_terrainVariationLabel": {

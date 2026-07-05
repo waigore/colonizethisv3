@@ -834,7 +834,7 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                       initialLeaderByGpId: initial,
                       blessedProfileNames: const [],
                       onCancel: () => Navigator.of(innerContext).pop(),
-                      onConfirmed: (_, _, _, _, _, __) {},
+                      onConfirmed: (_, _, _, _, _, __, ___) {},
                     ),
                   );
                 },
@@ -871,7 +871,7 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                   initialLeaderByGpId: initial,
                   blessedProfileNames: const [],
                   onCancel: () {},
-                  onConfirmed: (_, _, _, _, _, __) {},
+                  onConfirmed: (_, _, _, _, _, __, ___) {},
                 ),
               ),
             ),
@@ -919,7 +919,7 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                       initialLeaderByGpId: initial,
                       blessedProfileNames: const [],
                       onCancel: () => Navigator.of(innerContext).pop(),
-                      onConfirmed: (_, _, _, _, _, __) {},
+                      onConfirmed: (_, _, _, _, _, __, ___) {},
                     ),
                   );
                 },
@@ -962,7 +962,7 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                         'defensive_v1',
                       ],
                       onCancel: () => Navigator.of(innerContext).pop(),
-                      onConfirmed: (_, _, _, _, _, __) {},
+                      onConfirmed: (_, _, _, _, _, __, ___) {},
                     ),
                   );
                 },
