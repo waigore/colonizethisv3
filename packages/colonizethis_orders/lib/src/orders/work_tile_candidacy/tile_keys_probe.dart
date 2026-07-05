@@ -1,26 +1,18 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'incremental_candidate_validator.dart';
-import 'order_resolution_context.dart';
-import 'order_suggestion_context.dart';
-import 'order_suggestion_helpers.dart';
-import 'order_work_constants.dart';
-import 'order_suggestion_work_tile_candidacy_prefilter.dart';
-import 'partial_province_reveal.dart';
-import 'unit_type_helpers.dart';
+import '../incremental_candidate_validator.dart';
+import '../order_resolution_context.dart';
+import '../order_suggestion_context.dart';
+import '../order_suggestion_helpers.dart';
+import '../order_work_constants.dart';
+import '../partial_province_reveal.dart';
+import '../unit_type_helpers.dart';
+import 'prefilter.dart';
 
-// Work-tile candidacy module: prefilter companion library
-// (`order_suggestion_work_tile_candidacy_prefilter.dart`) plus this file's
-// candidate index and tile-keys probe API. Mirrors `order_engine_slot.dart`
-// extraction shape (Refs #3877 AC4; SPEC/program/order-engine.md).
-//
-// ---------------------------------------------------------------------------
-// Work-tile candidate index — shared pre-filtering for work-target tile scans.
+// Work-tile candidate index and tile-keys probe API.
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
-// ---------------------------------------------------------------------------
 
 Set<String> rawCandidateTilesForWorkTarget({
   required Game game,
@@ -60,10 +52,6 @@ Set<String> rawCandidateTilesForWorkTarget({
     factionMembership: factionMembership,
   );
 }
-
-// ---------------------------------------------------------------------------
-// Valid work-order tile keys — pre-filter + incremental validation probe.
-// ---------------------------------------------------------------------------
 
 /// Returns the set of tile keys that are valid targets for a work order
 /// (unitId, workTarget) given [currentOrders]. Used by the app to highlight
