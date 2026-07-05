@@ -2,9 +2,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import '../support/turn_resolver_test_harness.dart';
+import '../turn_resolver_test_harness.dart';
 
-void main() {
+void registerSpyFogEndOfTurnVisibilityTests() {
   group('spy fog end-of-turn', () {
     group('spy_fog_part4_segment2_test', () {
 test(
