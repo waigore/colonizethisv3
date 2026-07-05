@@ -7,8 +7,7 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';

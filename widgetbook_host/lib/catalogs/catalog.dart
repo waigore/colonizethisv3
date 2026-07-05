@@ -68,8 +68,7 @@ import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_ov
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
+import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
