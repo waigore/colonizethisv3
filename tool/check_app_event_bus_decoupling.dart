@@ -78,8 +78,16 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #3878 Phase 3).
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build.dart',
+  // Map display-options dialog split from `game_map_area_build.dart` into
+  // `game_map_area_build_map_stack.dart` for Phase 3 flame map modularization.
+  // Same local-by-design rationale as the parent part (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/map_state/game_map_area_build_map_stack.dart',
   'app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
+  // Next-turn processing dialog split from `game_screen.dart` into
+  // `game_screen_fallback_next_turn.dart` for Phase 3 flame modularization.
+  // Same local-by-design rationale as the parent file (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/game_screen_fallback_next_turn.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
   // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
