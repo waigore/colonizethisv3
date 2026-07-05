@@ -245,6 +245,27 @@ void main() {
           greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
         );
       });
+
+      test('$style candidate level-1 is less complex than production level 2', () async {
+        final candidate = await _loadCandidateStats(style);
+        final level2 = await _loadTownIconStats('town_${style}_2');
+
+        expect(candidate.opaqueCount, lessThan(level2.opaqueCount));
+      });
+
+      test('$style candidate level-1 bytes differ from S9a production level 1', () async {
+        final candidatePath =
+            'assets/icons/64/ui_icon_com_town_${style}_1_candidate_64.png';
+        final productionPath =
+            'assets/icons/64/ui_icon_com_town_${style}_1_64.png';
+        final candidateData = await rootBundle.load(candidatePath);
+        final productionData = await rootBundle.load(productionPath);
+
+        expect(
+          candidateData.buffer.asUint8List(),
+          isNot(equals(productionData.buffer.asUint8List())),
+        );
+      });
     }
   });
 }
