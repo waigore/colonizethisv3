@@ -241,15 +241,10 @@ void main() {
 
           expect(
             find.byKey(kGameMapPlayersBarKey),
-            findsNothing,
+            findsOneWidget,
             reason:
-                'Refs #2870 Requirement 6 (players bar hidden at '
-                '< 600 dp): the wide-only `GameMapPlayersBar` floating '
-                'chip column must NOT be present in the widget tree '
-                'at the minimum supported viewport (320 dp). The '
-                'narrow shell suppresses it via '
-                '`if (!isNarrow && widget.game.victory == null)` in '
-                '`game_map_area_build.dart`.',
+                'Issue #3898: at 320 dp with default showPlayersBar=true, '
+                'the players bar mounts below the news-feed anchor on narrow.',
           );
         },
         timeout: const Timeout(Duration(seconds: 20)),

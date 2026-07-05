@@ -105,15 +105,19 @@ void main() {
       },
     );
 
-    test('measurement table records players bar hidden at narrow', () {
-      expect(spec, contains('Players bar'));
-      expect(
-        spec,
-        contains('Hidden (not present in widget tree)'),
-        reason:
-            'Players bar must be removed from the widget tree at narrow per Req 6 of issue #2870.',
-      );
-    });
+    test(
+      'measurement table records players bar toggle placement at narrow (Refs #3898)',
+      () {
+        expect(spec, contains('Players bar'));
+        expect(
+          spec,
+          contains('Visible below news-feed anchor when `showPlayersBar == true`'),
+          reason:
+              'Issue #3898: narrow players bar mounts below the news-feed anchor when toggled on; '
+              'see SPEC/ui/mobile-adaptation.md § 4 In-game shell measurement table.',
+        );
+      },
+    );
 
     test(
       'measurement table records province/sea detail bottom 33 vh at narrow',

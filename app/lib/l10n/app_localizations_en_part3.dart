@@ -582,6 +582,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get mapControls_playersBarToggle => 'Players bar';
+
+  @override
   String common_percent(int value) {
     return '$value%';
   }
