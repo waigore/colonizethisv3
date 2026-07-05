@@ -2561,6 +2561,10 @@
       }
     }
   },
+  "mapControls_playersBarToggle": "Players bar",
+  "@mapControls_playersBarToggle": {
+    "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
+  },
   "common_percent": "{value}%",
   "@common_percent": {
     "description": "Percentage label with no space before percent sign.",
