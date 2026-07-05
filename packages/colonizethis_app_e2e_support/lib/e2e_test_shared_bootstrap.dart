@@ -8,7 +8,9 @@ import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.d
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -151,6 +153,39 @@ Future<void> e2eWaitForMapHudAfterNewGameStart(
   );
 }
 
+/// Selects an advanced-start preset in DLG10001 before tapping **Start**.
+///
+/// Requires the locked full-init profile (`CT_E2E_LOCKED_FULL_INIT=true`).
+/// [optionLabel] must match the English l10n string (e.g. `50 Turns In (1598)`).
+Future<void> e2eSelectLeaderDialogAdvancedStart(
+  WidgetTester tester,
+  String optionLabel, {
+  E2ePerfLog? perf,
+}) async {
+  final dropdown = find.byType(CtDropdown<AdvancedStartType>);
+  expect(dropdown, findsOneWidget);
+  await tester.ensureVisible(dropdown);
+  await tester.tap(dropdown);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find.text(optionLabel).evaluate().isNotEmpty,
+    timeout: const Duration(seconds: 5),
+    perf: perf,
+    phaseName: 'pump_until_advanced_start_menu_open',
+  );
+  await tester.tap(find.text(optionLabel).last);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find
+        .widgetWithText(CtDropdown<AdvancedStartType>, optionLabel)
+        .evaluate()
+        .isNotEmpty,
+    timeout: const Duration(seconds: 5),
+    perf: perf,
+    phaseName: 'pump_until_advanced_start_selected',
+  );
+}
+
 /// Canonical new-game → map HUD path shared by E2E scenarios (Refs #2336).
 ///
 /// Adaptive polling notes (GitHub #2336 AC5):
@@ -179,6 +214,7 @@ Future<void> e2eBootstrapNewGameToMap(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration overallCap = const Duration(seconds: 60),
+  String? advancedStartOptionLabel,
 }) async {
   final phaseSw = Stopwatch()..start();
   await tester.tap(find.text('New Game'));
@@ -189,6 +225,14 @@ Future<void> e2eBootstrapNewGameToMap(
     perf: perf,
     phaseName: 'wait_until_found_start_button',
   );
+
+  if (advancedStartOptionLabel != null) {
+    await e2eSelectLeaderDialogAdvancedStart(
+      tester,
+      advancedStartOptionLabel,
+      perf: perf,
+    );
+  }
 
   final startButton = find.ancestor(
     of: find.text('Start'),
