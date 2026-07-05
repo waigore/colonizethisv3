@@ -29,6 +29,8 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart'
     show GameScreen, kGameMapPlayersBarKey;
+import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -110,14 +112,15 @@ void main() {
     );
   }
 
-  group('GameMapPlayersBar narrow-viewport gating (Refs #2870 S3)', () {
+  group('GameMapPlayersBar narrow-viewport gating (Refs #3898)', () {
     testWidgets(
-      'positive: bar is absent from the widget tree below kNarrowBreakpoint',
+      'positive: bar mounts below feed anchor when showPlayersBar is true',
       (WidgetTester tester) async {
-        // Sanity check on the breakpoint itself; if this constant changes,
-        // every narrow-viewport AC across the app needs revisiting.
         expect(kNarrowBreakpoint, 600.0);
         const double narrowWidth = kNarrowBreakpoint - 1.0;
+        final game = baseGame.copyWith(
+          mapViewState: baseGame.mapViewState.copyWith(showPlayersBar: true),
+        );
 
         final dpr = tester.view.devicePixelRatio;
         tester.view.physicalSize = Size(narrowWidth * dpr, 700 * dpr);
@@ -125,21 +128,91 @@ void main() {
 
         await tester.pumpWidget(
           buildGameScreen(
-            game: baseGame,
+            game: game,
             width: narrowWidth,
             height: 700,
           ),
         );
         await tester.pump();
 
-        expect(
-          find.byKey(kGameMapPlayersBarKey),
-          findsNothing,
-          reason:
-              'Players bar must be hidden on viewports < kNarrowBreakpoint per '
-              'SPEC/ui/empire-overview.md § Players bar and '
-              'SPEC/ui/mobile-adaptation.md § In-game shell (issue #2870 S3).',
+        expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'positive: players bar stacks below feed card when both toggles are on',
+      (WidgetTester tester) async {
+        const double narrowWidth = kNarrowBreakpoint - 1.0;
+        final game = baseGame.copyWith(
+          mapViewState: baseGame.mapViewState.copyWith(
+            showPlayersBar: true,
+            showPlayerTurnEventsFeed: true,
+          ),
         );
+
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(narrowWidth * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          buildGameScreen(
+            game: game,
+            width: narrowWidth,
+            height: 700,
+          ),
+        );
+
+        const step = Duration(milliseconds: 50);
+        for (var i = 0; i < 80; i++) {
+          await tester.pump(step);
+          if (find.byType(PlayerTurnEventFeedCard).evaluate().isNotEmpty &&
+              find.byKey(kGameMapPlayersBarKey).evaluate().isNotEmpty) {
+            break;
+          }
+        }
+
+        expect(find.byType(PlayerTurnEventFeedCard), findsOneWidget);
+        expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
+
+        final feedRect = tester.getRect(find.byType(PlayerTurnEventFeedCard));
+        final barRect = tester.getRect(find.byKey(kGameMapPlayersBarKey));
+
+        expect(
+          barRect.top,
+          greaterThanOrEqualTo(
+            feedRect.bottom + GameMapPlayersBar.narrowStackGap - 0.5,
+          ),
+          reason:
+              'Players bar must stack below the news feed card with '
+              'GameMapPlayersBar.narrowStackGap spacing on narrow viewports.',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'positive: bar hidden on narrow when showPlayersBar is false',
+      (WidgetTester tester) async {
+        const double narrowWidth = kNarrowBreakpoint - 1.0;
+        final game = baseGame.copyWith(
+          mapViewState: baseGame.mapViewState.copyWith(showPlayersBar: false),
+        );
+
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(narrowWidth * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          buildGameScreen(
+            game: game,
+            width: narrowWidth,
+            height: 700,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byKey(kGameMapPlayersBarKey), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

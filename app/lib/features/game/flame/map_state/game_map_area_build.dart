@@ -65,6 +65,8 @@ mixin _GameMapAreaBuild
           playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,
           showPlayerTurnEventsFeed: _mapViewState.showPlayerTurnEventsFeed,
           onTogglePlayerTurnEventsFeed: _togglePlayerTurnEventsFeedVisibility,
+          showPlayersBar: _mapViewState.showPlayersBar,
+          onTogglePlayersBar: _togglePlayersBarVisibility,
         ),
         Expanded(
           child: Stack(
@@ -295,8 +297,17 @@ mixin _GameMapAreaBuild
                         // (mockup z-order: news card 7 > players bar 5;
                         // issue #2861 M4). Keep this child earlier in the
                         // stack than the feed cards below.
-                        if (!isNarrow && widget.game.victory == null)
-                          GameMapPlayersBar(game: widget.game),
+                        if (!isNarrow &&
+                            widget.game.victory == null &&
+                            _mapViewState.showPlayersBar)
+                          GameMapPlayersBar(
+                            game: widget.game,
+                            highlightPlayerId: shell.inObservePhase &&
+                                    shell.viewingPlayerId == null
+                                ? null
+                                : shell.viewingPlayerId ??
+                                    shell.effectiveHumanPlayerId,
+                          ),
                         if (!isNarrow)
                           Consumer(
                             builder: (context, ref, _) {
@@ -321,15 +332,41 @@ mixin _GameMapAreaBuild
                             },
                           ),
                         if (isNarrow &&
-                            shell.showPlayerChrome &&
-                            _mapViewState.showPlayerTurnEventsFeed)
+                            widget.game.victory == null &&
+                            (_mapViewState.showPlayersBar ||
+                                (shell.showPlayerChrome &&
+                                    _mapViewState.showPlayerTurnEventsFeed)))
                           Positioned(
                             right: kMapOverlayEdgeInset,
                             top: 56,
-                            child: PlayerTurnEventFeedCard(
-                              entries: feedEntries,
-                              emptyLabel: 'No player events last turn.',
-                              narrow: true,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (shell.showPlayerChrome &&
+                                    _mapViewState.showPlayerTurnEventsFeed)
+                                  PlayerTurnEventFeedCard(
+                                    entries: feedEntries,
+                                    emptyLabel: 'No player events last turn.',
+                                    narrow: true,
+                                  ),
+                                if (_mapViewState.showPlayersBar) ...[
+                                  if (shell.showPlayerChrome &&
+                                      _mapViewState.showPlayerTurnEventsFeed)
+                                    const SizedBox(
+                                      height: GameMapPlayersBar.narrowStackGap,
+                                    ),
+                                  GameMapPlayersBar(
+                                    game: widget.game,
+                                    highlightPlayerId: shell.inObservePhase &&
+                                            shell.viewingPlayerId == null
+                                        ? null
+                                        : shell.viewingPlayerId ??
+                                            shell.effectiveHumanPlayerId,
+                                    embedded: true,
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                       ],

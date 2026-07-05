@@ -42,6 +42,12 @@ mixin _GameMapAreaView on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
     );
   }
 
+  void _togglePlayersBarVisibility() {
+    _setMapViewState(
+      _mapViewState.copyWith(showPlayersBar: !_mapViewState.showPlayersBar),
+    );
+  }
+
   /// Runs the one-shot shell-entry auto-center on the current player's capital.
   /// Skipped in global observe (no `viewingPlayerId`) or when the current
   /// player has no capital. SPEC/ui/empire-overview.md § Initial map viewport.
