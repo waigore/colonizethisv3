@@ -61,9 +61,8 @@ List<String> advancedStartNwSeaZonesFromCapital({
     if (dist == null) continue;
     if (minDist == null || dist < minDist) {
       minDist = dist;
-      candidateOwSeas
-        ..clear()
-        ..add(link.seaZoneId);
+      candidateOwSeas.clear();
+      candidateOwSeas.add(link.seaZoneId);
     } else if (dist == minDist) {
       candidateOwSeas.add(link.seaZoneId);
     }

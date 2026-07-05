@@ -35,7 +35,7 @@ void main() {
       );
       expect(types, hasLength(12));
       expect(types, contains('musketeers'));
-      expect(types, contains('hussars'));
+      expect(types, contains(kTechIdHussars));
       expect(types, contains('royal_artillery'));
     });
 
