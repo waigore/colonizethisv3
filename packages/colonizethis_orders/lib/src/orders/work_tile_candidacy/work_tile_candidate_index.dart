@@ -7,41 +7,75 @@ import '../build_rail_work_rules.dart';
 import '../order_work_constants.dart';
 import '../orders_application_helpers.dart';
 
-// Work-target tile pre-filtering (work-tile candidacy submodule).
+// Shared work-tile candidacy index (Refs #3877 AC4).
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
 
-Set<String> preFilterWorkTargetTiles({
-  required Game game,
-  required String workTarget,
-  required String playerId,
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required Map<String, String> resourceByTile,
-  required Map<String, String> purchasedTiles,
-  required Set<String> ownedProvinceIds,
-  Set<String>? exploreProvinceScope,
-  Map<String, TileMapResult>? tileMapByRegion,
-  DiplomacyFactionMembership? factionMembership,
-}) {
-  final result = <String>{};
-  final ctx = _WorkTilePrefilterCtx(
-    game: game,
-    playerId: playerId,
-    tileKeysByRegion: tileKeysByRegion,
-    resourceByTile: resourceByTile,
-    purchasedTiles: purchasedTiles,
-    ownedProvinceIds: ownedProvinceIds,
-    exploreProvinceScope: exploreProvinceScope,
-    tileMapByRegion: tileMapByRegion,
-    factionMembership: factionMembership,
-    result: result,
-  );
-  final op = _workTargetPrefilters[workTarget];
-  if (op != null) {
-    op(ctx);
-  } else {
-    _prefilterWorkTargetDefault(ctx);
+/// Shared tile/province snapshot for work-target pre-filtering and tile-keys
+/// probing. Both suggestion prefilter and UI tile-key highlight paths consume
+/// this index instead of duplicating ownership/resource scans.
+class WorkTileCandidateIndex {
+  WorkTileCandidateIndex({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    this.tileMapByRegion,
+    this.factionMembership,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final DiplomacyFactionMembership? factionMembership;
+
+  /// Returns raw candidate tile keys for [workTarget] before visibility or
+  /// order-engine validation.
+  Set<String> candidateTilesForWorkTarget(
+    String workTarget, {
+    Set<String>? exploreProvinceScope,
+  }) {
+    final result = <String>{};
+    final session = _WorkTilePrefilterSession(
+      index: this,
+      exploreProvinceScope: exploreProvinceScope,
+      result: result,
+    );
+    final op = _workTargetPrefilters[workTarget];
+    if (op != null) {
+      op(session);
+    } else {
+      _prefilterWorkTargetDefault(session);
+    }
+    return result;
   }
-  return result;
+}
+
+class _WorkTilePrefilterSession {
+  _WorkTilePrefilterSession({
+    required this.index,
+    required this.exploreProvinceScope,
+    required this.result,
+  });
+
+  final WorkTileCandidateIndex index;
+  final Set<String>? exploreProvinceScope;
+  final Set<String> result;
+
+  Game get game => index.game;
+  String get playerId => index.playerId;
+  Map<String, Map<String, List<String>>> get tileKeysByRegion =>
+      index.tileKeysByRegion;
+  Map<String, String> get resourceByTile => index.resourceByTile;
+  Map<String, String> get purchasedTiles => index.purchasedTiles;
+  Set<String> get ownedProvinceIds => index.ownedProvinceIds;
+  Map<String, TileMapResult>? get tileMapByRegion => index.tileMapByRegion;
+  DiplomacyFactionMembership? get factionMembership => index.factionMembership;
 }
 
 void _forEachPrefixedProvinceTile({
@@ -89,35 +123,9 @@ void _addCandidateTilesForTownWork({
   }
 }
 
-class _WorkTilePrefilterCtx {
-  _WorkTilePrefilterCtx({
-    required this.game,
-    required this.playerId,
-    required this.tileKeysByRegion,
-    required this.resourceByTile,
-    required this.purchasedTiles,
-    required this.ownedProvinceIds,
-    required this.exploreProvinceScope,
-    required this.tileMapByRegion,
-    this.factionMembership,
-    required this.result,
-  });
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterSession c);
 
-  final Game game;
-  final String playerId;
-  final Map<String, Map<String, List<String>>> tileKeysByRegion;
-  final Map<String, String> resourceByTile;
-  final Map<String, String> purchasedTiles;
-  final Set<String> ownedProvinceIds;
-  final Set<String>? exploreProvinceScope;
-  final Map<String, TileMapResult>? tileMapByRegion;
-  final DiplomacyFactionMembership? factionMembership;
-  final Set<String> result;
-}
-
-typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
-
-void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+void _prefilterWtBuildImprovement(_WorkTilePrefilterSession c) {
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {
@@ -131,7 +139,7 @@ void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+void _prefilterWtBuildRoad(_WorkTilePrefilterSession c) {
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {
@@ -143,7 +151,7 @@ void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+void _prefilterWtBuildRail(_WorkTilePrefilterSession c) {
   final player = c.game.playerById(c.playerId);
   if (player == null) return;
   final tech = player.techUnlocked;
@@ -170,7 +178,7 @@ void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+void _prefilterWtTownWork(_WorkTilePrefilterSession c) {
   _addCandidateTilesForTownWork(
     game: c.game,
     ownedProvinceIds: c.ownedProvinceIds,
@@ -178,7 +186,7 @@ void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtUpgradeTown(_WorkTilePrefilterCtx c) {
+void _prefilterWtUpgradeTown(_WorkTilePrefilterSession c) {
   _addCandidateTilesForTownWork(
     game: c.game,
     ownedProvinceIds: c.ownedProvinceIds,
@@ -187,7 +195,7 @@ void _prefilterWtUpgradeTown(_WorkTilePrefilterCtx c) {
   _addMinorTribeTownTilesForEmbassyUpgrade(c);
 }
 
-void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterCtx c) {
+void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterSession c) {
   final factionMembership =
       c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
   for (final regionEntry in c.tileKeysByRegion.entries) {
@@ -211,7 +219,7 @@ void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterCtx c) {
   }
 }
 
-void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterSession c) {
   _addAllTilesInOwnedPrefixedProvinces(
     tileKeysByRegion: c.tileKeysByRegion,
     ownedProvinceIds: c.ownedProvinceIds,
@@ -219,7 +227,7 @@ void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+void _prefilterWtPurchaseLand(_WorkTilePrefilterSession c) {
   final factionMembership =
       c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
   _forEachPrefixedProvinceTile(
@@ -242,7 +250,7 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+void _prefilterWtExplore(_WorkTilePrefilterSession c) {
   final scoped = c.exploreProvinceScope;
   if (scoped != null) {
     for (final regionEntry in c.tileKeysByRegion.entries) {
@@ -260,7 +268,7 @@ void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
   }
 }
 
-void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+void _prefilterWtProspect(_WorkTilePrefilterSession c) {
   final prospected = c.game.worldState.prospectedTilesForPlayer(c.playerId);
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
@@ -274,7 +282,7 @@ void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
   );
 }
 
-void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+void _prefilterWorkTargetDefault(_WorkTilePrefilterSession c) {
   for (final regionEntry in c.tileKeysByRegion.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       c.result.addAll(provinceEntry.value);
