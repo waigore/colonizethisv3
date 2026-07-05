@@ -77,8 +77,10 @@ void main() {
     });
 
     test('tile road caption uses labelSmall TextTheme slot', () {
+      // Road/rail caption styling moved to the tile-section part during the
+      // #3658 overlay refactor.
       final source = File(
-        'lib/features/game/widgets/province_sea_zone_detail_overlay_sections.dart',
+        'lib/features/game/widgets/province_sea_zone_detail_overlay_tile_section.dart',
       ).readAsStringSync();
       expect(source, contains('textTheme.labelSmall'));
       expect(
