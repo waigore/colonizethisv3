@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../../config/app_assets.dart';
+import '../../../../config/ct_new_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -37,12 +38,31 @@ class TownIconCache extends AssetImageCache {
   @override
   Iterable<String> get assetIds => kTownIconIds;
 
+  /// Whether [assetId] is a level-1 town glyph (`town_{style}_1`).
+  static bool isLevelOneTownIconId(String assetId) {
+    return assetId.startsWith('town_') && assetId.endsWith('_1');
+  }
+
+  /// Resolves the 64×64 asset file name for a town/port cache id.
+  ///
+  /// When [useNewTownIcons] is true, level-1 ids load S9b candidate PNGs
+  /// (`ui_icon_com_town_{style}_1_candidate_64.png`); levels 2–4 are unchanged.
+  static String townIconAssetFileName(
+    String assetId, {
+    bool useNewTownIcons = kCtNewTownIconsEnabled,
+  }) {
+    if (assetId == portIconId) {
+      return 'ui_icon_com_port.png';
+    }
+    if (useNewTownIcons && isLevelOneTownIconId(assetId)) {
+      return 'ui_icon_com_${assetId}_candidate_64.png';
+    }
+    return 'ui_icon_com_${assetId}_64.png';
+  }
+
   @override
   String assetPath(String assetId) {
-    if (assetId == portIconId) {
-      return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
-    }
-    return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
+    return '${kAppIcon64AssetPrefix}${townIconAssetFileName(assetId)}';
   }
 
   @override

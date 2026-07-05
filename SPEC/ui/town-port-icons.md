@@ -33,6 +33,7 @@ Cache id: `town_{style}_{level}` where `{style}` ∈ `euro` | `colonial` | `trib
 | `ui_icon_com_town_colonial_3_64.png` | `town_colonial_3` |
 | `ui_icon_com_town_tribal_4_64.png` | `town_tribal_4` |
 | `ui_icon_com_port.png` | `port` |
+| `ui_icon_com_town_{style}_1_candidate_64.png` | `town_{style}_1` when `CT_NEW_TOWN_ICONS=true` only |
 
 Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 
@@ -41,6 +42,7 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 - **Format:** 64×64 PNG, RGBA transparent.
 - **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
 - **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources). **Current gap (S9a):** Level-1 PNGs are the pre-#3892 #3871 hamlets (commit `bed8a84a`); they do not yet meet size parity — **S9b** closes the gap after product-owner visual review.
+- **S9b preview gate:** Compile-time flag `CT_NEW_TOWN_ICONS` (`defaultValue: false` in `app/lib/config/ct_new_town_icons.dart`). When **false**, level-1 map glyphs load production `ui_icon_com_town_{style}_1_64.png`. When **true**, level-1 glyphs load **candidate** `ui_icon_com_town_{style}_1_candidate_64.png` for local/ctdev preview only; levels 2–4 unchanged. **No PR to `dev`** until PO on-map screenshots with the flag **true** approve the candidates.
 - **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
 - **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
 
@@ -96,6 +98,7 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Implementation Notes
 
-- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`).
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level-1 asset file names resolve through `TownIconCache.townIconAssetFileName` (production vs `_candidate_64` when `CT_NEW_TOWN_ICONS=true`).
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).
+- **S9b workflow:** iterate on `feat/issue-3870-s9b-new-town-icons` (or successor branch) → run app/ctdev with `--dart-define=CT_NEW_TOWN_ICONS=true` → PO on-map screenshot review → promotion PR swaps approved candidates into default `_1_64` paths and removes the flag.

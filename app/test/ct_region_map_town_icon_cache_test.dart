@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 
 import 'ct_region_map_test_support.dart';
@@ -29,6 +30,47 @@ void main() {
     test('town and port render sizes follow spec', () {
       expect(TownIconCache.townIconSize, equals(64.0));
       expect(TownIconCache.portIconSize, equals(64.0));
+    });
+
+    test('townIconAssetFileName uses production level-1 paths by default', () {
+      expect(
+        TownIconCache.townIconAssetFileName('town_euro_1'),
+        'ui_icon_com_town_euro_1_64.png',
+      );
+      expect(
+        TownIconCache.townIconAssetFileName(
+          'town_colonial_1',
+          useNewTownIcons: false,
+        ),
+        'ui_icon_com_town_colonial_1_64.png',
+      );
+    });
+
+    test('townIconAssetFileName uses candidate level-1 paths when preview flag on', () {
+      expect(
+        TownIconCache.townIconAssetFileName(
+          'town_euro_1',
+          useNewTownIcons: true,
+        ),
+        'ui_icon_com_town_euro_1_candidate_64.png',
+      );
+      expect(
+        TownIconCache.townIconAssetFileName(
+          'town_euro_2',
+          useNewTownIcons: true,
+        ),
+        'ui_icon_com_town_euro_2_64.png',
+      );
+      expect(
+        TownIconCache.townIconAssetFileName('port', useNewTownIcons: true),
+        'ui_icon_com_port.png',
+      );
+    });
+
+    test('isLevelOneTownIconId matches town level-1 ids only', () {
+      expect(TownIconCache.isLevelOneTownIconId('town_euro_1'), isTrue);
+      expect(TownIconCache.isLevelOneTownIconId('town_tribal_2'), isFalse);
+      expect(TownIconCache.isLevelOneTownIconId('port'), isFalse);
     });
 
     test('townIconIdForMarker resolves style and level', () {
@@ -165,6 +207,40 @@ void main() {
       expect(colonial, isNot(equals(tribal)));
     });
   });
+
+  group('S9b candidate level-1 town icons (Refs #3870)', () {
+    testWidgets(
+      'candidate level-1 PNGs are present in the asset bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        for (final style in kTownIconStyles) {
+          final path =
+              '${kAppIcon64AssetPrefix}ui_icon_com_town_${style}_1_candidate_64.png';
+          final data = await rootBundle.load(path);
+          expect(data.lengthInBytes, greaterThan(0), reason: path);
+        }
+      },
+    );
+
+    for (final style in kTownIconStyles) {
+      test('$style candidate level-1 bbox matches level-4 within 2 px', () async {
+        final level1 = await _loadCandidateTownIconStats(style);
+        final level4 = await _loadTownIconStats('town_${style}_4');
+
+        expect((level1.bboxWidth - level4.bboxWidth).abs(), lessThanOrEqualTo(2));
+        expect((level1.bboxHeight - level4.bboxHeight).abs(), lessThanOrEqualTo(2));
+        expect((level1.bboxMinX - level4.bboxMinX).abs(), lessThanOrEqualTo(2));
+        expect((level1.bboxMinY - level4.bboxMinY).abs(), lessThanOrEqualTo(2));
+      });
+
+      test('$style candidate opaque count stays below level 2', () async {
+        final candidate = await _loadCandidateTownIconStats(style);
+        final level2 = await _loadTownIconStats('town_${style}_2');
+        expect(candidate.opaqueCount, lessThan(level2.opaqueCount));
+        expect(candidate.opaqueCount, greaterThan(100));
+      });
+    }
+  });
 }
 
 class _TownIconStats {
@@ -195,8 +271,24 @@ Future<Uint8List> _loadTownIconBytes(String iconId) async {
   return data.buffer.asUint8List();
 }
 
+Future<Uint8List> _loadCandidateTownIconBytes(String style) async {
+  final path =
+      '${kAppIcon64AssetPrefix}ui_icon_com_town_${style}_1_candidate_64.png';
+  final data = await rootBundle.load(path);
+  return data.buffer.asUint8List();
+}
+
+Future<_TownIconStats> _loadCandidateTownIconStats(String style) async {
+  final bytes = await _loadCandidateTownIconBytes(style);
+  return _townIconStatsFromBytes(bytes);
+}
+
 Future<_TownIconStats> _loadTownIconStats(String iconId) async {
   final bytes = await _loadTownIconBytes(iconId);
+  return _townIconStatsFromBytes(bytes);
+}
+
+Future<_TownIconStats> _townIconStatsFromBytes(Uint8List bytes) async {
   final image = await _decodePng(bytes);
   expect(image.width, 64);
   expect(image.height, 64);
