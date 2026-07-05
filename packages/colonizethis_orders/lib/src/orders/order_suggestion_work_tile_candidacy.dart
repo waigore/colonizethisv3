@@ -12,6 +12,11 @@ import 'order_suggestion_work_tile_candidacy_prefilter.dart';
 import 'partial_province_reveal.dart';
 import 'unit_type_helpers.dart';
 
+// Work-tile candidacy module: prefilter companion library
+// (`order_suggestion_work_tile_candidacy_prefilter.dart`) plus this file's
+// candidate index and tile-keys probe API. Mirrors `order_engine_slot.dart`
+// extraction shape (Refs #3877 AC4; SPEC/program/order-engine.md).
+//
 // ---------------------------------------------------------------------------
 // Work-tile candidate index — shared pre-filtering for work-target tile scans.
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
