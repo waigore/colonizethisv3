@@ -118,6 +118,6 @@ const bool kCtNewTownIconsEnabled = bool.fromEnvironment(
 
 **Workflow:** Implementer iterates on feature branch → runs app/ctdev with `--dart-define=CT_NEW_TOWN_ICONS=true` → captures on-map screenshots → product owner approves → promotion PR replaces default `_1_64` paths, removes candidate files, and retires the flag.
 
-**S9b candidate art (feature branch):** Candidate PNGs use the production level-1 palette per style, spread 2–3 simple cottage/tree shapes across the level-4 opaque-pixel bounding box (size parity), and keep opaque pixel count **below** production level 2 (complexity monotonicity). Automatable checks live in `app/test/ct_region_map_town_icon_cache_test.dart` group `S9b candidate level-1 town icons`.
+**S9b candidate art (feature branch):** Candidate PNGs upscale the S9a-reverted level-1 hamlet cluster (~1.31× nearest-neighbor) to fill the level-4 opaque-pixel bounding box, then add a sparse grass perimeter inside that box so width/height/center offsets match level 4 within ±2 px while opaque pixel count stays **below** production level 2 (complexity monotonicity). Automatable checks live in `app/test/ct_region_map_town_icon_cache_test.dart` group `S9b candidate level-1 town icons`.
 
 **Non-destructive default:** Default builds must never load candidate PNGs; merging candidates into production paths without PO on-map approval is forbidden.
