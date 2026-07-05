@@ -3,11 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
-import 'order_suggestion_context.dart';
-import 'order_suggestion_diplomatic_candidates.dart';
 import 'order_suggestion_diplomatic_pass.dart';
-import 'order_suggestion_pass_context.dart';
-import 'validators/diplomatic/diplomatic_sub_validator.dart';
 
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
 /// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
@@ -23,7 +19,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final pass = SuggestionPassContext.forPlayerView(
+  final resolved = resolveDiplomaticSuggestionPassContext(
     view: view,
     game: game,
     topology: topology,
@@ -32,33 +28,18 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     tileMapByRegion: tileMapByRegion,
     sharedCandidateValidator: sharedCandidateValidator,
   );
+  final pass = resolved.pass;
+  final targets = resolved.targets;
   final playerId = pass.playerId;
   final suggestions = <DiplomaticOrder>[];
 
-  final targets = resolveDiplomaticSuggestionTargetIds(
-    view: view,
+  final passInputs = buildDiplomaticSuggestionPassInputs(
     game: game,
-    topology: topology,
-    factionMembership: pass.factionMembership,
     playerId: playerId,
-  );
-
-  final passInputs = DiplomaticSuggestionPassInputs(
-    subValidatorContext: DiplomaticSubValidatorContext(
-      game: game,
-      playerId: playerId,
-      factionMembership: pass.factionMembership,
-    ),
+    factionMembership: pass.factionMembership,
+    player: view.player,
     knownTargetIds: targets.knownTargetIds,
     knownFactionIds: targets.knownFactionIds,
-    playerOverturesByTargetId: playerOverturesByTargetIdForPlayer(
-      game,
-      playerId,
-    ),
-    playerHoldsColony: game.colonyStates.any(
-      (c) => c.colonyOfGpId == playerId,
-    ),
-    player: view.player,
   );
 
   final unionTargets = <String>{
@@ -108,7 +89,7 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final pass = SuggestionPassContext.forPlayerView(
+  final resolved = resolveDiplomaticSuggestionPassContext(
     view: view,
     game: game,
     topology: topology,
@@ -117,28 +98,20 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
     tileMapByRegion: tileMapByRegion,
     sharedCandidateValidator: sharedCandidateValidator,
   );
+  final pass = resolved.pass;
+  final targets = resolved.targets;
   final playerId = pass.playerId;
   final suggestions = <DiplomaticOrder>[];
 
-  final targets = resolveDiplomaticSuggestionTargetIds(
-    view: view,
+  final passInputs = buildDiplomaticSuggestionPassInputs(
     game: game,
-    topology: topology,
-    factionMembership: pass.factionMembership,
     playerId: playerId,
-  );
-
-  final passInputs = DiplomaticSuggestionPassInputs(
-    subValidatorContext: DiplomaticSubValidatorContext(
-      game: game,
-      playerId: playerId,
-      factionMembership: pass.factionMembership,
-    ),
+    factionMembership: pass.factionMembership,
+    player: view.player,
     knownTargetIds: targets.knownTargetIds,
     knownFactionIds: targets.knownFactionIds,
     playerOverturesByTargetId: const {},
     playerHoldsColony: false,
-    player: view.player,
   );
 
   final sortedTargetIds = targets.knownTargetIds.toList()..sort();

@@ -1,10 +1,74 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_diplomatic_candidates.dart';
+import 'order_suggestion_pass_context.dart';
 import 'validators/diplomatic/diplomatic_sub_validator.dart';
+
+/// Shared pass context and target resolution for diplomatic suggestion families
+/// (Refs #3877 AC8).
+({
+  SuggestionPassContext pass,
+  DiplomaticSuggestionTargetIds targets,
+}) resolveDiplomaticSuggestionPassContext({
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders currentOrders,
+  required String familyLabel,
+  Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  final pass = SuggestionPassContext.forPlayerView(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: currentOrders,
+    familyLabel: familyLabel,
+    tileMapByRegion: tileMapByRegion,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
+  final targets = resolveDiplomaticSuggestionTargetIds(
+    view: view,
+    game: game,
+    topology: topology,
+    factionMembership: pass.factionMembership,
+    playerId: pass.playerId,
+  );
+  return (pass: pass, targets: targets);
+}
+
+/// Builds per-target pass inputs for one diplomatic suggestion family.
+DiplomaticSuggestionPassInputs buildDiplomaticSuggestionPassInputs({
+  required Game game,
+  required String playerId,
+  required DiplomacyFactionMembership factionMembership,
+  required Player player,
+  required Set<String> knownTargetIds,
+  required Set<String> knownFactionIds,
+  Map<String, OvertureState>? playerOverturesByTargetId,
+  bool? playerHoldsColony,
+}) {
+  return DiplomaticSuggestionPassInputs(
+    subValidatorContext: DiplomaticSubValidatorContext(
+      game: game,
+      playerId: playerId,
+      factionMembership: factionMembership,
+    ),
+    knownTargetIds: knownTargetIds,
+    knownFactionIds: knownFactionIds,
+    playerOverturesByTargetId:
+        playerOverturesByTargetId ??
+        playerOverturesByTargetIdForPlayer(game, playerId),
+    playerHoldsColony:
+        playerHoldsColony ??
+        game.colonyStates.any((c) => c.colonyOfGpId == playerId),
+    player: player,
+  );
+}
 
 /// Per-target pass inputs shared by diplomatic suggestion orchestration (Refs
 /// #3877 AC8).
