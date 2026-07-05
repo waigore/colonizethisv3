@@ -34,10 +34,10 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         visibilityForTerrainForMapCell;
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/ct_region_map_game.dart';
-import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
