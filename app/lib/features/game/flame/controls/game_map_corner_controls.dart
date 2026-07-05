@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import 'game_screen_shared.dart';
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../game_screen_shared.dart';
 
 /// Bottom-left horizontal row of map tool buttons for the in-game map.
 ///
