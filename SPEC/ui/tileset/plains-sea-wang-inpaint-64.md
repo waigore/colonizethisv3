@@ -1,6 +1,6 @@
 # 64×64 plains↔sea Wang tiles (inpainted land–sea)
 
-**SPEC/ui/tileset** — **Two-terrain corner Wang** (same class as existing `sea_plains` tilesets): **16** tiles, one per assignment of **plains vs sea** at the **four cell corners**. Land–sea transitions use **async** `POST /v2/inpaint-v3` on **composites + masks** (see [base-tiles-64.md](base-tiles-64.md) for base fills); default prompts emphasize **rocky coast** with a **normal** land–ocean boundary (**no** cliffs / sheer drops). **Runtime contract** matches `WangTile` / `WangTileset.findTile` in `app/lib/features/game/flame/terrain_tileset.dart`.
+**SPEC/ui/tileset** — **Two-terrain corner Wang** (same class as existing `sea_plains` tilesets): **16** tiles, one per assignment of **plains vs sea** at the **four cell corners**. Land–sea transitions use **async** `POST /v2/inpaint-v3` on **composites + masks** (see [base-tiles-64.md](base-tiles-64.md) for base fills); default prompts emphasize **rocky coast** with a **normal** land–ocean boundary (**no** cliffs / sheer drops). **Runtime contract** matches `WangTile` / `WangTileset.findTile` in `app/lib/features/game/flame/tilesets/terrain_tileset.dart`.
 
 ---
 
