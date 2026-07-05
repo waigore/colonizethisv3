@@ -482,7 +482,13 @@ Future<void> bootstrapNewGameToMap(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration overallCap = const Duration(seconds: 60),
-}) => e2eBootstrapNewGameToMap(tester, perf: perf, overallCap: overallCap);
+  String? advancedStartOptionLabel,
+}) => e2eBootstrapNewGameToMap(
+  tester,
+  perf: perf,
+  overallCap: overallCap,
+  advancedStartOptionLabel: advancedStartOptionLabel,
+);
 
 void collectTextPreorder(Element element, List<String> out) =>
     e2eCollectTextPreorder(element, out);
