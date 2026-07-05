@@ -49,6 +49,10 @@ const Key kPlayerTurnFeedToggleButtonKey = Key(
   'player-turn-feed-toggle-button',
 );
 
+/// Key for the players bar toggle (widget / integration tests).
+/// SPEC/ui/empire-overview.md § Players bar toggle.
+const Key kPlayersBarToggleButtonKey = Key('players-bar-toggle-button');
+
 /// Right gutter (logical px) from the map stack viewport edge for wide-layout overlays that hug the map column (minimap, feed card). SPEC/ui/player-turn-event-feed.md.
 const double kGameMapWideStackRightGutter = 8;
 

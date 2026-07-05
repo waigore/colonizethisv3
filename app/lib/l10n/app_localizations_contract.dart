@@ -1464,6 +1464,9 @@ abstract class AppLocalizations {
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
 
+  /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
+  String get mapControls_playersBarToggle;
+
   /// Percentage label with no space before percent sign.
   String common_percent(int value);
 
