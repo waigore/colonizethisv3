@@ -455,6 +455,112 @@ void main() {
       expect(gotInfiniteMode, isTrue);
     });
 
+    group('Advanced start selector (Refs #3895)', () {
+      testWidgets('default Start emits AdvancedStartType.none', (
+        WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+              gotAdvancedStart = advancedStart,
+        );
+        expect(find.text('Advanced start'), findsOneWidget);
+        expect(find.text('None (Turn 0)'), findsOneWidget);
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.none);
+      });
+
+      testWidgets('selecting 50 Turns In forwards AdvancedStartType.turns50', (
+        WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+              gotAdvancedStart = advancedStart,
+        );
+        final advancedDropdown = find.widgetWithText(
+          CtDropdown<AdvancedStartType>,
+          'None (Turn 0)',
+        );
+        await tester.ensureVisible(advancedDropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(advancedDropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('50 Turns In (1598)').last);
+        await tester.pumpAndSettle();
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.turns50);
+      });
+
+      testWidgets(
+        'non-locked profile shows disabled helper and Start emits none',
+        (WidgetTester tester,
+      ) async {
+        AdvancedStartType? gotAdvancedStart;
+        addTearDown(tester.view.reset);
+        tester.view.physicalSize = const Size(900, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppThemes.colonial,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return TextButton(
+                    onPressed: () {
+                      final baseConfig = GameSetupConfig(
+                        numProvincesOldWorld: 24,
+                        numProvincesNewWorld: 12,
+                      );
+                      final naming = defaultNamingConfig;
+                      final initial = <String, String>{};
+                      for (final gpId in baseConfig.selectedGreatPowerIds) {
+                        final gp = naming.gpById(gpId);
+                        if (gp != null && gp.leaderVariants.isNotEmpty) {
+                          initial[gpId] = gp.defaultLeaderVariantId;
+                        }
+                      }
+                      showDialog<void>(
+                        context: context,
+                        builder: (ctx) => NewGameLeaderSelectionDialog(
+                          baseConfig: baseConfig,
+                          naming: naming,
+                          initialLeaderByGpId: initial,
+                          blessedProfileNames: const [],
+                          onCancel: () => Navigator.of(ctx).pop(),
+                          onConfirmed:
+                              (_, _, _, _, _, __, advancedStart) =>
+                                  gotAdvancedStart = advancedStart,
+                        ),
+                      );
+                    },
+                    child: const Text('open'),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Advanced start requires the standard six-power campaign profile.',
+          ),
+          findsOneWidget,
+        );
+        await ensureTapStart(tester);
+        expect(gotAdvancedStart, AdvancedStartType.none);
+      });
+    });
+
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {

@@ -42,6 +42,10 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 |  [ <text>                              ]                 |  TextField (numeric, --border idle / --accent focus)
 |  Enter 0 for a random seed                               |  --muted helper
 |                                                          |
+|  Advanced start                                          |  --accentDim w600 label
+|  [ None (Turn 0) v ]                                     |  CtDropdown<AdvancedStartType>
+|  (helper when disabled)                                  |  --muted helper
+|                                                          |
 |  [=O] Infinite mode (no victory condition)               |  CtToggleSwitch + label
 |       The game will continue indefinitely                |  --muted helper
 |                                                          |
@@ -65,6 +69,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
   - Leader dropdown items are the chosen nation's `leaderVariants` by id, labelled by `LeaderVariant.name`. Selection defaults to `defaultLeaderVariantId`.
   - AI Profile line (AI slots 1–5 only; `_SlotPickersBody.profileLine != null`) renders full-width on its own line **below** the nation/leader row in both viewports as a `Row` of an inline `AI Profile:` label (`shell_leaderDialog_aiProfileInlineLabel`, mockup `.profile-line`) and an `Expanded(CtDropdown<String>)`. Dropdown items are the `Normal` sentinel (`normalProfileChoiceId == ''`, labelled `shell_leaderDialog_aiProfileNormal`) plus each `blessedProfileNames` entry; hint `shell_leaderDialog_aiProfileLabel`. The human slot (0) passes `profileLine == null`, so its body has no profile line.
 - Seed input: `shell_leaderDialog_seedLabel` ("Game seed", `accentDim`, w600), numeric `TextField` (controller seeded with `baseConfig.seed.toString()`; idle/enabled border `EditorialMonoclePalette.border` 1px, focused border `EditorialMonoclePalette.accent` 2px, text color `EditorialMonoclePalette.fg`), helper `shell_leaderDialog_seedHelper` ("Enter 0 for a random seed", `EditorialMonoclePalette.muted`). Submit value parsed by `parseSeedInput`.
+- Advanced start (Refs #3895): `shell_leaderDialog_advancedStartLabel` ("Advanced start", `accentDim`, w600), `CtDropdown<AdvancedStartType>` defaulting to `AdvancedStartType.none` with items `none` → `shell_leaderDialog_advancedStartNone` ("None (Turn 0)"), `turns50` → `shell_leaderDialog_advancedStart50` ("50 Turns In (1598)"), `turns100` → `shell_leaderDialog_advancedStart100` ("100 Turns In (1698)"). Enabled only when `baseConfig.isLockedFullInitProfile`; otherwise wrapped in `AbsorbPointer` + `Opacity(0.5)` and helper `shell_leaderDialog_advancedStartDisabledHelper` ("Advanced start requires the standard six-power campaign profile."). On confirm, emits the selected preset when enabled, otherwise always `AdvancedStartType.none`. Game rules: [advanced-starts.md](../game/advanced-starts.md).
 - Infinite mode: `CtToggleSwitch` (no Material `CheckboxListTile`) beside the label `shell_leaderDialog_infiniteModeLabel` ("Infinite mode (no victory condition)", `EditorialMonoclePalette.fg` w600), with helper `shell_leaderDialog_infiniteModeHelper` ("The game will continue indefinitely", `EditorialMonoclePalette.muted`) indented beneath, per mockup `.toggle-row` / `.toggle-hint`.
 - Terrain variation: a `Row` with the static label `shell_leaderDialog_terrainVariationLabel` ("Terrain variation:", `accentDim` w600) and the live mono percent value `shell_leaderDialog_terrainVariationValue(percent)` (percent = `(value * 100).round()`, keyed `ValueKey<String>('leaderSelectionDialogTerrainVariationValue')`, `accentDim`, tabular figures); the label flexes so it wraps rather than overflowing at 320 dp. Below: `CtSlider(min: 0.0, max: 1.0, divisions: 20)` and helper `shell_leaderDialog_terrainVariationHelper` ("0% flat — 100% extreme", `EditorialMonoclePalette.muted`). Default `defaultTerrainVariation == 0.5`.
 - Footer: right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Start (`common_start`). Start enabled only when `_startEnabled == true`.
@@ -97,6 +102,9 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 | No blessed profiles | `blessedProfileNames.isEmpty` | Each AI slot's profile dropdown still renders but offers only the `Normal` item. |
 | Profile chosen | User picks a blessed name for slot i | `_profileBySlot[i]` set to that name; emitted on confirm as `aiProfileByGpId[gpId]`. |
 | Profile reset to Normal | User picks `Normal` (empty value) for slot i | `_profileBySlot.remove(i)`; that slot's gpId is absent from the emitted `aiProfileByGpId`. |
+| Advanced start enabled | `baseConfig.isLockedFullInitProfile == true` | Dropdown interactive; default `AdvancedStartType.none`. |
+| Advanced start disabled | `baseConfig.isLockedFullInitProfile == false` | Dropdown at 50% opacity, non-interactive; disabled helper visible. |
+| Advanced start changed | User picks a preset from the dropdown | `_advancedStart` updates; no game state mutated until Start. |
 
 ---
 
@@ -113,7 +121,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Cancel | Always | `widget.onCancel` | Dialog popped; no `onConfirmed`. |
-| Start | All six slots have nations (`_startEnabled`) | `widget.onConfirmed(..., aiProfileByGpId)` after `parseSeedInput` | Scope runs `runNewGameSetupAfterLeaderPick`; `aiProfileByGpId` (slots 1–5, non-empty selections only) forwarded into `GameSetupConfig.aiProfileByGpId`. |
+| Start | All six slots have nations (`_startEnabled`) | `widget.onConfirmed(..., aiProfileByGpId, advancedStart)` after `parseSeedInput` | Scope runs `runNewGameSetupAfterLeaderPick`; `aiProfileByGpId` (slots 1–5, non-empty selections only) and `advancedStart` forwarded into `GameSetupConfig.advancedStart`. |
 | Start (disabled) | Any slot empty | — | No-op. |
 | AI Profile dropdown (slots 1–5) | Always (when shown) | `setState` updating `_profileBySlot[slotIndex]` | Non-empty value stored; `Normal`/empty removes the slot entry. No game state mutated until Start. |
 
@@ -125,7 +133,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 - `EditorialMonoclePalette` tokens: `accent`, `accentDim`, `muted`, `fg`, `border`, `bgDeep`, `surface` (no hex literals in widget source per #2867 R1).
 - Material (chrome host only): `TextField`, `DecoratedBox`, `Row`, `Column`, `Flexible`, `Padding`, `Text` (the infinite-mode control is the custom `CtToggleSwitch`, not Material `CheckboxListTile`).
 - Helpers: `NewGameLeaderSelectionDialog.parseSeedInput`, `defaultTerrainVariation`.
-- Localized keys via `appL10n(context)`: `shell_leaderDialog_title`, `shell_leaderDialog_intro`, `shell_leaderDialog_slotLabel`, `shell_leaderDialog_slotYouTag`, `shell_leaderDialog_seedLabel`, `shell_leaderDialog_seedHelper`, `shell_leaderDialog_infiniteModeLabel`, `shell_leaderDialog_infiniteModeHelper`, `shell_leaderDialog_terrainVariationLabel`, `shell_leaderDialog_terrainVariationValue`, `shell_leaderDialog_terrainVariationHelper`, `shell_leaderDialog_selectLeaderHint`, `shell_leaderDialog_aiProfileInlineLabel`, `shell_leaderDialog_aiProfileLabel`, `shell_leaderDialog_aiProfileNormal`, `shell_newGame_selectNation`, `common_cancel`, `common_start`.
+- Localized keys via `appL10n(context)`: `shell_leaderDialog_title`, `shell_leaderDialog_intro`, `shell_leaderDialog_slotLabel`, `shell_leaderDialog_slotYouTag`, `shell_leaderDialog_seedLabel`, `shell_leaderDialog_seedHelper`, `shell_leaderDialog_advancedStartLabel`, `shell_leaderDialog_advancedStartNone`, `shell_leaderDialog_advancedStart50`, `shell_leaderDialog_advancedStart100`, `shell_leaderDialog_advancedStartDisabledHelper`, `shell_leaderDialog_infiniteModeLabel`, `shell_leaderDialog_infiniteModeHelper`, `shell_leaderDialog_terrainVariationLabel`, `shell_leaderDialog_terrainVariationValue`, `shell_leaderDialog_terrainVariationHelper`, `shell_leaderDialog_selectLeaderHint`, `shell_leaderDialog_aiProfileInlineLabel`, `shell_leaderDialog_aiProfileLabel`, `shell_leaderDialog_aiProfileNormal`, `shell_newGame_selectNation`, `common_cancel`, `common_start`.
 
 ---
 
@@ -146,6 +154,14 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 - Given the user moves the terrain-variation slider to a normalized value `v`, when `widget.onConfirmed` is invoked, then its `terrainVariation` argument equals `v` (in `[0.0, 1.0]`).
 
 - Given the user toggles the infinite-mode `CtToggleSwitch` to `true` and the dialog is otherwise startable, when the user taps Start, then `widget.onConfirmed` receives `infiniteMode == true`.
+
+- Given the dialog is open with `baseConfig.isLockedFullInitProfile == true`, when the user has not changed the advanced-start dropdown and taps Start, then `widget.onConfirmed` receives `advancedStart == AdvancedStartType.none`.
+
+- Given the dialog is open with `baseConfig.isLockedFullInitProfile == true`, when the user selects `50 Turns In (1598)` from the advanced-start dropdown and taps Start, then `widget.onConfirmed` receives `advancedStart == AdvancedStartType.turns50`.
+
+- Given the dialog is open with `baseConfig.isLockedFullInitProfile == false`, when the dialog builds, then the UI layer renders `shell_leaderDialog_advancedStartDisabledHelper` and the advanced-start `CtDropdown<AdvancedStartType>` is wrapped in `AbsorbPointer(absorbing: true)`.
+
+- Given the dialog is open with `baseConfig.isLockedFullInitProfile == false`, when the user taps Start without changing other fields, then `widget.onConfirmed` receives `advancedStart == AdvancedStartType.none` regardless of any visible dropdown label.
 
 - Given the user taps Cancel, when the gesture completes, then `widget.onCancel` is invoked exactly once and `widget.onConfirmed` is not invoked.
 
@@ -208,6 +224,6 @@ Catalog folder: **New Game Leader Selection Dialog** (registered in `app/lib/wid
 
 Automated widget tests:
 
-- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 540 dp wide↔narrow slot-pickers boundary, the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start), and the tuned AI profile selector (AI slots show the `Normal` + blessed-name dropdown, default Start emits an empty `aiProfileByGpId`, selecting a blessed name forwards it keyed by gpId).
+- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, advanced-start dropdown (default `none`, preset forwarding, disabled on non-locked profiles), infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 540 dp wide↔narrow slot-pickers boundary, the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start), and the tuned AI profile selector (AI slots show the `Normal` + blessed-name dropdown, default Start emits an empty `aiProfileByGpId`, selecting a blessed name forwards it keyed by gpId).
 - `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` — minimum-viewport pin (Refs #2870 S7/S8/S10): no `RenderFlex` overflow at 320 × 640 dp, every slot renders the stacked column body (no wide row body), title + six `Slot N` headings (slot 1 with `YOU` tag) + Cancel + Start labels visible, every rendered `CtNinePatchButton` ≥ 44 dp tall, and a 1024 × 768 negative regression sentinel that flips the contract so the wide row body is the only one mounted.
 - `app/test/new_game_leader_selection_dialog_golden_test.dart` (Refs #3507) — `matchesGoldenFile` visual baselines under `AppThemes.editorialMonocle`: a wide `600 × 900` dp capture (`goldens/new_game_leader_selection_dialog_wide.png`, side-by-side pickers) and a narrow `320 × 900` dp capture (`goldens/new_game_leader_selection_dialog_narrow_320.png`, stacked pickers), each asserting `takeException() == null`.

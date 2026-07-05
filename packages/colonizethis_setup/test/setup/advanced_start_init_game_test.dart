@@ -19,6 +19,76 @@ int _countMilitaryRegiments(Game game, String ownerId) {
       .length;
 }
 
+int _unlockedTechCount(Player player) {
+  return player.techUnlocked?.entries
+          .where((e) => e.value)
+          .length ??
+      0;
+}
+
+Set<String> _unlockedTechIds(Player player) {
+  return {
+    for (final entry in player.techUnlocked!.entries)
+      if (entry.value) entry.key,
+  };
+}
+
+int _countGpOwnedNwProvinces(Game game, String gpId) {
+  return game.worldState.newWorld.provinces
+      .where((p) => p.ownerId == gpId)
+      .length;
+}
+
+int _countFullyVisibleNwProvinces(Game game, String playerId) {
+  final visibility =
+      game.worldState.playerVisibilityByTile[playerId] ?? const {};
+  return game.worldState.newWorld.provinces
+      .where((p) {
+        final provinceKey = ProvinceId.isPrefixed(p.id)
+            ? p.id
+            : ProvinceId.full(p.regionId, p.id);
+        final tileKeys = game
+                .worldState
+                .tileKeysByRegionAndProvince[kRegionNewWorld]?[provinceKey] ??
+            const [];
+        return tileKeys.any(
+          (tk) => visibility[tk] == VisibilityLevel.fullyVisible.name,
+        );
+      })
+      .length;
+}
+
+void _expectTierCivilians(Game game, Player player, AdvancedStartType type) {
+  final counts = advancedStartCivilianCounts(type);
+  for (final entry in counts.entries) {
+    expect(
+      _countUnitsOfType(game, player.id, entry.key),
+      entry.value,
+      reason: '${player.id} ${entry.key}',
+    );
+  }
+}
+
+void _expectConsulatesWithAllMinors(Game game, String gpId) {
+  for (final minor in game.minorNations) {
+    expect(
+      getOverture(game, gpId, minor.id)!.stage,
+      OvertureStage.tradeConsulate,
+      reason: 'consulate with ${minor.id}',
+    );
+  }
+}
+
+void _expectEmbassiesWithAllMinors(Game game, String gpId) {
+  for (final minor in game.minorNations) {
+    expect(
+      getOverture(game, gpId, minor.id)!.stage,
+      OvertureStage.embassy,
+      reason: 'embassy with ${minor.id}',
+    );
+  }
+}
+
 void main() {
   group('runInitGame advanced start units slice', () {
     test('turns50 locked profile applies tier civilians regiments and galleon', () {
@@ -65,22 +135,7 @@ void main() {
       final totalNwProvinces = game.worldState.newWorld.provinces.length;
 
       for (final player in game.players) {
-        final visibility =
-            game.worldState.playerVisibilityByTile[player.id] ?? const {};
-        final visibleNwProvinces = game.worldState.newWorld.provinces
-            .where((p) {
-              final provinceKey = ProvinceId.isPrefixed(p.id)
-                  ? p.id
-                  : ProvinceId.full(p.regionId, p.id);
-              final tileKeys = game
-                      .worldState
-                      .tileKeysByRegionAndProvince[kRegionNewWorld]?[provinceKey] ??
-                  const [];
-              return tileKeys.any(
-                (tk) => visibility[tk] == VisibilityLevel.fullyVisible.name,
-              );
-            })
-            .length;
+        final visibleNwProvinces = _countFullyVisibleNwProvinces(game, player.id);
         expect(visibleNwProvinces, greaterThan(0));
         expect(visibleNwProvinces, lessThanOrEqualTo(totalNwProvinces));
       }
@@ -108,6 +163,95 @@ void main() {
           OvertureStage.embassy,
         );
       }
+    });
+  });
+
+  group('runInitGame advanced start acceptance criteria', () {
+    test('turns50 locked profile satisfies tier economy and world state', () {
+      final game = runInitGame(
+        config: GameSetupConfig(
+          seed: 42,
+          advancedStart: AdvancedStartType.turns50,
+        ),
+        options: defaultInitOptions,
+      ).game;
+
+      expect(game.advancedStartType, AdvancedStartType.turns50);
+      expect(game.worldState.turnState.turnNumber, 50);
+
+      for (final player in game.players) {
+        expect(player.treasury, 20000);
+        expect(player.workerPool.peasants, 16);
+        expect(player.workerPool.apprentices, 0);
+        expect(_unlockedTechCount(player), 23);
+        expect(
+          _unlockedTechIds(player),
+          containsAll(kAdvancedStart50TurnTechIds),
+        );
+        _expectTierCivilians(game, player, AdvancedStartType.turns50);
+        expect(_countMilitaryRegiments(game, player.id), 6);
+        expect(_countGpOwnedNwProvinces(game, player.id), 0);
+        expect(
+          _countFullyVisibleNwProvinces(game, player.id),
+          greaterThan(0),
+        );
+        _expectConsulatesWithAllMinors(game, player.id);
+      }
+    });
+
+    test('turns100 locked profile satisfies colonization and tier economy', () {
+      final game = runInitGame(
+        config: GameSetupConfig(
+          seed: 42,
+          advancedStart: AdvancedStartType.turns100,
+        ),
+        options: defaultInitOptions,
+      ).game;
+
+      expect(game.advancedStartType, AdvancedStartType.turns100);
+      expect(game.worldState.turnState.turnNumber, 100);
+
+      var totalGpOwnedNw = 0;
+
+      for (final player in game.players) {
+        expect(player.treasury, 40000);
+        expect(player.workerPool.peasants, 16);
+        expect(player.workerPool.apprentices, 4);
+        expect(_unlockedTechCount(player), 45);
+        expect(
+          _unlockedTechIds(player),
+          containsAll(kAdvancedStart100TurnTechIds),
+        );
+        _expectTierCivilians(game, player, AdvancedStartType.turns100);
+        expect(_countMilitaryRegiments(game, player.id), 12);
+        totalGpOwnedNw += _countGpOwnedNwProvinces(game, player.id);
+        expect(
+          _countFullyVisibleNwProvinces(game, player.id),
+          greaterThan(0),
+        );
+        _expectEmbassiesWithAllMinors(game, player.id);
+      }
+
+      // Map capacity may cap per-GP assignment below six; bootstrap still
+      // assigns contiguous provinces where tribe reserves allow.
+      expect(totalGpOwnedNw, greaterThan(0));
+
+      for (final tribe in game.tribes) {
+        final owned = game.worldState.newWorld.provinces
+            .where((p) => p.ownerId == tribe.id)
+            .length;
+        expect(owned, greaterThanOrEqualTo(1), reason: tribe.id);
+      }
+    });
+
+    test('none leaves turn-0 game unchanged', () {
+      final game = runInitGame(
+        config: GameSetupConfig.defaultConfig,
+        options: defaultInitOptions,
+      ).game;
+
+      expect(game.advancedStartType, isNull);
+      expect(game.worldState.turnState.turnNumber, 0);
     });
   });
 }
