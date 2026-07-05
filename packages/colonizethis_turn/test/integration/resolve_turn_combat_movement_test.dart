@@ -2,29 +2,15 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part1_segment3_test', () {
-    test(
+  group('combat movement', () {
+    group('combat_part1_segment3_test', () {
+test(
           'one full turn with combat: MoveOrder into enemy province, casualties and province flip',
           () {
-            final topology = MapTopology(
-              nodes: [
-                const TopologyNode(
-                  id: 'P1',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-                const TopologyNode(
-                  id: 'P2',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-            );
+            final topology = twoAdjacentOldWorldProvinceTopology();
 
             const ow = 'oldWorld';
             final game = ensureMilitaryArmiesForGame(
@@ -99,21 +85,7 @@ void main() {
         test(
           'combat with tileMapByRegion runs capital reassignment when defender loses only province',
           () {
-            final topology = MapTopology(
-              nodes: [
-                const TopologyNode(
-                  id: 'P1',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-                const TopologyNode(
-                  id: 'P2',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-            );
+            final topology = twoAdjacentOldWorldProvinceTopology();
             const ow = 'oldWorld';
             final tileMap = TileMapResult(
               width: 2,
@@ -217,21 +189,7 @@ void main() {
         test(
           'autoResolve combat with AI players invokes onDialogue with event battle_won/battle_lost',
           () {
-            final topology = MapTopology(
-              nodes: [
-                const TopologyNode(
-                  id: 'P1',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-                const TopologyNode(
-                  id: 'P2',
-                  regionId: 'oldWorld',
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-            );
+            final topology = twoAdjacentOldWorldProvinceTopology();
 
             const ow = 'oldWorld';
             final game = ensureMilitaryArmiesForGame(
@@ -313,5 +271,6 @@ void main() {
             expect(eventDialogue, isNotEmpty);
           },
         );
+    });
   });
 }

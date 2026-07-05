@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part3_segment1_test', () {
-    test(
+  group('diplomacy victory', () {
+    group('diplomacy_part3_segment1_test', () {
+test(
           'join_home_fleet mission moves ships into home fleet and removes fleet',
           () {
             const ow = 'oldWorld';
@@ -351,5 +351,6 @@ void main() {
           expect(next.worldState.turnState.turnNumber, 1);
           expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
         });
+    });
   });
 }

@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part4_segment2_test', () {
-    // Regression test for issue #233: Diplomatic orders must flow through
+  group('diplomacy victory', () {
+    group('diplomacy_part4_segment2_test', () {
+// Regression test for issue #233: Diplomatic orders must flow through
         // OrderEngine and turn resolver to the Diplomacy phase.
         test(
           'validateOrdersAndResolveTurn applies diplomatic orders from OrderEngine',
@@ -140,5 +140,6 @@ void main() {
             expect(rel.atWar, isTrue);
           },
         );
+    });
   });
 }

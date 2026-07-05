@@ -2,27 +2,13 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part1_segment1_test', () {
-    test('runs extraction, consumption, production, and movement phases', () {
-          final topology = MapTopology(
-            nodes: [
-              const TopologyNode(
-                id: 'P1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              const TopologyNode(
-                id: 'P2',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-          );
+  group('economy phases', () {
+    group('economy_part1_segment1_test', () {
+test('runs extraction, consumption, production, and movement phases', () {
+          final topology = twoAdjacentOldWorldProvinceTopology();
 
           const ow = 'oldWorld';
           final game = Game(
@@ -359,5 +345,6 @@ void main() {
             expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));
           },
         );
+    });
   });
 }

@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part1_segment2_test', () {
-    test(
+  group('economy phases', () {
+    group('economy_part1_segment2_test', () {
+test(
           'full turn with tileMapByRegion: extraction pipeline, turn advanced',
           () {
             final topology = MapTopology(
@@ -224,5 +224,6 @@ void main() {
           expect(player2.stockpile.quantityOf(CommodityCatalog.castIron.id), 7);
           expect(player2.stockpile.quantityOf(CommodityCatalog.lumber.id), 0);
         });
+    });
   });
 }

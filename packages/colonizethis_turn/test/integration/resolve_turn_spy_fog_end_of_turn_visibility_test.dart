@@ -2,12 +2,12 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part4_segment2_spy_fog_test', () {
-    test(
+  group('spy fog end-of-turn', () {
+    group('spy_fog_part4_segment2_test', () {
+test(
           'Spy leaving other-faction province fogs immediately at end-of-turn',
           () {
             const ow = 'oldWorld';
@@ -32,6 +32,7 @@ void main() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -115,6 +116,7 @@ void main() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -178,6 +180,7 @@ void main() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -218,6 +221,7 @@ void main() {
                   edges: const [],
                 ),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 
@@ -254,6 +258,7 @@ void main() {
 
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
                 oldWorld: RegionData(
@@ -317,5 +322,6 @@ void main() {
             );
           },
         );
+    });
   });
 }

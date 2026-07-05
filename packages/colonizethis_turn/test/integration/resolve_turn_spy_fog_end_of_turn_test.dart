@@ -2,18 +2,19 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../support/turn_resolver_test_harness.dart';
 
 void main() {
-  group('part4_segment1_test', () {
-    test(
+  group('spy fog end-of-turn', () {
+    group('spy_fog_part4_segment1_test', () {
+test(
           'endOfTurn fog decay does not apply when Explorer is in other-faction province',
           () {
             const ow = 'oldWorld';
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -53,22 +54,9 @@ void main() {
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
             expect(
@@ -87,6 +75,7 @@ void main() {
             const tileKeyNwP1 = 'newWorld|P1|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -156,6 +145,7 @@ void main() {
                   edges: const [],
                 ),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
             expect(
@@ -179,6 +169,7 @@ void main() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -210,22 +201,9 @@ void main() {
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 
@@ -243,6 +221,7 @@ void main() {
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -282,22 +261,9 @@ void main() {
             final next = requireTurnResolutionComplete(
               resolveTurnForGame(
                 game: game,
-                topology: MapTopology(
-                  nodes: const [
-                    TopologyNode(
-                      id: 'P1',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                    TopologyNode(
-                      id: 'P2',
-                      regionId: ow,
-                      type: TopologyNodeType.province,
-                    ),
-                  ],
-                  edges: const [],
-                ),
+                topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
+                startFromPhase: TurnPhase.endOfTurn,
               ),
             );
 
@@ -307,5 +273,6 @@ void main() {
             );
           },
         );
+    });
   });
 }

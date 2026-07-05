@@ -55,6 +55,28 @@ void main() {
       }
     });
 
+    test('fails for legacy segment test filename', () {
+      final temp = Directory.systemTemp.createTempSync('turn-int-legacy-test-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'resolve_turn_economy_part1_segment1_test.dart'),
+          "void main() {}\n",
+        );
+
+        final exitCode = runCheckTurnIntegrationNoPartFragments(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 1);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('passes for collapsed integration entrypoint', () {
       final temp = Directory.systemTemp.createTempSync('turn-int-ok-');
       try {
