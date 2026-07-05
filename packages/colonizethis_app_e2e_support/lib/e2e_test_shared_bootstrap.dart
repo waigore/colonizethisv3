@@ -164,8 +164,35 @@ Future<void> e2eSelectLeaderDialogAdvancedStart(
 }) async {
   final dropdown = find.byType(CtDropdown<AdvancedStartType>);
   expect(dropdown, findsOneWidget);
-  await tester.ensureVisible(dropdown);
-  await tester.tap(dropdown);
+
+  // Locked full-init DLG10001 exceeds the 720 px CI viewport; scroll the shell
+  // body before tapping (same scrollable as the Start-button drag below).
+  final shellScrollable = find.descendant(
+    of: find.byType(CtDialogShell),
+    matching: find.byType(Scrollable),
+  );
+  await tester.dragUntilVisible(
+    dropdown,
+    shellScrollable,
+    const Offset(0, -120),
+  );
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => dropdown.hitTestable().evaluate().isNotEmpty,
+    timeout: const Duration(milliseconds: 600),
+    perf: perf,
+    phaseName: 'pump_until_advanced_start_dropdown_tappable',
+  );
+
+  final didOpenMenu = await e2eEnsureVisibleAndTapHitTestable(
+    tester,
+    dropdown,
+  );
+  expect(
+    didOpenMenu,
+    isTrue,
+    reason: 'Advanced start dropdown must be tappable after scroll',
+  );
   await e2ePumpUntilConditionOrIdle(
     tester,
     () => find.text(optionLabel).evaluate().isNotEmpty,
@@ -173,7 +200,22 @@ Future<void> e2eSelectLeaderDialogAdvancedStart(
     perf: perf,
     phaseName: 'pump_until_advanced_start_menu_open',
   );
-  await tester.tap(find.text(optionLabel).last);
+
+  final menuOption = find.text(optionLabel);
+  expect(
+    menuOption,
+    findsWidgets,
+    reason: 'Advanced start menu must list $optionLabel',
+  );
+  final didSelectOption = await e2eEnsureVisibleAndTapHitTestable(
+    tester,
+    menuOption.last,
+  );
+  expect(
+    didSelectOption,
+    isTrue,
+    reason: 'Advanced start option $optionLabel must be tappable',
+  );
   await e2ePumpUntilConditionOrIdle(
     tester,
     () => find
