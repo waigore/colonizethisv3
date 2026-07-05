@@ -14,6 +14,7 @@ test(
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -87,6 +88,7 @@ test(
             const tileKeyNwP1 = 'newWorld|P1|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -179,6 +181,7 @@ test(
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
@@ -243,6 +246,7 @@ test(
             const tileKeyP2 = 'oldWorld|P2|0|0';
             final game = Game(
               id: 'g1',
+              globalGameSeed: turnTestSpyFogGameSeed,
               worldState: WorldState(
                 turnState: const TurnState(
                   phase: TurnPhase.endOfTurn,
