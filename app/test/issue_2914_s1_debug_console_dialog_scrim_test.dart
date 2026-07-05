@@ -27,7 +27,7 @@ void main() {
         'debug_console_overlay_panel.dart references '
         'EditorialMonoclePalette.dialogScrim and not Colors.black54', () {
       const String relativePath =
-          'lib/features/game/flame/debug_console_overlay_panel.dart';
+          'lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
       final File file = File(relativePath);
       expect(
         file.existsSync(),

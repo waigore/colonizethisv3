@@ -122,7 +122,7 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 ### Narrow layout: province detail above map chrome
 
-- **Z-order:** On narrow viewports, the province/sea zone detail host ([GameMapNarrowDetailOverlaySlot](../../app/lib/features/game/flame/game_map_narrow_detail_overlay.dart)) is a **sibling stacked above** the map `Stack` so the bottom detail **paints above** bottom-left map tool buttons and may **partially overlap** them; the detail layer receives hit testing above those buttons when visible.
+- **Z-order:** On narrow viewports, the province/sea zone detail host ([GameMapNarrowDetailOverlaySlot](../../app/lib/features/game/flame/overlays/game_map_narrow_detail_overlay.dart)) is a **sibling stacked above** the map `Stack` so the bottom detail **paints above** bottom-left map tool buttons and may **partially overlap** them; the detail layer receives hit testing above those buttons when visible.
 - **Widget:** [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) — full active region grid (flat terrain colors), visibility per `CellViewData.visibility` (unrevealed = black; fogged = same terrain hue at alpha **0.55**; visible = full opacity). Sea uses deep blue `#0D47A1`; land terrains: plains `#A5D6A7`, forest `#2E7D32`, hills `#B0BEC5`, mountain `#546E7A`, swamp `#6D4C41`, desert `#D7CCC8`.
 - **Viewport:** White stroke rectangle aligned with main map camera (world center, zoom, logical viewport size, `cellSizePx`); see [map-widget.md](map-widget.md) § Region minimap camera sync.
 - **Interaction:** **Tap-up** sets main map camera center to world position under the pointer (clamped), so a press-and-drag does not first jump the camera to the press point. **Pointer movement while down** applies world-space pan to camera center (clamped). Does not change tile/province selection.
@@ -257,7 +257,7 @@ Folder: **Region Minimap** — stories for [GameRegionMinimap](../../app/lib/fea
 
 Stories drive a deterministic [`RegionMapViewportSnapshot`](../../app/lib/features/game/flame/region_map_viewport_snapshot.dart) (`zoom = fitMapZoom × 1.6`) so the viewport rectangle reads as a visible window inside the minimap grid in the visible-chrome story.
 
-Folder: **Game Map Province Side Panel** — stories for [GameMapProvinceDetailSidePanel](../../app/lib/features/game/flame/game_map_province_detail_side_panel.dart) registered from [`gameMapProvinceDetailSidePanelDirectories`](../../app/lib/widgetbook/catalog_part7.dart). Issue #2861 S12 story (9) province panel open/closed on wide layout (≥ 600 dp).
+Folder: **Game Map Province Side Panel** — stories for [GameMapProvinceDetailSidePanel](../../app/lib/features/game/flame/overlays/game_map_province_detail_side_panel.dart) registered from [`gameMapProvinceDetailSidePanelDirectories`](../../app/lib/widgetbook/catalog_part7.dart). Issue #2861 S12 story (9) province panel open/closed on wide layout (≥ 600 dp).
 
 | Story | Purpose | Authority |
 |-------|---------|-----------|

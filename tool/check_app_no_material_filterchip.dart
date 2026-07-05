@@ -24,7 +24,7 @@ import 'package:path/path.dart' as p;
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
 /// 1. **Dev-tooling screen** — `SYS20001` Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) is an
+///    (`app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart`) is an
 ///    operator-only surface; implementing Ct-* catalog chip chrome there is
 ///    low-value (see #2914 Risks / edge cases). `SYS10001` Debug Log Viewer
 ///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) was
@@ -161,7 +161,7 @@ const Set<String> _appNoMaterialFilterChipAllowedFiles = <String>{
   // its package/level multi-select filter rows now compose CtChoiceChip
   // widgets (see SPEC/program/debug-log-viewer.md § 5a Visual chrome and
   // app/test/debug_log_viewer_test.dart).
-  'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+  'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
 };
 
 const Set<String> _appNoMaterialFilterChipAllowedDirPrefixes = <String>{

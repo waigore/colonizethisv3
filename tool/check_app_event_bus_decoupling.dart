@@ -78,12 +78,12 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #3878 Phase 3).
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build.dart',
-  'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
+  'app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
   // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
-  'app/lib/features/game/flame/exit_confirm_dialog.dart',
+  'app/lib/features/game/flame/overlays/exit_confirm_dialog.dart',
   'app/lib/features/game/widgets/tech_tree_widget.dart',
   // GP researchers list modal split from tech pennant row / tree surfaces
   // (Refs #3862). Same local-by-design rationale as tech detail in

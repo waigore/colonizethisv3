@@ -11,7 +11,7 @@
 // (`province_*_shortcut_host_emit_event_test.dart`).
 
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/features/game/flame/province_detail_overlay_host_support.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, buildPlayerView;

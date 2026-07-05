@@ -248,7 +248,7 @@ const debug = TextStyle(color: Colors.white);
         addTearDown(() => temp.deleteSync(recursive: true));
 
         const debugConsole =
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
         File('${temp.path}/$debugConsole')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -268,7 +268,7 @@ const sample = TextStyle(color: Colors.white);
         expect(
           logs.join('\n'),
           contains(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart:3: '
             'Colors.white',
           ),
         );
@@ -655,7 +655,7 @@ class Clean extends StatelessWidget {
       () {
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
           ),
           isFalse,
         );

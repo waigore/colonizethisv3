@@ -13,7 +13,7 @@ library;
 import 'dart:async';
 
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
