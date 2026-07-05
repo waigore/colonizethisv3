@@ -63,7 +63,7 @@ Ordered steps (full issue #3895):
 11. Player + minor tile development and roads.
 12. NW province town → OW capital connectivity.
 
-**Implementation status:** Steps **1–12** are implemented (turn through NW roads). Save/load integration ACs remain follow-up on #3895.
+**Implementation status:** Steps **1–12** and Hive save/load round-trip for advanced-start state are implemented. Full issue closure awaits PR merge and verify-github-issue on #3895.
 
 ## Acceptance criteria (partial — foundation + units slice)
 
@@ -74,4 +74,4 @@ Ordered steps (full issue #3895):
 - Given advanced start `turns100` on the locked profile, when init completes, then every GP has exactly 45 listed techs unlocked, 16 peasants and 4 apprentices, 40,000 treasury, tier civilian counts including Rail Builder, 12 upgraded regiments, at least 6 Galleons in the home fleet, and `turnNumber` is 100.
 - Given advanced start `turns100` on the locked profile, when init completes, then every GP has embassies with all OW minors and encountered tribes, 100% NW provinces visible, ≥75% of prospectable tiles prospected, 6 contiguous NW provinces owned per GP (tribes retain ≥1 province each), 50% of developable tiles at improvement level 1 in owned provinces (OW + NW) with road links, and 50% of minor developable tiles purchased and developed.
 - Given advanced start ≠ `none` on a non-locked profile, when bootstrap runs, then the System returns the turn-0 game unchanged and logs a warning.
-- Given an advanced-start game is saved and reloaded, when loaded, then `advancedStartType`, turn, techs, treasury, and workforce match the saved state.
+- Given an advanced-start game is saved and reloaded via `GameSaveAdapter`, when loaded, then `advancedStartType`, turn, techs, treasury, workforce, visibility, province ownership, tile improvements and roads, purchased tiles, prospected tiles, diplomacy overtures, civilian counts, regiment counts, and home-fleet cargo ships match the saved state exactly (load-time general-cap reconciliation excluded).
