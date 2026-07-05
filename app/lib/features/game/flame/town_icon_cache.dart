@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../config/app_assets.dart';
+import '../../../config/ct_new_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -42,6 +43,13 @@ class TownIconCache extends AssetImageCache {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
+    final level1CandidatePath = level1TownIconAssetPath(
+      assetId,
+      useCandidateLevel1Icons: kCtNewTownIconsEnabled,
+    );
+    if (level1CandidatePath != null) {
+      return level1CandidatePath;
+    }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
   }
 
@@ -65,6 +73,25 @@ class TownIconCache extends AssetImageCache {
   }) {
     final level = townDevelopmentLevel.clamp(1, 4);
     return 'town_${townIconStyle}_$level';
+  }
+
+  /// Returns the bundle path for a level-1 town icon when [useCandidateLevel1Icons]
+  /// selects S9b preview assets; otherwise null so callers use the default pattern.
+  static String? level1TownIconAssetPath(
+    String assetId, {
+    required bool useCandidateLevel1Icons,
+  }) {
+    if (!useCandidateLevel1Icons || assetId.length <= 6) {
+      return null;
+    }
+    if (!assetId.startsWith('town_') || !assetId.endsWith('_1')) {
+      return null;
+    }
+    final style = assetId.substring(5, assetId.length - 2);
+    if (!kTownIconStyles.contains(style)) {
+      return null;
+    }
+    return '${kAppIcon64AssetPrefix}ui_icon_com_town_${style}_1_candidate_64.png';
   }
 }
 

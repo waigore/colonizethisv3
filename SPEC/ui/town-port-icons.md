@@ -99,3 +99,23 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 - `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`).
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).
+
+### S9b preview gate (`CT_NEW_TOWN_ICONS`)
+
+Compile-time flag in `app/lib/config/ct_new_town_icons.dart`:
+
+```dart
+const bool kCtNewTownIconsEnabled = bool.fromEnvironment(
+  'CT_NEW_TOWN_ICONS',
+  defaultValue: false,
+);
+```
+
+| `CT_NEW_TOWN_ICONS` | Level-1 asset file | Levels 2–4 |
+|---------------------|-------------------|------------|
+| `false` (default) | `ui_icon_com_town_{style}_1_64.png` (S9a production) | unchanged |
+| `true` | `ui_icon_com_town_{style}_1_candidate_64.png` (S9b preview) | unchanged |
+
+**Workflow:** Implementer iterates on feature branch → runs app/ctdev with `--dart-define=CT_NEW_TOWN_ICONS=true` → captures on-map screenshots → product owner approves → promotion PR replaces default `_1_64` paths, removes candidate files, and retires the flag.
+
+**Non-destructive default:** Default builds must never load candidate PNGs; merging candidates into production paths without PO on-map approval is forbidden.

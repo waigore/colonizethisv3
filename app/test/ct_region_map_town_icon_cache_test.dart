@@ -41,6 +41,39 @@ void main() {
       );
     });
 
+    test('level1TownIconAssetPath uses production filenames by default', () {
+      expect(
+        TownIconCache.level1TownIconAssetPath(
+          'town_euro_1',
+          useCandidateLevel1Icons: false,
+        ),
+        isNull,
+      );
+      expect(
+        townIconCache.assetPath('town_euro_1'),
+        'assets/icons/64/ui_icon_com_town_euro_1_64.png',
+      );
+      expect(
+        TownIconCache.level1TownIconAssetPath(
+          'town_colonial_2',
+          useCandidateLevel1Icons: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('level1TownIconAssetPath selects candidate filenames when enabled', () {
+      for (final style in kTownIconStyles) {
+        expect(
+          TownIconCache.level1TownIconAssetPath(
+            'town_${style}_1',
+            useCandidateLevel1Icons: true,
+          ),
+          'assets/icons/64/ui_icon_com_town_${style}_1_candidate_64.png',
+        );
+      }
+    });
+
     testWidgets(
       'required town icon asset files are present in test asset bundle',
       (WidgetTester tester) async {
@@ -165,6 +198,55 @@ void main() {
       expect(colonial, isNot(equals(tribal)));
     });
   });
+
+  group('S9b candidate level-1 town icons (Refs #3870)', () {
+    Future<_TownIconStats> _loadCandidateStats(String style) async {
+      final path =
+          'assets/icons/64/ui_icon_com_town_${style}_1_candidate_64.png';
+      final data = await rootBundle.load(path);
+      final image = await _decodePng(data.buffer.asUint8List());
+      expect(image.width, 64);
+      expect(image.height, 64);
+      final pixels = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      image.dispose();
+      expect(pixels, isNotNull);
+      return _statsFromPixels(pixels!);
+    }
+
+    for (final style in kTownIconStyles) {
+      test('$style candidate level-1 bbox matches level-4 footprint within 2 px', () async {
+        final level1 = await _loadCandidateStats(style);
+        final level4 = await _loadTownIconStats('town_${style}_4');
+
+        expect(
+          (level1.bboxWidth - level4.bboxWidth).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxHeight - level4.bboxHeight).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxMinX - level4.bboxMinX).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxMinY - level4.bboxMinY).abs(),
+          lessThanOrEqualTo(2),
+        );
+      });
+
+      test('$style candidate level-1 max column height is at least 75% of level 4', () async {
+        final level1 = await _loadCandidateStats(style);
+        final level4 = await _loadTownIconStats('town_${style}_4');
+
+        expect(
+          level1.maxColumnHeight,
+          greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
+        );
+      });
+    }
+  });
 }
 
 class _TownIconStats {
@@ -203,7 +285,10 @@ Future<_TownIconStats> _loadTownIconStats(String iconId) async {
   final pixels = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
   image.dispose();
   expect(pixels, isNotNull);
+  return _statsFromPixels(pixels!);
+}
 
+_TownIconStats _statsFromPixels(ByteData pixels) {
   var opaque = 0;
   var minX = 64;
   var minY = 64;
@@ -214,7 +299,7 @@ Future<_TownIconStats> _loadTownIconStats(String iconId) async {
     var rowOpaque = 0;
     for (var x = 0; x < 64; x++) {
       final i = (y * 64 + x) * 4;
-      if (pixels!.getUint8(i + 3) == 0) continue;
+      if (pixels.getUint8(i + 3) == 0) continue;
       opaque++;
       rowOpaque++;
       if (x < minX) minX = x;
