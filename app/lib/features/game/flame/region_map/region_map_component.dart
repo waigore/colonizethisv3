@@ -29,7 +29,8 @@ import '../warp_zone_edge_geometry.dart';
 part 'region_map_component_shared.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
-part 'region_map_component_render_political.dart';
+part 'region_map_component_render_political_labels.dart';
+part 'region_map_component_render_political_borders.dart';
 part 'region_map_component_render_markers.dart';
 
 final _log = packageLogger();
