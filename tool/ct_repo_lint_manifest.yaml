@@ -1022,6 +1022,13 @@ rules:
     runner: dart
     script: tool/check_orders_dedup_diplomatic_helpers.dart
 
+  - rule_id: repo.orders_standard_work_declarative_config
+    group: architecture
+    title: standard_work_handler must use declarative target-kind table (Refs #3877)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_standard_work_declarative_config.dart
+
   - rule_id: repo.orders_test_no_duplicate_fixtures
     group: architecture
     title: colonizethis_orders tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3714)
