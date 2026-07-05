@@ -32,7 +32,9 @@ import '../utils/region_labels.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
 
-part 'civilian_units_panel_support.dart';
+part 'civilian_units_panel_support_resolution.dart';
+part 'civilian_units_panel_support_row_card.dart';
+part 'civilian_units_panel_support_unit_row.dart';
 
 class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
   const CivilianUnitsPanel({
