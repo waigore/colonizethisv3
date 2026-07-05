@@ -28,6 +28,8 @@ part 'region_map_component_shared.dart';
 part 'region_map_component_shared_visibility_halos.dart';
 part 'region_map_component_shared_visibility_labels.dart';
 part 'region_map_component_shared_visibility.dart';
+part 'region_map_component_shared_visibility_fog_transport.dart';
+part 'region_map_component_shared_visibility_extraction.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
 part 'region_map_component_render_core_base_tiles_helpers.dart';
@@ -40,9 +42,11 @@ part 'region_map_component_render_political_labels_province_paint.dart';
 part 'region_map_component_render_political_labels_sea.dart';
 part 'region_map_component_render_political_borders.dart';
 part 'region_map_component_render_markers_selection.dart';
+part 'region_map_component_render_markers_settlements_capitals.dart';
 part 'region_map_component_render_markers_settlements_towns.dart';
 part 'region_map_component_render_markers_settlements_warp.dart';
-part 'region_map_component_render_markers_units.dart';
+part 'region_map_component_render_markers_units_civilian.dart';
+part 'region_map_component_render_markers_units_fleet.dart';
 
 final _log = packageLogger();
 
