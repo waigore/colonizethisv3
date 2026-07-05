@@ -1,38 +1,20 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
-import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'naval_order_validator_test_support.dart';
 
 void main() {
   group('NavalOrderValidator', () {
-    const ow = 'oldWorld';
-
     test('validateNavalMission rejects when previousRejected', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = navalOrderValidatorTestGame(
+        fleets: [navalOrderValidatorTestFleetAtSea()],
       );
-      final topology = MapTopology(nodes: const [], edges: const []);
-      final validator = NavalOrderValidator(
+      final topology = navalOrderValidatorTestTopology(nodes: const []);
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMission(
         const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
@@ -43,38 +25,15 @@ void main() {
     });
 
     test('validateNavalMission blockade requires target province', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
+      final topology = navalOrderValidatorTestTopology(
+        nodes: [navalOrderValidatorTestSeaNode('sea1')],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = navalOrderValidatorTestGame(
+        fleets: [navalOrderValidatorTestFleetAtSea()],
       );
-      final validator = NavalOrderValidator(
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMission(
         NavalMissionOrder(
@@ -89,38 +48,15 @@ void main() {
     });
 
     test('validateNavalMission blockade reject when target not prefixed', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
+      final topology = navalOrderValidatorTestTopology(
+        nodes: [navalOrderValidatorTestSeaNode('sea1')],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'p1',
-              seaZoneId: 'sea1',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = navalOrderValidatorTestGame(
+        fleets: [navalOrderValidatorTestFleetAtSea()],
       );
-      final validator = NavalOrderValidator(
+      final validator = navalOrderValidatorForTest(
         game: game,
         topology: topology,
-        playerId: 'p1',
       );
       final result = validator.validateNavalMission(
         NavalMissionOrder(
@@ -137,46 +73,23 @@ void main() {
     test(
       'validateNavalMission blockade reject when blockading own province',
       () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [],
+        final topology = navalOrderValidatorTestTopology(
+          nodes: [navalOrderValidatorTestSeaNode('sea1')],
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = navalOrderValidatorTestGame(
+          oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+          fleets: [navalOrderValidatorTestFleetAtSea()],
         );
-        final validator = NavalOrderValidator(
+        final validator = navalOrderValidatorForTest(
           game: game,
           topology: topology,
-          playerId: 'p1',
         );
         final result = validator.validateNavalMission(
           NavalMissionOrder(
             fleetId: 'f1',
             mission: FleetMission.blockade.name,
-            targetProvinceId: '$ow|P1',
+            targetProvinceId:
+                ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
           ),
           previousRejected: false,
         );
@@ -188,38 +101,15 @@ void main() {
     test(
       'validateNavalMission accept non-blockade mission when fleet at sea',
       () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [],
+        final topology = navalOrderValidatorTestTopology(
+          nodes: [navalOrderValidatorTestSeaNode('sea1')],
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        final game = navalOrderValidatorTestGame(
+          fleets: [navalOrderValidatorTestFleetAtSea()],
         );
-        final validator = NavalOrderValidator(
+        final validator = navalOrderValidatorForTest(
           game: game,
           topology: topology,
-          playerId: 'p1',
         );
         final result = validator.validateNavalMission(
           const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
@@ -229,6 +119,5 @@ void main() {
         expect(result.reason, isNull);
       },
     );
-
   });
 }
