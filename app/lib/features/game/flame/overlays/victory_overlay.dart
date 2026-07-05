@@ -14,6 +14,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 
 part 'victory_overlay_panel.dart';
+part 'victory_overlay_panel_corners.dart';
 
 /// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
 ///
