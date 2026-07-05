@@ -19,7 +19,7 @@
 
 import 'dart:convert';
 
-import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
+import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kRegionMinimapCustomPaintKey;
 import 'package:colonizethis_data/colonizethis_data.dart';

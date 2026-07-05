@@ -5,17 +5,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../providers/region_minimap_provider.dart';
-import 'region_map/region_map_viewport_snapshot.dart'
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../providers/region_minimap_provider.dart';
+import '../region_map/region_map_viewport_snapshot.dart'
     show
         RegionMapViewportSnapshot,
         kRegionMapZoomMultiplierMax,
         kRegionMapZoomMultiplierMin;
-import '../../../widgets/ct_slider.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import 'game_screen_shared.dart';
+import '../../../../widgets/ct_slider.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../game_screen_shared.dart';
 import 'region_minimap_math.dart';
 
 /// Terrain base colors for the region minimap (flat fills). SPEC/ui/empire-overview.md § Region minimap.

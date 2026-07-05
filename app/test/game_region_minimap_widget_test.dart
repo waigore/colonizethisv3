@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
+import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show
         kRegionMinimapCustomPaintKey,
@@ -10,7 +10,6 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
         kRegionMinimapZoomSliderKey;
 import 'package:colonizethis_app/features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot, kRegionMapZoomMultiplierMax;
-import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

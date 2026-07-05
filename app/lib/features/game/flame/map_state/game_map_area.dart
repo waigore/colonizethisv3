@@ -44,7 +44,7 @@ import '../game_side_menu.dart';
 import '../map_area/map_area.dart' show GameMapAreaBackground;
 import '../controls/controls.dart';
 import '../game_map_canvas_stack.dart';
-import '../game_region_minimap.dart';
+import '../minimap/minimap.dart';
 import '../overlays/game_map_narrow_detail_overlay.dart';
 import '../overlays/debug_console_overlay_panel.dart';
 import 'game_map_area_state_logic.dart';
