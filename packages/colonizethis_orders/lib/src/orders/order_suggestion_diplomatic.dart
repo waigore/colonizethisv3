@@ -5,18 +5,9 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_diplomatic_candidates.dart';
+import 'order_suggestion_diplomatic_pass.dart';
 import 'order_suggestion_pass_context.dart';
 import 'validators/diplomatic/diplomatic_sub_validator.dart';
-
-/// Independent diplomatic candidates are appended in their own pass and do not
-/// consume (nor are consumed by) the single non-economic primary winner for a
-/// target: economic transfers (`grantAid`, `setSubsidy`) and the `boycott`
-/// colony trade embargo. SPEC/program/order-suggestions.md § Primary vs
-/// independent suggestions per target.
-bool _isIndependentDiplomaticCandidate(DiplomaticOrderType type) =>
-    type == DiplomaticOrderType.grantAid ||
-    type == DiplomaticOrderType.setSubsidy ||
-    type == DiplomaticOrderType.boycott;
 
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
 /// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
@@ -43,7 +34,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   );
   final playerId = pass.playerId;
   final suggestions = <DiplomaticOrder>[];
-  final player = view.player;
 
   final targets = resolveDiplomaticSuggestionTargetIds(
     view: view,
@@ -53,97 +43,43 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     playerId: playerId,
   );
 
-  final playerOverturesByTargetId = <String, OvertureState>{};
-  for (final o in game.overtureStates) {
-    if (o.gpId != playerId) continue;
-    playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
-  }
-
-  final playerHoldsColony = game.colonyStates.any(
-    (c) => c.colonyOfGpId == playerId,
-  );
-
-  final subValidatorContext = DiplomaticSubValidatorContext(
-    game: game,
-    playerId: playerId,
-    factionMembership: pass.factionMembership,
+  final passInputs = DiplomaticSuggestionPassInputs(
+    subValidatorContext: DiplomaticSubValidatorContext(
+      game: game,
+      playerId: playerId,
+      factionMembership: pass.factionMembership,
+    ),
+    knownTargetIds: targets.knownTargetIds,
+    knownFactionIds: targets.knownFactionIds,
+    playerOverturesByTargetId: playerOverturesByTargetIdForPlayer(
+      game,
+      playerId,
+    ),
+    playerHoldsColony: game.colonyStates.any(
+      (c) => c.colonyOfGpId == playerId,
+    ),
+    player: view.player,
   );
 
   final unionTargets = <String>{
     ...targets.knownTargetIds,
     ...targets.otherGpIds,
-    ...playerOverturesByTargetId.keys,
+    ...passInputs.playerOverturesByTargetId.keys,
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
-  var workingOrders = currentOrders;
-  var passValidator = pass.candidateValidator;
+  final passState = DiplomaticSuggestionPassState(
+    workingOrders: currentOrders,
+    passValidator: pass.candidateValidator,
+    suggestions: suggestions,
+  );
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
-
-    final targetView = DiplomaticSuggestionTargetView(
+    acceptDiplomaticCandidatesForTarget(
       targetId: targetId,
-      player: player,
-      knownTargetIds: targets.knownTargetIds,
-      knownFactionIds: targets.knownFactionIds,
-      playerOverturesByTargetId: playerOverturesByTargetId,
-      playerHoldsColony: playerHoldsColony,
+      inputs: passInputs,
+      state: passState,
     );
-    final candidates = diplomaticCandidatesForTargetOrdered(
-      subValidatorContext,
-      targetView,
-    );
-    var trialOrders = workingOrders;
-
-    final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
-    passValidator = prefixPassValidator;
-    var prefixPassAcceptedOrder = false;
-    for (final candidate in candidates) {
-      if (_isIndependentDiplomaticCandidate(candidate.type)) {
-        continue;
-      }
-      if (!isDiplomaticOrderAcceptedWithValidator(
-        prefixPassValidator,
-        candidate,
-      )) {
-        continue;
-      }
-      suggestions.add(candidate);
-      trialOrders = appendDiplomaticOrderForTrial(
-        trialOrders,
-        playerId,
-        candidate,
-      );
-      prefixPassAcceptedOrder = true;
-      break;
-    }
-
-    final economicPassValidator = prefixPassAcceptedOrder
-        ? prefixPassValidator.forBasePrefix(trialOrders)
-        : prefixPassValidator;
-    if (prefixPassAcceptedOrder) {
-      passValidator = economicPassValidator;
-    }
-    for (final candidate in candidates) {
-      if (!_isIndependentDiplomaticCandidate(candidate.type)) {
-        continue;
-      }
-      if (!isDiplomaticOrderAcceptedWithValidator(
-        economicPassValidator,
-        candidate,
-      )) {
-        continue;
-      }
-      suggestions.add(candidate);
-      trialOrders = appendDiplomaticOrderForTrial(
-        trialOrders,
-        playerId,
-        candidate,
-      );
-    }
-
-    workingOrders = trialOrders;
-    passValidator = passValidator.forBasePrefix(workingOrders);
   }
 
   suggestions.sort((a, b) {
