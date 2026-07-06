@@ -356,8 +356,10 @@ void main() {
 /// adds only the no-raw-`SizedBox`-token-gap invariant.
 const List<String> _sizedBoxMigratedFiles = <String>[
   'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
   'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
   'lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
 ];
 
@@ -374,8 +376,10 @@ const List<String> _sizedBoxMigratedFiles = <String>[
 const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/combat/quick_battle_deployment_view.dart',
   'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
   'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
   // CtSpacing callsites moved to the extracted selection-prompt widget.
   'lib/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart',
   'lib/features/game/flame/controls/game_side_menu.dart',
