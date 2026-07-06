@@ -682,6 +682,7 @@ class Clean extends StatelessWidget {
       () {
         const compositing = <String>[
           'app/lib/widgets/ct_main_menu_collage.dart',
+          'app/lib/widgets/ct_main_menu_collage_painter.dart',
           'app/lib/widgets/main_menu.dart',
           'app/lib/widgets/main_menu_buttons.dart',
         ];
