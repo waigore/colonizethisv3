@@ -41,6 +41,28 @@ void main() {
       );
     });
 
+    test('level-1 asset paths use production PNGs when preview flag is off', () {
+      expect(
+        TownIconCache.assetPathForId('town_euro_1', useCandidateLevelOne: false),
+        endsWith('ui_icon_com_town_euro_1_64.png'),
+      );
+      expect(
+        TownIconCache.assetPathForId('town_euro_2', useCandidateLevelOne: false),
+        endsWith('ui_icon_com_town_euro_2_64.png'),
+      );
+    });
+
+    test('level-1 asset paths use candidate PNGs when preview flag is on', () {
+      expect(
+        TownIconCache.assetPathForId('town_colonial_1', useCandidateLevelOne: true),
+        endsWith('ui_icon_com_town_colonial_1_candidate_64.png'),
+      );
+      expect(
+        TownIconCache.assetPathForId('town_colonial_3', useCandidateLevelOne: true),
+        endsWith('ui_icon_com_town_colonial_3_64.png'),
+      );
+    });
+
     testWidgets(
       'required town icon asset files are present in test asset bundle',
       (WidgetTester tester) async {
@@ -165,6 +187,71 @@ void main() {
       expect(colonial, isNot(equals(tribal)));
     });
   });
+
+  group('town icon S9b candidate assets (Refs #3870)', () {
+    testWidgets(
+      'candidate level-1 asset files are present in test asset bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        for (final style in kTownIconStyles) {
+          final path = TownIconCache.assetPathForId(
+            'town_${style}_1',
+            useCandidateLevelOne: true,
+          );
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Candidate town icon $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
+    for (final style in kTownIconStyles) {
+      test('$style candidate level-1 bbox matches level-4 footprint within 2 px', () async {
+        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+        final level4 = await _loadTownIconStats('town_${style}_4');
+
+        expect(
+          (level1.bboxWidth - level4.bboxWidth).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxHeight - level4.bboxHeight).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxMinX - level4.bboxMinX).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.bboxMinY - level4.bboxMinY).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.centerX - level4.centerX).abs(),
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          (level1.centerY - level4.centerY).abs(),
+          lessThanOrEqualTo(2),
+        );
+      });
+
+      test('$style candidate level-1 max column height is at least 75% of level 4', () async {
+        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+        final level4 = await _loadTownIconStats('town_${style}_4');
+
+        expect(
+          level1.maxColumnHeight,
+          greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
+        );
+      });
+    }
+  });
 }
 
 class _TownIconStats {
@@ -195,8 +282,26 @@ Future<Uint8List> _loadTownIconBytes(String iconId) async {
   return data.buffer.asUint8List();
 }
 
+Future<Uint8List> _loadCandidateTownIconBytes(String iconId) async {
+  final path = TownIconCache.assetPathForId(
+    iconId,
+    useCandidateLevelOne: true,
+  );
+  final data = await rootBundle.load(path);
+  return data.buffer.asUint8List();
+}
+
+Future<_TownIconStats> _loadCandidateTownIconStats(String iconId) async {
+  final bytes = await _loadCandidateTownIconBytes(iconId);
+  return _statsFromPngBytes(bytes);
+}
+
 Future<_TownIconStats> _loadTownIconStats(String iconId) async {
   final bytes = await _loadTownIconBytes(iconId);
+  return _statsFromPngBytes(bytes);
+}
+
+Future<_TownIconStats> _statsFromPngBytes(Uint8List bytes) async {
   final image = await _decodePng(bytes);
   expect(image.width, 64);
   expect(image.height, 64);

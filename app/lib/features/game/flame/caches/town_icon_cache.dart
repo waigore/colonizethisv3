@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../../config/app_assets.dart';
+import '../../../../config/ct_new_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -39,10 +40,31 @@ class TownIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) {
+    return assetPathForId(assetId);
+  }
+
+  /// Resolves bundle path for [assetId]. Tests may pass [useCandidateLevelOne]
+  /// to override the compile-time [kCtNewTownIconsEnabled] gate.
+  static String assetPathForId(
+    String assetId, {
+    bool? useCandidateLevelOne,
+  }) {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
+    final candidateLevelOne =
+        useCandidateLevelOne ?? kCtNewTownIconsEnabled;
+    if (candidateLevelOne && _isLevelOneTownIconId(assetId)) {
+      return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_candidate_64.png';
+    }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
+  }
+
+  static bool _isLevelOneTownIconId(String assetId) {
+    for (final style in kTownIconStyles) {
+      if (assetId == 'town_${style}_1') return true;
+    }
+    return false;
   }
 
   @override

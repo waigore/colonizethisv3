@@ -30,6 +30,7 @@ Cache id: `town_{style}_{level}` where `{style}` ∈ `euro` | `colonial` | `trib
 | Example file | Cache id |
 |--------------|----------|
 | `ui_icon_com_town_euro_1_64.png` | `town_euro_1` |
+| `ui_icon_com_town_euro_1_candidate_64.png` | `town_euro_1` (S9b preview only; `CT_NEW_TOWN_ICONS=true`) |
 | `ui_icon_com_town_colonial_3_64.png` | `town_colonial_3` |
 | `ui_icon_com_town_tribal_4_64.png` | `town_tribal_4` |
 | `ui_icon_com_port.png` | `port` |
@@ -41,6 +42,7 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 - **Format:** 64×64 PNG, RGBA transparent.
 - **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
 - **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources). **Current gap (S9a):** Level-1 PNGs are the pre-#3892 #3871 hamlets (commit `bed8a84a`); they do not yet meet size parity — **S9b** closes the gap after product-owner visual review.
+- **S9b preview flag:** `CT_NEW_TOWN_ICONS` compile-time dart define (`defaultValue: false`). When **false**, `TownIconCache` loads production `ui_icon_com_town_{style}_1_64.png`. When **true**, level-**1** glyphs load `ui_icon_com_town_{style}_1_candidate_64.png`; levels **2–4** unchanged. Config: `app/lib/config/ct_new_town_icons.dart`. Promotion PR replaces production level-1 PNGs with approved candidates and removes the flag.
 - **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
 - **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
 
@@ -88,7 +90,9 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 - **Given** each style, **when** opaque pixel counts are measured on levels 1–4, **then** counts strictly increase **1 < 2 < 3 < 4**.
 - **Given** the three level-**1** town PNGs after **S9a**, **when** loaded from the asset bundle, **then** file byte lengths match the pre-#3892 #3871 hamlets (`bed8a84a`) and decode as readable pixel-art (opaque count > 100 per icon).
 - **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **2 px** (size parity). *(S9b; tests skipped until S9b.)*
-- **Given** each style, **when** `maxColumnHeight` is measured on levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes). *(S9b; tests skipped until S9b.)*
+- **Given** each style, **when** `maxColumnHeight` is measured on levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes). *(S9b candidate assets; production L1 tests skipped until promotion.)*
+- **Given** the app is built **without** `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system uses production `ui_icon_com_town_{style}_1_64.png` assets (not S9b candidates).
+- **Given** the app is built with `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system loads candidate `ui_icon_com_town_{style}_1_candidate_64.png` assets; levels **2–4** remain unchanged.
 
 (Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
@@ -96,6 +100,6 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Implementation Notes
 
-- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`).
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level-**1** paths honor `kCtNewTownIconsEnabled` (`CT_NEW_TOWN_ICONS`).
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).
