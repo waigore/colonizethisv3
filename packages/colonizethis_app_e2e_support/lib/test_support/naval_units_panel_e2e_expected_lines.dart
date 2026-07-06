@@ -11,7 +11,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/tree_builders/naval_tree_builder.dart'
     show FleetRow, NavalTreeLocationNode, buildNavalTree, flattenNavalTree;
-import 'package:colonizethis_app/features/game/utils/region_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 String _roleLabelFor(String typeId, AppLocalizations l10n) {

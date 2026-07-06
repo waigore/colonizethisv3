@@ -22,7 +22,7 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../../utils/tech_ui_helpers.dart';
+import 'tech_ui_helpers.dart';
 import 'tech_gp_pennant_row.dart';
 
 /// Icon size used in Choose-tech dialog rows. Mirrors the mockup

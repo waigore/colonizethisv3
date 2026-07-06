@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/gp_nation_color_pennant.dart';
-import '../../utils/tech_gp_researchers.dart';
+import 'tech_gp_researchers.dart';
 import 'tech_researchers_list_dialog.dart';
 
 /// Ordered GP pennants for GPs that have fully unlocked [techId].

@@ -22,7 +22,7 @@ import '../shared/location_section_header.dart';
 import '../shared/region_section_header.dart';
 import '../shared/units_entity_action_row.dart';
 import '../shared/units_entity_card.dart';
-import '../../../utils/region_labels.dart';
+import '../shared/region_labels.dart';
 
 part 'military_units_panel_support_detail_rows.dart';
 

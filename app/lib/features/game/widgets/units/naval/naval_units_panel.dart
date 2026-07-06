@@ -26,7 +26,7 @@ import '../../unit_orders/transfer_to_home_fleet_dialog.dart';
 import '../shared/base_units_panel.dart';
 import '../shared/location_section_header.dart';
 import '../shared/region_section_header.dart';
-import '../../../utils/region_labels.dart';
+import '../shared/region_labels.dart';
 
 part 'naval_units_panel_support_combine.dart';
 part 'naval_units_panel_support_home_transfer.dart';

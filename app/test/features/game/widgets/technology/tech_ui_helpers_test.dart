@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/features/game/utils/commodity_ui_helpers.dart';
-import 'package:colonizethis_app/features/game/utils/tech_ui_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_ui_helpers.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

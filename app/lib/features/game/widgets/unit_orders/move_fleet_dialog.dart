@@ -12,9 +12,9 @@ import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../../utils/map_location_resolver.dart';
-import '../../utils/region_labels.dart';
-import '../../utils/sea_zone_name_resolver.dart';
+import '../../flame/map_state/map_location_resolver.dart';
+import '../province_overlay/sea_zone_name_resolver.dart';
+import '../units/shared/region_labels.dart';
 import 'move_units_dialog_base.dart';
 
 sealed class _MovePick {

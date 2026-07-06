@@ -10,7 +10,7 @@ import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/gp_nation_color_pennant.dart';
-import '../../utils/tech_gp_researchers.dart';
+import 'tech_gp_researchers.dart';
 
 /// Lists every GP that has fully unlocked [techId] with pennant + display name.
 class TechResearchersListDialog extends StatelessWidget {

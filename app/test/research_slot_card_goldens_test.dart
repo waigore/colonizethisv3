@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/utils/research_slot_preview.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';

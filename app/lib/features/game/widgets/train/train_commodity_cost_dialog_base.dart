@@ -12,7 +12,7 @@ import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
-import '../../utils/commodity_ui_helpers.dart';
+import '../production/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
 

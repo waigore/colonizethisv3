@@ -9,8 +9,8 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_transfer_list.dart';
-import '../../utils/region_labels.dart';
-import '../../utils/sea_zone_name_resolver.dart';
+import '../province_overlay/sea_zone_name_resolver.dart';
+import '../units/shared/region_labels.dart';
 
 class TransferToHomeFleetDialog extends StatelessWidget {
   const TransferToHomeFleetDialog({

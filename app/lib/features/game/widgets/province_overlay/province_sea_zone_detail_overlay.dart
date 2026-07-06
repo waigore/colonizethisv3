@@ -35,7 +35,7 @@ import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
-import '../../utils/sea_zone_name_resolver.dart';
+import 'sea_zone_name_resolver.dart';
 import 'province_overlay_unit_partition.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.

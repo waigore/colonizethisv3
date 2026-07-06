@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../utils/commodity_ui_helpers.dart';
+import 'commodity_ui_helpers.dart';
 
 /// Maximum desired output the production panel slider allows per recipe.
 /// SPEC/ui/production-panel.md

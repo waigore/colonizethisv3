@@ -23,10 +23,10 @@ String trainDialogPlayerById({required String playerId}) {
 ''';
 
 void _writeCanonicalHelpers(Directory tempDir) {
-  File('${tempDir.path}/app/lib/features/game/utils/tech_ui_helpers.dart')
+  File('${tempDir.path}/app/lib/features/game/widgets/technology/tech_ui_helpers.dart')
     ..createSync(recursive: true)
     ..writeAsStringSync(_kCanonicalEraRomanContents);
-  File('${tempDir.path}/app/lib/features/game/utils/commodity_ui_helpers.dart')
+  File('${tempDir.path}/app/lib/features/game/widgets/production/commodity_ui_helpers.dart')
     ..createSync(recursive: true)
     ..writeAsStringSync(_kCanonicalCommodityContents);
   File(

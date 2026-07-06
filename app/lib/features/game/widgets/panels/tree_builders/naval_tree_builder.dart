@@ -13,9 +13,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../../l10n/l10n.dart';
-import '../../../utils/map_location_resolver.dart';
-import '../../../utils/region_labels.dart';
-import '../../../utils/sea_zone_name_resolver.dart';
+import '../../../flame/map_state/map_location_resolver.dart';
+import '../../province_overlay/sea_zone_name_resolver.dart';
+import '../../units/shared/region_labels.dart';
 import 'fleet_mission_label.dart';
 
 part 'naval_tree_builder_support_scope.dart';

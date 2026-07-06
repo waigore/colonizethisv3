@@ -2,7 +2,7 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
     show ctE2eCivilianPanelSnapshot, ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/utils/region_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

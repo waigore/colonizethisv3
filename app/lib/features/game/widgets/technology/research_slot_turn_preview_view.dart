@@ -19,7 +19,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_resource_cell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../../utils/research_slot_preview.dart';
+import 'research_slot_preview.dart';
 import 'technology_slot_funding_toggles.dart';
 
 /// Treasury-coin glyph shared with the trade screen / game tab-bar treasury

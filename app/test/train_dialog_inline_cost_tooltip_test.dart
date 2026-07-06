@@ -18,7 +18,7 @@
 import 'dart:io' show File;
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/utils/commodity_ui_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';

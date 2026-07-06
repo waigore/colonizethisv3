@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-import '../../../l10n/l10n.dart';
+import '../../../../l10n/l10n.dart';
 
 String commodityDisplayName(String commodityId) {
   return CommodityCatalog.byId[commodityId]?.displayName ?? commodityId;

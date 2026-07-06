@@ -46,18 +46,18 @@ class _RemovedHelper {
 const List<_CanonicalHelper> _trackedCanonicalHelpers = <_CanonicalHelper>[
   _CanonicalHelper(
     symbol: 'eraRoman',
-    canonicalRelativePath: 'app/lib/features/game/utils/tech_ui_helpers.dart',
+    canonicalRelativePath: 'app/lib/features/game/widgets/technology/tech_ui_helpers.dart',
     kind: 'tech UI helper',
   ),
   _CanonicalHelper(
     symbol: 'techCategoryLabelL10n',
-    canonicalRelativePath: 'app/lib/features/game/utils/tech_ui_helpers.dart',
+    canonicalRelativePath: 'app/lib/features/game/widgets/technology/tech_ui_helpers.dart',
     kind: 'tech UI helper',
   ),
   _CanonicalHelper(
     symbol: 'commodityDisplayName',
     canonicalRelativePath:
-        'app/lib/features/game/utils/commodity_ui_helpers.dart',
+        'app/lib/features/game/widgets/production/commodity_ui_helpers.dart',
     kind: 'commodity UI helper',
   ),
   _CanonicalHelper(
@@ -129,28 +129,28 @@ const List<_RemovedHelper> _removedPrivateHelpers = <_RemovedHelper>[
   _RemovedHelper(
     symbol: '_eraRoman',
     replacement:
-        'eraRoman from app/lib/features/game/utils/tech_ui_helpers.dart',
+        'eraRoman from app/lib/features/game/widgets/technology/tech_ui_helpers.dart',
   ),
   _RemovedHelper(
     symbol: '_categoryLabel',
     replacement:
-        'techCategoryLabelL10n from app/lib/features/game/utils/tech_ui_helpers.dart',
+        'techCategoryLabelL10n from app/lib/features/game/widgets/technology/tech_ui_helpers.dart',
   ),
   _RemovedHelper(
     symbol: '_categoryLabelL10n',
     replacement:
-        'techCategoryLabelL10n from app/lib/features/game/utils/tech_ui_helpers.dart',
+        'techCategoryLabelL10n from app/lib/features/game/widgets/technology/tech_ui_helpers.dart',
   ),
   _RemovedHelper(
     symbol: '_commodityDisplayName',
     replacement:
-        'commodityDisplayName from app/lib/features/game/utils/commodity_ui_helpers.dart',
+        'commodityDisplayName from app/lib/features/game/widgets/production/commodity_ui_helpers.dart',
   ),
   // #3279: thin wrapper deleted; call `regionDisplayLabel` directly.
   _RemovedHelper(
     symbol: 'unitsPanelRegionLabel',
     replacement:
-        'regionDisplayLabel from app/lib/features/game/utils/region_labels.dart',
+        'regionDisplayLabel from app/lib/features/game/widgets/units/shared/region_labels.dart',
   ),
 ];
 

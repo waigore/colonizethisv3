@@ -28,7 +28,7 @@ import '../../train/train_dialog_chrome.dart';
 import '../shared/region_section_header.dart';
 import '../shared/units_entity_action_row.dart';
 import '../shared/units_panel_shell.dart';
-import '../../../utils/region_labels.dart';
+import '../shared/region_labels.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
 

@@ -28,7 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/utils/tech_gp_researchers.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_gp_researchers.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_gp_pennant_row.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_researchers_list_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';

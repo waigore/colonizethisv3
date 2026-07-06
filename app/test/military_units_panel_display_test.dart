@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_location_resolver.dart';
 
 import 'support/military_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
