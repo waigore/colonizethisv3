@@ -10,7 +10,7 @@ import '../../../core/services/game_service.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/observe_session_provider.dart';
-import '../shell_player_context.dart';
+import '../widgets/shell/shell_player_context.dart';
 
 String tribeCapitalDisplayName(Game game, Tribe tribe) {
   final capId = tribe.capitalProvinceId;

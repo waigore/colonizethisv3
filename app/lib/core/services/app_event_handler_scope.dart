@@ -20,7 +20,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
-import '../../features/game/shell_player_context.dart';
+import '../../features/game/widgets/shell/shell_player_context.dart';
 import 'debug_command_session_handler.dart';
 import 'observe_mode_session_handler.dart';
 

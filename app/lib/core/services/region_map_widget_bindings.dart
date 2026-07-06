@@ -7,7 +7,7 @@ import '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
-import '../../features/game/widgets/chrome/region_map_game_viewport.dart';
+import '../../features/game/widgets/shell/region_map_game_viewport.dart';
 export '../../features/game/flame/region_map/ct_region_map_game.dart' show CtRegionMapGame;
 export '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, assertCtMapPlayerViewRequired;

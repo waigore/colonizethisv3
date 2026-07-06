@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../production_recipe_affordance.dart';
+import 'production_recipe_affordance.dart';
 
 /// Applies **+1** to [recipe] using a fresh affordance pass on [current].
 /// Returns **false** when no change (repeat timers should stop).

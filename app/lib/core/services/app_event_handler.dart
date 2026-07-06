@@ -29,7 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/editorial_monocle_palette.dart';
-import '../../features/game/shell_player_context.dart';
+import '../../features/game/widgets/shell/shell_player_context.dart';
 import '../../features/game/widgets/shell/shell_player_guarded_body.dart';
 
 import '../../config/routes.dart';

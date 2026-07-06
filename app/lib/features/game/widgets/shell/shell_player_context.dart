@@ -3,11 +3,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/game_service_provider.dart';
-import '../../providers/games_provider.dart';
-import '../../providers/observe_session_provider.dart';
-import '../../../core/services/game_service.dart';
-import 'flame/region_map/region_map.dart' show CtMapVisibilityMode;
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../../../core/services/game_service.dart';
+import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.
 class ShellPlayerContext {

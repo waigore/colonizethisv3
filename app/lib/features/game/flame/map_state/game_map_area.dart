@@ -23,7 +23,7 @@ import '../../../../providers/observe_session_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
-import '../../shell_player_context.dart';
+import '../../widgets/shell/shell_player_context.dart';
 import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';

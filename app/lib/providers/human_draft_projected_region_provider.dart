@@ -2,7 +2,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/flame/map_state/map_state.dart';
-import '../features/game/shell_player_context.dart';
+import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 import 'map_view_provider.dart';

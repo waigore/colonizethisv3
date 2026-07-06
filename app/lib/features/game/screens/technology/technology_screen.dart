@@ -13,7 +13,7 @@ import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_top_bar.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../../shell_player_context.dart';
+import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import '../../widgets/technology/tech_tree_widget.dart';
 import '../../widgets/technology/technology_panel.dart';

@@ -21,7 +21,7 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Declaration site of `bool shellPanelsNotDefined(ShellPlayerContext)`.
 const String shellPanelDedupDefinitionPath =
-    'app/lib/features/game/shell_player_context.dart';
+    'app/lib/features/game/widgets/shell/shell_player_context.dart';
 
 /// The single canonical helper (`observeNotDefinedSentinel`) that wraps the
 /// guard branch; every screen/panel must route through it.
