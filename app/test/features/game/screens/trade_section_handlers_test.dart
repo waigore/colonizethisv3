@@ -13,7 +13,7 @@
 //   afresh on each call (the original inlined closures called
 //   `readProjectedTreasuryDelta()` per interaction).
 
-import 'package:colonizethis_app/features/game/screens/trade_section_handlers.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_section_handlers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';

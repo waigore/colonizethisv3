@@ -8,7 +8,7 @@ import '../features/game/widgets/diplomacy/diplomacy_panel.dart' show FactionKin
 import '../features/game/screens/diplomacy_screen.dart';
 import '../features/game/screens/production_screen.dart';
 import '../features/game/screens/technology_screen.dart';
-import '../features/game/screens/trade_screen.dart';
+import '../features/game/screens/trade/trade_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

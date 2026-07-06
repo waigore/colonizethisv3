@@ -92,7 +92,7 @@
   {
     "id": "ct_trade_screen",
     "name": "TradeScreen",
-    "dart_file_path": "lib/features/game/screens/trade_screen.dart",
+    "dart_file_path": "lib/features/game/screens/trade/trade_screen.dart",
     "constructor_props": "game: Game, player: Player",
     "category": "game/screen",
     "source": "pipeline",

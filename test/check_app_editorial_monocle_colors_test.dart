@@ -707,7 +707,7 @@ class Clean extends StatelessWidget {
         );
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/screens/trade_screen.dart',
+            'app/lib/features/game/screens/trade/trade_screen.dart',
           ),
           isFalse,
         );
