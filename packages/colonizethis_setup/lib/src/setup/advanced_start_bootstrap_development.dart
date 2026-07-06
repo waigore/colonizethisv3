@@ -214,6 +214,8 @@ Game applyAdvancedStartMinorDevelopment({
   for (var i = 0; i < game.minorNations.length; i++) {
     final minor = game.minorNations[i];
     final buyerId = game.players[i % game.players.length].id;
+    final buyerProspected =
+        updated.worldState.playerProspectedTiles[buyerId] ?? const <String>{};
     final tileKeysByProvince =
         game.worldState.tileKeysByRegionAndProvince[kRegionOldWorld] ??
         const <String, List<String>>{};
@@ -225,7 +227,7 @@ Game applyAdvancedStartMinorDevelopment({
         _rankDevelopableTileKeys(
           tileKeys: tileKeysByProvince[province.id] ?? const [],
           resourceByTileKey: game.worldState.resourceByTileKey,
-          prospectedTileKeys: const {},
+          prospectedTileKeys: buyerProspected,
         ),
       );
     }
