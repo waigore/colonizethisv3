@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// CP-based action selector for Quick Battle. SPEC/game/quick-battle.md.
@@ -31,7 +32,7 @@ class QuickBattleActionSelector extends StatelessWidget {
           l10n.quickBattle_commandPoints(cpRemaining),
           style: cpStyle,
         ),
-        const SizedBox(height: 8),
+        CtGap.m,
         Wrap(
           spacing: 8,
           runSpacing: 8,

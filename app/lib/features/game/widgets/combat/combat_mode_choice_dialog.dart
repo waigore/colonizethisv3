@@ -5,6 +5,7 @@ import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// Dialog for choosing combat mode (Auto-Resolve vs Quick Battle).
@@ -48,9 +49,9 @@ class CombatModeChoiceDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTitle(theme, l10n),
-          const SizedBox(height: 8),
+          CtGap.m,
           _buildBody(theme, l10n),
-          const SizedBox(height: 16),
+          CtGap.l,
           _buildActionRow(context, theme, l10n),
         ],
       ),

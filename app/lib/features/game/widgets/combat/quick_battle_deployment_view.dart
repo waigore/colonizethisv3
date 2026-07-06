@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 
@@ -30,7 +31,7 @@ class QuickBattleDeploymentView extends StatelessWidget {
         Text(attackerName, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         _buildSideDeployment(context, attackerDeployment),
-        const SizedBox(height: 16),
+        CtGap.l,
         Text(defenderName, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         _buildSideDeployment(context, defenderDeployment),

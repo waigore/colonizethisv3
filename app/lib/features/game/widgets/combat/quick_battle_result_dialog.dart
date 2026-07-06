@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// Displays Quick Battle result. Open via `OpenDialogEvent('quick_battle_result', params)`.
@@ -44,7 +45,7 @@ class QuickBattleResultDialog extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          CtGap.m,
           if (result.provinceFlips)
             Text(
               l10n.quickBattle_provinceCaptured,
@@ -53,7 +54,7 @@ class QuickBattleResultDialog extends StatelessWidget {
                 color: theme.colorScheme.error,
               ),
             ),
-          const SizedBox(height: 8),
+          CtGap.m,
           Text(
             l10n.quickBattle_casualties(
               attackerName,
@@ -68,7 +69,7 @@ class QuickBattleResultDialog extends StatelessWidget {
             ),
             style: theme.textTheme.bodySmall,
           ),
-          const SizedBox(height: 16),
+          CtGap.l,
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
