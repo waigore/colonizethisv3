@@ -66,10 +66,13 @@ part 'game_map_area_state_base.dart';
 part 'game_map_area_selection.dart';
 part 'game_map_area_view.dart';
 part 'game_map_area_turn_resolution.dart';
+part 'game_map_area_turn_feed_labels.dart';
 part 'game_map_area_turn_feed.dart';
 part 'game_map_area_events.dart';
 part 'game_map_area_e2e.dart';
 part 'game_map_area_lifecycle.dart';
+part 'game_map_area_build_map_stack.dart';
+part 'game_map_area_build_overlays.dart';
 part 'game_map_area_build.dart';
 
 final _gameMapNextTurnUiLog = packageLogger('logic');
@@ -94,8 +97,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea>
         _GameMapAreaSelection,
         _GameMapAreaView,
         _GameMapAreaTurnResolution,
+        _GameMapAreaTurnFeedLabels,
         _GameMapAreaTurnFeed,
         _GameMapAreaEvents,
         _GameMapAreaE2e,
         _GameMapAreaLifecycle,
+        _GameMapAreaBuildMapStack,
+        _GameMapAreaBuildOverlays,
         _GameMapAreaBuild {}

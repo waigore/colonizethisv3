@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
-import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../widgets/chrome/ct_nine_patch_button.dart';
-import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'region_map/region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'overlays/game_map_province_detail_side_panel.dart';
+import 'game_map_canvas_stack_selection_prompt.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'region_map/region_map_viewport_snapshot.dart';
 
@@ -92,7 +88,6 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = appL10n(context);
     final panel = ref.watch(mapProvincePanelProvider);
     final inWorkTargetSelectionMode = validTileKeysForSelection != null;
     return Positioned.fill(
@@ -153,58 +148,10 @@ class GameMapCanvasStack extends ConsumerWidget {
             ],
           ),
           if (inWorkTargetSelectionMode)
-            Positioned(
-              top: 8,
-              left: 0,
-              right: !isNarrow && panel.overlayOpen
-                  ? kGameMapWideProvinceSidePanelWidth
-                  : 0,
-              child: Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: EditorialMonoclePalette.bgDeep.withValues(
-                      alpha: kMapSelectionPromptBackgroundAlpha,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: EditorialMonoclePalette.accentDim,
-                      width: 1,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: CtSpacing.m,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          l10n.map_selectionMode_prompt,
-                          style: TextStyle(
-                            color: EditorialMonoclePalette.fg,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        CtNinePatchButton(
-                          onPressed: onWorkTargetSelectionCancelled,
-                          minHeight: kMapSelectionPromptCancelMinHeight,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: CtSpacing.ml,
-                            vertical: 4,
-                          ),
-                          child: Text(
-                            l10n.map_selectionMode_cancel,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            GameMapCanvasStackSelectionPrompt(
+              isNarrow: isNarrow,
+              overlayOpen: panel.overlayOpen,
+              onCancel: onWorkTargetSelectionCancelled,
             ),
         ],
       ),
