@@ -85,7 +85,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirma
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/split_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';

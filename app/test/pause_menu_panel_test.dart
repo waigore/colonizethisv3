@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

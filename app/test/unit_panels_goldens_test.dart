@@ -18,9 +18,9 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;

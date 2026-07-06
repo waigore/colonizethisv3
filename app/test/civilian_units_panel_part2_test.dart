@@ -11,7 +11,7 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;

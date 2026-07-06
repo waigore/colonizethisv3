@@ -1,7 +1,7 @@
 # Military Units Panel
 
 **Screen ID:** `UNIT20001` — stable; do not reassign.
-**SPEC/ui** — Land armies + naval fleets panel. Implementation: `app/lib/features/game/widgets/military_units_panel.dart`.
+**SPEC/ui** — Land armies + naval fleets panel. Implementation: `app/lib/features/game/widgets/panels/military_units_panel.dart`.
 **Widgetbook:** `Military Units Panel` → `app/lib/widgetbook/catalog.dart`. Army management: [military-units-army-management.md](military-units-army-management.md). Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md).
 
 **Separation:** Logic owns validation; app emits **AppEventBus** events only ([app-ui-wiring.md](../program/app-ui-wiring.md)).

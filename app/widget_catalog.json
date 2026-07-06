@@ -47,7 +47,7 @@
   {
     "id": "ct_civilian_units_panel",
     "name": "CivilianUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/civilian_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/panels/civilian_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, civilianOwnerIds: Set<String>?, bus: AppEventBus, currentOrders: Orders, tileScopeTileKey: String?, initialSelectedUnitId: String?, explorerOnly: bool, builderOnly: bool, prospectShortcutTargetTileKey: String?, exploreShortcutTargetTileKey: String?, buildImprovementShortcutTargetTileKey: String?, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
@@ -56,7 +56,7 @@
   {
     "id": "ct_military_units_panel",
     "name": "MilitaryUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/military_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/panels/military_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
@@ -65,7 +65,7 @@
   {
     "id": "ct_naval_units_panel",
     "name": "NavalUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/naval_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/panels/naval_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, tileMapByRegion: Map<String, TileMapResult>?, topologyByRegion: Map<String, MapTopology>?, locationScopeKey: String?, initialSelectedFleetId: String?, tileScopeTileKey: String?, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
