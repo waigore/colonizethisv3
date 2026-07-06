@@ -45,7 +45,8 @@ import 'province_overlay_unit_partition.dart';
 part 'province_sea_zone_detail_overlay_sections.dart';
 part 'province_sea_zone_detail_overlay_tile_section.dart';
 part 'province_sea_zone_detail_overlay_content.dart';
-part 'province_sea_zone_detail_overlay_economic_military_sections.dart';
+part 'province_sea_zone_detail_overlay_economic_section.dart';
+part 'province_sea_zone_detail_overlay_unit_sections.dart';
 part 'province_sea_zone_detail_overlay_designation.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {

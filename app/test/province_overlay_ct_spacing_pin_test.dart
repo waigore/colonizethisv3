@@ -43,10 +43,14 @@ void main() {
       );
     });
 
-    test('economic/military pending lines indent via CtSpacing.m / 2', () {
-      final source = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_military_sections.dart',
+    test('economic/unit pending lines indent via CtSpacing.m / 2', () {
+      final economicSource = File(
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_section.dart',
       ).readAsStringSync();
+      final unitSource = File(
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_unit_sections.dart',
+      ).readAsStringSync();
+      final source = '$economicSource\n$unitSource';
       expect(source, contains('left: CtSpacing.m / 2'));
       expect(source, contains('bottom: CtSpacing.m'));
       expect(source, contains('SizedBox(height: CtSpacing.m / 2)'));
@@ -58,12 +62,10 @@ void main() {
     });
 
     test('close button vertical padding uses CtSpacing.m / 2', () {
-      // `_OverlayCloseButton` was extracted into the economic/military sections
-      // file during the #3658 overlay refactor; scan it for the close control's
-      // symmetric padding token.
+      // `_OverlayCloseButton` lives in the unit-sections part file.
       final source = File(
         'lib/features/game/widgets/province_overlay/'
-        'province_sea_zone_detail_overlay_economic_military_sections.dart',
+        'province_sea_zone_detail_overlay_unit_sections.dart',
       ).readAsStringSync();
       expect(source, contains('vertical: CtSpacing.m / 2'));
       expect(

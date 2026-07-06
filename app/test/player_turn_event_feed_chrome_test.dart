@@ -427,47 +427,47 @@ void main() {
   });
 
   group('Source-file legacy-color regression', () {
+    const List<String> feedLibraryPaths = <String>[
+      'lib/features/game/widgets/shell/player_turn_event_feed.dart',
+      'lib/features/game/widgets/shell/player_turn_event_feed_toggle.dart',
+      'lib/features/game/widgets/shell/player_turn_event_feed_card.dart',
+    ];
+
     test(
-      'player_turn_event_feed.dart contains no legacy black/white/redAccent literals',
+      'player turn event feed library contains no legacy black/white/redAccent literals',
       () async {
-        // The widget source file must not paint with the legacy Material
+        // The widget source files must not paint with the legacy Material
         // chrome tokens (issue #2861 S7 chrome contract / catalog ban per
         // SPEC/ui/pixel-art-ui-catalog.md § Material design ban).
-        final File source = File(
-          'lib/features/game/widgets/shell/player_turn_event_feed.dart',
-        );
-        expect(
-          source.existsSync(),
-          isTrue,
-          reason: 'player_turn_event_feed.dart must exist at the documented path',
-        );
-        final String contents = source.readAsStringSync();
-        // Forbid the specific Material tokens the legacy chrome used.
-        // (Colors.transparent is still allowed and is the canonical way to
-        // surface a tappable Material above the editorial-monocle gradient.)
-        // The check ignores comment lines so doc-string references to the
-        // legacy tokens (explaining what was replaced) are allowed; only
-        // executable code lines must not paint with those tokens.
         const List<String> forbidden = <String>[
           'Colors.black.withValues',
           'Colors.white,',
           'Colors.white70',
           'Colors.redAccent',
         ];
-        final List<String> codeLines = contents
-            .split('\n')
-            .where((String line) => !line.trimLeft().startsWith('//'))
-            .toList();
-        final String codeOnly = codeLines.join('\n');
-        for (final String token in forbidden) {
+        for (final String relativePath in feedLibraryPaths) {
+          final File source = File(relativePath);
           expect(
-            codeOnly.contains(token),
-            isFalse,
-            reason: 'Forbidden legacy chrome token "$token" remains in '
-                'executable code of player_turn_event_feed.dart; replace with '
-                'the corresponding EditorialMonoclePalette token (see issue '
-                '#2861 S7).',
+            source.existsSync(),
+            isTrue,
+            reason: '$relativePath must exist at the documented path',
           );
+          final String contents = source.readAsStringSync();
+          final List<String> codeLines = contents
+              .split('\n')
+              .where((String line) => !line.trimLeft().startsWith('//'))
+              .toList();
+          final String codeOnly = codeLines.join('\n');
+          for (final String token in forbidden) {
+            expect(
+              codeOnly.contains(token),
+              isFalse,
+              reason: 'Forbidden legacy chrome token "$token" remains in '
+                  'executable code of $relativePath; replace with '
+                  'the corresponding EditorialMonoclePalette token (see issue '
+                  '#2861 S7).',
+            );
+          }
         }
       },
     );
