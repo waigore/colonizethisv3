@@ -16,6 +16,7 @@ Monorepo layout:
 
 ### App shell submodule layout (Refs #3878)
 
+- **`AppEventHandler`** (`app/lib/core/services/app_event_handler.dart`) wires shell-level bus events to Navigator/dialog APIs. Library parts: `app_event_handler_navigation.dart` (dialog, confirm, panel, pause, exit-to-shell navigation) and `app_event_handler_unit_panels.dart` (civilian/military/naval bottom-sheet hosts).
 - **`AppEventHandlerScope`** (`app/lib/core/services/app_event_handler_scope.dart`) binds session-scoped bus listeners. Session subscriptions are split into `part` files by event family (observe, civilian work, naval/army, diplomacy, debug), each capped at 500 non-comment lines (`repo.app_event_handler_part_size`). [`TurnResolutionResultApplier`](../../app/lib/core/services/turn_resolution_result_applier.dart) applies worker isolate turn-resolution results to session notifiers without threading `WidgetRef` through helpers.
 - **`DebugCommandSessionHandler`** and **`ObserveModeSessionHandler`** apply ctdev/debug and observe-mode session mutations without importing feature panels.
 - **`colonizethis_app_e2e_support`** (`packages/colonizethis_app_e2e_support`) hosts E2E/widget mirror helpers (`e2e_helpers.dart`, `e2e_test_shared*.dart`, panel expected-line fixtures) previously under `app/integration_test/` and `app/test/e2e_*`. `app/test` retains only barrel/contract tests (≤10 `e2e_*.dart` files); integration scenarios import the support package. Seed-42 demo fixtures remain in `app/lib/test_support/` (production/widgetbook consumers).
