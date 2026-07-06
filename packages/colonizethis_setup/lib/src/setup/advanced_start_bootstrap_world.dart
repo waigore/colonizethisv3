@@ -48,6 +48,23 @@ String? _ownerIdForLocalProvince(Game game, String localProvinceId) {
   return null;
 }
 
+void _setNwSeaZoneTilesFogged({
+  required Map<String, String> playerVisibility,
+  required Map<String, List<String>> nwTileKeysByProvince,
+  required Iterable<String> seaZoneLocalIds,
+}) {
+  for (final seaLocalId in seaZoneLocalIds) {
+    final bucketKey = canonicalSeaZoneTileBucketKey(kRegionNewWorld, seaLocalId);
+    final tileKeys = nwTileKeysByProvince[bucketKey] ?? const [];
+    for (final tileKey in tileKeys) {
+      final current = playerVisibility[tileKey];
+      if (current == null || current == VisibilityLevel.unknown.name) {
+        playerVisibility[tileKey] = VisibilityLevel.fogged.name;
+      }
+    }
+  }
+}
+
 /// Reveals contiguous NW provinces per GP and prospects a tier fraction of
 /// prospect-required tiles in those provinces.
 AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
@@ -109,6 +126,17 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       );
     }
 
+    final entrySeaZones = advancedStartNwSeaZonesFromCapital(
+      capitalLocalProvinceId: capitalLocalId,
+      topologyOldWorld: topologyOldWorld,
+      warpLinks: warpLinks,
+    );
+    final foggedSeaZones = advancedStartFoggedNwSeaZoneLocalIds(
+      topologyNewWorld: topologyNewWorld,
+      entrySeaZoneLocalIds: entrySeaZones,
+      revealedProvinceLocalIds: revealedLocalIds.toSet(),
+    );
+
     final playerVisibility =
         visibilityByPlayer.putIfAbsent(player.id, () => <String, String>{});
     final playerProspected =
@@ -127,6 +155,12 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
         revealedTileKeys.add(tileKey);
       }
     }
+
+    _setNwSeaZoneTilesFogged(
+      playerVisibility: playerVisibility,
+      nwTileKeysByProvince: tileKeysByProvince,
+      seaZoneLocalIds: foggedSeaZones,
+    );
 
     playerProspected.addAll(
       _prospectTilesForPlayer(
@@ -147,5 +181,37 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
   return AdvancedStartWorldKnowledgeResult(
     game: updated,
     encounteredTribeIds: encounteredTribes,
+  );
+}
+
+MapTopology _combinedTopologyFromRegions(
+  Map<String, MapTopology> topologyByRegion,
+) {
+  final allNodes = <TopologyNode>[];
+  final allEdges = <TopologyEdge>[];
+  for (final topology in topologyByRegion.values) {
+    allNodes.addAll(topology.nodes);
+    allEdges.addAll(topology.edges);
+  }
+  return MapTopology(nodes: allNodes, edges: allEdges);
+}
+
+/// Promotes GP-owned coastal NW sea zones to fullyVisible after colonization.
+/// SPEC/game/advanced-starts.md § NW sea-zone visibility.
+Game applyAdvancedStartCoastalSeaVisibility({
+  required Game game,
+  required Map<String, MapTopology> topologyByRegion,
+}) {
+  final combined = _combinedTopologyFromRegions(topologyByRegion);
+  final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+    game,
+    game.worldState.playerVisibilityByTile,
+    combined,
+    topologyByRegion: topologyByRegion,
+  );
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      playerVisibilityByTile: visibilityAfterCoastal,
+    ),
   );
 }

@@ -114,6 +114,11 @@ Game applyAdvancedStartBootstrap({
       topologyByRegion: topoByRegion,
     );
 
+    updated = applyAdvancedStartCoastalSeaVisibility(
+      game: updated,
+      topologyByRegion: topoByRegion,
+    );
+
     updated = applyAdvancedStartDevelopment(
       game: updated,
       startType: startType,

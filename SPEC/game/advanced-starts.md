@@ -20,6 +20,7 @@ Two fixed **advanced start** presets let players begin a campaign at turn **50**
 | Tech count | 23 | 45 |
 | NW GP provinces | 0 (turn-0 ownership) | 6 contiguous per GP |
 | NW revealed | 50–75% contiguous | 100% contiguous |
+| NW sea zones revealed | Fogged path from warp entry to seas adjacent to revealed provinces | Same fogged path; seas adjacent to GP-owned NW provinces also **fullyVisible** (coastal pass after colonization) |
 | NW prospected | ≥50% of prospectable tiles in revealed provinces | ≥75% |
 | Player development | 25% developable tiles → level 1 + roads | 50% |
 | Minor development | 25% purchased + level 1 | 50% |
@@ -33,6 +34,12 @@ Constants: `advancedStartCivilianCounts`, `advancedStartRegimentCount`, `advance
 50-turn cargo ships use a **fixed minimum of one Galleon** per GP (head start for planned colonization; no GP-owned NW provinces at this tier).
 
 50-turn NW reveal uses **62.5%** (`kAdvancedStart50TurnNwRevealFraction = 0.625`), the midpoint of the 50–75% SPEC range, applied deterministically per GP.
+
+### NW sea-zone visibility (advanced start)
+
+After step 8 province flood-fill per GP, the System reveals NW **sea-zone water tiles** at **`fogged`** (not `unknown`, not `fullyVisible`) for every sea zone on the shortest S–S path from that GP's warp-entry NW sea zone(s) to each sea zone P–S adjacent to a flood-filled NW province. NW sea zones not on that connecting path and not P–S adjacent to a revealed province remain **`unknown`**. Old World sea visibility is unchanged (standard turn-0 init: fogged baseline plus coastal `fullyVisible` for GP-owned OW provinces).
+
+At **100-turn** only, after step 9 colonization assigns GP-owned NW provinces, the bootstrap runs the standard coastal sea-zone full-visibility pass so every sea zone P–S adjacent to a GP-**owned** NW province becomes **`fullyVisible`**. Path-only seas adjacent to revealed-but-not-owned provinces stay **`fogged`**.
 
 ## Fixed technology lists
 
@@ -57,9 +64,9 @@ Ordered steps (full issue #3895):
 5. Assign upgraded regiments (best buildable type per military branch from unlocked techs; highest era, tie-break highest FPN+FPM; balanced across infantry/cavalry/artillery).
 6. Assign cargo ships per tier rule (Galleon; fixed minimum until NW dev step supplies extraction volume).
 7. Pre-establish consulates / embassies (OW minors + tribes encountered in step 8).
-8. NW exploration (contiguous flood-fill from warp-link entry).
+8. NW exploration (contiguous flood-fill from warp-link entry) plus fogged NW sea-zone reveal (see **NW sea-zone visibility**).
 9. NW prospecting (% of prospectable tiles).
-10. NW colonization (100-turn only).
+10. NW colonization (100-turn only); then coastal full-visibility for GP-owned NW provinces (100-turn only).
 11. Player + minor tile development and roads.
 12. NW province town → OW capital connectivity.
 
@@ -69,9 +76,10 @@ Ordered steps (full issue #3895):
 
 - Given advanced start `none`, when init completes, then `Game.advancedStartType` is null and `turnNumber` is 0.
 - Given advanced start `turns50` on the locked profile, when init completes, then every GP has exactly 23 listed techs unlocked, 16 peasants, 20,000 treasury, tier civilian counts, 6 upgraded regiments, at least 1 Galleon in the home fleet, and `turnNumber` is 50.
-- Given advanced start `turns50` on the locked profile, when init completes, then every GP has consulates with all OW minors, at least `kAdvancedStart50TurnNwRevealFraction` of NW provinces fully visible (contiguous from warp entry), ≥50% of prospectable tiles in those provinces prospected, and 25% of developable tiles at improvement level 1 in owned provinces with road links to town or capital.
+- Given advanced start `turns50` on the locked profile, when init completes, then every GP has consulates with all OW minors, at least `kAdvancedStart50TurnNwRevealFraction` of NW provinces fully visible (contiguous from warp entry), NW sea zones on the warp-entry path to every sea zone P–S adjacent to that GP's flood-filled provinces are **`fogged`** (not `unknown`, not `fullyVisible`), ≥50% of prospectable tiles in those provinces prospected, and 25% of developable tiles at improvement level 1 in owned provinces with road links to town or capital.
+- Given advanced start `turns50` on the locked profile, when init completes, then NW sea zones not on the connecting path from warp entry and not P–S adjacent to a flood-filled province remain **`unknown`**.
 - Given advanced start `turns50` on the locked profile, when init completes, then 25% of developable tiles in each OW minor province are purchased by a GP (round-robin) at improvement level 1 and recorded in `purchasedTilesByTileKey`.
 - Given advanced start `turns100` on the locked profile, when init completes, then every GP has exactly 45 listed techs unlocked, 16 peasants and 4 apprentices, 40,000 treasury, tier civilian counts including Rail Builder, 12 upgraded regiments, at least 6 Galleons in the home fleet, and `turnNumber` is 100.
-- Given advanced start `turns100` on the locked profile, when init completes, then every GP has embassies with all OW minors and encountered tribes, 100% NW provinces visible, ≥75% of prospectable tiles prospected, 6 contiguous NW provinces owned per GP (tribes retain ≥1 province each), 50% of developable tiles at improvement level 1 in owned provinces (OW + NW) with road links, and 50% of minor developable tiles purchased and developed.
+- Given advanced start `turns100` on the locked profile, when init completes, then every GP has embassies with all OW minors and encountered tribes, 100% NW provinces visible, the same fogged NW sea-zone path rule as 50-turn for the full reveal set, all NW sea zones P–S adjacent to GP-**owned** NW provinces are **`fullyVisible`**, NW sea zones adjacent only to revealed-but-not-owned provinces stay **`fogged`** unless on the warp-entry connecting path, ≥75% of prospectable tiles prospected, 6 contiguous NW provinces owned per GP (tribes retain ≥1 province each), 50% of developable tiles at improvement level 1 in owned provinces (OW + NW) with road links, and 50% of minor developable tiles purchased and developed.
 - Given advanced start ≠ `none` on a non-locked profile, when bootstrap runs, then the System returns the turn-0 game unchanged and logs a warning.
 - Given an advanced-start game is saved and reloaded via `GameSaveAdapter`, when loaded, then `advancedStartType`, turn, techs, treasury, workforce, visibility, province ownership, tile improvements and roads, purchased tiles, prospected tiles, diplomacy overtures, civilian counts, regiment counts, and home-fleet cargo ships match the saved state exactly (load-time general-cap reconciliation excluded).
