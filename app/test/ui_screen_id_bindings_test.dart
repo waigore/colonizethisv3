@@ -19,7 +19,7 @@ import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overla
 import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';

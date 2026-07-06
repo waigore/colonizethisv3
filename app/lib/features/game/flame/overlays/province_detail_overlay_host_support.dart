@@ -26,7 +26,7 @@ import '../../../../providers/map_province_panel_provider.dart'
     show displayProvinceOrSeaIdFromTileKey;
 import '../../../../core/services/game_service.dart' show GameMapData;
 import '../map_state/map_state.dart';
-import '../per_player_work_target_selection_cache.dart';
+import '../caches/per_player_work_target_selection_cache.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous

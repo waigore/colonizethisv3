@@ -6,14 +6,14 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/map_province_panel_provider.dart';
-import 'region_map/region_map_component.dart'
+import '../region_map/region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
-import 'overlays/game_map_province_detail_side_panel.dart';
+import '../overlays/game_map_province_detail_side_panel.dart';
 import 'game_map_canvas_stack_selection_prompt.dart';
-import 'per_player_work_target_selection_cache.dart';
-import 'region_map/region_map_viewport_snapshot.dart';
+import '../caches/per_player_work_target_selection_cache.dart';
+import '../region_map/region_map_viewport_snapshot.dart';
 
 /// Compact minimum tap-target height applied to the selection-prompt
 /// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline

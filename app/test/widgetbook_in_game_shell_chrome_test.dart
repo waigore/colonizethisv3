@@ -11,7 +11,7 @@ import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';

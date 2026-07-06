@@ -713,7 +713,7 @@ class Clean extends StatelessWidget {
         );
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/flame/game_side_menu.dart',
+            'app/lib/features/game/flame/controls/game_side_menu.dart',
           ),
           isFalse,
         );

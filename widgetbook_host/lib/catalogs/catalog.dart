@@ -67,11 +67,11 @@ import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay
 import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
-import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';

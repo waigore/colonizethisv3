@@ -431,7 +431,7 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
       () {
         expect(
           shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/flame/game_map_canvas_stack.dart',
+            'app/lib/features/game/flame/map_area/game_map_canvas_stack.dart',
           ),
           isFalse,
         );

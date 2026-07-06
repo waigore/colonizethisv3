@@ -33,14 +33,14 @@ import '../../dialogue/overture_dialogue_overlay.dart';
 import '../../dialogue/tribe_first_contact_overlay.dart';
 import '../../dialogue/tribe_first_contact_sync.dart';
 import '../../flame/overlays/exit_confirm_dialog.dart';
-import '../../flame/game_canvas.dart';
+import '../../flame/host/host.dart';
 import '../../flame/map_state/map_state.dart';
 import 'game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import '../../flame/overlays/next_turn_confirmation_dialog.dart';
 import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
-import '../../flame/turn_resolution_result_applier.dart';
+import '../../../../core/services/turn_resolution_result_applier.dart';
 import '../../flame/overlays/victory_overlay.dart';
 
 part 'game_screen_fallback_next_turn.dart';
