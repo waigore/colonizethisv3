@@ -18,7 +18,7 @@
 // .dart` so this file deliberately stays focused on the per-button
 // variant flag wiring (the contract that maps from the overlay spec to
 // the catalog).
-import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show InterventionChoice;

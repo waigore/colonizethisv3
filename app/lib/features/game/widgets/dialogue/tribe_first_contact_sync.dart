@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../config/constants.dart';
-import '../../../core/services/game_service.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import '../../../providers/observe_session_provider.dart';
-import '../widgets/shell/shell_player_context.dart';
+import '../../../../config/constants.dart';
+import '../../../../core/services/game_service.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../shell/shell_player_context.dart';
 
 String tribeCapitalDisplayName(Game game, Tribe tribe) {
   final capId = tribe.capitalProvinceId;

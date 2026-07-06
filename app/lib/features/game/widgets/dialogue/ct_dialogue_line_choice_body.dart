@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
 
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_view.dart';
 
 /// Shared body for blocking Jenny dialogue overlays that renders the narrative

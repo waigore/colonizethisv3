@@ -26,12 +26,12 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_screen_shell.dart';
 import '../../../../widgets/game_to_ui_bus_listener.dart';
 
-import '../../dialogue/call_to_arms_dialogue_overlay.dart';
-import '../../dialogue/game_start_intro_overlay.dart';
-import '../../dialogue/intervention_dialogue_overlay.dart';
-import '../../dialogue/overture_dialogue_overlay.dart';
-import '../../dialogue/tribe_first_contact_overlay.dart';
-import '../../dialogue/tribe_first_contact_sync.dart';
+import '../../widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import '../../widgets/dialogue/game_start_intro_overlay.dart';
+import '../../widgets/dialogue/intervention_dialogue_overlay.dart';
+import '../../widgets/dialogue/overture_dialogue_overlay.dart';
+import '../../widgets/dialogue/tribe_first_contact_overlay.dart';
+import '../../widgets/dialogue/tribe_first_contact_sync.dart';
 import '../../flame/overlays/exit_confirm_dialog.dart';
 import '../../flame/host/host.dart';
 import '../../flame/map_state/map_state.dart';

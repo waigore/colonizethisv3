@@ -61,11 +61,11 @@ import 'package:colonizethis_app/features/game/screens/technology/technology_scr
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
-import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/ct_dialogue_view.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';

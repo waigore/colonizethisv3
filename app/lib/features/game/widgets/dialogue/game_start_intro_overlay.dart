@@ -7,12 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
 
-import '../../../../l10n/l10n.dart';
-import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
-import '../../../../widgets/ct_loading_indicator.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
+import '../../../../../l10n/l10n.dart';
+import '../../../../../widgets/ct_brass_divider.dart';
+import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../../widgets/ct_loading_indicator.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 

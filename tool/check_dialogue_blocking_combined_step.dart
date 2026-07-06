@@ -19,7 +19,7 @@ import 'package:path/path.dart' as p;
 /// `confirmCombinedLineOption` on the view. The combined-step goldens in
 /// [_goldenTestRelative] must cover every overlay that constructs a view.
 ///
-/// Three checks run over `app/lib/features/game/dialogue/**/*.dart`:
+/// Three checks run over `app/lib/features/game/widgets/dialogue/**/*.dart`:
 ///
 /// 1. **Adoption** — any file that constructs `CtDialogueView(` must also
 ///    construct `CtDialogueLineChoiceBody(` (canonical and exempt files
@@ -32,7 +32,7 @@ import 'package:path/path.dart' as p;
 ///    imported by [_goldenTestRelative] (symmetric-difference fail).
 ///
 /// SPEC: `SPEC/ui/ct-dialogue-view.md`; `SPEC/program/repo-lint.md`.
-const String _dialogueDirRelative = 'app/lib/features/game/dialogue';
+const String _dialogueDirRelative = 'app/lib/features/game/widgets/dialogue';
 const String _goldenTestRelative =
     'app/test/dialogue_combined_line_choice_goldens_test.dart';
 
@@ -61,7 +61,7 @@ const Set<String> _forbiddenViewMethods = <String>{
 
 /// Import suffix that identifies a dialogue overlay import in the golden test.
 final RegExp _goldenOverlayImportPattern = RegExp(
-  r'''['"][^'"]*features/game/dialogue/([A-Za-z0-9_]+_overlay\.dart)['"]''',
+  r'''['"][^'"]*features/game/widgets/dialogue/([A-Za-z0-9_]+_overlay\.dart)['"]''',
 );
 
 /// Used by `ct_repo_lint` / `dart run`; [info] / [err] default to std streams.

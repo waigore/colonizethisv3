@@ -12,11 +12,11 @@ import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
-import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';

@@ -8,7 +8,7 @@
 
 ## Widget contract
 
-`CallToArmsDialogueOverlay` is a `StatefulWidget` (`app/lib/features/game/dialogue/call_to_arms_dialogue_overlay.dart`). It wraps an arbitrary `child` and, while the call-to-arms flow is open, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
+`CallToArmsDialogueOverlay` is a `StatefulWidget` (`app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart`). It wraps an arbitrary `child` and, while the call-to-arms flow is open, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
 
 | Constructor parameter | Type | Required | Description |
 |-----------------------|------|----------|-------------|

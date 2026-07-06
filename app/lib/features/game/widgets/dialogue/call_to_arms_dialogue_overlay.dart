@@ -4,12 +4,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../l10n/l10n.dart';
-import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/ct_toggle_switch.dart';
+import '../../../../../l10n/l10n.dart';
+import '../../../../../widgets/ct_brass_divider.dart';
+import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import '../../../../../widgets/ct_toggle_switch.dart';
 
 /// Blocking overlay: human ally accepts or refuses each pending call to arms.
 class CallToArmsDialogueOverlay extends StatefulWidget {

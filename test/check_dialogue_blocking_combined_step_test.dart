@@ -10,7 +10,7 @@ import '../tool/check_dialogue_blocking_combined_step.dart';
 
 /// Writes a dialogue overlay/source file into a temp repo's dialogue dir.
 void _writeDialogueFile(String repoRoot, String basename, String source) {
-  final dir = Directory(p.join(repoRoot, 'app/lib/features/game/dialogue'))
+  final dir = Directory(p.join(repoRoot, 'app/lib/features/game/widgets/dialogue'))
     ..createSync(recursive: true);
   File(p.join(dir.path, basename)).writeAsStringSync(source);
 }
@@ -22,7 +22,7 @@ void _writeGoldenTest(String repoRoot, List<String> overlayBasenames) {
   final imports = overlayBasenames
       .map(
         (b) =>
-            "import 'package:colonizethis_app/features/game/dialogue/$b';",
+            "import 'package:colonizethis_app/features/game/widgets/dialogue/$b';",
       )
       .join('\n');
   File(

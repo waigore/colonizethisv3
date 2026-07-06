@@ -62,14 +62,14 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
-| `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
+| `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
 | `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/overlays/victory_overlay.dart` | Victory | active |
-| `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
-| `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | `app/lib/features/game/dialogue/call_to_arms_dialogue_overlay.dart` | Call to Arms Dialogue Overlay | active |
-| `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
+| `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
+| `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart` | Call to Arms Dialogue Overlay | active |
+| `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
 | `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | TBD | — | draft |
-| `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
+| `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
 | `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |
 | `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | TBD | — | draft |
 

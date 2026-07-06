@@ -355,10 +355,10 @@ void main() {
 /// `CtSpacing.<token>` reference invariants are covered there; this list
 /// adds only the no-raw-`SizedBox`-token-gap invariant.
 const List<String> _sizedBoxMigratedFiles = <String>[
-  'lib/features/game/dialogue/game_start_intro_overlay.dart',
-  'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/dialogue/overture_dialogue_overlay.dart',
-  'lib/features/game/dialogue/call_to_arms_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
 ];
 
 /// Feature files migrated to `CtSpacing` for `EdgeInsets.all(N)` and
@@ -373,9 +373,9 @@ const List<String> _sizedBoxMigratedFiles = <String>[
 /// arg literal for the same token set.
 const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/combat/quick_battle_deployment_view.dart',
-  'lib/features/game/dialogue/game_start_intro_overlay.dart',
-  'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
   // CtSpacing callsites moved to the extracted selection-prompt widget.
   'lib/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart',
   'lib/features/game/flame/controls/game_side_menu.dart',

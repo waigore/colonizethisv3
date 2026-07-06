@@ -1,7 +1,7 @@
 # Tribe First Contact Overlay
 
 **Screen ID:** `OVL80001` — stable; do not reassign.
-**SPEC/ui** — Blocking herald when the human GP first discovers a Tribe. Implementation: `app/lib/features/game/dialogue/tribe_first_contact_overlay.dart`.
+**SPEC/ui** — Blocking herald when the human GP first discovers a Tribe. Implementation: `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart`.
 **Widgetbook:** `Tribe First Contact Overlay` → `app/lib/widgetbook/catalog.dart`. Yarn: `tribe_first_contact` in `assets/dialogue/tribe_first_contact.yarn`. Pattern: [`game-start-intro-overlay.md`](game-start-intro-overlay.md).
 
 ---

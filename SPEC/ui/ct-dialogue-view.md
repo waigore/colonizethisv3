@@ -6,7 +6,7 @@
 
 ## Widget contract
 
-`CtDialogueView` is a `DialogueView` subclass (`app/lib/features/game/dialogue/ct_dialogue_view.dart`). It is **not** a Flutter widget — it produces no UI by itself. Consumer widgets construct a `CtDialogueView`, register it with a `DialogueRunner`, and rebuild whenever the view's `onStateChanged` callback fires.
+`CtDialogueView` is a `DialogueView` subclass (`app/lib/features/game/widgets/dialogue/ct_dialogue_view.dart`). It is **not** a Flutter widget — it produces no UI by itself. Consumer widgets construct a `CtDialogueView`, register it with a `DialogueRunner`, and rebuild whenever the view's `onStateChanged` callback fires.
 
 | Constructor parameter | Type | Default | Description |
 |-----------------------|------|---------|-------------|
@@ -65,7 +65,7 @@ Yarn nodes in this app model narrative as a `line` event followed by a `-> optio
 - `selectOption(i)` clears both `currentChoice` and `contextLine`.
 - A later `onLineStart(L2)` overwrites `contextLine = L2`; `onDialogueFinish` clears `contextLine`.
 
-The shared widget `CtDialogueLineChoiceBody` (`app/lib/features/game/dialogue/ct_dialogue_line_choice_body.dart`) encapsulates both render contracts for all blocking dialogue overlays.
+The shared widget `CtDialogueLineChoiceBody` (`app/lib/features/game/widgets/dialogue/ct_dialogue_line_choice_body.dart`) encapsulates both render contracts for all blocking dialogue overlays.
 
 ---
 
