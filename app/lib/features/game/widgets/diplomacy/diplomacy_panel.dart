@@ -34,6 +34,8 @@ part 'diplomacy_panel_chrome_standing.dart';
 part 'diplomacy_panel_mode_bar.dart';
 part 'diplomacy_panel_order_actions.dart';
 part 'diplomacy_panel_row.dart';
+part 'diplomacy_panel_row_info.dart';
+part 'diplomacy_panel_row_actions.dart';
 
 /// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
 /// body switches to its narrow stacked variant (info column above the

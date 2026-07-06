@@ -36,6 +36,8 @@ part 'civilian_units_panel_list.dart';
 part 'civilian_units_panel_support_resolution.dart';
 part 'civilian_units_panel_support_row_card.dart';
 part 'civilian_units_panel_support_unit_row.dart';
+part 'civilian_units_panel_support_unit_row_labels.dart';
+part 'civilian_units_panel_support_unit_row_actions.dart';
 
 class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
   const CivilianUnitsPanel({
