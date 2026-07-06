@@ -372,7 +372,7 @@ const List<String> _sizedBoxMigratedFiles = <String>[
 /// `N ∈ {8, 12, 16, 20, 24}`, and no raw `EdgeInsets.symmetric` named
 /// arg literal for the same token set.
 const List<String> _migratedFeatureFiles = <String>[
-  'lib/features/game/combat/quick_battle_deployment_view.dart',
+  'lib/features/game/widgets/combat/quick_battle_deployment_view.dart',
   'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
   'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',

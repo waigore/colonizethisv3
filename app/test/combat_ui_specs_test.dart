@@ -12,11 +12,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_action_selector.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_deployment_view.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 

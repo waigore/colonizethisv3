@@ -1,9 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// CP-based action selector for Quick Battle. SPEC/game/quick-battle.md.
 class QuickBattleActionSelector extends StatelessWidget {

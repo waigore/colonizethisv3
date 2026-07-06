@@ -8,7 +8,7 @@
 
 ## Widget contract
 
-`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
+`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

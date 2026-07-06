@@ -1,9 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_panel.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_panel.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Displays Quick Battle deployment (units per lane/line).
 /// SPEC/game/quick-battle.md: LEFT/CENTER/RIGHT/RESERVE, FRONT/SUPPORT.

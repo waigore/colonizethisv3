@@ -1,11 +1,11 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// Dialog for choosing combat mode (Auto-Resolve vs Quick Battle).
 ///

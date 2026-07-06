@@ -7,7 +7,7 @@
 
 ## Widget contract
 
-`QuickBattleResultDialog` is a presentational `StatelessWidget` (`app/lib/features/game/combat/quick_battle_result_dialog.dart`) wrapped in a `CtDialogShell`.
+`QuickBattleResultDialog` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/quick_battle_result_dialog.dart`) wrapped in a `CtDialogShell`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
