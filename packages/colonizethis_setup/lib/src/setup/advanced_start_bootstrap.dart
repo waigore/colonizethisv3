@@ -115,6 +115,11 @@ Game applyAdvancedStartBootstrap({
       topologyByRegion: topoByRegion,
     );
 
+    updated = applyAdvancedStartCoastalSeaVisibility(
+      game: updated,
+      topologyByRegion: topoByRegion,
+    );
+
     updated = applyAdvancedStartProspecting(
       game: updated,
       startType: startType,
