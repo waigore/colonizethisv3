@@ -11,7 +11,7 @@
 //
 // SPEC: SPEC/ui/technology-panel.md § Top bar + § Slot behaviour.
 
-import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
+import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';

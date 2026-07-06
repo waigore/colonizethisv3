@@ -1,7 +1,7 @@
 # Technology Panel (Research Slots)
 
 **Screen ID:** `GAME40001` — stable; do not reassign.
-**SPEC/ui** — Technology panel: research slots and assignment. Implementation: `app/lib/features/game/screens/technology_screen.dart`.
+**SPEC/ui** — Technology panel: research slots and assignment. Implementation: `app/lib/features/game/screens/technology/technology_screen.dart`.
 **Widgetbook:** `Tech Tree` → `app/lib/widgetbook/catalog.dart`. Game rules: [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Placement: [tech-tree-widget.md](tech-tree-widget.md) (slots tab).
 
 **Mockup:** [mockups/GAME40001-technology-panel.html](mockups/GAME40001-technology-panel.html)

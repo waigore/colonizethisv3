@@ -12,7 +12,7 @@
 //     narrow vertical-scroll contract from `SPEC/ui/mobile-adaptation.md` § 7
 //     remains reviewable in Widgetbook without window resizing.
 
-import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
+import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';

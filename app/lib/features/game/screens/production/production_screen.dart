@@ -6,22 +6,22 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_constants.dart';
-import '../../../config/ct_e2e.dart';
-import '../../../config/ct_e2e_last_panel_snapshot.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import '../../../providers/production_allocation_provider.dart';
-import '../shell_player_context.dart';
-import '../widgets/shell/shell_player_guarded_body.dart';
-import '../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../widgets/ct_top_bar.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import '../widgets/production/production_commodity_breakdown_dialog.dart';
-import '../widgets/production/production_labour_helpers.dart';
-import '../widgets/production/production_panel.dart';
+import '../../../../config/app_constants.dart';
+import '../../../../config/ct_e2e.dart';
+import '../../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/production_allocation_provider.dart';
+import '../../shell_player_context.dart';
+import '../../widgets/shell/shell_player_guarded_body.dart';
+import '../../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../../widgets/ct_top_bar.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../../widgets/production/production_labour_helpers.dart';
+import '../../widgets/production/production_panel.dart';
 
 class ProductionScreen extends ConsumerWidget {
   const ProductionScreen({

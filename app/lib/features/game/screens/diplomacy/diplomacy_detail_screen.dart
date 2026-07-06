@@ -5,15 +5,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../providers/app_event_bus_provider.dart';
-import '../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/ct_top_bar.dart';
-import '../../../widgets/relation_meter.dart';
-import '../widgets/diplomacy/diplomacy_panel.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/ct_top_bar.dart';
+import '../../../../widgets/relation_meter.dart';
+import '../../widgets/diplomacy/diplomacy_panel.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
 String formatDiplomaticEvent(

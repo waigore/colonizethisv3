@@ -1,7 +1,7 @@
 # Production Panel
 
 **Screen ID:** `GAME20001` — stable; do not reassign.
-**SPEC/ui** — Production allocation panel. Implementation: `app/lib/features/game/screens/production_screen.dart`.
+**SPEC/ui** — Production allocation panel. Implementation: `app/lib/features/game/screens/production/production_screen.dart`.
 **Widgetbook:** `Production Panel` → `app/lib/widgetbook/catalog.dart`. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [production-recipes.md](../game/production-recipes.md), [workers-and-population.md](../game/workers-and-population.md). Mobile: [mobile-adaptation.md](mobile-adaptation.md).
 
 **Mockup:** [mockups/GAME20001-production-panel.html](mockups/GAME20001-production-panel.html)

@@ -37,10 +37,10 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `SHEL30001` | Game initializing | [game-initializing.md](game-initializing.md) | TBD | — | draft |
 | `SHEL40001` | Pause menu panel | [pause-menu-panel.md](pause-menu-panel.md) | `app/lib/features/game/widgets/panels/pause_menu_panel.dart` | Pause Menu Panel | active |
 | `GAME10001` | Game screen | [game-screen.md](game-screen.md) | `app/lib/features/game/flame/game_screen.dart` | Game Screen | active |
-| `GAME20001` | Production screen | [production-panel.md](production-panel.md) | `app/lib/features/game/screens/production_screen.dart` | Production Panel | active |
-| `GAME30001` | Diplomacy screen | [diplomacy-panel.md](diplomacy-panel.md) | `app/lib/features/game/screens/diplomacy_screen.dart` | Diplomacy Panel | active |
-| `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
-| `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology_screen.dart` | Tech Tree | active |
+| `GAME20001` | Production screen | [production-panel.md](production-panel.md) | `app/lib/features/game/screens/production/production_screen.dart` | Production Panel | active |
+| `GAME30001` | Diplomacy screen | [diplomacy-panel.md](diplomacy-panel.md) | `app/lib/features/game/screens/diplomacy/diplomacy_screen.dart` | Diplomacy Panel | active |
+| `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
+| `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/game_side_menu.dart` | Game Side Menu | active |
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | draft |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |

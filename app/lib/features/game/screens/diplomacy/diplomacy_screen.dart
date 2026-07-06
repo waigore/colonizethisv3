@@ -5,18 +5,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/app_constants.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import '../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../widgets/ct_top_bar.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import '../shell_player_context.dart' show shellPlayerContextProvider;
-import '../widgets/shell/shell_player_guarded_body.dart';
-import '../widgets/diplomacy/diplomacy_panel.dart';
-import '../widgets/diplomacy/grant_or_subsidy_listener.dart';
+import '../../../../config/app_constants.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../../widgets/ct_top_bar.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../shell_player_context.dart' show shellPlayerContextProvider;
+import '../../widgets/shell/shell_player_guarded_body.dart';
+import '../../widgets/diplomacy/diplomacy_panel.dart';
+import '../../widgets/diplomacy/grant_or_subsidy_listener.dart';
 
 class DiplomacyScreen extends ConsumerWidget {
   const DiplomacyScreen({

@@ -439,7 +439,7 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
       () {
         expect(
           shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/screens/diplomacy_detail_screen.dart',
+            'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
           ),
           isFalse,
         );
