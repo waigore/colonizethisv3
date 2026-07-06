@@ -93,7 +93,7 @@ The dialog **does not** mutate game state. All effects flow through the emitted 
 | Submit (enabled) | `Navigator.of(context).pop()` then `bus.emit(GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy))`. The dialog pops first to avoid use-after-dispose if the listener triggers a navigation. |
 | Submit (disabled) | No-op (`enabled: false` on the `CtNinePatchButton`). |
 
-The `GrantOrSubsidySubmittedEvent` listener (`grant_or_subsidy_listener.dart`) shows a `ConfirmDialogEvent` and, on confirm, materializes the corresponding diplomatic order; see [orders.md](../program/orders.md) § DiplomaticOrder. The confirmation `message` reflects the mode's unit: grant reads `Grant aid of £{amount} to {target}?`; subsidy reads `Set subsidy of {amount}% to {target}?` (the submitted `amount` carries the subsidy **percentage** for `DiplomaticOrderType.setSubsidy`; Refs #3753 R3).
+The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/diplomacy/grant_or_subsidy_listener.dart`) shows a `ConfirmDialogEvent` and, on confirm, materializes the corresponding diplomatic order; see [orders.md](../program/orders.md) § DiplomaticOrder. The confirmation `message` reflects the mode's unit: grant reads `Grant aid of £{amount} to {target}?`; subsidy reads `Set subsidy of {amount}% to {target}?` (the submitted `amount` carries the subsidy **percentage** for `DiplomaticOrderType.setSubsidy`; Refs #3753 R3).
 
 ---
 

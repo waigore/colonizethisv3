@@ -39,7 +39,7 @@ import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dia
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';

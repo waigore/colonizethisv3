@@ -16,7 +16,7 @@ import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart' show shellPlayerContextProvider;
 import '../widgets/shell/shell_player_guarded_body.dart';
 import '../widgets/diplomacy/diplomacy_panel.dart';
-import '../widgets/grant_or_subsidy_listener.dart';
+import '../widgets/diplomacy/grant_or_subsidy_listener.dart';
 
 class DiplomacyScreen extends ConsumerWidget {
   const DiplomacyScreen({

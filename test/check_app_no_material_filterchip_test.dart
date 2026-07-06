@@ -413,7 +413,7 @@ Widget probe() => FilterChip(
       );
       expect(
         shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/widgets/turn_news_dialog.dart',
+          'app/lib/features/game/widgets/dialogs/turn_news_dialog.dart',
         ),
         isFalse,
       );

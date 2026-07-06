@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/services/subscription_tracker.dart';
+import '../../../../core/services/subscription_tracker.dart';
 
 class GrantOrSubsidyListener extends StatefulWidget {
   const GrantOrSubsidyListener({

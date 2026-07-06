@@ -1,13 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/ct_e2e.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_spacing.dart';
-import 'utils/naval_tree_builder.dart';
-import 'units/shared/units_entity_action_row.dart';
-import 'units/shared/units_entity_card.dart';
+import '../../../../config/ct_e2e.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../utils/naval_tree_builder.dart';
+import '../units/shared/units_entity_action_row.dart';
+import '../units/shared/units_entity_card.dart';
 
 /// Naval-units fleet row.
 ///

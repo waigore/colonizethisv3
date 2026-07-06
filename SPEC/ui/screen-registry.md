@@ -60,7 +60,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
 | `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
-| `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/turn_news_dialog.dart` | Turn news | active |
+| `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
 | `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
 | `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/overlays/victory_overlay.dart` | Victory | active |

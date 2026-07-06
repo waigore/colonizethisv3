@@ -4,12 +4,12 @@
 import 'package:colonizethis_models/colonizethis_models.dart' show MapViewState;
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_toggle_switch.dart';
-import 'chrome/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_toggle_switch.dart';
+import '../chrome/ct_nine_patch_button.dart';
 
 /// Stable key for the "Show province overlay" [CtToggleSwitch] inside
 /// [GameMapOptionsDialog]. Used by widget tests and E2E lookups.

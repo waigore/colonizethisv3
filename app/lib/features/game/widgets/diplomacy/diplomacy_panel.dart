@@ -22,11 +22,11 @@ import '../../../../widgets/relation_meter.dart';
 import 'diplomacy_order_helpers.dart';
 import '../panels/game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
-import '../fnv1a_hash_constants.dart';
-import '../relative_power_line.dart';
+import 'fnv1a_hash_constants.dart';
+import 'relative_power_line.dart';
 
 export 'diplomacy_panel_rows.dart';
-export '../relative_power_line.dart';
+export 'relative_power_line.dart';
 
 part 'diplomacy_panel_body.dart';
 part 'diplomacy_panel_chrome.dart';

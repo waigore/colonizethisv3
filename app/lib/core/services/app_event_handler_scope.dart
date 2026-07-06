@@ -14,7 +14,7 @@ import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';

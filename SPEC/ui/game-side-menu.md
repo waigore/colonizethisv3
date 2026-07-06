@@ -92,7 +92,7 @@ The widget itself never reads `turnResolutionBlockingProvider`; the side menu re
 - [`CtNinePatchButton`](buttons-nine-patch.md) — every interactive row (close, Game Parameters, Debug log).
 - `Icon(Icons.tune, size: 20)` (Game Parameters), `Icon(Icons.bug_report, size: 20)` (Debug log) — Material icons matching `app/lib/features/game/flame/game_side_menu.dart`. Both icons resolve their colour from the dark-theme palette per § Dark-theme chrome below.
 - Localized strings: `appL10n(context).gameParameters_menuEntry`, `appL10n(context).debugLog_title`.
-- Local dialog: `GameParametersDialog` (`app/lib/features/game/widgets/game_parameters_dialog.dart`) for the read-only Infinite mode display.
+- Local dialog: `GameParametersDialog` (`app/lib/features/game/widgets/dialogs/game_parameters_dialog.dart`) for the read-only Infinite mode display.
 
 ---
 

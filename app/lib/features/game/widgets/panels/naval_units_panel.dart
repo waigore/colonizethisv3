@@ -17,7 +17,7 @@ import '../../../../core/services/app_event_handler_scope.dart'
     show trainNavalDialogId;
 import '../../../../l10n/l10n.dart';
 import '../chrome/ct_action_text_button.dart';
-import '../fleet_expansion_tile.dart';
+import 'fleet_expansion_tile.dart';
 import 'game_panel_contract.dart';
 import '../utils/naval_tree_builder.dart';
 import '../unit_orders/move_fleet_dialog.dart';

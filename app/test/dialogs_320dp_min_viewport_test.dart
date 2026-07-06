@@ -83,13 +83,13 @@ import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/game_parameters_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

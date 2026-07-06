@@ -37,7 +37,7 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_but
 import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
@@ -83,7 +83,7 @@ import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dia
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';

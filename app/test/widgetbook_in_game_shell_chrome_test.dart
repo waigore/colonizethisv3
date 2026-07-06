@@ -13,7 +13,7 @@ import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';

@@ -366,7 +366,7 @@ Widget probe() => SwitchListTile(
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/widgets/game_map_options_dialog.dart',
+          'app/lib/features/game/widgets/dialogs/game_map_options_dialog.dart',
         ),
         isFalse,
       );
