@@ -66,7 +66,7 @@ All styles: centered cluster, transparent background, no circular badge, colonia
 - **Height floor (S9b target):** Level-1 `maxColumnHeight` ≥ **75%** of level-4 `maxColumnHeight` (prevents tiny silhouettes). Automatable tests are **skipped until S9b**.
 - **Removed:** Strict `maxColumnHeight(1) < maxColumnHeight(2) < …` — height must **not** be the primary differentiation axis.
 
-**S9b candidate art (preview only, `CT_NEW_TOWN_ICONS=true`):** Single-cluster upscale from S9a-reverted level-1 hamlets — nearest-neighbor upscale (~1.1×) of the production L1 opaque crop, centered in the canvas, plus sparse edge/corner grass sampled from the production sprite to align the opaque bounding box with level-4 footprint (±2 px). Target opaque count below level 2 while matching level-4 bbox. PixelLab inpaint/Bitforge preferred when available; programmatic upscale+sparse-edge fill is the fallback.
+**S9b candidate art (preview only, `CT_NEW_TOWN_ICONS=true`):** Single-cluster upscale from S9a-reverted level-1 hamlets — nearest-neighbor upscale (~1.38×) of the production L1 opaque crop, centered in the canvas; widen the widest building row to the level-4 bbox width; snap bbox edges with building-pixel copies; add 2×2 corner grass tufts only when corners remain transparent. **No** sparse perimeter grass bands or dotted guide lines (prior passes read as grid artifacts on-map). Target opaque count below level 2 while matching level-4 bbox and `maxColumnHeight` ≥ 75% of level 4. PixelLab inpaint/Bitforge preferred when available; programmatic upscale+row-widen is the fallback.
 
 ---
 
