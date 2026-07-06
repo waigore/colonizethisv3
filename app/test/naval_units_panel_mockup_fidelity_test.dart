@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/fleet_expansion_tile.dart';
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';

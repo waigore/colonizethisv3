@@ -14,7 +14,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// The fully-shaped game-bearing panels all carry the same four inputs
 /// (`game`, `humanPlayerId`, `bus`, `readOnly`). They must adopt the shared
 /// [GamePanelMixin] contract (declared in
-/// `app/lib/features/game/widgets/game_panel_contract.dart`) so generic
+/// `app/lib/features/game/widgets/panels/game_panel_contract.dart`) so generic
 /// helpers and tests can refer to "a game-bearing panel" by one type.
 ///
 /// A class is a *fully-shaped game panel* when **all** of the following hold:
@@ -96,7 +96,7 @@ int runCheckAppGamePanelMixin(
   logE(
     'Fix: add `with $_requiredMixin` to each panel that declares `game`, '
     '`bus`, and `readOnly` (see '
-    'app/lib/features/game/widgets/game_panel_contract.dart). The existing '
+    'app/lib/features/game/widgets/panels/game_panel_contract.dart). The existing '
     '`final` fields satisfy the mixin getters.',
   );
   return 1;

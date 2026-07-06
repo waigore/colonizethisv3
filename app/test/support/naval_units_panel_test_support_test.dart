@@ -13,7 +13,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 
 import 'naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';

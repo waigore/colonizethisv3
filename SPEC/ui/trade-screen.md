@@ -348,7 +348,7 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 - `CtPanel` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtPanel`) — outer surface for the tabs body and inner surface for each tab placeholder.
 - `CtTabStrip` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTabStrip`) — dark editorial-monocle tab strip hosting the `Market` and `Deal Book` labels above the `IndexedStack` of tab bodies.
 - `CtSectionLabel` (`app/lib/widgets/ct_section_label.dart`; `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*) — small-caps section header used by the Market tab to group commodity rows under Food / Raw Materials / Manufactured (Refs `#3093` sectioned grouping slice). Same component the Production panel's Available subpanel uses.
-- `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
+- `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
 - `_DealBookTabContent` (`app/lib/features/game/screens/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
 - `_DealBookPanel` (`app/lib/features/game/screens/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
 - `_DealBookFilledRow` / `_DealBookUnfilledRow` (`app/lib/features/game/screens/trade_screen.dart`) — per-row widgets keyed by `dealBookFilledRowKey(side, index)` / `dealBookUnfilledRowKey(side, index)`.

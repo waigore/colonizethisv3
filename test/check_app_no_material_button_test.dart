@@ -374,7 +374,7 @@ Widget probe() => ElevatedButton(onPressed: () {}, child: const Text('x'));
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialButtonFile(
-          'app/lib/features/game/widgets/military_units_panel.dart',
+          'app/lib/features/game/widgets/panels/military_units_panel.dart',
         ),
         isFalse,
       );

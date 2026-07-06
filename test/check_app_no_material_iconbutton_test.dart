@@ -439,7 +439,7 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
         );
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/military_units_panel.dart',
+            'app/lib/features/game/widgets/panels/military_units_panel.dart',
           ),
           isFalse,
         );

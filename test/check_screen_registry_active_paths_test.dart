@@ -112,7 +112,7 @@ Status: `draft` = ...; `active` = ...
       );
       _writeFile(
         temp,
-        'app/lib/features/game/widgets/pause_menu_panel.dart',
+        'app/lib/features/game/widgets/panels/pause_menu_panel.dart',
         'class PauseMenuPanel {}\n',
       );
 
@@ -125,7 +125,7 @@ Status: `draft` = ...; `active` = ...
 |----|-------|------|----------------|------------|--------|
 | `SHEL10001` | Shell screen | [shell.md](shell.md) | `app/lib/features/shell/shell_screen.dart` | Shell Screen | active |
 | `SHEL30001` | Game initializing | [init.md](init.md) | TBD | — | draft |
-| `SHEL40001` | Pause menu panel | [pause.md](pause.md) | `app/lib/features/game/widgets/pause_menu_panel.dart` | Pause Menu Panel | active |
+| `SHEL40001` | Pause menu panel | [pause.md](pause.md) | `app/lib/features/game/widgets/panels/pause_menu_panel.dart` | Pause Menu Panel | active |
 ''');
 
       final logs = <String>[];

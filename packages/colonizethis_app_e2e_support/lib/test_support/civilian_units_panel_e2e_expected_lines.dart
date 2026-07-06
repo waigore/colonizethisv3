@@ -5,7 +5,7 @@
 // excluded from the app coverage gate using the same convention as
 // `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
-// app/lib/features/game/widgets/civilian_units_panel.dart for e2e.
+// app/lib/features/game/widgets/panels/civilian_units_panel.dart for e2e.
 // If drift fails tests, align this file with the panel widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart';

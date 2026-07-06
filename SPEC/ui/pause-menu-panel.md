@@ -1,14 +1,14 @@
 # Pause Menu Panel
 
 **Screen ID:** `SHEL40001` — stable; do not reassign.
-**SPEC/ui** — Modal pause menu shown by [`AppEventHandler`](../program/app-ui-wiring.md) in response to `OpenPauseMenuPanelEvent`. Hosts the in-game shell's primary pause flow: **Resume**, save/load, settings, and **Exit to Main Menu** (danger). Authority for visual chrome (dark editorial-monocle modal, brass divider, ordered button stack): [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) and the dialog/overlay restyling contract in issue #2867 § R1, R30. Related: [`game-side-menu.md`](game-side-menu.md) (the wide slide-out drawer that hosts the **Debug log** entry; Debug log is **not** rendered by the pause menu). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Source: `app/lib/features/game/widgets/pause_menu_panel.dart`.
+**SPEC/ui** — Modal pause menu shown by [`AppEventHandler`](../program/app-ui-wiring.md) in response to `OpenPauseMenuPanelEvent`. Hosts the in-game shell's primary pause flow: **Resume**, save/load, settings, and **Exit to Main Menu** (danger). Authority for visual chrome (dark editorial-monocle modal, brass divider, ordered button stack): [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) and the dialog/overlay restyling contract in issue #2867 § R1, R30. Related: [`game-side-menu.md`](game-side-menu.md) (the wide slide-out drawer that hosts the **Debug log** entry; Debug log is **not** rendered by the pause menu). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Source: `app/lib/features/game/widgets/panels/pause_menu_panel.dart`.
 
 **Mockup:** [mockups/SHEL40001-pause-menu-panel.html](mockups/SHEL40001-pause-menu-panel.html) (legacy bottom-sheet two-row layout; superseded by the modal contract in this SPEC per issue #2867 § R30. A refreshed mockup will be filed alongside the next pass over `SHEL40001`.)
 ---
 
 ## Widget contract
 
-`PauseMenuPanel` is a `StatelessWidget` (`app/lib/features/game/widgets/pause_menu_panel.dart`). It owns no state and emits all user actions on the supplied bus; it never calls `Navigator` directly.
+`PauseMenuPanel` is a `StatelessWidget` (`app/lib/features/game/widgets/panels/pause_menu_panel.dart`). It owns no state and emits all user actions on the supplied bus; it never calls `Navigator` directly.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
