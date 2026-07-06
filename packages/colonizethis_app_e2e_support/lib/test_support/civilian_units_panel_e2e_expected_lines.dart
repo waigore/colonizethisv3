@@ -13,7 +13,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/civilian_units_sort.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/utils/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
