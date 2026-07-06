@@ -93,7 +93,7 @@ const _warpLinks = [
 
 void main() {
   group('applyAdvancedStartWorldKnowledge', () {
-    test('turns50 reveals contiguous NW provinces and prospects minerals', () {
+    test('turns50 reveals contiguous NW provinces without prospecting', () {
       final result = applyAdvancedStartWorldKnowledge(
         game: _worldKnowledgeFixtureGame(),
         startType: AdvancedStartType.turns50,
@@ -117,8 +117,7 @@ void main() {
 
       final prospected =
           result.game.worldState.playerProspectedTiles['gp1'] ?? const {};
-      expect(prospected, contains('newWorld|p1|0|0'));
-      expect(prospected, isNot(contains('newWorld|p1|1|0')));
+      expect(prospected, isEmpty);
     });
 
     test('turns100 reveals all NW provinces', () {

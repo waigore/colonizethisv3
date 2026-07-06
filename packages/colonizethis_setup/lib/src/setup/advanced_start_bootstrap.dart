@@ -7,6 +7,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'advanced_start_bootstrap_colonization.dart';
 import 'advanced_start_bootstrap_development.dart';
 import 'advanced_start_bootstrap_diplomacy.dart';
+import 'advanced_start_bootstrap_prospecting.dart';
 import 'advanced_start_bootstrap_units.dart';
 import 'advanced_start_bootstrap_world.dart';
 import 'setup_logging.dart';
@@ -112,6 +113,11 @@ Game applyAdvancedStartBootstrap({
       warpLinks: warpLinks,
       tileMapByRegion: tileMapByRegion,
       topologyByRegion: topoByRegion,
+    );
+
+    updated = applyAdvancedStartProspecting(
+      game: updated,
+      startType: startType,
     );
 
     updated = applyAdvancedStartDevelopment(
