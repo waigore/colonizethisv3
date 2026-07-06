@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/constants.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../flame/game_screen_shared.dart'
+import '../../../../config/constants.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../flame/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 
 /// In-game shell top bar: 36 px dark editorial-monocle chrome with a

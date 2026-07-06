@@ -75,7 +75,7 @@ Register core (game-feature) builders in **`app/lib/core/services/app_event_hand
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` (see [grant-or-subsidy-dialog.md](../ui/grant-or-subsidy-dialog.md)) | `grantOrSubsidyDialogId` |
 | `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`; see [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md)) | `newGameLeaderSelectionDialogId` |
 
-For `train_civilians`, `train_military`, and `train_naval`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
+For `train_civilians`, `train_military`, and `train_naval`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
 | ID | Widget | Status |
 |----|--------|--------|

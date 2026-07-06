@@ -9,11 +9,11 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_spacing.dart';
-import 'chrome/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../chrome/ct_nine_patch_button.dart';
 
 /// Title text style shared by the move dialogs — dark-theme `titleMedium`
 /// in `--accent` with 0.05em letter spacing (#2867 R2/R5).

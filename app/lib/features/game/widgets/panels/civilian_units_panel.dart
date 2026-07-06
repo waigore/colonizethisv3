@@ -24,7 +24,7 @@ import '../chrome/ct_danger_text_button.dart';
 import '../../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
 import 'game_panel_contract.dart';
-import '../train_dialog_chrome.dart';
+import '../train/train_dialog_chrome.dart';
 import '../units/shared/region_section_header.dart';
 import '../units/shared/units_entity_action_row.dart';
 import '../units/shared/units_panel_shell.dart';

@@ -1,6 +1,6 @@
 import 'dart:io' show File;
 
-import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_radius.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

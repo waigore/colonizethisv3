@@ -1,7 +1,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
-import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show greatPowerPowerScore;
 import 'package:colonizethis_map/colonizethis_map.dart'

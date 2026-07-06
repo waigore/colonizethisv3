@@ -74,7 +74,7 @@
   {
     "id": "ct_train_civilians_dialog",
     "name": "TrainCiviliansDialog",
-    "dart_file_path": "lib/features/game/widgets/train_civilians_dialog.dart",
+    "dart_file_path": "lib/features/game/widgets/train/train_civilians_dialog.dart",
     "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
     "category": "game/dialog",
     "source": "pipeline",
@@ -83,7 +83,7 @@
   {
     "id": "ct_train_military_dialog",
     "name": "TrainMilitaryDialog",
-    "dart_file_path": "lib/features/game/widgets/train_military_dialog.dart",
+    "dart_file_path": "lib/features/game/widgets/train/train_military_dialog.dart",
     "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
     "category": "game/dialog",
     "source": "pipeline",

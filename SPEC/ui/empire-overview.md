@@ -40,7 +40,7 @@
 
 ### Tab bar chrome (dark editorial-monocle)
 
-Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.dart) hosted by [`GameMapControls`](../../app/lib/features/game/flame/controls/game_map_controls.dart) directly under [`GameTopBar`](../../app/lib/features/game/widgets/game_top_bar.dart). Mockup: [GAME10001-game-screen.html](mockups/GAME10001-game-screen.html) (`.tabbar`, `.region-tab`, `.treasury`, `.cargo-hold`).
+Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/shell/game_tab_bar.dart) hosted by [`GameMapControls`](../../app/lib/features/game/flame/controls/game_map_controls.dart) directly under [`GameTopBar`](../../app/lib/features/game/widgets/shell/game_top_bar.dart). Mockup: [GAME10001-game-screen.html](mockups/GAME10001-game-screen.html) (`.tabbar`, `.region-tab`, `.treasury`, `.cargo-hold`).
 
 - **Height:** Fixed **34 dp** (`GameTabBar.height`).
 - **Chrome:** `--surface` fill with a **1 px** `--border` bottom edge (no gradient on the bar itself).

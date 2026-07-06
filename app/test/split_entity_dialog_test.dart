@@ -1,6 +1,6 @@
-import 'package:colonizethis_app/features/game/widgets/split_army_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/split_entity_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/split_entity_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';

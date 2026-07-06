@@ -5,13 +5,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_section_label.dart';
-import '../../../widgets/ct_spacing.dart';
-import 'chrome/ct_nine_patch_button.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_section_label.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../chrome/ct_nine_patch_button.dart';
 import 'move_units_dialog_base.dart';
 
 String moveArmyFactionGroupHeaderLabel(

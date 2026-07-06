@@ -122,7 +122,7 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
   'app/lib/features/game/widgets/panels/military_units_panel.dart',
-  'app/lib/features/game/widgets/move_army_dialog.dart',
+  'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate

@@ -370,7 +370,7 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
       () {
         expect(
           shouldSkipAppNoMaterialAlertDialogFile(
-            'app/lib/features/game/widgets/move_fleet_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
           ),
           isFalse,
         );

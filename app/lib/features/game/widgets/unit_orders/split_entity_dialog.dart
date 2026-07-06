@@ -11,10 +11,10 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/ct_transfer_list.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/ct_transfer_list.dart';
 
 /// Abstract base for the in-game split dialogs (`SplitArmyDialog`,
 /// `SplitFleetDialog`).

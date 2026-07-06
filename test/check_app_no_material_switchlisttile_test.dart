@@ -372,7 +372,7 @@ Widget probe() => SwitchListTile(
       );
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/widgets/move_fleet_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
         ),
         isFalse,
       );

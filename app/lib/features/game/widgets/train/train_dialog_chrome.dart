@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/constants.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_brass_divider.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_radius.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../config/constants.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_brass_divider.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_radius.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
 /// `SPEC/ui/train-military-dialog.md` / `SPEC/ui/train-naval-dialog.md` and the

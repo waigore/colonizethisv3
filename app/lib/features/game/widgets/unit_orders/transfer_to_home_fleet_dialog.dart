@@ -2,15 +2,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/ct_transfer_list.dart';
-import '../utils/region_labels.dart';
-import '../utils/sea_zone_name_resolver.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/ct_transfer_list.dart';
+import '../../utils/region_labels.dart';
+import '../../utils/sea_zone_name_resolver.dart';
 
 class TransferToHomeFleetDialog extends StatelessWidget {
   const TransferToHomeFleetDialog({

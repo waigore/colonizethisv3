@@ -11,8 +11,8 @@
 
 import 'package:flutter/widgets.dart';
 
-import '../shell_player_context.dart';
-import 'panels/observe_mode_not_defined_panel.dart';
+import '../../shell_player_context.dart';
+import '../panels/observe_mode_not_defined_panel.dart';
 
 /// Returns the global-observe sentinel panel when [shell] hides player chrome
 /// ([shellPanelsNotDefined] is true), or `null` when player-scoped content

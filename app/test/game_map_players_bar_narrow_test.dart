@@ -29,8 +29,8 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart'
     show GameScreen, kGameMapPlayersBarKey;
-import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

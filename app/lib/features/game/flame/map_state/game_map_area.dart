@@ -55,8 +55,8 @@ import '../overlays/turn_resolution_progress_labels.dart';
 import '../turn_resolution_result_applier.dart';
 import '../../utils/map_location_resolver.dart';
 import '../../widgets/game_map_options_dialog.dart';
-import '../../widgets/game_map_players_bar.dart';
-import '../../widgets/player_turn_event_feed.dart';
+import '../../widgets/shell/game_map_players_bar.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
 
 // Domain-split state mixins/extensions (Refs #3699 Theme 3): the `_GameMapArea*`
 // units are organized by concern, not by file size. Application order satisfies

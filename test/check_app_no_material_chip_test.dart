@@ -386,7 +386,7 @@ Widget probe() => Chip(label: const Text('x'));
       );
       expect(
         shouldSkipAppNoMaterialChipFile(
-          'app/lib/features/game/widgets/move_fleet_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
         ),
         isFalse,
       );

@@ -17,7 +17,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// tech-lock resolution, and order materialization on close. That shared
 /// scaffolding lives in [_canonicalBase] ([TrainDialogBase] / its
 /// `TrainDialogBaseState`, declared in
-/// `app/lib/features/game/widgets/train_dialog_base.dart`).
+/// `app/lib/features/game/widgets/train/train_dialog_base.dart`).
 ///
 /// This check prevents regression where a new `Train*Dialog` re-implements the
 /// scaffold and stepper state instead of extending the canonical base: any
@@ -93,7 +93,7 @@ int runCheckAppTrainDialogBase(
   logE(
     'Fix: have each `$_dialogPrefix*$_dialogSuffix` widget '
     '`extends $_canonicalBase` (see '
-    'app/lib/features/game/widgets/train_dialog_base.dart) and back it with a '
+    'app/lib/features/game/widgets/train/train_dialog_base.dart) and back it with a '
     '`TrainDialogBaseState` subclass that supplies the unit-type cost model via '
     '`buildBody(...)` instead of re-implementing the dialog scaffold and '
     'stepper state.',

@@ -30,7 +30,7 @@ void _writeCanonicalHelpers(Directory tempDir) {
     ..createSync(recursive: true)
     ..writeAsStringSync(_kCanonicalCommodityContents);
   File(
-      '${tempDir.path}/app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+      '${tempDir.path}/app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     )
     ..createSync(recursive: true)
     ..writeAsStringSync(_kCanonicalTrainHelperContents);

@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
 import 'train_commodity_cost_dialog_base.dart';
 import 'train_dialog_base.dart';
 

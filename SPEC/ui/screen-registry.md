@@ -48,18 +48,18 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/panels/civilian_units_panel.dart` | Civilian Units Panel | active |
 | `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/panels/military_units_panel.dart` | Military Units Panel | active |
 | `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/panels/naval_units_panel.dart` | Naval Units Panel | active |
-| `UNIT40001` | Train civilians dialog | [train-civilians-dialog.md](train-civilians-dialog.md) | `app/lib/features/game/widgets/train_civilians_dialog.dart` | Train Civilians Dialog | active |
-| `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train_military_dialog.dart` | Train Military Dialog | active |
-| `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train_naval_dialog.dart` | Train Naval Dialog | active |
+| `UNIT40001` | Train civilians dialog | [train-civilians-dialog.md](train-civilians-dialog.md) | `app/lib/features/game/widgets/train/train_civilians_dialog.dart` | Train Civilians Dialog | active |
+| `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train/train_military_dialog.dart` | Train Military Dialog | active |
+| `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train/train_naval_dialog.dart` | Train Naval Dialog | active |
 | `DIPL20001` | Grant or subsidy dialog | [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md) | `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` | Grant or Subsidy Dialog | active |
 | `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
 | `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/combat/combat_mode_choice_dialog.dart` | Quick Battle | active |
 | `CMPT20001` | Quick battle screen | [quick-battle-screen.md](quick-battle-screen.md) | `app/lib/features/game/combat/quick_battle_screen.dart` | Quick Battle | active |
 | `CMPT50001` | Quick battle result dialog | [quick-battle-result-dialog.md](quick-battle-result-dialog.md) | `app/lib/features/game/combat/quick_battle_result_dialog.dart` | Quick Battle | active |
 | `DLG10001` | New game leader selection | [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) | `app/lib/features/shell/new_game_leader_selection_dialog.dart` | New Game Leader Selection Dialog | active |
-| `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/move_army_dialog.dart` | Move Army Dialog | active |
-| `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/move_fleet_dialog.dart` | Move Fleet Dialog | active |
-| `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
+| `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
+| `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
+| `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
 | `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |

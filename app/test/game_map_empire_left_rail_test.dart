@@ -10,9 +10,9 @@ import 'package:colonizethis_app/features/game/widgets/panels/military_units_pan
 import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
-import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';

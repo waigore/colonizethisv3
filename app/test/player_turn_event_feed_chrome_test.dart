@@ -3,7 +3,7 @@ import 'dart:io' show File;
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth, kPlayerTurnFeedToggleButtonKey;
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -434,7 +434,7 @@ void main() {
         // chrome tokens (issue #2861 S7 chrome contract / catalog ban per
         // SPEC/ui/pixel-art-ui-catalog.md § Material design ban).
         final File source = File(
-          'lib/features/game/widgets/player_turn_event_feed.dart',
+          'lib/features/game/widgets/shell/player_turn_event_feed.dart',
         );
         expect(
           source.existsSync(),

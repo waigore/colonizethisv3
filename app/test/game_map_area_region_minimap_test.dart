@@ -12,7 +12,7 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
         kRegionMinimapGestureKey,
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';

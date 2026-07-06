@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/ct_e2e.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import '../flame/game_screen_shared.dart'
+import '../../../../config/app_assets.dart';
+import '../../../../config/ct_e2e.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../flame/game_screen_shared.dart'
     show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
 
 /// In-game shell tab bar: 34 px dark editorial-monocle chrome with region

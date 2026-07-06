@@ -1,6 +1,6 @@
 # TrainDialogChrome (component)
 
-**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train_dialog_chrome.dart). Catalog atoms in [Related](#related).
+**SPEC/ui/components** — Reusable header / divider / resource-bar / row-surface chrome shared by the train-at-capital dialogs. Implementation: [`app/lib/features/game/widgets/train/train_dialog_chrome.dart`](../../../app/lib/features/game/widgets/train/train_dialog_chrome.dart). Catalog atoms in [Related](#related).
 
 This composite is **not** a screen and has **no** stable screen ID; consumers are listed in [Consumers](#consumers).
 

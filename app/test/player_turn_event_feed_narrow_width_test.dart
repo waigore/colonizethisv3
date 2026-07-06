@@ -19,7 +19,7 @@
 
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

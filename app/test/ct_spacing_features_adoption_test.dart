@@ -394,10 +394,10 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/fleet_expansion_tile.dart',
-  'lib/features/game/widgets/game_tab_bar.dart',
+  'lib/features/game/widgets/shell/game_tab_bar.dart',
   'lib/features/game/widgets/panels/military_units_panel.dart',
-  'lib/features/game/widgets/move_army_dialog.dart',
-  'lib/features/game/widgets/move_fleet_dialog.dart',
+  'lib/features/game/widgets/unit_orders/move_army_dialog.dart',
+  'lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
   // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
   // only CtSpacing callsite (the header button's vertical: CtSpacing.s padding)
   // with CtActionTextButton pills, leaving only an out-of-scale
@@ -416,7 +416,7 @@ const List<String> _migratedFeatureFiles = <String>[
   // delegate their scaffold to that base and no longer contain any
   // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
   // token-reference invariants moved to split_entity_dialog.dart below.
-  'lib/features/game/widgets/split_entity_dialog.dart',
+  'lib/features/game/widgets/unit_orders/split_entity_dialog.dart',
   'lib/features/game/widgets/technology/tech_tree_widget.dart',
   'lib/features/game/widgets/technology/technology_panel.dart',
   'lib/features/game/widgets/technology/technology_panel_orders.dart',
@@ -428,9 +428,9 @@ const List<String> _migratedFeatureFiles = <String>[
   // wrapper to the base and no longer contain token-eligible
   // `EdgeInsets`/`CtSpacing` spacing, so the import and token-reference
   // invariants moved to train_dialog_base.dart below.
-  'lib/features/game/widgets/train_dialog_base.dart',
-  'lib/features/game/widgets/train_dialog_chrome.dart',
-  'lib/features/game/widgets/transfer_to_home_fleet_dialog.dart',
+  'lib/features/game/widgets/train/train_dialog_base.dart',
+  'lib/features/game/widgets/train/train_dialog_chrome.dart',
+  'lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart',
   'lib/features/game/widgets/turn_news_dialog.dart',
   'lib/features/game/widgets/units/shared/location_section_header.dart',
   'lib/features/game/widgets/units/shared/region_section_header.dart',

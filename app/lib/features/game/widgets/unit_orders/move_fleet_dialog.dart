@@ -5,16 +5,16 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/ct_e2e.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../config/ui_screen_ids.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_icon_action.dart';
-import '../../../widgets/ct_section_label.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../utils/map_location_resolver.dart';
-import '../utils/region_labels.dart';
-import '../utils/sea_zone_name_resolver.dart';
+import '../../../../config/ct_e2e.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_icon_action.dart';
+import '../../../../widgets/ct_section_label.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../utils/map_location_resolver.dart';
+import '../../utils/region_labels.dart';
+import '../../utils/sea_zone_name_resolver.dart';
 import 'move_units_dialog_base.dart';
 
 sealed class _MovePick {

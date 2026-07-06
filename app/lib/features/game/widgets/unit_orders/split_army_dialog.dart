@@ -2,8 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/l10n.dart';
-import '../utils/region_labels.dart';
+import '../../../../l10n/l10n.dart';
+import '../../utils/region_labels.dart';
 import 'split_entity_dialog.dart';
 
 /// Split regiments from one army into a new army (same province).

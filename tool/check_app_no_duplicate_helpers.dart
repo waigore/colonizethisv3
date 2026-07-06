@@ -63,61 +63,61 @@ const List<_CanonicalHelper> _trackedCanonicalHelpers = <_CanonicalHelper>[
   _CanonicalHelper(
     symbol: 'trainDialogPlayerById',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'trainDialogHasCapital',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'trainDialogTreasury',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'trainDialogTechUnlocked',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'trainDialogIsLocked',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'initialTrainDialogCountsFromOrders',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'materializeTrainDialogOrdersFromCounts',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'incrementTrainDialogCount',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'decrementTrainDialogCount',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
   _CanonicalHelper(
     symbol: 'resetTrainDialogCounts',
     canonicalRelativePath:
-        'app/lib/features/game/widgets/train_unit_dialog_helper.dart',
+        'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
 ];

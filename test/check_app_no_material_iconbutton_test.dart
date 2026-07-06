@@ -433,7 +433,7 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
       () {
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/move_fleet_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
           ),
           isFalse,
         );
