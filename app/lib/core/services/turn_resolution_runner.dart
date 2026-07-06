@@ -11,76 +11,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'turn_resolution_result_codec.dart';
 import 'turn_resolution_worker_isolate.dart';
 
+part 'turn_resolution_runner_types.dart';
+part 'turn_resolution_runner_isolate_listener.dart';
+
 final _runnerLog = packageLogger('logic');
-
-class TurnResolutionProgressEvent {
-  const TurnResolutionProgressEvent({
-    required this.sessionId,
-    required this.phase,
-    required this.marker,
-  });
-
-  final String sessionId;
-  final String phase;
-  final String marker;
-}
-
-sealed class TurnResolutionTerminalEvent {
-  const TurnResolutionTerminalEvent();
-}
-
-class TurnResolutionTerminalComplete extends TurnResolutionTerminalEvent {
-  const TurnResolutionTerminalComplete(
-    this.result, {
-    this.turnTracePhases,
-    this.aiTraceSections,
-    this.turnTraceStartedAtUtc,
-    this.turnTraceExportPath,
-  });
-
-  final TurnResolutionResult result;
-
-  /// Phase-level traces from the worker isolate when [TurnResolutionRunner]
-  /// was started with `turnTraceEnabled: true`.
-  ///
-  /// Omitted when the worker wrote the merged trace file directly (Refs #2277)
-  /// to avoid multi-copy full-game JSON across [SendPort].
-  final List<TurnTracePhaseTrace>? turnTracePhases;
-
-  /// Full-AI diagnostic sections from the worker isolate when tracing is enabled;
-  /// aligned with [turnTracePhases].
-  final List<TurnTraceAiSection>? aiTraceSections;
-
-  /// UTC time resolution tracing started (after AI merge, before phase handlers).
-  final DateTime? turnTraceStartedAtUtc;
-
-  /// Path of exported merged turn trace JSON on disk when tracing ran in the worker.
-  final String? turnTraceExportPath;
-}
-
-class TurnResolutionTerminalError extends TurnResolutionTerminalEvent {
-  const TurnResolutionTerminalError({
-    required this.errorMessage,
-    required this.stackTrace,
-  });
-
-  final String errorMessage;
-  final String stackTrace;
-}
-
-class TurnResolutionRunnerSession {
-  TurnResolutionRunnerSession({
-    required this.sessionId,
-    required this.progress,
-    required this.done,
-    required this.dispose,
-  });
-
-  final String sessionId;
-  final Stream<TurnResolutionProgressEvent> progress;
-  final Future<TurnResolutionTerminalEvent> done;
-  final Future<void> Function() dispose;
-}
 
 class TurnResolutionRunner {
   TurnResolutionRunner({this.inspectSuccessIsolateEnvelope});
@@ -162,160 +96,14 @@ class TurnResolutionRunner {
 
     try {
       sub = receivePort.listen((dynamic message) {
-        if (message is! Map<Object?, Object?>) {
-          return;
-        }
-        final kind = message['kind'];
-        if (kind == 'phase') {
-          final phaseName = message['phase'] as String;
-          final markerName = message['marker'] as String;
-          _runnerLog.d(
-            'logic: turn_resolution_runner phase sessionId=$sessionId '
-            'phase=$phaseName marker=$markerName '
-            'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
-          );
-          progressController.add(
-            TurnResolutionProgressEvent(
-              sessionId: sessionId,
-              phase: phaseName,
-              marker: markerName,
-            ),
-          );
-          return;
-        }
-        if (kind == 'success') {
-          try {
-            final successReceivedAtUtc = DateTime.now().toUtc();
-            final workerFinishedRaw = message['workerFinishedAtUtc'];
-            final workerFinishedAtUtc = workerFinishedRaw is String
-                ? DateTime.tryParse(workerFinishedRaw)?.toUtc()
-                : null;
-            final portTransitMs = workerFinishedAtUtc == null
-                ? null
-                : successReceivedAtUtc
-                      .difference(workerFinishedAtUtc)
-                      .inMilliseconds;
-            inspectSuccessIsolateEnvelope?.call(message);
-            _runnerLog.i(
-              'logic: turn_resolution_runner session_complete sessionId=$sessionId '
-              'outcome=success elapsedMs=${sessionStopwatch.elapsedMilliseconds} '
-              'messageBytes=${safeTurnResolutionJsonUtf8Bytes(message)} '
-              'workerToMainMs=${portTransitMs ?? -1}',
-            );
-            final decodeStopwatch = Stopwatch()..start();
-            final decodedResult = decodeTurnResolutionResult(
-              Map<String, dynamic>.from(
-                message['result'] as Map<Object?, Object?>,
-              ),
-            );
-            final phasesPayload = message['turnTracePhases'];
-            final List<TurnTracePhaseTrace>? decodedPhases;
-            if (phasesPayload is List<Object?>) {
-              decodedPhases = phasesPayload
-                  .map(
-                    (Object? e) => TurnTracePhaseTrace.fromJson(
-                      Map<String, Object?>.fromEntries(
-                        (e as Map<Object?, Object?>).entries.map(
-                          (MapEntry<Object?, Object?> entry) =>
-                              MapEntry<String, Object?>(
-                                entry.key as String,
-                                entry.value,
-                              ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false);
-            } else {
-              decodedPhases = null;
-            }
-            final startedRaw = message['turnTraceStartedAtUtc'];
-            final DateTime? traceStartedAt = startedRaw is String
-                ? DateTime.parse(startedRaw).toUtc()
-                : null;
-            final aiTracePayload = message['aiTraceSections'];
-            final List<TurnTraceAiSection>? decodedAiSections;
-            if (aiTracePayload is List<Object?>) {
-              decodedAiSections = aiTracePayload
-                  .map(
-                    (Object? e) => TurnTraceAiSection.fromJson(
-                      Map<String, Object?>.fromEntries(
-                        (e as Map<Object?, Object?>).entries.map(
-                          (MapEntry<Object?, Object?> entry) =>
-                              MapEntry<String, Object?>(
-                                entry.key as String,
-                                entry.value,
-                              ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false);
-            } else {
-              decodedAiSections = null;
-            }
-            final exportPath = message['turnTraceExportPath'] as String?;
-            if (exportPath != null) {
-              _runnerLog.d(
-                'logic: turn_trace_exported_worker sessionId=$sessionId '
-                'path=$exportPath',
-              );
-            }
-            final terminal = TurnResolutionTerminalComplete(
-              decodedResult,
-              turnTracePhases: decodedPhases,
-              aiTraceSections: decodedAiSections,
-              turnTraceStartedAtUtc: traceStartedAt,
-              turnTraceExportPath: exportPath,
-            );
-            if (!doneCompleter.isCompleted) {
-              doneCompleter.complete(terminal);
-            }
-            _runnerLog.i(
-              'logic: turn_resolution_runner decode_complete sessionId=$sessionId '
-              'decodeMs=${decodeStopwatch.elapsedMilliseconds} '
-              'resultType=${turnResolutionResultTypeName(decodedResult)} '
-              'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
-            );
-          } catch (e, st) {
-            _runnerLog.e(
-              'logic: turn_resolution_runner session_complete_decode_failed '
-              'sessionId=$sessionId',
-              error: e,
-              stackTrace: st,
-            );
-            if (!doneCompleter.isCompleted) {
-              doneCompleter.complete(
-                TurnResolutionTerminalError(
-                  errorMessage: e.toString(),
-                  stackTrace: st.toString(),
-                ),
-              );
-            }
-          }
-          scheduleTearDownAfterPortMessage();
-          return;
-        }
-        if (kind == 'error') {
-          final errMsg = (message['error'] as String?) ?? 'Unknown error';
-          final stackStr = (message['stackTrace'] as String?) ?? '';
-          _runnerLog.e(
-            'logic: turn_resolution_runner session_complete sessionId=$sessionId '
-            'outcome=error elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
-            error: errMsg,
-            stackTrace: stackStr.isEmpty
-                ? null
-                : StackTrace.fromString(stackStr),
-          );
-          final terminal = TurnResolutionTerminalError(
-            errorMessage: errMsg,
-            stackTrace: stackStr,
-          );
-          if (!doneCompleter.isCompleted) {
-            doneCompleter.complete(terminal);
-          }
-          scheduleTearDownAfterPortMessage();
-        }
+        _handleIsolateMessage(
+          message: message,
+          sessionId: sessionId,
+          sessionStopwatch: sessionStopwatch,
+          progressController: progressController,
+          doneCompleter: doneCompleter,
+          scheduleTearDownAfterPortMessage: scheduleTearDownAfterPortMessage,
+        );
       });
 
       Isolate.spawn<Map<String, Object?>>(turnResolutionWorkerIsolateMain, {

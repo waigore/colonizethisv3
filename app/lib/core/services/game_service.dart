@@ -11,6 +11,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 part 'game_service_new_game_setup.dart';
+part 'game_service_turn_resume.dart';
 part 'game_service_turn_trace.dart';
 
 /// Cached map data for a game (topology and tile maps for turn resolution).
@@ -233,31 +234,17 @@ class GameService {
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
-  }) {
-    final mapData = _requiredMapDataView(current.id);
-    final topo = topology ?? mapData.combinedTopology;
-    final tileMaps = tileMapByRegion ?? mapData.tileMapByRegion;
-    final humanOrders = orders ?? const Orders();
-    final resolvedOrders = aiOrders != null
-        ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
-        : humanOrders;
-    final result = _gameServiceResolveTurnWithTrace(
-      this,
-      game: current,
-      aiTraceSections: aiTraceSections,
-      config: TurnResolverConfig(
-        topology: topo,
-        orders: resolvedOrders,
-        tileMapByRegion: tileMaps,
-        eventSink: TurnEventSink(
-          eventBus: logicEventBus,
-          onGameEvent: onGameEvent,
-        ),
-      ),
-    );
-    _emitTurnResolutionEvents(result);
-    return result;
-  }
+  }) =>
+      _gameServiceRunTurnResolution(
+        this,
+        current,
+        orders: orders,
+        aiOrders: aiOrders,
+        aiTraceSections: aiTraceSections,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+        onGameEvent: onGameEvent,
+      );
 
   /// Resumes turn resolution after the user has submitted call to arms decisions.
   TurnResolutionResult resumeCallToArmsDecisions(
@@ -265,28 +252,14 @@ class GameService {
     List<CallToArmsDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
-  }) {
-    final mapData = _requiredMapDataView(game.id);
-    final topo = mapData.combinedTopology;
-    final tileMaps = mapData.tileMapByRegion;
-    final result = _gameServiceResolveTurnWithTrace(
-      this,
-      game: game,
-      config: TurnResolverConfig(
-        topology: topo,
-        orders: orders,
-        tileMapByRegion: tileMaps,
-        eventSink: TurnEventSink(
-          eventBus: logicEventBus,
-          onGameEvent: onGameEvent,
-        ),
-        startFromPhase: TurnPhase.diplomacy,
+  }) =>
+      _gameServiceResumeTurnFromDiplomacy(
+        this,
+        game,
+        orders,
+        onGameEvent: onGameEvent,
         callToArmsDecisions: decisions,
-      ),
-    );
-    _emitTurnResolutionEvents(result);
-    return result;
-  }
+      );
 
   /// Resumes turn resolution after the user has submitted overture accept/reject decisions.
   /// Returns [TurnResolutionComplete] or again [TurnResolutionPendingOvertures].
@@ -297,28 +270,14 @@ class GameService {
     List<OvertureDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
-  }) {
-    final mapData = _requiredMapDataView(game.id);
-    final topo = mapData.combinedTopology;
-    final tileMaps = mapData.tileMapByRegion;
-    final result = _gameServiceResolveTurnWithTrace(
-      this,
-      game: game,
-      config: TurnResolverConfig(
-        topology: topo,
-        orders: orders,
-        tileMapByRegion: tileMaps,
-        eventSink: TurnEventSink(
-          eventBus: logicEventBus,
-          onGameEvent: onGameEvent,
-        ),
-        startFromPhase: TurnPhase.diplomacy,
+  }) =>
+      _gameServiceResumeTurnFromDiplomacy(
+        this,
+        game,
+        orders,
+        onGameEvent: onGameEvent,
         overtureDecisions: decisions,
-      ),
-    );
-    _emitTurnResolutionEvents(result);
-    return result;
-  }
+      );
 
   /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
   TurnResolutionResult resumeFtpDecisions(
@@ -327,28 +286,14 @@ class GameService {
     List<FtpDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
-  }) {
-    final mapData = _requiredMapDataView(game.id);
-    final topo = mapData.combinedTopology;
-    final tileMaps = mapData.tileMapByRegion;
-    final result = _gameServiceResolveTurnWithTrace(
-      this,
-      game: game,
-      config: TurnResolverConfig(
-        topology: topo,
-        orders: orders,
-        tileMapByRegion: tileMaps,
-        eventSink: TurnEventSink(
-          eventBus: logicEventBus,
-          onGameEvent: onGameEvent,
-        ),
-        startFromPhase: TurnPhase.diplomacy,
+  }) =>
+      _gameServiceResumeTurnFromDiplomacy(
+        this,
+        game,
+        orders,
+        onGameEvent: onGameEvent,
         ftpDecisions: decisions,
-      ),
-    );
-    _emitTurnResolutionEvents(result);
-    return result;
-  }
+      );
 
   /// Resumes after human intervention choices (GP declared war on Minor/Tribe).
   TurnResolutionResult resumeInterventionDecisions(
@@ -356,28 +301,14 @@ class GameService {
     List<InterventionDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
-  }) {
-    final mapData = _requiredMapDataView(game.id);
-    final topo = mapData.combinedTopology;
-    final tileMaps = mapData.tileMapByRegion;
-    final result = _gameServiceResolveTurnWithTrace(
-      this,
-      game: game,
-      config: TurnResolverConfig(
-        topology: topo,
-        orders: orders,
-        tileMapByRegion: tileMaps,
-        eventSink: TurnEventSink(
-          eventBus: logicEventBus,
-          onGameEvent: onGameEvent,
-        ),
-        startFromPhase: TurnPhase.diplomacy,
+  }) =>
+      _gameServiceResumeTurnFromDiplomacy(
+        this,
+        game,
+        orders,
+        onGameEvent: onGameEvent,
         interventionDecisions: decisions,
-      ),
-    );
-    _emitTurnResolutionEvents(result);
-    return result;
-  }
+      );
 
   /// Resolves one turn and returns the updated game; throws if resolution is pending overtures.
   /// Prefer [runTurnResolution] when the UI can show the overture dialogue.
@@ -398,6 +329,10 @@ class GameService {
     return requireTurnResolutionComplete(result);
   }
 
+  /// Emits app-level events and persistence side effects for externally resolved turns.
+  void handleExternallyResolvedTurnResult(TurnResolutionResult result) =>
+      _gameServiceEmitTurnResolutionEvents(this, result);
+
   /// Creates a new game via the full game-setup pipeline (map gen, province assignment, capital auto-choice).
   Game createNewGame({String? id, GameSetupConfig? config}) =>
       _gameServiceCreateNewGame(this, id: id, config: config);
@@ -414,49 +349,6 @@ class GameService {
         config: config,
         onProgress: onProgress,
       );
-
-  /// Maps [TurnResolutionResult] to app-level bus events and persists when complete.
-  /// SPEC/program/app-event-bus.md.
-  void _emitTurnResolutionEvents(TurnResolutionResult result) {
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      _mirrorAutoSave(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-      return;
-    }
-    if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-      return;
-    }
-    if (result is TurnResolutionPendingFtp) {
-      // FTP accept/reject UI is follow-up work; pending state is set via
-      // [applyTurnResolutionResult] / [pendingDiplomacyProvider].
-      return;
-    }
-    if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-      return;
-    }
-    if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
-  }
-
-  /// Emits app-level events and persistence side effects for externally resolved turns.
-  void handleExternallyResolvedTurnResult(TurnResolutionResult result) {
-    _emitTurnResolutionEvents(result);
-  }
 
   /// Writes merged turn trace after resolution ran outside [runTurnResolution]
   /// (e.g. worker isolate). No-op when [isTurnTraceEnabled] is false.
