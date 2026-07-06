@@ -113,5 +113,93 @@ void main() {
         greaterThanOrEqualTo(1),
       );
     });
+
+    test('turns50 develops prospected minerals when no higher-priority tiles', () {
+      final mineralFixture = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+                townTileKey: 'oldWorld|p1|1|1',
+              ),
+              Province(
+                id: 'oldWorld|m1',
+                regionId: kRegionOldWorld,
+                ownerId: 'minor1',
+                townTileKey: 'oldWorld|m1|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(provinces: []),
+          tileKeysByRegionAndProvince: {
+            kRegionOldWorld: {
+              'oldWorld|p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|1'],
+              'oldWorld|m1': ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
+            },
+          },
+          resourceByTileKey: {
+            'oldWorld|p1|0|0': 'iron',
+            'oldWorld|m1|1|0': 'copper',
+          },
+          playerProspectedTiles: const {
+            'gp1': {'oldWorld|p1|0|0', 'oldWorld|m1|1|0'},
+          },
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|p1',
+            capitalTile: CapitalTile(
+              regionId: kRegionOldWorld,
+              provinceId: 'p1',
+              x: 1,
+              y: 1,
+            ),
+          ),
+        ],
+        minorNations: const [
+          MinorNation(
+            id: 'minor1',
+            displayName: 'Minor 1',
+            capitalProvinceId: 'oldWorld|m1',
+            capitalTile: CapitalTile(
+              regionId: kRegionOldWorld,
+              provinceId: 'm1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+
+      final game = applyAdvancedStartDevelopment(
+        game: mineralFixture,
+        startType: AdvancedStartType.turns50,
+        tileMapByRegion: {kRegionOldWorld: _owTileMap()},
+        topologyByRegion: const {
+          kRegionOldWorld: MapTopology(nodes: [], edges: []),
+        },
+      );
+
+      expect(
+        game.worldState.tileState.improvementLevel('oldWorld|p1|0|0'),
+        1,
+      );
+      expect(
+        game.worldState.tileState.improvementLevel('oldWorld|m1|1|0'),
+        1,
+      );
+      expect(
+        game.worldState.purchasedTilesByTileKey['oldWorld|m1|1|0'],
+        'gp1',
+      );
+    });
   });
 }
