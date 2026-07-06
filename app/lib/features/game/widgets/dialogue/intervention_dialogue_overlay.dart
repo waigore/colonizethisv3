@@ -20,6 +20,8 @@ import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 import 'intervention_choice_buttons.dart';
 
+part 'intervention_dialogue_overlay_flow.dart';
+
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
 /// SPEC/ui/screens/pending-intervention-overlay.md, SPEC/ai/dialogue-content-and-yarn.md.
 class InterventionDialogueOverlay extends StatefulWidget {
@@ -50,206 +52,42 @@ class InterventionDialogueOverlay extends StatefulWidget {
       _InterventionDialogueOverlayState();
 }
 
-class _InterventionDialogueOverlayState
-    extends State<InterventionDialogueOverlay> {
-  static const String _kIntro = 'DialoguePoint/intervention_intro';
-  static const String _kSituation = 'DialoguePoint/intervention_situation';
-  static const String _kReactIntervene =
-      'DialoguePoint/intervention_reaction_intervene';
-  static const String _kReactNothing =
-      'DialoguePoint/intervention_reaction_do_nothing';
-  static const String _kReactProtest =
-      'DialoguePoint/intervention_reaction_protest';
-
-  YarnProject? _project;
-  DialogueRunner? _runner;
-  CtDialogueView? _view;
-  Object? _loadError;
-  bool _yarnUiActive = false;
-  bool _awaitingChoice = false;
-  Completer<InterventionChoice>? _choiceCompleter;
-  final List<InterventionDecision> _decisions = [];
-  int _promptIndex = 0;
+class _InterventionDialogueOverlayState extends State<InterventionDialogueOverlay>
+    with _InterventionDialogueOverlayFlow {
+  @override
+  YarnProject? interventionProject;
+  @override
+  DialogueRunner? interventionRunner;
+  @override
+  CtDialogueView? interventionView;
+  @override
+  Object? interventionLoadError;
+  @override
+  bool interventionYarnUiActive = false;
+  @override
+  bool interventionAwaitingChoice = false;
+  @override
+  Completer<InterventionChoice>? interventionChoiceCompleter;
+  @override
+  final List<InterventionDecision> interventionDecisions = [];
+  @override
+  int interventionPromptIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_runFlow());
-  }
-
-  Future<void> _runFlow() async {
-    final log = widget.logger ?? packageLogger('dialogue');
-    try {
-      final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(kDialogueInterventionAsset);
-      final project = YarnProject();
-      // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
-      // faction variables must exist (with the `$` prefix) before `parse` or it
-      // throws a `NameError` (#3463). Real per-prompt values are bound before
-      // each node runs; StringVariable reads storage at runtime.
-      project.variables.setVariable(r'$aggressorName', '');
-      project.variables.setVariable(r'$defenderName', '');
-      project.variables.setVariable(r'$interveningName', '');
-      project.parse(text);
-      for (final node in [
-        _kIntro,
-        _kSituation,
-        _kReactIntervene,
-        _kReactNothing,
-        _kReactProtest,
-      ]) {
-        if (!project.nodes.containsKey(node)) {
-          throw StateError(
-            'Intervention node "$node" missing in $kDialogueInterventionAsset',
-          );
-        }
-      }
-      final view = CtDialogueView(logger: log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
-      );
-      if (!mounted) return;
-      setState(() {
-        _project = project;
-        _runner = runner;
-        _view = view;
-        view.onStateChanged = (line, choice) {
-          if (mounted) setState(() {});
-        };
-      });
-
-      if (widget.prompts.isEmpty) {
-        widget.onDecisions(const []);
-        return;
-      }
-
-      if (!widget.skipIntroForTest) {
-        setState(() => _yarnUiActive = true);
-        await runner.startDialogue(_kIntro);
-        if (!mounted) return;
-      }
-
-      for (var i = 0; i < widget.prompts.length; i++) {
-        if (!mounted) return;
-        _promptIndex = i;
-        final prompt = widget.prompts[i];
-        _setFactionVariables(project, prompt);
-        setState(() => _yarnUiActive = true);
-        await runner.startDialogue(_kSituation);
-        if (!mounted) return;
-
-        final completer = Completer<InterventionChoice>();
-        _choiceCompleter = completer;
-        setState(() {
-          _yarnUiActive = false;
-          _awaitingChoice = true;
-        });
-        final choice = await completer.future;
-        if (!mounted) return;
-        setState(() => _awaitingChoice = false);
-        _choiceCompleter = null;
-
-        _decisions.add(
-          InterventionDecision(
-            aggressorGpId: prompt.aggressorGpId,
-            defenderMinorOrTribeId: prompt.defenderMinorOrTribeId,
-            interveningGpId: prompt.interveningGpId,
-            choice: choice,
-          ),
-        );
-
-        project.variables.setVariable(
-          r'$aggressorName',
-          _factionDisplayName(widget.game, prompt.aggressorGpId),
-        );
-        setState(() => _yarnUiActive = true);
-        await runner.startDialogue(_reactionNodeFor(choice));
-        if (!mounted) return;
-        setState(() => _yarnUiActive = false);
-      }
-
-      if (!mounted) return;
-      widget.onDecisions(List<InterventionDecision>.from(_decisions));
-    } catch (e, st) {
-      log.e('ui:dialogue: intervention flow failed', error: e, stackTrace: st);
-      if (mounted) setState(() => _loadError = e);
-    }
-  }
-
-  void _setFactionVariables(YarnProject project, InterventionPrompt prompt) {
-    // Jenny stores Yarn variables under their `$`-prefixed name; the asset
-    // interpolates `{$aggressorName}` etc. Binding without the prefix raised a
-    // Jenny `NameError` at runtime (#3463).
-    project.variables.setVariable(
-      r'$aggressorName',
-      _factionDisplayName(widget.game, prompt.aggressorGpId),
-    );
-    project.variables.setVariable(
-      r'$defenderName',
-      _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
-    );
-    project.variables.setVariable(
-      r'$interveningName',
-      _factionDisplayName(widget.game, prompt.interveningGpId),
-    );
-  }
-
-  static String _reactionNodeFor(InterventionChoice choice) {
-    switch (choice) {
-      case InterventionChoice.intervene:
-        return _kReactIntervene;
-      case InterventionChoice.doNothing:
-        return _kReactNothing;
-      case InterventionChoice.protest:
-        return _kReactProtest;
-    }
-  }
-
-  static String _factionDisplayName(Game game, String factionId) {
-    for (final p in game.players) {
-      if (p.id == factionId) return p.displayName;
-    }
-    for (final m in game.minorNations) {
-      if (m.id == factionId) return m.displayName ?? m.id;
-    }
-    for (final t in game.tribes) {
-      if (t.id == factionId) return t.displayName ?? t.id;
-    }
-    return factionId;
-  }
-
-  void _pick(InterventionChoice choice) {
-    final c = _choiceCompleter;
-    if (c != null && !c.isCompleted) {
-      c.complete(choice);
-    }
-  }
-
-  void _degradedSubmitDoNothing() {
-    final out = <InterventionDecision>[];
-    for (final p in widget.prompts) {
-      out.add(
-        InterventionDecision(
-          aggressorGpId: p.aggressorGpId,
-          defenderMinorOrTribeId: p.defenderMinorOrTribeId,
-          interveningGpId: p.interveningGpId,
-          choice: InterventionChoice.doNothing,
-        ),
-      );
-    }
-    widget.onDecisions(out);
+    unawaited(runInterventionFlow());
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    if (_loadError != null) {
+    if (interventionLoadError != null) {
       return _buildScrimmedShell(
         context: context,
         bodyChildren: [
           Text(
-            l10n.game_intervention_loadError(_loadError.toString()),
+            l10n.game_intervention_loadError(interventionLoadError.toString()),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: CtSpacing.l),
@@ -261,7 +99,7 @@ class _InterventionDialogueOverlayState
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
-              onPressed: _degradedSubmitDoNothing,
+              onPressed: degradedSubmitInterventionDoNothing,
               child: Text(l10n.game_intervention_continue),
             ),
           ),
@@ -270,7 +108,9 @@ class _InterventionDialogueOverlayState
       );
     }
 
-    if (_project == null || _runner == null || _view == null) {
+    if (interventionProject == null ||
+        interventionRunner == null ||
+        interventionView == null) {
       return _buildScrimmedShell(
         context: context,
         bodyChildren: const [
@@ -285,12 +125,12 @@ class _InterventionDialogueOverlayState
       );
     }
 
-    if (_yarnUiActive) {
+    if (interventionYarnUiActive) {
       return _buildScrimmedShell(
         context: context,
         bodyChildren: [
           CtDialogueLineChoiceBody(
-            view: _view!,
+            view: interventionView!,
             continueLabel: l10n.game_intervention_continue,
             lineTextStyle: Theme.of(context).textTheme.bodyLarge,
             loading: const Align(
@@ -300,14 +140,14 @@ class _InterventionDialogueOverlayState
           ),
         ],
       );
-    } else if (_awaitingChoice) {
-      final prompt = widget.prompts[_promptIndex];
+    } else if (interventionAwaitingChoice) {
+      final prompt = widget.prompts[interventionPromptIndex];
       return _buildScrimmedShell(
         context: context,
         bodyChildren: [
           Text(
             l10n.game_intervention_resolutionProgress(
-              _promptIndex + 1,
+              interventionPromptIndex + 1,
               widget.prompts.length,
             ),
             style: Theme.of(context).textTheme.titleSmall,
@@ -315,14 +155,20 @@ class _InterventionDialogueOverlayState
           const SizedBox(height: CtSpacing.ml),
           Text(
             l10n.game_intervention_situation(
-              _factionDisplayName(widget.game, prompt.aggressorGpId),
-              _factionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
-              _factionDisplayName(widget.game, prompt.interveningGpId),
+              interventionFactionDisplayName(widget.game, prompt.aggressorGpId),
+              interventionFactionDisplayName(
+                widget.game,
+                prompt.defenderMinorOrTribeId,
+              ),
+              interventionFactionDisplayName(
+                widget.game,
+                prompt.interveningGpId,
+              ),
             ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: CtSpacing.l),
-          InterventionChoiceButtons(onPick: _pick),
+          InterventionChoiceButtons(onPick: pickInterventionChoice),
         ],
       );
     }

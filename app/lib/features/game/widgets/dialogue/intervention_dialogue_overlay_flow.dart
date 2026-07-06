@@ -1,0 +1,201 @@
+// Yarn flow orchestration for [InterventionDialogueOverlay].
+// Split from `intervention_dialogue_overlay.dart` to keep the overlay host
+// under the repo file-size target (Refs #3878).
+
+part of 'intervention_dialogue_overlay.dart';
+
+mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
+  YarnProject? get interventionProject;
+  set interventionProject(YarnProject? value);
+  DialogueRunner? get interventionRunner;
+  set interventionRunner(DialogueRunner? value);
+  CtDialogueView? get interventionView;
+  set interventionView(CtDialogueView? value);
+  Object? get interventionLoadError;
+  set interventionLoadError(Object? value);
+  bool get interventionYarnUiActive;
+  set interventionYarnUiActive(bool value);
+  bool get interventionAwaitingChoice;
+  set interventionAwaitingChoice(bool value);
+  Completer<InterventionChoice>? get interventionChoiceCompleter;
+  set interventionChoiceCompleter(Completer<InterventionChoice>? value);
+  List<InterventionDecision> get interventionDecisions;
+  int get interventionPromptIndex;
+  set interventionPromptIndex(int value);
+
+  Future<void> runInterventionFlow() async {
+    final log = widget.logger ?? packageLogger('dialogue');
+    try {
+      final bundle = widget.assetBundle ?? rootBundle;
+      final text = await bundle.loadString(kDialogueInterventionAsset);
+      final project = YarnProject();
+      // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
+      // faction variables must exist (with the `$` prefix) before `parse` or it
+      // throws a `NameError` (#3463). Real per-prompt values are bound before
+      // each node runs; StringVariable reads storage at runtime.
+      project.variables.setVariable(r'$aggressorName', '');
+      project.variables.setVariable(r'$defenderName', '');
+      project.variables.setVariable(r'$interveningName', '');
+      project.parse(text);
+      for (final node in [
+        _kIntro,
+        _kSituation,
+        _kReactIntervene,
+        _kReactNothing,
+        _kReactProtest,
+      ]) {
+        if (!project.nodes.containsKey(node)) {
+          throw StateError(
+            'Intervention node "$node" missing in $kDialogueInterventionAsset',
+          );
+        }
+      }
+      final view = CtDialogueView(logger: log);
+      final runner = DialogueRunner(
+        yarnProject: project,
+        dialogueViews: [view],
+      );
+      if (!mounted) return;
+      setState(() {
+        interventionProject = project;
+        interventionRunner = runner;
+        interventionView = view;
+        view.onStateChanged = (line, choice) {
+          if (mounted) setState(() {});
+        };
+      });
+
+      if (widget.prompts.isEmpty) {
+        widget.onDecisions(const []);
+        return;
+      }
+
+      if (!widget.skipIntroForTest) {
+        setState(() => interventionYarnUiActive = true);
+        await runner.startDialogue(_kIntro);
+        if (!mounted) return;
+      }
+
+      for (var i = 0; i < widget.prompts.length; i++) {
+        if (!mounted) return;
+        interventionPromptIndex = i;
+        final prompt = widget.prompts[i];
+        setInterventionFactionVariables(project, prompt);
+        setState(() => interventionYarnUiActive = true);
+        await runner.startDialogue(_kSituation);
+        if (!mounted) return;
+
+        final completer = Completer<InterventionChoice>();
+        interventionChoiceCompleter = completer;
+        setState(() {
+          interventionYarnUiActive = false;
+          interventionAwaitingChoice = true;
+        });
+        final choice = await completer.future;
+        if (!mounted) return;
+        setState(() => interventionAwaitingChoice = false);
+        interventionChoiceCompleter = null;
+
+        interventionDecisions.add(
+          InterventionDecision(
+            aggressorGpId: prompt.aggressorGpId,
+            defenderMinorOrTribeId: prompt.defenderMinorOrTribeId,
+            interveningGpId: prompt.interveningGpId,
+            choice: choice,
+          ),
+        );
+
+        project.variables.setVariable(
+          r'$aggressorName',
+          interventionFactionDisplayName(widget.game, prompt.aggressorGpId),
+        );
+        setState(() => interventionYarnUiActive = true);
+        await runner.startDialogue(reactionNodeForInterventionChoice(choice));
+        if (!mounted) return;
+        setState(() => interventionYarnUiActive = false);
+      }
+
+      if (!mounted) return;
+      widget.onDecisions(List<InterventionDecision>.from(interventionDecisions));
+    } catch (e, st) {
+      log.e('ui:dialogue: intervention flow failed', error: e, stackTrace: st);
+      if (mounted) setState(() => interventionLoadError = e);
+    }
+  }
+
+  void setInterventionFactionVariables(
+    YarnProject project,
+    InterventionPrompt prompt,
+  ) {
+    // Jenny stores Yarn variables under their `$`-prefixed name; the asset
+    // interpolates `{$aggressorName}` etc. Binding without the prefix raised a
+    // Jenny `NameError` at runtime (#3463).
+    project.variables.setVariable(
+      r'$aggressorName',
+      interventionFactionDisplayName(widget.game, prompt.aggressorGpId),
+    );
+    project.variables.setVariable(
+      r'$defenderName',
+      interventionFactionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
+    );
+    project.variables.setVariable(
+      r'$interveningName',
+      interventionFactionDisplayName(widget.game, prompt.interveningGpId),
+    );
+  }
+
+  void pickInterventionChoice(InterventionChoice choice) {
+    final c = interventionChoiceCompleter;
+    if (c != null && !c.isCompleted) {
+      c.complete(choice);
+    }
+  }
+
+  void degradedSubmitInterventionDoNothing() {
+    final out = <InterventionDecision>[];
+    for (final p in widget.prompts) {
+      out.add(
+        InterventionDecision(
+          aggressorGpId: p.aggressorGpId,
+          defenderMinorOrTribeId: p.defenderMinorOrTribeId,
+          interveningGpId: p.interveningGpId,
+          choice: InterventionChoice.doNothing,
+        ),
+      );
+    }
+    widget.onDecisions(out);
+  }
+}
+
+String reactionNodeForInterventionChoice(InterventionChoice choice) {
+  switch (choice) {
+    case InterventionChoice.intervene:
+      return _kReactIntervene;
+    case InterventionChoice.doNothing:
+      return _kReactNothing;
+    case InterventionChoice.protest:
+      return _kReactProtest;
+  }
+}
+
+String interventionFactionDisplayName(Game game, String factionId) {
+  for (final p in game.players) {
+    if (p.id == factionId) return p.displayName;
+  }
+  for (final m in game.minorNations) {
+    if (m.id == factionId) return m.displayName ?? m.id;
+  }
+  for (final t in game.tribes) {
+    if (t.id == factionId) return t.displayName ?? t.id;
+  }
+  return factionId;
+}
+
+const String _kIntro = 'DialoguePoint/intervention_intro';
+const String _kSituation = 'DialoguePoint/intervention_situation';
+const String _kReactIntervene =
+    'DialoguePoint/intervention_reaction_intervene';
+const String _kReactNothing =
+    'DialoguePoint/intervention_reaction_do_nothing';
+const String _kReactProtest =
+    'DialoguePoint/intervention_reaction_protest';

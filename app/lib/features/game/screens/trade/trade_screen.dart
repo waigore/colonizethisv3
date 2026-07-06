@@ -91,7 +91,8 @@ part 'trade_screen_deal_book_panel.dart';
 part 'trade_screen_deal_book_rows.dart';
 part 'trade_screen_market_row.dart';
 part 'trade_screen_market_tab.dart';
-part 'trade_screen_market_tab_handlers.dart';
+part 'trade_screen_market_tab_order_handlers.dart';
+part 'trade_screen_market_tab_catalog.dart';
 
 /// Full-screen World Market trade screen.
 ///
