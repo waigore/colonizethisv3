@@ -38,7 +38,7 @@
   {
     "id": "ct_production_panel",
     "name": "ProductionPanel",
-    "dart_file_path": "lib/features/game/widgets/production_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/production/production_panel.dart",
     "constructor_props": "game: Game, player: Player, desiredOutputByRecipe: Map<String, int>, onDesiredOutputChanged: ValueChanged<Map<String, int>>",
     "category": "game/panel",
     "source": "pipeline",

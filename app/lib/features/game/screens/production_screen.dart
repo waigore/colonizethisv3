@@ -19,9 +19,9 @@ import '../widgets/shell_player_guarded_body.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
-import '../widgets/production_commodity_breakdown_dialog.dart';
-import '../widgets/production_labour_helpers.dart';
-import '../widgets/production_panel.dart';
+import '../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../widgets/production/production_labour_helpers.dart';
+import '../widgets/production/production_panel.dart';
 
 class ProductionScreen extends ConsumerWidget {
   const ProductionScreen({

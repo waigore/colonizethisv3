@@ -255,7 +255,7 @@ Widget bypass() => Card(child: const Text('x'));
     test('does not skip ordinary feature widgets', () {
       expect(
         shouldSkipAppNoMaterialCardFile(
-          'app/lib/features/game/widgets/production_panel.dart',
+          'app/lib/features/game/widgets/production/production_panel.dart',
         ),
         isFalse,
       );

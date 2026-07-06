@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/strict_asset_icon.dart';
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
 import 'production_allocation_repeat_timing.dart';
 
 /// Fixed tappable surface size for the dark editorial-monocle step buttons

@@ -3,7 +3,7 @@
 // owner decision **C7** / S8b for issue #2862. SPEC:
 // SPEC/ui/production-panel.md § Layout — Available subpanel.
 
-import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

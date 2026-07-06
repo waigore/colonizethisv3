@@ -20,8 +20,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
-import 'package:colonizethis_app/features/game/widgets/production_labour_section.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_section.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app_e2e_support/test_support/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';

@@ -47,10 +47,10 @@ import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
-import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
-import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';

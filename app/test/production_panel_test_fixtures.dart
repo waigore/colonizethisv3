@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/features/game/widgets/production_panel_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel_demo_data.dart';
 
 /// Players and games for production panel widget tests without debug game init.
 Player productionPanelTestFullPlayer() {

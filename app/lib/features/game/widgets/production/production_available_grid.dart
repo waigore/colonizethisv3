@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
+import '../../../../config/editorial_monocle_palette.dart';
 
 /// Renders a fixed-column grid of `CtResourceCell`-shaped cells for the
 /// Available subpanel (Refs #2862 S8b, owner decision **C7**).

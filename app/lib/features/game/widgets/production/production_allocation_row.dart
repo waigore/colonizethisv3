@@ -2,9 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_slider.dart';
-import '../production_recipe_affordance.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_slider.dart';
+import '../../production_recipe_affordance.dart';
 import 'production_allocation_mutations.dart';
 import 'production_allocation_row_buttons.dart';
 

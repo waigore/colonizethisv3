@@ -32,7 +32,7 @@ import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';

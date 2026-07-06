@@ -52,7 +52,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train_military_dialog.dart` | Train Military Dialog | active |
 | `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train_naval_dialog.dart` | Train Naval Dialog | active |
 | `DIPL20001` | Grant or subsidy dialog | [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md) | `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` | Grant or Subsidy Dialog | active |
-| `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
+| `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
 | `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/combat/combat_mode_choice_dialog.dart` | Quick Battle | active |
 | `CMPT20001` | Quick battle screen | [quick-battle-screen.md](quick-battle-screen.md) | `app/lib/features/game/combat/quick_battle_screen.dart` | Quick Battle | active |
 | `CMPT50001` | Quick battle result dialog | [quick-battle-result-dialog.md](quick-battle-result-dialog.md) | `app/lib/features/game/combat/quick_battle_result_dialog.dart` | Quick Battle | active |

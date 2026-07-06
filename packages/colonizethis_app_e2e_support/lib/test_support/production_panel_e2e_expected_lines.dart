@@ -5,14 +5,14 @@
 // excluded from the app coverage gate using the same convention as
 // `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for ProductionPanel (wide layout ≥ kNarrowBreakpoint).
-// Mirrors app/lib/features/game/widgets/production_panel.dart for e2e.
+// Mirrors app/lib/features/game/widgets/production/production_panel.dart for e2e.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
-import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 

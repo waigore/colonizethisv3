@@ -406,9 +406,9 @@ const List<String> _migratedFeatureFiles = <String>[
   // spacing left, the import/token-reference invariants no longer apply.
   'lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/panels/pause_menu_panel.dart',
-  'lib/features/game/widgets/production_allocation_row_chrome.dart',
-  'lib/features/game/widgets/production_commodity_breakdown_dialog.dart',
-  'lib/features/game/widgets/production_panel.dart',
+  'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
+  'lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart',
+  'lib/features/game/widgets/production/production_panel.dart',
   'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
   // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
   // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which

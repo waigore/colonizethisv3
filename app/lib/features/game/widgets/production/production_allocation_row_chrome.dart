@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../widgets/ct_gradients.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Dark editorial-monocle row chrome for a production allocation row.
 ///
