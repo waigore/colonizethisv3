@@ -376,7 +376,8 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/dialogue/game_start_intro_overlay.dart',
   'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/dialogue/overture_dialogue_overlay.dart',
-  'lib/features/game/flame/game_map_canvas_stack.dart',
+  // CtSpacing callsites moved to the extracted selection-prompt widget.
+  'lib/features/game/flame/game_map_canvas_stack_selection_prompt.dart',
   'lib/features/game/flame/game_side_menu.dart',
   'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'lib/features/game/flame/overlays/victory_overlay.dart',
