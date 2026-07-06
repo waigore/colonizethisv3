@@ -87,6 +87,8 @@ import 'trade_section_handlers.dart';
 
 part 'trade_screen_contract.dart';
 part 'trade_screen_deal_book.dart';
+part 'trade_screen_deal_book_panel.dart';
+part 'trade_screen_deal_book_rows.dart';
 part 'trade_screen_market_row.dart';
 part 'trade_screen_market_tab.dart';
 part 'trade_screen_market_tab_handlers.dart';
