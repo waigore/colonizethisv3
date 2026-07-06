@@ -8,27 +8,27 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/ct_e2e.dart';
-import '../../../../config/ct_e2e_last_panel_snapshot.dart';
-import '../../../../config/ui_screen_ids.dart';
-import '../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../core/services/app_event_handler_scope.dart';
-import '../../../../l10n/l10n.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../chrome/ct_action_text_button.dart';
-import '../chrome/ct_circular_locate_button.dart';
-import '../chrome/ct_danger_text_button.dart';
-import '../../../../widgets/resource_icon.dart';
+import '../../../../../config/ct_e2e.dart';
+import '../../../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../../../config/ui_screen_ids.dart';
+import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../../../core/services/app_event_handler_scope.dart';
+import '../../../../../l10n/l10n.dart';
+import '../../../../../providers/games_provider.dart';
+import '../../../../../config/editorial_monocle_palette.dart';
+import '../../../../../widgets/ct_gap.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import '../../chrome/ct_action_text_button.dart';
+import '../../chrome/ct_circular_locate_button.dart';
+import '../../chrome/ct_danger_text_button.dart';
+import '../../../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
-import 'game_panel_contract.dart';
-import '../train/train_dialog_chrome.dart';
-import '../units/shared/region_section_header.dart';
-import '../units/shared/units_entity_action_row.dart';
-import '../units/shared/units_panel_shell.dart';
-import '../../utils/region_labels.dart';
+import '../../panels/game_panel_contract.dart';
+import '../../train/train_dialog_chrome.dart';
+import '../shared/region_section_header.dart';
+import '../shared/units_entity_action_row.dart';
+import '../shared/units_panel_shell.dart';
+import '../../../utils/region_labels.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
 

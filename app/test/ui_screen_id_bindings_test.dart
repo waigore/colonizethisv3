@@ -25,12 +25,12 @@ import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detai
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';

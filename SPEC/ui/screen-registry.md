@@ -45,9 +45,9 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | draft |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
-| `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/panels/civilian_units_panel.dart` | Civilian Units Panel | active |
-| `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/panels/military_units_panel.dart` | Military Units Panel | active |
-| `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/panels/naval_units_panel.dart` | Naval Units Panel | active |
+| `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart` | Civilian Units Panel | active |
+| `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/units/military/military_units_panel.dart` | Military Units Panel | active |
+| `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Naval Units Panel | active |
 | `UNIT40001` | Train civilians dialog | [train-civilians-dialog.md](train-civilians-dialog.md) | `app/lib/features/game/widgets/train/train_civilians_dialog.dart` | Train Civilians Dialog | active |
 | `UNIT50001` | Train military dialog | [train-military-dialog.md](train-military-dialog.md) | `app/lib/features/game/widgets/train/train_military_dialog.dart` | Train Military Dialog | active |
 | `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train/train_naval_dialog.dart` | Train Naval Dialog | active |

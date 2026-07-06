@@ -5,7 +5,7 @@
 // excluded from the app coverage gate using the same convention as
 // `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for NavalUnitsPanel. Mirrors
-// app/lib/features/game/widgets/panels/naval_units_panel.dart for e2e.
+// app/lib/features/game/widgets/units/naval/naval_units_panel.dart for e2e.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';

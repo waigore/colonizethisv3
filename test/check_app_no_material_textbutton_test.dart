@@ -443,7 +443,7 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
         );
         expect(
           shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/widgets/panels/military_units_panel.dart',
+            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
           ),
           isFalse,
         );

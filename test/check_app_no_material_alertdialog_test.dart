@@ -376,7 +376,7 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
         );
         expect(
           shouldSkipAppNoMaterialAlertDialogFile(
-            'app/lib/features/game/widgets/panels/military_units_panel.dart',
+            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
           ),
           isFalse,
         );

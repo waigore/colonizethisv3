@@ -1,7 +1,7 @@
 # Naval Units Panel
 
 **Screen ID:** `UNIT30001` — stable; do not reassign.
-**SPEC/ui** — Naval fleets panel. Implementation: `app/lib/features/game/widgets/panels/naval_units_panel.dart`.
+**SPEC/ui** — Naval fleets panel. Implementation: `app/lib/features/game/widgets/units/naval/naval_units_panel.dart`.
 **Widgetbook:** `Naval Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md).
 
 **Mockup:** [mockups/UNIT30001-naval-units-panel.html](mockups/UNIT30001-naval-units-panel.html)

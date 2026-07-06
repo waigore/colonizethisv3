@@ -269,7 +269,7 @@ After any fleet operation (split or combine):
 
 | File | Description |
 |------|-------------|
-| `app/lib/features/game/widgets/panels/naval_units_panel.dart` | Main panel with combine/split UI |
+| `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Main panel with combine/split UI |
 | `app/lib/features/game/widgets/unit_orders/split_fleet_dialog.dart` | Split fleet modal dialog |
 | `app/test/naval_units_panel_test.dart` | Tests for fleet management |
 

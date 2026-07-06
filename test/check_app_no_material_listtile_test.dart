@@ -334,13 +334,13 @@ Widget probe() => ListTile(title: const Text('x'));
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialListTileFile(
-          'app/lib/features/game/widgets/panels/military_units_panel.dart',
+          'app/lib/features/game/widgets/units/military/military_units_panel.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialListTileFile(
-          'app/lib/features/game/widgets/panels/civilian_units_panel_support.dart',
+          'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row.dart',
         ),
         isFalse,
       );

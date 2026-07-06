@@ -63,14 +63,10 @@ const Set<String> _appNavigatorKeyAllowedPathPrefixes = <String>{
 /// elsewhere in that file. Each entry should map to one SPEC paragraph
 /// (referenced in the trailing comment) so the gate stays auditable.
 const Set<String> _allowedFeatureLocalDialogFiles = <String>{
-  // Local by design — `SPEC/program/app-ui-wiring.md` line 84.
-  'app/lib/features/game/widgets/panels/civilian_units_panel_support.dart',
-  // Work-target assignment bottom sheet split from
-  // `civilian_units_panel_support.dart` to keep panel parts under the
-  // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
-  // the parent file — `SPEC/program/app-ui-wiring.md` § "Local by design"
-  // (Refs #3878 Phase 3).
-  'app/lib/features/game/widgets/panels/civilian_units_panel_support_unit_row.dart',
+  // Work-target assignment bottom sheet in civilian unit row part file.
+  // Same local-by-design rationale as the parent panel —
+  // `SPEC/program/app-ui-wiring.md` § "Local by design" (Refs #3878 Phase 3).
+  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row.dart',
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
@@ -111,17 +107,17 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/shell/new_game_setup_flow.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
-  'app/lib/features/game/widgets/panels/naval_units_panel.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel.dart',
   // Split / move fleet and home-transfer dialogs extracted from
   // `naval_units_panel.dart` to keep panel parts under the
   // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
   // the parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
   // (Refs #3878 Phase 3).
-  'app/lib/features/game/widgets/panels/naval_units_panel_support_dialogs.dart',
-  'app/lib/features/game/widgets/panels/naval_units_panel_support_home_transfer.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
-  'app/lib/features/game/widgets/panels/military_units_panel.dart',
+  'app/lib/features/game/widgets/units/military/military_units_panel.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
