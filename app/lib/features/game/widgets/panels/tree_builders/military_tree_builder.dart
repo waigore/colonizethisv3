@@ -5,8 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show resolveToFullProvinceId, WorldStateProvinceLookup, WorldStateUnitLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../utils/map_location_resolver.dart';
-import '../../utils/sea_zone_name_resolver.dart';
+import '../../../utils/map_location_resolver.dart';
+import '../../../utils/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
 
 String armyStationedProvinceDisplayLabel(Game game, Army army) {

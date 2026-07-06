@@ -14,7 +14,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_action_text_button.dart';
 import 'game_panel_contract.dart';
-import '../utils/military_tree_builder.dart';
+import 'tree_builders/military_tree_builder.dart';
 import '../unit_orders/move_army_dialog.dart';
 import '../unit_orders/split_army_dialog.dart';
 import '../units/shared/base_units_panel.dart';
