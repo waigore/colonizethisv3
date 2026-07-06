@@ -16,6 +16,19 @@ Set<String> _selectProspectFraction({
   return prospectable.take(target).toSet();
 }
 
+Set<String> _prospectRequiredTileKeys(
+  Iterable<String> tileKeys,
+  Map<String, String> resourceByTileKey,
+) {
+  return tileKeys
+      .where((tileKey) {
+        final resourceId = resourceByTileKey[tileKey];
+        return resourceId != null &&
+            kProspectRequiredResourceIds.contains(resourceId);
+      })
+      .toSet();
+}
+
 Set<String> _ownedProspectableTileKeys({
   required Game game,
   required String ownerId,
@@ -30,13 +43,7 @@ Set<String> _ownedProspectableTileKeys({
     for (final province in game.worldState.provincesForRegion(regionId)) {
       if (province.ownerId != ownerId) continue;
       final tileKeys = tileKeysByProvince[province.id] ?? const [];
-      for (final tileKey in tileKeys) {
-        final resourceId = resourceByTileKey[tileKey];
-        if (resourceId != null &&
-            kProspectRequiredResourceIds.contains(resourceId)) {
-          keys.add(tileKey);
-        }
-      }
+      keys.addAll(_prospectRequiredTileKeys(tileKeys, resourceByTileKey));
     }
   }
   return keys;
