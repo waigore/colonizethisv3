@@ -43,7 +43,31 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 - **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
 - **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources). **Current gap (S9a):** Level-1 PNGs are the pre-#3892 #3871 hamlets (commit `bed8a84a`); they do not yet meet size parity — **S9b** closes the gap after product-owner visual review.
 - **S9b preview flag:** `CT_NEW_TOWN_ICONS` compile-time dart define (`defaultValue: false`). When **false**, `TownIconCache` loads production `ui_icon_com_town_{style}_1_64.png`. When **true**, level-**1** glyphs load `ui_icon_com_town_{style}_1_candidate_64.png`; levels **2–4** unchanged. Config: `app/lib/config/ct_new_town_icons.dart`. Promotion PR replaces production level-1 PNGs with approved candidates and removes the flag.
-- **S9b candidate art (preview branch):** Simple **two-cottage hamlet** layout at the level-4 opaque bounding box (54×49 px footprint): filled red or thatch roofs, wall outlines, short central chimney (euro/colonial) or totem pole (tribal), minimal grass anchors. Drawn programmatically from the level-2 palette when PixelLab is unavailable; replaces the prior dual-cluster spread that read as flowers on-map. Candidate opaque count stays **below level 2** for promotion monotonicity.
+- **S9b candidate art (preview branch):** Regenerated with PixelLab **Pixflux** using the verbatim level-**1** prompt table below (Refs #3870). Slight prompt tweaks per style when needed (e.g. `two separate cottages not one mansion`, `single map icon not a sprite sheet`). Candidate PNGs live at `ui_icon_com_town_{style}_1_candidate_64.png`; promotion requires PO on-map review with `CT_NEW_TOWN_ICONS=true`.
+
+### PixelLab prompts (Pixflux — S9b level-1 candidates)
+
+Shared negative: `blurry, anti-aliased, smooth gradient, photorealistic, circular background, text label, modern buildings, tiny distant buildings, small cluster in center with large empty margins, black lines only, outline only, wireframe, sprite sheet`
+
+**European (`euro`) — base:** `16th century European settlement pixel art, stone and timber houses, steep roofs, centered on transparent background, fills the icon frame`
+
+| Level | Description append |
+|-------|-------------------|
+| 1 | `, hamlet with 2-3 simple cottages spread across the full frame, same map scale as larger towns, no church tower, no spire, low flat roofs only, filled roofs and walls not outlines` |
+
+**Colonial (`colonial`) — base:** `17th century American colonial settlement pixel art, wooden buildings, centered on transparent background, fills the icon frame`
+
+| Level | Description append |
+|-------|-------------------|
+| 1 | `, frontier hamlet with 2-3 log cabins spread across the full frame, same map scale as larger settlements, no bell tower, no steeple, filled roofs and walls not outlines` |
+
+**Tribal (`tribal`) — base:** `indigenous American woodland settlement pixel art, longhouses and totems, centered on transparent background, fills the icon frame`
+
+| Level | Description append |
+|-------|-------------------|
+| 1 | `, camp with 2-3 lodges spread across the full frame, same map scale as larger settlements, no totem pole, filled roofs and walls not outlines` |
+
+**Pixflux parameters (all):** `width: 64`, `height: 64`, `no_background: true`, `text_guidance_scale: 8`. Generator script: `pytool/generate_town_l1_candidates_64.py` (requires `PIXELLAB_API_KEY`).
 - **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
 - **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
 
