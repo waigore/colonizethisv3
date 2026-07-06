@@ -67,6 +67,13 @@ class TownIconCache extends AssetImageCache {
     return false;
   }
 
+  /// S9b preview candidate PNGs shipped alongside production level-1 paths.
+  static Iterable<String> get levelOneCandidateAssetPaths sync* {
+    for (final style in kTownIconStyles) {
+      yield assetPathForId('town_${style}_1', useCandidateLevelOne: true);
+    }
+  }
+
   @override
   String get loadLogLabel => 'town/port icons';
 
