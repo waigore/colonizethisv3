@@ -250,7 +250,26 @@ void main() {
           greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
         );
       });
+
+      test('$style candidate level-1 opaque count stays below level 2', () async {
+        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+        final level2 = await _loadTownIconStats('town_${style}_2');
+
+        expect(
+          level1.opaqueCount,
+          lessThan(level2.opaqueCount),
+          reason: 'S9b promotion must preserve complexity monotonicity 1 < 2',
+        );
+      });
     }
+
+    test('candidate level-1 bytes differ from S9a production hamlets', () async {
+      for (final style in kTownIconStyles) {
+        final production = await _loadTownIconBytes('town_${style}_1');
+        final candidate = await _loadCandidateTownIconBytes('town_${style}_1');
+        expect(candidate, isNot(equals(production)));
+      }
+    });
   });
 }
 
