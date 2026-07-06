@@ -3,14 +3,14 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/gp_nation_color_pennant.dart';
-import '../utils/tech_gp_researchers.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/gp_nation_color_pennant.dart';
+import '../../utils/tech_gp_researchers.dart';
 
 /// Lists every GP that has fully unlocked [techId] with pennant + display name.
 class TechResearchersListDialog extends StatelessWidget {

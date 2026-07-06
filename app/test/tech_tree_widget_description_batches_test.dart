@@ -5,7 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
 import 'support/panel_test_fixtures.dart';

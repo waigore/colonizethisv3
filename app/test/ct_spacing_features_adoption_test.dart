@@ -417,9 +417,9 @@ const List<String> _migratedFeatureFiles = <String>[
   // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
   // token-reference invariants moved to split_entity_dialog.dart below.
   'lib/features/game/widgets/split_entity_dialog.dart',
-  'lib/features/game/widgets/tech_tree_widget.dart',
-  'lib/features/game/widgets/technology_panel.dart',
-  'lib/features/game/widgets/technology_panel_orders.dart',
+  'lib/features/game/widgets/technology/tech_tree_widget.dart',
+  'lib/features/game/widgets/technology/technology_panel.dart',
+  'lib/features/game/widgets/technology/technology_panel_orders.dart',
   // train_civilians_dialog.dart / train_military_dialog.dart dropped from the
   // adoption list: #3594 extracted the shared TrainDialogBase state, which now
   // owns the `EdgeInsets.fromLTRB(CtSpacing.l, CtSpacing.ml, ...)`

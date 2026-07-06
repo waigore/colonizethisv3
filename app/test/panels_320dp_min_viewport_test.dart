@@ -42,7 +42,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 
 import 'production_panel_test_fixtures.dart';
 import 'support/min_viewport_harness.dart';

@@ -10,16 +10,16 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../config/app_assets.dart';
-import '../../../config/editorial_monocle_palette.dart';
-import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_dialog_shell.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_resource_cell.dart';
-import '../../../widgets/ct_spacing.dart';
-import '../../../widgets/strict_asset_icon.dart';
-import '../utils/research_slot_preview.dart';
+import '../../../../config/app_assets.dart';
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_resource_cell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../utils/research_slot_preview.dart';
 import 'technology_slot_funding_toggles.dart';
 
 /// Treasury-coin glyph shared with the trade screen / game tab-bar treasury

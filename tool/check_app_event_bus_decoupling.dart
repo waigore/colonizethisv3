@@ -92,22 +92,22 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
   'app/lib/features/game/flame/overlays/exit_confirm_dialog.dart',
-  'app/lib/features/game/widgets/tech_tree_widget.dart',
+  'app/lib/features/game/widgets/technology/tech_tree_widget.dart',
   // GP researchers list modal split from tech pennant row / tree surfaces
   // (Refs #3862). Same local-by-design rationale as tech detail in
   // `tech_tree_widget.dart` — `SPEC/program/app-ui-wiring.md` § "Local by design".
-  'app/lib/features/game/widgets/tech_researchers_list_dialog.dart',
-  'app/lib/features/game/widgets/technology_panel.dart',
+  'app/lib/features/game/widgets/technology/tech_researchers_list_dialog.dart',
+  'app/lib/features/game/widgets/technology/technology_panel.dart',
   // Bottom-sheet split out of `technology_panel.dart` to keep the panel
   // file under the 700-line `repo.game_widgets_file_size` cap. Same
   // local-by-design rationale as the parent file (Refs #2864 S3 split).
-  'app/lib/features/game/widgets/technology_panel_orders.dart',
+  'app/lib/features/game/widgets/technology/technology_panel_orders.dart',
   // Read-only research-funding breakdown dialog split out of
   // `technology_panel.dart` to keep that file under the
   // `repo.game_widgets_file_size` cap. Same local-by-design rationale as the
   // parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
   // (`ResearchFundingBreakdownDialog`, Refs #3512).
-  'app/lib/features/game/widgets/research_slot_turn_preview_view.dart',
+  'app/lib/features/game/widgets/technology/research_slot_turn_preview_view.dart',
   'app/lib/features/shell/new_game_setup_flow.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.

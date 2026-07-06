@@ -8,7 +8,7 @@ import 'dart:io';
 void main(List<String> args) {
   final root = _findRepoRoot();
   final widgetPath = File(
-    '$root/app/lib/features/game/widgets/tech_tree_widget.dart',
+    '$root/app/lib/features/game/widgets/technology/tech_tree_widget.dart',
   );
   final outPath = File(
     '$root/packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml',
