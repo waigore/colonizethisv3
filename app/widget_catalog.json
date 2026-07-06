@@ -29,7 +29,7 @@
   {
     "id": "ct_province_sea_zone_detail_overlay",
     "name": "ProvinceSeaZoneDetailOverlay",
-    "dart_file_path": "lib/features/game/widgets/province_sea_zone_detail_overlay.dart",
+    "dart_file_path": "lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart",
     "constructor_props": "game: Game, region: RegionMapViewData, selectedId: String, humanPlayerId: String, onHighlightTile: void Function(String?)?, onClose: VoidCallback?",
     "category": "game/overlay",
     "source": "pipeline",

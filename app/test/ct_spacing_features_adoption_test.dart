@@ -409,7 +409,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
   'lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart',
   'lib/features/game/widgets/production/production_panel.dart',
-  'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart',
   // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
   // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
   // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs

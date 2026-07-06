@@ -6,7 +6,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_de
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
         demoHumanPlayerViewForOverlay,

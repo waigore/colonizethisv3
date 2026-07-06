@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show fleetsInPortAtProvince, WorldStateProvinceLookup, WorldStateUnitLookup;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../../l10n/l10n.dart';
+import '../../../../l10n/l10n.dart';
 import 'province_panel_labels.dart';
 
 String _destinationProvinceLabel(Game game, String provinceId) =>

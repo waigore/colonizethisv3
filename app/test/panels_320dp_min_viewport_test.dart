@@ -34,14 +34,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
         demoHumanPlayerViewForOverlay,
         demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 
 import 'production_panel_test_fixtures.dart';

@@ -16,7 +16,7 @@ import '../per_player_work_target_selection_cache.dart';
 import '../province_action_state_calculator.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
-import '../../widgets/province_sea_zone_detail_overlay.dart';
+import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 /// Wide-layout province / sea zone panel; reads [mapProvincePanelProvider] only.
 class GameMapProvinceDetailSidePanel extends ConsumerWidget {

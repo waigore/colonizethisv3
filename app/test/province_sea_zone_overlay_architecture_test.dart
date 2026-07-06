@@ -28,13 +28,13 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _overlayRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay.dart';
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 const String _overlaySectionsRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay_sections.dart';
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections.dart';
 
 const String _overlayEconomicMilitaryRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay_economic_military_sections.dart';
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_military_sections.dart';
 
 const String _ctRegionMapRelativePath = 'lib/widgets/ct_region_map.dart';
 

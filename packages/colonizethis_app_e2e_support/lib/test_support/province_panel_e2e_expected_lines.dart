@@ -5,7 +5,7 @@
 // excluded from the app coverage gate using the same convention as
 // `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
-// Mirrors app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart for e2e.
+// Mirrors app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -16,8 +16,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/province_panel_labels.dart';
-import 'package:colonizethis_app/features/game/widgets/province_panel_pending_orders.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
 
 /// Duplicated from [province_sea_zone_detail_overlay] so e2e expectations stay in sync
 /// without importing @visibleForTesting symbols from production code.
