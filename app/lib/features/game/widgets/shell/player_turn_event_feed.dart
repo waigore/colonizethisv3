@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
-import '../../flame/game_screen_shared.dart'
+import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth, kPlayerTurnFeedToggleButtonKey;
 
 class PlayerTurnEventFeedEntry {

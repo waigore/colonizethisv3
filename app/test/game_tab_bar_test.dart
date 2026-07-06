@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

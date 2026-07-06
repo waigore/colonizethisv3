@@ -20,7 +20,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen.dart'
     show GameScreen, kPlayerTurnFeedToggleButtonKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';

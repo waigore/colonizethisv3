@@ -5,7 +5,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../widgets/chrome/ct_nine_patch_button.dart';
 import 'game_map_canvas_stack.dart';
-import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
+import '../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///

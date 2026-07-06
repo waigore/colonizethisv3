@@ -23,7 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show
         kGameMapPlayerChipKeyPrefix,
         kGameMapPlayersBarKey,

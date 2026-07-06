@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../flame/game_screen_shared.dart'
+import '../../screens/game/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 
 /// Floating column of per–Great-Power chips on the in-game map stack.

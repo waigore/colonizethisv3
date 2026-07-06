@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'route_paths.dart';
 import '../features/debug_log/debug_log_viewer_screen.dart';
-import '../features/game/flame/game_screen.dart';
+import '../features/game/screens/game/game_screen.dart';
 import '../features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import '../features/game/widgets/diplomacy/diplomacy_panel.dart' show FactionKind;
 import '../features/game/screens/diplomacy/diplomacy_screen.dart';

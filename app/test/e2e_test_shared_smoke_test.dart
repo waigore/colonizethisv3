@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

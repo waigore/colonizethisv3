@@ -9,8 +9,8 @@ import 'package:flame/input.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;
 import 'package:flutter/material.dart' show Offset;
 
-import 'region_map/region_map_component.dart';
-import 'region_map/region_map_viewport_snapshot.dart'
+import 'region_map_component.dart';
+import 'region_map_viewport_snapshot.dart'
     show
         RegionMapViewportSnapshot,
         computeRegionMapFitMapZoom,

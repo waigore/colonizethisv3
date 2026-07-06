@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../flame/game_screen_shared.dart' show kPlayersBarToggleButtonKey;
+import '../../screens/game/game_screen_shared.dart' show kPlayersBarToggleButtonKey;
 
 /// Toggle for the in-game Great Power players bar; lives in the trailing
 /// cluster of [GameTabBar] immediately left of the news toggle.

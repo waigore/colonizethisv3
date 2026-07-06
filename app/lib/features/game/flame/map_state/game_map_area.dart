@@ -39,7 +39,7 @@ import '../../../../providers/human_draft_projected_region_provider.dart';
 import '../../../../config/constants.dart';
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import '../game_screen_shared.dart';
+import '../../screens/game/game_screen_shared.dart';
 import '../game_side_menu.dart';
 import '../map_area/map_area.dart' show GameMapAreaBackground;
 import '../controls/controls.dart';

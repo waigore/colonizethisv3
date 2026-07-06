@@ -451,7 +451,7 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
         );
         expect(
           shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/flame/game_screen.dart',
+            'app/lib/features/game/screens/game/game_screen.dart',
           ),
           isFalse,
         );

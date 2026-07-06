@@ -2,13 +2,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
-import '../../features/game/flame/ct_region_map_game.dart';
+import '../../features/game/flame/region_map/ct_region_map_game.dart';
 import '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 import '../../features/game/widgets/chrome/region_map_game_viewport.dart';
-export '../../features/game/flame/ct_region_map_game.dart' show CtRegionMapGame;
+export '../../features/game/flame/region_map/ct_region_map_game.dart' show CtRegionMapGame;
 export '../../features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, assertCtMapPlayerViewRequired;
 export '../../features/game/flame/region_map/region_map_viewport_snapshot.dart'

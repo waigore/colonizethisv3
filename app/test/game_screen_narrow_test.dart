@@ -6,7 +6,7 @@ import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

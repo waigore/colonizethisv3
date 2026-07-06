@@ -378,7 +378,7 @@ Widget probe() => SwitchListTile(
       );
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/flame/game_screen.dart',
+          'app/lib/features/game/screens/game/game_screen.dart',
         ),
         isFalse,
       );

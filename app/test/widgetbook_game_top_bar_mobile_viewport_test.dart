@@ -12,7 +12,7 @@
 //     label or pause affordance) per `SPEC/ui/in-game-shell-narrow.md` § Top bar
 //     and `SPEC/ui/mobile-adaptation.md` § 4 In-game shell.
 
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';

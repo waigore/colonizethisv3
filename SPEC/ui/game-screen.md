@@ -1,7 +1,7 @@
 # Game Screen
 
 **Screen ID:** `GAME10001` — stable; do not reassign.
-**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). Implementation: `app/lib/features/game/flame/game_screen.dart`.
+**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). Implementation: `app/lib/features/game/screens/game/game_screen.dart`.
 **Widgetbook:** `Game Screen` → `app/lib/widgetbook/catalog.dart`. Bus wiring: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Turn resolution: [`turn-resolution.md`](../program/turn-resolution.md), [`next-turn-confirmation.md`](next-turn-confirmation.md). Victory: [`victory.md`](../game/victory.md). Routes: `app/lib/config/routes.dart`.
 
 **Mockup:** [mockups/GAME10001-game-screen.html](mockups/GAME10001-game-screen.html)
@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-`GameScreen` is a `ConsumerWidget` (`app/lib/features/game/flame/game_screen.dart`). It takes no constructor parameters; all state comes from Riverpod providers.
+`GameScreen` is a `ConsumerWidget` (`app/lib/features/game/screens/game/game_screen.dart`). It takes no constructor parameters; all state comes from Riverpod providers.
 
 | Provider | Read mode | Used for |
 |----------|-----------|----------|

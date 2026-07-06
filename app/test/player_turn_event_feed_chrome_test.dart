@@ -1,7 +1,7 @@
 import 'dart:io' show File;
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth, kPlayerTurnFeedToggleButtonKey;
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';

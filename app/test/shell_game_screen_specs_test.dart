@@ -6,7 +6,7 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';

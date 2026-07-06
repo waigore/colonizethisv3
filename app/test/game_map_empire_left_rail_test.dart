@@ -4,7 +4,7 @@ import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';

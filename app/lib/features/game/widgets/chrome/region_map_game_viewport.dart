@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/flame/ct_region_map_game.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/ct_region_map_game.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 

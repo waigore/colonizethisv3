@@ -14,7 +14,7 @@ void main() {
     final violatingFile = File('${temp.path}/app/lib/widgets/bad_widget.dart')
       ..createSync(recursive: true);
     violatingFile.writeAsStringSync(
-      "import '../features/game/flame/ct_region_map_game.dart';\nclass A {}\n",
+      "import '../features/game/flame/region_map/ct_region_map_game.dart';\nclass A {}\n",
     );
 
     final logs = <String>[];
@@ -53,7 +53,7 @@ void main() {
         File('${temp.path}/app/lib/widgets/ct_region_map.dart')
           ..createSync(recursive: true);
     allowlistedFile.writeAsStringSync(
-      "export '../features/game/flame/ct_region_map_game.dart';\n",
+      "export '../features/game/flame/region_map/ct_region_map_game.dart';\n",
     );
 
     expect(runCheckAppWidgetImports(temp.path), 0);
@@ -86,7 +86,7 @@ void main() {
     final okFile = File('${temp.path}/app/lib/widgets/ok.dart')
       ..createSync(recursive: true);
     okFile.writeAsStringSync(
-      "// import '../features/game/flame/ct_region_map_game.dart';\n"
+      "// import '../features/game/flame/region_map/ct_region_map_game.dart';\n"
       "import 'package:flutter/widgets.dart';\n"
       'class A {}\n',
     );

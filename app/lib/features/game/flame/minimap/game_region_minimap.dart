@@ -15,7 +15,7 @@ import '../region_map/region_map_viewport_snapshot.dart'
         kRegionMapZoomMultiplierMin;
 import '../../../../widgets/ct_slider.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../game_screen_shared.dart';
+import '../../screens/game/game_screen_shared.dart';
 import 'region_minimap_math.dart';
 
 part 'game_region_minimap_controls.dart';

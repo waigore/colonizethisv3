@@ -3,7 +3,7 @@ import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show
         gameMapWideOverlayRightInset,
         kGameMapWideStackRightGutter,

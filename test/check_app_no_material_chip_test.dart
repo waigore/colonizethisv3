@@ -392,7 +392,7 @@ Widget probe() => Chip(label: const Text('x'));
       );
       expect(
         shouldSkipAppNoMaterialChipFile(
-          'app/lib/features/game/flame/game_screen.dart',
+          'app/lib/features/game/screens/game/game_screen.dart',
         ),
         isFalse,
       );
