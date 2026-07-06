@@ -45,6 +45,24 @@ String applyDebugSecond() => 'b';
     expect(code, 1);
   });
 
+  test('skips part-of debug handler fragments', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_debug_handler_one_per_file_part_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final servicesDir = Directory('${temp.path}/app/lib/core/services')
+      ..createSync(recursive: true);
+    File(
+      '${servicesDir.path}/app_event_handler_debug_set_diplomacy.dart',
+    ).writeAsStringSync("String applyDebugSetDiplomacy() => 'ok';\n");
+    File(
+      '${servicesDir.path}/app_event_handler_debug_set_diplomacy_alliance.dart',
+    ).writeAsStringSync("part of 'app_event_handler_debug_set_diplomacy.dart';\n");
+
+    final code = runCheckDebugHandlerOnePerFile(temp.path);
+    expect(code, 0);
+  });
+
   test(
     'passes when each debug handler file has exactly one applyDebug function',
     () {
