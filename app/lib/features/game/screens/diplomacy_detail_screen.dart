@@ -13,7 +13,7 @@ import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/relation_meter.dart';
-import '../widgets/diplomacy_panel.dart';
+import '../widgets/diplomacy/diplomacy_panel.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
 String formatDiplomaticEvent(

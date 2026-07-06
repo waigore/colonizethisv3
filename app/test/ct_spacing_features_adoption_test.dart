@@ -389,10 +389,10 @@ const List<String> _migratedFeatureFiles = <String>[
   // civilian_units_panel_support.dart was split into part files; the
   // token-eligible `EdgeInsets` callsites live in the unit-row part.
   'lib/features/game/widgets/panels/civilian_units_panel_support_unit_row.dart',
-  'lib/features/game/widgets/diplomacy_dialogs.dart',
-  'lib/features/game/widgets/diplomacy_panel.dart',
-  'lib/features/game/widgets/diplomacy_panel_chrome.dart',
-  'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/fleet_expansion_tile.dart',
   'lib/features/game/widgets/game_tab_bar.dart',
   'lib/features/game/widgets/panels/military_units_panel.dart',

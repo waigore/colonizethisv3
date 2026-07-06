@@ -37,12 +37,12 @@ void main() {
         // `flutter test` runs from the package root (`app/`); the source
         // path is therefore relative to that working directory.
         final File source =
-            File('lib/features/game/widgets/diplomacy_panel_row.dart');
+            File('lib/features/game/widgets/diplomacy/diplomacy_panel_row.dart');
         expect(
           source.existsSync(),
           isTrue,
           reason:
-              'Expected `app/lib/features/game/widgets/diplomacy_panel_row.dart` '
+              'Expected `app/lib/features/game/widgets/diplomacy/diplomacy_panel_row.dart` '
               'to exist; running directory is `${Directory.current.path}`.',
         );
         diplomacyPanelRowSource = source.readAsStringSync();

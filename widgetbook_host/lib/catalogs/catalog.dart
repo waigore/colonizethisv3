@@ -35,8 +35,8 @@ import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog
 import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/players_bar_toggle_button.dart';

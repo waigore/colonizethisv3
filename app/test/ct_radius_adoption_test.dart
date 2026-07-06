@@ -101,7 +101,7 @@ void main() {
       // does not reappear in the file (mirrors the "preserves legacy
       // inset" half of the widget-level pair).
       final File modeBarSource = File(
-        'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
+        'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
       );
 
       test(

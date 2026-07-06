@@ -34,7 +34,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 

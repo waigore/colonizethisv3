@@ -15,7 +15,7 @@ import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart' show shellPlayerContextProvider;
 import '../widgets/shell_player_guarded_body.dart';
-import '../widgets/diplomacy_panel.dart';
+import '../widgets/diplomacy/diplomacy_panel.dart';
 import '../widgets/grant_or_subsidy_listener.dart';
 
 class DiplomacyScreen extends ConsumerWidget {

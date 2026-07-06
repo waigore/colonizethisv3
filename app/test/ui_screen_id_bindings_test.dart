@@ -26,7 +26,7 @@ import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';

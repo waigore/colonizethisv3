@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/game_panel_contract.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
