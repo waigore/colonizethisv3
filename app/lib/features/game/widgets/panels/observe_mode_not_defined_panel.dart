@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../providers/observe_session_provider.dart';
-import '../../../widgets/ct_gap.dart';
-import '../../../widgets/ct_panel.dart';
-import '../../../widgets/ct_spacing.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_panel.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Placeholder for P4–P17 chrome when global observe hides player-scoped data.
 /// SPEC/ui/observe-mode.md.

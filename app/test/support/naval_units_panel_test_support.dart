@@ -20,7 +20,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
 
 import 'app_shell_harness.dart';
 

@@ -20,7 +20,7 @@ import '../../../widgets/ct_gap.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/relation_meter.dart';
 import 'diplomacy_order_helpers.dart';
-import 'game_panel_contract.dart';
+import 'panels/game_panel_contract.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 import 'relative_power_line.dart';

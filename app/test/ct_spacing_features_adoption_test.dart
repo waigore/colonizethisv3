@@ -376,7 +376,8 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/dialogue/game_start_intro_overlay.dart',
   'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/dialogue/overture_dialogue_overlay.dart',
-  'lib/features/game/flame/game_map_canvas_stack.dart',
+  // CtSpacing callsites moved to the extracted selection-prompt widget.
+  'lib/features/game/flame/game_map_canvas_stack_selection_prompt.dart',
   'lib/features/game/flame/game_side_menu.dart',
   'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'lib/features/game/flame/overlays/victory_overlay.dart',
@@ -384,17 +385,17 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/screens/technology_screen.dart',
   'lib/features/game/screens/trade_screen.dart',
   'lib/features/game/screens/trade_screen_deal_book.dart',
-  'lib/features/game/widgets/civilian_units_panel.dart',
+  'lib/features/game/widgets/panels/civilian_units_panel.dart',
   // civilian_units_panel_support.dart was split into part files; the
   // token-eligible `EdgeInsets` callsites live in the unit-row part.
-  'lib/features/game/widgets/civilian_units_panel_support_unit_row.dart',
+  'lib/features/game/widgets/panels/civilian_units_panel_support_unit_row.dart',
   'lib/features/game/widgets/diplomacy_dialogs.dart',
   'lib/features/game/widgets/diplomacy_panel.dart',
   'lib/features/game/widgets/diplomacy_panel_chrome.dart',
   'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/fleet_expansion_tile.dart',
   'lib/features/game/widgets/game_tab_bar.dart',
-  'lib/features/game/widgets/military_units_panel.dart',
+  'lib/features/game/widgets/panels/military_units_panel.dart',
   'lib/features/game/widgets/move_army_dialog.dart',
   'lib/features/game/widgets/move_fleet_dialog.dart',
   // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
@@ -403,8 +404,8 @@ const List<String> _migratedFeatureFiles = <String>[
   // `SizedBox(width: 4)` gap (a legitimate override per SPEC § Spacing tokens,
   // kept raw in the sibling military_units_panel.dart). With no token-eligible
   // spacing left, the import/token-reference invariants no longer apply.
-  'lib/features/game/widgets/observe_mode_not_defined_panel.dart',
-  'lib/features/game/widgets/pause_menu_panel.dart',
+  'lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart',
+  'lib/features/game/widgets/panels/pause_menu_panel.dart',
   'lib/features/game/widgets/production_allocation_row_chrome.dart',
   'lib/features/game/widgets/production_commodity_breakdown_dialog.dart',
   'lib/features/game/widgets/production_panel.dart',
