@@ -11,6 +11,8 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 part 'game_service_new_game_setup.dart';
+part 'game_service_new_game_setup_pipeline.dart';
+part 'game_service_new_game_setup_maps.dart';
 part 'game_service_turn_resume.dart';
 part 'game_service_turn_trace.dart';
 
