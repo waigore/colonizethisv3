@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app.dart' show appNavigatorKey;
-import '../../providers/turn_resolution_blocking_provider.dart';
+import '../../../app.dart' show appNavigatorKey;
+import '../../../providers/turn_resolution_blocking_provider.dart';
 
 /// Clears [turnResolutionBlockingProvider] via the root navigator context so
 /// the flag flips off even when the originating widget (for example

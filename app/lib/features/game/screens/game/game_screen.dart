@@ -19,8 +19,8 @@ import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../../core/services/ai_profile_resolution.dart';
-import '../../../../core/services/turn_resolution_blocking_service.dart';
-import '../../../../core/services/turn_resolution_runner.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_screen_shell.dart';
@@ -40,7 +40,7 @@ import 'game_screen_shared.dart'
 import '../../flame/overlays/next_turn_confirmation_dialog.dart';
 import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
-import '../../../../core/services/turn_resolution_result_applier.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
 import '../../flame/overlays/victory_overlay.dart';
 
 part 'game_screen_fallback_next_turn.dart';

@@ -2,10 +2,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../config/ct_e2e_turn_snapshot_refresh.dart';
-import 'game_service.dart';
-import '../../providers/game_service_provider.dart';
-import '../../providers/games_provider.dart';
+import '../../../config/ct_e2e_turn_snapshot_refresh.dart';
+import '../game_service.dart';
+import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 
 /// Applies [TurnResolutionResult] to session notifiers and optional E2E snapshot
 /// hooks without threading [WidgetRef] through helper signatures.
