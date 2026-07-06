@@ -479,7 +479,7 @@ class _RegionMinimapPainter extends CustomPainter {
         final cell = region.cellAt(x, y);
         final rect = Rect.fromLTWH(x * cellW, y * cellH, cellW, cellH);
         if (cell.visibility == TileVisibility.unrevealed) {
-          paint.color = Colors.black;
+          paint.color = EditorialMonoclePalette.bgDeep;
           canvas.drawRect(rect, paint);
           continue;
         }
@@ -507,7 +507,7 @@ class _RegionMinimapPainter extends CustomPainter {
       mapHeightWorld: mh,
     );
     final border = Paint()
-      ..color = Colors.white
+      ..color = EditorialMonoclePalette.fg
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawRect(indicator, border);
