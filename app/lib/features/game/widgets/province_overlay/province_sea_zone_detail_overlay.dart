@@ -49,7 +49,9 @@ part 'province_sea_zone_detail_overlay_tile_section.dart';
 part 'province_sea_zone_detail_overlay_province_content.dart';
 part 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 part 'province_sea_zone_detail_overlay_economic_section.dart';
-part 'province_sea_zone_detail_overlay_unit_sections.dart';
+part 'province_sea_zone_detail_overlay_military_section.dart';
+part 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+part 'province_sea_zone_detail_overlay_close_button.dart';
 part 'province_sea_zone_detail_overlay_designation.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
