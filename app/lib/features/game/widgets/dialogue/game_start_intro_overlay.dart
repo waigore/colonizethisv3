@@ -16,6 +16,9 @@ import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
+part 'game_start_intro_overlay_flow.dart';
+part 'game_start_intro_overlay_build.dart';
+
 /// Spinner while intro dialogue lines are not yet available.
 ///
 /// Matches the game-initializing progress dialog contract
@@ -61,8 +64,6 @@ class GameStartIntroOverlay extends StatefulWidget {
 }
 
 class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
-  static const String _kIntroNode = 'game_start_intro';
-
   CtDialogueView? _view;
   DialogueRunner? _runner;
   Object? _loadError;
@@ -72,174 +73,9 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
   @override
   void initState() {
     super.initState();
-    _loadAndRun();
-  }
-
-  Future<void> _loadAndRun() async {
-    final log = widget.logger ?? packageLogger('dialogue');
-    try {
-      final bundle = widget.assetBundle ?? rootBundle;
-      ctAppPerfInstant('intro.asset_load.begin');
-      log.i('game_intro asset_load begin asset=$kDialogueGameIntroAsset');
-      final text = await bundle.loadString(kDialogueGameIntroAsset);
-      ctAppPerfInstant('intro.asset_load.end');
-      log.i('game_intro asset_load end chars=${text.length}');
-      final project = YarnProject();
-      project.parse(text);
-      if (!project.nodes.containsKey(_kIntroNode)) {
-        throw StateError(
-          'Intro node "$_kIntroNode" not found in $kDialogueGameIntroAsset',
-        );
-      }
-      final view = CtDialogueView(logger: log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
-      );
-      view.onStateChanged = (line, choice) {
-        if (!_loggedFirstLine && line != null) {
-          _loggedFirstLine = true;
-          ctAppPerfInstant('intro.first_line');
-          log.i('game_intro first_line_shown');
-        }
-        if (mounted) setState(() {});
-      };
-      if (!mounted) return;
-      setState(() {
-        _view = view;
-        _runner = runner;
-      });
-      ctAppPerfInstant('intro.dialogue_begin');
-      log.i('game_intro dialogue_begin node=$_kIntroNode');
-      await runner.startDialogue(_kIntroNode);
-      if (!mounted) return;
-      setState(() => _dialogueFinished = true);
-      widget.onDismissed();
-    } catch (e, st) {
-      log.e(
-        'ui:dialogue: failed to load or run intro',
-        error: e,
-        stackTrace: st,
-      );
-      if (mounted) {
-        setState(() => _loadError = e);
-      }
-    }
+    loadAndRunIntro();
   }
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final theme = Theme.of(context);
-    if (_loadError != null) {
-      return CtFullScreenDialogueShell(
-        backdrop: widget.child,
-        padding: const EdgeInsets.all(CtSpacing.l),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-            const SizedBox(height: CtSpacing.ml),
-            const CtBrassDivider(),
-            const SizedBox(height: 14),
-            Text(
-              l10n.game_intro_loadError('$_loadError'),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: EditorialMonoclePalette.accentDim,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: CtSpacing.l),
-            Align(
-              alignment: Alignment.center,
-              child: CtNinePatchButton(
-                onPressed: () {
-                  setState(() => _loadError = null);
-                  widget.onDismissed();
-                },
-                child: Text(l10n.game_intervention_continue),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_dialogueFinished) {
-      return widget.child;
-    }
-
-    if (_view == null || _runner == null) {
-      return _introChromeBody(
-        l10n: l10n,
-        body: const GameStartIntroLoadingIndicator(),
-      );
-    }
-
-    return _introChromeBody(
-      l10n: l10n,
-      body: CtDialogueLineChoiceBody(
-        view: _view!,
-        continueLabel: l10n.game_intervention_continue,
-        lineTextStyle: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurface,
-        ),
-        lineTextAlign: TextAlign.center,
-        continueAlignment: Alignment.center,
-        loading: const GameStartIntroLoadingIndicator(),
-      ),
-    );
-  }
-
-  Widget _introChromeBody({
-    required AppLocalizations l10n,
-    required Widget body,
-  }) {
-    return CtFullScreenDialogueShell(
-      backdrop: widget.child,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-          const SizedBox(height: CtSpacing.ml),
-          const CtBrassDivider(),
-          const SizedBox(height: 14),
-          body,
-        ],
-      ),
-    );
-  }
-}
-
-/// Cinzel display-font title shown above the brass divider in every
-/// non-dismissed state of the intro overlay. Color resolves from
-/// `EditorialMonoclePalette.accent`; styling matches the editorial-monocle
-/// mockup `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`.
-class _IntroTitle extends StatelessWidget {
-  const _IntroTitle({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      textAlign: TextAlign.center,
-      style: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
-          .copyWith(
-            color: EditorialMonoclePalette.accent,
-            // 0.05em at Material 3 titleMedium fontSize 16 ≈ 0.8 logical px.
-            // Matches `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`
-            // `.dialog-title` letter-spacing (mockup uses 0.06em; SPEC/UI
-            // restyle table in #2867 R2 pins 0.05em as the dark-theme dialog
-            // title contract; both render at the same eye-level on the 16 px
-            // Material titleMedium baseline used here).
-            letterSpacing: 0.05 * 16,
-            fontWeight: FontWeight.w700,
-          ),
-    );
-  }
+  Widget build(BuildContext context) => buildIntroOverlay(context);
 }
