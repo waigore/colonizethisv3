@@ -49,6 +49,7 @@ part 'region_map_component_render_markers_settlements_warp.dart';
 part 'region_map_component_render_markers_units_civilian.dart';
 part 'region_map_component_render_markers_units_fleet.dart';
 part 'region_map_component_interaction.dart';
+part 'region_map_component_lifecycle.dart';
 
 final _log = packageLogger();
 
@@ -154,39 +155,13 @@ class CtRegionMapComponent extends PositionComponent {
       playerViewForResources: playerViewForResources,
     );
     await super.onLoad();
-    await Future.wait([
-      terrainTilesetCache.load(),
-      transportOverlayTilesetCache.load(),
-      resourceIconCache.load(),
-      civilianIconCache.load(),
-      townIconCache.load(),
-      provinceLabelIconCache.load(),
-    ]);
-    // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
-    // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
-    unawaited(
-      fleetIconCache.load().catchError((Object _, StackTrace stackTrace) {
-        // Errors are already logged inside FleetIconCache.load.
-      }),
-    );
-    _log.i(
-      'TerrainTilesetCache loaded. '
-      'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
-      'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
-      'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
-      'TransportOverlayTilesetCache loaded: ${transportOverlayTilesetCache.isLoaded}. '
-      'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
-      'CivilianIconCache loaded: ${civilianIconCache.isLoaded}. '
-      'TownIconCache loaded: ${townIconCache.isLoaded}. '
-      'ProvinceLabelIconCache loaded: ${provinceLabelIconCache.isLoaded}',
-    );
-    size = Vector2(region.width * cellSize, region.height * cellSize);
+    await _ctRegionMapComponentAfterSuperOnLoad(this);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _hoverAnimationT += dt;
+    _ctRegionMapComponentAdvanceHoverAnimation(this, dt);
   }
 
   /// Updates hover state from a world-space position.
