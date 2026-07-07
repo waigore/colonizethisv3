@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate S9b level-1 town icon candidates via PixelLab Pixflux (Refs #3870)."""
+"""Generate S9b town icon candidates via PixelLab Pixflux (Refs #3870)."""
 
 from __future__ import annotations
 
@@ -34,20 +34,60 @@ BASE_PROMPTS = {
     ),
 }
 
-LEVEL_ONE_APPEND = {
-    "euro": (
-        ", hamlet with 2-3 simple cottages spread across the full frame, same map scale as "
-        "larger towns, no church tower, no spire, low flat roofs only, filled roofs and "
-        "walls not outlines"
-    ),
-    "colonial": (
-        ", frontier hamlet with 2-3 log cabins spread across the full frame, same map scale "
-        "as larger settlements, no bell tower, no steeple, filled roofs and walls not outlines"
-    ),
-    "tribal": (
-        ", camp with 2-3 lodges spread across the full frame, same map scale as larger "
-        "settlements, no totem pole, filled roofs and walls not outlines"
-    ),
+LEVEL_APPEND: dict[str, dict[int, str]] = {
+    "euro": {
+        1: (
+            ", hamlet with 2-3 simple cottages spread across the full frame, same map scale as "
+            "larger towns, no church tower, no spire, low flat roofs only, filled roofs and "
+            "walls not outlines"
+        ),
+        2: (
+            ", small village with 4 houses and one low church roof, one bell-cote, modest detail, "
+            "no tall spire"
+        ),
+        3: (
+            ", walled market town with 6 buildings and one church tower, medium spire, denser "
+            "cluster"
+        ),
+        4: (
+            ", grand European city with 8 buildings and two church spires, tallest spire "
+            "dominates, dense medieval city cluster"
+        ),
+    },
+    "colonial": {
+        1: (
+            ", frontier hamlet with 2-3 log cabins spread across the full frame, same map scale "
+            "as larger settlements, no bell tower, no steeple, filled roofs and walls not outlines"
+        ),
+        2: (
+            ", village with 4 wooden houses and a small meeting hall, one low roof peak, "
+            "no tall steeple"
+        ),
+        3: (
+            ", colonial town with 6 buildings, palisade segment, one church steeple, denser"
+        ),
+        4: (
+            ", large colonial city with 8 buildings, two steeples, grand plaza, tallest steeple "
+            "dominates"
+        ),
+    },
+    "tribal": {
+        1: (
+            ", camp with 2-3 lodges spread across the full frame, same map scale as larger "
+            "settlements, no totem pole, filled roofs and walls not outlines"
+        ),
+        2: (
+            ", village with 4 lodges and one small ceremonial structure, modest roof detail, "
+            "no tall totem"
+        ),
+        3: (
+            ", tribal town with 6 lodges, one tall totem pole, enclosed gathering area"
+        ),
+        4: (
+            ", large tribal settlement with 8 lodges, two tall totem poles, grand ceremonial "
+            "center, tallest totem dominates"
+        ),
+    },
 }
 
 
@@ -87,11 +127,19 @@ def create_pixflux(api_key: str, description: str) -> bytes:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate S9b level-1 town candidates")
+    parser = argparse.ArgumentParser(description="Generate S9b town icon candidates")
     parser.add_argument(
         "--style",
         choices=["euro", "colonial", "tribal", "all"],
         default="all",
+    )
+    parser.add_argument(
+        "--level",
+        type=int,
+        choices=[1, 2, 3, 4],
+        action="append",
+        dest="levels",
+        help="Development level(s) to generate; repeat for multiple (default: 1)",
     )
     parser.add_argument(
         "--out",
@@ -103,20 +151,24 @@ def main() -> None:
         "--append",
         type=str,
         default="",
-        help="Optional extra text appended to the level-1 prompt",
+        help="Optional extra text appended to each prompt",
     )
     args = parser.parse_args()
 
+    levels = args.levels if args.levels else [1]
     api_key = get_api_key()
     styles = ["euro", "colonial", "tribal"] if args.style == "all" else [args.style]
     args.out.mkdir(parents=True, exist_ok=True)
 
     for style in styles:
-        description = BASE_PROMPTS[style] + LEVEL_ONE_APPEND[style] + args.append
-        png = create_pixflux(api_key, description)
-        path = args.out / f"ui_icon_com_town_{style}_1_candidate_64.png"
-        path.write_bytes(png)
-        print(f"wrote {path} ({len(png)} bytes)")
+        for level in levels:
+            description = (
+                BASE_PROMPTS[style] + LEVEL_APPEND[style][level] + args.append
+            )
+            png = create_pixflux(api_key, description)
+            path = args.out / f"ui_icon_com_town_{style}_{level}_candidate_64.png"
+            path.write_bytes(png)
+            print(f"wrote {path} ({len(png)} bytes)")
 
 
 if __name__ == "__main__":

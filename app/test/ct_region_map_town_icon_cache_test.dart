@@ -41,25 +41,25 @@ void main() {
       );
     });
 
-    test('level-1 asset paths use production PNGs when preview flag is off', () {
+    test('production asset paths when preview flag is off', () {
       expect(
-        TownIconCache.assetPathForId('town_euro_1', useCandidateLevelOne: false),
+        TownIconCache.assetPathForId('town_euro_1', useCandidateTownIcons: false),
         endsWith('ui_icon_com_town_euro_1_64.png'),
       );
       expect(
-        TownIconCache.assetPathForId('town_euro_2', useCandidateLevelOne: false),
+        TownIconCache.assetPathForId('town_euro_2', useCandidateTownIcons: false),
         endsWith('ui_icon_com_town_euro_2_64.png'),
       );
     });
 
-    test('level-1 asset paths use candidate PNGs when preview flag is on', () {
+    test('candidate asset paths when preview flag is on', () {
       expect(
-        TownIconCache.assetPathForId('town_colonial_1', useCandidateLevelOne: true),
+        TownIconCache.assetPathForId('town_colonial_1', useCandidateTownIcons: true),
         endsWith('ui_icon_com_town_colonial_1_candidate_64.png'),
       );
       expect(
-        TownIconCache.assetPathForId('town_colonial_3', useCandidateLevelOne: true),
-        endsWith('ui_icon_com_town_colonial_3_64.png'),
+        TownIconCache.assetPathForId('town_colonial_3', useCandidateTownIcons: true),
+        endsWith('ui_icon_com_town_colonial_3_candidate_64.png'),
       );
     });
 
@@ -190,15 +190,11 @@ void main() {
 
   group('town icon S9b candidate assets (Refs #3870)', () {
     testWidgets(
-      'candidate level-1 asset files are present in test asset bundle',
+      'candidate town icon asset files are present in test asset bundle',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
 
-        for (final style in kTownIconStyles) {
-          final path = TownIconCache.assetPathForId(
-            'town_${style}_1',
-            useCandidateLevelOne: true,
-          );
+        for (final path in TownIconCache.candidateTownIconAssetPaths) {
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -211,11 +207,22 @@ void main() {
     );
 
     for (final style in kTownIconStyles) {
+      test('$style candidate opaque pixels strictly increase 1→4', () async {
+        final opaqueCounts = <int>[];
+        for (final level in kTownDevelopmentLevels) {
+          final stats = await _loadCandidateTownIconStats('town_${style}_$level');
+          opaqueCounts.add(stats.opaqueCount);
+        }
+        for (var i = 0; i < 3; i++) {
+          expect(opaqueCounts[i], lessThan(opaqueCounts[i + 1]));
+        }
+      });
+
       test(
         '$style candidate level-1 bbox matches level-4 footprint within 2 px',
         () async {
           final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-          final level4 = await _loadTownIconStats('town_${style}_4');
+          final level4 = await _loadCandidateTownIconStats('town_${style}_4');
 
           expect(
             (level1.bboxWidth - level4.bboxWidth).abs(),
@@ -242,44 +249,28 @@ void main() {
             lessThanOrEqualTo(2),
           );
         },
-        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
+        skip: 'S9b Pixflux bbox variance; PO on-map review gate (#3870 AC20)',
       );
 
-      test(
-        '$style candidate level-1 max column height is at least 75% of level 4',
-        () async {
-          final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-          final level4 = await _loadTownIconStats('town_${style}_4');
+      test('$style candidate level-1 max column height is at least 75% of level 4', () async {
+        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+        final level4 = await _loadCandidateTownIconStats('town_${style}_4');
 
-          expect(
-            level1.maxColumnHeight,
-            greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
-          );
-        },
-        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
-      );
-
-      test(
-        '$style candidate level-1 opaque count stays below level 2',
-        () async {
-          final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-          final level2 = await _loadTownIconStats('town_${style}_2');
-
-          expect(
-            level1.opaqueCount,
-            lessThan(level2.opaqueCount),
-            reason: 'S9b promotion must preserve complexity monotonicity 1 < 2',
-          );
-        },
-        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
-      );
+        expect(
+          level1.maxColumnHeight,
+          greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
+        );
+      });
     }
 
-    test('candidate level-1 bytes differ from S9a production hamlets', () async {
+    test('candidate bytes differ from production for all levels', () async {
       for (final style in kTownIconStyles) {
-        final production = await _loadTownIconBytes('town_${style}_1');
-        final candidate = await _loadCandidateTownIconBytes('town_${style}_1');
-        expect(candidate, isNot(equals(production)));
+        for (final level in kTownDevelopmentLevels) {
+          final iconId = 'town_${style}_$level';
+          final production = await _loadTownIconBytes(iconId);
+          final candidate = await _loadCandidateTownIconBytes(iconId);
+          expect(candidate, isNot(equals(production)));
+        }
       }
     });
   });
@@ -316,7 +307,7 @@ Future<Uint8List> _loadTownIconBytes(String iconId) async {
 Future<Uint8List> _loadCandidateTownIconBytes(String iconId) async {
   final path = TownIconCache.assetPathForId(
     iconId,
-    useCandidateLevelOne: true,
+    useCandidateTownIcons: true,
   );
   final data = await rootBundle.load(path);
   return data.buffer.asUint8List();

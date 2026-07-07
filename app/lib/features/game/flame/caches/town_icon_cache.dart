@@ -43,34 +43,40 @@ class TownIconCache extends AssetImageCache {
     return assetPathForId(assetId);
   }
 
-  /// Resolves bundle path for [assetId]. Tests may pass [useCandidateLevelOne]
+  /// Resolves bundle path for [assetId]. Tests may pass [useCandidateTownIcons]
   /// to override the compile-time [kCtNewTownIconsEnabled] gate.
   static String assetPathForId(
     String assetId, {
-    bool? useCandidateLevelOne,
+    bool? useCandidateTownIcons,
   }) {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
-    final candidateLevelOne =
-        useCandidateLevelOne ?? kCtNewTownIconsEnabled;
-    if (candidateLevelOne && _isLevelOneTownIconId(assetId)) {
+    final useCandidates = useCandidateTownIcons ?? kCtNewTownIconsEnabled;
+    if (useCandidates && _isTownIconId(assetId)) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_candidate_64.png';
     }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
   }
 
-  static bool _isLevelOneTownIconId(String assetId) {
+  static bool _isTownIconId(String assetId) {
     for (final style in kTownIconStyles) {
-      if (assetId == 'town_${style}_1') return true;
+      for (final level in kTownDevelopmentLevels) {
+        if (assetId == 'town_${style}_$level') return true;
+      }
     }
     return false;
   }
 
-  /// S9b preview candidate PNGs shipped alongside production level-1 paths.
-  static Iterable<String> get levelOneCandidateAssetPaths sync* {
+  /// S9b preview candidate PNGs shipped alongside production town icon paths.
+  static Iterable<String> get candidateTownIconAssetPaths sync* {
     for (final style in kTownIconStyles) {
-      yield assetPathForId('town_${style}_1', useCandidateLevelOne: true);
+      for (final level in kTownDevelopmentLevels) {
+        yield assetPathForId(
+          'town_${style}_$level',
+          useCandidateTownIcons: true,
+        );
+      }
     }
   }
 

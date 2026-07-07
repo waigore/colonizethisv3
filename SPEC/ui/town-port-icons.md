@@ -30,7 +30,7 @@ Cache id: `town_{style}_{level}` where `{style}` ∈ `euro` | `colonial` | `trib
 | Example file | Cache id |
 |--------------|----------|
 | `ui_icon_com_town_euro_1_64.png` | `town_euro_1` |
-| `ui_icon_com_town_euro_1_candidate_64.png` | `town_euro_1` (S9b preview only; `CT_NEW_TOWN_ICONS=true`) |
+| `ui_icon_com_town_{style}_{level}_candidate_64.png` | `town_{style}_{level}` (S9b preview only; `CT_NEW_TOWN_ICONS=true`) |
 | `ui_icon_com_town_colonial_3_64.png` | `town_colonial_3` |
 | `ui_icon_com_town_tribal_4_64.png` | `town_tribal_4` |
 | `ui_icon_com_port.png` | `port` |
@@ -42,10 +42,10 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 - **Format:** 64×64 PNG, RGBA transparent.
 - **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
 - **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources). **Current gap (S9a):** Level-1 PNGs are the pre-#3892 #3871 hamlets (commit `bed8a84a`); they do not yet meet size parity — **S9b** closes the gap after product-owner visual review.
-- **S9b preview flag:** `CT_NEW_TOWN_ICONS` compile-time dart define (`defaultValue: false`). When **false**, `TownIconCache` loads production `ui_icon_com_town_{style}_1_64.png`. When **true**, level-**1** glyphs load `ui_icon_com_town_{style}_1_candidate_64.png`; levels **2–4** unchanged. Config: `app/lib/config/ct_new_town_icons.dart`. Promotion PR replaces production level-1 PNGs with approved candidates and removes the flag.
-- **S9b candidate art (preview branch):** Regenerated with PixelLab **Pixflux** using the verbatim level-**1** prompt table below (Refs #3870). Slight prompt tweaks per style when needed (e.g. `two separate cottages not one mansion`, `single map icon not a sprite sheet`). Candidate PNGs live at `ui_icon_com_town_{style}_1_candidate_64.png`; promotion requires PO on-map review with `CT_NEW_TOWN_ICONS=true`.
+- **S9b preview flag:** `CT_NEW_TOWN_ICONS` compile-time dart define (`defaultValue: false`). When **false**, `TownIconCache` loads production `ui_icon_com_town_{style}_{level}_64.png`. When **true**, all town glyphs (levels **1–4**) load `ui_icon_com_town_{style}_{level}_candidate_64.png`. Config: `app/lib/config/ct_new_town_icons.dart`. Promotion PR replaces production PNGs with approved candidates and removes the flag.
+- **S9b candidate art (preview branch):** Regenerated with PixelLab **Pixflux** using the verbatim prompt table below (Refs #3870). Candidate PNGs live at `ui_icon_com_town_{style}_{level}_candidate_64.png` for all levels; promotion requires PO on-map review with `CT_NEW_TOWN_ICONS=true`.
 
-### PixelLab prompts (Pixflux — S9b level-1 candidates)
+### PixelLab prompts (Pixflux — S9b candidates)
 
 Shared negative: `blurry, anti-aliased, smooth gradient, photorealistic, circular background, text label, modern buildings, tiny distant buildings, small cluster in center with large empty margins, black lines only, outline only, wireframe, sprite sheet`
 
@@ -54,20 +54,29 @@ Shared negative: `blurry, anti-aliased, smooth gradient, photorealistic, circula
 | Level | Description append |
 |-------|-------------------|
 | 1 | `, hamlet with 2-3 simple cottages spread across the full frame, same map scale as larger towns, no church tower, no spire, low flat roofs only, filled roofs and walls not outlines` |
+| 2 | `, small village with 4 houses and one low church roof, one bell-cote, modest detail, no tall spire` |
+| 3 | `, walled market town with 6 buildings and one church tower, medium spire, denser cluster` |
+| 4 | `, grand European city with 8 buildings and two church spires, tallest spire dominates, dense medieval city cluster` |
 
 **Colonial (`colonial`) — base:** `17th century American colonial settlement pixel art, wooden buildings, centered on transparent background, fills the icon frame`
 
 | Level | Description append |
 |-------|-------------------|
 | 1 | `, frontier hamlet with 2-3 log cabins spread across the full frame, same map scale as larger settlements, no bell tower, no steeple, filled roofs and walls not outlines` |
+| 2 | `, village with 4 wooden houses and a small meeting hall, one low roof peak, no tall steeple` |
+| 3 | `, colonial town with 6 buildings, palisade segment, one church steeple, denser` |
+| 4 | `, large colonial city with 8 buildings, two steeples, grand plaza, tallest steeple dominates` |
 
 **Tribal (`tribal`) — base:** `indigenous American woodland settlement pixel art, longhouses and totems, centered on transparent background, fills the icon frame`
 
 | Level | Description append |
 |-------|-------------------|
 | 1 | `, camp with 2-3 lodges spread across the full frame, same map scale as larger settlements, no totem pole, filled roofs and walls not outlines` |
+| 2 | `, village with 4 lodges and one small ceremonial structure, modest roof detail, no tall totem` |
+| 3 | `, tribal town with 6 lodges, one tall totem pole, enclosed gathering area` |
+| 4 | `, large tribal settlement with 8 lodges, two tall totem poles, grand ceremonial center, tallest totem dominates` |
 
-**Pixflux parameters (all):** `width: 64`, `height: 64`, `no_background: true`, `text_guidance_scale: 8`. Generator script: `pytool/generate_town_l1_candidates_64.py` (requires `PIXELLAB_API_KEY`).
+**Pixflux parameters (all):** `width: 64`, `height: 64`, `no_background: true`, `text_guidance_scale: 8`. Generator: `pytool/generate_town_l1_candidates_64.py` (`--level` repeatable; requires `PIXELLAB_API_KEY`).
 - **Fog:** Fogged town tiles render the **true** level glyph at reduced opacity; unrevealed tiles show **no** town icon.
 - **Capital ring:** GP capital town tiles (always level 4) use level-4 glyph + gold ring; non-GP capitals use their **actual** level glyph + ring.
 
@@ -116,8 +125,8 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 - **Given** the three level-**1** town PNGs after **S9a**, **when** loaded from the asset bundle, **then** file byte lengths match the pre-#3892 #3871 hamlets (`bed8a84a`) and decode as readable pixel-art (opaque count > 100 per icon).
 - **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **2 px** (size parity). *(S9b; tests skipped until S9b.)*
 - **Given** each style, **when** `maxColumnHeight` is measured on levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes). *(S9b candidate assets; production L1 tests skipped until promotion.)*
-- **Given** the app is built **without** `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system uses production `ui_icon_com_town_{style}_1_64.png` assets (not S9b candidates).
-- **Given** the app is built with `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system loads candidate `ui_icon_com_town_{style}_1_candidate_64.png` assets; levels **2–4** remain unchanged.
+- **Given** the app is built **without** `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders town glyphs, **then** the system uses production `ui_icon_com_town_{style}_{level}_64.png` assets (not S9b candidates).
+- **Given** the app is built with `--dart-define=CT_NEW_TOWN_ICONS=true`, **when** the map renders town glyphs, **then** the system loads candidate `ui_icon_com_town_{style}_{level}_candidate_64.png` assets for levels **1–4**.
 
 (Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
@@ -125,6 +134,6 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Implementation Notes
 
-- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level-**1** paths honor `kCtNewTownIconsEnabled` (`CT_NEW_TOWN_ICONS`).
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). All town levels honor `kCtNewTownIconsEnabled` (`CT_NEW_TOWN_ICONS`) via `candidateTownIconAssetPaths`.
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).
