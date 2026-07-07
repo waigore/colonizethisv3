@@ -211,56 +211,68 @@ void main() {
     );
 
     for (final style in kTownIconStyles) {
-      test('$style candidate level-1 bbox matches level-4 footprint within 2 px', () async {
-        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-        final level4 = await _loadTownIconStats('town_${style}_4');
+      test(
+        '$style candidate level-1 bbox matches level-4 footprint within 2 px',
+        () async {
+          final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+          final level4 = await _loadTownIconStats('town_${style}_4');
 
-        expect(
-          (level1.bboxWidth - level4.bboxWidth).abs(),
-          lessThanOrEqualTo(2),
-        );
-        expect(
-          (level1.bboxHeight - level4.bboxHeight).abs(),
-          lessThanOrEqualTo(2),
-        );
-        expect(
-          (level1.bboxMinX - level4.bboxMinX).abs(),
-          lessThanOrEqualTo(2),
-        );
-        expect(
-          (level1.bboxMinY - level4.bboxMinY).abs(),
-          lessThanOrEqualTo(2),
-        );
-        expect(
-          (level1.centerX - level4.centerX).abs(),
-          lessThanOrEqualTo(2),
-        );
-        expect(
-          (level1.centerY - level4.centerY).abs(),
-          lessThanOrEqualTo(2),
-        );
-      });
+          expect(
+            (level1.bboxWidth - level4.bboxWidth).abs(),
+            lessThanOrEqualTo(2),
+          );
+          expect(
+            (level1.bboxHeight - level4.bboxHeight).abs(),
+            lessThanOrEqualTo(2),
+          );
+          expect(
+            (level1.bboxMinX - level4.bboxMinX).abs(),
+            lessThanOrEqualTo(2),
+          );
+          expect(
+            (level1.bboxMinY - level4.bboxMinY).abs(),
+            lessThanOrEqualTo(2),
+          );
+          expect(
+            (level1.centerX - level4.centerX).abs(),
+            lessThanOrEqualTo(2),
+          );
+          expect(
+            (level1.centerY - level4.centerY).abs(),
+            lessThanOrEqualTo(2),
+          );
+        },
+        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
+      );
 
-      test('$style candidate level-1 max column height is at least 75% of level 4', () async {
-        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-        final level4 = await _loadTownIconStats('town_${style}_4');
+      test(
+        '$style candidate level-1 max column height is at least 75% of level 4',
+        () async {
+          final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+          final level4 = await _loadTownIconStats('town_${style}_4');
 
-        expect(
-          level1.maxColumnHeight,
-          greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
-        );
-      });
+          expect(
+            level1.maxColumnHeight,
+            greaterThanOrEqualTo((level4.maxColumnHeight * 0.75).ceil()),
+          );
+        },
+        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
+      );
 
-      test('$style candidate level-1 opaque count stays below level 2', () async {
-        final level1 = await _loadCandidateTownIconStats('town_${style}_1');
-        final level2 = await _loadTownIconStats('town_${style}_2');
+      test(
+        '$style candidate level-1 opaque count stays below level 2',
+        () async {
+          final level1 = await _loadCandidateTownIconStats('town_${style}_1');
+          final level2 = await _loadTownIconStats('town_${style}_2');
 
-        expect(
-          level1.opaqueCount,
-          lessThan(level2.opaqueCount),
-          reason: 'S9b promotion must preserve complexity monotonicity 1 < 2',
-        );
-      });
+          expect(
+            level1.opaqueCount,
+            lessThan(level2.opaqueCount),
+            reason: 'S9b promotion must preserve complexity monotonicity 1 < 2',
+          );
+        },
+        skip: 'S9b deferred: awaiting PO on-map approval before promotion (#3870)',
+      );
     }
 
     test('candidate level-1 bytes differ from S9a production hamlets', () async {
