@@ -92,6 +92,8 @@ part 'trade_screen_deal_book.dart';
 part 'trade_screen_deal_book_panel.dart';
 part 'trade_screen_deal_book_rows.dart';
 part 'trade_screen_market_row.dart';
+part 'trade_screen_market_row_controls.dart';
+part 'trade_screen_market_row_header.dart';
 part 'trade_screen_market_row_stepper.dart';
 part 'trade_screen_market_tab.dart';
 part 'trade_screen_market_tab_build.dart';
