@@ -15,8 +15,9 @@ void main() {
 
   group('Province overlay CtSpacing pins (Refs #2914)', () {
     test('main overlay header uses CtSpacing.ml/m insets', () {
+      // Header chrome moved to a dedicated part during #3878 overlay split (#3927).
       final source = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart',
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_chrome.dart',
       ).readAsStringSync();
       expect(source, contains('left: CtSpacing.ml'));
       expect(source, contains('right: CtSpacing.m'));

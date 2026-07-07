@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/ct_new_town_icons.dart';
+import '../../../../config/ct_legacy_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -43,40 +43,38 @@ class TownIconCache extends AssetImageCache {
     return assetPathForId(assetId);
   }
 
-  /// Resolves bundle path for [assetId]. Tests may pass [useCandidateTownIcons]
-  /// to override the compile-time [kCtNewTownIconsEnabled] gate.
+  /// Resolves bundle path for [assetId]. Tests may pass [useLegacyTownIcons]
+  /// to override the compile-time [kCtLegacyTownIconsEnabled] gate.
   static String assetPathForId(
     String assetId, {
-    bool? useCandidateTownIcons,
+    bool? useLegacyTownIcons,
   }) {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
-    final useCandidates = useCandidateTownIcons ?? kCtNewTownIconsEnabled;
-    if (useCandidates && _isTownIconId(assetId)) {
-      return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_candidate_64.png';
+    final useLegacy = useLegacyTownIcons ?? kCtLegacyTownIconsEnabled;
+    if (useLegacy && _isLevel1TownIconId(assetId)) {
+      final suffix = assetId.replaceFirst('town_', '');
+      return '${kAppIcon64AssetPrefix}ui_icon_com_town_${suffix}_legacy_64.png';
     }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
   }
 
-  static bool _isTownIconId(String assetId) {
+  static bool _isLevel1TownIconId(String assetId) {
     for (final style in kTownIconStyles) {
-      for (final level in kTownDevelopmentLevels) {
-        if (assetId == 'town_${style}_$level') return true;
-      }
+      if (assetId == 'town_${style}_1') return true;
     }
     return false;
   }
 
-  /// S9b preview candidate PNGs shipped alongside production town icon paths.
-  static Iterable<String> get candidateTownIconAssetPaths sync* {
+  /// Retired S9a level-1 hamlet PNGs shipped for rollback via
+  /// [CT_LEGACY_TOWN_ICONS].
+  static Iterable<String> get legacyTownIconAssetPaths sync* {
     for (final style in kTownIconStyles) {
-      for (final level in kTownDevelopmentLevels) {
-        yield assetPathForId(
-          'town_${style}_$level',
-          useCandidateTownIcons: true,
-        );
-      }
+      yield assetPathForId(
+        'town_${style}_1',
+        useLegacyTownIcons: true,
+      );
     }
   }
 
