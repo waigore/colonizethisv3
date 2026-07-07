@@ -12,7 +12,7 @@
 |--------|------|------------|-------------|
 | `GrantOrSubsidyDialog` | `StatelessWidget` | `game` (`Game`), `humanPlayerId` (`String`), `targetFactionId` (`String`), `isSubsidy` (`bool`), `bus` (`AppEventBus`) | Bus-registered modal (id `grant_or_subsidy`) opened by `DiplomacyPanel` via `OpenDialogEvent('grant_or_subsidy', {targetFactionId, isSubsidy})`. Emits exactly one `GrantOrSubsidySubmittedEvent` on submit. |
 
-Implementation: `app/lib/features/game/widgets/diplomacy_dialogs.dart` (private `_GrantSubsidyAmountBody` holds the stepper state). Wrapped in `CtDialogShell`. The mode (`isSubsidy: true` vs `false`) drives the **title**, the **unit** (£ amount for grant; `%` for subsidy), and the **step / range constants**: grant uses `grantAidAmountStep` / `grantAidDefaultAmount` (treasury-bounded); subsidy uses `kSubsidyPercentStep` (5), `kSubsidyPercentMin` (5), `kSubsidyPercentMax` (20), and `kSubsidyPercentDefault` (5) from `colonizethis_logic` and is **treasury-independent** (Refs #3753 R3). Dialog id constant: `grantOrSubsidyDialogId`.
+Implementation: `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` (private `_GrantSubsidyAmountBody` holds the stepper state). Wrapped in `CtDialogShell`. The mode (`isSubsidy: true` vs `false`) drives the **title**, the **unit** (£ amount for grant; `%` for subsidy), and the **step / range constants**: grant uses `grantAidAmountStep` / `grantAidDefaultAmount` (treasury-bounded); subsidy uses `kSubsidyPercentStep` (5), `kSubsidyPercentMin` (5), `kSubsidyPercentMax` (20), and `kSubsidyPercentDefault` (5) from `colonizethis_logic` and is **treasury-independent** (Refs #3753 R3). Dialog id constant: `grantOrSubsidyDialogId`.
 
 ---
 
@@ -93,7 +93,7 @@ The dialog **does not** mutate game state. All effects flow through the emitted 
 | Submit (enabled) | `Navigator.of(context).pop()` then `bus.emit(GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy))`. The dialog pops first to avoid use-after-dispose if the listener triggers a navigation. |
 | Submit (disabled) | No-op (`enabled: false` on the `CtNinePatchButton`). |
 
-The `GrantOrSubsidySubmittedEvent` listener (`grant_or_subsidy_listener.dart`) shows a `ConfirmDialogEvent` and, on confirm, materializes the corresponding diplomatic order; see [orders.md](../program/orders.md) § DiplomaticOrder. The confirmation `message` reflects the mode's unit: grant reads `Grant aid of £{amount} to {target}?`; subsidy reads `Set subsidy of {amount}% to {target}?` (the submitted `amount` carries the subsidy **percentage** for `DiplomaticOrderType.setSubsidy`; Refs #3753 R3).
+The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/diplomacy/grant_or_subsidy_listener.dart`) shows a `ConfirmDialogEvent` and, on confirm, materializes the corresponding diplomatic order; see [orders.md](../program/orders.md) § DiplomaticOrder. The confirmation `message` reflects the mode's unit: grant reads `Grant aid of £{amount} to {target}?`; subsidy reads `Set subsidy of {amount}% to {target}?` (the submitted `amount` carries the subsidy **percentage** for `DiplomaticOrderType.setSubsidy`; Refs #3753 R3).
 
 ---
 

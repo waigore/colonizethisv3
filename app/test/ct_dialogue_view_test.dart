@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jenny/jenny.dart';
 import 'package:jenny/src/structure/line_content.dart';
 
-import 'package:colonizethis_app/features/game/dialogue/ct_dialogue_view.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 
 void main() {
   suppressLogsForTests();

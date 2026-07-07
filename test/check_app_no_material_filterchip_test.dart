@@ -407,19 +407,19 @@ Widget probe() => FilterChip(
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/widgets/move_fleet_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/widgets/turn_news_dialog.dart',
+          'app/lib/features/game/widgets/dialogs/turn_news_dialog.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/flame/game_screen.dart',
+          'app/lib/features/game/screens/game/game_screen.dart',
         ),
         isFalse,
       );

@@ -11,7 +11,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
 import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';

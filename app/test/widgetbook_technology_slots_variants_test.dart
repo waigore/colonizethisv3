@@ -18,8 +18,8 @@
 //   * surface the expected slot-card counts per SPEC § Slot behaviour.
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
+import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

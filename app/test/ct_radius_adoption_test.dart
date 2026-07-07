@@ -1,6 +1,6 @@
 import 'dart:io' show File;
 
-import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_radius.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -101,7 +101,7 @@ void main() {
       // does not reappear in the file (mirrors the "preserves legacy
       // inset" half of the widget-level pair).
       final File modeBarSource = File(
-        'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
+        'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
       );
 
       test(

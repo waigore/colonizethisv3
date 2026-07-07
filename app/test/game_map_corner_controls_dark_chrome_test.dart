@@ -5,7 +5,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';

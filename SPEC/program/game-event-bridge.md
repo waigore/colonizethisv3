@@ -14,7 +14,7 @@
 
 `TurnResolver` → `GameEventBus.publish(GameEvent)` → `GameEventBridge` → `AppEventBus` → UI (`GameToUIBusListener`, `NotifyEvent`, overture dialog).
 
-**Location:** `app/lib/core/services/game_event_bridge.dart`. Not in `colonizethis_logic` (must not depend on app/models UI types) or `colonizethis_models` (no Flutter). Constructed in app DI (`game_service_provider.dart`).
+**Location:** `app/lib/core/services/event_bridge/game_event_bridge.dart`. Not in `colonizethis_logic` (must not depend on app/models UI types) or `colonizethis_models` (no Flutter). Constructed in app DI (`game_service_provider.dart`).
 
 ---
 
@@ -70,8 +70,8 @@ The bridge remains a per-event forwarder. The app-side map shell may aggregate t
 
 | Path | Role |
 |------|------|
-| `app/lib/core/services/game_event_bridge.dart` | Bridge implementation |
-| `app/lib/core/services/game_service.dart` | `logicEventBus`; overture emit |
+| `app/lib/core/services/event_bridge/game_event_bridge.dart` | Bridge implementation |
+| `app/lib/core/services/game_service/game_service.dart` | `logicEventBus`; overture emit |
 | `app/lib/providers/game_service_provider.dart` | Riverpod wiring |
 | `packages/colonizethis_models/lib/src/app_events.dart` | `App*` event types |
 | `app/test/game_event_bridge_test.dart` | Bridge forwarding tests |

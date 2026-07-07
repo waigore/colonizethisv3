@@ -6,11 +6,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/game_panel_contract.dart';
-import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/game_panel_contract.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 
 Game _minimalGame() {
   return const Game(

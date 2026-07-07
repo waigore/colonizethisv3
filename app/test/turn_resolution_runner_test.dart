@@ -3,7 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
+import 'package:colonizethis_app/core/services/turn_resolution/turn_resolution_runner.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_progress_labels.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';

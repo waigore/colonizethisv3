@@ -22,7 +22,7 @@ List<int> bad(List<int> xs) {
 }
 ''';
       final violations = findDisallowedAstViolations(
-        'app/lib/features/game/widgets/civilian_units_panel.dart',
+        'app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
         src,
         rules,
       );
@@ -60,7 +60,7 @@ List<int> ok(List<int> xs) {
 ''';
       expect(
         findDisallowedAstViolations(
-          'app/lib/features/game/widgets/civilian_units_panel.dart',
+          'app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
           src,
           rules,
         ).where((e) => e.ruleId == 'redundant_where_to_list_where_chain'),

@@ -366,19 +366,19 @@ Widget probe() => SwitchListTile(
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/widgets/game_map_options_dialog.dart',
+          'app/lib/features/game/widgets/dialogs/game_map_options_dialog.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/widgets/move_fleet_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/flame/game_screen.dart',
+          'app/lib/features/game/screens/game/game_screen.dart',
         ),
         isFalse,
       );

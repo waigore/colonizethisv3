@@ -1,6 +1,6 @@
 # ProductionAllocationRow (component)
 
-**SPEC/ui/components** — Reusable per-recipe row inside the Production panel Allocation subpanel. Implementation: [`app/lib/features/game/widgets/production_allocation_row.dart`](../../../app/lib/features/game/widgets/production_allocation_row.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtSlider*, *StrictAssetIcon*, *Editorial-monocle palette*, *CtGradients*.
+**SPEC/ui/components** — Reusable per-recipe row inside the Production panel Allocation subpanel. Implementation: [`app/lib/features/game/widgets/production/production_allocation_row.dart`](../../../app/lib/features/game/widgets/production/production_allocation_row.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtSlider*, *StrictAssetIcon*, *Editorial-monocle palette*, *CtGradients*.
 
 Not a screen; no stable screen ID. Canonical row layout referenced by the screen spec under [Consumers](#consumers).
 
@@ -8,7 +8,7 @@ Not a screen; no stable screen ID. Canonical row layout referenced by the screen
 
 ## Purpose
 
-Consolidates the per-recipe Allocation-subpanel layout: a header (label + affordance readout), a body row (`Expanded` `CtSlider` + numeric desired output + four icon-only step / action buttons), and chrome painted by [`ProductionAllocationRowChrome`](../../../app/lib/features/game/widgets/production_allocation_row_chrome.dart). The composite owns affordance recomputation, the slider cap clamp, the four-button footprint, and long-press repeat for the ± buttons. The inner step-button surface ([`ProductionStepButtonSurface`](../../../app/lib/features/game/widgets/production_allocation_row_buttons.dart): 26 dp `CtGradients.buttonGradient` inside a 1 dp `EditorialMonoclePalette.border` outline, 0.3 disabled opacity) is shared with the Available subpanel's Labour Controls. Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+Consolidates the per-recipe Allocation-subpanel layout: a header (label + affordance readout), a body row (`Expanded` `CtSlider` + numeric desired output + four icon-only step / action buttons), and chrome painted by [`ProductionAllocationRowChrome`](../../../app/lib/features/game/widgets/production/production_allocation_row_chrome.dart). The composite owns affordance recomputation, the slider cap clamp, the four-button footprint, and long-press repeat for the ± buttons. The inner step-button surface ([`ProductionStepButtonSurface`](../../../app/lib/features/game/widgets/production/production_allocation_row_buttons.dart): 26 dp `CtGradients.buttonGradient` inside a 1 dp `EditorialMonoclePalette.border` outline, 0.3 disabled opacity) is shared with the Available subpanel's Labour Controls. Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
 
 ---
 
@@ -56,7 +56,7 @@ Buttons are separated by `SizedBox(width: 4)`; each paints `ProductionStepButton
 1. **Affordance recompute.** Every `build` calls `computeRecipeAffordance(recipe, stockpile, desiredOutputByRecipe, effectiveLabour)` for `maxDesiredOutput` and the limiting label (`Labour` or input name); cross-row coupling re-runs it when the map mutates.
 2. **Slider clamp.** `sliderMax = maxAchievable == 0 ? 0.0 : maxAchievable.clamp(1, kProductionAllocationSliderCap).toDouble()`; thumb is `desired.clamp(0, maxAchievable)`. Drag rounds/clamps; `value == 0` removes the recipe key.
 3. **Enabled gating.** `−` iff `desired > 0`. `+` iff `maxAchievable > 0 && desired < maxAchievable`. **Maximize** iff `+` would be. **Clear** iff `desired > 0`.
-4. **Step mutations.** `±` delegate to `applyProductionRecipeIncrement` / `applyProductionRecipeDecrement` in [`production_allocation_mutations.dart`](../../../app/lib/features/game/widgets/production_allocation_mutations.dart) (return `false` on no-change to stop repeat timers). **Maximize** writes `affordance.maxDesiredOutput`; **Clear** removes the key.
+4. **Step mutations.** `±` delegate to `applyProductionRecipeIncrement` / `applyProductionRecipeDecrement` in [`production_allocation_mutations.dart`](../../../app/lib/features/game/widgets/production/production_allocation_mutations.dart) (return `false` on no-change to stop repeat timers). **Maximize** writes `affordance.maxDesiredOutput`; **Clear** removes the key.
 5. **Long-press repeat (± only).** `ProductionAllocationStepButton` uses `GestureDetector` long-press (~500 ms, `kProductionAllocationRepeatInitialDelay`) + `Timer.periodic` at `kProductionAllocationRepeatInterval` (125 ms), stopping at bounds/release/dispose. Maximize and Clear are single-tap.
 6. **Comfort headroom.** The slider's `comfortHeadroomActive` comes from `recipeAllocationComfortHeadroomActive(...)` per [`production-panel.md`](../production-panel.md) § *Comfort headroom (slider track)*.
 7. **Stateless.** `ProductionAllocationRow` is `StatelessWidget`; only `ProductionAllocationStepButton` holds a `Timer?` for repeats.
@@ -113,5 +113,5 @@ The Labour Controls reuse only `ProductionStepButtonSurface`, not this composite
 ## Related
 
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtSlider*, *StrictAssetIcon*, *Editorial-monocle palette*, *CtGradients*.
-- Sibling chrome: [`ProductionStepButtonSurface`](../../../app/lib/features/game/widgets/production_allocation_row_buttons.dart) — also used by Labour Controls.
+- Sibling chrome: [`ProductionStepButtonSurface`](../../../app/lib/features/game/widgets/production/production_allocation_row_buttons.dart) — also used by Labour Controls.
 - Consumer: [`production-panel.md`](../production-panel.md) § *Allocation row chrome* / *step buttons*. Tracking: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.

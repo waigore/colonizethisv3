@@ -13,8 +13,8 @@
 // Diplomatic standing chip cluster acceptance criteria (Refs #3753 R12).
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';

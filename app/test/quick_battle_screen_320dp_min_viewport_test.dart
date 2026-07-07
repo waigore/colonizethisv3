@@ -10,7 +10,7 @@
 // Quick Battle screen surfaced when the player picks Quick Battle from
 // `CombatModeChoiceDialog` or when a capital siege forces it.
 //
-// `QuickBattleScreen` (`app/lib/features/game/combat/quick_battle_screen.dart`)
+// `QuickBattleScreen` (`app/lib/features/game/screens/combat/quick_battle_screen.dart`)
 // mounts its chrome via [CtDialogShell] with `maxWidth: 400` and
 // `maxHeight: 500`. At `kMinViewportWidth` (320 dp) the outer
 // `Dialog.insetPadding: 16` dominates the configured `maxWidth`, so the
@@ -48,7 +48,7 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
+import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

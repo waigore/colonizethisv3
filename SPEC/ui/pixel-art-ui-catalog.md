@@ -171,7 +171,8 @@ tokens") and §S4 ("Zero `const Color(0x...)` in `app/lib/features/` and
 | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Dev-tooling screen SYS10001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart` | Dev-tooling screen SYS20001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/widgets/chrome/**` | Ct-* catalog widget implementations. These widgets implement the design-system primitives; consumer code in the rest of `features/**` must use the catalog widget, not raw Material colors. |
-| `app/lib/widgets/ct_main_menu_collage.dart` | Decorative `CustomPainter` `saveLayer` alpha multiplier (`Paint().color = const Color(0xFFFFFFFF).withValues(alpha: _collageOpacity)`). The literal is a compositing argument — any other color would tint the layer contents — and the editorial-monocle palette has no semantic token for pure-white-alpha compositing. Analogous to the Flame renderer allowlist. |
+| `app/lib/widgets/ct_main_menu_collage.dart` | Decorative `CustomPainter` library host for `CtMainMenuCollage` (`SHEL10002`). Glyph paint bodies live in `part` files under the file-size cap. |
+| `app/lib/widgets/ct_main_menu_collage_painter.dart` | `part of 'ct_main_menu_collage.dart'` — painter `saveLayer` alpha multiplier (`Paint().color = const Color(0xFFFFFFFF).withValues(alpha: _collageOpacity)`). The literal is a compositing argument — any other color would tint the layer contents — and the editorial-monocle palette has no semantic token for pure-white-alpha compositing. Analogous to the Flame renderer allowlist. |
 | `app/lib/widgets/main_menu.dart` | Main-menu button hover `ColorFilter.mode(Colors.black.withValues(alpha: 0.15), BlendMode.darken)` composite. The literal is a blend operand whose semantic role is "darken by 15%", not a theme color reference; the editorial-monocle palette has no semantic token for compositing-only blend operands. |
 | `app/lib/widgets/main_menu_buttons.dart` | `part of 'main_menu.dart'` button widgets split out under the file-size cap (`SPEC/program/dart-file-non-comment-line-size.md`). Hosts the same main-menu button hover `ColorFilter.mode(Colors.black.withValues(alpha: 0.15), BlendMode.darken)` composite as `main_menu.dart`; the literal is a "darken by 15%" blend operand, not a theme color reference. |
 
@@ -201,7 +202,8 @@ mention the banned tokens by name without tripping the check.
   deliberately omits `transparent` from the ban list).
 - **Given** a file path is on the whole-file allowlist documented above
   (including the `app/lib/widgets/` canvas-compositing entries
-  `ct_main_menu_collage.dart`, `main_menu.dart`, and its split-out part file
+  `ct_main_menu_collage.dart`, its split-out painter part file
+  `ct_main_menu_collage_painter.dart`, `main_menu.dart`, and its split-out part file
   `main_menu_buttons.dart`), **when** repo lint runs
   the same rule, **then** the rule does not flag banned literals inside that
   file (scope-only exclusion; the rule does not load keyed per-violation

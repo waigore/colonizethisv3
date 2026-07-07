@@ -7,10 +7,10 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/tech_gp_pennant_row.dart';
-import 'package:colonizethis_app/features/game/widgets/tech_researchers_list_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_gp_pennant_row.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_researchers_list_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 

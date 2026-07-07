@@ -6,7 +6,7 @@
 
 ## Widget contract
 
-`QuickBattleActionSelector` is a presentational `StatelessWidget` (`app/lib/features/game/combat/quick_battle_action_selector.dart`).
+`QuickBattleActionSelector` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/quick_battle_action_selector.dart`).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

@@ -3,7 +3,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';

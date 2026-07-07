@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// Cross-cutting cleanup that needs to flip this flag off even when the
 /// originating widget has disposed lives in
-/// `core/services/turn_resolution_blocking_service.dart`
+/// `core/services/turn_resolution/turn_resolution_blocking_service.dart`
 /// (`clearTurnResolutionBlockingFlag`); the navigator-key choke point belongs
 /// in `core/services/` per `SPEC/program/app-ui-wiring.md`.
 final turnResolutionBlockingProvider =

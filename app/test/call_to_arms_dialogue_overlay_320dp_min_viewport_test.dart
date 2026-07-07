@@ -31,7 +31,7 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show CallToArmsPending;
 import 'package:colonizethis_models/colonizethis_models.dart';

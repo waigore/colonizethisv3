@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logger/logger.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
     show demoGameForOverlay;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';

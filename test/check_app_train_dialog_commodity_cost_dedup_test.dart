@@ -8,8 +8,8 @@ import 'package:test/test.dart';
 import '../tool/check_app_train_dialog_commodity_cost_dedup.dart';
 
 const _militaryRelative =
-    'app/lib/features/game/widgets/train_military_dialog.dart';
-const _navalRelative = 'app/lib/features/game/widgets/train_naval_dialog.dart';
+    'app/lib/features/game/widgets/train/train_military_dialog.dart';
+const _navalRelative = 'app/lib/features/game/widgets/train/train_naval_dialog.dart';
 
 File _targetFile(String root, String relative) {
   final file = File(p.join(root, relative));

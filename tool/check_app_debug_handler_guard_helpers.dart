@@ -31,11 +31,11 @@ int runCheckAppDebugHandlerGuardHelpers(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final servicesDir = Directory(
-    p.join(repoRoot, 'app', 'lib', 'core', 'services'),
+    p.join(repoRoot, 'app', 'lib', 'core', 'services', 'debug'),
   );
   if (!servicesDir.existsSync()) {
     logE(
-      'check_app_debug_handler_guard_helpers: app/lib/core/services not found.',
+      'check_app_debug_handler_guard_helpers: app/lib/core/services/debug not found.',
     );
     return 1;
   }

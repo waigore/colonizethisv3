@@ -41,9 +41,9 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

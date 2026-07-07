@@ -20,7 +20,7 @@
 //  * FRR / FTP tags render on filled rows that the matcher annotated
 //    so the player can audit why a deal cleared.
 
-import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

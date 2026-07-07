@@ -6,11 +6,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart'
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';

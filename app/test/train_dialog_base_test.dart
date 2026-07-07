@@ -7,10 +7,10 @@
 // PopScope/CtDialogShell wrapper, capital-check state, count scaffolding, and
 // order materialization that now live in the shared base.
 
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_dialog_base.dart';
-import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_base.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

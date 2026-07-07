@@ -27,7 +27,7 @@
 // priority dropdown, cargo indicator) ship in follow-up slices and are
 // out of scope for this pin file.
 
-import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

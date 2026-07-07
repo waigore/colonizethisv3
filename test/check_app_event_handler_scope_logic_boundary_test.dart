@@ -19,6 +19,7 @@ void main() {
         'lib',
         'core',
         'services',
+        'app_event_handler',
         'app_event_handler_scope.dart',
       );
       File(targetPath)
@@ -53,6 +54,7 @@ import 'package:colonizethis_app/features/game/logic/some_logic.dart';
         'lib',
         'core',
         'services',
+        'app_event_handler',
         'app_event_handler_scope.dart',
       );
       File(targetPath)

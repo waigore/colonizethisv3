@@ -65,7 +65,7 @@ Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEve
 
 ## Dialog IDs (`OpenDialogEvent`)
 
-Register core (game-feature) builders in **`app/lib/core/services/app_event_handler_scope.dart`**. **Feature-layer dialog builders that would otherwise force `core/services/` to import `features/`** (for example the shell `new_game_leader_selection` dialog) live in their owning feature and are injected into the scope at the **composition root** (`app/lib/main.dart`) via **`AppEventHandlerScope.extraDialogBuilders`** — a `Map<String, NavigatorKeyDialogBuilder>` (each value a `DialogBuilder Function(GlobalKey<NavigatorState>)`) merged over the core builders by `OpenDialogEvent` id. The scope resolves each factory with `appNavigatorKey` so the feature threads the navigator key **explicitly** rather than reading the global; `appNavigatorKey` access stays confined to `core/services/` + `app.dart` (enforced by `repo.app_event_bus_decoupling`). This keeps `core/services/` free of `features/shell/` imports while preserving the single choke point for `navigatorKey` / `ProviderScope.containerOf` (Refs #3546).
+Register core (game-feature) builders in **`app/lib/core/services/app_event_handler/app_event_handler_scope.dart`**. **Feature-layer dialog builders that would otherwise force `core/services/` to import `features/`** (for example the shell `new_game_leader_selection` dialog) live in their owning feature and are injected into the scope at the **composition root** (`app/lib/main.dart`) via **`AppEventHandlerScope.extraDialogBuilders`** — a `Map<String, NavigatorKeyDialogBuilder>` (each value a `DialogBuilder Function(GlobalKey<NavigatorState>)`) merged over the core builders by `OpenDialogEvent` id. The scope resolves each factory with `appNavigatorKey` so the feature threads the navigator key **explicitly** rather than reading the global; `appNavigatorKey` access stays confined to `core/services/` + `app.dart` (enforced by `repo.app_event_bus_decoupling`). This keeps `core/services/` free of `features/shell/` imports while preserving the single choke point for `navigatorKey` / `ProviderScope.containerOf` (Refs #3546).
 
 | ID | Widget | Constant |
 |----|--------|----------|
@@ -75,7 +75,7 @@ Register core (game-feature) builders in **`app/lib/core/services/app_event_hand
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` (see [grant-or-subsidy-dialog.md](../ui/grant-or-subsidy-dialog.md)) | `grantOrSubsidyDialogId` |
 | `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`; see [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md)) | `newGameLeaderSelectionDialogId` |
 
-For `train_civilians`, `train_military`, and `train_naval`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
+For `train_civilians`, `train_military`, and `train_naval`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
 | ID | Widget | Status |
 |----|--------|--------|

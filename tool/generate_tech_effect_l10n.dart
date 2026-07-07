@@ -1,6 +1,6 @@
 // Reads tech_effect_summary.yaml and merges tech effect ARB entries into
 // app/lib/l10n/arb/app_en.arb, and writes
-// app/lib/features/game/widgets/tech_effect_summary_lookup.dart
+// app/lib/features/game/widgets/technology/tech_effect_summary_lookup.dart
 //
 // Run from repo root: dart tool/generate_tech_effect_l10n.dart
 // Then: cd app && flutter gen-l10n
@@ -17,7 +17,7 @@ void main() {
   );
   final appEnArb = File('$root/app/lib/l10n/arb/app_en.arb');
   final lookupPath = File(
-    '$root/app/lib/features/game/widgets/tech_effect_summary_lookup.dart',
+    '$root/app/lib/features/game/widgets/technology/tech_effect_summary_lookup.dart',
   );
 
   final doc = loadYaml(yamlFile.readAsStringSync());

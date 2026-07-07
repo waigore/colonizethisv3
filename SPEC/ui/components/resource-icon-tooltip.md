@@ -18,7 +18,7 @@ Any `ResourceIcon`, treasury coin icon, or `WorkerIcon` rendered **without** adj
 
 1. **Carry a `Tooltip`** wrapping the icon (and, where the icon shares a compact `icon + number` segment, that whole segment), using `triggerMode: TooltipTriggerMode.tap` so the same control shows the tooltip on desktop hover **and** on mobile tap.
 2. **Expose a name message.** The tooltip `message` is:
-   - **Commodity icon:** `"{displayName} ({category})"` — display name from `CommodityCatalog`, category from the localized lowercase `CommodityCategory` name (e.g. `Fabric (manufactured)`, `Coal (raw material)`). Built by `commodityIconTooltip(l10n, commodityId)` in `app/lib/features/game/utils/commodity_ui_helpers.dart`.
+   - **Commodity icon:** `"{displayName} ({category})"` — display name from `CommodityCatalog`, category from the localized lowercase `CommodityCategory` name (e.g. `Fabric (manufactured)`, `Coal (raw material)`). Built by `commodityIconTooltip(l10n, commodityId)` in `app/lib/features/game/widgets/production/commodity_ui_helpers.dart`.
    - **Treasury coin icon:** the localized `Treasury` label (`trainDialog_costTreasuryTooltip`).
    - **Worker (peasant) icon:** the localized `Peasants` label (`trainDialog_costPeasantsTooltip`).
 3. **Meet the touch target.** The tooltip-trigger region is at least `kMinTouchTargetSize` (44 dp) in both dimensions (`SPEC/ui/mobile-adaptation.md` § 1), even though the underlying glyph is smaller (the train-dialog cost icons render at `kTrainDialogCostIconSize` = 30 dp).

@@ -14,7 +14,7 @@ import 'package:colonizethis_turn/colonizethis_turn.dart'
     show researchPointsMedium;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/utils/research_slot_preview.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 
 Player _player({
   int treasury = 0,

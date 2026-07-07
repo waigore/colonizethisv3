@@ -11,8 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
-import 'package:colonizethis_app/features/game/widgets/production_labour_section.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_section.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'widget_test_pumps.dart';

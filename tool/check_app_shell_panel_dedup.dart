@@ -4,7 +4,7 @@
 // unit-panel sheets previously each re-derived the same
 // `shellPanelsNotDefined(...)` branch + `ObserveModeNotDefinedPanel`
 // construction. That duplication was collapsed into
-// `app/lib/features/game/widgets/shell_player_guarded_body.dart`
+// `app/lib/features/game/widgets/shell/shell_player_guarded_body.dart`
 // (`observeNotDefinedSentinel`), so every screen/panel now consumes the guard
 // through that helper instead of calling `shellPanelsNotDefined` directly.
 //
@@ -21,12 +21,12 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Declaration site of `bool shellPanelsNotDefined(ShellPlayerContext)`.
 const String shellPanelDedupDefinitionPath =
-    'app/lib/features/game/shell_player_context.dart';
+    'app/lib/features/game/widgets/shell/shell_player_context.dart';
 
 /// The single canonical helper (`observeNotDefinedSentinel`) that wraps the
 /// guard branch; every screen/panel must route through it.
 const String shellPanelDedupHelperPath =
-    'app/lib/features/game/widgets/shell_player_guarded_body.dart';
+    'app/lib/features/game/widgets/shell/shell_player_guarded_body.dart';
 
 /// Files allowed to reference `shellPanelsNotDefined` directly.
 const Set<String> shellPanelDedupAllowlist = <String>{

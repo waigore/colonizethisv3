@@ -8,7 +8,7 @@
 
 ## Widget contract
 
-`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
+`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -22,7 +22,7 @@ The widget owns no internal state. It pops itself via `Navigator.of(context).pop
 
 ## Trigger conditions
 
-- The dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, params)` where `combatModeChoiceDialogId == 'combat_mode_choice'` (declared in `app/lib/core/services/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler_scope_dialog_builders.dart` and constructs the dialog with `provinceName` and `isCapitalSiege` from the event `params`.
+- The dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, params)` where `combatModeChoiceDialogId == 'combat_mode_choice'` (declared in `app/lib/core/services/app_event_handler/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart` and constructs the dialog with `provinceName` and `isCapitalSiege` from the event `params`.
 - Required params:
   - `provinceName: String` — display name of the contested province.
   - `isCapitalSiege: bool` — `true` for capital sieges per [siege-mechanics.md](../game/siege-mechanics.md).

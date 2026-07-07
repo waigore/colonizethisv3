@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kPlayersBarToggleButtonKey, kPlayerTurnFeedToggleButtonKey;
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

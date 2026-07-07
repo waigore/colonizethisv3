@@ -6,7 +6,7 @@
 
 ## Widget contract
 
-`QuickBattleDeploymentView` is a presentational `StatelessWidget` (`app/lib/features/game/combat/quick_battle_deployment_view.dart`).
+`QuickBattleDeploymentView` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/quick_battle_deployment_view.dart`).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/core/services/game_event_bridge.dart';
+import 'package:colonizethis_app/core/services/event_bridge/game_event_bridge.dart';
 
 void main() {
   suppressLogsForTests();

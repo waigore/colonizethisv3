@@ -6,8 +6,8 @@
 // resource bar, and the comma-joined deficit hint without depending on the real
 // regiment/ship catalogs.
 
-import 'package:colonizethis_app/features/game/widgets/train_commodity_cost_dialog_base.dart';
-import 'package:colonizethis_app/features/game/widgets/train_dialog_base.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_commodity_cost_dialog_base.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_base.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

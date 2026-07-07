@@ -63,14 +63,10 @@ const Set<String> _appNavigatorKeyAllowedPathPrefixes = <String>{
 /// elsewhere in that file. Each entry should map to one SPEC paragraph
 /// (referenced in the trailing comment) so the gate stays auditable.
 const Set<String> _allowedFeatureLocalDialogFiles = <String>{
-  // Local by design — `SPEC/program/app-ui-wiring.md` line 84.
-  'app/lib/features/game/widgets/civilian_units_panel_support.dart',
-  // Work-target assignment bottom sheet split from
-  // `civilian_units_panel_support.dart` to keep panel parts under the
-  // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
-  // the parent file — `SPEC/program/app-ui-wiring.md` § "Local by design"
-  // (Refs #3878 Phase 3).
-  'app/lib/features/game/widgets/civilian_units_panel_support_unit_row.dart',
+  // Work-target assignment bottom sheet in civilian unit row part file.
+  // Same local-by-design rationale as the parent panel —
+  // `SPEC/program/app-ui-wiring.md` § "Local by design" (Refs #3878 Phase 3).
+  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).
@@ -78,49 +74,62 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #3878 Phase 3).
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build.dart',
+  // Map display-options dialog split from `game_map_area_build.dart` into
+  // `game_map_area_build_map_stack.dart` for Phase 3 flame map modularization.
+  // Same local-by-design rationale as the parent part (Refs #3878 Phase 3).
+  'app/lib/features/game/flame/map_state/game_map_area_build_map_stack.dart',
   'app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
-  'app/lib/features/game/flame/game_screen.dart',
+  'app/lib/features/game/screens/game/game_screen.dart',
+  // Next-turn processing dialog split from `game_screen.dart` into
+  // `game_screen_fallback_next_turn.dart` for Phase 3 flame modularization.
+  // Same local-by-design rationale as the parent file (Refs #3878 Phase 3).
+  'app/lib/features/game/screens/game/game_screen_fallback_next_turn.dart',
   // Android back / exit-to-main-menu confirm dialog extracted from
   // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
   // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
   'app/lib/features/game/flame/overlays/exit_confirm_dialog.dart',
-  'app/lib/features/game/widgets/tech_tree_widget.dart',
+  'app/lib/features/game/widgets/technology/tech_tree_widget.dart',
+  // Tech detail dialog split from `tech_tree_widget.dart` (Refs #3878).
+  'app/lib/features/game/widgets/technology/tech_tree_widget_dialog.dart',
   // GP researchers list modal split from tech pennant row / tree surfaces
   // (Refs #3862). Same local-by-design rationale as tech detail in
   // `tech_tree_widget.dart` — `SPEC/program/app-ui-wiring.md` § "Local by design".
-  'app/lib/features/game/widgets/tech_researchers_list_dialog.dart',
-  'app/lib/features/game/widgets/technology_panel.dart',
+  'app/lib/features/game/widgets/technology/tech_researchers_list_dialog.dart',
+  'app/lib/features/game/widgets/technology/technology_panel.dart',
   // Bottom-sheet split out of `technology_panel.dart` to keep the panel
   // file under the 700-line `repo.game_widgets_file_size` cap. Same
   // local-by-design rationale as the parent file (Refs #2864 S3 split).
-  'app/lib/features/game/widgets/technology_panel_orders.dart',
+  'app/lib/features/game/widgets/technology/technology_panel_orders.dart',
+  // Choose-tech dialog split from `technology_panel_orders.dart` (Refs #3878).
+  'app/lib/features/game/widgets/technology/technology_panel_choose_tech_dialog.dart',
   // Read-only research-funding breakdown dialog split out of
   // `technology_panel.dart` to keep that file under the
   // `repo.game_widgets_file_size` cap. Same local-by-design rationale as the
   // parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
   // (`ResearchFundingBreakdownDialog`, Refs #3512).
-  'app/lib/features/game/widgets/research_slot_turn_preview_view.dart',
-  'app/lib/features/shell/new_game_setup_flow.dart',
+  'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart',
+  'app/lib/features/shell/new_game_setup_flow_dialogs.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
-  'app/lib/features/game/widgets/naval_units_panel.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel.dart',
   // Split / move fleet and home-transfer dialogs extracted from
   // `naval_units_panel.dart` to keep panel parts under the
   // `repo.game_widgets_file_size` cap. Same local-by-design rationale as
   // the parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
   // (Refs #3878 Phase 3).
-  'app/lib/features/game/widgets/naval_units_panel_support_dialogs.dart',
-  'app/lib/features/game/widgets/naval_units_panel_support_home_transfer.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
-  'app/lib/features/game/widgets/military_units_panel.dart',
-  'app/lib/features/game/widgets/move_army_dialog.dart',
+  'app/lib/features/game/widgets/units/military/military_units_panel.dart',
+  'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
+  'app/lib/features/game/widgets/unit_orders/move_army_dialog_declare_war.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate
   // issues before removal from this allow-list.
-  'app/lib/features/game/flame/game_side_menu.dart',
-  'app/lib/features/game/screens/production_screen.dart',
+  'app/lib/features/game/flame/controls/game_side_menu.dart',
+  'app/lib/features/game/screens/production/production_screen.dart',
 };
 
 /// Files allowed to emit a non-[ClosePanelEvent] bus event from inside a

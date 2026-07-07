@@ -445,6 +445,14 @@ rules:
     runner: dart
     script: tool/check_app_flame_map_import_boundary.dart
 
+  - rule_id: repo.app_flame_file_size
+    group: structure
+    title: app/lib/features/game/flame files must stay at or below 600 non-comment lines
+    spec: SPEC/program/dart-file-non-comment-line-size.md
+    runner: dart
+    script: tool/check_app_flame_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)

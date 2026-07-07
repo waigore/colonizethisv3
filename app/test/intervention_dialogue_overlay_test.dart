@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

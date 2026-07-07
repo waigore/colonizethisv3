@@ -75,4 +75,74 @@ mixin _GameMapAreaE2e
           ),
         );
   }
+
+  List<Widget> _buildE2eOverlayTaps(RegionMapViewData projectedRegion) {
+    return [
+      Positioned(
+        right: kMapOverlayEdgeInset,
+        top: kMapOverlayEdgeInset,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: kCtE2EOpenCapitalProvinceDetailKey,
+              onTap: _e2eOpenHumanCapitalTileDetail,
+            ),
+          ),
+        ),
+      ),
+      if (_workTargetSelection != null &&
+          _cachedValidTileKeys != null &&
+          _cachedValidTileKeys!.isNotEmpty)
+        Positioned(
+          right: kMapOverlayEdgeInset,
+          top: kMapOverlayEdgeInset + 48,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: kCtE2ESelectFirstValidWorkTileKey,
+                onTap: _e2eSelectFirstValidWorkTargetTile,
+              ),
+            ),
+          ),
+        ),
+      if (projectedRegion.civilianTileMarkers.isNotEmpty)
+        Positioned(
+          right: kMapOverlayEdgeInset,
+          top: kMapOverlayEdgeInset + 96,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: kCtE2EOpenFirstCivilianMarkerPanelKey,
+                onTap: _e2eOpenFirstCivilianMarkerPanel,
+              ),
+            ),
+          ),
+        ),
+      if (projectedRegion.fleetTileMarkers.isNotEmpty)
+        Positioned(
+          right: kMapOverlayEdgeInset,
+          top: kMapOverlayEdgeInset + 144,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: kCtE2EOpenFirstFleetMarkerPanelKey,
+                onTap: _e2eOpenFirstFleetMarkerPanel,
+              ),
+            ),
+          ),
+        ),
+    ];
+  }
 }

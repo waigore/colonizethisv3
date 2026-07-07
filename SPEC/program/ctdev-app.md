@@ -50,6 +50,6 @@ ctdev is a developer tool and does **not** host the main player app's shell or i
 | Main player app screen | Dedicated SPEC |
 |------------------------|----------------|
 | `ShellScreen` (`Routes.shell`, `app/lib/features/shell/shell_screen.dart`) | [`../ui/shell-screen.md`](../ui/shell-screen.md) |
-| `GameScreen` (`Routes.game`, `app/lib/features/game/flame/game_screen.dart`) | [`../ui/game-screen.md`](../ui/game-screen.md) |
+| `GameScreen` (`Routes.game`, `app/lib/features/game/screens/game/game_screen.dart`) | [`../ui/game-screen.md`](../ui/game-screen.md) |
 
 Cross-cutting routing/bus rules for both player-app screens live in [`app-ui-wiring.md`](app-ui-wiring.md) § Routes. The ctdev tool's own screens (Init Game Config, Init Game Map Debug, Running Game) remain documented in the **Main Screens / Tabs** table above and are unrelated to `ShellScreen` / `GameScreen`.

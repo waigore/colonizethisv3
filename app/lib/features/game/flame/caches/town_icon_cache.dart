@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import '../../../../config/app_assets.dart';
+import '../../../../config/ct_legacy_town_icons.dart';
 import 'asset_image_cache.dart';
 
 /// All town icon cache ids: 16 level/style variants plus the port glyph.
@@ -39,10 +40,42 @@ class TownIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) {
+    return assetPathForId(assetId);
+  }
+
+  /// Resolves bundle path for [assetId]. Tests may pass [useLegacyTownIcons]
+  /// to override the compile-time [kCtLegacyTownIconsEnabled] gate.
+  static String assetPathForId(
+    String assetId, {
+    bool? useLegacyTownIcons,
+  }) {
     if (assetId == portIconId) {
       return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
     }
+    final useLegacy = useLegacyTownIcons ?? kCtLegacyTownIconsEnabled;
+    if (useLegacy && _isLevel1TownIconId(assetId)) {
+      final suffix = assetId.replaceFirst('town_', '');
+      return '${kAppIcon64AssetPrefix}ui_icon_com_town_${suffix}_legacy_64.png';
+    }
     return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
+  }
+
+  static bool _isLevel1TownIconId(String assetId) {
+    for (final style in kTownIconStyles) {
+      if (assetId == 'town_${style}_1') return true;
+    }
+    return false;
+  }
+
+  /// Retired S9a level-1 hamlet PNGs shipped for rollback via
+  /// [CT_LEGACY_TOWN_ICONS].
+  static Iterable<String> get legacyTownIconAssetPaths sync* {
+    for (final style in kTownIconStyles) {
+      yield assetPathForId(
+        'town_${style}_1',
+        useLegacyTownIcons: true,
+      );
+    }
   }
 
   @override

@@ -16,7 +16,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// scaffold and the same "keep one on the source side / new side non-empty"
 /// Confirm rule. That shared chrome lives in [_canonicalBase]
 /// ([SplitEntityDialog], declared in
-/// `app/lib/features/game/widgets/split_entity_dialog.dart`).
+/// `app/lib/features/game/widgets/unit_orders/split_entity_dialog.dart`).
 ///
 /// This check prevents regression where a new `Split*Dialog` re-implements the
 /// scaffold and confirm rule instead of extending the canonical base: any
@@ -92,7 +92,7 @@ int runCheckAppSplitDialogBase(
   logE(
     'Fix: have each `$_dialogPrefix*$_dialogSuffix` widget '
     '`extends $_canonicalBase` (see '
-    'app/lib/features/game/widgets/split_entity_dialog.dart) and return '
+    'app/lib/features/game/widgets/unit_orders/split_entity_dialog.dart) and return '
     '`buildSplitDialogScaffold(...)` from `build` instead of re-implementing '
     'the dialog scaffold and confirm rule.',
   );

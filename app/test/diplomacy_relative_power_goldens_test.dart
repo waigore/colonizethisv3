@@ -21,8 +21,8 @@
 // (relative-power golden).
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

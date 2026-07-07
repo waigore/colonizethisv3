@@ -16,7 +16,7 @@ void main() {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final servicesDir = Directory(
-      '${temp.path}/app/lib/core/services',
+      '${temp.path}/app/lib/core/services/debug',
     )..createSync(recursive: true);
 
     File(
@@ -48,7 +48,7 @@ DebugCommandResult applyDebugOffender({Object? currentGame}) {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final servicesDir = Directory(
-      '${temp.path}/app/lib/core/services',
+      '${temp.path}/app/lib/core/services/debug',
     )..createSync(recursive: true);
 
     File(

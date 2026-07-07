@@ -28,13 +28,21 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _overlayRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay.dart';
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 const String _overlaySectionsRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay_sections.dart';
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections.dart';
 
-const String _overlayEconomicMilitaryRelativePath =
-    'lib/features/game/widgets/province_sea_zone_detail_overlay_economic_military_sections.dart';
+const String _overlayEconomicSectionRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_section.dart';
+
+const String _overlayUnitSectionsRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_unit_sections.dart';
+
+const List<String> _overlayEconomicUnitPartRelativePaths = <String>[
+  _overlayEconomicSectionRelativePath,
+  _overlayUnitSectionsRelativePath,
+];
 
 const String _ctRegionMapRelativePath = 'lib/widgets/ct_region_map.dart';
 
@@ -162,29 +170,28 @@ void main() {
         },
       );
 
-      test(
-        '$_overlayEconomicMilitaryRelativePath contains no import of '
-        'ct_region_map.dart',
-        () {
-          final code = _stripDartComments(
-            _readAppSource(_overlayEconomicMilitaryRelativePath),
-          );
-          final matches = _ctRegionMapImportPattern
-              .allMatches(code)
-              .map((m) => m.group(0)?.trim())
-              .toList(growable: false);
-          expect(
-            matches,
-            isEmpty,
-            reason:
-                '$_overlayEconomicMilitaryRelativePath must not import '
-                '`ct_region_map.dart`. Even if this file is converted from a '
-                'part-of fragment into a stand-alone library, the SPEC '
-                'no-cross-import contract remains in force (Refs #2865 S1). '
-                'Forbidden import lines found: $matches.',
-          );
-        },
-      );
+      for (final partPath in _overlayEconomicUnitPartRelativePaths) {
+        test(
+          '$partPath contains no import of ct_region_map.dart',
+          () {
+            final code = _stripDartComments(_readAppSource(partPath));
+            final matches = _ctRegionMapImportPattern
+                .allMatches(code)
+                .map((m) => m.group(0)?.trim())
+                .toList(growable: false);
+            expect(
+              matches,
+              isEmpty,
+              reason:
+                  '$partPath must not import '
+                  '`ct_region_map.dart`. Even if this file is converted from a '
+                  'part-of fragment into a stand-alone library, the SPEC '
+                  'no-cross-import contract remains in force (Refs #2865 S1). '
+                  'Forbidden import lines found: $matches.',
+            );
+          },
+        );
+      }
     },
   );
 
@@ -236,28 +243,27 @@ void main() {
       },
     );
 
-    test(
-      '$_overlayEconomicMilitaryRelativePath contains no import of '
-      'map_province_panel_provider.dart',
-      () {
-        final code = _stripDartComments(
-          _readAppSource(_overlayEconomicMilitaryRelativePath),
-        );
-        final matches = _mapProvincePanelProviderImportPattern
-            .allMatches(code)
-            .map((m) => m.group(0)?.trim())
-            .toList(growable: false);
-        expect(
-          matches,
-          isEmpty,
-          reason:
-              '$_overlayEconomicMilitaryRelativePath must not import '
-              '`map_province_panel_provider.dart`. The provider belongs to '
-              'panel hosts only (Refs #2865 S1). Forbidden import lines '
-              'found: $matches.',
-        );
-      },
-    );
+    for (final partPath in _overlayEconomicUnitPartRelativePaths) {
+      test(
+        '$partPath contains no import of map_province_panel_provider.dart',
+        () {
+          final code = _stripDartComments(_readAppSource(partPath));
+          final matches = _mapProvincePanelProviderImportPattern
+              .allMatches(code)
+              .map((m) => m.group(0)?.trim())
+              .toList(growable: false);
+          expect(
+            matches,
+            isEmpty,
+            reason:
+                '$partPath must not import '
+                '`map_province_panel_provider.dart`. The provider belongs to '
+                'panel hosts only (Refs #2865 S1). Forbidden import lines '
+                'found: $matches.',
+          );
+        },
+      );
+    }
   });
 
   group('CtRegionMap does not import ProvinceSeaZoneDetailOverlay', () {

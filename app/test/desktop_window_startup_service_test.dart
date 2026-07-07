@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/desktop_window_settings.dart';
-import 'package:colonizethis_app/core/services/desktop_window_startup_service.dart';
+import 'package:colonizethis_app/core/services/platform/desktop_window_startup_service.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 

@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 
 class _PendingOverturesGameService extends GameService {
   _PendingOverturesGameService(super.box, super.adapter);

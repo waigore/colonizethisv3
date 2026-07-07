@@ -189,7 +189,7 @@ const b = 'newWorld';
     test('does not skip ordinary production files', () {
       expect(
         shouldSkipAppRegionStringLiteralsFile(
-          'app/lib/features/game/widgets/utils/military_tree_builder.dart',
+          'app/lib/features/game/widgets/panels/tree_builders/military_tree_builder.dart',
         ),
         isFalse,
       );
