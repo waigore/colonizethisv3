@@ -25,12 +25,12 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen.dart'
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen.dart'
     show GameScreen, kGameMapPlayersBarKey;
-import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

@@ -1,14 +1,14 @@
 # Game Side Menu
 
 **Screen ID:** `GAME50001` — stable; do not reassign.
-**SPEC/ui** — Slide-out hamburger drawer for the in-game shell. Hosts **Game Parameters** (read-only) and **Debug log**. Authority for the hamburger contract (240 dp width, content list, scrim/modal behaviour): [`in-game-shell-narrow.md`](in-game-shell-narrow.md). Related: [`pause-menu-panel.md`](pause-menu-panel.md) (the modal bottom-sheet variant emitted by `OpenPauseMenuPanelEvent`). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Source: `app/lib/features/game/flame/game_side_menu.dart`.
+**SPEC/ui** — Slide-out hamburger drawer for the in-game shell. Hosts **Game Parameters** (read-only) and **Debug log**. Authority for the hamburger contract (240 dp width, content list, scrim/modal behaviour): [`in-game-shell-narrow.md`](in-game-shell-narrow.md). Related: [`pause-menu-panel.md`](pause-menu-panel.md) (the modal bottom-sheet variant emitted by `OpenPauseMenuPanelEvent`). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Source: `app/lib/features/game/flame/controls/game_side_menu.dart`.
 
 **Mockup:** [mockups/GAME50001-game-side-menu.html](mockups/GAME50001-game-side-menu.html)
 ---
 
 ## Widget contract
 
-`GameSideMenu` is a `ConsumerWidget` (`app/lib/features/game/flame/game_side_menu.dart`). It animates in from the left edge using a `TweenAnimationBuilder<Offset>` and renders its body inside a `Positioned` slot so it overlays the map area as a drawer.
+`GameSideMenu` is a `ConsumerWidget` (`app/lib/features/game/flame/controls/game_side_menu.dart`). It animates in from the left edge using a `TweenAnimationBuilder<Offset>` and renders its body inside a `Positioned` slot so it overlays the map area as a drawer.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -90,9 +90,9 @@ The widget itself never reads `turnResolutionBlockingProvider`; the side menu re
 - `GestureDetector` — picks up drag-left close gesture.
 - [`CtPanel`](buttons-nine-patch.md) — pixel-art frame around the body.
 - [`CtNinePatchButton`](buttons-nine-patch.md) — every interactive row (close, Game Parameters, Debug log).
-- `Icon(Icons.tune, size: 20)` (Game Parameters), `Icon(Icons.bug_report, size: 20)` (Debug log) — Material icons matching `app/lib/features/game/flame/game_side_menu.dart`. Both icons resolve their colour from the dark-theme palette per § Dark-theme chrome below.
+- `Icon(Icons.tune, size: 20)` (Game Parameters), `Icon(Icons.bug_report, size: 20)` (Debug log) — Material icons matching `app/lib/features/game/flame/controls/game_side_menu.dart`. Both icons resolve their colour from the dark-theme palette per § Dark-theme chrome below.
 - Localized strings: `appL10n(context).gameParameters_menuEntry`, `appL10n(context).debugLog_title`.
-- Local dialog: `GameParametersDialog` (`app/lib/features/game/widgets/game_parameters_dialog.dart`) for the read-only Infinite mode display.
+- Local dialog: `GameParametersDialog` (`app/lib/features/game/widgets/dialogs/game_parameters_dialog.dart`) for the read-only Infinite mode display.
 
 ---
 

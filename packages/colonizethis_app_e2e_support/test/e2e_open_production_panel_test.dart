@@ -24,7 +24,7 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

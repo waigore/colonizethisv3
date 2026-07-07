@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 /// unit-row presentation — differing only in the economy catalog and id
 /// accessor. That shared machinery is centralized in [_canonicalBase]
 /// (`CommodityCostTrainDialogState`, declared in
-/// `app/lib/features/game/widgets/train_commodity_cost_dialog_base.dart`).
+/// `app/lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart`).
 ///
 /// This check prevents a regression where either commodity-cost dialog
 /// re-implements the cost math or private resource-bar / unit-row widgets
@@ -31,8 +31,8 @@ import 'package:path/path.dart' as p;
 const _canonicalBase = 'CommodityCostTrainDialogState';
 
 const _targetFilesRelative = <String>[
-  'app/lib/features/game/widgets/train_military_dialog.dart',
-  'app/lib/features/game/widgets/train_naval_dialog.dart',
+  'app/lib/features/game/widgets/train/train_military_dialog.dart',
+  'app/lib/features/game/widgets/train/train_naval_dialog.dart',
 ];
 
 const _forbiddenMemberNames = <String>{
@@ -108,7 +108,7 @@ int runCheckAppTrainDialogCommodityCostDedup(
   }
   logE(
     'Fix: have TrainMilitaryDialog / TrainNavalDialog `extends $_canonicalBase` '
-    '(app/lib/features/game/widgets/train_commodity_cost_dialog_base.dart) and '
+    '(app/lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart) and '
     'supply only commodityCostEntries / resourceBarCommodityIds / the tech map '
     '/ title / committed-orders event, instead of re-declaring the cost math '
     '(${_forbiddenMemberNames.join(', ')}) or private '

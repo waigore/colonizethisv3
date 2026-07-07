@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/widgets/train_unit_dialog_helper.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_unit_dialog_helper.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';

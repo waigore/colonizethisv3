@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
+import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 
 void main() {
   suppressLogsForTests();

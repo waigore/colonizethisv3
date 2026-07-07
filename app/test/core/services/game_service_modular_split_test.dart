@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 
 /// #2575 work item 12 — [GameService] library split sanity checks.
 void main() {

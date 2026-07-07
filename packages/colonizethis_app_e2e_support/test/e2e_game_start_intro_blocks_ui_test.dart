@@ -18,7 +18,7 @@
 ///    loading (spinner + `CtDialogShell` chrome) → returns true.
 library;
 
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/foundation.dart';

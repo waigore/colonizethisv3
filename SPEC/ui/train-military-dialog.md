@@ -1,7 +1,7 @@
 # Train Military Dialog
 
 **Screen ID:** `UNIT50001` — stable; do not reassign.
-**SPEC/ui** — Modal dialog for queuing military regiment training orders. Implementation: `app/lib/features/game/widgets/train_military_dialog.dart`. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/ui** — Modal dialog for queuing military regiment training orders. Implementation: `app/lib/features/game/widgets/train/train_military_dialog.dart`. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
 **Widgetbook:** `Train Military Dialog` → `app/lib/widgetbook/catalog_part3.dart`.
 
 **Mockup:** [mockups/UNIT50001-train-military-dialog.html](mockups/UNIT50001-train-military-dialog.html)
@@ -89,7 +89,7 @@ If no capital exists, UI shows `No capital set — cannot train units`, steppers
 
 ### Shared helper requirement
 
-To keep military and civilian train-dialog orchestration aligned, the UI layer must use the shared helper at `app/lib/features/game/widgets/train_unit_dialog_helper.dart` for:
+To keep military and civilian train-dialog orchestration aligned, the UI layer must use the shared helper at `app/lib/features/game/widgets/train/train_unit_dialog_helper.dart` for:
 
 - initializing counts from current orders at capital (`initialTrainDialogCountsFromOrders`)
 - materializing `List<BuildUnitOrder>` from counts (`materializeTrainDialogOrdersFromCounts`)

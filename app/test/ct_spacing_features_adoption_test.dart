@@ -355,10 +355,12 @@ void main() {
 /// `CtSpacing.<token>` reference invariants are covered there; this list
 /// adds only the no-raw-`SizedBox`-token-gap invariant.
 const List<String> _sizedBoxMigratedFiles = <String>[
-  'lib/features/game/dialogue/game_start_intro_overlay.dart',
-  'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/dialogue/overture_dialogue_overlay.dart',
-  'lib/features/game/dialogue/call_to_arms_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
+  'lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
 ];
 
 /// Feature files migrated to `CtSpacing` for `EdgeInsets.all(N)` and
@@ -372,32 +374,35 @@ const List<String> _sizedBoxMigratedFiles = <String>[
 /// `N ∈ {8, 12, 16, 20, 24}`, and no raw `EdgeInsets.symmetric` named
 /// arg literal for the same token set.
 const List<String> _migratedFeatureFiles = <String>[
-  'lib/features/game/combat/quick_battle_deployment_view.dart',
-  'lib/features/game/dialogue/game_start_intro_overlay.dart',
-  'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/combat/quick_battle_deployment_view.dart',
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
   // CtSpacing callsites moved to the extracted selection-prompt widget.
-  'lib/features/game/flame/game_map_canvas_stack_selection_prompt.dart',
-  'lib/features/game/flame/game_side_menu.dart',
+  'lib/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart',
+  'lib/features/game/flame/controls/game_side_menu.dart',
   'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
   'lib/features/game/flame/overlays/victory_overlay.dart',
-  'lib/features/game/screens/diplomacy_detail_screen.dart',
-  'lib/features/game/screens/technology_screen.dart',
-  'lib/features/game/screens/trade_screen.dart',
-  'lib/features/game/screens/trade_screen_deal_book.dart',
-  'lib/features/game/widgets/panels/civilian_units_panel.dart',
+  'lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
+  'lib/features/game/screens/technology/technology_screen.dart',
+  'lib/features/game/screens/trade/trade_screen.dart',
+  'lib/features/game/screens/trade/trade_screen_deal_book_panel.dart',
+  'lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
   // civilian_units_panel_support.dart was split into part files; the
-  // token-eligible `EdgeInsets` callsites live in the unit-row part.
-  'lib/features/game/widgets/panels/civilian_units_panel_support_unit_row.dart',
-  'lib/features/game/widgets/diplomacy_dialogs.dart',
-  'lib/features/game/widgets/diplomacy_panel.dart',
-  'lib/features/game/widgets/diplomacy_panel_chrome.dart',
-  'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
-  'lib/features/game/widgets/fleet_expansion_tile.dart',
-  'lib/features/game/widgets/game_tab_bar.dart',
-  'lib/features/game/widgets/panels/military_units_panel.dart',
-  'lib/features/game/widgets/move_army_dialog.dart',
-  'lib/features/game/widgets/move_fleet_dialog.dart',
+  // token-eligible `EdgeInsets` callsites live in the unit-row actions part.
+  'lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_badges.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_standing.dart',
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
+  'lib/features/game/widgets/panels/fleet_expansion_tile.dart',
+  'lib/features/game/widgets/shell/game_tab_bar.dart',
+  'lib/features/game/widgets/units/military/military_units_panel.dart',
+  'lib/features/game/widgets/unit_orders/move_army_dialog.dart',
+  'lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
   // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
   // only CtSpacing callsite (the header button's vertical: CtSpacing.s padding)
   // with CtActionTextButton pills, leaving only an out-of-scale
@@ -406,20 +411,20 @@ const List<String> _migratedFeatureFiles = <String>[
   // spacing left, the import/token-reference invariants no longer apply.
   'lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/panels/pause_menu_panel.dart',
-  'lib/features/game/widgets/production_allocation_row_chrome.dart',
-  'lib/features/game/widgets/production_commodity_breakdown_dialog.dart',
-  'lib/features/game/widgets/production_panel.dart',
-  'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
+  'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
+  'lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart',
+  'lib/features/game/widgets/production/production_panel.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart',
   // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
   // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
   // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs
   // delegate their scaffold to that base and no longer contain any
   // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
   // token-reference invariants moved to split_entity_dialog.dart below.
-  'lib/features/game/widgets/split_entity_dialog.dart',
-  'lib/features/game/widgets/tech_tree_widget.dart',
-  'lib/features/game/widgets/technology_panel.dart',
-  'lib/features/game/widgets/technology_panel_orders.dart',
+  'lib/features/game/widgets/unit_orders/split_entity_dialog.dart',
+  'lib/features/game/widgets/technology/tech_tree_widget.dart',
+  'lib/features/game/widgets/technology/technology_panel.dart',
+  'lib/features/game/widgets/technology/technology_panel_orders.dart',
   // train_civilians_dialog.dart / train_military_dialog.dart dropped from the
   // adoption list: #3594 extracted the shared TrainDialogBase state, which now
   // owns the `EdgeInsets.fromLTRB(CtSpacing.l, CtSpacing.ml, ...)`
@@ -428,10 +433,10 @@ const List<String> _migratedFeatureFiles = <String>[
   // wrapper to the base and no longer contain token-eligible
   // `EdgeInsets`/`CtSpacing` spacing, so the import and token-reference
   // invariants moved to train_dialog_base.dart below.
-  'lib/features/game/widgets/train_dialog_base.dart',
-  'lib/features/game/widgets/train_dialog_chrome.dart',
-  'lib/features/game/widgets/transfer_to_home_fleet_dialog.dart',
-  'lib/features/game/widgets/turn_news_dialog.dart',
+  'lib/features/game/widgets/train/train_dialog_base.dart',
+  'lib/features/game/widgets/train/train_dialog_chrome.dart',
+  'lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart',
+  'lib/features/game/widgets/dialogs/turn_news_dialog.dart',
   'lib/features/game/widgets/units/shared/location_section_header.dart',
   'lib/features/game/widgets/units/shared/region_section_header.dart',
   'lib/features/game/widgets/units/shared/units_entity_action_row.dart',

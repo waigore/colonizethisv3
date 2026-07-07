@@ -12,10 +12,10 @@ int runCheckDebugHandlerOnePerFile(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final servicesDir = Directory(
-    p.join(repoRoot, 'app', 'lib', 'core', 'services'),
+    p.join(repoRoot, 'app', 'lib', 'core', 'services', 'debug'),
   );
   if (!servicesDir.existsSync()) {
-    logE('check_debug_handler_one_per_file: app/lib/core/services not found.');
+    logE('check_debug_handler_one_per_file: app/lib/core/services/debug not found.');
     return 1;
   }
 
@@ -34,8 +34,12 @@ int runCheckDebugHandlerOnePerFile(
 
   for (final file in handlerFiles) {
     final relativePath = p.relative(file.path, from: repoRoot);
+    final content = file.readAsStringSync();
+    if (_isDartPartFragmentFile(content)) {
+      continue;
+    }
     final parsed = parseString(
-      content: file.readAsStringSync(),
+      content: content,
       path: relativePath,
     );
     final applyFns = parsed.unit.declarations
@@ -59,6 +63,21 @@ int runCheckDebugHandlerOnePerFile(
     logE(' - $violation');
   }
   return 1;
+}
+
+/// True when the first non-empty, non-line-comment line is a `part of` directive.
+bool _isDartPartFragmentFile(String content) {
+  for (final raw in content.split('\n')) {
+    final line = raw.trimLeft();
+    if (line.isEmpty) {
+      continue;
+    }
+    if (line.startsWith('//')) {
+      continue;
+    }
+    return line.startsWith('part of ');
+  }
+  return false;
 }
 
 void main() {

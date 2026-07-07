@@ -1,7 +1,7 @@
 # Diplomacy Panel
 
 **Screen ID:** `GAME30001` — stable; do not reassign.
-**SPEC/ui** — Full-page diplomacy screen. Implementation: `app/lib/features/game/screens/diplomacy_screen.dart`.
+**SPEC/ui** — Full-page diplomacy screen. Implementation: `app/lib/features/game/screens/diplomacy/diplomacy_screen.dart`.
 **Widgetbook:** `Diplomacy Panel` → `app/lib/widgetbook/catalog.dart`. Source: [diplomacy.md](../game/diplomacy.md), [factions.md](../game/factions.md).
 
 **Mockup:** [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html)

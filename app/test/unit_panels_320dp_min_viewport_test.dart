@@ -49,9 +49,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 
 import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';

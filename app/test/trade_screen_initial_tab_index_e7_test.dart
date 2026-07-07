@@ -18,7 +18,7 @@
 //    Deal Book stories in the SPEC-pinned order so reviewers can
 //    audit the live ledger chrome.
 
-import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

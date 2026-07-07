@@ -30,7 +30,7 @@
 //     the Market tab body at all.
 
 import 'package:colonizethis_app/config/app_constants.dart';
-import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';

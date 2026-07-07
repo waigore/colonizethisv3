@@ -10,7 +10,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';

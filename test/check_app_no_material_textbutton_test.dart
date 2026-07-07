@@ -431,19 +431,19 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
       () {
         expect(
           shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/flame/game_map_canvas_stack.dart',
+            'app/lib/features/game/flame/map_area/game_map_canvas_stack.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/widgets/move_fleet_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/widgets/panels/military_units_panel.dart',
+            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
           ),
           isFalse,
         );

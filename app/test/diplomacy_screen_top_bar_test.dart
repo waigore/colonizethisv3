@@ -2,7 +2,7 @@
 // (Refs #2863 R1–R3). SPEC/ui/diplomacy-panel.md § Top bar.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';

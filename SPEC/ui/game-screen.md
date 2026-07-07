@@ -1,7 +1,7 @@
 # Game Screen
 
 **Screen ID:** `GAME10001` — stable; do not reassign.
-**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). Implementation: `app/lib/features/game/flame/game_screen.dart`.
+**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). Implementation: `app/lib/features/game/screens/game/game_screen.dart`.
 **Widgetbook:** `Game Screen` → `app/lib/widgetbook/catalog.dart`. Bus wiring: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Turn resolution: [`turn-resolution.md`](../program/turn-resolution.md), [`next-turn-confirmation.md`](next-turn-confirmation.md). Victory: [`victory.md`](../game/victory.md). Routes: `app/lib/config/routes.dart`.
 
 **Mockup:** [mockups/GAME10001-game-screen.html](mockups/GAME10001-game-screen.html)
@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-`GameScreen` is a `ConsumerWidget` (`app/lib/features/game/flame/game_screen.dart`). It takes no constructor parameters; all state comes from Riverpod providers.
+`GameScreen` is a `ConsumerWidget` (`app/lib/features/game/screens/game/game_screen.dart`). It takes no constructor parameters; all state comes from Riverpod providers.
 
 | Provider | Read mode | Used for |
 |----------|-----------|----------|
@@ -156,7 +156,7 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
   When `GameScreen.build` runs,
   Then the Next turn `CtNinePatchButton` is rendered with `onPressed == null` (disabled) and the pause `IconButton` remains enabled (gating allows pause-menu opens per [`app-ui-wiring.md`](../program/app-ui-wiring.md)).
 
-- Given the Next turn `CtNinePatchButton` is rendered in its disabled state (`onPressed == null`) — either inside [`GameTopBar`](../../app/lib/features/game/widgets/game_top_bar.dart) on the map view or in the `GameScreen` fallback Flame-canvas branch,
+- Given the Next turn `CtNinePatchButton` is rendered in its disabled state (`onPressed == null`) — either inside [`GameTopBar`](../../app/lib/features/game/widgets/shell/game_top_bar.dart) on the map view or in the `GameScreen` fallback Flame-canvas branch,
   When the widget tree is inspected,
   Then the disabled wrapper is an `Opacity` widget whose `opacity` resolves to `0.35` (matching `.next-turn.disabled { opacity: 0.35 }` in [`mockups/GAME10001-game-screen.html`](mockups/GAME10001-game-screen.html) and issue #2861 R1), and the `CtNinePatchButton` instance is constructed with an explicit `disabledOpacity: 0.35` argument overriding the catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`). The pause `IconButton` and other `CtNinePatchButton` call sites without an explicit override continue to use the catalog-default `0.4` (regression guard).
 

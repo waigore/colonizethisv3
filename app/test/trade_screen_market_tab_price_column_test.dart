@@ -6,7 +6,7 @@
 // rightmost digit of each price shares a vertical edge across commodity rows.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

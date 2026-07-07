@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the mo
 
 ## Purpose
 
-The three unit panels (`UNIT10001`, `UNIT20001`, `UNIT30001`) mount inside a `showModalBottomSheet` host in [`app_event_handler.dart`](../../../app/lib/core/services/app_event_handler.dart). Without bespoke chrome the sheet renders with the bare Material surface, which diverges from the per-panel HTML mockups. `UnitsPanelSheetSurface` paints the mockup `.sheet` frame so the modal host matches the mockups while the inner [`UnitsPanelShell`](units-panel-shell.md) keeps owning the panel body. Tracking issue: [#3514](https://github.com/waigore/colonizethisv3/issues/3514) (owner decision #4).
+The three unit panels (`UNIT10001`, `UNIT20001`, `UNIT30001`) mount inside a `showModalBottomSheet` host in [`app_event_handler.dart`](../../../app/lib/core/services/app_event_handler/app_event_handler.dart). Without bespoke chrome the sheet renders with the bare Material surface, which diverges from the per-panel HTML mockups. `UnitsPanelSheetSurface` paints the mockup `.sheet` frame so the modal host matches the mockups while the inner [`UnitsPanelShell`](units-panel-shell.md) keeps owning the panel body. Tracking issue: [#3514](https://github.com/waigore/colonizethisv3/issues/3514) (owner decision #4).
 
 The mockup `.sheet` rule reproduced is:
 
@@ -99,5 +99,5 @@ The composite has no internal state and no variants. The same frame is painted f
 
 - Inner body chrome: [`units-panel-shell.md`](units-panel-shell.md).
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *Editorial-monocle palette*, § *Radius tokens*.
-- Host: [`app_event_handler.dart`](../../../app/lib/core/services/app_event_handler.dart) `_openCivilianUnitsPanel` / `_openMilitaryUnitsPanel` / `_openNavalUnitsPanel`.
+- Host: [`app_event_handler.dart`](../../../app/lib/core/services/app_event_handler/app_event_handler.dart) `_openCivilianUnitsPanel` / `_openMilitaryUnitsPanel` / `_openNavalUnitsPanel`.
 - Tracking issue: [#3514](https://github.com/waigore/colonizethisv3/issues/3514) (owner decision #4).

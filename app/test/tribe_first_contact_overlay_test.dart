@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/features/game/dialogue/tribe_first_contact_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

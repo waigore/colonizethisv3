@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
 import 'support/panel_test_fixtures.dart';
 

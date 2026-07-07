@@ -13,7 +13,7 @@
 //     `SPEC/ui/player-turn-event-feed.md` § Card chrome — narrow layout and
 //     `SPEC/ui/mobile-adaptation.md` § 6.
 
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

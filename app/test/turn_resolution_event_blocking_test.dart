@@ -1,6 +1,6 @@
 // Turn-resolution bus guards (#2160). SPEC/program/app-event-bus.md.
 
-import 'package:colonizethis_app/core/services/app_event_handler.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';

@@ -240,6 +240,12 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // The editorial-monocle palette has no semantic token for these
   // compositing-only colors, analogous to the Flame renderer allowlist.
   'app/lib/widgets/ct_main_menu_collage.dart',
+  // `part of 'ct_main_menu_collage.dart'` — painter `saveLayer` host split
+  // under the file-size cap (SPEC/program/dart-file-non-comment-line-size.md).
+  // Carries the same decorative `CustomPainter` `saveLayer` alpha multiplier
+  // as the collage library host; allowlisted for the identical compositing
+  // operand rationale (category #5 above).
+  'app/lib/widgets/ct_main_menu_collage_painter.dart',
   'app/lib/widgets/main_menu.dart',
   // `part of 'main_menu.dart'` — button widgets split out under the
   // file-size cap (SPEC/program/dart-file-non-comment-line-size.md). Carries

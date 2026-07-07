@@ -1,7 +1,7 @@
 # Overture Dialogue Overlay
 
 **Screen ID:** `OVL30001` — stable; do not reassign.
-**SPEC/ui** — Blocking overlay for pending overture offers before the turn advances. Implementation: `app/lib/features/game/dialogue/overture_dialogue_overlay.dart`.
+**SPEC/ui** — Blocking overlay for pending overture offers before the turn advances. Implementation: `app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart`.
 **Widgetbook:** `Overture Dialogue Overlay` → `app/lib/widgetbook/catalog.dart`. Provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueOvertureAsset`.
 
 **Mockup:** [mockups/OVL30001-game-overture-overlay.html](mockups/OVL30001-game-overture-overlay.html)
@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-`OvertureDialogueOverlay` is a `StatefulWidget` (`app/lib/features/game/dialogue/overture_dialogue_overlay.dart`). It wraps an arbitrary `child` and, while the overture flow is running, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
+`OvertureDialogueOverlay` is a `StatefulWidget` (`app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart`). It wraps an arbitrary `child` and, while the overture flow is running, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
 
 | Constructor parameter | Type | Required | Description |
 |-----------------------|------|----------|-------------|

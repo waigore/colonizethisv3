@@ -7,7 +7,7 @@
 // `ChooseTechDialog` is the dark editorial-monocle modal opened from a
 // `TechnologyPanel` research slot's "Choose tech" action
 // (`SPEC/ui/technology-panel.md` § Choose-tech dialog,
-// `app/lib/features/game/widgets/technology_panel_orders.dart`). It wraps
+// `app/lib/features/game/widgets/technology/technology_panel_orders.dart`). It wraps
 // a [CtDialogShell] containing an accent title, a vertical column of
 // bordered `_ChooseTechOptionRow` entries — each an icon + an `Expanded`
 // name / era·category·cost label column — (or the muted empty-state
@@ -48,7 +48,7 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show TechDefinition, techCatalog, techDisplayName;

@@ -255,7 +255,7 @@ Display font: `Iowan Old Style, Cinzel, Charter, Georgia, serif` (mirrors mockup
 | `CtCompassRose` | `app/lib/widgets/ct_compass_rose.dart` | `.compass-rose` / `.compass-rose .arm` / `.compass-rose .medallion` / `.compass-rose .ring` |
 | `CtFleurDeLisOrnament` | `app/lib/widgets/ct_fleur_de_lis_ornament.dart` | `<svg class="title-flank">` block |
 | `CtBrassDivider` | `app/lib/widgets/ct_brass_divider.dart` (issue #2859) | `.brass-divider` |
-| `CtMainMenuCollage` | `app/lib/widgets/ct_main_menu_collage.dart` (S2) | `<svg class="collage-svg">` block |
+| `CtMainMenuCollage` | `app/lib/widgets/ct_main_menu_collage.dart` + `ct_main_menu_collage_painter*.dart` `part` files (S2) | `<svg class="collage-svg">` block |
 | Scroll-bracket gutters (S5) | `_PixelArtButtonsRegion` + `_PixelArtScrollBracket` (private) in `app/lib/widgets/main_menu.dart` | `.buttons-region::before` / `.buttons-region::after` |
 
 All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux asset generation is required** for the `pixelArt` main menu. The legacy `ui_main_menu_background.png` / `ui_main_menu_logo.png` / `ui_main_menu_button.png` / `ui_main_menu_panel.png` assets are no longer referenced by this screen and may be retired once `CtMainMenu` consumes the new primitives (S5).

@@ -115,7 +115,7 @@ class CtConfirmDialog extends StatelessWidget {
 /// [useRootNavigator] defaults to `true` so callers driven by
 /// `AppEventHandler` reach across modal bottom sheets / inner navigators —
 /// matching the existing wiring in
-/// `app/lib/core/services/app_event_handler.dart`.
+/// `app/lib/core/services/app_event_handler/app_event_handler.dart`.
 Future<bool> showCtConfirmDialog(
   BuildContext context, {
   required String title,

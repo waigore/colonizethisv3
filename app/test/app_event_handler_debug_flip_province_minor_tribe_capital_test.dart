@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app/core/services/app_event_handler_debug_flip_province.dart';
+import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_flip_province.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';

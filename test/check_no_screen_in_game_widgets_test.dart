@@ -34,7 +34,7 @@ void main() {
     addTearDown(() => temp.deleteSync(recursive: true));
 
     final okFile = File(
-      '${temp.path}/app/lib/features/game/widgets/technology_panel.dart',
+      '${temp.path}/app/lib/features/game/widgets/technology/technology_panel.dart',
     )..createSync(recursive: true);
     okFile.writeAsStringSync('class TechnologyPanel {}\n');
 

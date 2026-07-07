@@ -1,9 +1,9 @@
 // Tests for TrainCiviliansDialog. SPEC/ui/train-civilians-dialog.md.
 
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';

@@ -4,7 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/game/shell_player_context.dart';
+import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'game_summary_support.dart';
 import 'games_provider.dart';

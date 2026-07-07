@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _targetRelativePath = 'app/lib/core/services/app_event_handler_scope.dart';
+const _targetRelativePath =
+    'app/lib/core/services/app_event_handler/app_event_handler_scope.dart';
 const _disallowedImportNeedle = 'package:colonizethis_app/features/game/logic/';
 
 /// Enforces app-event scope boundary:

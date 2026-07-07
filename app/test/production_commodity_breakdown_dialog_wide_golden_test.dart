@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'support/game_fixture.dart';

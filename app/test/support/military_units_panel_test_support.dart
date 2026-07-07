@@ -23,7 +23,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/panels/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 
 import 'app_shell_harness.dart';
 

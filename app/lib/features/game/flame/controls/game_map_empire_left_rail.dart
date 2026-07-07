@@ -12,7 +12,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../game_screen_shared.dart';
+import '../../screens/game/game_screen_shared.dart';
 
 part 'game_map_empire_left_rail_button.dart';
 

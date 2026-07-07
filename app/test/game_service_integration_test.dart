@@ -8,7 +8,7 @@ import 'package:colonizethis_save/colonizethis_save.dart'
     show GameSaveAdapter, kAutoSaveSlotId;
 import 'package:hive/hive.dart';
 
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 
 void main() {
   // Suppress logs for test run.

@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/province_overlay_unit_partition.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_unit_partition.dart';
 
 void main() {
   suppressLogsForTests();

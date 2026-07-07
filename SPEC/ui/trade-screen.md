@@ -1,7 +1,7 @@
 # Trade Screen
 
 **Screen ID:** `GAME60001` — stable; do not reassign.
-**SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade_screen.dart`.
+**SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade/trade_screen.dart`.
 **Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md](../game/world-market.md); resolution algorithm: [world-market-resolution.md](../program/world-market-resolution.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
 
 **Mockup:** [mockups/GAME60001-trade-screen.html](mockups/GAME60001-trade-screen.html)
@@ -340,7 +340,7 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 
 ## Components
 
-- `TradeScreen` (`app/lib/features/game/screens/trade_screen.dart`) — top-level shell host.
+- `TradeScreen` (`app/lib/features/game/screens/trade/trade_screen.dart`) — top-level shell host.
 - `CtGameFeatureScreenShell` (`app/lib/widgets/ct_game_feature_screen_shell.dart`) — opt-in dark chrome wrapper that owns the `GameToUIBusListener` and live `currentGameProvider` swap. Composite contract: [`components/ct-game-feature-screen-shell.md`](components/ct-game-feature-screen-shell.md).
 - `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTopBar`) — dark editorial-monocle top bar carrying the back affordance, icon, and title.
 - `StrictAssetIcon` (`app/lib/widgets/strict_asset_icon.dart`) — renders the 32 × 32 source PNG at the 18 × 18 top-bar size and the 14 × 14 per-row treasury-coin glyph (Refs `#3093` row-icons slice).
@@ -349,9 +349,9 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 - `CtTabStrip` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTabStrip`) — dark editorial-monocle tab strip hosting the `Market` and `Deal Book` labels above the `IndexedStack` of tab bodies.
 - `CtSectionLabel` (`app/lib/widgets/ct_section_label.dart`; `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*) — small-caps section header used by the Market tab to group commodity rows under Food / Raw Materials / Manufactured (Refs `#3093` sectioned grouping slice). Same component the Production panel's Available subpanel uses.
 - `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
-- `_DealBookTabContent` (`app/lib/features/game/screens/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
-- `_DealBookPanel` (`app/lib/features/game/screens/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
-- `_DealBookFilledRow` / `_DealBookUnfilledRow` (`app/lib/features/game/screens/trade_screen.dart`) — per-row widgets keyed by `dealBookFilledRowKey(side, index)` / `dealBookUnfilledRowKey(side, index)`.
+- `_DealBookTabContent` (`app/lib/features/game/screens/trade/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
+- `_DealBookPanel` (`app/lib/features/game/screens/trade/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
+- `_DealBookFilledRow` / `_DealBookUnfilledRow` (`app/lib/features/game/screens/trade/trade_screen.dart`) — per-row widgets keyed by `dealBookFilledRowKey(side, index)` / `dealBookUnfilledRowKey(side, index)`.
 
 ---
 
@@ -387,7 +387,7 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the game screen with the left rail visible, **when** the player taps the `kEmpireTradeButtonKey` button (positioned directly below the Production button and above Civilian Units), **then** the in-game shell emits `NavigateToRouteEvent(Routes.trade, {'game', 'humanPlayerId'})` so the route table mounts `TradeScreen`.
 - **Given** the app route registry, **when** the framework receives `RouteSettings(name: RoutePaths.trade, arguments: {'game', 'humanPlayerId'})`, **then** `Routes.generate` returns a `MaterialPageRoute<void>` whose builder constructs `TradeScreen(game: game, player: game.playerById(humanPlayerId)!)`.
 - **Given** the `TradeScreen` is mounted and `shellPanelsNotDefined(ref)` returns `true` (global observe mode), **then** the body widget tree contains an `ObserveModeNotDefinedPanel` whose `title` is `Trade` and **does not** contain the `tradeScreenTabsBody` key.
-- **Given** the screen registry, **when** the trade row is read, **then** the ID is `GAME60001`, the spec link is `trade-screen.md`, the code path is `app/lib/features/game/screens/trade_screen.dart`, and the status is `draft` until E5+ lands.
+- **Given** the screen registry, **when** the trade row is read, **then** the ID is `GAME60001`, the spec link is `trade-screen.md`, the code path is `app/lib/features/game/screens/trade/trade_screen.dart`, and the status is `draft` until E5+ lands.
 
 ### Tab scaffold slice (`#2993` E4)
 

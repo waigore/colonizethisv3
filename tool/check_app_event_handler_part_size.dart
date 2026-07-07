@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import 'check_dart_file_non_comment_line_size.dart'
     show countNonCommentLinesFromSource;
 
-const _scopeServicesDir = 'app/lib/core/services';
+const _scopeServicesDir = 'app/lib/core/services/app_event_handler';
 const _maxNonCommentLines = 500;
 
 int runCheckAppEventHandlerPartSize(

@@ -380,19 +380,19 @@ Widget probe() => Chip(label: const Text('x'));
     test('does not skip ordinary feature widgets (in scope for the check)', () {
       expect(
         shouldSkipAppNoMaterialChipFile(
-          'app/lib/features/game/widgets/tech_tree_widget_legend.dart',
+          'app/lib/features/game/widgets/technology/tech_tree_widget_legend.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialChipFile(
-          'app/lib/features/game/widgets/move_fleet_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
         ),
         isFalse,
       );
       expect(
         shouldSkipAppNoMaterialChipFile(
-          'app/lib/features/game/flame/game_screen.dart',
+          'app/lib/features/game/screens/game/game_screen.dart',
         ),
         isFalse,
       );

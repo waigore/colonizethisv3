@@ -144,3 +144,39 @@ lines) for the split domain packages.
 - Given a grandfather allowlist entry that names a file which does not exist in
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
+
+## app flame 600 non-comment-line gate (Refs #3878)
+
+`app/lib/features/game/flame/**` holds the in-game Flame map stack (render,
+state, caches, overlays, controls). Phase 3 modularization targets no file
+above **600** non-comment lines so each submodule stays reviewable.
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_app_flame_file_size.dart` | Walker, counter (reuses `countNonCommentLinesFromSource`), CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.app_flame_file_size` |
+
+### Scan scope and measurement
+
+- The checker walks `app/lib/features/game/flame/**` recursively and considers
+  only `*.dart` files, skipping generated suffixes (`.g.dart`, `.freezed.dart`,
+  `.mocks.dart`, `.gen.dart`).
+- **Failure threshold:** strictly **greater than 600** non-comment lines fails
+  the file (600 inclusive passes), using the same `countNonCommentLinesFromSource`
+  algorithm as the repository-wide gate.
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckAppFlameFileSize`, then the checker exits zero because every
+  `app/lib/features/game/flame` Dart file is at or below 600 non-comment lines.
+
+- Given a temporary workspace whose only flame source file is a hand-written
+  `app/lib/features/game/flame/huge.dart` with more than 600 non-comment lines,
+  when the System runs `runCheckAppFlameFileSize`, then the checker exits
+  non-zero and names `huge.dart` with a count strictly greater than 600.
+
+- Given a temporary workspace that does not contain the directory
+  `app/lib/features/game/flame/`, when the System runs
+  `runCheckAppFlameFileSize`, then the checker exits non-zero and reports that
+  the flame directory was not found.

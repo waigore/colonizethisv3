@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

@@ -11,7 +11,7 @@ void main() {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final file = File(
-      '${temp.path}/app/lib/core/services/app_event_handler_debug_spawn.dart',
+      '${temp.path}/app/lib/core/services/debug/app_event_handler_debug_spawn.dart',
     )..createSync(recursive: true);
     file.writeAsStringSync('''
 String applyDebugFirst() => 'a';
@@ -37,12 +37,30 @@ String applyDebugSecond() => 'b';
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final file = File(
-      '${temp.path}/app/lib/core/services/app_event_handler_debug_spawn.dart',
+      '${temp.path}/app/lib/core/services/debug/app_event_handler_debug_spawn.dart',
     )..createSync(recursive: true);
     file.writeAsStringSync("String helper() => 'noop';\n");
 
     final code = runCheckDebugHandlerOnePerFile(temp.path);
     expect(code, 1);
+  });
+
+  test('skips part-of debug handler fragments', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_debug_handler_one_per_file_part_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final servicesDir = Directory('${temp.path}/app/lib/core/services/debug')
+      ..createSync(recursive: true);
+    File(
+      '${servicesDir.path}/app_event_handler_debug_set_diplomacy.dart',
+    ).writeAsStringSync("String applyDebugSetDiplomacy() => 'ok';\n");
+    File(
+      '${servicesDir.path}/app_event_handler_debug_set_diplomacy_alliance.dart',
+    ).writeAsStringSync("part of 'app_event_handler_debug_set_diplomacy.dart';\n");
+
+    final code = runCheckDebugHandlerOnePerFile(temp.path);
+    expect(code, 0);
   });
 
   test(
@@ -52,7 +70,7 @@ String applyDebugSecond() => 'b';
         'check_debug_handler_one_per_file_pass_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
-      final servicesDir = Directory('${temp.path}/app/lib/core/services')
+      final servicesDir = Directory('${temp.path}/app/lib/core/services/debug')
         ..createSync(recursive: true);
       File(
         '${servicesDir.path}/app_event_handler_debug_spawn_civilian.dart',

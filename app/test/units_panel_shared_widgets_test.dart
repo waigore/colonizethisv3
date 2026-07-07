@@ -8,7 +8,7 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/location_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
-import 'package:colonizethis_app/features/game/utils/region_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';

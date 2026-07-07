@@ -1,7 +1,7 @@
 # Move Army Dialog
 
 **Screen ID:** `DLG20001` — stable; do not reassign.
-**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`.
+**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart`.
 **Widgetbook:** `Move Army Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG20001-move-army-dialog.html](mockups/DLG20001-move-army-dialog.html)
@@ -13,7 +13,7 @@
 |--------|------|------------|-------------|
 | `MoveArmyDialog` | `StatefulWidget` | `army` (`Army`), `game` (`Game`), `humanPlayerId` (`String`), `bus` (`AppEventBus`), `topology` (`MapTopology`), `draftOrders` (`Orders`), `playerView` (`PlayerView?`, optional) | Local `showDialog` modal opened from `MilitaryUnitsPanel` army row Move action. Emits move + optional declare-war on confirm. |
 
-Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `DropdownButtonFormField` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban.
+Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `DropdownButtonFormField` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban.
 
 ---
 

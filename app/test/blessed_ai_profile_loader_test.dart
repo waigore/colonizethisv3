@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/core/services/blessed_ai_profile_loader.dart';
+import 'package:colonizethis_app/core/services/ai/blessed_ai_profile_loader.dart';
 
 ByteData _utf8Bytes(String value) {
   final bytes = utf8.encode(value);

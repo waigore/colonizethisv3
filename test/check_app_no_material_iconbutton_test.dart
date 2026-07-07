@@ -433,19 +433,19 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
       () {
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/move_fleet_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/panels/military_units_panel.dart',
+            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/flame/game_screen.dart',
+            'app/lib/features/game/screens/game/game_screen.dart',
           ),
           isFalse,
         );

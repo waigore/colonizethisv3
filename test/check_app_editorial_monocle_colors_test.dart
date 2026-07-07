@@ -682,6 +682,7 @@ class Clean extends StatelessWidget {
       () {
         const compositing = <String>[
           'app/lib/widgets/ct_main_menu_collage.dart',
+          'app/lib/widgets/ct_main_menu_collage_painter.dart',
           'app/lib/widgets/main_menu.dart',
           'app/lib/widgets/main_menu_buttons.dart',
         ];
@@ -701,19 +702,19 @@ class Clean extends StatelessWidget {
       () {
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/widgets/move_army_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/screens/trade_screen.dart',
+            'app/lib/features/game/screens/trade/trade_screen.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
-            'app/lib/features/game/flame/game_side_menu.dart',
+            'app/lib/features/game/flame/controls/game_side_menu.dart',
           ),
           isFalse,
         );
