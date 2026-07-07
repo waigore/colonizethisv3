@@ -10,7 +10,7 @@ import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import '../features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/shell/shell_player_context.dart';
-import '../perf/app_perf_trace.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
