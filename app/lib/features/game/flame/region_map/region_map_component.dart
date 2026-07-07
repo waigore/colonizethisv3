@@ -182,21 +182,3 @@ class CtRegionMapComponent extends PositionComponent {
     _renderRegionMap(canvas);
   }
 }
-
-class _CornerValues {
-  final bool nw;
-  final bool ne;
-  final bool sw;
-  final bool se;
-  final bool same;
-  final bool value;
-
-  _CornerValues({
-    required this.nw,
-    required this.ne,
-    required this.sw,
-    required this.se,
-    required this.same,
-    required this.value,
-  });
-}
