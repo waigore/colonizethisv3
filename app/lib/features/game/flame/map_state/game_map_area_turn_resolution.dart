@@ -67,7 +67,9 @@ mixin _GameMapAreaTurnResolution
     try {
       final sessionResult = await _awaitGameMapAreaTurnResolutionSession(
         host: this,
-        ref: ref,
+        service: service,
+        aiCatalog:
+            ref.read(blessedAiProfileCatalogProvider).value ?? const {},
         runner: runner,
         game: game,
         orders: orders,
@@ -83,7 +85,7 @@ mixin _GameMapAreaTurnResolution
         processingDialogOpen = false;
       }
       _applyGameMapAreaTurnResolutionTerminal(
-        ref: ref,
+        resultApplier: ref.read(turnResolutionResultApplierProvider),
         terminal: sessionResult.terminal,
         service: service,
         game: game,

@@ -3,7 +3,8 @@ part of 'game_map_area.dart';
 Future<({TurnResolutionTerminalEvent terminal, String sessionId})>
     _awaitGameMapAreaTurnResolutionSession({
   required _GameMapAreaStateBase host,
-  required WidgetRef ref,
+  required GameService service,
+  required Map<String, AiProfile> aiCatalog,
   required TurnResolutionRunner runner,
   required ct_models.Game game,
   required ct_models.Orders orders,
@@ -11,8 +12,6 @@ Future<({TurnResolutionTerminalEvent terminal, String sessionId})>
   required ValueNotifier<String> phaseNotifier,
   required Stopwatch uiStopwatch,
 }) async {
-  final service = ref.read(gameServiceProvider);
-  final aiCatalog = ref.read(blessedAiProfileCatalogProvider).value ?? const {};
   final aiProfiles = resolveAiProfilesForGame(game, aiCatalog);
   final session = runner.startResolution(
     game: game,
@@ -50,7 +49,7 @@ Future<({TurnResolutionTerminalEvent terminal, String sessionId})>
 }
 
 void _applyGameMapAreaTurnResolutionTerminal({
-  required WidgetRef ref,
+  required TurnResolutionResultApplier resultApplier,
   required TurnResolutionTerminalEvent terminal,
   required GameService service,
   required ct_models.Game game,
@@ -88,7 +87,7 @@ void _applyGameMapAreaTurnResolutionTerminal({
         );
       }
       final applyStopwatch = Stopwatch()..start();
-      ref.read(turnResolutionResultApplierProvider).apply(c.result);
+      resultApplier.apply(c.result);
       _gameMapNextTurnUiLog.i(
         'logic: next_turn_ui_map result_applied gameId=${game.id} '
         'sessionId=$activeSessionId applyMs=${applyStopwatch.elapsedMilliseconds} '

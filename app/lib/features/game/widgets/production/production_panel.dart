@@ -27,6 +27,8 @@ part 'production_panel_layouts.dart';
 part 'production_panel_support_available.dart';
 part 'production_panel_support_available_sections.dart';
 part 'production_panel_support_allocation.dart';
+part 'production_panel_support_allocation_rows.dart';
+part 'production_panel_support_allocation_summary.dart';
 
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
