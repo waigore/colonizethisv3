@@ -205,7 +205,9 @@ String _commodityDisplayName(String id) => id;
       ..writeAsStringSync('''
 String eraRoman(int era) => 'GEN';
 ''');
-    File('${temp.path}/app/lib/l10n/gen/app_l10n_flutter_gen.dart')
+    File(
+      '${temp.path}/packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen.dart',
+    )
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 String _eraRoman(int era) => 'L10N';
