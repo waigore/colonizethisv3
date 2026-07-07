@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/services/game_event_bridge.dart';
+import '../core/services/event_bridge/game_event_bridge.dart';
 import '../core/services/game_service/game_service.dart';
 import 'app_event_bus_provider.dart';
 import 'games_box_provider.dart';

@@ -18,7 +18,7 @@ import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../../../../core/services/ai_profile_resolution.dart';
+import '../../../../core/services/ai/ai_profile_resolution.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 import '../../../../widgets/ct_icon_action.dart';

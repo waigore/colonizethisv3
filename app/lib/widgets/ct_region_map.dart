@@ -5,7 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../core/services/region_map_widget_bindings.dart';
+import '../core/services/region_map/region_map_widget_bindings.dart';
 import '../core/services/subscription_tracker.dart';
 
 /// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.

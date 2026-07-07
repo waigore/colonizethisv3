@@ -28,7 +28,7 @@ import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../../../../core/services/ai_profile_resolution.dart';
+import '../../../../core/services/ai/ai_profile_resolution.dart';
 import '../../../../core/services/subscription_tracker.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';

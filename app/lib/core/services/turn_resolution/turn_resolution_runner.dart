@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:colonizethis_app/config/ct_debug_console.dart';
-import 'package:colonizethis_app/core/services/ai_profile_resolution.dart';
+import 'package:colonizethis_app/core/services/ai/ai_profile_resolution.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
