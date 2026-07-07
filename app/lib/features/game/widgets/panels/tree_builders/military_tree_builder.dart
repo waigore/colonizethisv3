@@ -10,6 +10,8 @@ import '../../province_overlay/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
 
 part 'military_tree_builder_assembly.dart';
+part 'military_tree_builder_assembly_province.dart';
+part 'military_tree_builder_assembly_sea.dart';
 
 String armyStationedProvinceDisplayLabel(Game game, Army army) {
   final pid = army.stationedProvinceId;
