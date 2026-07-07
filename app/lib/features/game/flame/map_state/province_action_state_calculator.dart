@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../../../../core/services/game_service.dart' show GameMapData;
+import '../../../../core/services/game_service/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 

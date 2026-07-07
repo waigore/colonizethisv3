@@ -2,7 +2,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/config/ct_e2e_turn_snapshot_refresh.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/core/services/turn_resolution/turn_resolution_result_applier.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

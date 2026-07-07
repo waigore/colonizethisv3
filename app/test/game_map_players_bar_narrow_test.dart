@@ -26,7 +26,7 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart'
     show GameScreen, kGameMapPlayersBarKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';

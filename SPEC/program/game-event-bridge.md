@@ -71,7 +71,7 @@ The bridge remains a per-event forwarder. The app-side map shell may aggregate t
 | Path | Role |
 |------|------|
 | `app/lib/core/services/game_event_bridge.dart` | Bridge implementation |
-| `app/lib/core/services/game_service.dart` | `logicEventBus`; overture emit |
+| `app/lib/core/services/game_service/game_service.dart` | `logicEventBus`; overture emit |
 | `app/lib/providers/game_service_provider.dart` | Riverpod wiring |
 | `packages/colonizethis_models/lib/src/app_events.dart` | `App*` event types |
 | `app/test/game_event_bridge_test.dart` | Bridge forwarding tests |

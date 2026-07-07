@@ -9,7 +9,7 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';

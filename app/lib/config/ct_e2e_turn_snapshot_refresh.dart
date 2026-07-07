@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../core/services/game_service.dart';
+import '../core/services/game_service/game_service.dart';
 import 'ct_e2e.dart';
 import 'ct_e2e_last_panel_snapshot.dart';
 

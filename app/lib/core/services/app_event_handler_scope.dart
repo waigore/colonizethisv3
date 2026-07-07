@@ -21,29 +21,31 @@ import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import '../../features/game/widgets/shell/shell_player_context.dart';
-import 'debug_command_session_handler.dart';
+import 'debug/debug_command_session_handler.dart';
 import 'observe_mode_session_handler.dart';
 
 import 'app_event_handler.dart';
-import 'app_event_handler_debug_flip_province.dart'
+import 'debug/app_event_handler_debug_flip_province.dart'
     show applyDebugFlipProvinceOwnership;
-import 'app_event_handler_debug_reveal_province.dart'
+import 'debug/app_event_handler_debug_reveal_province.dart'
     show applyDebugRevealProvince;
-import 'app_event_handler_debug_set_diplomacy.dart'
+import 'debug/app_event_handler_debug_set_diplomacy.dart'
     show applyDebugSetDiplomacyRelation;
 import 'app_event_handler_break_alliance_immediately.dart'
     show applyBreakAllianceImmediately;
-import 'app_event_handler_debug_spawn_civilian.dart'
+import 'debug/app_event_handler_debug_spawn_civilian.dart'
     show applyDebugCivilianSpawnAtCapital;
-import 'app_event_handler_debug_spawn_regiment.dart'
+import 'debug/app_event_handler_debug_spawn_regiment.dart'
     show applyDebugRegimentSpawnAtCapital;
-import 'app_event_handler_debug_spawn_ship.dart'
+import 'debug/app_event_handler_debug_spawn_ship.dart'
     show applyDebugShipSpawnAtCapitalHomeFleet;
-import 'app_event_handler_debug_stockpile.dart' show applyDebugStockpileCredit;
-import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
-import 'app_event_handler_debug_worker_pool.dart'
+import 'debug/app_event_handler_debug_stockpile.dart'
+    show applyDebugStockpileCredit;
+import 'debug/app_event_handler_debug_treasury.dart'
+    show applyDebugTreasuryCredit;
+import 'debug/app_event_handler_debug_worker_pool.dart'
     show applyDebugWorkerPoolCredit;
-import 'debug_command_helpers.dart' show DebugCommandResult;
+import 'debug/debug_command_helpers.dart' show DebugCommandResult;
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
 

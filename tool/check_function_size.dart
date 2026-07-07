@@ -55,7 +55,7 @@ int runCheckFunctionSize(
 /// `packages/<name>/lib/` roots plus app debug handler files.
 List<String> _collectScanPathPrefixes(String repoRoot) {
   final packagesDir = Directory(p.join(repoRoot, 'packages'));
-  final prefixes = <String>['app/lib/core/services/app_event_handler_debug_'];
+  final prefixes = <String>['app/lib/core/services/debug/app_event_handler_debug_'];
   if (packagesDir.existsSync()) {
     for (final entity in packagesDir.listSync(followLinks: false)) {
       if (entity is! Directory) {

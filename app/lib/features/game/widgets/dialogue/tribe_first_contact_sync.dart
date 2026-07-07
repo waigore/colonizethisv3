@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../core/services/game_service.dart';
+import '../../../../core/services/game_service/game_service.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';

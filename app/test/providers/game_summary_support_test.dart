@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';

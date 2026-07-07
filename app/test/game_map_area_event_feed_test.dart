@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'

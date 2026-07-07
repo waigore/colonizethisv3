@@ -135,7 +135,7 @@ class AppEventHandler {
 
 ## Game logic → UI bridge
 
-**`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
+**`GameService`** (`app/lib/core/services/game_service/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
 
 - **`TurnResolutionCompleteEvent`** after `runTurnResolution` or any resume method completes with **`TurnResolutionComplete`**
 - **`NewGameCreatedEvent`** after a new game is created and saved (sync **`createNewGame()`** or async phased **`createNewGameAsync()`** used by the shell)

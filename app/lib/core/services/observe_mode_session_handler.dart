@@ -6,7 +6,7 @@ import '../../features/game/widgets/shell/shell_player_context.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
-import 'game_service.dart';
+import 'game_service/game_service.dart';
 
 /// Applies `/observe` session events. SPEC/ui/observe-mode.md.
 class ObserveModeSessionHandler {

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
-import '../../../../core/services/game_service.dart';
+import '../../../../core/services/game_service/game_service.dart';
 import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.

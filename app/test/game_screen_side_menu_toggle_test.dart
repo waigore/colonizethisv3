@@ -1,7 +1,7 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';

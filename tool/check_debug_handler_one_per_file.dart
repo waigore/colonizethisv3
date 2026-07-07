@@ -12,10 +12,10 @@ int runCheckDebugHandlerOnePerFile(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final servicesDir = Directory(
-    p.join(repoRoot, 'app', 'lib', 'core', 'services'),
+    p.join(repoRoot, 'app', 'lib', 'core', 'services', 'debug'),
   );
   if (!servicesDir.existsSync()) {
-    logE('check_debug_handler_one_per_file: app/lib/core/services not found.');
+    logE('check_debug_handler_one_per_file: app/lib/core/services/debug not found.');
     return 1;
   }
 

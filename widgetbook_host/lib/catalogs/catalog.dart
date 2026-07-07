@@ -19,7 +19,7 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service.dart' show GameMapData, GameService;
+import 'package:colonizethis_app/core/services/game_service/game_service.dart' show GameMapData, GameService;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';

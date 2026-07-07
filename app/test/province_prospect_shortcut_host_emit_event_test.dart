@@ -18,7 +18,7 @@
 //   - This file pins the positive path and the no-explorer negative.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';

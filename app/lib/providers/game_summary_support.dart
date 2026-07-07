@@ -3,7 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../core/services/game_service.dart';
+import '../core/services/game_service/game_service.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
 
 /// Resolved inputs shared by the watch-then-compute "game summary" providers
