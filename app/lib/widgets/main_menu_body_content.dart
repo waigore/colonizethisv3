@@ -1,6 +1,5 @@
 // Main-menu body content column (logo slot + buttons region). Refs #3878.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'main_menu.dart';
 
 class _MainMenuBodyContent extends StatelessWidget {

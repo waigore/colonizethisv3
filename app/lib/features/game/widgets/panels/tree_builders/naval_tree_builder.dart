@@ -3,7 +3,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
     show
         GamePlayerLookup,
         homeFleetIdFor,
@@ -11,6 +10,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
         kRegionOldWorld,
         regionIdForSeaZone,
         WorldStateProvinceLookup;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../flame/map_state/map_location_resolver.dart';

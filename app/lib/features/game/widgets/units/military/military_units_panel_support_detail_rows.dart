@@ -1,6 +1,5 @@
 /// Regiment/ship detail row widgets. SPEC/ui/military-units-panel.md.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'military_units_panel.dart';
 
 class _RegimentRow extends StatelessWidget {

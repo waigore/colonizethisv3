@@ -1,6 +1,5 @@
 /// Scrimmed shell chrome for [InterventionDialogueOverlay] phases.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'intervention_dialogue_overlay.dart';
 
 /// Stable key for the "Pending Intervention" title `Text` widget so widget

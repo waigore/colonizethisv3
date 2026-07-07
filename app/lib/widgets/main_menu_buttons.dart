@@ -7,7 +7,6 @@
 // library, so they keep sharing `CtMainMenu`'s constants/enums without further
 // plumbing.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'main_menu.dart';
 
 class _MenuButton extends StatelessWidget {

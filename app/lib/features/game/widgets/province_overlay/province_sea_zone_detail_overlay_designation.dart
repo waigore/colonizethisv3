@@ -3,7 +3,6 @@
 /// content `Tile` (town / capital designation) and `Political / Economic /
 /// Naval` (Capital row).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'province_sea_zone_detail_overlay.dart';
 
 /// Whether [provinceId] is the capital province of any faction (player,

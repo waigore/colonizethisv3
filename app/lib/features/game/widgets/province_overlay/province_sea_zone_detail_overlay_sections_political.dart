@@ -1,6 +1,5 @@
 /// Political section assembly and owner/region display helpers.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'province_sea_zone_detail_overlay.dart';
 
 String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {

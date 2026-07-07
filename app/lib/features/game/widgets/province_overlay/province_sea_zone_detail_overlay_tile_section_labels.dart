@@ -1,6 +1,5 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'province_sea_zone_detail_overlay.dart';
 
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).

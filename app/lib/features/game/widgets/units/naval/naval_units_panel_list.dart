@@ -1,6 +1,5 @@
 /// Naval panel tree list projection. SPEC/ui/naval-units-panel.md.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'naval_units_panel.dart';
 
 extension _NavalUnitsPanelList on _NavalUnitsPanelState {

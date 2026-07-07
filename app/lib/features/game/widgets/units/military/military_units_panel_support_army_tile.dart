@@ -1,7 +1,6 @@
 /// Army expansion tile for the military units panel.
 /// SPEC/ui/military-units-panel.md.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'military_units_panel.dart';
 
 class _ArmyExpansionTile extends StatelessWidget {

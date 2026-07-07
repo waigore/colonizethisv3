@@ -1,6 +1,5 @@
 /// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'tech_tree_widget.dart';
 
 class _TechTreeLegend extends StatelessWidget {

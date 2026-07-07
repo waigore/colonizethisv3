@@ -1,6 +1,5 @@
 // Main-menu pixel-art logo region. Refs #3878.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'main_menu.dart';
 
 /// Dark editorial-monocle logo region for the `pixelArt` main-menu variant.

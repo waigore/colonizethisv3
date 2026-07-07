@@ -1,6 +1,5 @@
 /// Breakdown DataTable body for [ProductionCommodityBreakdownDialog].
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'production_commodity_breakdown_dialog.dart';
 
 /// Viewport-adaptive breakdown table for the production commodity dialog.

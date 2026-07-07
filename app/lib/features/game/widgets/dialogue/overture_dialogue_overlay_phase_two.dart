@@ -1,7 +1,6 @@
 // Phase-2 offer list + Submit chrome for [OvertureDialogueOverlay].
 // SPEC/ui/overture-dialogue-overlay.md § Layout / wireframe.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'overture_dialogue_overlay.dart';
 
 Widget _buildOverturePhaseTwoBody({

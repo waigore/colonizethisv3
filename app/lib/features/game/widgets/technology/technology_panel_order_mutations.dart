@@ -2,7 +2,6 @@
 // Split out of `technology_panel_orders.dart` to keep host files under the
 // repo file-size target (Refs #3878).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'technology_panel_orders.dart';
 
 /// Returns an `Orders` value with `slotIndex` set to [techId] for
