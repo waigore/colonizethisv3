@@ -45,6 +45,7 @@ import '../../../../core/services/turn_resolution/turn_resolution_result_applier
 import '../../flame/overlays/victory_overlay.dart';
 
 part 'game_screen_fallback_next_turn.dart';
+part 'game_screen_fallback_next_turn_resolution.dart';
 part 'game_screen_overlay_stack.dart';
 
 final _gameScreenLog = packageLogger('logic');
