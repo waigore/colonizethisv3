@@ -16,7 +16,8 @@ import '../production/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
 
-part 'train_commodity_cost_dialog_base_widgets.dart';
+part 'train_commodity_cost_dialog_base_resource_bar.dart';
+part 'train_commodity_cost_dialog_base_unit_row.dart';
 
 /// A single trainable entry consumed by [CommodityCostTrainDialogState].
 ///

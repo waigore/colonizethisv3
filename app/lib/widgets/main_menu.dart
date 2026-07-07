@@ -11,116 +11,13 @@ import 'ct_gradients.dart';
 import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
+part 'main_menu_constants.dart';
 part 'main_menu_body.dart';
 part 'main_menu_body_logo.dart';
 part 'main_menu_body_content.dart';
 part 'main_menu_buttons.dart';
 part 'main_menu_footer.dart';
 part 'main_menu_scroll_bracket.dart';
-
-/// Narrow-viewport breakpoint for the main menu in logical pixels.
-///
-/// At or below this width the menu container compacts its horizontal padding
-/// and the `pixelArt` variant button labels reduce `letter-spacing` per
-/// `SPEC/ui/mockups/SHEL10002-main-menu.html` `@media (max-width: 430px)` and
-/// `SPEC/ui/main-menu.md` § Responsive rules.
-const double kMainMenuNarrowBreakpoint = 430;
-
-/// Letter-spacing (logical pixels) applied to `pixelArt` variant menu-button
-/// labels at viewports wider than [kMainMenuNarrowBreakpoint]. Mirrors the
-/// mockup `.menu-btn { letter-spacing: 0.08em }` default at the ~16dp font
-/// size used by the wood-panel button text style.
-const double kMainMenuButtonLetterSpacingDefault = 1.2;
-
-/// Letter-spacing (logical pixels) applied to `pixelArt` variant menu-button
-/// labels at viewports `≤ kMainMenuNarrowBreakpoint`. Mirrors the mockup
-/// `.menu-btn { letter-spacing: 0.04em }` narrow override.
-const double kMainMenuButtonLetterSpacingNarrow = 0.6;
-
-/// Menu container padding at viewports `> kMainMenuNarrowBreakpoint`.
-/// Default desktop / wide layout.
-const EdgeInsets kMainMenuBodyPaddingDefault = EdgeInsets.symmetric(
-  horizontal: CtSpacing.xxl,
-);
-
-/// Menu container padding at viewports `≤ kMainMenuNarrowBreakpoint`.
-/// Compacts horizontal padding and adds explicit vertical padding to mirror
-/// the mockup `.menu-container { padding: 24px 12px; }` narrow override.
-const EdgeInsets kMainMenuBodyPaddingNarrow = EdgeInsets.symmetric(
-  horizontal: CtSpacing.ml,
-  vertical: CtSpacing.xxl,
-);
-
-/// Stable `Key` value for the menu body `Padding` widget that owns the
-/// responsive padding resolution. Used by widget tests to assert the
-/// padding flips between [kMainMenuBodyPaddingDefault] and
-/// [kMainMenuBodyPaddingNarrow] at [kMainMenuNarrowBreakpoint].
-const String kMainMenuBodyPaddingKey = 'main_menu_body_padding';
-
-/// Stable `Key` value for the `pixelArt` variant footer Quit button. The
-/// secondary, smaller, border-only chip per `SPEC/ui/main-menu.md` §
-/// Variant rendering — Quit button row and `SPEC/ui/mockups/SHEL10002-main-menu.html`
-/// `.quit-btn`. Used by widget tests to assert chrome differs from the
-/// wood-panel primary buttons (no brass corner brackets, smaller min-height,
-/// `--muted` foreground).
-const String kMainMenuFooterQuitKey = 'main_menu_footer_quit';
-
-/// Minimum tap-target height for the `pixelArt` variant footer Quit button.
-/// Mirrors the mockup `.quit-btn { min-height: 44px }` rule and keeps the
-/// button just above the 44 dp accessibility threshold; smaller than the
-/// 48 dp primary wood-panel buttons per AC 9.
-const double kMainMenuFooterQuitMinHeight = 44;
-
-/// Maximum rendered width (logical pixels) of the `pixelArt` variant footer
-/// Quit chip. Mirrors the upper bound of the mockup
-/// `.quit-btn { min-width: clamp(100px, 30%, 160px) }` rule so the chip
-/// never stretches to the full primary wood-panel button width and reads as
-/// a visibly smaller, secondary control (issue #2860 S9). Combined with the
-/// existing `minWidth` floor this keeps the chip in the
-/// `[120, kMainMenuFooterQuitMaxWidth]` band, centred in the footer.
-const double kMainMenuFooterQuitMaxWidth = 160;
-
-/// Label font size (logical pixels) of the `pixelArt` variant footer Quit
-/// chip. Mirrors the lower bound of the mockup
-/// `.quit-btn { font-size: clamp(12px, 1.8vw, 14px) }` rule and is smaller
-/// than the primary wood-panel button label size (the dark-theme
-/// `titleSmall` slot, 14 dp) so the chip reads as typographically smaller
-/// and faded relative to the primary buttons (issue #2860 S9).
-const double kMainMenuFooterQuitFontSize = 12;
-
-/// Stable `Key` value for the left ornamental scroll bracket flanking the
-/// `pixelArt` buttons region. Mirrors the mockup
-/// `SPEC/ui/mockups/SHEL10002-main-menu.html` `.buttons-region::before` rule
-/// and the `SPEC/ui/main-menu.md` § Buttons region scroll-bracket entry.
-/// Widget tests assert presence under `pixelArt` and absence under `plain`.
-const String kMainMenuScrollBracketLeftKey = 'main_menu_scroll_bracket_left';
-
-/// Stable `Key` value for the right ornamental scroll bracket flanking the
-/// `pixelArt` buttons region. Mirror of [kMainMenuScrollBracketLeftKey]; see
-/// the same SPEC sections for the mockup `.buttons-region::after` mapping.
-const String kMainMenuScrollBracketRightKey = 'main_menu_scroll_bracket_right';
-
-/// Width (logical pixels) of each ornamental scroll-bracket bar flanking the
-/// `pixelArt` buttons region. Mirrors mockup `.buttons-region::before { width:
-/// 4px }`.
-const double kMainMenuScrollBracketWidth = 4;
-
-/// Horizontal gutter (logical pixels) by which each scroll bracket is offset
-/// outward from the corresponding edge of the `pixelArt` buttons region.
-/// Mirrors mockup `.buttons-region::before { left: -10px }` (and `::after {
-/// right: -10px }`).
-const double kMainMenuScrollBracketGutter = 10;
-
-/// Vertical fraction of the buttons region height inset above and below the
-/// scroll-bracket bar. Mirrors mockup `.buttons-region::before { top: 10%;
-/// bottom: 10% }`, so the bar paints across the middle 80 % of the buttons
-/// region height.
-const double kMainMenuScrollBracketVerticalInset = 0.10;
-
-/// Combined fill opacity applied to each scroll bracket (bar + ornamental
-/// dots). Mirrors mockup `.buttons-region::before { opacity: 0.45 }` so the
-/// bracket reads as a faint chrome flourish, not a structural rule.
-const double kMainMenuScrollBracketOpacity = 0.45;
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {

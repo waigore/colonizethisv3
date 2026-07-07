@@ -1,20 +1,5 @@
 part of 'game_map_area_state_logic.dart';
 
-/// Resolved mount-time / home-to-capital auto-center target for the in-game
-/// shell. SPEC/ui/empire-overview.md § Initial map viewport (shell entry).
-class ShellEntryAutoCenter {
-  const ShellEntryAutoCenter({
-    required this.tileKey,
-    required this.regionIndex,
-  });
-
-  /// Capital tile key (`regionId|localId|x|y`) to center on and highlight.
-  final String tileKey;
-
-  /// Region tab index for the capital region (`0` oldWorld, `1` newWorld).
-  final int regionIndex;
-}
-
 /// Pure-ish helpers for `GameMapArea` state translation.
 ///
 /// Splits per `SPEC/program/dart-file-non-comment-line-size.md` and #2575

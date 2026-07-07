@@ -370,8 +370,8 @@ void main() {
         final String commodityCostBase = File(
           'lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart',
         ).readAsStringSync();
-        final String commodityCostWidgets = File(
-          'lib/features/game/widgets/train/train_commodity_cost_dialog_base_widgets.dart',
+        final String commodityCostUnitRow = File(
+          'lib/features/game/widgets/train/train_commodity_cost_dialog_base_unit_row.dart',
         ).readAsStringSync();
 
         expect(
@@ -401,7 +401,7 @@ void main() {
         );
         expect(
           commodityCostBase.contains('TrainDialogInlineCost') ||
-              commodityCostWidgets.contains('TrainDialogInlineCost'),
+              commodityCostUnitRow.contains('TrainDialogInlineCost'),
           isTrue,
         );
       },
