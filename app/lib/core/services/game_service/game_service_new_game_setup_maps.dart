@@ -96,6 +96,6 @@ void _gameServicePersistNewGame(
     warpLinks: result.warpLinks,
   );
   service.saveGame(result.game);
-  service._mirrorAutoSave(result.game);
+  _gameServiceMirrorAutoSave(service, result.game);
   service.eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
 }
