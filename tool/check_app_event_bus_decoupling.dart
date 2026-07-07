@@ -122,7 +122,9 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
-  'app/lib/features/game/widgets/units/military/military_units_panel.dart',
+  // Dialog openers extracted from `military_units_panel.dart` to keep panel
+  // parts under the `repo.game_widgets_file_size` cap (Refs #3878 Phase 3).
+  'app/lib/features/game/widgets/units/military/military_units_panel_dialogs.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_declare_war.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
