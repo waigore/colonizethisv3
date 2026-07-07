@@ -20,6 +20,7 @@ import 'ct_dialogue_view.dart';
 
 part 'overture_dialogue_overlay_flow.dart';
 part 'overture_dialogue_overlay_offer_row.dart';
+part 'overture_dialogue_overlay_phase_two.dart';
 
 /// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
 /// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
@@ -193,93 +194,22 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
       );
     }
 
-    // Phase 2: list of offers with Accept/Reject + Submit
-    final offers = widget.pendingOvertures;
-    final ThemeData theme = Theme.of(context);
-    final TextStyle titleStyle = _phaseTwoTitleStyle(theme);
-    final TextStyle introStyle = _phaseTwoIntroStyle(theme);
     return CtFullScreenDialogueShell(
       backdrop: widget.child,
       maxHeight: 500,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.game_overture_title,
-            key: const ValueKey<String>('overtureTitle'),
-            style: titleStyle,
-          ),
-          const SizedBox(height: _titleToDividerGap),
-          const CtBrassDivider(key: ValueKey<String>('overtureBrassDivider')),
-          const SizedBox(height: _dividerToIntroGap),
-          Text(
-            l10n.game_overture_intro,
-            key: const ValueKey<String>('overtureIntro'),
-            style: introStyle,
-          ),
-          const SizedBox(height: CtSpacing.l),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: offers.length,
-            itemBuilder: (context, i) {
-              final offer = offers[i];
-              final bool? decision = _accepted[i];
-              return _OvertureOfferRow(
-                rowIndex: i,
-                offerer: _offererDisplayName(offer.offererGpId),
-                stageLabel: _stageLabel(l10n, offer.stage),
-                acceptLabel: l10n.game_overture_accept,
-                rejectLabel: l10n.game_overture_reject,
-                decision: decision,
-                onDecisionChanged: (bool? next) {
-                  setState(() => _accepted[i] = next);
-                },
-              );
-            },
-          ),
-          const SizedBox(height: CtSpacing.m),
-          Align(
-            alignment: Alignment.centerRight,
-            child: CtNinePatchButton(
-              key: const ValueKey<String>('overtureSubmitButton'),
-              enabled: _allDecided,
-              onPressed: _allDecided ? _submit : null,
-              child: Text(l10n.game_callToArms_submit),
-            ),
-          ),
-        ],
+      body: _buildOverturePhaseTwoBody(
+        context: context,
+        l10n: l10n,
+        offers: widget.pendingOvertures,
+        accepted: _accepted,
+        offererDisplayName: _offererDisplayName,
+        stageLabel: _stageLabel,
+        allDecided: _allDecided,
+        onSubmit: _submit,
+        onDecisionChanged: (int index, bool? next) {
+          setState(() => _accepted[index] = next);
+        },
       ),
     );
   }
-
-  /// Phase-2 title style per #2867 R2 / R21: `--accent` color and a 0.05em
-  /// letter-spacing computed from the resolved title `fontSize` so the
-  /// canonical letter-spacing scales with theme overrides.
-  TextStyle _phaseTwoTitleStyle(ThemeData theme) {
-    final TextStyle base =
-        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
-    final double fontSize = base.fontSize ?? 16;
-    return base.copyWith(
-      color: EditorialMonoclePalette.accent,
-      letterSpacing: fontSize * _titleLetterSpacingEm,
-    );
-  }
-
-  /// Phase-2 intro style per #2867 R5 / R21: italic body text in `--muted`.
-  TextStyle _phaseTwoIntroStyle(ThemeData theme) =>
-      (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-        color: EditorialMonoclePalette.muted,
-        fontStyle: FontStyle.italic,
-      );
-
-  /// Canonical title letter-spacing factor per #2867 R2 (0.05em).
-  static const double _titleLetterSpacingEm = 0.05;
-
-  /// Vertical gap between phase-2 title and the [CtBrassDivider].
-  static const double _titleToDividerGap = 8;
-
-  /// Vertical gap between the [CtBrassDivider] and the intro line.
-  static const double _dividerToIntroGap = 8;
 }

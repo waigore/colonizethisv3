@@ -7,7 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-part 'production_labour_recruit_economy.dart';
+part 'production_labour_recruit_economy_projection.dart';
+part 'production_labour_recruit_economy_mutations.dart';
 
 /// Pure predicate that returns `true` iff every tech id required to recruit
 /// or train [tier] (per `SPEC/game/workers-and-population.md` § Tech gates,
