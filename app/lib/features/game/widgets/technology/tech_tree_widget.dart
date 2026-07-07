@@ -24,6 +24,8 @@ import 'tech_effect_summary_lookup.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 
+part 'tech_tree_widget_canvas.dart';
+part 'tech_tree_widget_catalog.dart';
 part 'tech_tree_widget_dialog.dart';
 part 'tech_tree_widget_layout.dart';
 part 'tech_tree_widget_nodes.dart';
@@ -42,30 +44,6 @@ class TechNodePosition {
   final double y;
   final int layer;
 }
-
-/// Category color map. SPEC/ui/tech-tree-widget.md: color-coded by category.
-const Map<String, Color> _categoryColors = {
-  'gathering': Color(0xFF2E7D32),
-  'transport': Color(0xFF1565C0),
-  'labour': Color(0xFFF9A825),
-  'civilian': Color(0xFF6A1B9A),
-  'diplomacy': Color(0xFF00838F),
-  'naval': Color(0xFF0D47A1),
-  'military': Color(0xFFC62828),
-  'new-world': Color(0xFF4E342E),
-};
-
-/// Category icon map. SPEC/ui/tech-tree-widget.md: one icon per category.
-const Map<String, String> _categoryIcons = {
-  'gathering': '${kAppIconAssetPrefix}ui_icon_tech_gathering.png',
-  'new-world': '${kAppIconAssetPrefix}ui_icon_tech_new_world.png',
-  'transport': '${kAppIconAssetPrefix}ui_icon_tech_transport.png',
-  'labour': '${kAppIconAssetPrefix}ui_icon_tech_labour.png',
-  'civilian': '${kAppIconAssetPrefix}ui_icon_tech_civilian.png',
-  'diplomacy': '${kAppIconAssetPrefix}ui_icon_tech_diplomacy.png',
-  'naval': '${kAppIconAssetPrefix}ui_icon_tech_naval.png',
-  'military': '${kAppIconAssetPrefix}ui_icon_tech_military.png',
-};
 
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.
@@ -108,7 +86,7 @@ class TechTreeWidget extends StatelessWidget {
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildCanvas(
+              child: buildTechTreeCanvas(
                 context: context,
                 positions: positions,
                 unlocked: unlocked,
@@ -122,67 +100,6 @@ class TechTreeWidget extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  Widget _buildCanvas({
-    required BuildContext context,
-    required List<TechNodePosition> positions,
-    required Map<String, bool> unlocked,
-    required Set<String> inProgress,
-    required Set<String> researchable,
-    required double width,
-    required double height,
-  }) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: Stack(
-        children: [
-          CustomPaint(
-            size: Size(width, height),
-            painter: _TechTreeEdgePainter(positions: positions),
-          ),
-          ..._buildPositionedNodes(
-            context: context,
-            positions: positions,
-            unlocked: unlocked,
-            inProgress: inProgress,
-            researchable: researchable,
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildPositionedNodes({
-    required BuildContext context,
-    required List<TechNodePosition> positions,
-    required Map<String, bool> unlocked,
-    required Set<String> inProgress,
-    required Set<String> researchable,
-  }) {
-    return positions.map((pos) {
-      final tech = techById(pos.techId);
-      if (tech == null) return const SizedBox.shrink();
-      final state = _TechNodeState(
-        researched: unlocked[pos.techId] == true,
-        inProgress: inProgress.contains(pos.techId),
-        available: researchable.contains(pos.techId),
-      );
-      return Positioned(
-        left: pos.x,
-        top: pos.y,
-        width: _nodeWidth,
-        height: _nodeHeight,
-        child: _TechNode(
-          game: game,
-          tech: tech,
-          contextPlayerId: player.id,
-          state: state,
-          onTap: () => showTechDialog(context, tech),
-        ),
-      );
-    }).toList();
   }
 
   /// Computes topological layout for [catalog]. Forwarded from
