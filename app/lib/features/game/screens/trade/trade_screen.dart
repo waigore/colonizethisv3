@@ -87,6 +87,7 @@ import 'trade_section_handlers.dart';
 
 part 'trade_screen_contract.dart';
 part 'trade_screen_contract_market.dart';
+part 'trade_screen_contract_market_rows.dart';
 part 'trade_screen_contract_deal_book.dart';
 part 'trade_screen_deal_book.dart';
 part 'trade_screen_deal_book_panel.dart';
@@ -97,6 +98,7 @@ part 'trade_screen_market_row_header.dart';
 part 'trade_screen_market_row_stepper.dart';
 part 'trade_screen_market_tab.dart';
 part 'trade_screen_market_tab_build.dart';
+part 'trade_screen_market_tab_build_sections.dart';
 part 'trade_screen_market_tab_cargo_header.dart';
 part 'trade_screen_market_tab_order_handlers.dart';
 part 'trade_screen_market_tab_order_handlers_direction.dart';

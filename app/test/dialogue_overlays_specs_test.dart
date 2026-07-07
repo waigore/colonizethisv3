@@ -78,6 +78,20 @@ Future<void> _pumpUntilSettled(WidgetTester tester) async {
   }
 }
 
+/// Reads a library file plus any `part` files it declares (Dart 3 library
+/// unit). Used by static source-contract tests after `part` extractions.
+String _libraryUnitSource(String libraryRelPath) {
+  final libraryFile = File(libraryRelPath);
+  final librarySource = libraryFile.readAsStringSync();
+  final dir = libraryFile.parent.path;
+  final partRegex = RegExp(r"^\s*part\s+'([^']+)';", multiLine: true);
+  final partSources = partRegex
+      .allMatches(librarySource)
+      .map((m) => File('$dir/${m.group(1)!}').readAsStringSync())
+      .join('\n');
+  return '$librarySource\n$partSources';
+}
+
 Widget _wrapIntroOverlay({
   required AssetBundle bundle,
   required VoidCallback onDismissed,
@@ -370,9 +384,9 @@ void main() {
     // are caught even when the runtime widget tree is shallowly inspected.
     test('widget source does not reference Colors.black54 as the scrim '
         '(SPEC/ui/game-start-intro-overlay.md § Components)', () {
-      final source = File(
+      final source = _libraryUnitSource(
         'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
-      ).readAsStringSync();
+      );
       expect(
         source.contains('Colors.black54'),
         isFalse,

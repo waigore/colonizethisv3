@@ -18,24 +18,13 @@ extension _MarketTabContentBuild on _MarketTabContent {
     required int? Function() readProjectedTreasuryDelta,
   }) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle nameStyle =
-        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-            .copyWith(color: EditorialMonoclePalette.accent);
-    final TextStyle priceStyle =
-        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-            .copyWith(color: EditorialMonoclePalette.accentBright);
-    final TextStyle volumeStyle =
-        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-            .copyWith(color: EditorialMonoclePalette.muted);
-    final TextStyle quantityStyle =
-        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-            .copyWith(color: EditorialMonoclePalette.accentBright);
-    final TextStyle cargoIndicatorStyle =
-        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-            .copyWith(color: EditorialMonoclePalette.accent);
-    final TextStyle cargoWarningStyle =
-        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-            .copyWith(color: EditorialMonoclePalette.danger);
+    final styles = marketTabTextStyles(theme);
+    final TextStyle nameStyle = styles.nameStyle;
+    final TextStyle priceStyle = styles.priceStyle;
+    final TextStyle volumeStyle = styles.volumeStyle;
+    final TextStyle quantityStyle = styles.quantityStyle;
+    final TextStyle cargoIndicatorStyle = styles.cargoIndicatorStyle;
+    final TextStyle cargoWarningStyle = styles.cargoWarningStyle;
 
     final _SectionedTradeableCommodities sectioned =
         _tradeableCommoditiesByCategory();
@@ -123,55 +112,19 @@ extension _MarketTabContentBuild on _MarketTabContent {
     // each section, rows follow `CommodityCatalog.all` catalog order
     // (no per-section alphabetical sort); this matches the Production
     // panel's intra-section ordering.
-    final List<Widget> sectionWidgets = <Widget>[
-      ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionFoodKey,
-        sectionLabel: l10n.production_food,
-        commodities: sectioned.food,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
-        nameStyle: nameStyle,
-        priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
-        quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
-      ),
-      ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionRawMaterialsKey,
-        sectionLabel: l10n.production_rawMaterials,
-        commodities: sectioned.rawMaterials,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
-        nameStyle: nameStyle,
-        priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
-        quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
-        isFirstSection: false,
-      ),
-      ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionManufacturedKey,
-        sectionLabel: l10n.production_manufactured,
-        commodities: sectioned.manufactured,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
-        nameStyle: nameStyle,
-        priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
-        quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
-        isFirstSection: false,
-      ),
-    ];
+    final List<Widget> sectionWidgets = buildMarketTabSectionWidgets(
+      l10n: l10n,
+      sectioned: sectioned,
+      market: market,
+      orders: orders,
+      offerCap: offerCap,
+      stagedOffers: stagedOffers,
+      nameStyle: nameStyle,
+      priceStyle: priceStyle,
+      volumeStyle: volumeStyle,
+      quantityStyle: quantityStyle,
+      sectionHandlers: sectionHandlers,
+    );
 
     final Widget list = SingleChildScrollView(
       key: TradeScreen.marketCommodityListKey,
