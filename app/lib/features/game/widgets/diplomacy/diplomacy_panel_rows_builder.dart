@@ -2,75 +2,6 @@
 
 part of 'diplomacy_panel_rows.dart';
 
-int? _outgoingSubsidyPercent(Game game, String payerId, String targetId) {
-  for (final s in game.subsidyStates) {
-    if (s.payerId == payerId && s.targetId == targetId) {
-      return s.percent;
-    }
-  }
-  return null;
-}
-
-void _appendDiscoveredFactionId(
-  Game game,
-  String humanPlayerId,
-  String id,
-  List<String> gpIds,
-  List<String> minorIds,
-  List<String> tribeIds,
-) {
-  if (id == humanPlayerId) {
-    return;
-  }
-  if (game.players.any((p) => p.id == id)) {
-    gpIds.add(id);
-    return;
-  }
-  if (game.minorNations.any((m) => m.id == id)) {
-    minorIds.add(id);
-    return;
-  }
-  if (game.tribes.any((t) => t.id == id)) {
-    tribeIds.add(id);
-  }
-}
-
-({int? grant, int? subsidy}) _pendingEconomicAmounts(
-  List<DiplomaticOrder> list,
-  String targetId,
-) {
-  int? grant;
-  int? subsidy;
-  for (final o in list) {
-    if (o.targetFactionId != targetId) continue;
-    if (o.type == DiplomaticOrderType.grantAid) {
-      grant = o.amount;
-    }
-    if (o.type == DiplomaticOrderType.setSubsidy) {
-      subsidy = o.amount;
-    }
-  }
-  return (grant: grant, subsidy: subsidy);
-}
-
-/// Default neutral first-contact standing surfaced for a discovered faction
-/// that has no persisted [DiplomacyRelation] yet. SPEC/ui/diplomacy-panel.md
-/// § Discovered factions → First-contact standing: `AT_PEACE`, score `50`,
-/// level `Neutral` (the same default used for game-start Minor relations).
-/// The `DiplomacyRelation` constructor already defaults to these values; the
-/// turn fields are pinned to the current turn so history-derived UI stays
-/// deterministic.
-DiplomacyRelation _defaultFirstContactRelation(
-  String humanPlayerId,
-  String factionId,
-  int currentTurn,
-) => DiplomacyRelation(
-  factionId1: humanPlayerId,
-  factionId2: factionId,
-  sinceTurn: currentTurn,
-  lastInteractionTurn: currentTurn,
-);
-
 /// Builds list of discovered factions and their available actions.
 ///
 /// Discovery follows `knownDiplomaticTargetFactionIds`
@@ -172,118 +103,74 @@ List<DiplomacyRowData> buildDiplomacyRows(
     }
   }
 
-  String displayNameFor(String id) {
-    final p = game.playerById(id);
-    if (p != null) return p.displayName;
-    for (final m in game.minorNations) {
-      if (m.id == id) return m.displayName ?? id;
-    }
-    for (final t in game.tribes) {
-      if (t.id == id) return t.displayName ?? id;
-    }
-    return id;
-  }
-
-  List<DiplomacyRowData> rows = [];
+  final rows = <DiplomacyRowData>[];
   final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
     final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
-      DiplomacyRowData(
+      _buildDiplomacyRowData(
+        game: game,
+        humanPlayerId: humanPlayerId,
         factionId: id,
-        displayName: displayNameFor(id),
         kind: FactionKind.greatPower,
-        relation:
-            view.diplomacyByOtherId[id] ??
-            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-        overture: getOverture(game, humanPlayerId, id),
+        view: view,
+        currentTurn: currentTurn,
         actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
-        powerScore: greatPowerPowerScore(game, id),
-        playerPowerScore: playerPower,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
-        standingChips: diplomaticStandingChips(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          factionId: id,
-          kind: FactionKind.greatPower,
-          relation:
-              view.diplomacyByOtherId[id] ??
-              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-          overture: getOverture(game, humanPlayerId, id),
-          purchasedTiles: purchasedTiles,
-        ),
+        purchasedTiles: purchasedTiles,
+        powerScore: greatPowerPowerScore(game, id),
+        playerPowerScore: playerPower,
       ),
     );
   }
-  minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
+  minorIds.sort(
+    (a, b) => _displayNameForFaction(game, a).compareTo(
+      _displayNameForFaction(game, b),
+    ),
+  );
   for (final id in minorIds) {
     final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
-      DiplomacyRowData(
+      _buildDiplomacyRowData(
+        game: game,
+        humanPlayerId: humanPlayerId,
         factionId: id,
-        displayName: displayNameFor(id),
         kind: FactionKind.minor,
-        relation:
-            view.diplomacyByOtherId[id] ??
-            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-        overture: getOverture(game, humanPlayerId, id),
+        view: view,
+        currentTurn: currentTurn,
         actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
-        powerScore: null,
-        playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
-        standingChips: diplomaticStandingChips(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          factionId: id,
-          kind: FactionKind.minor,
-          relation:
-              view.diplomacyByOtherId[id] ??
-              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-          overture: getOverture(game, humanPlayerId, id),
-          purchasedTiles: purchasedTiles,
-        ),
+        purchasedTiles: purchasedTiles,
       ),
     );
   }
-  tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
+  tribeIds.sort(
+    (a, b) => _displayNameForFaction(game, a).compareTo(
+      _displayNameForFaction(game, b),
+    ),
+  );
   for (final id in tribeIds) {
     final econ = _pendingEconomicAmounts(pendingList, id);
     rows.add(
-      DiplomacyRowData(
+      _buildDiplomacyRowData(
+        game: game,
+        humanPlayerId: humanPlayerId,
         factionId: id,
-        displayName: displayNameFor(id),
         kind: FactionKind.tribe,
-        relation:
-            view.diplomacyByOtherId[id] ??
-            _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-        overture: getOverture(game, humanPlayerId, id),
+        view: view,
+        currentTurn: currentTurn,
         actions: actionsByTarget[id] ?? const <DiplomaticPanelAction>[],
-        powerScore: null,
-        playerPowerScore: null,
         pendingOrderTypes: pendingByTarget[id] ?? {},
         pendingOvertureStage: pendingOvertureStageByTarget[id],
-        activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, id),
         pendingGrantAmount: econ.grant,
         pendingSubsidyPercent: econ.subsidy,
-        standingChips: diplomaticStandingChips(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          factionId: id,
-          kind: FactionKind.tribe,
-          relation:
-              view.diplomacyByOtherId[id] ??
-              _defaultFirstContactRelation(humanPlayerId, id, currentTurn),
-          overture: getOverture(game, humanPlayerId, id),
-          purchasedTiles: purchasedTiles,
-        ),
+        purchasedTiles: purchasedTiles,
       ),
     );
   }

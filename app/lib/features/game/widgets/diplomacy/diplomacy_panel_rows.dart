@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 part 'diplomacy_panel_rows_standing_chips.dart';
+part 'diplomacy_panel_rows_builder_helpers.dart';
 part 'diplomacy_panel_rows_builder.dart';
 part 'diplomacy_panel_rows_power.dart';
 
