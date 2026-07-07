@@ -14,6 +14,7 @@ import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_nine_patch_button.dart';
 import 'move_units_dialog_base.dart';
 
+part 'move_army_dialog_declare_war.dart';
 part 'move_army_dialog_destinations.dart';
 
 String moveArmyFactionGroupHeaderLabel(
@@ -155,70 +156,6 @@ class _MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog> {
       ),
     );
     Navigator.of(context).pop();
-  }
-
-  Future<void> _onConfirmPressed() async {
-    final entries = _destinationEntries();
-    final entry = _selectedEntry(entries);
-    if (entry == null) return;
-    final l10n = appL10n(context);
-
-    if (!entry.requiresDeclareWarOnConfirm) {
-      _emitAndClose(entry);
-      return;
-    }
-
-    final ownerLabel = moveArmyFactionGroupHeaderLabel(
-      widget.game,
-      entry,
-      l10n,
-    );
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
-            .copyWith(color: EditorialMonoclePalette.danger);
-        final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
-            .copyWith(color: EditorialMonoclePalette.fg);
-        return CtDialogShell(
-          borderColor: EditorialMonoclePalette.danger,
-          borderWidth: CtDialogShell.dangerBorderWidth,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.moveArmy_invadeProvinceTitle, style: titleStyle),
-              const SizedBox(height: CtSpacing.m),
-              Text(
-                l10n.moveArmy_invadeProvinceBody(ownerLabel),
-                style: bodyStyle,
-              ),
-              const SizedBox(height: CtSpacing.l),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: CtSpacing.m,
-                runSpacing: CtSpacing.m,
-                children: [
-                  CtNinePatchButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    child: Text(l10n.common_cancel),
-                  ),
-                  CtNinePatchButton(
-                    dangerVariant: true,
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    child: Text(l10n.moveArmy_declareWarAndMove),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (ok == true && context.mounted) {
-      _emitAndClose(entry);
-    }
   }
 
   @override

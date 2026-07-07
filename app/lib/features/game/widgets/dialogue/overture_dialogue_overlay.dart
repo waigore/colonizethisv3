@@ -18,7 +18,14 @@ import '../../../../../widgets/ct_toggle_switch.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 
+part 'overture_dialogue_overlay_flow.dart';
 part 'overture_dialogue_overlay_offer_row.dart';
+
+/// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
+/// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
+/// the flow mixin was split into a `part` (Refs #3878).
+CtDialogueView _createOvertureDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
 
 /// Modal overture dialogue: Jenny-driven intro line then Accept/Reject per offer
 /// and Submit. SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.
@@ -56,12 +63,14 @@ class OvertureDialogueOverlay extends StatefulWidget {
       _OvertureDialogueOverlayState();
 }
 
-class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
-  static const String _kOvertureNode = 'DialoguePoint/overture_target_response';
-
-  bool _introDone = false;
-  CtDialogueView? _view;
-  Object? _loadError;
+class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
+    with _OvertureDialogueOverlayFlow {
+  @override
+  bool overtureIntroDone = false;
+  @override
+  CtDialogueView? overtureView;
+  @override
+  Object? overtureLoadError;
 
   /// Per-offer decisions; `null` means the player has not yet tapped Accept
   /// or Reject on that row. The Submit button stays disabled until every
@@ -73,9 +82,9 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
     super.initState();
     _accepted = List<bool?>.filled(widget.pendingOvertures.length, null);
     if (widget.skipIntroForTest) {
-      _introDone = true;
+      overtureIntroDone = true;
     } else {
-      _loadAndRunIntro();
+      loadAndRunOvertureIntro();
     }
   }
 
@@ -87,43 +96,6 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
       if (value == null) return false;
     }
     return true;
-  }
-
-  Future<void> _loadAndRunIntro() async {
-    final log = widget.logger ?? packageLogger('dialogue');
-    try {
-      final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(kDialogueOvertureAsset);
-      final project = YarnProject();
-      project.parse(text);
-      if (!project.nodes.containsKey(_kOvertureNode)) {
-        throw StateError(
-          'Overture node "$_kOvertureNode" not found in $kDialogueOvertureAsset',
-        );
-      }
-      final view = CtDialogueView(logger: log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
-      );
-      view.onStateChanged = (line, choice) {
-        if (mounted) setState(() {});
-      };
-      if (!mounted) return;
-      setState(() {
-        _view = view;
-      });
-      await runner.startDialogue(_kOvertureNode);
-      if (!mounted) return;
-      setState(() => _introDone = true);
-    } catch (e, st) {
-      log.e(
-        'ui:dialogue: failed to load overture intro',
-        error: e,
-        stackTrace: st,
-      );
-      if (mounted) setState(() => _loadError = e);
-    }
   }
 
   String _offererDisplayName(String offererGpId) {
@@ -188,14 +160,14 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    if (_loadError != null) {
+    if (overtureLoadError != null) {
       return CtFullScreenDialogueShell(
         backdrop: widget.child,
         padding: const EdgeInsets.all(CtSpacing.l),
         body: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n.game_overture_loadError('$_loadError')),
+            Text(l10n.game_overture_loadError('$overtureLoadError')),
             const SizedBox(height: CtSpacing.l),
             CtNinePatchButton(
               onPressed: _submitErrorFallback,
@@ -206,8 +178,8 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
       );
     }
 
-    if (!_introDone) {
-      final view = _view;
+    if (!overtureIntroDone) {
+      final view = overtureView;
       return CtFullScreenDialogueShell(
         backdrop: widget.child,
         body: view == null

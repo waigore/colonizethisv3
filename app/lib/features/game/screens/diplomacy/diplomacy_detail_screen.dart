@@ -16,7 +16,9 @@ import '../../../../widgets/relation_meter.dart';
 import '../../widgets/diplomacy/diplomacy_panel.dart';
 
 part 'diplomacy_detail_screen_format.dart';
-part 'diplomacy_detail_screen_widgets.dart';
+part 'diplomacy_detail_screen_widgets_cards.dart';
+part 'diplomacy_detail_screen_widgets_relation.dart';
+part 'diplomacy_detail_screen_widgets_sections.dart';
 
 /// Full-screen diplomacy detail. Dark editorial-monocle chrome per
 /// `SPEC/ui/diplomacy-detail-screen.md` and `SPEC/ui/mockups/GAME30002-…html`.

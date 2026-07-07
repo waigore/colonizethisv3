@@ -28,6 +28,7 @@ import '../shared/location_section_header.dart';
 import '../shared/region_section_header.dart';
 import '../shared/region_labels.dart';
 
+part 'naval_units_panel_list.dart';
 part 'naval_units_panel_support_combine.dart';
 part 'naval_units_panel_support_home_transfer.dart';
 part 'naval_units_panel_support_dialogs.dart';
@@ -221,63 +222,11 @@ class _NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel> {
       onSelectAll: () => _onHeaderSelectAllTapped(flat),
       onCombine: () => _performCombine(flat),
       hasContent: hasAny,
-      listChildren: [
-        for (final group in tree) ...[
-          RegionSectionHeader(
-            label: regionDisplayLabel(group.regionId),
-            variant: RegionHeaderVariant.leftBar,
-          ),
-          if (group.homeFleet != null)
-            FleetExpansionTile(
-              row: group.homeFleet!,
-              l10n: l10n,
-              onTap: group.homeFleet!.tileKey != null
-                  ? () => widget.bus.emit(
-                      LocateMapTileEvent(
-                        tileKey: group.homeFleet!.tileKey!,
-                        regionId: group.homeFleet!.regionId,
-                      ),
-                    )
-                  : null,
-              isSelectedForCombine: isSelected(
-                _selectionFleetId(group.homeFleet!),
-              ),
-              combineSelectionEnabled: !readOnly,
-              onCombineSelectionToggle: () =>
-                  _toggleFleetSelection(group.homeFleet!),
-              onSplitFleet: readOnly
-                  ? null
-                  : () => _openSplitDialog(group.homeFleet!),
-              onMoveFleet: null,
-              isSplitAllowed: !readOnly,
-            ),
-          for (final loc in group.locations) ...[
-            LocationSectionHeader(
-              label: loc.displayLabel,
-              regionLabel: regionDisplayLabel(loc.regionId),
-            ),
-            for (final row in loc.fleets)
-              FleetExpansionTile(
-                row: row,
-                l10n: l10n,
-                onTap: row.tileKey != null
-                    ? () => widget.bus.emit(
-                        LocateMapTileEvent(
-                          tileKey: row.tileKey!,
-                          regionId: row.regionId,
-                        ),
-                      )
-                    : null,
-                isSelectedForCombine: isSelected(_selectionFleetId(row)),
-                combineSelectionEnabled: !readOnly,
-                onCombineSelectionToggle: () => _toggleFleetSelection(row),
-                onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
-                onMoveFleet: readOnly ? null : () => _openMoveFleetDialog(row),
-                isSplitAllowed: true,
-              ),
-          ],
-        ],
-      ],
+      listChildren: _navalListChildren(
+        tree: tree,
+        l10n: l10n,
+        readOnly: readOnly,
+      ),
       emptyMessage: l10n.naval_units_empty,
     );
     if (kCtE2EEnabled) {

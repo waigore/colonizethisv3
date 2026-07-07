@@ -271,26 +271,11 @@ class _MarketTabContent extends ConsumerWidget {
       ),
     );
 
-    final Widget header = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          // ignore: avoid_hardcoded_strings_in_widgets
-          '${TradeScreen.cargoIndicatorPrefix} $clampedRemaining',
-          key: TradeScreen.marketCargoIndicatorKey,
-          style: cargoIndicatorStyle,
-        ),
-        if (warningVisible) ...<Widget>[
-          const SizedBox(height: 4),
-          Text(
-            TradeScreen.cargoLimitWarningText,
-            key: TradeScreen.marketCargoWarningKey,
-            style: cargoWarningStyle,
-          ),
-        ],
-        const SizedBox(height: 8),
-      ],
+    final Widget header = _MarketTabCargoHeader(
+      clampedRemaining: clampedRemaining,
+      warningVisible: warningVisible,
+      cargoIndicatorStyle: cargoIndicatorStyle,
+      cargoWarningStyle: cargoWarningStyle,
     );
 
     final Widget body = Column(
