@@ -29,17 +29,23 @@ void main() {
     });
 
     test('sections layer uses CtSpacing for section stack and hover rows', () {
-      final source = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections.dart',
+      final chromeSource = File(
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_chrome.dart',
       ).readAsStringSync();
-      expect(source, contains('bottom: CtSpacing.ml'));
-      expect(source, contains('left: CtSpacing.m / 2, top: CtSpacing.xs'));
+      expect(chromeSource, contains('bottom: CtSpacing.ml'));
       expect(
-        source,
+        chromeSource,
         isNot(contains('EdgeInsets.only(bottom: 12)')),
       );
+      final economicLabelsSource = File(
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_economic_labels.dart',
+      ).readAsStringSync();
       expect(
-        source,
+        economicLabelsSource,
+        contains('left: CtSpacing.m / 2, top: CtSpacing.xs'),
+      );
+      expect(
+        economicLabelsSource,
         isNot(contains('EdgeInsets.only(left: 4, top: 2)')),
       );
     });

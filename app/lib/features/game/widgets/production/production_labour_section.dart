@@ -15,6 +15,7 @@ import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 
 part 'production_labour_section_tier_row.dart';
+part 'production_labour_section_tier_row_controls.dart';
 
 /// Labour controls section appended to the Workers section of the
 /// Available subpanel. Renders one row per worker tier with recruit/train

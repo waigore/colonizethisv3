@@ -24,7 +24,8 @@ import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
-part 'new_game_setup_flow_dialogs.dart';
+part 'new_game_setup_flow_dialogs_error.dart';
+part 'new_game_setup_flow_dialogs_progress.dart';
 
 final _log = packageLogger('shell');
 

@@ -26,4 +26,5 @@ import 'tech_ui_helpers.dart';
 import 'tech_gp_pennant_row.dart';
 
 part 'technology_panel_choose_tech_dialog.dart';
+part 'technology_panel_choose_tech_dialog_rows.dart';
 part 'technology_panel_order_mutations.dart';

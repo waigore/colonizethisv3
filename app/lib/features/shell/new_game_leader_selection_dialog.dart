@@ -21,7 +21,9 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 part 'new_game_leader_selection_dialog_state_base.dart';
 part 'new_game_leader_selection_dialog_slots.dart';
 part 'new_game_leader_selection_dialog_slot_row.dart';
-part 'new_game_leader_selection_dialog_setup_fields.dart';
+part 'new_game_leader_selection_dialog_setup_fields_header.dart';
+part 'new_game_leader_selection_dialog_setup_fields_options.dart';
+part 'new_game_leader_selection_dialog_setup_fields_footer.dart';
 
 const int _kNumSlots = 6;
 
@@ -121,7 +123,9 @@ class _NewGameLeaderSelectionDialogState extends State<NewGameLeaderSelectionDia
         _NewGameLeaderSelectionDialogStateBase,
         _NewGameLeaderSelectionDialogSlots,
         _NewGameLeaderSelectionDialogSlotRow,
-        _NewGameLeaderSelectionDialogSetupFields {
+        _NewGameLeaderSelectionDialogSetupFieldsHeader,
+        _NewGameLeaderSelectionDialogSetupFieldsOptions,
+        _NewGameLeaderSelectionDialogSetupFieldsFooter {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);

@@ -99,6 +99,8 @@ part 'trade_screen_market_tab.dart';
 part 'trade_screen_market_tab_build.dart';
 part 'trade_screen_market_tab_cargo_header.dart';
 part 'trade_screen_market_tab_order_handlers.dart';
+part 'trade_screen_market_tab_order_handlers_direction.dart';
+part 'trade_screen_market_tab_order_handlers_quantity.dart';
 part 'trade_screen_market_tab_catalog.dart';
 part 'trade_screen_tabs_body.dart';
 

@@ -12,6 +12,8 @@ import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
 part 'main_menu_body.dart';
+part 'main_menu_body_logo.dart';
+part 'main_menu_body_content.dart';
 part 'main_menu_buttons.dart';
 part 'main_menu_footer.dart';
 part 'main_menu_scroll_bracket.dart';

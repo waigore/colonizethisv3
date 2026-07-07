@@ -36,47 +36,7 @@ _OverlayContent _provinceContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isFullyUnrevealed) {
-    final politicalObs = _buildSection(
-      l10n.provinceOverlay_sectionPolitical,
-      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
-    );
-    final tileObs = _buildSection(
-      l10n.provinceOverlay_sectionTile,
-      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
-    );
-    final obfuscatedSectionTitles = <String>[
-      l10n.provinceOverlay_sectionPolitical,
-      l10n.provinceOverlay_sectionTile,
-      l10n.provinceOverlay_sectionEconomic,
-      l10n.provinceOverlay_sectionMilitary,
-      l10n.provinceOverlay_sectionCivilian,
-      l10n.provinceOverlay_sectionNaval,
-    ];
-    final sections = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final title in obfuscatedSectionTitles)
-          _buildSection(
-            title,
-            _obfuscatedBodyText(l10n.provinceOverlay_unknown),
-          ),
-      ],
-    );
-    final tabLabels = obfuscatedSectionTitles;
-    final tabViews = [
-      politicalObs,
-      tileObs,
-      _ObfuscatedSection(l10n: l10n),
-      _ObfuscatedSection(l10n: l10n),
-      _ObfuscatedSection(l10n: l10n),
-      _ObfuscatedSection(l10n: l10n),
-    ];
-    return _OverlayContent(
-      tabLabels: tabLabels,
-      tabViews: tabViews,
-      sections: sections,
-    );
+    return _provinceContentUnrevealed(l10n: l10n);
   }
   final province = _findProvince(game, provinceId);
   final regionData = provinceId.startsWith(kRegionNewWorld)
@@ -105,58 +65,16 @@ _OverlayContent _provinceContent({
         provinceId: provinceId,
         provinceTileKeys: tileKeys,
       );
-  final resourceByTile = game.worldState.resourceByTileKey;
-  final tileState = game.worldState.tileState;
-  final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-
-  final byResImproved =
-      <String, List<({String tileKey, String terrain, String impBase})>>{};
-  final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
-  for (final tk in tileKeys) {
-    final res = resourceByTile[tk];
-    if (tryParseTileKey(tk) == null) continue;
-    if (!omniscientDetail && !prospected.contains(tk)) continue;
-    final imp = tileState.improvementLevel(tk);
-    final visLevel = omniscientDetail
-        ? VisibilityLevel.fullyVisible
-        : playerView.visibilityForTile(tk);
-    if (!omniscientDetail && visLevel == VisibilityLevel.unknown) continue;
-    final visibleRes = omniscientDetail
-        ? res
-        : resourceIdVisibleInPlayerView(playerView, tk, res);
-    if (visibleRes == null) continue;
-    final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
-    if (imp > 0) {
-      final impBase = _improvementBaseNameForPlayer(
-        l10n: l10n,
-        visLevel: visLevel,
-        rawResourceId: res,
-        visibleResourceId: visibleRes,
-      );
-      byResImproved.putIfAbsent(visibleRes, () => []).add((
-        tileKey: tk,
-        terrain: terrain,
-        impBase: impBase,
-      ));
-    } else if (res != null && imp < 4) {
-      byResImprovable.putIfAbsent(visibleRes, () => []).add((
-        tileKey: tk,
-        terrain: terrain,
-      ));
-    }
-  }
-
-  for (final list in byResImproved.values) {
-    list.sort((a, b) => a.tileKey.compareTo(b.tileKey));
-  }
-  for (final list in byResImprovable.values) {
-    list.sort((a, b) => a.tileKey.compareTo(b.tileKey));
-  }
-
-  final resourceKeysSorted = {
-    ...byResImproved.keys,
-    ...byResImprovable.keys,
-  }.toList()..sort();
+  final tileIntel = _aggregateProvinceTileIntel(
+    l10n: l10n,
+    game: game,
+    region: region,
+    provinceId: provinceId,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    tileKeys: tileKeys,
+    omniscientDetail: omniscientDetail,
+  );
 
   final tileSection = _buildTileSection(
     context: context,
@@ -190,9 +108,9 @@ _OverlayContent _provinceContent({
   final economic = showsFullIntel
       ? _buildEconomicSection(
           l10n: l10n,
-          resourceKeysSorted: resourceKeysSorted,
-          byResImproved: byResImproved,
-          byResImprovable: byResImprovable,
+          resourceKeysSorted: tileIntel.resourceKeysSorted,
+          byResImproved: tileIntel.byResImproved,
+          byResImprovable: tileIntel.byResImprovable,
           onHighlightTile: onHighlightTile,
           townProductionBonusByCommodity: townProductionBonusByCommodity,
         )
