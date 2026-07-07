@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView, bui
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/test_support/seed42_fixture_loader.dart';
+import 'package:colonizethis_app_fixtures/test_support/seed42_fixture_loader.dart';
 
 Game? _cachedDemoGame;
 InitGameMapViewData? _cachedDemoMapView;

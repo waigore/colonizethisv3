@@ -30,7 +30,7 @@
 /// carries the behavioural pin (Refs GitHub #2336 AC1 / AC2).
 library;
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         kWorkTargetBuildImprovement,

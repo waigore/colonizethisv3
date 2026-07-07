@@ -10,7 +10,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';

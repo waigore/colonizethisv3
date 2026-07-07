@@ -35,8 +35,8 @@
 /// Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'

@@ -50,9 +50,9 @@ import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_f
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/production/production_panel_demo_data.dart';
+import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart';
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
@@ -88,7 +88,7 @@ import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/test_support/seed42_init_game_result.dart';
+import 'package:colonizethis_app_fixtures/test_support/seed42_init_game_result.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';

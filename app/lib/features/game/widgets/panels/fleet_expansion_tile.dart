@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'tree_builders/naval_tree_builder.dart';

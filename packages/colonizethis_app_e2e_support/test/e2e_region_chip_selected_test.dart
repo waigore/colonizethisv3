@@ -38,7 +38,7 @@
 /// predicate contract.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

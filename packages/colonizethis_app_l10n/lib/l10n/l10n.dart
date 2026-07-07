@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 export 'app_localizations_contract.dart';
 export 'app_localizations_delegate.dart';
+export '../tech_effect/tech_effect_summary_lookup_export.dart';
 
 import 'app_localizations_contract.dart';
 import 'app_localizations_delegate.dart';

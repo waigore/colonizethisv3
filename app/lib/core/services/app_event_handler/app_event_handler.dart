@@ -33,8 +33,8 @@ import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 
 import '../../../config/routes.dart';
-import '../../../config/ct_e2e.dart';
-import '../../../config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import '../subscription_tracker.dart';
 import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';

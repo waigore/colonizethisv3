@@ -32,7 +32,7 @@ library;
 // `e2e_pick_move_destination_and_confirm_test.dart`.
 // ignore_for_file: deprecated_member_use
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';

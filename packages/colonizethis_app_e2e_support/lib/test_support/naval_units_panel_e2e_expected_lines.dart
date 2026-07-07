@@ -8,7 +8,7 @@
 // app/lib/features/game/widgets/units/naval/naval_units_panel.dart for e2e.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/tree_builders/naval_tree_builder.dart'
     show FleetRow, NavalTreeLocationNode, buildNavalTree, flattenNavalTree;
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';

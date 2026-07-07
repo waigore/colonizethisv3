@@ -31,7 +31,7 @@
 // is the only per-PR enforcement gate for the helper's fail-fast guards.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeBuilder, kUnitTypeMerchant;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

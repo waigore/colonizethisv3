@@ -4,7 +4,7 @@
 // `dart_file_non_comment_line_size` cap (`tool/ct_repo_lint.dart`).
 library;
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show
         CtE2eCivilianPanelSnapshot,
         CtE2eNavalPanelSnapshot,

@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/app_display_strings.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 

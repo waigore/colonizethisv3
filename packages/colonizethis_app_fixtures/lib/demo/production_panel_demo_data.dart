@@ -3,7 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart';
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 
 /// Full stockpile: enough of every commodity for recipes (and worker luxuries).
 Stockpile get _fullStockpile => Stockpile(

@@ -290,7 +290,7 @@ bool _shouldSkipPath(String relativePath) {
       relativePath.startsWith('app/lib/widgetbook/')) {
     return true;
   }
-  if (relativePath.startsWith('app/lib/test_support/')) {
+  if (relativePath.startsWith('packages/colonizethis_app_fixtures/lib/test_support/')) {
     return true;
   }
   if (relativePath.contains('/test/') || relativePath.endsWith('_test.dart')) {

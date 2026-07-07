@@ -1,7 +1,7 @@
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
         demoHumanPlayerViewForOverlay,

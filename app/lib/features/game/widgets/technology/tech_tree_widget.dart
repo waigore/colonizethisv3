@@ -20,7 +20,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/gp_nation_color_pennant.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import 'tech_effect_summary_lookup.dart';
+import 'package:colonizethis_app_l10n/tech_effect/tech_effect_summary_lookup.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 

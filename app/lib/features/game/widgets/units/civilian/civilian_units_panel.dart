@@ -9,8 +9,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../config/ct_e2e.dart';
-import '../../../../../config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import '../../../../../config/ui_screen_ids.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';

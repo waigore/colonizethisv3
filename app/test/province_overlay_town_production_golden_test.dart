@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';

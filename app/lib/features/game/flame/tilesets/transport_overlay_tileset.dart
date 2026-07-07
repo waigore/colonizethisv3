@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/config/map_terrain_config.dart';
+import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 

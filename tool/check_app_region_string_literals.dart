@@ -30,7 +30,7 @@ import 'package:path/path.dart' as p;
 /// 3. **`packages/colonizethis_app_l10n/lib/l10n/**`** — generated/authored localization carries region
 ///    ids as ARB keys / identifiers, not as the magic data-derivation literals
 ///    this rule targets.
-/// 4. **`app/lib/test_support/**`** and **`widgetbook_host/lib/catalogs/**`** — demo and
+/// 4. **`packages/colonizethis_app_fixtures/lib/test_support/**`** and **`widgetbook_host/lib/catalogs/**`** — demo and
 ///    expected-line fixtures. The #3658 migration deferred these; they are
 ///    sanctioned directory-scoped exceptions.
 ///
@@ -152,7 +152,7 @@ const Set<String> _appRegionStringLiteralsAllowedDirPrefixes = <String>{
   'packages/colonizethis_app_l10n/lib/l10n/',
   // Demo and expected-line fixtures. The #3658 migration deferred these to a
   // follow-up; sanctioned directory-scoped exceptions.
-  'app/lib/test_support/',
+  'packages/colonizethis_app_fixtures/lib/test_support/',
   'widgetbook_host/lib/catalogs/',
 };
 

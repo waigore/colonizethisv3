@@ -14,7 +14,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, RegionMapViewData;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
 import '../../../../core/services/game_service/game_service.dart'

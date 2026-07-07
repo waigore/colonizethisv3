@@ -1,8 +1,9 @@
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/ct_e2e_turn_snapshot_refresh.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_turn_snapshot_refresh.dart';
 import '../game_service/game_service.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
@@ -45,10 +46,14 @@ class TurnResolutionResultApplier {
         gameNotifier.setGame(result.game);
         diplomacyNotifier.setCallToArms(result.pendingCallToArms);
     }
+    final game = gameReader();
+    final mapData = game == null ? null : gameService.getMapData(game.id);
     refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(
-      game: gameReader(),
+      game: game,
       draftOrders: ordersReader(),
-      gameService: gameService,
+      combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
+      tileMapByRegion: mapData?.tileMapByRegion,
+      topologyByRegion: mapData?.topologyByRegion,
     );
   }
 }

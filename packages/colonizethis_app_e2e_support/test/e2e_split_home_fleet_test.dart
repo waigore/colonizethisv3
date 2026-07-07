@@ -32,7 +32,7 @@
 /// `app/test/e2e_open_panel_prepump_test.dart`).
 library;
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

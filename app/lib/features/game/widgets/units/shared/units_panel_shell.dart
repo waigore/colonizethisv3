@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../../config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_panel_with_top_bar.dart';
 import '../../../../../widgets/ct_spacing.dart';

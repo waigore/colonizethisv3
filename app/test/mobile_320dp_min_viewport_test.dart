@@ -30,7 +30,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/app_display_strings.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';

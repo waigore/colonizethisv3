@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show CtE2eNavalPanelSnapshot, ctE2eNavalPanelSnapshot;
 import 'package:flutter_test/flutter_test.dart';
 

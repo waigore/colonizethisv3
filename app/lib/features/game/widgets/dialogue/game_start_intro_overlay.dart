@@ -2,7 +2,7 @@ import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_app/perf/app_perf_trace.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';

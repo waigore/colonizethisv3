@@ -42,7 +42,7 @@
 //   - Issue #2336 § Acceptance criteria § AC1 (Shared helpers exist) and
 //     § AC5 (Adaptive polling) for the panel/turn entrypoints.
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show
         CtE2eCivilianPanelSnapshot,
         CtE2eNavalPanelSnapshot,

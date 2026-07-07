@@ -6,7 +6,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../config/map_terrain_config.dart';
+import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import '../features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/shell/shell_player_context.dart';

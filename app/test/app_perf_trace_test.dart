@@ -2,7 +2,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/perf/app_perf_trace.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 
 void main() {
   suppressLogsForTests();
