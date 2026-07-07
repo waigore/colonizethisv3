@@ -43,6 +43,7 @@ import 'province_overlay_unit_partition.dart';
 /// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
 
 part 'province_sea_zone_detail_overlay_sections.dart';
+part 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 part 'province_sea_zone_detail_overlay_tile_section.dart';
 part 'province_sea_zone_detail_overlay_content.dart';
 part 'province_sea_zone_detail_overlay_economic_section.dart';
