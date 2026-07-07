@@ -432,7 +432,7 @@ Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
       (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
     ),
     ...kTownIconIds.map(townIconCache.assetPath),
-    ...TownIconCache.candidateTownIconAssetPaths,
+    ...TownIconCache.legacyTownIconAssetPaths,
     ...kProvinceLabelIconIds.map(
       (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
     ),
