@@ -1,7 +1,7 @@
 // Integration tests for ProductionScreen + productionDesiredOutputProvider.
 // SPEC/ui/production-panel.md.
 
-import 'package:colonizethis_app/features/game/screens/production_screen.dart';
+import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';

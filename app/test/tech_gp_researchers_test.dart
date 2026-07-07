@@ -6,7 +6,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/utils/tech_gp_researchers.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_gp_researchers.dart';
 
 import 'support/panel_test_fixtures.dart';
 

@@ -129,13 +129,13 @@ class AppEventHandler {
 - **DialogBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 - **PanelBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 
-**Registration:** `app/lib/core/services/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
+**Registration:** `app/lib/core/services/app_event_handler/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
 
 ---
 
 ## Game logic → UI bridge
 
-**`GameService`** (`app/lib/core/services/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
+**`GameService`** (`app/lib/core/services/game_service/game_service.dart`) holds optional **`AppEventBus? eventBus`** and optional **`GameEventBus? logicEventBus`**. When **`eventBus`** is set, it emits:
 
 - **`TurnResolutionCompleteEvent`** after `runTurnResolution` or any resume method completes with **`TurnResolutionComplete`**
 - **`NewGameCreatedEvent`** after a new game is created and saved (sync **`createNewGame()`** or async phased **`createNewGameAsync()`** used by the shell)

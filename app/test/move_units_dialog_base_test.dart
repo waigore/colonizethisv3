@@ -2,7 +2,7 @@
 // SPEC/ui/components/move-units-dialog-base.md (Refs #3546).
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/move_units_dialog_base.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/move_units_dialog_base.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

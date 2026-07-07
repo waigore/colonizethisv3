@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/route_paths.dart';
-import 'package:colonizethis_app/core/services/app_event_handler.dart';
-import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 
 void main() {
   suppressLogsForTests();

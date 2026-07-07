@@ -1,4 +1,4 @@
-// Advanced-start NW exploration and prospecting (steps 8–9). SPEC/game/advanced-starts.md.
+// Advanced-start NW exploration (step 8). SPEC/game/advanced-starts.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -19,24 +19,6 @@ class AdvancedStartWorldKnowledgeResult {
   final Set<String> encounteredTribeIds;
 }
 
-Set<String> _prospectTilesForPlayer({
-  required Set<String> revealedTileKeys,
-  required Map<String, String> resourceByTileKey,
-  required double prospectFraction,
-}) {
-  final prospectable = revealedTileKeys
-      .where((key) {
-        final resourceId = resourceByTileKey[key];
-        return resourceId != null &&
-            kProspectRequiredResourceIds.contains(resourceId);
-      })
-      .toList()
-    ..sort();
-  if (prospectable.isEmpty) return const {};
-  final target = (prospectable.length * prospectFraction).ceil();
-  return prospectable.take(target).toSet();
-}
-
 String? _ownerIdForLocalProvince(Game game, String localProvinceId) {
   final fullId = ProvinceId.full(kRegionNewWorld, localProvinceId);
   for (final province in game.worldState.newWorld.provinces) {
@@ -48,8 +30,24 @@ String? _ownerIdForLocalProvince(Game game, String localProvinceId) {
   return null;
 }
 
-/// Reveals contiguous NW provinces per GP and prospects a tier fraction of
-/// prospect-required tiles in those provinces.
+void _setNwSeaZoneTilesFogged({
+  required Map<String, String> playerVisibility,
+  required Map<String, List<String>> nwTileKeysByProvince,
+  required Iterable<String> seaZoneLocalIds,
+}) {
+  for (final seaLocalId in seaZoneLocalIds) {
+    final bucketKey = canonicalSeaZoneTileBucketKey(kRegionNewWorld, seaLocalId);
+    final tileKeys = nwTileKeysByProvince[bucketKey] ?? const [];
+    for (final tileKey in tileKeys) {
+      final current = playerVisibility[tileKey];
+      if (current == null || current == VisibilityLevel.unknown.name) {
+        playerVisibility[tileKey] = VisibilityLevel.fogged.name;
+      }
+    }
+  }
+}
+
+/// Reveals contiguous NW provinces per GP for visibility and diplomacy.
 AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
   required Game game,
   required AdvancedStartType startType,
@@ -58,7 +56,6 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
   required List<WarpLink> warpLinks,
 }) {
   final revealFraction = advancedStartNwRevealFraction(startType);
-  final prospectFraction = advancedStartProspectFraction(startType);
   final totalNwProvinces = game.worldState.newWorld.provinces.length;
   final targetProvinceCount = (totalNwProvinces * revealFraction).ceil();
 
@@ -67,10 +64,6 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
   final visibilityByPlayer = {
     for (final entry in game.worldState.playerVisibilityByTile.entries)
       entry.key: Map<String, String>.from(entry.value),
-  };
-  final prospectedByPlayer = {
-    for (final entry in game.worldState.playerProspectedTiles.entries)
-      entry.key: Set<String>.from(entry.value),
   };
   final tileKeysByProvince =
       game.worldState.tileKeysByRegionAndProvince[kRegionNewWorld] ??
@@ -109,12 +102,20 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       );
     }
 
+    final entrySeaZones = advancedStartNwSeaZonesFromCapital(
+      capitalLocalProvinceId: capitalLocalId,
+      topologyOldWorld: topologyOldWorld,
+      warpLinks: warpLinks,
+    );
+    final foggedSeaZones = advancedStartFoggedNwSeaZoneLocalIds(
+      topologyNewWorld: topologyNewWorld,
+      entrySeaZoneLocalIds: entrySeaZones,
+      revealedProvinceLocalIds: revealedLocalIds.toSet(),
+    );
+
     final playerVisibility =
         visibilityByPlayer.putIfAbsent(player.id, () => <String, String>{});
-    final playerProspected =
-        prospectedByPlayer.putIfAbsent(player.id, () => <String>{});
 
-    final revealedTileKeys = <String>{};
     for (final localId in revealedLocalIds) {
       final ownerId = _ownerIdForLocalProvince(game, localId);
       if (ownerId != null && game.tribes.any((t) => t.id == ownerId)) {
@@ -124,28 +125,56 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       final tileKeys = tileKeysByProvince[provinceKey] ?? const [];
       for (final tileKey in tileKeys) {
         playerVisibility[tileKey] = VisibilityLevel.fullyVisible.name;
-        revealedTileKeys.add(tileKey);
       }
     }
 
-    playerProspected.addAll(
-      _prospectTilesForPlayer(
-        revealedTileKeys: revealedTileKeys,
-        resourceByTileKey: game.worldState.resourceByTileKey,
-        prospectFraction: prospectFraction,
-      ),
+    _setNwSeaZoneTilesFogged(
+      playerVisibility: playerVisibility,
+      nwTileKeysByProvince: tileKeysByProvince,
+      seaZoneLocalIds: foggedSeaZones,
     );
   }
 
   final updated = game.copyWith(
     worldState: game.worldState.copyWith(
       playerVisibilityByTile: visibilityByPlayer,
-      playerProspectedTiles: prospectedByPlayer,
     ),
   );
 
   return AdvancedStartWorldKnowledgeResult(
     game: updated,
     encounteredTribeIds: encounteredTribes,
+  );
+}
+
+MapTopology _combinedTopologyFromRegions(
+  Map<String, MapTopology> topologyByRegion,
+) {
+  final allNodes = <TopologyNode>[];
+  final allEdges = <TopologyEdge>[];
+  for (final topology in topologyByRegion.values) {
+    allNodes.addAll(topology.nodes);
+    allEdges.addAll(topology.edges);
+  }
+  return MapTopology(nodes: allNodes, edges: allEdges);
+}
+
+/// Promotes GP-owned coastal NW sea zones to fullyVisible after colonization.
+/// SPEC/game/advanced-starts.md § NW sea-zone visibility.
+Game applyAdvancedStartCoastalSeaVisibility({
+  required Game game,
+  required Map<String, MapTopology> topologyByRegion,
+}) {
+  final combined = _combinedTopologyFromRegions(topologyByRegion);
+  final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+    game,
+    game.worldState.playerVisibilityByTile,
+    combined,
+    topologyByRegion: topologyByRegion,
+  );
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      playerVisibilityByTile: visibilityAfterCoastal,
+    ),
   );
 }

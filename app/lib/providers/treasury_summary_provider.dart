@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'game_service_provider.dart';
 import 'game_summary_support.dart';
-import '../features/game/shell_player_context.dart';
+import '../features/game/widgets/shell/shell_player_context.dart';
 import 'games_provider.dart';
 
 final _treasurySummaryLog = packageLogger('treasury_summary');

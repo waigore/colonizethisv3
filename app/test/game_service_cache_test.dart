@@ -10,7 +10,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/config/ct_debug_console.dart';
-import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 
 class _CountingGameSaveAdapter extends GameSaveAdapter {
   int loadCallCount = 0;

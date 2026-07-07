@@ -1,0 +1,84 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+
+/// Displays Quick Battle result. Open via `OpenDialogEvent('quick_battle_result', params)`.
+/// SPEC/program/quick-battle-resolution.
+class QuickBattleResultDialog extends StatelessWidget {
+  const QuickBattleResultDialog({
+    super.key,
+    required this.result,
+    this.attackerName = 'Attacker',
+    this.defenderName = 'Defender',
+  });
+
+  static const screenId = UiScreenIds.quickBattleResultDialog;
+
+  final QuickBattleResult result;
+  final String attackerName;
+  final String defenderName;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final theme = Theme.of(context);
+    final winnerText = switch (result.winner) {
+      QuickBattleWinner.attacker => l10n.quickBattle_attackerWins(attackerName),
+      QuickBattleWinner.defender => l10n.quickBattle_defenderHolds(
+        defenderName,
+      ),
+      QuickBattleWinner.mutualExhaustion => l10n.quickBattle_mutualExhaustion,
+    };
+    return CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.quickBattle_battleResult(winnerText),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          CtGap.m,
+          if (result.provinceFlips)
+            Text(
+              l10n.quickBattle_provinceCaptured,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.error,
+              ),
+            ),
+          CtGap.m,
+          Text(
+            l10n.quickBattle_casualties(
+              attackerName,
+              result.attackerCasualties.length,
+            ),
+            style: theme.textTheme.bodySmall,
+          ),
+          Text(
+            l10n.quickBattle_casualties(
+              defenderName,
+              result.defenderCasualties.length,
+            ),
+            style: theme.textTheme.bodySmall,
+          ),
+          CtGap.l,
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.quickBattle_ok),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/production_allocation_row_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 
 import 'widget_test_pumps.dart';

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../../providers/observe_session_provider.dart';
-import '../../widgets/game_top_bar.dart';
-import '../../widgets/game_tab_bar.dart';
-import '../../widgets/player_turn_event_feed.dart';
-import '../../widgets/players_bar_toggle_button.dart';
+import '../../widgets/shell/game_top_bar.dart';
+import '../../widgets/shell/game_tab_bar.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
+import '../../widgets/shell/players_bar_toggle_button.dart';
 
 /// Top bar and tab bar for the in-game map shell.
 ///

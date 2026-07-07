@@ -230,10 +230,10 @@ Future<void> open(BuildContext context) {
     test(
       'allows showDialog inside the documented local-by-design files',
       () {
-        // `new_game_setup_flow.dart` is in the allow-list per
+        // `new_game_setup_flow_dialogs.dart` is in the allow-list per
         // SPEC/program/app-ui-wiring.md § "Local by design".
         final root = _writeAppFile(
-          'app/lib/features/shell/new_game_setup_flow.dart',
+          'app/lib/features/shell/new_game_setup_flow_dialogs.dart',
           '''
 import 'package:flutter/material.dart';
 

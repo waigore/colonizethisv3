@@ -18,7 +18,7 @@ import 'package:path/path.dart' as p;
 ///
 /// SPEC: SPEC/program/repo-lint.md; SPEC/ui/tribe-first-contact-overlay.md.
 const String _assetsDir = 'app/assets/dialogue';
-const String _overlaysDir = 'app/lib/features/game/dialogue';
+const String _overlaysDir = 'app/lib/features/game/widgets/dialogue';
 const String _constantsFile = 'app/lib/config/app_constants.dart';
 
 /// `{$identifier}` interpolation tokens inside a Yarn line.

@@ -25,8 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
-import 'package:colonizethis_app/features/game/widgets/research_slot_turn_preview_view.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_slot_funding_toggles.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'support/widgetbook_test_harness.dart';
 

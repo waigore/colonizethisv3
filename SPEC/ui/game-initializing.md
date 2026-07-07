@@ -34,7 +34,7 @@ These visual values are the dark editorial-monocle canon and resolve from the pa
 | Error frame | The error dialog content card paints a 1 px border colored `--danger` on all four sides, inside the regular `CtDialogShell` chrome. |
 | Buttons | Action buttons (Retry, Close) use `CtNinePatchButton`; Retry is positioned as the trailing (primary-positioned) action and Close as the leading (secondary-positioned) action. |
 
-**Coarse steps (minimum set):** The UI layer must expose at least these phases in order (labels are implementation-defined; l10n keys in `app/lib/l10n/`). Program indices `0..4` match `GameService.newGameSetupProgressStepCount` (`app/lib/core/services/game_service.dart`):
+**Coarse steps (minimum set):** The UI layer must expose at least these phases in order (labels are implementation-defined; l10n keys in `app/lib/l10n/`). Program indices `0..4` match `GameService.newGameSetupProgressStepCount` (`app/lib/core/services/game_service/game_service.dart`):
 
 | Index | Phase |
 |-------|--------|

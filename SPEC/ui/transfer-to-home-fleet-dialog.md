@@ -1,7 +1,7 @@
 # Transfer to Home Fleet Dialog
 
 **Screen ID:** `DLG40001` — stable; do not reassign.
-**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`.
+**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart`.
 **Widgetbook:** `Transfer to Home Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG40001-transfer-to-home-fleet.html](mockups/DLG40001-transfer-to-home-fleet.html)
@@ -13,7 +13,7 @@
 |--------|------|------------|-------------|
 | `TransferToHomeFleetDialog` | `StatelessWidget` | `sourceFleet` (`Fleet`), `homeFleet` (`Fleet`), `game` (`Game`), `humanPlayerId` (`String`), `bus` (`AppEventBus`) | Local `showDialog` modal opened from `NavalUnitsPanel` regular-fleet **Transfer to Home Fleet** action. Emits a single `NavalTransferShipsRequestedEvent` on confirm. |
 
-Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 560`, `maxHeight: 520`, dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient) hosting a `CtTransferList`. Ship instance selection is delegated to `shipInstancesForTransferCounts` (see [naval-units-fleet-management.md](naval-units-fleet-management.md)).
+Implementation: `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 560`, `maxHeight: 520`, dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient) hosting a `CtTransferList`. Ship instance selection is delegated to `shipInstancesForTransferCounts` (see [naval-units-fleet-management.md](naval-units-fleet-management.md)).
 
 ---
 

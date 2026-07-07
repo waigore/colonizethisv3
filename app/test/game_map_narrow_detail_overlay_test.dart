@@ -1,14 +1,14 @@
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_panel.dart'
     show CtPanel;
-import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
         demoHumanPlayerViewForOverlay,
         demoRegionForOverlay,
         sampleTileKeyForProvinceOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

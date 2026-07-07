@@ -1,5 +1,5 @@
 // formatDiplomaticEvent — all [DiplomaticEventType] branches. SPEC/ui/diplomacy-panel.md.
-import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';

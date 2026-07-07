@@ -1,7 +1,7 @@
 # Move Fleet Dialog
 
 **Screen ID:** `DLG30001` — stable; do not reassign.
-**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`.
+**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`.
 **Widgetbook:** `Move Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate: [map-widget.md](map-widget.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG30001-move-fleet-dialog.html](mockups/DLG30001-move-fleet-dialog.html)
@@ -13,7 +13,7 @@
 |--------|------|------------|-------------|
 | `MoveFleetDialog` | `StatefulWidget` | `game` (`Game`), `topology` (`MapTopology`), `humanPlayerId` (`String`), `fleet` (`Fleet`), `bus` (`AppEventBus`) | Local `showDialog` modal opened from `NavalUnitsPanel` fleet row Move action. Emits a naval move request on confirm and per-row `LocateMapTileEvent`s on locate. |
 
-Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `RadioListTile` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban. `_buildNavalMovePicks` plus the `_PickSeaZone` / `_PickPort` variants build the sealed `_MovePick` list and order conversion.
+Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `RadioListTile` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban. `_buildNavalMovePicks` plus the `_PickSeaZone` / `_PickPort` variants build the sealed `_MovePick` list and order conversion.
 
 ---
 

@@ -1,0 +1,188 @@
+import 'dart:async';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../l10n/l10n.dart';
+import 'research_slot_preview.dart';
+import '../../../../widgets/ct_brass_divider.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'technology_panel_orders.dart';
+import 'technology_panel_widgets.dart';
+
+// Re-export the research slot-card widget family (extracted to keep this file
+// under the `repo.game_widgets_file_size` cap) so existing importers and tests
+// keep resolving `ResearchSlotCard`, `LockedResearchSlotCard`, the slot
+// constants, `TechSectionHeading`, and `ResearchedTechChip` from this panel
+// entrypoint.
+export 'technology_panel_widgets.dart';
+
+part 'technology_panel_research_slots.dart';
+
+/// Always-rendered slot count on the Slots tab.
+///
+/// SPEC/ui/technology-panel.md § Slot behaviour: "The Slots tab always
+/// renders exactly four slot cards in slot-index order regardless of
+/// `player.researchSlots`." Refs #2864 S0/S3.
+const int kTechnologyResearchSlotCount = 4;
+
+/// Technology panel (UXD 03k / GAME40001). Shows researched techs and
+/// research slots for a player under the dark editorial-monocle theme.
+class TechnologyPanel extends StatelessWidget {
+  const TechnologyPanel({
+    super.key,
+    required this.game,
+    required this.player,
+    this.currentOrders = const Orders(),
+    this.onOrdersChanged,
+  });
+
+  /// SPEC/ui/technology-panel.md — [UiScreenIds.technologyScreen]. Hosted by
+  /// `TechnologyScreen`; shares its stable surface ID.
+  static const screenId = UiScreenIds.technologyScreen;
+
+  final Game game;
+  final Player player;
+  final Orders currentOrders;
+  final void Function(Orders orders)? onOrdersChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final researchedIds = _sortedResearchedTechIds();
+    final progress = player.researchProgressByTechId ?? const <String, int>{};
+    final slots = player.researchSlots ?? 3;
+    final humanPlayerId = player.id;
+    final researchOrdersForPlayer = _researchOrdersForPlayer(humanPlayerId);
+    final canEdit = onOrdersChanged != null;
+
+    return Padding(
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: _buildPanelContent(
+        context: context,
+        l10n: l10n,
+        researchedIds: researchedIds,
+        progress: progress,
+        slots: slots,
+        humanPlayerId: humanPlayerId,
+        researchOrdersForPlayer: researchOrdersForPlayer,
+        canEdit: canEdit,
+      ),
+    );
+  }
+
+  Widget _buildPanelContent({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required List<String> researchedIds,
+    required Map<String, int> progress,
+    required int slots,
+    required String humanPlayerId,
+    required List<ResearchOrder> researchOrdersForPlayer,
+    required bool canEdit,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // No dev-only panel header block: the per-player title and the
+        // research-slot count line are intentionally omitted so the Slots
+        // tab body opens directly with the Researched Techs heading, matching
+        // the mockup (`SPEC/ui/mockups/GAME40001-technology-panel.html` opens
+        // with `.researched-heading`). Player identity and the `Technology`
+        // title are carried by the `CtTopBar` chrome. Refs #3510.
+        // Researched Techs renders ABOVE Research Slots per
+        // SPEC/ui/technology-panel.md § Layout / wireframe > Body section
+        // ordering and matches the mockup body markup in
+        // SPEC/ui/mockups/GAME40001-technology-panel.html where
+        // `.researched-heading` precedes `.slots-heading`. Refs #2864 S0/S6.
+        // The two canonical Slots-tab headings use the mockup-faithful
+        // accent display-font `TechSectionHeading` (mockup
+        // `.researched-heading` / `.slots-heading`) rather than the small-caps
+        // `CtSectionLabel` chrome; per the issue source-of-truth precedence
+        // the mockup wins on this purely visual heading detail. Refs #3510.
+        TechSectionHeading(l10n.technologyPanel_researchedTechsHeading),
+        const SizedBox(height: 6),
+        if (researchedIds.isEmpty)
+          Text(
+            l10n.technologyPanel_noneYet,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: EditorialMonoclePalette.muted,
+                  fontStyle: FontStyle.italic,
+                ),
+          )
+        else
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final id in researchedIds)
+                ResearchedTechChip(techId: id),
+            ],
+          ),
+        CtGap.l,
+        const CtBrassDivider(),
+        CtGap.ml,
+        TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
+        const SizedBox(height: 6),
+        // Stretch every slot card to the full panel content width so the
+        // locked Slot 4 placeholder is the same width as the active Slots
+        // 1–3 (mockup `.slot-card` is a full-width block element).
+        // SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4.
+        // Refs #3510.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: List.generate(
+            kTechnologyResearchSlotCount,
+            (index) => buildResearchSlot(
+              context: context,
+              l10n: l10n,
+              index: index,
+              slots: slots,
+              progress: progress,
+              humanPlayerId: humanPlayerId,
+              researchOrdersForPlayer: researchOrdersForPlayer,
+              canEdit: canEdit,
+            ),
+          ),
+        ),
+        // The standalone "In progress" auxiliary block was removed (Refs
+        // #3512): in-progress techs now keep occupying their slots via the
+        // persisted `Player.researchSlotAssignments` and render exclusively
+        // inside their slot cards, so there is no orphaned-progress list.
+        // SPEC/ui/technology-panel.md § Slots tab — section ordering.
+      ],
+    );
+  }
+
+  List<String> _sortedResearchedTechIds() {
+    final techUnlocked = player.techUnlocked ?? const <String, bool>{};
+    final researchedIds = techUnlocked.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+    researchedIds.sort(_sortTechIdsByEraThenName);
+    return researchedIds;
+  }
+
+  int _sortTechIdsByEraThenName(String a, String b) {
+    final eraA = techById(a)?.era ?? 999;
+    final eraB = techById(b)?.era ?? 999;
+    final eraCmp = eraA.compareTo(eraB);
+    if (eraCmp != 0) {
+      return eraCmp;
+    }
+    return techDisplayName(a).compareTo(techDisplayName(b));
+  }
+
+  List<ResearchOrder> _researchOrdersForPlayer(String playerId) {
+    return currentOrders.researchOrdersByPlayerId[playerId] ??
+        const <ResearchOrder>[];
+  }
+
+}
+

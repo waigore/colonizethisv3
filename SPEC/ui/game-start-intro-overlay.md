@@ -1,7 +1,7 @@
 # Game Start Intro Overlay
 
 **Screen ID:** `OVL10001` — stable; do not reassign.
-**SPEC/ui** — Modal blocking overlay on first entry to a new game session. Implementation: `app/lib/features/game/dialogue/game_start_intro_overlay.dart`.
+**SPEC/ui** — Modal blocking overlay on first entry to a new game session. Implementation: `app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart`.
 **Widgetbook:** `Game Start Intro Overlay` → `app/lib/widgetbook/catalog.dart`. Yarn: `game_start_intro` via [`CtDialogueView`](ct-dialogue-view.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`.
 
 **Mockup:** [mockups/OVL10001-game-intro-overlay.html](mockups/OVL10001-game-intro-overlay.html)
@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-`GameStartIntroOverlay` is a `StatefulWidget` (`app/lib/features/game/dialogue/game_start_intro_overlay.dart`). It wraps an arbitrary `child` and, while the intro dialogue is running, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
+`GameStartIntroOverlay` is a `StatefulWidget` (`app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart`). It wraps an arbitrary `child` and, while the intro dialogue is running, paints a dim scrim plus a centered `CtDialogShell` on top of that child.
 
 | Constructor parameter | Type | Required | Description |
 |-----------------------|------|----------|-------------|

@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_app/core/services/ai_profile_resolution.dart';
+import 'package:colonizethis_app/core/services/ai/ai_profile_resolution.dart';
 
 void main() {
   group('resolveAiProfilesForGame', () {

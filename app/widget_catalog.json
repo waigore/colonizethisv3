@@ -29,7 +29,7 @@
   {
     "id": "ct_province_sea_zone_detail_overlay",
     "name": "ProvinceSeaZoneDetailOverlay",
-    "dart_file_path": "lib/features/game/widgets/province_sea_zone_detail_overlay.dart",
+    "dart_file_path": "lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart",
     "constructor_props": "game: Game, region: RegionMapViewData, selectedId: String, humanPlayerId: String, onHighlightTile: void Function(String?)?, onClose: VoidCallback?",
     "category": "game/overlay",
     "source": "pipeline",
@@ -38,7 +38,7 @@
   {
     "id": "ct_production_panel",
     "name": "ProductionPanel",
-    "dart_file_path": "lib/features/game/widgets/production_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/production/production_panel.dart",
     "constructor_props": "game: Game, player: Player, desiredOutputByRecipe: Map<String, int>, onDesiredOutputChanged: ValueChanged<Map<String, int>>",
     "category": "game/panel",
     "source": "pipeline",
@@ -47,7 +47,7 @@
   {
     "id": "ct_civilian_units_panel",
     "name": "CivilianUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/civilian_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/units/civilian/civilian_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, civilianOwnerIds: Set<String>?, bus: AppEventBus, currentOrders: Orders, tileScopeTileKey: String?, initialSelectedUnitId: String?, explorerOnly: bool, builderOnly: bool, prospectShortcutTargetTileKey: String?, exploreShortcutTargetTileKey: String?, buildImprovementShortcutTargetTileKey: String?, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
@@ -56,7 +56,7 @@
   {
     "id": "ct_military_units_panel",
     "name": "MilitaryUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/military_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/units/military/military_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
@@ -65,7 +65,7 @@
   {
     "id": "ct_naval_units_panel",
     "name": "NavalUnitsPanel",
-    "dart_file_path": "lib/features/game/widgets/naval_units_panel.dart",
+    "dart_file_path": "lib/features/game/widgets/units/naval/naval_units_panel.dart",
     "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, tileMapByRegion: Map<String, TileMapResult>?, topologyByRegion: Map<String, MapTopology>?, locationScopeKey: String?, initialSelectedFleetId: String?, tileScopeTileKey: String?, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
@@ -74,7 +74,7 @@
   {
     "id": "ct_train_civilians_dialog",
     "name": "TrainCiviliansDialog",
-    "dart_file_path": "lib/features/game/widgets/train_civilians_dialog.dart",
+    "dart_file_path": "lib/features/game/widgets/train/train_civilians_dialog.dart",
     "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
     "category": "game/dialog",
     "source": "pipeline",
@@ -83,7 +83,7 @@
   {
     "id": "ct_train_military_dialog",
     "name": "TrainMilitaryDialog",
-    "dart_file_path": "lib/features/game/widgets/train_military_dialog.dart",
+    "dart_file_path": "lib/features/game/widgets/train/train_military_dialog.dart",
     "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
     "category": "game/dialog",
     "source": "pipeline",
@@ -92,7 +92,7 @@
   {
     "id": "ct_trade_screen",
     "name": "TradeScreen",
-    "dart_file_path": "lib/features/game/screens/trade_screen.dart",
+    "dart_file_path": "lib/features/game/screens/trade/trade_screen.dart",
     "constructor_props": "game: Game, player: Player",
     "category": "game/screen",
     "source": "pipeline",

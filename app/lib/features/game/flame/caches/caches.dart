@@ -7,3 +7,4 @@ export 'fleet_icon_cache.dart';
 export 'province_label_icon_cache.dart';
 export 'resource_icon_cache.dart';
 export 'town_icon_cache.dart';
+export 'per_player_work_target_selection_cache.dart';

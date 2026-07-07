@@ -17,9 +17,9 @@
 //      paints the legacy 320 dp wide-layout width, so the wide-vs-open
 //      province panel inset rule from #2861 S7 is preserved.
 
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
-import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

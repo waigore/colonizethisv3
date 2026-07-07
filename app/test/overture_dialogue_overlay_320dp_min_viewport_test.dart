@@ -39,7 +39,7 @@
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show OvertureOffer;
 import 'package:colonizethis_models/colonizethis_models.dart';

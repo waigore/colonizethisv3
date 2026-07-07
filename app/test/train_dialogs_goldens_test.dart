@@ -43,10 +43,10 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_dialog_chrome.dart';
-import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train_naval_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

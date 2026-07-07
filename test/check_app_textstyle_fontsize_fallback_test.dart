@@ -287,7 +287,7 @@ TextStyle resolve(TextTheme t) =>
     test('does not skip ordinary feature / widget files', () {
       expect(
         shouldSkipAppTextStyleFontSizeFallbackFile(
-          'app/lib/features/game/widgets/move_army_dialog.dart',
+          'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
         ),
         isFalse,
       );

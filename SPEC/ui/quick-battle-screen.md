@@ -1,7 +1,7 @@
 # Quick Battle Screen
 
 **Screen ID:** `CMPT20001` — stable; do not reassign.
-**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Implementation: `app/lib/features/game/combat/quick_battle_screen.dart`.
+**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Implementation: `app/lib/features/game/screens/combat/quick_battle_screen.dart`.
 **Widgetbook:** `Quick Battle` → `app/lib/widgetbook/catalog.dart`. Game model: [quick-battle.md](../game/quick-battle.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md).
 
 **Mockup:** [mockups/CMPT20001-quick-battle-screen.html](mockups/CMPT20001-quick-battle-screen.html)
@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-`QuickBattleScreen` is a `StatefulWidget` (`app/lib/features/game/combat/quick_battle_screen.dart`) presented inside a `CtDialogShell` (max width 400 dp, max height 500 dp).
+`QuickBattleScreen` is a `StatefulWidget` (`app/lib/features/game/screens/combat/quick_battle_screen.dart`) presented inside a `CtDialogShell` (max width 400 dp, max height 500 dp).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -24,7 +24,7 @@ The widget is presentational with respect to game state — it does not read pro
 ## Trigger conditions
 
 - The screen is opened by the combat phase resolver when the player has chosen Quick Battle for a province (see [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md)) or when a capital siege forces Quick Battle.
-- The screen is **not** registered as an `OpenDialogEvent` id in `app/lib/core/services/app_event_handler_scope.dart`. The orchestrating combat flow constructs `QuickBattleScreen` directly (or via a future typed event) and supplies `onComplete` to feed the result back into the combat pipeline.
+- The screen is **not** registered as an `OpenDialogEvent` id in `app/lib/core/services/app_event_handler/app_event_handler_scope.dart`. The orchestrating combat flow constructs `QuickBattleScreen` directly (or via a future typed event) and supplies `onComplete` to feed the result back into the combat pipeline.
 - While `turnResolutionBlockingProvider == true`, normal bus-driven dialogs are gated per [app-ui-wiring.md](../program/app-ui-wiring.md) § Turn resolution in progress; Quick Battle invocation must coordinate with that gate (typically the combat phase pauses turn-resolution UI dismissal until the screen completes).
 
 ---

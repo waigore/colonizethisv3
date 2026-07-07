@@ -439,19 +439,19 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
       () {
         expect(
           shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/screens/diplomacy_detail_screen.dart',
+            'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/widgets/move_fleet_dialog.dart',
+            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
           ),
           isFalse,
         );
         expect(
           shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/flame/game_screen.dart',
+            'app/lib/features/game/screens/game/game_screen.dart',
           ),
           isFalse,
         );

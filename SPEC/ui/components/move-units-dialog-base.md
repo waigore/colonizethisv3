@@ -1,6 +1,6 @@
 # MoveUnitsDialogState / MoveDialogDestinationRow (component)
 
-**SPEC/ui/components** — Shared scaffold + destination-row chrome for the in-game move dialogs. Implementation: [`app/lib/features/game/widgets/move_units_dialog_base.dart`](../../../app/lib/features/game/widgets/move_units_dialog_base.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtDialogShell*, § *CtSectionLabel*, § *CtNinePatchButton*, § *Editorial-monocle palette*.
+**SPEC/ui/components** — Shared scaffold + destination-row chrome for the in-game move dialogs. Implementation: [`app/lib/features/game/widgets/unit_orders/move_units_dialog_base.dart`](../../../app/lib/features/game/widgets/unit_orders/move_units_dialog_base.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtDialogShell*, § *CtSectionLabel*, § *CtNinePatchButton*, § *Editorial-monocle palette*.
 
 This composite is **not** a screen and has **no** stable screen ID. It is the canonical chrome for the two move-dialog screen specs listed under [Consumers](#consumers).
 
@@ -103,7 +103,7 @@ The trailing `Wrap` lets Cancel/Confirm flow onto a second run at narrow viewpor
 - **Given** a `MoveDialogDestinationRow` with `selected == true`, **When** it builds, **Then** the border width equals `MoveDialogDestinationRow.selectedBorderWidth` (2), color resolves to `EditorialMonoclePalette.accent`, and a filled `EditorialMonoclePalette.accent` dot is mounted in the leading `MoveDialogRadioDot`.
 - **Given** a `MoveDialogDestinationRow` built with a non-null `trailing`, **When** the tree settles, **Then** the trailing widget is reachable as a descendant of the row; **Given** `trailing == null`, **Then** no trailing widget follows the `Expanded(content)`.
 - **Given** a `MoveDialogDestinationRow`, **When** the user taps it, **Then** the supplied `onTap` callback fires exactly once.
-- **Given** the source `app/lib/features/game/widgets/move_units_dialog_base.dart`, **When** read, **Then** it references `EditorialMonoclePalette.accent`/`border` and exposes `MoveUnitsDialogState`, `MoveDialogDestinationRow`, and `MoveDialogRadioDot` (canonical chrome regression guard).
+- **Given** the source `app/lib/features/game/widgets/unit_orders/move_units_dialog_base.dart`, **When** read, **Then** it references `EditorialMonoclePalette.accent`/`border` and exposes `MoveUnitsDialogState`, `MoveDialogDestinationRow`, and `MoveDialogRadioDot` (canonical chrome regression guard).
 
 ---
 

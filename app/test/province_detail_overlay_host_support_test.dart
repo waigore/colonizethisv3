@@ -10,7 +10,7 @@
 // runtime tap/emit behavior remains pinned by the host-level tests
 // (`province_*_shortcut_host_emit_event_test.dart`).
 
-import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'

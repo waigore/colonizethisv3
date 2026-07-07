@@ -7,7 +7,7 @@
 
 ## Widget contract
 
-`QuickBattleResultDialog` is a presentational `StatelessWidget` (`app/lib/features/game/combat/quick_battle_result_dialog.dart`) wrapped in a `CtDialogShell`.
+`QuickBattleResultDialog` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/quick_battle_result_dialog.dart`) wrapped in a `CtDialogShell`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -21,7 +21,7 @@ The widget owns no internal state. It pops itself via `Navigator.of(context).pop
 
 ## Trigger conditions
 
-- The dialog is opened via `OpenDialogEvent(quickBattleResultDialogId, params)` where `quickBattleResultDialogId == 'quick_battle_result'` (declared in `app/lib/core/services/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler_scope_dialog_builders.dart` and constructs the dialog from the event `params`.
+- The dialog is opened via `OpenDialogEvent(quickBattleResultDialogId, params)` where `quickBattleResultDialogId == 'quick_battle_result'` (declared in `app/lib/core/services/app_event_handler/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart` and constructs the dialog from the event `params`.
 - Required params:
   - `result: QuickBattleResult` — when missing, the builder renders `SizedBox.shrink()` (no dialog content).
   - `attackerName: String?` — defaults to `'Attacker'` when absent.

@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/caches/fleet_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
@@ -432,6 +432,7 @@ Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
       (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
     ),
     ...kTownIconIds.map(townIconCache.assetPath),
+    ...TownIconCache.legacyTownIconAssetPaths,
     ...kProvinceLabelIconIds.map(
       (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
     ),

@@ -11,8 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/panel_test_fixtures.dart';

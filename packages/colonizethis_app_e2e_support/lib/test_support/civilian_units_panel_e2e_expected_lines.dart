@@ -5,7 +5,7 @@
 // excluded from the app coverage gate using the same convention as
 // `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
-// app/lib/features/game/widgets/civilian_units_panel.dart for e2e.
+// app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart for e2e.
 // If drift fails tests, align this file with the panel widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -13,8 +13,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/civilian_units_sort.dart';
-import 'package:colonizethis_app/features/game/utils/region_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 const Map<String, String> _workTargetLabels = {

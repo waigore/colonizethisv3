@@ -136,3 +136,60 @@ List<String> advancedStartFloodFillProvinces({
 
   return collected;
 }
+
+/// NW sea zones to mark [VisibilityLevel.fogged] during advanced-start step 8:
+/// shortest S–S paths from [entrySeaZoneLocalIds] to every sea zone P–S adjacent
+/// to [revealedProvinceLocalIds]. Unreachable targets are omitted.
+List<String> advancedStartFoggedNwSeaZoneLocalIds({
+  required MapTopology topologyNewWorld,
+  required List<String> entrySeaZoneLocalIds,
+  required Set<String> revealedProvinceLocalIds,
+}) {
+  if (entrySeaZoneLocalIds.isEmpty || revealedProvinceLocalIds.isEmpty) {
+    return const [];
+  }
+
+  final targetSeas = <String>{};
+  for (final localId in revealedProvinceLocalIds) {
+    targetSeas.addAll(
+      seaZoneIdsAdjacentToProvince(
+        topologyNewWorld,
+        localId,
+        regionId: kRegionNewWorld,
+      ),
+    );
+  }
+  if (targetSeas.isEmpty) return const [];
+
+  final parents = <String, String?>{};
+  for (final entry in entrySeaZoneLocalIds) {
+    parents[entry] = null;
+  }
+  final visited = <String>{...entrySeaZoneLocalIds};
+  final queue = List<String>.from(entrySeaZoneLocalIds)..sort();
+  var head = 0;
+
+  while (head < queue.length && !targetSeas.every(visited.contains)) {
+    final current = queue[head++];
+    for (final next in adjacentSeaZoneIdsSeaOnly(topologyNewWorld, current)) {
+      if (visited.add(next)) {
+        parents[next] = current;
+        queue.add(next);
+      }
+    }
+  }
+
+  final onPath = <String>{};
+  for (final target in targetSeas) {
+    if (!visited.contains(target)) continue;
+    var node = target;
+    while (true) {
+      if (!onPath.add(node)) break;
+      final parent = parents[node];
+      if (parent == null) break;
+      node = parent;
+    }
+  }
+
+  return onPath.toList()..sort();
+}
