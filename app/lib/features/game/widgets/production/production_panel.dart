@@ -23,6 +23,7 @@ import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
 
 part 'production_panel_support_available.dart';
+part 'production_panel_support_available_sections.dart';
 part 'production_panel_support_allocation.dart';
 
 /// Public layout key planted on the narrow (`< [kNarrowBreakpoint]` dp) variant

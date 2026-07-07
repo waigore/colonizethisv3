@@ -21,6 +21,7 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 part 'new_game_leader_selection_dialog_state_base.dart';
 part 'new_game_leader_selection_dialog_slots.dart';
 part 'new_game_leader_selection_dialog_slot_row.dart';
+part 'new_game_leader_selection_dialog_slot_row_pickers.dart';
 part 'new_game_leader_selection_dialog_setup_fields_header.dart';
 part 'new_game_leader_selection_dialog_setup_fields_options.dart';
 part 'new_game_leader_selection_dialog_setup_fields_footer.dart';
