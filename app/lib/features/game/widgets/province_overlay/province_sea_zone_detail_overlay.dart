@@ -42,7 +42,9 @@ import 'province_overlay_unit_partition.dart';
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
 /// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
 
-part 'province_sea_zone_detail_overlay_sections.dart';
+part 'province_sea_zone_detail_overlay_sections_chrome.dart';
+part 'province_sea_zone_detail_overlay_sections_political.dart';
+part 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 part 'province_sea_zone_detail_overlay_chrome.dart';
 part 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 part 'province_sea_zone_detail_overlay_tile_section.dart';
