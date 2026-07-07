@@ -16,6 +16,7 @@ part 'game_service_new_game_setup_pipeline.dart';
 part 'game_service_new_game_setup_maps.dart';
 part 'game_service_turn_resume.dart';
 part 'game_service_turn_trace.dart';
+part 'game_service_turn_trace_ai_sections.dart';
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
