@@ -3,7 +3,7 @@
 // `AppThemes.editorialMonocle.textTheme` rather than a hard-coded
 // `const TextStyle(fontSize: 12)` literal.
 //
-// `_ActionButton` lives in `diplomacy_panel_row.dart` (extracted from
+// `_ActionButton` lives in `diplomacy_panel_row_actions.dart` (extracted from
 // `diplomacy_panel.dart`).
 //
 // SPEC:
@@ -28,7 +28,7 @@ void main() {
   suppressLogsForTests();
 
   group(
-    'diplomacy_panel_row.dart _ActionButton routes caption through TextTheme '
+    'diplomacy_panel_row_actions.dart _ActionButton routes caption through TextTheme '
     '(Refs #2914 S7 regression guard)',
     () {
       late final String diplomacyPanelRowSource;
@@ -36,13 +36,14 @@ void main() {
       setUpAll(() {
         // `flutter test` runs from the package root (`app/`); the source
         // path is therefore relative to that working directory.
-        final File source =
-            File('lib/features/game/widgets/diplomacy/diplomacy_panel_row.dart');
+        final File source = File(
+          'lib/features/game/widgets/diplomacy/diplomacy_panel_row_actions.dart',
+        );
         expect(
           source.existsSync(),
           isTrue,
           reason:
-              'Expected `app/lib/features/game/widgets/diplomacy/diplomacy_panel_row.dart` '
+              'Expected `app/lib/features/game/widgets/diplomacy/diplomacy_panel_row_actions.dart` '
               'to exist; running directory is `${Directory.current.path}`.',
         );
         diplomacyPanelRowSource = source.readAsStringSync();
@@ -63,7 +64,7 @@ void main() {
           slotFallback.hasMatch(diplomacyPanelRowSource),
           isTrue,
           reason:
-              'Expected `_ActionButton.build` in `diplomacy_panel_row.dart` to '
+              'Expected `_ActionButton.build` in `diplomacy_panel_row_actions.dart` to '
               'resolve its caption text style via '
               '`theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)` '
               '(Refs #2914 S7). If the slot was intentionally changed, '
@@ -88,7 +89,7 @@ void main() {
           isEmpty,
           reason:
               'Found ${matches.length} `style: const TextStyle(fontSize: N)` '
-              'literal(s) in `diplomacy_panel_row.dart`. Each must route through '
+              'literal(s) in `diplomacy_panel_row_actions.dart`. Each must route through '
               '`Theme.of(context).textTheme.<slot> ?? const TextStyle(...)` '
               'per Refs #2914 S7 so font, weight, and colour flow from '
               '`AppThemes.editorialMonocle`. Offending occurrences: '

@@ -97,44 +97,76 @@ int runCheckDialogueBlockingCombinedStep(
           .toList()
         ..sort((a, b) => a.path.compareTo(b.path));
 
+  final analysesByRelPath = <String, _DialogueFileAnalysis>{};
+  final partLibraryByRelPath = <String, String>{};
+
+  for (final file in files) {
+    final relPath = p
+        .relative(file.path, from: root)
+        .replaceAll('\\', '/');
+    final source = file.readAsStringSync();
+    final libraryRelPath = _partOfLibraryRelPath(
+      source,
+      relPath,
+      _dialogueDirRelative,
+    );
+    if (libraryRelPath != null) {
+      partLibraryByRelPath[relPath] = libraryRelPath;
+    }
+    analysesByRelPath[relPath] = _analyzeDialogueFile(source, relPath);
+  }
+
+  final libraryPartPaths = <String, List<String>>{};
+  for (final entry in partLibraryByRelPath.entries) {
+    libraryPartPaths.putIfAbsent(entry.value, () => []).add(entry.key);
+  }
+
   for (final file in files) {
     final relPath = p
         .relative(file.path, from: root)
         .replaceAll('\\', '/');
     final basename = p.basename(file.path);
-    final analysis = _analyzeDialogueFile(
-      file.readAsStringSync(),
-      relPath,
-    );
+    final analysis = analysesByRelPath[relPath]!;
 
     final isCanonical = _canonicalBasenames.contains(basename);
     final isExemptOverlay = basename == _exemptOverlayBasename;
-
-    // Check 3 input: structural set of view-constructing overlay basenames.
-    if (basename.endsWith('_overlay.dart') && analysis.constructsCtView) {
-      ctViewOverlays.add(basename);
-    }
+    final isPartFile = partLibraryByRelPath.containsKey(relPath);
 
     if (isCanonical || isExemptOverlay) {
       continue;
     }
 
-    // Check 1: adoption.
-    if (analysis.constructsCtView && !analysis.constructsCtBody) {
-      adoptionViolations.add(
-        '$relPath: constructs $_ctView( but never constructs $_ctBody( — '
-        'delegate Yarn line/choice rendering to $_ctBody instead of '
-        're-implementing line/choice branches (Refs #3628).',
-      );
-    }
-
-    // Check 2: no bespoke wiring.
+    // Check 2: no bespoke wiring (per file, including `part of` fragments).
     for (final ref in analysis.forbiddenViewRefs) {
       wiringViolations.add(
         '$relPath:${ref.line}: overlay invokes `${ref.method}` on the view — '
         'only ct_dialogue_line_choice_body.dart may wire $_ctView '
         '${_forbiddenViewMethods.join(' / ')}; delegate to $_ctBody '
         '(Refs #3628).',
+      );
+    }
+
+    // Check 1 + 3: adoption and golden registry use the merged library unit
+    // so overlay hosts split into `part of` fragments still satisfy the gate.
+    if (isPartFile) {
+      continue;
+    }
+
+    final mergedAnalysis = _mergeDialogueAnalyses([
+      analysis,
+      for (final partPath in libraryPartPaths[relPath] ?? const <String>[])
+        analysesByRelPath[partPath]!,
+    ]);
+
+    if (basename.endsWith('_overlay.dart') && mergedAnalysis.constructsCtView) {
+      ctViewOverlays.add(basename);
+    }
+
+    if (mergedAnalysis.constructsCtView && !mergedAnalysis.constructsCtBody) {
+      adoptionViolations.add(
+        '$relPath: constructs $_ctView( but never constructs $_ctBody( — '
+        'delegate Yarn line/choice rendering to $_ctBody instead of '
+        're-implementing line/choice branches (Refs #3628).',
       );
     }
   }
@@ -199,6 +231,49 @@ class _DialogueFileAnalysis {
   final bool constructsCtView;
   final bool constructsCtBody;
   final List<({String method, int line})> forbiddenViewRefs;
+}
+
+/// Relative path to the library file when [source] begins with `part of`.
+String? _partOfLibraryRelPath(
+  String source,
+  String relPath,
+  String dialogueDirRelative,
+) {
+  for (final raw in source.split('\n')) {
+    final line = raw.trimLeft();
+    if (line.isEmpty || line.startsWith('//')) {
+      continue;
+    }
+    if (!line.startsWith('part of ')) {
+      return null;
+    }
+    final match = RegExp(r'''part of ['"]([^'"]+)['"]''').firstMatch(line);
+    if (match == null) {
+      return null;
+    }
+    return p
+        .join(dialogueDirRelative, match.group(1)!)
+        .replaceAll('\\', '/');
+  }
+  return null;
+}
+
+_DialogueFileAnalysis _mergeDialogueAnalyses(
+  Iterable<_DialogueFileAnalysis> analyses,
+) {
+  var constructsCtView = false;
+  var constructsCtBody = false;
+  final forbiddenViewRefs = <({String method, int line})>[];
+  for (final analysis in analyses) {
+    constructsCtView = constructsCtView || analysis.constructsCtView;
+    constructsCtBody = constructsCtBody || analysis.constructsCtBody;
+    forbiddenViewRefs.addAll(analysis.forbiddenViewRefs);
+  }
+  return _DialogueFileAnalysis(
+    constructsCtView: constructsCtView,
+    constructsCtBody: constructsCtBody,
+    forbiddenViewRefs: forbiddenViewRefs,
+  );
 }
 
 _DialogueFileAnalysis _analyzeDialogueFile(String source, String relPath) {

@@ -77,6 +77,45 @@ void main() {
       expect(code, 0, reason: logs.join('\n'));
     });
 
+    test('passes when view/body split across library and part files', () {
+      final temp = Directory.systemTemp.createTempSync('dlg_combined_part_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      _writeDialogueFile(
+        temp.path,
+        'herald_overlay.dart',
+        '''
+import 'ct_dialogue_view.dart';
+import 'ct_dialogue_line_choice_body.dart';
+
+part 'herald_overlay_flow.dart';
+
+Widget buildBody(CtDialogueView view) =>
+    CtDialogueLineChoiceBody(view: view, continueLabel: 'ok');
+''',
+      );
+      _writeDialogueFile(
+        temp.path,
+        'herald_overlay_flow.dart',
+        '''
+part of 'herald_overlay.dart';
+
+import 'ct_dialogue_view.dart';
+
+CtDialogueView createView() => CtDialogueView();
+''',
+      );
+      _writeGoldenTest(temp.path, ['herald_overlay.dart']);
+
+      final logs = <String>[];
+      final code = runCheckDialogueBlockingCombinedStep(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(code, 0, reason: logs.join('\n'));
+    });
+
     test('Check 1: fails when CtDialogueView is built without the body', () {
       final temp = Directory.systemTemp.createTempSync('dlg_combined_c1_');
       addTearDown(() => temp.deleteSync(recursive: true));
