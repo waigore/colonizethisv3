@@ -10,7 +10,7 @@ TurnResolutionResult _gameServiceRunTurnResolution(
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(GameEvent)? onGameEvent,
 }) {
-  final mapData = service._requiredMapDataView(current.id);
+  final mapData = _gameServiceRequiredMapDataView(service, current.id);
   final topo = topology ?? mapData.combinedTopology;
   final tileMaps = tileMapByRegion ?? mapData.tileMapByRegion;
   final humanOrders = orders ?? const Orders();
@@ -45,7 +45,7 @@ TurnResolutionResult _gameServiceResumeTurnFromDiplomacy(
   List<FtpDecision>? ftpDecisions,
   List<InterventionDecision>? interventionDecisions,
 }) {
-  final mapData = service._requiredMapDataView(game.id);
+  final mapData = _gameServiceRequiredMapDataView(service, game.id);
   final result = _gameServiceResolveTurnWithTrace(
     service,
     game: game,
@@ -75,7 +75,7 @@ void _gameServiceEmitTurnResolutionEvents(
   if (result is TurnResolutionComplete) {
     final complete = result;
     service.saveGame(complete.game);
-    service._mirrorAutoSave(complete.game);
+    _gameServiceMirrorAutoSave(service, complete.game);
     service.eventBus?.emit(
       TurnResolutionCompleteEvent(
         gameId: complete.game.id,

@@ -6,7 +6,8 @@
 // `.cursor/rules/colonizethis-code-review.mdc` >1000-physical-line rule).
 //
 // Order handlers and catalog helpers live in
-// `trade_screen_market_tab_handlers.dart` (Refs #3878).
+// `trade_screen_market_tab_order_handlers.dart` and
+// `trade_screen_market_tab_catalog.dart` (Refs #3878).
 //
 // All classes here are library-private (`_MarketTabContent`,
 // `_SectionedTradeableCommodities`) and consumed only by
