@@ -52,6 +52,7 @@ void main() {
       //   * kCivilianIconSlugs   -> ui_icon_civ_<slug>.png
       //   * kResourceIconIds     -> ui_icon_com_<id>.png
       //   * kTownIconIds         -> ui_icon_com_<id>.png
+      //   * TownIconCache.candidateTownIconAssetPaths (S9b preview PNGs)
       //   * kProvinceLabelIconIds-> ui_icon_<id>.png
       //   * kFleetMapIcon64PngAssetPath (singleton)
       // The helper asserts the constructed set matches the real manifest, so
