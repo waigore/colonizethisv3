@@ -1,5 +1,6 @@
 /// Per-unit civilian row builder shell. SPEC/ui/civilian-units-panel.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'civilian_units_panel.dart';
 
 class _UnitRow extends ConsumerWidget {

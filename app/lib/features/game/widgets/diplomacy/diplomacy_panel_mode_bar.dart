@@ -1,6 +1,7 @@
 // Bottom filter mode bar for DiplomacyPanel. SPEC/ui/diplomacy-panel.md
 // § Mode bar (filter).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'diplomacy_panel.dart';
 
 /// Bottom mode-bar filter for the Diplomacy panel.

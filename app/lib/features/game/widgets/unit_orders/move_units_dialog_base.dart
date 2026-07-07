@@ -8,9 +8,9 @@
 // `--border`/`--accent` radio-row outline contract (#2867 R1/R7).
 
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_nine_patch_button.dart';

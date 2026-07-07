@@ -1,5 +1,5 @@
 import '../../../../config/app_assets.dart';
-import '../../../../l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 String eraRoman(int era) {
   const romans = ['I', 'II', 'III', 'IV'];

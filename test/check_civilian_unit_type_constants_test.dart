@@ -103,11 +103,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 }
 ''';
         for (final relPath in <String>[
-          'app/lib/l10n/app_localizations_en_part1.dart',
-          'app/lib/l10n/app_localizations_en_part2.dart',
-          'app/lib/l10n/app_localizations_en_part3.dart',
-          'app/lib/l10n/app_localizations_en_part4.dart',
-          'app/lib/l10n/app_localizations_en_part5.dart',
+          'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part1.dart',
+          'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part2.dart',
+          'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part3.dart',
+          'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part4.dart',
+          'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part5.dart',
         ]) {
           final violations = findCivilianUnitTypeConstantViolations(
             relativePath: relPath,

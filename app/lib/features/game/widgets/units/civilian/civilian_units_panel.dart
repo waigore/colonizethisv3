@@ -1,6 +1,7 @@
 // Civilian units panel. SPEC/ui/civilian-units-panel.md.
 
 import 'dart:async';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -13,7 +14,6 @@ import '../../../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../../../config/ui_screen_ids.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
-import '../../../../../l10n/l10n.dart';
 import '../../../../../providers/games_provider.dart';
 import '../../../../../config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_gap.dart';

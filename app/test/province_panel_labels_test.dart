@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart' show UnitStatus;

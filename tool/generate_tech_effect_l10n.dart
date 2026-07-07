@@ -1,10 +1,10 @@
 // Reads tech_effect_summary.yaml and merges tech effect ARB entries into
-// app/lib/l10n/arb/app_en.arb, and writes
+// packages/colonizethis_app_l10n/lib/l10n/arb/app_en.arb, and writes
 // app/lib/features/game/widgets/technology/tech_effect_summary_lookup.dart
 // plus chunked `part` entry maps (Refs #3878).
 //
 // Run from repo root: dart tool/generate_tech_effect_l10n.dart
-// Then: cd app && flutter gen-l10n
+// Then: cd packages/colonizethis_app_l10n && flutter gen-l10n
 
 import 'dart:convert';
 import 'dart:io';
@@ -18,7 +18,7 @@ void main() {
   final yamlFile = File(
     '$root/packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml',
   );
-  final appEnArb = File('$root/app/lib/l10n/arb/app_en.arb');
+  final appEnArb = File('$root/packages/colonizethis_app_l10n/lib/l10n/arb/app_en.arb');
   final lookupPath = File(
     '$root/app/lib/features/game/widgets/technology/tech_effect_summary_lookup.dart',
   );
@@ -88,7 +88,7 @@ void _writeLookupLibrary(File lookupPath, List<String> sortedKeys) {
     final partBuf = StringBuffer()
       ..writeln('// GENERATED FILE — do not edit by hand.')
       ..writeln('// Run: dart tool/generate_tech_effect_l10n.dart')
-      ..writeln('// Then: cd app && flutter gen-l10n')
+      ..writeln('// Then: cd packages/colonizethis_app_l10n && flutter gen-l10n')
       ..writeln()
       ..writeln("part of 'tech_effect_summary_lookup.dart';")
       ..writeln()
@@ -108,9 +108,9 @@ void _writeLookupLibrary(File lookupPath, List<String> sortedKeys) {
   final mainBuf = StringBuffer()
     ..writeln('// GENERATED FILE — do not edit by hand.')
     ..writeln('// Run: dart tool/generate_tech_effect_l10n.dart')
-    ..writeln('// Then: cd app && flutter gen-l10n')
+    ..writeln('// Then: cd packages/colonizethis_app_l10n && flutter gen-l10n')
     ..writeln()
-    ..writeln("import 'package:colonizethis_app/l10n/l10n.dart';")
+    ..writeln("import 'package:colonizethis_app_l10n/l10n/l10n.dart';")
     ..writeln();
   for (var chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
     mainBuf.writeln(

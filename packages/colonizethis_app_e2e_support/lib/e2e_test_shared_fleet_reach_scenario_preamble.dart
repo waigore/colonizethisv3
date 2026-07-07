@@ -1,5 +1,5 @@
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app/l10n/app_localizations_delegate.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_delegate.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,6 +1,7 @@
 // Tech tree graph widget. SPEC/ui/tech-tree-widget.md.
 
 import 'dart:math' as math;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -9,7 +10,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../l10n/l10n.dart';
 import 'tech_gp_researchers.dart';
 import 'tech_ui_helpers.dart';
 import 'tech_gp_pennant_row.dart';

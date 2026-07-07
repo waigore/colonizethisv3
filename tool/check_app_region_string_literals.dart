@@ -27,7 +27,7 @@ import 'package:path/path.dart' as p;
 ///    `*.gen.dart`.
 /// 2. **Test files** — `*_test.dart` and anything under a `/test/` segment
 ///    (production surface only).
-/// 3. **`app/lib/l10n/**`** — generated/authored localization carries region
+/// 3. **`packages/colonizethis_app_l10n/lib/l10n/**`** — generated/authored localization carries region
 ///    ids as ARB keys / identifiers, not as the magic data-derivation literals
 ///    this rule targets.
 /// 4. **`app/lib/test_support/**`** and **`widgetbook_host/lib/catalogs/**`** — demo and
@@ -149,7 +149,7 @@ const Set<String> _appRegionStringLiteralsAllowedFiles = <String>{};
 const Set<String> _appRegionStringLiteralsAllowedDirPrefixes = <String>{
   // Generated/authored localization — region ids appear as ARB keys /
   // identifiers, not data-derivation literals.
-  'app/lib/l10n/',
+  'packages/colonizethis_app_l10n/lib/l10n/',
   // Demo and expected-line fixtures. The #3658 migration deferred these to a
   // follow-up; sanctioned directory-scoped exceptions.
   'app/lib/test_support/',

@@ -1,5 +1,6 @@
 /// Civilian unit row location and assignment labels. SPEC/ui/civilian-units-panel.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'civilian_units_panel.dart';
 
 extension _UnitRowLabels on _UnitRow {

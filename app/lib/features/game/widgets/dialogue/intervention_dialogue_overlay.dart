@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -10,7 +11,6 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 
-import '../../../../../l10n/l10n.dart';
 import '../../../../../widgets/ct_brass_divider.dart';
 import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';

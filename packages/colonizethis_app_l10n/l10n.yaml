@@ -6,4 +6,4 @@ output-dir: lib/l10n/gen
 output-localization-file: app_l10n_flutter_gen.dart
 untranslated-messages-file: lib/l10n/gen/untranslated.json
 required-resource-attributes: true
-# App code imports `package:colonizethis_app/l10n/l10n.dart` (contract + delegate + `appL10n`).
+# App code imports `package:colonizethis_app_l10n/l10n/l10n.dart` (contract + delegate + `appL10n`).

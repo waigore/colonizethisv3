@@ -1,6 +1,7 @@
 // Market-tab section list assembly for `_MarketTabContent`.
 // Split from `trade_screen_market_tab_build.dart` (Refs #3878).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'trade_screen.dart';
 
 extension _MarketTabContentBuildSections on _MarketTabContent {

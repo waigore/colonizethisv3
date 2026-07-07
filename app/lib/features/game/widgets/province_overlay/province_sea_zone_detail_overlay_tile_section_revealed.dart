@@ -1,5 +1,6 @@
 /// Revealed-tile body for [ProvinceSeaZoneDetailOverlay] tile section.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'province_sea_zone_detail_overlay.dart';
 
 Widget _buildRevealedTileSection({

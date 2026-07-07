@@ -14,18 +14,18 @@
 - Use `flutter_localizations` to localize built-in Material/Cupertino widgets.
 - Generated localization access is via `AppLocalizations.of(context)` (or an app helper that returns the same instance).
 
-## File layout (Refs #2074)
-- **Config:** `app/l10n.yaml`
-- **ARB inputs only:** `app/lib/l10n/arb/` (e.g. `app_en.arb`) — `l10n.yaml` **`arb-dir`**.
-- **Generated output:** `app/l10n.yaml` sets **`output-dir: lib/l10n/gen`** and **`output-localization-file: app_l10n_flutter_gen.dart`**, so `flutter gen-l10n` (including the build/run integration) writes **`app_l10n_flutter_gen*.dart`**, **`untranslated.json`**, and related artifacts **only** under **`app/lib/l10n/gen/`** (entire directory **gitignored**). Hand-maintained Dart stays in **`app/lib/l10n/*.dart`** outside `gen/`, so stale incremental-build stamps cannot list hand paths as prior codegen outputs to delete.
-- **Hand-maintained Dart:** `app/lib/l10n/app_localizations_contract.dart`, delegate, lookup, `l10n.dart`, `app_localizations_en.dart`, `app_localizations_en_part*.dart`, etc. App code and tests import **`package:colonizethis_app/l10n/l10n.dart`**, which exports the contract + delegate (`Refs #2021`) and defines **`appL10n`**.
+## File layout (Refs #2074, #3878)
+- **Config:** `packages/colonizethis_app_l10n/l10n.yaml`
+- **ARB inputs only:** `packages/colonizethis_app_l10n/lib/l10n/arb/` (e.g. `app_en.arb`) — `l10n.yaml` **`arb-dir`**.
+- **Generated output:** `packages/colonizethis_app_l10n/l10n.yaml` sets **`output-dir: lib/l10n/gen`** and **`output-localization-file: app_l10n_flutter_gen.dart`**, so `flutter gen-l10n` writes **`app_l10n_flutter_gen*.dart`**, **`untranslated.json`**, and related artifacts **only** under **`packages/colonizethis_app_l10n/lib/l10n/gen/`** (entire directory **gitignored**). Hand-maintained Dart stays in **`packages/colonizethis_app_l10n/lib/l10n/*.dart`** outside `gen/`.
+- **Hand-maintained Dart:** `packages/colonizethis_app_l10n/lib/l10n/app_localizations_contract.dart`, delegate, lookup, `l10n.dart`, `app_localizations_en.dart`, `app_localizations_en_part*.dart`, etc. App code and tests import **`package:colonizethis_app_l10n/l10n/l10n.dart`**, which exports the contract + delegate (`Refs #2021`) and defines **`appL10n`**.
 - **Maintainability:** Keys are namespaced/prefixed by feature (e.g. `mainMenu_newGame`, `victory_titleMilitary`), and messages include ARB metadata for translator context.
 
 ## Merge / local validation prerequisite
-- On a checkout that **already built** with a **pre-#2074** `l10n.yaml` (ARB and gen beside hand files), **clear stale build metadata** before validating: run **`flutter clean`** in `app/` **or** remove stale **`app/.dart_tool/flutter_build/**/gen_localizations.stamp`**. Otherwise an old stamp can still reference removed output paths and the next **`flutter run`** may delete hand files until stamps align with the current config.
+- On a checkout that **already built** with a **pre-#2074** `l10n.yaml` (ARB and gen beside hand files), **clear stale build metadata** before validating: run **`flutter clean`** in `app/` and `packages/colonizethis_app_l10n/` **or** remove stale **`*/.dart_tool/flutter_build/**/gen_localizations.stamp`**. Otherwise an old stamp can still reference removed output paths and the next **`flutter run`** may delete hand files until stamps align with the current config.
 
 ## CI quality gate (GitHub)
-- The Quality workflow must run `flutter gen-l10n` for `app/` and produce an **untranslated / missing messages report** via `untranslated-messages-file` at **`lib/l10n/gen/untranslated.json`**.
+- The Quality workflow must run `flutter gen-l10n` for `packages/colonizethis_app_l10n/` and produce an **untranslated / missing messages report** via `untranslated-messages-file` at **`packages/colonizethis_app_l10n/lib/l10n/gen/untranslated.json`**.
 - CI **fails** if the untranslated report contains **any** missing/untranslated messages for any locale.
 - CI runs this gate when the existing Quality workflow is already running tests for `app/**` changes.
 - **`app_build_linux`** (`.github/workflows/quality.yml`): after **`flutter build linux --release --no-pub`**, CI asserts an allowlist of **tracked hand l10n files** still exist and match **`git`** at **`HEAD`** (`git diff --exit-code` on those paths), so a regression that deletes or rewrites hand files after a full app build fails the job.

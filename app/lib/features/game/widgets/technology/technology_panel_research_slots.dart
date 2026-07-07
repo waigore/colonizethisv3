@@ -2,6 +2,7 @@
 // [TechnologyPanel]. Split from `technology_panel.dart` to keep the
 // host file under the repo file-size target (Refs #3878).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'technology_panel.dart';
 
 extension _TechnologyPanelResearchSlots on TechnologyPanel {

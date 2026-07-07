@@ -12,7 +12,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, RegionMapViewData;
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';

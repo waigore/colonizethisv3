@@ -90,7 +90,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_di
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

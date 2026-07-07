@@ -19,7 +19,7 @@ library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app_e2e_support/test_support/civilian_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app_e2e_support/test_support/naval_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app_e2e_support/test_support/production_panel_e2e_expected_lines.dart';

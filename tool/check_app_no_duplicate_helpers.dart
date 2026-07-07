@@ -170,7 +170,7 @@ const List<_RemovedHelper> _removedPrivateHelpers = <_RemovedHelper>[
 /// Excluded paths (whole-file scope skips per `SPEC/program/repo-lint.md`):
 /// - Generated Dart suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`,
 ///   `.gen.dart`).
-/// - Generated app l10n under `app/lib/l10n/gen/`.
+/// - Generated app l10n under `packages/colonizethis_app_l10n/lib/l10n/gen/`.
 /// - Widgetbook entrypoint (`app/lib/widgetbook.dart`) and catalog stories
 ///   under `app/lib/widgetbook/` — these intentionally reproduce production
 ///   helpers for showcasing.
@@ -283,7 +283,7 @@ bool _shouldSkipPath(String relativePath) {
       relativePath.endsWith('.gen.dart')) {
     return true;
   }
-  if (relativePath.startsWith('app/lib/l10n/gen/')) {
+  if (relativePath.startsWith('packages/colonizethis_app_l10n/lib/l10n/gen/')) {
     return true;
   }
   if (relativePath == 'app/lib/widgetbook.dart' ||

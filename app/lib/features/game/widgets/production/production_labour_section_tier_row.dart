@@ -3,6 +3,7 @@
 // Extracted from `production_labour_section.dart` to keep the host file
 // under the repo code-review physical-line limit.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'production_labour_section.dart';
 
 const _uiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';

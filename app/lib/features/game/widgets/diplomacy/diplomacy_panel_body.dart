@@ -1,6 +1,7 @@
 /// Filtered faction-row list body for the diplomacy panel.
 /// SPEC/ui/diplomacy-panel.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'diplomacy_panel.dart';
 
 class _DiplomacyPanelBody extends StatelessWidget {

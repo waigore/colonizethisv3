@@ -1,6 +1,7 @@
 // Choose-tech dialog row widgets. Split from
 // `technology_panel_choose_tech_dialog.dart` (Refs #3878).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'technology_panel_orders.dart';
 
 class _ChooseTechEmptyMessage extends StatelessWidget {

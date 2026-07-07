@@ -12,7 +12,7 @@
 //     `SPEC/ui/mobile-adaptation.md` § 6 and the Widgetbook contract in
 //     `SPEC/ui/map-widget.md`.
 
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

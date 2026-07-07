@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_slider.dart';
 import 'production_recipe_affordance.dart';
 import 'production_allocation_mutations.dart';

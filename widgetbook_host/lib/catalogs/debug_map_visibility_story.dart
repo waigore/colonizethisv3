@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/test_support/seed42_init_game_result.dart';

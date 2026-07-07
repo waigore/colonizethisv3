@@ -12,7 +12,6 @@ import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../core/services/subscription_tracker.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_radius.dart';

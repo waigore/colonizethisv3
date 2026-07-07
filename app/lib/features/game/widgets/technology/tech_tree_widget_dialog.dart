@@ -2,6 +2,7 @@
 // `tech_tree_widget.dart` to keep the host file under the repo file-size
 // target (Refs #3878).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'tech_tree_widget.dart';
 
 extension TechTreeWidgetDialog on TechTreeWidget {

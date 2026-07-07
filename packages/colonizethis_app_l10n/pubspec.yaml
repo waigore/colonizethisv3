@@ -1,0 +1,25 @@
+name: colonizethis_app_l10n
+description: Flutter localization contract, delegates, and ARB inputs for colonizethis_app.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/waigore/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  custom_lint: 0.8.1
+  flutter_lints: ^6.0.0
+
+flutter:
+  generate: true

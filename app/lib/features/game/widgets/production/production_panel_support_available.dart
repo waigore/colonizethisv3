@@ -1,5 +1,6 @@
 /// Available subpanel for production screen. SPEC/ui/production-panel.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'production_panel.dart';
 
 class _AvailableSubpanel extends StatelessWidget {

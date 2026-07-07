@@ -2,6 +2,7 @@
 // Split from `trade_screen_market_tab.dart` to keep each trade-screen part
 // under the repo file-size target (Refs #3878).
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'trade_screen.dart';
 
 extension _MarketTabContentBuild on _MarketTabContent {

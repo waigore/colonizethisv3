@@ -1,5 +1,6 @@
 /// Legend chip widgets for the tech tree graph.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'tech_tree_widget.dart';
 
 enum _TechLegendStateKind { researched, inProgress, available, locked }

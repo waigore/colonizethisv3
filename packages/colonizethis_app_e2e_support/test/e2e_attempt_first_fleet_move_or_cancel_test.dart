@@ -33,8 +33,8 @@ library;
 // ignore_for_file: deprecated_member_use
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

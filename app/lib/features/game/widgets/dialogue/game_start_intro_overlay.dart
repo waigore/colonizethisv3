@@ -6,8 +6,8 @@ import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../../l10n/l10n.dart';
 import '../../../../../widgets/ct_brass_divider.dart';
 import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';

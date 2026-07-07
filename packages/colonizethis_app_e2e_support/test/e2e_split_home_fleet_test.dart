@@ -33,7 +33,7 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

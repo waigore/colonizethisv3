@@ -1,6 +1,7 @@
 // Diplomacy faction-row info column (header, relation, standing, status).
 // SPEC/ui/diplomacy-panel.md § Per-faction row.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'diplomacy_panel.dart';
 
 extension _DiplomacyRowInfo on _DiplomacyRow {

@@ -2,6 +2,7 @@
 // Run: dart tool/generate_tech_effect_l10n.dart
 // Then: cd app && flutter gen-l10n
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 part of 'tech_effect_summary_lookup.dart';
 
 Map<String, String Function(AppLocalizations)> _techEffectSummaryL10nChunk3() => {

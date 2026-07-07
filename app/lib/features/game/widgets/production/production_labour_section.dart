@@ -4,11 +4,11 @@
 
 library;
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
