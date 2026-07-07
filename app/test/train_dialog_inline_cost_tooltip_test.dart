@@ -363,6 +363,9 @@ void main() {
         final String chromeUnitRow = File(
           'lib/features/game/widgets/train/train_dialog_chrome_unit_row.dart',
         ).readAsStringSync();
+        final String chromeUnitRowCost = File(
+          'lib/features/game/widgets/train/train_dialog_chrome_unit_row_cost.dart',
+        ).readAsStringSync();
         // Refs #3686: the military/naval cost rows (incl. the inline cost
         // segments) are now rendered by the shared commodity-cost base, so the
         // single `TrainDialogInlineCost` reference lives there rather than in
@@ -393,11 +396,12 @@ void main() {
         );
         expect(
           chrome.contains('class TrainDialogInlineCost') ||
-              chromeUnitRow.contains('class TrainDialogInlineCost'),
+              chromeUnitRow.contains('class TrainDialogInlineCost') ||
+              chromeUnitRowCost.contains('class TrainDialogInlineCost'),
           isTrue,
           reason:
               'TrainDialogInlineCost must be the single shared cost segment in '
-              'train_dialog_chrome.dart (or its unit-row part).',
+              'train_dialog_chrome.dart (or its unit-row part files).',
         );
         expect(
           commodityCostBase.contains('TrainDialogInlineCost') ||
