@@ -36,12 +36,20 @@ const String _overlaySectionsRelativePath =
 const String _overlayEconomicSectionRelativePath =
     'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_section.dart';
 
-const String _overlayUnitSectionsRelativePath =
-    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_unit_sections.dart';
+const String _overlayMilitarySectionRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_military_section.dart';
+
+const String _overlayCivilianNavalSectionsRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+
+const String _overlayCloseButtonRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_close_button.dart';
 
 const List<String> _overlayEconomicUnitPartRelativePaths = <String>[
   _overlayEconomicSectionRelativePath,
-  _overlayUnitSectionsRelativePath,
+  _overlayMilitarySectionRelativePath,
+  _overlayCivilianNavalSectionsRelativePath,
+  _overlayCloseButtonRelativePath,
 ];
 
 const String _ctRegionMapRelativePath = 'lib/widgets/ct_region_map.dart';

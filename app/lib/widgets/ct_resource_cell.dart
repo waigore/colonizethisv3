@@ -4,6 +4,9 @@ import '../config/editorial_monocle_palette.dart';
 import 'ct_gradients.dart';
 import 'ct_spacing.dart';
 
+part 'ct_resource_cell_format.dart';
+part 'ct_resource_cell_trailing.dart';
+
 /// Compact icon + name + quantity (+ optional signed delta) row for the dark
 /// editorial-monocle theme.
 ///
@@ -88,79 +91,15 @@ class CtResourceCell extends StatelessWidget {
 
   /// Returns the formatted delta string for the supplied [delta] per R10.
   /// Returns `null` if the delta region should not be laid out.
-  static String? formattedDeltaText(int? delta) {
-    if (delta == null) return null;
-    if (delta > 0) return '+$delta';
-    return '$delta';
-  }
+  static String? formattedDeltaText(int? delta) =>
+      _ctResourceCellFormattedDeltaText(delta);
 
   /// Returns the colour token for the supplied [delta] per R10. Returns
   /// `null` if the delta region should not be laid out.
-  static Color? deltaColor(int? delta) {
-    if (delta == null) return null;
-    if (delta > 0) return EditorialMonoclePalette.success;
-    if (delta < 0) return EditorialMonoclePalette.danger;
-    return EditorialMonoclePalette.muted;
-  }
+  static Color? deltaColor(int? delta) => _ctResourceCellDeltaColor(delta);
 
   /// Renders an integer with thousands separators (`1_240` → `1,240`).
-  /// Kept inline so the widget does not pull in `intl` for a single use.
-  /// Also reused by the production-panel e2e text-mirror fixture
-  /// (`production_panel_e2e_expected_lines.dart`) so it stays stable across
-  /// callers.
-  static String formatQuantity(int value) {
-    final String raw = value.abs().toString();
-    final StringBuffer out = StringBuffer();
-    for (int i = 0; i < raw.length; i++) {
-      final int posFromRight = raw.length - i;
-      if (i > 0 && posFromRight % 3 == 0) out.write(',');
-      out.write(raw[i]);
-    }
-    if (value < 0) return '-${out.toString()}';
-    return out.toString();
-  }
-
-  TextStyle _nameStyle(BuildContext context) {
-    final TextStyle base =
-        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return base.copyWith(
-      color: EditorialMonoclePalette.fg,
-      fontSize: nameFontSize,
-    );
-  }
-
-  TextStyle _monoStyle(
-    BuildContext context, {
-    required Color color,
-    required double fontSize,
-  }) {
-    final TextStyle base =
-        Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
-    return base.copyWith(
-      color: color,
-      fontSize: fontSize,
-      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
-      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-    );
-  }
-
-  /// A single trailing monospace [Text] (ellipsizing, one line). Kept as a
-  /// distinct widget per value so the quantity and delta remain individually
-  /// findable / colour-assertable, while [_trailingCluster] composes them.
-  Widget _monoText(
-    BuildContext context, {
-    required String text,
-    required Color color,
-    required double fontSize,
-  }) {
-    return Text(
-      text,
-      style: _monoStyle(context, color: color, fontSize: fontSize),
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
+  static String formatQuantity(int value) => _ctResourceCellFormatQuantity(value);
 
   /// Outer-[Row] flex factor of the [Expanded] name column relative to the
   /// trailing quantity/delta cluster ([trailingFlex]). The name claims the
@@ -172,65 +111,12 @@ class CtResourceCell extends StatelessWidget {
   /// Outer-[Row] flex factor of the trailing quantity/delta cluster. The
   /// cluster's slot is the **last** flex child, so its right edge coincides
   /// with the card's inner-right edge; the cluster's content is right-aligned
-  /// within the slot (see [_trailingCluster]) so the amount is pinned to that
+  /// within the slot (see trailing-cluster part) so the amount is pinned to that
   /// edge. The small flex (vs [nameFlex]) keeps the slot wide enough to show
   /// the quantity + optional delta in full at normal widths while still
   /// collapsing — and letting the values ellipsize — at pathologically narrow
   /// widths instead of overflowing.
   static const int trailingFlex = 1;
-
-  /// Builds the trailing quantity + optional delta as the **last** flex child
-  /// of the outer [Row] (see [build]). The cluster slot's right edge coincides
-  /// with the card's inner-right edge, and the cluster's content is
-  /// right-aligned within the slot via [Alignment.centerRight], so the quantity
-  /// (and, when present, the trailing `+N` / `-N` delta) is pinned hard against
-  /// the card's right edge whether or not a delta is shown (issue #3485). The
-  /// optional delta sits immediately to the right of the quantity per the
-  /// mockup `.resource-cell` order. Inside the cluster each value is a loose
-  /// [Flexible] with `maxLines: 1` + ellipsis so it shrinks as a defensive
-  /// last-resort fallback at pathologically narrow widths instead of
-  /// overflowing; in normal usage neither value ellipsizes (Refs #2862 S9 / C10,
-  /// #3485).
-  Widget _trailingCluster(
-    BuildContext context, {
-    required String quantityText,
-    required String? deltaText,
-    required Color? deltaTextColor,
-  }) {
-    return Flexible(
-      fit: FlexFit.loose,
-      flex: trailingFlex,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Flexible(
-              fit: FlexFit.loose,
-              child: _monoText(
-                context,
-                text: quantityText,
-                color: EditorialMonoclePalette.accentDim,
-                fontSize: quantityFontSize,
-              ),
-            ),
-            if (deltaText != null) ...<Widget>[
-              const SizedBox(width: quantityToDeltaGap),
-              Flexible(
-                fit: FlexFit.loose,
-                child: _monoText(
-                  context,
-                  text: deltaText,
-                  color: deltaTextColor!,
-                  fontSize: deltaFontSize,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -260,13 +146,13 @@ class CtResourceCell extends StatelessWidget {
               flex: nameFlex,
               child: Text(
                 name,
-                style: _nameStyle(context),
+                style: nameStyle(context),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
             ),
             const SizedBox(width: itemGap),
-            _trailingCluster(
+            trailingCluster(
               context,
               quantityText: formatQuantity(quantity),
               deltaText: deltaText,

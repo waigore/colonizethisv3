@@ -49,8 +49,11 @@ void main() {
         'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_section.dart',
       ).readAsStringSync();
       final unitSource = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_unit_sections.dart',
-      ).readAsStringSync();
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_military_section.dart',
+      ).readAsStringSync() +
+          File(
+            'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_civilian_naval_sections.dart',
+          ).readAsStringSync();
       final source = '$economicSource\n$unitSource';
       expect(source, contains('left: CtSpacing.m / 2'));
       expect(source, contains('bottom: CtSpacing.m'));
@@ -63,10 +66,10 @@ void main() {
     });
 
     test('close button vertical padding uses CtSpacing.m / 2', () {
-      // `_OverlayCloseButton` lives in the unit-sections part file.
+      // `_OverlayCloseButton` lives in the close-button part file.
       final source = File(
         'lib/features/game/widgets/province_overlay/'
-        'province_sea_zone_detail_overlay_unit_sections.dart',
+        'province_sea_zone_detail_overlay_close_button.dart',
       ).readAsStringSync();
       expect(source, contains('vertical: CtSpacing.m / 2'));
       expect(
