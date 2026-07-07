@@ -135,6 +135,7 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // explicitly out of scope for #2626 and must be filed as separate
   // issues before removal from this allow-list.
   'app/lib/features/game/flame/controls/game_side_menu.dart',
+  'app/lib/features/game/flame/controls/game_side_menu_panel.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
 };
 

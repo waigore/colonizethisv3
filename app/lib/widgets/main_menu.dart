@@ -17,6 +17,7 @@ part 'main_menu_body_logo.dart';
 part 'main_menu_body_content.dart';
 part 'main_menu_buttons.dart';
 part 'main_menu_footer.dart';
+part 'main_menu_footer_quit_button.dart';
 part 'main_menu_scroll_bracket.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
