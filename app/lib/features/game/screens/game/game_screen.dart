@@ -44,6 +44,7 @@ import '../../flame/overlays/turn_resolution_progress_labels.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
 import '../../flame/overlays/victory_overlay.dart';
 
+part 'game_screen_fallback_next_turn_runner.dart';
 part 'game_screen_fallback_next_turn.dart';
 part 'game_screen_overlay_stack.dart';
 

@@ -18,7 +18,8 @@ import '../../../../widgets/strict_asset_icon.dart';
 import '../../screens/game/game_screen_shared.dart';
 import 'region_minimap_math.dart';
 
-part 'game_region_minimap_controls.dart';
+part 'game_region_minimap_zoom_controls.dart';
+part 'game_region_minimap_toggle_button.dart';
 part 'game_region_minimap_painter.dart';
 
 /// Dismissible region minimap (Empire overview). SPEC/ui/empire-overview.md § Region minimap.
