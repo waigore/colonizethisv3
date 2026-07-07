@@ -62,63 +62,8 @@ class UnitsEntityActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
-        final row = Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: details),
-            if (actions.isNotEmpty) ...[
-              SizedBox(width: dense ? spacing : 8),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: dense
-                      ? LayoutBuilder(
-                          builder: (context, denseConstraints) {
-                            // Dense Row cannot wrap; if the actions cluster
-                            // alone is narrower than [denseIconOnlyBreakpoint]
-                            // (label + icon footprint per the mockup), fall
-                            // back to icon-only across the whole cluster so
-                            // it stays on one line. R25 spec explicitly
-                            // permits "Narrow icon-only fallback below the
-                            // existing iconOnlyBreakpoint".
-                            final denseIconOnly =
-                                iconOnly ||
-                                denseConstraints.maxWidth <
-                                    _UnitsEntityActionRowActions
-                                        .denseIconOnlyBreakpoint(
-                                      actions.length,
-                                    );
-                            return buildDenseActionsRow(
-                              actions: actions,
-                              forceIconOnly: denseIconOnly,
-                            );
-                          },
-                        )
-                      : buildDefaultActionsWrap(
-                          actions: actions,
-                          iconOnly: iconOnly,
-                        ),
-                ),
-              ),
-            ],
-          ],
-        );
-        const padding = EdgeInsets.symmetric(
-          horizontal: CtSpacing.m,
-          vertical: 6,
-        );
-        if (!chrome) {
-          return Padding(padding: padding, child: row);
-        }
-        return UnitsPanelRowChrome(
-          margin: EdgeInsets.zero,
-          padding: padding,
-          child: row,
-        );
-      },
+      builder: (context, constraints) =>
+          buildEntityActionRowLayout(constraints),
     );
   }
 }

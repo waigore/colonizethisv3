@@ -1,6 +1,61 @@
 part of 'units_entity_action_row.dart';
 
 extension _UnitsEntityActionRowActions on UnitsEntityActionRow {
+  Widget buildEntityActionRowLayout(BoxConstraints constraints) {
+    final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: details),
+        if (actions.isNotEmpty) ...[
+          SizedBox(width: dense ? spacing : 8),
+          Flexible(
+            fit: FlexFit.loose,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: dense
+                  ? LayoutBuilder(
+                      builder: (context, denseConstraints) {
+                        // Dense Row cannot wrap; if the actions cluster
+                        // alone is narrower than [denseIconOnlyBreakpoint]
+                        // (label + icon footprint per the mockup), fall
+                        // back to icon-only across the whole cluster so
+                        // it stays on one line. R25 spec explicitly
+                        // permits "Narrow icon-only fallback below the
+                        // existing iconOnlyBreakpoint".
+                        final denseIconOnly =
+                            iconOnly ||
+                            denseConstraints.maxWidth <
+                                denseIconOnlyBreakpoint(actions.length);
+                        return buildDenseActionsRow(
+                          actions: actions,
+                          forceIconOnly: denseIconOnly,
+                        );
+                      },
+                    )
+                  : buildDefaultActionsWrap(
+                      actions: actions,
+                      iconOnly: iconOnly,
+                    ),
+            ),
+          ),
+        ],
+      ],
+    );
+    const padding = EdgeInsets.symmetric(
+      horizontal: CtSpacing.m,
+      vertical: 6,
+    );
+    if (!chrome) {
+      return Padding(padding: padding, child: row);
+    }
+    return UnitsPanelRowChrome(
+      margin: EdgeInsets.zero,
+      padding: padding,
+      child: row,
+    );
+  }
+
   /// Heuristic per-action label+icon width used to decide when the dense
   /// actions cluster must collapse to icon-only to avoid overflowing the
   /// single inline row. Sized so the default 3-action naval cluster
