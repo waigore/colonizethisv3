@@ -6,7 +6,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';

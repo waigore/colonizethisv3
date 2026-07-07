@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../config/ui_screen_ids.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../core/services/app_event_handler_scope.dart'
+import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../../../l10n/l10n.dart';
 import '../../../../../widgets/ct_spacing.dart';

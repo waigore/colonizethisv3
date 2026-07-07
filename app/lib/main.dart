@@ -13,7 +13,7 @@ import 'config/constants.dart';
 import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
 import 'config/themes.dart';
-import 'core/services/app_event_handler_scope.dart';
+import 'core/services/app_event_handler/app_event_handler_scope.dart';
 import 'core/services/blessed_ai_profile_loader.dart';
 import 'core/services/desktop_window_startup_service.dart';
 import 'features/shell/new_game_leader_dialog_builder.dart';

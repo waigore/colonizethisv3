@@ -5,7 +5,7 @@ import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_spa
 import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_spawn_regiment.dart';
 import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_stockpile.dart';
 import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_treasury.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 

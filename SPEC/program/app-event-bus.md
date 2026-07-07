@@ -129,7 +129,7 @@ class AppEventHandler {
 - **DialogBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 - **PanelBuilder:** `Widget Function(BuildContext, Map<String, Object?>? params?)`
 
-**Registration:** `app/lib/core/services/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
+**Registration:** `app/lib/core/services/app_event_handler/app_event_handler_scope.dart` — dialog IDs and panel wiring per **[app-ui-wiring.md](app-ui-wiring.md)**.
 
 ---
 

@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';

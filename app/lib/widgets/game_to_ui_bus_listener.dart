@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/services/app_event_handler_scope.dart' show turnNewsDialogId;
+import '../core/services/app_event_handler/app_event_handler_scope.dart' show turnNewsDialogId;
 import '../core/services/subscription_tracker.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/game_service_provider.dart';

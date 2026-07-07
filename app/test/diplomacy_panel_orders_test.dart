@@ -1,5 +1,5 @@
 // DiplomacyPanel order UI + bus command emission coverage.
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart'
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
     show grantOrSubsidyDialogId;
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

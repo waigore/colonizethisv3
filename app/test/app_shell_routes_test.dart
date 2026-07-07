@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 
 void main() {
   suppressLogsForTests();

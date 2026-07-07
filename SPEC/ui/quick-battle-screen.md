@@ -24,7 +24,7 @@ The widget is presentational with respect to game state — it does not read pro
 ## Trigger conditions
 
 - The screen is opened by the combat phase resolver when the player has chosen Quick Battle for a province (see [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md)) or when a capital siege forces Quick Battle.
-- The screen is **not** registered as an `OpenDialogEvent` id in `app/lib/core/services/app_event_handler_scope.dart`. The orchestrating combat flow constructs `QuickBattleScreen` directly (or via a future typed event) and supplies `onComplete` to feed the result back into the combat pipeline.
+- The screen is **not** registered as an `OpenDialogEvent` id in `app/lib/core/services/app_event_handler/app_event_handler_scope.dart`. The orchestrating combat flow constructs `QuickBattleScreen` directly (or via a future typed event) and supplies `onComplete` to feed the result back into the combat pipeline.
 - While `turnResolutionBlockingProvider == true`, normal bus-driven dialogs are gated per [app-ui-wiring.md](../program/app-ui-wiring.md) § Turn resolution in progress; Quick Battle invocation must coordinate with that gate (typically the combat phase pauses turn-resolution UI dismissal until the screen completes).
 
 ---

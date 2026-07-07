@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../config/routes.dart';
 import '../../config/ui_screen_ids.dart';
-import '../../core/services/app_event_handler_scope.dart';
+import '../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
