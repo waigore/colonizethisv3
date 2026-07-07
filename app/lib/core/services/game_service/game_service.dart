@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_app/config/ct_debug_console.dart';
+import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_app/perf/app_perf_trace.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart'
     show applyAdvancedStartBootstrap, assignHiddenAgendasForGame;

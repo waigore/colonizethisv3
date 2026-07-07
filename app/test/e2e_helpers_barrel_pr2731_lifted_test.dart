@@ -4,13 +4,13 @@
 // `dart_file_non_comment_line_size` cap (`tool/ct_repo_lint.dart`).
 library;
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show
         CtE2eCivilianPanelSnapshot,
         CtE2eNavalPanelSnapshot,
         ctE2eNavalPanelSnapshot;
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

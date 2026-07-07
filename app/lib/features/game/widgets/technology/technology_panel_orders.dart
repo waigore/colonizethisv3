@@ -9,13 +9,13 @@
 // `SPEC/ui/technology-panel.md` § Choose-tech dialog and
 // `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_confirm_dialog.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_dialog_shell.dart';

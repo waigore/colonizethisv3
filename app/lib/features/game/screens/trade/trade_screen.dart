@@ -59,6 +59,7 @@
 // `SPEC/ui/trade-screen.md` § Layout / wireframe records as the canonical
 // body for the screen.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -68,7 +69,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_constants.dart';
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';

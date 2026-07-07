@@ -10,9 +10,9 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../l10n/l10n.dart';
 
 /// Localized label for a research [ResearchFundingLevel] funding toggle.
 ///

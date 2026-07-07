@@ -1,6 +1,7 @@
 // Naval units panel. SPEC/ui/naval-units-panel.md.
 
 import 'dart:async';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -9,13 +10,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../config/ct_e2e.dart';
-import '../../../../../config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import '../../../../../config/ui_screen_ids.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainNavalDialogId;
-import '../../../../../l10n/l10n.dart';
 import '../../chrome/ct_action_text_button.dart';
 import '../../panels/fleet_expansion_tile.dart';
 import '../../panels/game_panel_contract.dart';

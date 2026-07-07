@@ -21,7 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 import 'support/panel_test_fixtures.dart';

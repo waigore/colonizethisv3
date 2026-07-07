@@ -24,7 +24,7 @@
 /// Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
 library;
 
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

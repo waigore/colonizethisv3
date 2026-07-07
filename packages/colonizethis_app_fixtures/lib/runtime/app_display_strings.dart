@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/ct_debug_console.dart';
+import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 
 /// Canonical application version label used in shell surfaces.
 const String kAppVersion = 'v0.0.1';

@@ -1,7 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show MapTopology, TileMapResult;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../core/services/game_service/game_service.dart';
 import 'ct_e2e.dart';
 import 'ct_e2e_last_panel_snapshot.dart';
 
@@ -11,7 +11,9 @@ import 'ct_e2e_last_panel_snapshot.dart';
 void refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled({
   required Game? game,
   required Orders draftOrders,
-  required GameService gameService,
+  required MapTopology combinedTopology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
 }) {
   if (!kCtE2EEnabled) {
     return;
@@ -20,15 +22,14 @@ void refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled({
     return;
   }
   final humanPlayerId = _humanPlayerIdForE2e(game);
-  final mapData = gameService.getMapData(game.id);
   updateCtE2eNavalPanelSnapshotIfEnabled(
     CtE2eNavalPanelSnapshot(
       game: game,
       humanPlayerId: humanPlayerId,
-      topology: mapData?.combinedTopology ?? const MapTopology(),
+      topology: combinedTopology,
       draftOrders: draftOrders,
-      tileMapByRegion: mapData?.tileMapByRegion,
-      topologyByRegion: mapData?.topologyByRegion,
+      tileMapByRegion: tileMapByRegion,
+      topologyByRegion: topologyByRegion,
     ),
   );
 }

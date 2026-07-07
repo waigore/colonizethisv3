@@ -27,7 +27,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 // A tier-1 tech (cost 1800 RP after the #3512 rebalance) used as the assigned
 // tech for every slot-card golden so the captures are deterministic.

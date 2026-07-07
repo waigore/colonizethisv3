@@ -1,6 +1,7 @@
 // Diplomacy panel. SPEC/ui/diplomacy-panel.md.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,7 +13,6 @@ import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../core/services/subscription_tracker.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_radius.dart';

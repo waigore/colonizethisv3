@@ -1,11 +1,13 @@
 import 'dart:convert';
 
-import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'app_assets.dart';
 
-final _log = packageLogger();
+final _log = CtLogger('app.map');
+
+/// Root-relative path for map terrain tilesets JSON (mirrors app `kMapTerrainTilesetsAsset`).
+const String kMapTerrainTilesetsAsset = 'assets/data/map_terrain_tilesets.json';
 
 /// Paths + expected tile pixel size for one Wang tileset (PixelLab JSON + PNG atlas).
 class WangTilesetAssetConfig {

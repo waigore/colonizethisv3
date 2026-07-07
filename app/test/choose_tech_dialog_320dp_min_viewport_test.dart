@@ -49,7 +49,7 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show TechDefinition, techCatalog, techDisplayName;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

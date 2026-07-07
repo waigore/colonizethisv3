@@ -19,7 +19,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';

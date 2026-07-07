@@ -2,7 +2,7 @@
 //
 // Re-exports the lib implementation so tests keep `import 'support/map_view_fixture.dart'`.
 
-export 'package:colonizethis_app/test_support/seed42_fixture_loader.dart'
+export 'package:colonizethis_app_fixtures/test_support/seed42_fixture_loader.dart'
     show
         kSeed42MapViewFixtureRepoPath,
         loadSeed42MapViewData,

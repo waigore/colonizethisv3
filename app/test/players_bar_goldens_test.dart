@@ -33,7 +33,7 @@ import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_ba
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'support/panel_test_fixtures.dart';
 

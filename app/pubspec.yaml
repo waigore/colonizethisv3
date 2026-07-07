@@ -29,6 +29,10 @@ dependencies:
   colonizethis_setup:
   colonizethis_ai:
   colonizethis_debug_console:
+  colonizethis_app_l10n:
+    path: ../packages/colonizethis_app_l10n
+  colonizethis_app_fixtures:
+    path: ../packages/colonizethis_app_fixtures
   widgetbook: ^3.23.0
   google_fonts: ^8.1.0
   intl: ^0.20.2
@@ -51,7 +55,6 @@ dev_dependencies:
   hardcoded_strings_lint: 1.0.4
 
 flutter:
-  generate: true
   uses-material-design: true
   assets:
     - assets/data/

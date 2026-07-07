@@ -6,7 +6,7 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app_fixtures/debug_init_game.dart';
 
 /// Decodes seed-42 [Game] data; on web uses [getDebugInitGameResult].
 Game loadSeed42Game() => getDebugInitGameResult().game;

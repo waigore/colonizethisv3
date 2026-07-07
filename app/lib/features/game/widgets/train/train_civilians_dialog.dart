@@ -3,11 +3,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/utils/currency_format.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';

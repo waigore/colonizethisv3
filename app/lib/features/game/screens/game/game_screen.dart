@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flame/game.dart' hide Game;
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/ui_screen_ids.dart';

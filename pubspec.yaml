@@ -31,6 +31,8 @@ workspace:
   - packages/colonizethis_map
   - packages/colonizethis_test
   - packages/colonizethis_app_e2e_support
+  - packages/colonizethis_app_fixtures
+  - packages/colonizethis_app_l10n
   - tool/generate_map
   - tool/init_game
   - tool/run_observer_game

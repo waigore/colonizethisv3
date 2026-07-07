@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:colonizethis_app/config/map_terrain_config.dart';
+import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 

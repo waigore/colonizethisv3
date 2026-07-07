@@ -97,7 +97,15 @@ final a = 1; // ignore: avoid_print
       addTearDown(() => temp.deleteSync(recursive: true));
 
       final generatedFile = File(
-        p.join(temp.path, 'app', 'lib', 'l10n', 'gen', 'app_l10n_flutter_gen_en.dart'),
+        p.join(
+          temp.path,
+          'packages',
+          'colonizethis_app_l10n',
+          'lib',
+          'l10n',
+          'gen',
+          'app_l10n_flutter_gen_en.dart',
+        ),
       )..createSync(recursive: true);
       generatedFile.writeAsStringSync(
         List.filled(2000, 'final generated = 1;').join('\n'),

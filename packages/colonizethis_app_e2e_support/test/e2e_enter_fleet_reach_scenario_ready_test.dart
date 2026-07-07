@@ -50,8 +50,8 @@
 /// Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
 library;
 
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';

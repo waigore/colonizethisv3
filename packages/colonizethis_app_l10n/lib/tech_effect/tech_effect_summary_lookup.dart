@@ -2,7 +2,7 @@
 // Run: dart tool/generate_tech_effect_l10n.dart
 // Then: cd app && flutter gen-l10n
 
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 part 'tech_effect_summary_lookup_entries_0.dart';
 part 'tech_effect_summary_lookup_entries_1.dart';

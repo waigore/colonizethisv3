@@ -3,7 +3,7 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
-import 'package:colonizethis_app/test_support/seed42_init_game_result.dart';
+import 'package:colonizethis_app_fixtures/test_support/seed42_init_game_result.dart';
 
 InitGameResult? _debugInitGameResult;
 

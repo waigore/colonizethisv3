@@ -1,0 +1,24 @@
+name: colonizethis_app_fixtures
+description: Seed-42 demo fixtures, E2E compile-time keys, and Widgetbook loaders for colonizethis_app.
+version: 0.0.1
+publish_to: none
+repository: https://github.com/waigore/colonizethisv3
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  colonizethis_data:
+  colonizethis_logic:
+  colonizethis_map:
+  colonizethis_models:
+  colonizethis_logger:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../colonizethis_exception_lint
+  custom_lint: 0.8.1
+  flutter_lints: ^6.0.0

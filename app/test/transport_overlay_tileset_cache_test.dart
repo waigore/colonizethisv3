@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_app/config/map_terrain_config.dart';
+import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 
 void main() {
