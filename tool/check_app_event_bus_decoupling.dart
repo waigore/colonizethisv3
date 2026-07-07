@@ -107,8 +107,8 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `repo.game_widgets_file_size` cap. Same local-by-design rationale as the
   // parent panel — `SPEC/program/app-ui-wiring.md` § "Local by design"
   // (`ResearchFundingBreakdownDialog`, Refs #3512).
-  'app/lib/features/game/widgets/technology/research_slot_turn_preview_view.dart',
-  'app/lib/features/shell/new_game_setup_flow.dart',
+  'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart',
+  'app/lib/features/shell/new_game_setup_flow_dialogs.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
   'app/lib/features/game/widgets/units/naval/naval_units_panel.dart',
