@@ -93,13 +93,10 @@ class ProductionScreen extends ConsumerWidget {
           height: 18,
         ),
       ),
-      bodyBuilder: (context, shellRef, displayGame) =>
-          buildProductionScreenBody(
-            context: context,
-            shellRef: shellRef,
-            displayGame: displayGame,
-            screen: this,
-          ),
+      bodyBuilder: (context, shellRef, displayGame) => _ProductionScreenBody(
+        displayGame: displayGame,
+        screen: this,
+      ),
     );
   }
 }
