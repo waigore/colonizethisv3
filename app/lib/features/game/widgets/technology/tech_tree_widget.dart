@@ -27,6 +27,7 @@ import 'tech_effect_summary_lookup.dart';
 part 'tech_tree_widget_dialog.dart';
 part 'tech_tree_widget_layout.dart';
 part 'tech_tree_widget_nodes.dart';
+part 'tech_tree_widget_legend_chips.dart';
 part 'tech_tree_widget_legend.dart';
 
 class TechNodePosition {

@@ -5,6 +5,7 @@ import '../../../../widgets/ct_gradients.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth, kPlayerTurnFeedToggleButtonKey;
 
+part 'player_turn_event_feed_toggle_glyph.dart';
 part 'player_turn_event_feed_toggle.dart';
 part 'player_turn_event_feed_card.dart';
 
