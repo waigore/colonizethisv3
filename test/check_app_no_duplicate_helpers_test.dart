@@ -174,14 +174,16 @@ class StoryShim {
     expect(code, 0);
   });
 
-  test('ignores violations under app/lib/test_support/', () {
+  test('ignores violations under colonizethis_app_fixtures test_support/', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_app_no_duplicate_helpers_test_support_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeCanonicalHelpers(temp);
 
-    File('${temp.path}/app/lib/test_support/expected_lines.dart')
+    File(
+      '${temp.path}/packages/colonizethis_app_fixtures/lib/test_support/expected_lines.dart',
+    )
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 String eraRoman(int era) => 'IV';

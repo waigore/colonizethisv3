@@ -124,7 +124,7 @@ class C {}
 
       const excluded = <String>[
         'packages/colonizethis_app_l10n/lib/l10n/app_localizations.dart',
-        'app/lib/test_support/region_fixtures.dart',
+        'packages/colonizethis_app_fixtures/lib/test_support/region_fixtures.dart',
         'widgetbook_host/lib/catalogs/catalog_panels.dart',
         'app/lib/features/game/model.g.dart',
         'app/lib/features/game/region_test.dart',
@@ -174,7 +174,7 @@ const b = 'newWorld';
         'app/lib/features/game/data.gen.dart',
         'app/lib/features/game/region_test.dart',
         'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en.dart',
-        'app/lib/test_support/region_fixtures.dart',
+        'packages/colonizethis_app_fixtures/lib/test_support/region_fixtures.dart',
         'widgetbook_host/lib/catalogs/catalog_panels.dart',
       ];
       for (final rel in skipped) {

@@ -174,7 +174,8 @@ const List<_RemovedHelper> _removedPrivateHelpers = <_RemovedHelper>[
 /// - Widgetbook entrypoint (`app/lib/widgetbook.dart`) and catalog stories
 ///   under `app/lib/widgetbook/` — these intentionally reproduce production
 ///   helpers for showcasing.
-/// - E2E expected-line snapshots under `app/lib/test_support/` — these
+/// - E2E expected-line snapshots under
+///   `packages/colonizethis_app_fixtures/lib/test_support/` — these
 ///   intentionally mirror production code as golden fixtures.
 /// - Test paths and fixture trees.
 int runCheckAppNoDuplicateHelpers(
