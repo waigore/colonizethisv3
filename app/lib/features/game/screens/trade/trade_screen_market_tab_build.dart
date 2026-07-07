@@ -10,7 +10,13 @@ extension _MarketTabContentBuild on _MarketTabContent {
   /// editorial-monocle conventions for read-only surfaces.
   static const double observeModeOpacity = 0.7;
 
-  Widget buildMarketTabBody(BuildContext context, WidgetRef ref) {
+  Widget buildMarketTabBody(
+    BuildContext context, {
+    required Orders orders,
+    required CurrentOrdersNotifier ordersNotifier,
+    required Map<String, int> desiredOutputByRecipe,
+    required int? Function() readProjectedTreasuryDelta,
+  }) {
     final ThemeData theme = Theme.of(context);
     final TextStyle nameStyle =
         (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
@@ -35,17 +41,6 @@ extension _MarketTabContentBuild on _MarketTabContent {
         _tradeableCommoditiesByCategory();
     final AppLocalizations l10n = appL10n(context);
     final WorldMarketState market = game.worldMarketState;
-    final Orders orders = ref.watch(currentOrdersProvider);
-    final CurrentOrdersNotifier ordersNotifier =
-        ref.read(currentOrdersProvider.notifier);
-
-    int? readProjectedTreasuryDelta() {
-      try {
-        return ref.read(treasurySummaryProvider).projectedDelta;
-      } on Object {
-        return null;
-      }
-    }
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
     final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
@@ -67,8 +62,6 @@ extension _MarketTabContentBuild on _MarketTabContent {
     // `watch` the provider so allocation changes (e.g. the user
     // returning from the Production screen) immediately refresh the
     // sellable readouts without leaving the Market tab.
-    final Map<String, int> desiredOutputByRecipe =
-        ref.watch(productionDesiredOutputProvider);
     final Map<CommodityId, int> productionInputConsumption =
         _consumptionForDesiredOutput(desiredOutputByRecipe);
     final Map<CommodityId, int> offerCap = offerCapByCommodityId(

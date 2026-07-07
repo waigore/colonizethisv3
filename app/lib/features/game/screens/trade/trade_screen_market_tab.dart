@@ -93,6 +93,26 @@ class _MarketTabContent extends ConsumerWidget {
   static const String incrementSemanticLabel = 'Increase quantity';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      buildMarketTabBody(context, ref);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final Orders orders = ref.watch(currentOrdersProvider);
+    final CurrentOrdersNotifier ordersNotifier =
+        ref.read(currentOrdersProvider.notifier);
+    final Map<String, int> desiredOutputByRecipe =
+        ref.watch(productionDesiredOutputProvider);
+    int? readProjectedTreasuryDelta() {
+      try {
+        return ref.read(treasurySummaryProvider).projectedDelta;
+      } on Object {
+        return null;
+      }
+    }
+
+    return buildMarketTabBody(
+      context,
+      orders: orders,
+      ordersNotifier: ordersNotifier,
+      desiredOutputByRecipe: desiredOutputByRecipe,
+      readProjectedTreasuryDelta: readProjectedTreasuryDelta,
+    );
+  }
 }
