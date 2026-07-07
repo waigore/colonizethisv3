@@ -20,6 +20,8 @@ import 'research_slot_turn_preview_view.dart';
 import 'technology_slot_funding_toggles.dart';
 
 part 'technology_panel_widgets_slot_cards.dart';
+part 'technology_panel_widgets_slot_cards_header.dart';
+part 'technology_panel_widgets_slot_cards_body.dart';
 part 'technology_panel_widgets_slot_cards_locked.dart';
 
 /// Opacity applied to the locked fourth-slot card body when
