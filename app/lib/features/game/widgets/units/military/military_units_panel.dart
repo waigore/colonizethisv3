@@ -24,6 +24,7 @@ import '../shared/units_entity_action_row.dart';
 import '../shared/units_entity_card.dart';
 import '../shared/region_labels.dart';
 
+part 'military_units_panel_support_army_tile.dart';
 part 'military_units_panel_support_detail_rows.dart';
 part 'military_units_panel_build.dart';
 part 'military_units_panel_dialogs.dart';

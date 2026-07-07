@@ -18,38 +18,14 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
   @override
   void initState() {
     super.initState();
-    _game = _buildGame();
-    _attachMinimapCameraBusSubscriptions();
+    _game = _buildCtRegionMapGame(this);
+    _attachMinimapCameraBusSubscriptions(this);
   }
 
   @override
   void dispose() {
     _subscriptions.cancelAll();
     super.dispose();
-  }
-
-  void _attachMinimapCameraBusSubscriptions() {
-    _subscriptions.cancelAll();
-    final b = widget.bus;
-    if (b == null) return;
-    _subscriptions.track(
-      b.on<RequestRegionMapCameraCenterWorldEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
-      }),
-    );
-    _subscriptions.track(
-      b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.panCameraWorld(e.worldDx, e.worldDy);
-      }),
-    );
-    _subscriptions.track(
-      b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.setZoomMultiplierAbsolute(e.zoomMultiplier);
-      }),
-    );
   }
 
   @override
@@ -101,8 +77,15 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
-        onCivilianTileTapped: _handleCivilianTileTapped,
-        onFleetMarkerTapped: _handleFleetMarkerTapped,
+        onCivilianTileTapped: (tileKey) =>
+            _handleCtRegionMapCivilianTileTapped(this, tileKey),
+        onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
+            _handleCtRegionMapFleetMarkerTapped(
+              this,
+              locationScopeKey,
+              initialFleetId,
+              markerTileKey,
+            ),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
@@ -110,7 +93,7 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
       );
     }
     if (widget.bus != oldWidget.bus) {
-      _attachMinimapCameraBusSubscriptions();
+      _attachMinimapCameraBusSubscriptions(this);
     }
     if (widget.centerOnTileKey != null &&
         widget.centerOnTileKey != oldWidget.centerOnTileKey) {
@@ -118,78 +101,6 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
         _game.centerOnTileKey(widget.centerOnTileKey!);
       });
     }
-  }
-
-  CtRegionMapGame _buildGame() {
-    return defaultCreateCtRegionMapGame(
-      region: widget.region,
-      cellSizePx: widget.cellSizePx,
-      showPoliticalOverlay: widget.showPoliticalOverlay,
-      showProvinceOverlay: widget.showProvinceOverlay,
-      showProvinceOwnershipTint: widget.showProvinceOwnershipTint,
-      showProvinceNamesLayer: widget.showProvinceNamesLayer,
-      visibilityMode: widget.visibilityMode,
-      baseLayerDisplayMode:
-          widget.baseLayerDisplayMode ??
-          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-      onProvinceSelected: widget.onProvinceSelected,
-      onMapTileTappedForDetail: widget.onMapTileTappedForDetail,
-      onRegionViewChanged: widget.onRegionViewChanged,
-      onProvinceHovered: widget.onProvinceHovered,
-      onTileHovered: widget.onTileHovered,
-      onCivilianTileTapped: _handleCivilianTileTapped,
-      onFleetMarkerTapped: _handleFleetMarkerTapped,
-      onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
-      selectedTileKey: widget.selectedTileKey,
-      selectedCivilianTileKey: widget.selectedCivilianTileKey,
-      secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
-      validTileKeys: widget.validTileKeys,
-      onTileSelected: widget.onTileSelected,
-      onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
-      onTownIconTapped: widget.bus != null
-          ? (provinceId) {
-              widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
-            }
-          : null,
-      playerViewForResources: widget.playerViewForResources,
-      onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
-      initialZoomMultiplier: widget.zoomMultiplier ?? 1.0,
-    );
-  }
-
-  void _handleCivilianTileTapped(String tileKey) {
-    widget.onCivilianTileStateChanged?.call(tileKey);
-    final bus = widget.bus;
-    if (bus == null) {
-      return;
-    }
-    String? initialSelectedUnitId;
-    for (final marker in widget.region.civilianTileMarkers) {
-      if (marker.tileKey == tileKey && marker.unitIds.isNotEmpty) {
-        initialSelectedUnitId = marker.unitIds.first;
-        break;
-      }
-    }
-    bus.emit(
-      OpenCivilianUnitsPanelEvent(
-        tileScopeTileKey: tileKey,
-        initialSelectedUnitId: initialSelectedUnitId,
-      ),
-    );
-  }
-
-  void _handleFleetMarkerTapped(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  ) {
-    widget.bus?.emit(
-      OpenNavalUnitsPanelEvent(
-        locationScopeKey: locationScopeKey,
-        initialSelectedFleetId: initialFleetId,
-        tileScopeTileKey: markerTileKey,
-      ),
-    );
   }
 
   @override

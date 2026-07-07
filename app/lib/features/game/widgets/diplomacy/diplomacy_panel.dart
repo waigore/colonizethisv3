@@ -29,11 +29,13 @@ export 'diplomacy_panel_rows.dart';
 export 'relative_power_line.dart';
 
 part 'diplomacy_panel_body.dart';
-part 'diplomacy_panel_chrome_badges.dart';
+part 'diplomacy_panel_chrome_section_header.dart';
+part 'diplomacy_panel_chrome_relation_badges.dart';
 part 'diplomacy_panel_chrome_standing.dart';
 part 'diplomacy_panel_constants.dart';
 part 'diplomacy_panel_filter.dart';
 part 'diplomacy_panel_mode_bar.dart';
+part 'diplomacy_panel_order_actions_mood.dart';
 part 'diplomacy_panel_order_actions.dart';
 part 'diplomacy_panel_row.dart';
 part 'diplomacy_panel_row_info.dart';
@@ -73,7 +75,7 @@ class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
 }
 
 class _DiplomacyPanelState extends State<DiplomacyPanel>
-    with _DiplomacyOrderActions {
+    with _DiplomacyOrderActionsMood, _DiplomacyOrderActions {
   final Map<String, String> _moodByLeaderId = <String, String>{};
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
 

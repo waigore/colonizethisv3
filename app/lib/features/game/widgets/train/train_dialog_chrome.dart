@@ -11,6 +11,8 @@ import '../../../../widgets/ct_spacing.dart';
 
 part 'train_dialog_chrome_resource_bar.dart';
 part 'train_dialog_chrome_unit_row.dart';
+part 'train_dialog_chrome_unit_row_cost.dart';
+part 'train_dialog_chrome_unit_row_controls.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
 /// `SPEC/ui/train-military-dialog.md` / `SPEC/ui/train-naval-dialog.md` and the

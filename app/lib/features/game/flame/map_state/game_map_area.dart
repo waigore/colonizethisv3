@@ -17,6 +17,8 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../../config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
@@ -64,11 +66,13 @@ part 'game_map_area_state_base.dart';
 part 'game_map_area_selection.dart';
 part 'game_map_area_view.dart';
 part 'game_map_area_turn_resolution.dart';
+part 'game_map_area_turn_resolution_session.dart';
 part 'game_map_area_turn_feed_labels.dart';
 part 'game_map_area_turn_feed.dart';
 part 'game_map_area_events.dart';
 part 'game_map_area_e2e.dart';
 part 'game_map_area_lifecycle.dart';
+part 'game_map_area_build_map_stack_chrome.dart';
 part 'game_map_area_build_map_stack.dart';
 part 'game_map_area_build_overlays.dart';
 part 'game_map_area_build.dart';
@@ -100,6 +104,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea>
         _GameMapAreaEvents,
         _GameMapAreaE2e,
         _GameMapAreaLifecycle,
+        _GameMapAreaBuildMapStackChrome,
         _GameMapAreaBuildMapStack,
         _GameMapAreaBuildOverlays,
         _GameMapAreaBuild {}

@@ -8,6 +8,9 @@ import 'production_recipe_affordance.dart';
 import 'production_allocation_mutations.dart';
 import 'production_allocation_row_buttons.dart';
 
+part 'production_allocation_row_slider.dart';
+part 'production_allocation_row_controls.dart';
+
 const _uiIconProductionAllocDecrement =
     'ui_icon_production_alloc_decrement.png';
 const _uiIconProductionAllocIncrement =
@@ -52,126 +55,25 @@ class ProductionAllocationRow extends StatelessWidget {
   /// non-interactive per `SPEC/ui/production-panel.md` § Tech-gated recipe rows.
   final bool locked;
 
-  int get _desired => desiredOutputByRecipe[recipe.id] ?? 0;
+  int get desiredOutput => desiredOutputByRecipe[recipe.id] ?? 0;
 
-  RecipeAffordance get _affordance => computeRecipeAffordance(
+  RecipeAffordance get affordance => computeRecipeAffordance(
     recipe: recipe,
     stockpile: player.stockpile,
     desiredOutputByRecipe: desiredOutputByRecipe,
     effectiveLabour: effectiveLabour,
   );
 
-  bool get _comfortHeadroom => recipeAllocationComfortHeadroomActive(
+  bool get comfortHeadroom => recipeAllocationComfortHeadroomActive(
     recipe: recipe,
-    desiredOutput: _desired,
-    maxDesiredOutput: _affordance.maxDesiredOutput,
+    desiredOutput: desiredOutput,
+    maxDesiredOutput: affordance.maxDesiredOutput,
     stockpile: player.stockpile,
     desiredOutputByRecipe: desiredOutputByRecipe,
     effectiveLabour: effectiveLabour,
   );
 
-  Widget _buildSlider(int maxAchievable) {
-    final sliderMax = maxAchievable == 0
-        ? 0.0
-        : maxAchievable.clamp(1, kProductionAllocationSliderCap).toDouble();
-    return CtSlider(
-      value: _desired.clamp(0, maxAchievable).toDouble(),
-      min: 0,
-      max: sliderMax,
-      divisions: maxAchievable == 0
-          ? 1
-          : maxAchievable.clamp(1, kProductionAllocationSliderCap),
-      comfortHeadroomActive: _comfortHeadroom,
-      onChanged: (value) {
-        final next = Map<String, int>.from(desiredOutputByRecipe);
-        final rounded = value.round().clamp(0, maxAchievable);
-        if (rounded == 0) {
-          next.remove(recipe.id);
-        } else {
-          next[recipe.id] = rounded;
-        }
-        onDesiredOutputChanged(next);
-      },
-    );
-  }
-
-  Widget _buildActionButtons(int maxAchievable) {
-    final canDecrement = !locked && _desired > 0;
-    final canIncrement = !locked && maxAchievable > 0 && _desired < maxAchievable;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 30,
-          child: Text(
-            _desired.toString(),
-            textAlign: TextAlign.right,
-            style: theme.textTheme.bodySmall,
-          ),
-        ),
-        const SizedBox(width: 4),
-        ProductionAllocationStepButton(
-          enabled: canDecrement,
-          readDesired: () => desiredOutputByRecipe,
-          tryStepFromCurrent: (cur) => applyProductionRecipeDecrement(
-            recipe: recipe,
-            player: player,
-            effectiveLabour: effectiveLabour,
-            current: cur,
-            onDesiredOutputChanged: onDesiredOutputChanged,
-          ),
-          semanticLabel: l10n.production_allocationDecrementRecipe,
-          tooltip: l10n.production_allocationDecrementRecipe,
-          assetFileName: _uiIconProductionAllocDecrement,
-        ),
-        const SizedBox(width: 4),
-        ProductionAllocationStepButton(
-          enabled: canIncrement,
-          readDesired: () => desiredOutputByRecipe,
-          tryStepFromCurrent: (cur) => applyProductionRecipeIncrement(
-            recipe: recipe,
-            player: player,
-            effectiveLabour: effectiveLabour,
-            current: cur,
-            onDesiredOutputChanged: onDesiredOutputChanged,
-          ),
-          semanticLabel: l10n.production_allocationIncrementRecipe,
-          tooltip: l10n.production_allocationIncrementRecipe,
-          assetFileName: _uiIconProductionAllocIncrement,
-        ),
-        const SizedBox(width: 4),
-        ProductionAllocationActionIconButton(
-          enabled: canIncrement,
-          readDesired: () => desiredOutputByRecipe,
-          onPressedFromCurrent: (cur) => applyProductionRecipeMaximize(
-            recipe: recipe,
-            player: player,
-            effectiveLabour: effectiveLabour,
-            current: cur,
-            onDesiredOutputChanged: onDesiredOutputChanged,
-          ),
-          semanticLabel: l10n.production_allocationMaximizeRecipe,
-          tooltip: l10n.production_allocationMaximizeRecipe,
-          assetFileName: _uiIconProductionAllocMaximize,
-        ),
-        const SizedBox(width: 4),
-        ProductionAllocationActionIconButton(
-          enabled: !locked && _desired > 0,
-          readDesired: () => desiredOutputByRecipe,
-          onPressedFromCurrent: (cur) => applyProductionRecipeClear(
-            recipe: recipe,
-            current: cur,
-            onDesiredOutputChanged: onDesiredOutputChanged,
-          ),
-          semanticLabel: l10n.production_allocationClearRecipe,
-          tooltip: l10n.production_allocationClearRecipe,
-          assetFileName: _uiIconProductionAllocClear,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader(RecipeAffordance affordance, int maxAchievable) {
+  Widget buildHeader(RecipeAffordance rowAffordance, int maxAchievable) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,7 +83,7 @@ class ProductionAllocationRow extends StatelessWidget {
           child: Text(
             l10n.production_recipeAffordance(
               maxAchievable,
-              affordance.limitingLabel,
+              rowAffordance.limitingLabel,
             ),
             textAlign: TextAlign.right,
             style: theme.textTheme.labelSmall,
@@ -194,22 +96,22 @@ class ProductionAllocationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final affordance = _affordance;
+    final rowAffordance = affordance;
     // A locked recipe (its requiredTechId not unlocked for the player) cannot
     // be allocated, so its affordance reads 0 and the controls are disabled.
-    final maxAchievable = locked ? 0 : affordance.maxDesiredOutput;
+    final maxAchievable = locked ? 0 : rowAffordance.maxDesiredOutput;
     final sliderRow = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(child: _buildSlider(maxAchievable)),
-        _buildActionButtons(maxAchievable),
+        Expanded(child: buildAllocationSlider(maxAchievable)),
+        buildAllocationActionButtons(maxAchievable),
       ],
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildHeader(affordance, maxAchievable),
+        buildHeader(rowAffordance, maxAchievable),
         if (locked)
           IgnorePointer(
             child: Opacity(

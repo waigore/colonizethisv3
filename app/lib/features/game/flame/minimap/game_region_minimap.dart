@@ -18,8 +18,11 @@ import '../../../../widgets/strict_asset_icon.dart';
 import '../../screens/game/game_screen_shared.dart';
 import 'region_minimap_math.dart';
 
-part 'game_region_minimap_controls.dart';
+part 'game_region_minimap_zoom_controls.dart';
+part 'game_region_minimap_toggle_button.dart';
 part 'game_region_minimap_painter.dart';
+part 'game_region_minimap_gestures.dart';
+part 'game_region_minimap_visible_panel.dart';
 
 /// Dismissible region minimap (Empire overview). SPEC/ui/empire-overview.md § Region minimap.
 ///
@@ -121,47 +124,12 @@ class GameRegionMinimap extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (visible) ...[
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: EditorialMonoclePalette.bgDeep,
-              border: Border.all(
-                color: EditorialMonoclePalette.border,
-                width: 1,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(panelPadding),
-              child: Listener(
-                behavior: HitTestBehavior.opaque,
-                onPointerMove: (event) {
-                  if (!event.down || event.delta == Offset.zero) {
-                    return;
-                  }
-                  _onPan(delta: event.delta, mapSize: mapSize);
-                },
-                child: GestureDetector(
-                  key: kRegionMinimapGestureKey,
-                  behavior: HitTestBehavior.opaque,
-                  // Tap-up avoids a center event at pointer-down (which interfered with drags).
-                  onTapUp: (d) =>
-                      _onTap(local: d.localPosition, mapSize: mapSize),
-                  child: SizedBox(
-                    width: mapSize.width,
-                    height: mapSize.height,
-                    child: CustomPaint(
-                      key: kRegionMinimapCustomPaintKey,
-                      painter: _RegionMinimapPainter(
-                        region: region,
-                        cellSizePx: cellSizePx,
-                        viewport: viewport?.regionId == region.regionId
-                            ? viewport
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          _GameRegionMinimapVisiblePanel(
+            region: region,
+            cellSizePx: cellSizePx,
+            bus: bus,
+            mapSize: mapSize,
+            viewport: viewport,
           ),
           const SizedBox(height: 4),
         ],
@@ -178,42 +146,6 @@ class GameRegionMinimap extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _onTap({required Offset local, required Size mapSize}) {
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-    final world = minimapLocalToWorldCenter(
-      localOnMinimap: local,
-      minimapSize: mapSize,
-      mapWidthWorld: mw,
-      mapHeightWorld: mh,
-    );
-    bus.emit(
-      RequestRegionMapCameraCenterWorldEvent(
-        regionId: region.regionId,
-        worldCenterX: world.dx,
-        worldCenterY: world.dy,
-      ),
-    );
-  }
-
-  void _onPan({required Offset delta, required Size mapSize}) {
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-    final w = minimapDeltaToWorldDelta(
-      minimapDelta: delta,
-      minimapSize: mapSize,
-      mapWidthWorld: mw,
-      mapHeightWorld: mh,
-    );
-    bus.emit(
-      RequestRegionMapCameraPanWorldDeltaEvent(
-        regionId: region.regionId,
-        worldDx: w.dx,
-        worldDy: w.dy,
-      ),
     );
   }
 }

@@ -14,7 +14,8 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 
 part 'diplomacy_dialogs_grant_subsidy_body.dart';
-part 'diplomacy_dialogs_grant_subsidy_chrome.dart';
+part 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
+part 'diplomacy_dialogs_grant_subsidy_chrome_stepper.dart';
 
 /// Grant or Subsidy dialog widget. Emits [GrantOrSubsidySubmittedEvent] on submit.
 ///
