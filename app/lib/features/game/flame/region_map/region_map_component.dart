@@ -25,6 +25,8 @@ import '../render/warp_zone_edge_geometry.dart';
 
 
 part 'region_map_component_shared.dart';
+part 'region_map_component_shared_palette.dart';
+part 'region_map_component_shared_label_placement.dart';
 part 'region_map_component_shared_visibility_halos.dart';
 part 'region_map_component_shared_visibility_labels.dart';
 part 'region_map_component_shared_visibility.dart';

@@ -19,6 +19,7 @@ import '../../../../widgets/resource_icon.dart';
 part 'production_commodity_breakdown_dialog_layout.dart';
 part 'production_commodity_breakdown_dialog_table_cells.dart';
 part 'production_commodity_breakdown_dialog_table.dart';
+part 'production_commodity_breakdown_dialog_table_data.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
 class ProductionCommodityBreakdownDialog extends ConsumerStatefulWidget {
