@@ -22,6 +22,12 @@ import 'intervention_choice_buttons.dart';
 
 part 'intervention_dialogue_overlay_flow.dart';
 
+/// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
+/// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
+/// the flow mixin was split into a `part` (Refs #3878).
+CtDialogueView _createInterventionDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
+
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
 /// SPEC/ui/screens/pending-intervention-overlay.md, SPEC/ai/dialogue-content-and-yarn.md.
 class InterventionDialogueOverlay extends StatefulWidget {

@@ -50,7 +50,7 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
           );
         }
       }
-      final view = CtDialogueView(logger: log);
+      final view = _createInterventionDialogueView(log);
       final runner = DialogueRunner(
         yarnProject: project,
         dialogueViews: [view],
