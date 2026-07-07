@@ -16,6 +16,7 @@ import '../../../../widgets/ct_resource_cell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
 
+part 'production_commodity_breakdown_dialog_table_cells.dart';
 part 'production_commodity_breakdown_dialog_table.dart';
 
 /// Minimum viewport width at which the breakdown dialog drops the
