@@ -65,24 +65,13 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorUnknownPriceBidRow(
     label: 'bids with no effective market price contribute zero treasury spend '
         '(defensive guard against unknown / future commodity ids)',
-    context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 0),
-    proposedOrders: [validatorBid('not_a_real_commodity', 10)],
-    expect: const ValidatorExpectation(singleAccepted: true),
-    refs: '#3093',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorManufacturedBudgetRejectRow(
     label: 'manufactured commodity bids now consume the catalog base price '
         '(Refs #3093 manufactured-default-prices slice)',
-    context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 100),
-    proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
-    expect: ValidatorExpectation(
-      singleRejectedWithReason:
-          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-    ),
-    refs: '#3093',
   ),
   validatorTreasuryTimberIronBids(
     label: 'accepts cumulative spend equal to treasuryBudgetForBids across '
@@ -143,35 +132,23 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     ),
     refs: '#3123',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorCatalogAdmitRow(
     label: 'admits a bid priced solely from the catalog default when budget '
         'allows (Refs #3123 AC: rule 5 must not reject for unknown price '
         'when an initial/default price exists)',
-    context: validatorCtxCatalogDefaults(
-      treasuryBudgetForBids: _catalogTimberBudgetForQty2(),
-    ),
-    proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
-    expect: ValidatorExpectation(
-      catalogDefaultCommodityId: CommodityCatalog.timber.id,
-      catalogDefaultNotNullReason:
-          'timber must have a catalog default for this AC pin',
-      singleAccepted: true,
-    ),
-    refs: '#3123',
+    commodityId: CommodityCatalog.timber.id,
+    bidQty: 2,
+    treasuryBudgetForBids: _catalogTimberBudgetForQty2(),
+    catalogDefaultNotNullReason:
+        'timber must have a catalog default for this AC pin',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorCatalogAdmitRow(
     label: 'admits a manufactured-commodity bid priced from the catalog '
         'default when budget allows (Refs #3123 AC, manufactured branch)',
-    context: validatorCtxLumberBudget(
-      treasuryBudgetForBids: _catalogLumberBudgetForQty1(),
-    ),
-    proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 1)],
-    expect: ValidatorExpectation(
-      catalogDefaultCommodityId: CommodityCatalog.lumber.id,
-      catalogDefaultNotNullReason:
-          'lumber must have a manufactured catalog default',
-      singleAccepted: true,
-    ),
-    refs: '#3123',
+    commodityId: CommodityCatalog.lumber.id,
+    bidQty: 1,
+    treasuryBudgetForBids: _catalogLumberBudgetForQty1(),
+    catalogDefaultNotNullReason:
+        'lumber must have a manufactured catalog default',
   ),
 ];
