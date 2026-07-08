@@ -44,31 +44,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
 const String _gpOwnedNwProvince = 'newWorld|gp1_nw0';
 const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 
-// gp1 owns 11 OW provinces (>= the observer quota of 10), so the GP is
-// past EXPAND and `isBelowObserverConquestQuota` is false. The COLONIAL
-// vs DEVELOP split is then driven entirely by whether the NW region holds
-// a tribe-owned (or otherwise non-GP) province visible to the snapshot's
-// colonial summary.
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
-
+// Uses kGp1OwProvincesAtQuota from domain_planner_orchestrator_test_support.dart
+// (Refs #3941). COLONIAL vs DEVELOP is driven by NW tribe visibility.
 /// DEVELOP scenario: every `newWorld|` province is GP-owned so
 /// `hasColonialAcquisitionTargets` is false and the snapshot has no
 /// invadable/adjacent colonial targets. Combined with `oldWorldProvincesOwned
@@ -82,7 +66,7 @@ Game _developScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvincesAtQuota)
+          for (final id in kGp1OwProvincesAtQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
         ],
       ),
@@ -104,7 +88,7 @@ Game _developScenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvincesAtQuota.first,
+          stationedProvinceId: kGp1OwProvincesAtQuota.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),
@@ -135,7 +119,7 @@ Game _colonialScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 130),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvincesAtQuota)
+          for (final id in kGp1OwProvincesAtQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
         ],
       ),
@@ -153,7 +137,7 @@ Game _colonialScenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvincesAtQuota.first,
+          stationedProvinceId: kGp1OwProvincesAtQuota.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),

@@ -59,34 +59,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _minorId = 'minor1';
 const String _minorOwProvince = 'oldWorld|minor1_0';
 
-// Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
-// `isBelowObserverConquestQuota` is true and `observerGoalPhaseFor`
-// returns EXPAND. Sized at the observer default start
-// (`kObserverDefaultStartOldWorldProvincesPerGp` = 7) so the
-// `_defaultStartOwMinorDeclarePlannerResultIfNeeded` short-circuit is in
-// scope (`ownOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1`).
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-// Past-quota OW set (>= `kObserverConquestMinOwProvincesPerGp` = 10) and
-// large enough that `oldWorldProvincesOwned` exits both EXPAND and the
-// turn-120 COLONIAL-lite safeguard window. Combined with an empty
-// `ColonialSummary` it routes `observerGoalPhaseFor` into DEVELOP, where
-// every declare-war candidate score collapses to
-// `kDeclareWarNonAdjacentSuppressedScore` (verified in
-// `observer_goal_phase_test.dart` group `DEVELOP suppresses declareWar`).
+// Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
+// Past-quota DEVELOP set remains local (`_gp1OwProvincesDevelop`).
 const List<String> _gp1OwProvincesDevelop = <String>[
   'oldWorld|gp1_0',
   'oldWorld|gp1_1',
@@ -248,7 +228,7 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND minor declareWar', () {
     test('emits declareWar toward adjacent invadable OW minor in EXPAND', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -331,7 +311,7 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();

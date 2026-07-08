@@ -43,6 +43,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
@@ -84,16 +85,6 @@ const PhasePlanOutcome _expandPhasePlanZeroNw = PhasePlanOutcome(
 // Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
 // `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
 // `observerGoalPhaseFor` — the phase the lock predicate operates in.
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
 Game _scenarioGame() {
   return Game(
     id: 'g-2924-expand-nw-lock-recovery-acquisition',
@@ -101,7 +92,7 @@ Game _scenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvincesBelowQuota)
+          for (final id in kGp1OwProvincesBelowQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
         ],
       ),
@@ -122,7 +113,7 @@ Game _scenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvincesBelowQuota.first,
+          stationedProvinceId: kGp1OwProvincesBelowQuota.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),

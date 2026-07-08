@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 /// `snapshot.threats.atWarWith.any/where((id) => game.playerById(id) != null)`
 /// form.
 ///
-/// The single canonical home (`lib/src/planning/planning_helpers.dart`) is
+/// The single canonical home (`lib/src/planning/planning_peace_collectors.dart`) is
 /// the only file allowed to contain the filter; every other inline copy is
 /// rejected so the deterministic GP filter lives in one place.
 ///
@@ -36,7 +36,7 @@ import 'package:path/path.dart' as p;
 /// ID,` — the inline form that builds a minor + tribe peace-target list.
 /// Callers must use the shared
 /// `nonGreatPowerAtWarPeaceTargetsWhere(game: …, snapshot: …)` collector from
-/// `planning_helpers.dart` instead. Detection is scoped to the **collector**
+/// `planning_peace_collectors.dart` instead. Detection is scoped to the **collector**
 /// form (the `if (… == null) IDENTIFIER,` comprehension element); the
 /// `if (playerById(...) == null) continue;` skip loop (which iterates to
 /// process the *Great Powers*) ends in `continue;`/`{`, never a bare
@@ -45,8 +45,9 @@ import 'package:path/path.dart' as p;
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
 /// Canonical home of `gpFactionIdsAtWarWith` — the only allowed comprehension.
-const _allowedRelative =
-    'packages/colonizethis_ai/lib/src/planning/planning_helpers.dart';
+const _allowedRelatives = <String>{
+  'packages/colonizethis_ai/lib/src/planning/planning_peace_collectors.dart',
+};
 
 /// `for (final <id> in <expr>.atWarWith)` … `playerById(<...>) != null`.
 final RegExp _inlineGpWarsFilter = RegExp(
@@ -93,12 +94,14 @@ int runCheckAiDedupGpWarsFilter(
     return 1;
   }
 
-  final allowedPath = p.normalize(p.join(root, _allowedRelative));
+  final allowedPaths = {
+    for (final rel in _allowedRelatives) p.normalize(p.join(root, rel)),
+  };
   final gpViolations = <String>[];
   final nonGpViolations = <String>[];
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    if (p.normalize(entity.path) == allowedPath) continue;
+    if (allowedPaths.contains(p.normalize(entity.path))) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
 
@@ -129,7 +132,7 @@ int runCheckAiDedupGpWarsFilter(
       'GP-wars filter(s) in $_aiLibRelative. Use the shared '
       '`gpFactionIdsAtWarWith(game, snapshot)` (for the id list/length) or '
       '`isAtWarWithAnyGreatPower(game, snapshot)` (for the boolean presence '
-      'check) helper from src/planning/planning_helpers.dart instead.',
+      'check) helper from src/planning/planning_peace_collectors.dart (via planning_helpers.dart barrel) instead.',
     );
     for (final v in gpViolations) {
       logE(' - $v');
@@ -141,7 +144,7 @@ int runCheckAiDedupGpWarsFilter(
       'check_ai_dedup_gp_wars_filter: found ${nonGpViolations.length} inline '
       'non-GP peace-collector comprehension(s) in $_aiLibRelative. Use the '
       'shared `nonGreatPowerAtWarPeaceTargetsWhere(game: ..., snapshot: ...)` '
-      'collector from src/planning/planning_helpers.dart instead.',
+      'collector from src/planning/planning_peace_collectors.dart (via planning_helpers.dart barrel) instead.',
     );
     for (final v in nonGpViolations) {
       logE(' - $v');
