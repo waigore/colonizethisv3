@@ -22,6 +22,13 @@ class FrrCreditsExpectation {
     this.totalProfitTreasury,
     this.totalEmbassyKickback,
     this.singleCreditedDealBuyer,
+    this.singleCreditedDealOwningGpId,
+    this.singleCreditedDealSourceFactionId,
+    this.singleCreditedDealRelationScore,
+    this.singleCreditedDealProfitRateCloseTo,
+    this.singleCreditedDealProfitTreasuryCloseTo,
+    this.singleCreditedDealProfitIsZero = false,
+    this.treasuryCreditKeysExact,
     this.custom,
   });
 
@@ -42,6 +49,13 @@ class FrrCreditsExpectation {
         totalProfitTreasury = null,
         totalEmbassyKickback = null,
         singleCreditedDealBuyer = null,
+        singleCreditedDealOwningGpId = null,
+        singleCreditedDealSourceFactionId = null,
+        singleCreditedDealRelationScore = null,
+        singleCreditedDealProfitRateCloseTo = null,
+        singleCreditedDealProfitTreasuryCloseTo = null,
+        singleCreditedDealProfitIsZero = false,
+        treasuryCreditKeysExact = null,
         custom = null;
 
   final bool empty;
@@ -60,6 +74,13 @@ class FrrCreditsExpectation {
   final double? totalProfitTreasury;
   final double? totalEmbassyKickback;
   final String? singleCreditedDealBuyer;
+  final String? singleCreditedDealOwningGpId;
+  final String? singleCreditedDealSourceFactionId;
+  final int? singleCreditedDealRelationScore;
+  final double? singleCreditedDealProfitRateCloseTo;
+  final double? singleCreditedDealProfitTreasuryCloseTo;
+  final bool singleCreditedDealProfitIsZero;
+  final List<String>? treasuryCreditKeysExact;
   final void Function(FirstRightCreditsResult result)? custom;
 }
 
@@ -130,6 +151,42 @@ void assertFrrCreditsExpectation(
   }
   if (expectation.singleCreditedDealBuyer != null) {
     expect(result.creditedDeals.single.deal.buyerFactionId, expectation.singleCreditedDealBuyer);
+  }
+  if (expectation.singleCreditedDealOwningGpId != null) {
+    expect(
+      result.creditedDeals.single.owningGpId,
+      expectation.singleCreditedDealOwningGpId,
+    );
+  }
+  if (expectation.singleCreditedDealSourceFactionId != null) {
+    expect(
+      result.creditedDeals.single.sourceFactionId,
+      expectation.singleCreditedDealSourceFactionId,
+    );
+  }
+  if (expectation.singleCreditedDealRelationScore != null) {
+    expect(
+      result.creditedDeals.single.relationScore,
+      expectation.singleCreditedDealRelationScore,
+    );
+  }
+  if (expectation.singleCreditedDealProfitRateCloseTo != null) {
+    expect(
+      result.creditedDeals.single.profit.profitRate,
+      closeTo(expectation.singleCreditedDealProfitRateCloseTo!, 1e-12),
+    );
+  }
+  if (expectation.singleCreditedDealProfitTreasuryCloseTo != null) {
+    expect(
+      result.creditedDeals.single.profit.profitTreasury,
+      closeTo(expectation.singleCreditedDealProfitTreasuryCloseTo!, 1e-12),
+    );
+  }
+  if (expectation.singleCreditedDealProfitIsZero) {
+    expect(result.creditedDeals.single.profit, FirstRightProfit.zero);
+  }
+  if (expectation.treasuryCreditKeysExact != null) {
+    expect(result.treasuryCreditByGpId.keys, expectation.treasuryCreditKeysExact);
   }
   expectation.custom?.call(result);
 }

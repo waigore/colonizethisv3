@@ -38,6 +38,7 @@ export 'src/treasury_scenarios/treasury_scenarios.dart';
 export 'src/price_discovery_scenarios.dart';
 export 'src/projected_cost_engine_scenarios.dart';
 export 'src/purchased_tile_fixture_support.dart';
+export 'src/purchased_tile_scenarios/purchased_tile_expectations.dart';
 export 'src/purchased_tile_scenarios/purchased_tile_scenarios.dart';
 export 'src/town_manufacturing_bonus_expectations.dart';
 export 'src/town_manufacturing_bonus_scenarios.dart';

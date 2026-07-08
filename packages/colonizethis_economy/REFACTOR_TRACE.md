@@ -580,3 +580,15 @@ test_support LOC: **13,533** (net +115 vs slice 14 — two expectation helper mo
 
 test_support LOC: **13,806** (net +273 vs slice 15 — two expectation helper modules added; town-manufacturing/resource-extractor inline-verify bodies reduced; purchased-tile scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 17+).
 
+## Phase 3 — Slice 17 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| purchased-tile-expectations | `PurchasedTileIndexExpectation`, `PurchasedTileRichesExpectation` data-driven assertions | `purchased_tile_scenarios/purchased_tile_expectations.dart` | #3939 |
+| purchased-tile-index-compaction | migrated nine `PurchasedTileIndex.fromGame` inline-verify rows to `.expect` | `purchased_tile_scenarios/purchased_tile_index_scenarios.dart` | D1, #3939 |
+| purchased-tile-riches-compaction | migrated twelve `computePurchasedTileRichesCredits` inline-verify rows to `.expect` | `purchased_tile_scenarios/purchased_tile_riches_scenarios.dart` | #2991 C5, #3939 |
+| frr-d5-matcher-compaction | migrated three D5 AC1 DealMatcher inline-verify rows to `DealMatcherScenario.expect` | `frr_scenarios/frr_issue_ac_d5_scenarios.dart` | #2992 D5, #3939 |
+| frr-d5-credits-compaction | migrated six D5 AC2–AC5 FRR credits inline-verify rows to `FrrCreditsScenario.expect` | `frr_scenarios/frr_issue_ac_d5_scenarios.dart` | #2992 D5, #3939 |
+
+test_support LOC: deferred recount post-slice — purchased-tile + D5 compaction reduces inline-verify bodies; further treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 18+.
+

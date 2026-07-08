@@ -7,10 +7,11 @@
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 import '../deal_matcher_scenarios/deal_matcher_core_scenarios.dart';
+import '../deal_matcher_scenarios/deal_matcher_expectations.dart';
 import '../deal_matcher_scenarios/deal_matcher_test_support.dart';
+import 'frr_credits_expectations.dart';
 import 'frr_credits_scenarios.dart';
 import 'frr_credits_test_support.dart';
 
@@ -71,7 +72,7 @@ DealMatchInputs _d5MatcherInputs({
 
 /// AC #1 — owning-GP bid wins above priority tiers AND FTP.
 List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'rival priority-1 bid loses to owning-GP priority-5 bid; rival '
         'priority-1 bid carries forward intact',
@@ -97,20 +98,21 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, kFrrIssueAcD5GpA);
-      expect(deal.quantity, 10);
-      expect(deal.isFirstRightOfRefusalMatch, isTrue);
-      expect(deal.isFtpMatch, isFalse);
-      expect(result.unfilledBidsByFactionId[kFrrIssueAcD5GpB], [
-        matcherBid('timber', 10, priority: 1),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      frrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: kFrrIssueAcD5GpA,
+        quantity: 10,
+        isFirstRightOfRefusalMatch: true,
+        isFtpMatch: false,
+      ),
+      unfilledBidsByFactionId: {
+        kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
+      },
+    ),
     refs: '#2992 D5 AC1',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'FTP-paired rival bid at same priority loses to owning GP; FTP '
         'partner bid carries forward (FRR overrides FTP)',
@@ -139,19 +141,20 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, kFrrIssueAcD5GpA);
-      expect(deal.isFirstRightOfRefusalMatch, isTrue);
-      expect(deal.isFtpMatch, isFalse);
-      expect(result.unfilledBidsByFactionId[kFrrIssueAcD5GpFtp], [
-        matcherBid('timber', 6, priority: 1),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      frrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: kFrrIssueAcD5GpA,
+        isFirstRightOfRefusalMatch: true,
+        isFtpMatch: false,
+      ),
+      unfilledBidsByFactionId: {
+        kFrrIssueAcD5GpFtp: [matcherBid('timber', 6, priority: 1)],
+      },
+    ),
     refs: '#2992 D5 AC1',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'negative — owning GP does NOT bid: purchased-tile offer falls '
         'back to standard tier matching (not FRR-flagged)',
@@ -173,19 +176,20 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, kFrrIssueAcD5GpB);
-      expect(deal.isFirstRightOfRefusalMatch, isFalse);
-    },
+    expect: const DealMatchExpectation(
+      filledDealsLength: 1,
+      nonFrrFilledDeal: FilledDealExpectation(
+        buyerFactionId: kFrrIssueAcD5GpB,
+        isFirstRightOfRefusalMatch: false,
+      ),
+    ),
     refs: '#2992 D5 AC1',
   ),
 ];
 
 /// AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full share).
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
     filledDeals: [_d5OtherBuyDeal()],
     purchasedTileIndex: idx([
@@ -193,24 +197,23 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
     ]),
     relationScoreFor: (gp, src) =>
         gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM1 ? 75 : 0,
-    verify: (result) {
-      expect(result.creditedDeals, hasLength(1));
-      final credit = result.creditedDeals.single;
-      expect(credit.owningGpId, kFrrIssueAcD5GpA);
-      expect(credit.sourceFactionId, kFrrIssueAcD5MinorM1);
-      expect(credit.relationScore, 75);
-      expect(credit.profit.profitRate, closeTo(0.75, 1e-12));
-      expect(credit.profit.profitTreasury, closeTo(150.0, 1e-12));
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpA], closeTo(150.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(150.0, 1e-12));
-    },
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealOwningGpId: kFrrIssueAcD5GpA,
+      singleCreditedDealSourceFactionId: kFrrIssueAcD5MinorM1,
+      singleCreditedDealRelationScore: 75,
+      singleCreditedDealProfitRateCloseTo: 0.75,
+      singleCreditedDealProfitTreasuryCloseTo: 150.0,
+      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 150.0},
+      totalProfitTreasury: 150.0,
+    ),
     refs: '#2992 D5 AC2',
   ),
 ];
 
 /// AC #3 — relation 100 credits exactly 100% of sale value.
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label:
         'credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
         'treasury == quantity * pricePerUnit (full share)',
@@ -219,22 +222,19 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 100,
-    verify: (result) {
-      expect(result.creditedDeals, hasLength(1));
-      expect(
-        result.creditedDeals.single.profit.profitRate,
-        kFirstRightMaxProfitRate,
-      );
-      expect(result.totalProfitTreasury, closeTo(40.0, 1e-12));
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpA], closeTo(40.0, 1e-12));
-    },
+    expect: FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealProfitRateCloseTo: kFirstRightMaxProfitRate,
+      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 40.0},
+      totalProfitTreasury: 40.0,
+    ),
     refs: '#2992 D5 AC3',
   ),
 ];
 
 /// AC #4 — relation 0 credits 0 treasury (no overseas profit).
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label:
         'credits helper records audit row but transfers 0 treasury (Deal '
         'Book can still surface the no-credit case)',
@@ -243,15 +243,15 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 0,
-    verify: (result) {
-      expect(result.creditedDeals, hasLength(1));
-      expect(result.creditedDeals.single.profit, FirstRightProfit.zero);
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpA], 0.0);
-      expect(result.totalProfitTreasury, 0.0);
-    },
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealProfitIsZero: true,
+      treasuryCreditByGpId: {kFrrIssueAcD5GpA: 0.0},
+      totalProfitTreasury: 0.0,
+    ),
     refs: '#2992 D5 AC4',
   ),
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label:
         'negative — buyer == owning GP (D2 FRR-match path) excluded from '
         'D4 aggregation: no double-credit when gpA wins the offer itself',
@@ -270,18 +270,18 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 100,
-    verify: (result) {
-      expect(result.creditedDeals, isEmpty);
-      expect(result.treasuryCreditByGpId, isEmpty);
-      expect(result.totalProfitTreasury, 0.0);
-    },
+    expect: const FrrCreditsExpectation(
+      creditedDealsEmpty: true,
+      treasuryCreditEmpty: true,
+      totalProfitTreasury: 0.0,
+    ),
     refs: '#2992 D5 AC4',
   ),
 ];
 
 /// AC #5 — multi-GP attribution, no cross-credit.
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label:
         'k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 60.0, gpB '
         '20.0; neither GP is credited for the other GP\'s purchased tile',
@@ -308,18 +308,17 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
       if (gp == kFrrIssueAcD5GpB && src == kFrrIssueAcD5MinorM1) return 50;
       return 0;
     },
-    verify: (result) {
-      expect(
-        result.treasuryCreditByGpId.keys,
-        containsAll(<String>[kFrrIssueAcD5GpA, kFrrIssueAcD5GpB]),
-      );
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpA], closeTo(60.0, 1e-12));
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpB], closeTo(20.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(80.0, 1e-12));
-    },
+    expect: const FrrCreditsExpectation(
+      treasuryCreditKeysContainAll: [kFrrIssueAcD5GpA, kFrrIssueAcD5GpB],
+      treasuryCreditCloseTo: {
+        kFrrIssueAcD5GpA: 60.0,
+        kFrrIssueAcD5GpB: 20.0,
+      },
+      totalProfitTreasury: 80.0,
+    ),
     refs: '#2992 D5 AC5',
   ),
-  FrrCreditsScenario(
+  FrrCreditsScenario.expect(
     label:
         'same owning GP across two minors aggregates per source relation '
         'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 45.0)',
@@ -353,12 +352,12 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
       if (gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM2) return 25;
       return 0;
     },
-    verify: (result) {
-      expect(result.creditedDeals, hasLength(2));
-      expect(result.treasuryCreditByGpId.keys, [kFrrIssueAcD5GpA]);
-      expect(result.treasuryCreditByGpId[kFrrIssueAcD5GpA], closeTo(45.0, 1e-12));
-      expect(result.totalProfitTreasury, closeTo(45.0, 1e-12));
-    },
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 2,
+      treasuryCreditKeysExact: [kFrrIssueAcD5GpA],
+      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 45.0},
+      totalProfitTreasury: 45.0,
+    ),
     refs: '#2992 D5 AC5',
   ),
 ];
