@@ -1,4 +1,5 @@
-// Compact resolveConsumption integration assertions (Refs #3939 phase 3 slice 34).
+// Compact resolveConsumption integration assertions (Refs #3939 phase 3
+// slices 34 / 45).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -15,20 +16,38 @@ final _cigarsId = CommodityCatalog.cigars.id;
 final _furHatsId = CommodityCatalog.furHats.id;
 
 /// Pins for [resolveConsumption] integration rows.
-typedef ResolveConsumptionPins = ({
-  WorkerPool? workerPool,
-  WorkerIdleCounts? idleLabour,
-  int? grainRemaining,
-  int? meatRemaining,
-  int? combinedFoodRemaining,
-  int? sugarRemaining,
-  int? cigarsRemaining,
-  int? furHatsRemaining,
-  int? totalRegiments,
-  int? fullyFedRegiments,
-  int? totalShips,
-  int? fullyFedShips,
-});
+///
+/// Optional fields default to `null` (no assertion) so scenario tables omit
+/// unused keys (Refs #3939 slice 45 LOC compaction).
+class ResolveConsumptionPins {
+  const ResolveConsumptionPins({
+    this.workerPool,
+    this.idleLabour,
+    this.grainRemaining,
+    this.meatRemaining,
+    this.combinedFoodRemaining,
+    this.sugarRemaining,
+    this.cigarsRemaining,
+    this.furHatsRemaining,
+    this.totalRegiments,
+    this.fullyFedRegiments,
+    this.totalShips,
+    this.fullyFedShips,
+  });
+
+  final WorkerPool? workerPool;
+  final WorkerIdleCounts? idleLabour;
+  final int? grainRemaining;
+  final int? meatRemaining;
+  final int? combinedFoodRemaining;
+  final int? sugarRemaining;
+  final int? cigarsRemaining;
+  final int? furHatsRemaining;
+  final int? totalRegiments;
+  final int? fullyFedRegiments;
+  final int? totalShips;
+  final int? fullyFedShips;
+}
 
 void runResolveConsumption({
   required Stockpile stockpile,

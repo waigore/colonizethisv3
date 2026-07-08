@@ -932,3 +932,12 @@ test_support LOC: **17,223** (net +127 vs slice 42 — row builders centralized 
 
 test_support LOC: **17,204** (net −19 vs slice 43 — FRR credits scenario-table compaction; builders share canonical k1/gpA index and embassy-M1 callback). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 45+.
 
+## Phase 3 — Slice 45 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| consumption-pins-class | `ResolveConsumptionPins` class with optional defaults replaces 12-field record literals | `consumption_expectations.dart`, `consumption_scenarios.dart` | #3939 |
+| frr-profit-row | `frrProfitRateRow` / `frrProfitRow` / `embassyKickbackRow` compact FRR profit + embassy kickback tables | `first_right_profit_scenarios.dart` | #2992, #3939 |
+
+test_support LOC: **17,103** (net −101 vs slice 44 — consumption pin omission + FRR profit row builders). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 46+.
+
