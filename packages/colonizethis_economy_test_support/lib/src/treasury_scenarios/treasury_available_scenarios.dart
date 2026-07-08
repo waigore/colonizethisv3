@@ -172,24 +172,41 @@ class TreasuryUiCompositionScenario {
   final String? refs;
 }
 
+/// Compact UI composition row (Refs #3939 slice 52).
+TreasuryUiCompositionScenario treasuryUiCompositionRow({
+  required String label,
+  required TreasuryUiCompositionExpectation expect,
+  int treasury = 100,
+  Map<CommodityId, int> prices = const {},
+  List<TradeOrder> stagedBids = const [],
+  int projectedNonBidTreasuryDelta = 0,
+  String? refs = '#3093',
+}) =>
+    TreasuryUiCompositionScenario.expect(
+      label: label,
+      treasury: treasury,
+      prices: prices,
+      stagedBids: stagedBids,
+      projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
+      expect: expect,
+      refs: refs,
+    );
+
 List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
   data.ResourceRules rules,
 ) => [
-  TreasuryUiCompositionScenario.expect(
+  treasuryUiCompositionRow(
     label: 'treasury 100, market price timber 30, no staged bids → headroom for '
         'fresh row equals raw treasury (allows up to qty 3)',
-    treasury: 100,
     prices: const {'timber': 30},
     expect: const TreasuryUiCompositionExpectation(
       commodityPrices: {'timber': 30},
       maxAffordableQty: (commodityId: 'timber', qty: 3),
     ),
-    refs: '#3093',
   ),
-  TreasuryUiCompositionScenario.expect(
+  treasuryUiCompositionRow(
     label: 'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid '
         'for iron (price 80) is refused (headroom 10 < 80)',
-    treasury: 100,
     prices: const {'timber': 30, 'iron': 80},
     stagedBids: [bidOrder('timber', 3)],
     expect: const TreasuryUiCompositionExpectation(
@@ -197,25 +214,21 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
       headroom: 10,
       headroomLessThanCommodity: 'iron',
     ),
-    refs: '#3093',
   ),
-  TreasuryUiCompositionScenario.expect(
+  treasuryUiCompositionRow(
     label: 'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → '
         'next increment would make spend 120 (> 100), so the UI must silent-no-op',
-    treasury: 100,
     prices: const {'timber': 30},
     stagedBids: [bidOrder('timber', 3)],
     expect: const TreasuryUiCompositionExpectation(
       commodityPrices: {'timber': 30},
       spendIncrementExceedsBudget: (commodityId: 'timber', delta: 1),
     ),
-    refs: '#3093',
   ),
-  TreasuryUiCompositionScenario.expect(
+  treasuryUiCompositionRow(
     label: 'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
         'no staged bids), market price timber 30 → budget = 60, default qty '
         '1 fits and headroom permits up to qty 2 (spend 60)',
-    treasury: 100,
     prices: const {'timber': 30},
     projectedNonBidTreasuryDelta: -40,
     expect: const TreasuryUiCompositionExpectation(
@@ -223,9 +236,8 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
       commodityPrices: {'timber': 30},
       maxAffordableQty: (commodityId: 'timber', qty: 2),
     ),
-    refs: '#3093',
   ),
-  TreasuryUiCompositionScenario.expect(
+  treasuryUiCompositionRow(
     label: 'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
         'so no bid (even default qty 1) can be staged on any priced '
         'commodity (silent no-op gate)',
@@ -237,7 +249,6 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
       commodityPrices: {'timber': 30},
       budgetLessThanCommodity: 'timber',
     ),
-    refs: '#3093',
   ),
 ];
 

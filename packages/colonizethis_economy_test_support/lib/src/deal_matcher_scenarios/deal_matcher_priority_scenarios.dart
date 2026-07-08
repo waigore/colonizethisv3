@@ -1,6 +1,5 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'deal_matcher_expectations.dart';
@@ -9,22 +8,85 @@ import 'deal_matcher_test_support.dart';
 
 /// Priority and FTP precedence from `world_market_deal_matcher_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
-  matcherFtpTierPrecedenceRow(
+  matcherFtpTimberRow(
     label: 'priority integer absolutely beats FTP across tiers',
+    offerPriorityBySeller: const {'sellerLow': 1, 'sellerFtp': 2},
+    bidPriorityByBuyer: const {'buyerLow': 1, 'buyerFtp': 2},
+    ftpSeller: 'sellerFtp',
+    ftpBuyer: 'buyerFtp',
+    expect: const DealMatchExpectation(
+      filledDealExpectations: [
+        FilledDealExpectation(buyerFactionId: 'buyerLow', isFtpMatch: false),
+        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
+      ],
+    ),
   ),
-  matcherFtpTiebreakerRow(
+  matcherFtpTimberRow(
     label: 'within a tier, FTP pair fills first as tiebreaker',
+    qty: 5,
+    offerPriorityBySeller: const {'sellerA': 1},
+    bidPriorityByBuyer: const {'buyerFtp': 1, 'buyerOther': 1},
+    ftpSeller: 'sellerA',
+    ftpBuyer: 'buyerFtp',
+    expect: DealMatchExpectation(
+      filledDealExpectations: const [
+        FilledDealExpectation(
+          buyerFactionId: 'buyerFtp',
+          isFtpMatch: true,
+        ),
+      ],
+      unfilledBidsByFactionId: {
+        'buyerOther': [matcherBid('timber', 5, priority: 1)],
+      },
+    ),
   ),
-  matcherFtpThreeGpRow(
+  matcherFtpTimberRow(
     label:
         'three GPs: FTP A↔B fills before C at same tier; C carry-forward when exhausted (#2989 FTP AC)',
+    offerPriorityBySeller: const {'gpA': 1},
+    bidPriorityByBuyer: const {'gpB': 1, 'gpC': 1},
+    ftpSeller: 'gpA',
+    ftpBuyer: 'gpB',
+    expect: DealMatchExpectation(
+      filledDealExpectations: const [
+        FilledDealExpectation(
+          sellerFactionId: 'gpA',
+          buyerFactionId: 'gpB',
+          isFtpMatch: true,
+        ),
+      ],
+      unfilledBidsByFactionId: {
+        'gpC': [matcherBid('timber', 10, priority: 1)],
+      },
+    ),
+    refs: '#2989',
   ),
-  matcherFtpTier2PrecedenceRow(
+  matcherFtpTimberRow(
     label: 'FTP pair at tier 2 does not fill before non-FTP at tier 1',
+    offerPriorityBySeller: const {'sellerFtp': 2, 'sellerOther': 1},
+    bidPriorityByBuyer: const {'buyerFtp': 2, 'buyerOther': 1},
+    ftpSeller: 'sellerFtp',
+    ftpBuyer: 'buyerFtp',
+    expect: const DealMatchExpectation(
+      firstFilledDeal: FilledDealExpectation(
+        buyerFactionId: 'buyerOther',
+        isFtpMatch: false,
+      ),
+    ),
   ),
-  matcherFtpOrderIndependentRow(
+  matcherFtpTimberRow(
     label:
         'FTP membership is order-independent (set keyed via canonical pairKey)',
+    qty: 5,
+    offerPriorityBySeller: const {'zeta': 1},
+    bidPriorityByBuyer: const {'alpha': 1},
+    ftpSeller: 'alpha',
+    ftpBuyer: 'zeta',
+    expect: const DealMatchExpectation(
+      filledDealExpectations: [
+        FilledDealExpectation(isFtpMatch: true),
+      ],
+    ),
   ),
 ];
 

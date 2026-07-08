@@ -9,16 +9,15 @@ import 'validator_scenario.dart';
 /// Rule 4–7 and precedence scenarios from
 /// `world_market_trade_order_validator_caps_test.dart`.
 List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bidTypeCap = 0 rejects every bid with bidTypeCapExceeded',
     context: validatorCtx(bidTypeCap: 0),
     proposedOrders: [validatorBid('timber', 5), validatorBid('iron', 5)],
     expect: const ValidatorExpectation(
       allRejectedWithReason: TradeOrderRejectionReasons.bidTypeCapExceeded,
     ),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bidTypeCap = 0 does NOT affect offers (offers are not capped by '
         'rule 4)',
     context: validatorCtx(
@@ -35,9 +34,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
       validatorOffer('coal', 5),
     ],
     expect: const ValidatorExpectation(allAccepted: true),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bidTypeCap = 3 accepts first 3 distinct bid commodities, rejects 4th',
     context: validatorCtx(bidTypeCap: 3),
     proposedOrders: [
@@ -57,9 +55,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
         ),
       ],
     ),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bidTypeCap = 6 accepts first 6 distinct bid commodities, rejects 7th',
     context: validatorCtx(bidTypeCap: 6),
     proposedOrders: [
@@ -75,9 +72,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
       firstNAccepted: 6,
       thenRejectedWithReason: TradeOrderRejectionReasons.bidTypeCapExceeded,
     ),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bidTypeCap submission order determines which commodities are admitted',
     context: validatorCtx(bidTypeCap: 2),
     proposedOrders: [
@@ -97,62 +93,46 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
         (accepted: true, reason: null),
       ],
     ),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRejectRow(
     label: 'bid quantity > tradeCargoCapacity is rejected',
     context: validatorCtx(tradeCargoCapacity: 10),
-    proposedOrders: [validatorBid('timber', 12)],
-    expect: ValidatorExpectation(
-      singleRejectedWithReason:
-          TradeOrderRejectionReasons.bidExceedsCargoCapacity,
-    ),
-    refs: '#2989',
+    order: validatorBid('timber', 12),
+    reason: TradeOrderRejectionReasons.bidExceedsCargoCapacity,
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'bid quantity == tradeCargoCapacity is accepted (inclusive)',
     context: validatorCtx(tradeCargoCapacity: 10),
     proposedOrders: [validatorBid('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'per-commodity cap is independent: two distinct bids each at capacity '
         'are both accepted (cross-commodity is the matcher\'s job)',
     context: validatorCtx(bidTypeCap: 2, tradeCargoCapacity: 10),
     proposedOrders: [validatorBid('timber', 10), validatorBid('iron', 10)],
     expect: const ValidatorExpectation(allAccepted: true),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRejectRow(
     label: 'offer quantity > availableStockpile is rejected',
     context: validatorCtxWithStockpile({'timber': 5}),
-    proposedOrders: [validatorOffer('timber', 10)],
-    expect: ValidatorExpectation(
-      singleRejectedWithReason:
-          TradeOrderRejectionReasons.offerExceedsStockpile,
-    ),
-    refs: '#2989',
+    order: validatorOffer('timber', 10),
+    reason: TradeOrderRejectionReasons.offerExceedsStockpile,
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRejectRow(
     label: 'offer with no entry in availableStockpileByCommodityId is treated as '
         'available = 0 and rejected for any positive quantity',
     context: validatorCtxWithStockpile(const {}),
-    proposedOrders: [validatorOffer('timber', 1)],
-    expect: ValidatorExpectation(
-      singleRejectedWithReason:
-          TradeOrderRejectionReasons.offerExceedsStockpile,
-    ),
-    refs: '#2989',
+    order: validatorOffer('timber', 1),
+    reason: TradeOrderRejectionReasons.offerExceedsStockpile,
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'offer quantity == availableStockpile is accepted (inclusive)',
     context: validatorCtxWithStockpile({'timber': 10}),
     proposedOrders: [validatorOffer('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'mutualExclusion takes precedence over bidTypeCapExceeded (rule 3 '
         'before rule 4)',
     context: validatorCtxWithStockpile(
@@ -166,9 +146,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     expect: const ValidatorExpectation(
       firstOrderReason: TradeOrderRejectionReasons.mutualExclusion,
     ),
-    refs: '#2989',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorRow(
     label: 'richesNotTradeable takes precedence over mutualExclusion (rule 2 '
         'before rule 3)',
     context: validatorCtxWithStockpile({'gold': 50}),
@@ -176,6 +155,5 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     expect: const ValidatorExpectation(
       allSameReason: TradeOrderRejectionReasons.richesNotTradeable,
     ),
-    refs: '#2989',
   ),
 ];
