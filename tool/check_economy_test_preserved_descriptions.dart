@@ -13,6 +13,13 @@ const descriptionBaselineRelativePath =
     'packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt';
 
 const _economyTestDir = 'packages/colonizethis_economy/test';
+const _economyScenarioSupportDir =
+    'packages/colonizethis_economy_test_support/lib/src';
+
+/// Captures `label: '…'` / `label: "…"` on scenario table rows in test_support.
+final RegExp economyScenarioLabelPattern = RegExp(
+  r"""label:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""",
+);
 
 void main() {
   exit(runCheckEconomyTestPreservedDescriptions(Directory.current.path));
@@ -58,8 +65,21 @@ int runCheckEconomyTestPreservedDescriptions(
     sourcesByPath[relativePath] = entity.readAsStringSync();
   }
 
-  final presentDescriptions =
-      collectEconomyTestDescriptions(sourcesByPath: sourcesByPath);
+  final scenarioSourcesByPath = <String, String>{};
+  final scenarioDir = Directory(p.join(root, _economyScenarioSupportDir));
+  if (scenarioDir.existsSync()) {
+    for (final entity in scenarioDir.listSync(recursive: false)) {
+      if (entity is! File) continue;
+      if (!entity.path.endsWith('_scenarios.dart')) continue;
+      final relativePath = p.relative(entity.path, from: root);
+      scenarioSourcesByPath[relativePath] = entity.readAsStringSync();
+    }
+  }
+
+  final presentDescriptions = collectEconomyTestDescriptions(
+    sourcesByPath: sourcesByPath,
+    scenarioSourcesByPath: scenarioSourcesByPath,
+  );
   final missing = <String>[];
   for (final description in baselineDescriptions) {
     if (!presentDescriptions.contains(description)) {
@@ -83,9 +103,11 @@ int runCheckEconomyTestPreservedDescriptions(
 }
 
 /// Returns the set of single-line `test`/`testWidgets` descriptions found in
-/// [sourcesByPath] (relative path -> source).
+/// [sourcesByPath] (relative path -> source), plus scenario `label:` strings
+/// from [scenarioSourcesByPath] when provided.
 Set<String> collectEconomyTestDescriptions({
   required Map<String, String> sourcesByPath,
+  Map<String, String> scenarioSourcesByPath = const {},
 }) {
   final descriptions = <String>{};
   final paths = sourcesByPath.keys.toList()..sort();
@@ -95,6 +117,19 @@ Set<String> collectEconomyTestDescriptions({
       if (economyTestDescriptionIsCommentLine(line)) continue;
       for (final match
           in economyTestDescriptionPattern.allMatches(line)) {
+        final description = match.group(1) ?? match.group(2);
+        if (description == null || description.isEmpty) continue;
+        descriptions.add(description);
+      }
+    }
+  }
+
+  final scenarioPaths = scenarioSourcesByPath.keys.toList()..sort();
+  for (final path in scenarioPaths) {
+    final lines = scenarioSourcesByPath[path]!.split('\n');
+    for (final line in lines) {
+      if (economyTestDescriptionIsCommentLine(line)) continue;
+      for (final match in economyScenarioLabelPattern.allMatches(line)) {
         final description = match.group(1) ?? match.group(2);
         if (description == null || description.isEmpty) continue;
         descriptions.add(description);

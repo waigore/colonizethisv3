@@ -380,16 +380,33 @@ World-market file count: 30 → **11** (meets ≤12 AC).
 
 Wall-clock (advisory, 3-run median): **21.19 s** — within `ECONOMY_TEST_TIMING_CEILING_SECONDS` (25 s); improved from slice 1 median 28.30 s.
 
+## Phase 3 — Slice 3 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| trade-interception-apply | nine `applyTradeInterception` rows | `trade_interception_test.dart` → `trade_interception_scenarios.dart` | #3939, #3470 |
+| trade-interception-scan | four `scanTradeInterceptionInputs` rows | `trade_interception_scan_test.dart` → `trade_interception_scenarios.dart` | #3615, #3939 |
+| town-bonus-province | five `computeTownManufacturingBonusForProvince` rows | `town_manufacturing_bonus_test.dart` → `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| town-bonus-game | five fixture-backed `computeTownManufacturingBonusForGame` rows | `town_manufacturing_bonus_test.dart` → `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| description-baseline-ext | preserved-description lint scans test_support `*_scenarios.dart` `label:` fields | `tool/check_economy_test_preserved_descriptions.dart` | #3939 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/trade_interception_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/town_manufacturing_bonus_scenarios.dart`
+
+Core scenario migration progress: `trade_interception_test.dart`, `trade_interception_scan_test.dart`, `town_manufacturing_bonus_test.dart` (10 table rows + 4 documented pure-helper exceptions).
+
 ## Phase 3 — documented exceptions (partial; extended in later slices)
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
 | `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically` | pure `DealMatcher.pairKey` helper unit tests | #3939 |
 | `world_market_deal_matcher_frr_test.dart` | `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
-| `game_lookup_helpers_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `economy_extraction_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `cost_check_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `tile_extraction_pipeline_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `economy/trade_cargo_capacity_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `economy/projected_cost_engine_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
-| `sea_transport_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `town_manufacturing_bonus_test.dart` | `level 2 → 1, level 4 → 2, others → 0`; three `isTownManufacturingRecipeEligible` rows | pure multiplier / recipe-eligibility helper unit tests | #3872, #3939 |
+| `game_lookup_helpers_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `economy_extraction_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `cost_check_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `tile_extraction_pipeline_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `economy/trade_cargo_capacity_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `economy/projected_cost_engine_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `sea_transport_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |

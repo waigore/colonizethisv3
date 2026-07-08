@@ -50,6 +50,8 @@ export 'src/purchased_tile_index_test_support.dart';
 export 'src/purchased_tile_riches_scenarios.dart';
 export 'src/purchased_tile_riches_test_support.dart';
 export 'src/treasury_bid_budget_test_support.dart';
+export 'src/town_manufacturing_bonus_scenarios.dart';
+export 'src/trade_interception_scenarios.dart';
 export 'src/treasury_bid_budget_scenarios.dart';
 export 'src/worker_action_cost_scenarios.dart';
 export 'src/trade_order_admission_scenarios.dart';
