@@ -8,9 +8,10 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'non_gp_extraction_test_support.dart';
 import 'resource_extractor_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row for `computeNonGreatPowerAutoOffers` scenario tables.
-class NonGpAutoOffersScenario {
+class NonGpAutoOffersScenario implements RefsScenario {
   const NonGpAutoOffersScenario({
     required this.label,
     required this.game,
@@ -25,6 +26,7 @@ class NonGpAutoOffersScenario {
   final Map<String, TileMapResult> tileMapByRegion;
   final Map<String, ConnectivityResult> connectivityByFactionId;
   final void Function(Map<String, List<TradeOrder>> result) verify;
+  @override
   final String? refs;
 }
 

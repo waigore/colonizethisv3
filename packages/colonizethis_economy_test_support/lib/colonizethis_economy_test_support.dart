@@ -35,6 +35,7 @@ export 'src/gp_treasury_credit_accumulator_scenarios.dart';
 export 'src/lock_recovery_minor_bids_scenarios.dart';
 export 'src/lock_recovery_minor_bids_test_support.dart';
 export 'src/matcher_treasury_budget_scenarios.dart';
+export 'src/non_gp_auto_offers_purchased_tile_scenarios.dart';
 export 'src/non_gp_auto_offers_scenarios.dart';
 export 'src/non_gp_auto_offers_test_support.dart';
 export 'src/non_gp_extraction_scenarios.dart';

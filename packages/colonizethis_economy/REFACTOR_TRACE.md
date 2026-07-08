@@ -437,4 +437,19 @@ Wall-clock (advisory, 3-run median): **32.49 s** — above `ECONOMY_TEST_TIMING_
 | `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically` | pure `DealMatcher.pairKey` helper unit tests | #3939 |
 | `world_market_deal_matcher_frr_test.dart` | `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
 | `town_manufacturing_bonus_test.dart` | `level 2 → 1, level 4 → 2, others → 0`; three `isTownManufacturingRecipeEligible` rows | pure multiplier / recipe-eligibility helper unit tests | #3872, #3939 |
-| `non_gp_auto_offers_purchased_tile_test.dart` | (all) | pending core scenario migration | #3939 slice 5+ |
+
+## Phase 3 — Slice 5 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| purchased-tile-timber | purchased non-riches tile (timber) emits priority-1 auto-offer | `non_gp_auto_offers_purchased_tile_test.dart` → `non_gp_auto_offers_purchased_tile_scenarios.dart` | #2991 C6, #3939 |
+| purchased-tile-parity | purchased vs unpurchased tile parity | `non_gp_auto_offers_purchased_tile_test.dart` → `non_gp_auto_offers_purchased_tile_scenarios.dart` | #2991 C6, #3939 |
+| purchased-tile-frr-index | PurchasedTileIndex.fromGame independent of auto-offer emission | `non_gp_auto_offers_purchased_tile_test.dart` → `non_gp_auto_offers_purchased_tile_scenarios.dart` | #2991 C6, #3939 |
+| purchased-tile-gold | purchased gold tile emits no auto-offer | `non_gp_auto_offers_purchased_tile_test.dart` → `non_gp_auto_offers_purchased_tile_scenarios.dart` | #2991 C6, #3939 |
+| purchased-tile-spices | purchased spices tile emits no auto-offer | `non_gp_auto_offers_purchased_tile_test.dart` → `non_gp_auto_offers_purchased_tile_scenarios.dart` | #2991 C6, #3939 |
+
+Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_purchased_tile_scenarios.dart`
+
+Core scenario migration: complete — all imperative core suites migrated except documented extractor exceptions. Treasury/deal-matcher test_support consolidation and town-bonus lib DRY deferred to slice 6+.
+
+Economy `test/` LOC: **2,248** (down from 2,415 slice 4). test_support: **12,355** (treasury/deal-matcher consolidation still deferred for ≤8,200 target).
