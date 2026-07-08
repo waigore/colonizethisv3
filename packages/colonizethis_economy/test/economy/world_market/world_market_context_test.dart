@@ -1,7 +1,10 @@
-// Consolidated world-market context and price-discovery runners (Refs #3939 phase 3 slice 2).
+// Consolidated world-market context, price-discovery, and purchased-tile runners
+// (Refs #3939 phase 3 slice 2 + slice 30).
 //
 // SPEC/program/economy-models.md § Package locations (world-market player
 // context facade), SPEC/game/world-market.md — issue #3396 cluster 4.
+// SPEC/game/world-market-first-right-of-refusal.md § Purchased-tile index (D1)
+// SPEC/game/world-market.md § Purchased-tile riches handoff
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
@@ -63,5 +66,31 @@ void main() {
       expect(PriceDiscovery.deltaCoefficient, 0.5);
       expect(PriceDiscovery.priceFloorRatio, 0.30);
     });
+  });
+
+  group('PurchasedTileAttribution value semantics', () {
+    for (final scenario in purchasedTileAttributionSemanticsScenarios()) {
+      test(scenario.label, scenario.run);
+    }
+  });
+
+  group('PurchasedTileIndex.fromGame', () {
+    for (final scenario in purchasedTileIndexFromGameScenarios()) {
+      test(scenario.label, () {
+        final index = runPurchasedTileIndexFromGameScenario(scenario);
+        scenario.verify(index);
+      });
+    }
+  });
+
+  group('computePurchasedTileRichesCredits — riches handoff per #2991 C5', () {
+    for (final scenario in purchasedTileRichesScenarios()) {
+      test(scenario.label, () {
+        final game = scenario.buildGame();
+        final index = PurchasedTileIndex.fromGame(game);
+        final result = runPurchasedTileRichesScenario(scenario);
+        scenario.verify(result, index, game);
+      });
+    }
   });
 }

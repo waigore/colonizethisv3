@@ -771,3 +771,19 @@ World-market runner file count: **8 → 7** (target ≤12 met).
 
 test_support LOC: **15,359** (net +96 vs slice 28 — decrement/silver scenario rows + validator preset; treasury runner slimmed). Economy `test/` **1,414** (down 66 vs slice 28). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 30+.
 
+## Phase 3 — Slice 30 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| validator-file-split | split 664-line `trade_order_validator_scenarios.dart` into behavior-family modules (≤183 lines each) | `validator_scenario.dart`, `validator_cap_scenarios.dart`, `validator_rules_scenarios.dart`, `validator_treasury_scenarios.dart`, `validator_context_scenarios.dart` | #3939 |
+| treasury-price-discovery-cluster | moved `price_discovery_scenarios.dart` + `price_discovery_expectations.dart` under `treasury_scenarios/` barrel | `treasury_scenarios/price_discovery_scenarios.dart`, `price_discovery_expectations.dart` | #3939 |
+| context-runner-merge | merged purchased-tile runners into consolidated context file | `world_market_context_test.dart` (deleted `purchased_tile_test.dart`) | #3939 |
+
+Deleted modules: `trade_order_validator_scenarios.dart`, `purchased_tile_test.dart`.
+
+Deleted root-level modules (relocated): `price_discovery_scenarios.dart`, `price_discovery_expectations.dart`.
+
+World-market runner file count: **7 → 6** (target ≤12 met).
+
+test_support LOC: **15,388** (net +29 vs slice 29 — validator split file headers offset runner merge; all validator modules now ≤183 physical lines). Economy `test/` **1,407** (down 7 vs slice 29). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 31+.
+
