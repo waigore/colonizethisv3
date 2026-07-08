@@ -568,3 +568,15 @@ test_support LOC: **13,418** (net +285 vs slice 13 — two expectation helper mo
 
 test_support LOC: **13,533** (net +115 vs slice 14 — two expectation helper modules added; boycott/lock-recovery inline-verify bodies reduced; town-manufacturing/resource-extractor scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 16+).
 
+## Phase 3 — Slice 16 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| town-bonus-expectations | `TownManufacturingBonusProvinceExpectation`, `TownManufacturingBonusGameExpectation`, `TownManufacturingAutoOfferExpectation` data-driven assertions | `town_manufacturing_bonus_expectations.dart` | #3872, #3939 |
+| town-bonus-province-compaction | migrated five province-level inline-verify rows to `.expect` constructors | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| town-bonus-game-compaction | migrated five game-level fixture assertions to `assertTownManufacturingBonusGameExpectation` | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| resource-extractor-expectations | `ResourceExtractorExpectation` + `assertResourceExtractorExpectation` data-driven assertions | `resource_extractor_expectations.dart` | #3836, #3939 |
+| resource-extractor-compaction | migrated all seven inline-verify rows to `.expect`; `extractionScenario` DSL delegates to expectations | `resource_extractor_scenarios.dart` | #3836, #3939 |
+
+test_support LOC: **13,806** (net +273 vs slice 15 — two expectation helper modules added; town-manufacturing/resource-extractor inline-verify bodies reduced; purchased-tile scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 17+).
+
