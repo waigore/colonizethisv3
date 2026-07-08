@@ -557,3 +557,14 @@ test_support LOC: **13,133** (net +206 vs slice 12 — `treasury_expectations.da
 
 test_support LOC: **13,418** (net +285 vs slice 13 — two expectation helper modules added; FRR-profit and suggester inline-verify bodies reduced; boycott/lock-recovery compaction and ≥20% test_support reduction (≤8,200) deferred to slice 15+).
 
+## Phase 3 — Slice 15 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| boycott-expectations | `BoycottBlockedCommoditiesExpectation` + `BoycottBlockedCommoditiesScenario.expect` data-driven assertions | `boycott_blocked_commodities_expectations.dart` | #3758, #3939 |
+| boycott-compaction | migrated all seven boycott-blocked-commodities inline-verify rows to `.expect` | `boycott_blocked_commodities_scenarios.dart` | #3758, #3939 |
+| lock-recovery-expectations | `LockRecoveryMinorBidsExpectation` + `LockRecoveryMinorBidsScenario.expect` data-driven assertions | `lock_recovery_minor_bids_expectations.dart` | #2924, #3939 |
+| lock-recovery-compaction | migrated all three lock-recovery minor-bid rows to `.expect`; added `runLockRecoveryMinorBidsScenario` | `lock_recovery_minor_bids_scenarios.dart`, `world_market_misc_test.dart` | #2924, #3939 |
+
+test_support LOC: **13,533** (net +115 vs slice 14 — two expectation helper modules added; boycott/lock-recovery inline-verify bodies reduced; town-manufacturing/resource-extractor scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 16+).
+

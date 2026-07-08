@@ -9,6 +9,7 @@ library colonizethis_economy_test_support;
 
 export 'src/build_cost_scenarios.dart';
 export 'src/boycott_blocked_commodities_scenarios.dart';
+export 'src/boycott_blocked_commodities_expectations.dart';
 export 'src/boycott_blocked_commodities_test_support.dart';
 export 'src/consumption_phases_scenarios.dart';
 export 'src/consumption_scenarios.dart';
@@ -21,6 +22,7 @@ export 'src/deal_matcher_scenarios/deal_matcher_scenarios.dart';
 export 'src/frr_scenarios/frr_scenarios.dart';
 export 'src/game_lookup_helpers_scenarios.dart';
 export 'src/lock_recovery_minor_bids_scenarios.dart';
+export 'src/lock_recovery_minor_bids_expectations.dart';
 export 'src/lock_recovery_minor_bids_test_support.dart';
 export 'src/non_gp_auto_offers_scenarios.dart';
 export 'src/non_gp_auto_offers_test_support.dart';

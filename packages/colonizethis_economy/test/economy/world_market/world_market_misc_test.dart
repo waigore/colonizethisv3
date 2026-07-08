@@ -30,11 +30,10 @@ void main() {
   group('computeLockRecoveryMinorAutoBids', () {
     for (final scenario in lockRecoveryMinorBidsScenarios()) {
       test(scenario.label, () {
-        final bids = computeLockRecoveryMinorAutoBids(
-          game: scenario.game,
+        runLockRecoveryMinorBidsScenario(
+          scenario: scenario,
           worldMarketState: lockRecoveryGrainMarket(),
         );
-        scenario.verify(bids);
       });
     }
   });
