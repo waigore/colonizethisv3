@@ -1100,6 +1100,13 @@ rules:
     runner: dart
     script: tool/check_ai_test_no_duplicate_scaffolding.dart
 
+  - rule_id: repo.ai_orchestrator_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai domain_planner_orchestrator_* tests must import shared OW-quota fixtures from domain_planner_orchestrator_test_support.dart (no local _gp1OwProvincesBelowQuota / _gp1OwProvincesAtQuota copies) (Refs #3941)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_orchestrator_test_shared_fixtures.dart
+
   - rule_id: repo.ai_test_mirrors_lib
     group: structure
     title: colonizethis_ai tests must mirror lib/ (no flat-root unit test sources outside the documented integration/package-level allowlist) (Refs #3717)
