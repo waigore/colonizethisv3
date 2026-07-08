@@ -1,7 +1,6 @@
 // Table-driven commodity totals helper scenarios (Refs #3939 phase 3 slice 21).
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_test/test.dart';
+import 'commodity_totals_expectations.dart';
 
 class CommodityTotalsScenario {
   const CommodityTotalsScenario({
@@ -18,86 +17,97 @@ void runCommodityTotalsScenario(CommodityTotalsScenario scenario) {
 }
 
 List<CommodityTotalsScenario> addUnitsScenarios() => [
-  CommodityTotalsScenario(
+  addUnitsScenario(
     label: 'creates a new entry starting from zero',
-    run: () {
-      final m = <String, int>{};
-      addUnits(m, 'a', 3);
-      expect(m, {'a': 3});
-    },
+    pins: (
+      initial: <String, int>{},
+      steps: [(key: 'a', delta: 3)],
+      expected: {'a': 3},
+      keyOrder: null,
+    ),
   ),
-  CommodityTotalsScenario(
+  addUnitsScenario(
     label: 'accumulates onto an existing entry',
-    run: () {
-      final m = <String, int>{'a': 3};
-      addUnits(m, 'a', 4);
-      expect(m['a'], 7);
-    },
+    pins: (
+      initial: {'a': 3},
+      steps: [(key: 'a', delta: 4)],
+      expected: {'a': 7},
+      keyOrder: null,
+    ),
   ),
-  CommodityTotalsScenario(
+  addUnitsScenario(
     label: 'preserves first-seen insertion order across keys',
-    run: () {
-      final m = <String, int>{};
-      addUnits(m, 'b', 1);
-      addUnits(m, 'a', 1);
-      addUnits(m, 'b', 1);
-      expect(m.keys.toList(), ['b', 'a']);
-      expect(m, {'b': 2, 'a': 1});
-    },
+    pins: (
+      initial: <String, int>{},
+      steps: [
+        (key: 'b', delta: 1),
+        (key: 'a', delta: 1),
+        (key: 'b', delta: 1),
+      ],
+      expected: {'b': 2, 'a': 1},
+      keyOrder: ['b', 'a'],
+    ),
   ),
-  CommodityTotalsScenario(
+  addUnitsScenario(
     label: 'does not filter zero or negative deltas (caller guards)',
-    run: () {
-      final m = <String, int>{'a': 5};
-      addUnits(m, 'a', 0);
-      addUnits(m, 'a', -2);
-      addUnits(m, 'z', -1);
-      expect(m, {'a': 3, 'z': -1});
-    },
+    pins: (
+      initial: {'a': 5},
+      steps: [
+        (key: 'a', delta: 0),
+        (key: 'a', delta: -2),
+        (key: 'z', delta: -1),
+      ],
+      expected: {'a': 3, 'z': -1},
+      keyOrder: null,
+    ),
   ),
 ];
 
 List<CommodityTotalsScenario> sumValuesScenarios() => [
-  CommodityTotalsScenario(
+  sumValuesScenario(
     label: 'returns 0 for an empty iterable',
-    run: () {
-      expect(sumValues(const <int>[]), 0);
-    },
+    pins: (cases: [(values: <int>[], expected: 0)],),
   ),
-  CommodityTotalsScenario(
+  sumValuesScenario(
     label: 'sums positive and negative values',
-    run: () {
-      expect(sumValues(const [1, 2, 3]), 6);
-      expect(sumValues(const [5, -2, -1]), 2);
-    },
+    pins: (
+      cases: [
+        (values: [1, 2, 3], expected: 6),
+        (values: [5, -2, -1], expected: 2),
+      ],
+    ),
   ),
-  CommodityTotalsScenario(
+  sumValuesScenario(
     label: 'matches the inline fold idiom it replaces',
-    run: () {
-      const values = [4, 8, 15, 16, 23, 42];
-      expect(sumValues(values), values.fold<int>(0, (a, b) => a + b));
-    },
+    pins: (
+      cases: [
+        (
+          values: [4, 8, 15, 16, 23, 42],
+          expected: 108,
+        ),
+      ],
+    ),
   ),
 ];
 
 List<CommodityTotalsScenario> sumNestedValuesScenarios() => [
-  CommodityTotalsScenario(
+  sumNestedValuesScenario(
     label: 'returns 0 for no maps and for empty maps',
-    run: () {
-      expect(sumNestedValues(const <Map<String, int>>[]), 0);
-      expect(sumNestedValues(const [<String, int>{}, <String, int>{}]), 0);
-    },
+    pins: (
+      maps: const [<String, int>{}, <String, int>{}],
+      expected: 0,
+    ),
   ),
-  CommodityTotalsScenario(
+  sumNestedValuesScenario(
     label: 'sums every value across nested maps',
-    run: () {
-      final maps = [
+    pins: (
+      maps: [
         {'a': 1, 'b': 2},
         {'a': 3},
         <String, int>{},
         {'c': 4},
-      ];
-      expect(sumNestedValues(maps), 10);
-    },
+      ],
+      expected: 10,
+    ),
   ),
 ];

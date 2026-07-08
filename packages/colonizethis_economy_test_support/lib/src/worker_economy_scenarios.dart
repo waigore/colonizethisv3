@@ -1,9 +1,9 @@
 // Table-driven worker labour primitive scenarios (Refs #3939 phase 3 slice 21).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
+
+import 'worker_economy_expectations.dart';
 
 /// One row in a worker-economy labour scenario table.
 class WorkerEconomyScenario {
@@ -27,83 +27,71 @@ final _furHatsId = CommodityCatalog.furHats.id;
 
 /// Canonical scenarios for [effectiveLabourFromIdleCounts].
 List<WorkerEconomyScenario> workerEconomyLabourFromIdleCountsScenarios() => [
-  WorkerEconomyScenario(
+  idleLabourScenario(
     label: 'sums tier multipliers (1/4/6/8) over idle counts',
-    run: () {
-      const idle = WorkerIdleCounts(
+    pins: (
+      idle: const WorkerIdleCounts(
         peasants: 1,
         apprentices: 1,
         journeymen: 1,
         masters: 1,
-      );
-      expect(effectiveLabourFromIdleCounts(idle), 19);
-    },
+      ),
+      expected: 19,
+    ),
   ),
-  WorkerEconomyScenario(
+  idleLabourScenario(
     label: 'zero idle counts contribute no labour',
-    run: () {
-      expect(effectiveLabourFromIdleCounts(WorkerIdleCounts.zero), 0);
-    },
+    pins: (idle: WorkerIdleCounts.zero, expected: 0),
   ),
 ];
 
 /// Canonical scenarios for [effectiveLabourForWorkers].
 List<WorkerEconomyScenario> workerEconomyLabourForWorkersScenarios() => [
-  WorkerEconomyScenario(
+  effectiveLabourScenario(
     label: 'fed peasants contribute labour without luxury',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(_grainId, 2);
-      final labour = effectiveLabourForWorkers(
-        workers: const WorkerPool(peasants: 2),
-        stockpile: stockpile,
-      );
-      expect(labour, 2 * WorkerPool.labourPerPeasantTurn);
-    },
+    pins: (
+      workers: const WorkerPool(peasants: 2),
+      stockpile: const Stockpile().applyDelta(_grainId, 2),
+      militaryUnits: 0,
+      expected: 2 * WorkerPool.labourPerPeasantTurn,
+    ),
   ),
-  WorkerEconomyScenario(
+  effectiveLabourScenario(
     label: 'trained worker needs both food and luxury to count',
-    run: () {
-      final stockpile = const Stockpile()
+    pins: (
+      workers: const WorkerPool(masters: 1),
+      stockpile: const Stockpile()
           .applyDelta(_grainId, 2)
-          .applyDelta(_furHatsId, 1);
-      final labour = effectiveLabourForWorkers(
-        workers: const WorkerPool(masters: 1),
-        stockpile: stockpile,
-      );
-      expect(labour, WorkerPool.labourPerMasterTurn);
-    },
+          .applyDelta(_furHatsId, 1),
+      militaryUnits: 0,
+      expected: WorkerPool.labourPerMasterTurn,
+    ),
   ),
-  WorkerEconomyScenario(
+  effectiveLabourScenario(
     label: 'fed-but-unluxuried trained worker contributes no labour',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(_grainId, 2);
-      final labour = effectiveLabourForWorkers(
-        workers: const WorkerPool(masters: 1),
-        stockpile: stockpile,
-      );
-      expect(labour, 0);
-    },
+    pins: (
+      workers: const WorkerPool(masters: 1),
+      stockpile: const Stockpile().applyDelta(_grainId, 2),
+      militaryUnits: 0,
+      expected: 0,
+    ),
   ),
-  WorkerEconomyScenario(
+  effectiveLabourScenario(
     label: 'no food leaves workers on strike (zero labour)',
-    run: () {
-      final labour = effectiveLabourForWorkers(
-        workers: const WorkerPool(peasants: 3),
-        stockpile: const Stockpile(),
-      );
-      expect(labour, 0);
-    },
+    pins: (
+      workers: const WorkerPool(peasants: 3),
+      stockpile: const Stockpile(),
+      militaryUnits: 0,
+      expected: 0,
+    ),
   ),
-  WorkerEconomyScenario(
+  effectiveLabourScenario(
     label: 'military upkeep consumes food before workers',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(_grainId, 2);
-      final labour = effectiveLabourForWorkers(
-        workers: const WorkerPool(peasants: 1),
-        stockpile: stockpile,
-        militaryUnits: 1,
-      );
-      expect(labour, 0);
-    },
+    pins: (
+      workers: const WorkerPool(peasants: 1),
+      stockpile: const Stockpile().applyDelta(_grainId, 2),
+      militaryUnits: 1,
+      expected: 0,
+    ),
   ),
 ];

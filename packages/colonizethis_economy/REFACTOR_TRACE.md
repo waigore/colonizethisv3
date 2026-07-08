@@ -808,3 +808,14 @@ test_support LOC: **15,561** (net +173 vs slice 30 — capital lookup scenarios 
 
 test_support LOC: **15,719** (net +158 vs slice 31 — `game_lookup_helpers_expectations.dart` + town-game pin runner; economy `test/` **1,397** (down 16 vs slice 31)). Further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 33+.
 
+## Phase 3 — Slice 33 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| consumption-phases-expectations | migrated 19 inline `run:` closures to `consumption_phases_expectations.dart` pins | `consumption_phases_scenarios.dart`, `consumption_phases_expectations.dart` | #3939 |
+| worker-economy-expectations | migrated 7 inline `run:` closures to `worker_economy_expectations.dart` pins | `worker_economy_scenarios.dart`, `worker_economy_expectations.dart` | #3939 |
+| commodity-totals-expectations | migrated 10 inline `run:` closures to `commodity_totals_expectations.dart` pins | `commodity_totals_scenarios.dart`, `commodity_totals_expectations.dart` | #3939 |
+| tile-contribution-expectations | migrated 2 inline `run:` closures to `TileExtractionContributionPin` + connected/disconnected pins | `tile_extraction_contribution_scenarios.dart`, `tile_extraction_contribution_expectations.dart` | #3939 |
+
+test_support LOC: **16,014** (net +295 vs slice 32 — four expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and `consumption_scenarios.dart` inline-verify migration for ≥20% test_support reduction (≤8,200) deferred to slice 34+.
+

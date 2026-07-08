@@ -8,10 +8,12 @@
 library colonizethis_economy_test_support;
 
 export 'src/build_cost_scenarios.dart';
+export 'src/commodity_totals_expectations.dart';
 export 'src/commodity_totals_scenarios.dart';
 export 'src/boycott_blocked_commodities_scenarios.dart';
 export 'src/boycott_blocked_commodities_expectations.dart';
 export 'src/boycott_blocked_commodities_test_support.dart';
+export 'src/consumption_phases_expectations.dart';
 export 'src/consumption_phases_scenarios.dart';
 export 'src/consumption_scenarios.dart';
 export 'src/cost_check_scenarios.dart';
@@ -34,6 +36,7 @@ export 'src/resource_extractor_expectations.dart';
 export 'src/resource_extractor_scenarios.dart';
 export 'src/scenario_runner.dart';
 export 'src/sea_transport_scenarios.dart';
+export 'src/tile_extraction_contribution_expectations.dart';
 export 'src/tile_extraction_contribution_scenarios.dart';
 export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
@@ -46,6 +49,7 @@ export 'src/town_manufacturing_bonus_expectations.dart';
 export 'src/town_manufacturing_bonus_scenarios.dart';
 export 'src/trade_interception_scenarios.dart';
 export 'src/worker_action_cost_scenarios.dart';
+export 'src/worker_economy_expectations.dart';
 export 'src/worker_economy_scenarios.dart';
 export 'src/trade_order_admission_scenarios.dart';
 export 'src/trade_order_factory.dart';
