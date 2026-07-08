@@ -60,17 +60,31 @@ Game provinceMissingExtractorGame({required TileMapState tileState}) {
 }
 
 /// Per-tile improvement and road level for [tileStateFromSpecs].
+///
+/// Positional [improvement]/[roadLevel] keep scenario tables compact
+/// (Refs #3939 slice 50). Prefer `TileImprovementSpec(key, imp, road)`.
 class TileImprovementSpec {
   const TileImprovementSpec(
-    this.tileKey, {
+    this.tileKey, [
     this.improvement = 0,
     this.roadLevel = 0,
-  });
+  ]);
 
   final String tileKey;
   final int improvement;
   final int roadLevel;
 }
+
+/// Same improvement/road level applied to each key (Refs #3939 slice 50).
+List<TileImprovementSpec> tileImps(
+  Iterable<String> tileKeys, [
+  int improvement = 1,
+  int roadLevel = 1,
+]) =>
+    [
+      for (final key in tileKeys)
+        TileImprovementSpec(key, improvement, roadLevel),
+    ];
 
 /// Builds a [TileMapState] from [specs], applying only non-zero levels.
 TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
@@ -400,11 +414,7 @@ Game overseasResourceExtractorGame({
     ],
   );
   final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
-  final tileState = tileStateFromSpecs(const [
-    TileImprovementSpec('newWorld|n1|0|0', improvement: 1, roadLevel: 4),
-    TileImprovementSpec('newWorld|n1|1|0', improvement: 1, roadLevel: 4),
-    TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 4),
-  ]);
+  final tileState = tileStateFromSpecs(const [TileImprovementSpec('newWorld|n1|0|0', 1, 4), TileImprovementSpec('newWorld|n1|1|0', 1, 4), TileImprovementSpec('oldWorld|p1|0|0', 0, 4)]);
   final ports = {
     '$ow|p1|sea1': 'oldWorld|p1|0|0',
     '$nw|n1|sea2': 'newWorld|n1|0|0',

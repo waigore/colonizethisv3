@@ -50,6 +50,12 @@ int frrAlwaysZeroRelation(String _, String __) => 0;
 num Function(String, String) frrConstantRelation(int score) =>
     (_, __) => score;
 
+/// Nested GP→source relation lookup; missing keys yield 0 (Refs #3939 slice 50).
+num Function(String, String) frrRelationTable(
+  Map<String, Map<String, num>> byOwningGp,
+) =>
+    (gp, src) => byOwningGp[gp]?[src] ?? 0;
+
 /// Canonical k1 tile owned by gpA sourced from M1 (defensive / kickback suites).
 PurchasedTileIndex frrIdxK1GpA() => idx([
       attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),

@@ -81,11 +81,7 @@ List<TileImprovementSpec> _impSpecs(
 }) =>
     [
       for (final key in tileKeys)
-        TileImprovementSpec(
-          key,
-          improvement: improvement,
-          roadLevel: roadLevel,
-        ),
+        TileImprovementSpec(key, improvement, roadLevel),
     ];
 
 /// Compact minor/OW auto-offer row (Refs #3939 slice 47).

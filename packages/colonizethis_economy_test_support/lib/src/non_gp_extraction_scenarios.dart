@@ -111,9 +111,7 @@ NonGpExtractionScenario nonGpMinorRow({
 List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       nonGpMinorRow(
         label: 'minor with non-mineral connected tile produces 1 unit at imp=1',
-        tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|1|0', improvement: 1, roadLevel: 1),
-        ],
+        tileSpecs: const [TileImprovementSpec('oldWorld|m1|1|0', 1, 1)],
         resources: [
           [null, Resource.grain],
           [null, null],
@@ -128,9 +126,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
         label: 'tech cap clamps higher-improvement non-mineral tile to 1 unit '
             '(SPEC AC: defaultExtractionCap = 1, applied before transport/town)',
         townDev: 4,
-        tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|1|0', improvement: 4, roadLevel: 4),
-        ],
+        tileSpecs: const [TileImprovementSpec('oldWorld|m1|1|0', 4, 4)],
         resources: [
           [null, Resource.grain],
           [null, null],
@@ -154,10 +150,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
               townDevelopmentLevel: 1,
             ),
           ],
-          tileState: tileStateFromSpecs(const [
-            TileImprovementSpec('newWorld|t1|1|0', improvement: 4, roadLevel: 4),
-            TileImprovementSpec('newWorld|t1|1|1', improvement: 1, roadLevel: 1),
-          ]),
+          tileState: tileStateFromSpecs(const [TileImprovementSpec('newWorld|t1|1|0', 4, 4), TileImprovementSpec('newWorld|t1|1|1', 1, 1)]),
           tribes: [testTribe()],
         ),
         tileMapByRegion: {
@@ -193,9 +186,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
             'side-effects on Player.stockpile)',
         width: 1,
         height: 1,
-        tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|0|0', improvement: 1, roadLevel: 1),
-        ],
+        tileSpecs: const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)],
         resources: const [
           [Resource.timber],
         ],
@@ -266,9 +257,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
           provinces: [
             capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
           ],
-          tileState: tileStateFromSpecs(const [
-            TileImprovementSpec('oldWorld|m1|0|0', improvement: 1, roadLevel: 1),
-          ]),
+          tileState: tileStateFromSpecs(const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)]),
           minorNations: [testMinor()],
         ),
         tileMapByRegion: {
@@ -283,9 +272,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       nonGpMinorRow(
         label: 'tile with road level 0 (no transport path) yields 0 even when listed '
             'as connected and improved',
-        tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|1|0', improvement: 1),
-        ],
+        tileSpecs: const [TileImprovementSpec('oldWorld|m1|1|0', 1)],
         resources: [
           [null, Resource.timber],
           [null, null],
@@ -313,10 +300,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
               townDevelopmentLevel: 1,
             ),
           ],
-          tileState: tileStateFromSpecs(const [
-            TileImprovementSpec('oldWorld|m1|0|0', improvement: 1, roadLevel: 1),
-            TileImprovementSpec('newWorld|t1|0|0', improvement: 1, roadLevel: 1),
-          ]),
+          tileState: tileStateFromSpecs(const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1), TileImprovementSpec('newWorld|t1|0|0', 1, 1)]),
           minorNations: [testMinor()],
           tribes: [testTribe()],
         ),
@@ -348,9 +332,9 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
         width: 3,
         height: 1,
         tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|0|0', improvement: 1, roadLevel: 1),
-          TileImprovementSpec('oldWorld|m1|1|0', improvement: 1, roadLevel: 1),
-          TileImprovementSpec('oldWorld|m1|2|0', improvement: 1, roadLevel: 1),
+          TileImprovementSpec('oldWorld|m1|0|0', 1, 1),
+          TileImprovementSpec('oldWorld|m1|1|0', 1, 1),
+          TileImprovementSpec('oldWorld|m1|2|0', 1, 1),
         ],
         resources: const [
           [Resource.grain, Resource.grain, Resource.timber],
@@ -372,9 +356,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
         width: 2,
         height: 1,
         townDev: 1,
-        tileSpecs: const [
-          TileImprovementSpec('oldWorld|m1|1|0', improvement: 1, roadLevel: 1),
-        ],
+        tileSpecs: const [TileImprovementSpec('oldWorld|m1|1|0', 1, 1)],
         resources: const [
           [null, Resource.timber],
         ],

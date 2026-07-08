@@ -978,3 +978,13 @@ test_support LOC: **16,971** (net −16 vs slice 47 — purchased-tile riches + 
 
 test_support LOC: **16,863** (net −108 vs slice 48 — D5 fixture dedup + one-shot DealMatcher row inlining). Economy `test/` **1,392** (unchanged). Further treasury/validator/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 50+.
 
+## Phase 3 — Slice 50 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|---------------|------|
+| tile-imp-positional | `TileImprovementSpec` positional ctor + `tileImps` / shared `_p1FourTiles` / `_townRuleTileSpecs` | `extraction_fixture_support.dart`, `resource_extractor_scenarios.dart`, `non_gp_extraction_scenarios.dart`, `town_manufacturing_bonus_scenarios.dart` | #3661, #3939 |
+| matcher-ab-zero-cargo | `matcherAbPairRow` / `matcherZeroCargoBuyerRow` for a/b timber + zero-cargo rows | `deal_matcher_test_support.dart`, `deal_matcher_basic_scenarios.dart` | #3939 |
+| frr-relation-table | `frrRelationTable` replaces multi-branch relation lambdas in credits AC rows | `frr_credits_test_support.dart`, `frr_credits_scenarios.dart` | #2992, #3753, #3939 |
+
+test_support LOC: **16,820** (net −43 vs slice 49 — positional tile-imp DSL + DealMatcher/FRR relation compaction). Economy `test/` **1,392** (unchanged). Further treasury/validator/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 51+.
+

@@ -215,10 +215,7 @@ Game _gpTownTimberGame() => TestFixtures.minimalGame(
           _gpProvinceId: [_gpTownKey, _gpTimberTile],
         },
       },
-      tileState: tileStateFromSpecs([
-        const TileImprovementSpec(_gpTimberTile, improvement: 4, roadLevel: 4),
-        const TileImprovementSpec(_gpTownKey, roadLevel: 1),
-      ]),
+      tileState: tileStateFromSpecs(const [TileImprovementSpec(_gpTimberTile, 4, 4), TileImprovementSpec(_gpTownKey, 0, 1)]),
     );
 
 void runTownManufacturingBonusGamePin(
@@ -274,9 +271,7 @@ void runTownManufacturingBonusGamePin(
             ),
           ),
         ],
-        tileState: tileStateFromSpecs([
-          const TileImprovementSpec(tileKey, improvement: 1, roadLevel: 1),
-        ]),
+        tileState: tileStateFromSpecs(const [TileImprovementSpec(tileKey, 1, 1)]),
       );
       final delivered = computeTownConnectedDeliveredRawByProvince(
         game: game,

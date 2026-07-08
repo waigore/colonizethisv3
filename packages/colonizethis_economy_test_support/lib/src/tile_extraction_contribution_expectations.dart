@@ -53,7 +53,7 @@ void runTileContributionConnectedPin({
       ],
     ),
     tileState: tileStateFromSpecs(const [
-      TileImprovementSpec(_tileKey, improvement: 1, roadLevel: 1),
+      TileImprovementSpec(_tileKey, 1, 1),
     ]),
     players: [player],
   );

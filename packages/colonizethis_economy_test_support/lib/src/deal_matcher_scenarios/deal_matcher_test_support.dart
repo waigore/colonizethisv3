@@ -432,7 +432,56 @@ DealMatcherScenario matcherUnilateralRow({
       expect: expect,
     );
 
+/// Seller `a` / buyer `b` timber (or [commodity]) fill row (Refs #3939 slice 50).
+DealMatcherScenario matcherAbPairRow({
+  required String label,
+  required DealMatchExpectation expect,
+  String commodity = 'timber',
+  int offerQty = 10,
+  int bidQty = 5,
+  int buyerCapacity = 100,
+  Map<CommodityId, double>? pricesByCommodityId,
+  String? refs,
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherPairTrade(
+        commodity: commodity,
+        offerQty: offerQty,
+        bidQty: bidQty,
+        buyerCapacity: buyerCapacity,
+        pricesByCommodityId: pricesByCommodityId,
+      ),
+      expect: expect,
+      refs: refs,
+    );
 
+/// Zero / omitted / negative buyer cargo suppresses fills (Refs #3939 slice 50).
+DealMatcherScenario matcherZeroCargoBuyerRow({
+  required String label,
+  required DealMatchExpectation expect,
+  int offerQty = 10,
+  int bidQty = 5,
+  int? buyerCapacity,
+  String commodity = 'timber',
+  String? refs,
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          'a': [matcherOffer(commodity, offerQty)],
+        },
+        bidsByFactionId: {
+          'b': [matcherBid(commodity, bidQty)],
+        },
+        tradeCapacityByFactionId: buyerCapacity == null
+            ? const {}
+            : {'b': buyerCapacity},
+      ),
+      expect: expect,
+      refs: refs,
+    );
 
 /// FRR disabled: rival lower-priority bid wins standard matching (Refs #3939 slice 41).
 DealMatcherScenario frrNoFrrFallbackRow({
@@ -582,13 +631,3 @@ DealMatcherScenario frrD5NoOwnerBidRow({
       ),
       refs: refs,
     );
-
-
-
-
-
-
-
-
-
-

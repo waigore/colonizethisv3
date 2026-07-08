@@ -221,12 +221,10 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
       attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
       attr(tileKey: 'k3', owningGpId: 'gpA', sourceFactionId: 'M2'),
     ]),
-    relationScoreFor: (gp, src) {
-      if (gp == 'gpA' && src == 'M1') return 100;
-      if (gp == 'gpB' && src == 'M1') return 50;
-      if (gp == 'gpA' && src == 'M2') return 25;
-      return 0;
-    },
+    relationScoreFor: frrRelationTable(const {
+      'gpA': {'M1': 100, 'M2': 25},
+      'gpB': {'M1': 50},
+    }),
     expect: const FrrCreditsExpectation(
       treasuryCreditKeysContainAll: ['gpA', 'gpB'],
       treasuryCreditCloseTo: {'gpA': 101.5, 'gpB': 10.0},
@@ -271,7 +269,9 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     label:
         'non-owner embassy GP receives 10% kickback while tile owner gets full '
         'share and no kickback',
-    relationScoreFor: (gp, src) => gp == 'gpA' && src == 'M1' ? 100 : 0,
+    relationScoreFor: frrRelationTable(const {
+      'gpA': {'M1': 100},
+    }),
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
     expect: const FrrCreditsExpectation(
       treasuryCreditCloseTo: {'gpA': 200.0},
@@ -340,8 +340,9 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
     filledDeals: [frrD5OtherBuyDeal()],
     purchasedTileIndex: frrD5IdxK1GpA(),
-    relationScoreFor: (gp, src) =>
-        gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM1 ? 75 : 0,
+    relationScoreFor: frrRelationTable(const {
+      kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 75},
+    }),
     expect: const FrrCreditsExpectation(
       creditedDealsLength: 1,
       singleCreditedDealOwningGpId: kFrrIssueAcD5GpA,
@@ -432,11 +433,10 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
       frrD5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       frrD5Attr(kFrrIssueAcD5TileK2, kFrrIssueAcD5GpB, kFrrIssueAcD5MinorM1),
     ]),
-    relationScoreFor: (gp, src) {
-      if (gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM1) return 100;
-      if (gp == kFrrIssueAcD5GpB && src == kFrrIssueAcD5MinorM1) return 50;
-      return 0;
-    },
+    relationScoreFor: frrRelationTable(const {
+      kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 100},
+      kFrrIssueAcD5GpB: {kFrrIssueAcD5MinorM1: 50},
+    }),
     expect: const FrrCreditsExpectation(
       treasuryCreditKeysContainAll: [kFrrIssueAcD5GpA, kFrrIssueAcD5GpB],
       treasuryCreditCloseTo: {
@@ -475,11 +475,12 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
         kFrrIssueAcD5ProvinceM2,
       ),
     ]),
-    relationScoreFor: (gp, src) {
-      if (gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM1) return 100;
-      if (gp == kFrrIssueAcD5GpA && src == kFrrIssueAcD5MinorM2) return 25;
-      return 0;
-    },
+    relationScoreFor: frrRelationTable(const {
+      kFrrIssueAcD5GpA: {
+        kFrrIssueAcD5MinorM1: 100,
+        kFrrIssueAcD5MinorM2: 25,
+      },
+    }),
     expect: const FrrCreditsExpectation(
       creditedDealsLength: 2,
       treasuryCreditKeysExact: [kFrrIssueAcD5GpA],
