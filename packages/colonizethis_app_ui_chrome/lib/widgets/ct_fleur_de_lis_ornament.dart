@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Stylized fleur-de-lis ornament used to flank the main-menu title in the
 /// dark editorial-monocle theme.

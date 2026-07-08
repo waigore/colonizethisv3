@@ -7,7 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/routes.dart';
 import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../../config/ui_screen_ids.dart';

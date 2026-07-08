@@ -1,7 +1,7 @@
 // Widget tests for the dark-theme top bar on ProductionScreen
 // (Refs #2862 S1). SPEC/ui/production-panel.md § Top bar.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';

@@ -11,7 +11,7 @@
 // contract those stories produce — without re-running the full Widgetbook
 // chrome at test time.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';

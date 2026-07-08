@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';

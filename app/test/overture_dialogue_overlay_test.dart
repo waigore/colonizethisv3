@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 

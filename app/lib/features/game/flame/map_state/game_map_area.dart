@@ -39,7 +39,7 @@ import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../screens/game/game_screen_shared.dart';
 import '../map_area/map_area.dart'

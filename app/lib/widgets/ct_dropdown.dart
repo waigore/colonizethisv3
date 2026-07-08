@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_dialog_shell.dart';
 import 'ct_nine_patch_button.dart';
 

@@ -11,7 +11,7 @@
 // (CtDialogShell wrapping, 48 px `--accent` spinner, 1 px `--danger` error
 // border, no Material chrome) — fails CI immediately.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';

@@ -98,7 +98,7 @@ The widget itself never reads `turnResolutionBlockingProvider`; the side menu re
 
 ## Dark-theme chrome
 
-`GameSideMenu` renders inside the dark editorial-monocle theme (`AppThemes.editorialMonocle`). All glyph and label colours MUST resolve from [`EditorialMonoclePalette`](../../app/lib/config/editorial_monocle_palette.dart) tokens — no `Theme.of(context).colorScheme.*` fallbacks, no `Colors.*` literals — so the side menu reads with the same chrome contract as `GameTopBar`, `CtTopBar`, and the exit-confirm dialog (Refs #2861).
+`GameSideMenu` renders inside the dark editorial-monocle theme (`AppThemes.editorialMonocle`). All glyph and label colours MUST resolve from [`EditorialMonoclePalette`](../../packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart) tokens — no `Theme.of(context).colorScheme.*` fallbacks, no `Colors.*` literals — so the side menu reads with the same chrome contract as `GameTopBar`, `CtTopBar`, and the exit-confirm dialog (Refs #2861).
 
 | Element | Token | Notes |
 |---------|-------|-------|
