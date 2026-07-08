@@ -1,24 +1,7 @@
-// Table-driven matrix consolidation of the EXPAND below-quota peace
-// function-unit predicate pins (Refs #3749 branch-pin consolidation).
-//
-// This single file replaces three former per-predicate `*_branches_test.dart`
-// suites that each pinned a pure predicate from `expand_phase_planner.dart`
-// with one `test(...)` per row:
-//
-//   - `expand_phase_planner_below_quota_peace_insufficient_regiments_branches_test.dart`
-//   - `expand_phase_planner_below_quota_peace_treasury_recovery_branches_test.dart`
-//   - `expand_phase_planner_mutual_below_quota_plateau_peer_branches_test.dart`
-//
-// All three pinned **pure** predicates (scalar inputs, no `Game` fixture), so
-// each former branch case becomes one matrix row here with byte-equivalent
-// inputs and expectations. Coverage is preserved 1:1 — every former assertion
-// has a corresponding row — while the per-file boilerplate collapses into three
-// table-driven loops. See the original suites' history for the full per-branch
-// rationale; the `reason` text on each row carries the regression it guards.
-//
-// SPEC/ai/ai-architecture.md § Observer goal phases (Full AI) — EXPAND
-// below-quota peace insufficient-regiments / treasury-recovery trap and the
-// mutual below-quota plateau-peer pivot (Refs #2509).
+// EXPAND peace matrix case module (Refs #3749 / #3941).
+// Registered from `expand_phase_peace_matrix_test.dart` — the single contract
+// file for all four former `expand_phase_planner_*_peace_*_matrix_test.dart`
+// shards. Row coverage is preserved 1:1.
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
@@ -33,7 +16,7 @@ Stockpile _riches(String commodityId, int qty) => qty <= 0
     ? const Stockpile()
     : Stockpile().applyDelta(commodityId, qty);
 
-void main() {
+void registerExpandPeaceScalarPredicateCases() {
   // Quota / band constants the truth tables are built on. `cheapest` and the
   // riches base prices come from the production helpers so the boundary rows
   // track any constant tuning automatically.
