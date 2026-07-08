@@ -132,6 +132,37 @@ Merged five `orders_application_work_order_application_part*_test.dart` → `ord
 
 test/ LOC after slice 4: **33,241** (five part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred). ≥20% target ≤26,400 still deferred. Remaining: `order_engine_validate_*`, `order_suggestion_core_part*`, other `orders_application_*`, incremental equivalence, lib DRY.
 
+## Wave 3 — Slice 5 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osc-move-pass | suggestMoveOrders only returns moves that pass validation | `order_suggestion_core_part1_move_and_explore_test.dart` | `support/suggestion/order_suggestion_core_scenarios.dart` + `order_suggestion_core_test.dart` | #3949 |
+| osc-move-unknown-vis | suggestMoveOrders throws when source province has unknown visibility | same | same | #3949 |
+| osc-move-location | move suggestions use unit locationProvinceId (tileKey-derived for civilians) | same | same | #3949 |
+| osc-explore-unknown | no explore suggestion when province unknown | same | same | #3949 |
+| osc-explore-target | suggestWorkOrders explore target uses kWorkTargetExplore | same | same | #3949 |
+| osc-explore-cache | suggestWorkOrders explore aligns with partially revealed province cache scope | same | same | #3949 |
+| osc-prospect-fog | no prospect suggestion when province not at least fogged | `…_part1_prospect_player_view_test.dart` | same | #3949 |
+| osc-prospect-ok | prospect suggestion when province fogged and tiles in province | same | same | #3949 |
+| osc-prospect-order | PlayerView.provincesById matches allProvinces for prospect iteration order | same | same | #3949 |
+| osc-vwt-reserved | getValidWorkOrderTileKeysWithVisibility excludes tile reserved by another unit pending order | `…_part1_valid_work_tiles_visibility_test.dart` (was multi-line; label joined) | same | #3949 |
+| osc-work-any-tile | work suggestions for worker use unit id; targets may be any valid tile | `…_part1_work_targets_and_build_test.dart` | same | #3949 |
+| osc-build-later-tile | suggestWorkOrders includes build_improvement when first province tile has no resource but a later tile does | same (was multi-line; label joined) | same | #3949 |
+| osc-build-other-prov | suggestWorkOrders includes build_improvement on another owned province when the builder’s province has no valid resource tile | same (was multi-line; label joined) | same | #3949 |
+| osc-build-reserved | suggestWorkOrders second Builder skips tile reserved by another Builder pending work order | same (was multi-line; label joined) | same | #3949 |
+| osc-naval-mission | suggestNavalMissionOrders returns list | `…_part2_naval_mission_test.dart` | same | #3949 |
+| osc-build-list | suggestBuildOrders returns list | `order_suggestion_core_part2_test.dart` | same | #3949 |
+| osc-build-ship | suggestBuildOrders returns ship when affordable | same | same | #3949 |
+| osc-build-both | suggestBuildOrders can return both regiment and ship when both affordable | same | same | #3949 |
+| osc-research | suggestResearchOrders returns list | same | same | #3949 |
+| osc-naval-move | suggestNavalMoveOrders returns list | same | same | #3949 |
+| osc-counter-spy | counter_spy work suggested for Spy in owned province with tiles | same | same | #3949 |
+| osc-purchase | purchase_land work suggested for Merchant when minor province has resource tile | same | same | #3949 |
+
+Merged six `order_suggestion_core_part*_test.dart` shards → `order_suggestion_core_test.dart` (≤400 lines). Bodies live in `order_suggestion_core_expectations.dart`; labels in `order_suggestion_core_scenarios.dart`.
+
+test/ LOC after slice 5: **33,273** (six part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred). ≥20% target ≤26,400 still deferred. Remaining: `order_engine_validate_*`, other `orders_application_*`, incremental equivalence, lib DRY.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
