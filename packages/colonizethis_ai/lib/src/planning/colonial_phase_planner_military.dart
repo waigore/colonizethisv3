@@ -183,46 +183,20 @@ ColonialMilitaryPlan planColonialMilitary({
     return ColonialMilitaryPlan.defaultPlan;
   }
 
-  final provinceOwner = getProvinceOwnerMap(game);
-
-  if (colonialDeclaredWarTargetFactionId != null) {
-    final destinations = <String>[
-      for (final pid in invadable)
-        if (provinceOwner[pid] == colonialDeclaredWarTargetFactionId) pid,
-    ];
-    if (destinations.isEmpty) {
-      return ColonialMilitaryPlan.defaultPlan;
-    }
-    destinations.sort();
-    return ColonialMilitaryPlan(
-      priorityDestinationProvinceIdsSorted: List<String>.unmodifiable(
-        destinations,
-      ),
-      priorityTargetOwnerFactionIdsSorted: List<String>.unmodifiable(<String>[
-        colonialDeclaredWarTargetFactionId,
-      ]),
-    );
-  }
-
-  final atWarSet = snapshot.threats.atWarWith.toSet();
-  final atWarOwners = <String>{};
-  final destinations = <String>[];
-  for (final pid in invadable) {
-    final owner = provinceOwner[pid];
-    if (owner == null) continue;
-    if (!atWarSet.contains(owner)) continue;
-    destinations.add(pid);
-    atWarOwners.add(owner);
-  }
-  if (destinations.isEmpty) {
+  // Shared OW/NW priority-arm partition (Refs #3941 step 3).
+  final destinations = planRegionMilitaryDestinations(
+    game: game,
+    invadableProvinceIdsSorted: invadable,
+    atWarWithFactionIds: snapshot.threats.atWarWith,
+    declaredWarTargetFactionId: colonialDeclaredWarTargetFactionId,
+  );
+  if (destinations == null) {
     return ColonialMilitaryPlan.defaultPlan;
   }
-  destinations.sort();
-  final owners = atWarOwners.toList()..sort();
   return ColonialMilitaryPlan(
-    priorityDestinationProvinceIdsSorted: List<String>.unmodifiable(
-      destinations,
-    ),
-    priorityTargetOwnerFactionIdsSorted: List<String>.unmodifiable(owners),
+    priorityDestinationProvinceIdsSorted:
+        destinations.destinationProvinceIdsSorted,
+    priorityTargetOwnerFactionIdsSorted:
+        destinations.targetOwnerFactionIdsSorted,
   );
 }

@@ -118,6 +118,7 @@ import 'cast_iron_labour_gate.dart'
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'phase_destination_result.dart';
+import 'region_military_destination_filter.dart';
 import 'planning_helpers.dart'
     show
         anyInvadableProvinceOwnedByGreatPower,

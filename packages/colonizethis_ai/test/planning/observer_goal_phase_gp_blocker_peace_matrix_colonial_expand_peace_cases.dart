@@ -1,37 +1,5 @@
-// Table-driven matrix consolidation of the observer-phase peace-target
-// guard-branch suites (Refs #3749 branch-pin consolidation).
-//
-// Part 2 of 3 — COLONIAL + EXPAND peace-target guard ladders, including the
-// EXPAND-unique minor-first and mutual-plateau arms. The GP-blocker
-// contracts live in `observer_goal_phase_gp_blocker_peace_matrix_test.dart`;
-// the DEVELOP + stalled-below-quota peace ladders live in
-// `observer_goal_phase_gp_blocker_peace_matrix_part3_test.dart`. Shared
-// fixture families and the guard-branch runner live in
-// `observer_goal_phase_gp_blocker_peace_matrix_support.dart`.
-//
-// This part replaces the peace-target halves of two former per-phase
-// `*_branches_test.dart` suites:
-//
-//   - `observer_goal_phase_colonial_peace_blocker_branches_test.dart`
-//     (`colonialPhaseGpPeaceTargets`, COLONIAL phase, NEW-WORLD invadable
-//     frontier; Refs #2509 S10, PR #2661).
-//   - `observer_goal_phase_expand_peace_blocker_branches_test.dart`
-//     (`expandPhaseGpPeaceTargets`, EXPAND phase, OLD-WORLD invadable
-//     frontier; Refs #2509 S10).
-//
-// Both functions share the `({required Game game, required AIWorldSnapshot
-// snapshot}) -> List<String>` signature, so the two peace-target guard
-// ladders collapse into one shared case runner ([runPeace]). Coverage is
-// preserved 1:1 — every former `test(...)` becomes one matrix row with the
-// same fixture and the verbatim regression `reason`.
-//
-//   SPEC/ai/ai-architecture.md § Observer goal phases (Full AI):
-//     COLONIAL — "offerPeace toward at-war Great Powers that do not own
-//     the primary colonial NW frontier blocker when fighting two or more
-//     GPs"; EXPAND — "Hold blocker war ... peace the non-blocker GP
-//     front(s)" / "When at war with two or more GPs: peace all
-//     non-blocker GP fronts" plus the minor-first rule "exit every GP
-//     front while uninvaded minors remain".
+// Case tables for observer_goal_phase_gp_blocker_peace_matrix_test.dart
+// (Refs #3941). Imported by the support library / contract file.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
@@ -41,14 +9,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'observer_goal_phase_gp_blocker_peace_matrix_support.dart';
 
-void main() {
-  // ---------------------------------------------------------------------
-  // colonialPhaseGpPeaceTargets guard branches (COLONIAL / NW frontier).
-  // ---------------------------------------------------------------------
-  runPeace(
-    'colonialPhaseGpPeaceTargets guard branches',
-    colonialPhaseGpPeaceTargets,
-    <PeaceCase>[
+/// Matrix rows for `colonialPhaseGpPeaceTargets guard branches` (Refs #3941 matrix consolidation).
+final List<PeaceCase> kColonialPhaseGpPeaceTargetsGuardBranchesCases = <PeaceCase>[
       PeaceCase(
         label: 'not in COLONIAL phase → empty (EXPAND fixture)',
         // OW = 7, well below quota → EXPAND.
@@ -232,17 +194,10 @@ void main() {
             'factionId order so downstream order generation is '
             'deterministic for a fixed seed (Must-have #7).',
       ),
-    ],
-  );
+    ];
 
-  // ---------------------------------------------------------------------
-  // expandPhaseGpPeaceTargets guard branches (EXPAND / OW frontier).
-  // Includes the EXPAND-unique minor-first and mutual-plateau arms.
-  // ---------------------------------------------------------------------
-  runPeace(
-    'expandPhaseGpPeaceTargets guard branches',
-    expandPhaseGpPeaceTargets,
-    <PeaceCase>[
+/// Matrix rows for `expandPhaseGpPeaceTargets guard branches` (Refs #3941 matrix consolidation).
+final List<PeaceCase> kExpandPhaseGpPeaceTargetsGuardBranchesCases = <PeaceCase>[
       PeaceCase(
         label: 'not in EXPAND phase -> empty (DEVELOP fixture)',
         // OW = quota, no colonial targets -> DEVELOP.
@@ -515,28 +470,5 @@ void main() {
             'factionId order so downstream order generation is '
             'deterministic for a fixed seed (Must-have #7).',
       ),
-    ],
-  );
+    ];
 
-  group('expandPhaseGpPeaceTargets determinism', () {
-    test('identical inputs produce identical peace target list', () {
-      // Must-have #7 (determinism) for the helper itself, mirroring the
-      // `primaryInvadableOldWorldGpBlocker` determinism pin above. The
-      // 3-GP-at-war fixture exercises both the blocker scan and the sort,
-      // so repeating the call must yield the same list.
-      final game = gameWithOwProvinces(
-        turnNumber: 50,
-        owProvinces: const [
-          Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: gp2),
-        ],
-      );
-      final snapshot = expandSnapshot(
-        atWarWith: const [gp4, gp2, gp3],
-        invadableOw: const ['oldWorld|gp2_a'],
-      );
-      final first = expandPhaseGpPeaceTargets(game: game, snapshot: snapshot);
-      final second = expandPhaseGpPeaceTargets(game: game, snapshot: snapshot);
-      expect(second, first);
-    });
-  });
-}

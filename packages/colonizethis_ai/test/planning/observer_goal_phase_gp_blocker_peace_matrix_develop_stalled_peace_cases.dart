@@ -1,49 +1,15 @@
-// Table-driven matrix consolidation of the observer-phase peace-target
-// guard-branch suites (Refs #3749 branch-pin consolidation).
-//
-// Part 3 of 3 — DEVELOP + stalled-below-quota peace-target guard ladders.
-// The GP-blocker contracts live in
-// `observer_goal_phase_gp_blocker_peace_matrix_test.dart`; the COLONIAL +
-// EXPAND peace ladders live in
-// `observer_goal_phase_gp_blocker_peace_matrix_part2_test.dart`. Shared
-// fixture families and the guard-branch runner live in
-// `observer_goal_phase_gp_blocker_peace_matrix_support.dart`.
-//
-// This part folds in two further peace-target guard suites that share the
-// same `({required Game game, required AIWorldSnapshot snapshot}) ->
-// List<String>` signature, so they reuse the same peace-target case runner
-// ([runPeace]):
-//
-//   - `observer_goal_phase_develop_peace_target_branches_test.dart`
-//     (`developPhaseGpPeaceTargets`, DEVELOP phase, GP-vs-GP peace-all
-//     rule with no blocker preservation / minor-first short-circuit;
-//     Refs #2509 S10).
-//   - `expand_phase_planner_stalled_below_quota_gp_lead_branches_test.dart`
-//     (`stalledBelowQuotaGpLeadPeaceTargets`, below-quota lead-peace
-//     shortcut keyed on `minLeadDeficit` / quota guard / GP-only blocker;
-//     Refs #2509).
-//
-// Coverage is preserved 1:1 — every former `test(...)` becomes one matrix
-// row with the same fixture and the verbatim regression `reason`.
+// Case tables for observer_goal_phase_gp_blocker_peace_matrix_test.dart
+// (Refs #3941). Imported by the support library / contract file.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'observer_goal_phase_gp_blocker_peace_matrix_support.dart';
 
-void main() {
-  // ---------------------------------------------------------------------
-  // developPhaseGpPeaceTargets guard branches (DEVELOP phase, GP-vs-GP
-  // peace-all rule). No blocker preservation and no minor-first
-  // short-circuit (unlike EXPAND / COLONIAL).
-  // ---------------------------------------------------------------------
-  runPeace(
-    'developPhaseGpPeaceTargets guard branches',
-    developPhaseGpPeaceTargets,
-    <PeaceCase>[
+/// Matrix rows for `developPhaseGpPeaceTargets guard branches` (Refs #3941 matrix consolidation).
+final List<PeaceCase> kDevelopPhaseGpPeaceTargetsGuardBranchesCases = <PeaceCase>[
       PeaceCase(
         label: 'not in DEVELOP phase (EXPAND fixture) -> empty',
         // Below OW quota -> EXPAND. EXPAND has its own peace-target
@@ -210,39 +176,10 @@ void main() {
             'the sort, leaving the GP fronts in ascending '
             '`factionId` order.',
       ),
-    ],
-  );
+    ];
 
-  group('developPhaseGpPeaceTargets determinism', () {
-    test('identical inputs produce identical peace target list', () {
-      // Must-have #7 (determinism) at the function-unit level,
-      // mirroring the determinism pins in the COLONIAL and EXPAND
-      // peace-blocker families above. The mixed-input fixture
-      // exercises both the filter and the sort, so repeating the call
-      // must yield the same list.
-      final game = developGame(
-        turnNumber: 140,
-        tribes: const [Tribe(id: tribe1, displayName: 'T1')],
-        minorNations: const [MinorNation(id: minor1, displayName: 'M1')],
-      );
-      final snapshot = developSnapshot(
-        atWarWith: const [gp3, tribe1, gp2, minor1],
-      );
-      final first = developPhaseGpPeaceTargets(game: game, snapshot: snapshot);
-      final second = developPhaseGpPeaceTargets(game: game, snapshot: snapshot);
-      expect(second, first);
-    });
-  });
-
-  // ---------------------------------------------------------------------
-  // stalledBelowQuotaGpLeadPeaceTargets branches (below-quota lead-peace
-  // shortcut). Quota guard, `minLeadDeficit` table, GP-only invadable
-  // blocker exclusion, and collection guards.
-  // ---------------------------------------------------------------------
-  runPeace(
-    'stalledBelowQuotaGpLeadPeaceTargets branches',
-    stalledBelowQuotaGpLeadPeaceTargets,
-    <PeaceCase>[
+/// Matrix rows for `stalledBelowQuotaGpLeadPeaceTargets branches` (Refs #3941 matrix consolidation).
+final List<PeaceCase> kStalledBelowQuotaGpLeadPeaceTargetsBranchesCases = <PeaceCase>[
       PeaceCase(
         label: 'quota guard: empty at the observer OW quota even when '
             'enemy leads by 3+',
@@ -423,6 +360,4 @@ void main() {
         ),
         expectedPeace: const ['gp_strong'],
       ),
-    ],
-  );
-}
+    ];
