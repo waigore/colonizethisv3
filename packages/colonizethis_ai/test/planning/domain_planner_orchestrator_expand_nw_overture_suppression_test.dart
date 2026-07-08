@@ -46,42 +46,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
 const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 
-// Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
-// `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
-// `observerGoalPhaseFor`. Mirrors the EXPAND negative-control shape used in
-// `domain_planner_orchestrator_colonial_tribe_declare_war_test.dart`.
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-// At-quota OW set (>= `kObserverConquestMinOwProvincesPerGp` = 10) so the GP
-// passes the EXPAND gate and enters COLONIAL when colonial acquisition
-// targets are visible. Used by the negative-control test.
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
-
+// Uses kGp1OwProvincesBelowQuota / kGp1OwProvincesAtQuota from
+// domain_planner_orchestrator_test_support.dart (Refs #3941).
 Game _scenarioGame({required List<String> gp1OwProvinces}) {
   return Game(
     id: 'g-2509-expand-nw-overture-suppress',
@@ -262,7 +234,7 @@ List<String> _overtureTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND-phase NW establishOverture suppression', () {
     test('EXPAND drops establishOverture toward NW tribe colonial target', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -307,7 +279,7 @@ void main() {
     test(
       'COLONIAL allows establishOverture toward the same NW tribe candidate',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+        final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _colonialSnapshot();
@@ -352,7 +324,7 @@ void main() {
     );
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();

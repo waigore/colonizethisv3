@@ -7,12 +7,13 @@ import 'package:path/path.dart' as p;
 /// Forbids local `_listEquals` / `_colonialListEquals` definitions under
 /// `packages/colonizethis_ai/lib/**` outside the canonical helper file.
 /// Phase planner value types MUST call `planningListEquals` from
-/// `planning_helpers.dart` instead.
+/// `planning_weight_scale.dart` instead.
 
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
-const _allowedRelative =
-    'packages/colonizethis_ai/lib/src/planning/planning_helpers.dart';
+const _allowedRelatives = <String>{
+  'packages/colonizethis_ai/lib/src/planning/planning_weight_scale.dart',
+};
 
 final RegExp _localListEqualsDefinition = RegExp(
   r'bool\s+_(?:colonial)?[Ll]istEquals\s*\(',
@@ -37,11 +38,13 @@ int runCheckAiDedupListEquals(
     return 1;
   }
 
-  final allowedPath = p.normalize(p.join(root, _allowedRelative));
+  final allowedPaths = {
+    for (final rel in _allowedRelatives) p.normalize(p.join(root, rel)),
+  };
   final violations = <String>[];
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    if (p.normalize(entity.path) == allowedPath) continue;
+    if (allowedPaths.contains(p.normalize(entity.path))) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
     final match = _localListEqualsDefinition.firstMatch(content);
@@ -59,7 +62,7 @@ int runCheckAiDedupListEquals(
   logE(
     'check_ai_dedup_list_equals: found ${violations.length} local list-equals '
     'definition(s) in $_aiLibRelative. Use `planningListEquals` from '
-    'planning_helpers.dart instead.',
+    'planning_weight_scale.dart (via planning_helpers.dart barrel) instead.',
   );
   for (final v in violations) {
     logE(' - $v');

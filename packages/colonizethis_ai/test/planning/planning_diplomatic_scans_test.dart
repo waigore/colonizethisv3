@@ -1,20 +1,10 @@
-// Unit tests for `planning_helpers.dart` (Refs #3278), part 3.
-//
-// Split from `planning_helpers_test.dart` to keep each file within the repo
-// non-comment line limit (SPEC/program/dart-file-non-comment-line-size.md).
-// Pins the diplomatic-cooldown and at-war peace/order scoring helpers:
-//   - `hasRecentDiplomaticEventWithinCooldown` — newest-match-wins reversed
-//     history scan, strict `<` cooldown window, predicate filtering (Refs #3717)
-//   - `atWarPeaceTargetBonus` — at-war GP eligibility gate, lazy predicate
-//     short-circuit, flat-bonus emission (Refs #3717)
-//   - `atWarGreatPowerOrderTarget` — at-war Great-Power order-target gate
-//     (Refs #3717)
+// Unit tests for `planning_diplomatic_scans.dart` (Refs #3941 topic split).
+// Pins diplomatic cooldown scans and at-war peace/order scoring gates.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
 const String _gp3 = 'gp3';
