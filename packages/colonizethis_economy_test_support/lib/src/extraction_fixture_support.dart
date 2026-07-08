@@ -1,16 +1,40 @@
-// Shared fixture helper for `resource_extractor_part*_test.dart`.
-//
-// Hoists the single-owned-province `computeExtraction` setup that was copied
-// verbatim across the four split resource-extractor suites so each scenario
-// only declares the inputs it actually varies (tile state, town dev, tech,
-// prospected tiles). Refs #3661 (economy test dedup, step 5); #3831 Phase 4.
+// Shared extraction/tile-map fixtures for economy test suites (Refs #3661, #3831, #3939).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'tile_map_test_support.dart';
+/// A 1×1 [TileMapResult] for [province] (local id, default `p1`) carrying
+/// [resource] (`null` for an empty/no-resource tile).
+TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) =>
+    TileMapResult(
+      width: 1,
+      height: 1,
+      grid: [
+        [province],
+      ],
+      resourceGrid: [
+        [resource],
+      ],
+    );
+
+/// 1×1 [TileMapResult] keyed to [province] carrying [resource].
+TileMapResult singleResourceTileMap(
+  Resource resource, {
+  String province = 'M1',
+}) =>
+    singleTileMap(resource, province: province);
+
+/// Builds a single-region `tileMapByRegion` map for [regionId] placing
+/// [resource] at coordinates `(0, 0)` of [province].
+Map<String, TileMapResult> tileMapByRegionForResource(
+  Resource resource, {
+  String regionId = 'oldWorld',
+  String province = 'M1',
+}) {
+  return {regionId: singleResourceTileMap(resource, province: province)};
+}
 
 /// Per-tile improvement and road level for [tileStateFromSpecs].
 class TileImprovementSpec {
@@ -51,10 +75,24 @@ TileMapResult tileMapFromGrids({
       resourceGrid: resourceGrid,
     );
 
+/// Square tile map of size [width] × [height] where every cell belongs to the
+/// same prefixed [provinceId] and resources are read from [resources].
+TileMapResult tileMapAllInProvinceForNonGpExtractionTest({
+  required String provinceId,
+  required int width,
+  required int height,
+  required List<List<Resource?>> resources,
+}) {
+  final localId = provinceId.split('|').last;
+  final grid = List<List<String>>.generate(
+    height,
+    (_) => List<String>.filled(width, localId),
+  );
+  return tileMapFromGrids(grid: grid, resourceGrid: resources);
+}
+
 /// `{playerId: ConnectivityResult(...)}` for the single-player extraction
-/// setup. Hoists the `{'pl1': ConnectivityResult(connected: {…})}` wrapper
-/// repeated across the resource-extractor suites; [pathTransportCap] and
-/// [connectedByRoadRule] keep their `ConnectivityResult` defaults. Refs #3661.
+/// setup.
 Map<String, ConnectivityResult> connectivityFor(
   Set<String> connected, {
   Map<String, int> pathTransportCap = const {},
@@ -68,10 +106,85 @@ Map<String, ConnectivityResult> connectivityFor(
   ),
 };
 
+/// A capital-province row with sane defaults for non-GP extraction tests.
+Province capitalProvinceForNonGpExtractionTest({
+  required String provinceId,
+  int townDev = 1,
+}) {
+  final regionId = provinceId.split('|').first;
+  final factionId = provinceId.split('|').last;
+  return Province(
+    id: provinceId,
+    regionId: regionId,
+    ownerId: factionId,
+    townDevelopmentLevel: townDev,
+  );
+}
+
+/// Builds a minimal [Game] hosting the supplied non-GP factions.
+Game gameForNonGpExtractionTest({
+  required List<Province> provinces,
+  TileMapState? tileState,
+  List<MinorNation> minorNations = const [],
+  List<Tribe> tribes = const [],
+  int capitalTileGrainBonusPerTurn = 0,
+  List<Province> newWorldProvinces = const [],
+}) {
+  return Game(
+    id: 'g_test',
+    capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+    worldState: WorldState(
+      turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: RegionData(provinces: provinces),
+      newWorld: RegionData(provinces: newWorldProvinces),
+      tileState: tileState ?? TileMapState(),
+    ),
+    players: const [],
+    minorNations: minorNations,
+    tribes: tribes,
+  );
+}
+
+/// A standard one-tile minor nation in `oldWorld|m1` with capital at (0,0).
+MinorNation testMinor({
+  String id = 'm1',
+  String provinceId = 'oldWorld|m1',
+  int capitalX = 0,
+  int capitalY = 0,
+}) {
+  return MinorNation(
+    id: id,
+    capitalProvinceId: provinceId,
+    capitalTile: CapitalTile(
+      regionId: provinceId.split('|').first,
+      provinceId: provinceId,
+      x: capitalX,
+      y: capitalY,
+    ),
+  );
+}
+
+/// A standard one-tile tribe in `newWorld|t1` with capital at (0,0).
+Tribe testTribe({
+  String id = 't1',
+  String provinceId = 'newWorld|t1',
+  int capitalX = 0,
+  int capitalY = 0,
+}) {
+  return Tribe(
+    id: id,
+    capitalProvinceId: provinceId,
+    capitalTile: CapitalTile(
+      regionId: provinceId.split('|').first,
+      provinceId: provinceId,
+      x: capitalX,
+      y: capitalY,
+    ),
+  );
+}
+
 /// Single-owned-province extraction setup: player `pl1` ("Spain") owns
-/// `oldWorld|p1` (capital tile at 0,0) at [townDevelopmentLevel]. Pairs with a
-/// single-region `tileMapByRegion` for `computeExtraction` resource tests; pass
-/// [techUnlocked] for tech-cap cases and [playerProspectedTiles] for minerals.
+/// `oldWorld|p1` (capital tile at 0,0) at [townDevelopmentLevel].
 Game resourceExtractorGame({
   required TileMapState tileState,
   int townDevelopmentLevel = 4,

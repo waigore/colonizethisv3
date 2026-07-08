@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import 'tile_map_test_support.dart';
+import 'extraction_fixture_support.dart';
 
 /// Builds a minimal [Game] with one Minor `m1` owning province `oldWorld|m1`
 /// and a single tile at [tileKey]. The tile is improved to

@@ -7,9 +7,8 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'resource_extractor_test_support.dart';
+import 'extraction_fixture_support.dart';
 import 'scenario_runner.dart';
-import 'tile_map_test_support.dart';
 
 /// One row in [townManufacturingBonusProvinceScenarios].
 typedef TownManufacturingBonusProvinceScenario = ({

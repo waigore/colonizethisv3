@@ -5,8 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'resource_extractor_test_support.dart';
-import 'tile_map_test_support.dart';
+import 'extraction_fixture_support.dart';
 
 /// One row for `computeExtraction` scenario tables on the standard single-player
 /// `resourceExtractorGame` setup.

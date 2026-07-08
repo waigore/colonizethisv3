@@ -476,3 +476,16 @@ test_support LOC: **12,287** (down from 12,355 slice 5). Treasury/deal-matcher v
 | consumption-dry | `consumption_phases_scenarios.dart` reuses `ConsumptionScenario` type from `consumption_scenarios.dart` | `consumption_phases_scenarios.dart` | #3939 |
 
 test_support LOC: **12,287** (organizational consolidation; further scenario-data dedup for ≤8,200 target deferred to slice 8+).
+
+## Phase 3 — Slice 8 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| extraction-fixtures | merged `tile_map_test_support`, `non_gp_extraction_test_support`, `resource_extractor_test_support` into `extraction_fixture_support.dart` | `extraction_fixture_support.dart` | #3939 |
+| treasury-quantity-cluster | sellable/offer-cap scenarios under `treasury_scenarios/` with data-driven `assertCommodityQuantityMap` | `treasury_scenarios/treasury_sellable_quantity_scenarios.dart` | #3093, #3939 |
+| treasury-context-cluster | player-context + context-base scenarios under `treasury_scenarios/` barrel | `treasury_scenarios/treasury_player_context_scenarios.dart`, `world_market_context_base_scenarios.dart` | #3615, #3396, #3939 |
+| auto-offers-merge | purchased-tile C6 rows merged into `non_gp_auto_offers_scenarios.dart` | `non_gp_auto_offers_scenarios.dart` | #2991 C6, #3939 |
+
+Deleted modules (merged): `tile_map_test_support.dart`, `non_gp_extraction_test_support.dart`, `resource_extractor_test_support.dart`, `sellable_quantity_scenarios.dart`, `player_context_scenarios.dart`, `world_market_context_base_scenarios.dart`, `non_gp_auto_offers_purchased_tile_scenarios.dart`.
+
+test_support LOC: **12,207** (down from 12,287 slice 7). Further scenario-data compaction for ≤8,200 target deferred to slice 9+.

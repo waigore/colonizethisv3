@@ -7,7 +7,7 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'purchased_tile_riches_test_support.dart';
-import '../tile_map_test_support.dart';
+import '../extraction_fixture_support.dart';
 
 /// One row in [purchasedTileRichesScenarios].
 typedef PurchasedTileRichesScenario = ({

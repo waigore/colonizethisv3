@@ -102,12 +102,7 @@ void main() {
   group('offerCapByCommodityId (Refs #3093)', () {
     for (final scenario in offerCapByCommodityIdScenarios()) {
       test(scenario.label, () {
-        final game = buildStockpilePlayerGame(stockpile: scenario.stockpile);
-        final cap = offerCapByCommodityId(
-          game: game,
-          playerId: scenario.playerId,
-        );
-        scenario.verify(cap);
+        verifyOfferCapScenario(scenario);
       });
     }
   });
@@ -115,11 +110,7 @@ void main() {
   group('stagedOfferQuantitiesByCommodityId (Refs #3093)', () {
     for (final scenario in stagedOfferQuantitiesByCommodityIdScenarios()) {
       test(scenario.label, () {
-        final staged = stagedOfferQuantitiesByCommodityId(
-          orders: humanOrdersWith(scenario.orders),
-          playerId: humanPlayerId,
-        );
-        scenario.verify(staged);
+        verifyStagedOfferQuantitiesScenario(scenario);
       });
     }
   });
@@ -127,8 +118,7 @@ void main() {
   group('sellableHeadroomByCommodityId (Refs #3093)', () {
     for (final scenario in sellableHeadroomByCommodityIdScenarios()) {
       test(scenario.label, () {
-        final sellable = runSellableHeadroomScenario(scenario);
-        scenario.verify(sellable);
+        verifySellableHeadroomScenario(scenario);
       });
     }
   });

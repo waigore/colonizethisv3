@@ -1,17 +1,37 @@
-// Table-driven sellable / offer-cap scenarios (Refs #3856).
+// Data-driven sellable / offer-cap scenarios (Refs #3856, #3939 phase 3 slice 8).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'treasury_scenarios/treasury_test_support.dart';
+import 'treasury_test_support.dart';
+
+/// Asserts [actual] matches [expected] keys/values and omits [absentKeys].
+void assertCommodityQuantityMap(
+  Map<CommodityId, int> actual, {
+  required Map<CommodityId, int> expected,
+  Set<CommodityId> absentKeys = const {},
+  int? expectedLength,
+}) {
+  for (final key in absentKeys) {
+    expect(actual.containsKey(key), isFalse);
+  }
+  for (final MapEntry(:key, :value) in expected.entries) {
+    expect(actual[key], value);
+  }
+  if (expectedLength != null) {
+    expect(actual.length, expectedLength);
+  }
+}
 
 /// One row in [offerCapByCommodityIdScenarios].
 typedef OfferCapByCommodityIdScenario = ({
   String label,
   Map<CommodityId, int> stockpile,
   String playerId,
-  void Function(Map<CommodityId, int> cap) verify,
+  Map<CommodityId, int> expected,
+  Set<CommodityId> absentKeys,
+  int? expectedLength,
   String? refs,
 });
 
@@ -21,14 +41,18 @@ List<OfferCapByCommodityIdScenario> offerCapByCommodityIdScenarios() => [
     label: 'returns empty map for unknown player',
     stockpile: {'timber': 10},
     playerId: 'gp_ghost',
-    verify: _verifyOfferCapEmpty,
+    expected: const {},
+    absentKeys: const {},
+    expectedLength: 0,
     refs: '#3093',
   ),
   (
     label: 'returns each non-riches stockpile quantity as the offer cap',
     stockpile: {'timber': 10, 'iron': 7, 'fabric': 3},
     playerId: humanPlayerId,
-    verify: _verifyOfferCapMultiCommodity,
+    expected: const {'timber': 10, 'iron': 7, 'fabric': 3},
+    absentKeys: const {},
+    expectedLength: 3,
     refs: '#3093',
   ),
   (
@@ -42,47 +66,42 @@ List<OfferCapByCommodityIdScenario> offerCapByCommodityIdScenarios() => [
       'spices': 1,
     },
     playerId: humanPlayerId,
-    verify: _verifyOfferCapExcludesRiches,
+    expected: const {'timber': 10},
+    absentKeys: const {'gold', 'silver', 'gems', 'diamonds', 'spices'},
+    expectedLength: null,
     refs: '#3093',
   ),
   (
     label: 'skips commodities with non-positive stockpile',
     stockpile: {'timber': 10},
     playerId: humanPlayerId,
-    verify: _verifyOfferCapSkipsNonPositive,
+    expected: const {'timber': 10},
+    absentKeys: const {'iron'},
+    expectedLength: null,
     refs: '#3093',
   ),
 ];
 
-void _verifyOfferCapEmpty(Map<CommodityId, int> cap) {
-  expect(cap, isEmpty);
-}
-
-void _verifyOfferCapMultiCommodity(Map<CommodityId, int> cap) {
-  expect(cap['timber'], 10);
-  expect(cap['iron'], 7);
-  expect(cap['fabric'], 3);
-  expect(cap.length, 3);
-}
-
-void _verifyOfferCapExcludesRiches(Map<CommodityId, int> cap) {
-  expect(cap['timber'], 10);
-  expect(cap.containsKey('gold'), isFalse);
-  expect(cap.containsKey('silver'), isFalse);
-  expect(cap.containsKey('gems'), isFalse);
-  expect(cap.containsKey('diamonds'), isFalse);
-  expect(cap.containsKey('spices'), isFalse);
-}
-
-void _verifyOfferCapSkipsNonPositive(Map<CommodityId, int> cap) {
-  expect(cap['iron'], isNull);
+void verifyOfferCapScenario(OfferCapByCommodityIdScenario scenario) {
+  final game = buildStockpilePlayerGame(stockpile: scenario.stockpile);
+  final cap = offerCapByCommodityId(
+    game: game,
+    playerId: scenario.playerId,
+  );
+  assertCommodityQuantityMap(
+    cap,
+    expected: scenario.expected,
+    absentKeys: scenario.absentKeys,
+    expectedLength: scenario.expectedLength,
+  );
 }
 
 /// One row in [stagedOfferQuantitiesByCommodityIdScenarios].
 typedef StagedOfferQuantitiesScenario = ({
   String label,
   List<TradeOrder> orders,
-  void Function(Map<CommodityId, int> staged) verify,
+  Map<CommodityId, int> expected,
+  Set<CommodityId> absentKeys,
   String? refs,
 });
 
@@ -92,7 +111,8 @@ List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios(
     (
       label: 'returns empty map when no trade orders are staged',
       orders: const <TradeOrder>[],
-      verify: _verifyStagedOffersEmpty,
+      expected: const {},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -101,7 +121,8 @@ List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios(
         offerOrder('timber', 5),
         offerOrder('iron', 3),
       ],
-      verify: _verifyStagedOffersSum,
+      expected: const {'timber': 5, 'iron': 3},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -110,7 +131,8 @@ List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios(
         bidOrder('timber', 4),
         offerOrder('iron', 3),
       ],
-      verify: _verifyStagedOffersExcludeBids,
+      expected: const {'iron': 3},
+      absentKeys: const {'timber'},
       refs: '#3093',
     ),
     (
@@ -118,28 +140,23 @@ List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios(
       orders: [
         offerOrder('timber', 0),
       ],
-      verify: _verifyStagedOffersExcludeNonPositive,
+      expected: const {},
+      absentKeys: const {'timber'},
       refs: '#3093',
     ),
   ];
 }
 
-void _verifyStagedOffersEmpty(Map<CommodityId, int> staged) {
-  expect(staged, isEmpty);
-}
-
-void _verifyStagedOffersSum(Map<CommodityId, int> staged) {
-  expect(staged['timber'], 5);
-  expect(staged['iron'], 3);
-}
-
-void _verifyStagedOffersExcludeBids(Map<CommodityId, int> staged) {
-  expect(staged.containsKey('timber'), isFalse);
-  expect(staged['iron'], 3);
-}
-
-void _verifyStagedOffersExcludeNonPositive(Map<CommodityId, int> staged) {
-  expect(staged.containsKey('timber'), isFalse);
+void verifyStagedOfferQuantitiesScenario(StagedOfferQuantitiesScenario scenario) {
+  final staged = stagedOfferQuantitiesByCommodityId(
+    orders: humanOrdersWith(scenario.orders),
+    playerId: humanPlayerId,
+  );
+  assertCommodityQuantityMap(
+    staged,
+    expected: scenario.expected,
+    absentKeys: scenario.absentKeys,
+  );
 }
 
 /// One row in [sellableHeadroomByCommodityIdScenarios].
@@ -149,7 +166,8 @@ typedef SellableHeadroomScenario = ({
   List<TradeOrder> orders,
   Map<CommodityId, int>? productionInputConsumptionByCommodityId,
   bool useEmptyProductionMap,
-  void Function(Map<CommodityId, int> sellable) verify,
+  Map<CommodityId, int> expected,
+  Set<CommodityId> absentKeys,
   String? refs,
 });
 
@@ -162,7 +180,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: const <TradeOrder>[],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomNoStagedOffers,
+      expected: const {'timber': 10, 'iron': 7},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -172,7 +191,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: [offerOrder('timber', 2)],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomSubtractsStaged,
+      expected: const {'timber': 8},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -183,7 +203,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: [offerOrder('timber', 2)],
       productionInputConsumptionByCommodityId: {'timber': 2},
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomIndustryReservation,
+      expected: const {'timber': 6},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -193,7 +214,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: const <TradeOrder>[],
       productionInputConsumptionByCommodityId: {'timber': 10},
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomFullReservation,
+      expected: const {},
+      absentKeys: const {'timber'},
       refs: '#3093',
     ),
     (
@@ -203,7 +225,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: const <TradeOrder>[],
       productionInputConsumptionByCommodityId: {'timber': -100},
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomNegativeConsumptionClamped,
+      expected: const {'timber': 10},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -213,7 +236,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: const <TradeOrder>[],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: true,
-      verify: _verifySellableHeadroomEmptyMapMatchesNull,
+      expected: const {'timber': 10},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -223,7 +247,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: const <TradeOrder>[],
       productionInputConsumptionByCommodityId: {'timber': 4},
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomIsolatedCommodities,
+      expected: const {'timber': 6, 'iron': 7},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -233,7 +258,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: [offerOrder('timber', 5)],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomClampsAtZero,
+      expected: const {},
+      absentKeys: const {'timber'},
       refs: '#3093',
     ),
     (
@@ -242,7 +268,8 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: [bidOrder('timber', 4)],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomBidsIgnored,
+      expected: const {'timber': 10},
+      absentKeys: const {},
       refs: '#3093',
     ),
     (
@@ -251,82 +278,11 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       orders: [offerOrder('gold', 2)],
       productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: false,
-      verify: _verifySellableHeadroomExcludesRiches,
+      expected: const {'timber': 10},
+      absentKeys: const {'gold'},
       refs: '#3093',
     ),
   ];
-}
-
-void _verifySellableHeadroomNoStagedOffers(Map<CommodityId, int> sellable) {
-  expect(sellable['timber'], 10);
-  expect(sellable['iron'], 7);
-}
-
-void _verifySellableHeadroomSubtractsStaged(Map<CommodityId, int> sellable) {
-  expect(sellable['timber'], 8);
-}
-
-void _verifySellableHeadroomIndustryReservation(Map<CommodityId, int> sellable) {
-  expect(
-    sellable['timber'],
-    6,
-    reason:
-        'Canonical AC: max(0, 10 - 2) - 2 = 6. Offer chip / `+` '
-        'stepper must clamp at this sellable headroom.',
-  );
-}
-
-void _verifySellableHeadroomFullReservation(Map<CommodityId, int> sellable) {
-  expect(
-    sellable.containsKey('timber'),
-    isFalse,
-    reason: 'Full reservation collapses the cap to 0 → key dropped.',
-  );
-}
-
-void _verifySellableHeadroomNegativeConsumptionClamped(
-  Map<CommodityId, int> sellable,
-) {
-  expect(
-    sellable['timber'],
-    10,
-    reason:
-        'Negative consumption must not raise sellable above '
-        'raw stockpile.',
-  );
-}
-
-void _verifySellableHeadroomEmptyMapMatchesNull(Map<CommodityId, int> sellable) {
-  expect(sellable['timber'], 10);
-}
-
-void _verifySellableHeadroomIsolatedCommodities(Map<CommodityId, int> sellable) {
-  expect(sellable['timber'], 6);
-  expect(
-    sellable['iron'],
-    7,
-    reason: 'Iron has no reservation entry → raw stockpile.',
-  );
-}
-
-void _verifySellableHeadroomClampsAtZero(Map<CommodityId, int> sellable) {
-  expect(
-    sellable.containsKey('timber'),
-    isFalse,
-    reason:
-        'Cap=5 minus staged offer 5 = 0; missing key means `(0)` so '
-        'the Trade Market tab shows no `(N)` and disables the Offer '
-        'chip / `+` button.',
-  );
-}
-
-void _verifySellableHeadroomBidsIgnored(Map<CommodityId, int> sellable) {
-  expect(sellable['timber'], 10);
-}
-
-void _verifySellableHeadroomExcludesRiches(Map<CommodityId, int> sellable) {
-  expect(sellable.containsKey('gold'), isFalse);
-  expect(sellable['timber'], 10);
 }
 
 /// Runs [sellableHeadroomByCommodityId] for one [SellableHeadroomScenario].
@@ -354,5 +310,14 @@ Map<CommodityId, int> runSellableHeadroomScenario(SellableHeadroomScenario scena
     orders: orders,
     productionInputConsumptionByCommodityId:
         scenario.productionInputConsumptionByCommodityId,
+  );
+}
+
+void verifySellableHeadroomScenario(SellableHeadroomScenario scenario) {
+  final sellable = runSellableHeadroomScenario(scenario);
+  assertCommodityQuantityMap(
+    sellable,
+    expected: scenario.expected,
+    absentKeys: scenario.absentKeys,
   );
 }

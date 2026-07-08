@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'non_gp_extraction_test_support.dart';
+import 'extraction_fixture_support.dart';
 import 'scenario_runner.dart';
 
 /// One row in [resolveTileKeyResourceContextScenarios].
