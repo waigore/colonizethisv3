@@ -10,7 +10,7 @@ import 'package:path/path.dart' as p;
 /// the `<= 0.0 → return 0`, clamp-to-`1.0`, `(baseConstant * clamped).round()`
 /// weight-scaling idiom.
 ///
-/// The single canonical home (`lib/src/planning/planning_helpers.dart`) is the
+/// The single canonical home (`lib/src/planning/planning_weight_scale.dart`) is the
 /// only file allowed to contain the idiom.
 ///
 /// Detection matches the full canonical body shape: a `<= 0.0) { return 0; }`
@@ -25,8 +25,9 @@ import 'package:path/path.dart' as p;
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
 /// Canonical home of `scaleWeightedBonus` — the only allowed idiom site.
-const _allowedRelative =
-    'packages/colonizethis_ai/lib/src/planning/planning_helpers.dart';
+const _allowedRelatives = <String>{
+  'packages/colonizethis_ai/lib/src/planning/planning_weight_scale.dart',
+};
 
 /// `<= 0.0) { return 0; } final clamped = X > 1.0 ? 1.0 : X; return (Y *
 /// clamped).round();` — the full body replaceable by `scaleWeightedBonus`.
@@ -55,11 +56,13 @@ int runCheckAiDedupWeightScaleClamp(
     return 1;
   }
 
-  final allowedPath = p.normalize(p.join(root, _allowedRelative));
+  final allowedPaths = {
+    for (final rel in _allowedRelatives) p.normalize(p.join(root, rel)),
+  };
   final violations = <String>[];
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    if (p.normalize(entity.path) == allowedPath) continue;
+    if (allowedPaths.contains(p.normalize(entity.path))) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
     final match = _inlineWeightScaleClamp.firstMatch(content);
@@ -78,7 +81,7 @@ int runCheckAiDedupWeightScaleClamp(
     'check_ai_dedup_weight_scale_clamp: found ${violations.length} inline '
     'weight-scale clamp idiom(s) in $_aiLibRelative. Use the shared '
     '`scaleWeightedBonus(weight, baseConstant)` helper from '
-    'src/planning/planning_helpers.dart instead.',
+    'src/planning/planning_weight_scale.dart (via planning_helpers.dart barrel) instead.',
   );
   for (final v in violations) {
     logE(' - $v');
