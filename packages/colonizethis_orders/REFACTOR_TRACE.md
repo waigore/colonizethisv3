@@ -269,7 +269,43 @@ test/ LOC after slice 8: see PR. Remaining: recruit / trade validate suites, oth
 
 Migrated remaining `order_engine_validate_{recruit_worker,trade}_test.dart` suites (9 scenarios) → thin family runners. Completes the `order_engine_validate_*` family migration from Current behavior §2. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
 
-test/ LOC after slice 9: see PR. Remaining: other `orders_application_*`, incremental equivalence, lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
+test/ LOC after slice 9: see PR. Remaining after slice 9: other `orders_application_*`, incremental equivalence, lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
+
+## Wave 3 — Slice 10 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-move-own | move: builder onto own province (accepted) | `incremental_candidate_validator_equivalence_test.dart` | `support/incremental/incremental_candidate_validator_equivalence_scenarios.dart` + thin runner | #3949 |
+| ice-move-gp | move: builder onto other GP province (rejected) | same | same | #3949 |
+| ice-move-minor | move: explorer onto Minor province (accepted) | same | same | #3949 |
+| ice-move-spy | move: spy onto other GP province (accepted) | same | same | #3949 |
+| ice-move-regiment | move: military regiment via MoveOrder (rejected) | same | same | #3949 |
+| ice-move-missing | move: missing unit (rejected) | same | same | #3949 |
+| ice-move-empty | move: empty destination tile (rejected) | same | same | #3949 |
+| ice-move-xor | move: rejected because basePrefix has work order for same unit (move XOR work cascade) | same (was multi-line; label joined) | same | #3949 |
+| ice-move-prefix | move: with non-empty accepted basePrefix (accepted) | same | same | #3949 |
+| ice-build | build: candidate remains equivalent to full-pass path | same | same | #3949 |
+| ice-build-seq | build: successive candidate probes stay full-pass equivalent (#2394) | same (was multi-line; label joined) | same | #3949 |
+| ice-work | work: non-empty basePrefix replay remains equivalent | same | same | #3949 |
+| ice-diplo | diplomatic: non-empty basePrefix replay remains equivalent | same | same | #3949 |
+| ice-diplo-seq | diplomatic: sequential probes on one validator stay equivalent (#2394) | same (was multi-line; label joined) | same | #3949 |
+| ice-prefetch | prefetched DiplomacyFactionMembership matches lazy membership (#2394) | same (was multi-line; label joined) | same | #3949 |
+| ice-army-own | army move: into own adjacent province (accepted) | `…_army_naval_test.dart` | same | #3949 |
+| ice-army-gp | army move: into other GP without war (rejected) | same | same | #3949 |
+| ice-army-declare | army move: into other GP with same-turn declare war (accepted) | same (was multi-line; label joined) | same | #3949 |
+| ice-army-minor | army move: into Minor without war (rejected) | same | same | #3949 |
+| ice-army-missing | army move: missing army (rejected) | same | same | #3949 |
+| ice-naval-adj | naval move: at-sea fleet to adjacent sea zone (accepted) | same | same | #3949 |
+| ice-naval-nonadj | naval move: at-sea fleet to non-adjacent sea zone (rejected) | same | same | #3949 |
+| ice-naval-undock | naval move: in-port fleet undock to adjacent sea zone (accepted) | same (was multi-line; label joined) | same | #3949 |
+| ice-naval-missing | naval move: missing fleet (rejected) | same | same | #3949 |
+| ice-mission-patrol | naval mission: patrol owned fleet (accepted) | same | same | #3949 |
+| ice-mission-blockade | naval mission: blockade without target province (rejected) | same | same | #3949 |
+| ice-mission-missing | naval mission: missing fleet (rejected) | same | same | #3949 |
+
+Merged `incremental_candidate_validator_equivalence_{,_army_naval}_test.dart` (27 scenarios) → one thin family runner. Bodies in `…_expectations.dart`; labels in `…_scenarios.dart`. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 10: see PR. Remaining: other `orders_application_*`, lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
 
 ## Wave 3 — documented exceptions (kickoff)
 
