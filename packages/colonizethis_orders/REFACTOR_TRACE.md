@@ -337,6 +337,59 @@ Merged four imperative work-completion / dispatch suites (20 scenarios) → `ord
 
 test/ LOC after slice 11: see PR. Remaining: other `orders_application_*` (military/ship, training costs, worker pool, helpers, civilian spawn, clear current work), lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
 
+## Wave 3 — Slice 12 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| but-unknown | skips build when unitType unknown in RegimentEconomyCatalog | `orders_application_military_ship_skip_test.dart` | `support/application/build_unit_training_scenarios.dart` + thin runner | #3949 |
+| but-zero-peasants | skips military build when zero peasants | same | same | #3949 |
+| but-mil-tech | skips military build when tech not unlocked | same | same | #3949 |
+| but-ship-tech | skips ship build when tech not unlocked | same | same | #3949 |
+| but-topo-null | ship build with topology null does not add fleet | same | same | #3949 |
+| but-cap-null | ship build with capitalProvinceId null does not add fleet | same | same | #3949 |
+| but-no-sea | ship build with capital not adjacent to sea does not add ship | same | same | #3949 |
+| but-treasury | rejects build when treasury is insufficient | `orders_application_military_training_costs_test.dart` | same | #3949 |
+| but-materials | rejects build when materials are insufficient | same | same | #3949 |
+| but-apply | applies treasury, stockpile and worker costs when valid | same | same | #3949 |
+| but-noop | returns game unchanged when no build or work orders | same | same | #3949 |
+| but-ship-ok | ship build adds ship to fleet when topology and capital with sea | same | same | #3949 |
+| but-naval-peasants | rejects naval build when peasants are zero | same | same | #3949 |
+| but-second-ship | second naval build adds ship to existing home fleet | same | same | #3949 |
+| but-civ-treasury | rejects civilian build when treasury insufficient | `orders_application_civilian_training_costs_test.dart` | same | #3949 |
+| but-civ-paper | rejects civilian build when paper insufficient | same | same | #3949 |
+| but-civ-ok | applies treasury and paper cost when civilian build valid | same | same | #3949 |
+| but-merchant | Merchant requires merchant_companies tech | same | same | #3949 |
+| wpp-peasant | accepted recruit peasant order adds 1 peasant and deducts fabric | `orders_application_worker_pool_phase_test.dart` | `support/application/worker_pool_phase_scenarios.dart` + thin runner | #2692, #3949 |
+| wpp-apprentice | accepted apprentice train consumes peasant, paper, and treasury | same | same | #2692, #3949 |
+| wpp-afford | recruit that fails affordability checks does not mutate the player (no partial deduction) | same (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-journeyman | accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage) | `…_s9_test.dart` (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-master | accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail) | same (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-tech-gate | master recruit with required tech locked is silently skipped (#2692 S9 tech-gate coverage) | same (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-ordering | later recruit order observes the running state of earlier accepted order in the same submission list (#2692 S9 ordering semantics) | same (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-skip-middle | middle order silently skips when peasants are exhausted; later orders still resolve against the running state (#2692 S9; AC #4 resolver behavior) | same (was multi-line; label joined) | same | #2692, #3949 |
+| wpp-multi | per-player order lists apply in isolation (#2692 S9 multi-player pin) | same (was multi-line; label joined) | same | #2692, #3949 |
+| cs-capital-other | civilian spawn uses capitalTile key even when spawnProvinceId is different owned province | `orders_application_civilian_new_world_spawn_test.dart` (was multi-line; label joined) | `support/application/civilian_spawn_scenarios.dart` + thin runner | #3949 |
+| cs-empty-spawn | civilian build with empty spawnProvinceId uses capital tile and province | same (was multi-line; label joined) | same | #3949 |
+| cs-missing-cap | civilian build with missing capital tile throws explicit error | same | same | #3949 |
+| cs-new-world | New World spawn adds unit to newWorld | same | same | #3949 |
+| ah-parse | returns parsed coordinates for a valid tile key | `orders_application_helpers_test.dart` | `support/application/application_helpers_scenarios.dart` + thin runner | #3949 |
+| ah-malformed | returns null for malformed tile key | same | same | #3949 |
+| ah-cancel | clears work state and restores origin tile by default | same | same | #3949 |
+| ah-override | uses explicit restored tile override | same | same | #3949 |
+| ah-clear-noop | returns game unchanged when unit has no currentWork | `orders_application_clear_unit_current_work_test.dart` | same | #3949 |
+| ah-clear | clears currentWork, restores origin tile, and sets status idle | same | same | #3949 |
+| ah-prospect-terrain | returns true for prospectable terrain even when no resource is present | `orders_application_helpers_mineral_eligible_test.dart` | same | #3949 |
+| ah-non-prospect | returns false for non-prospectable terrain even when mineral resource exists | same | same | #3949 |
+| ah-wool | returns false for wool on hills when tile map shows prospectable terrain | same | same | #3949 |
+| ah-iron | returns true for iron on hills with tile map when not prospected | same | same | #3949 |
+| ah-absent | returns false when resource is absent | same | same | #3949 |
+| ah-non-mineral | returns false for non-mineral resource | same | same | #3949 |
+| ah-mineral | returns true for mineral resource | same | same | #3949 |
+
+Merged remaining imperative `orders_application_*` suites (ship-skip, military/civilian training, worker-pool S4+S9, civilian spawn, helpers, mineral eligible, clear current work) → thin family runners. Completes the `orders_application_*` family migration from Current behavior §2 / PR remaining list. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 12: see PR. Remaining: lib DRY (validation orchestration + explorer pipeline), ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
