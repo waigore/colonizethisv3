@@ -119,8 +119,13 @@ class PurchasedTileIndexFromGameScenario {
   }) : this(
           label: label,
           buildGame: buildGame,
-          verify: (index) =>
-              assertPurchasedTileIndexExpectation(index, expect),
+          verify: (index) => assertPurchasedTileIndexExpectation(
+                index,
+                expect,
+                gameForDeterminismRerun: expect.deterministicIndexRerun
+                    ? buildGame()
+                    : null,
+              ),
           refs: refs,
         );
 
@@ -136,12 +141,12 @@ List<PurchasedTileIndexFromGameScenario> purchasedTileIndexFromGameScenarios() =
       PurchasedTileIndexFromGameScenario.expect(
         label: 'AC-D1-1 — empty world yields empty index',
         buildGame: TestFixtures.minimalGame,
-        expect: PurchasedTileIndexExpectation(
+        expect: const PurchasedTileIndexExpectation(
           length: 0,
           isEmpty: true,
           isNotEmpty: false,
           attributionForTileKeyNull: 'any',
-          custom: _verifyEmptyIndexAttributions,
+          attributionsEmpty: true,
         ),
         refs: 'D1-1',
       ),
@@ -194,30 +199,45 @@ List<PurchasedTileIndexFromGameScenario> purchasedTileIndexFromGameScenarios() =
       PurchasedTileIndexFromGameScenario.expect(
         label: 'AC-D1-6 — unmapped tile key excludes attribution',
         buildGame: unmappedTileKeyPurchasedTileGame,
-        expect: PurchasedTileIndexExpectation(
+        expect: const PurchasedTileIndexExpectation(
           length: 0,
-          custom: _verifyUnmappedTileKeyExcludes,
+          attributionForTileKeysNull: [
+            'oldWorld|M1|9|9',
+            'oldWorld|M1|0|0',
+          ],
         ),
         refs: 'D1-6',
       ),
       PurchasedTileIndexFromGameScenario.expect(
         label: 'AC-D1-7 — determinism: repeated builds return equal attributions',
         buildGame: minorOwnedPurchasedTileIndexGame,
-        expect: PurchasedTileIndexExpectation(
-          custom: _verifyIndexDeterminism,
+        expect: const PurchasedTileIndexExpectation(
+          deterministicIndexRerun: true,
+          deterministicRerunTileKey: 'oldWorld|M1|0|0',
         ),
         refs: 'D1-7',
       ),
       PurchasedTileIndexFromGameScenario.expect(
         label: 'mixed minor + tribe purchases coexist in the same index',
         buildGame: mixedMinorTribePurchasedTileGame,
-        expect: PurchasedTileIndexExpectation(
+        expect: const PurchasedTileIndexExpectation(
           length: 2,
           attributionsTileKeysContainAll: [
             'oldWorld|M1|0|0',
             'newWorld|T1|0|0',
           ],
-          custom: _verifyMixedMinorTribeAttributions,
+          multiAttributions: [
+            PurchasedTileAttributionExpectation(
+              tileKey: 'oldWorld|M1|0|0',
+              owningGpId: 'gpA',
+              sourceFactionId: 'M1',
+            ),
+            PurchasedTileAttributionExpectation(
+              tileKey: 'newWorld|T1|0|0',
+              owningGpId: 'gpB',
+              sourceFactionId: 'T1',
+            ),
+          ],
         ),
       ),
       PurchasedTileIndexFromGameScenario.expect(
@@ -226,42 +246,6 @@ List<PurchasedTileIndexFromGameScenario> purchasedTileIndexFromGameScenarios() =
         expect: const PurchasedTileIndexExpectation(length: 0),
       ),
     ];
-
-void _verifyEmptyIndexAttributions(PurchasedTileIndex index) {
-  expect(index.attributions, isEmpty);
-}
-
-void _verifyUnmappedTileKeyExcludes(PurchasedTileIndex index) {
-  expect(index.attributionForTileKey('oldWorld|M1|9|9'), isNull);
-  expect(index.attributionForTileKey('oldWorld|M1|0|0'), isNull);
-}
-
-void _verifyIndexDeterminism(PurchasedTileIndex index) {
-  final game = minorOwnedPurchasedTileIndexGame();
-  final first = PurchasedTileIndex.fromGame(game);
-  final second = PurchasedTileIndex.fromGame(game);
-  expect(index.length, first.length);
-  expect(first.length, second.length);
-  expect(
-    first.attributionForTileKey('oldWorld|M1|0|0'),
-    equals(second.attributionForTileKey('oldWorld|M1|0|0')),
-  );
-}
-
-void _verifyMixedMinorTribeAttributions(PurchasedTileIndex index) {
-  const minorTileKey = 'oldWorld|M1|0|0';
-  const tribeTileKey = 'newWorld|T1|0|0';
-
-  final minorAttr = index.attributionForTileKey(minorTileKey);
-  expect(minorAttr, isNotNull);
-  expect(minorAttr!.owningGpId, 'gpA');
-  expect(minorAttr.sourceFactionId, 'M1');
-
-  final tribeAttr = index.attributionForTileKey(tribeTileKey);
-  expect(tribeAttr, isNotNull);
-  expect(tribeAttr!.owningGpId, 'gpB');
-  expect(tribeAttr.sourceFactionId, 'T1');
-}
 
 /// Builds [PurchasedTileIndex] for one [PurchasedTileIndexFromGameScenario].
 PurchasedTileIndex runPurchasedTileIndexFromGameScenario(

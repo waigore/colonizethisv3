@@ -35,6 +35,7 @@ export 'src/sea_transport_scenarios.dart';
 export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
 export 'src/treasury_scenarios/treasury_scenarios.dart';
+export 'src/price_discovery_expectations.dart';
 export 'src/price_discovery_scenarios.dart';
 export 'src/projected_cost_engine_scenarios.dart';
 export 'src/purchased_tile_fixture_support.dart';

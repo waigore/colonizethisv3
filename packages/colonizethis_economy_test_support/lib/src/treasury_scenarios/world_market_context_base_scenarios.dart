@@ -1,8 +1,9 @@
-// Table-driven WorldMarketContextBase scenarios (Refs #3856).
+// Table-driven WorldMarketContextBase scenarios (Refs #3856, #3939 slice 19).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
+
+import 'world_market_context_base_expectations.dart';
 
 /// Minimal concrete subclass exercising the abstract base constructor.
 class TestWorldMarketContextBase extends WorldMarketContextBase {
@@ -21,7 +22,7 @@ typedef WorldMarketContextBaseScenario = ({
   int bidTypeCap,
   int tradeCargoCapacity,
   Map<CommodityId, int>? availableStockpileByCommodityId,
-  void Function(WorldMarketContextBase ctx) verify,
+  WorldMarketContextBaseExpectation expect,
   String? refs,
 });
 
@@ -33,7 +34,12 @@ List<WorldMarketContextBaseScenario> worldMarketContextBaseScenarios() => [
     bidTypeCap: 6,
     tradeCargoCapacity: 12,
     availableStockpileByCommodityId: const {'grain': 5, 'silver': 2},
-    verify: _verifyContextBaseCarriesFields,
+    expect: const WorldMarketContextBaseExpectation(
+      playerId: 'gp1',
+      bidTypeCap: 6,
+      tradeCargoCapacity: 12,
+      availableStockpileByCommodityId: {'grain': 5, 'silver': 2},
+    ),
     refs: '#3396',
   ),
   (
@@ -42,22 +48,12 @@ List<WorldMarketContextBaseScenario> worldMarketContextBaseScenarios() => [
     bidTypeCap: 0,
     tradeCargoCapacity: 0,
     availableStockpileByCommodityId: null,
-    verify: _verifyContextBaseDefaultStockpile,
+    expect: const WorldMarketContextBaseExpectation(
+      stockpileEmpty: true,
+    ),
     refs: '#3396',
   ),
 ];
-
-void _verifyContextBaseCarriesFields(WorldMarketContextBase ctx) {
-  const stockpile = <CommodityId, int>{'grain': 5, 'silver': 2};
-  expect(ctx.playerId, 'gp1');
-  expect(ctx.bidTypeCap, 6);
-  expect(ctx.tradeCargoCapacity, 12);
-  expect(ctx.availableStockpileByCommodityId, stockpile);
-}
-
-void _verifyContextBaseDefaultStockpile(WorldMarketContextBase ctx) {
-  expect(ctx.availableStockpileByCommodityId, isEmpty);
-}
 
 /// Builds the context for a scenario row.
 TestWorldMarketContextBase buildWorldMarketContextBaseScenario(

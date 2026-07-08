@@ -3,8 +3,10 @@
 export 'treasury_available_scenarios.dart';
 export 'treasury_bid_spend_scenarios.dart';
 export 'treasury_expectations.dart';
+export 'treasury_player_context_expectations.dart';
 export 'treasury_player_context_scenarios.dart';
 export 'treasury_pure_helper_scenarios.dart';
 export 'treasury_sellable_quantity_scenarios.dart';
 export 'treasury_test_support.dart';
+export 'world_market_context_base_expectations.dart';
 export 'world_market_context_base_scenarios.dart';

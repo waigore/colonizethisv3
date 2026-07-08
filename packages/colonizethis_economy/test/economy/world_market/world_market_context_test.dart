@@ -12,7 +12,7 @@ void main() {
     for (final scenario in worldMarketContextBaseScenarios()) {
       test(scenario.label, () {
         final ctx = buildWorldMarketContextBaseScenario(scenario);
-        scenario.verify(ctx);
+        assertWorldMarketContextBaseExpectation(ctx, scenario.expect);
       });
     }
   });

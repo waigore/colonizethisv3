@@ -39,6 +39,8 @@ class PurchasedTileRichesScenario {
             index,
             game,
             expect,
+            tileMapByRegion: tileMaps(),
+            richesCashMultiplier: richesCashMultiplier ?? 1.0,
           ),
           refs: refs,
         );
@@ -243,27 +245,11 @@ List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
       roadLevel: 1,
     ),
     tileMaps: () => tileMapByRegionForResource(Resource.gems),
-    expect: PurchasedTileRichesExpectation(
-      custom: _verifyRichesDeterminism,
+    expect: const PurchasedTileRichesExpectation(
+      deterministicRichesRerun: true,
     ),
   ),
 ];
-
-void _verifyRichesDeterminism(
-  PurchasedTileRichesResult result,
-  PurchasedTileIndex index,
-  Game game,
-) {
-  final tileMaps = tileMapByRegionForResource(Resource.gems);
-  final r2 = computePurchasedTileRichesCredits(
-    game: game,
-    tileMapByRegion: tileMaps,
-    purchasedTileIndex: index,
-  );
-  expect(result.credits.length, equals(r2.credits.length));
-  expect(result.totalTreasuryCredit, equals(r2.totalTreasuryCredit));
-  expect(result.treasuryCreditByGpId, equals(r2.treasuryCreditByGpId));
-}
 
 /// Runs [scenario] through [computePurchasedTileRichesCredits].
 PurchasedTileRichesResult runPurchasedTileRichesScenario(

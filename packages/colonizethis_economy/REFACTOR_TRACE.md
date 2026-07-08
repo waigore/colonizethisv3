@@ -604,3 +604,18 @@ test_support LOC: deferred recount post-slice — purchased-tile + D5 compaction
 
 test_support LOC: deferred recount post-slice — remaining core scenario inline-verify bodies and ≥20% reduction (≤8,200) deferred to slice 19+.
 
+## Phase 3 — Slice 19 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| price-discovery-expectations | `PriceDiscoveryMarketActivityExpectation` data-driven assertions | `price_discovery_expectations.dart` | #3939 |
+| price-discovery-compaction | migrated four market-activity inline `_verify*` rows to `.expect` pins | `price_discovery_scenarios.dart` | #3939 |
+| context-base-expectations | `WorldMarketContextBaseExpectation` data-driven assertions | `world_market_context_base_expectations.dart` | #3939 |
+| context-base-compaction | migrated two context-base inline `_verify*` rows to `.expect` pins | `world_market_context_base_scenarios.dart`, `world_market_context_test.dart` | #3939 |
+| player-context-expectations | `PlayerContextExpectation` + `PlayerContextScenario.expect` data-driven assertions | `treasury_player_context_expectations.dart` | #3615, #3939 |
+| player-context-compaction | migrated nine player-context inline `run` closures to `.expect` rows | `treasury_player_context_scenarios.dart` | #3615, #3939 |
+| purchased-tile-expectations-v2 | extended index/riches expectations with determinism + multi-attribution pins | `purchased_tile_expectations.dart` | #3939 |
+| purchased-tile-compaction | eliminated remaining purchased-tile `_verify*` custom closures | `purchased_tile_index_scenarios.dart`, `purchased_tile_riches_scenarios.dart` | #3939 |
+
+test_support LOC: **14,317** (net +511 vs slice 18 — three expectation helper modules added; price-discovery/context-base/player-context/purchased-tile inline-verify bodies reduced; treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 20+).
+
