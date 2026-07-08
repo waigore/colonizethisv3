@@ -68,59 +68,29 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
     ),
     refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  frrNoEffectRow(
     label: 'offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions',
-    inputs: frrTwoBuyerRivalInputs(
-      offersByFactionId: {
-        'sellerX': [matcherOffer('timber', 10)],
-      },
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'sellerX': [matcherOffer('timber', 10)],
+    },
+    purchasedTileIndex: frrMatcherTestIndex(),
   ),
-  DealMatcherScenario.expect(
+  frrNoEffectRow(
     label: 'offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)',
-    inputs: frrTwoBuyerRivalInputs(
-      offersByFactionId: {
-        'M2': [
-          matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
-        ],
-      },
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'M2': [
+        matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
+      ],
+    },
+    purchasedTileIndex: frrMatcherTestIndex(),
   ),
-  DealMatcherScenario.expect(
+  frrNoEffectRow(
     label: 'null purchasedTileIndex disables FRR (legacy behavior preserved)',
-    inputs: frrTwoBuyerRivalInputs(
-      offersByFactionId: {
-        'M1': [matcherOffer('timber', 10, originTileKey: kFrrMatcherTestTileKey)],
-      },
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'M1': [matcherOffer('timber', 10, originTileKey: kFrrMatcherTestTileKey)],
+    },
   ),
 ];
 

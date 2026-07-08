@@ -1018,5 +1018,14 @@ test_support LOC: **16,622** (net −88 vs slice 51 — shared connectivity/play
 | matcher-ftp-timber | `matcherFtpTimberRow` compact five FTP/priority DealMatcher rows | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #2989, #3939 |
 | deal-on | `dealOn(tileKey, …)` shorthand for FRR credits filled-deal rows | `frr_credits_test_support.dart`, `frr_credits_scenarios.dart` | #2992, #3753, #3939 |
 
-test_support LOC: **16,604** (net −18 vs slice 52 — owP1Imp + FTP timber row + dealOn compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 54+.
+test_support LOC: **16,603** (net −19 vs slice 52 — owP1Imp + FTP timber row + dealOn compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 54+.
+
+## Phase 3 — Slice 54 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|---------------|------|
+| frr-no-effect | `frrNoEffectRow` for three FRR-disabled / unmatched-origin routing pins | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| matcher-a-gp1 | `matcherAgp1Row` for treasury edge a→gp1 clamp / free-fill / cargo rows | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: **16,583** (net −20 vs slice 53 — frrNoEffectRow + matcherAgp1Row compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 55+.
 

@@ -55,25 +55,15 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherAgp1Row(
     label: 'negative-treasury buyer treated as zero budget (full suppression)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerA': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': -50},
-    ),
+    treasuryBudgetByBuyerFactionId: const {'gp1': -50},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledBidsByFactionId: {
         'gp1': [matcherBid('timber', 10)],
       },
     ),
-    refs: '#3115',
   ),
   DealMatcherScenario.expect(
     label: 'FRR pre-pass respects treasury clamp',
@@ -137,20 +127,14 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     expect: const DealMatchExpectation(),
     refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherAgp1Row(
     label:
         'zero-price commodity preserves legacy free-fill (no treasury debit)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('iron', 5)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('iron', 5)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 0},
-      pricesByCommodityId: const <CommodityId, double>{},
-    ),
+    commodity: 'iron',
+    offerQty: 5,
+    bidQty: 5,
+    treasuryBudgetByBuyerFactionId: const {'gp1': 0},
+    pricesByCommodityId: const <CommodityId, double>{},
     expect: const DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: FilledDealExpectation(
@@ -159,43 +143,26 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       ),
       activityNotesEmptyForCommodities: ['iron'],
     ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherAgp1Row(
     label: 'missing buyer entry in treasury budget treated as zero',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 5)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 5)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const <String, int>{},
-    ),
+    offerQty: 5,
+    bidQty: 5,
+    treasuryBudgetByBuyerFactionId: const <String, int>{},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledBidsByFactionId: {
         'gp1': [matcherBid('timber', 5)],
       },
     ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherAgp1Row(
     label: 'unaffordable bid at non-zero price emits a note even with zero '
         'fill quantity',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 1)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 1)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 10},
-      pricesByCommodityId: const {'timber': 30.0},
-    ),
-    expect: DealMatchExpectation(
+    offerQty: 1,
+    bidQty: 1,
+    treasuryBudgetByBuyerFactionId: const {'gp1': 10},
+    expect: const DealMatchExpectation(
       filledDealsEmpty: true,
       activityNotesByCommodityId: {
         'timber': [
@@ -208,26 +175,15 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
         ],
       },
     ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherAgp1Row(
     label: 'cargo clamps tighter than treasury → matchQty falls back to cargo, '
         'no truncation note emitted',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 4},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 10_000},
-      pricesByCommodityId: const {'timber': 30.0},
-    ),
+    buyerCapacity: 4,
+    treasuryBudgetByBuyerFactionId: const {'gp1': 10_000},
     expect: const DealMatchExpectation(
       firstFilledDeal: FilledDealExpectation(quantity: 4),
       activityNotesEmptyForCommodities: ['timber'],
     ),
-    refs: '#3115',
   ),
 ];

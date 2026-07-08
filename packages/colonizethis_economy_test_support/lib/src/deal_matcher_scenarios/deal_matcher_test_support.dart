@@ -404,3 +404,57 @@ DealMatcherScenario matcherFtpTimberRow({
       expect: expect,
       refs: refs,
     );
+
+/// FRR disabled / unmatched origin → normal routing to rival (Refs #3939 slice 54).
+DealMatcherScenario frrNoEffectRow({
+  required String label,
+  required Map<String, List<TradeOrder>> offersByFactionId,
+  PurchasedTileIndex? purchasedTileIndex,
+  String? refs = '#2992',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: frrTwoBuyerRivalInputs(
+        offersByFactionId: offersByFactionId,
+        purchasedTileIndex: purchasedTileIndex,
+      ),
+      expect: const DealMatchExpectation(
+        filledDealsLength: 1,
+        firstFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpB',
+          isFirstRightOfRefusalMatch: false,
+        ),
+      ),
+      refs: refs,
+    );
+
+/// Seller `a` / buyer `gp1` single-commodity row for treasury edges (Refs #3939 slice 54).
+DealMatcherScenario matcherAgp1Row({
+  required String label,
+  required DealMatchExpectation expect,
+  String commodity = 'timber',
+  int offerQty = 10,
+  int bidQty = 10,
+  int buyerCapacity = 100,
+  Map<String, int>? treasuryBudgetByBuyerFactionId,
+  Map<CommodityId, double>? pricesByCommodityId,
+  bool deterministicRerun = false,
+  String? refs = '#3115',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          'a': [matcherOffer(commodity, offerQty)],
+        },
+        bidsByFactionId: {
+          'gp1': [matcherBid(commodity, bidQty)],
+        },
+        tradeCapacityByFactionId: {'gp1': buyerCapacity},
+        treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId,
+        pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
+      ),
+      deterministicRerun: deterministicRerun,
+      expect: expect,
+      refs: refs,
+    );
