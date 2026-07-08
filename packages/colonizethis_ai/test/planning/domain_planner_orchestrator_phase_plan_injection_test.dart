@@ -51,65 +51,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _minorId = 'minor1';
-const String _fieldArmyId = 'field_a';
-const String _owMinorProvince = 'oldWorld|minor1';
-const String _owHomeProvince = 'oldWorld|gp1_0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _minorId = kOrchestratorMinorId;
+const String _fieldArmyId = kOrchestratorFieldArmyId;
+const String _owMinorProvince = kOrchestratorOwMinorProvince;
+const String _owHomeProvince = kOrchestratorOwHomeProvince;
 
 // 7 GP-owned OW provinces: well below the observer quota of 10, so the
 // natural phase is EXPAND. The conquest army-move planner runs and the
 // orchestrator surfaces the fake suggestion below.
-Game _scenarioGame() {
-  return Game(
-    id: 'g-2509-orchestrator-phase-plan-injection',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 30),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesBelowQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _owMinorProvince,
-            regionId: 'oldWorld',
-            ownerId: _minorId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      armies: const [
-        Army(
-          id: _fieldArmyId,
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owHomeProvince,
-          regimentUnitIds: ['u_field'],
-          isHomeArmy: false,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'napoleon',
-      ),
-    ],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor One'),
-    ],
-    tribes: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    ],
-  );
-}
 
 // Fake API drives a single conquest army-move candidate so the orchestrator
 // output cleanly reflects whether the conquest planner ran (EXPAND) or
@@ -173,7 +123,9 @@ void main() {
       'conquest army move when phasePlan is omitted (legacy internal '
       'compute)',
       () {
-        final game = _scenarioGame();
+        final game = buildOrchestratorExpandMinorWarScenarioGame(
+          id: 'g-2509-orchestrator-phase-plan-injection',
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();
@@ -221,7 +173,9 @@ void main() {
       'orchestrator skips the conquest pass (conquestArmyMoveCount == 0), '
       'overriding the natural EXPAND dispatch',
       () {
-        final game = _scenarioGame();
+        final game = buildOrchestratorExpandMinorWarScenarioGame(
+          id: 'g-2509-orchestrator-phase-plan-injection',
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();
@@ -281,7 +235,9 @@ void main() {
         // accidentally branched the two paths (for example by reading
         // additional state inside the orchestrator that the hoisted
         // version did not see) would diverge here.
-        final game = _scenarioGame();
+        final game = buildOrchestratorExpandMinorWarScenarioGame(
+          id: 'g-2509-orchestrator-phase-plan-injection',
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();
@@ -373,7 +329,9 @@ void main() {
       'runDomainPlannersWithOutcome produces identical orders '
       '(Must-have #7 determinism under hoisted dispatch)',
       () {
-        final game = _scenarioGame();
+        final game = buildOrchestratorExpandMinorWarScenarioGame(
+          id: 'g-2509-orchestrator-phase-plan-injection',
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();

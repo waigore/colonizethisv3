@@ -52,142 +52,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _owProvincePrefix = 'oldWorld|gp1_';
-const String _nwGpProvince = 'newWorld|gp1_nw0';
-const String _nwTribeProvince = 'newWorld|tribe1_nw0';
-const String _nwGpTile = '$_nwGpProvince|0|0';
-const String _nwTribeTile = '$_nwTribeProvince|0|0';
-
-// Below-quota OW set sized to the COLONIAL-lite floor
-// (`kObserverColonialLiteNearQuotaOw` = 9) so the GP enters either EXPAND or
-// COLONIAL-lite depending purely on the turn number — keeping the positive
-// vs negative-control fixtures otherwise byte-identical.
-const List<String> _gp1OwProvincesNearQuota = <String>[
-  '${_owProvincePrefix}0',
-  '${_owProvincePrefix}1',
-  '${_owProvincePrefix}2',
-  '${_owProvincePrefix}3',
-  '${_owProvincePrefix}4',
-  '${_owProvincePrefix}5',
-  '${_owProvincePrefix}6',
-  '${_owProvincePrefix}7',
-  '${_owProvincePrefix}8',
-];
-
-/// Builds a GP scenario with:
-///   - 9 GP-owned OW provinces (matches `kObserverColonialLiteNearQuotaOw`).
-///   - 1 GP-owned NW province with an unimproved grain tile and a Builder.
-///   - 1 tribe-owned NW province with an unimproved grain tile and a Merchant
-///     unit (`purchase_land` target).
-///   - Peace + embassy with the tribe so `establishOverture(joinEmpire)` is a
-///     structurally valid candidate per `runDiplomacyPlannerWithResult`.
-///
-/// The non-GP-owned NW province satisfies the
-/// `globalNewWorldHasNonGpOwnership` precondition for COLONIAL-lite, and the
-/// builder/merchant placement gives `selectFullAiCivilianWorkOrders` two
-/// concrete, deterministic candidates the orchestrator must filter
-/// according to phase.
-Game _scenarioGame({required int turnNumber}) {
-  return Game(
-    id: 'g-2509-colonial-lite-orchestrator',
-    worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in _gp1OwProvincesNearQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _nwGpProvince,
-            regionId: 'newWorld',
-            ownerId: _nationId,
-          ),
-          Province(
-            id: _nwTribeProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'b_nw',
-            type: kUnitTypeBuilder,
-            ownerId: _nationId,
-            locationProvinceId: _nwGpProvince,
-            tileKey: _nwGpTile,
-          ),
-          Unit(
-            id: 'm_nw',
-            type: kUnitTypeMerchant,
-            ownerId: _nationId,
-            locationProvinceId: _nwTribeProvince,
-            tileKey: _nwTribeTile,
-          ),
-        ],
-      ),
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvincesNearQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-      playerVisibilityByTile: const {
-        _nationId: {
-          _nwGpTile: 'fullyVisible',
-          _nwTribeTile: 'fullyVisible',
-        },
-      },
-      tileKeysByRegionAndProvince: const {
-        'newWorld': {
-          _nwGpProvince: [_nwGpTile],
-          _nwTribeProvince: [_nwTribeTile],
-        },
-      },
-      resourceByTileKey: const {
-        _nwGpTile: 'grain',
-        _nwTribeTile: 'grain',
-      },
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 60,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: _nationId,
-        targetId: _tribeId,
-        stage: OvertureStage.embassy,
-      ),
-    ],
-  );
-}
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
 
 /// Fake API surfaces the three phase-distinguishing candidates:
 ///   - NW `build_improvement` on the GP-owned NW grain tile;
@@ -203,12 +71,12 @@ const FakeOrderSuggestionAPIForDomainPlannerTests _phasePhasingApi =
     WorkOrder(
       unitId: 'b_nw',
       target: kWorkTargetBuildImprovement,
-      targetTileKey: _nwGpTile,
+      targetTileKey: kOrchestratorColonialLiteNwGpTile,
     ),
     WorkOrder(
       unitId: 'm_nw',
       target: kWorkTargetPurchaseLand,
-      targetTileKey: _nwTribeTile,
+      targetTileKey: kOrchestratorColonialLiteNwTribeTile,
     ),
   ],
   build: [],
@@ -260,7 +128,7 @@ AIWorldSnapshot _nearQuotaSnapshot() {
     // 90 in the negative control.
     colonial: ColonialSummary(
       newWorldProvincesOwned: 1,
-      invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
+      invadableNewWorldProvinceIdsSorted: [kOrchestratorColonialLiteNwTribeProvince],
       adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
       preferredColonialTargetFactionIdsSorted: [_tribeId],
     ),
@@ -294,7 +162,10 @@ void main() {
       () {
         // Turn 120 + OW 9 + tribe-owned NW = COLONIAL-lite per
         // `isObserverColonialLitePhase`.
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+        final game = buildOrchestratorColonialLiteWorkPhasingScenarioGame(
+          id: 'g-2509-colonial-lite-orchestrator',
+          turnNumber: kObserverColonialLiteMinTurn,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshot();
@@ -327,7 +198,7 @@ void main() {
           work.any(
             (w) =>
                 w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
+                w.targetTileKey == kOrchestratorColonialLiteNwTribeTile,
           ),
           isFalse,
           reason:
@@ -340,7 +211,7 @@ void main() {
           work.any(
             (w) =>
                 w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwGpTile,
+                w.targetTileKey == kOrchestratorColonialLiteNwGpTile,
           ),
           isTrue,
           reason:
@@ -373,7 +244,10 @@ void main() {
         // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND.
         // Soft-phase work-order filter keeps NW civilian work at low
         // priority; colonial diplomacy suppression still blocks overtures.
-        final game = _scenarioGame(turnNumber: 90);
+        final game = buildOrchestratorColonialLiteWorkPhasingScenarioGame(
+          id: 'g-2509-colonial-lite-orchestrator',
+          turnNumber: 90,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshot();
@@ -407,7 +281,7 @@ void main() {
           work.any(
             (w) =>
                 w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
+                w.targetTileKey == kOrchestratorColonialLiteNwTribeTile,
           ),
           isTrue,
           reason:
@@ -419,7 +293,7 @@ void main() {
           work.any(
             (w) =>
                 w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwGpTile,
+                w.targetTileKey == kOrchestratorColonialLiteNwGpTile,
           ),
           isTrue,
           reason:
@@ -442,7 +316,10 @@ void main() {
       'emits identical work and diplomatic orders for identical COLONIAL-lite '
       'inputs',
       () {
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+        final game = buildOrchestratorColonialLiteWorkPhasingScenarioGame(
+          id: 'g-2509-colonial-lite-orchestrator',
+          turnNumber: kObserverColonialLiteMinTurn,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshot();

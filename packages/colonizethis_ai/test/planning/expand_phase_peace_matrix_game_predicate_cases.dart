@@ -1,34 +1,7 @@
-// Table-driven matrix consolidation of the EXPAND `(game, snapshot) -> bool`
-// peace-predicate pins (Refs #3749 branch-pin consolidation, companion to the
-// scalar predicate matrix in
-// `expand_phase_planner_below_quota_peace_predicate_matrix_test.dart` and the
-// decider matrix in `expand_phase_planner_peace_target_decider_matrix_test.dart`).
-//
-// This single file replaces three former per-predicate `*_branches_test.dart`
-// suites that each pinned one EXPAND `bool` predicate from
-// `expand_phase_planner.dart` (re-exported from `colonial_pressure.dart`) with
-// one `test(...)` per branch:
-//
-//   - `expand_phase_planner_stalled_ow_gp_blocker_focus_branches_test.dart`
-//   - `expand_phase_planner_can_pivot_from_sole_gp_war_branches_test.dart`
-//   - `expand_phase_planner_has_uninvaded_minor_branches_test.dart`
-//
-// All three pinned predicates share the exact signature
-// `({required Game game, required AIWorldSnapshot snapshot}) -> bool`, so each
-// former branch case becomes one matrix row here with byte-equivalent fixture
-// inputs (Old/New World province ownership, player/minor/tribe roster, the
-// planning GP id, at-war list, own OW count, and the invadable frontier) and
-// the same verbatim expected value + regression `reason`. Coverage is preserved
-// 1:1 — every former assertion has a corresponding row — while the per-file
-// scaffolding collapses into one shared `_buildGame` / `_snapshot` harness and
-// three table-driven loops. See each original suite's history for the full
-// per-branch rationale; the `reason` text on each row carries the regression it
-// guards. The two former determinism guards (repeated-call stability) are kept
-// verbatim in a dedicated group below.
-//
-// SPEC/ai/ai-architecture.md § Observer goal phases (Full AI) — EXPAND
-// diplomacy targeting (stalled OW GP-blocker focus, sole-GP-war pivot
-// availability, and the uninvaded-OW-minor first-peace gate; Refs #2509).
+// EXPAND peace matrix case module (Refs #3749 / #3941).
+// Registered from `expand_phase_peace_matrix_test.dart` — the single contract
+// file for all four former `expand_phase_planner_*_peace_*_matrix_test.dart`
+// shards. Row coverage is preserved 1:1.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
@@ -149,7 +122,7 @@ const Province _gp6Frontier = Province(
   ownerId: _gp6,
 );
 
-void main() {
+void registerExpandPeaceGamePredicateCases() {
   // --- isStalledOldWorldGpBlockerFocus (gp5/gp6 roster, GP-only frontier). ---
   _runPredicate('isStalledOldWorldGpBlockerFocus (truth table)',
       isStalledOldWorldGpBlockerFocus, <_Case>[

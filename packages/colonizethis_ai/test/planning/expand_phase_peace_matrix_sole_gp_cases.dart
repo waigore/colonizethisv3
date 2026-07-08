@@ -1,39 +1,7 @@
-// Table-driven matrix consolidation of the EXPAND **sole-GP** peace-target
-// deciders that share the `({required Game game, required AIWorldSnapshot
-// snapshot}) -> String?` signature (Refs #3749 branch-pin consolidation,
-// continuation of the `List<String>` decider matrix in
-// `expand_phase_planner_peace_target_decider_matrix_test.dart` and the
-// function-unit predicate matrix in
-// `expand_phase_planner_below_quota_peace_predicate_matrix_test.dart`).
-//
-// This single file replaces three former per-decider `*_branches_test.dart`
-// suites that each pinned one `String?`-returning sole-GP peace-target decider
-// with one `test(...)` per branch:
-//
-//   - `expand_phase_planner_sole_at_war_gp_branches_test.dart`
-//     (`soleAtWarGreatPowerId`)
-//   - `expand_phase_planner_consolidate_gains_sole_gp_peace_branches_test.dart`
-//     (`consolidateGainsSoleGpPeaceTarget`)
-//   - `expand_phase_planner_unwinnable_sole_gp_branches_test.dart`
-//     (`unwinnableSoleGpFrontierPeaceTarget`)
-//
-// All three deciders return the sole at-war Great Power id (or `null`) and read
-// a common `AIWorldSnapshot` skeleton (`playerId`, `threats.atWarWith`,
-// `conquest.oldWorldProvincesOwned`, `conquest.invadableProvinceIdsSorted`), so
-// the per-suite snapshot helpers collapse into the shared [_snapshot] factory
-// here. Each decider keeps its own `Game` builder because the fixtures vary
-// legitimately (plain roster vs two-GP OW counts vs own-vs-partner OW frontier);
-// every former branch case becomes one matrix row with byte-equivalent fixture
-// inputs and the same verbatim expected value + regression `reason`. Coverage is
-// preserved 1:1 — every former assertion has a corresponding row (the two
-// determinism guards stay as explicit tests because they invoke a decider more
-// than once). See each original suite's history for the full per-branch
-// rationale; the `reason` text on each row carries the regression it guards.
-//
-// SPEC/ai/ai-architecture.md § Observer goal phases (Full AI) — Diplomacy
-// targeting: the "sole at-war Great Power" predicate gates the below-quota
-// outgunned forced peace (`unwinnableSoleGpFrontierPeaceTarget`) and the
-// quota-met consolidate peace (`consolidateGainsSoleGpPeaceTarget`); Refs #2509.
+// EXPAND peace matrix case module (Refs #3749 / #3941).
+// Registered from `expand_phase_peace_matrix_test.dart` — the single contract
+// file for all four former `expand_phase_planner_*_peace_*_matrix_test.dart`
+// shards. Row coverage is preserved 1:1.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
@@ -296,7 +264,7 @@ Game _ownVsPartnerGame({
   );
 }
 
-void main() {
+void registerExpandPeaceSoleGpCases() {
   // --- soleAtWarGreatPowerId (plain roster, snapshot at-war set only). ---
   _runDecider('soleAtWarGreatPowerId (truth table)', soleAtWarGreatPowerId,
       <_Case>[

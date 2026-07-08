@@ -61,78 +61,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _minorId = 'minor1';
-const String _minorOwProvince = 'oldWorld|minor1_0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _minorId = kOrchestratorAdjacentMinorId;
+const String _minorOwProvince = kOrchestratorAdjacentMinorOwProvince;
 
 // Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
-// Past-quota DEVELOP set remains local (`_gp1OwProvincesDevelop`).
-const List<String> _gp1OwProvincesDevelop = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-  'oldWorld|gp1_11',
-];
-
-Game _scenarioGame({required List<String> gp1OwProvinces}) {
-  return Game(
-    id: 'g-2509-expand-minor-declare-war',
-    worldState: WorldState(
-      // Turn 20 sits inside the EXPAND fixture window for the positive
-      // case; the DEVELOP fixture overrides via `_developSnapshot` and
-      // the helper builds the same turn so the only phase signal that
-      // varies is OW holdings size.
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in gp1OwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _minorOwProvince,
-            regionId: 'oldWorld',
-            ownerId: _minorId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      // Non-empty Home Army for gp1 keeps `regimentCountForPlayer` > 0
-      // and avoids the zero-regiment stalemate peace paths that would
-      // suppress declare-war scoring for unrelated reasons. Mirrors the
-      // home-army guard used in the COLONIAL tribe declare-war pin
-      // (`domain_planner_orchestrator_colonial_tribe_declare_war_test.dart`).
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: gp1OwProvinces.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor1'),
-    ],
-  );
-}
+// Past-quota DEVELOP set: kGp1OwProvincesDevelop (Refs #3941).
 
 // Fake API surfaces declareWar toward minor1 so the orchestrator has a
 // candidate to score and merge. The same suggestion shape is replayed in
@@ -228,7 +162,10 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND minor declareWar', () {
     test('emits declareWar toward adjacent invadable OW minor in EXPAND', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -270,7 +207,10 @@ void main() {
     });
 
     test('suppresses minor declareWar in DEVELOP at quota', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesDevelop);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesDevelop,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _developSnapshot();
@@ -311,7 +251,10 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
