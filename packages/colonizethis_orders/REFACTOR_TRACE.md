@@ -99,6 +99,39 @@ Merged nine `order_suggestion_valid_work_tiles_part*_test.dart` shards → `orde
 
 test/ LOC after slice 3: **33,068** (nine part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness overhead — further compaction deferred with remaining families). ≥20% target ≤26,400 still deferred. Remaining: `order_engine_validate_*`, `order_suggestion_core_part*`, `orders_application_*`, incremental equivalence, lib DRY.
 
+## Wave 3 — Slice 4 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| woa-prospect-eligible | prospect adds tile to playerProspectedTiles when terrain eligible | `orders_application_work_order_application_part1_test.dart` | `support/application/work_order_application_scenarios.dart` + `orders_application_work_order_application_test.dart` | #3949 |
+| woa-prospect-non-mineral | prospect on non-mineral-eligible terrain does not add tile | same | same | #3949 |
+| woa-prospect-mineral-no-map | prospect adds tile when mineral resource present without tile map | same | same | #3949 |
+| woa-prospect-non-mineral-no-map | prospect does not add tile when non-mineral resource present without tile map | same | same | #3949 |
+| woa-build-improvement-complete | build_improvement work order sets currentWork then completes when totalTurns=1 | same | same | #3949 |
+| woa-build-fort-total-turns | build_fort assigns currentWork.totalTurns from totalTurnsForWork (fort level) | same | same | #3949 |
+| woa-counter-spy-assign | counter_spy work order sets currentWork for Spy unit | `…_part2_test.dart` | same | #3949 |
+| woa-purchase-success | purchase_land success: treasury deducted and tile recorded in purchasedTilesByTileKey | same | same | #3949 |
+| woa-purchase-no-embassy | purchase_land rejected when no Embassy with province owner (Minor/Tribe) | same | same | #3949 |
+| woa-purchase-at-war | purchase_land rejected when at war with province owner (Minor/Tribe) | same | same | #3949 |
+| woa-purchase-first-wins | purchase_land same tile by two GPs: first wins, second does not deduct or overwrite | same | same | #3949 |
+| woa-build-fort-deduct | build_fort with sufficient materials deducts materials | `…_part3_test.dart` | same | #3949 |
+| woa-build-fort-l2-tech | build_fort to level 2 is skipped without Mine Engineering | same | same | #3949 |
+| woa-build-fort-l3-tech | build_fort to level 3 is skipped without Modern Forts | same | same | #3949 |
+| woa-upgrade-town | upgrade_town completion increases province townDevelopmentLevel | same | same | #3949 |
+| woa-counter-spy-process | counter_spy processWork keeps ongoing assignment without killing in build/work | same | same | #3949 |
+| woa-unknown-target | unknown work target is skipped and unit stays idle | `…_part4_test.dart` | same | #3949 |
+| woa-build-road-insufficient | build_road with insufficient materials does not set currentWork or deduct stockpile | same | same | #3949 |
+| woa-build-road-sufficient | build_road with sufficient materials deducts materials and sets currentWork | same | same | #3949 |
+| woa-counter-spy-owned-capital | counter_spy work order sets currentWork for Spy unit on owned capital province | `…_part5_test.dart` (was duplicate label; disambiguated) | same | #3949 |
+| woa-explore-assign | explore work order sets currentWork when province has tiles | same | same | #3949 |
+| woa-explore-formula | explore work order totalTurns uses region-scoped formula ceil(3 * tilesInP / maxTilesInRegion) | same | same | #3949 |
+| woa-engineer-road | Engineer build_road work order sets currentWork | same | same | #3949 |
+| woa-build-port | build_port work order sets currentWork when materials sufficient | same | same | #3949 |
+
+Merged five `orders_application_work_order_application_part*_test.dart` → `orders_application_work_order_application_test.dart` (≤400 lines). Bodies live in `work_order_application_expectations.dart`; labels in `work_order_application_scenarios.dart`.
+
+test/ LOC after slice 4: **33,241** (five part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred). ≥20% target ≤26,400 still deferred. Remaining: `order_engine_validate_*`, `order_suggestion_core_part*`, other `orders_application_*`, incremental equivalence, lib DRY.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
