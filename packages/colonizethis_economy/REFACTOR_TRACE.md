@@ -508,4 +508,17 @@ Economy `test/` LOC: **2,153** (down from 2,238 slice 8). test_support: **12,356
 | dm-record-compaction | migrated DealMatcher empty/basic/cargo/boycott/activity/sell-priority/treasury/FRR-activity rows to `.expect` | `deal_matcher_core_scenarios.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_sell_priority_scenarios.dart`, `deal_matcher_treasury_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3939 |
 | validator-record-compaction | migrated validator cap rows (bidTypeCap 0/3) to `.expect` | `validator_scenarios/trade_order_validator_scenarios.dart` | #3939 |
 
-test_support LOC: **12,518** (net +162 vs slice 9 — expectation helpers added; further FRR/priority/complex-row compaction and scenario-data dedup deferred to slice 11+ for ≤8,200 target).
+## Phase 3 — Slice 11 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-expectations-v2 | `FilledDealExpectation`, `frrFilledDeal`/`nonFrrFilledDeal`, `filledDealCommodityIds` on `DealMatchExpectation` | `deal_matcher_expectations.dart` | #3939 |
+| validator-expectations-v2 | `singleAccepted`, `singleRejectedWithReason`, `allSameReason`, `firstNAccepted`/`thenRejectedWithReason`, `resultsEmpty` on `ValidatorExpectation` | `validator_expectations.dart` | #3939 |
+| dm-priority-compaction | migrated remaining priority/FTP/multi-commodity rows to `.expect` | `deal_matcher_priority_scenarios.dart` | #3939 |
+| dm-frr-compaction | migrated remaining FRR routing/multi-bid rows to `.expect` | `deal_matcher_frr_scenarios.dart` | #3939 |
+| dm-treasury-compaction | migrated remaining treasury clamp/edge rows to `.expect` | `deal_matcher_treasury_scenarios.dart` | #3939 |
+| dm-sell-priority-compaction | migrated relation tiebreaker row to `.expect` | `deal_matcher_sell_priority_scenarios.dart` | #3939 |
+| validator-compaction | migrated cap/rules/treasury validator rows to `.expect` | `trade_order_validator_scenarios.dart`, `trade_order_validator_treasury_scenarios.dart` | #3939 |
+
+test_support LOC: **12,624** (net +106 vs slice 10 — `FilledDealExpectation` class + validator helpers; DealMatcher/validator inline-verify compaction; FRR credits / non-GP extraction / auto-offers scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 12+).
+

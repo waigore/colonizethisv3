@@ -137,7 +137,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'priority tier remains absolute over relation tiebreaker',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -155,11 +155,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpHigh': 90, 'gpLow': 10},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(2));
-      expect(result.filledDeals.first.buyerFactionId, 'gpLow');
-      expect(result.filledDeals[1].buyerFactionId, 'gpHigh');
-    },
+    expect: const DealMatchExpectation(
+      filledDealExpectations: [
+        FilledDealExpectation(buyerFactionId: 'gpLow'),
+        FilledDealExpectation(buyerFactionId: 'gpHigh'),
+      ],
+    ),
     refs: '#3753',
   ),
 ];

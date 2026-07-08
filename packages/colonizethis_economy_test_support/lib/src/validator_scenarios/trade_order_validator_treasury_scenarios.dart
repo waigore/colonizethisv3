@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'trade_order_validator_scenarios.dart';
 import 'trade_order_validator_test_support.dart';
+import 'validator_expectations.dart';
 import '../treasury_scenarios/treasury_test_support.dart';
 
 int _catalogTimberBudgetForQty2() {
@@ -29,7 +30,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [
 ];
 
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'rejects bid when cumulative spend exceeds treasuryBudgetForBids',
     context: validatorCtx(
       treasuryBudgetForBids: 60,
@@ -44,16 +45,18 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.iron.id, 2),
     ],
-    verify: (results) {
-      expect(results[0].isAccepted, isTrue);
-      expect(
-        results[1].reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-    },
+    expect: ValidatorExpectation(
+      outcomes: [
+        (accepted: true, reason: null),
+        (
+          accepted: false,
+          reason: TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+        ),
+      ],
+    ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'accepts bids whose cumulative spend equals treasuryBudgetForBids',
     context: validatorCtx(
       treasuryBudgetForBids: 60,
@@ -62,12 +65,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       ),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
-    verify: (results) {
-      expect(results.single.isAccepted, isTrue);
-    },
+    expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'treasury cap takes precedence over bidExceedsCargoCapacity (rule 5 '
         'before rule 6)',
     context: validatorCtx(
@@ -78,15 +79,13 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       ),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 5)],
-    verify: (results) {
-      expect(
-        results.single.reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-    },
+    expect: ValidatorExpectation(
+      singleRejectedWithReason:
+          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+    ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'bids with no effective market price contribute zero treasury spend '
         '(defensive guard against unknown / future commodity ids)',
     context: validatorCtx(
@@ -94,12 +93,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid('not_a_real_commodity', 10)],
-    verify: (results) {
-      expect(results.single.isAccepted, isTrue);
-    },
+    expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'manufactured commodity bids now consume the catalog base price '
         '(Refs #3093 manufactured-default-prices slice)',
     context: validatorCtx(
@@ -107,15 +104,13 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
-    verify: (results) {
-      expect(
-        results.single.reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-    },
+    expect: ValidatorExpectation(
+      singleRejectedWithReason:
+          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+    ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'accepts cumulative spend equal to treasuryBudgetForBids across '
         'distinct commodities in submission order (Refs #3123)',
     context: validatorCtx(
@@ -131,18 +126,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       validatorBid(CommodityCatalog.timber.id, 2),
       validatorBid(CommodityCatalog.iron.id, 4),
     ],
-    verify: (results) {
-      expect(results, hasLength(2));
-      expect(results[0].isAccepted, isTrue);
-      expect(
-        results[1].isAccepted,
-        isTrue,
-        reason: 'cumulative 100 == budget must be admitted',
-      );
-    },
+    expect: const ValidatorExpectation(allAccepted: true),
     refs: '#3123',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'rejected bid does not consume the running spend budget — greedy '
         'continuation admits a later smaller bid that fits (Refs #3123)',
     context: validatorCtx(
@@ -159,28 +146,30 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
       validatorBid(CommodityCatalog.timber.id, 4),
       validatorBid(CommodityCatalog.iron.id, 1),
     ],
-    verify: (results) {
-      expect(results, hasLength(2));
-      expect(
-        results[0].reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-      expect(
+    expect: ValidatorExpectation(
+      outcomes: [
+        (
+          accepted: false,
+          reason: TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+        ),
+        (accepted: true, reason: null),
+      ],
+      custom: (results) => expect(
         results[1].isAccepted,
         isTrue,
         reason:
             'greedy continuation: rejected bid must not consume '
             'the running spend budget so a later bid that fits the '
             'remaining budget is admitted',
-      );
-    },
+      ),
+    ),
     refs: '#3123',
   ),
 ];
 
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() =>
     [
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',
     context: validatorCtx(
       treasuryBudgetForBids: 0,
@@ -192,20 +181,13 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.timber.id, 5),
     ],
-    verify: (results) {
-      expect(results, hasLength(2));
-      expect(
-        results[0].reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-      expect(
-        results[1].reason,
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-      );
-    },
+    expect: const ValidatorExpectation(
+      allRejectedWithReason:
+          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+    ),
     refs: '#3123',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'admits a bid priced solely from the catalog default when budget '
         'allows (Refs #3123 AC: rule 5 must not reject for unknown price '
         'when an initial/default price exists)',
@@ -214,25 +196,27 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
       worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
-    verify: (results) {
-      final int? catalogTimber = ResourceRules.defaultRules
-          .defaultMarketPriceForCommodityId(CommodityCatalog.timber.id);
-      expect(
-        catalogTimber,
-        isNotNull,
-        reason: 'timber must have a catalog default for this AC pin',
-      );
-      expect(
-        results.single.isAccepted,
-        isTrue,
-        reason:
-            'rule 5 must use the catalog default and admit when '
-            'cumulative spend fits the budget',
-      );
-    },
+    expect: ValidatorExpectation(
+      custom: (results) {
+        final int? catalogTimber = ResourceRules.defaultRules
+            .defaultMarketPriceForCommodityId(CommodityCatalog.timber.id);
+        expect(
+          catalogTimber,
+          isNotNull,
+          reason: 'timber must have a catalog default for this AC pin',
+        );
+        expect(
+          results.single.isAccepted,
+          isTrue,
+          reason:
+              'rule 5 must use the catalog default and admit when '
+              'cumulative spend fits the budget',
+        );
+      },
+    ),
     refs: '#3123',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'admits a manufactured-commodity bid priced from the catalog '
         'default when budget allows (Refs #3123 AC, manufactured branch)',
     context: validatorCtx(
@@ -240,16 +224,18 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
       worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 1)],
-    verify: (results) {
-      final int? catalogLumber = ResourceRules.defaultRules
-          .defaultMarketPriceForCommodityId(CommodityCatalog.lumber.id);
-      expect(
-        catalogLumber,
-        isNotNull,
-        reason: 'lumber must have a manufactured catalog default',
-      );
-      expect(results.single.isAccepted, isTrue);
-    },
+    expect: ValidatorExpectation(
+      custom: (results) {
+        final int? catalogLumber = ResourceRules.defaultRules
+            .defaultMarketPriceForCommodityId(CommodityCatalog.lumber.id);
+        expect(
+          catalogLumber,
+          isNotNull,
+          reason: 'lumber must have a manufactured catalog default',
+        );
+        expect(results.single.isAccepted, isTrue);
+      },
+    ),
     refs: '#3123',
   ),
 ];

@@ -40,7 +40,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'per-buyer running tally exhausts treasury across bids in order',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -54,17 +54,16 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       treasuryBudgetByBuyerFactionId: const {'gp1': 100},
       pricesByCommodityId: const {'alpha': 20.0, 'beta': 20.0},
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final alphaDeal = result.filledDeals.single;
-      expect(alphaDeal.commodityId, 'alpha');
-      expect(alphaDeal.quantity, 5);
-      expect(result.unfilledBidsByFactionId['gp1'], hasLength(1));
-      expect(
-        result.unfilledBidsByFactionId['gp1']!.single,
-        matcherBid('beta', 5),
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.commodityId, 'alpha');
+        expect(deal.quantity, 5);
+      },
+      unfilledBidsByFactionId: {
+        'gp1': [matcherBid('beta', 5)],
+      },
+    ),
     refs: '#3115',
   ),
   DealMatcherScenario.expect(
@@ -87,7 +86,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'FRR pre-pass respects treasury clamp',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -103,18 +102,17 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       pricesByCommodityId: const {'timber': 20.0},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final frrDeal = result.filledDeals.single;
-      expect(frrDeal.isFirstRightOfRefusalMatch, isTrue);
-      expect(frrDeal.buyerFactionId, 'gpA');
-      expect(frrDeal.quantity, 3);
-      expect(result.unfilledBidsByFactionId['gpA'], hasLength(1));
-      expect(
-        result.unfilledBidsByFactionId['gpA']!.single,
-        matcherBid('timber', 10).copyWith(quantity: 7),
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.isFirstRightOfRefusalMatch, isTrue);
+        expect(deal.buyerFactionId, 'gpA');
+        expect(deal.quantity, 3);
+      },
+      unfilledBidsByFactionId: {
+        'gpA': [matcherBid('timber', 10).copyWith(quantity: 7)],
+      },
+    ),
     refs: '#3115',
   ),
 ];
@@ -152,7 +150,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'two identical runs produce byte-identical FilledDeal sequences',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -165,26 +163,28 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100, 'gp2': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': 100, 'gp2': 200},
     ),
-    verify: (result) {
-      final b = DealMatcher.matchDeals(
-        matcherInputs(
-          offersByFactionId: {
-            'a': [matcherOffer('timber', 10)],
-          },
-          bidsByFactionId: {
-            'gp1': [matcherBid('timber', 10)],
-            'gp2': [matcherBid('timber', 10)],
-          },
-          tradeCapacityByFactionId: const {'gp1': 100, 'gp2': 100},
-          treasuryBudgetByBuyerFactionId: const {'gp1': 100, 'gp2': 200},
-        ),
-      );
-      expect(result.filledDeals, equals(b.filledDeals));
-      expect(
-        result.unfilledBidsByFactionId.keys.toList()..sort(),
-        equals(b.unfilledBidsByFactionId.keys.toList()..sort()),
-      );
-    },
+    expect: DealMatchExpectation(
+      custom: (result) {
+        final b = DealMatcher.matchDeals(
+          matcherInputs(
+            offersByFactionId: {
+              'a': [matcherOffer('timber', 10)],
+            },
+            bidsByFactionId: {
+              'gp1': [matcherBid('timber', 10)],
+              'gp2': [matcherBid('timber', 10)],
+            },
+            tradeCapacityByFactionId: const {'gp1': 100, 'gp2': 100},
+            treasuryBudgetByBuyerFactionId: const {'gp1': 100, 'gp2': 200},
+          ),
+        );
+        expect(result.filledDeals, equals(b.filledDeals));
+        expect(
+          result.unfilledBidsByFactionId.keys.toList()..sort(),
+          equals(b.unfilledBidsByFactionId.keys.toList()..sort()),
+        );
+      },
+    ),
     refs: '#3115',
   ),
   DealMatcherScenario.expect(

@@ -17,7 +17,7 @@ List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'partial FRR fill: residual offer quantity becomes available for '
         'other GPs at their normal priority tier',
@@ -32,26 +32,24 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 2);
-      final frrDeal = result.filledDeals.firstWhere(
-        (d) => d.isFirstRightOfRefusalMatch,
-      );
-      expect(frrDeal.buyerFactionId, 'gpA');
-      expect(frrDeal.quantity, 4);
-      final regularDeal = result.filledDeals.firstWhere(
-        (d) => !d.isFirstRightOfRefusalMatch,
-      );
-      expect(regularDeal.buyerFactionId, 'gpB');
-      expect(regularDeal.quantity, 6);
-      expect(result.unfilledBidsByFactionId['gpB'], [
-        matcherBid('timber', 4, priority: 1),
-      ]);
-      expect(result.unfilledOffersByFactionId, isEmpty);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 2,
+      frrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: 'gpA',
+        quantity: 4,
+      ),
+      nonFrrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: 'gpB',
+        quantity: 6,
+      ),
+      unfilledBidsByFactionId: {
+        'gpB': [matcherBid('timber', 4, priority: 1)],
+      },
+      unfilledOffersEmpty: true,
+    ),
     refs: '#2992',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'cargo limit caps FRR fill (per-buyer cumulative cargo still applies)',
     inputs: matcherInputs(
@@ -65,25 +63,25 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 3, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 2);
-      final frrDeal = result.filledDeals.firstWhere(
-        (d) => d.isFirstRightOfRefusalMatch,
-      );
-      expect(frrDeal.buyerFactionId, 'gpA');
-      expect(frrDeal.quantity, 3);
-      final regularDeal = result.filledDeals.firstWhere(
-        (d) => !d.isFirstRightOfRefusalMatch,
-      );
-      expect(regularDeal.buyerFactionId, 'gpB');
-      expect(regularDeal.quantity, 7);
-      expect(result.unfilledBidsByFactionId['gpA'], [
-        matcherBid('timber', 7, priority: 1),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 2,
+      frrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: 'gpA',
+        quantity: 3,
+      ),
+      nonFrrFilledDeal: const FilledDealExpectation(
+        buyerFactionId: 'gpB',
+        quantity: 7,
+      ),
+      custom: (result) {
+        expect(result.unfilledBidsByFactionId['gpA'], [
+          matcherBid('timber', 7, priority: 1),
+        ]);
+      },
+    ),
     refs: '#2992',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions',
     inputs: matcherInputs(
@@ -97,15 +95,16 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 1);
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, 'gpB');
-      expect(deal.isFirstRightOfRefusalMatch, isFalse);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.buyerFactionId, 'gpB');
+        expect(deal.isFirstRightOfRefusalMatch, isFalse);
+      },
+    ),
     refs: '#2992',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)',
     inputs: matcherInputs(
@@ -121,15 +120,16 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 1);
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, 'gpB');
-      expect(deal.isFirstRightOfRefusalMatch, isFalse);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.buyerFactionId, 'gpB');
+        expect(deal.isFirstRightOfRefusalMatch, isFalse);
+      },
+    ),
     refs: '#2992',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'null purchasedTileIndex disables FRR (legacy behavior preserved)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -141,18 +141,19 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       },
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 1);
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, 'gpB');
-      expect(deal.isFirstRightOfRefusalMatch, isFalse);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.buyerFactionId, 'gpB');
+        expect(deal.isFirstRightOfRefusalMatch, isFalse);
+      },
+    ),
     refs: '#2992',
   ),
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'multiple purchased tiles owned by the same GP each route through FRR',
     inputs: matcherInputs(
@@ -181,19 +182,26 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
         ),
       ]),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 2);
-      for (final deal in result.filledDeals) {
-        expect(deal.buyerFactionId, 'gpA');
-        expect(deal.quantity, 5);
-        expect(deal.isFirstRightOfRefusalMatch, isTrue);
-      }
-      expect(result.unfilledOffersByFactionId, isEmpty);
-      expect(result.unfilledBidsByFactionId, isEmpty);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 2,
+      filledDealExpectations: const [
+        FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: 5,
+          isFirstRightOfRefusalMatch: true,
+        ),
+        FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: 5,
+          isFirstRightOfRefusalMatch: true,
+        ),
+      ],
+      unfilledOffersEmpty: true,
+      unfilledBidsEmpty: true,
+    ),
     refs: '#2992',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'FRR pass respects multiple bids from the owning GP in submission order',
     inputs: matcherInputs(
@@ -209,18 +217,24 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 2);
-      for (final deal in result.filledDeals) {
-        expect(deal.buyerFactionId, 'gpA');
-        expect(deal.isFirstRightOfRefusalMatch, isTrue);
-      }
-      expect(result.filledDeals[0].quantity, 4);
-      expect(result.filledDeals[1].quantity, 6);
-      expect(result.unfilledBidsByFactionId['gpA'], [
-        matcherBid('timber', 2, priority: 5),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 2,
+      filledDealExpectations: const [
+        FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: 4,
+          isFirstRightOfRefusalMatch: true,
+        ),
+        FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: 6,
+          isFirstRightOfRefusalMatch: true,
+        ),
+      ],
+      unfilledBidsByFactionId: {
+        'gpA': [matcherBid('timber', 2, priority: 5)],
+      },
+    ),
     refs: '#2992',
   ),
 ];

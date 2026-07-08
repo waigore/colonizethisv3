@@ -1,8 +1,56 @@
-// Compact DealMatcher result assertions (Refs #3939 phase 3 slice 10).
+// Compact DealMatcher result assertions (Refs #3939 phase 3 slice 10+).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+/// Per-deal field pins for data-driven [DealMatchExpectation] rows.
+class FilledDealExpectation {
+  const FilledDealExpectation({
+    this.buyerFactionId,
+    this.sellerFactionId,
+    this.commodityId,
+    this.quantity,
+    this.pricePerUnit,
+    this.isFtpMatch,
+    this.isFirstRightOfRefusalMatch,
+  });
+
+  final String? buyerFactionId;
+  final String? sellerFactionId;
+  final String? commodityId;
+  final int? quantity;
+  final double? pricePerUnit;
+  final bool? isFtpMatch;
+  final bool? isFirstRightOfRefusalMatch;
+}
+
+void _assertFilledDealExpectation(
+  FilledDeal deal,
+  FilledDealExpectation expectation,
+) {
+  if (expectation.buyerFactionId != null) {
+    expect(deal.buyerFactionId, expectation.buyerFactionId);
+  }
+  if (expectation.sellerFactionId != null) {
+    expect(deal.sellerFactionId, expectation.sellerFactionId);
+  }
+  if (expectation.commodityId != null) {
+    expect(deal.commodityId, expectation.commodityId);
+  }
+  if (expectation.quantity != null) {
+    expect(deal.quantity, expectation.quantity);
+  }
+  if (expectation.pricePerUnit != null) {
+    expect(deal.pricePerUnit, expectation.pricePerUnit);
+  }
+  if (expectation.isFtpMatch != null) {
+    expect(deal.isFtpMatch, expectation.isFtpMatch);
+  }
+  if (expectation.isFirstRightOfRefusalMatch != null) {
+    expect(deal.isFirstRightOfRefusalMatch, expectation.isFirstRightOfRefusalMatch);
+  }
+}
 
 /// Data-driven expectations for [DealMatchResult] scenario rows.
 class DealMatchExpectation {
@@ -10,6 +58,10 @@ class DealMatchExpectation {
     this.filledDeals,
     this.filledDealsLength,
     this.filledDealsEmpty = false,
+    this.filledDealExpectations,
+    this.filledDealCommodityIds,
+    this.frrFilledDeal,
+    this.nonFrrFilledDeal,
     this.unfilledOffersByFactionId,
     this.unfilledBidsByFactionId,
     this.unfilledOffersEmpty = false,
@@ -22,6 +74,10 @@ class DealMatchExpectation {
   final List<FilledDeal>? filledDeals;
   final int? filledDealsLength;
   final bool filledDealsEmpty;
+  final List<FilledDealExpectation>? filledDealExpectations;
+  final List<CommodityId>? filledDealCommodityIds;
+  final FilledDealExpectation? frrFilledDeal;
+  final FilledDealExpectation? nonFrrFilledDeal;
   final Map<String, List<TradeOrder>>? unfilledOffersByFactionId;
   final Map<String, List<TradeOrder>>? unfilledBidsByFactionId;
   final bool unfilledOffersEmpty;
@@ -43,6 +99,36 @@ void assertDealMatchExpectation(
   }
   if (expectation.filledDeals != null) {
     expect(result.filledDeals, expectation.filledDeals);
+  }
+  if (expectation.filledDealExpectations != null) {
+    expect(
+      result.filledDeals,
+      hasLength(expectation.filledDealExpectations!.length),
+    );
+    for (var i = 0; i < expectation.filledDealExpectations!.length; i++) {
+      _assertFilledDealExpectation(
+        result.filledDeals[i],
+        expectation.filledDealExpectations![i],
+      );
+    }
+  }
+  if (expectation.filledDealCommodityIds != null) {
+    expect(
+      result.filledDeals.map((d) => d.commodityId).toList(),
+      expectation.filledDealCommodityIds,
+    );
+  }
+  if (expectation.frrFilledDeal != null) {
+    final frrDeal = result.filledDeals.firstWhere(
+      (d) => d.isFirstRightOfRefusalMatch,
+    );
+    _assertFilledDealExpectation(frrDeal, expectation.frrFilledDeal!);
+  }
+  if (expectation.nonFrrFilledDeal != null) {
+    final regularDeal = result.filledDeals.firstWhere(
+      (d) => !d.isFirstRightOfRefusalMatch,
+    );
+    _assertFilledDealExpectation(regularDeal, expectation.nonFrrFilledDeal!);
   }
   if (expectation.unfilledOffersEmpty) {
     expect(result.unfilledOffersByFactionId, isEmpty);

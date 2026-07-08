@@ -1,4 +1,4 @@
-// Compact TradeOrderValidator result assertions (Refs #3939 phase 3 slice 10).
+// Compact TradeOrderValidator result assertions (Refs #3939 phase 3 slice 10+).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
@@ -12,12 +12,24 @@ class ValidatorExpectation {
     this.outcomes,
     this.allAccepted = false,
     this.allRejectedWithReason,
+    this.allSameReason,
+    this.singleAccepted,
+    this.singleRejectedWithReason,
+    this.resultsEmpty = false,
+    this.firstNAccepted,
+    this.thenRejectedWithReason,
     this.custom,
   });
 
   final List<ValidatorOrderOutcome>? outcomes;
   final bool allAccepted;
   final String? allRejectedWithReason;
+  final String? allSameReason;
+  final bool? singleAccepted;
+  final String? singleRejectedWithReason;
+  final bool resultsEmpty;
+  final int? firstNAccepted;
+  final String? thenRejectedWithReason;
   final void Function(List<OrderValidationResult> results)? custom;
 }
 
@@ -25,6 +37,9 @@ void assertValidatorExpectation(
   List<OrderValidationResult> results,
   ValidatorExpectation expectation,
 ) {
+  if (expectation.resultsEmpty) {
+    expect(results, isEmpty);
+  }
   if (expectation.allAccepted) {
     for (final result in results) {
       expect(result.isAccepted, isTrue, reason: result.reason);
@@ -35,6 +50,17 @@ void assertValidatorExpectation(
       expect(result.reason, expectation.allRejectedWithReason);
     }
   }
+  if (expectation.allSameReason != null) {
+    for (final result in results) {
+      expect(result.reason, expectation.allSameReason);
+    }
+  }
+  if (expectation.singleAccepted != null) {
+    expect(results.single.isAccepted, expectation.singleAccepted);
+  }
+  if (expectation.singleRejectedWithReason != null) {
+    expect(results.single.reason, expectation.singleRejectedWithReason);
+  }
   if (expectation.outcomes != null) {
     expect(results, hasLength(expectation.outcomes!.length));
     for (var i = 0; i < expectation.outcomes!.length; i++) {
@@ -44,6 +70,15 @@ void assertValidatorExpectation(
       if (!expected.accepted) {
         expect(actual.reason, expected.reason);
       }
+    }
+  }
+  if (expectation.firstNAccepted != null) {
+    final n = expectation.firstNAccepted!;
+    for (var i = 0; i < n; i++) {
+      expect(results[i].isAccepted, isTrue, reason: results[i].reason);
+    }
+    if (expectation.thenRejectedWithReason != null) {
+      expect(results[n].reason, expectation.thenRejectedWithReason);
     }
   }
   expectation.custom?.call(results);
