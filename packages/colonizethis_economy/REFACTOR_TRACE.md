@@ -396,6 +396,40 @@ Modules:
 
 Core scenario migration progress: `trade_interception_test.dart`, `trade_interception_scan_test.dart`, `town_manufacturing_bonus_test.dart` (10 table rows + 4 documented pure-helper exceptions).
 
+## Phase 3 — Slice 4 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| game-lookup-province | two `buildProvinceIndex` rows | `game_lookup_helpers_test.dart` → `game_lookup_helpers_scenarios.dart` | #3939 |
+| game-lookup-ports | three `collectPortTileKeys` rows | `game_lookup_helpers_test.dart` → `game_lookup_helpers_scenarios.dart` | #3939 |
+| cost-check-precond | five `checkPreconditionsInOrder` rows | `cost_check_test.dart` → `cost_check_scenarios.dart` | #3517, #3939 |
+| extraction-stockpile | six `applyExtractionToStockpile` rows | `economy_extraction_test.dart` → `economy_extraction_scenarios.dart` | #3939 |
+| extraction-players | three `applyExtractionForPlayers` rows | `economy_extraction_test.dart` → `economy_extraction_scenarios.dart` | #3939 |
+| sea-transport-holds | four `cargoHoldsForHomeFleet` rows | `sea_transport_test.dart` → `sea_transport_scenarios.dart` | #3939 |
+| sea-transport-allocate | four `allocateOverseasToStockpile` rows | `sea_transport_test.dart` → `sea_transport_scenarios.dart` | #3939 |
+| tile-resource-ctx | three `resolveTileKeyResourceContext` rows | `tile_extraction_pipeline_test.dart` → `tile_extraction_pipeline_scenarios.dart` | #3939 |
+| tile-extraction-ctx | three `resolveTileKeyExtractionContext` rows | `tile_extraction_pipeline_test.dart` → `tile_extraction_pipeline_scenarios.dart` | #3939 |
+| trade-cargo-tonnage | two `overseasShippedTonnageFromExtractionTotals` rows | `economy/trade_cargo_capacity_test.dart` → `trade_cargo_capacity_scenarios.dart` | #3939 |
+| trade-cargo-capacity | one empty-tile-map capacity row | `economy/trade_cargo_capacity_test.dart` → `trade_cargo_capacity_scenarios.dart` | #3939 |
+| trade-cargo-bypass | four extractionById bypass rows | `economy/trade_cargo_capacity_test.dart` → `trade_cargo_capacity_scenarios.dart` | #3517, #3939 |
+| projected-cost-work | two work-material rows | `economy/projected_cost_engine_test.dart` → `projected_cost_engine_scenarios.dart` | #3939 |
+| projected-cost-build | two build-delegation rows | `economy/projected_cost_engine_test.dart` → `projected_cost_engine_scenarios.dart` | #3939 |
+
+Modules:
+- `colonizethis_economy_test_support/lib/src/game_lookup_helpers_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/cost_check_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/economy_extraction_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/sea_transport_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/tile_extraction_pipeline_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/trade_cargo_capacity_scenarios.dart`
+- `colonizethis_economy_test_support/lib/src/projected_cost_engine_scenarios.dart`
+
+Core scenario migration progress: seven additional imperative suites migrated (39 table rows); `non_gp_auto_offers_purchased_tile_test.dart` and lib DRY deferred to slice 5+.
+
+Economy `test/` LOC: **2,415** (down from 3,093 slice 3). test_support: **12,184** (treasury/deal-matcher consolidation still deferred for ≤8,200 target).
+
+Wall-clock (advisory, 3-run median): **32.49 s** — above `ECONOMY_TEST_TIMING_CEILING_SECONDS` (25 s); documented per `SPEC/program/economy-test-wall-clock.md`; not a merge blocker.
+
 ## Phase 3 — documented exceptions (partial; extended in later slices)
 
 | file | retained test description(s) | rationale | refs |
@@ -403,10 +437,4 @@ Core scenario migration progress: `trade_interception_test.dart`, `trade_interce
 | `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically` | pure `DealMatcher.pairKey` helper unit tests | #3939 |
 | `world_market_deal_matcher_frr_test.dart` | `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
 | `town_manufacturing_bonus_test.dart` | `level 2 → 1, level 4 → 2, others → 0`; three `isTownManufacturingRecipeEligible` rows | pure multiplier / recipe-eligibility helper unit tests | #3872, #3939 |
-| `game_lookup_helpers_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `economy_extraction_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `cost_check_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `tile_extraction_pipeline_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `economy/trade_cargo_capacity_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `economy/projected_cost_engine_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
-| `sea_transport_test.dart` | (all) | pending core scenario migration | #3939 slice 4+ |
+| `non_gp_auto_offers_purchased_tile_test.dart` | (all) | pending core scenario migration | #3939 slice 5+ |
