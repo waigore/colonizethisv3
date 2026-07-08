@@ -969,3 +969,12 @@ test_support LOC: **16,987** (net −15 vs slice 46 — auto-offer + sellable/of
 
 test_support LOC: **16,971** (net −16 vs slice 47 — purchased-tile riches + extractor DSL compaction). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 49+.
 
+## Phase 3 — Slice 49 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-d5-shared | Shared `frr_d5_test_support.dart` for D5 AC constants/helpers used by matcher + credits | `frr_d5_test_support.dart`, `frr_credits_scenarios.dart`, `deal_matcher_test_support.dart` | #2992 D5, #3939 |
+| deal-matcher-inline | Inline single-use FTP/treasury/FRR multi-bid row wrappers into scenario modules | `deal_matcher_{priority,treasury,frr}_scenarios.dart`, `deal_matcher_test_support.dart` | #2989, #2992, #3115, #3939 |
+
+test_support LOC: **16,863** (net −108 vs slice 48 — D5 fixture dedup + one-shot DealMatcher row inlining). Economy `test/` **1,392** (unchanged). Further treasury/validator/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 50+.
+
