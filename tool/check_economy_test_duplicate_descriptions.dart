@@ -20,16 +20,20 @@ const _economyTestDir = 'packages/colonizethis_economy/test';
 /// to be the complete first argument (followed by the test body comma or a
 /// closing paren), so Dart adjacent-string concatenations spanning lines are
 /// intentionally ignored rather than partially matched.
-final RegExp _testDescription = RegExp(
+final RegExp economyTestDescriptionPattern = RegExp(
   r"""(?:test|testWidgets)\(\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")\s*[,)]""",
 );
 
 /// True when [line] is a pure comment line (`//`, `///`, or a `*` doc/block
 /// continuation), so a description mentioned in prose is not flagged.
-bool _isCommentLine(String line) {
+bool economyTestDescriptionIsCommentLine(String line) {
   final trimmed = line.trimLeft();
   return trimmed.startsWith('//') || trimmed.startsWith('*');
 }
+
+bool _isCommentLine(String line) => economyTestDescriptionIsCommentLine(line);
+
+final RegExp _testDescription = economyTestDescriptionPattern;
 
 void main() {
   exit(runCheckEconomyTestDuplicateDescriptions(Directory.current.path));

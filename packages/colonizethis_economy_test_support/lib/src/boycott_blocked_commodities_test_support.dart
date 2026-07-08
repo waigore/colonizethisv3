@@ -4,7 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'non_gp_extraction_test_support.dart';
+import 'extraction_fixture_support.dart';
 
 /// New-World region id used by boycott colony-tribe fixtures.
 const boycottColonyTribeNwRegionId = 'newWorld';

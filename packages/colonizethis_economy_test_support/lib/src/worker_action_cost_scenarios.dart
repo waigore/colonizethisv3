@@ -3,9 +3,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
-import 'core_economy_test_support.dart';
+import 'worker_action_cost_expectations.dart';
 
 /// One row in a worker-action-cost scenario table.
 class WorkerActionCostScenario {
@@ -25,273 +24,171 @@ void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {
   scenario.run();
 }
 
-Player _playerWithTech(Map<String, bool>? tech) =>
-    corePlayer(techUnlocked: tech ?? const {});
-
-const _apprenticeTech = <String, bool>{
-  kTechIdApprenticeWorkers: true,
-  kTechIdSugarRefining: true,
-};
-const _journeymanTech = <String, bool>{
-  kTechIdTrainedJourneymen: true,
-  kTechIdCigarProduction: true,
-};
-const _masterTech = <String, bool>{
-  kTechIdMasterArtisans: true,
-  kTechIdHatProduction: true,
-};
-
 /// Canonical scenarios for [canAffordRecruitWorker].
 List<WorkerActionCostScenario> canAffordRecruitWorkerScenarios() => [
-  WorkerActionCostScenario(
-    label: 'peasant recruit needs only fabric (no tech, no peasant, no treasury)',
-    run: () {
-      final stockpile = stockpileWithDeltas({
-        CommodityCatalog.fabric.id: 2,
-      });
-      final result = canAffordRecruitWorker(
-        _playerWithTech(null),
-        const RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-        WorkerPool.empty,
-        stockpile,
-        0,
-      );
-      expect(result.canAfford, isTrue);
-      expect(result.reason, isNull);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'peasant recruit rejected when fabric below cost',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.fabric.id,
-        1,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(null),
-        const RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-        WorkerPool.empty,
-        stockpile,
-        0,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, kRecruitWorkerInsufficientMaterials);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'apprentice rejected with tech-locked when required tech missing',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        10,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(const {kTechIdApprenticeWorkers: true}),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        const WorkerPool(peasants: 1),
-        stockpile,
-        1000,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, kRecruitWorkerTechLocked);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'tech gate is checked before the worker gate (canonical order)',
-    run: () {
-      final result = canAffordRecruitWorker(
-        _playerWithTech(null),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        WorkerPool.empty,
-        const Stockpile(),
-        0,
-      );
-      expect(result.reason, kRecruitWorkerTechLocked);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'apprentice rejected when no peasant available to consume',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        10,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(_apprenticeTech),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        WorkerPool.empty,
-        stockpile,
-        1000,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, kRecruitWorkerInsufficientWorkers);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'apprentice rejected when treasury below cost',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        10,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(_apprenticeTech),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        const WorkerPool(peasants: 1),
-        stockpile,
-        199,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, kRecruitWorkerInsufficientTreasury);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'apprentice rejected when materials below cost',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        1,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(_apprenticeTech),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        const WorkerPool(peasants: 1),
-        stockpile,
-        1000,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, kRecruitWorkerInsufficientMaterials);
-    },
-  ),
-  WorkerActionCostScenario(
-    label:
-        'apprentice allowed when tech, peasant, treasury, and materials meet '
-        'the cost row exactly',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        2,
-      );
-      final result = canAffordRecruitWorker(
-        _playerWithTech(_apprenticeTech),
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        const WorkerPool(peasants: 1),
-        stockpile,
-        200,
-      );
-      expect(result.canAfford, isTrue);
-      expect(result.reason, isNull);
-    },
-  ),
-];
+      canAffordRecruitWorkerScenario(
+        label: 'peasant recruit needs only fabric (no tech, no peasant, no treasury)',
+        pins: (
+          tech: null,
+          targetTier: WorkerTier.peasant,
+          workers: WorkerPool.empty,
+          stockpileDeltas: {CommodityCatalog.fabric.id: 2},
+          treasury: 0,
+          expectedCanAfford: true,
+          expectedReason: null,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'peasant recruit rejected when fabric below cost',
+        pins: (
+          tech: null,
+          targetTier: WorkerTier.peasant,
+          workers: WorkerPool.empty,
+          stockpileDeltas: {CommodityCatalog.fabric.id: 1},
+          treasury: 0,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerInsufficientMaterials,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'apprentice rejected with tech-locked when required tech missing',
+        pins: (
+          tech: {kTechIdApprenticeWorkers: true},
+          targetTier: WorkerTier.apprentice,
+          workers: const WorkerPool(peasants: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 10},
+          treasury: 1000,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerTechLocked,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'tech gate is checked before the worker gate (canonical order)',
+        pins: (
+          tech: null,
+          targetTier: WorkerTier.apprentice,
+          workers: WorkerPool.empty,
+          stockpileDeltas: {},
+          treasury: 0,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerTechLocked,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'apprentice rejected when no peasant available to consume',
+        pins: (
+          tech: {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+          targetTier: WorkerTier.apprentice,
+          workers: WorkerPool.empty,
+          stockpileDeltas: {CommodityCatalog.paper.id: 10},
+          treasury: 1000,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerInsufficientWorkers,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'apprentice rejected when treasury below cost',
+        pins: (
+          tech: {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+          targetTier: WorkerTier.apprentice,
+          workers: const WorkerPool(peasants: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 10},
+          treasury: 199,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerInsufficientTreasury,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label: 'apprentice rejected when materials below cost',
+        pins: (
+          tech: {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+          targetTier: WorkerTier.apprentice,
+          workers: const WorkerPool(peasants: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 1},
+          treasury: 1000,
+          expectedCanAfford: false,
+          expectedReason: kRecruitWorkerInsufficientMaterials,
+        ),
+      ),
+      canAffordRecruitWorkerScenario(
+        label:
+            'apprentice allowed when tech, peasant, treasury, and materials meet '
+            'the cost row exactly',
+        pins: (
+          tech: {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+          targetTier: WorkerTier.apprentice,
+          workers: const WorkerPool(peasants: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 2},
+          treasury: 200,
+          expectedCanAfford: true,
+          expectedReason: null,
+        ),
+      ),
+    ];
 
 /// Canonical scenarios for [applyRecruitWorkerCostDeduction].
 List<WorkerActionCostScenario> applyRecruitWorkerCostDeductionScenarios() => [
-  WorkerActionCostScenario(
-    label: 'peasant recruit adds a peasant and deducts only fabric',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.fabric.id,
-        5,
-      );
-      final next = applyRecruitWorkerCostDeduction(
-        const RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-        const WorkerPool(peasants: 3),
-        stockpile,
-        100,
-      );
-      expect(next.workers.peasants, 4);
-      expect(next.stockpile.quantityOf(CommodityCatalog.fabric.id), 3);
-      expect(next.treasury, 100);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'apprentice train consumes a peasant, paper, and treasury',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        5,
-      );
-      final next = applyRecruitWorkerCostDeduction(
-        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        const WorkerPool(peasants: 2, apprentices: 1),
-        stockpile,
-        1000,
-      );
-      expect(next.workers.peasants, 1);
-      expect(next.workers.apprentices, 2);
-      expect(next.stockpile.quantityOf(CommodityCatalog.paper.id), 3);
-      expect(next.treasury, 800);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'journeyman train consumes a peasant, paper, and treasury',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        10,
-      );
-      final next = applyRecruitWorkerCostDeduction(
-        const RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
-        const WorkerPool(peasants: 1, journeymen: 4),
-        stockpile,
-        1000,
-      );
-      expect(next.workers.peasants, 0);
-      expect(next.workers.journeymen, 5);
-      expect(next.stockpile.quantityOf(CommodityCatalog.paper.id), 5);
-      expect(next.treasury, 500);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'master train consumes a peasant, paper, and treasury',
-    run: () {
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        12,
-      );
-      final next = applyRecruitWorkerCostDeduction(
-        const RecruitWorkerOrder(targetTier: WorkerTier.master),
-        const WorkerPool(peasants: 1, masters: 0),
-        stockpile,
-        1000,
-      );
-      expect(next.workers.peasants, 0);
-      expect(next.workers.masters, 1);
-      expect(next.stockpile.quantityOf(CommodityCatalog.paper.id), 2);
-      expect(next.treasury, 0);
-    },
-  ),
-  WorkerActionCostScenario(
-    label: 'consistency: apprentice tech is honoured across both helpers',
-    run: () {
-      const order = RecruitWorkerOrder(targetTier: WorkerTier.apprentice);
-      final stockpile = const Stockpile().applyDelta(
-        CommodityCatalog.paper.id,
-        2,
-      );
-      expect(
-        canAffordRecruitWorker(
-          _playerWithTech(_journeymanTech),
-          order,
-          const WorkerPool(peasants: 1),
-          stockpile,
-          200,
-        ).reason,
-        kRecruitWorkerTechLocked,
-        reason: 'journeyman tech does not satisfy the apprentice gate',
-      );
-      expect(
-        canAffordRecruitWorker(
-          _playerWithTech(_masterTech),
-          order,
-          const WorkerPool(peasants: 1),
-          stockpile,
-          200,
-        ).reason,
-        kRecruitWorkerTechLocked,
-        reason: 'master tech does not satisfy the apprentice gate',
-      );
-    },
-  ),
-];
+      applyRecruitWorkerCostScenario(
+        label: 'peasant recruit adds a peasant and deducts only fabric',
+        pins: (
+          targetTier: WorkerTier.peasant,
+          initialWorkers: const WorkerPool(peasants: 3),
+          stockpileDeltas: {CommodityCatalog.fabric.id: 5},
+          treasury: 100,
+          expectedWorkers: const WorkerPool(peasants: 4),
+          expectedStockpileQuantities: {CommodityCatalog.fabric.id: 3},
+          expectedTreasury: 100,
+        ),
+      ),
+      applyRecruitWorkerCostScenario(
+        label: 'apprentice train consumes a peasant, paper, and treasury',
+        pins: (
+          targetTier: WorkerTier.apprentice,
+          initialWorkers: const WorkerPool(peasants: 2, apprentices: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 5},
+          treasury: 1000,
+          expectedWorkers: const WorkerPool(peasants: 1, apprentices: 2),
+          expectedStockpileQuantities: {CommodityCatalog.paper.id: 3},
+          expectedTreasury: 800,
+        ),
+      ),
+      applyRecruitWorkerCostScenario(
+        label: 'journeyman train consumes a peasant, paper, and treasury',
+        pins: (
+          targetTier: WorkerTier.journeyman,
+          initialWorkers: const WorkerPool(peasants: 1, journeymen: 4),
+          stockpileDeltas: {CommodityCatalog.paper.id: 10},
+          treasury: 1000,
+          expectedWorkers: const WorkerPool(journeymen: 5),
+          expectedStockpileQuantities: {CommodityCatalog.paper.id: 5},
+          expectedTreasury: 500,
+        ),
+      ),
+      applyRecruitWorkerCostScenario(
+        label: 'master train consumes a peasant, paper, and treasury',
+        pins: (
+          targetTier: WorkerTier.master,
+          initialWorkers: const WorkerPool(peasants: 1),
+          stockpileDeltas: {CommodityCatalog.paper.id: 12},
+          treasury: 1000,
+          expectedWorkers: const WorkerPool(masters: 1),
+          expectedStockpileQuantities: {CommodityCatalog.paper.id: 2},
+          expectedTreasury: 0,
+        ),
+      ),
+      apprenticeTechConsistencyScenario(
+        label: 'consistency: apprentice tech is honoured across both helpers',
+      ),
+    ];
