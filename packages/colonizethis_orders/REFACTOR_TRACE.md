@@ -206,7 +206,25 @@ test/ LOC after slice 5: **33,273** (six part runners → one family runner + su
 
 Merged ten `order_engine_validate_work_*_test.dart` suites (35 scenarios) → `order_engine_validate_work_test.dart` (≤400 lines). Bodies live in `order_engine_validate_work_expectations.dart` + shared builders in `order_engine_validate_work_fixtures.dart`; labels in `order_engine_validate_work_scenarios.dart`. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
 
-test/ LOC after slice 6: **33,481** (ten imperative runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred with remaining families / lib DRY). ≥20% target ≤26,400 still deferred. Remaining: other `order_engine_validate_*` (build_civilian / diplomatic / recruit / trade), other `orders_application_*`, incremental equivalence, lib DRY.
+test/ LOC after slice 6: **33,481** (ten imperative runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred with remaining families / lib DRY). ≥20% target ≤26,400 still deferred. Remaining after slice 6: other `order_engine_validate_*` (build_civilian / diplomatic / recruit / trade), other `orders_application_*`, incremental equivalence, lib DRY.
+
+
+## Wave 3 — Slice 7 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevbc-unknown | rejects unknown unit type | `order_engine_validate_build_civilian_test.dart` | `support/engine/order_engine_validate_build_civilian_scenarios.dart` + `order_engine_validate_build_civilian_test.dart` | #3949 |
+| oevbc-treasury | rejects Builder when treasury too low | same | same | #3949 |
+| oevbc-paper | rejects Builder when paper insufficient | same | same | #3949 |
+| oevbc-merchant-tech | rejects Merchant when merchant_companies not unlocked | same | same | #3949 |
+| oevbc-builder-ok | accepts Builder when treasury and paper sufficient | same | same | #3949 |
+| oevbc-merchant-ok | accepts Merchant when tech and resources ok | same (+ removed duplicate `…_merchant_and_spawn_test.dart`) | same | #3949 |
+| oevbc-spawn-empty | accepts build when spawnProvinceId is empty (falls back to capital) | same (was multi-line; label joined; duplicate suite removed) | same | #3949 |
+| oevbc-spawn-foreign | accepts build when spawnProvinceId is foreign (falls back to capital) | same (was multi-line; label joined; duplicate suite removed) | same | #3949 |
+
+Merged `order_engine_validate_build_civilian_test.dart` (+ dropped duplicate `order_engine_validate_build_civilian_merchant_and_spawn_test.dart` with identical descriptions) → thin family runner. Expectations reuse `order_engine_validate_build_civilian_test_support.dart`.
+
+test/ LOC after slice 7: see `find … wc -l` in PR. Remaining: diplomatic / recruit / trade validate suites, other `orders_application_*`, incremental equivalence, lib DRY. ≥20% target ≤26,400 still deferred.
 
 ## Wave 3 — documented exceptions (kickoff)
 
