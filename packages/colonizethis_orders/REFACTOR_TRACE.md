@@ -253,6 +253,24 @@ Merged `order_engine_validate_diplomatic_{relations,aid_subsidy}_test.dart` (17 
 
 test/ LOC after slice 8: see PR. Remaining: recruit / trade validate suites, other `orders_application_*`, incremental equivalence, lib DRY. ≥20% target ≤26,400 still deferred.
 
+## Wave 3 — Slice 9 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevrw-peasant | accepts a single peasant recruit when fabric is available | `order_engine_validate_recruit_worker_test.dart` | `support/engine/order_engine_validate_recruit_worker_scenarios.dart` + thin runner | #3949 |
+| oevrw-tech | rejects apprentice train when required tech is locked | same | same | #3949 |
+| oevrw-military | recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers | same (was multi-line; label joined) | same | #3949 |
+| oevrw-civilian | civilian build (no peasant consume) is accepted after recruit consumes the only peasant | same (was multi-line; label joined) | same | #3949 |
+| oevt-offer | accepts a valid offer when stockpile covers quantity | `order_engine_validate_trade_test.dart` | `support/engine/order_engine_validate_trade_scenarios.dart` + thin runner | #3949 |
+| oevt-mutex | rejects mutual exclusion when bid and offer share a commodity | same | same | #3949 |
+| oevt-stockpile | rejects offer exceeding available stockpile | same | same | #3949 |
+| oevt-first-bid | accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap) | same (was multi-line; label joined) | same | #3949 |
+| oevt-cap | rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924) | same (was multi-line; label joined) | same | #3949 |
+
+Migrated remaining `order_engine_validate_{recruit_worker,trade}_test.dart` suites (9 scenarios) → thin family runners. Completes the `order_engine_validate_*` family migration from Current behavior §2. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 9: see PR. Remaining: other `orders_application_*`, incremental equivalence, lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

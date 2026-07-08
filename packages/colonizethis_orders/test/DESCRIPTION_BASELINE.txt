@@ -133,6 +133,10 @@ rejects apprentice train when required tech is locked
 accepts a valid offer when stockpile covers quantity
 rejects mutual exclusion when bid and offer share a commodity
 rejects offer exceeding available stockpile
+recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers
+civilian build (no peasant consume) is accepted after recruit consumes the only peasant
+accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)
+rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)
 rejects build_fort to level 2 without Mine Engineering
 rejects build_fort to level 3 without Modern Forts
 accepts raising hardwood timber from level 1 with circular_saw
