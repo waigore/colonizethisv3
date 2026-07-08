@@ -362,6 +362,24 @@ World-market file count: 35 → 30 (target ≤12 deferred to slice 2+).
 
 Wall-clock (advisory, 3-run median): **28.30 s** — above `ECONOMY_TEST_TIMING_CEILING_SECONDS` (25 s); documented per `SPEC/program/economy-test-wall-clock.md`; not a merge blocker.
 
+## Phase 3 — Slice 2 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-consolidated | all treasury bid-budget, staged spend, carry-forward, parity, GP credit, effective price, cap-bid rows | `world_market_treasury_test.dart` (merged from 11 micro-runners) | #3939 |
+| validator-consolidated | rules 1–7, precedence, treasury cap, context-from-game, catalog-default pin | `world_market_trade_order_validator_test.dart` (merged caps + treasury runners) | #3939 |
+| suggester-consolidated | suggester, admission, sellable-headroom rows | `world_market_trade_order_suggester_test.dart` (merged treasury + admission + sellable) | #3939 |
+| frr-credits-consolidated | defensive, aggregation, embassy kickback rows | `first_right_credits_test.dart` (merged aggregation + kickback) | #3939 |
+| context-consolidated | WorldMarketContextBase, player context, PriceDiscovery rows | `world_market_context_test.dart` (merged context_base + player_context + price_discovery) | #3939 |
+| purchased-tile-consolidated | PurchasedTileIndex + riches handoff rows | `purchased_tile_test.dart` (merged index + riches) | #3939 |
+| misc-consolidated | boycott blocked commodities + lock-recovery minor bids | `world_market_misc_test.dart` (merged boycott + lock_recovery) | #3939 |
+
+Deleted micro-runners (22): `first_right_credits_aggregation_test.dart`, `first_right_credits_kickback_test.dart`, `world_market_treasury_bid_budget_test.dart`, `world_market_matcher_treasury_budget_test.dart`, `world_market_staged_bid_spend_test.dart`, `world_market_carry_forward_bid_notional_test.dart`, `world_market_bid_spend_shared_helper_test.dart`, `gp_treasury_credit_accumulator_test.dart`, `world_market_effective_price_test.dart`, `world_market_cap_bid_quantity_test.dart`, `world_market_trade_order_validator_treasury_test.dart`, `world_market_trade_order_validator_context_treasury_test.dart`, `world_market_trade_order_validator_caps_test.dart`, `world_market_trade_order_suggester_treasury_test.dart`, `trade_order_admission_test.dart`, `world_market_sellable_quantity_test.dart`, `world_market_context_base_test.dart`, `world_market_player_context_test.dart`, `world_market_price_discovery_test.dart`, `purchased_tile_index_test.dart`, `purchased_tile_riches_test.dart`, `world_market_boycott_blocked_commodities_test.dart`, `lock_recovery_minor_bids_test.dart`.
+
+World-market file count: 30 → **11** (meets ≤12 AC).
+
+Wall-clock (advisory, 3-run median): **21.19 s** — within `ECONOMY_TEST_TIMING_CEILING_SECONDS` (25 s); improved from slice 1 median 28.30 s.
+
 ## Phase 3 — documented exceptions (partial; extended in later slices)
 
 | file | retained test description(s) | rationale | refs |

@@ -26,8 +26,8 @@ const _allowlistedRelativePaths = <String>{
   'packages/colonizethis_economy/test/economy/world_market/world_market_deal_matcher_frr_test.dart',
   'packages/colonizethis_economy/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart',
   'packages/colonizethis_economy/test/economy/world_market/first_right_profit_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/world_market_treasury_bid_budget_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/world_market_trade_order_validator_caps_test.dart',
+  'packages/colonizethis_economy/test/economy/world_market/world_market_treasury_test.dart',
+  'packages/colonizethis_economy/test/economy/world_market/world_market_trade_order_validator_test.dart',
   // Pending phase-3 core scenario migration (#3939 slice 3+):
   'packages/colonizethis_economy/test/game_lookup_helpers_test.dart',
   'packages/colonizethis_economy/test/economy_extraction_test.dart',
