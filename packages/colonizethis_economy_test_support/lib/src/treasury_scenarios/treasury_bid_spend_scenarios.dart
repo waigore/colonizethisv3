@@ -13,83 +13,110 @@ import 'treasury_test_support.dart';
 const String _gp = 'gp_h';
 
 /// One row in [stagedBidSpendScenarios].
-class StagedBidSpendScenario {
-  const StagedBidSpendScenario({
-    required this.label,
-    required this.orders,
-    this.prices,
-    this.expectedSpend,
-    this.expectedSpendFn,
-    this.playerId = humanPlayerId,
-    this.refs,
-  });
+typedef StagedBidSpendScenario = ({
+  String label,
+  Map<CommodityId, int>? prices,
+  List<TradeOrder> orders,
+  int? expectedSpend,
+  int Function(data.ResourceRules rules)? expectedSpendFn,
+  String playerId,
+  String? refs,
+});
 
-  final String label;
-  final Map<CommodityId, int>? prices;
-  final List<TradeOrder> orders;
-  final int? expectedSpend;
-  final int Function(data.ResourceRules rules)? expectedSpendFn;
-  final String playerId;
-  final String? refs;
-
-  int resolveExpectedSpend(data.ResourceRules rules) {
-    if (expectedSpendFn != null) {
-      return expectedSpendFn!(rules);
-    }
-    return expectedSpend ?? 0;
+int resolveStagedBidSpendExpected(
+  StagedBidSpendScenario scenario,
+  data.ResourceRules rules,
+) {
+  if (scenario.expectedSpendFn != null) {
+    return scenario.expectedSpendFn!(rules);
   }
+  return scenario.expectedSpend ?? 0;
+}
+
+void runStagedBidSpendScenario(
+  StagedBidSpendScenario scenario,
+  data.ResourceRules rules,
+) {
+  final game = buildTreasuryBidBudgetGame(prices: scenario.prices);
+  final orders = scenario.orders.isEmpty
+      ? const Orders()
+      : humanOrdersWith(scenario.orders);
+  expect(
+    stagedBidTotalSpendByPlayer(
+      orders: orders,
+      playerId: scenario.playerId,
+      game: game,
+      resourceRules: rules,
+    ),
+    resolveStagedBidSpendExpected(scenario, rules),
+    reason: scenario.label == 'ignores bids with non-positive quantity '
+        '(defensive guard)'
+        ? 'quantity == 0 should contribute nothing to the running total'
+        : null,
+  );
 }
 
 List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
-  final int? defaultTimber = rules.defaultMarketPriceForCommodityId('timber');
-  final int? defaultLumber = rules.defaultMarketPriceForCommodityId('lumber');
-
   return [
-    const StagedBidSpendScenario(
+    (
       label: 'returns 0 when the player has no staged trade orders',
-      orders: [],
-      prices: {'timber': 30},
+      orders: <TradeOrder>[],
+      prices: const {'timber': 30},
       expectedSpend: 0,
+      expectedSpendFn: null,
+      playerId: humanPlayerId,
       refs: '#3093',
     ),
-    StagedBidSpendScenario(
+    (
       label: 'returns 0 when the player has only staged offers (no bids)',
       orders: [offerOrder('timber', 5)],
       prices: const {'timber': 30},
       expectedSpend: 0,
+      expectedSpendFn: null,
+      playerId: humanPlayerId,
       refs: '#3093',
     ),
-    StagedBidSpendScenario(
+    (
       label: 'sums quantity × effectiveMarketPrice across all staged bids',
       orders: [bidOrder('timber', 4), bidOrder('iron', 2)],
       prices: const {'timber': 30, 'iron': 80},
       expectedSpend: 4 * 30 + 2 * 80,
+      expectedSpendFn: null,
+      playerId: humanPlayerId,
       refs: '#3093',
     ),
-    StagedBidSpendScenario(
+    (
       label: 'uses catalog defaults when a bid commodity is missing from prices',
       orders: [bidOrder('timber', 3)],
-      prices: const {},
-      expectedSpend: 3 * defaultTimber!,
+      prices: const <CommodityId, int>{},
+      expectedSpend: null,
+      expectedSpendFn: (rules) => 3 * rules.defaultMarketPriceForCommodityId('timber')!,
+      playerId: humanPlayerId,
       refs: '#3093',
     ),
-    StagedBidSpendScenario(
+    (
       label: 'sums spend across raw + manufactured bids using catalog defaults '
           '(Refs #3093 manufactured-default-prices)',
       orders: [bidOrder('lumber', 5), bidOrder('timber', 2)],
-      prices: const {},
-      expectedSpend: 5 * defaultLumber! + 2 * defaultTimber!,
+      prices: const <CommodityId, int>{},
+      expectedSpend: null,
+      expectedSpendFn: (rules) =>
+          5 * rules.defaultMarketPriceForCommodityId('lumber')! +
+          2 * rules.defaultMarketPriceForCommodityId('timber')!,
+      playerId: humanPlayerId,
       refs: '#3093',
     ),
-    StagedBidSpendScenario(
+    (
       label: 'skips bids on commodities with no effective price (defensive guard '
           'against unknown / future ids)',
       orders: [bidOrder('not_a_commodity', 5), bidOrder('timber', 2)],
-      prices: const {},
-      expectedSpend: 2 * defaultTimber!,
+      prices: const <CommodityId, int>{},
+      expectedSpend: null,
+      expectedSpendFn: (rules) => 2 * rules.defaultMarketPriceForCommodityId('timber')!,
+      playerId: humanPlayerId,
       refs: null,
     ),
-    StagedBidSpendScenario(
+    (
       label: 'ignores bids with non-positive quantity (defensive guard)',
       orders: [
         TradeOrder(
@@ -102,13 +129,16 @@ List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
       ],
       prices: const {'timber': 30},
       expectedSpend: 3 * 30,
+      expectedSpendFn: null,
+      playerId: humanPlayerId,
       refs: null,
     ),
-    StagedBidSpendScenario(
+    (
       label: 'isolates spend per player (unknown playerId returns 0)',
       orders: [bidOrder('timber', 4)],
       prices: const {'timber': 30},
       expectedSpend: 0,
+      expectedSpendFn: null,
       playerId: 'gp_ghost',
       refs: null,
     ),

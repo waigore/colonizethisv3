@@ -3,61 +3,62 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'package:colonizethis_test/test.dart';
 
+import 'game_lookup_helpers_expectations.dart';
 import 'scenario_runner.dart';
 
 /// One row in [buildProvinceIndexScenarios].
 class BuildProvinceIndexScenario implements RefsScenario {
   const BuildProvinceIndexScenario({
     required this.label,
-    required this.run,
+    required this.gameBuilder,
+    required this.expect,
     this.refs,
   });
 
   @override
   final String label;
-  final void Function() run;
+  final Game Function() gameBuilder;
+  final BuildProvinceIndexExpectation expect;
   @override
   final String? refs;
 }
 
 void runBuildProvinceIndexScenario(BuildProvinceIndexScenario scenario) {
-  scenario.run();
+  assertBuildProvinceIndexExpectation(
+    buildProvinceIndex(scenario.gameBuilder()),
+    scenario.expect,
+  );
 }
 
 /// Canonical scenarios for [buildProvinceIndex].
 List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
       BuildProvinceIndexScenario(
         label: 'indexes provinces across both regions by prefixed id',
-        run: () {
-          final game = TestFixtures.minimalGame(
-            oldWorld: const RegionData(
-              provinces: [
-                Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-                Province(id: 'oldWorld|p2', regionId: 'oldWorld'),
-              ],
-            ),
-            newWorld: const RegionData(
-              provinces: [Province(id: 'newWorld|n1', regionId: 'newWorld')],
-            ),
-          );
-
-          final index = buildProvinceIndex(game);
-
-          expect(index.keys.toSet(), {'oldWorld|p1', 'oldWorld|p2', 'newWorld|n1'});
-          expect(index['oldWorld|p1']!.regionId, 'oldWorld');
-          expect(index['newWorld|n1']!.regionId, 'newWorld');
-        },
+        gameBuilder: () => TestFixtures.minimalGame(
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+              Province(id: 'oldWorld|p2', regionId: 'oldWorld'),
+            ],
+          ),
+          newWorld: const RegionData(
+            provinces: [Province(id: 'newWorld|n1', regionId: 'newWorld')],
+          ),
+        ),
+        expect: const BuildProvinceIndexExpectation(
+          expectedKeys: {'oldWorld|p1', 'oldWorld|p2', 'newWorld|n1'},
+          regionByProvinceId: {
+            'oldWorld|p1': 'oldWorld',
+            'newWorld|n1': 'newWorld',
+          },
+        ),
         refs: '#3939',
       ),
       BuildProvinceIndexScenario(
         label: 'empty world produces an empty index',
-        run: () {
-          final game = TestFixtures.minimalGame();
-
-          expect(buildProvinceIndex(game), isEmpty);
-        },
+        gameBuilder: TestFixtures.minimalGame,
+        expect: const BuildProvinceIndexExpectation(isEmpty: true),
         refs: '#3939',
       ),
     ];
@@ -66,61 +67,61 @@ List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
 class CollectPortTileKeysScenario implements RefsScenario {
   const CollectPortTileKeysScenario({
     required this.label,
-    required this.run,
+    required this.gameBuilder,
+    required this.expect,
     this.refs,
   });
 
   @override
   final String label;
-  final void Function() run;
+  final Game Function() gameBuilder;
+  final CollectPortTileKeysExpectation expect;
   @override
   final String? refs;
 }
 
 void runCollectPortTileKeysScenario(CollectPortTileKeysScenario scenario) {
-  scenario.run();
+  assertCollectPortTileKeysExpectation(
+    collectPortTileKeys(scenario.gameBuilder()),
+    scenario.expect,
+  );
 }
 
 /// Canonical scenarios for [collectPortTileKeys].
 List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
       CollectPortTileKeysScenario(
         label: 'collects the seaboard port tile keys as a set',
-        run: () {
-          final game = TestFixtures.minimalGame(
-            portsByProvinceSeaboard: const {
-              'oldWorld|harbor|north': 'oldWorld|harbor|0|0',
-              'newWorld|harbor|south': 'newWorld|harbor|1|1',
-            },
-          );
-
-          expect(collectPortTileKeys(game), {
+        gameBuilder: () => TestFixtures.minimalGame(
+          portsByProvinceSeaboard: const {
+            'oldWorld|harbor|north': 'oldWorld|harbor|0|0',
+            'newWorld|harbor|south': 'newWorld|harbor|1|1',
+          },
+        ),
+        expect: const CollectPortTileKeysExpectation(
+          expected: {
             'oldWorld|harbor|0|0',
             'newWorld|harbor|1|1',
-          });
-        },
+          },
+        ),
         refs: '#3939',
       ),
       CollectPortTileKeysScenario(
         label: 'deduplicates seaboards that map to the same tile key',
-        run: () {
-          final game = TestFixtures.minimalGame(
-            portsByProvinceSeaboard: const {
-              'oldWorld|harbor|north': 'oldWorld|harbor|0|0',
-              'oldWorld|harbor|east': 'oldWorld|harbor|0|0',
-            },
-          );
-
-          expect(collectPortTileKeys(game), {'oldWorld|harbor|0|0'});
-        },
+        gameBuilder: () => TestFixtures.minimalGame(
+          portsByProvinceSeaboard: const {
+            'oldWorld|harbor|north': 'oldWorld|harbor|0|0',
+            'oldWorld|harbor|east': 'oldWorld|harbor|0|0',
+          },
+        ),
+        expect: const CollectPortTileKeysExpectation(
+          expected: {'oldWorld|harbor|0|0'},
+        ),
         refs: '#3939',
       ),
       CollectPortTileKeysScenario(
         label: 'no ports produces an empty set',
-        run: () {
-          final game = TestFixtures.minimalGame();
-
-          expect(collectPortTileKeys(game), isEmpty);
-        },
+        gameBuilder: TestFixtures.minimalGame,
+        expect: const CollectPortTileKeysExpectation(isEmpty: true),
         refs: '#3939',
       ),
     ];
@@ -129,19 +130,24 @@ List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
 class CapitalFactionLookupScenario implements RefsScenario {
   const CapitalFactionLookupScenario({
     required this.label,
-    required this.run,
+    required this.gameBuilder,
+    required this.expect,
     this.refs,
   });
 
   @override
   final String label;
-  final void Function() run;
+  final Game Function() gameBuilder;
+  final CapitalFactionLookupExpectation expect;
   @override
   final String? refs;
 }
 
 void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
-  scenario.run();
+  assertCapitalFactionLookupExpectation(
+    scenario.gameBuilder(),
+    scenario.expect,
+  );
 }
 
 /// Canonical scenarios for [capitalProvinceIdForFaction] /
@@ -149,73 +155,87 @@ void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
 List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [
       CapitalFactionLookupScenario(
         label: 'resolves Great Power capital province and region ids',
-        run: () {
-          final game = TestFixtures.minimalGame(
-            players: const [
-              Player(
-                id: 'gp1',
-                displayName: 'Spain',
-                isHuman: true,
-                capitalProvinceId: 'oldWorld|p1',
-                capitalTile: CapitalTile(
-                  regionId: 'oldWorld',
-                  provinceId: 'oldWorld|p1',
-                  x: 0,
-                  y: 0,
-                ),
+        gameBuilder: () => TestFixtures.minimalGame(
+          players: const [
+            Player(
+              id: 'gp1',
+              displayName: 'Spain',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|p1',
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|p1',
+                x: 0,
+                y: 0,
               ),
-            ],
-          );
-          expect(capitalProvinceIdForFaction(game, 'gp1'), 'oldWorld|p1');
-          expect(capitalRegionIdForFaction(game, 'gp1'), 'oldWorld');
-        },
+            ),
+          ],
+        ),
+        expect: const CapitalFactionLookupExpectation(
+          pins: [
+            (
+              factionId: 'gp1',
+              provinceId: 'oldWorld|p1',
+              regionId: 'oldWorld',
+            ),
+          ],
+        ),
         refs: '#3939',
       ),
       CapitalFactionLookupScenario(
         label: 'resolves minor and tribe capital ids',
-        run: () {
-          final game = TestFixtures.minimalGame(
-            minorNations: const [
-              MinorNation(
-                id: 'm1',
-                displayName: 'Minor',
-                capitalProvinceId: 'oldWorld|m1',
-                capitalTile: CapitalTile(
-                  regionId: 'oldWorld',
-                  provinceId: 'oldWorld|m1',
-                  x: 1,
-                  y: 0,
-                ),
+        gameBuilder: () => TestFixtures.minimalGame(
+          minorNations: const [
+            MinorNation(
+              id: 'm1',
+              displayName: 'Minor',
+              capitalProvinceId: 'oldWorld|m1',
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|m1',
+                x: 1,
+                y: 0,
               ),
-            ],
-            tribes: const [
-              Tribe(
-                id: 't1',
-                displayName: 'Tribe',
-                capitalProvinceId: 'newWorld|t1',
-                capitalTile: CapitalTile(
-                  regionId: 'newWorld',
-                  provinceId: 'newWorld|t1',
-                  x: 0,
-                  y: 1,
-                ),
+            ),
+          ],
+          tribes: const [
+            Tribe(
+              id: 't1',
+              displayName: 'Tribe',
+              capitalProvinceId: 'newWorld|t1',
+              capitalTile: CapitalTile(
+                regionId: 'newWorld',
+                provinceId: 'newWorld|t1',
+                x: 0,
+                y: 1,
               ),
-            ],
-          );
-          expect(capitalProvinceIdForFaction(game, 'm1'), 'oldWorld|m1');
-          expect(capitalRegionIdForFaction(game, 'm1'), 'oldWorld');
-          expect(capitalProvinceIdForFaction(game, 't1'), 'newWorld|t1');
-          expect(capitalRegionIdForFaction(game, 't1'), 'newWorld');
-        },
+            ),
+          ],
+        ),
+        expect: const CapitalFactionLookupExpectation(
+          pins: [
+            (
+              factionId: 'm1',
+              provinceId: 'oldWorld|m1',
+              regionId: 'oldWorld',
+            ),
+            (
+              factionId: 't1',
+              provinceId: 'newWorld|t1',
+              regionId: 'newWorld',
+            ),
+          ],
+        ),
         refs: '#3939',
       ),
       CapitalFactionLookupScenario(
         label: 'unknown faction id returns null capital ids',
-        run: () {
-          final game = TestFixtures.minimalGame();
-          expect(capitalProvinceIdForFaction(game, 'missing'), isNull);
-          expect(capitalRegionIdForFaction(game, 'missing'), isNull);
-        },
+        gameBuilder: TestFixtures.minimalGame,
+        expect: const CapitalFactionLookupExpectation(
+          pins: [
+            (factionId: 'missing', provinceId: null, regionId: null),
+          ],
+        ),
         refs: '#3939',
       ),
     ];

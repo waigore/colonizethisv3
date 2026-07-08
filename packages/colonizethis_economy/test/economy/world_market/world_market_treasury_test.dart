@@ -52,23 +52,7 @@ void main() {
   group('stagedBidTotalSpendByPlayer (Refs #3093)', () {
     for (final scenario in stagedBidSpendScenarios(rules)) {
       test(scenario.label, () {
-        final game = buildTreasuryBidBudgetGame(prices: scenario.prices);
-        final orders = scenario.orders.isEmpty
-            ? const Orders()
-            : humanOrdersWith(scenario.orders);
-        expect(
-          stagedBidTotalSpendByPlayer(
-            orders: orders,
-            playerId: scenario.playerId,
-            game: game,
-            resourceRules: rules,
-          ),
-          scenario.resolveExpectedSpend(rules),
-          reason: scenario.label == 'ignores bids with non-positive quantity '
-              '(defensive guard)'
-              ? 'quantity == 0 should contribute nothing to the running total'
-              : null,
-        );
+        runStagedBidSpendScenario(scenario, rules);
       });
     }
   });

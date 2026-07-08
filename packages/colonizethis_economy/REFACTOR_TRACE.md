@@ -798,3 +798,13 @@ test_support LOC: **15,388** (net +29 vs slice 29 — validator split file heade
 
 test_support LOC: **15,561** (net +173 vs slice 30 — capital lookup scenarios + extraction pin helpers; economy `test/` **1,413** (+6 vs slice 30)). Treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 32+.
 
+## Phase 3 — Slice 32 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| game-lookup-expectations | `BuildProvinceIndexExpectation`, `CollectPortTileKeysExpectation`, `CapitalFactionLookupExpectation` replace inline `run:` closures | `game_lookup_helpers_expectations.dart`, `game_lookup_helpers_scenarios.dart` | #3939 |
+| town-game-pin | `TownManufacturingBonusGamePin` + shared `runTownManufacturingBonusGamePin` replace five inline game `run:` closures | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| staged-bid-spend-runner | `StagedBidSpendScenario` typedef + `runStagedBidSpendScenario` hoists treasury runner parity | `treasury_bid_spend_scenarios.dart`, `world_market_treasury_test.dart` | #3093, #3939 |
+
+test_support LOC: **15,719** (net +158 vs slice 31 — `game_lookup_helpers_expectations.dart` + town-game pin runner; economy `test/` **1,397** (down 16 vs slice 31)). Further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 33+.
+

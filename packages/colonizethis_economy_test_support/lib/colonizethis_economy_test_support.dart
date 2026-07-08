@@ -21,6 +21,7 @@ export 'src/economy_riches_to_treasury_scenarios.dart';
 export 'src/economy_production_scenarios.dart';
 export 'src/deal_matcher_scenarios/deal_matcher_scenarios.dart';
 export 'src/frr_scenarios/frr_scenarios.dart';
+export 'src/game_lookup_helpers_expectations.dart';
 export 'src/game_lookup_helpers_scenarios.dart';
 export 'src/lock_recovery_minor_bids_scenarios.dart';
 export 'src/lock_recovery_minor_bids_expectations.dart';
