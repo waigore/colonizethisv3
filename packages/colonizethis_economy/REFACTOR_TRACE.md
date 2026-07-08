@@ -489,3 +489,12 @@ test_support LOC: **12,287** (organizational consolidation; further scenario-dat
 Deleted modules (merged): `tile_map_test_support.dart`, `non_gp_extraction_test_support.dart`, `resource_extractor_test_support.dart`, `sellable_quantity_scenarios.dart`, `player_context_scenarios.dart`, `world_market_context_base_scenarios.dart`, `non_gp_auto_offers_purchased_tile_scenarios.dart`.
 
 test_support LOC: **12,207** (down from 12,287 slice 7). Further scenario-data compaction for ≤8,200 target deferred to slice 9+.
+
+## Phase 3 — Slice 9 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| purchased-tile-fixtures | shared `purchased_tile_fixture_support.dart` builders (`purchasedTileFixtureGame`, `minorPurchasedTileGame`, `tribePurchasedTileGame`, `gpProvincePurchasedTileGame`, `minorTileAutoOfferGame`) | `purchased_tile_index_test_support.dart`, `purchased_tile_riches_test_support.dart`, `non_gp_auto_offers_test_support.dart` | #2991, #3939 |
+| riches-to-treasury | `economy_riches_to_treasury_test.dart` → `economy_riches_to_treasury_scenarios.dart` (8 rows) | `economy_riches_to_treasury_scenarios.dart` | #3939 |
+
+Economy `test/` LOC: **2,153** (down from 2,238 slice 8). test_support: **12,356** (fixture module + riches scenarios added; net +149 — DealMatcher/validator record compaction and further scenario-data dedup deferred to slice 10+ for ≤8,200 target).
