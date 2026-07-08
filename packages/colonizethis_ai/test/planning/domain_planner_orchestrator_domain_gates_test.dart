@@ -42,9 +42,6 @@ const String _fieldArmyId = kOrchestratorFieldArmyId;
 const String _owMinorProvince = kOrchestratorOwMinorProvince;
 const String _owHomeProvince = kOrchestratorOwHomeProvince;
 
-Game _scenarioGame() =>
-    buildOrchestratorExpandMinorWarScenarioGame(id: 'g-2832-orchestrator-domain-gates');
-
 const FakeOrderSuggestionAPIForDomainPlannerTests _conquestCandidateApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
       work: [],
@@ -95,7 +92,9 @@ AIWorldSnapshot _expandSnapshot() {
 }
 
 DomainPlannerOutcome _runForPhase(PhasePlanOutcome plan) {
-  final game = _scenarioGame();
+  final game = buildOrchestratorExpandMinorWarScenarioGame(
+    id: 'g-2832-orchestrator-domain-gates',
+  );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandSnapshot();
@@ -133,7 +132,9 @@ void main() {
     test(
       'gate booleans / conquestPasses follow the active phase: EXPAND -> 22',
       () {
-        final game = _scenarioGame();
+        final game = buildOrchestratorExpandMinorWarScenarioGame(
+    id: 'g-2832-orchestrator-domain-gates',
+  );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();
@@ -191,7 +192,9 @@ void main() {
 
     test('computeNavalRunGate.willRun is false when base weight falls below '
         'kNavalRunMinWeight with no colonial-pressure boost', () {
-      final game = _scenarioGame();
+      final game = buildOrchestratorExpandMinorWarScenarioGame(
+    id: 'g-2832-orchestrator-domain-gates',
+  );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();

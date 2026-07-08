@@ -68,12 +68,6 @@ const String _minorOwProvince = kOrchestratorAdjacentMinorOwProvince;
 // Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
 // Past-quota DEVELOP set: kGp1OwProvincesDevelop (Refs #3941).
 
-Game _scenarioGame({required List<String> gp1OwProvinces}) =>
-    buildOrchestratorExpandAdjacentMinorScenarioGame(
-      id: 'g-2509-expand-minor-declare-war',
-      gp1OwProvinces: gp1OwProvinces,
-    );
-
 // Fake API surfaces declareWar toward minor1 so the orchestrator has a
 // candidate to score and merge. The same suggestion shape is replayed in
 // the DEVELOP negative-control test so the test isolates phase-driven
@@ -168,7 +162,10 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND minor declareWar', () {
     test('emits declareWar toward adjacent invadable OW minor in EXPAND', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -210,7 +207,10 @@ void main() {
     });
 
     test('suppresses minor declareWar in DEVELOP at quota', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesDevelop);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesDevelop,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _developSnapshot();
@@ -251,7 +251,10 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorExpandAdjacentMinorScenarioGame(
+        id: 'g-2509-expand-minor-declare-war',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();

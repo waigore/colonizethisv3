@@ -39,9 +39,6 @@ const String _fieldArmyId = kOrchestratorFieldArmyId;
 const String _owMinorProvince = kOrchestratorOwMinorProvince;
 const String _owHomeProvince = kOrchestratorOwHomeProvince;
 
-Game _scenarioGame() =>
-    buildOrchestratorExpandMinorWarScenarioGame(id: 'g-2994-f7-trade-wiring');
-
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
   work: [],
@@ -81,7 +78,9 @@ AIWorldSnapshot _expandSnapshot() {
 }
 
 DomainPlannerOutcome _runOrchestrator({required EconomyPlan economyPlan}) {
-  final game = _scenarioGame();
+  final game = buildOrchestratorExpandMinorWarScenarioGame(
+    id: 'g-2994-f7-trade-wiring',
+  );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandSnapshot();

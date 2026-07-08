@@ -84,11 +84,6 @@ const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
 
 // Uses kGp1OwProvincesAtQuota / kGp1OwProvincesBelowQuota from
 // domain_planner_orchestrator_test_support.dart (Refs #3941).
-Game _scenarioGame({required List<String> gp1OwProvinces}) =>
-    buildOrchestratorGp1TribeNwScenarioGame(
-      id: 'g-2509-colonial-tribe-declare',
-      gp1OwProvinces: gp1OwProvinces,
-    );
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _tribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -178,7 +173,10 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners COLONIAL tribe declareWar', () {
     test('emits declareWar toward visible NW tribe when in COLONIAL', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesAtQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();
@@ -217,7 +215,10 @@ void main() {
     });
 
     test('suppresses tribe declareWar in EXPAND below OW quota', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -265,7 +266,10 @@ void main() {
 
     test('emits identical diplomatic orders for identical COLONIAL inputs',
         () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesAtQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();

@@ -85,18 +85,6 @@ const PhasePlanOutcome _expandPhasePlanZeroNw = PhasePlanOutcome(
 // Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
 // `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
 // `observerGoalPhaseFor` — the phase the lock predicate operates in.
-Game _scenarioGame() => buildOrchestratorGp1TribeNwScenarioGame(
-      id: 'g-2924-expand-nw-lock-recovery-acquisition',
-      gp1OwProvinces: kGp1OwProvincesBelowQuota,
-      diplomacyRelations: const <DiplomacyRelation>[
-        DiplomacyRelation(
-          factionId1: kOrchestratorGp1NationId,
-          factionId2: kOrchestratorTribeId,
-          state: RelationState.atPeace,
-          score: 0,
-        ),
-      ],
-    );
 
 // Fake API provides one `declareWar(tribe1)` candidate (NW tribe colonial
 // target). The orchestrator's EXPAND scoring + selection pass is what
@@ -170,7 +158,18 @@ Orders _runOrchestrator({
   required PhasePlanOutcome phasePlan,
   required int turnSeed,
 }) {
-  final game = _scenarioGame();
+  final game = buildOrchestratorGp1TribeNwScenarioGame(
+    id: 'g-2924-expand-nw-lock-recovery-acquisition',
+    gp1OwProvinces: kGp1OwProvincesBelowQuota,
+    diplomacyRelations: const <DiplomacyRelation>[
+      DiplomacyRelation(
+        factionId1: kOrchestratorGp1NationId,
+        factionId2: kOrchestratorTribeId,
+        state: RelationState.atPeace,
+        score: 0,
+      ),
+    ],
+  );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandLockSnapshot();

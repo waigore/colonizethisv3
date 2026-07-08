@@ -90,19 +90,6 @@ const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
 
 // Uses kGp1OwProvincesBelowQuota / kGp1OwProvincesAtQuota from
 // domain_planner_orchestrator_test_support.dart (Refs #3941).
-Game _scenarioGame({required List<String> gp1OwProvinces}) =>
-    buildOrchestratorGp1TribeNwScenarioGame(
-      id: 'g-2509-expand-nw-declare-suppress',
-      gp1OwProvinces: gp1OwProvinces,
-      diplomacyRelations: const <DiplomacyRelation>[
-        DiplomacyRelation(
-          factionId1: kOrchestratorGp1NationId,
-          factionId2: kOrchestratorTribeId,
-          state: RelationState.atPeace,
-          score: 0,
-        ),
-      ],
-    );
 
 // Fake API provides one `declareWar(tribe1)` candidate. The fake's
 // `suggestDeclareWarOrders` filters by `type == declareWar`, so the
@@ -215,7 +202,18 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND-phase NW declareWar suppression', () {
     test('EXPAND drops declareWar toward NW tribe colonial target', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-expand-nw-declare-suppress',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        diplomacyRelations: const <DiplomacyRelation>[
+          DiplomacyRelation(
+            factionId1: kOrchestratorGp1NationId,
+            factionId2: kOrchestratorTribeId,
+            state: RelationState.atPeace,
+            score: 0,
+          ),
+        ],
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -272,7 +270,18 @@ void main() {
     test(
       'COLONIAL allows declareWar toward the same NW tribe candidate',
       () {
-        final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
+        final game = buildOrchestratorGp1TribeNwScenarioGame(
+          id: 'g-2509-expand-nw-declare-suppress',
+          gp1OwProvinces: kGp1OwProvincesAtQuota,
+          diplomacyRelations: const <DiplomacyRelation>[
+            DiplomacyRelation(
+              factionId1: kOrchestratorGp1NationId,
+              factionId2: kOrchestratorTribeId,
+              state: RelationState.atPeace,
+              score: 0,
+            ),
+          ],
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _colonialSnapshot();
@@ -317,7 +326,18 @@ void main() {
     );
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-expand-nw-declare-suppress',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        diplomacyRelations: const <DiplomacyRelation>[
+          DiplomacyRelation(
+            factionId1: kOrchestratorGp1NationId,
+            factionId2: kOrchestratorTribeId,
+            state: RelationState.atPeace,
+            score: 0,
+          ),
+        ],
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
