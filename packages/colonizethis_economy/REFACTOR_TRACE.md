@@ -787,3 +787,14 @@ World-market runner file count: **7 → 6** (target ≤12 met).
 
 test_support LOC: **15,388** (net +29 vs slice 29 — validator split file headers offset runner merge; all validator modules now ≤183 physical lines). Economy `test/` **1,407** (down 7 vs slice 29). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 31+.
 
+## Phase 3 — Slice 31 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| capital-faction-lookup | shared `capitalProvinceIdForFaction` / `capitalRegionIdForFaction` in `game_lookup_helpers.dart`; `town_manufacturing_bonus.dart` + `non_gp_extraction_shared.dart` delegate | `game_lookup_helpers.dart`, `town_manufacturing_bonus.dart`, `non_gp_extraction_shared.dart` | #3939 |
+| extractor-tech-cap-pin | `TechCapComparisonPin` replaces bespoke `verify` closure on player tech-cap row | `resource_extractor_expectations.dart`, `resource_extractor_scenarios.dart` | #3939 |
+| extractor-blockade-pin | `BlockadedOverseasPin` replaces `runOverride` on blockaded overseas row | `resource_extractor_expectations.dart`, `resource_extractor_scenarios.dart` | #3939 |
+| game-lookup-capital | three capital-faction lookup rows | `game_lookup_helpers_test.dart` → `game_lookup_helpers_scenarios.dart` | #3939 |
+
+test_support LOC: **15,561** (net +173 vs slice 30 — capital lookup scenarios + extraction pin helpers; economy `test/` **1,413** (+6 vs slice 30)). Treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 32+.
+

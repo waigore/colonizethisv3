@@ -211,8 +211,8 @@ void _accumulateNonGpProvinceExtraction({
   required Set<String> portTileKeys,
   required Map<String, Map<CommodityId, int>> landByProvince,
 }) {
-  final capitalProvinceId = _capitalProvinceIdForOwner(game, ownerId);
-  final capitalRegionId = _capitalRegionIdForOwner(game, ownerId);
+  final capitalProvinceId = capitalProvinceIdForFaction(game, ownerId);
+  final capitalRegionId = capitalRegionIdForFaction(game, ownerId);
   if (capitalProvinceId == null || capitalRegionId == null) return;
 
   forEachTownConnectedTileInProvince(
@@ -420,28 +420,4 @@ Map<String, List<TradeOrder>> townManufacturingBonusToAutoOffers({
 Map<String, bool>? _techUnlockedForOwner(Game game, String ownerId) {
   final player = game.playerById(ownerId);
   return player?.techUnlocked;
-}
-
-String? _capitalProvinceIdForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalProvinceId;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalProvinceId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalProvinceId;
-  }
-  return null;
-}
-
-String? _capitalRegionIdForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalTile?.regionId;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalTile?.regionId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalTile?.regionId;
-  }
-  return null;
 }

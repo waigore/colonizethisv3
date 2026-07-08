@@ -34,7 +34,8 @@ class ResourceExtractorScenario {
     this.useOverseasGame = false,
     this.gameOverride,
     this.connectivityByPlayer,
-    this.runOverride,
+    this.techCapComparisonPin,
+    this.blockadedOverseasPin,
     this.expectLogMessageContains,
     this.refs,
   });
@@ -58,6 +59,8 @@ class ResourceExtractorScenario {
     bool useOverseasGame = false,
     Game? gameOverride,
     Map<String, ConnectivityResult>? connectivityByPlayer,
+    TechCapComparisonPin? techCapComparisonPin,
+    BlockadedOverseasPin? blockadedOverseasPin,
     String? expectLogMessageContains,
     String? refs,
   }) : this(
@@ -78,6 +81,8 @@ class ResourceExtractorScenario {
           useOverseasGame: useOverseasGame,
           gameOverride: gameOverride,
           connectivityByPlayer: connectivityByPlayer,
+          techCapComparisonPin: techCapComparisonPin,
+          blockadedOverseasPin: blockadedOverseasPin,
           expectLogMessageContains: expectLogMessageContains,
           refs: refs,
           verify: (result) =>
@@ -101,7 +106,8 @@ class ResourceExtractorScenario {
   final bool useOverseasGame;
   final Game? gameOverride;
   final Map<String, ConnectivityResult>? connectivityByPlayer;
-  final void Function()? runOverride;
+  final TechCapComparisonPin? techCapComparisonPin;
+  final BlockadedOverseasPin? blockadedOverseasPin;
   final String? expectLogMessageContains;
   final void Function(Map<String, ExtractionTotals> result) verify;
   final String? refs;
@@ -150,8 +156,31 @@ ResourceExtractorScenario extractionScenario({
 }
 
 void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
-  if (scenario.runOverride != null) {
-    scenario.runOverride!();
+  if (scenario.blockadedOverseasPin != null) {
+    final tileState = tileStateFromSpecs(scenario.tileSpecs);
+    final game = scenario.gameOverride ??
+        resourceExtractorGame(
+          tileState: tileState,
+          townDevelopmentLevel: scenario.townDevelopmentLevel,
+          techUnlocked: scenario.techUnlocked,
+          playerProspectedTiles: scenario.playerProspectedTiles,
+        );
+    final Map<String, TileMapResult> tileMapByRegion;
+    if (scenario.tileMapByRegion != null) {
+      tileMapByRegion = scenario.tileMapByRegion!;
+    } else {
+      final resolvedTileMap = scenario.tileMap ??
+          tileMapFromGrids(
+            grid: scenario.grid!,
+            resourceGrid: scenario.resourceGrid!,
+          );
+      tileMapByRegion = {scenario.regionId: resolvedTileMap};
+    }
+    assertBlockadedOverseasPin(
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      pin: scenario.blockadedOverseasPin!,
+    );
     return;
   }
   final captured = scenario.expectLogMessageContains != null
@@ -185,14 +214,24 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
           );
       tileMapByRegion = {scenario.regionId: resolvedTileMap};
     }
+    final connectivity = scenario.connectivityByPlayer ??
+        connectivityFor(
+          scenario.connected,
+          pathTransportCap: scenario.pathTransportCap,
+        );
+    if (scenario.techCapComparisonPin != null) {
+      assertTechCapComparisonPin(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        connectivityResult: connectivity,
+        pin: scenario.techCapComparisonPin!,
+      );
+      return;
+    }
     final result = computeExtraction(
       game: game,
       tileMapByRegion: tileMapByRegion,
-      connectivityResult: scenario.connectivityByPlayer ??
-          connectivityFor(
-            scenario.connected,
-            pathTransportCap: scenario.pathTransportCap,
-          ),
+      connectivityResult: connectivity,
       techCapForPlayer:
           scenario.techCapForPlayer ?? ((_) => scenario.techCap),
     );
@@ -490,29 +529,10 @@ ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
         TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
       ],
       connected: {'oldWorld|p1|0|0'},
-      verify: (_) {
-        final tileState = tileStateFromSpecs(const [
-          TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
-        ]);
-        final game = resourceExtractorGame(tileState: tileState);
-        final tileMapByRegion = {'oldWorld': grainTileMap};
-        final connectivity = connectivityFor({'oldWorld|p1|0|0'});
-        final resultCap2 = computeExtraction(
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          connectivityResult: connectivity,
-          techCapForPlayer: (_) => 2,
-        );
-        expect(resultCap2['pl1']!.land['grain'], 2);
-
-        final resultCap3 = computeExtraction(
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          connectivityResult: connectivity,
-          techCapForPlayer: (_) => 3,
-        );
-        expect(resultCap3['pl1']!.land['grain'], 3);
-      },
+      techCapComparisonPin: const TechCapComparisonPin(
+        capsAndExpectedGrain: [(2, 2), (3, 3)],
+      ),
+      verify: (_) {},
     );
 
 /// Capital grain bonus from `resource_extractor_part2_part2_test.dart`.
@@ -563,38 +583,15 @@ ResourceExtractorScenario blockadedOverseasPortScenario() {
   return ResourceExtractorScenario(
     label:
         'blockaded overseas port: connectivity excludes tile so overseas extraction zero',
+    gameOverride: fixture.game,
+    tileMapByRegion: fixture.tileMapByRegion,
+    blockadedOverseasPin: BlockadedOverseasPin(
+      topology: fixture.topology,
+      blockadedPortProvincesByPlayerId: {
+        'pl1': {'newWorld|n1'},
+      },
+    ),
     verify: (_) {},
-    runOverride: () {
-      final connectivityBlockaded = resolveConnectivity(
-        game: fixture.game,
-        tileMapByRegion: fixture.tileMapByRegion,
-        topology: fixture.topology,
-        blockadedPortProvincesByPlayerId: {
-          'pl1': {'newWorld|n1'},
-        },
-      );
-      final resultBlockaded = computeExtraction(
-        game: fixture.game,
-        tileMapByRegion: fixture.tileMapByRegion,
-        connectivityResult: connectivityBlockaded,
-        techCapForPlayer: (_) => 4,
-      );
-      expect(resultBlockaded['pl1']!.overseas, isEmpty);
-      expect(resultBlockaded['pl1']!.land, isEmpty);
-
-      final connectivityOpen = resolveConnectivity(
-        game: fixture.game,
-        tileMapByRegion: fixture.tileMapByRegion,
-        topology: fixture.topology,
-      );
-      final resultOpen = computeExtraction(
-        game: fixture.game,
-        tileMapByRegion: fixture.tileMapByRegion,
-        connectivityResult: connectivityOpen,
-        techCapForPlayer: (_) => 4,
-      );
-      expect(resultOpen['pl1']!.overseas['sugarCane'] ?? 0, greaterThan(0));
-    },
     refs: '#3939',
   );
 }

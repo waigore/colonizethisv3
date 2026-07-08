@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
 import 'tile_extraction_pipeline.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 
@@ -60,15 +61,15 @@ void forEachNonGpFaction({
   for (final minor in game.minorNations) {
     visit(
       factionId: minor.id,
-      capitalProvinceId: minor.capitalProvinceId,
-      capitalRegionId: minor.capitalTile?.regionId,
+      capitalProvinceId: capitalProvinceIdForFaction(game, minor.id),
+      capitalRegionId: capitalRegionIdForFaction(game, minor.id),
     );
   }
   for (final tribe in game.tribes) {
     visit(
       factionId: tribe.id,
-      capitalProvinceId: tribe.capitalProvinceId,
-      capitalRegionId: tribe.capitalTile?.regionId,
+      capitalProvinceId: capitalProvinceIdForFaction(game, tribe.id),
+      capitalRegionId: capitalRegionIdForFaction(game, tribe.id),
     );
   }
 }

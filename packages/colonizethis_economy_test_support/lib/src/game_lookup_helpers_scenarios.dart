@@ -124,3 +124,98 @@ List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
         refs: '#3939',
       ),
     ];
+
+/// One row in [capitalFactionLookupScenarios].
+class CapitalFactionLookupScenario implements RefsScenario {
+  const CapitalFactionLookupScenario({
+    required this.label,
+    required this.run,
+    this.refs,
+  });
+
+  @override
+  final String label;
+  final void Function() run;
+  @override
+  final String? refs;
+}
+
+void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
+  scenario.run();
+}
+
+/// Canonical scenarios for [capitalProvinceIdForFaction] /
+/// [capitalRegionIdForFaction].
+List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [
+      CapitalFactionLookupScenario(
+        label: 'resolves Great Power capital province and region ids',
+        run: () {
+          final game = TestFixtures.minimalGame(
+            players: const [
+              Player(
+                id: 'gp1',
+                displayName: 'Spain',
+                isHuman: true,
+                capitalProvinceId: 'oldWorld|p1',
+                capitalTile: CapitalTile(
+                  regionId: 'oldWorld',
+                  provinceId: 'oldWorld|p1',
+                  x: 0,
+                  y: 0,
+                ),
+              ),
+            ],
+          );
+          expect(capitalProvinceIdForFaction(game, 'gp1'), 'oldWorld|p1');
+          expect(capitalRegionIdForFaction(game, 'gp1'), 'oldWorld');
+        },
+        refs: '#3939',
+      ),
+      CapitalFactionLookupScenario(
+        label: 'resolves minor and tribe capital ids',
+        run: () {
+          final game = TestFixtures.minimalGame(
+            minorNations: const [
+              MinorNation(
+                id: 'm1',
+                displayName: 'Minor',
+                capitalProvinceId: 'oldWorld|m1',
+                capitalTile: CapitalTile(
+                  regionId: 'oldWorld',
+                  provinceId: 'oldWorld|m1',
+                  x: 1,
+                  y: 0,
+                ),
+              ),
+            ],
+            tribes: const [
+              Tribe(
+                id: 't1',
+                displayName: 'Tribe',
+                capitalProvinceId: 'newWorld|t1',
+                capitalTile: CapitalTile(
+                  regionId: 'newWorld',
+                  provinceId: 'newWorld|t1',
+                  x: 0,
+                  y: 1,
+                ),
+              ),
+            ],
+          );
+          expect(capitalProvinceIdForFaction(game, 'm1'), 'oldWorld|m1');
+          expect(capitalRegionIdForFaction(game, 'm1'), 'oldWorld');
+          expect(capitalProvinceIdForFaction(game, 't1'), 'newWorld|t1');
+          expect(capitalRegionIdForFaction(game, 't1'), 'newWorld');
+        },
+        refs: '#3939',
+      ),
+      CapitalFactionLookupScenario(
+        label: 'unknown faction id returns null capital ids',
+        run: () {
+          final game = TestFixtures.minimalGame();
+          expect(capitalProvinceIdForFaction(game, 'missing'), isNull);
+          expect(capitalRegionIdForFaction(game, 'missing'), isNull);
+        },
+        refs: '#3939',
+      ),
+    ];

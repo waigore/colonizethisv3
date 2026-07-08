@@ -12,4 +12,10 @@ void main() {
     collectPortTileKeysScenarios(),
     runCollectPortTileKeysScenario,
   );
+
+  runLabeledScenarioGroup(
+    'capitalFactionLookup',
+    capitalFactionLookupScenarios(),
+    runCapitalFactionLookupScenario,
+  );
 }
