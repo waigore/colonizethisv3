@@ -522,3 +522,16 @@ Economy `test/` LOC: **2,153** (down from 2,238 slice 8). test_support: **12,356
 
 test_support LOC: **12,624** (net +106 vs slice 10 — `FilledDealExpectation` class + validator helpers; DealMatcher/validator inline-verify compaction; FRR credits / non-GP extraction / auto-offers scenario compaction and ≥20% test_support reduction (≤8,200) deferred to slice 12+).
 
+## Phase 3 — Slice 12 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-credits-expectations | `FrrCreditsExpectation` + `FrrCreditsScenario.expect` data-driven assertions | `frr_scenarios/frr_credits_expectations.dart` | #3939 |
+| non-gp-extraction-expectations | `NonGpExtractionExpectation` + `NonGpExtractionScenario.expect` | `non_gp_extraction_expectations.dart` | #3939 |
+| non-gp-auto-offers-expectations | `NonGpAutoOffersExpectation` + `FactionAutoOffersExpectation` + `NonGpAutoOffersScenario.expect` | `non_gp_auto_offers_expectations.dart` | #3939 |
+| frr-credits-compaction | migrated defensive/aggregation/kickback FRR credits rows to `.expect` | `frr_scenarios/frr_credits_scenarios.dart` | #3939 |
+| non-gp-extraction-compaction | migrated all non-GP extraction scenario rows to `.expect` | `non_gp_extraction_scenarios.dart` | #3939 |
+| non-gp-auto-offers-compaction | migrated C4/C6 auto-offer rows to `.expect` (FRR index row retains inline verify) | `non_gp_auto_offers_scenarios.dart` | #3939 |
+
+test_support LOC: **12,927** (net +303 vs slice 11 — three expectation helper modules added; scenario inline-verify bodies reduced; further treasury/validator/FRR-profit scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 13+).
+

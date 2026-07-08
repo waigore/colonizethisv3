@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
+import 'non_gp_auto_offers_expectations.dart';
 import 'non_gp_auto_offers_test_support.dart';
 import 'scenario_runner.dart';
 
@@ -20,6 +21,22 @@ class NonGpAutoOffersScenario implements RefsScenario {
     required this.verify,
     this.refs,
   });
+
+  NonGpAutoOffersScenario.expect({
+    required String label,
+    required Game game,
+    required Map<String, TileMapResult> tileMapByRegion,
+    required Map<String, ConnectivityResult> connectivityByFactionId,
+    required NonGpAutoOffersExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          connectivityByFactionId: connectivityByFactionId,
+          verify: (result) => assertNonGpAutoOffersExpectation(result, expect),
+          refs: refs,
+        );
 
   final String label;
   final Game game;
@@ -47,15 +64,15 @@ List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
 ];
 
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'empty when no minors and no tribes are configured',
     game: gameForNonGpExtractionTest(provinces: const []),
     tileMapByRegion: const {},
     connectivityByFactionId: const {},
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpAutoOffersExpectation(empty: true),
     refs: '#2991 C4',
   ),
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'empty when tileMapByRegion is empty',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -67,10 +84,10 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
     connectivityByFactionId: const {
       'm1': ConnectivityResult(connected: <String>{'oldWorld|m1|0|0'}),
     },
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpAutoOffersExpectation(empty: true),
     refs: '#2991 C4',
   ),
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'factions with no connectivity entry do not appear in the auto-offer map',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -92,13 +109,13 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
       ),
     },
     connectivityByFactionId: const {},
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpAutoOffersExpectation(empty: true),
     refs: '#2991 C4',
   ),
 ];
 
 List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'emits one priority-1 offer per non-riches tile with originTileKey set',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -125,29 +142,20 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
         connected: <String>{'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
       ),
     },
-    verify: (result) {
-      expect(result.keys, equals(<String>{'m1'}));
-      final orders = result['m1']!;
-      expect(orders, hasLength(2));
-      for (final order in orders) {
-        expect(order.type, equals(TradeOrderType.offer));
-        expect(order.priority, equals(1));
-        expect(order.quantity, equals(1));
-        expect(order.originTileKey, isNotNull);
-        expect(order.isFtp, isFalse);
-      }
-      expect(
-        orders.map((o) => o.originTileKey).toList(),
-        equals(<String>['oldWorld|m1|0|0', 'oldWorld|m1|1|0']),
-      );
-      expect(
-        orders.map((o) => o.commodityId).toList(),
-        equals(<CommodityId>['timber', 'grain']),
-      );
-    },
+    expect: const NonGpAutoOffersExpectation(
+      factionKeys: {'m1'},
+      offersByFaction: {
+        'm1': FactionAutoOffersExpectation(
+          length: 2,
+          standardPriorityOneOffers: true,
+          commodityIds: ['timber', 'grain'],
+          originTileKeys: ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
+        ),
+      },
+    ),
     refs: '#2991 C4',
   ),
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'aggregates minor and tribe offers in the same result map',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -185,16 +193,22 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
       'm1': ConnectivityResult(connected: <String>{'oldWorld|m1|0|0'}),
       't1': ConnectivityResult(connected: <String>{'newWorld|t1|0|0'}),
     },
-    verify: (result) {
-      expect(result.keys, unorderedEquals(<String>['m1', 't1']));
-      expect(result['m1'], hasLength(1));
-      expect(result['t1'], hasLength(1));
-      expect(result['m1']!.first.commodityId, equals('timber'));
-      expect(result['t1']!.first.commodityId, equals('furs'));
-    },
+    expect: const NonGpAutoOffersExpectation(
+      factionKeysUnordered: ['m1', 't1'],
+      offersByFaction: {
+        'm1': FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'timber',
+        ),
+        't1': FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'furs',
+        ),
+      },
+    ),
     refs: '#2991 C4',
   ),
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'excludes riches commodities (spices) per Requirement 11 — '
         'riches do not trade on the world market',
     game: gameForNonGpExtractionTest(
@@ -222,19 +236,20 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
         connected: <String>{'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
       ),
     },
-    verify: (result) {
-      expect(result.keys, equals(<String>{'m1'}));
-      final orders = result['m1']!;
-      expect(orders, hasLength(1));
-      expect(orders.first.commodityId, equals('grain'));
-      expect(orders.first.originTileKey, equals('oldWorld|m1|1|0'));
-      for (final order in orders) {
-        expect(order.commodityId, isNot(equals('spices')));
-      }
-    },
+    expect: const NonGpAutoOffersExpectation(
+      factionKeys: {'m1'},
+      offersByFaction: {
+        'm1': FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'grain',
+          singleOriginTileKey: 'oldWorld|m1|1|0',
+          excludeCommodity: 'spices',
+        ),
+      },
+    ),
     refs: '#2991 C4',
   ),
-  NonGpAutoOffersScenario(
+  NonGpAutoOffersScenario.expect(
     label: 'minerals stay excluded (covered by computeNonGreatPowerExtraction '
         'mineral filter) — no offer emitted for an iron tile even if developed',
     game: gameForNonGpExtractionTest(
@@ -262,10 +277,14 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
         connected: <String>{'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
       ),
     },
-    verify: (result) {
-      expect(result['m1'], hasLength(1));
-      expect(result['m1']!.first.commodityId, equals('grain'));
-    },
+    expect: const NonGpAutoOffersExpectation(
+      offersByFaction: {
+        'm1': FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'grain',
+        ),
+      },
+    ),
     refs: '#2991 C4',
   ),
 ];
@@ -276,7 +295,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
   const unpurchasedTileKey = 'oldWorld|m1|1|0';
 
   return [
-    NonGpAutoOffersScenario(
+    NonGpAutoOffersScenario.expect(
       label: 'purchased non-riches tile (timber) emits a priority-1 auto-offer '
           'keyed under the minor with originTileKey equal to the purchased '
           'tile key',
@@ -292,20 +311,20 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       connectivityByFactionId: const {
         'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
       },
-      verify: (result) {
-        expect(result.keys, equals(<String>{'m1'}));
-        final orders = result['m1']!;
-        expect(orders, hasLength(1));
-        final order = orders.single;
-        expect(order.commodityId, equals('timber'));
-        expect(order.type, equals(TradeOrderType.offer));
-        expect(order.priority, equals(1));
-        expect(order.quantity, equals(1));
-        expect(order.originTileKey, equals(purchasedTileKey));
-      },
+      expect: const NonGpAutoOffersExpectation(
+        factionKeys: {'m1'},
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 1,
+            standardPriorityOneOffers: true,
+            singleCommodityId: 'timber',
+            singleOriginTileKey: purchasedTileKey,
+          ),
+        },
+      ),
       refs: '#2991 C6',
     ),
-    NonGpAutoOffersScenario(
+    NonGpAutoOffersScenario.expect(
       label: 'purchased non-riches tile parity with unpurchased tile — both tiles '
           'emit auto-offers with identical quantity and priority; only '
           'originTileKey differs',
@@ -321,23 +340,16 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
           connected: <String>{purchasedTileKey, unpurchasedTileKey},
         ),
       },
-      verify: (result) {
-        final orders = result['m1']!;
-        expect(orders, hasLength(2));
-        for (final order in orders) {
-          expect(order.commodityId, equals('timber'));
-          expect(order.type, equals(TradeOrderType.offer));
-          expect(order.priority, equals(1));
-          expect(order.quantity, equals(1));
-        }
-        expect(
-          orders.map((o) => o.originTileKey).toList(),
-          equals(<String>[purchasedTileKey, unpurchasedTileKey]),
-          reason:
-              'tiles are emitted in ascending tileKey order; purchased '
-              'status does not affect ordering or eligibility',
-        );
-      },
+      expect: const NonGpAutoOffersExpectation(
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 2,
+            standardPriorityOneOffers: true,
+            commodityIds: ['timber', 'timber'],
+            originTileKeys: [purchasedTileKey, unpurchasedTileKey],
+          ),
+        },
+      ),
       refs: '#2991 C6',
     ),
     () {
@@ -372,7 +384,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
         refs: '#2991 C6',
       );
     }(),
-    NonGpAutoOffersScenario(
+    NonGpAutoOffersScenario.expect(
       label: 'purchased gold tile (mineral riches) emits no auto-offer — riches '
           'handoff (C5) routes the yield to the owning GP treasury in '
           'phase 3 instead',
@@ -388,18 +400,10 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       connectivityByFactionId: const {
         'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
       },
-      verify: (result) {
-        expect(
-          result,
-          isEmpty,
-          reason:
-              'mineral riches are excluded from non-GP auto-offers '
-              'regardless of purchased-tile status',
-        );
-      },
+      expect: const NonGpAutoOffersExpectation(empty: true),
       refs: '#2991 C6',
     ),
-    NonGpAutoOffersScenario(
+    NonGpAutoOffersScenario.expect(
       label: 'purchased spices tile (non-mineral riches) emits no auto-offer — '
           'spices route through the riches handoff (C5) instead of the '
           'world market',
@@ -415,15 +419,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       connectivityByFactionId: const {
         'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
       },
-      verify: (result) {
-        expect(
-          result,
-          isEmpty,
-          reason:
-              'spices is in richesCommodityIds and is filtered from '
-              'non-GP auto-offers regardless of purchased-tile status',
-        );
-      },
+      expect: const NonGpAutoOffersExpectation(empty: true),
       refs: '#2991 C6',
     ),
   ];

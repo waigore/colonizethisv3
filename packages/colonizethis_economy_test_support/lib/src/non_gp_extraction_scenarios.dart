@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
+import 'non_gp_extraction_expectations.dart';
 
 /// One row for `computeNonGreatPowerExtraction` scenario tables.
 class NonGpExtractionScenario {
@@ -18,6 +19,22 @@ class NonGpExtractionScenario {
     required this.verify,
     this.refs,
   });
+
+  NonGpExtractionScenario.expect({
+    required String label,
+    required Game game,
+    required Map<String, TileMapResult> tileMapByRegion,
+    required Map<String, ConnectivityResult> connectivityByFactionId,
+    required NonGpExtractionExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          connectivityByFactionId: connectivityByFactionId,
+          verify: (result) => assertNonGpExtractionExpectation(result, expect),
+          refs: refs,
+        );
 
   final String label;
   final Game game;
@@ -38,7 +55,7 @@ void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
 
 /// SPEC-AC happy paths from `non_gp_extraction_part1_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'minor with non-mineral connected tile produces 1 unit at imp=1',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -63,13 +80,12 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) {
-      expect(result, contains('m1'));
-      expect(result['m1'], equals(<CommodityId, int>{'grain': 1}));
-    },
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {'m1': {'grain': 1}},
+    ),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'tech cap clamps higher-improvement non-mineral tile to 1 unit '
         '(SPEC AC: defaultExtractionCap = 1, applied before transport/town)',
     game: gameForNonGpExtractionTest(
@@ -98,12 +114,12 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) {
-      expect(result['m1'], equals(<CommodityId, int>{'grain': 1}));
-    },
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {'m1': {'grain': 1}},
+    ),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'mineral resources on non-GP tiles are unconditionally excluded '
         '(SPEC AC: tribes/minors never prospect)',
     game: gameForNonGpExtractionTest(
@@ -138,13 +154,13 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
         connected: {'newWorld|t1|1|0', 'newWorld|t1|1|1'},
       ),
     },
-    verify: (result) {
-      expect(result['t1'], equals(<CommodityId, int>{'grain': 1}));
-      expect(result['t1'], isNot(contains('iron')));
-    },
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {'t1': {'grain': 1}},
+      excludesCommodity: ('t1', 'iron'),
+    ),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'capital-tile grain bonus is NOT applied to non-GP totals '
         '(SPEC AC: Great-Power-only rule)',
     game: gameForNonGpExtractionTest(
@@ -167,12 +183,10 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: const <String>{}),
     },
-    verify: (result) {
-      expect(result, isNot(contains('m1')));
-    },
+    expect: const NonGpExtractionExpectation(absentFaction: 'm1'),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'non-GP output is land-only (SPEC AC: no overseas bucket, no GP-side '
         'side-effects on Player.stockpile)',
     game: gameForNonGpExtractionTest(
@@ -197,10 +211,10 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|0|0'}),
     },
-    verify: (result) {
-      expect(result['m1'], equals(<CommodityId, int>{'timber': 1}));
-      expect(result['m1']?.keys, hasLength(1));
-    },
+    expect: NonGpExtractionExpectation(
+      factionTotals: const {'m1': {'timber': 1}},
+      custom: (result) => expect(result['m1']?.keys, hasLength(1)),
+    ),
     refs: '#2991',
   ),
 ];
@@ -212,15 +226,15 @@ List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
 ];
 
 List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'empty minors and tribes lists yield an empty result and skip lookups',
     game: gameForNonGpExtractionTest(provinces: const []),
     tileMapByRegion: const <String, TileMapResult>{},
     connectivityByFactionId: const <String, ConnectivityResult>{},
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'empty tileMapByRegion short-circuits even when minors/tribes present',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -232,10 +246,10 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'minor without capitalProvinceId or capitalTile is skipped silently '
         '(no throw, no entry in output)',
     game: gameForNonGpExtractionTest(
@@ -259,10 +273,10 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       'm1': ConnectivityResult(connected: {'oldWorld|m1|0|0'}),
       'm2': ConnectivityResult(connected: {'oldWorld|m2|0|0'}),
     },
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'minor with capital but no connectivity entry in the input is skipped',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -284,10 +298,10 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       ),
     },
     connectivityByFactionId: const <String, ConnectivityResult>{},
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'tile with road level 0 (no transport path) yields 0 even when listed '
         'as connected and improved',
     game: gameForNonGpExtractionTest(
@@ -313,13 +327,13 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) => expect(result, isEmpty),
+    expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
 ];
 
 List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => [
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'minor and tribe in the same Game both produce per-faction totals '
         'keyed by their ids',
     game: gameForNonGpExtractionTest(
@@ -363,14 +377,16 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
       'm1': ConnectivityResult(connected: {'oldWorld|m1|0|0'}),
       't1': ConnectivityResult(connected: {'newWorld|t1|0|0'}),
     },
-    verify: (result) {
-      expect(result.keys, unorderedEquals(<String>['m1', 't1']));
-      expect(result['m1'], equals(<CommodityId, int>{'timber': 1}));
-      expect(result['t1'], equals(<CommodityId, int>{'furs': 1}));
-    },
+    expect: const NonGpExtractionExpectation(
+      factionKeysUnordered: ['m1', 't1'],
+      factionTotals: {
+        'm1': {'timber': 1},
+        't1': {'furs': 1},
+      },
+    ),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'aggregates multiple connected non-mineral tiles of the same commodity '
         'into a single per-faction total',
     game: gameForNonGpExtractionTest(
@@ -403,15 +419,14 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
         },
       ),
     },
-    verify: (result) {
-      expect(
-        result['m1'],
-        equals(<CommodityId, int>{'grain': 2, 'timber': 1}),
-      );
-    },
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {
+        'm1': {'grain': 2, 'timber': 1},
+      },
+    ),
     refs: '#2991',
   ),
-  NonGpExtractionScenario(
+  NonGpExtractionScenario.expect(
     label: 'capital province at minimum town development level 1 caps yield to 1',
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -438,9 +453,8 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() => 
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|1|0'}),
     },
-    verify: (result) => expect(
-      result['m1'],
-      equals(<CommodityId, int>{'timber': 1}),
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {'m1': {'timber': 1}},
     ),
     refs: '#2991 #3870',
   ),
