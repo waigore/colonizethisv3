@@ -828,3 +828,13 @@ test_support LOC: **16,014** (net +295 vs slice 32 — four expectation helper m
 
 test_support LOC: **16,227** (net +213 vs slice 33 — two expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and remaining inline-verify migrations (`cost_check_scenarios.dart`, `projected_cost_engine_scenarios.dart`, etc.) for ≥20% test_support reduction (≤8,200) deferred to slice 35+.
 
+## Phase 3 — Slice 35 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| cost-check-expectations | migrated 5 inline `run:` closures to `cost_check_expectations.dart` pins | `cost_check_scenarios.dart`, `cost_check_expectations.dart` | #3939 |
+| projected-cost-engine-expectations | migrated 4 inline `run:` closures to `projected_cost_engine_expectations.dart` pins | `projected_cost_engine_scenarios.dart`, `projected_cost_engine_expectations.dart` | #3939 |
+| trade-cargo-capacity-expectations | migrated 7 inline `run:` closures to `trade_cargo_capacity_expectations.dart` pins | `trade_cargo_capacity_scenarios.dart`, `trade_cargo_capacity_expectations.dart` | #3939 |
+
+test_support LOC: **16,452** (net +225 vs slice 34 — three expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and remaining inline-verify migrations (`sea_transport_scenarios.dart`, `worker_action_cost_scenarios.dart`, etc.) for ≥20% test_support reduction (≤8,200) deferred to slice 36+.
+

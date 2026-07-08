@@ -1,8 +1,6 @@
-// Table-driven cost-check precondition scenarios (Refs #3939 phase 3).
+// Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35).
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_test/test.dart';
-
+import 'cost_check_expectations.dart';
 import 'scenario_runner.dart';
 
 /// One row in [checkPreconditionsInOrderScenarios].
@@ -29,78 +27,64 @@ void runCheckPreconditionsInOrderScenario(
 /// Canonical scenarios for [checkPreconditionsInOrder].
 List<CheckPreconditionsInOrderScenario> checkPreconditionsInOrderScenarios() =>
     [
-      CheckPreconditionsInOrderScenario(
+      checkPreconditionsInOrderScenario(
         label: 'returns null when every check passes',
-        run: () {
-          final reason = checkPreconditionsInOrder([
-            (failReason: 'a', check: () => true),
-            (failReason: 'b', check: () => true),
-            (failReason: 'c', check: () => true),
-          ]);
-          expect(reason, isNull);
-        },
+        pins: (
+          steps: [
+            (failReason: 'a', pass: true, trackEvaluation: false),
+            (failReason: 'b', pass: true, trackEvaluation: false),
+            (failReason: 'c', pass: true, trackEvaluation: false),
+          ],
+          expectedReason: null,
+          expectedEvaluated: null,
+        ),
         refs: '#3517',
       ),
-      CheckPreconditionsInOrderScenario(
+      checkPreconditionsInOrderScenario(
         label: 'returns the first failing reason in list order',
-        run: () {
-          final reason = checkPreconditionsInOrder([
-            (failReason: 'tech', check: () => true),
-            (failReason: 'workers', check: () => false),
-            (failReason: 'treasury', check: () => false),
-          ]);
-          expect(reason, 'workers');
-        },
+        pins: (
+          steps: [
+            (failReason: 'tech', pass: true, trackEvaluation: false),
+            (failReason: 'workers', pass: false, trackEvaluation: false),
+            (failReason: 'treasury', pass: false, trackEvaluation: false),
+          ],
+          expectedReason: 'workers',
+          expectedEvaluated: null,
+        ),
         refs: '#3517',
       ),
-      CheckPreconditionsInOrderScenario(
+      checkPreconditionsInOrderScenario(
         label: 'honours canonical priority: earlier failure wins over later',
-        run: () {
-          final reason = checkPreconditionsInOrder([
-            (failReason: 'tech', check: () => false),
-            (failReason: 'materials', check: () => false),
-          ]);
-          expect(reason, 'tech');
-        },
+        pins: (
+          steps: [
+            (failReason: 'tech', pass: false, trackEvaluation: false),
+            (failReason: 'materials', pass: false, trackEvaluation: false),
+          ],
+          expectedReason: 'tech',
+          expectedEvaluated: null,
+        ),
         refs: '#3517',
       ),
-      CheckPreconditionsInOrderScenario(
+      checkPreconditionsInOrderScenario(
         label: 'short-circuits: no later check runs once one fails',
-        run: () {
-          final evaluated = <String>[];
-          final reason = checkPreconditionsInOrder([
-            (
-              failReason: 'first',
-              check: () {
-                evaluated.add('first');
-                return true;
-              },
-            ),
-            (
-              failReason: 'second',
-              check: () {
-                evaluated.add('second');
-                return false;
-              },
-            ),
-            (
-              failReason: 'third',
-              check: () {
-                evaluated.add('third');
-                return true;
-              },
-            ),
-          ]);
-          expect(reason, 'second');
-          expect(evaluated, ['first', 'second']);
-        },
+        pins: (
+          steps: [
+            (failReason: 'first', pass: true, trackEvaluation: true),
+            (failReason: 'second', pass: false, trackEvaluation: true),
+            (failReason: 'third', pass: true, trackEvaluation: true),
+          ],
+          expectedReason: 'second',
+          expectedEvaluated: ['first', 'second'],
+        ),
         refs: '#3517',
       ),
-      CheckPreconditionsInOrderScenario(
+      checkPreconditionsInOrderScenario(
         label: 'empty precondition list passes (returns null)',
-        run: () {
-          expect(checkPreconditionsInOrder(const []), isNull);
-        },
+        pins: (
+          steps: [],
+          expectedReason: null,
+          expectedEvaluated: null,
+        ),
         refs: '#3517',
       ),
     ];
