@@ -61,6 +61,23 @@ const List<String> kGp1OwProvincesDevelop = <String>[
   'oldWorld|gp1_11',
 ];
 
+/// Eight OW provinces for the EXPAND two-GP peace orchestrator pin
+/// (`domain_planner_orchestrator_expand_two_gp_peace_test.dart`).
+///
+/// Strictly below `kObserverConquestMinOwProvincesPerGp` (10) while one
+/// province larger than [kGp1OwProvincesBelowQuota] so the EXPAND frontier
+/// geometry matches the historical 8-province pin (Refs #3941).
+const List<String> kGp1OwProvincesExpandTwoGp = <String>[
+  'oldWorld|gp1_0',
+  'oldWorld|gp1_1',
+  'oldWorld|gp1_2',
+  'oldWorld|gp1_3',
+  'oldWorld|gp1_4',
+  'oldWorld|gp1_5',
+  'oldWorld|gp1_6',
+  'oldWorld|gp1_7',
+];
+
 /// Shared minor-war fixture ids for the minimal EXPAND orchestrator pins
 /// (`domain_planner_orchestrator_{domain_gates,phase_plan_injection,
 /// trade_orders_wiring}_test.dart`; Refs #2832 / #2509 S5 / #2994 F7).

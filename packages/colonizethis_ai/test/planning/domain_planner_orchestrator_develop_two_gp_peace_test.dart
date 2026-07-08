@@ -52,32 +52,20 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
-const String _nationId = 'gp1';
+const String _nationId = kOrchestratorGp1NationId;
 const String _atWarGpAId = 'gp2';
 const String _atWarGpBId = 'gp3';
 const String _atWarMinorId = 'minor1';
 
-// gp1 owns 11 OW provinces (>= the observer quota of 10) so the GP is
-// past EXPAND. Combined with an empty `ColonialSummary` (no invadable NW
-// provinces, no adjacent NW owners) and no unowned NW visible in the
-// `Game`'s NW region, this places the GP in DEVELOP per
+// gp1 owns 11 OW provinces via [kGp1OwProvincesAtQuota] (>= observer quota
+// of 10) so the GP is past EXPAND. Combined with an empty `ColonialSummary`
+// (no invadable NW provinces, no adjacent NW owners) and no unowned NW
+// visible in the `Game`'s NW region, this places the GP in DEVELOP per
 // `observerGoalPhaseFor` (`hasColonialAcquisitionTargets` is false and
 // the global NW snapshot has no non-GP-owned provinces).
-const List<String> _gp1OwProvinces = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
 
 const String _gpAOwProvince = 'oldWorld|gp2_0';
 const String _gpBOwProvince = 'oldWorld|gp3_0';
@@ -92,7 +80,7 @@ Game _developTwoGpWarsScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvinces)
+          for (final id in kGp1OwProvincesAtQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
           const Province(
             id: _gpAOwProvince,
@@ -127,7 +115,7 @@ Game _developTwoGpWarsScenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvinces.first,
+          stationedProvinceId: kGp1OwProvincesAtQuota.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),

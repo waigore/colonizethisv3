@@ -27,6 +27,18 @@ final RegExp _localAtQuotaConst = RegExp(
   r'const\s+List<String>\s+_gp1OwProvincesAtQuota\b',
 );
 
+/// Forbidden bare `_gp1OwProvinces` copies (COLONIAL / DEVELOP two-GP peace
+/// pins historically used this name for the shared at-quota set).
+final RegExp _localBareGp1OwProvincesConst = RegExp(
+  r'const\s+List<String>\s+_gp1OwProvinces\b',
+);
+
+/// Forbidden EXPAND two-GP local `_gp1Provinces` copies; use
+/// [kGp1OwProvincesExpandTwoGp] instead (Refs #3941).
+final RegExp _localExpandTwoGpProvincesConst = RegExp(
+  r'const\s+List<String>\s+_gp1Provinces\b',
+);
+
 /// True when the repo-relative [slashPath] is an in-scope orchestrator
 /// `*_test.dart` (not the shared support library).
 bool aiOrchestratorSharedFixturesPathInScope(String slashPath) {
@@ -56,6 +68,16 @@ String? aiOrchestratorSharedFixturesViolationReason(
   if (_localAtQuotaConst.hasMatch(content)) {
     return 'redeclares local `_gp1OwProvincesAtQuota`; import '
         '`kGp1OwProvincesAtQuota` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3941)';
+  }
+  if (_localBareGp1OwProvincesConst.hasMatch(content)) {
+    return 'redeclares local `_gp1OwProvinces`; import '
+        '`kGp1OwProvincesAtQuota` (or the phase-appropriate shared list) from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3941)';
+  }
+  if (_localExpandTwoGpProvincesConst.hasMatch(content)) {
+    return 'redeclares local `_gp1Provinces`; import '
+        '`kGp1OwProvincesExpandTwoGp` from '
         '`$orchestratorSharedFixturesSupportFile` (Refs #3941)';
   }
   return null;

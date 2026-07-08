@@ -48,29 +48,17 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
-const String _nationId = 'gp1';
+const String _nationId = kOrchestratorGp1NationId;
 const String _blockerGpId = 'gp2';
 const String _nonBlockerGpId = 'gp3';
 
-// gp1 owns 11 OW provinces (>= the observer quota of 10), so the GP is
-// past EXPAND and `isBelowObserverConquestQuota` is false. Combined with a
-// non-empty colonial acquisition target set, this places the GP in
-// COLONIAL per `observerGoalPhaseFor`.
-const List<String> _gp1OwProvinces = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
+// gp1 owns 11 OW provinces via [kGp1OwProvincesAtQuota] (>= observer quota
+// of 10), so the GP is past EXPAND and `isBelowObserverConquestQuota` is
+// false. Combined with a non-empty colonial acquisition target set, this
+// places the GP in COLONIAL per `observerGoalPhaseFor`.
 
 // gp2 owns two NW provinces. Both are listed in
 // `invadableNewWorldProvinceIdsSorted` so `primaryColonialGpBlocker`
@@ -111,7 +99,7 @@ Game _colonialTwoGpWarsScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvinces)
+          for (final id in kGp1OwProvincesAtQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
           for (final id in _gp3OwProvinces)
             Province(id: id, regionId: 'oldWorld', ownerId: _nonBlockerGpId),
@@ -141,7 +129,7 @@ Game _colonialTwoGpWarsScenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvinces.first,
+          stationedProvinceId: kGp1OwProvincesAtQuota.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),
