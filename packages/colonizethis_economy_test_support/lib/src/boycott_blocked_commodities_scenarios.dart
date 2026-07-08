@@ -9,6 +9,40 @@ import 'boycott_blocked_commodities_expectations.dart';
 import 'boycott_blocked_commodities_test_support.dart';
 import 'trade_order_factory.dart';
 
+const _boycottColonyStates = [
+  ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
+];
+const _boycottActiveStates = [
+  BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
+];
+
+BoycottBlockedCommoditiesScenario _boycottColonyRow({
+  required String label,
+  required BoycottBlockedCommoditiesExpectation expect,
+  List<ColonyState> colonyStates = _boycottColonyStates,
+  List<BoycottState> boycottStates = _boycottActiveStates,
+  String buyerPlayerId = 'gpC',
+  bool useDefaultTileMaps = true,
+  bool useDefaultTopology = true,
+  Map<String, ConnectivityResult>? connectivityByFactionId,
+  Map<String, List<TradeOrder>>? autoOffersByFactionId,
+  String? refs,
+}) =>
+    BoycottBlockedCommoditiesScenario.expect(
+      label: label,
+      buildGame: () => gameWithColonyTribeBoycottTest(
+        colonyStates: colonyStates,
+        boycottStates: boycottStates,
+      ),
+      buyerPlayerId: buyerPlayerId,
+      expect: expect,
+      useDefaultTileMaps: useDefaultTileMaps,
+      useDefaultTopology: useDefaultTopology,
+      connectivityByFactionId: connectivityByFactionId,
+      autoOffersByFactionId: autoOffersByFactionId,
+      refs: refs,
+    );
+
 /// One row in [boycottBlockedCommoditiesScenarios].
 class BoycottBlockedCommoditiesScenario {
   const BoycottBlockedCommoditiesScenario({
@@ -60,34 +94,16 @@ class BoycottBlockedCommoditiesScenario {
 /// Canonical scenarios for [boycottedColonySellableCommodityIds].
 List<BoycottBlockedCommoditiesScenario> boycottBlockedCommoditiesScenarios() =>
     [
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label:
             'returns the colony Tribe sellable commodities for the boycotted buyer',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
         expect: const BoycottBlockedCommoditiesExpectation(
           blockedCommodityIds: {'furs'},
         ),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'honors precomputed auto-offers without recomputing connectivity',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
         connectivityByFactionId: const {},
         autoOffersByFactionId: {
           't1': [testOffer('furs', 1)],
@@ -97,68 +113,32 @@ List<BoycottBlockedCommoditiesScenario> boycottBlockedCommoditiesScenarios() =>
         ),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'empty for a buyer that is not the boycott target',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
         buyerPlayerId: 'gpA',
         expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'empty when no boycott is active',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
+        boycottStates: const [],
         expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'empty when the boycotting GP holds no colony',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
+        colonyStates: const [],
         expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'empty when tile maps are omitted (unit-test path unaffected)',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
         useDefaultTileMaps: false,
         expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
         refs: '#3758',
       ),
-      BoycottBlockedCommoditiesScenario.expect(
+      _boycottColonyRow(
         label: 'empty when topology is absent',
-        buildGame: () => gameWithColonyTribeBoycottTest(
-          colonyStates: const [
-            ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1),
-          ],
-          boycottStates: const [
-            BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1),
-          ],
-        ),
-        buyerPlayerId: 'gpC',
         useDefaultTopology: false,
         expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
         refs: '#3758',

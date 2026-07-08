@@ -713,3 +713,16 @@ Province-missing logger row migrated from slice 24 documented exception to scena
 
 test_support LOC: **15,201** (net +76 vs slice 24 — three cluster file merges offset by province-missing scenario helpers; net −3 files). Economy `test/` **1,529** (down 48 vs slice 24). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 26+.
 
+## Phase 3 — Slice 26 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-file-split | split 1349-line `deal_matcher_core_scenarios.dart` into behavior-family modules (≤423 lines each) | `deal_matcher_scenario.dart`, `deal_matcher_basic_scenarios.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_treasury_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3939 |
+| dm-pair-trade-preset | `matcherPairTrade` shared single-seller/single-buyer input builder | `deal_matcher_test_support.dart` | #3939 |
+| dm-partial-fill-pin | migrated last `FilledDeal(...)` literal row to `firstFilledDeal` pins + `matcherPairTrade` | `deal_matcher_basic_scenarios.dart` | #3939 |
+| boycott-row-preset | `_boycottColonyRow` shared colony/boycott fixture builder | `boycott_blocked_commodities_scenarios.dart` | #3758, #3939 |
+
+Deleted module: `deal_matcher_core_scenarios.dart` (exceeded `repo.dart_file_non_comment_line_size` at 1349 non-comment lines).
+
+test_support LOC: **15,231** (net +30 vs slice 25 — split-file headers offset boycott row compaction; all deal_matcher modules now ≤423 physical lines). Economy `test/` **1,529** (unchanged). Further treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 27+.
+

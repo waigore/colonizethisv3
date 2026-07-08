@@ -64,6 +64,31 @@ DealMatchInputs matcherInputs({
   );
 }
 
+/// Single-seller / single-buyer commodity match with default timber @ 30.0.
+DealMatchInputs matcherPairTrade({
+  String seller = 'a',
+  String buyer = 'b',
+  String commodity = 'timber',
+  int offerQty = 10,
+  int bidQty = 5,
+  int buyerCapacity = 100,
+  int offerPriority = 1,
+  int bidPriority = 1,
+  Map<CommodityId, double>? pricesByCommodityId,
+  Set<String> boycottBlockedPairKeys = const {},
+}) =>
+    matcherInputs(
+      offersByFactionId: {
+        seller: [matcherOffer(commodity, offerQty, priority: offerPriority)],
+      },
+      bidsByFactionId: {
+        buyer: [matcherBid(commodity, bidQty, priority: bidPriority)],
+      },
+      tradeCapacityByFactionId: {buyer: buyerCapacity},
+      pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
+      boycottBlockedPairKeys: boycottBlockedPairKeys,
+    );
+
 /// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
 PurchasedTileIndex frrMatcherTestIndex({
   String tileKey = 'oldWorld|M1|0|0',
