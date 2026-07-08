@@ -754,3 +754,20 @@ World-market runner file count: **10 → 8** (target ≤12 met).
 
 test_support LOC: **15,263** (net +12 vs slice 27 — validator catalog presets added; runner merges reduce economy `test/` overhead). Economy `test/` **1,480** (down 40 vs slice 27). Further treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 29+.
 
+## Phase 3 — Slice 29 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-decrement-scenarios | `decrements running treasury tally after a priced fill`; `skips decrement on missing-price free-fill path` | `treasury_pure_helper_scenarios.dart`, `world_market_treasury_test.dart` | #3856, #3939 |
+| eff-price-silver | `returns null for silver riches regardless of stored prices` | `treasury_pure_helper_scenarios.dart` | #3939 |
+| treasury-available-runner | parity pins moved from runner into `runTreasuryAvailableScenario` | `treasury_available_scenarios.dart` | #3093, #3939 |
+| validator-stockpile-preset | `validatorCtxWithStockpile` shared preset | `trade_order_validator_test_support.dart`, `trade_order_validator_scenarios.dart` | #3939 |
+| misc-runner-merge | merged boycott + lock-recovery runners into deal-matcher file | `world_market_deal_matcher_test.dart` (deleted `world_market_misc_test.dart`) | #3758, #2924, #3939 |
+| description-lint-recursive | `check_economy_test_preserved_descriptions` scans nested `*_scenarios.dart` modules | `tool/check_economy_test_preserved_descriptions.dart` | #3939 |
+
+Deleted test runners: `world_market_misc_test.dart`.
+
+World-market runner file count: **8 → 7** (target ≤12 met).
+
+test_support LOC: **15,359** (net +96 vs slice 28 — decrement/silver scenario rows + validator preset; treasury runner slimmed). Economy `test/` **1,414** (down 66 vs slice 28). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 30+.
+

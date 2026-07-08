@@ -68,7 +68,7 @@ int runCheckEconomyTestPreservedDescriptions(
   final scenarioSourcesByPath = <String, String>{};
   final scenarioDir = Directory(p.join(root, _economyScenarioSupportDir));
   if (scenarioDir.existsSync()) {
-    for (final entity in scenarioDir.listSync(recursive: false)) {
+    for (final entity in scenarioDir.listSync(recursive: true)) {
       if (entity is! File) continue;
       if (!entity.path.endsWith('_scenarios.dart')) continue;
       final relativePath = p.relative(entity.path, from: root);

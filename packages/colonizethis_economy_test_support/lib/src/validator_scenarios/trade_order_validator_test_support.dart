@@ -86,3 +86,17 @@ TradeOrderValidationContext validatorCtxLumberBudget({
       treasuryBudgetForBids: treasuryBudgetForBids,
       tradeCargoCapacity: tradeCargoCapacity,
     );
+
+/// Shared stockpile preset for offer-cap validator scenarios.
+TradeOrderValidationContext validatorCtxWithStockpile(
+  Map<CommodityId, int> stockpile, {
+  int bidTypeCap = 6,
+  int tradeCargoCapacity = 100,
+  int treasuryBudgetForBids = 1 << 30,
+}) =>
+    validatorCtx(
+      availableStockpileByCommodityId: stockpile,
+      bidTypeCap: bidTypeCap,
+      tradeCargoCapacity: tradeCargoCapacity,
+      treasuryBudgetForBids: treasuryBudgetForBids,
+    );

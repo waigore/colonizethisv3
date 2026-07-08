@@ -107,6 +107,31 @@ const List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
 
 void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
+  if (scenario.label.startsWith('default projectedNonBidTreasuryDelta')) {
+    expect(
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: scenario.playerId,
+        projectedNonBidTreasuryDelta: 0,
+      ),
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: scenario.playerId,
+      ),
+    );
+  }
+  if (scenario.label.startsWith(
+    'projectedNonBidTreasuryDelta is ignored when treasury is already 0',
+  )) {
+    expect(
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: scenario.playerId,
+        projectedNonBidTreasuryDelta: -25,
+      ),
+      0,
+    );
+  }
   final actual = treasuryAvailableForBidsByPlayer(
     game: game,
     playerId: scenario.playerId,

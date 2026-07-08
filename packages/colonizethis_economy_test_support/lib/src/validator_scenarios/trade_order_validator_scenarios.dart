@@ -166,7 +166,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
   ),
   TradeOrderValidatorScenario.expect(
     label: 'offer quantity > availableStockpile is rejected',
-    context: validatorCtx(availableStockpileByCommodityId: {'timber': 5}),
+    context: validatorCtxWithStockpile({'timber': 5}),
     proposedOrders: [validatorOffer('timber', 10)],
     expect: ValidatorExpectation(
       singleRejectedWithReason:
@@ -177,7 +177,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'offer with no entry in availableStockpileByCommodityId is treated as '
         'available = 0 and rejected for any positive quantity',
-    context: validatorCtx(availableStockpileByCommodityId: const {}),
+    context: validatorCtxWithStockpile(const {}),
     proposedOrders: [validatorOffer('timber', 1)],
     expect: ValidatorExpectation(
       singleRejectedWithReason:
@@ -187,7 +187,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
   ),
   TradeOrderValidatorScenario.expect(
     label: 'offer quantity == availableStockpile is accepted (inclusive)',
-    context: validatorCtx(availableStockpileByCommodityId: {'timber': 10}),
+    context: validatorCtxWithStockpile({'timber': 10}),
     proposedOrders: [validatorOffer('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#2989',
@@ -195,9 +195,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'mutualExclusion takes precedence over bidTypeCapExceeded (rule 3 '
         'before rule 4)',
-    context: validatorCtx(
+    context: validatorCtxWithStockpile(
+      {'timber': 50},
       bidTypeCap: 0,
-      availableStockpileByCommodityId: {'timber': 50},
     ),
     proposedOrders: [
       validatorBid('timber', 5),
@@ -211,7 +211,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'richesNotTradeable takes precedence over mutualExclusion (rule 2 '
         'before rule 3)',
-    context: validatorCtx(availableStockpileByCommodityId: {'gold': 50}),
+    context: validatorCtxWithStockpile({'gold': 50}),
     proposedOrders: [validatorBid('gold', 5), validatorOffer('gold', 5)],
     expect: const ValidatorExpectation(
       allSameReason: TradeOrderRejectionReasons.richesNotTradeable,
@@ -245,7 +245,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'single valid offer is accepted (stockpile covers, not riches, not '
         'mutually excluded)',
-    context: validatorCtx(availableStockpileByCommodityId: {'timber': 50}),
+    context: validatorCtxWithStockpile({'timber': 50}),
     proposedOrders: [validatorOffer('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#2989',
@@ -346,7 +346,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'commodity appearing as both bid and offer rejects both sides with '
         'mutualExclusion',
-    context: validatorCtx(availableStockpileByCommodityId: {'timber': 50}),
+    context: validatorCtxWithStockpile({'timber': 50}),
     proposedOrders: [
       validatorBid('timber', 5),
       validatorOffer('timber', 5),
@@ -359,16 +359,16 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'bid-on-A + offer-on-B is allowed (mutual exclusion is per-commodity, '
         'not per-player)',
-    context: validatorCtx(availableStockpileByCommodityId: {'iron': 50}),
+    context: validatorCtxWithStockpile({'iron': 50}),
     proposedOrders: [validatorBid('timber', 5), validatorOffer('iron', 5)],
     expect: const ValidatorExpectation(allAccepted: true),
     refs: '#2989',
   ),
   TradeOrderValidatorScenario.expect(
     label: 'mutually excluded commodity does not consume a bid-type cap slot',
-    context: validatorCtx(
+    context: validatorCtxWithStockpile(
+      {'timber': 50},
       bidTypeCap: 3,
-      availableStockpileByCommodityId: {'timber': 50},
     ),
     proposedOrders: [
       validatorBid('timber', 5),

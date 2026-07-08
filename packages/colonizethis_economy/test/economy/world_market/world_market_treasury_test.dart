@@ -47,20 +47,6 @@ void main() {
         );
       });
     }
-
-    test('returns null for silver riches regardless of stored prices', () {
-      final game = buildTreasuryBidBudgetGame(
-        prices: const {'gold': 1000, 'silver': 500, 'gems': 999},
-      );
-      expect(
-        effectiveMarketPriceForCommodityId(
-          commodityId: 'silver',
-          worldMarket: game.worldMarketState,
-          resourceRules: rules,
-        ),
-        isNull,
-      );
-    });
   });
 
   group('stagedBidTotalSpendByPlayer (Refs #3093)', () {
@@ -105,34 +91,7 @@ void main() {
 
   group('treasuryAvailableForBidsByPlayer (Refs #3093)', () {
     for (final scenario in treasuryAvailableForBidsScenarios) {
-      test(scenario.label, () {
-        if (scenario.label.contains('default projectedNonBidTreasuryDelta')) {
-          final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
-          expect(
-            treasuryAvailableForBidsByPlayer(
-              game: game,
-              playerId: scenario.playerId,
-            ),
-            treasuryAvailableForBidsByPlayer(
-              game: game,
-              playerId: scenario.playerId,
-              projectedNonBidTreasuryDelta: 0,
-            ),
-          );
-        }
-        if (scenario.label.contains('projectedNonBidTreasuryDelta is ignored')) {
-          final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
-          expect(
-            treasuryAvailableForBidsByPlayer(
-              game: game,
-              playerId: scenario.playerId,
-              projectedNonBidTreasuryDelta: -25,
-            ),
-            0,
-          );
-        }
-        runTreasuryAvailableScenario(scenario);
-      });
+      test(scenario.label, () => runTreasuryAvailableScenario(scenario));
     }
   });
 
@@ -158,27 +117,9 @@ void main() {
   });
 
   group('decrementTreasuryForFill (Refs #3856)', () {
-    test('decrements running treasury tally after a priced fill', () {
-      final remaining = <String, int>{'gp1': 100};
-      decrementTreasuryForFill(
-        buyerFactionId: 'gp1',
-        matchQty: 3,
-        pricePerUnit: 30.0,
-        remainingTreasuryByBuyerFactionId: remaining,
-      );
-      expect(remaining['gp1'], 10);
-    });
-
-    test('skips decrement on missing-price free-fill path', () {
-      final remaining = <String, int>{'gp1': 100};
-      decrementTreasuryForFill(
-        buyerFactionId: 'gp1',
-        matchQty: 5,
-        pricePerUnit: 0.0,
-        remainingTreasuryByBuyerFactionId: remaining,
-      );
-      expect(remaining['gp1'], 100);
-    });
+    for (final scenario in decrementTreasuryForFillScenarios) {
+      test(scenario.label, () => runDecrementTreasuryForFillScenario(scenario));
+    }
   });
 
   group('GpTreasuryCreditAccumulator<int>', () {

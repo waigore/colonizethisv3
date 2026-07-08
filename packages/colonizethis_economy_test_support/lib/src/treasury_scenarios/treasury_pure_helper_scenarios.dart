@@ -1,7 +1,9 @@
 // Pure treasury bid-budget helper scenario tables (Refs #3836, #3939 phase 3 slice 6).
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// One row in [capBidQuantityForBudgetsScenarios].
 typedef CapBidQuantityScenario = ({
@@ -151,6 +153,15 @@ const List<EffectiveMarketPriceScenario> effectiveMarketPriceScenarios = [
     refs: null,
   ),
   (
+    label: 'returns null for silver riches regardless of stored prices',
+    commodityId: 'silver',
+    prices: {'gold': 1000, 'silver': 500, 'gems': 999},
+    expected: null,
+    useCatalogDefault: false,
+    expectNull: true,
+    refs: null,
+  ),
+  (
     label: 'treats negative stored prices as missing and falls back to catalog',
     commodityId: 'timber',
     prices: {'timber': -5},
@@ -219,3 +230,49 @@ const List<MaxAffordableBidQuantityScenario> maxAffordableBidQuantityScenarios =
     refs: '#3115',
   ),
 ];
+
+/// One row in [decrementTreasuryForFillScenarios].
+typedef DecrementTreasuryForFillScenario = ({
+  String label,
+  String buyerFactionId,
+  int matchQty,
+  double pricePerUnit,
+  int initialTreasury,
+  int expectedTreasury,
+  String? refs,
+});
+
+const List<DecrementTreasuryForFillScenario> decrementTreasuryForFillScenarios =
+    [
+  (
+    label: 'decrements running treasury tally after a priced fill',
+    buyerFactionId: 'gp1',
+    matchQty: 3,
+    pricePerUnit: 30.0,
+    initialTreasury: 100,
+    expectedTreasury: 10,
+    refs: '#3856',
+  ),
+  (
+    label: 'skips decrement on missing-price free-fill path',
+    buyerFactionId: 'gp1',
+    matchQty: 5,
+    pricePerUnit: 0.0,
+    initialTreasury: 100,
+    expectedTreasury: 100,
+    refs: '#3856',
+  ),
+];
+
+void runDecrementTreasuryForFillScenario(
+  DecrementTreasuryForFillScenario scenario,
+) {
+  final remaining = <String, int>{scenario.buyerFactionId: scenario.initialTreasury};
+  decrementTreasuryForFill(
+    buyerFactionId: scenario.buyerFactionId,
+    matchQty: scenario.matchQty,
+    pricePerUnit: scenario.pricePerUnit,
+    remainingTreasuryByBuyerFactionId: remaining,
+  );
+  expect(remaining[scenario.buyerFactionId], scenario.expectedTreasury);
+}

@@ -1,10 +1,20 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Consolidated DealMatcher runners (Refs #3939 phase 3).
 void main() {
+  late final Map<String, TileMapResult> boycottTileMaps;
+  late final MapTopology boycottTopology;
+
+  setUpAll(() {
+    boycottTileMaps = tileMapsForBoycottColonyTribeTest();
+    boycottTopology = topologyForBoycottColonyTribeTest();
+  });
+
   group('DealMatcher.pairKey', () {
     test('returns canonical key regardless of argument order', () {
       expect(
@@ -121,5 +131,28 @@ void main() {
       expect(index.length, 0);
       expect(index.isEmpty, isTrue);
     });
+  });
+
+  group('boycottedColonySellableCommodityIds (Refs #3758 S7/R12)', () {
+    for (final scenario in boycottBlockedCommoditiesScenarios()) {
+      test(scenario.label, () {
+        runBoycottBlockedCommoditiesScenario(
+          scenario: scenario,
+          defaultTileMaps: boycottTileMaps,
+          defaultTopology: boycottTopology,
+        );
+      });
+    }
+  });
+
+  group('computeLockRecoveryMinorAutoBids', () {
+    for (final scenario in lockRecoveryMinorBidsScenarios()) {
+      test(scenario.label, () {
+        runLockRecoveryMinorBidsScenario(
+          scenario: scenario,
+          worldMarketState: lockRecoveryGrainMarket(),
+        );
+      });
+    }
   });
 }
