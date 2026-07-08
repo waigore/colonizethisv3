@@ -122,17 +122,22 @@ ResourceExtractorScenario extractionScenario({
   List<List<String>>? grid,
   List<List<Resource?>>? resourceGrid,
   TileMapResult? tileMap,
-  required List<TileImprovementSpec> improvements,
-  required Set<String> connected,
+  Map<String, TileMapResult>? tileMapByRegion,
+  List<TileImprovementSpec> improvements = const [],
+  Set<String> connected = const {},
   int techCap = 4,
   Map<String, int>? expectLand,
   Map<String, int>? expectOverseas,
   bool expectOverseasEmpty = false,
   bool expectLandEmpty = false,
+  List<String> landAbsent = const [],
   int townDevelopmentLevel = 4,
   Map<String, bool>? techUnlocked,
   Map<String, Set<String>>? playerProspectedTiles,
   Map<String, int> pathTransportCap = const {},
+  Map<String, bool>? techCapPinUnlocked,
+  int? techCapPinExpected,
+  int Function(String playerId)? techCapForPlayer,
   String? refs,
 }) {
   return ResourceExtractorScenario.expect(
@@ -140,6 +145,7 @@ ResourceExtractorScenario extractionScenario({
     grid: grid,
     resourceGrid: resourceGrid,
     tileMap: tileMap,
+    tileMapByRegion: tileMapByRegion,
     tileSpecs: improvements,
     connected: connected,
     pathTransportCap: pathTransportCap,
@@ -147,37 +153,50 @@ ResourceExtractorScenario extractionScenario({
     techUnlocked: techUnlocked,
     playerProspectedTiles: playerProspectedTiles,
     techCap: techCap,
+    techCapForPlayer: techCapForPlayer,
     refs: refs,
     expect: ResourceExtractorExpectation(
       land: expectLand ?? const {},
       overseas: expectOverseas ?? const {},
       landEmpty: expectLandEmpty,
       overseasEmpty: expectOverseasEmpty,
+      landAbsent: landAbsent,
+      techCapPinUnlocked: techCapPinUnlocked,
+      techCapPinExpected: techCapPinExpected,
     ),
   );
 }
 
+Map<String, TileMapResult> _tileMapByRegionFor(
+  ResourceExtractorScenario scenario,
+) {
+  if (scenario.tileMapByRegion != null) return scenario.tileMapByRegion!;
+  final resolved = scenario.tileMap ??
+      tileMapFromGrids(
+        grid: scenario.grid!,
+        resourceGrid: scenario.resourceGrid!,
+      );
+  return {scenario.regionId: resolved};
+}
+
+Game _gameFor(ResourceExtractorScenario scenario, TileMapState tileState) {
+  if (scenario.gameOverride != null) return scenario.gameOverride!;
+  if (scenario.useOverseasGame) {
+    return overseasResourceExtractorGame(tileState: tileState);
+  }
+  return resourceExtractorGame(
+    tileState: tileState,
+    townDevelopmentLevel: scenario.townDevelopmentLevel,
+    techUnlocked: scenario.techUnlocked,
+    playerProspectedTiles: scenario.playerProspectedTiles,
+  );
+}
+
 void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
+  final tileState = tileStateFromSpecs(scenario.tileSpecs);
+  final tileMapByRegion = _tileMapByRegionFor(scenario);
+  final game = _gameFor(scenario, tileState);
   if (scenario.blockadedOverseasPin != null) {
-    final tileState = tileStateFromSpecs(scenario.tileSpecs);
-    final game = scenario.gameOverride ??
-        resourceExtractorGame(
-          tileState: tileState,
-          townDevelopmentLevel: scenario.townDevelopmentLevel,
-          techUnlocked: scenario.techUnlocked,
-          playerProspectedTiles: scenario.playerProspectedTiles,
-        );
-    final Map<String, TileMapResult> tileMapByRegion;
-    if (scenario.tileMapByRegion != null) {
-      tileMapByRegion = scenario.tileMapByRegion!;
-    } else {
-      final resolvedTileMap = scenario.tileMap ??
-          tileMapFromGrids(
-            grid: scenario.grid!,
-            resourceGrid: scenario.resourceGrid!,
-          );
-      tileMapByRegion = {scenario.regionId: resolvedTileMap};
-    }
     assertBlockadedOverseasPin(
       game: game,
       tileMapByRegion: tileMapByRegion,
@@ -195,27 +214,6 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
     Logger.level = Level.error;
   }
   try {
-    final tileState = tileStateFromSpecs(scenario.tileSpecs);
-    final game = scenario.gameOverride ??
-        (scenario.useOverseasGame
-            ? overseasResourceExtractorGame(tileState: tileState)
-            : resourceExtractorGame(
-                tileState: tileState,
-                townDevelopmentLevel: scenario.townDevelopmentLevel,
-                techUnlocked: scenario.techUnlocked,
-                playerProspectedTiles: scenario.playerProspectedTiles,
-              ));
-    final Map<String, TileMapResult> tileMapByRegion;
-    if (scenario.tileMapByRegion != null) {
-      tileMapByRegion = scenario.tileMapByRegion!;
-    } else {
-      final TileMapResult resolvedTileMap = scenario.tileMap ??
-          tileMapFromGrids(
-            grid: scenario.grid!,
-            resourceGrid: scenario.resourceGrid!,
-          );
-      tileMapByRegion = {scenario.regionId: resolvedTileMap};
-    }
     final connectivity = scenario.connectivityByPlayer ??
         connectivityFor(
           scenario.connected,
@@ -258,7 +256,7 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
 List<ResourceExtractorScenario> resourceExtractorConnectivityCapScenarios({
   required TileMapResult grainTileMap,
 }) => [
-  ResourceExtractorScenario.expect(
+  extractionScenario(
     label: 'stub connectivity: land totals and tech cap applied',
     grid: const [
       ['p1', 'p1'],
@@ -268,57 +266,52 @@ List<ResourceExtractorScenario> resourceExtractorConnectivityCapScenarios({
       [Resource.grain, Resource.timber],
       [Resource.iron, null],
     ],
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 3, roadLevel: 2),
-      TileImprovementSpec('oldWorld|p1|1|0', improvement: 2, roadLevel: 1),
-      TileImprovementSpec('oldWorld|p1|0|1', improvement: 4, roadLevel: 0),
-    ],
+    improvements: [owP1Imp(3, 2), const TileImprovementSpec('oldWorld|p1|1|0', 2, 1), const TileImprovementSpec('oldWorld|p1|0|1', 4)],
     connected: {
-      'oldWorld|p1|0|0',
+      kOwP1Tile00,
       'oldWorld|p1|1|0',
       'oldWorld|p1|0|1',
     },
-    expect: const ResourceExtractorExpectation(
-      land: {'grain': 2, 'timber': 1},
-      landAbsent: ['iron'],
-      overseasEmpty: true,
-    ),
+    expectLand: const {'grain': 2, 'timber': 1},
+    landAbsent: const ['iron'],
+    expectOverseasEmpty: true,
   ),
   extractionScenario(
     label: 'effective extraction capped by transport level',
     tileMap: grainTileMap,
-    improvements: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 1),
-    ],
-    connected: {'oldWorld|p1|0|0'},
+    improvements: [owP1Imp(4, 1)],
+    connected: {kOwP1Tile00},
     expectLand: const {'grain': 1},
   ),
-  ResourceExtractorScenario.expect(
+  extractionScenario(
     label: 'tech cap from extractionCapForUnlocked matches turn_resolver wiring',
     tileMap: grainTileMap,
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
-    ],
-    connected: {'oldWorld|p1|0|0'},
+    improvements: [owP1Imp(4, 4)],
+    connected: {kOwP1Tile00},
     techUnlocked: const {
       kTechIdSawMill: true,
       kTechIdSeedDrill: true,
     },
-    techCapForPlayer: (playerId) => extractionCapForUnlocked(const {
+    techCapForPlayer: (_) => extractionCapForUnlocked(const {
       kTechIdSawMill: true,
       kTechIdSeedDrill: true,
     }),
-    expect: ResourceExtractorExpectation(
-      land: const {'grain': 3},
-      techCapPinUnlocked: const {
-        kTechIdSawMill: true,
-        kTechIdSeedDrill: true,
-      },
-      techCapPinExpected: 3,
-    ),
+    expectLand: const {'grain': 3},
+    techCapPinUnlocked: const {
+      kTechIdSawMill: true,
+      kTechIdSeedDrill: true,
+    },
+    techCapPinExpected: 3,
     refs: '#3661',
   ),
 ];
+
+const _p1FourTiles = {
+  kOwP1Tile00,
+  'oldWorld|p1|1|0',
+  'oldWorld|p1|0|1',
+  'oldWorld|p1|1|1',
+};
 
 /// Scenarios from `resource_extractor_part1_segment2_test.dart`.
 List<ResourceExtractorScenario> resourceExtractorMineralTownDevScenarios({
@@ -335,26 +328,9 @@ List<ResourceExtractorScenario> resourceExtractorMineralTownDevScenarios({
       [Resource.wool, Resource.copper],
       [Resource.timber, Resource.iron],
     ],
-    improvements: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 1, roadLevel: 1),
-      TileImprovementSpec('oldWorld|p1|1|0', improvement: 1, roadLevel: 1),
-      TileImprovementSpec('oldWorld|p1|0|1', improvement: 1, roadLevel: 1),
-      TileImprovementSpec('oldWorld|p1|1|1', improvement: 1, roadLevel: 1),
-    ],
-    connected: {
-      'oldWorld|p1|0|0',
-      'oldWorld|p1|1|0',
-      'oldWorld|p1|0|1',
-      'oldWorld|p1|1|1',
-    },
-    playerProspectedTiles: {
-      'pl1': {
-        'oldWorld|p1|0|0',
-        'oldWorld|p1|1|0',
-        'oldWorld|p1|0|1',
-        'oldWorld|p1|1|1',
-      },
-    },
+    improvements: tileImps(_p1FourTiles),
+    connected: _p1FourTiles,
+    playerProspectedTiles: {'pl1': _p1FourTiles},
     expectLand: const {
       'wool': 1,
       'copper': 1,
@@ -362,37 +338,29 @@ List<ResourceExtractorScenario> resourceExtractorMineralTownDevScenarios({
       'iron': 1,
     },
   ),
-  ResourceExtractorScenario.expect(
+  extractionScenario(
     label: 'mineral tiles without prospected are excluded from extraction',
     tileMap: ironTileMap,
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
-    ],
-    connected: {'oldWorld|p1|0|0'},
-    expect: const ResourceExtractorExpectation(
-      landAbsent: ['iron'],
-      landEmpty: true,
-    ),
+    improvements: [owP1Imp(2, 2)],
+    connected: {kOwP1Tile00},
+    landAbsent: const ['iron'],
+    expectLandEmpty: true,
   ),
   extractionScenario(
     label: 'mineral from prospected tile counts in land',
     tileMap: ironTileMap,
-    improvements: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
-    ],
-    connected: {'oldWorld|p1|0|0'},
+    improvements: [owP1Imp(2, 2)],
+    connected: {kOwP1Tile00},
     playerProspectedTiles: {
-      'pl1': {'oldWorld|p1|0|0'},
+      'pl1': {kOwP1Tile00},
     },
     expectLand: const {'iron': 2},
   ),
   extractionScenario(
     label: 'effective extraction capped by province townDevelopmentLevel',
     tileMap: grainTileMap,
-    improvements: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
-    ],
-    connected: {'oldWorld|p1|0|0'},
+    improvements: [owP1Imp(4, 4)],
+    connected: {kOwP1Tile00},
     townDevelopmentLevel: 1,
     expectLand: const {'grain': 1},
   ),
@@ -400,15 +368,11 @@ List<ResourceExtractorScenario> resourceExtractorMineralTownDevScenarios({
 
 /// Scenarios from `resource_extractor_part2_part2_test.dart` (empty connectivity).
 List<ResourceExtractorScenario> resourceExtractorEmptyConnectivityScenarios() => [
-  ResourceExtractorScenario.expect(
+  extractionScenario(
     label: 'returns empty ExtractionTotals when player has no connected tiles',
     tileMapByRegion: const {},
-    tileSpecs: const [],
-    connected: const {},
-    expect: const ResourceExtractorExpectation(
-      landEmpty: true,
-      overseasEmpty: true,
-    ),
+    expectLandEmpty: true,
+    expectOverseasEmpty: true,
   ),
 ];
 
@@ -421,9 +385,7 @@ ResourceExtractorScenario overseasExtractionScenario() =>
         'oldWorld': singleTileMap(null),
         'newWorld': singleTileMap(Resource.sugarCane, province: 'n1'),
       },
-      tileSpecs: const [
-        TileImprovementSpec('newWorld|n1|0|0', improvement: 1, roadLevel: 1),
-      ],
+      tileSpecs: const [TileImprovementSpec('newWorld|n1|0|0', 1, 1)],
       connected: {'newWorld|n1|0|0'},
       expect: const ResourceExtractorExpectation(
         overseas: {'sugarCane': 1},
@@ -435,18 +397,16 @@ ResourceExtractorScenario overseasExtractionScenario() =>
 ResourceExtractorScenario pathTransportCapScenario({
   required TileMapResult grainTileMap,
 }) =>
-    ResourceExtractorScenario.expect(
+    extractionScenario(
       label: 'effective yield capped by min transport level along path to capital',
       tileMap: grainTileMap,
-      tileSpecs: const [
-        TileImprovementSpec('oldWorld|p1|0|0', improvement: 3, roadLevel: 3),
-      ],
-      connected: {'oldWorld|p1|0|0'},
-      pathTransportCap: const {'oldWorld|p1|0|0': 1},
-      expect: const ResourceExtractorExpectation(
-        land: {'grain': 1},
-      ),
+      improvements: [owP1Imp(3, 3)],
+      connected: {kOwP1Tile00},
+      pathTransportCap: const {kOwP1Tile00: 1},
+      expectLand: const {'grain': 1},
     );
+
+final _townRuleTileSpecs = [owP1Imp(0, 1), const TileImprovementSpec('oldWorld|p2|1|1', 4)];
 
 /// Town-rule + port cap from `resource_extractor_part2_part1_test.dart`.
 ResourceExtractorScenario townRulePortCapScenario() {
@@ -461,18 +421,12 @@ ResourceExtractorScenario townRulePortCapScenario() {
       [null, null],
       [null, Resource.grain],
     ],
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
-      TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
-    ],
+    tileSpecs: _townRuleTileSpecs,
     connected: {tileKey},
     pathTransportCap: const {tileKey: 4},
     gameOverride: townRuleTwoProvinceExtractorGame(
-      tileState: tileStateFromSpecs(const [
-        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
-        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
-      ]),
-      p1TownTileKey: 'oldWorld|p1|0|0',
+      tileState: tileStateFromSpecs(_townRuleTileSpecs),
+      p1TownTileKey: kOwP1Tile00,
       p2TownTileKey: 'oldWorld|p2|0|1',
       portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
     ),
@@ -498,18 +452,12 @@ ResourceExtractorScenario townRuleNonPortNoCapScenario() {
       [null, Resource.grain, null],
       [null, null, null],
     ],
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
-      TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
-    ],
+    tileSpecs: _townRuleTileSpecs,
     connected: {tileKey},
     pathTransportCap: const {tileKey: 4},
     gameOverride: townRuleTwoProvinceExtractorGame(
-      tileState: tileStateFromSpecs(const [
-        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
-        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
-      ]),
-      p1TownTileKey: 'oldWorld|p1|0|0',
+      tileState: tileStateFromSpecs(_townRuleTileSpecs),
+      p1TownTileKey: kOwP1Tile00,
       p2TownTileKey: 'oldWorld|p2|1|0',
     ),
     expect: const ResourceExtractorExpectation(
@@ -527,10 +475,8 @@ ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
       label: 'effective extraction capped by player tech cap when improvement and '
           'transport are high',
       tileMap: grainTileMap,
-      tileSpecs: const [
-        TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
-      ],
-      connected: {'oldWorld|p1|0|0'},
+      tileSpecs: [owP1Imp(4, 4)],
+      connected: {kOwP1Tile00},
       techCapComparisonPin: const TechCapComparisonPin(
         capsAndExpectedGrain: [(2, 2), (3, 3)],
       ),
@@ -538,19 +484,6 @@ ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
 
 /// Capital grain bonus from `resource_extractor_part2_part2_test.dart`.
 ResourceExtractorScenario capitalGrainBonusScenario() {
-  const playerId = 'pl1';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return ResourceExtractorScenario.expect(
     label: 'capital tile grain bonus is unconditional on connectivity',
     tileMapByRegion: const {},
@@ -563,12 +496,12 @@ ResourceExtractorScenario capitalGrainBonusScenario() {
           Province(
             id: 'oldWorld|p1',
             regionId: 'oldWorld',
-            ownerId: playerId,
+            ownerId: 'pl1',
             townDevelopmentLevel: 4,
           ),
         ],
       ),
-      players: [player],
+      players: [spainPl1Player()],
     ),
     connectivityByPlayer: connectivityFor(const {}),
     expect: const ResourceExtractorExpectation(
@@ -600,18 +533,16 @@ ResourceExtractorScenario blockadedOverseasPortScenario() {
 ResourceExtractorScenario provinceMissingFromRegionScenario({
   required TileMapResult grainTileMap,
 }) {
-  final tileState = tileStateFromSpecs(const [
-    TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
-  ]);
+  final specs = [owP1Imp(2, 2)];
   return ResourceExtractorScenario.expect(
     label:
         'skips connected tile and logs when province missing from region (world-model)',
     tileMap: grainTileMap,
-    tileSpecs: const [
-      TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
-    ],
-    connected: {'oldWorld|p1|0|0'},
-    gameOverride: provinceMissingExtractorGame(tileState: tileState),
+    tileSpecs: specs,
+    connected: {kOwP1Tile00},
+    gameOverride: provinceMissingExtractorGame(
+      tileState: tileStateFromSpecs(specs),
+    ),
     expectLogMessageContains: 'extraction province missing',
     expect: const ResourceExtractorExpectation(
       landAbsent: ['grain'],

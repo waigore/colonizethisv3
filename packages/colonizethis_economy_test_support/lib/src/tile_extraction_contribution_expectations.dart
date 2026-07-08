@@ -27,18 +27,7 @@ void runTileContributionConnectedPin({
   required TileContributionConnectedPin pins,
 }) {
   const connected = {_tileKey};
-  final player = Player(
-    id: 'pl1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: _provinceId,
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: _provinceId,
-      x: 0,
-      y: 0,
-    ),
-  );
+  final player = spainPl1Player(capitalProvinceId: _provinceId);
   final game = TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 5,
@@ -53,7 +42,7 @@ void runTileContributionConnectedPin({
       ],
     ),
     tileState: tileStateFromSpecs(const [
-      TileImprovementSpec(_tileKey, improvement: 1, roadLevel: 1),
+      TileImprovementSpec(_tileKey, 1, 1),
     ]),
     players: [player],
   );
@@ -102,18 +91,7 @@ void runTileContributionConnectedPin({
 void runTileContributionDisconnectedPin({
   required TileMapResult grainTileMap,
 }) {
-  final player = Player(
-    id: 'pl1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: _provinceId,
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: _provinceId,
-      x: 0,
-      y: 0,
-    ),
-  );
+  final player = spainPl1Player(capitalProvinceId: _provinceId);
   final game = TestFixtures.minimalGame(
     id: 'g1',
     oldWorld: RegionData(

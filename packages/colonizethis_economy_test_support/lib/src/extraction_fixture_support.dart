@@ -38,39 +38,41 @@ Map<String, TileMapResult> tileMapByRegionForResource(
 
 /// Connected tile with no matching province row (world-model defensive path).
 Game provinceMissingExtractorGame({required TileMapState tileState}) {
-  final player = Player(
-    id: 'pl1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
     oldWorld: const RegionData(provinces: []),
     tileState: tileState,
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
 /// Per-tile improvement and road level for [tileStateFromSpecs].
+///
+/// Positional [improvement]/[roadLevel] keep scenario tables compact
+/// (Refs #3939 slice 50). Prefer `TileImprovementSpec(key, imp, road)`.
 class TileImprovementSpec {
   const TileImprovementSpec(
-    this.tileKey, {
+    this.tileKey, [
     this.improvement = 0,
     this.roadLevel = 0,
-  });
+  ]);
 
   final String tileKey;
   final int improvement;
   final int roadLevel;
 }
+
+/// Same improvement/road level applied to each key (Refs #3939 slice 50).
+List<TileImprovementSpec> tileImps(
+  Iterable<String> tileKeys, [
+  int improvement = 1,
+  int roadLevel = 1,
+]) =>
+    [
+      for (final key in tileKeys)
+        TileImprovementSpec(key, improvement, roadLevel),
+    ];
 
 /// Builds a [TileMapState] from [specs], applying only non-zero levels.
 TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
@@ -128,6 +130,44 @@ Map<String, ConnectivityResult> connectivityFor(
     connectedByRoadRule: connectedByRoadRule,
   ),
 };
+
+/// Multi-faction `{factionId: ConnectivityResult(connected: …)}` map
+/// (Refs #3939 slice 52).
+Map<String, ConnectivityResult> connectivityByFaction(
+  Map<String, Set<String>> byFaction,
+) => {
+      for (final e in byFaction.entries)
+        e.key: ConnectivityResult(connected: e.value),
+    };
+
+/// Canonical capital-province tile key `oldWorld|p1|0|0` (Refs #3939 slice 53).
+const String kOwP1Tile00 = 'oldWorld|p1|0|0';
+
+/// [TileImprovementSpec] for [kOwP1Tile00] (Refs #3939 slice 53).
+TileImprovementSpec owP1Imp([int improvement = 0, int roadLevel = 0]) =>
+    TileImprovementSpec(kOwP1Tile00, improvement, roadLevel);
+
+/// Canonical GP player `pl1` / "Spain" with oldWorld|p1 capital
+/// (Refs #3939 slice 52).
+Player spainPl1Player({
+  Map<String, bool>? techUnlocked,
+  String capitalProvinceId = 'oldWorld|p1',
+  CapitalTile? capitalTile,
+}) =>
+    Player(
+      id: 'pl1',
+      displayName: 'Spain',
+      isHuman: true,
+      capitalProvinceId: capitalProvinceId,
+      capitalTile: capitalTile ??
+          const CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'oldWorld|p1',
+            x: 0,
+            y: 0,
+          ),
+      techUnlocked: techUnlocked,
+    );
 
 /// A capital-province row with sane defaults for non-GP extraction tests.
 Province capitalProvinceForNonGpExtractionTest({
@@ -215,19 +255,7 @@ Game resourceExtractorGame({
   Map<String, Set<String>>? playerProspectedTiles,
   String playerId = 'pl1',
 }) {
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-    techUnlocked: techUnlocked,
-  );
+  assert(playerId == 'pl1', 'resourceExtractorGame uses spainPl1Player');
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -243,7 +271,7 @@ Game resourceExtractorGame({
     ),
     tileState: tileState,
     playerProspectedTiles: playerProspectedTiles,
-    players: [player],
+    players: [spainPl1Player(techUnlocked: techUnlocked)],
   );
 }
 
@@ -258,18 +286,7 @@ Game townRuleTwoProvinceExtractorGame({
   String playerId = 'pl1',
 }) {
   const regionId = 'oldWorld';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: '$regionId|p1',
-    capitalTile: const CapitalTile(
-      regionId: regionId,
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
+  assert(playerId == 'pl1', 'townRuleTwoProvinceExtractorGame uses spainPl1Player');
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -293,7 +310,7 @@ Game townRuleTwoProvinceExtractorGame({
     ),
     tileState: tileState,
     portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
@@ -303,18 +320,6 @@ Game overseasResourceExtractorGame({
   required TileMapState tileState,
 }) {
   const playerId = 'pl1';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -334,7 +339,7 @@ Game overseasResourceExtractorGame({
       ],
     ),
     tileState: tileState,
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
@@ -400,10 +405,10 @@ Game overseasResourceExtractorGame({
     ],
   );
   final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
-  final tileState = tileStateFromSpecs(const [
-    TileImprovementSpec('newWorld|n1|0|0', improvement: 1, roadLevel: 4),
-    TileImprovementSpec('newWorld|n1|1|0', improvement: 1, roadLevel: 4),
-    TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 4),
+  final tileState = tileStateFromSpecs([
+    const TileImprovementSpec('newWorld|n1|0|0', 1, 4),
+    const TileImprovementSpec('newWorld|n1|1|0', 1, 4),
+    owP1Imp(0, 4),
   ]);
   final ports = {
     '$ow|p1|sea1': 'oldWorld|p1|0|0',
@@ -435,10 +440,7 @@ Game overseasResourceExtractorGame({
     tileState: tileState,
     portsByProvinceSeaboard: ports,
     players: [
-      Player(
-        id: 'pl1',
-        displayName: 'Spain',
-        isHuman: true,
+      spainPl1Player(
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       ),

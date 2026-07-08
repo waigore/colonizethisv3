@@ -15,92 +15,61 @@ typedef PurchasedTileAttributionSemanticsScenario = ({
   String? refs,
 });
 
+/// Canonical K1 attribution for semantics rows (Refs #3939 slice 56).
+const PurchasedTileAttribution _kAttrM1GpA = PurchasedTileAttribution(
+  tileKey: 'oldWorld|M1|0|0',
+  owningGpId: 'gpA',
+  sourceFactionId: 'M1',
+  provinceId: 'oldWorld|M1',
+);
+
+PurchasedTileAttribution _attr({
+  String? tileKey,
+  String? owningGpId,
+  String? sourceFactionId,
+  String? provinceId,
+}) =>
+    PurchasedTileAttribution(
+      tileKey: tileKey ?? _kAttrM1GpA.tileKey,
+      owningGpId: owningGpId ?? _kAttrM1GpA.owningGpId,
+      sourceFactionId: sourceFactionId ?? _kAttrM1GpA.sourceFactionId,
+      provinceId: provinceId ?? _kAttrM1GpA.provinceId,
+    );
+
 /// Canonical scenarios for [PurchasedTileAttribution] value semantics.
 List<PurchasedTileAttributionSemanticsScenario>
 purchasedTileAttributionSemanticsScenarios() => [
   (
     label: 'equality holds across all four fields',
-    run: _runAttributionEquality,
+    run: () {
+      final a = _kAttrM1GpA;
+      final b = _attr();
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+    },
     refs: null,
   ),
   (
     label: 'inequality on any differing field',
-    run: _runAttributionInequality,
+    run: () {
+      expect(_kAttrM1GpA, isNot(equals(_attr(tileKey: 'oldWorld|M1|1|0'))));
+      expect(_kAttrM1GpA, isNot(equals(_attr(owningGpId: 'gpB'))));
+      expect(_kAttrM1GpA, isNot(equals(_attr(sourceFactionId: 'M2'))));
+      expect(_kAttrM1GpA, isNot(equals(_attr(provinceId: 'oldWorld|M2'))));
+    },
     refs: null,
   ),
   (
     label: 'toString surfaces every field for trace logs',
-    run: _runAttributionToString,
+    run: () {
+      final s = _kAttrM1GpA.toString();
+      expect(s, contains('oldWorld|M1|0|0'));
+      expect(s, contains('gpA'));
+      expect(s, contains('M1'));
+    },
     refs: null,
   ),
 ];
-
-void _runAttributionEquality() {
-  const a = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  const b = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  expect(a, equals(b));
-  expect(a.hashCode, b.hashCode);
-}
-
-void _runAttributionInequality() {
-  const base = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  const diffTile = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|1|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  const diffOwner = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpB',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  const diffSource = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M2',
-    provinceId: 'oldWorld|M1',
-  );
-  const diffProvince = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M2',
-  );
-  expect(base, isNot(equals(diffTile)));
-  expect(base, isNot(equals(diffOwner)));
-  expect(base, isNot(equals(diffSource)));
-  expect(base, isNot(equals(diffProvince)));
-}
-
-void _runAttributionToString() {
-  const a = PurchasedTileAttribution(
-    tileKey: 'oldWorld|M1|0|0',
-    owningGpId: 'gpA',
-    sourceFactionId: 'M1',
-    provinceId: 'oldWorld|M1',
-  );
-  final s = a.toString();
-  expect(s, contains('oldWorld|M1|0|0'));
-  expect(s, contains('gpA'));
-  expect(s, contains('M1'));
-}
 
 /// One row in [purchasedTileIndexFromGameScenarios].
 class PurchasedTileIndexFromGameScenario {

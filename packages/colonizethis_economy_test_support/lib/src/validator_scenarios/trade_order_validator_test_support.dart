@@ -222,3 +222,35 @@ TradeOrderValidatorScenario validatorCatalogAdmitRow({
       ),
       refs: refs,
     );
+
+/// Compact rules/caps validator row (Refs #3939 slice 51).
+TradeOrderValidatorScenario validatorRow({
+  required String label,
+  required ValidatorExpectation expect,
+  TradeOrderValidationContext? context,
+  List<TradeOrder>? proposedOrders,
+  String? refs = '#2989',
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: context ?? validatorCtx(),
+      proposedOrders: proposedOrders ?? const [],
+      expect: expect,
+      refs: refs,
+    );
+
+/// Single-order reject with [reason] (Refs #3939 slice 51).
+TradeOrderValidatorScenario validatorRejectRow({
+  required String label,
+  required String reason,
+  required TradeOrder order,
+  TradeOrderValidationContext? context,
+  String? refs = '#2989',
+}) =>
+    validatorRow(
+      label: label,
+      context: context,
+      proposedOrders: [order],
+      expect: ValidatorExpectation(singleRejectedWithReason: reason),
+      refs: refs,
+    );

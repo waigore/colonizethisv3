@@ -1,4 +1,4 @@
-// Table-driven FirstRightProfit scenarios (Refs #3856, #3939 phase 3 slice 14).
+// Table-driven FirstRightProfit scenarios (Refs #3856, #3939 slices 14 / 45).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
@@ -32,32 +32,31 @@ class FirstRightProfitRateScenario {
   final String? refs;
 }
 
+FirstRightProfitRateScenario frrProfitRateRow(
+  String label,
+  int score,
+  double expected,
+) =>
+    FirstRightProfitRateScenario.expect(
+      label: label,
+      score: score,
+      expect: FrrProfitRateExpectation(expected: expected),
+    );
+
 /// Canonical scenarios for [computeFirstRightProfitRate].
 List<FirstRightProfitRateScenario> firstRightProfitRateScenarios() => [
-  FirstRightProfitRateScenario.expect(
-    label: 'returns 0.0 at relationScore 0',
-    score: 0,
-    expect: const FrrProfitRateExpectation(expected: 0.0),
+  frrProfitRateRow('returns 0.0 at relationScore 0', 0, 0.0),
+  frrProfitRateRow('returns 0.75 at relationScore 75', 75, 0.75),
+  frrProfitRateRow(
+    'returns 1.0 at relationScore 100',
+    100,
+    kFirstRightMaxProfitRate,
   ),
-  FirstRightProfitRateScenario.expect(
-    label: 'returns 0.75 at relationScore 75',
-    score: 75,
-    expect: const FrrProfitRateExpectation(expected: 0.75),
-  ),
-  FirstRightProfitRateScenario.expect(
-    label: 'returns 1.0 at relationScore 100',
-    score: 100,
-    expect: const FrrProfitRateExpectation(expected: kFirstRightMaxProfitRate),
-  ),
-  FirstRightProfitRateScenario.expect(
-    label: 'returns 0.0 at relationScore -25',
-    score: -25,
-    expect: const FrrProfitRateExpectation(expected: 0.0),
-  ),
-  FirstRightProfitRateScenario.expect(
-    label: 'returns 1.0 at relationScore 150',
-    score: 150,
-    expect: const FrrProfitRateExpectation(expected: kFirstRightMaxProfitRate),
+  frrProfitRateRow('returns 0.0 at relationScore -25', -25, 0.0),
+  frrProfitRateRow(
+    'returns 1.0 at relationScore 150',
+    150,
+    kFirstRightMaxProfitRate,
   ),
 ];
 
@@ -96,72 +95,88 @@ class FirstRightProfitScenario {
   final String? refs;
 }
 
+FirstRightProfitScenario frrProfitRow({
+  required String label,
+  required int relationScore,
+  required int filledQuantity,
+  required double pricePerUnit,
+  bool expectZero = false,
+  double? profitRate,
+  double? profitTreasury,
+}) =>
+    FirstRightProfitScenario.expect(
+      label: label,
+      relationScore: relationScore,
+      filledQuantity: filledQuantity,
+      pricePerUnit: pricePerUnit,
+      expect: expectZero
+          ? const FrrProfitExpectation(expectZero: true)
+          : FrrProfitExpectation(
+              profitRate: profitRate,
+              profitTreasury: profitTreasury,
+            ),
+    );
+
 /// Canonical scenarios for [computeFirstRightProfit].
 List<FirstRightProfitScenario> firstRightProfitScenarios() => [
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 0, qty 10 @ 5.0 → rate 0.0, treasury 0.0',
     relationScore: 0,
     filledQuantity: 10,
     pricePerUnit: 5.0,
-    expect: const FrrProfitExpectation(expectZero: true),
+    expectZero: true,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 75, qty 10 @ 5.0 → rate 0.75, treasury 37.5',
     relationScore: 75,
     filledQuantity: 10,
     pricePerUnit: 5.0,
-    expect: const FrrProfitExpectation(
-      profitRate: 0.75,
-      profitTreasury: 37.5,
-    ),
+    profitRate: 0.75,
+    profitTreasury: 37.5,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty 1 @ 1.0 → rate 1.0, treasury 1.0',
     relationScore: 100,
     filledQuantity: 1,
     pricePerUnit: 1.0,
-    expect: const FrrProfitExpectation(
-      profitRate: kFirstRightMaxProfitRate,
-      profitTreasury: 1.0,
-    ),
+    profitRate: kFirstRightMaxProfitRate,
+    profitTreasury: 1.0,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty 4 @ 2.5 → rate 1.0, treasury 10.0',
     relationScore: 100,
     filledQuantity: 4,
     pricePerUnit: 2.5,
-    expect: const FrrProfitExpectation(
-      profitRate: kFirstRightMaxProfitRate,
-      profitTreasury: 10.0,
-    ),
+    profitRate: kFirstRightMaxProfitRate,
+    profitTreasury: 10.0,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty 0 @ 5.0 → rate 0.0, treasury 0.0',
     relationScore: 100,
     filledQuantity: 0,
     pricePerUnit: 5.0,
-    expect: const FrrProfitExpectation(expectZero: true),
+    expectZero: true,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty 10 @ 0.0 → rate 0.0, treasury 0.0',
     relationScore: 100,
     filledQuantity: 10,
     pricePerUnit: 0.0,
-    expect: const FrrProfitExpectation(expectZero: true),
+    expectZero: true,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty -5 @ 5.0 → rate 0.0, treasury 0.0',
     relationScore: 100,
     filledQuantity: -5,
     pricePerUnit: 5.0,
-    expect: const FrrProfitExpectation(expectZero: true),
+    expectZero: true,
   ),
-  FirstRightProfitScenario.expect(
+  frrProfitRow(
     label: 'relationScore 100, qty 5 @ -1.0 → rate 0.0, treasury 0.0',
     relationScore: 100,
     filledQuantity: 5,
     pricePerUnit: -1.0,
-    expect: const FrrProfitExpectation(expectZero: true),
+    expectZero: true,
   ),
 ];
 
@@ -200,57 +215,30 @@ class EmbassyKickbackScenario {
   final String? refs;
 }
 
+EmbassyKickbackScenario embassyKickbackRow(
+  String label,
+  num relationScore,
+  int filledQuantity,
+  double pricePerUnit,
+  double expected,
+) =>
+    EmbassyKickbackScenario.expect(
+      label: label,
+      relationScore: relationScore,
+      filledQuantity: filledQuantity,
+      pricePerUnit: pricePerUnit,
+      expect: EmbassyKickbackExpectation(expected: expected),
+    );
+
 /// Canonical scenarios for [computeEmbassyKickback].
 List<EmbassyKickbackScenario> embassyKickbackScenarios() => [
-  EmbassyKickbackScenario.expect(
-    label: 'relation 100, 10 @ 20.0 → 20.0',
-    relationScore: 100,
-    filledQuantity: 10,
-    pricePerUnit: 20.0,
-    expect: const EmbassyKickbackExpectation(expected: 20.0),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 50, 10 @ 20.0 → 10.0',
-    relationScore: 50,
-    filledQuantity: 10,
-    pricePerUnit: 20.0,
-    expect: const EmbassyKickbackExpectation(expected: 10.0),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 80.0, 4 @ 2.5 → 0.8',
-    relationScore: 80.0,
-    filledQuantity: 4,
-    pricePerUnit: 2.5,
-    expect: const EmbassyKickbackExpectation(expected: 0.8),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 0, 10 @ 20.0 → 0.0',
-    relationScore: 0,
-    filledQuantity: 10,
-    pricePerUnit: 20.0,
-    expect: const EmbassyKickbackExpectation(expected: 0.0),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 100, -5 @ 20.0 → 0.0',
-    relationScore: 100,
-    filledQuantity: -5,
-    pricePerUnit: 20.0,
-    expect: const EmbassyKickbackExpectation(expected: 0.0),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 100, 10 @ 0.0 → 0.0',
-    relationScore: 100,
-    filledQuantity: 10,
-    pricePerUnit: 0.0,
-    expect: const EmbassyKickbackExpectation(expected: 0.0),
-  ),
-  EmbassyKickbackScenario.expect(
-    label: 'relation 150, 10 @ 20.0 → 20.0',
-    relationScore: 150,
-    filledQuantity: 10,
-    pricePerUnit: 20.0,
-    expect: const EmbassyKickbackExpectation(expected: 20.0),
-  ),
+  embassyKickbackRow('relation 100, 10 @ 20.0 → 20.0', 100, 10, 20.0, 20.0),
+  embassyKickbackRow('relation 50, 10 @ 20.0 → 10.0', 50, 10, 20.0, 10.0),
+  embassyKickbackRow('relation 80.0, 4 @ 2.5 → 0.8', 80.0, 4, 2.5, 0.8),
+  embassyKickbackRow('relation 0, 10 @ 20.0 → 0.0', 0, 10, 20.0, 0.0),
+  embassyKickbackRow('relation 100, -5 @ 20.0 → 0.0', 100, -5, 20.0, 0.0),
+  embassyKickbackRow('relation 100, 10 @ 0.0 → 0.0', 100, 10, 0.0, 0.0),
+  embassyKickbackRow('relation 150, 10 @ 20.0 → 20.0', 150, 10, 20.0, 20.0),
 ];
 
 /// Runs a [computeFirstRightProfitRate] scenario row.
