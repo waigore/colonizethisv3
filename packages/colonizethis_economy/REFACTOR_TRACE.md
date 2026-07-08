@@ -924,3 +924,11 @@ test_support LOC: deferred recount post-slice — further treasury/validator/dea
 
 test_support LOC: **17,223** (net +127 vs slice 42 — row builders centralized in `deal_matcher_test_support.dart` and `trade_order_validator_test_support.dart`; scenario modules `deal_matcher_frr_scenarios.dart` 312→80, `deal_matcher_priority_scenarios.dart` FTP block −96). Economy `test/` **1,392** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 44+.
 
+## Phase 3 — Slice 44 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-credits-row | `frrCreditsRow` + `frrIdxK1GpA` / `frrConstantRelation` / `frrEmbassyForM1` compact defensive, aggregation, kickback, and D5 AC2–AC5 credit rows | `frr_credits_scenarios.dart`, `frr_credits_test_support.dart` | #2992, #3753, #3939 |
+
+test_support LOC: **17,204** (net −19 vs slice 43 — FRR credits scenario-table compaction; builders share canonical k1/gpA index and embassy-M1 callback). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 45+.
+

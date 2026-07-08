@@ -1,4 +1,4 @@
-// Table-driven First Right credits scenarios (Refs #3836).
+// Table-driven First Right credits scenarios (Refs #3836, #3939 slice 44).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show
@@ -8,12 +8,9 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
         computeFirstRightCredits,
         kFirstRightMaxProfitRate;
 import 'package:colonizethis_models/colonizethis_models.dart' show FilledDeal;
-import 'package:colonizethis_test/test.dart';
 
 import 'frr_credits_expectations.dart';
 import 'frr_credits_test_support.dart';
-
-int _alwaysZero(String _, String __) => 0;
 
 /// One row for `computeFirstRightCredits` scenario tables.
 class FrrCreditsScenario {
@@ -65,58 +62,73 @@ void runFrrCreditsScenario(FrrCreditsScenario scenario) {
   scenario.verify(result);
 }
 
+/// Compact [FrrCreditsScenario.expect] builder (Refs #3939 slice 44).
+FrrCreditsScenario frrCreditsRow({
+  required String label,
+  required FrrCreditsExpectation expect,
+  List<FilledDeal>? filledDeals,
+  PurchasedTileIndex? purchasedTileIndex,
+  bool nullPurchasedTileIndex = false,
+  num Function(String owningGpId, String sourceFactionId)? relationScoreFor,
+  int? constantRelation,
+  Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor,
+  String? refs,
+}) {
+  final num Function(String, String) relation = relationScoreFor ??
+      (constantRelation != null
+          ? frrConstantRelation(constantRelation)
+          : frrAlwaysZeroRelation);
+  return FrrCreditsScenario.expect(
+    label: label,
+    filledDeals:
+        filledDeals ?? [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
+    purchasedTileIndex:
+        nullPurchasedTileIndex ? null : (purchasedTileIndex ?? frrIdxK1GpA()),
+    relationScoreFor: relation,
+    embassyGpRelationsFor: embassyGpRelationsFor,
+    expect: expect,
+    refs: refs,
+  );
+}
+
 /// Defensive / skip branches from `first_right_credits_test.dart`.
 List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'empty input returns FirstRightCreditsResult.empty (no deals)',
     filledDeals: const <FilledDeal>[],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: _alwaysZero,
     expect: const FrrCreditsExpectation(
       empty: true,
       totalProfitTreasury: 0.0,
     ),
     refs: '#2992',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'empty purchased-tile index returns FirstRightCreditsResult.empty',
-    filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
-    purchasedTileIndex: idx(const <PurchasedTileAttribution>[]),
-    relationScoreFor: _alwaysZero,
+    purchasedTileIndex: idx(const []),
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'null purchased-tile index returns FirstRightCreditsResult.empty',
-    filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
-    purchasedTileIndex: null,
-    relationScoreFor: _alwaysZero,
+    nullPurchasedTileIndex: true,
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'negative — deal with null sellerOriginTileKey is skipped',
     filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, __) => 100,
+    constantRelation: 100,
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'negative — deal with unmapped tile key is skipped (no attribution)',
     filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'unmapped')],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, __) => 100,
+    constantRelation: 100,
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'negative — zero quantity or zero price deals are skipped',
     filledDeals: [
       deal(
@@ -132,10 +144,7 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
         sellerOriginTileKey: 'k1',
       ),
     ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, __) => 100,
+    constantRelation: 100,
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
   ),
@@ -167,7 +176,7 @@ FrrCreditsScenario _frrCreditsDeterminismScenario() {
     attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
   ]);
   int relationScoreFor(String _, String __) => 100;
-  return FrrCreditsScenario.expect(
+  return frrCreditsRow(
     label:
         'deterministic — identical inputs return identical credit/aggregation order',
     filledDeals: deals,
@@ -185,7 +194,7 @@ FrrCreditsScenario _frrCreditsDeterminismScenario() {
 
 /// Aggregation cases from `first_right_credits_aggregation_test.dart`.
 List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'multi-tile — two owning GPs aggregate credits independently',
     filledDeals: [
       deal(
@@ -226,7 +235,7 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'multi-GP precedence — buyer == owning GP for one tile, other-GP buyer for another',
     filledDeals: [
@@ -244,10 +253,7 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
         sellerOriginTileKey: 'k1',
       ),
     ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, _) => 100,
+    constantRelation: 100,
     expect: const FrrCreditsExpectation(
       creditedDealsLength: 1,
       singleCreditedDealBuyer: 'gpB',
@@ -261,24 +267,12 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
 
 /// Embassy kickback cases from `first_right_credits_kickback_test.dart`.
 List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'non-owner embassy GP receives 10% kickback while tile owner gets full '
         'share and no kickback',
-    filledDeals: [
-      deal(
-        buyer: 'gpB',
-        quantity: 10,
-        pricePerUnit: 20.0,
-        sellerOriginTileKey: 'k1',
-      ),
-    ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
     relationScoreFor: (gp, src) => gp == 'gpA' && src == 'M1' ? 100 : 0,
-    embassyGpRelationsFor: (src) =>
-        src == 'M1' ? const {'gpA': 100, 'gpC': 50} : const {},
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
     expect: const FrrCreditsExpectation(
       treasuryCreditCloseTo: {'gpA': 200.0},
       noEmbassyKickbackFor: ['gpA'],
@@ -287,20 +281,18 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'R8.6 — kickback applies on Minor/Tribe sale with no purchased tile',
     filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
     purchasedTileIndex: idx(const []),
-    relationScoreFor: (_, _) => 0,
-    embassyGpRelationsFor: (src) =>
-        src == 'M1' ? const {'gpC': 50} : const {},
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 50}),
     expect: const FrrCreditsExpectation(
       treasuryCreditEmpty: true,
       embassyKickbackCloseTo: {'gpC': 10.0},
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'R8.7 — buyer == tile owner: no tile-owner share, other embassy GPs '
         'still get kickbacks',
@@ -312,12 +304,8 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
         sellerOriginTileKey: 'k1',
       ),
     ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, _) => 100,
-    embassyGpRelationsFor: (src) =>
-        src == 'M1' ? const {'gpA': 100, 'gpC': 50} : const {},
+    constantRelation: 100,
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
     expect: const FrrCreditsExpectation(
       treasuryCreditEmpty: true,
       noEmbassyKickbackFor: ['gpA'],
@@ -325,20 +313,9 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'no embassy holders → no kickbacks (empty callback result)',
-    filledDeals: [
-      deal(
-        buyer: 'gpB',
-        quantity: 10,
-        pricePerUnit: 20.0,
-        sellerOriginTileKey: 'k1',
-      ),
-    ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, _) => 100,
+    constantRelation: 100,
     embassyGpRelationsFor: (_) => const {},
     expect: const FrrCreditsExpectation(
       embassyKickbackEmpty: true,
@@ -347,13 +324,11 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'relation-0 embassy holder records no kickback',
     filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
     purchasedTileIndex: idx(const []),
-    relationScoreFor: (_, _) => 0,
-    embassyGpRelationsFor: (src) =>
-        src == 'M1' ? const {'gpC': 0} : const {},
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 0}),
     expect: const FrrCreditsExpectation(sameAsEmpty: true),
     refs: '#3753',
   ),
@@ -362,7 +337,6 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
 const String _kFrrIssueAcD5GpA = 'gpA';
 const String _kFrrIssueAcD5GpB = 'gpB';
 const String _kFrrIssueAcD5GpC = 'gpC';
-const String _kFrrIssueAcD5GpFtp = 'gpFtp';
 const String _kFrrIssueAcD5MinorM1 = 'M1';
 const String _kFrrIssueAcD5MinorM2 = 'M2';
 const String _kFrrIssueAcD5TileK1 = 'oldWorld|M1|0|0';
@@ -376,30 +350,17 @@ PurchasedTileAttribution _d5Attr(
   String owningGpId,
   String sourceFactionId, [
   String provinceId = _kFrrIssueAcD5ProvinceM1,
-]) => attr(
-  tileKey: tileKey,
-  owningGpId: owningGpId,
-  sourceFactionId: sourceFactionId,
-  provinceId: provinceId,
-);
+]) =>
+    attr(
+      tileKey: tileKey,
+      owningGpId: owningGpId,
+      sourceFactionId: sourceFactionId,
+      provinceId: provinceId,
+    );
 
 FilledDeal _d5OtherBuyDeal({
   String seller = _kFrrIssueAcD5MinorM1,
   String buyer = _kFrrIssueAcD5GpB,
-  int quantity = 10,
-  double pricePerUnit = 20.0,
-  String sellerOriginTileKey = _kFrrIssueAcD5TileK1,
-}) => deal(
-  seller: seller,
-  buyer: buyer,
-  quantity: quantity,
-  pricePerUnit: pricePerUnit,
-  sellerOriginTileKey: sellerOriginTileKey,
-);
-
-FilledDeal _d5FrrMatchDeal({
-  String seller = _kFrrIssueAcD5MinorM1,
-  String buyer = _kFrrIssueAcD5GpA,
   int quantity = 10,
   double pricePerUnit = 20.0,
   String sellerOriginTileKey = _kFrrIssueAcD5TileK1,
@@ -410,17 +371,27 @@ FilledDeal _d5FrrMatchDeal({
       quantity: quantity,
       pricePerUnit: pricePerUnit,
       sellerOriginTileKey: sellerOriginTileKey,
+    );
+
+FilledDeal _d5FrrMatchDeal() => deal(
+      seller: _kFrrIssueAcD5MinorM1,
+      buyer: _kFrrIssueAcD5GpA,
+      quantity: 10,
+      pricePerUnit: 20.0,
+      sellerOriginTileKey: _kFrrIssueAcD5TileK1,
       isFirstRightOfRefusalMatch: true,
     );
 
+PurchasedTileIndex _d5IdxK1GpA() => idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+    ]);
+
 /// AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full share).
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
     filledDeals: [_d5OtherBuyDeal()],
-    purchasedTileIndex: idx([
-      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
-    ]),
+    purchasedTileIndex: _d5IdxK1GpA(),
     relationScoreFor: (gp, src) =>
         gp == _kFrrIssueAcD5GpA && src == _kFrrIssueAcD5MinorM1 ? 75 : 0,
     expect: const FrrCreditsExpectation(
@@ -439,15 +410,13 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
 
 /// AC #3 — relation 100 credits exactly 100% of sale value.
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
         'treasury == quantity * pricePerUnit (full share)',
     filledDeals: [_d5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
-    purchasedTileIndex: idx([
-      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
-    ]),
-    relationScoreFor: (_, __) => 100,
+    purchasedTileIndex: _d5IdxK1GpA(),
+    constantRelation: 100,
     expect: FrrCreditsExpectation(
       creditedDealsLength: 1,
       singleCreditedDealProfitRateCloseTo: kFirstRightMaxProfitRate,
@@ -460,15 +429,13 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
 
 /// AC #4 — relation 0 credits 0 treasury (no overseas profit).
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'credits helper records audit row but transfers 0 treasury (Deal '
         'Book can still surface the no-credit case)',
     filledDeals: [_d5OtherBuyDeal()],
-    purchasedTileIndex: idx([
-      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
-    ]),
-    relationScoreFor: (_, __) => 0,
+    purchasedTileIndex: _d5IdxK1GpA(),
+    constantRelation: 0,
     expect: const FrrCreditsExpectation(
       creditedDealsLength: 1,
       singleCreditedDealProfitIsZero: true,
@@ -477,15 +444,13 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
     ),
     refs: '#2992 D5 AC4',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'negative — buyer == owning GP (D2 FRR-match path) excluded from '
         'D4 aggregation: no double-credit when gpA wins the offer itself',
     filledDeals: [_d5FrrMatchDeal()],
-    purchasedTileIndex: idx([
-      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
-    ]),
-    relationScoreFor: (_, __) => 100,
+    purchasedTileIndex: _d5IdxK1GpA(),
+    constantRelation: 100,
     expect: const FrrCreditsExpectation(
       creditedDealsEmpty: true,
       treasuryCreditEmpty: true,
@@ -497,7 +462,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
 
 /// AC #5 — multi-GP attribution, no cross-credit.
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 60.0, gpB '
         '20.0; neither GP is credited for the other GP\'s purchased tile',
@@ -534,7 +499,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
     ),
     refs: '#2992 D5 AC5',
   ),
-  FrrCreditsScenario.expect(
+  frrCreditsRow(
     label:
         'same owning GP across two minors aggregates per source relation '
         'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 45.0)',
