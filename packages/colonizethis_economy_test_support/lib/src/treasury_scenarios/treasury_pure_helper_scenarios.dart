@@ -19,44 +19,35 @@ typedef CapBidQuantityScenario = ({
   String? refs,
 });
 
-const List<CapBidQuantityScenario> capBidQuantityForBudgetsScenarios = [
-  (
+final List<CapBidQuantityScenario> capBidQuantityForBudgetsScenarios = [
+  capBidQtyRow(
     label: 'cargo-only cap when treasury is ample',
-    bidQuantity: 10,
     remainingCargoBudget: 4,
     remainingTreasuryBudget: 1000,
-    unitPrice: 30,
     expected: 4,
     refs: '#3093',
   ),
-  (
+  capBidQtyRow(
     label: 'treasury-only cap when cargo is ample',
-    bidQuantity: 10,
-    remainingCargoBudget: 100,
     remainingTreasuryBudget: 90,
-    unitPrice: 30,
     expected: 3,
     refs: '#3123',
   ),
-  (
+  capBidQtyRow(
     label: 'zero treasury budget yields zero',
     bidQuantity: 5,
-    remainingCargoBudget: 100,
     remainingTreasuryBudget: 0,
-    unitPrice: 30,
     expected: 0,
     refs: '#3123',
   ),
-  (
+  capBidQtyRow(
     label: 'zero cargo budget yields zero',
     bidQuantity: 5,
     remainingCargoBudget: 0,
-    remainingTreasuryBudget: 100,
-    unitPrice: 30,
     expected: 0,
     refs: null,
   ),
-  (
+  capBidQtyRow(
     label: 'null unit price applies cargo cap only',
     bidQuantity: 8,
     remainingCargoBudget: 5,
@@ -65,7 +56,7 @@ const List<CapBidQuantityScenario> capBidQuantityForBudgetsScenarios = [
     expected: 5,
     refs: null,
   ),
-  (
+  capBidQtyRow(
     label: 'non-positive unit price applies cargo cap only',
     bidQuantity: 8,
     remainingCargoBudget: 5,
@@ -74,21 +65,15 @@ const List<CapBidQuantityScenario> capBidQuantityForBudgetsScenarios = [
     expected: 5,
     refs: null,
   ),
-  (
+  capBidQtyRow(
     label: 'bid quantity below both caps passes through',
     bidQuantity: 2,
-    remainingCargoBudget: 10,
-    remainingTreasuryBudget: 100,
-    unitPrice: 30,
     expected: 2,
     refs: null,
   ),
-  (
+  capBidQtyRow(
     label: 'non-positive bid quantity yields zero',
     bidQuantity: 0,
-    remainingCargoBudget: 10,
-    remainingTreasuryBudget: 100,
-    unitPrice: 30,
     expected: 0,
     refs: null,
   ),
@@ -104,6 +89,12 @@ typedef EffectiveMarketPriceScenario = ({
   bool expectNull,
   String? refs,
 });
+
+const Map<CommodityId, int> _richesNullPriceStoredPrices = {
+  'gold': 1000,
+  'silver': 500,
+  'gems': 999,
+};
 
 final List<EffectiveMarketPriceScenario> effectiveMarketPriceScenarios = [
   (
@@ -146,8 +137,24 @@ final List<EffectiveMarketPriceScenario> effectiveMarketPriceScenarios = [
     expectNull: true,
     refs: null,
   ),
-  effectiveMarketPriceRichesRow('gold'),
-  effectiveMarketPriceRichesRow('silver'),
+  (
+    label: 'returns null for gold riches regardless of stored prices',
+    commodityId: 'gold',
+    prices: _richesNullPriceStoredPrices,
+    expected: null,
+    useCatalogDefault: false,
+    expectNull: true,
+    refs: null,
+  ),
+  (
+    label: 'returns null for silver riches regardless of stored prices',
+    commodityId: 'silver',
+    prices: _richesNullPriceStoredPrices,
+    expected: null,
+    useCatalogDefault: false,
+    expectNull: true,
+    refs: null,
+  ),
   (
     label: 'treats negative stored prices as missing and falls back to catalog',
     commodityId: 'timber',
@@ -172,16 +179,6 @@ int? expectedEffectiveMarketPrice(
   return scenario.expected;
 }
 
-EffectiveMarketPriceScenario effectiveMarketPriceRichesRow(String commodityId) => (
-      label: 'returns null for $commodityId riches regardless of stored prices',
-      commodityId: commodityId,
-      prices: const {'gold': 1000, 'silver': 500, 'gems': 999},
-      expected: null,
-      useCatalogDefault: false,
-      expectNull: true,
-      refs: null,
-    );
-
 /// One row in [maxAffordableBidQuantityScenarios].
 typedef MaxAffordableBidQuantityScenario = ({
   String label,
@@ -192,25 +189,20 @@ typedef MaxAffordableBidQuantityScenario = ({
   String? refs,
 });
 
-const List<MaxAffordableBidQuantityScenario> maxAffordableBidQuantityScenarios =
+final List<MaxAffordableBidQuantityScenario> maxAffordableBidQuantityScenarios =
     [
-  (
+  maxAffordableBidQtyRow(
     label: 'floor(treasury / price) when price is positive',
-    bidRemaining: 10,
-    pricePerUnit: 30.0,
-    remainingTreasuryBudget: 90,
     expected: 3,
     refs: '#3115',
   ),
-  (
+  maxAffordableBidQtyRow(
     label: 'zero treasury budget yields zero',
-    bidRemaining: 10,
-    pricePerUnit: 30.0,
     remainingTreasuryBudget: 0,
     expected: 0,
     refs: '#3115',
   ),
-  (
+  maxAffordableBidQtyRow(
     label: 'missing-price free-fill returns bid remaining',
     bidRemaining: 8,
     pricePerUnit: 0.0,
@@ -218,7 +210,7 @@ const List<MaxAffordableBidQuantityScenario> maxAffordableBidQuantityScenarios =
     expected: 8,
     refs: '#3115',
   ),
-  (
+  maxAffordableBidQtyRow(
     label: 'negative price preserves free-fill contract',
     bidRemaining: 5,
     pricePerUnit: -1.0,
@@ -239,23 +231,19 @@ typedef DecrementTreasuryForFillScenario = ({
   String? refs,
 });
 
-const List<DecrementTreasuryForFillScenario> decrementTreasuryForFillScenarios =
+final List<DecrementTreasuryForFillScenario> decrementTreasuryForFillScenarios =
     [
-  (
+  decrementTreasuryFillRow(
     label: 'decrements running treasury tally after a priced fill',
-    buyerFactionId: 'gp1',
     matchQty: 3,
     pricePerUnit: 30.0,
-    initialTreasury: 100,
     expectedTreasury: 10,
     refs: '#3856',
   ),
-  (
+  decrementTreasuryFillRow(
     label: 'skips decrement on missing-price free-fill path',
-    buyerFactionId: 'gp1',
     matchQty: 5,
     pricePerUnit: 0.0,
-    initialTreasury: 100,
     expectedTreasury: 100,
     refs: '#3856',
   ),

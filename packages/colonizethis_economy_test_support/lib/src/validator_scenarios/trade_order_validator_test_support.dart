@@ -3,6 +3,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../trade_order_factory.dart';
+import 'validator_expectations.dart';
+import 'validator_scenario.dart';
 
 /// Shared helpers for `TradeOrderValidator` tests per
 /// `SPEC/program/world-market-resolution.md` § Trade order validation.
@@ -99,4 +101,72 @@ TradeOrderValidationContext validatorCtxWithStockpile(
       bidTypeCap: bidTypeCap,
       tradeCargoCapacity: tradeCargoCapacity,
       treasuryBudgetForBids: treasuryBudgetForBids,
+    );
+
+/// Compact single-timber-bid row for treasury-cap validator scenarios (Refs #3939 slice 40).
+TradeOrderValidatorScenario validatorTreasuryTimberBid({
+  required String label,
+  required int treasuryBudgetForBids,
+  required int bidQty,
+  required ValidatorExpectation expect,
+  int tradeCargoCapacity = 100,
+  int timberPrice = 30,
+  String? refs,
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxTimber(
+        treasuryBudgetForBids: treasuryBudgetForBids,
+        tradeCargoCapacity: tradeCargoCapacity,
+        timberPrice: timberPrice,
+      ),
+      proposedOrders: [validatorBid(CommodityCatalog.timber.id, bidQty)],
+      expect: expect,
+      refs: refs,
+    );
+
+/// Compact multi-bid row with timber-only price preset (Refs #3939 slice 40).
+TradeOrderValidatorScenario validatorTreasuryTimberBids({
+  required String label,
+  required int treasuryBudgetForBids,
+  required List<TradeOrder> proposedOrders,
+  required ValidatorExpectation expect,
+  int tradeCargoCapacity = 100,
+  int timberPrice = 30,
+  String? refs,
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxTimber(
+        treasuryBudgetForBids: treasuryBudgetForBids,
+        tradeCargoCapacity: tradeCargoCapacity,
+        timberPrice: timberPrice,
+      ),
+      proposedOrders: proposedOrders,
+      expect: expect,
+      refs: refs,
+    );
+
+/// Compact multi-bid row with timber/iron price preset (Refs #3939 slice 40).
+TradeOrderValidatorScenario validatorTreasuryTimberIronBids({
+  required String label,
+  required int treasuryBudgetForBids,
+  required List<TradeOrder> proposedOrders,
+  required ValidatorExpectation expect,
+  int tradeCargoCapacity = 100,
+  int timberPrice = 30,
+  int ironPrice = 30,
+  String? refs,
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxTimberIron(
+        treasuryBudgetForBids: treasuryBudgetForBids,
+        tradeCargoCapacity: tradeCargoCapacity,
+        timberPrice: timberPrice,
+        ironPrice: ironPrice,
+      ),
+      proposedOrders: proposedOrders,
+      expect: expect,
+      refs: refs,
     );

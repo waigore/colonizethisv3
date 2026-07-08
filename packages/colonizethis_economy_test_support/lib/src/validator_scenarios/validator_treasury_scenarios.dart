@@ -28,9 +28,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [
 ];
 
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberIronBids(
     label: 'rejects bid when cumulative spend exceeds treasuryBudgetForBids',
-    context: validatorCtxTimberIron(treasuryBudgetForBids: 60),
+    treasuryBudgetForBids: 60,
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.iron.id, 2),
@@ -46,21 +46,19 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberBid(
     label: 'accepts bids whose cumulative spend equals treasuryBudgetForBids',
-    context: validatorCtxTimber(treasuryBudgetForBids: 60),
-    proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
+    treasuryBudgetForBids: 60,
+    bidQty: 2,
     expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberBid(
     label: 'treasury cap takes precedence over bidExceedsCargoCapacity (rule 5 '
         'before rule 6)',
-    context: validatorCtxTimber(
-      tradeCargoCapacity: 100,
-      treasuryBudgetForBids: 10,
-    ),
-    proposedOrders: [validatorBid(CommodityCatalog.timber.id, 5)],
+    treasuryBudgetForBids: 10,
+    tradeCargoCapacity: 100,
+    bidQty: 5,
     expect: ValidatorExpectation(
       singleRejectedWithReason:
           TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
@@ -86,14 +84,12 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     ),
     refs: '#3093',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberIronBids(
     label: 'accepts cumulative spend equal to treasuryBudgetForBids across '
         'distinct commodities in submission order (Refs #3123)',
-    context: validatorCtxTimberIron(
-      treasuryBudgetForBids: 100,
-      timberPrice: 30,
-      ironPrice: 10,
-    ),
+    treasuryBudgetForBids: 100,
+    timberPrice: 30,
+    ironPrice: 10,
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 2),
       validatorBid(CommodityCatalog.iron.id, 4),
@@ -101,14 +97,12 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     expect: const ValidatorExpectation(allAccepted: true),
     refs: '#3123',
   ),
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberIronBids(
     label: 'rejected bid does not consume the running spend budget — greedy '
         'continuation admits a later smaller bid that fits (Refs #3123)',
-    context: validatorCtxTimberIron(
-      treasuryBudgetForBids: 100,
-      timberPrice: 30,
-      ironPrice: 10,
-    ),
+    treasuryBudgetForBids: 100,
+    timberPrice: 30,
+    ironPrice: 10,
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 4),
       validatorBid(CommodityCatalog.iron.id, 1),
@@ -136,9 +130,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
 
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() =>
     [
-  TradeOrderValidatorScenario.expect(
+  validatorTreasuryTimberBids(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',
-    context: validatorCtxTimber(treasuryBudgetForBids: 0),
+    treasuryBudgetForBids: 0,
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.timber.id, 5),

@@ -146,3 +146,84 @@ Game carryForwardBidGame(
       refs: refs,
       extra: extra,
     );
+
+/// Compact row builder for [capBidQuantityForBudgetsScenarios] (Refs #3939 slice 40).
+({
+  String label,
+  int bidQuantity,
+  int remainingCargoBudget,
+  int remainingTreasuryBudget,
+  int? unitPrice,
+  int expected,
+  String? refs,
+}) capBidQtyRow({
+  required String label,
+  required int expected,
+  int bidQuantity = 10,
+  int remainingCargoBudget = 100,
+  int remainingTreasuryBudget = 100,
+  int? unitPrice = 30,
+  String? refs,
+}) =>
+    (
+      label: label,
+      bidQuantity: bidQuantity,
+      remainingCargoBudget: remainingCargoBudget,
+      remainingTreasuryBudget: remainingTreasuryBudget,
+      unitPrice: unitPrice,
+      expected: expected,
+      refs: refs,
+    );
+
+/// Compact row builder for [maxAffordableBidQuantityScenarios] (Refs #3939 slice 40).
+({
+  String label,
+  int bidRemaining,
+  double pricePerUnit,
+  int remainingTreasuryBudget,
+  int expected,
+  String? refs,
+}) maxAffordableBidQtyRow({
+  required String label,
+  required int expected,
+  int bidRemaining = 10,
+  double pricePerUnit = 30.0,
+  int remainingTreasuryBudget = 90,
+  String? refs,
+}) =>
+    (
+      label: label,
+      bidRemaining: bidRemaining,
+      pricePerUnit: pricePerUnit,
+      remainingTreasuryBudget: remainingTreasuryBudget,
+      expected: expected,
+      refs: refs,
+    );
+
+/// Compact row builder for [decrementTreasuryForFillScenarios] (Refs #3939 slice 40).
+({
+  String label,
+  String buyerFactionId,
+  int matchQty,
+  double pricePerUnit,
+  int initialTreasury,
+  int expectedTreasury,
+  String? refs,
+}) decrementTreasuryFillRow({
+  required String label,
+  required int matchQty,
+  required double pricePerUnit,
+  required int expectedTreasury,
+  String buyerFactionId = 'gp1',
+  int initialTreasury = 100,
+  String? refs,
+}) =>
+    (
+      label: label,
+      buyerFactionId: buyerFactionId,
+      matchQty: matchQty,
+      pricePerUnit: pricePerUnit,
+      initialTreasury: initialTreasury,
+      expectedTreasury: expectedTreasury,
+      refs: refs,
+    );

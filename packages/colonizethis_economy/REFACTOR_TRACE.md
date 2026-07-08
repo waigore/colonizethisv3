@@ -879,3 +879,15 @@ test_support LOC: deferred recount post-slice — treasury/validator/deal-matche
 
 test_support LOC: **16,817** (net +49 vs slice 38 — GP-credit cluster relocation + expectation pins offset staged-bid row compaction; `treasury_bid_spend_scenarios.dart` 455→300). Economy `test/` **1,392** (down 5 vs slice 38). Further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 40+.
 
+## Phase 3 — Slice 40 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| eff-price-riches-fix | literal `label:` strings for gold/silver riches rows (preserved-description gate) | `treasury_pure_helper_scenarios.dart` | #3939 |
+| cap-bid-qty-row | `capBidQtyRow` compact builder for eight cap-bid scenarios | `treasury_test_support.dart`, `treasury_pure_helper_scenarios.dart` | #3093, #3939 |
+| max-affordable-row | `maxAffordableBidQtyRow` + `decrementTreasuryFillRow` builders | `treasury_test_support.dart`, `treasury_pure_helper_scenarios.dart` | #3115, #3939 |
+| validator-treasury-row | `validatorTreasuryTimberBid` / `validatorTreasuryTimberBids` / `validatorTreasuryTimberIronBids` compact rows | `trade_order_validator_test_support.dart`, `validator_treasury_scenarios.dart` | #3093, #3123, #3939 |
+| sellable-headroom-row | `sellableHeadroomRow` compact builder for timber-default headroom scenarios | `treasury_sellable_quantity_scenarios.dart` | #3093, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 41+.
+

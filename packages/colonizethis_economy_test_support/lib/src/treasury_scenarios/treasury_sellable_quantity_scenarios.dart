@@ -171,6 +171,29 @@ typedef SellableHeadroomScenario = ({
   String? refs,
 });
 
+/// Compact row builder for [sellableHeadroomByCommodityIdScenarios] (Refs #3939 slice 40).
+SellableHeadroomScenario sellableHeadroomRow({
+  required String label,
+  required Map<CommodityId, int> expected,
+  Map<CommodityId, int> stockpile = const {'timber': 10},
+  List<TradeOrder> orders = const <TradeOrder>[],
+  Map<CommodityId, int>? productionInputConsumptionByCommodityId,
+  bool useEmptyProductionMap = false,
+  Set<CommodityId> absentKeys = const {},
+  String? refs = '#3093',
+}) =>
+    (
+      label: label,
+      stockpile: stockpile,
+      orders: orders,
+      productionInputConsumptionByCommodityId:
+          productionInputConsumptionByCommodityId,
+      useEmptyProductionMap: useEmptyProductionMap,
+      expected: expected,
+      absentKeys: absentKeys,
+      refs: refs,
+    );
+
 /// Canonical scenarios for [sellableHeadroomByCommodityId].
 List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
   return [
@@ -184,61 +207,38 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       absentKeys: const {},
       refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'subtracts staged offer quantity from the cap to produce the '
           '`(N)` display headroom (default: industry allocation = 0)',
-      stockpile: {'timber': 10},
       orders: [offerOrder('timber', 2)],
-      productionInputConsumptionByCommodityId: null,
-      useEmptyProductionMap: false,
       expected: const {'timber': 8},
-      absentKeys: const {},
-      refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'industry-allocation reservation: stockpile 10 timber, '
           'production consumes 2 timber, staged offer 2 → sellable 6 '
           '(canonical AC for Refs #3093 sellable definition)',
-      stockpile: {'timber': 10},
       orders: [offerOrder('timber', 2)],
-      productionInputConsumptionByCommodityId: {'timber': 2},
-      useEmptyProductionMap: false,
+      productionInputConsumptionByCommodityId: const {'timber': 2},
       expected: const {'timber': 6},
-      absentKeys: const {},
-      refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'industry-allocation reservation: when consumption equals '
           'stockpile, cap is 0 → key omitted (Offer chip disabled)',
-      stockpile: {'timber': 10},
-      orders: const <TradeOrder>[],
-      productionInputConsumptionByCommodityId: {'timber': 10},
-      useEmptyProductionMap: false,
+      productionInputConsumptionByCommodityId: const {'timber': 10},
       expected: const {},
       absentKeys: const {'timber'},
-      refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'industry-allocation reservation: negative consumption entries '
           'are clamped at 0 (defensive — caller cannot inflate the cap)',
-      stockpile: {'timber': 10},
-      orders: const <TradeOrder>[],
-      productionInputConsumptionByCommodityId: {'timber': -100},
-      useEmptyProductionMap: false,
+      productionInputConsumptionByCommodityId: const {'timber': -100},
       expected: const {'timber': 10},
-      absentKeys: const {},
-      refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'industry-allocation reservation: empty map matches null '
           '(both fall back to raw stockpile)',
-      stockpile: {'timber': 10},
-      orders: const <TradeOrder>[],
-      productionInputConsumptionByCommodityId: null,
       useEmptyProductionMap: true,
       expected: const {'timber': 10},
-      absentKeys: const {},
-      refs: '#3093',
     ),
     (
       label: 'industry-allocation reservation: consumption on one commodity '
@@ -251,26 +251,18 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       absentKeys: const {},
       refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'clamps headroom at 0 (drops the commodity) when staged offer '
           'reaches or exceeds the cap',
-      stockpile: {'timber': 5},
+      stockpile: const {'timber': 5},
       orders: [offerOrder('timber', 5)],
-      productionInputConsumptionByCommodityId: null,
-      useEmptyProductionMap: false,
       expected: const {},
       absentKeys: const {'timber'},
-      refs: '#3093',
     ),
-    (
+    sellableHeadroomRow(
       label: 'bids do not consume the offer headroom',
-      stockpile: {'timber': 10},
       orders: [bidOrder('timber', 4)],
-      productionInputConsumptionByCommodityId: null,
-      useEmptyProductionMap: false,
       expected: const {'timber': 10},
-      absentKeys: const {},
-      refs: '#3093',
     ),
     (
       label: 'riches commodities are excluded even when staged offers exist',
