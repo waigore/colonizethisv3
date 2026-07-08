@@ -3,9 +3,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
-import 'core_economy_test_support.dart';
+import 'build_cost_expectations.dart';
 
 /// One row in a build-cost scenario table.
 class BuildCostScenario {
@@ -25,258 +24,110 @@ void runBuildCostScenario(BuildCostScenario scenario) {
   scenario.run();
 }
 
-Stockpile _stockpileForCatalogInputs(Map<CommodityId, int> inputs) {
-  return stockpileWithDeltas(inputs);
-}
-
 /// Canonical scenarios for [canAffordBuild] and [applyBuildCostDeduction].
 List<BuildCostScenario> buildCostScenarios() => [
-  ..._buildCostUnknownUnitScenarios(),
-  ..._buildCostAffordApplyScenarios(),
-  ..._buildCostAffordRejectScenarios(),
-];
+      ..._buildCostUnknownUnitScenarios(),
+      ..._buildCostAffordApplyScenarios(),
+      ..._buildCostAffordRejectScenarios(),
+    ];
 
 List<BuildCostScenario> _buildCostUnknownUnitScenarios() => [
-  BuildCostScenario(
-    label: 'canAffordBuild returns false for unknown unit type',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 10);
-      const stockpile = Stockpile();
-      const order = BuildUnitOrder(
-        unitType: 'unknown_unit_xyz',
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = canAffordBuild(player, order, workers, stockpile, 10000);
-      expect(result.canAfford, isFalse);
-      expect(result.reason, 'Insufficient resources');
-    },
-  ),
-  BuildCostScenario(
-    label:
-        'applyBuildCostDeduction returns unchanged state for unknown unit type',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 5);
-      const stockpile = Stockpile();
-      const order = BuildUnitOrder(
-        unitType: 'unknown_unit_xyz',
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = applyBuildCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        1000,
-      );
-      expect(result.workers.peasants, 5);
-      expect(result.treasury, 1000);
-    },
-  ),
-];
+      buildCostUnknownUnitScenario(
+        label: 'canAffordBuild returns false for unknown unit type',
+        pins: (
+          viaApplyDeduction: false,
+          peasants: 10,
+          treasury: 10000,
+          expectedPeasants: 10,
+          expectedTreasury: 10000,
+        ),
+      ),
+      buildCostUnknownUnitScenario(
+        label:
+            'applyBuildCostDeduction returns unchanged state for unknown unit type',
+        pins: (
+          viaApplyDeduction: true,
+          peasants: 5,
+          treasury: 1000,
+          expectedPeasants: 5,
+          expectedTreasury: 1000,
+        ),
+      ),
+    ];
 
 List<BuildCostScenario> _buildCostAffordApplyScenarios() => [
-  BuildCostScenario(
-    label: 'civilian Builder: apply matches catalog after canAfford true',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 10);
-      final econ = CivilianEconomyCatalog.byId[kUnitTypeBuilder]!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      const treasuryStart = 5000;
-      const order = BuildUnitOrder(
-        unitType: kUnitTypeBuilder,
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final check = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(check.canAfford, isTrue);
-      final after = applyBuildCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(after.treasury, treasuryStart - econ.buildTreasuryCost);
-      expect(after.workers.peasants, workers.peasants);
-      for (final e in econ.buildInputs.entries) {
-        expect(after.stockpile.quantityOf(e.key), 0);
-      }
-    },
-  ),
-  BuildCostScenario(
-    label: 'military peasant_levies: apply matches catalog after canAfford true',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 3);
-      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      final treasuryStart = econ.buildTreasuryCost + 500;
-      const order = BuildUnitOrder(
-        unitType: 'peasant_levies',
-        isMilitary: true,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final check = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(check.canAfford, isTrue);
-      final after = applyBuildCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(after.treasury, treasuryStart - econ.buildTreasuryCost);
-      expect(after.workers.peasants, workers.peasants - 1);
-      for (final e in econ.buildInputs.entries) {
-        expect(after.stockpile.quantityOf(e.key), 0);
-      }
-    },
-  ),
-  BuildCostScenario(
-    label: 'naval carrack: apply matches catalog after canAfford true',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 10);
-      final econ = ShipEconomyCatalog.byId['carrack']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      final treasuryStart = econ.buildTreasuryCost + 500;
-      const order = BuildUnitOrder(
-        unitType: 'carrack',
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final check = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(check.canAfford, isTrue);
-      final after = applyBuildCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasuryStart,
-      );
-      expect(after.treasury, treasuryStart - econ.buildTreasuryCost);
-      expect(after.workers.peasants, workers.peasants - 1);
-      for (final e in econ.buildInputs.entries) {
-        expect(after.stockpile.quantityOf(e.key), 0);
-      }
-    },
-  ),
-];
+      buildCostAffordApplyScenario(
+        label: 'civilian Builder: apply matches catalog after canAfford true',
+        pins: (
+          unitType: kUnitTypeBuilder,
+          isMilitary: false,
+          peasants: 10,
+          treasuryPadding: 5000,
+        ),
+      ),
+      buildCostAffordApplyScenario(
+        label: 'military peasant_levies: apply matches catalog after canAfford true',
+        pins: (
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          peasants: 3,
+          treasuryPadding: 500,
+        ),
+      ),
+      buildCostAffordApplyScenario(
+        label: 'naval carrack: apply matches catalog after canAfford true',
+        pins: (
+          unitType: 'carrack',
+          isMilitary: false,
+          peasants: 10,
+          treasuryPadding: 500,
+        ),
+      ),
+    ];
 
 List<BuildCostScenario> _buildCostAffordRejectScenarios() => [
-  BuildCostScenario(
-    label: 'naval carrack: canAfford false when peasants are zero',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 0);
-      final econ = ShipEconomyCatalog.byId['carrack']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      const order = BuildUnitOrder(
-        unitType: 'carrack',
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        econ.buildTreasuryCost + 10,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, 'Insufficient workers');
-    },
-  ),
-  BuildCostScenario(
-    label: 'naval fluyte: canAfford false when unlocking tech missing',
-    run: () {
-      final player = corePlayer(techUnlocked: const {});
-      final workers = coreWorkerPool(peasants: 10);
-      final econ = ShipEconomyCatalog.byId['fluyte']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      const order = BuildUnitOrder(
-        unitType: 'fluyte',
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        econ.buildTreasuryCost + 500,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, 'Required technology not unlocked');
-    },
-  ),
-  BuildCostScenario(
-    label: 'military lancers: canAfford false when unlocking tech missing',
-    run: () {
-      final player = corePlayer(techUnlocked: const {});
-      final workers = coreWorkerPool(peasants: 5);
-      final econ = RegimentEconomyCatalog.byId['lancers']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      const order = BuildUnitOrder(
-        unitType: 'lancers',
-        isMilitary: true,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        econ.buildTreasuryCost + 500,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, 'Required technology not unlocked');
-    },
-  ),
-  BuildCostScenario(
-    label: 'military peasant_levies: canAfford false when peasants are zero',
-    run: () {
-      final player = corePlayer();
-      final workers = coreWorkerPool(peasants: 0);
-      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-      final stockpile = _stockpileForCatalogInputs(econ.buildInputs);
-      const order = BuildUnitOrder(
-        unitType: 'peasant_levies',
-        isMilitary: true,
-        spawnProvinceId: 'oldWorld|p1',
-      );
-      final result = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        econ.buildTreasuryCost + 500,
-      );
-      expect(result.canAfford, isFalse);
-      expect(result.reason, 'Insufficient workers');
-    },
-  ),
-];
+      buildCostAffordRejectScenario(
+        label: 'naval carrack: canAfford false when peasants are zero',
+        pins: (
+          unitType: 'carrack',
+          isMilitary: false,
+          peasants: 0,
+          techUnlocked: null,
+          treasuryPadding: 10,
+          expectedReason: 'Insufficient workers',
+        ),
+      ),
+      buildCostAffordRejectScenario(
+        label: 'naval fluyte: canAfford false when unlocking tech missing',
+        pins: (
+          unitType: 'fluyte',
+          isMilitary: false,
+          peasants: 10,
+          techUnlocked: {},
+          treasuryPadding: 500,
+          expectedReason: 'Required technology not unlocked',
+        ),
+      ),
+      buildCostAffordRejectScenario(
+        label: 'military lancers: canAfford false when unlocking tech missing',
+        pins: (
+          unitType: 'lancers',
+          isMilitary: true,
+          peasants: 5,
+          techUnlocked: {},
+          treasuryPadding: 500,
+          expectedReason: 'Required technology not unlocked',
+        ),
+      ),
+      buildCostAffordRejectScenario(
+        label: 'military peasant_levies: canAfford false when peasants are zero',
+        pins: (
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          peasants: 0,
+          techUnlocked: null,
+          treasuryPadding: 500,
+          expectedReason: 'Insufficient workers',
+        ),
+      ),
+    ];
