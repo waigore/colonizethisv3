@@ -819,3 +819,12 @@ test_support LOC: **15,719** (net +158 vs slice 31 — `game_lookup_helpers_expe
 
 test_support LOC: **16,014** (net +295 vs slice 32 — four expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and `consumption_scenarios.dart` inline-verify migration for ≥20% test_support reduction (≤8,200) deferred to slice 34+.
 
+## Phase 3 — Slice 34 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| consumption-expectations | migrated 12 inline `run:` closures to `consumption_expectations.dart` pins | `consumption_scenarios.dart`, `consumption_expectations.dart` | #3939 |
+| economy-extraction-expectations | migrated 9 inline `run:` closures to `economy_extraction_expectations.dart` pins | `economy_extraction_scenarios.dart`, `economy_extraction_expectations.dart` | #3939 |
+
+test_support LOC: **16,227** (net +213 vs slice 33 — two expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and remaining inline-verify migrations (`cost_check_scenarios.dart`, `projected_cost_engine_scenarios.dart`, etc.) for ≥20% test_support reduction (≤8,200) deferred to slice 35+.
+
