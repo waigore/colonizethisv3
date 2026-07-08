@@ -7,7 +7,7 @@ import 'package:colonizethis_orders/src/orders/incremental_candidate_validator.d
 import 'package:colonizethis_orders/src/orders/order_suggestion_diplomatic_pass.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 
-import 'diplomatic_orders_test_fixtures.dart';
+import 'support/diplomatic/diplomatic_orders_test_fixtures.dart';
 
 void main() {
   group('order_suggestion_diplomatic_pass', () {

@@ -12,7 +12,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/join_empire_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'diplomatic_sub_validators_test_support.dart';
+import '../../support/validators/diplomatic/diplomatic_sub_validators_test_support.dart';
 
 void main() {
   group('validateJoinEmpireOverture (free function)', () {

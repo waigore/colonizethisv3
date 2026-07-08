@@ -3,7 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'order_engine_build_civilian_topology_test_support.dart';
+import 'support/engine/order_engine_build_civilian_topology_test_support.dart';
 
 void main() {
   group('OrderEngine', () {

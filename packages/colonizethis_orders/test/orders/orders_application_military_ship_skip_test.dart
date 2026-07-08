@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'orders_application_military_ship_skip_test_support.dart';
+import 'support/application/orders_application_military_ship_skip_test_support.dart';
 
 void main() {
   group('applyBuildAndWorkOrders military and ship skip branches', () {

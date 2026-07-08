@@ -3,7 +3,7 @@ import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'naval_order_validator_test_support.dart';
+import '../support/validators/naval_order_validator_test_support.dart';
 
 void main() {
   group('NavalOrderValidator', () {

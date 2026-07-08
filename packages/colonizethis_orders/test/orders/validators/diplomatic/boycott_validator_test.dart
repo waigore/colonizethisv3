@@ -9,7 +9,7 @@ import 'package:colonizethis_orders/src/orders/validators/diplomatic/boycott_val
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/revoke_boycott_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'diplomatic_sub_validators_test_support.dart';
+import '../../support/validators/diplomatic/diplomatic_sub_validators_test_support.dart';
 
 Game _colonyHolderGame({
   bool holdsColony = true,

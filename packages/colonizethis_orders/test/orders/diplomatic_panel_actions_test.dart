@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'diplomatic_orders_test_fixtures.dart';
+import 'support/diplomatic/diplomatic_orders_test_fixtures.dart';
 
 const _topology = emptyTopology;
 

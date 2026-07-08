@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import 'incremental_candidate_validator_equivalence_test_helpers.dart';
+import 'support/incremental/incremental_candidate_validator_equivalence_test_helpers.dart';
 
 void main() {
   suppressLogsForTests();

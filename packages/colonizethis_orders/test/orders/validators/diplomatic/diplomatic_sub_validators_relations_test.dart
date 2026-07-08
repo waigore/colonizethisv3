@@ -16,7 +16,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
-import 'diplomatic_sub_validators_test_support.dart';
+import '../../support/validators/diplomatic/diplomatic_sub_validators_test_support.dart';
 
 void main() {
   group('declareWarSubValidator', () {

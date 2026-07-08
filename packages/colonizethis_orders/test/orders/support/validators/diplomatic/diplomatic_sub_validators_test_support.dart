@@ -7,7 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-export '../../diplomatic_orders_test_fixtures.dart' show gpMinorGame;
+export '../../diplomatic/diplomatic_orders_test_fixtures.dart' show gpMinorGame;
 
 DiplomaticSubValidatorContext diplomaticSubValidatorContext(
   Game game,

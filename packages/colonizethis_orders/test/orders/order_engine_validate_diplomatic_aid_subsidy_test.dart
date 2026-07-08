@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'order_engine_validate_diplomatic_test_support.dart';
+import 'support/engine/order_engine_validate_diplomatic_test_support.dart';
 
 void main() {
   group('OrderEngine validateDiplomatic aid and subsidy rules', () {
