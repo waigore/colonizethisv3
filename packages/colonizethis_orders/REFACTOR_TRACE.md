@@ -427,6 +427,14 @@ test/ LOC after slice 15: **32,385** (down ~751 from ~33,136 post–slice 14). R
 
 test/ LOC after slice 16: **32,079** (down ~306 from post–slice 15). Remaining: further expectation compaction (`order_engine_validate_work_*`, `build_unit_training_*`, `incremental_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 17: validateWork expectation fixtures + helper compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-fixtures-2 | extract dual-tile pending work, tile exclusivity, minor-province road, upgrade-town helpers; compact purchase-land / road / upgrade expectation bodies | `order_engine_validate_work_expectations.dart` | extended `order_engine_validate_work_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 17: **31,872** (down ~207 from post–slice 16). Remaining: further expectation compaction (`build_unit_training_*`, `incremental_*`, `valid_work_tiles_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

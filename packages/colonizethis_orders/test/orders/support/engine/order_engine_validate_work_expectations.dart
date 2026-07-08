@@ -205,85 +205,90 @@ OrderValidationResult _validateOwWorkTarget({
   tileMapByRegion: tileMapByRegion,
 );
 
-void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
-  const regionId = 'oldWorld';
-  const provinceId = '$regionId|P1';
-  const tileA = '$provinceId|0|0';
-  const tileB = '$provinceId|1|0';
-
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: regionId, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileA,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        regionId: {
-          provinceId: [tileA, tileB],
-        },
-      },
-      resourceByTileKey: const {tileA: 'grain', tileB: 'grain'},
-      playerVisibilityByTile: const {
-        'p1': {tileA: 'fullyVisible', tileB: 'fullyVisible'},
-      },
+List<OrderValidationResult> _runPurchaseLandValidation(Game game) {
+  final engine = OrderEngine();
+  engine.addWorkOrder(
+    'p1',
+    WorkOrder(
+      unitId: 'merchant1',
+      target: kWorkTargetPurchaseLand,
+      targetTileKey: PurchaseLandTestFixture.tileKey,
     ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 20)
-            .applyDelta(CommodityCatalog.castIron.id, 20),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
-    ],
   );
-
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'P1',
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: const [],
+  return engine.validatePlayerOrdersWithContext(
+    game,
+    PurchaseLandTestFixture.topology(),
+    'p1',
   );
+}
 
+OrderValidationResult _runUpgradeTownValidation(Game game) {
   final engine = OrderEngine();
   engine.addWorkOrder(
     'p1',
     const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileA,
+      unitId: 'b1',
+      target: kWorkTargetUpgradeTown,
+      targetTileKey: ValidateWorkOw.tileKey,
     ),
   );
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileB,
-    ),
-  );
+  return engine
+      .validatePlayerOrdersWithContext(
+        game,
+        ValidateWorkOw.topology(),
+        'p1',
+      )
+      .single;
+}
 
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+OrderValidationResult _runMinorProvinceRoadValidation(Game game) {
+  final engine = OrderEngine();
+  engine.addWorkOrder(
+    'gp1',
+    WorkOrder(
+      unitId: 'e1',
+      target: kWorkTargetBuildRoad,
+      targetTileKey: minorProvinceRoadTileKey(),
+    ),
+  );
+  return engine
+      .validatePlayerOrdersWithContext(
+        game,
+        minorProvinceRoadTopology(),
+        'gp1',
+      )
+      .single;
+}
+
+void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
+  final game = dualTilePendingWorkGame();
+  const tileA = ValidateWorkOw.tileKey;
+  const tileB = '${ValidateWorkOw.provinceId}|1|0';
+
+  final engine = OrderEngine();
+  engine
+    ..addWorkOrder(
+      'p1',
+      const WorkOrder(
+        unitId: 'builder1',
+        target: kWorkTargetBuildImprovement,
+        targetTileKey: tileA,
+      ),
+    )
+    ..addWorkOrder(
+      'p1',
+      const WorkOrder(
+        unitId: 'builder1',
+        target: kWorkTargetBuildImprovement,
+        targetTileKey: tileB,
+      ),
+    );
+
+  final results = engine.validatePlayerOrdersWithContext(
+    game,
+    ValidateWorkOw.topology(),
+    'p1',
+  );
   expect(results, hasLength(2));
   expect(results.first.status, OrderValidationStatus.accepted);
   expect(results.last.status, OrderValidationStatus.rejected);
@@ -294,232 +299,84 @@ void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
 }
 
 void _rejectsPurchaseLandWhenNoEmbassyWithMinor() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(treasury: 500);
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
-    ),
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(treasury: 500),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('embassy'));
 }
 
 void _rejectsPurchaseLandWhenAtWarWithFaction() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    diplomacyRelations: [
-      const DiplomacyRelation(
-        factionId1: 'p1',
-        factionId2: 'minor1',
-        state: RelationState.atWar,
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'p1',
+          factionId2: 'minor1',
+          state: RelationState.atWar,
+        ),
+      ],
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('war'));
 }
 
 void _rejectsPurchaseLandWhenInsufficientTreasury() {
-  final topology = PurchaseLandTestFixture.topology();
   const cost = 15 * 10; // grain default base 10
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: cost - 1,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: cost - 1,
+      overtureStates: purchaseLandEmbassyOverture,
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('Insufficient treasury'));
 }
 
 void _rejectsPurchaseLandWhenTileHasNoResource() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    resourceByTileKey: {},
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      resourceByTileKey: {},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('no resource'));
 }
 
 void _rejectsPurchaseLandWhenMineralTileNotProspected() {
-  final topology = PurchaseLandTestFixture.topology();
   final tk = PurchaseLandTestFixture.tileKey;
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    resourceByTileKey: {tk: 'iron'},
-    playerProspectedTiles: {}, // p1 has not prospected this tile
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('prospected'));
 }
 
 void
 _acceptsPurchaseLandWithEmbassyAtPeaceSufficientTreasuryTileWithResource() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.accepted);
 }
 
 void
 _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExclusivity() {
-  const ow = 'oldWorld';
-  const provinceId = '$ow|P1';
-  const tileKey = '$ow|P1|0|0';
-  final tileTopology = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
-  );
-
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-          Unit(
-            id: 'engineer1',
-            type: kUnitTypeEngineer,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'grain'},
-      // Tile is fully visible so visibility is not the rejecting reason.
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        // Provide enough materials so material-cost validation passes and
-        // the first work order can be accepted.
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 10)
-            .applyDelta(CommodityCatalog.castIron.id, 10),
-      ),
-    ],
-  );
+  const tileKey = ValidateWorkOw.tileKey;
+  final game = builderEngineerSameTileExclusivityGame();
 
   final engine = OrderEngine();
   engine
@@ -542,7 +399,7 @@ _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExcl
 
   final results = engine.validatePlayerOrdersWithContext(
     game,
-    tileTopology,
+    ValidateWorkOw.topology(),
     'p1',
   );
 
@@ -556,60 +413,28 @@ _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExcl
 }
 
 void _acceptsPurchaseLandForMineralWhenProspected() {
-  final topology = PurchaseLandTestFixture.topology();
   final tk = PurchaseLandTestFixture.tileKey;
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    resourceByTileKey: {tk: 'iron'},
-    playerProspectedTiles: {
-      'p1': {tk},
-    },
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {
+        'p1': {tk},
+      },
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.accepted);
 }
 
 void _rejectsPurchaseLandWhenTileAlreadyPurchasedByAnotherGP() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p2'},
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p2'},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(
     results.single.reason,
@@ -618,29 +443,13 @@ void _rejectsPurchaseLandWhenTileAlreadyPurchasedByAnotherGP() {
 }
 
 void _rejectsPurchaseLandWhenTileAlreadyOwnedBySamePlayer() {
-  final topology = PurchaseLandTestFixture.topology();
-  final game = PurchaseLandTestFixture.baseGame(
-    treasury: 500,
-    overtureStates: [
-      const OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-    purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p1'},
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
+  final results = _runPurchaseLandValidation(
+    PurchaseLandTestFixture.baseGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p1'},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('You already own this tile'));
 }
@@ -876,291 +685,35 @@ void _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1() {
 }
 
 void _rejectsBuildRoadInMinorProvinceWithoutEmbassyPath() {
-  const ow = 'oldWorld';
-  const minorProvId = '$ow|MN';
-  const tileKey = '$minorProvId|0|0';
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'MN', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
+  final result = _runMinorProvinceRoadValidation(
+    minorProvinceEngineerRoadGame(),
   );
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: minorProvId, regionId: ow, ownerId: 'minor1')],
-        units: [
-          Unit(
-            id: 'e1',
-            type: kUnitTypeEngineer,
-            ownerId: 'gp1',
-            locationProvinceId: minorProvId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          minorProvId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'gp1': {tileKey: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: true,
-        capitalProvinceId: '$ow|CAP',
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 4)
-            .applyDelta(CommodityCatalog.castIron.id, 4),
-        techUnlocked: const {kTechIdDiplomaticExpertise: true},
-      ),
-    ],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'minor1',
-        state: RelationState.atPeace,
-        level: RelationLevel.neutral,
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'gp1',
-    const WorkOrder(
-      unitId: 'e1',
-      target: kWorkTargetBuildRoad,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'gp1');
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('foreign province'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('foreign province'));
 }
 
 void
 _rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile() {
-  const ow = 'oldWorld';
-  const minorProvId = '$ow|MN';
-  const tileKey = '$minorProvId|0|0';
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'MN', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
+  final result = _runMinorProvinceRoadValidation(
+    minorProvinceEngineerRoadGame(overtureStates: minorProvinceEmbassyOverture),
   );
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: minorProvId, regionId: ow, ownerId: 'minor1')],
-        units: [
-          Unit(
-            id: 'e1',
-            type: kUnitTypeEngineer,
-            ownerId: 'gp1',
-            locationProvinceId: minorProvId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          minorProvId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'gp1': {tileKey: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: true,
-        capitalProvinceId: '$ow|CAP',
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 4)
-            .applyDelta(CommodityCatalog.castIron.id, 4),
-        techUnlocked: const {kTechIdDiplomaticExpertise: true},
-      ),
-    ],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'minor1',
-        state: RelationState.atPeace,
-        level: RelationLevel.neutral,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: 'gp1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'gp1',
-    const WorkOrder(
-      unitId: 'e1',
-      target: kWorkTargetBuildRoad,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(game, topology, 'gp1');
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('cannot occupy'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('cannot occupy'));
 }
 
 void _rejectsUpgradeTownWithoutNationalBureaucracy() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: ow,
-            ownerId: 'p1',
-            townTileKey: tileKey,
-            townDevelopmentLevel: 1,
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'b1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 10)
-            .applyDelta(CommodityCatalog.castIron.id, 10),
-        techUnlocked: const {},
-      ),
-    ],
+  final result = _runUpgradeTownValidation(
+    upgradeTownWorkGame(techUnlocked: const {}),
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'b1',
-      target: kWorkTargetUpgradeTown,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('National Bureaucracy'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('National Bureaucracy'));
 }
 
 void _acceptsUpgradeTownWhenNationalBureaucracyUnlocked() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: ow,
-            ownerId: 'p1',
-            townTileKey: tileKey,
-            townDevelopmentLevel: 1,
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'b1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 10)
-            .applyDelta(CommodityCatalog.castIron.id, 10),
-        techUnlocked: const {kTechIdNationalBureaucracy: true},
-      ),
-    ],
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'b1',
-      target: kWorkTargetUpgradeTown,
-      targetTileKey: tileKey,
+  final result = _runUpgradeTownValidation(
+    upgradeTownWorkGame(
+      techUnlocked: const {kTechIdNationalBureaucracy: true},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
