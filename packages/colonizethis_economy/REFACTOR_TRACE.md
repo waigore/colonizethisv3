@@ -960,3 +960,12 @@ test_support LOC: **17,002** (net −101 vs slice 45 — suggester + non-GP extr
 
 test_support LOC: **16,987** (net −15 vs slice 46 — auto-offer + sellable/offer-cap row builders; town-bonus province helper offset by builder LOC). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 48+.
 
+## Phase 3 — Slice 48 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| purchased-tile-riches-row | `purchasedTileRichesRow` compact builder for fourteen riches-credit scenarios | `purchased_tile_riches_scenarios.dart` | #2991 C5, #3939 |
+| extraction-scenario-extend | Extend `extractionScenario` for landAbsent/tech-cap/`tileMapByRegion` pins; migrate connectivity/mineral/empty/path rows | `resource_extractor_scenarios.dart` | #3661, #3939 |
+
+test_support LOC: **16,971** (net −16 vs slice 47 — purchased-tile riches + extractor DSL compaction). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 49+.
+
