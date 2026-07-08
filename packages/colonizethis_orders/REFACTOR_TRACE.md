@@ -307,6 +307,36 @@ Merged `incremental_candidate_validator_equivalence_{,_army_naval}_test.dart` (2
 
 test/ LOC after slice 10: see PR. Remaining: other `orders_application_*`, lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
 
+
+## Wave 3 — Slice 11 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wc-build-improve | build_improvement completion increases improvement level and clears currentWork | `orders_application_work_completion_build_improvement_test.dart` | `support/application/work_completion_scenarios.dart` + thin runner | #3949 |
+| wc-envy-hint | build_improvement completion sets envy mirror hint for human on extraction tile | same | same | #3949 |
+| wc-envy-ai | build_improvement completion adds envy evidence when AI mirrors human gathering hint | same | same | #3949 |
+| wc-level-4 | build_improvement completion raises stored level from 3 to 4 (global max) | same | same | #3949 |
+| wc-tech-cap | build_improvement completion does not re-apply extraction tech cap (#1291) | same (was multi-line; label joined) | same | #1291, #3949 |
+| wc-conquer | work cancelled when province containing target tile is conquered (#376) | same | same | #376, #3949 |
+| wc-multi-turn | multi-turn work decrements remainingTurns and completes only when zero | same | same | #3949 |
+| wc-explore | explore completion sets visibility and clears currentWork | `…_explore_and_roads_test.dart` | same | #3949 |
+| wc-explore-bucket | explore completion reveals every tile in canonical full-id bucket | same (was multi-line; label joined) | same | #3949 |
+| wc-road | build_road completion increases road level | same | same | #3949 |
+| wc-road-capital | build_road completion propagates transport level to adjacent capital tile (no downgrade) | same (was multi-line; label joined) | same | #3949 |
+| wc-road-port | build_road completion propagates transport level to adjacent port tile and upgrades it | same (was multi-line; label joined) | same | #3949 |
+| wc-port | build_port completion sets port and road level 4 when topology has sea | `…_infrastructure_test.dart` (was multi-line; label joined) | same | #3949 |
+| wc-fort | build_fort completion increases province fortLevel | same | same | #3949 |
+| wc-rail-no-road | build_rail completion leaves road when tile has no road | same | same | #3949 |
+| wc-rail-valid | build_rail completion sets road level to 4 when valid | same | same | #3949 |
+| wc-dispatch-rail | routes kWorkTargetBuildRail through handler map entry | `orders_application_completed_work_dispatch_test.dart` | same | #3949 |
+| wc-dispatch-noop | build_rail completion no-ops when rejectionReasonForBuildRailOrder applies | same | same | #3949 |
+| wc-dispatch-town | upgrade_town threads getProvinces/replaceProvinces through the CompletedWorkContext record | same (was multi-line; label joined) | same | #3949 |
+| wc-dispatch-explore | explore invokes the applyExploreCompletion closure with the unit region via the CompletedWorkContext record | same (was multi-line; label joined) | same | #3949 |
+
+Merged four imperative work-completion / dispatch suites (20 scenarios) → `orders_application_work_completion_test.dart`. Bodies in `work_completion_expectations.dart`; labels in `work_completion_scenarios.dart`. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 11: see PR. Remaining: other `orders_application_*` (military/ship, training costs, worker pool, helpers, civilian spawn, clear current work), lib DRY, ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
