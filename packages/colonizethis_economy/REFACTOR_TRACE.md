@@ -535,3 +535,14 @@ test_support LOC: **12,624** (net +106 vs slice 10 — `FilledDealExpectation` c
 
 test_support LOC: **12,927** (net +303 vs slice 11 — three expectation helper modules added; scenario inline-verify bodies reduced; further treasury/validator/FRR-profit scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 13+).
 
+## Phase 3 — Slice 13 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-expectations | `TreasuryUiCompositionExpectation`, `CarryForwardBidNotionalExpectation`, `GpTreasuryCreditExpectation` data-driven assertions | `treasury_scenarios/treasury_expectations.dart` | #3939 |
+| treasury-ui-compaction | migrated five treasury UI composition rows to `.expect` | `treasury_scenarios/treasury_available_scenarios.dart` | #3093, #3939 |
+| carry-forward-compaction | migrated carry-forward catalog-fallback row to `.expect` | `treasury_scenarios/treasury_bid_spend_scenarios.dart` | #3122, #3939 |
+| gp-credit-compaction | migrated eight GP treasury-credit accumulator rows to `gpTreasuryCredit*ScenarioExpect` | `treasury_scenarios/treasury_bid_spend_scenarios.dart` | #3939 |
+
+test_support LOC: **13,133** (net +206 vs slice 12 — `treasury_expectations.dart` module added; treasury UI/carry-forward/GP-credit inline-verify bodies reduced; further validator/FRR-profit scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 14+).
+

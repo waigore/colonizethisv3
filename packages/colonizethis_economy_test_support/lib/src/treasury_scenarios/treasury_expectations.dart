@@ -1,0 +1,179 @@
+// Compact treasury UI composition and GP-credit assertions (Refs #3939 phase 3 slice 13).
+
+import 'package:colonizethis_data/colonizethis_data.dart' as data;
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+/// Pins for [TreasuryUiCompositionExpectation.maxAffordableQty].
+typedef MaxAffordableQtyPin = ({String commodityId, int qty});
+
+/// Pins for [TreasuryUiCompositionExpectation.spendIncrementExceedsBudget].
+typedef SpendIncrementExceedsBudgetPin = ({String commodityId, int delta});
+
+/// Data-driven expectations for [TreasuryUiCompositionScenario] rows.
+class TreasuryUiCompositionExpectation {
+  const TreasuryUiCompositionExpectation({
+    this.budget,
+    this.commodityPrices,
+    this.headroom,
+    this.maxAffordableQty,
+    this.headroomLessThanCommodity,
+    this.spendIncrementExceedsBudget,
+    this.budgetLessThanCommodity,
+  });
+
+  final int? budget;
+  final Map<CommodityId, int>? commodityPrices;
+  final int? headroom;
+  final MaxAffordableQtyPin? maxAffordableQty;
+  final CommodityId? headroomLessThanCommodity;
+  final SpendIncrementExceedsBudgetPin? spendIncrementExceedsBudget;
+  final CommodityId? budgetLessThanCommodity;
+}
+
+void assertTreasuryUiCompositionExpectation({
+  required Game game,
+  required data.ResourceRules rules,
+  required int budget,
+  required int currentSpend,
+  required TreasuryUiCompositionExpectation expectation,
+}) {
+  if (expectation.budget != null) {
+    expect(budget, expectation.budget);
+  }
+  if (expectation.commodityPrices != null) {
+    for (final entry in expectation.commodityPrices!.entries) {
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: entry.key,
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        entry.value,
+      );
+    }
+  }
+  final int resolvedHeadroom =
+      expectation.headroom ?? budget - currentSpend;
+  if (expectation.headroom != null) {
+    expect(resolvedHeadroom, expectation.headroom);
+  }
+  if (expectation.maxAffordableQty != null) {
+    final pin = expectation.maxAffordableQty!;
+    final int? rowPrice = effectiveMarketPriceForCommodityId(
+      commodityId: pin.commodityId,
+      worldMarket: game.worldMarketState,
+      resourceRules: rules,
+    );
+    expect(resolvedHeadroom ~/ rowPrice!, pin.qty);
+  }
+  if (expectation.headroomLessThanCommodity != null) {
+    final int? price = effectiveMarketPriceForCommodityId(
+      commodityId: expectation.headroomLessThanCommodity!,
+      worldMarket: game.worldMarketState,
+      resourceRules: rules,
+    );
+    expect(resolvedHeadroom < price!, isTrue);
+  }
+  if (expectation.spendIncrementExceedsBudget != null) {
+    final pin = expectation.spendIncrementExceedsBudget!;
+    final int? rowPrice = effectiveMarketPriceForCommodityId(
+      commodityId: pin.commodityId,
+      worldMarket: game.worldMarketState,
+      resourceRules: rules,
+    );
+    expect(currentSpend + pin.delta * rowPrice! > budget, isTrue);
+  }
+  if (expectation.budgetLessThanCommodity != null) {
+    final int? rowPrice = effectiveMarketPriceForCommodityId(
+      commodityId: expectation.budgetLessThanCommodity!,
+      worldMarket: game.worldMarketState,
+      resourceRules: rules,
+    );
+    expect(budget < rowPrice!, isTrue);
+  }
+}
+
+/// Data-driven expectations for carry-forward bid-notional rows.
+class CarryForwardBidNotionalExpectation {
+  const CarryForwardBidNotionalExpectation({
+    required this.catalogCommodity,
+    required this.quantity,
+  });
+
+  final CommodityId catalogCommodity;
+  final int quantity;
+}
+
+void assertCarryForwardBidNotionalExpectation({
+  required int notional,
+  required data.ResourceRules rules,
+  required CarryForwardBidNotionalExpectation expectation,
+}) {
+  final catalogPrice =
+      rules.defaultMarketPriceForCommodityId(expectation.catalogCommodity) ?? 0;
+  expect(catalogPrice, greaterThan(0));
+  expect(notional, expectation.quantity * catalogPrice);
+}
+
+/// Data-driven expectations for [GpTreasuryCreditAccumulator] scenario rows.
+class GpTreasuryCreditExpectation<T extends num> {
+  const GpTreasuryCreditExpectation({
+    this.isEmpty,
+    this.total,
+    this.totalCloseTo,
+    this.view,
+    this.viewCloseTo,
+    this.viewKeyOrder,
+    this.viewUnmodifiable = false,
+    this.totalEqualsNaiveViewSum = false,
+  });
+
+  final bool? isEmpty;
+  final T? total;
+  final T? totalCloseTo;
+  final Map<String, T>? view;
+  final Map<String, T>? viewCloseTo;
+  final List<String>? viewKeyOrder;
+  final bool viewUnmodifiable;
+  final bool totalEqualsNaiveViewSum;
+}
+
+void assertGpTreasuryCreditExpectation<T extends num>(
+  GpTreasuryCreditAccumulator<T> acc,
+  GpTreasuryCreditExpectation<T> expectation,
+) {
+  if (expectation.isEmpty != null) {
+    expect(acc.isEmpty, expectation.isEmpty);
+  }
+  if (expectation.total != null) {
+    expect(acc.total, expectation.total);
+  }
+  if (expectation.totalCloseTo != null) {
+    expect(acc.total, closeTo(expectation.totalCloseTo!, 1e-12));
+  }
+  if (expectation.view != null) {
+    expect(acc.view, expectation.view);
+  }
+  if (expectation.viewCloseTo != null) {
+    for (final entry in expectation.viewCloseTo!.entries) {
+      expect(acc.view[entry.key], closeTo(entry.value, 1e-12));
+    }
+  }
+  if (expectation.viewKeyOrder != null) {
+    expect(acc.view.keys.toList(), expectation.viewKeyOrder);
+  }
+  if (expectation.viewUnmodifiable) {
+    expect(() => acc.view['gpB'] = (0 as T), throwsUnsupportedError);
+  }
+  if (expectation.totalEqualsNaiveViewSum) {
+    if (acc is GpTreasuryCreditAccumulator<double>) {
+      final naive = acc.view.values.fold<double>(0.0, (a, b) => a + b);
+      expect(acc.total, closeTo(naive, 1e-12));
+    } else {
+      final naive = acc.view.values.fold<int>(0, (a, b) => a + b.toInt());
+      expect(acc.total, naive);
+    }
+  }
+}

@@ -5,6 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'treasury_expectations.dart';
 import 'treasury_test_support.dart';
 
 /// One row for [treasuryAvailableForBidsScenarios].
@@ -126,6 +127,36 @@ class TreasuryUiCompositionScenario {
     this.refs,
   });
 
+  TreasuryUiCompositionScenario.expect({
+    required String label,
+    required int treasury,
+    Map<CommodityId, int> prices = const {},
+    List<TradeOrder> stagedBids = const [],
+    int projectedNonBidTreasuryDelta = 0,
+    required TreasuryUiCompositionExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          treasury: treasury,
+          prices: prices,
+          stagedBids: stagedBids,
+          projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
+          verify: ({
+            required game,
+            required rules,
+            required budget,
+            required currentSpend,
+          }) =>
+              assertTreasuryUiCompositionExpectation(
+            game: game,
+            rules: rules,
+            budget: budget,
+            currentSpend: currentSpend,
+            expectation: expect,
+          ),
+          refs: refs,
+        );
+
   final String label;
   final int treasury;
   final Map<CommodityId, int> prices;
@@ -144,103 +175,68 @@ class TreasuryUiCompositionScenario {
 List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
   data.ResourceRules rules,
 ) => [
-  TreasuryUiCompositionScenario(
+  TreasuryUiCompositionScenario.expect(
     label: 'treasury 100, market price timber 30, no staged bids → headroom for '
         'fresh row equals raw treasury (allows up to qty 3)',
     treasury: 100,
     prices: const {'timber': 30},
-    verify: ({required game, required rules, required budget, required currentSpend}) {
-      final int? rowPrice = effectiveMarketPriceForCommodityId(
-        commodityId: 'timber',
-        worldMarket: game.worldMarketState,
-        resourceRules: rules,
-      );
-      expect(rowPrice, 30);
-      final int headroom = budget - currentSpend;
-      expect(headroom ~/ rowPrice!, 3);
-    },
+    expect: const TreasuryUiCompositionExpectation(
+      commodityPrices: {'timber': 30},
+      maxAffordableQty: (commodityId: 'timber', qty: 3),
+    ),
     refs: '#3093',
   ),
-  TreasuryUiCompositionScenario(
+  TreasuryUiCompositionScenario.expect(
     label: 'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid '
         'for iron (price 80) is refused (headroom 10 < 80)',
     treasury: 100,
     prices: const {'timber': 30, 'iron': 80},
     stagedBids: [bidOrder('timber', 3)],
-    verify: ({required game, required rules, required budget, required currentSpend}) {
-      final int? ironPrice = effectiveMarketPriceForCommodityId(
-        commodityId: 'iron',
-        worldMarket: game.worldMarketState,
-        resourceRules: rules,
-      );
-      expect(ironPrice, 80);
-      final int headroom = budget - currentSpend;
-      expect(headroom, 10);
-      expect(
-        headroom < ironPrice!,
-        isTrue,
-        reason:
-            'Cannot fit even 1 unit of iron at price 80 with only 10 treasury '
-            'headroom — the UI must silent-no-op the toggle.',
-      );
-    },
+    expect: const TreasuryUiCompositionExpectation(
+      commodityPrices: {'iron': 80},
+      headroom: 10,
+      headroomLessThanCommodity: 'iron',
+    ),
     refs: '#3093',
   ),
-  TreasuryUiCompositionScenario(
+  TreasuryUiCompositionScenario.expect(
     label: 'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → '
         'next increment would make spend 120 (> 100), so the UI must silent-no-op',
     treasury: 100,
     prices: const {'timber': 30},
     stagedBids: [bidOrder('timber', 3)],
-    verify: ({required game, required rules, required budget, required currentSpend}) {
-      const int delta = 1;
-      final int? rowPrice = effectiveMarketPriceForCommodityId(
-        commodityId: 'timber',
-        worldMarket: game.worldMarketState,
-        resourceRules: rules,
-      );
-      expect(rowPrice, 30);
-      expect(currentSpend + delta * rowPrice! > budget, isTrue);
-    },
+    expect: const TreasuryUiCompositionExpectation(
+      commodityPrices: {'timber': 30},
+      spendIncrementExceedsBudget: (commodityId: 'timber', delta: 1),
+    ),
     refs: '#3093',
   ),
-  TreasuryUiCompositionScenario(
+  TreasuryUiCompositionScenario.expect(
     label: 'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
         'no staged bids), market price timber 30 → budget = 60, default qty '
         '1 fits and headroom permits up to qty 2 (spend 60)',
     treasury: 100,
     prices: const {'timber': 30},
     projectedNonBidTreasuryDelta: -40,
-    verify: ({required game, required rules, required budget, required currentSpend}) {
-      final int headroom = budget - currentSpend;
-      final int? rowPrice = effectiveMarketPriceForCommodityId(
-        commodityId: 'timber',
-        worldMarket: game.worldMarketState,
-        resourceRules: rules,
-      );
-      expect(budget, 60);
-      expect(rowPrice, 30);
-      expect(headroom ~/ rowPrice!, 2);
-    },
+    expect: const TreasuryUiCompositionExpectation(
+      budget: 60,
+      commodityPrices: {'timber': 30},
+      maxAffordableQty: (commodityId: 'timber', qty: 2),
+    ),
     refs: '#3093',
   ),
-  TreasuryUiCompositionScenario(
+  TreasuryUiCompositionScenario.expect(
     label: 'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
         'so no bid (even default qty 1) can be staged on any priced '
         'commodity (silent no-op gate)',
     treasury: 50,
     prices: const {'timber': 30},
     projectedNonBidTreasuryDelta: -60,
-    verify: ({required game, required rules, required budget, required currentSpend}) {
-      final int? rowPrice = effectiveMarketPriceForCommodityId(
-        commodityId: 'timber',
-        worldMarket: game.worldMarketState,
-        resourceRules: rules,
-      );
-      expect(budget, 0);
-      expect(rowPrice, 30);
-      expect(budget < rowPrice!, isTrue);
-    },
+    expect: const TreasuryUiCompositionExpectation(
+      budget: 0,
+      commodityPrices: {'timber': 30},
+      budgetLessThanCommodity: 'timber',
+    ),
     refs: '#3093',
   ),
 ];
