@@ -224,6 +224,56 @@ Game resourceExtractorGame({
   );
 }
 
+/// Two-province GP game for town-rule extraction scenarios (Refs #3939).
+Game townRuleTwoProvinceExtractorGame({
+  required TileMapState tileState,
+  required String p1TownTileKey,
+  required String p2TownTileKey,
+  int p1TownDevelopmentLevel = 4,
+  int p2TownDevelopmentLevel = 2,
+  Map<String, String>? portsByProvinceSeaboard,
+  String playerId = 'pl1',
+}) {
+  const regionId = 'oldWorld';
+  final player = Player(
+    id: playerId,
+    displayName: 'Spain',
+    isHuman: true,
+    capitalProvinceId: '$regionId|p1',
+    capitalTile: const CapitalTile(
+      regionId: regionId,
+      provinceId: 'oldWorld|p1',
+      x: 0,
+      y: 0,
+    ),
+  );
+  return TestFixtures.minimalGame(
+    id: 'g1',
+    capitalTileGrainBonusPerTurn: 0,
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$regionId|p1',
+          regionId: regionId,
+          ownerId: playerId,
+          townTileKey: p1TownTileKey,
+          townDevelopmentLevel: p1TownDevelopmentLevel,
+        ),
+        Province(
+          id: '$regionId|p2',
+          regionId: regionId,
+          ownerId: playerId,
+          townTileKey: p2TownTileKey,
+          townDevelopmentLevel: p2TownDevelopmentLevel,
+        ),
+      ],
+    ),
+    tileState: tileState,
+    portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
+    players: [player],
+  );
+}
+
 /// Single-player game with [oldWorld|p1] capital and an owned [newWorld|n1]
 /// province for overseas extraction scenarios.
 Game overseasResourceExtractorGame({

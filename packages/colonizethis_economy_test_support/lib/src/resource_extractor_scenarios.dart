@@ -4,6 +4,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 import 'extraction_fixture_support.dart';
 import 'resource_extractor_expectations.dart';
@@ -28,6 +31,8 @@ class ResourceExtractorScenario {
     this.techCap = 4,
     this.techCapForPlayer,
     this.useOverseasGame = false,
+    this.gameOverride,
+    this.connectivityByPlayer,
     this.refs,
   });
 
@@ -48,6 +53,8 @@ class ResourceExtractorScenario {
     int techCap = 4,
     int Function(String playerId)? techCapForPlayer,
     bool useOverseasGame = false,
+    Game? gameOverride,
+    Map<String, ConnectivityResult>? connectivityByPlayer,
     String? refs,
   }) : this(
           label: label,
@@ -65,6 +72,8 @@ class ResourceExtractorScenario {
           techCap: techCap,
           techCapForPlayer: techCapForPlayer,
           useOverseasGame: useOverseasGame,
+          gameOverride: gameOverride,
+          connectivityByPlayer: connectivityByPlayer,
           refs: refs,
           verify: (result) =>
               assertResourceExtractorExpectation(result, expect),
@@ -85,6 +94,8 @@ class ResourceExtractorScenario {
   final int techCap;
   final int Function(String playerId)? techCapForPlayer;
   final bool useOverseasGame;
+  final Game? gameOverride;
+  final Map<String, ConnectivityResult>? connectivityByPlayer;
   final void Function(Map<String, ExtractionTotals> result) verify;
   final String? refs;
 }
@@ -133,14 +144,15 @@ ResourceExtractorScenario extractionScenario({
 
 void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
   final tileState = tileStateFromSpecs(scenario.tileSpecs);
-  final game = scenario.useOverseasGame
-      ? overseasResourceExtractorGame(tileState: tileState)
-      : resourceExtractorGame(
-          tileState: tileState,
-          townDevelopmentLevel: scenario.townDevelopmentLevel,
-          techUnlocked: scenario.techUnlocked,
-          playerProspectedTiles: scenario.playerProspectedTiles,
-        );
+  final game = scenario.gameOverride ??
+      (scenario.useOverseasGame
+          ? overseasResourceExtractorGame(tileState: tileState)
+          : resourceExtractorGame(
+              tileState: tileState,
+              townDevelopmentLevel: scenario.townDevelopmentLevel,
+              techUnlocked: scenario.techUnlocked,
+              playerProspectedTiles: scenario.playerProspectedTiles,
+            ));
   final Map<String, TileMapResult> tileMapByRegion;
   if (scenario.tileMapByRegion != null) {
     tileMapByRegion = scenario.tileMapByRegion!;
@@ -155,10 +167,11 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
   final result = computeExtraction(
     game: game,
     tileMapByRegion: tileMapByRegion,
-    connectivityResult: connectivityFor(
-      scenario.connected,
-      pathTransportCap: scenario.pathTransportCap,
-    ),
+    connectivityResult: scenario.connectivityByPlayer ??
+        connectivityFor(
+          scenario.connected,
+          pathTransportCap: scenario.pathTransportCap,
+        ),
     techCapForPlayer:
         scenario.techCapForPlayer ?? ((_) => scenario.techCap),
   );
@@ -359,3 +372,153 @@ ResourceExtractorScenario pathTransportCapScenario({
         land: {'grain': 1},
       ),
     );
+
+/// Town-rule + port cap from `resource_extractor_part2_part1_test.dart`.
+ResourceExtractorScenario townRulePortCapScenario() {
+  const tileKey = 'oldWorld|p2|1|1';
+  return ResourceExtractorScenario.expect(
+    label: 'town-rule-only + port: townDevelopmentLevel DOES cap yield',
+    grid: const [
+      ['p1', 'p1'],
+      ['p1', 'p2'],
+    ],
+    resourceGrid: const [
+      [null, null],
+      [null, Resource.grain],
+    ],
+    tileSpecs: const [
+      TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+      TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+    ],
+    connected: {tileKey},
+    pathTransportCap: const {tileKey: 4},
+    gameOverride: townRuleTwoProvinceExtractorGame(
+      tileState: tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+      ]),
+      p1TownTileKey: 'oldWorld|p1|0|0',
+      p2TownTileKey: 'oldWorld|p2|0|1',
+      portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
+    ),
+    expect: const ResourceExtractorExpectation(
+      land: {'grain': 2},
+    ),
+    refs: 'SPEC/game/extraction-and-improvements.md § Extraction formula',
+  );
+}
+
+/// Town-rule + non-port from `resource_extractor_part1_segment2_test.dart`.
+ResourceExtractorScenario townRuleNonPortNoCapScenario() {
+  const tileKey = 'oldWorld|p2|1|1';
+  return ResourceExtractorScenario.expect(
+    label: 'town-rule-only + non-port: townDevelopmentLevel does NOT cap yield',
+    grid: const [
+      ['p1', 'p1', 'p1'],
+      ['p1', 'p2', 'p2'],
+      ['p1', 'p2', 'p2'],
+    ],
+    resourceGrid: const [
+      [null, null, null],
+      [null, Resource.grain, null],
+      [null, null, null],
+    ],
+    tileSpecs: const [
+      TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+      TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+    ],
+    connected: {tileKey},
+    pathTransportCap: const {tileKey: 4},
+    gameOverride: townRuleTwoProvinceExtractorGame(
+      tileState: tileStateFromSpecs(const [
+        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
+        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
+      ]),
+      p1TownTileKey: 'oldWorld|p1|0|0',
+      p2TownTileKey: 'oldWorld|p2|1|0',
+    ),
+    expect: const ResourceExtractorExpectation(
+      land: {'grain': 4},
+    ),
+    refs: 'SPEC/game/extraction-and-improvements.md § Extraction formula',
+  );
+}
+
+/// Dual tech-cap comparison from `resource_extractor_part1_segment1_test.dart`.
+ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
+  required TileMapResult grainTileMap,
+}) =>
+    ResourceExtractorScenario(
+      label: 'effective extraction capped by player tech cap when improvement and '
+          'transport are high',
+      tileMap: grainTileMap,
+      tileSpecs: const [
+        TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
+      ],
+      connected: {'oldWorld|p1|0|0'},
+      verify: (_) {
+        final tileState = tileStateFromSpecs(const [
+          TileImprovementSpec('oldWorld|p1|0|0', improvement: 4, roadLevel: 4),
+        ]);
+        final game = resourceExtractorGame(tileState: tileState);
+        final tileMapByRegion = {'oldWorld': grainTileMap};
+        final connectivity = connectivityFor({'oldWorld|p1|0|0'});
+        final resultCap2 = computeExtraction(
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          connectivityResult: connectivity,
+          techCapForPlayer: (_) => 2,
+        );
+        expect(resultCap2['pl1']!.land['grain'], 2);
+
+        final resultCap3 = computeExtraction(
+          game: game,
+          tileMapByRegion: tileMapByRegion,
+          connectivityResult: connectivity,
+          techCapForPlayer: (_) => 3,
+        );
+        expect(resultCap3['pl1']!.land['grain'], 3);
+      },
+    );
+
+/// Capital grain bonus from `resource_extractor_part2_part2_test.dart`.
+ResourceExtractorScenario capitalGrainBonusScenario() {
+  const playerId = 'pl1';
+  final player = Player(
+    id: playerId,
+    displayName: 'Spain',
+    isHuman: true,
+    capitalProvinceId: 'oldWorld|p1',
+    capitalTile: const CapitalTile(
+      regionId: 'oldWorld',
+      provinceId: 'oldWorld|p1',
+      x: 0,
+      y: 0,
+    ),
+  );
+  return ResourceExtractorScenario.expect(
+    label: 'capital tile grain bonus is unconditional on connectivity',
+    tileMapByRegion: const {},
+    tileSpecs: const [],
+    connected: const {},
+    gameOverride: TestFixtures.minimalGame(
+      id: 'g1',
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            townDevelopmentLevel: 4,
+          ),
+        ],
+      ),
+      players: [player],
+    ),
+    connectivityByPlayer: connectivityFor(const {}),
+    expect: const ResourceExtractorExpectation(
+      land: {'grain': 5},
+      overseasEmpty: true,
+    ),
+  );
+}

@@ -642,3 +642,24 @@ test_support LOC: **14,416** (net +99 vs slice 19 — `validator_context_expecta
 
 test_support LOC: deferred recount post-slice — treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200), lib town-bonus traversal DRY, and remaining bespoke extractor rows deferred to slice 22+.
 
+## Phase 3 — Slice 22 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| town-rule-port | `town-rule-only + port: townDevelopmentLevel DOES cap yield` | `resource_extractor_part2_part1_test.dart` → `resource_extractor_scenarios.dart` | #3939 |
+| town-rule-non-port | `town-rule-only + non-port: townDevelopmentLevel does NOT cap yield` | `resource_extractor_part1_segment2_test.dart` → `resource_extractor_scenarios.dart` | #3939 |
+| player-tech-cap-dual | `effective extraction capped by player tech cap when improvement and transport are high` | `resource_extractor_part1_segment1_test.dart` → `resource_extractor_scenarios.dart` | #3939 |
+| capital-grain-bonus | `capital tile grain bonus is unconditional on connectivity` | `resource_extractor_part2_part2_test.dart` → `resource_extractor_scenarios.dart` | #3939 |
+| tile-contribution-scenarios | `tile extraction contribution excludes aggregate capital grain bonus`; `tile extraction contribution is null for disconnected tile` | `resource_extractor_part2_part2_test.dart` → `tile_extraction_contribution_scenarios.dart` | #3939 |
+| town-rule-fixture | `townRuleTwoProvinceExtractorGame` shared builder | `extraction_fixture_support.dart` | #3939 |
+| scenario-framework | `gameOverride` + `connectivityByPlayer` on `ResourceExtractorScenario` | `resource_extractor_scenarios.dart` | #3939 |
+
+Documented exceptions (resource extractor bespoke rows retained):
+
+| file | retained test description(s) | rationale | refs |
+|------|------------------------------|-----------|------|
+| `resource_extractor_part2_part1_test.dart` | `blockaded overseas port: connectivity excludes tile so overseas extraction zero` | multi-region topology + `resolveConnectivity` blockade wiring | #3939 |
+| `resource_extractor_part2_part2_test.dart` | `skips connected tile and logs when province missing from region (world-model)` | logger capture + missing-province defensive branch | #3939 |
+
+test_support LOC: **15,001** (net +585 vs slice 21 — `tile_extraction_contribution_scenarios.dart` + town-rule/capital scenario rows added; economy `test/` **1,742** (down 302 vs slice 21). Treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 23+.
+

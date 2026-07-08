@@ -11,76 +11,10 @@ final TileMapResult _grainTileMap = singleTileMap(Resource.grain);
 
 void main() {
   group('ResourceExtractor', () {
-    test('town-rule-only + port: townDevelopmentLevel DOES cap yield', () {
-      final grid = [
-        ['p1', 'p1'],
-        ['p1', 'p2'],
-      ];
-      final resourceGrid = [
-        [null, null],
-        [null, Resource.grain],
-      ];
-      final tileMap = tileMapFromGrids(grid: grid, resourceGrid: resourceGrid);
-      const cap = CapitalTile(
-        regionId: 'oldWorld',
-        provinceId: 'oldWorld|p1',
-        x: 0,
-        y: 0,
-      );
-      final tileState = tileStateFromSpecs(const [
-        TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 1),
-        TileImprovementSpec('oldWorld|p2|1|1', improvement: 4),
-      ]);
-      final player = Player(
-        id: 'pl1',
-        displayName: 'Spain',
-        isHuman: true,
-        capitalProvinceId: 'oldWorld|p1',
-        capitalTile: cap,
-      );
-      final game = TestFixtures.minimalGame(
-        id: 'g1',
-        capitalTileGrainBonusPerTurn: 0,
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p1|0|0',
-              townDevelopmentLevel: 4,
-            ),
-            Province(
-              id: 'oldWorld|p2',
-              regionId: 'oldWorld',
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p2|0|1',
-              townDevelopmentLevel: 2,
-            ),
-          ],
-        ),
-        tileState: tileState,
-        portsByProvinceSeaboard: {'oldWorld|p2|sea1': 'oldWorld|p2|0|1'},
-        players: [player],
-      );
-      const tileKey = 'oldWorld|p2|1|1';
-      final result = computeExtraction(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        connectivityResult: connectivityFor(
-          {tileKey},
-          pathTransportCap: {tileKey: 4},
-        ),
-        techCapForPlayer: (_) => 4,
-      );
-      expect(
-        result['pl1']!.land['grain'],
-        2,
-        reason:
-            'town-rule-only tile with port town; townDevelopmentLevel=2 caps yield to 2 '
-            '(SPEC/game/extraction-and-improvements.md § Extraction formula)',
-      );
-    });
+    test(
+      townRulePortCapScenario().label,
+      () => runResourceExtractorScenario(townRulePortCapScenario()),
+    );
 
     test(
       overseasExtractionScenario().label,

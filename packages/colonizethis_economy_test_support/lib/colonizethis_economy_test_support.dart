@@ -33,6 +33,7 @@ export 'src/resource_extractor_expectations.dart';
 export 'src/resource_extractor_scenarios.dart';
 export 'src/scenario_runner.dart';
 export 'src/sea_transport_scenarios.dart';
+export 'src/tile_extraction_contribution_scenarios.dart';
 export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
 export 'src/treasury_scenarios/treasury_scenarios.dart';
