@@ -3,7 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 
-void main() {
+// Peer / near-quota peace helper cases (former part2 shard, Refs #3941).
+void registerDiplomacyBelowQuotaPeacePeerNearQuotaCases() {
   test(
     'belowQuotaPeerGpPeaceTargets peace peer below-quota GP when minors remain',
     () {
