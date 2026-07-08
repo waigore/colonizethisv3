@@ -9,7 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'tech_gp_researchers.dart';
 import 'tech_ui_helpers.dart';
 import 'tech_gp_pennant_row.dart';

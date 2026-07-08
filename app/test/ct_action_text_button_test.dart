@@ -2,7 +2,7 @@
 // mirroring mockup `.action-btn` in
 // SPEC/ui/mockups/GAME20001-production-panel.html (Refs #2862 S10 / C11).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';

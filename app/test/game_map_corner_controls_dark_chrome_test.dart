@@ -2,7 +2,7 @@
 // GameMapCornerControls (Refs #2861 R5 / S4). SPEC: SPEC/ui/empire-overview.md
 // § Corner controls chrome (dark editorial-monocle).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';

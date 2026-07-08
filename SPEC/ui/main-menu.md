@@ -215,7 +215,7 @@ Hard-coded hex literals are forbidden in `app/lib/widgets/main_menu.dart` and th
 
 ### Background
 
-Dark SVG collage rendered via the `CtMainMenuCollage` widget (S2; `app/lib/widgets/ct_main_menu_collage.dart`): telescope, crossed muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, layered wave bands, navigation-star waypoints, and dashed trade-route arcs. Painted in `--accent` at low opacity (per-glyph group alphas × `0.8` final layer) over the scaffold `--bg`. **No external SVG asset is required** — primitives mirror the inline `<svg class="collage-svg">` block of the mockup.
+Dark SVG collage rendered via the `CtMainMenuCollage` widget (S2; `packages/colonizethis_app_ui_chrome/lib/widgets/ct_main_menu_collage.dart`): telescope, crossed muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, layered wave bands, navigation-star waypoints, and dashed trade-route arcs. Painted in `--accent` at low opacity (per-glyph group alphas × `0.8` final layer) over the scaffold `--bg`. **No external SVG asset is required** — primitives mirror the inline `<svg class="collage-svg">` block of the mockup.
 
 ### Logo region
 
@@ -252,10 +252,10 @@ Display font: `Iowan Old Style, Cinzel, Charter, Georgia, serif` (mirrors mockup
 
 | Primitive | Source | Mockup reference |
 |-----------|--------|------------------|
-| `CtCompassRose` | `app/lib/widgets/ct_compass_rose.dart` | `.compass-rose` / `.compass-rose .arm` / `.compass-rose .medallion` / `.compass-rose .ring` |
-| `CtFleurDeLisOrnament` | `app/lib/widgets/ct_fleur_de_lis_ornament.dart` | `<svg class="title-flank">` block |
-| `CtBrassDivider` | `app/lib/widgets/ct_brass_divider.dart` (issue #2859) | `.brass-divider` |
-| `CtMainMenuCollage` | `app/lib/widgets/ct_main_menu_collage.dart` + `ct_main_menu_collage_painter*.dart` `part` files (S2) | `<svg class="collage-svg">` block |
+| `CtCompassRose` | `packages/colonizethis_app_ui_chrome/lib/widgets/ct_compass_rose.dart` | `.compass-rose` / `.compass-rose .arm` / `.compass-rose .medallion` / `.compass-rose .ring` |
+| `CtFleurDeLisOrnament` | `packages/colonizethis_app_ui_chrome/lib/widgets/ct_fleur_de_lis_ornament.dart` | `<svg class="title-flank">` block |
+| `CtBrassDivider` | `packages/colonizethis_app_ui_chrome/lib/widgets/ct_brass_divider.dart` (issue #2859) | `.brass-divider` |
+| `CtMainMenuCollage` | `packages/colonizethis_app_ui_chrome/lib/widgets/ct_main_menu_collage.dart` + `ct_main_menu_collage_painter*.dart` parts `part` files (S2) | `<svg class="collage-svg">` block |
 | Scroll-bracket gutters (S5) | `_PixelArtButtonsRegion` + `_PixelArtScrollBracket` (private) in `app/lib/widgets/main_menu.dart` | `.buttons-region::before` / `.buttons-region::after` |
 
 All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux asset generation is required** for the `pixelArt` main menu. The legacy `ui_main_menu_background.png` / `ui_main_menu_logo.png` / `ui_main_menu_button.png` / `ui_main_menu_panel.png` assets are no longer referenced by this screen and may be retired once `CtMainMenu` consumes the new primitives (S5).

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
-import 'ct_brass_divider.dart';
-import 'ct_compass_rose.dart';
-import 'ct_fleur_de_lis_ornament.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
 import 'ct_gradients.dart';
-import 'ct_main_menu_collage.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
 part 'main_menu_constants.dart';

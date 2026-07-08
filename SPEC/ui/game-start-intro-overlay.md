@@ -72,7 +72,7 @@ The overlay is meant to be **single-shot per game id per session**: once the hos
 
 Error mode renders the same `Stack` (with the editorial-monocle scrim) and the `CtDialogShell` body is the title row, the brass divider, then the localized error message (`l10n.game_intro_loadError`) and a single centered Continue button (`l10n.game_intervention_continue`).
 
-The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim` token (see [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Dialog scrim and `app/lib/config/editorial_monocle_palette.dart`). No hex literal (e.g. `Colors.black54`) may appear in the widget source for the scrim layer.
+The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim` token (see [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Dialog scrim and `packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`). No hex literal (e.g. `Colors.black54`) may appear in the widget source for the scrim layer.
 
 ---
 
@@ -114,10 +114,10 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 
 - `CtFullScreenDialogueShell` ([`components/ct-full-screen-dialogue-shell.md`](components/ct-full-screen-dialogue-shell.md)) — canonical scrim + centered `CtDialogShell` scaffold reused by every blocking dialogue overlay; pins the `EditorialMonoclePalette.dialogScrim` token so individual overlays do not redeclare it (Refs #2914 S2 / S9).
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
-- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
+- `CtBrassDivider` (`packages/colonizethis_app_ui_chrome/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue and option buttons (no Material buttons in dialogue chrome).
 - `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget. The wrapper pins the SHEL30001 R32 contract: `size: 48`, `strokeWidth: 2`, `color: EditorialMonoclePalette.accent` (Refs #2867 R28).
-- `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`) — scrim color resolved from the canonical OKLCH token (`SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). The widget MUST NOT paint a hex-literal scrim (e.g. `Colors.black54`).
+- `EditorialMonoclePalette.dialogScrim` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — scrim color resolved from the canonical OKLCH token (`SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). The widget MUST NOT paint a hex-literal scrim (e.g. `Colors.black54`).
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns Line / Choice state.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
 - Localized strings via `appL10n(context).gameStartIntroOverlay_title`, `appL10n(context).game_intervention_continue`, and `appL10n(context).game_intro_loadError(...)`.

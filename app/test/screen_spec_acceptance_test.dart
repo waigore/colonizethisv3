@@ -7,14 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
-import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
-import 'package:colonizethis_app/widgets/ct_fleur_de_lis_ornament.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
-import 'package:colonizethis_app/widgets/ct_main_menu_collage.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
 /// Locates the `CtNinePatchButton` ancestor of the menu label [label] so

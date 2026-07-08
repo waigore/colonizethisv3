@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'tree_builders/naval_tree_builder.dart';
 import '../units/shared/units_entity_action_row.dart';

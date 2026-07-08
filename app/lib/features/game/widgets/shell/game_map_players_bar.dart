@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 

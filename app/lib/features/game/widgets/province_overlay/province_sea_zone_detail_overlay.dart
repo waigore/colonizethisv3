@@ -31,7 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';

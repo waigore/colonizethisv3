@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_radius.dart';
 
 /// Bottom-sheet host chrome shared by the three unit panels (Civilian

@@ -100,7 +100,7 @@ The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/dipl
 ## Components
 
 - `CtDialogShell`, `CtNinePatchButton` (see `app/lib/widgets/`).
-- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — title/treasury/amount/divider/warning/stepper colors.
+- `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — title/treasury/amount/divider/warning/stepper colors.
 - Flutter primitives: `Text`, `Row`, `Column`, `Container`, `InkWell`/`GestureDetector` for the bespoke stepper buttons keyed `diplo_amount_minus` / `diplo_amount_plus` (the dialog no longer uses Material `IconButton` or `Icons.remove` / `Icons.add` — the chrome paints `−` / `+` glyphs per [mockups/DIPL20001-grant-or-subsidy-dialog.html](mockups/DIPL20001-grant-or-subsidy-dialog.html)).
 - Logic constants: `grantAidAmountStep`, `grantAidDefaultAmount` (grant mode); `kSubsidyPercentStep`, `kSubsidyPercentMin`, `kSubsidyPercentMax`, `kSubsidyPercentDefault`, and `isValidSubsidyPercent` (subsidy mode) — all from `colonizethis_logic` (Refs #3753 R3).
 - Localized keys via `appL10n(context)`: `diplomacy_grantAid`, `diplomacy_setSubsidy`, `diplomacy_treasuryStep` (grant), `diplomacy_subsidyStep` (subsidy), `diplomacy_currencyAmount` (grant), `diplomacy_treasuryBelowMinimum` (grant), `common_cancel`, `game_callToArms_submit`.

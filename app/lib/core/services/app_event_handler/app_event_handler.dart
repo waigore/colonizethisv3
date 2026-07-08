@@ -28,7 +28,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 

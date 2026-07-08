@@ -20,7 +20,7 @@
 // `CtNinePatchButton`).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/map_area/game_map_canvas_stack.dart';

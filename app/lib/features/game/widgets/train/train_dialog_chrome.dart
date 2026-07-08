@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';

@@ -51,7 +51,7 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 - **Disabled state:** When a button is disabled (e.g., debug-only icon hidden), the button is **removed from the tree** rather than rendered greyed out. Visible buttons are always interactive.
 - **Tooltip:** Each button hosts a `Tooltip` with the label from the [Definition](#definition) table; the localised string is the source of truth. The mockup's CSS hover tooltip is the inspiration for the side-mounted dark popup; the Flutter `Tooltip` provides the equivalent behaviour with the default platform timing.
 - **Accessibility:** Each button is wrapped in `Semantics(button: true, label: <tooltip>)` so assistive tech still reports the action even when the visual is icon-only.
-- **Tokens / no light hex:** All chrome and glyph colours resolve from [EditorialMonoclePalette](../../app/lib/config/editorial_monocle_palette.dart). Hard-coded light hex (e.g. `Colors.white.withOpacity(0.9)`, parchment `#F5F5DC`) is forbidden in the rail — those colours regress the dark theme mandate from `colonizethis-ui-design.mdc`.
+- **Tokens / no light hex:** All chrome and glyph colours resolve from [EditorialMonoclePalette](../../packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart). Hard-coded light hex (e.g. `Colors.white.withOpacity(0.9)`, parchment `#F5F5DC`) is forbidden in the rail — those colours regress the dark theme mandate from `colonizethis-ui-design.mdc`.
 - **Asset error handling:** Asset paths follow `ui_icon_<id>.png` per [game-toolbar-icons.md](game-toolbar-icons.md); missing or invalid assets throw `FlutterError`.
 
 ### Acceptance criteria (left rail chrome)

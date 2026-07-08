@@ -33,6 +33,7 @@ workspace:
   - packages/colonizethis_app_e2e_support
   - packages/colonizethis_app_fixtures
   - packages/colonizethis_app_l10n
+  - packages/colonizethis_app_ui_chrome
   - tool/generate_map
   - tool/init_game
   - tool/run_observer_game

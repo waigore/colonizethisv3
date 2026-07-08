@@ -33,6 +33,8 @@ dependencies:
     path: ../packages/colonizethis_app_l10n
   colonizethis_app_fixtures:
     path: ../packages/colonizethis_app_fixtures
+  colonizethis_app_ui_chrome:
+    path: ../packages/colonizethis_app_ui_chrome
   widgetbook: ^3.23.0
   google_fonts: ^8.1.0
   intl: ^0.20.2

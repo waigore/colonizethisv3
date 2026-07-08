@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Pennant / banner shape filled with a GP map-ownership color.
 ///
