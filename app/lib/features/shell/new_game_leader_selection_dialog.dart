@@ -6,10 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

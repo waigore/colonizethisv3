@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../region_map/region_map_viewport_snapshot.dart'
     show

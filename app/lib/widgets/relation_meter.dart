@@ -7,7 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Resolves the editorial-monocle gradient color for a 1-based relation-meter
 /// [step] in `[1, relationMeterStepCount]`.

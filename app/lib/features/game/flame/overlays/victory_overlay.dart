@@ -5,9 +5,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import '../../../../widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';

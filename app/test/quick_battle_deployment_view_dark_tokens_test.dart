@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
 

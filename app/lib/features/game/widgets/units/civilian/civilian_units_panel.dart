@@ -15,7 +15,7 @@ import '../../../../../config/ui_screen_ids.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../../providers/games_provider.dart';
-import '../../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_gap.dart';
 import '../../../../../widgets/ct_spacing.dart';
 import '../../chrome/ct_action_text_button.dart';

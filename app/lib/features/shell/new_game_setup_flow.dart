@@ -10,7 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';

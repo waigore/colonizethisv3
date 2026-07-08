@@ -16,7 +16,7 @@
 // so loading the committed seed-42 fixtures keeps the baselines byte-identical
 // while dropping the ~7-11s `getDebugInitGameResult()` map generation per file.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';

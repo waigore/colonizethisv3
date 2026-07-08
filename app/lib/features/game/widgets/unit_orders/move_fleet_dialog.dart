@@ -10,7 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_section_label.dart';

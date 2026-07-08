@@ -50,15 +50,16 @@ import 'package:path/path.dart' as p;
 ///    `features/**` must still use the catalog widget, not raw Material
 ///    colors.
 /// 5. **`app/lib/widgets/` CustomPainter / canvas compositing files** —
-///    decorative `CustomPainter` paints (e.g. `ct_main_menu_collage.dart`)
-///    and `ColorFilter.mode` darken/lighten composites (e.g. the main-menu
+///    `ColorFilter.mode` darken/lighten composites (e.g. the main-menu
 ///    button hover filter in `main_menu.dart` and its split-out part file
 ///    `main_menu_buttons.dart`) treat the color value as a
 ///    compositing argument (alpha multiplier or blend operand), not a theme
 ///    palette reference. The editorial-monocle palette has no semantic
 ///    token for these compositing-only colors, and replacing them with
 ///    palette tokens would tint the rendered output. Analogous to the
-///    Flame renderer allowlist for the same reason.
+///    Flame renderer allowlist for the same reason. Decorative collage /
+///    ornament painters live in `colonizethis_app_ui_chrome` (Refs #3942)
+///    and are outside this scan root.
 ///
 /// Per-line skips:
 /// - Lines starting with `//` (line comments) and `///` (dartdoc) so this
@@ -234,18 +235,10 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // .accentDim / .muted]); SYS20001 (Debug Console Overlay) was promoted by
   // the parallel S3 + S8 slice. Both are in scope for the colour gate.
   // app/lib/widgets/ canvas-compositing files — the color literal is a
-  // compositing argument (alpha multiplier in `Paint.color` for a
-  // `saveLayer` decorative overlay, or the `ColorFilter.mode` blend
-  // operand for a hover-darken filter), not a theme palette reference.
-  // The editorial-monocle palette has no semantic token for these
-  // compositing-only colors, analogous to the Flame renderer allowlist.
-  'app/lib/widgets/ct_main_menu_collage.dart',
-  // `part of 'ct_main_menu_collage.dart'` — painter `saveLayer` host split
-  // under the file-size cap (SPEC/program/dart-file-non-comment-line-size.md).
-  // Carries the same decorative `CustomPainter` `saveLayer` alpha multiplier
-  // as the collage library host; allowlisted for the identical compositing
-  // operand rationale (category #5 above).
-  'app/lib/widgets/ct_main_menu_collage_painter.dart',
+  // `ColorFilter.mode` blend operand for a hover-darken filter, not a theme
+  // palette reference. The editorial-monocle palette has no semantic token
+  // for these compositing-only colors, analogous to the Flame renderer
+  // allowlist. Collage painters moved to colonizethis_app_ui_chrome (#3942).
   'app/lib/widgets/main_menu.dart',
   // `part of 'main_menu.dart'` — button widgets split out under the
   // file-size cap (SPEC/program/dart-file-non-comment-line-size.md). Carries

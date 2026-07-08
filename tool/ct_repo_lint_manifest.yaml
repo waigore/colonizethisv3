@@ -497,10 +497,17 @@ rules:
 
   - rule_id: repo.app_main_line_budget
     group: structure
-    title: colonizethis_app main role must stay at or below 60_000 lines
+    title: colonizethis_app main role must stay at or below 59_000 lines
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_main_line_budget.dart
+
+  - rule_id: repo.app_no_stray_l10n_gen
+    group: structure
+    title: app/lib must not contain generated l10n Dart (belongs in colonizethis_app_l10n)
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_app_no_stray_l10n_gen.dart
 
   - rule_id: repo.app_widgetbook_catalog_location
     group: architecture

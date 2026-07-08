@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_constants.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';

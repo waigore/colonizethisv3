@@ -5,10 +5,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'research_slot_preview.dart';
-import '../../../../widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'technology_panel_orders.dart';
