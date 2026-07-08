@@ -881,13 +881,9 @@ void _getvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLarge
     for (var t = 0; t < tilesPerProvince; t++) {
       final tileKey = ValidWorkTilesTestSupport.tileKey('p$p', t, 0);
       tiles.add(tileKey);
-      if (p.isEven && t == 0) {
-        visibility[tileKey] = 'fogged';
-      } else if (p.isEven && t == 1) {
-        visibility[tileKey] = 'unknown';
-      } else {
-        visibility[tileKey] = 'unknown';
-      }
+      // Fog one tile on even provinces; all other tiles stay unknown.
+      visibility[tileKey] =
+          (p.isEven && t == 0) ? 'fogged' : 'unknown';
     }
     byProvince[provinceId] = tiles;
   }
