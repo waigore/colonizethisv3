@@ -8,7 +8,7 @@ import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
 
-const _frrTileKey = 'oldWorld|M1|0|0';
+const _frrTileKey = kFrrMatcherTestTileKey;
 
 /// FRR matcher integration from `world_market_deal_matcher_first_right_test.dart`.
 List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
@@ -17,67 +17,14 @@ List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
-  DealMatcherScenario.expect(
+  frrPartialFillRow(
     label:
         'partial FRR fill: residual offer quantity becomes available for '
         'other GPs at their normal priority tier',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [matcherOffer('timber', 10, originTileKey: _frrTileKey)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 4, priority: 5)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 4,
-      ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 6,
-      ),
-      unfilledBidsByFactionId: {
-        'gpB': [matcherBid('timber', 4, priority: 1)],
-      },
-      unfilledOffersEmpty: true,
-    ),
-    refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  frrCargoCapRow(
     label:
         'cargo limit caps FRR fill (per-buyer cumulative cargo still applies)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [matcherOffer('timber', 10, originTileKey: _frrTileKey)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 1)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 3, 'gpB': 100},
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 3,
-      ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 7,
-      ),
-      unfilledBidsPinsByFactionId: {
-        'gpA': [matcherBid('timber', 7, priority: 1)],
-      },
-    ),
-    refs: '#2992',
   ),
   frrNoFrrFallbackRow(
     label: 'offer without originTileKey is unaffected by FRR even when index '
@@ -120,20 +67,7 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
         'gpA': [matcherBid('timber', 10, priority: 1)],
       },
       tradeCapacityByFactionId: {'gpA': 100},
-      purchasedTileIndex: PurchasedTileIndex.forTesting(const [
-        PurchasedTileAttribution(
-          tileKey: _frrTileKey,
-          owningGpId: 'gpA',
-          sourceFactionId: 'M1',
-          provinceId: 'oldWorld|M1',
-        ),
-        PurchasedTileAttribution(
-          tileKey: 'oldWorld|M1|1|0',
-          owningGpId: 'gpA',
-          sourceFactionId: 'M1',
-          provinceId: 'oldWorld|M1',
-        ),
-      ]),
+      purchasedTileIndex: frrMatcherTestIndexDual(),
     ),
     expect: DealMatchExpectation(
       filledDealsLength: 2,

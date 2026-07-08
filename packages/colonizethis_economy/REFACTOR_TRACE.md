@@ -901,3 +901,25 @@ test_support LOC: deferred recount post-slice — further treasury/deal-matcher 
 
 test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 42+.
 
+## Phase 3 — Slice 42 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| eff-price-row | `effectiveMarketPriceRow` / `effectiveMarketPriceRichesRow` compact seven effective-market-price rows | `treasury_test_support.dart`, `treasury_pure_helper_scenarios.dart` | #3093, #3939 |
+| frr-partial-cargo-row | `frrPartialFillRow` / `frrCargoCapRow` / `frrM1OfferInputs` / `frrMatcherTestIndexDual` — two FRR routing rows + dual-tile index | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| boycott-unilateral-row | `boycottTradeRow` / `matcherUnilateralRow` — three boycott + two unilateral basic rows | `deal_matcher_test_support.dart`, `deal_matcher_basic_scenarios.dart` | #3753, #3939 |
+| treasury-exhaust-row | `treasuryNegativeBudgetRow` / `treasuryDualCommodityExhaustRow` — two treasury-clamp rows | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 43+.
+
+## Phase 3 — Slice 42 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| eff-price-row | `effectiveMarketPriceRow` / `effectiveMarketPriceRichesRow` compact seven effective-market-price rows | `treasury_test_support.dart`, `treasury_pure_helper_scenarios.dart` | #3093, #3939 |
+| frr-partial-cargo-row | `frrPartialFillRow` / `frrCargoCapRow` / `frrM1OfferInputs` / `frrMatcherTestIndexDual` — two FRR routing rows + dual-tile index | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| boycott-unilateral-row | `boycottTradeRow` / `matcherUnilateralRow` — three boycott + two unilateral basic rows | `deal_matcher_test_support.dart`, `deal_matcher_basic_scenarios.dart` | #3753, #3939 |
+| treasury-exhaust-row | `treasuryNegativeBudgetRow` / `treasuryDualCommodityExhaustRow` — two treasury-clamp rows | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 43+.
+

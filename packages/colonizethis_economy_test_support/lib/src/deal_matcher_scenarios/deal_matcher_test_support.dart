@@ -123,9 +123,12 @@ DealMatchInputs matcherTreasuryClampInputs({
       purchasedTileIndex: purchasedTileIndex,
     );
 
+/// Canonical FRR purchased-tile key for matcher integration tests (#2992).
+const String kFrrMatcherTestTileKey = 'oldWorld|M1|0|0';
+
 /// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
 PurchasedTileIndex frrMatcherTestIndex({
-  String tileKey = 'oldWorld|M1|0|0',
+  String tileKey = kFrrMatcherTestTileKey,
   String owningGpId = 'gpA',
   String sourceFactionId = 'M1',
   String provinceId = 'oldWorld|M1',
@@ -242,6 +245,244 @@ DealMatchInputs frrTwoBuyerRivalInputs({
       },
       tradeCapacityByFactionId: {gpOwner: 100, gpRival: 100},
       purchasedTileIndex: purchasedTileIndex,
+    );
+
+/// Two-tile [PurchasedTileIndex] owned by the same GP (Refs #3939 slice 42).
+PurchasedTileIndex frrMatcherTestIndexDual({
+  String tileKeyA = kFrrMatcherTestTileKey,
+  String tileKeyB = 'oldWorld|M1|1|0',
+  String owningGpId = 'gpA',
+  String sourceFactionId = 'M1',
+  String provinceId = 'oldWorld|M1',
+}) =>
+    PurchasedTileIndex.forTesting([
+      PurchasedTileAttribution(
+        tileKey: tileKeyA,
+        owningGpId: owningGpId,
+        sourceFactionId: sourceFactionId,
+        provinceId: provinceId,
+      ),
+      PurchasedTileAttribution(
+        tileKey: tileKeyB,
+        owningGpId: owningGpId,
+        sourceFactionId: sourceFactionId,
+        provinceId: provinceId,
+      ),
+    ]);
+
+/// Standard M1 FRR offer inputs with optional rival buyers (Refs #3939 slice 42).
+DealMatchInputs frrM1OfferInputs({
+  int offerQty = 10,
+  String commodity = 'timber',
+  String seller = 'M1',
+  Map<String, List<TradeOrder>>? bidsByFactionId,
+  Map<String, int>? tradeCapacityByFactionId,
+  PurchasedTileIndex? purchasedTileIndex,
+}) =>
+    matcherInputs(
+      offersByFactionId: {
+        seller: [
+          matcherOffer(
+            commodity,
+            offerQty,
+            originTileKey: kFrrMatcherTestTileKey,
+          ),
+        ],
+      },
+      bidsByFactionId: bidsByFactionId ??
+          {
+            'gpA': [matcherBid(commodity, offerQty, priority: 5)],
+            'gpB': [matcherBid(commodity, offerQty, priority: 1)],
+          },
+      tradeCapacityByFactionId:
+          tradeCapacityByFactionId ?? const {'gpA': 100, 'gpB': 100},
+      purchasedTileIndex: purchasedTileIndex ?? frrMatcherTestIndex(),
+    );
+
+/// Partial FRR fill with residual routed to rival GP (Refs #3939 slice 42).
+DealMatcherScenario frrPartialFillRow({
+  required String label,
+  int offerQty = 10,
+  int ownerBidQty = 4,
+  int ownerBidPriority = 5,
+  int rivalBidQty = 10,
+  int rivalBidPriority = 1,
+  int ownerFillQty = 4,
+  int rivalFillQty = 6,
+  int rivalCarryQty = 4,
+  String? refs = '#2992',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: frrM1OfferInputs(
+        offerQty: offerQty,
+        bidsByFactionId: {
+          'gpA': [
+            matcherBid('timber', ownerBidQty, priority: ownerBidPriority),
+          ],
+          'gpB': [
+            matcherBid('timber', rivalBidQty, priority: rivalBidPriority),
+          ],
+        },
+      ),
+      expect: DealMatchExpectation(
+        filledDealsLength: 2,
+        frrFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: ownerFillQty,
+        ),
+        nonFrrFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpB',
+          quantity: rivalFillQty,
+        ),
+        unfilledBidsByFactionId: {
+          'gpB': [
+            matcherBid('timber', rivalCarryQty, priority: rivalBidPriority),
+          ],
+        },
+        unfilledOffersEmpty: true,
+      ),
+      refs: refs,
+    );
+
+/// FRR fill capped by buyer cargo capacity (Refs #3939 slice 42).
+DealMatcherScenario frrCargoCapRow({
+  required String label,
+  int offerQty = 10,
+  int ownerCargoCap = 3,
+  int ownerFillQty = 3,
+  int rivalFillQty = 7,
+  int ownerCarryQty = 7,
+  String? refs = '#2992',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: frrM1OfferInputs(
+        offerQty: offerQty,
+        bidsByFactionId: {
+          'gpA': [matcherBid('timber', offerQty, priority: 1)],
+          'gpB': [matcherBid('timber', offerQty, priority: 1)],
+        },
+        tradeCapacityByFactionId: {'gpA': ownerCargoCap, 'gpB': 100},
+      ),
+      expect: DealMatchExpectation(
+        filledDealsLength: 2,
+        frrFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpA',
+          quantity: ownerFillQty,
+        ),
+        nonFrrFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpB',
+          quantity: rivalFillQty,
+        ),
+        unfilledBidsPinsByFactionId: {
+          'gpA': [matcherBid('timber', ownerCarryQty, priority: 1)],
+        },
+      ),
+      refs: refs,
+    );
+
+/// Boycott-blocked or allowed tribe/GP trade row (Refs #3939 slice 42).
+DealMatcherScenario boycottTradeRow({
+  required String label,
+  required String seller,
+  required String buyer,
+  required DealMatchExpectation expect,
+  Set<String> boycottBlockedPairKeys = const {},
+  int qty = 10,
+  String commodity = 'timber',
+  String? refs = '#3753',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          seller: [matcherOffer(commodity, qty, priority: 1)],
+        },
+        bidsByFactionId: {
+          buyer: [matcherBid(commodity, qty, priority: 1)],
+        },
+        tradeCapacityByFactionId: {buyer: 100},
+        boycottBlockedPairKeys: boycottBlockedPairKeys,
+      ),
+      expect: expect,
+      refs: refs,
+    );
+
+/// Offers-only or bids-only carry-forward row (Refs #3939 slice 42).
+DealMatcherScenario matcherUnilateralRow({
+  required String label,
+  required DealMatchExpectation expect,
+  Map<String, List<TradeOrder>>? offersByFactionId,
+  Map<String, List<TradeOrder>>? bidsByFactionId,
+  Map<String, int> tradeCapacityByFactionId = const {},
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: offersByFactionId ?? const {},
+        bidsByFactionId: bidsByFactionId ?? const {},
+        tradeCapacityByFactionId: tradeCapacityByFactionId,
+      ),
+      expect: expect,
+    );
+
+/// Treasury-clamp row with negative buyer budget (Refs #3939 slice 42).
+DealMatcherScenario treasuryNegativeBudgetRow({
+  required String label,
+  String? refs = '#3115',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          'sellerA': [matcherOffer('timber', 10)],
+        },
+        bidsByFactionId: {
+          'gp1': [matcherBid('timber', 10)],
+        },
+        tradeCapacityByFactionId: const {'gp1': 100},
+        treasuryBudgetByBuyerFactionId: const {'gp1': -50},
+      ),
+      expect: DealMatchExpectation(
+        filledDealsEmpty: true,
+        unfilledBidsByFactionId: {
+          'gp1': [matcherBid('timber', 10)],
+        },
+      ),
+      refs: refs,
+    );
+
+/// Per-buyer treasury exhaust across two commodities in bid order (Refs #3939 slice 42).
+DealMatcherScenario treasuryDualCommodityExhaustRow({
+  required String label,
+  String? refs = '#3115',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          'sellerA': [matcherOffer('alpha', 5)],
+          'sellerB': [matcherOffer('beta', 5)],
+        },
+        bidsByFactionId: {
+          'gp1': [matcherBid('alpha', 5), matcherBid('beta', 5)],
+        },
+        tradeCapacityByFactionId: const {'gp1': 100},
+        treasuryBudgetByBuyerFactionId: const {'gp1': 100},
+        pricesByCommodityId: const {'alpha': 20.0, 'beta': 20.0},
+      ),
+      expect: DealMatchExpectation(
+        filledDealsLength: 1,
+        firstFilledDeal: const FilledDealExpectation(
+          commodityId: 'alpha',
+          quantity: 5,
+        ),
+        unfilledBidsByFactionId: {
+          'gp1': [matcherBid('beta', 5)],
+        },
+      ),
+      refs: refs,
     );
 
 /// FRR disabled: rival lower-priority bid wins standard matching (Refs #3939 slice 41).
