@@ -419,6 +419,14 @@ test/ LOC after slice 14: see PR (`find … wc -l`). Remaining: further expectat
 
 test/ LOC after slice 15: **32,385** (down ~751 from ~33,136 post–slice 14). Remaining: further expectation compaction (`order_suggestion_core_*`, `order_engine_validate_work_*`, `build_unit_training_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 16: order_suggestion_core expectation fixtures
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osc-fixtures | extract shared GP/province/unit/topology/game helpers + dual-builder grain tile pair; compact core expectation bodies | `order_suggestion_core_expectations.dart` | `order_suggestion_core_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 16: **32,079** (down ~306 from post–slice 15). Remaining: further expectation compaction (`order_engine_validate_work_*`, `build_unit_training_*`, `incremental_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
