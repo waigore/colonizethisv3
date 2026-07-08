@@ -66,6 +66,43 @@ void _assertStandardPriorityOneOffer(TradeOrder order) {
   expect(order.isFtp, isFalse);
 }
 
+void _assertFactionAutoOffersExpectation(
+  List<TradeOrder>? orders,
+  FactionAutoOffersExpectation factionExpectation,
+) {
+  if (factionExpectation.length != null) {
+    expect(orders, hasLength(factionExpectation.length));
+  }
+  if (factionExpectation.standardPriorityOneOffers) {
+    for (final order in orders!) {
+      _assertStandardPriorityOneOffer(order);
+    }
+  }
+  if (factionExpectation.commodityIds != null) {
+    expect(
+      orders!.map((o) => o.commodityId).toList(),
+      equals(factionExpectation.commodityIds),
+    );
+  }
+  if (factionExpectation.originTileKeys != null) {
+    expect(
+      orders!.map((o) => o.originTileKey).toList(),
+      equals(factionExpectation.originTileKeys),
+    );
+  }
+  if (factionExpectation.singleCommodityId != null) {
+    expect(orders!.first.commodityId, equals(factionExpectation.singleCommodityId));
+  }
+  if (factionExpectation.singleOriginTileKey != null) {
+    expect(orders!.first.originTileKey, equals(factionExpectation.singleOriginTileKey));
+  }
+  if (factionExpectation.excludeCommodity != null) {
+    for (final order in orders!) {
+      expect(order.commodityId, isNot(equals(factionExpectation.excludeCommodity)));
+    }
+  }
+}
+
 void assertNonGpAutoOffersExpectation(
   Map<String, List<TradeOrder>> result,
   NonGpAutoOffersExpectation expectation, {
@@ -82,39 +119,7 @@ void assertNonGpAutoOffersExpectation(
   }
   if (expectation.offersByFaction != null) {
     for (final entry in expectation.offersByFaction!.entries) {
-      final orders = result[entry.key];
-      final factionExpectation = entry.value;
-      if (factionExpectation.length != null) {
-        expect(orders, hasLength(factionExpectation.length));
-      }
-      if (factionExpectation.standardPriorityOneOffers) {
-        for (final order in orders!) {
-          _assertStandardPriorityOneOffer(order);
-        }
-      }
-      if (factionExpectation.commodityIds != null) {
-        expect(
-          orders!.map((o) => o.commodityId).toList(),
-          equals(factionExpectation.commodityIds),
-        );
-      }
-      if (factionExpectation.originTileKeys != null) {
-        expect(
-          orders!.map((o) => o.originTileKey).toList(),
-          equals(factionExpectation.originTileKeys),
-        );
-      }
-      if (factionExpectation.singleCommodityId != null) {
-        expect(orders!.first.commodityId, equals(factionExpectation.singleCommodityId));
-      }
-      if (factionExpectation.singleOriginTileKey != null) {
-        expect(orders!.first.originTileKey, equals(factionExpectation.singleOriginTileKey));
-      }
-      if (factionExpectation.excludeCommodity != null) {
-        for (final order in orders!) {
-          expect(order.commodityId, isNot(equals(factionExpectation.excludeCommodity)));
-        }
-      }
+      _assertFactionAutoOffersExpectation(result[entry.key], entry.value);
     }
   }
   if (expectation.purchasedTileFrrAttribution != null) {

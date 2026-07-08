@@ -632,3 +632,13 @@ test_support LOC: **14,317** (net +511 vs slice 18 — three expectation helper 
 
 test_support LOC: **14,416** (net +99 vs slice 19 — `validator_context_expectations.dart` added; validator/deal-matcher inline-verify bodies reduced; core scenario migration and ≥20% test_support reduction (≤8,200) deferred to slice 21+).
 
+## Phase 3 — Slice 21 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| nesting-fix | extracted `_assertFactionAutoOffersExpectation` to satisfy `repo.control_flow_nesting_depth` | `non_gp_auto_offers_expectations.dart` | #3939 |
+| worker-economy-scenarios | migrated seven imperative worker labour rows to table-driven scenarios | `worker_economy_scenarios.dart`, `worker_economy_test.dart` | #3939 |
+| commodity-totals-scenarios | migrated nine imperative commodity-totals helper rows to table-driven scenarios | `commodity_totals_scenarios.dart`, `economy/commodity_totals_test.dart` | #3939 |
+
+test_support LOC: deferred recount post-slice — treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200), lib town-bonus traversal DRY, and remaining bespoke extractor rows deferred to slice 22+.
+

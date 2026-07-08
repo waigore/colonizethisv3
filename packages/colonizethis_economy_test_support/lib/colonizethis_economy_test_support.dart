@@ -8,6 +8,7 @@
 library colonizethis_economy_test_support;
 
 export 'src/build_cost_scenarios.dart';
+export 'src/commodity_totals_scenarios.dart';
 export 'src/boycott_blocked_commodities_scenarios.dart';
 export 'src/boycott_blocked_commodities_expectations.dart';
 export 'src/boycott_blocked_commodities_test_support.dart';
@@ -45,6 +46,7 @@ export 'src/town_manufacturing_bonus_expectations.dart';
 export 'src/town_manufacturing_bonus_scenarios.dart';
 export 'src/trade_interception_scenarios.dart';
 export 'src/worker_action_cost_scenarios.dart';
+export 'src/worker_economy_scenarios.dart';
 export 'src/trade_order_admission_scenarios.dart';
 export 'src/trade_order_factory.dart';
 export 'src/trade_order_suggester_expectations.dart';
