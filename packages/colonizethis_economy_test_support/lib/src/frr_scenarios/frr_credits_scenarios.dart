@@ -140,6 +140,48 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   ),
 ];
 
+FrrCreditsScenario _frrCreditsDeterminismScenario() {
+  final deals = [
+    deal(
+      buyer: 'gpC',
+      quantity: 1,
+      pricePerUnit: 5.0,
+      sellerOriginTileKey: 'k2',
+    ),
+    deal(
+      buyer: 'gpC',
+      quantity: 2,
+      pricePerUnit: 5.0,
+      sellerOriginTileKey: 'k1',
+    ),
+    deal(
+      buyer: 'gpC',
+      quantity: 3,
+      pricePerUnit: 5.0,
+      sellerOriginTileKey: 'k2',
+    ),
+  ];
+  final index = idx([
+    attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
+    attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
+  ]);
+  int relationScoreFor(String _, String __) => 100;
+  return FrrCreditsScenario.expect(
+    label:
+        'deterministic — identical inputs return identical credit/aggregation order',
+    filledDeals: deals,
+    purchasedTileIndex: index,
+    relationScoreFor: relationScoreFor,
+    expect: FrrCreditsExpectation.deterministicRerunWithFirstKey(
+      'gpB',
+      filledDeals: deals,
+      purchasedTileIndex: index,
+      relationScoreFor: relationScoreFor,
+    ),
+    refs: '#3753',
+  );
+}
+
 /// Aggregation cases from `first_right_credits_aggregation_test.dart`.
 List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
   FrrCreditsScenario.expect(
@@ -213,82 +255,7 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
     ),
     refs: '#3753',
   ),
-  FrrCreditsScenario(
-    label:
-        'deterministic — identical inputs return identical credit/aggregation order',
-    filledDeals: [
-      deal(
-        buyer: 'gpC',
-        quantity: 1,
-        pricePerUnit: 5.0,
-        sellerOriginTileKey: 'k2',
-      ),
-      deal(
-        buyer: 'gpC',
-        quantity: 2,
-        pricePerUnit: 5.0,
-        sellerOriginTileKey: 'k1',
-      ),
-      deal(
-        buyer: 'gpC',
-        quantity: 3,
-        pricePerUnit: 5.0,
-        sellerOriginTileKey: 'k2',
-      ),
-    ],
-    purchasedTileIndex: idx([
-      attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-      attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
-    ]),
-    relationScoreFor: (_, _) => 100,
-    verify: (result) {
-      FirstRightCreditsResult run() => computeFirstRightCredits(
-        filledDeals: [
-          deal(
-            buyer: 'gpC',
-            quantity: 1,
-            pricePerUnit: 5.0,
-            sellerOriginTileKey: 'k2',
-          ),
-          deal(
-            buyer: 'gpC',
-            quantity: 2,
-            pricePerUnit: 5.0,
-            sellerOriginTileKey: 'k1',
-          ),
-          deal(
-            buyer: 'gpC',
-            quantity: 3,
-            pricePerUnit: 5.0,
-            sellerOriginTileKey: 'k2',
-          ),
-        ],
-        purchasedTileIndex: idx([
-          attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
-          attr(tileKey: 'k2', owningGpId: 'gpB', sourceFactionId: 'M1'),
-        ]),
-        relationScoreFor: (_, _) => 100,
-      );
-      final second = run();
-      expect(
-        result.treasuryCreditByGpId.keys.toList(),
-        equals(second.treasuryCreditByGpId.keys.toList()),
-      );
-      for (final key in result.treasuryCreditByGpId.keys) {
-        expect(
-          result.treasuryCreditByGpId[key],
-          equals(second.treasuryCreditByGpId[key]),
-        );
-      }
-      expect(result.creditedDeals.length, second.creditedDeals.length);
-      expect(
-        result.treasuryCreditByGpId.keys.first,
-        'gpB',
-        reason: 'insertion order tracks first deal mentioning each owning GP',
-      );
-    },
-    refs: '#3753',
-  ),
+  _frrCreditsDeterminismScenario(),
 ];
 
 /// Embassy kickback cases from `first_right_credits_kickback_test.dart`.

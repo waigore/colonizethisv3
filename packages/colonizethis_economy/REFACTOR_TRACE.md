@@ -592,3 +592,15 @@ test_support LOC: **13,806** (net +273 vs slice 15 — two expectation helper mo
 
 test_support LOC: deferred recount post-slice — purchased-tile + D5 compaction reduces inline-verify bodies; further treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 18+.
 
+## Phase 3 — Slice 18 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| bid-spend-parity-expectations | `BidSpendParityExpectation` + `assertBidSpendParityExpectation` data-driven assertions | `treasury_scenarios/treasury_expectations.dart` | #3427, #3939 |
+| bid-spend-parity-compaction | migrated four staged/carry-forward parity inline `run` closures to `.expect` rows + `runBidSpendParityScenario` | `treasury_scenarios/treasury_bid_spend_scenarios.dart`, `world_market_treasury_test.dart` | #3427, #3939 |
+| dm-cross-cargo-compaction | migrated cross-commodity cargo DealMatcher inline-verify to `filledDealQuantityByCommodityId` + activity pins | `deal_matcher_scenarios/deal_matcher_core_scenarios.dart`, `deal_matcher_expectations.dart` | #3939 |
+| frr-credits-determinism-compaction | migrated FRR credits determinism inline-verify to `FrrCreditsExpectation.deterministicRerunWithFirstKey` | `frr_scenarios/frr_credits_scenarios.dart`, `frr_credits_expectations.dart` | #3753, #3939 |
+| non-gp-frr-index-compaction | migrated purchased-tile FRR index routing row to `PurchasedTileFrrAttributionExpectation` | `non_gp_auto_offers_scenarios.dart`, `non_gp_auto_offers_expectations.dart` | #2991 C6, #3939 |
+
+test_support LOC: deferred recount post-slice — remaining core scenario inline-verify bodies and ≥20% reduction (≤8,200) deferred to slice 19+.
+

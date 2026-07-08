@@ -177,3 +177,55 @@ void assertGpTreasuryCreditExpectation<T extends num>(
     }
   }
 }
+
+/// Pins for per-order [bidTreasurySpendForOrder] parity rows.
+typedef BidTreasurySpendPin = ({
+  TradeOrder order,
+  int expected,
+  String? reason,
+});
+
+/// Data-driven expectations for staged vs carry-forward bid-spend parity rows.
+class BidSpendParityExpectation {
+  const BidSpendParityExpectation({
+    this.stagedSpend,
+    this.carryForwardEqualsStaged = true,
+    this.bidTreasurySpendPins,
+  });
+
+  final int? stagedSpend;
+  final bool carryForwardEqualsStaged;
+  final List<BidTreasurySpendPin>? bidTreasurySpendPins;
+}
+
+void assertBidSpendParityExpectation({
+  required int staged,
+  required int carryForward,
+  required Game game,
+  required data.ResourceRules rules,
+  required BidSpendParityExpectation expectation,
+}) {
+  if (expectation.stagedSpend != null) {
+    expect(staged, expectation.stagedSpend);
+  }
+  if (expectation.carryForwardEqualsStaged) {
+    expect(
+      carryForward,
+      staged,
+      reason: 'both entry points must delegate to the same summation core',
+    );
+  }
+  if (expectation.bidTreasurySpendPins != null) {
+    for (final pin in expectation.bidTreasurySpendPins!) {
+      expect(
+        bidTreasurySpendForOrder(
+          order: pin.order,
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        pin.expected,
+        reason: pin.reason,
+      );
+    }
+  }
+}

@@ -176,7 +176,7 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
       },
     ),
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with '
         'tradeCapacity 15 -> A fills 8, B partial 7, B carry 3',
     inputs: matcherInputs(
@@ -193,36 +193,25 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
       tradeCapacityByFactionId: {'buyer': 15},
       pricesByCommodityId: const {'alpha': 5.0, 'beta': 10.0},
     ),
-    verify: (result) {
-      expect(result.filledDeals.length, 2);
-      final alpha = result.filledDeals.firstWhere(
-        (d) => d.commodityId == 'alpha',
-      );
-      final beta = result.filledDeals.firstWhere(
-        (d) => d.commodityId == 'beta',
-      );
-      expect(alpha.quantity, 8);
-      expect(beta.quantity, 7);
-      expect(result.unfilledBidsByFactionId['buyer'], [
-        matcherBid('beta', 3, priority: 2),
-      ]);
-      expect(
-        result.activityByCommodityId['alpha'],
-        const MarketActivity(
+    expect: DealMatchExpectation(
+      filledDealsLength: 2,
+      filledDealQuantityByCommodityId: const {'alpha': 8, 'beta': 7},
+      unfilledBidsByFactionId: {
+        'buyer': [matcherBid('beta', 3, priority: 2)],
+      },
+      activityByCommodityId: const {
+        'alpha': MarketActivity(
           totalBidQuantity: 8,
           totalOfferQuantity: 100,
           filledQuantity: 8,
         ),
-      );
-      expect(
-        result.activityByCommodityId['beta'],
-        const MarketActivity(
+        'beta': MarketActivity(
           totalBidQuantity: 10,
           totalOfferQuantity: 100,
           filledQuantity: 7,
         ),
-      );
-    },
+      },
+    ),
     refs: null,
   ),
   DealMatcherScenario.expect(

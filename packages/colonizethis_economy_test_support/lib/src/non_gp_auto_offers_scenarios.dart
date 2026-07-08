@@ -34,7 +34,8 @@ class NonGpAutoOffersScenario implements RefsScenario {
           game: game,
           tileMapByRegion: tileMapByRegion,
           connectivityByFactionId: connectivityByFactionId,
-          verify: (result) => assertNonGpAutoOffersExpectation(result, expect),
+          verify: (result) =>
+              assertNonGpAutoOffersExpectation(result, expect, game: game),
           refs: refs,
         );
 
@@ -352,38 +353,32 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       ),
       refs: '#2991 C6',
     ),
-    () {
-      final game = minorTileAutoOfferGame(
+    NonGpAutoOffersScenario.expect(
+      label: 'PurchasedTileIndex.fromGame is built independently of auto-offer '
+          "emission — the minor's auto-offer for a purchased timber tile "
+          'carries the originTileKey that the index can map back to the '
+          'owning GP for FRR routing',
+      game: minorTileAutoOfferGame(
         tileKey: purchasedTileKey,
         improvementLevel: 1,
         roadLevel: 1,
         purchasedTilesByTileKey: const {purchasedTileKey: 'gpA'},
-      );
-      return NonGpAutoOffersScenario(
-        label: 'PurchasedTileIndex.fromGame is built independently of auto-offer '
-            "emission — the minor's auto-offer for a purchased timber tile "
-            'carries the originTileKey that the index can map back to the '
-            'owning GP for FRR routing',
-        game: game,
-        tileMapByRegion: {
-          'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
-        },
-        connectivityByFactionId: const {
-          'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
-        },
-        verify: (result) {
-          final index = PurchasedTileIndex.fromGame(game);
-
-          final order = result['m1']!.single;
-          expect(order.originTileKey, equals(purchasedTileKey));
-          final attribution = index.attributionForTileKey(order.originTileKey!);
-          expect(attribution, isNotNull);
-          expect(attribution!.owningGpId, equals('gpA'));
-          expect(attribution.sourceFactionId, equals('m1'));
-        },
-        refs: '#2991 C6',
-      );
-    }(),
+      ),
+      tileMapByRegion: {
+        'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
+      },
+      connectivityByFactionId: const {
+        'm1': ConnectivityResult(connected: <String>{purchasedTileKey}),
+      },
+      expect: const NonGpAutoOffersExpectation(
+        purchasedTileFrrAttribution: PurchasedTileFrrAttributionExpectation(
+          factionId: 'm1',
+          owningGpId: 'gpA',
+          sourceFactionId: 'm1',
+        ),
+      ),
+      refs: '#2991 C6',
+    ),
     NonGpAutoOffersScenario.expect(
       label: 'purchased gold tile (mineral riches) emits no auto-offer — riches '
           'handoff (C5) routes the yield to the owning GP treasury in '

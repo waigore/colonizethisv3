@@ -67,6 +67,7 @@ class DealMatchExpectation {
     this.unfilledOffersEmpty = false,
     this.unfilledBidsEmpty = false,
     this.activityByCommodityId,
+    this.filledDealQuantityByCommodityId,
     this.singleFilledDeal,
     this.custom,
   });
@@ -83,6 +84,7 @@ class DealMatchExpectation {
   final bool unfilledOffersEmpty;
   final bool unfilledBidsEmpty;
   final Map<CommodityId, MarketActivity>? activityByCommodityId;
+  final Map<CommodityId, int>? filledDealQuantityByCommodityId;
   final void Function(FilledDeal deal)? singleFilledDeal;
   final void Function(DealMatchResult result)? custom;
 }
@@ -152,6 +154,15 @@ void assertDealMatchExpectation(
     for (final MapEntry(:key, :value)
         in expectation.activityByCommodityId!.entries) {
       expect(result.activityByCommodityId[key], value);
+    }
+  }
+  if (expectation.filledDealQuantityByCommodityId != null) {
+    for (final MapEntry(:key, :value)
+        in expectation.filledDealQuantityByCommodityId!.entries) {
+      final deal = result.filledDeals.firstWhere(
+        (d) => d.commodityId == key,
+      );
+      expect(deal.quantity, value);
     }
   }
   if (expectation.singleFilledDeal != null) {

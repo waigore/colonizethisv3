@@ -186,139 +186,105 @@ List<CarryForwardBidNotionalScenario> carryForwardBidNotionalScenarios() => [
 
 typedef BidSpendParityScenario = ({
   String label,
-  void Function(data.ResourceRules rules) run,
+  List<TradeOrder> bids,
+  Map<CommodityId, int> prices,
+  String playerId,
+  BidSpendParityExpectation expect,
 });
 
+BidSpendParityScenario bidSpendParityScenarioExpect({
+  required String label,
+  required List<TradeOrder> bids,
+  required Map<CommodityId, int> prices,
+  String playerId = _gp,
+  required BidSpendParityExpectation expect,
+}) =>
+    (
+      label: label,
+      bids: bids,
+      prices: prices,
+      playerId: playerId,
+      expect: expect,
+    );
+
+void runBidSpendParityScenario(
+  BidSpendParityScenario scenario,
+  data.ResourceRules rules,
+) {
+  final game = carryForwardBidGame(
+    scenario.bids,
+    playerId: scenario.playerId,
+    prices: scenario.prices,
+    gameId: 'g_bid_spend_parity',
+  );
+  final staged = stagedBidTotalSpendByPlayer(
+    orders: Orders(tradeOrdersByPlayerId: {scenario.playerId: scenario.bids}),
+    playerId: scenario.playerId,
+    game: game,
+    resourceRules: rules,
+  );
+  final carryForward = carryForwardBidNotionalByPlayer(
+    game: game,
+    playerId: scenario.playerId,
+    resourceRules: rules,
+  );
+  assertBidSpendParityExpectation(
+    staged: staged,
+    carryForward: carryForward,
+    game: game,
+    rules: rules,
+    expectation: scenario.expect,
+  );
+}
+
 List<BidSpendParityScenario> bidSpendParityScenarios() => [
-  (
+  bidSpendParityScenarioExpect(
     label: 'staged and carry-forward totals match for an identical bid list',
-    run: (rules) {
-      final bids = [testBid('timber', 4), testBid('iron', 2)];
-      final game = carryForwardBidGame(
-        bids,
-        playerId: _gp,
-        prices: const {'timber': 30, 'iron': 80},
-        gameId: 'g_bid_spend_parity',
-      );
-      final staged = stagedBidTotalSpendByPlayer(
-        orders: Orders(tradeOrdersByPlayerId: {_gp: bids}),
-        playerId: _gp,
-        game: game,
-        resourceRules: rules,
-      );
-      final carryForward = carryForwardBidNotionalByPlayer(
-        game: game,
-        playerId: _gp,
-        resourceRules: rules,
-      );
-      expect(staged, 4 * 30 + 2 * 80);
-      expect(
-        carryForward,
-        staged,
-        reason: 'both entry points must delegate to the same summation core',
-      );
-    },
+    bids: [testBid('timber', 4), testBid('iron', 2)],
+    prices: const {'timber': 30, 'iron': 80},
+    expect: const BidSpendParityExpectation(stagedSpend: 4 * 30 + 2 * 80),
   ),
-  (
+  bidSpendParityScenarioExpect(
     label: 'both apply identical defensive skips '
         '(offers, zero qty, unpriced ids)',
-    run: (rules) {
-      final list = [
-        testOffer('timber', 9),
-        testBid('timber', 0),
-        testBid('not_a_commodity', 5),
-        testBid('iron', 3),
-      ];
-      final game = carryForwardBidGame(
-        list,
-        playerId: _gp,
-        prices: const {'timber': 30, 'iron': 80},
-        gameId: 'g_bid_spend_parity',
-      );
-      final staged = stagedBidTotalSpendByPlayer(
-        orders: Orders(tradeOrdersByPlayerId: {_gp: list}),
-        playerId: _gp,
-        game: game,
-        resourceRules: rules,
-      );
-      final carryForward = carryForwardBidNotionalByPlayer(
-        game: game,
-        playerId: _gp,
-        resourceRules: rules,
-      );
-      expect(
-        staged,
-        3 * 80,
-        reason: 'only the priced positive iron bid counts',
-      );
-      expect(carryForward, staged);
-    },
+    bids: [
+      testOffer('timber', 9),
+      testBid('timber', 0),
+      testBid('not_a_commodity', 5),
+      testBid('iron', 3),
+    ],
+    prices: const {'timber': 30, 'iron': 80},
+    expect: const BidSpendParityExpectation(
+      stagedSpend: 3 * 80,
+      carryForwardEqualsStaged: true,
+    ),
   ),
-  (
+  bidSpendParityScenarioExpect(
     label: 'both return 0 for an empty bid list',
-    run: (rules) {
-      final game = carryForwardBidGame(
-        const [],
-        playerId: _gp,
-        prices: const {'timber': 30},
-        gameId: 'g_bid_spend_parity',
-      );
-      expect(
-        stagedBidTotalSpendByPlayer(
-          orders: const Orders(),
-          playerId: _gp,
-          game: game,
-          resourceRules: rules,
-        ),
-        0,
-      );
-      expect(
-        carryForwardBidNotionalByPlayer(
-          game: game,
-          playerId: _gp,
-          resourceRules: rules,
-        ),
-        0,
-      );
-    },
+    bids: const [],
+    prices: const {'timber': 30},
+    expect: const BidSpendParityExpectation(stagedSpend: 0),
   ),
-  (
+  bidSpendParityScenarioExpect(
     label: 'bidTreasurySpendForOrder matches per-order summation core',
-    run: (rules) {
-      final bid = testBid('timber', 4);
-      final game = carryForwardBidGame(
-        [bid],
-        playerId: _gp,
-        prices: const {'timber': 30},
-        gameId: 'g_bid_spend_parity',
-      );
-      expect(
-        bidTreasurySpendForOrder(
-          order: bid,
-          worldMarket: game.worldMarketState,
-          resourceRules: rules,
-        ),
-        120,
-      );
-      expect(
-        bidTreasurySpendForOrder(
+    bids: [testBid('timber', 4)],
+    prices: const {'timber': 30},
+    expect: BidSpendParityExpectation(
+      carryForwardEqualsStaged: false,
+      bidTreasurySpendPins: [
+        (order: testBid('timber', 4), expected: 120, reason: null),
+        (
           order: testOffer('timber', 4),
-          worldMarket: game.worldMarketState,
-          resourceRules: rules,
+          expected: 0,
+          reason: 'offers do not spend treasury',
         ),
-        0,
-        reason: 'offers do not spend treasury',
-      );
-      expect(
-        bidTreasurySpendForOrder(
+        (
           order: testBid('unknown', 4),
-          worldMarket: game.worldMarketState,
-          resourceRules: rules,
+          expected: 0,
+          reason: 'unpriced commodities contribute 0',
         ),
-        0,
-        reason: 'unpriced commodities contribute 0',
-      );
-    },
+      ],
+    ),
   ),
 ];
 

@@ -1,6 +1,7 @@
 // Compact First Right credits result assertions (Refs #3939 phase 3 slice 12).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Data-driven expectations for [FirstRightCreditsResult] scenario rows.
@@ -29,6 +30,8 @@ class FrrCreditsExpectation {
     this.singleCreditedDealProfitTreasuryCloseTo,
     this.singleCreditedDealProfitIsZero = false,
     this.treasuryCreditKeysExact,
+    this.treasuryCreditFirstKey,
+    this.deterministicRerun = false,
     this.custom,
   });
 
@@ -56,6 +59,8 @@ class FrrCreditsExpectation {
         singleCreditedDealProfitTreasuryCloseTo = null,
         singleCreditedDealProfitIsZero = false,
         treasuryCreditKeysExact = null,
+        treasuryCreditFirstKey = null,
+        deterministicRerun = false,
         custom = null;
 
   final bool empty;
@@ -81,7 +86,45 @@ class FrrCreditsExpectation {
   final double? singleCreditedDealProfitTreasuryCloseTo;
   final bool singleCreditedDealProfitIsZero;
   final List<String>? treasuryCreditKeysExact;
+  final String? treasuryCreditFirstKey;
+  final bool deterministicRerun;
   final void Function(FirstRightCreditsResult result)? custom;
+
+  /// Pins determinism: re-run [computeFirstRightCredits] with identical inputs.
+  static FrrCreditsExpectation deterministicRerunWithFirstKey(
+    String firstTreasuryCreditKey, {
+    required List<FilledDeal> filledDeals,
+    required PurchasedTileIndex purchasedTileIndex,
+    required int Function(String gpId, String sourceFactionId) relationScoreFor,
+  }) =>
+      FrrCreditsExpectation(
+        deterministicRerun: true,
+        treasuryCreditFirstKey: firstTreasuryCreditKey,
+        custom: (result) {
+          final second = computeFirstRightCredits(
+            filledDeals: filledDeals,
+            purchasedTileIndex: purchasedTileIndex,
+            relationScoreFor: relationScoreFor,
+          );
+          expect(
+            result.treasuryCreditByGpId.keys.toList(),
+            equals(second.treasuryCreditByGpId.keys.toList()),
+          );
+          for (final key in result.treasuryCreditByGpId.keys) {
+            expect(
+              result.treasuryCreditByGpId[key],
+              equals(second.treasuryCreditByGpId[key]),
+            );
+          }
+          expect(result.creditedDeals.length, second.creditedDeals.length);
+          expect(
+            result.treasuryCreditByGpId.keys.first,
+            firstTreasuryCreditKey,
+            reason:
+                'insertion order tracks first deal mentioning each owning GP',
+          );
+        },
+      );
 }
 
 void assertFrrCreditsExpectation(

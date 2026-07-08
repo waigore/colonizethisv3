@@ -97,7 +97,9 @@ void main() {
 
   group('shared bid-spend helper parity (Refs #3427)', () {
     for (final scenario in bidSpendParityScenarios()) {
-      test(scenario.label, () => scenario.run(rules));
+      test(scenario.label, () {
+        runBidSpendParityScenario(scenario, rules);
+      });
     }
   });
 

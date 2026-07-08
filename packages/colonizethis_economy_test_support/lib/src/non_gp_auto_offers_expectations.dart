@@ -1,8 +1,22 @@
 // Compact non-GP auto-offer result assertions (Refs #3939 phase 3 slice 12).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+/// Pins purchased-tile index attribution resolved from an auto-offer origin tile.
+class PurchasedTileFrrAttributionExpectation {
+  const PurchasedTileFrrAttributionExpectation({
+    required this.factionId,
+    required this.owningGpId,
+    required this.sourceFactionId,
+  });
+
+  final String factionId;
+  final String owningGpId;
+  final String sourceFactionId;
+}
 
 /// Per-faction offer list pins for [NonGpAutoOffersExpectation].
 class FactionAutoOffersExpectation {
@@ -32,6 +46,7 @@ class NonGpAutoOffersExpectation {
     this.factionKeys,
     this.factionKeysUnordered,
     this.offersByFaction,
+    this.purchasedTileFrrAttribution,
     this.custom,
   });
 
@@ -39,6 +54,7 @@ class NonGpAutoOffersExpectation {
   final Set<String>? factionKeys;
   final Iterable<String>? factionKeysUnordered;
   final Map<String, FactionAutoOffersExpectation>? offersByFaction;
+  final PurchasedTileFrrAttributionExpectation? purchasedTileFrrAttribution;
   final void Function(Map<String, List<TradeOrder>> result)? custom;
 }
 
@@ -52,8 +68,9 @@ void _assertStandardPriorityOneOffer(TradeOrder order) {
 
 void assertNonGpAutoOffersExpectation(
   Map<String, List<TradeOrder>> result,
-  NonGpAutoOffersExpectation expectation,
-) {
+  NonGpAutoOffersExpectation expectation, {
+  Game? game,
+}) {
   if (expectation.empty) {
     expect(result, isEmpty);
   }
@@ -99,6 +116,17 @@ void assertNonGpAutoOffersExpectation(
         }
       }
     }
+  }
+  if (expectation.purchasedTileFrrAttribution != null) {
+    final pin = expectation.purchasedTileFrrAttribution!;
+    expect(game, isNotNull, reason: 'game required for FRR index attribution');
+    final index = PurchasedTileIndex.fromGame(game!);
+    final order = result[pin.factionId]!.single;
+    expect(order.originTileKey, isNotNull);
+    final attribution = index.attributionForTileKey(order.originTileKey!);
+    expect(attribution, isNotNull);
+    expect(attribution!.owningGpId, equals(pin.owningGpId));
+    expect(attribution.sourceFactionId, equals(pin.sourceFactionId));
   }
   expectation.custom?.call(result);
 }
