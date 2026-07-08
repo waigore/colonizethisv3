@@ -1,5 +1,6 @@
 // Compact GP resource-extraction result assertions (Refs #3939 phase 3 slice 16).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -14,6 +15,8 @@ class ResourceExtractorExpectation {
     this.landEmpty = false,
     this.overseasEmpty = false,
     this.requirePlayer = true,
+    this.techCapPinUnlocked,
+    this.techCapPinExpected,
     this.custom,
   });
 
@@ -24,6 +27,8 @@ class ResourceExtractorExpectation {
   final bool landEmpty;
   final bool overseasEmpty;
   final bool requirePlayer;
+  final Map<String, bool>? techCapPinUnlocked;
+  final int? techCapPinExpected;
   final void Function(Map<String, ExtractionTotals> result)? custom;
 }
 
@@ -52,6 +57,13 @@ void assertResourceExtractorExpectation(
   }
   for (final entry in expectation.overseas.entries) {
     expect(totals.overseas[entry.key], entry.value);
+  }
+  if (expectation.techCapPinUnlocked != null &&
+      expectation.techCapPinExpected != null) {
+    expect(
+      extractionCapForUnlocked(expectation.techCapPinUnlocked!),
+      expectation.techCapPinExpected,
+    );
   }
   expectation.custom?.call(result);
 }

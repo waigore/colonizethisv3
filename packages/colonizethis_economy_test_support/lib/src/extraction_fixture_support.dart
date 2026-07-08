@@ -36,6 +36,29 @@ Map<String, TileMapResult> tileMapByRegionForResource(
   return {regionId: singleResourceTileMap(resource, province: province)};
 }
 
+/// Connected tile with no matching province row (world-model defensive path).
+Game provinceMissingExtractorGame({required TileMapState tileState}) {
+  final player = Player(
+    id: 'pl1',
+    displayName: 'Spain',
+    isHuman: true,
+    capitalProvinceId: 'oldWorld|p1',
+    capitalTile: const CapitalTile(
+      regionId: 'oldWorld',
+      provinceId: 'oldWorld|p1',
+      x: 0,
+      y: 0,
+    ),
+  );
+  return TestFixtures.minimalGame(
+    id: 'g1',
+    capitalTileGrainBonusPerTurn: 0,
+    oldWorld: const RegionData(provinces: []),
+    tileState: tileState,
+    players: [player],
+  );
+}
+
 /// Per-tile improvement and road level for [tileStateFromSpecs].
 class TileImprovementSpec {
   const TileImprovementSpec(

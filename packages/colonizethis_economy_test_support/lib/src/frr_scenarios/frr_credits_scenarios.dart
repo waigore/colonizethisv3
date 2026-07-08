@@ -5,7 +5,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
         FirstRightCreditsResult,
         PurchasedTileAttribution,
         PurchasedTileIndex,
-        computeFirstRightCredits;
+        computeFirstRightCredits,
+        kFirstRightMaxProfitRate;
 import 'package:colonizethis_models/colonizethis_models.dart' show FilledDeal;
 import 'package:colonizethis_test/test.dart';
 
@@ -355,5 +356,218 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
         src == 'M1' ? const {'gpC': 0} : const {},
     expect: const FrrCreditsExpectation(sameAsEmpty: true),
     refs: '#3753',
+  ),
+];
+
+const String _kFrrIssueAcD5GpA = 'gpA';
+const String _kFrrIssueAcD5GpB = 'gpB';
+const String _kFrrIssueAcD5GpC = 'gpC';
+const String _kFrrIssueAcD5GpFtp = 'gpFtp';
+const String _kFrrIssueAcD5MinorM1 = 'M1';
+const String _kFrrIssueAcD5MinorM2 = 'M2';
+const String _kFrrIssueAcD5TileK1 = 'oldWorld|M1|0|0';
+const String _kFrrIssueAcD5TileK2 = 'oldWorld|M1|1|0';
+const String _kFrrIssueAcD5TileK3 = 'oldWorld|M2|0|0';
+const String _kFrrIssueAcD5ProvinceM1 = 'oldWorld|M1';
+const String _kFrrIssueAcD5ProvinceM2 = 'oldWorld|M2';
+
+PurchasedTileAttribution _d5Attr(
+  String tileKey,
+  String owningGpId,
+  String sourceFactionId, [
+  String provinceId = _kFrrIssueAcD5ProvinceM1,
+]) => attr(
+  tileKey: tileKey,
+  owningGpId: owningGpId,
+  sourceFactionId: sourceFactionId,
+  provinceId: provinceId,
+);
+
+FilledDeal _d5OtherBuyDeal({
+  String seller = _kFrrIssueAcD5MinorM1,
+  String buyer = _kFrrIssueAcD5GpB,
+  int quantity = 10,
+  double pricePerUnit = 20.0,
+  String sellerOriginTileKey = _kFrrIssueAcD5TileK1,
+}) => deal(
+  seller: seller,
+  buyer: buyer,
+  quantity: quantity,
+  pricePerUnit: pricePerUnit,
+  sellerOriginTileKey: sellerOriginTileKey,
+);
+
+/// AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full share).
+List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
+  FrrCreditsScenario.expect(
+    label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
+    filledDeals: [_d5OtherBuyDeal()],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+    ]),
+    relationScoreFor: (gp, src) =>
+        gp == _kFrrIssueAcD5GpA && src == _kFrrIssueAcD5MinorM1 ? 75 : 0,
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealOwningGpId: _kFrrIssueAcD5GpA,
+      singleCreditedDealSourceFactionId: _kFrrIssueAcD5MinorM1,
+      singleCreditedDealRelationScore: 75,
+      singleCreditedDealProfitRateCloseTo: 0.75,
+      singleCreditedDealProfitTreasuryCloseTo: 150.0,
+      treasuryCreditCloseTo: {_kFrrIssueAcD5GpA: 150.0},
+      totalProfitTreasury: 150.0,
+    ),
+    refs: '#2992 D5 AC2',
+  ),
+];
+
+/// AC #3 — relation 100 credits exactly 100% of sale value.
+List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
+  FrrCreditsScenario.expect(
+    label:
+        'credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
+        'treasury == quantity * pricePerUnit (full share)',
+    filledDeals: [_d5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+    ]),
+    relationScoreFor: (_, __) => 100,
+    expect: FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealProfitRateCloseTo: kFirstRightMaxProfitRate,
+      treasuryCreditCloseTo: {_kFrrIssueAcD5GpA: 40.0},
+      totalProfitTreasury: 40.0,
+    ),
+    refs: '#2992 D5 AC3',
+  ),
+];
+
+/// AC #4 — relation 0 credits 0 treasury (no overseas profit).
+List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
+  FrrCreditsScenario.expect(
+    label:
+        'credits helper records audit row but transfers 0 treasury (Deal '
+        'Book can still surface the no-credit case)',
+    filledDeals: [_d5OtherBuyDeal()],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+    ]),
+    relationScoreFor: (_, __) => 0,
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 1,
+      singleCreditedDealProfitIsZero: true,
+      treasuryCreditByGpId: {_kFrrIssueAcD5GpA: 0.0},
+      totalProfitTreasury: 0.0,
+    ),
+    refs: '#2992 D5 AC4',
+  ),
+  FrrCreditsScenario.expect(
+    label:
+        'negative — buyer == owning GP (D2 FRR-match path) excluded from '
+        'D4 aggregation: no double-credit when gpA wins the offer itself',
+    filledDeals: [
+      FilledDeal(
+        sellerFactionId: _kFrrIssueAcD5MinorM1,
+        buyerFactionId: _kFrrIssueAcD5GpA,
+        commodityId: 'timber',
+        quantity: 10,
+        pricePerUnit: 20.0,
+        isFirstRightOfRefusalMatch: true,
+        sellerOriginTileKey: _kFrrIssueAcD5TileK1,
+      ),
+    ],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+    ]),
+    relationScoreFor: (_, __) => 100,
+    expect: const FrrCreditsExpectation(
+      creditedDealsEmpty: true,
+      treasuryCreditEmpty: true,
+      totalProfitTreasury: 0.0,
+    ),
+    refs: '#2992 D5 AC4',
+  ),
+];
+
+/// AC #5 — multi-GP attribution, no cross-credit.
+List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
+  FrrCreditsScenario.expect(
+    label:
+        'k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 60.0, gpB '
+        '20.0; neither GP is credited for the other GP\'s purchased tile',
+    filledDeals: [
+      _d5OtherBuyDeal(
+        buyer: _kFrrIssueAcD5GpC,
+        quantity: 6,
+        pricePerUnit: 10.0,
+        sellerOriginTileKey: _kFrrIssueAcD5TileK1,
+      ),
+      _d5OtherBuyDeal(
+        buyer: _kFrrIssueAcD5GpC,
+        quantity: 4,
+        pricePerUnit: 10.0,
+        sellerOriginTileKey: _kFrrIssueAcD5TileK2,
+      ),
+    ],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+      _d5Attr(_kFrrIssueAcD5TileK2, _kFrrIssueAcD5GpB, _kFrrIssueAcD5MinorM1),
+    ]),
+    relationScoreFor: (gp, src) {
+      if (gp == _kFrrIssueAcD5GpA && src == _kFrrIssueAcD5MinorM1) return 100;
+      if (gp == _kFrrIssueAcD5GpB && src == _kFrrIssueAcD5MinorM1) return 50;
+      return 0;
+    },
+    expect: const FrrCreditsExpectation(
+      treasuryCreditKeysContainAll: [_kFrrIssueAcD5GpA, _kFrrIssueAcD5GpB],
+      treasuryCreditCloseTo: {
+        _kFrrIssueAcD5GpA: 60.0,
+        _kFrrIssueAcD5GpB: 20.0,
+      },
+      totalProfitTreasury: 80.0,
+    ),
+    refs: '#2992 D5 AC5',
+  ),
+  FrrCreditsScenario.expect(
+    label:
+        'same owning GP across two minors aggregates per source relation '
+        'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 45.0)',
+    filledDeals: [
+      _d5OtherBuyDeal(
+        buyer: _kFrrIssueAcD5GpC,
+        quantity: 5,
+        pricePerUnit: 8.0,
+        sellerOriginTileKey: _kFrrIssueAcD5TileK1,
+      ),
+      FilledDeal(
+        sellerFactionId: _kFrrIssueAcD5MinorM2,
+        buyerFactionId: _kFrrIssueAcD5GpC,
+        commodityId: 'timber',
+        quantity: 2,
+        pricePerUnit: 10.0,
+        sellerOriginTileKey: _kFrrIssueAcD5TileK3,
+      ),
+    ],
+    purchasedTileIndex: idx([
+      _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
+      _d5Attr(
+        _kFrrIssueAcD5TileK3,
+        _kFrrIssueAcD5GpA,
+        _kFrrIssueAcD5MinorM2,
+        _kFrrIssueAcD5ProvinceM2,
+      ),
+    ]),
+    relationScoreFor: (gp, src) {
+      if (gp == _kFrrIssueAcD5GpA && src == _kFrrIssueAcD5MinorM1) return 100;
+      if (gp == _kFrrIssueAcD5GpA && src == _kFrrIssueAcD5MinorM2) return 25;
+      return 0;
+    },
+    expect: const FrrCreditsExpectation(
+      creditedDealsLength: 2,
+      treasuryCreditKeysExact: [_kFrrIssueAcD5GpA],
+      treasuryCreditCloseTo: {_kFrrIssueAcD5GpA: 45.0},
+      totalProfitTreasury: 45.0,
+    ),
+    refs: '#2992 D5 AC5',
   ),
 ];

@@ -5,6 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:logger/logger.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
@@ -34,6 +35,7 @@ class ResourceExtractorScenario {
     this.gameOverride,
     this.connectivityByPlayer,
     this.runOverride,
+    this.expectLogMessageContains,
     this.refs,
   });
 
@@ -56,6 +58,7 @@ class ResourceExtractorScenario {
     bool useOverseasGame = false,
     Game? gameOverride,
     Map<String, ConnectivityResult>? connectivityByPlayer,
+    String? expectLogMessageContains,
     String? refs,
   }) : this(
           label: label,
@@ -75,6 +78,7 @@ class ResourceExtractorScenario {
           useOverseasGame: useOverseasGame,
           gameOverride: gameOverride,
           connectivityByPlayer: connectivityByPlayer,
+          expectLogMessageContains: expectLogMessageContains,
           refs: refs,
           verify: (result) =>
               assertResourceExtractorExpectation(result, expect),
@@ -98,6 +102,7 @@ class ResourceExtractorScenario {
   final Game? gameOverride;
   final Map<String, ConnectivityResult>? connectivityByPlayer;
   final void Function()? runOverride;
+  final String? expectLogMessageContains;
   final void Function(Map<String, ExtractionTotals> result) verify;
   final String? refs;
 }
@@ -149,39 +154,63 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
     scenario.runOverride!();
     return;
   }
-  final tileState = tileStateFromSpecs(scenario.tileSpecs);
-  final game = scenario.gameOverride ??
-      (scenario.useOverseasGame
-          ? overseasResourceExtractorGame(tileState: tileState)
-          : resourceExtractorGame(
-              tileState: tileState,
-              townDevelopmentLevel: scenario.townDevelopmentLevel,
-              techUnlocked: scenario.techUnlocked,
-              playerProspectedTiles: scenario.playerProspectedTiles,
-            ));
-  final Map<String, TileMapResult> tileMapByRegion;
-  if (scenario.tileMapByRegion != null) {
-    tileMapByRegion = scenario.tileMapByRegion!;
-  } else {
-    final TileMapResult resolvedTileMap = scenario.tileMap ??
-        tileMapFromGrids(
-          grid: scenario.grid!,
-          resourceGrid: scenario.resourceGrid!,
-        );
-    tileMapByRegion = {scenario.regionId: resolvedTileMap};
+  final captured = scenario.expectLogMessageContains != null
+      ? <LogEvent>[]
+      : null;
+  void Function(LogEvent)? listener;
+  if (captured != null) {
+    listener = captured.add;
+    Logger.addLogListener(listener);
+    Logger.level = Level.error;
   }
-  final result = computeExtraction(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-    connectivityResult: scenario.connectivityByPlayer ??
-        connectivityFor(
-          scenario.connected,
-          pathTransportCap: scenario.pathTransportCap,
+  try {
+    final tileState = tileStateFromSpecs(scenario.tileSpecs);
+    final game = scenario.gameOverride ??
+        (scenario.useOverseasGame
+            ? overseasResourceExtractorGame(tileState: tileState)
+            : resourceExtractorGame(
+                tileState: tileState,
+                townDevelopmentLevel: scenario.townDevelopmentLevel,
+                techUnlocked: scenario.techUnlocked,
+                playerProspectedTiles: scenario.playerProspectedTiles,
+              ));
+    final Map<String, TileMapResult> tileMapByRegion;
+    if (scenario.tileMapByRegion != null) {
+      tileMapByRegion = scenario.tileMapByRegion!;
+    } else {
+      final TileMapResult resolvedTileMap = scenario.tileMap ??
+          tileMapFromGrids(
+            grid: scenario.grid!,
+            resourceGrid: scenario.resourceGrid!,
+          );
+      tileMapByRegion = {scenario.regionId: resolvedTileMap};
+    }
+    final result = computeExtraction(
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      connectivityResult: scenario.connectivityByPlayer ??
+          connectivityFor(
+            scenario.connected,
+            pathTransportCap: scenario.pathTransportCap,
+          ),
+      techCapForPlayer:
+          scenario.techCapForPlayer ?? ((_) => scenario.techCap),
+    );
+    scenario.verify(result);
+    if (captured != null) {
+      expect(
+        captured.any(
+          (e) => e.message.contains(scenario.expectLogMessageContains!),
         ),
-    techCapForPlayer:
-        scenario.techCapForPlayer ?? ((_) => scenario.techCap),
-  );
-  scenario.verify(result);
+        isTrue,
+      );
+    }
+  } finally {
+    if (listener != null) {
+      Logger.removeLogListener(listener);
+      Logger.level = Level.off;
+    }
+  }
 }
 
 /// Scenarios from `resource_extractor_part1_segment1_test.dart`.
@@ -240,12 +269,11 @@ List<ResourceExtractorScenario> resourceExtractorConnectivityCapScenarios({
     }),
     expect: ResourceExtractorExpectation(
       land: const {'grain': 3},
-      custom: (result) {
-        expect(extractionCapForUnlocked(const {
-          kTechIdSawMill: true,
-          kTechIdSeedDrill: true,
-        }), 3);
+      techCapPinUnlocked: const {
+        kTechIdSawMill: true,
+        kTechIdSeedDrill: true,
       },
+      techCapPinExpected: 3,
     ),
     refs: '#3661',
   ),
@@ -567,6 +595,32 @@ ResourceExtractorScenario blockadedOverseasPortScenario() {
       );
       expect(resultOpen['pl1']!.overseas['sugarCane'] ?? 0, greaterThan(0));
     },
+    refs: '#3939',
+  );
+}
+
+/// Missing-province defensive path from `resource_extractor_part2_part2_test.dart`.
+ResourceExtractorScenario provinceMissingFromRegionScenario({
+  required TileMapResult grainTileMap,
+}) {
+  final tileState = tileStateFromSpecs(const [
+    TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
+  ]);
+  return ResourceExtractorScenario.expect(
+    label:
+        'skips connected tile and logs when province missing from region (world-model)',
+    tileMap: grainTileMap,
+    tileSpecs: const [
+      TileImprovementSpec('oldWorld|p1|0|0', improvement: 2, roadLevel: 2),
+    ],
+    connected: {'oldWorld|p1|0|0'},
+    gameOverride: provinceMissingExtractorGame(tileState: tileState),
+    expectLogMessageContains: 'extraction province missing',
+    expect: const ResourceExtractorExpectation(
+      landAbsent: ['grain'],
+      landEmpty: true,
+      overseasEmpty: true,
+    ),
     refs: '#3939',
   );
 }

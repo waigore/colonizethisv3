@@ -697,3 +697,19 @@ Documented exceptions (resource extractor bespoke rows retained):
 
 test_support LOC: **15,125** (net −19 vs slice 23 — treasury file merge + validator-context merge + `singleFilledDeal` removal). Economy `test/` **1,577** (down 30 vs slice 23). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 25+.
 
+## Phase 3 — Slice 25 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-frr-merge | merged `deal_matcher_frr_scenarios.dart` + D5 AC1 matcher rows into `deal_matcher_core_scenarios.dart` | `deal_matcher_scenarios/deal_matcher_core_scenarios.dart` | #2992, #3939 |
+| validator-treasury-merge | merged `trade_order_validator_treasury_scenarios.dart` into `trade_order_validator_scenarios.dart` | `validator_scenarios/trade_order_validator_scenarios.dart` | #3939 |
+| frr-d5-credits-merge | merged `frr_issue_ac_d5_scenarios.dart` credits AC2–AC5 rows into `frr_credits_scenarios.dart` | `frr_scenarios/frr_credits_scenarios.dart` | #2992 D5, #3939 |
+| province-missing-scenario | `skips connected tile and logs when province missing from region (world-model)` → table row with `expectLogMessageContains` | `resource_extractor_scenarios.dart`, `extraction_fixture_support.dart` | #3939 |
+| tech-cap-pin | `techCapPinUnlocked` / `techCapPinExpected` on `ResourceExtractorExpectation` | `resource_extractor_expectations.dart` | #3939 |
+
+Deleted modules (merged): `deal_matcher_frr_scenarios.dart`, `trade_order_validator_treasury_scenarios.dart`, `frr_issue_ac_d5_scenarios.dart`.
+
+Province-missing logger row migrated from slice 24 documented exception to scenario table (`expectLogMessageContains`).
+
+test_support LOC: **15,201** (net +76 vs slice 24 — three cluster file merges offset by province-missing scenario helpers; net −3 files). Economy `test/` **1,529** (down 48 vs slice 24). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 26+.
+
