@@ -9,119 +9,22 @@ import 'deal_matcher_test_support.dart';
 
 /// Priority and FTP precedence from `world_market_deal_matcher_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
-  DealMatcherScenario.expect(
+  matcherFtpTierPrecedenceRow(
     label: 'priority integer absolutely beats FTP across tiers',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerLow': [matcherOffer('timber', 10, priority: 1)],
-        'sellerFtp': [matcherOffer('timber', 10, priority: 2)],
-      },
-      bidsByFactionId: {
-        'buyerLow': [matcherBid('timber', 10, priority: 1)],
-        'buyerFtp': [matcherBid('timber', 10, priority: 2)],
-      },
-      tradeCapacityByFactionId: {'buyerLow': 100, 'buyerFtp': 100},
-      ftpPairKeys: {DealMatcher.pairKey('sellerFtp', 'buyerFtp')},
-    ),
-    expect: const DealMatchExpectation(
-      filledDealExpectations: [
-        FilledDealExpectation(buyerFactionId: 'buyerLow', isFtpMatch: false),
-        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
-      ],
-    ),
   ),
-  DealMatcherScenario.expect(
+  matcherFtpTiebreakerRow(
     label: 'within a tier, FTP pair fills first as tiebreaker',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerA': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'buyerFtp': [matcherBid('timber', 5, priority: 1)],
-        'buyerOther': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'buyerFtp': 100, 'buyerOther': 100},
-      ftpPairKeys: {DealMatcher.pairKey('sellerA', 'buyerFtp')},
-    ),
-    expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          buyerFactionId: 'buyerFtp',
-          isFtpMatch: true,
-        ),
-      ],
-      unfilledBidsByFactionId: {
-        'buyerOther': [matcherBid('timber', 5, priority: 1)],
-      },
-    ),
   ),
-  DealMatcherScenario.expect(
+  matcherFtpThreeGpRow(
     label:
         'three GPs: FTP A↔B fills before C at same tier; C carry-forward when exhausted (#2989 FTP AC)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'gpA': [matcherOffer('timber', 10, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-        'gpC': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpB': 100, 'gpC': 100},
-      ftpPairKeys: {DealMatcher.pairKey('gpA', 'gpB')},
-    ),
-    expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          sellerFactionId: 'gpA',
-          buyerFactionId: 'gpB',
-          isFtpMatch: true,
-        ),
-      ],
-      unfilledBidsByFactionId: {
-        'gpC': [matcherBid('timber', 10, priority: 1)],
-      },
-    ),
-    refs: '#2989',
   ),
-  DealMatcherScenario.expect(
+  matcherFtpTier2PrecedenceRow(
     label: 'FTP pair at tier 2 does not fill before non-FTP at tier 1',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerFtp': [matcherOffer('timber', 10, priority: 2)],
-        'sellerOther': [matcherOffer('timber', 10, priority: 1)],
-      },
-      bidsByFactionId: {
-        'buyerFtp': [matcherBid('timber', 10, priority: 2)],
-        'buyerOther': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'buyerFtp': 100, 'buyerOther': 100},
-      ftpPairKeys: {DealMatcher.pairKey('sellerFtp', 'buyerFtp')},
-    ),
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'buyerOther',
-        isFtpMatch: false,
-      ),
-    ),
   ),
-  DealMatcherScenario.expect(
+  matcherFtpOrderIndependentRow(
     label:
         'FTP membership is order-independent (set keyed via canonical pairKey)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'zeta': [matcherOffer('timber', 5)],
-      },
-      bidsByFactionId: {
-        'alpha': [matcherBid('timber', 5)],
-      },
-      tradeCapacityByFactionId: {'alpha': 100},
-      ftpPairKeys: {DealMatcher.pairKey('alpha', 'zeta')},
-    ),
-    expect: const DealMatchExpectation(
-      filledDealExpectations: [
-        FilledDealExpectation(isFtpMatch: true),
-      ],
-    ),
   ),
 ];
 
@@ -241,21 +144,11 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
 /// Sell-priority relation tiebreaker from
 /// `world_market_deal_matcher_sell_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'higher-relation consulate-holding buyer wins limited supply',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorM': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpHigh': [matcherBid('timber', 5, priority: 1)],
-        'gpLow': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpHigh': 100, 'gpLow': 100},
-      sellPriorityRelationByMinorTribeSeller: const {
-        'minorM': {'gpHigh': 80, 'gpLow': 40},
-      },
-    ),
+    sellPriorityRelationByMinorTribeSeller: const {
+      'minorM': {'gpHigh': 80, 'gpLow': 40},
+    },
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: const FilledDealExpectation(
@@ -266,107 +159,61 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'gpLow': [matcherBid('timber', 5, priority: 1)],
       },
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'relation order overrides default ascending-faction-id order',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorM': [matcherOffer('timber', 4, priority: 1)],
-      },
-      bidsByFactionId: {
-        'aBuyer': [matcherBid('timber', 4, priority: 1)],
-        'zBuyer': [matcherBid('timber', 4, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'aBuyer': 100, 'zBuyer': 100},
-      sellPriorityRelationByMinorTribeSeller: const {
-        'minorM': {'aBuyer': 30, 'zBuyer': 90},
-      },
-    ),
+    buyerA: 'aBuyer',
+    buyerB: 'zBuyer',
+    qty: 4,
+    sellPriorityRelationByMinorTribeSeller: const {
+      'minorM': {'aBuyer': 30, 'zBuyer': 90},
+    },
     expect: const DealMatchExpectation(
       firstFilledDeal: FilledDealExpectation(buyerFactionId: 'zBuyer'),
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'consulate-less buyer falls back behind consulate-holding buyer',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorM': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpHigh': [matcherBid('timber', 5, priority: 1)],
-        'gpLow': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpHigh': 100, 'gpLow': 100},
-      sellPriorityRelationByMinorTribeSeller: const {
-        'minorM': {'gpLow': 40},
-      },
-    ),
+    sellPriorityRelationByMinorTribeSeller: const {
+      'minorM': {'gpLow': 40},
+    },
     expect: DealMatchExpectation(
       firstFilledDeal: const FilledDealExpectation(buyerFactionId: 'gpLow'),
       unfilledBidsByFactionId: {
         'gpHigh': [matcherBid('timber', 5, priority: 1)],
       },
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'relation tie breaks deterministically by ascending faction id',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorM': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpB': [matcherBid('timber', 5, priority: 1)],
-        'gpA': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 100, 'gpB': 100},
-      sellPriorityRelationByMinorTribeSeller: const {
-        'minorM': {'gpA': 55, 'gpB': 55},
-      },
-    ),
+    buyerA: 'gpB',
+    buyerB: 'gpA',
+    sellPriorityRelationByMinorTribeSeller: const {
+      'minorM': {'gpA': 55, 'gpB': 55},
+    },
     expect: const DealMatchExpectation(
       firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'seller absent from map keeps legacy ordering (no reorder)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorN': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 5, priority: 1)],
-        'gpZ': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 100, 'gpZ': 100},
-      sellPriorityRelationByMinorTribeSeller: const {
-        'minorM': {'gpA': 1, 'gpZ': 99},
-      },
-    ),
+    seller: 'minorN',
+    buyerA: 'gpA',
+    buyerB: 'gpZ',
+    sellPriorityRelationByMinorTribeSeller: const {
+      'minorM': {'gpA': 1, 'gpZ': 99},
+    },
     expect: const DealMatchExpectation(
       firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  sellPriorityMinorSellerRow(
     label: 'empty relation map preserves legacy ordering for minor seller',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'minorM': [matcherOffer('timber', 5, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 5, priority: 1)],
-        'gpZ': [matcherBid('timber', 5, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 100, 'gpZ': 100},
-    ),
+    buyerA: 'gpA',
+    buyerB: 'gpZ',
     expect: const DealMatchExpectation(
       firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
     ),
-    refs: '#3753',
   ),
   DealMatcherScenario.expect(
     label: 'priority tier remains absolute over relation tiebreaker',

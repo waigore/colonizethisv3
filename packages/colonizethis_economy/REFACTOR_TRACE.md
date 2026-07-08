@@ -891,3 +891,36 @@ test_support LOC: **16,817** (net +49 vs slice 38 — GP-credit cluster relocati
 
 test_support LOC: deferred recount post-slice — further treasury/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 41+.
 
+## Phase 3 — Slice 41 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| sell-priority-row | `sellPriorityMinorSellerRow` + `sellPriorityMinorSellerInputs` compact six sell-priority relation rows | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #3753, #3939 |
+| ftp-tier-row | `matcherFtpTierInputs` dedupes cross-tier FTP precedence row | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #2989, #3939 |
+| frr-fallback-row | `frrNoFrrFallbackRow` + `frrTwoBuyerRivalInputs` compact three FRR-disabled fallback rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 42+.
+
+## Phase 3 — Slice 42 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| eff-price-row | `effectiveMarketPriceRow` / `effectiveMarketPriceRichesRow` compact seven effective-market-price rows | `treasury_test_support.dart`, `treasury_pure_helper_scenarios.dart` | #3093, #3939 |
+| frr-partial-cargo-row | `frrPartialFillRow` / `frrCargoCapRow` / `frrM1OfferInputs` / `frrMatcherTestIndexDual` — two FRR routing rows + dual-tile index | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| boycott-unilateral-row | `boycottTradeRow` / `matcherUnilateralRow` — three boycott + two unilateral basic rows | `deal_matcher_test_support.dart`, `deal_matcher_basic_scenarios.dart` | #3753, #3939 |
+| treasury-exhaust-row | `treasuryNegativeBudgetRow` / `treasuryDualCommodityExhaustRow` — two treasury-clamp rows | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 43+.
+
+## Phase 3 — Slice 43 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-d5-rows | `frrD5RivalPriorityRow` / `frrD5FtpRivalRow` / `frrD5NoOwnerBidRow` — three D5 AC1 matcher rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992 D5, #3939 |
+| frr-multi-activity-rows | `frrDualTileSameOwnerRow` / `frrMultiBidSubmissionOrderRow` / `frrActivityTotalsRow` | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| ftp-priority-rows | `matcherFtpTierPrecedenceRow` through `matcherFtpOrderIndependentRow` — five FTP/priority rows | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #2989, #3939 |
+| treasury-clamp-rows | `treasuryClampTruncateRow` / `treasuryFrrPrePassClampRow` | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+| validator-catalog-rows | `validatorUnknownPriceBidRow` / `validatorManufacturedBudgetRejectRow` / `validatorCatalogAdmitRow` | `trade_order_validator_test_support.dart`, `validator_treasury_scenarios.dart` | #3093, #3123, #3939 |
+
+test_support LOC: **17,223** (net +127 vs slice 42 — row builders centralized in `deal_matcher_test_support.dart` and `trade_order_validator_test_support.dart`; scenario modules `deal_matcher_frr_scenarios.dart` 312→80, `deal_matcher_priority_scenarios.dart` FTP block −96). Economy `test/` **1,392** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 44+.
+

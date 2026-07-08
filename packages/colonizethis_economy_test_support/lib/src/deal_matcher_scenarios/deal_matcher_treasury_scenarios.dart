@@ -14,90 +14,17 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
-  DealMatcherScenario.expect(
+  treasuryClampTruncateRow(
     label: 'truncates a single oversized bid to floor(treasury / price)',
-    inputs: matcherTreasuryClampInputs(),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gp1',
-        quantity: 3,
-        pricePerUnit: 30.0,
-      ),
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('timber', 7)],
-      },
-    ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  treasuryDualCommodityExhaustRow(
     label: 'per-buyer running tally exhausts treasury across bids in order',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerA': [matcherOffer('alpha', 5)],
-        'sellerB': [matcherOffer('beta', 5)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('alpha', 5), matcherBid('beta', 5)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 100},
-      pricesByCommodityId: const {'alpha': 20.0, 'beta': 20.0},
-    ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        commodityId: 'alpha',
-        quantity: 5,
-      ),
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('beta', 5)],
-      },
-    ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  treasuryNegativeBudgetRow(
     label: 'negative-treasury buyer treated as zero budget (full suppression)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerA': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': -50},
-    ),
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-    ),
-    refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  treasuryFrrPrePassClampRow(
     label: 'FRR pre-pass respects treasury clamp',
-    inputs: matcherTreasuryClampInputs(
-      seller: 'M1',
-      buyer: 'gpA',
-      treasuryBudget: 60,
-      pricesByCommodityId: const {'timber': 20.0},
-      originTileKey: 'oldWorld|M1|0|0',
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 3,
-        isFirstRightOfRefusalMatch: true,
-      ),
-      unfilledBidsByFactionId: {
-        'gpA': [matcherBid('timber', 10).copyWith(quantity: 7)],
-      },
-    ),
-    refs: '#3115',
   ),
 ];
 

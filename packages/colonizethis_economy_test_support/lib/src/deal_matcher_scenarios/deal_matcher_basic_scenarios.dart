@@ -14,13 +14,11 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
     inputs: matcherInputs(),
     expect: const DealMatchExpectation(resultEqualsEmpty: true),
   ),
-  DealMatcherScenario.expect(
+  matcherUnilateralRow(
     label: 'offers only (no bids) carries every offer forward, no deals',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 5)],
-      },
-    ),
+    offersByFactionId: {
+      'a': [matcherOffer('timber', 5)],
+    },
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledBidsEmpty: true,
@@ -32,14 +30,12 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
       },
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherUnilateralRow(
     label: 'bids only (no offers) carries every bid forward, no deals',
-    inputs: matcherInputs(
-      bidsByFactionId: {
-        'b': [matcherBid('timber', 5)],
-      },
-      tradeCapacityByFactionId: {'b': 100},
-    ),
+    bidsByFactionId: {
+      'b': [matcherBid('timber', 5)],
+    },
+    tradeCapacityByFactionId: {'b': 100},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledOffersEmpty: true,
@@ -193,18 +189,11 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
 
 /// Boycott exclusion scenarios from `world_market_deal_matcher_boycott_test.dart`.
 List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
-  DealMatcherScenario.expect(
+  boycottTradeRow(
     label: 'blocks trade where target GP buys goods a colony Tribe sells',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'tribeT': [matcherOffer('timber', 10, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpB': 100},
-      boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    ),
+    seller: 'tribeT',
+    buyer: 'gpB',
+    boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledOffersByFactionId: {
@@ -214,22 +203,13 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
         'gpB': [matcherBid('timber', 10, priority: 1)],
       },
     ),
-    refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  boycottTradeRow(
     label: 'block is bidirectional (colony Tribe buying goods target GP sells)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'gpB': [matcherOffer('timber', 10, priority: 1)],
-      },
-      bidsByFactionId: {
-        'tribeT': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'tribeT': 100},
-      boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    ),
+    seller: 'gpB',
+    buyer: 'tribeT',
+    boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
     expect: const DealMatchExpectation(filledDealsEmpty: true),
-    refs: '#3753',
   ),
   DealMatcherScenario.expect(
     label: 'only the boycotted GP is blocked; other buyers still trade',
@@ -257,17 +237,10 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     ),
     refs: '#3753',
   ),
-  DealMatcherScenario.expect(
+  boycottTradeRow(
     label: 'empty blocked set is a no-op (legacy matching preserved)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'tribeT': [matcherOffer('timber', 10, priority: 1)],
-      },
-      bidsByFactionId: {
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpB': 100},
-    ),
+    seller: 'tribeT',
+    buyer: 'gpB',
     expect: const DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: FilledDealExpectation(
@@ -275,6 +248,5 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
         quantity: 10,
       ),
     ),
-    refs: '#3753',
   ),
 ];

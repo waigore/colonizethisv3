@@ -227,3 +227,54 @@ Game carryForwardBidGame(
       expectedTreasury: expectedTreasury,
       refs: refs,
     );
+
+/// Compact row builder for [effectiveMarketPriceScenarios] (Refs #3939 slice 42).
+({
+  String label,
+  String commodityId,
+  Map<CommodityId, int> prices,
+  int? expected,
+  bool useCatalogDefault,
+  bool expectNull,
+  String? refs,
+}) effectiveMarketPriceRow({
+  required String label,
+  required String commodityId,
+  Map<CommodityId, int> prices = const {},
+  int? expected,
+  bool useCatalogDefault = false,
+  bool expectNull = false,
+  String? refs,
+}) =>
+    (
+      label: label,
+      commodityId: commodityId,
+      prices: prices,
+      expected: expected,
+      useCatalogDefault: useCatalogDefault,
+      expectNull: expectNull,
+      refs: refs,
+    );
+
+/// Riches commodity row with stored prices but null effective price (Refs #3939 slice 42).
+({
+  String label,
+  String commodityId,
+  Map<CommodityId, int> prices,
+  int? expected,
+  bool useCatalogDefault,
+  bool expectNull,
+  String? refs,
+}) effectiveMarketPriceRichesRow({
+  required String label,
+  required String commodityId,
+  required Map<CommodityId, int> prices,
+  String? refs,
+}) =>
+    effectiveMarketPriceRow(
+      label: label,
+      commodityId: commodityId,
+      prices: prices,
+      expectNull: true,
+      refs: refs,
+    );

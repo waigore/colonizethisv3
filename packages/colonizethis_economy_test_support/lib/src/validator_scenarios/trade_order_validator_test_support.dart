@@ -170,3 +170,55 @@ TradeOrderValidatorScenario validatorTreasuryTimberIronBids({
       expect: expect,
       refs: refs,
     );
+
+/// Unknown commodity bid contributes zero treasury spend (Refs #3939 slice 43).
+TradeOrderValidatorScenario validatorUnknownPriceBidRow({
+  required String label,
+  String? refs = '#3093',
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 0),
+      proposedOrders: [validatorBid('not_a_real_commodity', 10)],
+      expect: const ValidatorExpectation(singleAccepted: true),
+      refs: refs,
+    );
+
+/// Manufactured commodity bid rejected when budget insufficient (Refs #3939 slice 43).
+TradeOrderValidatorScenario validatorManufacturedBudgetRejectRow({
+  required String label,
+  String? refs = '#3093',
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 100),
+      proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
+      expect: const ValidatorExpectation(
+        singleRejectedWithReason:
+            TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+      ),
+      refs: refs,
+    );
+
+/// Catalog-default priced bid admitted when budget allows (Refs #3939 slice 43).
+TradeOrderValidatorScenario validatorCatalogAdmitRow({
+  required String label,
+  required CommodityId commodityId,
+  required int bidQty,
+  required int treasuryBudgetForBids,
+  required String catalogDefaultNotNullReason,
+  String? refs = '#3123',
+}) =>
+    TradeOrderValidatorScenario.expect(
+      label: label,
+      context: validatorCtxCatalogDefaults(
+        treasuryBudgetForBids: treasuryBudgetForBids,
+      ),
+      proposedOrders: [validatorBid(commodityId, bidQty)],
+      expect: ValidatorExpectation(
+        catalogDefaultCommodityId: commodityId,
+        catalogDefaultNotNullReason: catalogDefaultNotNullReason,
+        singleAccepted: true,
+      ),
+      refs: refs,
+    );
