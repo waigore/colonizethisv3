@@ -1029,3 +1029,143 @@ test_support LOC: **16,603** (net −19 vs slice 52 — owP1Imp + FTP timber row
 
 test_support LOC: **16,583** (net −20 vs slice 53 — frrNoEffectRow + matcherAgp1Row compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 55+.
 
+## Phase 3 — Slice 55 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| description-baseline-map | full `DESCRIPTION_BASELINE.txt` → source → consolidated target mapping (115 rows) | `REFACTOR_TRACE.md` § DESCRIPTION_BASELINE mapping | #3939 |
+
+test_support LOC: **16,583** (unchanged — documentation / AC mapping slice). Economy `test/` **1,392**. Completes the issue AC that every baseline description has a phase-3 `REFACTOR_TRACE.md` mapping row.
+
+## Phase 3 — Slice 56 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| attr-semantics-compact | `_kAttrM1GpA` / `_attr` collapse duplicated PurchasedTileAttribution literals | `purchased_tile_index_scenarios.dart` | #3939 |
+| frr-m1-expect-row | `frrM1OfferExpectRow` for partial-fill, cargo-cap, and FRR activity pins | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| frr-d5-matcher-row | `frrD5MatcherRow` for three D5 AC1 matcher rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992 D5, #3939 |
+
+test_support LOC: **16,560** (net −23 vs slice 54 — attribution DSL + FRR M1/D5 row builders). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 57+.
+
+## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
+
+Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.
+
+| test description | source file(s) | consolidated target file | refs |
+|---|---|---|---|
+| `FirstRightProfit equality works on identical (rate, treasury)` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `FirstRightProfit.zero has zero rate and zero treasury` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `GP town-connected timber yields lumber bonus in bonusByFactionId` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `accumulates on existing stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `accumulates onto an existing entry` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `adds extracted quantities to stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `applies per-player extraction to player stockpiles` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `bronze limiting input min(8,2)=2 → floor(2/4)=0` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `can remove merchant ships when interception triggers and RNG hits` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `canAffordWorkMaterialCost is false when any commodity is short` | test_support/projected_cost_engine_scenarios.dart | test/economy/projected_cost_engine_test.dart | #3939 |
+| `capital tile grain bonus is unconditional on connectivity` | test_support/resource_extractor_scenarios.dart | test/resource_extractor_test.dart | #3939 |
+| `cargo cap limits delivered overseas` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `collects the seaboard port tile keys as a set` | test_support/game_lookup_helpers_scenarios.dart | test/game_lookup_helpers_test.dart | #3939 |
+| `converts multiple riches and sums treasury delta` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `converts spices to treasury at base price` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `cotton fabric requires cotton_weaving tech` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `creates a new entry starting from zero` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `custom priorityOrder is respected` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `decrements running treasury tally after a priced fill` | test_support/treasury_scenarios/treasury_pure_helper_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `deductWorkMaterialCost reduces quantities` | test_support/projected_cost_engine_scenarios.dart | test/economy/projected_cost_engine_test.dart | #3939 |
+| `deduplicates seaboards that map to the same tile key` | test_support/game_lookup_helpers_scenarios.dart | test/game_lookup_helpers_test.dart | #3939 |
+| `delegates canAffordBuildOrder to build_cost canAffordBuild` | test_support/projected_cost_engine_scenarios.dart | test/economy/projected_cost_engine_test.dart | #3939 |
+| `does not boost gathering tech` | test/economy_tech_effects_test.dart | test/economy_tech_effects_test.dart | #3939 |
+| `does not filter zero or negative deltas (caller guards)` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `empty extracted returns same stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `empty extractedByPlayerId returns game unchanged` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `empty input yields empty index` | test/economy/world_market/world_market_deal_matcher_test.dart | test/economy/world_market/world_market_deal_matcher_test.dart | #3939 |
+| `empty precondition list passes (returns null)` | test_support/cost_check_scenarios.dart | test/cost_check_test.dart | #3939 |
+| `empty stockpile yields zero delta` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `empty world produces an empty index` | test_support/game_lookup_helpers_scenarios.dart | test/game_lookup_helpers_test.dart | #3939 |
+| `enemy blockade fleet sets the blockade flag` | test_support/trade_interception_scenarios.dart | test/trade_interception_scan_test.dart | #3939 |
+| `enemy with privateering reduces cargo more (strictly less kept)` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `enemy without privateering reduces cargo by the baseline` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `every Resource.name resolves to a catalog commodity id` | test/resource_commodity_id_mapping_test.dart | test/resource_commodity_id_mapping_test.dart | #3939 |
+| `every riches commodity is not tradeable` | test/economy/world_market/world_market_trade_order_suggester_test.dart | test/economy/world_market/world_market_trade_order_suggester_test.dart | #3939 |
+| `falls back to game.worldState when index misses` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `fed peasants contribute labour without luxury` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `fed-but-unluxuried trained worker contributes no labour` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `first attribution per tileKey wins on duplicates` | test/economy/world_market/world_market_deal_matcher_test.dart | test/economy/world_market/world_market_deal_matcher_test.dart | #3939 |
+| `fleetsById index matches default linear home-fleet lookup` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `floor(7/4)*1 = 1 lumber at level 2` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `handles equal ids (degenerate self-pair) deterministically` | test/economy/world_market/world_market_deal_matcher_test.dart | test/economy/world_market/world_market_deal_matcher_test.dart | #3939 |
+| `honours canonical priority: earlier failure wins over later` | test_support/cost_check_scenarios.dart | test/cost_check_test.dart | #3939 |
+| `ignores negative values in extracted` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `indexes provinces across both regions by prefixed id` | test_support/game_lookup_helpers_scenarios.dart | test/game_lookup_helpers_test.dart | #3939 |
+| `is deterministic for a fixed seed` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `is monotonically non-decreasing across 0..100` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `kEmbassyOverseasProfitKickbackMultiplier is 0.10 (#3753 R8.3)` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `kFirstRightMaxProfitRate is 1.0 (#3753 R8.2 — full share, no cap)` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `kFirstRightRelationScoreMax is 100` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `level 2 → 1, level 4 → 2, others → 0` | test/town_manufacturing_bonus_test.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `level 3 grants zero bonus` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `level 4 with 4 timber → 2 lumber (replacement multiplier)` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `lumber from timber is eligible` | test/town_manufacturing_bonus_test.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `mapped commodity ids are unique per resource (no collisions)` | test/resource_commodity_id_mapping_test.dart | test/resource_commodity_id_mapping_test.dart | #3939 |
+| `maps commodity id via resource.name consistently` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `match SPEC values` | test/economy/world_market/world_market_context_test.dart | test/economy/world_market/world_market_context_test.dart | #3939 |
+| `matches resolveRichesToTreasury treasuryDelta` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `matches the inline fold idiom it replaces` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `military upkeep consumes food before workers` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `minor town-connected timber accumulates delivered raw extraction` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `no enemy patrol/blockade fleets yields zero intercept score` | test_support/trade_interception_scenarios.dart | test/trade_interception_scan_test.dart | #3939 |
+| `no food leaves workers on strike (zero labour)` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `no ports produces an empty set` | test_support/game_lookup_helpers_scenarios.dart | test/game_lookup_helpers_test.dart | #3939 |
+| `non-riches commodity is tradeable` | test/economy/world_market/world_market_trade_order_suggester_test.dart | test/economy/world_market/world_market_trade_order_suggester_test.dart | #3939 |
+| `non-riches in stockpile are unchanged` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `player merchant ships counted; escorts feed escort strength` | test_support/trade_interception_scenarios.dart | test/trade_interception_scan_test.dart | #3939 |
+| `players with no extraction keep existing stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `preserves first-seen insertion order across keys` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `previewTownManufacturingBonusByProvince matches live bonusByProvinceId when connectivity resolves` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `previewTownManufacturingBonusByProvince returns empty without tile maps` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `priority order: food before raw materials` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `privateering enemy scales intercept score above the baseline` | test_support/trade_interception_scenarios.dart | test/trade_interception_scan_test.dart | #3939 |
+| `privateering trade-raid result is deterministic for a fixed seed` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `recipe excluded when any input is manufactured` | test/town_manufacturing_bonus_test.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `reduces cargo when enemy has patrol fleet` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `resolves province from provincesByFullId index` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `returns 0 for an empty iterable` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `returns 0 for no maps and for empty maps` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `returns 0 when home fleet has only warship types (cargoHold 0)` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `returns 0 when no home fleet exists` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `returns 0 when no overseas totals or zero holds` | test_support/trade_cargo_capacity_scenarios.dart | test/economy/trade_cargo_capacity_test.dart | #3939 |
+| `returns as-is when overseasDelivered is empty` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `returns canonical key regardless of argument order` | test/economy/world_market/world_market_deal_matcher_test.dart | test/economy/world_market/world_market_deal_matcher_test.dart | #3939 |
+| `returns empty when overseas is empty` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `returns full delivered when at war but no interceptor fleet` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `returns full delivered when no enemies at war` | test_support/trade_interception_scenarios.dart | test/trade_interception_test.dart | #3939 |
+| `returns full home fleet when tile maps are empty` | test_support/trade_cargo_capacity_scenarios.dart | test/economy/trade_cargo_capacity_test.dart | #3939 |
+| `returns null for invalid or out-of-range keys` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `returns null for silver riches regardless of stored prices` | test_support/treasury_scenarios/treasury_pure_helper_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `returns null when every check passes` | test_support/cost_check_scenarios.dart | test/cost_check_test.dart | #3939 |
+| `returns null when province row is missing` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `returns resource context for valid tile key` | test_support/tile_extraction_pipeline_scenarios.dart | test/tile_extraction_pipeline_test.dart | #3939 |
+| `returns the first failing reason in list order` | test_support/cost_check_scenarios.dart | test/cost_check_test.dart | #3939 |
+| `returns zero when stockpile has no riches` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `richesCashMultiplier scales treasury delta` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `short-circuits: no later check runs once one fails` | test_support/cost_check_scenarios.dart | test/cost_check_test.dart | #3939 |
+| `skips decrement on missing-price free-fill path` | test_support/treasury_scenarios/treasury_pure_helper_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+| `steel from iron and coal is eligible (all raw inputs)` | test/town_manufacturing_bonus_test.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `sums cargoHold from home-fleet ship types` | test_support/sea_transport_scenarios.dart | test/sea_transport_test.dart | #3939 |
+| `sums every value across nested maps` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `sums positive and negative values` | test_support/commodity_totals_scenarios.dart | test/economy/commodity_totals_test.dart | #3939 |
+| `sums tier multipliers (1/4/6/8) over idle counts` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `sums units committed by allocateOverseasToStockpile` | test_support/trade_cargo_capacity_scenarios.dart | test/economy/trade_cargo_capacity_test.dart | #3939 |
+| `the mapping is total over all Resource values` | test/resource_commodity_id_mapping_test.dart | test/resource_commodity_id_mapping_test.dart | #3939 |
+| `tile extraction contribution is null for disconnected tile` | test_support/tile_extraction_contribution_scenarios.dart | test/resource_extractor_test.dart | #3939 |
+| `toString is informative for trace logs` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `town-rule-only + non-port: townDevelopmentLevel does NOT cap yield` | test_support/resource_extractor_scenarios.dart | test/resource_extractor_test.dart | #3939 |
+| `town-rule-only + port: townDevelopmentLevel DOES cap yield` | test_support/resource_extractor_scenarios.dart | test/resource_extractor_test.dart | #3939 |
+| `townManufacturingBonusToAutoOffers emits priority-1 offers for minors` | test_support/town_manufacturing_bonus_scenarios.dart | test/town_manufacturing_bonus_test.dart | #3939 |
+| `trained worker needs both food and luxury to count` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `treasury equals filledQuantity * pricePerUnit * profitRate` | test/economy/world_market/first_right_credits_test.dart | test/economy/world_market/first_right_credits_test.dart | #3939 |
+| `zero idle counts contribute no labour` | test_support/worker_economy_scenarios.dart | test/worker_economy_test.dart | #3939 |
+| `zero quantities do not change stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
+| `zero riches yields zero delta and unchanged stockpile` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
+

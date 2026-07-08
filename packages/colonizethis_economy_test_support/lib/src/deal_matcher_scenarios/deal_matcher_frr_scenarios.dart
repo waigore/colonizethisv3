@@ -15,16 +15,14 @@ List<DealMatcherScenario> dealMatcherFirstRightScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
-  DealMatcherScenario.expect(
+  frrM1OfferExpectRow(
     label:
         'partial FRR fill: residual offer quantity becomes available for '
         'other GPs at their normal priority tier',
-    inputs: frrM1OfferInputs(
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 4, priority: 5)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-    ),
+    bidsByFactionId: {
+      'gpA': [matcherBid('timber', 4, priority: 5)],
+      'gpB': [matcherBid('timber', 10, priority: 1)],
+    },
     expect: DealMatchExpectation(
       filledDealsLength: 2,
       frrFilledDeal: const FilledDealExpectation(
@@ -40,18 +38,15 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       },
       unfilledOffersEmpty: true,
     ),
-    refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  frrM1OfferExpectRow(
     label:
         'cargo limit caps FRR fill (per-buyer cumulative cargo still applies)',
-    inputs: frrM1OfferInputs(
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 1)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 3, 'gpB': 100},
-    ),
+    bidsByFactionId: {
+      'gpA': [matcherBid('timber', 10, priority: 1)],
+      'gpB': [matcherBid('timber', 10, priority: 1)],
+    },
+    tradeCapacityByFactionId: const {'gpA': 3, 'gpB': 100},
     expect: DealMatchExpectation(
       filledDealsLength: 2,
       frrFilledDeal: const FilledDealExpectation(
@@ -66,7 +61,6 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
         'gpA': [matcherBid('timber', 7, priority: 1)],
       },
     ),
-    refs: '#2992',
   ),
   frrNoEffectRow(
     label: 'offer without originTileKey is unaffected by FRR even when index '
@@ -172,17 +166,13 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
 
 /// FRR activity bookkeeping from supplement test file.
 List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
-  DealMatcherScenario.expect(
+  frrM1OfferExpectRow(
     label:
         'FRR fills count toward filledQuantity in the per-commodity activity',
-    inputs: frrM1OfferInputs(
-      offerQty: 10,
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 6, priority: 5)],
-        'gpB': [matcherBid('timber', 6, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 100, 'gpB': 100},
-    ),
+    bidsByFactionId: {
+      'gpA': [matcherBid('timber', 6, priority: 5)],
+      'gpB': [matcherBid('timber', 6, priority: 1)],
+    },
     expect: const DealMatchExpectation(
       activityByCommodityId: {
         'timber': MarketActivity(
@@ -192,32 +182,18 @@ List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
         ),
       },
     ),
-    refs: '#2992',
   ),
 ];
 
 List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
-  DealMatcherScenario.expect(
+  frrD5MatcherRow(
     label:
         'rival priority-1 bid loses to owning-GP priority-5 bid; rival '
         'priority-1 bid carries forward intact',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        kFrrIssueAcD5MinorM1: [
-          matcherOffer('timber', 10, originTileKey: kFrrIssueAcD5TileK1),
-        ],
-      },
-      bidsByFactionId: {
-        kFrrIssueAcD5GpA: [matcherBid('timber', 10, priority: 5)],
-        kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {
-        kFrrIssueAcD5GpA: 100,
-        kFrrIssueAcD5GpB: 100,
-      },
-      pricesByCommodityId: const {'timber': 20.0},
-      purchasedTileIndex: frrD5IdxK1GpA(),
-    ),
+    bidPriorityByBuyer: const {
+      kFrrIssueAcD5GpA: 5,
+      kFrrIssueAcD5GpB: 1,
+    },
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       frrFilledDeal: const FilledDealExpectation(
@@ -230,32 +206,19 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
       },
     ),
-    refs: '#2992 D5 AC1',
   ),
-  DealMatcherScenario.expect(
+  frrD5MatcherRow(
     label:
         'FTP-paired rival bid at same priority loses to owning GP; FTP '
         'partner bid carries forward (FRR overrides FTP)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        kFrrIssueAcD5MinorM1: [
-          matcherOffer('timber', 6, originTileKey: kFrrIssueAcD5TileK1),
-        ],
-      },
-      bidsByFactionId: {
-        kFrrIssueAcD5GpA: [matcherBid('timber', 6, priority: 1)],
-        kFrrIssueAcD5GpFtp: [matcherBid('timber', 6, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {
-        kFrrIssueAcD5GpA: 100,
-        kFrrIssueAcD5GpFtp: 100,
-      },
-      pricesByCommodityId: const {'timber': 20.0},
-      ftpPairKeys: {
-        DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
-      },
-      purchasedTileIndex: frrD5IdxK1GpA(),
-    ),
+    offerQty: 6,
+    bidPriorityByBuyer: const {
+      kFrrIssueAcD5GpA: 1,
+      kFrrIssueAcD5GpFtp: 1,
+    },
+    ftpPairKeys: {
+      DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
+    },
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       frrFilledDeal: const FilledDealExpectation(
@@ -267,25 +230,12 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         kFrrIssueAcD5GpFtp: [matcherBid('timber', 6, priority: 1)],
       },
     ),
-    refs: '#2992 D5 AC1',
   ),
-  DealMatcherScenario.expect(
+  frrD5MatcherRow(
     label:
         'negative — owning GP does NOT bid: purchased-tile offer falls '
         'back to standard tier matching (not FRR-flagged)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        kFrrIssueAcD5MinorM1: [
-          matcherOffer('timber', 10, originTileKey: kFrrIssueAcD5TileK1),
-        ],
-      },
-      bidsByFactionId: {
-        kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: const {kFrrIssueAcD5GpB: 100},
-      pricesByCommodityId: const {'timber': 20.0},
-      purchasedTileIndex: frrD5IdxK1GpA(),
-    ),
+    bidPriorityByBuyer: const {kFrrIssueAcD5GpB: 1},
     expect: const DealMatchExpectation(
       filledDealsLength: 1,
       nonFrrFilledDeal: FilledDealExpectation(
@@ -293,6 +243,5 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         isFirstRightOfRefusalMatch: false,
       ),
     ),
-    refs: '#2992 D5 AC1',
   ),
 ];

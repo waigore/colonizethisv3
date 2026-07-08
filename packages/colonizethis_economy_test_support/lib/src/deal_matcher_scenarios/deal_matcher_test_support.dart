@@ -6,6 +6,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
         PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../frr_scenarios/frr_d5_test_support.dart';
 import '../trade_order_factory.dart';
 import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
@@ -458,3 +459,61 @@ DealMatcherScenario matcherAgp1Row({
       expect: expect,
       refs: refs,
     );
+
+/// M1 FRR offer + expect row (partial fill / cargo / activity) (Refs #3939 slice 56).
+DealMatcherScenario frrM1OfferExpectRow({
+  required String label,
+  required DealMatchExpectation expect,
+  int offerQty = 10,
+  Map<String, List<TradeOrder>>? bidsByFactionId,
+  Map<String, int>? tradeCapacityByFactionId,
+  String? refs = '#2992',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: frrM1OfferInputs(
+        offerQty: offerQty,
+        bidsByFactionId: bidsByFactionId,
+        tradeCapacityByFactionId: tradeCapacityByFactionId,
+      ),
+      expect: expect,
+      refs: refs,
+    );
+
+/// D5 AC1 purchased-tile M1 timber offer with per-buyer bid priorities
+/// (Refs #3939 slice 56).
+DealMatcherScenario frrD5MatcherRow({
+  required String label,
+  required DealMatchExpectation expect,
+  required Map<String, int> bidPriorityByBuyer,
+  int offerQty = 10,
+  Set<String> ftpPairKeys = const {},
+  String? refs = '#2992 D5 AC1',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          kFrrIssueAcD5MinorM1: [
+            matcherOffer(
+              'timber',
+              offerQty,
+              originTileKey: kFrrIssueAcD5TileK1,
+            ),
+          ],
+        },
+        bidsByFactionId: {
+          for (final e in bidPriorityByBuyer.entries)
+            e.key: [matcherBid('timber', offerQty, priority: e.value)],
+        },
+        tradeCapacityByFactionId: {
+          for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
+        },
+        pricesByCommodityId: const {'timber': 20.0},
+        ftpPairKeys: ftpPairKeys,
+        purchasedTileIndex: frrD5IdxK1GpA(),
+      ),
+      expect: expect,
+      refs: refs,
+    );
+
