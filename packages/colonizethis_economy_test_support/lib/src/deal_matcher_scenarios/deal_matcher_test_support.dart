@@ -1,5 +1,6 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show
+        DealMatcher,
         DealMatchInputs,
         PurchasedTileAttribution,
         PurchasedTileIndex;
@@ -367,6 +368,38 @@ DealMatcherScenario matcherZeroCargoBuyerRow({
         tradeCapacityByFactionId: buyerCapacity == null
             ? const {}
             : {'b': buyerCapacity},
+      ),
+      expect: expect,
+      refs: refs,
+    );
+
+/// Single-commodity FTP pair with per-seller/buyer priorities (Refs #3939 slice 53).
+DealMatcherScenario matcherFtpTimberRow({
+  required String label,
+  required DealMatchExpectation expect,
+  required Map<String, int> offerPriorityBySeller,
+  required Map<String, int> bidPriorityByBuyer,
+  required String ftpSeller,
+  required String ftpBuyer,
+  int qty = 10,
+  String commodity = 'timber',
+  String? refs,
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          for (final e in offerPriorityBySeller.entries)
+            e.key: [matcherOffer(commodity, qty, priority: e.value)],
+        },
+        bidsByFactionId: {
+          for (final e in bidPriorityByBuyer.entries)
+            e.key: [matcherBid(commodity, qty, priority: e.value)],
+        },
+        tradeCapacityByFactionId: {
+          for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
+        },
+        ftpPairKeys: {DealMatcher.pairKey(ftpSeller, ftpBuyer)},
       ),
       expect: expect,
       refs: refs,

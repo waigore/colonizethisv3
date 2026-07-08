@@ -140,6 +140,13 @@ Map<String, ConnectivityResult> connectivityByFaction(
         e.key: ConnectivityResult(connected: e.value),
     };
 
+/// Canonical capital-province tile key `oldWorld|p1|0|0` (Refs #3939 slice 53).
+const String kOwP1Tile00 = 'oldWorld|p1|0|0';
+
+/// [TileImprovementSpec] for [kOwP1Tile00] (Refs #3939 slice 53).
+TileImprovementSpec owP1Imp([int improvement = 0, int roadLevel = 0]) =>
+    TileImprovementSpec(kOwP1Tile00, improvement, roadLevel);
+
 /// Canonical GP player `pl1` / "Spain" with oldWorld|p1 capital
 /// (Refs #3939 slice 52).
 Player spainPl1Player({
@@ -398,7 +405,11 @@ Game overseasResourceExtractorGame({
     ],
   );
   final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
-  final tileState = tileStateFromSpecs(const [TileImprovementSpec('newWorld|n1|0|0', 1, 4), TileImprovementSpec('newWorld|n1|1|0', 1, 4), TileImprovementSpec('oldWorld|p1|0|0', 0, 4)]);
+  final tileState = tileStateFromSpecs([
+    const TileImprovementSpec('newWorld|n1|0|0', 1, 4),
+    const TileImprovementSpec('newWorld|n1|1|0', 1, 4),
+    owP1Imp(0, 4),
+  ]);
   final ports = {
     '$ow|p1|sea1': 'oldWorld|p1|0|0',
     '$nw|n1|sea2': 'newWorld|n1|0|0',

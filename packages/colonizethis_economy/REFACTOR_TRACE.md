@@ -1010,3 +1010,13 @@ test_support LOC: **16,710** (net −110 vs slice 50 — FRR one-shot inlining +
 
 test_support LOC: **16,622** (net −88 vs slice 51 — shared connectivity/player fixtures + auto-offer/FTP/treasury UI compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 53+.
 
+## Phase 3 — Slice 53 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|---------------|------|
+| ow-p1-imp | `kOwP1Tile00` / `owP1Imp` for canonical capital-tile improvement specs | `extraction_fixture_support.dart`, `resource_extractor_scenarios.dart` | #3661, #3939 |
+| matcher-ftp-timber | `matcherFtpTimberRow` compact five FTP/priority DealMatcher rows | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #2989, #3939 |
+| deal-on | `dealOn(tileKey, …)` shorthand for FRR credits filled-deal rows | `frr_credits_test_support.dart`, `frr_credits_scenarios.dart` | #2992, #3753, #3939 |
+
+test_support LOC: **16,604** (net −18 vs slice 52 — owP1Imp + FTP timber row + dealOn compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 54+.
+

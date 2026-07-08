@@ -81,7 +81,7 @@ FrrCreditsScenario frrCreditsRow({
   return FrrCreditsScenario.expect(
     label: label,
     filledDeals:
-        filledDeals ?? [deal(buyer: 'gpB', sellerOriginTileKey: 'k1')],
+        filledDeals ?? [dealOn('k1', buyer: 'gpB')],
     purchasedTileIndex:
         nullPurchasedTileIndex ? null : (purchasedTileIndex ?? frrIdxK1GpA()),
     relationScoreFor: relation,
@@ -123,7 +123,7 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   ),
   frrCreditsRow(
     label: 'negative — deal with unmapped tile key is skipped (no attribution)',
-    filledDeals: [deal(buyer: 'gpB', sellerOriginTileKey: 'unmapped')],
+    filledDeals: [dealOn('unmapped', buyer: 'gpB')],
     constantRelation: 100,
     expect: const FrrCreditsExpectation.emptyResult(),
     refs: '#2992',
@@ -131,18 +131,8 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   frrCreditsRow(
     label: 'negative — zero quantity or zero price deals are skipped',
     filledDeals: [
-      deal(
-        buyer: 'gpB',
-        quantity: 0,
-        pricePerUnit: 20.0,
-        sellerOriginTileKey: 'k1',
-      ),
-      deal(
-        buyer: 'gpB',
-        quantity: 10,
-        pricePerUnit: 0.0,
-        sellerOriginTileKey: 'k1',
-      ),
+      dealOn('k1', buyer: 'gpB', quantity: 0, pricePerUnit: 20.0),
+      dealOn('k1', buyer: 'gpB', quantity: 10, pricePerUnit: 0.0),
     ],
     constantRelation: 100,
     expect: const FrrCreditsExpectation.emptyResult(),
@@ -152,24 +142,9 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
 
 FrrCreditsScenario _frrCreditsDeterminismScenario() {
   final deals = [
-    deal(
-      buyer: 'gpC',
-      quantity: 1,
-      pricePerUnit: 5.0,
-      sellerOriginTileKey: 'k2',
-    ),
-    deal(
-      buyer: 'gpC',
-      quantity: 2,
-      pricePerUnit: 5.0,
-      sellerOriginTileKey: 'k1',
-    ),
-    deal(
-      buyer: 'gpC',
-      quantity: 3,
-      pricePerUnit: 5.0,
-      sellerOriginTileKey: 'k2',
-    ),
+    dealOn('k2', buyer: 'gpC', quantity: 1, pricePerUnit: 5.0),
+    dealOn('k1', buyer: 'gpC', quantity: 2, pricePerUnit: 5.0),
+    dealOn('k2', buyer: 'gpC', quantity: 3, pricePerUnit: 5.0),
   ];
   final index = idx([
     attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
@@ -197,24 +172,9 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
   frrCreditsRow(
     label: 'multi-tile — two owning GPs aggregate credits independently',
     filledDeals: [
-      deal(
-        buyer: 'gpC',
-        quantity: 10,
-        pricePerUnit: 10.0,
-        sellerOriginTileKey: 'k1',
-      ),
-      deal(
-        buyer: 'gpC',
-        quantity: 4,
-        pricePerUnit: 5.0,
-        sellerOriginTileKey: 'k2',
-      ),
-      deal(
-        buyer: 'gpC',
-        quantity: 2,
-        pricePerUnit: 3.0,
-        sellerOriginTileKey: 'k3',
-      ),
+      dealOn('k1', buyer: 'gpC', quantity: 10, pricePerUnit: 10.0),
+      dealOn('k2', buyer: 'gpC', quantity: 4, pricePerUnit: 5.0),
+      dealOn('k3', buyer: 'gpC', quantity: 2, pricePerUnit: 3.0),
     ],
     purchasedTileIndex: idx([
       attr(tileKey: 'k1', owningGpId: 'gpA', sourceFactionId: 'M1'),
@@ -237,19 +197,14 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
     label:
         'multi-GP precedence — buyer == owning GP for one tile, other-GP buyer for another',
     filledDeals: [
-      deal(
+      dealOn(
+        'k1',
         buyer: 'gpA',
         isFirstRightOfRefusalMatch: true,
         quantity: 4,
         pricePerUnit: 10.0,
-        sellerOriginTileKey: 'k1',
       ),
-      deal(
-        buyer: 'gpB',
-        quantity: 6,
-        pricePerUnit: 10.0,
-        sellerOriginTileKey: 'k1',
-      ),
+      dealOn('k1', buyer: 'gpB', quantity: 6, pricePerUnit: 10.0),
     ],
     constantRelation: 100,
     expect: const FrrCreditsExpectation(
@@ -297,12 +252,7 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
         'R8.7 — buyer == tile owner: no tile-owner share, other embassy GPs '
         'still get kickbacks',
     filledDeals: [
-      deal(
-        buyer: 'gpA',
-        quantity: 10,
-        pricePerUnit: 20.0,
-        sellerOriginTileKey: 'k1',
-      ),
+      dealOn('k1', buyer: 'gpA', quantity: 10, pricePerUnit: 20.0),
     ],
     constantRelation: 100,
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
