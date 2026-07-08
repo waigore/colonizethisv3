@@ -941,3 +941,12 @@ test_support LOC: **17,204** (net −19 vs slice 43 — FRR credits scenario-tab
 
 test_support LOC: **17,103** (net −101 vs slice 44 — consumption pin omission + FRR profit row builders). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 46+.
 
+## Phase 3 — Slice 46 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| suggester-row | `suggesterRow` / `suggesterPin` compact TradeOrderSuggester scenario tables | `trade_order_suggester_scenarios.dart` | #2989, #3123, #3939 |
+| non-gp-extraction-row | `nonGpMinorRow` + `_provMap` / `_conn` compact non-GP extraction tables | `non_gp_extraction_scenarios.dart` | #2991, #3870, #3939 |
+
+test_support LOC: **17,002** (net −101 vs slice 45 — suggester + non-GP extraction row builders). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 47+.
+
