@@ -9,9 +9,10 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'deal_matcher_scenarios.dart';
-import 'deal_matcher_test_support.dart';
+import '../deal_matcher_scenarios/deal_matcher_core_scenarios.dart';
+import '../deal_matcher_scenarios/deal_matcher_test_support.dart';
 import 'frr_credits_scenarios.dart';
+import 'frr_credits_test_support.dart';
 
 const String kFrrIssueAcD5GpA = 'gpA';
 const String kFrrIssueAcD5GpB = 'gpB';
@@ -25,15 +26,12 @@ const String kFrrIssueAcD5TileK3 = 'oldWorld|M2|0|0';
 const String kFrrIssueAcD5ProvinceM1 = 'oldWorld|M1';
 const String kFrrIssueAcD5ProvinceM2 = 'oldWorld|M2';
 
-PurchasedTileIndex _d5Index(Iterable<PurchasedTileAttribution> rows) =>
-    PurchasedTileIndex.forTesting(rows);
-
 PurchasedTileAttribution _d5Attr(
   String tileKey,
   String owningGpId,
   String sourceFactionId, [
   String provinceId = kFrrIssueAcD5ProvinceM1,
-]) => PurchasedTileAttribution(
+]) => attr(
   tileKey: tileKey,
   owningGpId: owningGpId,
   sourceFactionId: sourceFactionId,
@@ -46,10 +44,9 @@ FilledDeal _d5OtherBuyDeal({
   int quantity = 10,
   double pricePerUnit = 20.0,
   String sellerOriginTileKey = kFrrIssueAcD5TileK1,
-}) => FilledDeal(
-  sellerFactionId: seller,
-  buyerFactionId: buyer,
-  commodityId: 'timber',
+}) => deal(
+  seller: seller,
+  buyer: buyer,
   quantity: quantity,
   pricePerUnit: pricePerUnit,
   sellerOriginTileKey: sellerOriginTileKey,
@@ -96,7 +93,7 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         kFrrIssueAcD5GpA: 100,
         kFrrIssueAcD5GpB: 100,
       },
-      purchasedTileIndex: _d5Index([
+      purchasedTileIndex: idx([
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
@@ -138,7 +135,7 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
       ftpPairKeys: {
         DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
       },
-      purchasedTileIndex: _d5Index([
+      purchasedTileIndex: idx([
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
@@ -172,7 +169,7 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
       },
       tradeCapacityByFactionId: const {kFrrIssueAcD5GpB: 100},
-      purchasedTileIndex: _d5Index([
+      purchasedTileIndex: idx([
         _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       ]),
     ),
@@ -191,7 +188,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
   FrrCreditsScenario(
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
     filledDeals: [_d5OtherBuyDeal()],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (gp, src) =>
@@ -218,7 +215,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc3Scenarios() => [
         'credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
         'treasury == quantity * pricePerUnit (full share)',
     filledDeals: [_d5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 100,
@@ -242,7 +239,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
         'credits helper records audit row but transfers 0 treasury (Deal '
         'Book can still surface the no-credit case)',
     filledDeals: [_d5OtherBuyDeal()],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 0,
@@ -269,7 +266,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
         sellerOriginTileKey: kFrrIssueAcD5TileK1,
       ),
     ],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
     ]),
     relationScoreFor: (_, __) => 100,
@@ -302,7 +299,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
         sellerOriginTileKey: kFrrIssueAcD5TileK2,
       ),
     ],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       _d5Attr(kFrrIssueAcD5TileK2, kFrrIssueAcD5GpB, kFrrIssueAcD5MinorM1),
     ]),
@@ -342,7 +339,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
         sellerOriginTileKey: kFrrIssueAcD5TileK3,
       ),
     ],
-    purchasedTileIndex: _d5Index([
+    purchasedTileIndex: idx([
       _d5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
       _d5Attr(
         kFrrIssueAcD5TileK3,

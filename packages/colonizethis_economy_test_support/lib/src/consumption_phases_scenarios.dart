@@ -1,27 +1,18 @@
-// Table-driven per-phase consumption helper scenarios (Refs #3856).
+// Table-driven per-phase consumption helper scenarios (Refs #3856, #3939 slice 7).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-/// One row in a consumption-phase scenario table.
-class ConsumptionPhaseScenario {
-  const ConsumptionPhaseScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
+import 'consumption_scenarios.dart';
 
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// Back-compat alias — phase tables share [ConsumptionScenario].
+typedef ConsumptionPhaseScenario = ConsumptionScenario;
 
-/// Runs [scenario] (setup + assertions live in [ConsumptionPhaseScenario.run]).
-void runConsumptionPhaseScenario(ConsumptionPhaseScenario scenario) {
-  scenario.run();
-}
+/// Back-compat runner for per-phase consumption scenario tables.
+void runConsumptionPhaseScenario(ConsumptionPhaseScenario scenario) =>
+    runConsumptionScenario(scenario);
 
 final _grainId = CommodityCatalog.grain.id;
 final _meatId = CommodityCatalog.meat.id;
@@ -29,7 +20,7 @@ final _sugarId = CommodityCatalog.refinedSugar.id;
 
 /// Canonical scenarios for [consumeMilitaryFood].
 List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'per-type foodUpkeep fully feeds regiments from catalog',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 10);
@@ -44,7 +35,7 @@ List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
       expect(next.quantityOf(_grainId), 6);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'militaryUnits fallback consumes 2 food per regiment',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 10);
@@ -59,7 +50,7 @@ List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
       expect(next.quantityOf(_grainId), 4);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'insufficient food partially feeds regiments',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 2);
@@ -74,7 +65,7 @@ List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
       expect(next.quantityOf(_grainId), 0);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'no regiments and no military leaves stockpile unchanged',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 5);
@@ -86,7 +77,7 @@ List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
       expect(next.quantityOf(_grainId), 5);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'unknown regiment id contributes count but no food demand',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 5);
@@ -105,7 +96,7 @@ List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [
 
 /// Canonical scenarios for [consumeNavyFood].
 List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'feeds ships from catalog foodUpkeep',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 10);
@@ -120,7 +111,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
       expect(next.quantityOf(_grainId), 6);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'insufficient food partially feeds ships',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 2);
@@ -135,7 +126,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
       expect(next.quantityOf(_grainId), 0);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'unknown ship id throws before any food is deducted',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 5);
@@ -149,7 +140,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
       );
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'empty fleet leaves stockpile unchanged',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 5);
@@ -165,7 +156,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
 
 /// Canonical scenarios for [consumeWorkerFood].
 List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'feeds trained tiers (2 food) and peasants (1 food)',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 100);
@@ -185,7 +176,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
       expect(fed.stockpile.quantityOf(_grainId), 92);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'priority Masters→...→Peasants: masters fed before peasants',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 2);
@@ -198,7 +189,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
       expect(fed.stockpile.quantityOf(_grainId), 0);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'grain consumed before meat',
     run: () {
       final stockpile = const Stockpile()
@@ -213,7 +204,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
       expect(fed.stockpile.quantityOf(_meatId), 8);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'no food leaves all tiers on strike',
     run: () {
       const stockpile = Stockpile();
@@ -229,7 +220,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
 
 /// Canonical scenarios for [assignWorkerLuxury].
 List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'assigns one luxury per food-fed worker when supply suffices',
     run: () {
       final stockpile = const Stockpile().applyDelta(_sugarId, 5);
@@ -244,7 +235,7 @@ List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
       expect(next.quantityOf(_sugarId), 2);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'luxury strike: short supply caps count and deducts what exists',
     run: () {
       final stockpile = const Stockpile().applyDelta(_sugarId, 1);
@@ -259,7 +250,7 @@ List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
       expect(next.quantityOf(_sugarId), 0);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'no food-fed workers deducts nothing',
     run: () {
       final stockpile = const Stockpile().applyDelta(_sugarId, 5);
@@ -274,7 +265,7 @@ List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
       expect(next.quantityOf(_sugarId), 5);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'no luxury available deducts nothing',
     run: () {
       const stockpile = Stockpile();
@@ -293,7 +284,7 @@ List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
 
 /// Canonical scenarios for [consumeFoodUnits].
 List<ConsumptionPhaseScenario> consumeFoodUnitsScenarios() => [
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'grain then meat, returns consumed amount',
     run: () {
       final stockpile = const Stockpile()
@@ -310,7 +301,7 @@ List<ConsumptionPhaseScenario> consumeFoodUnitsScenarios() => [
       expect(next.quantityOf(_meatId), 2);
     },
   ),
-  ConsumptionPhaseScenario(
+  ConsumptionScenario(
     label: 'caps consumed at available when demand exceeds supply',
     run: () {
       final stockpile = const Stockpile().applyDelta(_grainId, 2);

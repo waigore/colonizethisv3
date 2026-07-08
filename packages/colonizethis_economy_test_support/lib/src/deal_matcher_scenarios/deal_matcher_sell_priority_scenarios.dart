@@ -3,7 +3,7 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'deal_matcher_scenarios.dart';
+import 'deal_matcher_core_scenarios.dart';
 import 'deal_matcher_test_support.dart';
 
 /// Sell-priority relation tiebreaker from

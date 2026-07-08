@@ -464,3 +464,15 @@ Economy `test/` LOC: **2,248** (down from 2,415 slice 4). test_support: **12,355
 Deleted modules (merged): `effective_market_price_scenarios.dart`, `staged_bid_spend_scenarios.dart`, `carry_forward_bid_notional_scenarios.dart`, `bid_spend_parity_scenarios.dart`, `treasury_bid_budget_scenarios.dart`, `matcher_treasury_budget_scenarios.dart`, `gp_treasury_credit_accumulator_scenarios.dart`, `treasury_bid_budget_test_support.dart`, `bid_spend_game_factory.dart`, `treasury_available_scenarios.dart` (root).
 
 test_support LOC: **12,287** (down from 12,355 slice 5). Treasury/deal-matcher validator scenario merge and ≥20% test_support reduction (≤8,200) still deferred to slice 7+.
+
+## Phase 3 — Slice 7 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| deal-matcher-cluster | consolidated DealMatcher scenario modules under `deal_matcher_scenarios/` barrel | `deal_matcher_scenarios/deal_matcher_core_scenarios.dart`, `deal_matcher_frr_scenarios.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_sell_priority_scenarios.dart`, `deal_matcher_treasury_scenarios.dart`, `deal_matcher_test_support.dart` | #3939 |
+| validator-cluster | consolidated TradeOrderValidator scenario modules under `validator_scenarios/` barrel | `validator_scenarios/trade_order_validator_scenarios.dart`, `trade_order_validator_treasury_scenarios.dart`, `trade_order_validator_test_support.dart` | #3939 |
+| purchased-tile-cluster | consolidated purchased-tile scenario + fixture modules under `purchased_tile_scenarios/` barrel | `purchased_tile_scenarios/purchased_tile_index_scenarios.dart`, `purchased_tile_riches_scenarios.dart`, `purchased_tile_index_test_support.dart`, `purchased_tile_riches_test_support.dart` | #3939 |
+| frr-cluster | consolidated FRR scenario modules under `frr_scenarios/` barrel; D5 helpers delegate to `frr_credits_test_support` | `frr_scenarios/frr_credits_scenarios.dart`, `frr_issue_ac_d5_scenarios.dart`, `first_right_profit_scenarios.dart`, `frr_credits_test_support.dart` | #2992 D5, #3939 |
+| consumption-dry | `consumption_phases_scenarios.dart` reuses `ConsumptionScenario` type from `consumption_scenarios.dart` | `consumption_phases_scenarios.dart` | #3939 |
+
+test_support LOC: **12,287** (organizational consolidation; further scenario-data dedup for ≤8,200 target deferred to slice 8+).

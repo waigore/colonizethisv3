@@ -4,8 +4,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../scenario_runner.dart';
 import 'deal_matcher_test_support.dart';
-import 'scenario_runner.dart';
 
 /// One row in a DealMatcher scenario table.
 class DealMatcherScenario implements RefsScenario {

@@ -7,7 +7,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'trade_order_validator_scenarios.dart';
 import 'trade_order_validator_test_support.dart';
-import 'treasury_scenarios/treasury_test_support.dart';
+import '../treasury_scenarios/treasury_test_support.dart';
 
 int _catalogTimberBudgetForQty2() {
   final int? catalogTimber = ResourceRules.defaultRules
