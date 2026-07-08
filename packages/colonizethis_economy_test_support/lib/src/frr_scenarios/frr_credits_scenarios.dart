@@ -545,10 +545,9 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc5Scenarios() => [
         pricePerUnit: 8.0,
         sellerOriginTileKey: _kFrrIssueAcD5TileK1,
       ),
-      FilledDeal(
-        sellerFactionId: _kFrrIssueAcD5MinorM2,
-        buyerFactionId: _kFrrIssueAcD5GpC,
-        commodityId: 'timber',
+      _d5OtherBuyDeal(
+        seller: _kFrrIssueAcD5MinorM2,
+        buyer: _kFrrIssueAcD5GpC,
         quantity: 2,
         pricePerUnit: 10.0,
         sellerOriginTileKey: _kFrrIssueAcD5TileK3,

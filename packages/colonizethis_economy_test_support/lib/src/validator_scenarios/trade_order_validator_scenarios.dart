@@ -457,10 +457,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'bids with no effective market price contribute zero treasury spend '
         '(defensive guard against unknown / future commodity ids)',
-    context: validatorCtx(
-      treasuryBudgetForBids: 0,
-      worldMarketState: const WorldMarketState(),
-    ),
+    context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 0),
     proposedOrders: [validatorBid('not_a_real_commodity', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#3093',
@@ -468,10 +465,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'manufactured commodity bids now consume the catalog base price '
         '(Refs #3093 manufactured-default-prices slice)',
-    context: validatorCtx(
-      treasuryBudgetForBids: 100,
-      worldMarketState: const WorldMarketState(),
-    ),
+    context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 100),
     proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
     expect: ValidatorExpectation(
       singleRejectedWithReason:
@@ -546,9 +540,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     label: 'admits a bid priced solely from the catalog default when budget '
         'allows (Refs #3123 AC: rule 5 must not reject for unknown price '
         'when an initial/default price exists)',
-    context: validatorCtx(
+    context: validatorCtxCatalogDefaults(
       treasuryBudgetForBids: _catalogTimberBudgetForQty2(),
-      worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
     expect: ValidatorExpectation(
@@ -562,9 +555,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
   TradeOrderValidatorScenario.expect(
     label: 'admits a manufactured-commodity bid priced from the catalog '
         'default when budget allows (Refs #3123 AC, manufactured branch)',
-    context: validatorCtx(
+    context: validatorCtxLumberBudget(
       treasuryBudgetForBids: _catalogLumberBudgetForQty1(),
-      worldMarketState: const WorldMarketState(),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 1)],
     expect: ValidatorExpectation(

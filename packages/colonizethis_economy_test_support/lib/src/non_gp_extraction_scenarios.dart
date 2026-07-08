@@ -53,7 +53,7 @@ void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
   scenario.verify(result);
 }
 
-/// SPEC-AC happy paths from `non_gp_extraction_part1_test.dart`.
+/// SPEC-AC happy paths from `non_gp_extraction_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
   NonGpExtractionScenario.expect(
     label: 'minor with non-mineral connected tile produces 1 unit at imp=1',
@@ -219,7 +219,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
   ),
 ];
 
-/// Boundary / multi-faction cases from `non_gp_extraction_part2_test.dart`.
+/// Boundary / multi-faction cases from `non_gp_extraction_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
   ..._nonGpExtractionBoundarySkipScenarios(),
   ..._nonGpExtractionBoundaryAggregationScenarios(),

@@ -739,3 +739,18 @@ World-market runner file count: **11 → 10** (target ≤12 met).
 
 test_support LOC: deferred recount post-slice — validator/treasury scenario-data compaction for ≥20% test_support reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 28+.
 
+## Phase 3 — Slice 28 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-runner-merge | merged D5 AC audit groups into `first_right_credits_test.dart` + `world_market_deal_matcher_test.dart`; deleted standalone D5 + profit runners | `first_right_credits_test.dart`, `world_market_deal_matcher_test.dart` | #2992 D5, #3939 |
+| non-gp-runner-merge | merged `non_gp_extraction_part{1,2}_test.dart` into `non_gp_extraction_test.dart` | `non_gp_extraction_test.dart` | #2991, #3939 |
+| validator-catalog-presets | `validatorCtxCatalogDefaults` + `validatorCtxLumberBudget` shared treasury-cap presets | `trade_order_validator_test_support.dart`, `trade_order_validator_scenarios.dart` | #3939 |
+| frr-d5-deal-preset | migrated last AC #5 `FilledDeal` literal to `_d5OtherBuyDeal` | `frr_credits_scenarios.dart` | #2992 D5 AC5, #3939 |
+
+Deleted test runners: `first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`, `first_right_profit_test.dart`, `non_gp_extraction_part1_test.dart`, `non_gp_extraction_part2_test.dart`.
+
+World-market runner file count: **10 → 8** (target ≤12 met).
+
+test_support LOC: **15,263** (net +12 vs slice 27 — validator catalog presets added; runner merges reduce economy `test/` overhead). Economy `test/` **1,480** (down 40 vs slice 27). Further treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 29+.
+

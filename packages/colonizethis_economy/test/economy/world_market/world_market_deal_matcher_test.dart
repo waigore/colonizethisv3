@@ -91,6 +91,12 @@ void main() {
     runDealMatcherScenario,
   );
 
+  group('AC #1 — owning-GP bid wins above priority tiers AND FTP (#2992 D5)', () {
+    for (final scenario in frrIssueAcD5MatcherScenarios()) {
+      test(scenario.label, () => runDealMatcherScenario(scenario));
+    }
+  });
+
   group('PurchasedTileIndex.forTesting (#2992 D2 test helper)', () {
     test('first attribution per tileKey wins on duplicates', () {
       const first = PurchasedTileAttribution(

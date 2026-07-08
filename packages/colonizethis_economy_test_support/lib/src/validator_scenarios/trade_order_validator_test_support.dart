@@ -65,3 +65,24 @@ TradeOrderValidationContext validatorCtxTimberIron({
         },
       ),
     );
+
+/// Empty live-price preset — catalog defaults apply (rule 5 manufactured/raw).
+TradeOrderValidationContext validatorCtxCatalogDefaults({
+  int treasuryBudgetForBids = 1 << 30,
+  int tradeCargoCapacity = 100,
+}) =>
+    validatorCtx(
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      tradeCargoCapacity: tradeCargoCapacity,
+      worldMarketState: const WorldMarketState(),
+    );
+
+/// Catalog-default lumber budget preset for manufactured-commodity treasury rows.
+TradeOrderValidationContext validatorCtxLumberBudget({
+  required int treasuryBudgetForBids,
+  int tradeCargoCapacity = 100,
+}) =>
+    validatorCtxCatalogDefaults(
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      tradeCargoCapacity: tradeCargoCapacity,
+    );
