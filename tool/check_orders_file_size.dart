@@ -32,6 +32,9 @@ const List<String> ordersFileSizeGatedFiles = <String>[
   '$_ordersLibDir/validators/work_order_validator.dart',
   '$_ordersLibDir/order_engine_validation.dart',
   '$_ordersLibDir/order_suggestion_diplomatic.dart',
+  '$_ordersLibDir/incremental_candidate_validator_replay.dart',
+  '$_ordersLibDir/order_suggestion_work_explorer.dart',
+  '$_ordersLibDir/projected_economy_prefix_replay.dart',
 ];
 
 /// Used by `ct_repo_lint`/tests; [info] / [err] default to stdout/stderr.

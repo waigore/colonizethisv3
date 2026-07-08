@@ -58,5 +58,17 @@ void main() {
         isNull,
       );
     });
+
+    test('default gate uses explicit allowlist (baseline allow-all off)', () {
+      expect(ordersPreferScenarioTablesBaselineAllowAll, isFalse);
+      expect(ordersPreferScenarioTablesAllowlist, isNotEmpty);
+      expect(
+        ordersScenarioTableRunnerViolationReason(
+          'packages/colonizethis_orders/test/orders/brand_new_imperative_test.dart',
+          "void main() {\n  test('x', () {\n    expect(1, 1);\n  });\n}\n",
+        ),
+        isNotNull,
+      );
+    });
   });
 }

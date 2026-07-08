@@ -156,6 +156,55 @@ void runOrderEngineValidateWorkExpectation(
   }
 }
 
+OrderValidationResult _validateSingleWork({
+  required Game game,
+  required WorkOrder order,
+  MapTopology? topology,
+  Map<String, TileMapResult>? tileMapByRegion,
+  String playerId = 'p1',
+}) {
+  final engine = OrderEngine();
+  engine.addWorkOrder(playerId, order);
+  return engine
+      .validatePlayerOrdersWithContext(
+        game,
+        topology ?? ValidateWorkOw.topology(),
+        playerId,
+        tileMapByRegion: tileMapByRegion,
+      )
+      .single;
+}
+
+OrderValidationResult _validateBuildImprovement({
+  required Game game,
+  Map<String, TileMapResult>? tileMapByRegion,
+  String targetTileKey = ValidateWorkOw.tileKey,
+  String unitId = 'builder1',
+}) => _validateSingleWork(
+  game: game,
+  order: WorkOrder(
+    unitId: unitId,
+    target: kWorkTargetBuildImprovement,
+    targetTileKey: targetTileKey,
+  ),
+  tileMapByRegion: tileMapByRegion,
+);
+
+OrderValidationResult _validateOwWorkTarget({
+  required Game game,
+  required String unitId,
+  required String target,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) => _validateSingleWork(
+  game: game,
+  order: WorkOrder(
+    unitId: unitId,
+    target: target,
+    targetTileKey: ValidateWorkOw.tileKey,
+  ),
+  tileMapByRegion: tileMapByRegion,
+);
+
 void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
   const regionId = 'oldWorld';
   const provinceId = '$regionId|P1';
@@ -598,668 +647,232 @@ void _rejectsPurchaseLandWhenTileAlreadyOwnedBySamePlayer() {
 
 void _rejectsBuildImprovementOnMineralTileWhenNotProspected() {
   const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(resourceByTileKey: {tileKey: 'iron'});
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
-    ),
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(resourceByTileKey: {tileKey: 'iron'}),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('prospected'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('prospected'));
 }
 
 void _acceptsBuildImprovementOnMineralTileAfterProspected() {
   const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(
-    resourceByTileKey: {tileKey: 'iron'},
-    playerProspectedTiles: {
-      'p1': {tileKey},
-    },
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {tileKey: 'iron'},
+      playerProspectedTiles: {
+        'p1': {tileKey},
+      },
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsBuildImprovementOnGrainWhenTileNotProspected() {
   const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(resourceByTileKey: {tileKey: 'grain'});
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
-    ),
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(resourceByTileKey: {tileKey: 'grain'}),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _rejectsBuildImprovementWhenTileHasNoResource() {
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(resourceByTileKey: {});
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
-    ),
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(resourceByTileKey: {}),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('no resource'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('no resource'));
 }
 
 void _rejectsBuildImprovementWhenImprovementLevelAlready4() {
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(
-    tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 4}),
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 20)
-        .applyDelta(CommodityCatalog.castIron.id, 20),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 4}),
+      stockpile: lumberCastIronStockpile(20),
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('maximum'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('maximum'));
 }
 
 void _rejectsBuildImprovementWhenTechCapWouldBeExceededEmptyTech() {
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(
-    techUnlocked: const {},
-    tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 10)
-        .applyDelta(CommodityCatalog.castIron.id, 10),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('Insufficient tech'));
-  expect(results.single.reason, contains('grain'));
-  expect(results.single.reason, contains('cap 1'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('Insufficient tech'));
+  expect(result.reason, contains('grain'));
+  expect(result.reason, contains('cap 1'));
 }
 
 void _rejectsBuildImprovementWhenTechCapWouldBeExceeded() {
-  const tileKey = ValidateWorkOw.tileKey;
   // With no grain-cap tech, grain stays at cap 1; tile at level 1 cannot upgrade.
-  final game = buildImprovementBaseGame(
-    techUnlocked: const {kTechIdSawMill: true},
-    tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 10)
-        .applyDelta(CommodityCatalog.castIron.id, 10),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {kTechIdSawMill: true},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('Insufficient tech'));
-  expect(results.single.reason, contains('cap 1'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('Insufficient tech'));
+  expect(result.reason, contains('cap 1'));
 }
 
 void _acceptsGrainUpgradeWhenExactNextLevelGrainTechIsUnlocked() {
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(
-    techUnlocked: const {kTechIdLandEnclosure: true},
-    tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 10)
-        .applyDelta(CommodityCatalog.castIron.id, 10),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {kTechIdLandEnclosure: true},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsBuildImprovementWhenTileHasResourceLevel4TechCapAllows() {
   const tileKey = ValidateWorkOw.tileKey;
-  final game = buildImprovementBaseGame(
-    resourceByTileKey: {tileKey: 'grain'},
-    tileState: const TileMapState(),
-    techUnlocked: const {kTechIdCircularSaw: true},
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: tileKey,
+  final result = _validateBuildImprovement(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {tileKey: 'grain'},
+      tileState: const TileMapState(),
+      techUnlocked: const {kTechIdCircularSaw: true},
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _rejectsBuildImprovementInForeignUnpurchasedProvince() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final foreignProvinceId = '$ow|P2';
-  final foreignTileKey = '$foreignProvinceId|0|0';
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-          Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
-      tileState: const TileMapState(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-          foreignProvinceId: [foreignTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 2)
-            .applyDelta(CommodityCatalog.castIron.id, 2),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
-      const Player(id: 'p2', displayName: 'P2', isHuman: false),
-    ],
+  final result = _validateBuildImprovement(
+    game: buildImprovementForeignProvinceGame(),
+    targetTileKey: validateWorkForeignTileKey(),
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: foreignTileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('foreign or uncontrolled province'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('foreign or uncontrolled province'));
 }
 
 void _rejectsRaisingScrubTimberFromLevel1EvenWithCircularSaw() {
-  OrderValidationResult validate(Game game, TerrainType terrain) {
-    final engine = OrderEngine();
-    engine.addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: ValidateWorkOw.tileKey,
-      ),
-    );
-    return engine
-        .validatePlayerOrdersWithContext(
-          game,
-          ValidateWorkOw.topology(),
-          'p1',
-          tileMapByRegion: scrubCapTileMaps(terrain),
-        )
-        .single;
-  }
-
-  final result = validate(scrubCapBaseGame(level: 1), TerrainType.scrubForest);
+  final result = _validateBuildImprovement(
+    game: scrubCapBaseGame(level: 1),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+  );
   expect(result.status, OrderValidationStatus.rejected);
   expect(result.reason, contains('Terrain caps'));
   expect(result.reason, contains('level 1'));
 }
 
 void _acceptsRaisingHardwoodTimberFromLevel1WithCircularSaw() {
-  OrderValidationResult validate(Game game, TerrainType terrain) {
-    final engine = OrderEngine();
-    engine.addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: ValidateWorkOw.tileKey,
-      ),
-    );
-    return engine
-        .validatePlayerOrdersWithContext(
-          game,
-          ValidateWorkOw.topology(),
-          'p1',
-          tileMapByRegion: scrubCapTileMaps(terrain),
-        )
-        .single;
-  }
-
-  final result = validate(
-    scrubCapBaseGame(level: 1),
-    TerrainType.hardwoodForest,
+  final result = _validateBuildImprovement(
+    game: scrubCapBaseGame(level: 1),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.hardwoodForest),
   );
   expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsInitialScrubTimberImprovementLevel01() {
-  OrderValidationResult validate(Game game, TerrainType terrain) {
-    final engine = OrderEngine();
-    engine.addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: ValidateWorkOw.tileKey,
-      ),
-    );
-    return engine
-        .validatePlayerOrdersWithContext(
-          game,
-          ValidateWorkOw.topology(),
-          'p1',
-          tileMapByRegion: scrubCapTileMaps(terrain),
-        )
-        .single;
-  }
-
-  final result = validate(scrubCapBaseGame(level: 0), TerrainType.scrubForest);
+  final result = _validateBuildImprovement(
+    game: scrubCapBaseGame(level: 0),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+  );
   expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsBuildImprovementOnPurchasedTileInForeignProvince() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final foreignProvinceId = '$ow|P2';
-  final foreignTileKey = '$foreignProvinceId|0|0';
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-          Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
-      tileState: const TileMapState(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-          foreignProvinceId: [foreignTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
-      },
+  final foreignTileKey = validateWorkForeignTileKey();
+  final result = _validateBuildImprovement(
+    game: buildImprovementForeignProvinceGame(
       purchasedTilesByTileKey: {foreignTileKey: 'p1'},
     ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 2)
-            .applyDelta(CommodityCatalog.castIron.id, 2),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
-      const Player(id: 'p2', displayName: 'P2', isHuman: false),
-    ],
+    targetTileKey: foreignTileKey,
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'builder1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: foreignTileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _rejectsBuildFortToLevel2WithoutMineEngineering() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 1),
-        ],
-        units: [
-          Unit(
-            id: 'eng1',
-            type: kUnitTypeEngineer,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
+  final result = _validateOwWorkTarget(
+    game: fortWorkGame(
+      fortLevel: 1,
+      stockpile: Stockpile()
+          .applyDelta(CommodityCatalog.lumber.id, 4)
+          .applyDelta(CommodityCatalog.bronze.id, 4),
+      techUnlocked: {},
     ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 4)
-            .applyDelta(CommodityCatalog.bronze.id, 4),
-        techUnlocked: {},
-      ),
-    ],
+    unitId: 'eng1',
+    target: kWorkTargetBuildFort,
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'eng1',
-      target: kWorkTargetBuildFort,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('Mine Engineering'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('Mine Engineering'));
 }
 
 void _rejectsBuildFortToLevel3WithoutModernForts() {
-  const ow = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
-  const tileKey = ValidateWorkOw.tileKey;
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 2),
-        ],
-        units: [
-          Unit(
-            id: 'eng1',
-            type: kUnitTypeEngineer,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
+  final result = _validateOwWorkTarget(
+    game: fortWorkGame(
+      fortLevel: 2,
+      stockpile: Stockpile()
+          .applyDelta(CommodityCatalog.steel.id, 5)
+          .applyDelta(CommodityCatalog.lumber.id, 5),
+      techUnlocked: const {kTechIdMineEngineering: true},
     ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.steel.id, 5)
-            .applyDelta(CommodityCatalog.lumber.id, 5),
-        techUnlocked: const {kTechIdMineEngineering: true},
-      ),
-    ],
+    unitId: 'eng1',
+    target: kWorkTargetBuildFort,
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'eng1',
-      target: kWorkTargetBuildFort,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('Modern Forts'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('Modern Forts'));
 }
 
 void _rejectsBuildRailWhenTileTerrainDataIsMissing() {
   const tileKey = ValidateWorkOw.tileKey;
-  final game = gameWithRailUnit(
-    tileState: TileMapState().setRoadLevel(tileKey, 1),
+  final result = _validateOwWorkTarget(
+    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 1)),
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
   );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'rail1',
-      target: kWorkTargetBuildRail,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
-    tileMapByRegion: null,
-  );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('terrain data required'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('terrain data required'));
 }
 
 void _rejectsBuildRailWhenRoadLevelIs0() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  final game = gameWithRailUnit(
-    tileState: TileMapState().setRoadLevel(tileKey, 0),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'rail1',
-      target: kWorkTargetBuildRail,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
+  final result = _validateOwWorkTarget(
+    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 0)),
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
   );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('existing road'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('existing road'));
 }
 
 void _rejectsBuildRailOnHillsWithOnlyEarlySteam() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  final game = gameWithRailUnit(
-    tileState: TileMapState().setRoadLevel(tileKey, 1),
-    techUnlocked: const {kTechIdEarlySteamEngine: true},
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'rail1',
-      target: kWorkTargetBuildRail,
-      targetTileKey: tileKey,
+  final result = _validateOwWorkTarget(
+    game: gameWithRailUnit(
+      tileState: TileMapState().setRoadLevel(tileKey, 1),
+      techUnlocked: const {kTechIdEarlySteamEngine: true},
     ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.hills)},
   );
-  expect(results.single.status, OrderValidationStatus.rejected);
-  expect(results.single.reason, contains('Later Steam'));
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, contains('Later Steam'));
 }
 
 void _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  final game = gameWithRailUnit(
-    tileState: TileMapState().setRoadLevel(tileKey, 1),
-  );
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'rail1',
-      target: kWorkTargetBuildRail,
-      targetTileKey: tileKey,
-    ),
-  );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    ValidateWorkOw.topology(),
-    'p1',
+  final result = _validateOwWorkTarget(
+    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 1)),
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
   );
-  expect(results.single.status, OrderValidationStatus.accepted);
+  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _rejectsBuildRoadInMinorProvinceWithoutEmbassyPath() {

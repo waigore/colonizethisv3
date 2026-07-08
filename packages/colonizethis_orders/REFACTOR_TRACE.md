@@ -390,8 +390,21 @@ Merged remaining imperative `orders_application_*` suites (ship-skip, military/c
 
 test/ LOC after slice 12: see PR. Remaining: lib DRY (validation orchestration + explorer pipeline), ≥20% LOC target ≤26,400, tighten prefer-scenario-tables allow-all.
 
+## Wave 3 — Slice 13: projected-economy prefix DRY + validateWork compaction + prefer-scenario-tables tighten
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| lib-prefix-replay | extract shared `ensureProjectedResourcePrefixReplay` for recruit/build incremental prefix caches | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` + replay callers | #3949 |
+| vw-compact | compact validateWork build-improvement / fort / rail / scrub bodies onto shared fixtures + validate helpers | `support/engine/order_engine_validate_work_expectations.dart` | same + `order_engine_validate_work_fixtures.dart` | #3949 |
+| gate-prefer-tables | set `ordersPreferScenarioTablesBaselineAllowAll=false`; populate explicit allowlist of remaining long-form imperative `*_test.dart` | kickoff allow-all | `tool/check_orders_scenario_table_runner.dart` | #3949 |
+| gate-hot-files | extend `ordersFileSizeGatedFiles` for replay / explorer / prefix-replay modules | `tool/check_orders_file_size.dart` | same | #3949 |
+
+Explorer suggestion already routes through `WorkSuggestionPipeline` (explore + prospect); no further behavior-preserving fold this slice.
+
+test/ LOC after slice 13: see PR. Remaining: further scenario-data compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
-| (all pre-wave `*_test.dart`) | see `DESCRIPTION_BASELINE.txt` | Imperative suites allowlisted via `ordersPreferScenarioTablesBaselineAllowAll` until table migration; tighten allowlist as families migrate | #3949 |
+| remaining long-form `*_test.dart` | see `DESCRIPTION_BASELINE.txt` + `ordersPreferScenarioTablesAllowlist` | Imperative suites still outside migrated families; allowlisted explicitly after slice 13 shut off baseline allow-all | #3949 |
