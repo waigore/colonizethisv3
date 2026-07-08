@@ -891,3 +891,13 @@ test_support LOC: **16,817** (net +49 vs slice 38 — GP-credit cluster relocati
 
 test_support LOC: deferred recount post-slice — further treasury/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 41+.
 
+## Phase 3 — Slice 41 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| sell-priority-row | `sellPriorityMinorSellerRow` + `sellPriorityMinorSellerInputs` compact six sell-priority relation rows | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #3753, #3939 |
+| ftp-tier-row | `matcherFtpTierInputs` dedupes cross-tier FTP precedence row | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart` | #2989, #3939 |
+| frr-fallback-row | `frrNoFrrFallbackRow` + `frrTwoBuyerRivalInputs` compact three FRR-disabled fallback rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+
+test_support LOC: deferred recount post-slice — further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 42+.
+

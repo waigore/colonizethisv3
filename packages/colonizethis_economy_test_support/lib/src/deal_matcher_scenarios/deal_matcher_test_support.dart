@@ -1,8 +1,10 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart'
-    show DealMatchInputs, PurchasedTileAttribution, PurchasedTileIndex;
+    show DealMatchInputs, DealMatcher, PurchasedTileAttribution, PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../trade_order_factory.dart';
+import 'deal_matcher_expectations.dart';
+import 'deal_matcher_scenario.dart';
 
 /// Shared helpers for world-market `DealMatcher` tests. The bid/offer builders
 /// delegate to the canonical shared `TradeOrder` factory (Refs #3427 step 14 /
@@ -135,3 +137,132 @@ PurchasedTileIndex frrMatcherTestIndex({
     provinceId: provinceId,
   ),
 ]);
+
+/// Minor/Tribe seller with two GP buyers and optional relation map (Refs #3939 slice 41).
+DealMatchInputs sellPriorityMinorSellerInputs({
+  String seller = 'minorM',
+  String buyerA = 'gpHigh',
+  String buyerB = 'gpLow',
+  String commodity = 'timber',
+  int qty = 5,
+  int priority = 1,
+  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller =
+      const {},
+  List<TradeOrder>? extraOffers,
+}) =>
+    matcherInputs(
+      offersByFactionId: {
+        seller: [
+          ...(extraOffers ?? [matcherOffer(commodity, qty, priority: priority)]),
+        ],
+      },
+      bidsByFactionId: {
+        buyerA: [matcherBid(commodity, qty, priority: priority)],
+        buyerB: [matcherBid(commodity, qty, priority: priority)],
+      },
+      tradeCapacityByFactionId: {buyerA: 100, buyerB: 100},
+      sellPriorityRelationByMinorTribeSeller:
+          sellPriorityRelationByMinorTribeSeller,
+    );
+
+/// Compact row builder for sell-priority relation tiebreaker suites (Refs #3939 slice 41).
+DealMatcherScenario sellPriorityMinorSellerRow({
+  required String label,
+  required DealMatchExpectation expect,
+  String seller = 'minorM',
+  String buyerA = 'gpHigh',
+  String buyerB = 'gpLow',
+  String commodity = 'timber',
+  int qty = 5,
+  int priority = 1,
+  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller =
+      const {},
+  List<TradeOrder>? extraOffers,
+  String? refs = '#3753',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: sellPriorityMinorSellerInputs(
+        seller: seller,
+        buyerA: buyerA,
+        buyerB: buyerB,
+        commodity: commodity,
+        qty: qty,
+        priority: priority,
+        sellPriorityRelationByMinorTribeSeller:
+            sellPriorityRelationByMinorTribeSeller,
+        extraOffers: extraOffers,
+      ),
+      expect: expect,
+      refs: refs,
+    );
+
+/// FTP tier inputs with paired low/FTP sellers and buyers (Refs #3939 slice 41).
+DealMatchInputs matcherFtpTierInputs({
+  String sellerLow = 'sellerLow',
+  String sellerFtp = 'sellerFtp',
+  String buyerLow = 'buyerLow',
+  String buyerFtp = 'buyerFtp',
+  String commodity = 'timber',
+  int qty = 10,
+  int lowPriority = 1,
+  int ftpPriority = 2,
+  Set<String>? ftpPairKeys,
+}) =>
+    matcherInputs(
+      offersByFactionId: {
+        sellerLow: [matcherOffer(commodity, qty, priority: lowPriority)],
+        sellerFtp: [matcherOffer(commodity, qty, priority: ftpPriority)],
+      },
+      bidsByFactionId: {
+        buyerLow: [matcherBid(commodity, qty, priority: lowPriority)],
+        buyerFtp: [matcherBid(commodity, qty, priority: ftpPriority)],
+      },
+      tradeCapacityByFactionId: {buyerLow: 100, buyerFtp: 100},
+      ftpPairKeys: ftpPairKeys ??
+          {DealMatcher.pairKey(sellerFtp, buyerFtp)},
+    );
+
+/// Two-buyer FRR routing inputs with owning GP at higher priority (Refs #3939 slice 41).
+DealMatchInputs frrTwoBuyerRivalInputs({
+  required Map<String, List<TradeOrder>> offersByFactionId,
+  String gpOwner = 'gpA',
+  String gpRival = 'gpB',
+  String commodity = 'timber',
+  int qty = 10,
+  int ownerBidPriority = 5,
+  int rivalBidPriority = 1,
+  PurchasedTileIndex? purchasedTileIndex,
+}) =>
+    matcherInputs(
+      offersByFactionId: offersByFactionId,
+      bidsByFactionId: {
+        gpOwner: [matcherBid(commodity, qty, priority: ownerBidPriority)],
+        gpRival: [matcherBid(commodity, qty, priority: rivalBidPriority)],
+      },
+      tradeCapacityByFactionId: {gpOwner: 100, gpRival: 100},
+      purchasedTileIndex: purchasedTileIndex,
+    );
+
+/// FRR disabled: rival lower-priority bid wins standard matching (Refs #3939 slice 41).
+DealMatcherScenario frrNoFrrFallbackRow({
+  required String label,
+  required Map<String, List<TradeOrder>> offersByFactionId,
+  PurchasedTileIndex? purchasedTileIndex,
+  String? refs = '#2992',
+}) =>
+    DealMatcherScenario.expect(
+      label: label,
+      inputs: frrTwoBuyerRivalInputs(
+        offersByFactionId: offersByFactionId,
+        purchasedTileIndex: purchasedTileIndex,
+      ),
+      expect: const DealMatchExpectation(
+        filledDealsLength: 1,
+        firstFilledDeal: FilledDealExpectation(
+          buyerFactionId: 'gpB',
+          isFirstRightOfRefusalMatch: false,
+        ),
+      ),
+      refs: refs,
+    );

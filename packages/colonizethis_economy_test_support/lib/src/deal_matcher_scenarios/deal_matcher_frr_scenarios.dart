@@ -79,74 +79,29 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
     ),
     refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  frrNoFrrFallbackRow(
     label: 'offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'sellerX': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 5)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'sellerX': [matcherOffer('timber', 10)],
+    },
+    purchasedTileIndex: frrMatcherTestIndex(),
   ),
-  DealMatcherScenario.expect(
+  frrNoFrrFallbackRow(
     label: 'offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M2': [
-          matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
-        ],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 5)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'M2': [
+        matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
+      ],
+    },
+    purchasedTileIndex: frrMatcherTestIndex(),
   ),
-  DealMatcherScenario.expect(
+  frrNoFrrFallbackRow(
     label: 'null purchasedTileIndex disables FRR (legacy behavior preserved)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [matcherOffer('timber', 10, originTileKey: _frrTileKey)],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 5)],
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-    ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        isFirstRightOfRefusalMatch: false,
-      ),
-    ),
-    refs: '#2992',
+    offersByFactionId: {
+      'M1': [matcherOffer('timber', 10, originTileKey: _frrTileKey)],
+    },
   ),
 ];
 
