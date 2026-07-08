@@ -1,10 +1,11 @@
-// Table-driven TradeOrderSuggester scenarios (Refs #3856).
+// Table-driven TradeOrderSuggester scenarios (Refs #3856, #3939 phase 3 slice 14).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'trade_order_suggester_expectations.dart';
 import 'trade_order_suggester_test_support.dart';
 
 /// One row in a TradeOrderSuggester scenario table.
@@ -15,6 +16,19 @@ class TradeOrderSuggesterScenario {
     required this.verify,
     this.refs,
   });
+
+  TradeOrderSuggesterScenario.expect({
+    required String label,
+    required TradeSuggestionContext Function() buildContext,
+    required SuggesterExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          buildContext: buildContext,
+          verify: (context, result) =>
+              assertSuggesterExpectation(context, result, expect),
+          refs: refs,
+        );
 
   final String label;
   final TradeSuggestionContext Function() buildContext;
@@ -35,74 +49,78 @@ void runTradeOrderSuggesterScenario(TradeOrderSuggesterScenario scenario) {
 /// Empty / defensive-path scenarios from `world_market_trade_order_suggester_test.dart`.
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterEmptyDefensiveScenarios() =>
     [
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'empty context returns empty result',
         buildContext: suggesterCtx,
-        verify: (context, result) {
-          expect(result.isEmpty, isTrue);
-          expect(result.offers, isEmpty);
-          expect(result.bids, isEmpty);
-        },
+        expect: const SuggesterExpectation(
+          isEmpty: true,
+          offersEmpty: true,
+          bidsEmpty: true,
+        ),
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'negative tradeCargoCapacity returns empty result',
         buildContext: () => suggesterCtx(
           tradeCargoCapacity: -1,
           availableStockpileByCommodityId: {'timber': 10},
           commodityNeedByCommodityId: {'iron': 10},
         ),
-        verify: (context, result) {
-          expect(result.isEmpty, isTrue);
-        },
+        expect: const SuggesterExpectation(isEmpty: true),
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label:
             'negative entries in available/need maps are silently dropped (no throw)',
         buildContext: () => suggesterCtx(
           availableStockpileByCommodityId: {'timber': -5, 'iron': 10},
           commodityNeedByCommodityId: {'coal': -3, 'wool': 4},
         ),
-        verify: (context, result) {
-          expect(result.offers, hasLength(1));
-          expect(result.offers.single.commodityId, 'iron');
-          expect(result.bids, hasLength(1));
-          expect(result.bids.single.commodityId, 'wool');
-        },
+        expect: const SuggesterExpectation(
+          offersLength: 1,
+          bidsLength: 1,
+          offerCommodityIds: ['iron'],
+          bidCommodityIds: ['wool'],
+        ),
       ),
     ];
 
 /// Surplus-offer detection scenarios.
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterSurplusOfferScenarios() =>
     [
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label:
             'positive available stockpile produces an offer with that quantity',
         buildContext: () =>
             suggesterCtx(availableStockpileByCommodityId: {'timber': 12}),
-        verify: (context, result) {
-          expect(result.offers, hasLength(1));
-          final offer = result.offers.single;
-          expect(offer.commodityId, 'timber');
-          expect(offer.type, TradeOrderType.offer);
-          expect(offer.quantity, 12);
-          expect(offer.priority, TradeSuggestionContext.defaultOfferPriority);
-          expect(offer.isFtp, isFalse);
-          expect(result.bids, isEmpty);
-        },
+        expect: const SuggesterExpectation(
+          offersLength: 1,
+          bidsEmpty: true,
+          singleOffer: (
+            commodityId: 'timber',
+            quantity: 12,
+            type: TradeOrderType.offer,
+            priority: TradeSuggestionContext.defaultOfferPriority,
+            isFtp: false,
+          ),
+        ),
         refs: '#2989',
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'zero / missing available is not offered',
         buildContext: () => suggesterCtx(
           availableStockpileByCommodityId: {'timber': 0, 'iron': 5},
         ),
-        verify: (context, result) {
-          expect(result.offers, hasLength(1));
-          expect(result.offers.single.commodityId, 'iron');
-          expect(result.offers.single.quantity, 5);
-        },
+        expect: const SuggesterExpectation(
+          offersLength: 1,
+          singleOffer: (
+            commodityId: 'iron',
+            quantity: 5,
+            type: null,
+            priority: null,
+            isFtp: null,
+          ),
+        ),
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'riches commodities are excluded from offers',
         buildContext: () => suggesterCtx(
           availableStockpileByCommodityId: {
@@ -111,12 +129,12 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterSurplusOfferScenarios() =>
             'timber': 10,
           },
         ),
-        verify: (context, result) {
-          expect(result.offers, hasLength(1));
-          expect(result.offers.single.commodityId, 'timber');
-        },
+        expect: const SuggesterExpectation(
+          offersLength: 1,
+          offerCommodityIds: ['timber'],
+        ),
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'offers iterate in alphabetical commodity id order (determinism)',
         buildContext: () => suggesterCtx(
           availableStockpileByCommodityId: {
@@ -126,36 +144,32 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterSurplusOfferScenarios() =>
             'timber': 1,
           },
         ),
-        verify: (context, result) {
-          expect(result.offers.map((o) => o.commodityId).toList(), [
-            'coal',
-            'iron',
-            'timber',
-            'wool',
-          ]);
-        },
+        expect: const SuggesterExpectation(
+          offerCommodityIds: ['coal', 'iron', 'timber', 'wool'],
+        ),
       ),
     ];
 
 /// Deficit-bid detection scenarios.
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterDeficitBidScenarios() => [
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'positive need with zero stockpile produces a bid with that quantity',
     buildContext: () =>
         suggesterCtx(commodityNeedByCommodityId: {'timber': 8}),
-    verify: (context, result) {
-      expect(result.bids, hasLength(1));
-      final bid = result.bids.single;
-      expect(bid.commodityId, 'timber');
-      expect(bid.type, TradeOrderType.bid);
-      expect(bid.quantity, 8);
-      expect(bid.priority, TradeSuggestionContext.defaultBidPriority);
-      expect(bid.isFtp, isFalse);
-      expect(result.offers, isEmpty);
-    },
+    expect: const SuggesterExpectation(
+      bidsLength: 1,
+      offersEmpty: true,
+      singleBid: (
+        commodityId: 'timber',
+        quantity: 8,
+        type: TradeOrderType.bid,
+        priority: TradeSuggestionContext.defaultBidPriority,
+        isFtp: false,
+      ),
+    ),
     refs: '#2989',
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label:
         'mutual-exclusion at suggestion time: same commodity with stockpile=5 '
         'and need=9 produces a deficit bid of 4 only (no offer)',
@@ -163,41 +177,51 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterDeficitBidScenarios() => [
       availableStockpileByCommodityId: {'timber': 5},
       commodityNeedByCommodityId: {'timber': 9},
     ),
-    verify: (context, result) {
-      expect(result.offers, isEmpty);
-      expect(result.bids, hasLength(1));
-      expect(result.bids.single.commodityId, 'timber');
-      expect(result.bids.single.quantity, 4);
-    },
+    expect: const SuggesterExpectation(
+      offersEmpty: true,
+      bidsLength: 1,
+      singleBid: (
+        commodityId: 'timber',
+        quantity: 4,
+        type: null,
+        priority: null,
+        isFtp: null,
+      ),
+    ),
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'riches commodities are excluded from bids even when needed',
     buildContext: () => suggesterCtx(
       commodityNeedByCommodityId: {'gems': 5, 'gold': 5, 'timber': 4},
     ),
-    verify: (context, result) {
-      expect(result.bids, hasLength(1));
-      expect(result.bids.single.commodityId, 'timber');
-      expect(result.bids.single.quantity, 4);
-    },
+    expect: const SuggesterExpectation(
+      bidsLength: 1,
+      singleBid: (
+        commodityId: 'timber',
+        quantity: 4,
+        type: null,
+        priority: null,
+        isFtp: null,
+      ),
+    ),
   ),
 ];
 
 /// Bid type cap (rule 4) scenarios.
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterBidTypeCapScenarios() => [
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'bidTypeCap=0 suppresses every bid',
     buildContext: () => suggesterCtx(
       bidTypeCap: 0,
       commodityNeedByCommodityId: {'timber': 4, 'iron': 3},
     ),
-    verify: (context, result) {
-      expect(result.bids, isEmpty);
-      expect(result.offers, isEmpty);
-    },
+    expect: const SuggesterExpectation(
+      bidsEmpty: true,
+      offersEmpty: true,
+    ),
     refs: '#2989',
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'bidTypeCap=3 admits the first three alphabetical commodities only',
     buildContext: () => suggesterCtx(
       commodityNeedByCommodityId: {
@@ -207,18 +231,12 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterBidTypeCapScenarios() => [
         'iron': 5,
       },
     ),
-    verify: (context, result) {
-      expect(
-        result.bids.map((b) => b.commodityId).toList(),
-        ['coal', 'iron', 'timber'],
-        reason:
-            'Alphabetical iteration + cap-of-3 keeps coal/iron/timber and '
-            'drops wool deterministically.',
-      );
-    },
+    expect: const SuggesterExpectation(
+      bidCommodityIds: ['coal', 'iron', 'timber'],
+    ),
     refs: '#2989',
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'bidTypeCap=6 admits up to six distinct commodities',
     buildContext: () => suggesterCtx(
       bidTypeCap: 6,
@@ -232,69 +250,68 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterBidTypeCapScenarios() => [
         'timber': 1,
       },
     ),
-    verify: (context, result) {
-      expect(result.bids, hasLength(6));
-      expect(result.bids.map((b) => b.commodityId).toList(), [
+    expect: const SuggesterExpectation(
+      bidsLength: 6,
+      bidCommodityIds: [
         'cattle',
         'coal',
         'cotton',
         'grain',
         'hides',
         'iron',
-      ]);
-    },
+      ],
+    ),
     refs: '#2989',
   ),
 ];
 
 /// Cumulative cargo cap (rule 5) scenarios.
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterCargoCapScenarios() => [
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'cargo budget is consumed across distinct bids (per-buyer total)',
     buildContext: () => suggesterCtx(
       tradeCargoCapacity: 6,
       commodityNeedByCommodityId: {'coal': 4, 'iron': 5},
     ),
-    verify: (context, result) {
-      expect(result.bids, hasLength(2));
-      expect(result.bids[0].commodityId, 'coal');
-      expect(result.bids[0].quantity, 4);
-      expect(result.bids[1].commodityId, 'iron');
-      expect(
-        result.bids[1].quantity,
-        2,
-        reason: 'iron is partial-capped by remaining cargo (6 - 4 = 2).',
-      );
-    },
+    expect: const SuggesterExpectation(
+      bidQuantities: [
+        (commodityId: 'coal', quantity: 4),
+        (commodityId: 'iron', quantity: 2),
+      ],
+    ),
     refs: '#2989',
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'per-commodity bid never exceeds tradeCargoCapacity',
     buildContext: () => suggesterCtx(
       tradeCargoCapacity: 10,
       commodityNeedByCommodityId: {'timber': 999},
     ),
-    verify: (context, result) {
-      expect(result.bids, hasLength(1));
-      expect(result.bids.single.quantity, 10);
-    },
+    expect: const SuggesterExpectation(
+      bidsLength: 1,
+      singleBid: (
+        commodityId: 'timber',
+        quantity: 10,
+        type: null,
+        priority: null,
+        isFtp: null,
+      ),
+    ),
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label: 'zero cargo budget suppresses bids entirely',
     buildContext: () => suggesterCtx(
       tradeCargoCapacity: 0,
       commodityNeedByCommodityId: {'timber': 5},
     ),
-    verify: (context, result) {
-      expect(result.bids, isEmpty);
-    },
+    expect: const SuggesterExpectation(bidsEmpty: true),
   ),
 ];
 
 /// Validator-clean-by-construction scenarios.
 List<TradeOrderSuggesterScenario>
 tradeOrderSuggesterValidatorCleanScenarios() => [
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label:
         'every suggested order is accepted by TradeOrderValidator.validate',
     buildContext: () => suggesterCtx(
@@ -303,29 +320,13 @@ tradeOrderSuggesterValidatorCleanScenarios() => [
       availableStockpileByCommodityId: {'timber': 10, 'wool': 0},
       commodityNeedByCommodityId: {'coal': 5, 'iron': 7, 'wool': 4},
     ),
-    verify: (context, result) {
-      expect(result.offers, isNotEmpty);
-      expect(result.bids, isNotEmpty);
-      final all = <TradeOrder>[...result.offers, ...result.bids];
-      final validatorResults = TradeOrderValidator.validate(
-        context: TradeOrderValidationContext(
-          playerId: context.playerId,
-          bidTypeCap: context.bidTypeCap,
-          tradeCargoCapacity: context.tradeCargoCapacity,
-          availableStockpileByCommodityId:
-              context.availableStockpileByCommodityId,
-          treasuryBudgetForBids: context.treasuryBudgetForBids,
-          worldMarketState: context.worldMarketState,
-          resourceRules: context.resourceRules ?? ResourceRules.defaultRules,
-        ),
-        proposedOrders: all,
-      );
-      for (final r in validatorResults) {
-        expect(r.isAccepted, isTrue, reason: r.reason);
-      }
-    },
+    expect: const SuggesterExpectation(
+      offersNotEmpty: true,
+      bidsNotEmpty: true,
+      validatorAllAccepted: true,
+    ),
   ),
-  TradeOrderSuggesterScenario(
+  TradeOrderSuggesterScenario.expect(
     label:
         'mixed surplus/deficit submission produces no commodity in both lists',
     buildContext: () => suggesterCtx(
@@ -336,13 +337,11 @@ tradeOrderSuggesterValidatorCleanScenarios() => [
         'iron': 4,
       },
     ),
-    verify: (context, result) {
-      final offerIds = result.offers.map((o) => o.commodityId).toSet();
-      final bidIds = result.bids.map((b) => b.commodityId).toSet();
-      expect(offerIds.intersection(bidIds), isEmpty);
-      expect(offerIds, contains('timber'));
-      expect(bidIds, containsAll(<String>{'wool', 'iron'}));
-    },
+    expect: const SuggesterExpectation(
+      offerBidDisjoint: true,
+      offersContain: {'timber'},
+      bidsContainAll: {'wool', 'iron'},
+    ),
   ),
 ];
 
@@ -350,7 +349,7 @@ tradeOrderSuggesterValidatorCleanScenarios() => [
 /// `world_market_trade_order_suggester_treasury_test.dart` (Refs #3123).
 List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() =>
     [
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'treasury budget is consumed across distinct bids in id order',
         buildContext: () => suggesterCtx(
           bidTypeCap: 6,
@@ -366,14 +365,19 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() =>
             CommodityCatalog.timber.id: 5,
           },
         ),
-        verify: (context, result) {
-          expect(result.bids, hasLength(1));
-          expect(result.bids.single.commodityId, CommodityCatalog.iron.id);
-          expect(result.bids.single.quantity, 3);
-        },
+        expect: const SuggesterExpectation(
+          bidsLength: 1,
+          singleBid: (
+            commodityId: 'iron',
+            quantity: 3,
+            type: null,
+            priority: null,
+            isFtp: null,
+          ),
+        ),
         refs: '#3123',
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'single bid is partial-capped by treasury',
         buildContext: () => suggesterCtx(
           treasuryBudgetForBids: 90,
@@ -382,12 +386,18 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() =>
           ),
           commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
         ),
-        verify: (context, result) {
-          expect(result.bids.single.quantity, 3);
-        },
+        expect: const SuggesterExpectation(
+          singleBid: (
+            commodityId: 'timber',
+            quantity: 3,
+            type: null,
+            priority: null,
+            isFtp: null,
+          ),
+        ),
         refs: '#3123',
       ),
-      TradeOrderSuggesterScenario(
+      TradeOrderSuggesterScenario.expect(
         label: 'zero treasury budget suppresses bids entirely',
         buildContext: () => suggesterCtx(
           treasuryBudgetForBids: 0,
@@ -396,9 +406,7 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() =>
           ),
           commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
         ),
-        verify: (context, result) {
-          expect(result.bids, isEmpty);
-        },
+        expect: const SuggesterExpectation(bidsEmpty: true),
         refs: '#3123',
       ),
     ];

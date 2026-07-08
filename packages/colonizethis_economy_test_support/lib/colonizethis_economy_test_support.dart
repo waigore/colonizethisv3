@@ -41,6 +41,7 @@ export 'src/trade_interception_scenarios.dart';
 export 'src/worker_action_cost_scenarios.dart';
 export 'src/trade_order_admission_scenarios.dart';
 export 'src/trade_order_factory.dart';
+export 'src/trade_order_suggester_expectations.dart';
 export 'src/trade_order_suggester_scenarios.dart';
 export 'src/trade_order_suggester_test_support.dart';
 export 'src/validator_scenarios/validator_scenarios.dart';

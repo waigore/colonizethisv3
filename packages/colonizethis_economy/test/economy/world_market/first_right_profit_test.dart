@@ -25,7 +25,7 @@ void main() {
   });
 
   group('computeFirstRightProfitRate (#3753 R8.2 — full relation-linear)', () {
-    for (final scenario in firstRightProfitRateScenarios) {
+    for (final scenario in firstRightProfitRateScenarios()) {
       test(scenario.label, () {
         runFirstRightProfitRateScenario(scenario);
       });
@@ -43,7 +43,7 @@ void main() {
   });
 
   group('computeFirstRightProfit (#2992 D3 + D4 helper)', () {
-    for (final scenario in firstRightProfitScenarios) {
+    for (final scenario in firstRightProfitScenarios()) {
       test(scenario.label, () {
         runFirstRightProfitScenario(scenario);
       });
@@ -80,7 +80,7 @@ void main() {
   });
 
   group('computeEmbassyKickback (#3753 R8.3 — 10% of relation portion)', () {
-    for (final scenario in embassyKickbackScenarios) {
+    for (final scenario in embassyKickbackScenarios()) {
       test(scenario.label, () {
         runEmbassyKickbackScenario(scenario);
       });

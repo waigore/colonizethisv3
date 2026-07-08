@@ -546,3 +546,14 @@ test_support LOC: **12,927** (net +303 vs slice 11 — three expectation helper 
 
 test_support LOC: **13,133** (net +206 vs slice 12 — `treasury_expectations.dart` module added; treasury UI/carry-forward/GP-credit inline-verify bodies reduced; further validator/FRR-profit scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 14+).
 
+## Phase 3 — Slice 14 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-profit-expectations | `FrrProfitRateExpectation`, `FrrProfitExpectation`, `EmbassyKickbackExpectation` data-driven assertions | `frr_scenarios/frr_profit_expectations.dart` | #3939 |
+| frr-profit-compaction | migrated rate/profit/embassy-kickback scenario rows to `.expect` constructors | `frr_scenarios/first_right_profit_scenarios.dart` | #3753, #2992, #3939 |
+| suggester-expectations | `SuggesterExpectation` + `TradeOrderSuggesterScenario.expect` data-driven assertions | `trade_order_suggester_expectations.dart` | #3939 |
+| suggester-compaction | migrated all 21 TradeOrderSuggester inline-verify rows to `.expect` | `trade_order_suggester_scenarios.dart` | #2989, #3123, #3939 |
+
+test_support LOC: **13,418** (net +285 vs slice 13 — two expectation helper modules added; FRR-profit and suggester inline-verify bodies reduced; boycott/lock-recovery compaction and ≥20% test_support reduction (≤8,200) deferred to slice 15+).
+
