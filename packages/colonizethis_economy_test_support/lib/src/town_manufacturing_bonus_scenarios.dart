@@ -183,11 +183,9 @@ TileMapResult _gpTimberTileMap() => TileMapResult(
     );
 
 Game _gpTownTimberGame() => TestFixtures.minimalGame(
-      players: const [
-        Player(
-          id: 'pl1',
-          displayName: 'Spain',
-          isHuman: true,
+      players: [
+        spainPl1Player(
+          techUnlocked: {kTechIdCircularSaw: true},
           capitalProvinceId: _gpProvinceId,
           capitalTile: CapitalTile(
             regionId: _ow,
@@ -195,7 +193,6 @@ Game _gpTownTimberGame() => TestFixtures.minimalGame(
             x: 0,
             y: 0,
           ),
-          techUnlocked: {kTechIdCircularSaw: true},
         ),
       ],
       capitalTileGrainBonusPerTurn: 0,

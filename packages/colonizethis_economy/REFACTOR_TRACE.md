@@ -998,3 +998,15 @@ test_support LOC: **16,820** (net −43 vs slice 49 — positional tile-imp DSL 
 
 test_support LOC: **16,710** (net −110 vs slice 50 — FRR one-shot inlining + extractor runner dedup + validator row builders). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 52+.
 
+## Phase 3 — Slice 52 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|---------------|------|
+| connectivity-by-faction | Shared `connectivityByFaction` replaces duplicate `_conn` in non-GP extraction/auto-offers | `extraction_fixture_support.dart`, `non_gp_{extraction,auto_offers}_scenarios.dart` | #2991, #3939 |
+| spain-pl1-player | `spainPl1Player` shared GP fixture across extractor/town-bonus/tile-contribution builders | `extraction_fixture_support.dart`, `resource_extractor_scenarios.dart`, `town_manufacturing_bonus_scenarios.dart`, `tile_extraction_contribution_expectations.dart` | #3661, #3939 |
+| auto-offer-tileImps | Drop local `_impSpecs` / `_owMap`; use `tileImps` + `tileMapAllInProvinceForNonGpExtractionTest` | `non_gp_auto_offers_scenarios.dart` | #2991 C4/C6, #3939 |
+| ftp-tier-inline | Inline one-shot `matcherFtpTierInputs` into priority FTP row | `deal_matcher_priority_scenarios.dart`, `deal_matcher_test_support.dart` | #2989, #3939 |
+| treasury-ui-row | `treasuryUiCompositionRow` compact five UI composition rows | `treasury_available_scenarios.dart` | #3093, #3939 |
+
+test_support LOC: **16,622** (net −88 vs slice 51 — shared connectivity/player fixtures + auto-offer/FTP/treasury UI compaction). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 53+.
+

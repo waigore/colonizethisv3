@@ -38,24 +38,12 @@ Map<String, TileMapResult> tileMapByRegionForResource(
 
 /// Connected tile with no matching province row (world-model defensive path).
 Game provinceMissingExtractorGame({required TileMapState tileState}) {
-  final player = Player(
-    id: 'pl1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
     oldWorld: const RegionData(provinces: []),
     tileState: tileState,
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
@@ -143,6 +131,37 @@ Map<String, ConnectivityResult> connectivityFor(
   ),
 };
 
+/// Multi-faction `{factionId: ConnectivityResult(connected: …)}` map
+/// (Refs #3939 slice 52).
+Map<String, ConnectivityResult> connectivityByFaction(
+  Map<String, Set<String>> byFaction,
+) => {
+      for (final e in byFaction.entries)
+        e.key: ConnectivityResult(connected: e.value),
+    };
+
+/// Canonical GP player `pl1` / "Spain" with oldWorld|p1 capital
+/// (Refs #3939 slice 52).
+Player spainPl1Player({
+  Map<String, bool>? techUnlocked,
+  String capitalProvinceId = 'oldWorld|p1',
+  CapitalTile? capitalTile,
+}) =>
+    Player(
+      id: 'pl1',
+      displayName: 'Spain',
+      isHuman: true,
+      capitalProvinceId: capitalProvinceId,
+      capitalTile: capitalTile ??
+          const CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'oldWorld|p1',
+            x: 0,
+            y: 0,
+          ),
+      techUnlocked: techUnlocked,
+    );
+
 /// A capital-province row with sane defaults for non-GP extraction tests.
 Province capitalProvinceForNonGpExtractionTest({
   required String provinceId,
@@ -229,19 +248,7 @@ Game resourceExtractorGame({
   Map<String, Set<String>>? playerProspectedTiles,
   String playerId = 'pl1',
 }) {
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-    techUnlocked: techUnlocked,
-  );
+  assert(playerId == 'pl1', 'resourceExtractorGame uses spainPl1Player');
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -257,7 +264,7 @@ Game resourceExtractorGame({
     ),
     tileState: tileState,
     playerProspectedTiles: playerProspectedTiles,
-    players: [player],
+    players: [spainPl1Player(techUnlocked: techUnlocked)],
   );
 }
 
@@ -272,18 +279,7 @@ Game townRuleTwoProvinceExtractorGame({
   String playerId = 'pl1',
 }) {
   const regionId = 'oldWorld';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: '$regionId|p1',
-    capitalTile: const CapitalTile(
-      regionId: regionId,
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
+  assert(playerId == 'pl1', 'townRuleTwoProvinceExtractorGame uses spainPl1Player');
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -307,7 +303,7 @@ Game townRuleTwoProvinceExtractorGame({
     ),
     tileState: tileState,
     portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
@@ -317,18 +313,6 @@ Game overseasResourceExtractorGame({
   required TileMapState tileState,
 }) {
   const playerId = 'pl1';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return TestFixtures.minimalGame(
     id: 'g1',
     capitalTileGrainBonusPerTurn: 0,
@@ -348,7 +332,7 @@ Game overseasResourceExtractorGame({
       ],
     ),
     tileState: tileState,
-    players: [player],
+    players: [spainPl1Player()],
   );
 }
 
@@ -445,10 +429,7 @@ Game overseasResourceExtractorGame({
     tileState: tileState,
     portsByProvinceSeaboard: ports,
     players: [
-      Player(
-        id: 'pl1',
-        displayName: 'Spain',
-        isHuman: true,
+      spainPl1Player(
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       ),

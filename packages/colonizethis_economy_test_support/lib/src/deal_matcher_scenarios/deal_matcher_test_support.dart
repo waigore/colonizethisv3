@@ -1,7 +1,6 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show
         DealMatchInputs,
-        DealMatcher,
         PurchasedTileAttribution,
         PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -202,32 +201,6 @@ DealMatcherScenario sellPriorityMinorSellerRow({
       ),
       expect: expect,
       refs: refs,
-    );
-
-/// FTP tier inputs with paired low/FTP sellers and buyers (Refs #3939 slice 41).
-DealMatchInputs matcherFtpTierInputs({
-  String sellerLow = 'sellerLow',
-  String sellerFtp = 'sellerFtp',
-  String buyerLow = 'buyerLow',
-  String buyerFtp = 'buyerFtp',
-  String commodity = 'timber',
-  int qty = 10,
-  int lowPriority = 1,
-  int ftpPriority = 2,
-  Set<String>? ftpPairKeys,
-}) =>
-    matcherInputs(
-      offersByFactionId: {
-        sellerLow: [matcherOffer(commodity, qty, priority: lowPriority)],
-        sellerFtp: [matcherOffer(commodity, qty, priority: ftpPriority)],
-      },
-      bidsByFactionId: {
-        buyerLow: [matcherBid(commodity, qty, priority: lowPriority)],
-        buyerFtp: [matcherBid(commodity, qty, priority: ftpPriority)],
-      },
-      tradeCapacityByFactionId: {buyerLow: 100, buyerFtp: 100},
-      ftpPairKeys: ftpPairKeys ??
-          {DealMatcher.pairKey(sellerFtp, buyerFtp)},
     );
 
 /// Two-buyer FRR routing inputs with owning GP at higher priority (Refs #3939 slice 41).

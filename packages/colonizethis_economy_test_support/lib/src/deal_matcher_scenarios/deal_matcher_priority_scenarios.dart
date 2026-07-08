@@ -11,7 +11,18 @@ import 'deal_matcher_test_support.dart';
 List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
   DealMatcherScenario.expect(
     label: 'priority integer absolutely beats FTP across tiers',
-    inputs: matcherFtpTierInputs(),
+    inputs: matcherInputs(
+      offersByFactionId: {
+        'sellerLow': [matcherOffer('timber', 10, priority: 1)],
+        'sellerFtp': [matcherOffer('timber', 10, priority: 2)],
+      },
+      bidsByFactionId: {
+        'buyerLow': [matcherBid('timber', 10, priority: 1)],
+        'buyerFtp': [matcherBid('timber', 10, priority: 2)],
+      },
+      tradeCapacityByFactionId: const {'buyerLow': 100, 'buyerFtp': 100},
+      ftpPairKeys: {DealMatcher.pairKey('sellerFtp', 'buyerFtp')},
+    ),
     expect: const DealMatchExpectation(
       filledDealExpectations: [
         FilledDealExpectation(buyerFactionId: 'buyerLow', isFtpMatch: false),

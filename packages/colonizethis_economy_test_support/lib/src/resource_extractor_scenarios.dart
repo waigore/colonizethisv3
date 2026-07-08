@@ -484,19 +484,6 @@ ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
 
 /// Capital grain bonus from `resource_extractor_part2_part2_test.dart`.
 ResourceExtractorScenario capitalGrainBonusScenario() {
-  const playerId = 'pl1';
-  final player = Player(
-    id: playerId,
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|p1',
-    capitalTile: const CapitalTile(
-      regionId: 'oldWorld',
-      provinceId: 'oldWorld|p1',
-      x: 0,
-      y: 0,
-    ),
-  );
   return ResourceExtractorScenario.expect(
     label: 'capital tile grain bonus is unconditional on connectivity',
     tileMapByRegion: const {},
@@ -509,12 +496,12 @@ ResourceExtractorScenario capitalGrainBonusScenario() {
           Province(
             id: 'oldWorld|p1',
             regionId: 'oldWorld',
-            ownerId: playerId,
+            ownerId: 'pl1',
             townDevelopmentLevel: 4,
           ),
         ],
       ),
-      players: [player],
+      players: [spainPl1Player()],
     ),
     connectivityByPlayer: connectivityFor(const {}),
     expect: const ResourceExtractorExpectation(

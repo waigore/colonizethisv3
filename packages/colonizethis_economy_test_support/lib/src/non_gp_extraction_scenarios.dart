@@ -66,11 +66,6 @@ TileMapResult _provMap(
       resources: resources,
     );
 
-Map<String, ConnectivityResult> _conn(Map<String, Set<String>> byFaction) => {
-      for (final e in byFaction.entries)
-        e.key: ConnectivityResult(connected: e.value),
-    };
-
 /// Compact [NonGpExtractionScenario.expect] for minor `m1` OW cases.
 NonGpExtractionScenario nonGpMinorRow({
   required String label,
@@ -101,7 +96,7 @@ NonGpExtractionScenario nonGpMinorRow({
     tileMapByRegion: {
       'oldWorld': _provMap(provinceId, width, height, resources),
     },
-    connectivityByFactionId: _conn({'m1': connected}),
+    connectivityByFactionId: connectivityByFaction({'m1': connected}),
     expect: expect,
     refs: refs,
   );
@@ -159,7 +154,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
             [null, Resource.grain],
           ]),
         },
-        connectivityByFactionId: _conn({
+        connectivityByFactionId: connectivityByFaction({
           't1': {'newWorld|t1|1|0', 'newWorld|t1|1|1'},
         }),
         expect: const NonGpExtractionExpectation(
@@ -223,7 +218,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
           minorNations: [testMinor()],
         ),
         tileMapByRegion: const <String, TileMapResult>{},
-        connectivityByFactionId: _conn({
+        connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|1|0'},
         }),
         expect: const NonGpExtractionExpectation(empty: true),
@@ -244,7 +239,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
             [Resource.grain],
           ]),
         },
-        connectivityByFactionId: _conn({
+        connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|0|0'},
           'm2': {'oldWorld|m2|0|0'},
         }),
@@ -312,7 +307,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
             [Resource.furs],
           ]),
         },
-        connectivityByFactionId: _conn({
+        connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|0|0'},
           't1': {'newWorld|t1|0|0'},
         }),
