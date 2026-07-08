@@ -17,7 +17,7 @@ import 'resource_extractor_expectations.dart';
 class ResourceExtractorScenario {
   const ResourceExtractorScenario({
     required this.label,
-    required this.verify,
+    this.verify = _noopResourceExtractorVerify,
     this.tileMap,
     this.tileMapByRegion,
     this.grid,
@@ -112,6 +112,8 @@ class ResourceExtractorScenario {
   final void Function(Map<String, ExtractionTotals> result) verify;
   final String? refs;
 }
+
+void _noopResourceExtractorVerify(Map<String, ExtractionTotals> _) {}
 
 /// Issue #3836 DSL entry point — builds a [ResourceExtractorScenario] from
 /// grid/improvement inputs and a land-bucket expectation map.
@@ -532,7 +534,6 @@ ResourceExtractorScenario resourceExtractorPlayerTechCapScenario({
       techCapComparisonPin: const TechCapComparisonPin(
         capsAndExpectedGrain: [(2, 2), (3, 3)],
       ),
-      verify: (_) {},
     );
 
 /// Capital grain bonus from `resource_extractor_part2_part2_test.dart`.
@@ -591,7 +592,6 @@ ResourceExtractorScenario blockadedOverseasPortScenario() {
         'pl1': {'newWorld|n1'},
       },
     ),
-    verify: (_) {},
     refs: '#3939',
   );
 }

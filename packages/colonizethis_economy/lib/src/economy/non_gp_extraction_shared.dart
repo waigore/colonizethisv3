@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'tile_extraction_pipeline.dart';
+import 'town_connected_tile_walk.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 
 /// Shared per-faction / per-tile traversal helpers for the non-Great-Power
@@ -107,7 +108,7 @@ void forEachNonGpTileContribution({
     sorted: sortTileKeys,
   );
   for (final tileKey in tileKeys) {
-    final contribution = _computeNonGpTileContribution(
+    final contribution = computeNonGpTileContribution(
       game: game,
       tileMapByRegion: tileMapByRegion,
       factionCapitalProvinceId: capitalProvinceId,
@@ -138,7 +139,51 @@ void forEachNonGpTileContribution({
 /// byte-for-byte so that minors and tribes whose capital province has a
 /// non-default town-development level are extracted with the same
 /// town-development semantics as Great Powers.
-NonGpTileContribution? _computeNonGpTileContribution({
+/// Walks town-connected tiles in [provinceId] for a non-GP faction and invokes
+/// [onContribution] for each tile that yields units. Shared by town manufacturing
+/// bonus extraction and non-GP extraction/auto-offers paths (Refs #3939).
+void forEachTownConnectedNonGpTileContributionInProvince({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required String ownerId,
+  required Province province,
+  required Set<String> townConnected,
+  required ConnectivityResult connectivity,
+  required Map<String, Province> provincesByFullId,
+  required Set<String> portTileKeys,
+  required void Function(NonGpTileContribution contribution) onContribution,
+}) {
+  final capitalProvinceId = capitalProvinceIdForFaction(game, ownerId);
+  final capitalRegionId = capitalRegionIdForFaction(game, ownerId);
+  if (capitalProvinceId == null || capitalRegionId == null) return;
+
+  forEachTownConnectedTileInProvince(
+    connectedTiles: connectivity.connected,
+    townConnected: townConnected,
+    provinceId: province.id,
+    onTile: (tileKey) {
+      final contribution = computeNonGpTileContribution(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        factionCapitalProvinceId: capitalProvinceId,
+        factionCapitalRegionId: capitalRegionId,
+        tileKey: tileKey,
+        connectedTileKeys: connectivity.connected,
+        pathTransportCap: connectivity.pathTransportCap,
+        connectedByRoadRule: connectivity.connectedByRoadRule,
+        portTileKeys: portTileKeys,
+        provincesByFullId: provincesByFullId,
+      );
+      if (contribution != null && contribution.units > 0) {
+        onContribution(contribution);
+      }
+    },
+  );
+}
+
+/// Single-tile non-GP extraction contribution. Library-internal; shared by
+/// [forEachNonGpTileContribution], town manufacturing bonus, and tests.
+NonGpTileContribution? computeNonGpTileContribution({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required String factionCapitalProvinceId,

@@ -4,11 +4,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'commodity_totals.dart';
-import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
+import 'non_gp_extraction_shared.dart';
 import 'resource_extractor.dart';
 import 'sea_transport.dart';
-import 'tile_extraction_pipeline.dart';
 import 'town_connected_tile_walk.dart';
 
 /// Town manufacturing clustering bonus (Refs #3872).
@@ -211,32 +210,16 @@ void _accumulateNonGpProvinceExtraction({
   required Set<String> portTileKeys,
   required Map<String, Map<CommodityId, int>> landByProvince,
 }) {
-  final capitalProvinceId = capitalProvinceIdForFaction(game, ownerId);
-  final capitalRegionId = capitalRegionIdForFaction(game, ownerId);
-  if (capitalProvinceId == null || capitalRegionId == null) return;
-
-  forEachTownConnectedTileInProvince(
-    connectedTiles: connectivity.connected,
+  forEachTownConnectedNonGpTileContributionInProvince(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    ownerId: ownerId,
+    province: province,
     townConnected: townConnected,
-    provinceId: province.id,
-    onTile: (tileKey) {
-      final contribution = computeTileYieldContribution(
-        game: game,
-        tileMapByRegion: tileMapByRegion,
-        tileKey: tileKey,
-        connectedTileKeys: connectivity.connected,
-        pathTransportCap: connectivity.pathTransportCap,
-        connectedByRoadRule: connectivity.connectedByRoadRule,
-        portTileKeys: portTileKeys,
-        capitalProvinceId: capitalProvinceId,
-        capitalRegionId: capitalRegionId,
-        logContext: 'town_bonus_non_gp',
-        provincesByFullId: provincesByFullId,
-        techCapForCommodity: (_) => defaultExtractionCap,
-        isCommodityExtractable: (tileKey, commodityId) =>
-            !kMineralResourceIds.contains(commodityId),
-      );
-      if (contribution == null || contribution.units <= 0) return;
+    connectivity: connectivity,
+    provincesByFullId: provincesByFullId,
+    portTileKeys: portTileKeys,
+    onContribution: (contribution) {
       final totals = landByProvince.putIfAbsent(province.id, () => {});
       addUnits(totals, contribution.commodityId, contribution.units);
     },

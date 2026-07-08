@@ -858,3 +858,12 @@ test_support LOC: **16,630** (net +178 vs slice 35 — three expectation helper 
 
 test_support LOC: **16,768** (net +138 vs slice 36 — three expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 38+.
 
+## Phase 3 — Slice 38 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| town-non-gp-tile-walk | `forEachTownConnectedNonGpTileContributionInProvince` + exported `computeNonGpTileContribution`; `town_manufacturing_bonus.dart` delegates non-GP province accumulation | `non_gp_extraction_shared.dart`, `town_manufacturing_bonus.dart` | #3939 |
+| resource-extractor-pin-cleanup | pin-only `ResourceExtractorScenario` rows no longer require `verify: (_) {}` stubs | `resource_extractor_scenarios.dart` | #3939 |
+
+test_support LOC: deferred recount post-slice — treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 39+.
+
