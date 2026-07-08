@@ -1114,6 +1114,13 @@ rules:
     runner: dart
     script: tool/check_ai_orchestrator_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_test_no_matrix_part_shards
+    group: testing
+    title: colonizethis_ai planning matrix suites must not keep *_partN_test.dart shards alongside a sibling *_support.dart (Refs #3941)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_no_matrix_part_shards.dart
+
   - rule_id: repo.ai_test_mirrors_lib
     group: structure
     title: colonizethis_ai tests must mirror lib/ (no flat-root unit test sources outside the documented integration/package-level allowlist) (Refs #3717)

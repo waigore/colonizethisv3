@@ -6,7 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 
 
-void main() {
+// EXPAND-phase scoring suppression cases (former part2 shard, Refs #3941).
+void registerDiplomaticCandidateScoringSuppressionExpandCases() {
   group('computeDiplomaticCandidateScores suppression (part 2)', () {
     test(
       'suppresses mutual plateau declareWar on peer within one OW province',

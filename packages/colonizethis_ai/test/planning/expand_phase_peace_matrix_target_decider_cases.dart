@@ -1,39 +1,7 @@
-// Table-driven matrix consolidation of the EXPAND `(game, snapshot) ->
-// List<String>` peace-target decider pins (Refs #3749 branch-pin
-// consolidation, continuation of the function-unit predicate matrix in
-// `expand_phase_planner_below_quota_peace_predicate_matrix_test.dart`).
-//
-// This single file replaces four former per-decider `*_branches_test.dart`
-// suites that each pinned one EXPAND peace-target decider from
-// `expand_phase_planner.dart` with one `test(...)` per branch:
-//
-//   - `expand_phase_planner_critical_ow_hold_branches_test.dart`
-//   - `expand_phase_planner_quota_met_below_quota_at_war_peace_branches_test.dart`
-//   - `expand_phase_planner_default_start_gp_peace_branches_test.dart`
-//   - `expand_phase_planner_quota_met_futile_below_quota_gp_peace_branches_test.dart`
-//
-// All four deciders share the exact signature
-// `({required Game game, required AIWorldSnapshot snapshot}) -> List<String>`,
-// so each former branch case becomes one matrix row here with byte-equivalent
-// fixture inputs (Old World province ownership, player/minor/tribe roster, the
-// planning GP id, own OW count, `atWarWith`, and the invadable-OW frontier)
-// and the same verbatim expected target list + regression `reason`. Coverage
-// is preserved 1:1 — every former assertion has a corresponding row — while the
-// per-file scaffolding collapses into one shared `_buildGame` / `_snapshot`
-// harness and four table-driven loops. See each original suite's history for
-// the full per-branch rationale; the `reason` text on each row carries the
-// regression it guards.
-//
-// The remaining sibling `stalledBelowQuotaGpLeadPeaceTargets` decider uses a
-// distinct `DiplomacyRelation`-backed fixture builder (it reads at-war
-// relations + invadable owners through `isOldWorldGpOnlyInvadableFrontier`),
-// so it is intentionally left to a follow-up slice rather than forced into
-// this roster/ownership harness.
-//
-// SPEC/ai/ai-architecture.md § Observer goal phases (Full AI) — EXPAND
-// diplomacy targeting (critical-OW-hold survival peace, quota-met
-// below-quota futile-bullying peace, and the default-start GP peace pivot;
-// Refs #2509).
+// EXPAND peace matrix case module (Refs #3749 / #3941).
+// Registered from `expand_phase_peace_matrix_test.dart` — the single contract
+// file for all four former `expand_phase_planner_*_peace_*_matrix_test.dart`
+// shards. Row coverage is preserved 1:1.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
@@ -145,7 +113,7 @@ void _runDecider(String label, _PeaceTargetsFn fn, List<_Case> cases) {
   });
 }
 
-void main() {
+void registerExpandPeaceTargetDeciderCases() {
   // --- criticalOwHoldPeaceTargets (focus roster, count-map provinces). ---
   _runDecider('criticalOwHoldPeaceTargets (truth table)',
       criticalOwHoldPeaceTargets, <_Case>[

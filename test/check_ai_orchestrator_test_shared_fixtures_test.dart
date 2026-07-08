@@ -30,12 +30,29 @@ const String _localAtQuotaBody =
     '];\n\n'
     'void main() {}\n';
 
+const String _localBareGp1Body =
+    "import 'package:test/test.dart';\n\n"
+    'const List<String> _gp1OwProvinces = <String>[\n'
+    "  'oldWorld|gp1_0',\n"
+    "  'oldWorld|gp1_1',\n"
+    '];\n\n'
+    'void main() {}\n';
+
+const String _localExpandTwoGpBody =
+    "import 'package:test/test.dart';\n\n"
+    'const List<String> _gp1Provinces = <String>[\n'
+    "  'oldWorld|gp1_0',\n"
+    "  'oldWorld|gp1_1',\n"
+    '];\n\n'
+    'void main() {}\n';
+
 const String _sharedImportBody =
     "import 'package:test/test.dart';\n"
     "import '../support/domain_planner_orchestrator_test_support.dart';\n\n"
     'void main() {\n'
     '  expect(kGp1OwProvincesBelowQuota, isNotEmpty);\n'
     '  expect(kGp1OwProvincesAtQuota, isNotEmpty);\n'
+    '  expect(kGp1OwProvincesExpandTwoGp, isNotEmpty);\n'
     '}\n';
 
 void main() {
@@ -75,6 +92,50 @@ void main() {
         expect(exitCode, 1);
         expect(errors.join('\n'), contains('_gp1OwProvincesAtQuota'));
         expect(errors.join('\n'), contains('kGp1OwProvincesAtQuota'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails when an orchestrator pin redeclares bare _gp1OwProvinces', () {
+      final temp = Directory.systemTemp.createTempSync('ai-orch-bare-');
+      try {
+        _writeSupportStub(temp);
+        _writeOrchestratorTest(temp, 'bare_gp1_test.dart', _localBareGp1Body);
+
+        final errors = <String>[];
+        final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_gp1OwProvinces'));
+        expect(errors.join('\n'), contains('kGp1OwProvincesAtQuota'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails when an orchestrator pin redeclares _gp1Provinces', () {
+      final temp = Directory.systemTemp.createTempSync('ai-orch-expand-');
+      try {
+        _writeSupportStub(temp);
+        _writeOrchestratorTest(
+          temp,
+          'expand_two_gp_test.dart',
+          _localExpandTwoGpBody,
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_gp1Provinces'));
+        expect(errors.join('\n'), contains('kGp1OwProvincesExpandTwoGp'));
       } finally {
         temp.deleteSync(recursive: true);
       }
@@ -127,7 +188,8 @@ void _writeSupportStub(Directory temp) {
     p.join(support.path, 'domain_planner_orchestrator_test_support.dart'),
   ).writeAsStringSync(
     "const List<String> kGp1OwProvincesBelowQuota = <String>['a'];\n"
-    "const List<String> kGp1OwProvincesAtQuota = <String>['b'];\n",
+    "const List<String> kGp1OwProvincesAtQuota = <String>['b'];\n"
+    "const List<String> kGp1OwProvincesExpandTwoGp = <String>['c'];\n",
   );
 }
 

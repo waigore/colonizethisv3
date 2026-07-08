@@ -215,6 +215,7 @@ import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
 import 'phase_destination_result.dart';
+import 'region_military_destination_filter.dart';
 import 'planning_helpers.dart' show gpFactionIdsAtWarWith, planningListEquals;
 
 part 'colonial_phase_planner_acquisition.dart';

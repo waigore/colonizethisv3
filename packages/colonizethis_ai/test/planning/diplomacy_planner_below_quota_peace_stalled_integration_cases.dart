@@ -7,7 +7,8 @@ import 'package:colonizethis_test/test.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
 
-void main() {
+// Stalled / integration below-quota peace cases (former part3 shard, Refs #3941).
+void registerDiplomacyBelowQuotaPeaceStalledIntegrationCases() {
   test(
     'stalledZeroRegimentAllFactionPeaceTargets includes minors when stalled',
     () {

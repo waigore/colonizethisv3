@@ -5,7 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 
 
-void main() {
+// COLONIAL-phase scoring suppression cases (former part3 shard, Refs #3941).
+void registerDiplomaticCandidateScoringSuppressionColonialCases() {
   group('computeDiplomaticCandidateScores suppression (part 3)', () {
     test(
       'suppresses new declareWar on below-quota adjacent GP when attacker meets quota',
