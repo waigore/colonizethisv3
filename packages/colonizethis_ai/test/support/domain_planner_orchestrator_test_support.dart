@@ -44,6 +44,39 @@ const List<String> kGp1OwProvincesAtQuota = <String>[
   'oldWorld|gp1_10',
 ];
 
+/// Past-quota OW province set for gp1: 12 IDs so DEVELOP negative controls
+/// in orchestrator declare-war pins stay off COLONIAL visibility.
+const List<String> kGp1OwProvincesDevelop = <String>[
+  'oldWorld|gp1_0',
+  'oldWorld|gp1_1',
+  'oldWorld|gp1_2',
+  'oldWorld|gp1_3',
+  'oldWorld|gp1_4',
+  'oldWorld|gp1_5',
+  'oldWorld|gp1_6',
+  'oldWorld|gp1_7',
+  'oldWorld|gp1_8',
+  'oldWorld|gp1_9',
+  'oldWorld|gp1_10',
+  'oldWorld|gp1_11',
+];
+
+/// Shared minor-war fixture ids for the minimal EXPAND orchestrator pins
+/// (`domain_planner_orchestrator_{domain_gates,phase_plan_injection,
+/// trade_orders_wiring}_test.dart`; Refs #2832 / #2509 S5 / #2994 F7).
+const String kOrchestratorMinorId = 'minor1';
+const String kOrchestratorFieldArmyId = 'field_a';
+const String kOrchestratorOwMinorProvince = 'oldWorld|minor1';
+const String kOrchestratorOwHomeProvince = 'oldWorld|gp1_0';
+
+/// Shared NW tribe fixture ids for colonial / lock-recovery orchestrator pins.
+const String kOrchestratorTribeId = 'tribe1';
+const String kOrchestratorTribeNwProvince = 'newWorld|tribe1_nw0';
+
+/// Shared adjacent-minor fixture for EXPAND minor declare-war orchestrator pins.
+const String kOrchestratorAdjacentMinorId = 'minor1';
+const String kOrchestratorAdjacentMinorOwProvince = 'oldWorld|minor1_0';
+
 /// Empty cargo EconomyPlan shared by many orchestrator pins.
 const EconomyPlan kOrchestratorEmptyEconomyPlan = kTestEconomyPlan;
 
@@ -112,6 +145,96 @@ Game buildOrchestratorScenarioGame({
     minorNations: minorNations,
     diplomacyRelations: diplomacyRelations,
     overtureStates: overtureStates,
+  );
+}
+
+/// Minimal EXPAND game with gp1 below OW quota, an at-war OW minor, and a
+/// non-home field army — shared by domain-gate / phase-plan / trade-wiring pins.
+Game buildOrchestratorExpandMinorWarScenarioGame({required String id}) {
+  return buildOrchestratorScenarioGame(
+    id: id,
+    gp1OwProvinces: kGp1OwProvincesBelowQuota,
+    turnNumber: 30,
+    gp1LeaderKey: 'napoleon',
+    extraOldWorldProvinces: const <Province>[
+      Province(
+        id: kOrchestratorOwMinorProvince,
+        regionId: 'oldWorld',
+        ownerId: kOrchestratorMinorId,
+      ),
+    ],
+    armies: const <Army>[
+      Army(
+        id: kOrchestratorFieldArmyId,
+        ownerId: kOrchestratorGp1NationId,
+        regionId: 'oldWorld',
+        stationedProvinceId: kOrchestratorOwHomeProvince,
+        regimentUnitIds: <String>['u_field'],
+        isHomeArmy: false,
+      ),
+    ],
+    minorNations: const <MinorNation>[
+      MinorNation(id: kOrchestratorMinorId, displayName: 'Minor One'),
+    ],
+    diplomacyRelations: const <DiplomacyRelation>[
+      DiplomacyRelation(
+        factionId1: kOrchestratorGp1NationId,
+        factionId2: kOrchestratorMinorId,
+        state: RelationState.atWar,
+        score: -100,
+      ),
+    ],
+  );
+}
+
+/// EXPAND/COLONIAL tribe declare-war fixture: parameterized gp1 OW holdings
+/// plus one tribe-owned NW province visible for colonial acquisition.
+Game buildOrchestratorGp1TribeNwScenarioGame({
+  required String id,
+  required List<String> gp1OwProvinces,
+  int turnNumber = 110,
+  List<DiplomacyRelation> diplomacyRelations = const <DiplomacyRelation>[],
+  List<OvertureState> overtureStates = const <OvertureState>[],
+}) {
+  return buildOrchestratorScenarioGame(
+    id: id,
+    gp1OwProvinces: gp1OwProvinces,
+    turnNumber: turnNumber,
+    newWorldProvinces: const <Province>[
+      Province(
+        id: kOrchestratorTribeNwProvince,
+        regionId: 'newWorld',
+        ownerId: kOrchestratorTribeId,
+      ),
+    ],
+    tribes: const <Tribe>[
+      Tribe(id: kOrchestratorTribeId, displayName: 'T1'),
+    ],
+    diplomacyRelations: diplomacyRelations,
+    overtureStates: overtureStates,
+  );
+}
+
+/// EXPAND adjacent invadable minor declare-war fixture.
+Game buildOrchestratorExpandAdjacentMinorScenarioGame({
+  required String id,
+  required List<String> gp1OwProvinces,
+  int turnNumber = 20,
+}) {
+  return buildOrchestratorScenarioGame(
+    id: id,
+    gp1OwProvinces: gp1OwProvinces,
+    turnNumber: turnNumber,
+    extraOldWorldProvinces: const <Province>[
+      Province(
+        id: kOrchestratorAdjacentMinorOwProvince,
+        regionId: 'oldWorld',
+        ownerId: kOrchestratorAdjacentMinorId,
+      ),
+    ],
+    minorNations: const <MinorNation>[
+      MinorNation(id: kOrchestratorAdjacentMinorId, displayName: 'M1'),
+    ],
   );
 }
 

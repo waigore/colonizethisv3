@@ -81,23 +81,7 @@ const String _nationId = 'gp1';
 const String _blockerGpId = 'gp2';
 
 // Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
-// Past-quota DEVELOP set remains local (`_gp1OwProvincesDevelop`).
-const List<String> _gp1OwProvincesDevelop = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-  'oldWorld|gp1_11',
-];
-
-// gp2 owns exactly the invadable provinces, so
+// Past-quota DEVELOP set: kGp1OwProvincesDevelop (Refs #3941).
 // `primaryInvadableOldWorldGpBlocker` resolves to `_blockerGpId` and
 // `isOldWorldGpOnlyInvadableFrontier` returns true. Province count of
 // 4 is deliberately outside the mutual-plateau 8–9 OW band so
@@ -332,7 +316,7 @@ void main() {
     test(
       'suppresses GP blocker declareWar at quota in DEVELOP',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesDevelop);
+        final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesDevelop);
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _developSnapshot();

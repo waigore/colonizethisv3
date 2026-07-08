@@ -45,9 +45,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // EXPAND priority profile with the New-World acquisition weight floored
 // at the resource-need override value (`kPhasePriorityNwTreasuryRecoveryFloor`
@@ -85,60 +85,18 @@ const PhasePlanOutcome _expandPhasePlanZeroNw = PhasePlanOutcome(
 // Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
 // `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
 // `observerGoalPhaseFor` — the phase the lock predicate operates in.
-Game _scenarioGame() {
-  return Game(
-    id: 'g-2924-expand-nw-lock-recovery-acquisition',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesBelowQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army keeps `regimentCountForPlayer` > 0 so the
-      // orchestrator does not divert into the zero-regiment stalemate
-      // peace paths — same guard pattern as the sibling suppression pins.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesBelowQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
+Game _scenarioGame() => buildOrchestratorGp1TribeNwScenarioGame(
+      id: 'g-2924-expand-nw-lock-recovery-acquisition',
+      gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      diplomacyRelations: const <DiplomacyRelation>[
+        DiplomacyRelation(
+          factionId1: kOrchestratorGp1NationId,
+          factionId2: kOrchestratorTribeId,
+          state: RelationState.atPeace,
+          score: 0,
         ),
       ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    ],
-  );
-}
+    );
 
 // Fake API provides one `declareWar(tribe1)` candidate (NW tribe colonial
 // target). The orchestrator's EXPAND scoring + selection pass is what
