@@ -6,7 +6,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'trade_order_validator_scenarios.dart';
 import 'trade_order_validator_test_support.dart';
-import 'validator_context_expectations.dart';
 import 'validator_expectations.dart';
 
 int _catalogTimberBudgetForQty2() {
@@ -31,15 +30,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'rejects bid when cumulative spend exceeds treasuryBudgetForBids',
-    context: validatorCtx(
-      treasuryBudgetForBids: 60,
-      worldMarketState: WorldMarketState(
-        prices: {
-          CommodityCatalog.timber.id: 30,
-          CommodityCatalog.iron.id: 30,
-        },
-      ),
-    ),
+    context: validatorCtxTimberIron(treasuryBudgetForBids: 60),
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.iron.id, 2),
@@ -112,14 +103,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'accepts cumulative spend equal to treasuryBudgetForBids across '
         'distinct commodities in submission order (Refs #3123)',
-    context: validatorCtx(
+    context: validatorCtxTimberIron(
       treasuryBudgetForBids: 100,
-      worldMarketState: WorldMarketState(
-        prices: {
-          CommodityCatalog.timber.id: 30,
-          CommodityCatalog.iron.id: 10,
-        },
-      ),
+      timberPrice: 30,
+      ironPrice: 10,
     ),
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 2),
@@ -131,15 +118,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'rejected bid does not consume the running spend budget — greedy '
         'continuation admits a later smaller bid that fits (Refs #3123)',
-    context: validatorCtx(
+    context: validatorCtxTimberIron(
       treasuryBudgetForBids: 100,
-      tradeCargoCapacity: 100,
-      worldMarketState: WorldMarketState(
-        prices: {
-          CommodityCatalog.timber.id: 30,
-          CommodityCatalog.iron.id: 10,
-        },
-      ),
+      timberPrice: 30,
+      ironPrice: 10,
     ),
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 4),

@@ -4,4 +4,3 @@ export 'deal_matcher_core_scenarios.dart';
 export 'deal_matcher_expectations.dart';
 export 'deal_matcher_frr_scenarios.dart';
 export 'deal_matcher_test_support.dart';
-export 'deal_matcher_treasury_scenarios.dart';

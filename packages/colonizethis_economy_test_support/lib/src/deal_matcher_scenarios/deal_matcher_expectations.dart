@@ -69,7 +69,6 @@ class DealMatchExpectation {
     this.unfilledBidsEmpty = false,
     this.activityByCommodityId,
     this.filledDealQuantityByCommodityId,
-    this.singleFilledDeal,
     this.firstFilledDeal,
     this.resultEqualsEmpty = false,
     this.activityNotesByCommodityId,
@@ -92,7 +91,6 @@ class DealMatchExpectation {
   final bool unfilledBidsEmpty;
   final Map<CommodityId, MarketActivity>? activityByCommodityId;
   final Map<CommodityId, int>? filledDealQuantityByCommodityId;
-  final void Function(FilledDeal deal)? singleFilledDeal;
   final FilledDealExpectation? firstFilledDeal;
   final bool resultEqualsEmpty;
   final Map<CommodityId, List<MarketActivityNote>>? activityNotesByCommodityId;
@@ -182,9 +180,6 @@ void assertDealMatchExpectation(
       );
       expect(deal.quantity, value);
     }
-  }
-  if (expectation.singleFilledDeal != null) {
-    expectation.singleFilledDeal!(result.filledDeals.single);
   }
   if (expectation.firstFilledDeal != null) {
     _assertFilledDealExpectation(

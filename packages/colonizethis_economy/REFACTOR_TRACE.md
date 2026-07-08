@@ -679,3 +679,21 @@ Documented exceptions (resource extractor bespoke rows retained):
 
 test_support LOC: **15,144** (net +143 vs slice 22 — blockaded fixture added; deal-matcher file merge −17 overhead). Economy `test/` **1,607** (down 135 vs slice 22). Treasury/validator scenario-data compaction and ≥20% test_support reduction (≤8,200) deferred to slice 24+.
 
+## Phase 3 — Slice 24 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-first-filled-deal | migrated 18 remaining `singleFilledDeal` closures to `firstFilledDeal` pins; removed `singleFilledDeal` from `DealMatchExpectation` | `deal_matcher_core_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3939 |
+| dm-treasury-merge | merged `deal_matcher_treasury_scenarios.dart` into `deal_matcher_core_scenarios.dart` | `deal_matcher_scenarios/deal_matcher_core_scenarios.dart` | #3939 |
+| validator-context-merge | merged `validator_context_expectations.dart` into `validator_expectations.dart` | `validator_scenarios/validator_expectations.dart` | #3939 |
+| validator-ctx-preset | `validatorCtxTimberIron` shared preset for treasury-cap validator rows | `trade_order_validator_test_support.dart`, `trade_order_validator_treasury_scenarios.dart` | #3939 |
+| resource-extractor-consolidated | merged four thin `resource_extractor_part*_test.dart` runners into `resource_extractor_test.dart` | `test/resource_extractor_test.dart` | #3939 |
+
+Documented exceptions (resource extractor bespoke rows retained):
+
+| file | retained test description(s) | rationale | refs |
+|------|------------------------------|-----------|------|
+| `resource_extractor_test.dart` | `skips connected tile and logs when province missing from region (world-model)` | logger capture + missing-province defensive branch | #3939 |
+
+test_support LOC: **15,125** (net −19 vs slice 23 — treasury file merge + validator-context merge + `singleFilledDeal` removal). Economy `test/` **1,577** (down 30 vs slice 23). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 25+.
+

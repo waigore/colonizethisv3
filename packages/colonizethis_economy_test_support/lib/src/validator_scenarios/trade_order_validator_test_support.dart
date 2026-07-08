@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -32,3 +33,21 @@ TradeOrderValidationContext validatorCtx({
   treasuryBudgetForBids: treasuryBudgetForBids,
   worldMarketState: worldMarketState,
 );
+
+/// Shared timber/iron price preset for treasury-cap validator scenarios.
+TradeOrderValidationContext validatorCtxTimberIron({
+  int treasuryBudgetForBids = 1 << 30,
+  int tradeCargoCapacity = 100,
+  int timberPrice = 30,
+  int ironPrice = 30,
+}) =>
+    validatorCtx(
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      tradeCargoCapacity: tradeCargoCapacity,
+      worldMarketState: WorldMarketState(
+        prices: {
+          CommodityCatalog.timber.id: timberPrice,
+          CommodityCatalog.iron.id: ironPrice,
+        },
+      ),
+    );

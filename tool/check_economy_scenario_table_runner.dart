@@ -14,10 +14,7 @@ const _maxImperativeTestBodyLines = 15;
 /// Files exempt from the scenario-table preference (documented in
 /// `packages/colonizethis_economy/REFACTOR_TRACE.md` phase-3 exceptions).
 const _allowlistedRelativePaths = <String>{
-  'packages/colonizethis_economy/test/resource_extractor_part2_part1_test.dart',
-  'packages/colonizethis_economy/test/resource_extractor_part2_part2_test.dart',
-  'packages/colonizethis_economy/test/resource_extractor_part1_segment1_test.dart',
-  'packages/colonizethis_economy/test/resource_extractor_part1_segment2_test.dart',
+  'packages/colonizethis_economy/test/resource_extractor_test.dart',
   'packages/colonizethis_economy/test/economy/world_market/world_market_deal_matcher_test.dart',
   'packages/colonizethis_economy/test/economy/world_market/world_market_deal_matcher_frr_test.dart',
   'packages/colonizethis_economy/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart',

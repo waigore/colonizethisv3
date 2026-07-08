@@ -3,5 +3,4 @@
 export 'trade_order_validator_scenarios.dart';
 export 'trade_order_validator_test_support.dart';
 export 'trade_order_validator_treasury_scenarios.dart';
-export 'validator_context_expectations.dart';
 export 'validator_expectations.dart';

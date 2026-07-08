@@ -93,12 +93,12 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    expect: DealMatchExpectation(
+    expect: const DealMatchExpectation(
       filledDealsLength: 1,
-      singleFilledDeal: (deal) {
-        expect(deal.buyerFactionId, 'gpB');
-        expect(deal.isFirstRightOfRefusalMatch, isFalse);
-      },
+      firstFilledDeal: FilledDealExpectation(
+        buyerFactionId: 'gpB',
+        isFirstRightOfRefusalMatch: false,
+      ),
     ),
     refs: '#2992',
   ),
@@ -118,12 +118,12 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    expect: DealMatchExpectation(
+    expect: const DealMatchExpectation(
       filledDealsLength: 1,
-      singleFilledDeal: (deal) {
-        expect(deal.buyerFactionId, 'gpB');
-        expect(deal.isFirstRightOfRefusalMatch, isFalse);
-      },
+      firstFilledDeal: FilledDealExpectation(
+        buyerFactionId: 'gpB',
+        isFirstRightOfRefusalMatch: false,
+      ),
     ),
     refs: '#2992',
   ),
@@ -139,12 +139,12 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       },
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
     ),
-    expect: DealMatchExpectation(
+    expect: const DealMatchExpectation(
       filledDealsLength: 1,
-      singleFilledDeal: (deal) {
-        expect(deal.buyerFactionId, 'gpB');
-        expect(deal.isFirstRightOfRefusalMatch, isFalse);
-      },
+      firstFilledDeal: FilledDealExpectation(
+        buyerFactionId: 'gpB',
+        isFirstRightOfRefusalMatch: false,
+      ),
     ),
     refs: '#2992',
   ),
