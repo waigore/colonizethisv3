@@ -867,3 +867,15 @@ test_support LOC: **16,768** (net +138 vs slice 36 — three expectation helper 
 
 test_support LOC: deferred recount post-slice — treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 39+.
 
+## Phase 3 — Slice 39 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| staged-bid-spend-row | `stagedBidSpendRow` + `treasuryAvailableRow` compact row builders with shared defaults | `treasury_test_support.dart`, `treasury_bid_spend_scenarios.dart`, `treasury_available_scenarios.dart` | #3093, #3939 |
+| treasury-available-extra | `TreasuryAvailableExpectation` pins replace label-prefix branches in `runTreasuryAvailableScenario` | `treasury_expectations.dart`, `treasury_available_scenarios.dart` | #3939 |
+| gp-credit-unify | generic `GpTreasuryCreditScenario<T>` + `runGpTreasuryCreditScenario`; GP credit tables relocated to pure-helper cluster | `treasury_pure_helper_scenarios.dart` (from `treasury_bid_spend_scenarios.dart`) | #3939 |
+| eff-price-riches-row | `effectiveMarketPriceRichesRow` dedupes gold/silver riches null-price rows | `treasury_pure_helper_scenarios.dart` | #3939 |
+| matcher-treasury-clamp | `matcherTreasuryClampInputs` shared preset for single-buyer treasury-clamp DealMatcher rows | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: **16,817** (net +49 vs slice 38 — GP-credit cluster relocation + expectation pins offset staged-bid row compaction; `treasury_bid_spend_scenarios.dart` 455→300). Economy `test/` **1,392** (down 5 vs slice 38). Further treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 40+.
+

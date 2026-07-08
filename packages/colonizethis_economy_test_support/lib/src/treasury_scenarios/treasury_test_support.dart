@@ -1,8 +1,10 @@
 // Shared treasury bid-budget fixtures and game builders (Refs #3093, #3661, #3939).
 
+import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../trade_order_factory.dart';
+import 'treasury_expectations.dart';
 
 /// Canonical human-player id used across treasury-bid-budget test suites.
 const String humanPlayerId = 'gp_h';
@@ -87,4 +89,60 @@ Game carryForwardBidGame(
       playerDisplayName: playerDisplayName,
       isHuman: false,
       carryForwardBids: bids,
+    );
+
+/// Compact row builder for [stagedBidSpendScenarios] (Refs #3939 phase 3 slice 39).
+({
+  String label,
+  Map<CommodityId, int>? prices,
+  List<TradeOrder> orders,
+  int? expectedSpend,
+  int Function(data.ResourceRules rules)? expectedSpendFn,
+  String playerId,
+  String? refs,
+}) stagedBidSpendRow({
+  required String label,
+  required List<TradeOrder> orders,
+  Map<CommodityId, int>? prices,
+  int? expectedSpend,
+  int Function(data.ResourceRules rules)? expectedSpendFn,
+  String playerId = humanPlayerId,
+  String? refs = '#3093',
+}) =>
+    (
+      label: label,
+      orders: orders,
+      prices: prices,
+      expectedSpend: expectedSpend,
+      expectedSpendFn: expectedSpendFn,
+      playerId: playerId,
+      refs: refs,
+    );
+
+/// Compact row builder for [treasuryAvailableForBidsScenarios] (Refs #3939 slice 39).
+({
+  String label,
+  int treasury,
+  String playerId,
+  int projectedNonBidTreasuryDelta,
+  int expected,
+  String? refs,
+  TreasuryAvailableExpectation? extra,
+}) treasuryAvailableRow({
+  required String label,
+  required int treasury,
+  required int expected,
+  int projectedNonBidTreasuryDelta = 0,
+  String playerId = humanPlayerId,
+  String? refs,
+  TreasuryAvailableExpectation? extra,
+}) =>
+    (
+      label: label,
+      treasury: treasury,
+      playerId: playerId,
+      projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
+      expected: expected,
+      refs: refs,
+      extra: extra,
     );

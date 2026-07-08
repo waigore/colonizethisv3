@@ -16,16 +16,7 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
 List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   DealMatcherScenario.expect(
     label: 'truncates a single oversized bid to floor(treasury / price)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 100},
-    ),
+    inputs: matcherTreasuryClampInputs(),
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: const FilledDealExpectation(
@@ -87,18 +78,12 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   ),
   DealMatcherScenario.expect(
     label: 'FRR pre-pass respects treasury clamp',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [
-          matcherOffer('timber', 10, originTileKey: 'oldWorld|M1|0|0'),
-        ],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gpA': 100},
-      treasuryBudgetByBuyerFactionId: const {'gpA': 60},
+    inputs: matcherTreasuryClampInputs(
+      seller: 'M1',
+      buyer: 'gpA',
+      treasuryBudget: 60,
       pricesByCommodityId: const {'timber': 20.0},
+      originTileKey: 'oldWorld|M1|0|0',
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
     expect: DealMatchExpectation(
@@ -121,16 +106,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     label:
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
         'truncated bid (full bid quantity carried in note)',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'a': [matcherOffer('timber', 10)],
-      },
-      bidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
-      tradeCapacityByFactionId: const {'gp1': 100},
-      treasuryBudgetByBuyerFactionId: const {'gp1': 100},
-    ),
+    inputs: matcherTreasuryClampInputs(),
     expect: const DealMatchExpectation(
       activityNotesByCommodityId: {
         'timber': [

@@ -1,5 +1,4 @@
-// Staged/carry-forward bid-spend and GP treasury-credit scenario tables
-// (Refs #3427, #3836, #3856, #3939 phase 3 slice 6).
+// Staged/carry-forward bid-spend scenario tables (Refs #3427, #3836, #3939).
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -58,65 +57,48 @@ void runStagedBidSpendScenario(
 
 List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
   return [
-    (
+    stagedBidSpendRow(
       label: 'returns 0 when the player has no staged trade orders',
       orders: <TradeOrder>[],
       prices: const {'timber': 30},
       expectedSpend: 0,
-      expectedSpendFn: null,
-      playerId: humanPlayerId,
-      refs: '#3093',
     ),
-    (
+    stagedBidSpendRow(
       label: 'returns 0 when the player has only staged offers (no bids)',
       orders: [offerOrder('timber', 5)],
       prices: const {'timber': 30},
       expectedSpend: 0,
-      expectedSpendFn: null,
-      playerId: humanPlayerId,
-      refs: '#3093',
     ),
-    (
+    stagedBidSpendRow(
       label: 'sums quantity × effectiveMarketPrice across all staged bids',
       orders: [bidOrder('timber', 4), bidOrder('iron', 2)],
       prices: const {'timber': 30, 'iron': 80},
       expectedSpend: 4 * 30 + 2 * 80,
-      expectedSpendFn: null,
-      playerId: humanPlayerId,
-      refs: '#3093',
     ),
-    (
+    stagedBidSpendRow(
       label: 'uses catalog defaults when a bid commodity is missing from prices',
       orders: [bidOrder('timber', 3)],
       prices: const <CommodityId, int>{},
-      expectedSpend: null,
       expectedSpendFn: (rules) => 3 * rules.defaultMarketPriceForCommodityId('timber')!,
-      playerId: humanPlayerId,
-      refs: '#3093',
     ),
-    (
+    stagedBidSpendRow(
       label: 'sums spend across raw + manufactured bids using catalog defaults '
           '(Refs #3093 manufactured-default-prices)',
       orders: [bidOrder('lumber', 5), bidOrder('timber', 2)],
       prices: const <CommodityId, int>{},
-      expectedSpend: null,
       expectedSpendFn: (rules) =>
           5 * rules.defaultMarketPriceForCommodityId('lumber')! +
           2 * rules.defaultMarketPriceForCommodityId('timber')!,
-      playerId: humanPlayerId,
-      refs: '#3093',
     ),
-    (
+    stagedBidSpendRow(
       label: 'skips bids on commodities with no effective price (defensive guard '
           'against unknown / future ids)',
       orders: [bidOrder('not_a_commodity', 5), bidOrder('timber', 2)],
       prices: const <CommodityId, int>{},
-      expectedSpend: null,
       expectedSpendFn: (rules) => 2 * rules.defaultMarketPriceForCommodityId('timber')!,
-      playerId: humanPlayerId,
       refs: null,
     ),
-    (
+    stagedBidSpendRow(
       label: 'ignores bids with non-positive quantity (defensive guard)',
       orders: [
         TradeOrder(
@@ -129,16 +111,13 @@ List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
       ],
       prices: const {'timber': 30},
       expectedSpend: 3 * 30,
-      expectedSpendFn: null,
-      playerId: humanPlayerId,
       refs: null,
     ),
-    (
+    stagedBidSpendRow(
       label: 'isolates spend per player (unknown playerId returns 0)',
       orders: [bidOrder('timber', 4)],
       prices: const {'timber': 30},
       expectedSpend: 0,
-      expectedSpendFn: null,
       playerId: 'gp_ghost',
       refs: null,
     ),
@@ -318,138 +297,4 @@ List<BidSpendParityScenario> bidSpendParityScenarios() => [
   ),
 ];
 
-typedef GpTreasuryCreditIntScenario = ({
-  String label,
-  void Function(GpTreasuryCreditAccumulator<int> acc) setup,
-  void Function(GpTreasuryCreditAccumulator<int> acc) verify,
-  String? refs,
-});
 
-GpTreasuryCreditIntScenario gpTreasuryCreditIntScenarioExpect({
-  required String label,
-  void Function(GpTreasuryCreditAccumulator<int> acc)? setup,
-  required GpTreasuryCreditExpectation<int> expect,
-  String? refs,
-}) =>
-    (
-      label: label,
-      setup: setup ?? (_) {},
-      verify: (acc) => assertGpTreasuryCreditExpectation(acc, expect),
-      refs: refs,
-    );
-
-List<GpTreasuryCreditIntScenario> gpTreasuryCreditIntScenarios() => [
-  gpTreasuryCreditIntScenarioExpect(
-    label: 'starts empty with a zero total',
-    expect: const GpTreasuryCreditExpectation<int>(
-      isEmpty: true,
-      total: 0,
-      view: {},
-    ),
-  ),
-  gpTreasuryCreditIntScenarioExpect(
-    label: 'add creates and accumulates entries, total stays incremental',
-    setup: (acc) => acc
-      ..add('gpA', 10)
-      ..add('gpB', 5)
-      ..add('gpA', 3),
-    expect: const GpTreasuryCreditExpectation<int>(
-      view: {'gpA': 13, 'gpB': 5},
-      total: 18,
-      isEmpty: false,
-    ),
-  ),
-  gpTreasuryCreditIntScenarioExpect(
-    label: 'view preserves first-seen insertion order',
-    setup: (acc) => acc
-      ..add('gpC', 1)
-      ..add('gpA', 1)
-      ..add('gpB', 1)
-      ..add('gpA', 1),
-    expect: const GpTreasuryCreditExpectation<int>(
-      viewKeyOrder: ['gpC', 'gpA', 'gpB'],
-    ),
-  ),
-  gpTreasuryCreditIntScenarioExpect(
-    label: 'view is unmodifiable',
-    setup: (acc) => acc.add('gpA', 1),
-    expect: const GpTreasuryCreditExpectation<int>(viewUnmodifiable: true),
-  ),
-  gpTreasuryCreditIntScenarioExpect(
-    label: 'incremental total equals the naive re-summed view total',
-    setup: (acc) => acc
-      ..add('gpA', 7)
-      ..add('gpB', 11)
-      ..add('gpA', 2),
-    expect: const GpTreasuryCreditExpectation<int>(totalEqualsNaiveViewSum: true),
-  ),
-];
-
-typedef GpTreasuryCreditDoubleScenario = ({
-  String label,
-  void Function(GpTreasuryCreditAccumulator<double> acc) setup,
-  void Function(GpTreasuryCreditAccumulator<double> acc) verify,
-  String? refs,
-});
-
-GpTreasuryCreditDoubleScenario gpTreasuryCreditDoubleScenarioExpect({
-  required String label,
-  void Function(GpTreasuryCreditAccumulator<double> acc)? setup,
-  required GpTreasuryCreditExpectation<double> expect,
-  String? refs,
-}) =>
-    (
-      label: label,
-      setup: setup ?? (_) {},
-      verify: (acc) => assertGpTreasuryCreditExpectation(acc, expect),
-      refs: refs,
-    );
-
-List<GpTreasuryCreditDoubleScenario> gpTreasuryCreditDoubleScenarios() => [
-  gpTreasuryCreditDoubleScenarioExpect(
-    label: 'ensure records a zero entry without changing the total',
-    setup: (acc) => acc
-      ..add('gpA', 40.0)
-      ..ensure('gpB'),
-    expect: const GpTreasuryCreditExpectation<double>(
-      view: {'gpA': 40.0, 'gpB': 0.0},
-      total: 40.0,
-    ),
-  ),
-  gpTreasuryCreditDoubleScenarioExpect(
-    label: 'ensure is a no-op when the key already has a credit',
-    setup: (acc) => acc
-      ..add('gpA', 12.5)
-      ..ensure('gpA'),
-    expect: const GpTreasuryCreditExpectation<double>(
-      view: {'gpA': 12.5},
-      total: 12.5,
-    ),
-  ),
-  gpTreasuryCreditDoubleScenarioExpect(
-    label: 'total matches naive re-sum including a zero-profit entry',
-    setup: (acc) => acc
-      ..add('gpA', 4.6)
-      ..add('gpB', 40.0)
-      ..ensure('gpC')
-      ..add('gpA', 0.4),
-    expect: const GpTreasuryCreditExpectation<double>(
-      totalEqualsNaiveViewSum: true,
-      viewCloseTo: {'gpC': 0.0},
-    ),
-  ),
-];
-
-void runGpTreasuryCreditIntScenario(GpTreasuryCreditIntScenario scenario) {
-  final acc = GpTreasuryCreditAccumulator<int>(0);
-  scenario.setup(acc);
-  scenario.verify(acc);
-}
-
-void runGpTreasuryCreditDoubleScenario(
-  GpTreasuryCreditDoubleScenario scenario,
-) {
-  final acc = GpTreasuryCreditAccumulator<double>(0.0);
-  scenario.setup(acc);
-  scenario.verify(acc);
-}

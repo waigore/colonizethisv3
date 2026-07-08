@@ -95,6 +95,52 @@ void assertTreasuryUiCompositionExpectation({
   }
 }
 
+/// Optional extra assertions for [TreasuryAvailableScenario] rows.
+class TreasuryAvailableExpectation {
+  const TreasuryAvailableExpectation({
+    this.omitProjectedDeltaAlias = false,
+    this.ignoredProjectedDeltaWhenTreasuryZero,
+  });
+
+  /// When true, calling with `projectedNonBidTreasuryDelta: 0` matches omitting
+  /// the parameter (legacy raw-treasury contract).
+  final bool omitProjectedDeltaAlias;
+
+  /// When set, asserts that this projected delta is ignored when treasury is 0.
+  final int? ignoredProjectedDeltaWhenTreasuryZero;
+}
+
+void assertTreasuryAvailableExpectation({
+  required Game game,
+  required String playerId,
+  required TreasuryAvailableExpectation expectation,
+}) {
+  if (expectation.omitProjectedDeltaAlias) {
+    expect(
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: playerId,
+        projectedNonBidTreasuryDelta: 0,
+      ),
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: playerId,
+      ),
+    );
+  }
+  if (expectation.ignoredProjectedDeltaWhenTreasuryZero != null) {
+    expect(
+      treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: playerId,
+        projectedNonBidTreasuryDelta:
+            expectation.ignoredProjectedDeltaWhenTreasuryZero!,
+      ),
+      0,
+    );
+  }
+}
+
 /// Data-driven expectations for carry-forward bid-notional rows.
 class CarryForwardBidNotionalExpectation {
   const CarryForwardBidNotionalExpectation({

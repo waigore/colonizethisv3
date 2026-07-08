@@ -5,7 +5,6 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
@@ -108,17 +107,13 @@ void main() {
 
   group('GpTreasuryCreditAccumulator<int>', () {
     for (final scenario in gpTreasuryCreditIntScenarios()) {
-      test(scenario.label, () {
-        runGpTreasuryCreditIntScenario(scenario);
-      });
+      test(scenario.label, () => runGpTreasuryCreditIntScenario(scenario));
     }
   });
 
   group('GpTreasuryCreditAccumulator<double> (FRR zero-profit semantics)', () {
     for (final scenario in gpTreasuryCreditDoubleScenarios()) {
-      test(scenario.label, () {
-        runGpTreasuryCreditDoubleScenario(scenario);
-      });
+      test(scenario.label, () => runGpTreasuryCreditDoubleScenario(scenario));
     }
   });
 }

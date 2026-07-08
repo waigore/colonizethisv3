@@ -16,85 +16,78 @@ typedef TreasuryAvailableScenario = ({
   int projectedNonBidTreasuryDelta,
   int expected,
   String? refs,
+  TreasuryAvailableExpectation? extra,
 });
 
-const List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
-  (
+final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
+  treasuryAvailableRow(
     label: "returns the player's raw treasury for known players",
     treasury: 250,
-    playerId: humanPlayerId,
-    projectedNonBidTreasuryDelta: 0,
     expected: 250,
     refs: '#3093',
   ),
-  (
+  treasuryAvailableRow(
     label: 'clamps negative treasury to 0 (defensive guard)',
     treasury: -10,
-    playerId: humanPlayerId,
-    projectedNonBidTreasuryDelta: 0,
     expected: 0,
     refs: null,
   ),
-  (
+  treasuryAvailableRow(
     label: 'returns 0 when playerId does not resolve to a player',
     treasury: 100,
     playerId: 'gp_ghost',
-    projectedNonBidTreasuryDelta: 0,
     expected: 0,
     refs: null,
   ),
-  (
+  treasuryAvailableRow(
     label: 'default projectedNonBidTreasuryDelta == 0 preserves the legacy '
         '"raw treasury" contract for callers without a projection',
     treasury: 175,
-    playerId: humanPlayerId,
-    projectedNonBidTreasuryDelta: 0,
     expected: 175,
     refs: '#3093',
+    extra: TreasuryAvailableExpectation(omitProjectedDeltaAlias: true),
   ),
-  (
+  treasuryAvailableRow(
     label: 'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit '
         'from raw treasury (positive AC #1)',
     treasury: 100,
-    playerId: humanPlayerId,
     projectedNonBidTreasuryDelta: -40,
     expected: 60,
     refs: '#3093',
   ),
-  (
+  treasuryAvailableRow(
     label: 'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury '
         '(conservative — net non-bid income never raises the budget)',
     treasury: 100,
-    playerId: humanPlayerId,
     projectedNonBidTreasuryDelta: 50,
     expected: 100,
     refs: '#3093',
   ),
-  (
+  treasuryAvailableRow(
     label: 'projected deficit equal to treasury clamps the budget at exactly 0',
     treasury: 80,
-    playerId: humanPlayerId,
     projectedNonBidTreasuryDelta: -80,
     expected: 0,
     refs: null,
   ),
-  (
+  treasuryAvailableRow(
     label: 'projected deficit larger than treasury still clamps at 0 (not negative)',
     treasury: 50,
-    playerId: humanPlayerId,
     projectedNonBidTreasuryDelta: -120,
     expected: 0,
     refs: null,
   ),
-  (
+  treasuryAvailableRow(
     label: 'projectedNonBidTreasuryDelta is ignored when treasury is already 0',
     treasury: 0,
-    playerId: humanPlayerId,
     projectedNonBidTreasuryDelta: 25,
     expected: 0,
     refs: null,
+    extra: const TreasuryAvailableExpectation(
+      ignoredProjectedDeltaWhenTreasuryZero: -25,
+    ),
   ),
-  (
+  treasuryAvailableRow(
     label: 'unknown playerId returns 0 even when a non-zero '
         'projectedNonBidTreasuryDelta is supplied',
     treasury: 100,
@@ -107,29 +100,11 @@ const List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
 
 void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
-  if (scenario.label.startsWith('default projectedNonBidTreasuryDelta')) {
-    expect(
-      treasuryAvailableForBidsByPlayer(
-        game: game,
-        playerId: scenario.playerId,
-        projectedNonBidTreasuryDelta: 0,
-      ),
-      treasuryAvailableForBidsByPlayer(
-        game: game,
-        playerId: scenario.playerId,
-      ),
-    );
-  }
-  if (scenario.label.startsWith(
-    'projectedNonBidTreasuryDelta is ignored when treasury is already 0',
-  )) {
-    expect(
-      treasuryAvailableForBidsByPlayer(
-        game: game,
-        playerId: scenario.playerId,
-        projectedNonBidTreasuryDelta: -25,
-      ),
-      0,
+  if (scenario.extra != null) {
+    assertTreasuryAvailableExpectation(
+      game: game,
+      playerId: scenario.playerId,
+      expectation: scenario.extra!,
     );
   }
   final actual = treasuryAvailableForBidsByPlayer(

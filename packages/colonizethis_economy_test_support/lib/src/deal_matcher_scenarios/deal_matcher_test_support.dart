@@ -89,6 +89,38 @@ DealMatchInputs matcherPairTrade({
       boycottBlockedPairKeys: boycottBlockedPairKeys,
     );
 
+/// Single-buyer treasury-clamp preset for DealMatcher treasury suites (Refs #3939).
+DealMatchInputs matcherTreasuryClampInputs({
+  String seller = 'a',
+  String buyer = 'gp1',
+  String commodity = 'timber',
+  int offerQty = 10,
+  int bidQty = 10,
+  int buyerCapacity = 100,
+  int treasuryBudget = 100,
+  Map<CommodityId, double>? pricesByCommodityId,
+  PurchasedTileIndex? purchasedTileIndex,
+  String? originTileKey,
+}) =>
+    matcherInputs(
+      offersByFactionId: {
+        seller: [
+          matcherOffer(
+            commodity,
+            offerQty,
+            originTileKey: originTileKey,
+          ),
+        ],
+      },
+      bidsByFactionId: {
+        buyer: [matcherBid(commodity, bidQty)],
+      },
+      tradeCapacityByFactionId: {buyer: buyerCapacity},
+      treasuryBudgetByBuyerFactionId: {buyer: treasuryBudget},
+      pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
+      purchasedTileIndex: purchasedTileIndex,
+    );
+
 /// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
 PurchasedTileIndex frrMatcherTestIndex({
   String tileKey = 'oldWorld|M1|0|0',
