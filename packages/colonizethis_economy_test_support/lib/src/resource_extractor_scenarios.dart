@@ -33,6 +33,7 @@ class ResourceExtractorScenario {
     this.useOverseasGame = false,
     this.gameOverride,
     this.connectivityByPlayer,
+    this.runOverride,
     this.refs,
   });
 
@@ -96,6 +97,7 @@ class ResourceExtractorScenario {
   final bool useOverseasGame;
   final Game? gameOverride;
   final Map<String, ConnectivityResult>? connectivityByPlayer;
+  final void Function()? runOverride;
   final void Function(Map<String, ExtractionTotals> result) verify;
   final String? refs;
 }
@@ -143,6 +145,10 @@ ResourceExtractorScenario extractionScenario({
 }
 
 void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
+  if (scenario.runOverride != null) {
+    scenario.runOverride!();
+    return;
+  }
   final tileState = tileStateFromSpecs(scenario.tileSpecs);
   final game = scenario.gameOverride ??
       (scenario.useOverseasGame
@@ -520,5 +526,47 @@ ResourceExtractorScenario capitalGrainBonusScenario() {
       land: {'grain': 5},
       overseasEmpty: true,
     ),
+  );
+}
+
+/// Blockaded overseas port from `resource_extractor_part2_part1_test.dart`.
+ResourceExtractorScenario blockadedOverseasPortScenario() {
+  final fixture = blockadedOverseasExtractionFixture();
+  return ResourceExtractorScenario(
+    label:
+        'blockaded overseas port: connectivity excludes tile so overseas extraction zero',
+    verify: (_) {},
+    runOverride: () {
+      final connectivityBlockaded = resolveConnectivity(
+        game: fixture.game,
+        tileMapByRegion: fixture.tileMapByRegion,
+        topology: fixture.topology,
+        blockadedPortProvincesByPlayerId: {
+          'pl1': {'newWorld|n1'},
+        },
+      );
+      final resultBlockaded = computeExtraction(
+        game: fixture.game,
+        tileMapByRegion: fixture.tileMapByRegion,
+        connectivityResult: connectivityBlockaded,
+        techCapForPlayer: (_) => 4,
+      );
+      expect(resultBlockaded['pl1']!.overseas, isEmpty);
+      expect(resultBlockaded['pl1']!.land, isEmpty);
+
+      final connectivityOpen = resolveConnectivity(
+        game: fixture.game,
+        tileMapByRegion: fixture.tileMapByRegion,
+        topology: fixture.topology,
+      );
+      final resultOpen = computeExtraction(
+        game: fixture.game,
+        tileMapByRegion: fixture.tileMapByRegion,
+        connectivityResult: connectivityOpen,
+        techCapForPlayer: (_) => 4,
+      );
+      expect(resultOpen['pl1']!.overseas['sugarCane'] ?? 0, greaterThan(0));
+    },
+    refs: '#3939',
   );
 }

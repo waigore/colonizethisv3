@@ -13,9 +13,15 @@ Game buildTreasuryBidBudgetGame({
   Map<CommodityId, int>? prices,
   Map<CommodityId, int>? stockpile,
   WorldMarketState? worldMarketState,
+  String playerId = humanPlayerId,
+  String gameId = 'test_treasury_bid_budget',
+  String playerDisplayName = 'England',
+  bool isHuman = true,
+  List<TradeOrder>? carryForwardBids,
 }) {
+  final resolvedPrices = prices ?? const <CommodityId, int>{};
   return Game(
-    id: 'test_treasury_bid_budget',
+    id: gameId,
     worldState: WorldState(
       turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(),
@@ -24,9 +30,9 @@ Game buildTreasuryBidBudgetGame({
     turnTimeMapping: TurnTimeMapping.gdd01,
     players: [
       Player(
-        id: humanPlayerId,
-        displayName: 'England',
-        isHuman: true,
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: isHuman,
         treasury: treasury,
         stockpile: Stockpile(
           quantities: stockpile ?? const <CommodityId, int>{},
@@ -36,9 +42,13 @@ Game buildTreasuryBidBudgetGame({
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
-    worldMarketState:
-        worldMarketState ??
-        WorldMarketState(prices: prices ?? const <CommodityId, int>{}),
+    worldMarketState: worldMarketState ??
+        WorldMarketState(
+          prices: resolvedPrices,
+          carryForwardBidsByFactionId: carryForwardBids == null
+              ? const {}
+              : {playerId: carryForwardBids},
+        ),
   );
 }
 
@@ -68,23 +78,13 @@ Game carryForwardBidGame(
   int treasury = 10000,
   String gameId = 'g_bid_spend',
   String playerDisplayName = 'GP1',
-}) => Game(
-  id: gameId,
-  worldState: WorldState(
-    turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: [
-    Player(
-      id: playerId,
-      displayName: playerDisplayName,
-      isHuman: false,
+}) =>
+    buildTreasuryBidBudgetGame(
       treasury: treasury,
-    ),
-  ],
-  worldMarketState: WorldMarketState(
-    prices: prices,
-    carryForwardBidsByFactionId: {playerId: bids},
-  ),
-);
+      prices: prices,
+      playerId: playerId,
+      gameId: gameId,
+      playerDisplayName: playerDisplayName,
+      isHuman: false,
+      carryForwardBids: bids,
+    );

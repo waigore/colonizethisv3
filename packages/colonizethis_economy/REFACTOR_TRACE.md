@@ -658,8 +658,24 @@ Documented exceptions (resource extractor bespoke rows retained):
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
-| `resource_extractor_part2_part1_test.dart` | `blockaded overseas port: connectivity excludes tile so overseas extraction zero` | multi-region topology + `resolveConnectivity` blockade wiring | #3939 |
 | `resource_extractor_part2_part2_test.dart` | `skips connected tile and logs when province missing from region (world-model)` | logger capture + missing-province defensive branch | #3939 |
 
 test_support LOC: **15,001** (net +585 vs slice 21 — `tile_extraction_contribution_scenarios.dart` + town-rule/capital scenario rows added; economy `test/` **1,742** (down 302 vs slice 21). Treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 23+.
+
+## Phase 3 — Slice 23 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-builder-dedup | `carryForwardBidGame` delegates to extended `buildTreasuryBidBudgetGame` | `treasury_scenarios/treasury_test_support.dart` | #3939 |
+| blockaded-overseas | `blockaded overseas port: connectivity excludes tile so overseas extraction zero` | `resource_extractor_part2_part1_test.dart` → `resource_extractor_scenarios.dart` + `extraction_fixture_support.dart` | #3939 |
+| dm-cluster-merge | merged `deal_matcher_priority_scenarios.dart` + `deal_matcher_sell_priority_scenarios.dart` into `deal_matcher_core_scenarios.dart` | `deal_matcher_scenarios/deal_matcher_core_scenarios.dart` | #3939 |
+| scenario-run-override | `runOverride` hook on `ResourceExtractorScenario` for topology/`resolveConnectivity` bespoke rows | `resource_extractor_scenarios.dart` | #3939 |
+
+Documented exceptions (resource extractor bespoke rows retained):
+
+| file | retained test description(s) | rationale | refs |
+|------|------------------------------|-----------|------|
+| `resource_extractor_part2_part2_test.dart` | `skips connected tile and logs when province missing from region (world-model)` | logger capture + missing-province defensive branch | #3939 |
+
+test_support LOC: **15,144** (net +143 vs slice 22 — blockaded fixture added; deal-matcher file merge −17 overhead). Economy `test/` **1,607** (down 135 vs slice 22). Treasury/validator scenario-data compaction and ≥20% test_support reduction (≤8,200) deferred to slice 24+.
 

@@ -314,3 +314,116 @@ Game overseasResourceExtractorGame({
     players: [player],
   );
 }
+
+/// Dual-region blockaded-port extraction fixture (Refs #3939 phase 3 slice 23).
+({
+  Game game,
+  Map<String, TileMapResult> tileMapByRegion,
+  MapTopology topology,
+}) blockadedOverseasExtractionFixture() {
+  const ow = 'oldWorld';
+  const nw = 'newWorld';
+  final tileMapOw = TileMapResult(
+    width: 2,
+    height: 2,
+    grid: const [
+      ['p1', 'p1'],
+      ['p1', 'p1'],
+    ],
+    resourceGrid: const [
+      [null, null],
+      [null, null],
+    ],
+  );
+  final tileMapNw = TileMapResult(
+    width: 2,
+    height: 2,
+    grid: const [
+      ['n1', 'n1'],
+      ['n1', 'n1'],
+    ],
+    resourceGrid: const [
+      [Resource.sugarCane, Resource.sugarCane],
+      [null, null],
+    ],
+  );
+  final topology = MapTopology(
+    nodes: [
+      TopologyNode(
+        id: 'p1',
+        regionId: ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'n1',
+        regionId: nw,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'sea1',
+        regionId: ow,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: 'sea2',
+        regionId: nw,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: 'p1', id2: 'sea1'),
+      TopologyEdge(id1: 'n1', id2: 'sea2'),
+      TopologyEdge(id1: 'sea1', id2: 'sea2'),
+    ],
+  );
+  final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
+  final tileState = tileStateFromSpecs(const [
+    TileImprovementSpec('newWorld|n1|0|0', improvement: 1, roadLevel: 4),
+    TileImprovementSpec('newWorld|n1|1|0', improvement: 1, roadLevel: 4),
+    TileImprovementSpec('oldWorld|p1|0|0', roadLevel: 4),
+  ]);
+  final ports = {
+    '$ow|p1|sea1': 'oldWorld|p1|0|0',
+    '$nw|n1|sea2': 'newWorld|n1|0|0',
+  };
+  final game = TestFixtures.minimalGame(
+    id: 'g1',
+    capitalTileGrainBonusPerTurn: 0,
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$ow|p1',
+          regionId: ow,
+          ownerId: 'pl1',
+          townDevelopmentLevel: 4,
+        ),
+      ],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$nw|n1',
+          regionId: nw,
+          ownerId: 'pl1',
+          townDevelopmentLevel: 4,
+        ),
+      ],
+    ),
+    tileState: tileState,
+    portsByProvinceSeaboard: ports,
+    players: [
+      Player(
+        id: 'pl1',
+        displayName: 'Spain',
+        isHuman: true,
+        capitalProvinceId: '$ow|p1',
+        capitalTile: cap,
+      ),
+    ],
+  );
+  return (
+    game: game,
+    tileMapByRegion: {ow: tileMapOw, nw: tileMapNw},
+    topology: topology,
+  );
+}
