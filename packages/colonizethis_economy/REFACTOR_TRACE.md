@@ -950,3 +950,13 @@ test_support LOC: **17,103** (net −101 vs slice 44 — consumption pin omissio
 
 test_support LOC: **17,002** (net −101 vs slice 45 — suggester + non-GP extraction row builders). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 47+.
 
+## Phase 3 — Slice 47 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-auto-offer-row | `nonGpAutoOfferMinorRow` / `nonGpAutoOfferPurchasedRow` compact C4/C6 auto-offer tables | `non_gp_auto_offers_scenarios.dart` | #2991 C4/C6, #3939 |
+| sellable-offer-cap-row | `offerCapRow` / `stagedOfferQtyRow` + finish remaining `sellableHeadroomRow` literals | `treasury_sellable_quantity_scenarios.dart` | #3093, #3939 |
+| town-bonus-province-row | `townBonusProvinceRow` compact province bonus table | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+
+test_support LOC: **16,987** (net −15 vs slice 46 — auto-offer + sellable/offer-cap row builders; town-bonus province helper offset by builder LOC). Economy `test/` **1,392** (unchanged). Further treasury/validator/deal-matcher/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 48+.
+
