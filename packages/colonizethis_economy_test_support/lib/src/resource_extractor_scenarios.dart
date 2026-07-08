@@ -167,27 +167,36 @@ ResourceExtractorScenario extractionScenario({
   );
 }
 
+Map<String, TileMapResult> _tileMapByRegionFor(
+  ResourceExtractorScenario scenario,
+) {
+  if (scenario.tileMapByRegion != null) return scenario.tileMapByRegion!;
+  final resolved = scenario.tileMap ??
+      tileMapFromGrids(
+        grid: scenario.grid!,
+        resourceGrid: scenario.resourceGrid!,
+      );
+  return {scenario.regionId: resolved};
+}
+
+Game _gameFor(ResourceExtractorScenario scenario, TileMapState tileState) {
+  if (scenario.gameOverride != null) return scenario.gameOverride!;
+  if (scenario.useOverseasGame) {
+    return overseasResourceExtractorGame(tileState: tileState);
+  }
+  return resourceExtractorGame(
+    tileState: tileState,
+    townDevelopmentLevel: scenario.townDevelopmentLevel,
+    techUnlocked: scenario.techUnlocked,
+    playerProspectedTiles: scenario.playerProspectedTiles,
+  );
+}
+
 void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
+  final tileState = tileStateFromSpecs(scenario.tileSpecs);
+  final tileMapByRegion = _tileMapByRegionFor(scenario);
+  final game = _gameFor(scenario, tileState);
   if (scenario.blockadedOverseasPin != null) {
-    final tileState = tileStateFromSpecs(scenario.tileSpecs);
-    final game = scenario.gameOverride ??
-        resourceExtractorGame(
-          tileState: tileState,
-          townDevelopmentLevel: scenario.townDevelopmentLevel,
-          techUnlocked: scenario.techUnlocked,
-          playerProspectedTiles: scenario.playerProspectedTiles,
-        );
-    final Map<String, TileMapResult> tileMapByRegion;
-    if (scenario.tileMapByRegion != null) {
-      tileMapByRegion = scenario.tileMapByRegion!;
-    } else {
-      final resolvedTileMap = scenario.tileMap ??
-          tileMapFromGrids(
-            grid: scenario.grid!,
-            resourceGrid: scenario.resourceGrid!,
-          );
-      tileMapByRegion = {scenario.regionId: resolvedTileMap};
-    }
     assertBlockadedOverseasPin(
       game: game,
       tileMapByRegion: tileMapByRegion,
@@ -205,27 +214,6 @@ void runResourceExtractorScenario(ResourceExtractorScenario scenario) {
     Logger.level = Level.error;
   }
   try {
-    final tileState = tileStateFromSpecs(scenario.tileSpecs);
-    final game = scenario.gameOverride ??
-        (scenario.useOverseasGame
-            ? overseasResourceExtractorGame(tileState: tileState)
-            : resourceExtractorGame(
-                tileState: tileState,
-                townDevelopmentLevel: scenario.townDevelopmentLevel,
-                techUnlocked: scenario.techUnlocked,
-                playerProspectedTiles: scenario.playerProspectedTiles,
-              ));
-    final Map<String, TileMapResult> tileMapByRegion;
-    if (scenario.tileMapByRegion != null) {
-      tileMapByRegion = scenario.tileMapByRegion!;
-    } else {
-      final TileMapResult resolvedTileMap = scenario.tileMap ??
-          tileMapFromGrids(
-            grid: scenario.grid!,
-            resourceGrid: scenario.resourceGrid!,
-          );
-      tileMapByRegion = {scenario.regionId: resolvedTileMap};
-    }
     final connectivity = scenario.connectivityByPlayer ??
         connectivityFor(
           scenario.connected,

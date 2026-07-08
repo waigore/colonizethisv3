@@ -988,3 +988,13 @@ test_support LOC: **16,863** (net −108 vs slice 48 — D5 fixture dedup + one-
 
 test_support LOC: **16,820** (net −43 vs slice 49 — positional tile-imp DSL + DealMatcher/FRR relation compaction). Economy `test/` **1,392** (unchanged). Further treasury/validator/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 51+.
 
+## Phase 3 — Slice 51 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|---------------|------|
+| frr-oneshot-inline | Inline `frrPartialFillRow` / `frrCargoCapRow` / `frrNoFrrFallbackRow` / D5 AC1 row wrappers into FRR scenario module | `deal_matcher_frr_scenarios.dart`, `deal_matcher_test_support.dart` | #2992, #3939 |
+| extractor-runner-dedup | Shared `_tileMapByRegionFor` / `_gameFor` for `runResourceExtractorScenario` | `resource_extractor_scenarios.dart` | #3661, #3939 |
+| validator-row | `validatorRow` / `validatorRejectRow` compact rules + caps tables | `trade_order_validator_test_support.dart`, `validator_{rules,cap}_scenarios.dart` | #2989, #3939 |
+
+test_support LOC: **16,710** (net −110 vs slice 50 — FRR one-shot inlining + extractor runner dedup + validator row builders). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 52+.
+
