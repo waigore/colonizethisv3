@@ -1,17 +1,13 @@
-// Shared helpers for world-market treasury bid budget unit tests
-// (Refs #3093 — treasury bid cap slice; #3823 Phase 3).
+// Shared treasury bid-budget fixtures and game builders (Refs #3093, #3661, #3939).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'trade_order_factory.dart';
+import '../trade_order_factory.dart';
 
-/// Canonical human-player id used across the treasury-bid-budget test
-/// suites so per-player helpers can be shared between files.
+/// Canonical human-player id used across treasury-bid-budget test suites.
 const String humanPlayerId = 'gp_h';
 
-/// Builds a minimal `Game` shaped for the treasury-bid-budget tests:
-/// a single human player with the requested treasury/stockpile and a
-/// `WorldMarketState` populated with the provided prices map.
+/// Builds a minimal `Game` shaped for treasury-bid-budget tests.
 Game buildTreasuryBidBudgetGame({
   int treasury = 100,
   Map<CommodityId, int>? prices,
@@ -47,9 +43,6 @@ Game buildTreasuryBidBudgetGame({
 }
 
 /// Stockpile-player game builder for sellable-quantity suites (Refs #3831).
-///
-/// Thin wrapper over [buildTreasuryBidBudgetGame] with the sellable-suite
-/// treasury default and empty world-market prices.
 Game buildStockpilePlayerGame({Map<CommodityId, int>? stockpile}) =>
     buildTreasuryBidBudgetGame(
       treasury: 500,
@@ -57,18 +50,41 @@ Game buildStockpilePlayerGame({Map<CommodityId, int>? stockpile}) =>
       worldMarketState: const WorldMarketState(),
     );
 
-/// Wraps a flat list of `TradeOrder` values into the per-player map shape
-/// expected by `Orders.tradeOrdersByPlayerId` for the canonical human
-/// player.
+/// Wraps trade orders into the per-player map for [humanPlayerId].
 Orders humanOrdersWith(List<TradeOrder> orders) {
   return Orders(tradeOrdersByPlayerId: {humanPlayerId: orders});
 }
 
-/// Bid trade order at priority 1 (delegates to the shared factory,
-/// Refs #3427 step 14).
 TradeOrder bidOrder(String commodityId, int qty) => testBid(commodityId, qty);
 
-/// Offer trade order at priority 1 (delegates to the shared factory,
-/// Refs #3427 step 14).
 TradeOrder offerOrder(String commodityId, int qty) =>
     testOffer(commodityId, qty);
+
+/// Minimal single-player [Game] with carry-forward bids on the world market.
+Game carryForwardBidGame(
+  List<TradeOrder> bids, {
+  String playerId = 'gp1',
+  Map<CommodityId, int> prices = const <CommodityId, int>{},
+  int treasury = 10000,
+  String gameId = 'g_bid_spend',
+  String playerDisplayName = 'GP1',
+}) => Game(
+  id: gameId,
+  worldState: WorldState(
+    turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: const RegionData(),
+    newWorld: const RegionData(),
+  ),
+  players: [
+    Player(
+      id: playerId,
+      displayName: playerDisplayName,
+      isHuman: false,
+      treasury: treasury,
+    ),
+  ],
+  worldMarketState: WorldMarketState(
+    prices: prices,
+    carryForwardBidsByFactionId: {playerId: bids},
+  ),
+);

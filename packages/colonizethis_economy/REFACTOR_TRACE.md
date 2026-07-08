@@ -450,6 +450,17 @@ Wall-clock (advisory, 3-run median): **32.49 s** — above `ECONOMY_TEST_TIMING_
 
 Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_purchased_tile_scenarios.dart`
 
-Core scenario migration: complete — all imperative core suites migrated except documented extractor exceptions. Treasury/deal-matcher test_support consolidation and town-bonus lib DRY deferred to slice 6+.
+Core scenario migration: complete — all imperative core suites migrated except documented extractor exceptions. Treasury test_support cluster consolidation and town-bonus lib DRY continued in slice 6; further test_support LOC reduction deferred to slice 7+.
 
 Economy `test/` LOC: **2,248** (down from 2,415 slice 4). test_support: **12,355** (treasury/deal-matcher consolidation still deferred for ≤8,200 target).
+
+## Phase 3 — Slice 6 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-cluster | consolidated treasury pure-helper + bid-spend + available scenario modules under `treasury_scenarios/` | `treasury_scenarios/treasury_pure_helper_scenarios.dart`, `treasury_bid_spend_scenarios.dart`, `treasury_available_scenarios.dart`, `treasury_test_support.dart` | #3939 |
+| town-tile-walk | shared `forEachTownConnectedTileInProvince` + `fullProvinceIdFromTileKey` | `lib/src/economy/town_connected_tile_walk.dart`; `town_manufacturing_bonus.dart` delegates GP/non-GP province tile loops | #3872, #3939 |
+
+Deleted modules (merged): `effective_market_price_scenarios.dart`, `staged_bid_spend_scenarios.dart`, `carry_forward_bid_notional_scenarios.dart`, `bid_spend_parity_scenarios.dart`, `treasury_bid_budget_scenarios.dart`, `matcher_treasury_budget_scenarios.dart`, `gp_treasury_credit_accumulator_scenarios.dart`, `treasury_bid_budget_test_support.dart`, `bid_spend_game_factory.dart`, `treasury_available_scenarios.dart` (root).
+
+test_support LOC: **12,287** (down from 12,355 slice 5). Treasury/deal-matcher validator scenario merge and ≥20% test_support reduction (≤8,200) still deferred to slice 7+.

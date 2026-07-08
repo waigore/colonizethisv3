@@ -5,7 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'treasury_bid_budget_test_support.dart';
+import 'treasury_test_support.dart';
 
 /// One row for [treasuryAvailableForBidsScenarios].
 typedef TreasuryAvailableScenario = ({
