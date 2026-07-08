@@ -161,7 +161,52 @@ test/ LOC after slice 4: **33,241** (five part runners → one family runner + s
 
 Merged six `order_suggestion_core_part*_test.dart` shards → `order_suggestion_core_test.dart` (≤400 lines). Bodies live in `order_suggestion_core_expectations.dart`; labels in `order_suggestion_core_scenarios.dart`.
 
-test/ LOC after slice 5: **33,273** (six part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred). ≥20% target ≤26,400 still deferred. Remaining: `order_engine_validate_*`, other `orders_application_*`, incremental equivalence, lib DRY.
+test/ LOC after slice 5: **33,273** (six part runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred). ≥20% target ≤26,400 still deferred. Remaining after slice 5: `order_engine_validate_*`, other `orders_application_*`, incremental equivalence, lib DRY.
+
+
+## Wave 3 — Slice 6 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevw-unique | rejects second pending work order for same unit in one turn | `order_engine_validate_work_single_order_per_unit_test.dart` | `support/engine/order_engine_validate_work_scenarios.dart` + `order_engine_validate_work_test.dart` | #3949 |
+| oevw-purchase-no-embassy | rejects purchase_land when no embassy with Minor | `order_engine_validate_work_purchase_land_test.dart` | same | #3949 |
+| oevw-purchase-at-war | rejects purchase_land when at war with faction | same | same | #3949 |
+| oevw-purchase-treasury | rejects purchase_land when insufficient treasury | same | same | #3949 |
+| oevw-purchase-no-resource | rejects purchase_land when tile has no resource | same | same | #3949 |
+| oevw-purchase-mineral | rejects purchase_land when mineral tile not prospected | same | same | #3949 |
+| oevw-purchase-accept | accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource | same (was multi-line; label joined) | same | #3949 |
+| oevw-purchase-exclusivity | rejects second Builder/Engineer/Merchant work order on same tile for same player (per-tile exclusivity) | `…_purchase_land_part2_test.dart` (was multi-line; label joined) | same | #3949 |
+| oevw-purchase-mineral-ok | accepts purchase_land for mineral when prospected | same | same | #3949 |
+| oevw-purchase-other-gp | rejects purchase_land when tile already purchased by another GP | same (was multi-line; label joined) | same | #3949 |
+| oevw-purchase-owned | rejects purchase_land when tile already owned by same player | same | same | #3949 |
+| oevw-bi-mineral-no | rejects build_improvement on mineral tile when not prospected | `order_engine_validate_work_build_improvement_test.dart` (was multi-line; label joined) | same | #3949 |
+| oevw-bi-mineral-ok | accepts build_improvement on mineral tile after prospected | same (was multi-line; label joined) | same | #3949 |
+| oevw-bi-grain | accepts build_improvement on grain when tile not prospected | same (was multi-line; label joined) | same | #3949 |
+| oevw-bi-no-resource | rejects build_improvement when tile has no resource | same | same | #3949 |
+| oevw-bi-max-level | rejects build_improvement when improvement level already 4 | same | same | #3949 |
+| oevw-bi-tech-empty | rejects build_improvement when tech cap would be exceeded (empty tech) | same (was multi-line; label joined) | same | #3949 |
+| oevw-bi-tech-cap | rejects build_improvement when tech cap would be exceeded | same | same | #3949 |
+| oevw-bi-grain-tech | accepts grain upgrade when exact next-level grain tech is unlocked | same (was multi-line; label joined) | same | #3949 |
+| oevw-bi-accept | accepts build_improvement when tile has resource, level < 4, tech cap allows | same (was multi-line; label joined) | same | #3949 |
+| oevw-bi-foreign | rejects build_improvement in foreign, unpurchased province | same | same | #3949 |
+| oevw-scrub-raise | rejects raising scrub timber from level 1 even with circular_saw | `…_scrub_cap_test.dart` (was multi-line; label joined) | same | #3949 |
+| oevw-scrub-hardwood | accepts raising hardwood timber from level 1 with circular_saw | same | same | #3949 |
+| oevw-scrub-initial | accepts initial scrub timber improvement (level 0 -> 1) | same | same | #3949 |
+| oevw-bi-purchased | accepts build_improvement on purchased tile in foreign province | `…_purchased_foreign_tile_test.dart` (was multi-line; label joined) | same | #3949 |
+| oevw-fort-l2 | rejects build_fort to level 2 without Mine Engineering | `order_engine_validate_work_build_fort_test.dart` | same | #3949 |
+| oevw-fort-l3 | rejects build_fort to level 3 without Modern Forts | same | same | #3949 |
+| oevw-rail-terrain | rejects build_rail when tile terrain data is missing | `order_engine_validate_work_build_rail_test.dart` | same | #3949 |
+| oevw-rail-road0 | rejects build_rail when road level is 0 | same | same | #3949 |
+| oevw-rail-hills | rejects build_rail on hills with only Early Steam | same | same | #3949 |
+| oevw-rail-plains | accepts build_rail on plains with Early Steam and road 1 | same | same | #3949 |
+| oevw-embassy-path | rejects build_road in minor province without embassy path | `order_engine_validate_work_minor_embassy_test.dart` | same | #3949 |
+| oevw-embassy-occupy | rejects build_road in minor province even with embassy when occupancy disallows tile | same (was multi-line; label joined) | same | #3949 |
+| oevw-town-reject | rejects upgrade_town without National Bureaucracy | `order_engine_validate_work_upgrade_town_test.dart` | same | #3949 |
+| oevw-town-accept | accepts upgrade_town when National Bureaucracy unlocked | same | same | #3949 |
+
+Merged ten `order_engine_validate_work_*_test.dart` suites (35 scenarios) → `order_engine_validate_work_test.dart` (≤400 lines). Bodies live in `order_engine_validate_work_expectations.dart` + shared builders in `order_engine_validate_work_fixtures.dart`; labels in `order_engine_validate_work_scenarios.dart`. Joined formerly multi-line descriptions added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 6: **33,481** (ten imperative runners → one family runner + support tables; slight LOC uptick from enum/switch/scenario harness — further compaction deferred with remaining families / lib DRY). ≥20% target ≤26,400 still deferred. Remaining: other `order_engine_validate_*` (build_civilian / diplomatic / recruit / trade), other `orders_application_*`, incremental equivalence, lib DRY.
 
 ## Wave 3 — documented exceptions (kickoff)
 
