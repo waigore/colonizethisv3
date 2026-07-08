@@ -352,7 +352,7 @@ Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_scenarios.
 |-------------|------------------|----------------|------|
 | harness-run-labeled | `runLabeledScenario` / `runLabeledScenarios` / `runLabeledScenarioGroup` exported from `scenario_runner.dart` | `colonizethis_economy_test_support/lib/src/scenario_runner.dart` | #3939 |
 | dm-consolidated | all non-FRR DealMatcher table rows | `world_market_deal_matcher_test.dart` (merged from boycott, priority, sell-priority, treasury micro-runners) | #3939 |
-| dm-frr-consolidated | FRR matcher + FRR activity + PurchasedTileIndex.forTesting helper rows | `world_market_deal_matcher_frr_test.dart` (merged from first_right + first_right_supplement) | #2992 D2, #3939 |
+| dm-frr-consolidated | FRR matcher + FRR activity + PurchasedTileIndex.forTesting helper rows | `world_market_deal_matcher_test.dart` (merged from first_right + first_right_supplement + frr runner slice 27) | #2992 D2, #3939 |
 | description-baseline | 115 preserved single-line test descriptions | `test/DESCRIPTION_BASELINE.txt` + `repo.economy_test_preserved_descriptions` | #3939 |
 | import-hygiene | zero `package:*/src/` imports under economy test/ | `repo.economy_test_no_cross_package_src_imports` | #3939 |
 
@@ -434,8 +434,7 @@ Wall-clock (advisory, 3-run median): **32.49 s** — above `ECONOMY_TEST_TIMING_
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
-| `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically` | pure `DealMatcher.pairKey` helper unit tests | #3939 |
-| `world_market_deal_matcher_frr_test.dart` | `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
+| `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically`; `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `DealMatcher.pairKey` + `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
 | `town_manufacturing_bonus_test.dart` | `level 2 → 1, level 4 → 2, others → 0`; three `isTownManufacturingRecipeEligible` rows | pure multiplier / recipe-eligibility helper unit tests | #3872, #3939 |
 
 ## Phase 3 — Slice 5 (Refs #3939)
@@ -725,4 +724,18 @@ test_support LOC: **15,201** (net +76 vs slice 24 — three cluster file merges 
 Deleted module: `deal_matcher_core_scenarios.dart` (exceeded `repo.dart_file_non_comment_line_size` at 1349 non-comment lines).
 
 test_support LOC: **15,231** (net +30 vs slice 25 — split-file headers offset boycott row compaction; all deal_matcher modules now ≤423 physical lines). Economy `test/` **1,529** (unchanged). Further treasury/validator scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 27+.
+
+## Phase 3 — Slice 27 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-frr-runner-merge | merged FRR matcher/activity runners + PurchasedTileIndex.forTesting helper tests into consolidated deal-matcher file | `world_market_deal_matcher_test.dart` (deleted `world_market_deal_matcher_frr_test.dart`) | #2992 D2, #3939 |
+| validator-ctx-timber-preset | `validatorCtxTimber` shared single-commodity price preset | `trade_order_validator_test_support.dart`, `trade_order_validator_scenarios.dart` | #3939 |
+| non-gp-faction-key-count-pin | `factionCommodityKeyCount` replaces inline `custom` closure on land-only row | `non_gp_extraction_expectations.dart`, `non_gp_extraction_scenarios.dart` | #2991, #3939 |
+| town-preview-faction-pin | `previewProvinceMatchesFactionCommodity` replaces inline `custom` on preview/live row | `town_manufacturing_bonus_expectations.dart`, `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| frr-d5-match-deal-preset | `_d5FrrMatchDeal` shared FRR-match filled-deal builder | `frr_credits_scenarios.dart` | #2992 D5 AC4, #3939 |
+
+World-market runner file count: **11 → 10** (target ≤12 met).
+
+test_support LOC: deferred recount post-slice — validator/treasury scenario-data compaction for ≥20% test_support reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 28+.
 

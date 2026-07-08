@@ -11,7 +11,7 @@ class NonGpExtractionExpectation {
     this.factionTotals,
     this.factionKeysUnordered,
     this.excludesCommodity,
-    this.custom,
+    this.factionCommodityKeyCount,
   });
 
   final bool empty;
@@ -19,7 +19,7 @@ class NonGpExtractionExpectation {
   final Map<String, Map<CommodityId, int>>? factionTotals;
   final Iterable<String>? factionKeysUnordered;
   final (String factionId, CommodityId commodity)? excludesCommodity;
-  final void Function(Map<String, Map<CommodityId, int>> result)? custom;
+  final (String factionId, int count)? factionCommodityKeyCount;
 }
 
 void assertNonGpExtractionExpectation(
@@ -48,5 +48,8 @@ void assertNonGpExtractionExpectation(
     final (factionId, commodity) = expectation.excludesCommodity!;
     expect(result[factionId], isNot(contains(commodity)));
   }
-  expectation.custom?.call(result);
+  if (expectation.factionCommodityKeyCount != null) {
+    final (factionId, count) = expectation.factionCommodityKeyCount!;
+    expect(result[factionId]?.keys, hasLength(count));
+  }
 }

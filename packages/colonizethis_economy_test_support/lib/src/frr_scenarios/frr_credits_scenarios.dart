@@ -397,6 +397,22 @@ FilledDeal _d5OtherBuyDeal({
   sellerOriginTileKey: sellerOriginTileKey,
 );
 
+FilledDeal _d5FrrMatchDeal({
+  String seller = _kFrrIssueAcD5MinorM1,
+  String buyer = _kFrrIssueAcD5GpA,
+  int quantity = 10,
+  double pricePerUnit = 20.0,
+  String sellerOriginTileKey = _kFrrIssueAcD5TileK1,
+}) =>
+    deal(
+      seller: seller,
+      buyer: buyer,
+      quantity: quantity,
+      pricePerUnit: pricePerUnit,
+      sellerOriginTileKey: sellerOriginTileKey,
+      isFirstRightOfRefusalMatch: true,
+    );
+
 /// AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full share).
 List<FrrCreditsScenario> frrIssueAcD5CreditsAc2Scenarios() => [
   FrrCreditsScenario.expect(
@@ -465,17 +481,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsAc4Scenarios() => [
     label:
         'negative — buyer == owning GP (D2 FRR-match path) excluded from '
         'D4 aggregation: no double-credit when gpA wins the offer itself',
-    filledDeals: [
-      FilledDeal(
-        sellerFactionId: _kFrrIssueAcD5MinorM1,
-        buyerFactionId: _kFrrIssueAcD5GpA,
-        commodityId: 'timber',
-        quantity: 10,
-        pricePerUnit: 20.0,
-        isFirstRightOfRefusalMatch: true,
-        sellerOriginTileKey: _kFrrIssueAcD5TileK1,
-      ),
-    ],
+    filledDeals: [_d5FrrMatchDeal()],
     purchasedTileIndex: idx([
       _d5Attr(_kFrrIssueAcD5TileK1, _kFrrIssueAcD5GpA, _kFrrIssueAcD5MinorM1),
     ]),

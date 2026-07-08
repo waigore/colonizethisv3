@@ -211,9 +211,9 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: {
       'm1': ConnectivityResult(connected: {'oldWorld|m1|0|0'}),
     },
-    expect: NonGpExtractionExpectation(
-      factionTotals: const {'m1': {'timber': 1}},
-      custom: (result) => expect(result['m1']?.keys, hasLength(1)),
+    expect: const NonGpExtractionExpectation(
+      factionTotals: {'m1': {'timber': 1}},
+      factionCommodityKeyCount: ('m1', 1),
     ),
     refs: '#2991',
   ),

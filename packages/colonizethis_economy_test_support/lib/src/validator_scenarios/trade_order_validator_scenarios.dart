@@ -435,12 +435,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   ),
   TradeOrderValidatorScenario.expect(
     label: 'accepts bids whose cumulative spend equals treasuryBudgetForBids',
-    context: validatorCtx(
-      treasuryBudgetForBids: 60,
-      worldMarketState: WorldMarketState(
-        prices: {CommodityCatalog.timber.id: 30},
-      ),
-    ),
+    context: validatorCtxTimber(treasuryBudgetForBids: 60),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
     expect: const ValidatorExpectation(singleAccepted: true),
     refs: '#3093',
@@ -448,12 +443,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   TradeOrderValidatorScenario.expect(
     label: 'treasury cap takes precedence over bidExceedsCargoCapacity (rule 5 '
         'before rule 6)',
-    context: validatorCtx(
+    context: validatorCtxTimber(
       tradeCargoCapacity: 100,
       treasuryBudgetForBids: 10,
-      worldMarketState: WorldMarketState(
-        prices: {CommodityCatalog.timber.id: 30},
-      ),
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 5)],
     expect: ValidatorExpectation(
@@ -539,12 +531,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     [
   TradeOrderValidatorScenario.expect(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',
-    context: validatorCtx(
-      treasuryBudgetForBids: 0,
-      worldMarketState: WorldMarketState(
-        prices: {CommodityCatalog.timber.id: 30},
-      ),
-    ),
+    context: validatorCtxTimber(treasuryBudgetForBids: 0),
     proposedOrders: [
       validatorBid(CommodityCatalog.timber.id, 1),
       validatorBid(CommodityCatalog.timber.id, 5),

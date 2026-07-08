@@ -34,6 +34,20 @@ TradeOrderValidationContext validatorCtx({
   worldMarketState: worldMarketState,
 );
 
+/// Shared timber-only price preset for treasury-cap validator scenarios.
+TradeOrderValidationContext validatorCtxTimber({
+  int treasuryBudgetForBids = 1 << 30,
+  int tradeCargoCapacity = 100,
+  int timberPrice = 30,
+}) =>
+    validatorCtx(
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      tradeCargoCapacity: tradeCargoCapacity,
+      worldMarketState: WorldMarketState(
+        prices: {CommodityCatalog.timber.id: timberPrice},
+      ),
+    );
+
 /// Shared timber/iron price preset for treasury-cap validator scenarios.
 TradeOrderValidationContext validatorCtxTimberIron({
   int treasuryBudgetForBids = 1 << 30,

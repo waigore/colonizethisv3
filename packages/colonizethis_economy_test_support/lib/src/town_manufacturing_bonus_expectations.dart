@@ -83,7 +83,7 @@ class TownManufacturingBonusGameExpectation {
     this.autoOffers,
     this.previewMatchesLive = false,
     this.previewEmpty = false,
-    this.custom,
+    this.previewProvinceMatchesFactionCommodity,
   });
 
   final Map<String, Map<CommodityId, int>>? factionBonus;
@@ -91,7 +91,11 @@ class TownManufacturingBonusGameExpectation {
   final Map<String, TownManufacturingAutoOfferExpectation>? autoOffers;
   final bool previewMatchesLive;
   final bool previewEmpty;
-  final void Function()? custom;
+  final ({
+    String provinceId,
+    String factionId,
+    CommodityId commodityId,
+  })? previewProvinceMatchesFactionCommodity;
 }
 
 void assertTownManufacturingBonusGameExpectation({
@@ -136,5 +140,11 @@ void assertTownManufacturingBonusGameExpectation({
   if (expectation.previewEmpty) {
     expect(previewByProvince, isEmpty);
   }
-  expectation.custom?.call();
+  final previewPin = expectation.previewProvinceMatchesFactionCommodity;
+  if (previewPin != null) {
+    expect(
+      previewByProvince![previewPin.provinceId]?[previewPin.commodityId],
+      bonusByFactionId![previewPin.factionId]?[previewPin.commodityId],
+    );
+  }
 }

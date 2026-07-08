@@ -353,14 +353,14 @@ List<TownManufacturingBonusGameScenario> townManufacturingBonusGameScenarios() =
           assertTownManufacturingBonusGameExpectation(
             expectation: TownManufacturingBonusGameExpectation(
               previewMatchesLive: true,
-              custom: () {
-                expect(
-                  preview[_gpProvinceId]?[CommodityCatalog.lumber.id],
-                  live.bonusByFactionId['pl1']?[CommodityCatalog.lumber.id],
-                );
-              },
+              previewProvinceMatchesFactionCommodity: (
+                provinceId: _gpProvinceId,
+                factionId: 'pl1',
+                commodityId: CommodityCatalog.lumber.id,
+              ),
             ),
             bonusByProvinceId: live.bonusByProvinceId,
+            bonusByFactionId: live.bonusByFactionId,
             previewByProvince: preview,
           );
         },
