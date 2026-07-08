@@ -848,3 +848,13 @@ test_support LOC: **16,452** (net +225 vs slice 34 — three expectation helper 
 
 test_support LOC: **16,630** (net +178 vs slice 35 — three expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Further treasury/validator/deal-matcher scenario-data compaction and remaining inline-verify migrations (`tile_extraction_pipeline_scenarios.dart`, `trade_interception_scenarios.dart`, `economy_production_scenarios.dart`, etc.) for ≥20% test_support reduction (≤8,200) deferred to slice 37+.
 
+## Phase 3 — Slice 37 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| tile-extraction-pipeline-expectations | migrated 6 inline `run:` closures to `tile_extraction_pipeline_expectations.dart` pins | `tile_extraction_pipeline_scenarios.dart`, `tile_extraction_pipeline_expectations.dart` | #3939 |
+| trade-interception-expectations | migrated 13 inline `run:` closures to `trade_interception_expectations.dart` pins | `trade_interception_scenarios.dart`, `trade_interception_expectations.dart` | #3939 |
+| economy-production-expectations | migrated 12 inline `run:` closures to `economy_production_expectations.dart` pins | `economy_production_scenarios.dart`, `economy_production_expectations.dart` | #3939 |
+
+test_support LOC: **16,768** (net +138 vs slice 36 — three expectation helper modules added; scenario inline-verify bodies reduced). Economy `test/` **1,397** (unchanged). Treasury/validator/deal-matcher scenario-data compaction for ≥20% test_support reduction (≤8,200) and lib town-bonus traversal DRY deferred to slice 38+.
+
