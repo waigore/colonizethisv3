@@ -224,7 +224,34 @@ test/ LOC after slice 6: **33,481** (ten imperative runners → one family runne
 
 Merged `order_engine_validate_build_civilian_test.dart` (+ dropped duplicate `order_engine_validate_build_civilian_merchant_and_spawn_test.dart` with identical descriptions) → thin family runner. Expectations reuse `order_engine_validate_build_civilian_test_support.dart`.
 
-test/ LOC after slice 7: see `find … wc -l` in PR. Remaining: diplomatic / recruit / trade validate suites, other `orders_application_*`, incremental equivalence, lib DRY. ≥20% target ≤26,400 still deferred.
+test/ LOC after slice 7: see `find … wc -l` in PR. Remaining after slice 7: diplomatic / recruit / trade validate suites, other `orders_application_*`, incremental equivalence, lib DRY. ≥20% target ≤26,400 still deferred.
+
+
+## Wave 3 — Slice 8 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevd-war-already | declareWar rejected when already at war | `order_engine_validate_diplomatic_relations_test.dart` | `support/engine/order_engine_validate_diplomatic_scenarios.dart` + `order_engine_validate_diplomatic_test.dart` | #3949 |
+| oevd-peace-nowar | offerPeace rejected when not at war | same | same | #3949 |
+| oevd-overture-war | establishOverture rejected when target is at war with GP | same | same | #3949 |
+| oevd-trade-tech | establishOverture trade consulate rejected without diplomatic_expertise | same (was multi-line; label joined) | same | #3949 |
+| oevd-consulate-treasury | establishOverture consulate rejected when treasury too low | same | same | #3949 |
+| oevd-embassy-consulate | establishOverture embassy requires existing consulate | same | same | #3949 |
+| oevd-overture-second | establishOverture second order for same faction in same turn rejected | same | same | #3949 |
+| oevd-second-type | second diplomatic order to same target different type is rejected | same | same | #3949 |
+| oevd-aid-embassy | grantAid requires embassy and sufficient treasury | `order_engine_validate_diplomatic_aid_subsidy_test.dart` | same | #3949 |
+| oevd-aid-multiple | grantAid rejects amounts not a multiple of £1000 | same | same | #3949 |
+| oevd-aid-subsidy | grantAid then setSubsidy toward same target both accepted | same | same | #3949 |
+| oevd-subsidy-embassy | setSubsidy requires an embassy (Refs #3753 R2) | same | same | #3949 |
+| oevd-subsidy-treasury | setSubsidy with an embassy is accepted regardless of treasury (no upfront cost, Refs #3753 R3) | same (was multi-line; label joined) | same | #3949 |
+| oevd-subsidy-percent | setSubsidy with an embassy and a valid percent is accepted | same | same | #3949 |
+| oevd-subsidy-range | setSubsidy rejects a percent outside 5-20 in steps of 5 | same | same | #3949 |
+| oevd-aid-second | second grantAid toward same target rejected | same | same | #3949 |
+| oevd-war-aid | declareWar then grantAid toward same target rejected | same | same | #3949 |
+
+Merged `order_engine_validate_diplomatic_{relations,aid_subsidy}_test.dart` (17 scenarios) → `order_engine_validate_diplomatic_test.dart`. Bodies reuse `gpMinorGame` / `emptyTopology` via diplomatic fixtures re-export.
+
+test/ LOC after slice 8: see PR. Remaining: recruit / trade validate suites, other `orders_application_*`, incremental equivalence, lib DRY. ≥20% target ≤26,400 still deferred.
 
 ## Wave 3 — documented exceptions (kickoff)
 
