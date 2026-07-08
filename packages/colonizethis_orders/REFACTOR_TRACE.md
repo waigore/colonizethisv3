@@ -411,6 +411,14 @@ test/ LOC after slice 13: see PR. Remaining: further scenario-data compaction to
 
 test/ LOC after slice 14: see PR (`find … wc -l`). Remaining: further expectation compaction (`work_order_application_*`, `order_suggestion_core_*`, `work_completion_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 15: work-application/completion expectation fixtures
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| work-app-fixtures | extract shared OW unit/province/player/game/order/purchase-land helpers; compact application + completion expectation bodies | `work_order_application_expectations.dart`, `work_completion_expectations.dart` | `work_application_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 15: **32,385** (down ~751 from ~33,136 post–slice 14). Remaining: further expectation compaction (`order_suggestion_core_*`, `order_engine_validate_work_*`, `build_unit_training_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

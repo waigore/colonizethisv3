@@ -7,7 +7,7 @@ import 'package:colonizethis_orders/src/orders/orders_application_completed_work
 import 'package:colonizethis_orders/src/orders/orders_application_context.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'orders_application_test_support.dart';
+import 'work_application_fixtures.dart';
 
 /// Pins for [workCompletionScenarios] rows.
 enum WorkCompletionTarget {
@@ -93,161 +93,104 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
   }
 }
 
-Orders _ordersToTriggerProcessWork() =>
-    Orders(buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]});
-
-TileMapResult _simpleTileMap() {
-  return TileMapResult(
-    width: 3,
-    height: 3,
-    grid: const [
-      ['P1', 'P1', 'P1'],
-      ['P1', 'P1', 'P1'],
-      ['P1', 'P1', 'P1'],
-    ],
+Unit _builderCompletingImprovement({
+  String ownerId = 'p1',
+  int totalTurns = 1,
+  int remainingTurns = 1,
+  bool withOriginAssignment = true,
+}) {
+  return workAppWorkingUnit(
+    type: kUnitTypeBuilder,
+    workTarget: kWorkTargetBuildImprovement,
+    ownerId: ownerId,
+    totalTurns: totalTurns,
+    remainingTurns: remainingTurns,
+    originTileKey: withOriginAssignment ? WorkAppIds.originTileKey : null,
+    assignedTileKey: withOriginAssignment ? WorkAppIds.tileKey : null,
   );
 }
 
-TileMapResult _railMap() {
-  return TileMapResult(
-    width: 1,
-    height: 1,
-    grid: const [
-      ['P1'],
-    ],
-    terrainGrid: [
-      [TerrainType.plains],
-    ],
+Game _completionGame({
+  required List<Unit> units,
+  TileMapState? tileState,
+  List<Province>? provinces,
+  List<Player>? players,
+  Map<String, String>? resourceByTileKey,
+  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+  Map<String, String>? portsByProvinceSeaboard,
+  int turnNumber = 0,
+  Map<String, bool>? aiControlByGpId,
+  String? lastHumanCompletedResearchCategory,
+  int? lastHumanResearchCategoryCompletionTurn,
+}) {
+  return workAppOwnedGame(
+    units: units,
+    provinces: provinces,
+    players: players,
+    tileState: tileState,
+    resourceByTileKey: resourceByTileKey,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+    playerVisibilityByTile: playerVisibilityByTile,
+    portsByProvinceSeaboard: portsByProvinceSeaboard,
+    turnNumber: turnNumber,
+    aiControlByGpId: aiControlByGpId,
+    lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
+    lastHumanResearchCategoryCompletionTurn:
+        lastHumanResearchCategoryCompletionTurn,
   );
 }
 
 void
 _buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setImprovement(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [_builderCompletingImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
-  expect(next.worldState.tileState.improvementLevel(tileKey), 1);
+  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 1);
   final after = next.worldState.oldWorld.units.single;
-  expect(after.tileKey, tileKey);
+  expect(after.tileKey, WorkAppIds.tileKey);
   expect(after.originTileKey, isNull);
   expect(after.assignedTileKey, isNull);
 }
 
 void _buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setImprovement(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      turnNumber: 2,
+      units: [_builderCompletingImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'grain'},
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   expect(next.lastHumanCompletedResearchCategory, 'gathering');
   expect(next.lastHumanResearchCategoryCompletionTurn, 2);
 }
 
 void
 _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
   const aiId = 'ai1';
-  final tileState = TileMapState().setImprovement(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: aiId,
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      turnNumber: 1,
+      units: [_builderCompletingImprovement(ownerId: aiId)],
+      provinces: [workAppOwnedProvince(ownerId: aiId)],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'coal'},
+      players: const [
+        Player(id: 'human', displayName: 'H', isHuman: true),
+        Player(id: aiId, displayName: 'AI', isHuman: false),
+      ],
+      aiControlByGpId: const {aiId: true},
+      lastHumanCompletedResearchCategory: 'gathering',
+      lastHumanResearchCategoryCompletionTurn: 0,
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: aiId)],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'coal'},
-      tileState: tileState,
-    ),
-    players: const [
-      Player(id: 'human', displayName: 'H', isHuman: true),
-      Player(id: aiId, displayName: 'AI', isHuman: false),
-    ],
-    aiControlByGpId: const {aiId: true},
-    lastHumanCompletedResearchCategory: 'gathering',
-    lastHumanResearchCategoryCompletionTurn: 0,
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   final envy = next.dossierEvidenceEntries
       .where((e) => e.agendaType == 'envy')
       .toList();
@@ -257,280 +200,141 @@ _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
 }
 
 void _buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setImprovement(tileKey, 3);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [_builderCompletingImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'grain'},
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
-  expect(next.worldState.tileState.improvementLevel(tileKey), 4);
+  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 4);
 }
 
 void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
   // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
   expect(
     extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
     1,
   );
-  final tileState = TileMapState().setImprovement(tileKey, 3);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [_builderCompletingImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdSawMill: true}),
+      ],
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'grain'},
-      tileState: tileState,
-    ),
-    players: const [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        techUnlocked: {kTechIdSawMill: true},
-      ),
-    ],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
-  expect(next.worldState.tileState.improvementLevel(tileKey), 4);
+  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 4);
 }
 
 void _workCancelledWhenProvinceContainingTargetTileIsConquered376() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
   // Unit p1 is working on a tile in P1; province P1 is conquered by p2.
-  final tileState = TileMapState().setImprovement(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    originTileKey: 'oldWorld|P1|1|0',
-    assignedTileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 2,
-      remainingTurns: 2,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [_builderCompletingImprovement(totalTurns: 2, remainingTurns: 2)],
+      // Province owned by p2 (conquered); unit still belongs to p1.
+      provinces: [workAppOwnedProvince(ownerId: 'p2')],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        // Province owned by p2 (conquered); unit still belongs to p1.
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p2')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-      Player(id: 'p2', displayName: 'P2', isHuman: true),
-    ],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   final uAfter = next.worldState.oldWorld.units.single;
   expect(uAfter.status, UnitStatus.idle);
   expect(uAfter.currentWork, isNull);
-  expect(uAfter.tileKey, 'oldWorld|P1|1|0');
+  expect(uAfter.tileKey, WorkAppIds.originTileKey);
   expect(uAfter.originTileKey, isNull);
   expect(uAfter.assignedTileKey, isNull);
   // Improvement not applied (work was cancelled).
-  expect(next.worldState.tileState.improvementLevel(tileKey), 0);
+  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 0);
 }
 
 void _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setImprovement(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: tileKey,
-      totalTurns: 2,
-      remainingTurns: 2,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
+  final game = _completionGame(
+    units: [
+      _builderCompletingImprovement(
+        totalTurns: 2,
+        remainingTurns: 2,
+        withOriginAssignment: false,
       ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+    ],
+    tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
   );
-  final afterFirst = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
+  final afterFirst = applyBuildAndWorkOrders(game, workAppProcessWorkOrders());
+  expect(
+    afterFirst.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
+    0,
   );
-  expect(afterFirst.worldState.tileState.improvementLevel(tileKey), 0);
   final uAfterFirst = afterFirst.worldState.oldWorld.units.single;
   expect(uAfterFirst.currentWork!.remainingTurns, 1);
   final afterSecond = applyBuildAndWorkOrders(
     afterFirst,
-    _ordersToTriggerProcessWork(),
+    workAppProcessWorkOrders(),
   );
-  expect(afterSecond.worldState.tileState.improvementLevel(tileKey), 1);
+  expect(
+    afterSecond.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
+    1,
+  );
 }
 
 void _exploreCompletionSetsVisibilityAndClearsCurrentWork() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeExplorer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetExplore,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeExplorer,
+          workTarget: kWorkTargetExplore,
+        ),
+      ],
       tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
         },
       },
     ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+    workAppProcessWorkOrders(),
   );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   expect(
-    next.worldState.playerVisibilityByTile['p1']?[tileKey],
+    next.worldState.playerVisibilityByTile['p1']?[WorkAppIds.tileKey],
     VisibilityLevel.fullyVisible.name,
   );
 }
 
 void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const tileKey2 = 'oldWorld|P1|1|0';
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeExplorer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetExplore,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
+  const tileKey2 = WorkAppIds.originTileKey;
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeExplorer,
+          workTarget: kWorkTargetExplore,
+        ),
+      ],
       tileKeysByRegionAndProvince: const {
-        ow: {
-          provinceId: [tileKey, tileKey2],
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey, tileKey2],
           'P1': ['oldWorld|P1|9|9'],
         },
       },
       playerVisibilityByTile: const {
         'p1': {
-          tileKey: 'fogged',
+          WorkAppIds.tileKey: 'fogged',
           tileKey2: 'unknown',
           'oldWorld|P1|9|9': 'unknown',
         },
       },
     ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+    workAppProcessWorkOrders(),
   );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   expect(
-    next.worldState.playerVisibilityByTile['p1']?[tileKey],
+    next.worldState.playerVisibilityByTile['p1']?[WorkAppIds.tileKey],
     VisibilityLevel.fullyVisible.name,
   );
   expect(
@@ -544,497 +348,277 @@ void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
 }
 
 void _buildRoadCompletionIncreasesRoadLevel() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setRoadLevel(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeEngineer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRoad,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeEngineer,
+          workTarget: kWorkTargetBuildRoad,
+        ),
+      ],
+      tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, 0),
+    ),
+    workAppProcessWorkOrders(),
     tileMapByRegion: const {},
   );
-  expect(next.worldState.tileState.roadLevel(tileKey), 1);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
 }
 
 void
 _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const capitalTileKey = 'oldWorld|P1|1|0';
-  final initialTileState = TileMapState()
-      .setRoadLevel(tileKey, 0)
-      .setRoadLevel(capitalTileKey, 2);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeEngineer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRoad,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final player = Player(
-    id: 'p1',
-    displayName: 'P1',
-    isHuman: true,
-    capitalProvinceId: provinceId,
-    capitalTile: const CapitalTile(
-      regionId: ow,
-      provinceId: provinceId,
-      x: 1,
-      y: 0,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: initialTileState,
-    ),
-    players: [player],
-  );
+  const capitalTileKey = WorkAppIds.originTileKey;
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
-    tileMapByRegion: {ow: _simpleTileMap()},
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeEngineer,
+          workTarget: kWorkTargetBuildRoad,
+        ),
+      ],
+      tileState: TileMapState()
+          .setRoadLevel(WorkAppIds.tileKey, 0)
+          .setRoadLevel(capitalTileKey, 2),
+      players: [
+        workAppPlayer(
+          capitalProvinceId: WorkAppIds.provinceId,
+          capitalTile: const CapitalTile(
+            regionId: WorkAppIds.ow,
+            provinceId: WorkAppIds.provinceId,
+            x: 1,
+            y: 0,
+          ),
+        ),
+      ],
+    ),
+    workAppProcessWorkOrders(),
+    tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
 
   // Road built on target tile.
-  expect(next.worldState.tileState.roadLevel(tileKey), 1);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
   // Capital tile was already at level 2 and should remain 2 (no downgrade).
   expect(next.worldState.tileState.roadLevel(capitalTileKey), 2);
 }
 
 void
 _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const portTileKey = 'oldWorld|P1|1|0';
-  final initialTileState = TileMapState()
-      .setRoadLevel(tileKey, 1)
-      .setRoadLevel(portTileKey, 1);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeEngineer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRoad,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final player = Player(
-    id: 'p1',
-    displayName: 'P1',
-    isHuman: true,
-    capitalProvinceId: provinceId,
-    techUnlocked: const {kTechIdRoadConstruction: true},
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-      units: [unit],
-    ),
-    newWorld: const RegionData(),
-    tileState: initialTileState,
-    portsByProvinceSeaboard: const {'$provinceId|sea1': portTileKey},
-  );
-  final game = Game(id: 'g', worldState: world, players: [player]);
-
+  const portTileKey = WorkAppIds.originTileKey;
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
-    tileMapByRegion: {ow: _simpleTileMap()},
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeEngineer,
+          workTarget: kWorkTargetBuildRoad,
+        ),
+      ],
+      tileState: TileMapState()
+          .setRoadLevel(WorkAppIds.tileKey, 1)
+          .setRoadLevel(portTileKey, 1),
+      portsByProvinceSeaboard: const {
+        '${WorkAppIds.provinceId}|sea1': portTileKey,
+      },
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
+      ],
+    ),
+    workAppProcessWorkOrders(),
+    tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
 
   // Road on target tile upgraded from 1 -> 2.
-  expect(next.worldState.tileState.roadLevel(tileKey), 2);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 2);
   // Adjacent port tile upgraded from 1 -> 2.
   expect(next.worldState.tileState.roadLevel(portTileKey), 2);
 }
 
 void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
   final topology = MapTopology(
     nodes: const [
-      TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-      TopologyNode(id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+      TopologyNode(
+        id: 'P1',
+        regionId: WorkAppIds.ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'sea1',
+        regionId: WorkAppIds.ow,
+        type: TopologyNodeType.seaZone,
+      ),
     ],
     edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
   );
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeEngineer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildPort,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeEngineer,
+          workTarget: kWorkTargetBuildPort,
+        ),
+      ],
+    ),
+    workAppProcessWorkOrders(),
     topology: topology,
   );
-  expect(next.worldState.tileState.roadLevel(tileKey), 4);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 4);
   expect(
     next.worldState.portsByProvinceSeaboard.keys.any(
-      (k) => k.startsWith(provinceId),
+      (k) => k.startsWith(WorkAppIds.provinceId),
     ),
     isTrue,
   );
 }
 
 void _buildFortCompletionIncreasesProvinceFortLevel() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeEngineer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildFort,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
+  final next = applyBuildAndWorkOrders(
+    _completionGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeEngineer,
+          workTarget: kWorkTargetBuildFort,
+        ),
+      ],
+      provinces: [workAppOwnedProvince(fortLevel: 0)],
     ),
+    workAppProcessWorkOrders(),
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1', fortLevel: 0),
-        ],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
   expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
 }
 
+Game _railCompletionGame({
+  required int roadLevel,
+  required List<Player> players,
+  int turnNumber = 0,
+  bool working = true,
+}) {
+  final unit = working
+      ? workAppWorkingUnit(
+          type: kUnitTypeRailBuilder,
+          workTarget: kWorkTargetBuildRail,
+        )
+      : workAppUnit(type: kUnitTypeRailBuilder, status: UnitStatus.working);
+  return _completionGame(
+    turnNumber: turnNumber,
+    units: [unit],
+    tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel),
+    players: players,
+  );
+}
+
 void _buildRailCompletionLeavesRoadWhenTileHasNoRoad() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setRoadLevel(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeRailBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRail,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        techUnlocked: const {kTechIdEarlySteamEngine: true},
-      ),
-    ],
-  );
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
-    tileMapByRegion: {ow: _railMap()},
+    _railCompletionGame(
+      roadLevel: 0,
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
+      ],
+    ),
+    workAppProcessWorkOrders(),
+    tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
   );
-  expect(next.worldState.tileState.roadLevel(tileKey), 0);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 0);
 }
 
 void _buildRailCompletionSetsRoadLevelTo4WhenValid() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  final tileState = TileMapState().setRoadLevel(tileKey, 1);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeRailBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRail,
-      tileKey: tileKey,
-      totalTurns: 1,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        techUnlocked: const {kTechIdEarlySteamEngine: true},
-      ),
-    ],
-  );
   final next = applyBuildAndWorkOrders(
-    game,
-    _ordersToTriggerProcessWork(),
-    tileMapByRegion: {ow: _railMap()},
+    _railCompletionGame(
+      roadLevel: 1,
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
+      ],
+    ),
+    workAppProcessWorkOrders(),
+    tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
   );
-  expect(next.worldState.tileState.roadLevel(tileKey), 4);
+  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 4);
+}
+
+(BuildWorkState, Unit, CurrentWork) _dispatchRailSetup({
+  required int roadLevel,
+  required List<Player> players,
+}) {
+  final unit = workAppUnit(
+    type: kUnitTypeRailBuilder,
+    status: UnitStatus.working,
+  );
+  final tileState = TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel);
+  final game = _completionGame(
+    turnNumber: 1,
+    units: [unit],
+    tileState: tileState,
+    players: players,
+  );
+  final work = WorkOrderState(
+    unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
+    tileState: tileState,
+    visibilityByTile: const {},
+    portsByProvinceSeaboard: const {},
+    purchasedTilesByTileKey: const {},
+    oldProvinces: game.worldState.oldWorld.provinces,
+    newProvinces: const [],
+  );
+  final state = BuildWorkState(
+    game: game,
+    buildOrders: const {},
+    workOrders: const {},
+    tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
+    work: work,
+  );
+  const cw = CurrentWork(
+    workTarget: kWorkTargetBuildRail,
+    tileKey: WorkAppIds.tileKey,
+    totalTurns: 1,
+    remainingTurns: 0,
+  );
+  return (state, unit, cw);
 }
 
 void _routesKWorkTargetBuildRailThroughHandlerMapEntry() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  final tileState = TileMapState().setRoadLevel(tileKey, 1);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeRailBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
+  final (state, unit, cw) = _dispatchRailSetup(
+    roadLevel: 1,
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        techUnlocked: const {kTechIdEarlySteamEngine: true},
-      ),
+      workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
     ],
   );
-  final work = WorkOrderState(
-    unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
-    tileState: tileState,
-    visibilityByTile: const {},
-    portsByProvinceSeaboard: const {},
-    purchasedTilesByTileKey: const {},
-    oldProvinces: game.worldState.oldWorld.provinces,
-    newProvinces: const [],
-  );
-  final state = BuildWorkState(
-    game: game,
-    buildOrders: const {},
-    workOrders: const {},
-    tileMapByRegion: {ow: _railMap()},
-    work: work,
-  );
-  const cw = CurrentWork(
-    workTarget: kWorkTargetBuildRail,
-    tileKey: tileKey,
-    totalTurns: 1,
-    remainingTurns: 0,
-  );
-
   final next = dispatchCompletedWorkTarget(
     state,
     unit,
     cw,
-    () => game.worldState.oldWorld.provinces,
+    () => state.game.worldState.oldWorld.provinces,
     (w, p) => w.copyWith(oldProvinces: p),
     (s, u, regionId) => s,
   );
-
-  expect(next.work.tileState.roadLevel(tileKey), 4);
+  expect(next.work.tileState.roadLevel(WorkAppIds.tileKey), 4);
 }
 
 void _buildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  final tileState = TileMapState().setRoadLevel(tileKey, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeRailBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
+  final (state, unit, cw) = _dispatchRailSetup(
+    roadLevel: 0,
+    players: [workAppPlayer()],
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final work = WorkOrderState(
-    unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
-    tileState: tileState,
-    visibilityByTile: const {},
-    portsByProvinceSeaboard: const {},
-    purchasedTilesByTileKey: const {},
-    oldProvinces: game.worldState.oldWorld.provinces,
-    newProvinces: const [],
-  );
-  final state = BuildWorkState(
-    game: game,
-    buildOrders: const {},
-    workOrders: const {},
-    tileMapByRegion: {ow: _railMap()},
-    work: work,
-  );
-  const cw = CurrentWork(
-    workTarget: kWorkTargetBuildRail,
-    tileKey: tileKey,
-    totalTurns: 1,
-    remainingTurns: 0,
-  );
-
   final next = dispatchCompletedWorkTarget(
     state,
     unit,
     cw,
-    () => game.worldState.oldWorld.provinces,
+    () => state.game.worldState.oldWorld.provinces,
     (w, p) => w.copyWith(oldProvinces: p),
     (s, u, regionId) => s,
   );
-
-  expect(next.work.tileState.roadLevel(tileKey), 0);
+  expect(next.work.tileState.roadLevel(WorkAppIds.tileKey), 0);
 }
 
 void
 _upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-  );
+  final unit = workAppUnit(type: kUnitTypeBuilder, status: UnitStatus.working);
   const province = Province(
-    id: provinceId,
-    regionId: ow,
+    id: WorkAppIds.provinceId,
+    regionId: WorkAppIds.ow,
     ownerId: 'p1',
     townDevelopmentLevel: 0,
   );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: const [province], units: [unit]),
-      newWorld: const RegionData(),
-      tileState: TileMapState(),
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  final game = _completionGame(
+    turnNumber: 1,
+    units: [unit],
+    provinces: const [province],
   );
   final work = WorkOrderState(
     unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
@@ -1054,7 +638,7 @@ _upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRec
   );
   const cw = CurrentWork(
     workTarget: kWorkTargetUpgradeTown,
-    tileKey: tileKey,
+    tileKey: WorkAppIds.tileKey,
     totalTurns: 1,
     remainingTurns: 0,
   );
@@ -1073,26 +657,11 @@ _upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRec
 
 void
 _exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord() {
-  const ow = OrdersApplicationTestSupport.ow;
-  const provinceId = OrdersApplicationTestSupport.provinceId;
-  const tileKey = OrdersApplicationTestSupport.tileKey;
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeExplorer,
-    ownerId: 'p1',
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(units: [unit]),
-      newWorld: const RegionData(),
-      tileState: TileMapState(),
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  final unit = workAppUnit(type: kUnitTypeExplorer, status: UnitStatus.working);
+  final game = workAppOwnedGame(
+    turnNumber: 1,
+    units: [unit],
+    provinces: const [],
   );
   final work = WorkOrderState(
     unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
@@ -1112,7 +681,7 @@ _exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedW
   );
   const cw = CurrentWork(
     workTarget: kWorkTargetExplore,
-    tileKey: tileKey,
+    tileKey: WorkAppIds.tileKey,
     totalTurns: 1,
     remainingTurns: 0,
   );
@@ -1130,6 +699,6 @@ _exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedW
     },
   );
 
-  expect(capturedRegionId, ow);
+  expect(capturedRegionId, WorkAppIds.ow);
   expect(identical(next, state), isTrue);
 }
