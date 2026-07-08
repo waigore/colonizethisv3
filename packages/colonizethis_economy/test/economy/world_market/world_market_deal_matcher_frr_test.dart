@@ -3,15 +3,21 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 
-/// Activity bookkeeping and [PurchasedTileIndex.forTesting] coverage for
-/// #2992 D2 (split from [world_market_deal_matcher_first_right_test.dart] to
-/// satisfy repo logic test file size limits).
+/// SPEC: SPEC/game/world-market-first-right-of-refusal.md § Rules
+/// (#2992 D2 — First Right of Refusal absolute-priority override in
+/// `DealMatcher.matchDeals`). Consolidated FRR matcher runners (Refs #3939).
 void main() {
-  group('DealMatcher.matchDeals — FRR activity bookkeeping (#2992 D2)', () {
-    for (final scenario in dealMatcherFrrActivityScenarios()) {
-      test(scenario.label, () => runDealMatcherScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'DealMatcher.matchDeals — First Right of Refusal (#2992 D2)',
+    dealMatcherFirstRightScenarios(),
+    runDealMatcherScenario,
+  );
+
+  runLabeledScenarioGroup(
+    'DealMatcher.matchDeals — FRR activity bookkeeping (#2992 D2)',
+    dealMatcherFrrActivityScenarios(),
+    runDealMatcherScenario,
+  );
 
   group('PurchasedTileIndex.forTesting (#2992 D2 test helper)', () {
     test('first attribution per tileKey wins on duplicates', () {

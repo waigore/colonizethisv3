@@ -345,3 +345,33 @@ Module: `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_scenarios.
 - Deal-matcher treasury dedup — done (shared helpers + `repo.economy_deal_matcher_treasury_budget_shared`)
 - Extended inline-`Game(` guard — done (`repo.economy_test_no_inline_game` on all `test/**`)
 - ≥15% test LOC reduction target (≤6,500 LOC) — met; maintain on follow-up migrations
+
+## Phase 3 — Slice 1 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| harness-run-labeled | `runLabeledScenario` / `runLabeledScenarios` / `runLabeledScenarioGroup` exported from `scenario_runner.dart` | `colonizethis_economy_test_support/lib/src/scenario_runner.dart` | #3939 |
+| dm-consolidated | all non-FRR DealMatcher table rows | `world_market_deal_matcher_test.dart` (merged from boycott, priority, sell-priority, treasury micro-runners) | #3939 |
+| dm-frr-consolidated | FRR matcher + FRR activity + PurchasedTileIndex.forTesting helper rows | `world_market_deal_matcher_frr_test.dart` (merged from first_right + first_right_supplement) | #2992 D2, #3939 |
+| description-baseline | 115 preserved single-line test descriptions | `test/DESCRIPTION_BASELINE.txt` + `repo.economy_test_preserved_descriptions` | #3939 |
+| import-hygiene | zero `package:*/src/` imports under economy test/ | `repo.economy_test_no_cross_package_src_imports` | #3939 |
+
+Deleted micro-runners: `world_market_deal_matcher_boycott_test.dart`, `world_market_deal_matcher_priority_test.dart`, `world_market_deal_matcher_sell_priority_test.dart`, `world_market_deal_matcher_treasury_test.dart`, `world_market_deal_matcher_first_right_test.dart`, `world_market_deal_matcher_first_right_supplement_test.dart`.
+
+World-market file count: 35 → 30 (target ≤12 deferred to slice 2+).
+
+Wall-clock (advisory, 3-run median): **28.30 s** — above `ECONOMY_TEST_TIMING_CEILING_SECONDS` (25 s); documented per `SPEC/program/economy-test-wall-clock.md`; not a merge blocker.
+
+## Phase 3 — documented exceptions (partial; extended in later slices)
+
+| file | retained test description(s) | rationale | refs |
+|------|------------------------------|-----------|------|
+| `world_market_deal_matcher_test.dart` | `returns canonical key regardless of argument order`; `handles equal ids (degenerate self-pair) deterministically` | pure `DealMatcher.pairKey` helper unit tests | #3939 |
+| `world_market_deal_matcher_frr_test.dart` | `first attribution per tileKey wins on duplicates`; `empty input yields empty index` | pure `PurchasedTileIndex.forTesting` helper unit tests | #2992 D2, #3939 |
+| `game_lookup_helpers_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `economy_extraction_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `cost_check_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `tile_extraction_pipeline_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `economy/trade_cargo_capacity_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `economy/projected_cost_engine_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |
+| `sea_transport_test.dart` | (all) | pending core scenario migration | #3939 slice 3+ |

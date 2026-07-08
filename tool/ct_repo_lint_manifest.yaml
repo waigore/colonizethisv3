@@ -195,6 +195,27 @@ rules:
     runner: dart
     script: tool/check_economy_test_no_src_imports.dart
 
+  - rule_id: repo.economy_test_no_cross_package_src_imports
+    group: testing
+    title: colonizethis_economy test/ must not import package:*/src/ (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_cross_package_src_imports.dart
+
+  - rule_id: repo.economy_test_preserved_descriptions
+    group: testing
+    title: economy test descriptions in DESCRIPTION_BASELINE.txt must survive runner consolidation (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_preserved_descriptions.dart
+
+  - rule_id: repo.economy_test_prefer_scenario_tables
+    group: testing
+    title: colonizethis_economy tests should use scenario-table loops for long imperative bodies (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_scenario_table_runner.dart
+
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
     title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)
