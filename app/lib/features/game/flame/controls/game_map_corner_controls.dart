@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/strict_asset_icon.dart';
 import '../../screens/game/game_screen_shared.dart';

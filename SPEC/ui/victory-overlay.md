@@ -113,10 +113,10 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 
 ## Components
 
-- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`).
+- `CtBrassDivider` (`packages/colonizethis_app_ui_chrome/lib/widgets/ct_brass_divider.dart`).
 - `CtGradients.victoryPanelGradient` (`app/lib/widgets/ct_gradients.dart`).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`).
-- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — `accent`, `accentBright`, `fg`, `muted`, `dialogScrim`, `surfaceLite`, `bgDeep` tokens.
+- `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — `accent`, `accentBright`, `fg`, `muted`, `dialogScrim`, `surfaceLite`, `bgDeep` tokens.
 - Localized strings: `victory_military`, `victory_winnerOnTurn`, `victory_returnToMainMenu`, `victory_viewFinalState` via `appL10n(context)`.
 
 ---

@@ -1,7 +1,7 @@
 // Pins SPEC/ui/empire-overview.md § Map display options button and dialog
 // (dark editorial-monocle chrome — Refs #2861 S8 / R9, Refs #2867 R1).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';

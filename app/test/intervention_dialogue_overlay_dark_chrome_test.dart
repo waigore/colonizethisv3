@@ -16,9 +16,9 @@
 // asset bundle) therefore proves the chrome contract for every phase: the
 // scrim, title key + color, and brass divider key are produced by that
 // single helper.
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

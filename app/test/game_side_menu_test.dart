@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';

@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';

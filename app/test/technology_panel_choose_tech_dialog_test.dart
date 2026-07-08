@@ -9,7 +9,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';

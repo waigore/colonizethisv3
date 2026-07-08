@@ -34,22 +34,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _minorId = 'minor1';
 const String _fieldArmyId = 'field_a';
 const String _owMinorProvince = 'oldWorld|minor1';
 const String _owHomeProvince = 'oldWorld|gp1_0';
-
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  _owHomeProvince,
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
 
 Game _scenarioGame() {
   return Game(
@@ -58,7 +49,7 @@ Game _scenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 30),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvincesBelowQuota)
+          for (final id in kGp1OwProvincesBelowQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
           const Province(
             id: _owMinorProvince,

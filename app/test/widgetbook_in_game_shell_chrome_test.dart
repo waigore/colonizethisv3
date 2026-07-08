@@ -5,7 +5,7 @@
 // `*Directories` getters so the test fails if a folder or use case is
 // removed or renamed.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';

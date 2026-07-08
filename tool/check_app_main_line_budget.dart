@@ -1,12 +1,12 @@
-// Caps colonizethis_app `by_package_role.main` at 60_000 lines per
-// `pytool/project_stats.py`. Refs #3878 measurable outcome AC.
+// Caps colonizethis_app `by_package_role.main` at 59_000 lines per
+// `pytool/project_stats.py`. Refs #3942 headroom (was 60_000 under #3878).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 60000;
+const _maxMainLines = 59000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

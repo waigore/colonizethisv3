@@ -7,7 +7,7 @@
 //   - engraved label text shadow `Offset(0, 1)` blur 0 colour `--surface`
 //   - disabled wraps the button in 0.4 opacity and suppresses taps.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

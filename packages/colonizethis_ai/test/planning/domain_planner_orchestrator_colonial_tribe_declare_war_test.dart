@@ -52,6 +52,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
@@ -81,35 +82,8 @@ const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
   priorityWeights: _nwAcquisitionZeroExpand,
 );
 
-// gp1 owns 11 OW provinces (>= the observer quota of 10), so the GP is
-// past EXPAND and `isBelowObserverConquestQuota` is false. Combined with
-// a non-empty `invadableNewWorldProvinceIdsSorted` set, this places the
-// GP in COLONIAL per `observerGoalPhaseFor`.
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
-
-// Sub-quota OW set used for the EXPAND negative control.
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
+// Uses kGp1OwProvincesAtQuota / kGp1OwProvincesBelowQuota from
+// domain_planner_orchestrator_test_support.dart (Refs #3941).
 Game _scenarioGame({required List<String> gp1OwProvinces}) {
   return Game(
     id: 'g-2509-colonial-tribe-declare',
@@ -247,7 +221,7 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners COLONIAL tribe declareWar', () {
     test('emits declareWar toward visible NW tribe when in COLONIAL', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();
@@ -286,7 +260,7 @@ void main() {
     });
 
     test('suppresses tribe declareWar in EXPAND below OW quota', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesBelowQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -334,7 +308,7 @@ void main() {
 
     test('emits identical diplomatic orders for identical COLONIAL inputs',
         () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      final game = _scenarioGame(gp1OwProvinces: kGp1OwProvincesAtQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/strict_asset_icon.dart';
 import 'production_allocation_repeat_timing.dart';

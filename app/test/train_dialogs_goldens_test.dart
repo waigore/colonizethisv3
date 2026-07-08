@@ -41,7 +41,7 @@
 // SPEC/ui/components/train-dialog-chrome.md, SPEC/ui/train-military-dialog.md,
 // SPEC/ui/train-naval-dialog.md (`UNIT60001`).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';

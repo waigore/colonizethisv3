@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';

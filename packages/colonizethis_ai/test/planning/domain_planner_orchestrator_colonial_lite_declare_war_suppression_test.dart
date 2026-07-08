@@ -76,10 +76,12 @@ const List<String> _gp1OwProvincesAtColonialLiteFloor = <String>[
   'oldWorld|gp1_8',
 ];
 
-// At quota (`kObserverConquestMinOwProvincesPerGp` = 10). The negative
+// Exact quota (`kObserverConquestMinOwProvincesPerGp` = 10). The negative
 // control places the GP one province above the COLONIAL-lite floor so the
 // phase tips to COLONIAL while every other fixture parameter stays the same.
-const List<String> _gp1OwProvincesAtQuota = <String>[
+// Named `_gp1OwProvincesExactQuota` (not `_gp1OwProvincesAtQuota`) because
+// the shared `kGp1OwProvincesAtQuota` is the 11-province COLONIAL/DEVELOP set.
+const List<String> _gp1OwProvincesExactQuota = <String>[
   'oldWorld|gp1_0',
   'oldWorld|gp1_1',
   'oldWorld|gp1_2',
@@ -243,7 +245,7 @@ AIWorldSnapshot _colonialSnapshot() {
     playerId: _nationId,
     threats: ThreatSummary(),
     opportunities: OpportunitySummary(),
-    // 10 OW provinces -> at quota (matches `_gp1OwProvincesAtQuota`).
+    // 10 OW provinces -> at quota (matches `_gp1OwProvincesExactQuota`).
     // `isBelowObserverConquestQuota(10)` -> false so COLONIAL-lite cannot
     // fire even at turn 120, and `hasColonialAcquisitionTargets` true
     // places the GP in COLONIAL. Boundary differs from the positive case
@@ -338,7 +340,7 @@ void main() {
         'COLONIAL (OW=10) keeps declareWar toward the same NW tribe candidate',
         () {
           final game = _scenarioGame(
-            gp1OwProvinces: _gp1OwProvincesAtQuota,
+            gp1OwProvinces: _gp1OwProvincesExactQuota,
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);

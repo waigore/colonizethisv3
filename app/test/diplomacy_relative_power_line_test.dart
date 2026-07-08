@@ -2,7 +2,7 @@
 // SPEC/ui/diplomacy-panel.md § Relative power line,
 // SPEC/ui/diplomacy-detail-screen.md § Current relation. Refs #3622.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/relative_power_line.dart';

@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
 import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
