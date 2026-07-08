@@ -403,6 +403,14 @@ Explorer suggestion already routes through `WorkSuggestionPipeline` (explore + p
 
 test/ LOC after slice 13: see PR. Remaining: further scenario-data compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 14: valid-work-tiles expectation fixtures + helper compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-fixtures | extract NW partial-reveal + OW builder/prospect/suggest helpers; compact expectation bodies onto fixtures | `support/suggestion/valid_work_tiles_expectations.dart` | `valid_work_tiles_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 14: see PR (`find … wc -l`). Remaining: further expectation compaction (`work_order_application_*`, `order_suggestion_core_*`, `work_completion_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
