@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'deal_matcher_core_scenarios.dart';
+import 'deal_matcher_expectations.dart';
 import 'deal_matcher_test_support.dart';
 
 /// Treasury clamp scenarios from `world_market_deal_matcher_treasury_test.dart`.
@@ -14,7 +15,7 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'truncates a single oversized bid to floor(treasury / price)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -26,18 +27,17 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': 100},
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final deal = result.filledDeals.single;
-      expect(deal.buyerFactionId, 'gp1');
-      expect(deal.quantity, 3);
-      expect(deal.pricePerUnit, 30.0);
-      expect(result.unfilledBidsByFactionId['gp1'], hasLength(1));
-      expect(
-        result.unfilledBidsByFactionId['gp1']!.single,
-        matcherBid('timber', 7),
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.buyerFactionId, 'gp1');
+        expect(deal.quantity, 3);
+        expect(deal.pricePerUnit, 30.0);
+      },
+      unfilledBidsByFactionId: {
+        'gp1': [matcherBid('timber', 7)],
+      },
+    ),
     refs: '#3115',
   ),
   DealMatcherScenario(
@@ -67,7 +67,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     },
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'negative-treasury buyer treated as zero budget (full suppression)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -79,14 +79,12 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': -50},
     ),
-    verify: (result) {
-      expect(result.filledDeals, isEmpty);
-      expect(result.unfilledBidsByFactionId['gp1'], hasLength(1));
-      expect(
-        result.unfilledBidsByFactionId['gp1']!.single,
-        matcherBid('timber', 10),
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsEmpty: true,
+      unfilledBidsByFactionId: {
+        'gp1': [matcherBid('timber', 10)],
+      },
+    ),
     refs: '#3115',
   ),
   DealMatcherScenario(
@@ -122,7 +120,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
         'truncated bid (full bid quantity carried in note)',
@@ -136,20 +134,22 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': 100},
     ),
-    verify: (result) {
-      final activity = result.activityByCommodityId['timber'];
-      expect(activity, isNotNull);
-      expect(activity!.notes, hasLength(1));
-      expect(
-        activity.notes.single,
-        const MarketActivityNote(
-          kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
-          factionId: 'gp1',
-          commodityId: 'timber',
-          quantity: 10,
-        ),
-      );
-    },
+    expect: DealMatchExpectation(
+      custom: (result) {
+        final activity = result.activityByCommodityId['timber'];
+        expect(activity, isNotNull);
+        expect(activity!.notes, hasLength(1));
+        expect(
+          activity.notes.single,
+          const MarketActivityNote(
+            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+            factionId: 'gp1',
+            commodityId: 'timber',
+            quantity: 10,
+          ),
+        );
+      },
+    ),
     refs: '#3115',
   ),
   DealMatcherScenario(
@@ -187,7 +187,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     },
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'zero-price commodity preserves legacy free-fill (no treasury debit)',
     inputs: matcherInputs(
@@ -201,22 +201,25 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       treasuryBudgetByBuyerFactionId: const {'gp1': 0},
       pricesByCommodityId: const <CommodityId, double>{},
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      final deal = result.filledDeals.single;
-      expect(deal.pricePerUnit, 0.0);
-      expect(deal.quantity, 5);
-      final activity = result.activityByCommodityId['iron'];
-      expect(activity, isNotNull);
-      expect(
-        activity!.notes,
-        isEmpty,
-        reason: 'no treasury truncation should be recorded on free-fill',
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.pricePerUnit, 0.0);
+        expect(deal.quantity, 5);
+      },
+      custom: (result) {
+        final activity = result.activityByCommodityId['iron'];
+        expect(activity, isNotNull);
+        expect(
+          activity!.notes,
+          isEmpty,
+          reason: 'no treasury truncation should be recorded on free-fill',
+        );
+      },
+    ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'missing buyer entry in treasury budget treated as zero',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -228,17 +231,15 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100},
       treasuryBudgetByBuyerFactionId: const <String, int>{},
     ),
-    verify: (result) {
-      expect(result.filledDeals, isEmpty);
-      expect(result.unfilledBidsByFactionId['gp1'], hasLength(1));
-      expect(
-        result.unfilledBidsByFactionId['gp1']!.single,
-        matcherBid('timber', 5),
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsEmpty: true,
+      unfilledBidsByFactionId: {
+        'gp1': [matcherBid('timber', 5)],
+      },
+    ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'unaffordable bid at non-zero price emits a note even with zero '
         'fill quantity',
     inputs: matcherInputs(
@@ -252,19 +253,21 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       treasuryBudgetByBuyerFactionId: const {'gp1': 10},
       pricesByCommodityId: const {'timber': 30.0},
     ),
-    verify: (result) {
-      expect(result.filledDeals, isEmpty);
-      final activity = result.activityByCommodityId['timber'];
-      expect(activity, isNotNull);
-      expect(activity!.notes, hasLength(1));
-      expect(
-        activity.notes.single.kind,
-        MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
-      );
-    },
+    expect: DealMatchExpectation(
+      filledDealsEmpty: true,
+      custom: (result) {
+        final activity = result.activityByCommodityId['timber'];
+        expect(activity, isNotNull);
+        expect(activity!.notes, hasLength(1));
+        expect(
+          activity.notes.single.kind,
+          MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+        );
+      },
+    ),
     refs: '#3115',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'cargo clamps tighter than treasury → matchQty falls back to cargo, '
         'no truncation note emitted',
     inputs: matcherInputs(
@@ -278,18 +281,20 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       treasuryBudgetByBuyerFactionId: const {'gp1': 10_000},
       pricesByCommodityId: const {'timber': 30.0},
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.quantity, 4);
-      final activity = result.activityByCommodityId['timber'];
-      expect(activity, isNotNull);
-      expect(
-        activity!.notes,
-        isEmpty,
-        reason:
-            'cargo-truncated bids do not emit the treasury-insufficient '
-            'note (only treasury-clamped fills emit it)',
-      );
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.quantity, 4),
+      custom: (result) {
+        final activity = result.activityByCommodityId['timber'];
+        expect(activity, isNotNull);
+        expect(
+          activity!.notes,
+          isEmpty,
+          reason:
+              'cargo-truncated bids do not emit the treasury-insufficient '
+              'note (only treasury-clamped fills emit it)',
+        );
+      },
+    ),
     refs: '#3115',
   ),
 ];

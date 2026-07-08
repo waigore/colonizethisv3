@@ -498,3 +498,14 @@ test_support LOC: **12,207** (down from 12,287 slice 7). Further scenario-data c
 | riches-to-treasury | `economy_riches_to_treasury_test.dart` → `economy_riches_to_treasury_scenarios.dart` (8 rows) | `economy_riches_to_treasury_scenarios.dart` | #3939 |
 
 Economy `test/` LOC: **2,153** (down from 2,238 slice 8). test_support: **12,356** (fixture module + riches scenarios added; net +149 — DealMatcher/validator record compaction and further scenario-data dedup deferred to slice 10+ for ≤8,200 target).
+
+## Phase 3 — Slice 10 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| dm-expectations | `DealMatchExpectation` + `DealMatcherScenario.expect` data-driven assertions | `deal_matcher_scenarios/deal_matcher_expectations.dart` | #3939 |
+| validator-expectations | `ValidatorExpectation` + `TradeOrderValidatorScenario.expect` | `validator_scenarios/validator_expectations.dart` | #3939 |
+| dm-record-compaction | migrated DealMatcher empty/basic/cargo/boycott/activity/sell-priority/treasury/FRR-activity rows to `.expect` | `deal_matcher_core_scenarios.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_sell_priority_scenarios.dart`, `deal_matcher_treasury_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3939 |
+| validator-record-compaction | migrated validator cap rows (bidTypeCap 0/3) to `.expect` | `validator_scenarios/trade_order_validator_scenarios.dart` | #3939 |
+
+test_support LOC: **12,518** (net +162 vs slice 9 — expectation helpers added; further FRR/priority/complex-row compaction and scenario-data dedup deferred to slice 11+ for ≤8,200 target).

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'deal_matcher_core_scenarios.dart';
+import 'deal_matcher_expectations.dart';
 import 'deal_matcher_test_support.dart';
 
 /// Priority and FTP precedence from `world_market_deal_matcher_priority_test.dart`.
@@ -168,7 +169,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
 
 /// Lock-recovery seller priority (Refs #2924 F12).
 List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'fills lock-recovery seller before earlier-id affluent seller',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -183,18 +184,20 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
       lockRecoverySellerPriorityIds: const {'gp1', 'gp4'},
       treasuryByFactionId: const {'gp1': 100, 'gp4': -50},
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      expect(result.filledDeals.single.sellerFactionId, 'gp4');
-      expect(result.filledDeals.single.quantity, 3);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.sellerFactionId, 'gp4');
+        expect(deal.quantity, 3);
+      },
+    ),
     refs: '#2924',
   ),
 ];
 
 /// Activity bookkeeping from priority test file.
 List<DealMatcherScenario> dealMatcherActivityScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'activity totals reflect input quantities, not just fills',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -206,23 +209,21 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       },
       tradeCapacityByFactionId: {'b': 100, 'c': 100},
     ),
-    verify: (result) {
-      expect(
-        result.activityByCommodityId['timber'],
-        const MarketActivity(
+    expect: DealMatchExpectation(
+      activityByCommodityId: const {
+        'timber': MarketActivity(
           totalBidQuantity: 7,
           totalOfferQuantity: 10,
           filledQuantity: 7,
         ),
-      );
-      expect(result.unfilledBidsByFactionId, isEmpty);
-      expect(result.unfilledOffersByFactionId['a'], [
-        matcherOffer('timber', 3),
-      ]);
-    },
-    refs: null,
+      },
+      unfilledBidsEmpty: true,
+      unfilledOffersByFactionId: {
+        'a': [matcherOffer('timber', 3)],
+      },
+    ),
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'priceChangePercent stays 0.0 (composed separately by phase handler)',
     inputs: matcherInputs(
@@ -234,9 +235,11 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       },
       tradeCapacityByFactionId: {'b': 100},
     ),
-    verify: (result) {
-      expect(result.activityByCommodityId['timber']!.priceChangePercent, 0.0);
-    },
-    refs: null,
+    expect: DealMatchExpectation(
+      custom: (result) => expect(
+        result.activityByCommodityId['timber']!.priceChangePercent,
+        0.0,
+      ),
+    ),
   ),
 ];

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'trade_order_validator_test_support.dart';
+import 'validator_expectations.dart';
 
 /// One row for validator cap / precedence scenarios.
 class TradeOrderValidatorScenario {
@@ -15,6 +16,20 @@ class TradeOrderValidatorScenario {
     required this.verify,
     this.refs,
   });
+
+  TradeOrderValidatorScenario.expect({
+    required String label,
+    required TradeOrderValidationContext context,
+    required List<TradeOrder> proposedOrders,
+    required ValidatorExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          context: context,
+          proposedOrders: proposedOrders,
+          verify: (results) => assertValidatorExpectation(results, expect),
+          refs: refs,
+        );
 
   final TradeOrderValidationContext context;
   final List<TradeOrder> proposedOrders;
@@ -34,18 +49,16 @@ void runTradeOrderValidatorScenario(TradeOrderValidatorScenario scenario) {
 /// Rule 4–7 and precedence scenarios from
 /// `world_market_trade_order_validator_caps_test.dart`.
 List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'bidTypeCap = 0 rejects every bid with bidTypeCapExceeded',
     context: validatorCtx(bidTypeCap: 0),
     proposedOrders: [validatorBid('timber', 5), validatorBid('iron', 5)],
-    verify: (results) {
-      for (final r in results) {
-        expect(r.reason, TradeOrderRejectionReasons.bidTypeCapExceeded);
-      }
-    },
+    expect: const ValidatorExpectation(
+      allRejectedWithReason: TradeOrderRejectionReasons.bidTypeCapExceeded,
+    ),
     refs: '#2989',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'bidTypeCap = 0 does NOT affect offers (offers are not capped by '
         'rule 4)',
     context: validatorCtx(
@@ -61,14 +74,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
       validatorOffer('iron', 5),
       validatorOffer('coal', 5),
     ],
-    verify: (results) {
-      for (final r in results) {
-        expect(r.isAccepted, isTrue, reason: r.reason);
-      }
-    },
+    expect: const ValidatorExpectation(allAccepted: true),
     refs: '#2989',
   ),
-  TradeOrderValidatorScenario(
+  TradeOrderValidatorScenario.expect(
     label: 'bidTypeCap = 3 accepts first 3 distinct bid commodities, rejects 4th',
     context: validatorCtx(bidTypeCap: 3),
     proposedOrders: [
@@ -77,15 +86,17 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
       validatorBid('coal', 5),
       validatorBid('wool', 5),
     ],
-    verify: (results) {
-      expect(results[0].isAccepted, isTrue);
-      expect(results[1].isAccepted, isTrue);
-      expect(results[2].isAccepted, isTrue);
-      expect(
-        results[3].reason,
-        TradeOrderRejectionReasons.bidTypeCapExceeded,
-      );
-    },
+    expect: ValidatorExpectation(
+      outcomes: [
+        (accepted: true, reason: null),
+        (accepted: true, reason: null),
+        (accepted: true, reason: null),
+        (
+          accepted: false,
+          reason: TradeOrderRejectionReasons.bidTypeCapExceeded,
+        ),
+      ],
+    ),
     refs: '#2989',
   ),
   TradeOrderValidatorScenario(

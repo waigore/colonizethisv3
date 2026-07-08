@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'deal_matcher_core_scenarios.dart';
+import 'deal_matcher_expectations.dart';
 import 'deal_matcher_test_support.dart';
 
 const _frrTileKey = 'oldWorld|M1|0|0';
@@ -226,7 +227,7 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
 
 /// FRR activity bookkeeping from supplement test file.
 List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label:
         'FRR fills count toward filledQuantity in the per-commodity activity',
     inputs: matcherInputs(
@@ -240,16 +241,15 @@ List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    verify: (result) {
-      expect(
-        result.activityByCommodityId['timber'],
-        const MarketActivity(
+    expect: const DealMatchExpectation(
+      activityByCommodityId: {
+        'timber': MarketActivity(
           totalBidQuantity: 12,
           totalOfferQuantity: 10,
           filledQuantity: 10,
         ),
-      );
-    },
+      },
+    ),
     refs: '#2992',
   ),
 ];

@@ -4,12 +4,13 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'deal_matcher_core_scenarios.dart';
+import 'deal_matcher_expectations.dart';
 import 'deal_matcher_test_support.dart';
 
 /// Sell-priority relation tiebreaker from
 /// `world_market_deal_matcher_sell_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'higher-relation consulate-holding buyer wins limited supply',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -24,17 +25,19 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpHigh': 80, 'gpLow': 40},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals, hasLength(1));
-      expect(result.filledDeals.single.buyerFactionId, 'gpHigh');
-      expect(result.filledDeals.single.quantity, 5);
-      expect(result.unfilledBidsByFactionId['gpLow'], [
-        matcherBid('timber', 5, priority: 1),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      filledDealsLength: 1,
+      singleFilledDeal: (deal) {
+        expect(deal.buyerFactionId, 'gpHigh');
+        expect(deal.quantity, 5);
+      },
+      unfilledBidsByFactionId: {
+        'gpLow': [matcherBid('timber', 5, priority: 1)],
+      },
+    ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'relation order overrides default ascending-faction-id order',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -49,12 +52,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'aBuyer': 30, 'zBuyer': 90},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.buyerFactionId, 'zBuyer');
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.buyerFactionId, 'zBuyer'),
+    ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'consulate-less buyer falls back behind consulate-holding buyer',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -69,15 +72,15 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpLow': 40},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.buyerFactionId, 'gpLow');
-      expect(result.unfilledBidsByFactionId['gpHigh'], [
-        matcherBid('timber', 5, priority: 1),
-      ]);
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.buyerFactionId, 'gpLow'),
+      unfilledBidsByFactionId: {
+        'gpHigh': [matcherBid('timber', 5, priority: 1)],
+      },
+    ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'relation tie breaks deterministically by ascending faction id',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -92,12 +95,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpA': 55, 'gpB': 55},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.buyerFactionId, 'gpA');
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.buyerFactionId, 'gpA'),
+    ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'seller absent from map keeps legacy ordering (no reorder)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -112,12 +115,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpA': 1, 'gpZ': 99},
       },
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.buyerFactionId, 'gpA');
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.buyerFactionId, 'gpA'),
+    ),
     refs: '#3753',
   ),
-  DealMatcherScenario(
+  DealMatcherScenario.expect(
     label: 'empty relation map preserves legacy ordering for minor seller',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -129,9 +132,9 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
       },
       tradeCapacityByFactionId: const {'gpA': 100, 'gpZ': 100},
     ),
-    verify: (result) {
-      expect(result.filledDeals.single.buyerFactionId, 'gpA');
-    },
+    expect: DealMatchExpectation(
+      singleFilledDeal: (deal) => expect(deal.buyerFactionId, 'gpA'),
+    ),
     refs: '#3753',
   ),
   DealMatcherScenario(
