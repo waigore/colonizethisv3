@@ -2,7 +2,6 @@
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 import 'trade_order_validator_test_support.dart';
 import 'validator_expectations.dart';
@@ -203,12 +202,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
       validatorBid('timber', 5),
       validatorOffer('timber', 5),
     ],
-    expect: ValidatorExpectation(
-      custom: (results) => expect(
-        results[0].reason,
-        TradeOrderRejectionReasons.mutualExclusion,
-        reason: 'Rule 3 fires before rule 4.',
-      ),
+    expect: const ValidatorExpectation(
+      firstOrderReason: TradeOrderRejectionReasons.mutualExclusion,
     ),
     refs: '#2989',
   ),
@@ -314,12 +309,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
         'zero-quantity riches order',
     context: validatorCtx(),
     proposedOrders: [validatorOffer('spices', 0)],
-    expect: ValidatorExpectation(
-      custom: (results) => expect(
-        results.single.reason,
-        TradeOrderRejectionReasons.invalidQuantity,
-        reason: 'Rule 1 evaluates before rule 2 per SPEC.',
-      ),
+    expect: const ValidatorExpectation(
+      singleRejectedWithReason: TradeOrderRejectionReasons.invalidQuantity,
     ),
     refs: '#2989',
   ),
@@ -334,12 +325,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
       label: 'riches offer $id is rejected with richesNotTradeable (offer side)',
       context: validatorCtx(availableStockpileByCommodityId: {id: 999}),
       proposedOrders: [validatorOffer(id, 5)],
-      expect: ValidatorExpectation(
-        custom: (results) => expect(
-          results.single.reason,
-          TradeOrderRejectionReasons.richesNotTradeable,
-          reason: 'Riches commodity $id must not be tradeable',
-        ),
+      expect: const ValidatorExpectation(
+        singleRejectedWithReason:
+            TradeOrderRejectionReasons.richesNotTradeable,
       ),
       refs: '#2989',
     ),

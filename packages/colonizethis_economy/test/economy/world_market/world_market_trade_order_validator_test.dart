@@ -67,7 +67,10 @@ void main() {
 
   group('tradeOrderValidationContextFromGame (Refs #3123)', () {
     for (final scenario in tradeOrderValidatorContextTreasuryScenarios()) {
-      test(scenario.label, scenario.run);
+      test(
+        scenario.label,
+        () => runTradeOrderValidatorContextScenario(scenario),
+      );
     }
   });
 

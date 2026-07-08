@@ -1,5 +1,6 @@
 // Compact TradeOrderValidator result assertions (Refs #3939 phase 3 slice 10+).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -18,6 +19,10 @@ class ValidatorExpectation {
     this.resultsEmpty = false,
     this.firstNAccepted,
     this.thenRejectedWithReason,
+    this.catalogDefaultCommodityId,
+    this.catalogDefaultNotNullReason,
+    this.orderAcceptedPin,
+    this.firstOrderReason,
     this.custom,
   });
 
@@ -30,6 +35,10 @@ class ValidatorExpectation {
   final bool resultsEmpty;
   final int? firstNAccepted;
   final String? thenRejectedWithReason;
+  final String? catalogDefaultCommodityId;
+  final String? catalogDefaultNotNullReason;
+  final ({int index, bool accepted, String? reason})? orderAcceptedPin;
+  final String? firstOrderReason;
   final void Function(List<OrderValidationResult> results)? custom;
 }
 
@@ -80,6 +89,28 @@ void assertValidatorExpectation(
     if (expectation.thenRejectedWithReason != null) {
       expect(results[n].reason, expectation.thenRejectedWithReason);
     }
+  }
+  if (expectation.catalogDefaultCommodityId != null) {
+    final int? catalogDefault = ResourceRules.defaultRules
+        .defaultMarketPriceForCommodityId(
+      expectation.catalogDefaultCommodityId!,
+    );
+    expect(
+      catalogDefault,
+      isNotNull,
+      reason: expectation.catalogDefaultNotNullReason,
+    );
+  }
+  if (expectation.orderAcceptedPin != null) {
+    final pin = expectation.orderAcceptedPin!;
+    expect(
+      results[pin.index].isAccepted,
+      pin.accepted,
+      reason: pin.reason,
+    );
+  }
+  if (expectation.firstOrderReason != null) {
+    expect(results.first.reason, expectation.firstOrderReason);
   }
   expectation.custom?.call(results);
 }

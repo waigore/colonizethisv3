@@ -14,6 +14,7 @@ class DealMatcherScenario implements RefsScenario {
     required this.label,
     required this.inputs,
     required this.verify,
+    this.deterministicRerun = false,
     this.refs,
   });
 
@@ -21,22 +22,34 @@ class DealMatcherScenario implements RefsScenario {
     required String label,
     required DealMatchInputs inputs,
     required DealMatchExpectation expect,
+    bool deterministicRerun = false,
     String? refs,
   }) : this(
           label: label,
           inputs: inputs,
           verify: (result) => assertDealMatchExpectation(result, expect),
+          deterministicRerun: deterministicRerun,
           refs: refs,
         );
 
   final String label;
   final DealMatchInputs inputs;
   final void Function(DealMatchResult result) verify;
+  final bool deterministicRerun;
   final String? refs;
 }
 
 void runDealMatcherScenario(DealMatcherScenario scenario) {
-  scenario.verify(DealMatcher.matchDeals(scenario.inputs));
+  final result = DealMatcher.matchDeals(scenario.inputs);
+  scenario.verify(result);
+  if (scenario.deterministicRerun) {
+    final rerun = DealMatcher.matchDeals(scenario.inputs);
+    expect(result.filledDeals, equals(rerun.filledDeals));
+    expect(
+      result.unfilledBidsByFactionId.keys.toList()..sort(),
+      equals(rerun.unfilledBidsByFactionId.keys.toList()..sort()),
+    );
+  }
 }
 
 /// Empty-input and basic-fill scenarios from `world_market_deal_matcher_test.dart`.
@@ -44,9 +57,7 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
   DealMatcherScenario.expect(
     label: 'no offers and no bids returns DealMatchResult.empty',
     inputs: matcherInputs(),
-    expect: DealMatchExpectation(
-      custom: (result) => expect(result, equals(DealMatchResult.empty)),
-    ),
+    expect: const DealMatchExpectation(resultEqualsEmpty: true),
   ),
   DealMatcherScenario.expect(
     label: 'offers only (no bids) carries every offer forward, no deals',

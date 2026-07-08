@@ -98,11 +98,11 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
       tradeCapacityByFactionId: {'buyerFtp': 100, 'buyerOther': 100},
       ftpPairKeys: {DealMatcher.pairKey('sellerFtp', 'buyerFtp')},
     ),
-    expect: DealMatchExpectation(
-      custom: (result) {
-        expect(result.filledDeals.first.buyerFactionId, 'buyerOther');
-        expect(result.filledDeals.first.isFtpMatch, false);
-      },
+    expect: const DealMatchExpectation(
+      firstFilledDeal: FilledDealExpectation(
+        buyerFactionId: 'buyerOther',
+        isFtpMatch: false,
+      ),
     ),
   ),
   DealMatcherScenario.expect(
@@ -160,13 +160,6 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
       unfilledOffersEmpty: true,
       unfilledBidsByFactionId: {
         'b': [matcherBid('timber', 5, priority: 3)],
-      },
-      custom: (result) {
-        final carryBid = result.unfilledBidsByFactionId['b']!.single;
-        expect(carryBid.commodityId, 'timber');
-        expect(carryBid.quantity, 5);
-        expect(carryBid.priority, 3);
-        expect(carryBid.type, TradeOrderType.bid);
       },
     ),
   ),
@@ -240,11 +233,8 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       },
       tradeCapacityByFactionId: {'b': 100},
     ),
-    expect: DealMatchExpectation(
-      custom: (result) => expect(
-        result.activityByCommodityId['timber']!.priceChangePercent,
-        0.0,
-      ),
+    expect: const DealMatchExpectation(
+      activityPriceChangePercent: {'timber': 0.0},
     ),
   ),
 ];

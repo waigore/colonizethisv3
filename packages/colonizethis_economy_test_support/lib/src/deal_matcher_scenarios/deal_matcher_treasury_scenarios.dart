@@ -132,20 +132,16 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': 100},
     ),
-    expect: DealMatchExpectation(
-      custom: (result) {
-        final activity = result.activityByCommodityId['timber'];
-        expect(activity, isNotNull);
-        expect(activity!.notes, hasLength(1));
-        expect(
-          activity.notes.single,
-          const MarketActivityNote(
+    expect: const DealMatchExpectation(
+      activityNotesByCommodityId: {
+        'timber': [
+          MarketActivityNote(
             kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
             factionId: 'gp1',
             commodityId: 'timber',
             quantity: 10,
           ),
-        );
+        ],
       },
     ),
     refs: '#3115',
@@ -163,28 +159,8 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       tradeCapacityByFactionId: const {'gp1': 100, 'gp2': 100},
       treasuryBudgetByBuyerFactionId: const {'gp1': 100, 'gp2': 200},
     ),
-    expect: DealMatchExpectation(
-      custom: (result) {
-        final b = DealMatcher.matchDeals(
-          matcherInputs(
-            offersByFactionId: {
-              'a': [matcherOffer('timber', 10)],
-            },
-            bidsByFactionId: {
-              'gp1': [matcherBid('timber', 10)],
-              'gp2': [matcherBid('timber', 10)],
-            },
-            tradeCapacityByFactionId: const {'gp1': 100, 'gp2': 100},
-            treasuryBudgetByBuyerFactionId: const {'gp1': 100, 'gp2': 200},
-          ),
-        );
-        expect(result.filledDeals, equals(b.filledDeals));
-        expect(
-          result.unfilledBidsByFactionId.keys.toList()..sort(),
-          equals(b.unfilledBidsByFactionId.keys.toList()..sort()),
-        );
-      },
-    ),
+    deterministicRerun: true,
+    expect: const DealMatchExpectation(),
     refs: '#3115',
   ),
   DealMatcherScenario.expect(
@@ -207,15 +183,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
         expect(deal.pricePerUnit, 0.0);
         expect(deal.quantity, 5);
       },
-      custom: (result) {
-        final activity = result.activityByCommodityId['iron'];
-        expect(activity, isNotNull);
-        expect(
-          activity!.notes,
-          isEmpty,
-          reason: 'no treasury truncation should be recorded on free-fill',
-        );
-      },
+      activityNotesEmptyForCommodities: const ['iron'],
     ),
     refs: '#3115',
   ),
@@ -255,14 +223,15 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     ),
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
-      custom: (result) {
-        final activity = result.activityByCommodityId['timber'];
-        expect(activity, isNotNull);
-        expect(activity!.notes, hasLength(1));
-        expect(
-          activity.notes.single.kind,
-          MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
-        );
+      activityNotesByCommodityId: {
+        'timber': [
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+            factionId: 'gp1',
+            commodityId: 'timber',
+            quantity: 1,
+          ),
+        ],
       },
     ),
     refs: '#3115',
@@ -283,17 +252,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     ),
     expect: DealMatchExpectation(
       singleFilledDeal: (deal) => expect(deal.quantity, 4),
-      custom: (result) {
-        final activity = result.activityByCommodityId['timber'];
-        expect(activity, isNotNull);
-        expect(
-          activity!.notes,
-          isEmpty,
-          reason:
-              'cargo-truncated bids do not emit the treasury-insufficient '
-              'note (only treasury-clamped fills emit it)',
-        );
-      },
+      activityNotesEmptyForCommodities: const ['timber'],
     ),
     refs: '#3115',
   ),

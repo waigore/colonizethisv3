@@ -3,12 +3,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 import 'trade_order_validator_scenarios.dart';
 import 'trade_order_validator_test_support.dart';
+import 'validator_context_expectations.dart';
 import 'validator_expectations.dart';
-import '../treasury_scenarios/treasury_test_support.dart';
 
 int _catalogTimberBudgetForQty2() {
   final int? catalogTimber = ResourceRules.defaultRules
@@ -154,9 +153,9 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
         ),
         (accepted: true, reason: null),
       ],
-      custom: (results) => expect(
-        results[1].isAccepted,
-        isTrue,
+      orderAcceptedPin: (
+        index: 1,
+        accepted: true,
         reason:
             'greedy continuation: rejected bid must not consume '
             'the running spend budget so a later bid that fits the '
@@ -197,22 +196,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     ),
     proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
     expect: ValidatorExpectation(
-      custom: (results) {
-        final int? catalogTimber = ResourceRules.defaultRules
-            .defaultMarketPriceForCommodityId(CommodityCatalog.timber.id);
-        expect(
-          catalogTimber,
-          isNotNull,
-          reason: 'timber must have a catalog default for this AC pin',
-        );
-        expect(
-          results.single.isAccepted,
-          isTrue,
-          reason:
-              'rule 5 must use the catalog default and admit when '
-              'cumulative spend fits the budget',
-        );
-      },
+      catalogDefaultCommodityId: CommodityCatalog.timber.id,
+      catalogDefaultNotNullReason:
+          'timber must have a catalog default for this AC pin',
+      singleAccepted: true,
     ),
     refs: '#3123',
   ),
@@ -225,16 +212,10 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     ),
     proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 1)],
     expect: ValidatorExpectation(
-      custom: (results) {
-        final int? catalogLumber = ResourceRules.defaultRules
-            .defaultMarketPriceForCommodityId(CommodityCatalog.lumber.id);
-        expect(
-          catalogLumber,
-          isNotNull,
-          reason: 'lumber must have a manufactured catalog default',
-        );
-        expect(results.single.isAccepted, isTrue);
-      },
+      catalogDefaultCommodityId: CommodityCatalog.lumber.id,
+      catalogDefaultNotNullReason:
+          'lumber must have a manufactured catalog default',
+      singleAccepted: true,
     ),
     refs: '#3123',
   ),
@@ -248,112 +229,88 @@ class TradeOrderValidatorContextScenario {
     this.refs,
   });
 
+  TradeOrderValidatorContextScenario.expect({
+    required String label,
+    required ValidatorContextExpectation expect,
+    String? refs,
+  }) : this(
+          label: label,
+          run: () => assertValidatorContextExpectation(expect),
+          refs: refs,
+        );
+
   final String label;
   final void Function() run;
   final String? refs;
+}
+
+void runTradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario scenario,
+) {
+  scenario.run();
 }
 
 /// Context-from-game treasury scenarios from
 /// `world_market_trade_order_validator_context_treasury_test.dart`.
 List<TradeOrderValidatorContextScenario>
 tradeOrderValidatorContextTreasuryScenarios() => [
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'positive treasury surfaces as TradeOrderValidationContext.'
         'treasuryBudgetForBids',
-    run: () {
-      final game = buildTreasuryBidBudgetGame(treasury: 175);
-      final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
-      expect(ctx.treasuryBudgetForBids, 175);
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.treasuryBudget,
+      treasury: 175,
+      treasuryBudgetForBids: 175,
+    ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'treasury at or below zero yields a zero bid budget that rejects any '
         'priced bid end-to-end (negative clamps; zero passes through) '
         '(SPEC/game/world-market.md — cross-commodity bid treasury cap)',
-    run: () {
-      for (final treasury in const <int>[-25, 0]) {
-        final game = buildTreasuryBidBudgetGame(
-          treasury: treasury,
-          prices: const {'timber': 30},
-        );
-        final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        expect(
-          ctx.treasuryBudgetForBids,
-          0,
-          reason: 'treasury $treasury must yield a zero bid budget',
-        );
-        final results = TradeOrderValidator.validate(
-          context: ctx,
-          proposedOrders: [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 1,
-              priority: 1,
-            ),
-          ],
-        );
-        expect(
-          results.single.reason,
-          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-          reason: 'a priced bid must be rejected when treasury is $treasury',
-        );
-      }
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.treasuryClampsRejectPricedBid,
+    ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'ghost player id returns a zero-budget context (ghost guard)',
-    run: () {
-      final game = buildTreasuryBidBudgetGame(treasury: 200);
-      final ctx = tradeOrderValidationContextFromGame(game, 'gp_ghost');
-      expect(ctx.treasuryBudgetForBids, 0);
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.ghostPlayerZeroBudget,
+      treasury: 200,
+    ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'caller-supplied projectedTreasuryDelta reduces the budget by the '
         'projected non-bid deficit (Refs #3290 economy->orders inversion)',
-    run: () {
-      final game = buildTreasuryBidBudgetGame(treasury: 175);
-      final ctx = tradeOrderValidationContextFromGame(
-        game,
-        humanPlayerId,
-        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
-        projectedTreasuryDelta: -50,
-      );
-      expect(ctx.treasuryBudgetForBids, 125);
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.projectedDeltaReducesBudget,
+      treasury: 175,
+      treasuryBudgetForBids: 125,
+      projectedTreasuryDelta: -50,
+    ),
     refs: '#3290',
   ),
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'caller-supplied non-negative projectedTreasuryDelta leaves the raw '
         'treasury budget unchanged (income does not raise the budget)',
-    run: () {
-      final game = buildTreasuryBidBudgetGame(treasury: 175);
-      final ctx = tradeOrderValidationContextFromGame(
-        game,
-        humanPlayerId,
-        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
-        projectedTreasuryDelta: 40,
-      );
-      expect(ctx.treasuryBudgetForBids, 175);
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.nonNegativeProjectedDeltaUnchanged,
+      treasury: 175,
+      treasuryBudgetForBids: 175,
+      projectedTreasuryDelta: 40,
+    ),
     refs: '#3290',
   ),
-  TradeOrderValidatorContextScenario(
+  TradeOrderValidatorContextScenario.expect(
     label: 'omitting projectedTreasuryDelta keeps the raw-treasury budget even '
         'when staged orders are supplied',
-    run: () {
-      final game = buildTreasuryBidBudgetGame(treasury: 175);
-      final ctx = tradeOrderValidationContextFromGame(
-        game,
-        humanPlayerId,
-        stagedOrders: humanOrdersWith(const <TradeOrder>[]),
-      );
-      expect(ctx.treasuryBudgetForBids, 175);
-    },
+    expect: const ValidatorContextExpectation(
+      target: ValidatorContextScenarioTarget.omitProjectedDeltaUnchanged,
+      treasury: 175,
+      treasuryBudgetForBids: 175,
+    ),
     refs: '#3123',
   ),
 ];

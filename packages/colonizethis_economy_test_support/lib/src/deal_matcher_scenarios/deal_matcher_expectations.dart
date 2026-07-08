@@ -64,11 +64,17 @@ class DealMatchExpectation {
     this.nonFrrFilledDeal,
     this.unfilledOffersByFactionId,
     this.unfilledBidsByFactionId,
+    this.unfilledBidsPinsByFactionId,
     this.unfilledOffersEmpty = false,
     this.unfilledBidsEmpty = false,
     this.activityByCommodityId,
     this.filledDealQuantityByCommodityId,
     this.singleFilledDeal,
+    this.firstFilledDeal,
+    this.resultEqualsEmpty = false,
+    this.activityNotesByCommodityId,
+    this.activityNotesEmptyForCommodities,
+    this.activityPriceChangePercent,
     this.custom,
   });
 
@@ -81,11 +87,17 @@ class DealMatchExpectation {
   final FilledDealExpectation? nonFrrFilledDeal;
   final Map<String, List<TradeOrder>>? unfilledOffersByFactionId;
   final Map<String, List<TradeOrder>>? unfilledBidsByFactionId;
+  final Map<String, List<TradeOrder>>? unfilledBidsPinsByFactionId;
   final bool unfilledOffersEmpty;
   final bool unfilledBidsEmpty;
   final Map<CommodityId, MarketActivity>? activityByCommodityId;
   final Map<CommodityId, int>? filledDealQuantityByCommodityId;
   final void Function(FilledDeal deal)? singleFilledDeal;
+  final FilledDealExpectation? firstFilledDeal;
+  final bool resultEqualsEmpty;
+  final Map<CommodityId, List<MarketActivityNote>>? activityNotesByCommodityId;
+  final List<CommodityId>? activityNotesEmptyForCommodities;
+  final Map<CommodityId, double>? activityPriceChangePercent;
   final void Function(DealMatchResult result)? custom;
 }
 
@@ -150,6 +162,12 @@ void assertDealMatchExpectation(
       expectation.unfilledBidsByFactionId,
     );
   }
+  if (expectation.unfilledBidsPinsByFactionId != null) {
+    for (final MapEntry(:key, :value)
+        in expectation.unfilledBidsPinsByFactionId!.entries) {
+      expect(result.unfilledBidsByFactionId[key], value);
+    }
+  }
   if (expectation.activityByCommodityId != null) {
     for (final MapEntry(:key, :value)
         in expectation.activityByCommodityId!.entries) {
@@ -167,6 +185,36 @@ void assertDealMatchExpectation(
   }
   if (expectation.singleFilledDeal != null) {
     expectation.singleFilledDeal!(result.filledDeals.single);
+  }
+  if (expectation.firstFilledDeal != null) {
+    _assertFilledDealExpectation(
+      result.filledDeals.first,
+      expectation.firstFilledDeal!,
+    );
+  }
+  if (expectation.resultEqualsEmpty) {
+    expect(result, equals(DealMatchResult.empty));
+  }
+  if (expectation.activityNotesByCommodityId != null) {
+    for (final MapEntry(:key, :value)
+        in expectation.activityNotesByCommodityId!.entries) {
+      final activity = result.activityByCommodityId[key];
+      expect(activity, isNotNull);
+      expect(activity!.notes, value);
+    }
+  }
+  if (expectation.activityNotesEmptyForCommodities != null) {
+    for (final commodityId in expectation.activityNotesEmptyForCommodities!) {
+      final activity = result.activityByCommodityId[commodityId];
+      expect(activity, isNotNull);
+      expect(activity!.notes, isEmpty);
+    }
+  }
+  if (expectation.activityPriceChangePercent != null) {
+    for (final MapEntry(:key, :value)
+        in expectation.activityPriceChangePercent!.entries) {
+      expect(result.activityByCommodityId[key]!.priceChangePercent, value);
+    }
   }
   expectation.custom?.call(result);
 }

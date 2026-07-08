@@ -73,10 +73,8 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
         buyerFactionId: 'gpB',
         quantity: 7,
       ),
-      custom: (result) {
-        expect(result.unfilledBidsByFactionId['gpA'], [
-          matcherBid('timber', 7, priority: 1),
-        ]);
+      unfilledBidsPinsByFactionId: {
+        'gpA': [matcherBid('timber', 7, priority: 1)],
       },
     ),
     refs: '#2992',

@@ -619,3 +619,16 @@ test_support LOC: deferred recount post-slice — remaining core scenario inline
 
 test_support LOC: **14,317** (net +511 vs slice 18 — three expectation helper modules added; price-discovery/context-base/player-context/purchased-tile inline-verify bodies reduced; treasury/validator/deal-matcher scenario-data dedup for ≥20% reduction (≤8,200) deferred to slice 20+).
 
+## Phase 3 — Slice 20 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| validator-context-expectations | `ValidatorContextExpectation` + `TradeOrderValidatorContextScenario.expect` data-driven assertions | `validator_context_expectations.dart` | #3939 |
+| validator-context-compaction | migrated six `tradeOrderValidationContextFromGame` inline `run` closures to `.expect` rows | `trade_order_validator_treasury_scenarios.dart` | #3123, #3290, #3939 |
+| validator-expectations-v3 | `catalogDefaultCommodityId`, `orderAcceptedPin`, `firstOrderReason` pins on `ValidatorExpectation` | `validator_expectations.dart` | #3939 |
+| validator-treasury-compaction | eliminated remaining validator treasury/catalog/greedy inline `custom` closures | `trade_order_validator_treasury_scenarios.dart`, `trade_order_validator_scenarios.dart` | #3093, #3123, #2989, #3939 |
+| deal-matcher-expectations-v3 | `resultEqualsEmpty`, `firstFilledDeal`, `activityNotes*`, `activityPriceChangePercent`, `unfilledBidsPinsByFactionId`, `deterministicRerun` on scenarios | `deal_matcher_expectations.dart`, `deal_matcher_core_scenarios.dart` | #3939 |
+| deal-matcher-compaction | eliminated remaining deal-matcher treasury/priority/FRR inline `custom` closures | `deal_matcher_treasury_scenarios.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_frr_scenarios.dart`, `deal_matcher_core_scenarios.dart` | #3115, #2992, #3939 |
+
+test_support LOC: **14,416** (net +99 vs slice 19 — `validator_context_expectations.dart` added; validator/deal-matcher inline-verify bodies reduced; core scenario migration and ≥20% test_support reduction (≤8,200) deferred to slice 21+).
+
