@@ -5,43 +5,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'order_engine_validate_recruit_worker_expectation_shorthand.dart';
+
 /// Pins for [orderEngineValidateRecruitWorkerScenarios] rows.
 enum OrderEngineValidateRecruitWorkerTarget {
   acceptsASinglePeasantRecruitWhenFabricIsAvailable,
   rejectsApprenticeTrainWhenRequiredTechIsLocked,
   recruitConsumesLastPeasantBeforeMilitaryBuild,
   civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant,
-}
-
-const _regionId = 'oldWorld';
-const _provinceId = '$_regionId|P1';
-
-final _topology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'P1',
-      regionId: _regionId,
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: const [],
-);
-
-Game _gameWith({
-  required Player player,
-  List<Province> provinces = const [
-    Province(id: _provinceId, regionId: _regionId, ownerId: 'p1'),
-  ],
-}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: [player],
-  );
 }
 
 void runOrderEngineValidateRecruitWorkerExpectation(
@@ -64,7 +35,7 @@ void runOrderEngineValidateRecruitWorkerExpectation(
 }
 
 void _acceptsASinglePeasantRecruitWhenFabricIsAvailable() {
-  final game = _gameWith(
+  final game = vrwGameWith(
     player: Player(
       id: 'p1',
       displayName: 'P',
@@ -72,20 +43,13 @@ void _acceptsASinglePeasantRecruitWhenFabricIsAvailable() {
       stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 2}),
     ),
   );
-  final engine = OrderEngine()
-    ..addRecruitWorkerOrder(
-      'p1',
-      const RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-    );
-
-  final results = engine.validatePlayerOrdersWithContext(game, _topology, 'p1');
-
-  expect(results, hasLength(1));
-  expect(results.single.isAccepted, isTrue);
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.peasant);
+  vrwExpectSingleAccepted(vrwValidate(game, engine));
 }
 
 void _rejectsApprenticeTrainWhenRequiredTechIsLocked() {
-  final game = _gameWith(
+  final game = vrwGameWith(
     player: Player(
       id: 'p1',
       displayName: 'P',
@@ -96,25 +60,21 @@ void _rejectsApprenticeTrainWhenRequiredTechIsLocked() {
       techUnlocked: const {kTechIdApprenticeWorkers: true},
     ),
   );
-  final engine = OrderEngine()
-    ..addRecruitWorkerOrder(
-      'p1',
-      const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-    );
-
-  final results = engine.validatePlayerOrdersWithContext(game, _topology, 'p1');
-
-  expect(results.single.isAccepted, isFalse);
-  expect(results.single.reason, kRecruitWorkerTechLocked);
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwExpectSingleRejected(
+    vrwValidate(game, engine),
+    reason: kRecruitWorkerTechLocked,
+  );
 }
 
 void _recruitConsumesLastPeasantBeforeMilitaryBuild() {
-  final game = _gameWith(
+  final game = vrwGameWith(
     player: Player(
       id: 'p1',
       displayName: 'P',
       isHuman: true,
-      capitalProvinceId: _provinceId,
+      capitalProvinceId: vrwProvinceId,
       stockpile: Stockpile(
         quantities: {
           CommodityCatalog.paper.id: 50,
@@ -130,22 +90,10 @@ void _recruitConsumesLastPeasantBeforeMilitaryBuild() {
       },
     ),
   );
-  final engine = OrderEngine()
-    ..addRecruitWorkerOrder(
-      'p1',
-      const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-    )
-    ..addBuildOrder(
-      'p1',
-      BuildUnitOrder(
-        unitType: 'peasant_levies',
-        isMilitary: true,
-        spawnProvinceId: _provinceId,
-      ),
-    );
-
-  final results = engine.validatePlayerOrdersWithContext(game, _topology, 'p1');
-
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwAddBuild(engine, 'peasant_levies', isMilitary: true);
+  final results = vrwValidate(game, engine);
   expect(results, hasLength(2));
   expect(results[0].isAccepted, isTrue, reason: 'recruit accepted');
   expect(
@@ -157,14 +105,14 @@ void _recruitConsumesLastPeasantBeforeMilitaryBuild() {
 }
 
 void _civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant() {
-  final game = _gameWith(
+  final game = vrwGameWith(
     player: Player(
       id: 'p1',
       displayName: 'P',
       isHuman: true,
-      capitalProvinceId: _provinceId,
+      capitalProvinceId: vrwProvinceId,
       capitalTile: const CapitalTile(
-        regionId: _regionId,
+        regionId: vrwRegionId,
         provinceId: 'P1',
         x: 0,
         y: 0,
@@ -178,22 +126,10 @@ void _civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant() {
       },
     ),
   );
-  final engine = OrderEngine()
-    ..addRecruitWorkerOrder(
-      'p1',
-      const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-    )
-    ..addBuildOrder(
-      'p1',
-      BuildUnitOrder(
-        unitType: kUnitTypeBuilder,
-        isMilitary: false,
-        spawnProvinceId: _provinceId,
-      ),
-    );
-
-  final results = engine.validatePlayerOrdersWithContext(game, _topology, 'p1');
-
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwAddBuild(engine, kUnitTypeBuilder, isMilitary: false);
+  final results = vrwValidate(game, engine);
   expect(results, hasLength(2));
   expect(results[0].isAccepted, isTrue);
   expect(

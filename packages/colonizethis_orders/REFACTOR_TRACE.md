@@ -515,6 +515,16 @@ test/ LOC after slice 25: **32,127** (net −20 from post–slice 24; expectatio
 
 test/ LOC after slice 26: **32,135** (net +8 from post–slice 25; expectation bodies shortened, new `mv*`/`nov*` shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_build_civilian`, `civilian_spawn`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 27: build_civilian + recruit_worker + civilian_spawn expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vbc-shorthand | add `vbcOrder` / `vbcExpect*` wrappers; compact validateBuild(civilian) expectation bodies | `order_engine_validate_build_civilian_expectations.dart` | `order_engine_validate_build_civilian_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vrw-shorthand | add `vrwGameWith` / `vrwAddRecruit` / `vrwExpect*` helpers; compact validateRecruitWorker expectation bodies | `order_engine_validate_recruit_worker_expectations.dart` | `order_engine_validate_recruit_worker_expectation_shorthand.dart` + compacted expectations | #3949 |
+| csp-shorthand | add `cspExplorerGame` / `cspBuildOrders` / `cspExpect*` helpers; compact civilian/New World spawn expectation bodies | `civilian_spawn_expectations.dart` | `civilian_spawn_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 27: **32,158** (net +23 from post–slice 26; expectation bodies shortened, new `vbc*`/`vrw*`/`csp*` shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_work_fixtures_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

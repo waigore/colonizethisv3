@@ -1,10 +1,9 @@
 // Compact OrderEngine validateBuild(civilian) assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
+import 'order_engine_validate_build_civilian_expectation_shorthand.dart';
 import 'order_engine_validate_build_civilian_test_support.dart';
 
 /// Pins for [orderEngineValidateBuildCivilianScenarios] rows.
@@ -50,113 +49,65 @@ void runOrderEngineValidateBuildCivilianExpectation(
 }
 
 void _rejectsUnknownUnitType() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectRejected(
     buildCivilianValidationGame(treasury: 5000),
-    BuildUnitOrder(
-      unitType: 'UnknownTypeXyz',
-      isMilitary:
-          buildUnitCategoryForUnitType('UnknownTypeXyz') ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    'UnknownTypeXyz',
+    reason: 'Insufficient resources',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, 'Insufficient resources');
 }
 
 void _rejectsBuilderWhenTreasuryTooLow() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectRejected(
     buildCivilianValidationGame(treasury: 999, paper: 5),
-    BuildUnitOrder(
-      unitType: kUnitTypeBuilder,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    kUnitTypeBuilder,
+    reason: 'Insufficient treasury',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, 'Insufficient treasury');
 }
 
 void _rejectsBuilderWhenPaperInsufficient() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectRejected(
     buildCivilianValidationGame(treasury: 2000),
-    BuildUnitOrder(
-      unitType: kUnitTypeBuilder,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    kUnitTypeBuilder,
+    reason: 'Insufficient materials',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, 'Insufficient materials');
 }
 
 void _rejectsMerchantWhenMerchantCompaniesNotUnlocked() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectRejected(
     buildCivilianValidationGame(treasury: 3000, paper: 5),
-    BuildUnitOrder(
-      unitType: kUnitTypeMerchant,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeMerchant) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    kUnitTypeMerchant,
+    reason: 'Required technology not unlocked',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, 'Required technology not unlocked');
 }
 
 void _acceptsBuilderWhenTreasuryAndPaperSufficient() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectAccepted(
     buildCivilianValidationGame(treasury: 2000, paper: 5),
-    BuildUnitOrder(
-      unitType: kUnitTypeBuilder,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    kUnitTypeBuilder,
   );
-  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsMerchantWhenTechAndResourcesOk() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectAccepted(
     buildCivilianValidationGame(
       treasury: 3000,
       paper: 5,
       techUnlocked: const {kTechIdMerchantCompanies: true},
     ),
-    BuildUnitOrder(
-      unitType: kUnitTypeMerchant,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeMerchant) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P1',
-    ),
+    kUnitTypeMerchant,
   );
-  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsBuildWhenSpawnProvinceIdIsEmptyFallsBackToCapital() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectAccepted(
     buildCivilianValidationGame(treasury: 2000, paper: 5),
-    BuildUnitOrder(
-      unitType: kUnitTypeBuilder,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '',
-    ),
+    kUnitTypeBuilder,
+    spawnProvinceId: '',
   );
-  expect(result.status, OrderValidationStatus.accepted);
 }
 
 void _acceptsBuildWhenSpawnProvinceIdIsForeignFallsBackToCapital() {
-  final result = validateSingleBuildUnitOrder(
+  vbcExpectAccepted(
     buildCivilianValidationGame(
       treasury: 2000,
       paper: 5,
@@ -173,13 +124,7 @@ void _acceptsBuildWhenSpawnProvinceIdIsForeignFallsBackToCapital() {
         ),
       ],
     ),
-    BuildUnitOrder(
-      unitType: kUnitTypeBuilder,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: '$oldWorldRegionId|P2',
-    ),
+    kUnitTypeBuilder,
+    spawnProvinceId: '$oldWorldRegionId|P2',
   );
-  expect(result.status, OrderValidationStatus.accepted);
 }
