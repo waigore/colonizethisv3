@@ -47,9 +47,12 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         expect(moves.first.destinationTileKey, OscIds.tile('p2', 0, 0));
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility:
-      oscExpectThrowsSuggestMoveOnUnknownVisibility(
-          oscTwoProvinceExplorerUnknownVisibilityGame(),
-          oscTwoProvincesConnected('p1', 'p2'),
+      final game = oscTwoProvinceExplorerUnknownVisibilityGame();
+        final topology = oscTwoProvincesConnected('p1', 'p2');
+        final view = oscView(game, topology);
+        expect(
+          () => suggestMoveOrders(view, game, topology, const Orders()),
+          throwsStateError,
         );
     case OrderSuggestionCoreTarget
         .moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians:
@@ -76,21 +79,28 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         .suggestWorkOrdersExploreTargetUsesKWorkTargetExplore:
       final t0 = OscIds.tile('p1', 0, 0);
         final t1 = OscIds.tile('p1', 1, 0);
-        oscExpectWorkTargetNotEmpty(
-          oscSuggestWork(
-            oscExplorerProvinceGame(
-              visibilityByTile: {t0: 'fullyVisible', t1: 'unknown'},
-              tilesByLocal: {'p1': [t0, t1]},
-            ),
-            oscProvinceTopology(['p1']),
+        final suggestions = oscSuggestWork(
+          oscExplorerProvinceGame(
+            visibilityByTile: {t0: 'fullyVisible', t1: 'unknown'},
+            tilesByLocal: {'p1': [t0, t1]},
           ),
-          kWorkTargetExplore,
+          oscProvinceTopology(['p1']),
+        );
+        expect(
+          oscWorkWithTarget(suggestions, kWorkTargetExplore),
+          isNotEmpty,
         );
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope:
-      oscExpectExploreTargetsProvince(
-          oscPartialRevealExploreCacheGame(),
-          oscEmptyTopology(),
+      final game = oscPartialRevealExploreCacheGame();
+        final topology = oscEmptyTopology();
+        final explore = oscWorkWithTarget(
+          oscSuggestWork(game, topology),
+          kWorkTargetExplore,
+        );
+        expect(explore, isNotEmpty);
+        expect(
+          Unit.provinceIdFromTileKey(explore.first.targetTileKey),
           OscIds.prov('p_partial'),
         );
     case OrderSuggestionCoreTarget
@@ -115,7 +125,16 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
             tilesByLocal: {'p1': [tileKey]},
           ).worldState.copyWith(resourceByTileKey: {tileKey: 'iron'}),
         );
-        oscExpectProspectTargetsTile(game, oscProvinceTopology(['p1']), tileKey);
+        final topology = oscProvinceTopology(['p1']);
+        final suggestions = oscSuggestWork(game, topology);
+        expect(
+          oscWorkWithTarget(suggestions, kWorkTargetProspect),
+          isNotEmpty,
+        );
+        expect(
+          oscWorkWithTarget(suggestions, kWorkTargetProspect).first.targetTileKey,
+          tileKey,
+        );
     case OrderSuggestionCoreTarget
         .playerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder:
       final game = oscGame(
@@ -144,7 +163,19 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         );
     case OrderSuggestionCoreTarget
         .getValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder:
-      oscExpectDualBuilderVisKeysExcludeReserved(OscDualBuilderGrainTiles());
+      final setup = OscDualBuilderGrainTiles();
+        final game = setup.game();
+        final topology = setup.topology();
+        final validB2 = getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: oscView(game, topology),
+          unitId: 'b2',
+          workTarget: kWorkTargetBuildImprovement,
+          currentOrders: setup.ordersReservingTileA(),
+        );
+        expect(validB2, isNot(contains(setup.tileA)));
+        expect(validB2, contains(setup.tileB));
     case OrderSuggestionCoreTarget
         .workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile:
       final workerGame = oscBuilderWorkerSuggestGame();
@@ -160,12 +191,18 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         .suggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes:
       final tileNoResource = OscIds.tile('p1', 0, 0);
         final tileWithResource = OscIds.tile('p1', 1, 0);
-        oscExpectBuildImprovementTargetsTile(
-          oscBuilderImprovementGame(
-            tileNoResource: tileNoResource,
-            tileWithResource: tileWithResource,
-          ),
-          oscProvinceTopology(['p1']),
+        final game = oscBuilderImprovementGame(
+          tileNoResource: tileNoResource,
+          tileWithResource: tileWithResource,
+        );
+        final topology = oscProvinceTopology(['p1']);
+        final buildImp = oscWorkWithTarget(
+          oscSuggestWork(game, topology),
+          kWorkTargetBuildImprovement,
+        );
+        expect(buildImp, isNotEmpty);
+        expect(
+          buildImp.first.targetTileKey,
           tileWithResource,
           reason: 'should pick first valid tile, not the empty-resource tile',
         );
@@ -173,19 +210,30 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         .suggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile:
       final tileP1 = OscIds.tile('p1', 0, 0);
         final tileP2 = OscIds.tile('p2', 0, 0);
-        oscExpectBuildImprovementTargetsTile(
-          oscBuilderImprovementGame(
-            tileNoResource: tileP1,
-            tileWithResource: tileP2,
-            secondProvinceLocal: 'p2',
-            secondTile: tileP2,
-          ),
-          oscProvinceTopology(['p1', 'p2']),
-          tileP2,
+        final game = oscBuilderImprovementGame(
+          tileNoResource: tileP1,
+          tileWithResource: tileP2,
+          secondProvinceLocal: 'p2',
+          secondTile: tileP2,
         );
+        final topology = oscProvinceTopology(['p1', 'p2']);
+        final buildImp = oscWorkWithTarget(
+          oscSuggestWork(game, topology),
+          kWorkTargetBuildImprovement,
+        );
+        expect(buildImp, isNotEmpty);
+        expect(buildImp.first.targetTileKey, tileP2);
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder:
-      oscExpectDualBuilderSuggestSkipsReserved(OscDualBuilderGrainTiles());
+      final setup = OscDualBuilderGrainTiles();
+        final game = setup.game();
+        final topology = setup.topology();
+        final b2Build = oscWorkWithTarget(
+          oscSuggestWork(game, topology, setup.ordersReservingTileA()),
+          kWorkTargetBuildImprovement,
+        ).where((o) => o.unitId == 'b2').toList();
+        expect(b2Build, isNotEmpty);
+        expect(b2Build.first.targetTileKey, setup.tileB);
     case OrderSuggestionCoreTarget.suggestNavalMissionOrdersReturnsList:
       expect(
         oscSuggestNavalMission(
@@ -209,15 +257,31 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         isA<List<BuildUnitOrder>>(),
       );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsShipWhenAffordable:
-      oscExpectBuildIncludesShipTypes(
-          oscCapitalProvinceGame(oscAffordableShipPlayer()),
-          oscCapitalTopology(),
+      final game = oscCapitalProvinceGame(oscAffordableShipPlayer());
+        final topology = oscCapitalTopology();
+        final shipTypes = oscSuggestBuild(game, topology)
+            .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
+            .toList();
+        expect(
+          shipTypes,
+          isNotEmpty,
+          reason:
+              'suggestBuildOrders should include ships when player has capital, treasury and stockpile for fluyte/carrack',
         );
     case OrderSuggestionCoreTarget
         .suggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable:
-      oscExpectBuildIncludesRegimentAndShip(
-          oscCapitalProvinceGame(oscAffordableBothPlayer()),
-          oscCapitalTopology(),
+      final game = oscCapitalProvinceGame(oscAffordableBothPlayer());
+        final topology = oscCapitalTopology();
+        final suggestions = oscSuggestBuild(game, topology);
+        expect(
+          suggestions.any((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType)),
+          isTrue,
+          reason: 'should suggest regiments when affordable',
+        );
+        expect(
+          suggestions.any((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)),
+          isTrue,
+          reason: 'should suggest ships when affordable',
         );
     case OrderSuggestionCoreTarget.suggestResearchOrdersReturnsList:
       expect(
@@ -243,18 +307,24 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
       );
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
-      oscExpectWorkTargetNotEmpty(
+      expect(
+        oscWorkWithTarget(
           oscSuggestWork(oscSpyInOwnedProvinceGame(), oscProvinceTopology(['p1'])),
           kWorkTargetCounterSpy,
-        );
+        ),
+        isNotEmpty,
+      );
     case OrderSuggestionCoreTarget
         .purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile:
-      oscExpectWorkTargetNotEmpty(
+      expect(
+        oscWorkWithTarget(
           oscSuggestWork(
             oscMerchantPurchaseLandGame(),
             oscProvinceTopology(['p1', 'minor1']),
           ),
           kWorkTargetPurchaseLand,
-        );
+        ),
+        isNotEmpty,
+      );
   }
 }

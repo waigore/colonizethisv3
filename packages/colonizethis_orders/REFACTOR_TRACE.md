@@ -1771,7 +1771,16 @@ test/ LOC after slice 104: **38,389** (net −55 from post–slice 103). Remaini
 | but-import-dedup | remove duplicate `build_unit_training_*` imports | `build_unit_training_expectations.dart` | same | #3949 |
 | lib-feedstock-tile-gate | extract `_feedstockExtractionWhenOwnsUnimprovedTile` for supplier + seller improvement-input gates | `feedstock_extraction_targets.dart` | same | #3949 |
 
-test/ LOC after slice 105: TBD (net reduction from vet/vrw/osc shorthand removal + import dedup). Remaining: further support-table compaction toward ≤26,400; optional army-move cleanup (item 7).
+test/ LOC after slice 105: **38,344** (net −45 from post–slice 104). Remaining: further support-table compaction toward ≤26,400; optional army-move cleanup (item 7).
+
+## Wave 3 — Slice 106: osc dispatcher-inline + army-move owned-province DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-osc | inline nine single-site `oscExpect*` wrappers into core suggestion dispatcher | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| lib-army-move-owned | extract `armyMovePlayerOwnedProvinceIds` for picker + suggest paths | `order_suggestion_army_move.dart` | same | #3949 |
+
+test/ LOC after slice 106: **38,304** (net −40 from post–slice 105). Remaining: further support-table compaction toward ≤26,400.
 
 ## Wave 3 — documented exceptions (kickoff)
 

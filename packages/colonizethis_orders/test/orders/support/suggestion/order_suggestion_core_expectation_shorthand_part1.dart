@@ -61,103 +61,6 @@ Iterable<WorkOrder> oscWorkWithTarget(
 ) =>
     suggestions.where((o) => o.target == target);
 
-void oscExpectWorkTargetNotEmpty(List<WorkOrder> suggestions, String target) {
-  expect(oscWorkWithTarget(suggestions, target), isNotEmpty);
-}
-
-void oscExpectThrowsSuggestMoveOnUnknownVisibility(
-  Game game,
-  MapTopology topology,
-) {
-  final view = oscView(game, topology);
-  expect(
-    () => suggestMoveOrders(view, game, topology, const Orders()),
-    throwsStateError,
-  );
-}
-
-void oscExpectExploreTargetsProvince(
-  Game game,
-  MapTopology topology,
-  String provinceId,
-) {
-  final explore = oscWorkWithTarget(
-    oscSuggestWork(game, topology),
-    kWorkTargetExplore,
-  );
-  expect(explore, isNotEmpty);
-  expect(
-    Unit.provinceIdFromTileKey(explore.first.targetTileKey),
-    provinceId,
-  );
-}
-
-void oscExpectDualBuilderVisKeysExcludeReserved(OscDualBuilderGrainTiles setup) {
-  final game = setup.game();
-  final topology = setup.topology();
-  final validB2 = getValidWorkOrderTileKeysWithVisibility(
-    game: game,
-    topology: topology,
-    view: oscView(game, topology),
-    unitId: 'b2',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: setup.ordersReservingTileA(),
-  );
-  expect(validB2, isNot(contains(setup.tileA)));
-  expect(validB2, contains(setup.tileB));
-}
-
-void oscExpectDualBuilderSuggestSkipsReserved(OscDualBuilderGrainTiles setup) {
-  final game = setup.game();
-  final topology = setup.topology();
-  final b2Build = oscWorkWithTarget(
-    oscSuggestWork(game, topology, setup.ordersReservingTileA()),
-    kWorkTargetBuildImprovement,
-  ).where((o) => o.unitId == 'b2').toList();
-  expect(b2Build, isNotEmpty);
-  expect(b2Build.first.targetTileKey, setup.tileB);
-}
-
-void oscExpectBuildImprovementTargetsTile(
-  Game game,
-  MapTopology topology,
-  String tileKey, {
-  String? reason,
-}) {
-  final buildImp = oscWorkWithTarget(
-    oscSuggestWork(game, topology),
-    kWorkTargetBuildImprovement,
-  );
-  expect(buildImp, isNotEmpty);
-  expect(buildImp.first.targetTileKey, tileKey, reason: reason);
-}
-
-void oscExpectBuildIncludesShipTypes(Game game, MapTopology topology) {
-  final shipTypes = oscSuggestBuild(game, topology)
-      .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
-      .toList();
-  expect(
-    shipTypes,
-    isNotEmpty,
-    reason:
-        'suggestBuildOrders should include ships when player has capital, treasury and stockpile for fluyte/carrack',
-  );
-}
-
-void oscExpectBuildIncludesRegimentAndShip(Game game, MapTopology topology) {
-  final suggestions = oscSuggestBuild(game, topology);
-  expect(
-    suggestions.any((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType)),
-    isTrue,
-    reason: 'should suggest regiments when affordable',
-  );
-  expect(
-    suggestions.any((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)),
-    isTrue,
-    reason: 'should suggest ships when affordable',
-  );
-}
-
 Game oscExplorerProvinceGame({
   String provinceLocal = 'p1',
   String? ownerId = OscIds.playerId,
@@ -358,19 +261,6 @@ Game oscBuilderWorkerSuggestGame() {
       tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
     ),
     players: [oscBuilderPlayer()],
-  );
-}
-
-void oscExpectProspectTargetsTile(
-  Game game,
-  MapTopology topology,
-  String tileKey,
-) {
-  final suggestions = oscSuggestWork(game, topology);
-  oscExpectWorkTargetNotEmpty(suggestions, kWorkTargetProspect);
-  expect(
-    oscWorkWithTarget(suggestions, kWorkTargetProspect).first.targetTileKey,
-    tileKey,
   );
 }
 
