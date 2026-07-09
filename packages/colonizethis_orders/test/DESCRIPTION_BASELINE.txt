@@ -147,6 +147,7 @@ does not re-suggest a tech already assigned by a pending order
 does not return alliance toward a GP when a formal alliance exists
 does not return breakAlliance when relation level is allied but no formal alliance
 does not suggest diplomatic orders for completely unknown factions
+does not suggest toward target already in draft diplomatic orders
 does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise
 drops move into minor province when explicitly at peace
 drops move into minor-owned province when relation row is absent
@@ -213,6 +214,7 @@ includes cross-region player-owned province as destination
 includes resource tiles in tribe-owned provinces
 incremental build probe matches full-pass when riches fund build
 IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)
+IncrementalCandidateValidator.forPlayer trips assertion when supplied view is for a different player
 indexExistingTargetsByEntityId skips empty targets when requested
 initial orders copy: getter returns equal but distinct lists
 isDiplomaticOrderAccepted returns a boolean result
@@ -299,6 +301,7 @@ OrderEngine validator factory allows injected validators
 validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4)
 orderResolutionContextFromView aliases provincesById
 ordersApplicationLog is an alias of the shared ordersLog
+orders generated under the new shared-validator code path are unchanged against a known fixture
 ordersLog emits messages with the `orders:` prefix
 ordersLog is a CtLogger with the distinct `orders` prefix
 ordersLog is the single shared instance for the orders domain
@@ -344,6 +347,7 @@ refresh replaces target membership on turn-boundary style update
 refresh stores and reads prospect membership
 registers expected work targets
 rejected result is identical with and without supplied armiesById
+removing pending diplomatic order restores suggestions for that target
 rejected candidates log engineRejectedReason
 rejects a duplicate alliance when a formal alliance already exists
 rejects a duplicate boycott for the same pair
@@ -507,12 +511,15 @@ sorted regiment type ids match lexicographic sort of id set
 sorted returns deterministic ordering
 sorted ship type ids match lexicographic sort of id set
 suggestArmyMoveOrders matches default path
+suggestArmyMoveOrders trips assertion when validator is for a different player
 suggestBuildOrders does not invoke validatePlayerOrdersWithContext
 suggestBuildOrders matches default path
 suggestBuildOrders returns list
 suggestBuildOrders includes ship types when player can afford a ship
 suggestBuildOrders returns ship when affordable
+suggestBuildOrders trips assertion when validator is for a different player
 suggestDiplomaticOrders is deterministic across repeated calls
+suggestDiplomaticOrders: cumulative list appendable and validates
 suggestDiplomaticOrders returns list
 suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)
 suggestion ordering is deterministic across repeated passes
@@ -520,6 +527,7 @@ suggestMoveOrders excludes moves to other Great Power provinces
 suggestMoveOrders matches default path
 suggestMoveOrders only returns moves that pass validation
 suggestMoveOrders returns list
+suggestMoveOrders trips assertion when validator is for a different player
 suggestNavalMissionOrders returns list
 suggestNavalMoveOrders returns list
 suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)
@@ -531,6 +539,7 @@ suggestWorkOrders explore target uses kWorkTargetExplore
 suggestWorkOrders logger lines never emit unbounded full list payload
 suggestWorkOrders matches default path
 suggestWorkOrders returns list
+suggestWorkOrders trips assertion when validator is for a different player
 supports only counter_spy
 supports only explore target
 supports only prospect

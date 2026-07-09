@@ -1594,6 +1594,24 @@ Migrated imperative `army_move_validator_armies_by_id_test.dart` and `simple_ai_
 
 test/ LOC after slice 93: **38,623** (net +129 from post–slice 92; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 94 — shared-validator negative + diplomatic appendability scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| svn-move-wrong-player | suggestMoveOrders trips assertion when validator is for a different player | `order_suggestion_shared_validator_negative_test.dart` | `support/suggestion/order_suggestion_shared_validator_negative_{scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+| svn-army-wrong-player | suggestArmyMoveOrders trips assertion when validator is for a different player | same | same | #2394, #3949 |
+| svn-work-wrong-player | suggestWorkOrders trips assertion when validator is for a different player | same | same | #2394, #3949 |
+| svn-build-wrong-player | suggestBuildOrders trips assertion when validator is for a different player | same | same | #2394, #3949 |
+| svn-for-player-foreign-view | IncrementalCandidateValidator.forPlayer trips assertion when supplied view is for a different player | same | same | #2394, #3949 |
+| svn-heuristics-smoke | orders generated under the new shared-validator code path are unchanged against a known fixture | same | same | #2394, #3949 |
+| daa-excludes-draft | does not suggest toward target already in draft diplomatic orders | `order_suggestion_api_impl_diplomatic_appendability_test.dart` | `support/suggestion/order_suggestion_api_impl_diplomatic_appendability_{fixtures,scenarios,expectations}.dart` + thin runner | #3949 |
+| daa-cumulative-validates | suggestDiplomaticOrders: cumulative list appendable and validates | same | same | #3949 |
+| daa-pending-restore | removing pending diplomatic order restores suggestions for that target | same | same | #3949 |
+
+Migrated imperative `order_suggestion_shared_validator_negative_test.dart` and `order_suggestion_api_impl_diplomatic_appendability_test.dart` → table-driven scenarios with dedicated support modules. Pinned nine previously absent baseline descriptions.
+
+test/ LOC after slice 94: **38,695** (net +72 from post–slice 93; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
