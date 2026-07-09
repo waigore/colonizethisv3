@@ -120,12 +120,6 @@ void vwExpectDualWorkOrders({
   }
 }
 
-WorkOrder vwMinorProvinceRoadOrder() => WorkOrder(
-      unitId: 'e1',
-      target: kWorkTargetBuildRoad,
-      targetTileKey: minorProvinceRoadTileKey(),
-    );
-
 void vwExpectRejectMinorProvinceRoad({
   required Game game,
   required String reasonContains,
@@ -134,7 +128,11 @@ void vwExpectRejectMinorProvinceRoad({
     vwValidateSingleWork(
       game: game,
       playerId: 'gp1',
-      order: vwMinorProvinceRoadOrder(),
+      order: WorkOrder(
+        unitId: 'e1',
+        target: kWorkTargetBuildRoad,
+        targetTileKey: minorProvinceRoadTileKey(),
+      ),
       topology: minorProvinceRoadTopology(),
     ),
     reasonContains: reasonContains,

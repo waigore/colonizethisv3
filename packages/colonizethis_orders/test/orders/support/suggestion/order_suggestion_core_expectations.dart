@@ -386,16 +386,71 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
       );
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
+      final counterSpyTile = OscIds.tile('p1', 0, 0);
       oscExpectWorkTargetSuggestions(
-        game: oscSpyCounterSuggestGame(),
+        game: oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: kUnitTypeSpy,
+                  ownerId: OscIds.playerId,
+                  locationProvinceId: OscIds.prov('p1'),
+                ),
+              ],
+            ),
+            playerVisibilityByTile: oscVisibility({counterSpyTile: 'fullyVisible'}),
+            tileKeysByRegionAndProvince:
+                oscTilesByProvince({'p1': [counterSpyTile]}),
+          ),
+        ),
         topology: oscProvinceTopology(['p1']),
         target: kWorkTargetCounterSpy,
         expectNonEmpty: true,
       );
     case OrderSuggestionCoreTarget
         .purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile:
+      final purchaseTile = OscIds.tile('minor1', 0, 0);
       oscExpectWorkTargetSuggestions(
-        game: oscMerchantPurchaseLandSuggestGame(),
+        game: oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [
+                oscProvince('p1', ownerId: OscIds.playerId),
+                oscProvince('minor1', ownerId: 'minor1'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: kUnitTypeMerchant,
+                  ownerId: OscIds.playerId,
+                  locationProvinceId: OscIds.prov('p1'),
+                ),
+              ],
+            ),
+            playerVisibilityByTile: oscVisibility({
+              OscIds.tile('p1', 0, 0): 'fullyVisible',
+              purchaseTile: 'fullyVisible',
+            }),
+            tileKeysByRegionAndProvince: oscTilesByProvince({
+              'p1': [OscIds.tile('p1', 0, 0)],
+              'minor1': [purchaseTile],
+            }),
+            resourceByTileKey: {purchaseTile: 'grain'},
+          ),
+          players: [oscPlayer(treasury: 500)],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+          overtureStates: const [
+            OvertureState(
+              gpId: OscIds.playerId,
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        ),
         topology: oscProvinceTopology(['p1', 'minor1']),
         target: kWorkTargetPurchaseLand,
         expectNonEmpty: true,

@@ -188,15 +188,16 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile:
       final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        vwtExpectProspectVisContains(
-          owTribeProspectGame(
-            provinceLocalId: 'p1',
-            tileKeys: [ironTile],
-            resourceByTileKey: {ironTile: 'iron'},
-            visibilityByTile: {ironTile: 'fogged'},
-          ),
-          ironTile,
-        );
+      final prospectGame = owTribeProspectGame(
+        provinceLocalId: 'p1',
+        tileKeys: [ironTile],
+        resourceByTileKey: {ironTile: 'iron'},
+        visibilityByTile: {ironTile: 'fogged'},
+      );
+      expect(
+        vwtProspectVisKeys(prospectGame),
+        contains(ironTile),
+      );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility:
       final woolTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);

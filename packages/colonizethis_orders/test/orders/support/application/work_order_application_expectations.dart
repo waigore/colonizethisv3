@@ -59,7 +59,26 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       );
     case WorkOrderApplicationTarget
         .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1:
-      waaExpectBuildImprovementCompletes();
+      final buildImpCost = workOrderCostBuildImprovement(0);
+      final buildImpNext = waaApply(
+        workAppOwnedGame(
+          units: [workAppUnit(type: kUnitTypeBuilder)],
+          resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
+          players: [
+            workAppPlayer(
+              stockpile: OrdersApplicationTestSupport.stockpileCovering(
+                buildImpCost,
+              ),
+            ),
+          ],
+        ),
+        workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
+      );
+      expect(
+        buildImpNext.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
+        1,
+      );
+      waaExpectUnitIdle(buildImpNext);
     case WorkOrderApplicationTarget
         .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel:
       final fortNext = waaApply(
@@ -150,7 +169,70 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       );
     case WorkOrderApplicationTarget
         .purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite:
-      waaExpectDualGpPurchaseFirstWins();
+      const dualCost = WorkAppIds.purchaseLandGrainCost;
+      final dualGame = workAppPurchaseLandGame(
+        units: [
+          workAppPurchaseLandMerchant(),
+          workAppPurchaseLandMerchant(id: 'merchant2', ownerId: 'p2'),
+        ],
+        players: [
+          workAppPlayer(
+            treasury: dualCost + 100,
+            capitalProvinceId: WorkAppIds.provinceId,
+          ),
+          workAppPlayer(
+            id: 'p2',
+            displayName: 'P2',
+            isHuman: false,
+            treasury: dualCost + 100,
+            capitalProvinceId: WorkAppIds.provinceId,
+          ),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'p1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+          OvertureState(
+            gpId: 'p2',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      final dualNext = waaApply(
+        dualGame,
+        Orders(
+          workOrdersByPlayerId: {
+            'p1': [
+              const WorkOrder(
+                unitId: 'merchant1',
+                target: kWorkTargetPurchaseLand,
+                targetTileKey: WorkAppIds.tileKeyMinor,
+              ),
+            ],
+            'p2': [
+              const WorkOrder(
+                unitId: 'merchant2',
+                target: kWorkTargetPurchaseLand,
+                targetTileKey: WorkAppIds.tileKeyMinor,
+              ),
+            ],
+          },
+        ),
+      );
+      waaExpectPurchased(dualNext, ownerId: 'p1');
+      expect(
+        dualNext.playerById('p1')!.treasury,
+        dualGame.playerById('p1')!.treasury - dualCost,
+      );
+      expect(
+        dualNext.playerById('p2')!.treasury,
+        dualGame.playerById('p2')!.treasury,
+      );
     case WorkOrderApplicationTarget
         .buildFortWithSufficientMaterialsDeductsMaterials:
       final cost = workOrderCostBuildFort(0);
@@ -191,7 +273,29 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
       final next = waaApply(
-        waaSpyCounterProcessGame(),
+        workAppOwnedGame(
+          turnNumber: 1,
+          globalGameSeed: 12345,
+          units: [
+            workAppWorkingUnit(
+              id: 'spy1',
+              type: kUnitTypeSpy,
+              workTarget: kWorkTargetCounterSpy,
+              totalTurns: 0,
+              remainingTurns: 1,
+            ),
+            workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
+          ],
+          tileKeysByRegionAndProvince: {
+            WorkAppIds.ow: {
+              WorkAppIds.provinceId: [WorkAppIds.tileKey],
+            },
+          },
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: true),
+          ],
+        ),
         workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
       );
       final units = next.worldState.oldWorld.units;
@@ -234,7 +338,15 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince:
       final capitalSpyNext = waaApply(
-        waaSpyOnCapitalGame(),
+        workAppOwnedGame(
+          units: [workAppUnit(id: 'spy1', type: kUnitTypeSpy)],
+          tileKeysByRegionAndProvince: const {
+            WorkAppIds.ow: {
+              WorkAppIds.provinceId: [WorkAppIds.tileKey],
+            },
+          },
+          players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
+        ),
         workAppSingleWorkOrder(
           unitId: 'spy1',
           target: kWorkTargetCounterSpy,
@@ -267,15 +379,53 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       );
     case WorkOrderApplicationTarget
         .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion:
+      const exploreProvinceSmall = '${WorkAppIds.ow}|P1';
+      const exploreProvinceLarge = '${WorkAppIds.ow}|P2';
       const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
-      final next = waaApply(
-        waaExploreFormulaGame(),
+      const tileSmall2 = '${WorkAppIds.ow}|P1|1|0';
+      const tileLarge1 = '${WorkAppIds.ow}|P2|0|0';
+      const tileLarge2 = '${WorkAppIds.ow}|P2|1|0';
+      const tileLarge3 = '${WorkAppIds.ow}|P2|2|0';
+      const tileLarge4 = '${WorkAppIds.ow}|P2|3|0';
+      final exploreFormulaNext = waaApply(
+        workAppOwnedGame(
+          units: [
+            workAppUnit(
+              type: kUnitTypeExplorer,
+              locationProvinceId: exploreProvinceSmall,
+              tileKey: tileSmall1,
+            ),
+          ],
+          provinces: const [
+            Province(
+              id: exploreProvinceSmall,
+              regionId: WorkAppIds.ow,
+              ownerId: 'p1',
+            ),
+            Province(
+              id: exploreProvinceLarge,
+              regionId: WorkAppIds.ow,
+              ownerId: 'p1',
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {
+            WorkAppIds.ow: {
+              exploreProvinceSmall: [tileSmall1, tileSmall2],
+              exploreProvinceLarge: [
+                tileLarge1,
+                tileLarge2,
+                tileLarge3,
+                tileLarge4,
+              ],
+            },
+          },
+        ),
         workAppSingleWorkOrder(
           target: kWorkTargetExplore,
           targetTileKey: tileSmall1,
         ),
       );
-      waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
+      waaExpectExploreWork(exploreFormulaNext, totalTurns: 2, remainingTurns: 1);
     case WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork:
       final next = waaApply(
         waaEngineerRoadGame(),
@@ -285,10 +435,21 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       waaExpectRoadLevel(next, 1);
     case WorkOrderApplicationTarget
         .buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient:
-      final next = waaApply(
-        waaEngineerPortGame(),
+      final portCost = workOrderMaterialCost(kWorkTargetBuildPort);
+      expect(portCost, isNotNull);
+      final portNext = waaApply(
+        workAppOwnedGame(
+          units: [workAppUnit(type: kUnitTypeEngineer)],
+          players: [
+            workAppPlayer(
+              stockpile: OrdersApplicationTestSupport.stockpileCovering(
+                portCost!,
+              ),
+            ),
+          ],
+        ),
         workAppSingleWorkOrder(target: kWorkTargetBuildPort),
       );
-      waaExpectUnitIdle(next);
+      waaExpectUnitIdle(portNext);
   }
 }

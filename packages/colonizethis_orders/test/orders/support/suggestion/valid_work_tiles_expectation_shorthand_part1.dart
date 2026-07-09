@@ -69,14 +69,6 @@ Set<String> vwtProspectVisKeys(
       tileMapByRegion: tileMapByRegion,
     );
 
-void vwtExpectProspectVisContains(
-  Game game,
-  String tile, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  expect(vwtProspectVisKeys(game, tileMapByRegion: tileMapByRegion), contains(tile));
-}
-
 void vwtExpectProspectVisExcludesAll(
   Game game,
   Iterable<String> tiles, {

@@ -2009,6 +2009,18 @@ test/ LOC after slice 126: **37,513** (net +129 from post–slice 125; helper de
 
 test/ LOC after slice 127: **37,339** (net −174 from post–slice 126). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 128: inline single-use waa/osc/wcc/vwt/vw dispatch helpers
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-dispatch-inline | inline six single-site work-application game/expectation wrappers into dispatcher switch | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| osc-dispatch-inline | inline counter-spy / purchase-land suggest game builders into dispatcher switch | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| wcc-dispatch-inline | inline upgrade-town / explore dispatch setup into dispatcher switch | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+| vwt-dispatch-inline | inline prospect-vis contains check into dispatcher switch | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vw-dispatch-inline | fold minor-province road order literal into reject helper | `order_engine_validate_work_expectation_shorthand_part1.dart` | same | #3949 |
+
+test/ LOC after slice 128: **37,317** (net −22 from post–slice 127). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
