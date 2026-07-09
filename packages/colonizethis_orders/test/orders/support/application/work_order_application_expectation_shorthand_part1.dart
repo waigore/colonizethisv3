@@ -154,3 +154,80 @@ void waaExpectProspect({
     expect(u.assignedTileKey, isNull);
   }
 }
+
+Game waaSpyCounterProcessGame() => workAppOwnedGame(
+      turnNumber: 1,
+      globalGameSeed: 12345,
+      units: [
+        workAppWorkingUnit(
+          id: 'spy1',
+          type: kUnitTypeSpy,
+          workTarget: kWorkTargetCounterSpy,
+          totalTurns: 0,
+          remainingTurns: 1,
+        ),
+        workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
+      ],
+      tileKeysByRegionAndProvince: {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
+    );
+
+Game waaSpyOnCapitalGame() => workAppOwnedGame(
+      units: [workAppUnit(id: 'spy1', type: kUnitTypeSpy)],
+      tileKeysByRegionAndProvince: const {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+      players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
+    );
+
+Game waaExploreFormulaGame() {
+  const provinceSmall = '${WorkAppIds.ow}|P1';
+  const provinceLarge = '${WorkAppIds.ow}|P2';
+  const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+  const tileSmall2 = '${WorkAppIds.ow}|P1|1|0';
+  const tileLarge1 = '${WorkAppIds.ow}|P2|0|0';
+  const tileLarge2 = '${WorkAppIds.ow}|P2|1|0';
+  const tileLarge3 = '${WorkAppIds.ow}|P2|2|0';
+  const tileLarge4 = '${WorkAppIds.ow}|P2|3|0';
+  return workAppOwnedGame(
+    units: [
+      workAppUnit(
+        type: kUnitTypeExplorer,
+        locationProvinceId: provinceSmall,
+        tileKey: tileSmall1,
+      ),
+    ],
+    provinces: const [
+      Province(id: provinceSmall, regionId: WorkAppIds.ow, ownerId: 'p1'),
+      Province(id: provinceLarge, regionId: WorkAppIds.ow, ownerId: 'p1'),
+    ],
+    tileKeysByRegionAndProvince: const {
+      WorkAppIds.ow: {
+        provinceSmall: [tileSmall1, tileSmall2],
+        provinceLarge: [tileLarge1, tileLarge2, tileLarge3, tileLarge4],
+      },
+    },
+  );
+}
+
+Game waaEngineerPortGame() {
+  final cost = workOrderMaterialCost(kWorkTargetBuildPort);
+  expect(cost, isNotNull);
+  return workAppOwnedGame(
+    units: [workAppUnit(type: kUnitTypeEngineer)],
+    players: [
+      workAppPlayer(
+        stockpile: OrdersApplicationTestSupport.stockpileCovering(cost!),
+      ),
+    ],
+  );
+}

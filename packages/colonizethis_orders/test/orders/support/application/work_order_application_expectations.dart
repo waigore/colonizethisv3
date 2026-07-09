@@ -9,8 +9,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'work_application_fixtures.dart';
 import 'work_order_application_expectation_shorthand.dart';
 
-part 'work_order_application_expectations_late.dart';
-
 /// Pins for [workOrderApplicationScenarios] rows.
 enum WorkOrderApplicationTarget {
   prospectAddsTilePlayerProspectedTilesWhenTerrainEligible,
@@ -310,28 +308,105 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
-      woaLateCounterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork();
+      final next = waaApply(
+        waaSpyCounterProcessGame(),
+        workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
+      );
+      final units = next.worldState.oldWorld.units;
+      expect(units.length, 2);
+      for (final id in const ['spy1', 'spy2']) {
+        expect(units.any((u) => u.id == id), isTrue);
+      }
     case WorkOrderApplicationTarget.unknownWorkTargetSkippedUnitStaysIdle:
-      woaLateUnknownWorkTargetSkippedUnitStaysIdle();
+      final next = waaApply(
+        workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
+        workAppSingleWorkOrder(target: 'unknown_target'),
+      );
+      waaExpectUnitIdle(next);
     case WorkOrderApplicationTarget
         .buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile:
-      woaLateBuildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile();
+      final game = workAppOwnedGame(
+        units: [workAppUnit(type: kUnitTypeEngineer)],
+        players: [workAppPlayer(stockpile: const Stockpile())],
+      );
+      final next = waaApply(
+        game,
+        workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+      );
+      waaExpectUnitIdle(next);
+      expect(
+        next.players.single.stockpile.quantityOf(CommodityCatalog.lumber.id),
+        0,
+      );
     case WorkOrderApplicationTarget
         .buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork:
-      woaLateBuildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork();
+      final cost = workOrderCostBuildRoad;
+      final game = waaEngineerRoadGame();
+      final next = waaApply(
+        game,
+        workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+      );
+      waaExpectUnitIdle(next);
+      waaExpectRoadLevel(next, 1);
+      waaExpectStockpileDeducted(game, next, cost);
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince:
-      woaLateCounterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince();
+      final capitalSpyNext = waaApply(
+        waaSpyOnCapitalGame(),
+        workAppSingleWorkOrder(
+          unitId: 'spy1',
+          target: kWorkTargetCounterSpy,
+        ),
+      );
+      final counterSpyU = waaSingleUnit(capitalSpyNext);
+      expect(counterSpyU.currentWork, isNotNull);
+      expect(counterSpyU.currentWork!.workTarget, kWorkTargetCounterSpy);
     case WorkOrderApplicationTarget
         .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles:
-      woaLateExploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles();
+      final next = waaApply(
+        workAppOwnedGame(
+          units: [workAppUnit(type: kUnitTypeExplorer)],
+          tileKeysByRegionAndProvince: {
+            WorkAppIds.ow: {
+              WorkAppIds.provinceId: [
+                WorkAppIds.tileKey,
+                WorkAppIds.originTileKey,
+              ],
+            },
+          },
+        ),
+        workAppSingleWorkOrder(target: kWorkTargetExplore),
+      );
+      final u = waaSingleUnit(next);
+      expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
+      waaExpectExploreWork(
+        next,
+        remainingTurns: u.currentWork!.totalTurns - 1,
+      );
     case WorkOrderApplicationTarget
         .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion:
-      woaLateExploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion();
+      const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+      final next = waaApply(
+        waaExploreFormulaGame(),
+        workAppSingleWorkOrder(
+          target: kWorkTargetExplore,
+          targetTileKey: tileSmall1,
+        ),
+      );
+      waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
     case WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork:
-      woaLateEngineerBuildRoadWorkOrderSetsCurrentWork();
+      final next = waaApply(
+        waaEngineerRoadGame(),
+        workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+      );
+      waaExpectUnitIdle(next);
+      waaExpectRoadLevel(next, 1);
     case WorkOrderApplicationTarget
         .buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient:
-      woaLateBuildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient();
+      final next = waaApply(
+        waaEngineerPortGame(),
+        workAppSingleWorkOrder(target: kWorkTargetBuildPort),
+      );
+      waaExpectUnitIdle(next);
   }
 }

@@ -1953,6 +1953,16 @@ test/ LOC after slice 121: **37,726** (net −13 from pre-slice-121 **37,739**; 
 
 test/ LOC after slice 122: **37,682** (net −44 from post–slice 121). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 123: merge/move-context/work-app late-part DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| order-merge-shorthand | extract `omMerged` / `omResearch` / `omNavalMoves` helpers; inline late cases | `order_merge_expectations_late.dart` | `order_merge_expectation_shorthand.dart` + `order_merge_expectations.dart` | #3949 |
+| oemwc-shorthand | extract `oemwcExplorerProvinceGame` / `oemwcExpectWork` / `oemwcExpectMove`; inline late cases | `order_engine_move_and_work_context_expectations_late.dart` | `order_engine_move_and_work_context_expectation_shorthand.dart` + `order_engine_move_and_work_context_expectations.dart` | #3949 |
+| woa-late-inline | extract `waaSpyCounterProcessGame` / `waaExploreFormulaGame` / `waaEngineerPortGame`; inline late cases | `work_order_application_expectations_late.dart` | `work_order_application_expectation_shorthand_part1.dart` + `work_order_application_expectations.dart` | #3949 |
+
+test/ LOC after slice 123: **37,411** (net −271 from post–slice 122). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
