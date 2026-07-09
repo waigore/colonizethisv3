@@ -552,6 +552,15 @@ test/ LOC after slice 29: **32,413** (net +120 from post–slice 28; expectation
 
 test/ LOC after slice 30: **32,548** (net +135 from post–slice 29; expectation bodies shortened, new `vwt*`/`osc*` shorthand and fixture modules added). Remaining: further expectation compaction (remaining large support files, imperative suites), lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 31: work_order_application + work_completion part1 expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-part1-shorthand | add `waaProspectApply` / `waaApplyBuildImprovement` / `waaApplyBuildFort` / `waaExpectCurrentWorkTiming` / `waaCounterSpyForeignProvinceGame` / `waaEmbassyOverture` / `waaDualGpPurchaseLandGame` / `waaDualPurchaseLandOrders` / `waaExpectTownDevelopmentLevel` / `waaExpectUnitIdsPresent`; compact work-order application expectation bodies | `work_order_application_expectations_part1.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+| wcc-part1-shorthand | add `wccEngineerWorking` / `wccExplorerWorking` / `wccEngineerCompletionGame` / `wccBuilderImprovementAtLevel` / `wccExpectUnitCancelledToOrigin` / `wccExpectRemainingTurns` / `wccExpectPortRegisteredForProvince` / `wccBuildRoadCapitalAdjacentGame` / `wccBuildRoadPortAdjacentGame`; compact work-completion expectation bodies | `work_completion_expectations_part1.dart` | `work_completion_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 31: **32,595** (net +47 from post–slice 30; part1 expectation bodies shortened, new `waa*`/`wcc*` shorthand helpers added). Remaining: further expectation compaction (remaining large support files, imperative suites), lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

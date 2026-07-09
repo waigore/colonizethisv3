@@ -242,3 +242,88 @@ BuildWorkState wccDispatchCompleted(
   );
   return (state, unit, cw);
 }
+
+Unit wccEngineerWorking(String workTarget) =>
+    workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget);
+
+Unit wccExplorerWorking() =>
+    workAppWorkingUnit(type: kUnitTypeExplorer, workTarget: kWorkTargetExplore);
+
+Game wccEngineerCompletionGame({
+  required String workTarget,
+  TileMapState? tileState,
+  List<Province>? provinces,
+  List<Player>? players,
+  Map<String, String>? portsByProvinceSeaboard,
+}) =>
+    wccGame(
+      units: [wccEngineerWorking(workTarget)],
+      tileState: tileState,
+      provinces: provinces,
+      players: players,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+    );
+
+Game wccBuilderImprovementAtLevel(int level) => wccGame(
+      units: [wccBuilderImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, level),
+    );
+
+void wccExpectUnitCancelledToOrigin(Game next) {
+  final u = wccSingleUnit(next);
+  expect(u.status, UnitStatus.idle);
+  expect(u.currentWork, isNull);
+  expect(u.tileKey, WorkAppIds.originTileKey);
+  expect(u.originTileKey, isNull);
+  expect(u.assignedTileKey, isNull);
+}
+
+void wccExpectRemainingTurns(Game next, int remaining) {
+  expect(wccSingleUnit(next).currentWork!.remainingTurns, remaining);
+}
+
+void wccExpectPortRegisteredForProvince(Game next) {
+  expect(
+    next.worldState.portsByProvinceSeaboard.keys.any(
+      (k) => k.startsWith(WorkAppIds.provinceId),
+    ),
+    isTrue,
+  );
+}
+
+Game wccBuildRoadCapitalAdjacentGame() {
+  const capitalTileKey = WorkAppIds.originTileKey;
+  return wccEngineerCompletionGame(
+    workTarget: kWorkTargetBuildRoad,
+    tileState: TileMapState()
+        .setRoadLevel(WorkAppIds.tileKey, 0)
+        .setRoadLevel(capitalTileKey, 2),
+    players: [
+      workAppPlayer(
+        capitalProvinceId: WorkAppIds.provinceId,
+        capitalTile: const CapitalTile(
+          regionId: WorkAppIds.ow,
+          provinceId: WorkAppIds.provinceId,
+          x: 1,
+          y: 0,
+        ),
+      ),
+    ],
+  );
+}
+
+Game wccBuildRoadPortAdjacentGame() {
+  const portTileKey = WorkAppIds.originTileKey;
+  return wccEngineerCompletionGame(
+    workTarget: kWorkTargetBuildRoad,
+    tileState: TileMapState()
+        .setRoadLevel(WorkAppIds.tileKey, 1)
+        .setRoadLevel(portTileKey, 1),
+    portsByProvinceSeaboard: const {
+      '${WorkAppIds.provinceId}|sea1': portTileKey,
+    },
+    players: [
+      workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
+    ],
+  );
+}

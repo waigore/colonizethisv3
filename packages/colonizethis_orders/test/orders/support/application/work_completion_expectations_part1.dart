@@ -1,12 +1,7 @@
 part of 'work_completion_expectations.dart';
 
 void _buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
-  final next = wccApply(
-    wccGame(
-      units: [wccBuilderImprovement()],
-      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
-    ),
-  );
+  final next = wccApply(wccBuilderImprovementAtLevel(0));
   wccExpectImprovement(next, 1);
   wccExpectUnitIdleCleared(next);
 }
@@ -56,7 +51,6 @@ void _buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax() {
 }
 
 void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
-  // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
   expect(
     extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
     1,
@@ -75,7 +69,6 @@ void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
 }
 
 void _workCancelledWhenProvinceContainingTargetTileIsConquered376() {
-  // Unit p1 is working on a tile in P1; province P1 is conquered by p2.
   final next = wccApply(
     wccGame(
       units: [
@@ -89,12 +82,7 @@ void _workCancelledWhenProvinceContainingTargetTileIsConquered376() {
       ],
     ),
   );
-  final uAfter = wccSingleUnit(next);
-  expect(uAfter.status, UnitStatus.idle);
-  expect(uAfter.currentWork, isNull);
-  expect(uAfter.tileKey, WorkAppIds.originTileKey);
-  expect(uAfter.originTileKey, isNull);
-  expect(uAfter.assignedTileKey, isNull);
+  wccExpectUnitCancelledToOrigin(next);
   wccExpectImprovement(next, 0);
 }
 
@@ -111,7 +99,7 @@ void _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero() {
   );
   final afterFirst = wccApply(game);
   wccExpectImprovement(afterFirst, 0);
-  expect(wccSingleUnit(afterFirst).currentWork!.remainingTurns, 1);
+  wccExpectRemainingTurns(afterFirst, 1);
   final afterSecond = wccApply(afterFirst);
   wccExpectImprovement(afterSecond, 1);
 }
@@ -119,12 +107,7 @@ void _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero() {
 void _exploreCompletionSetsVisibilityAndClearsCurrentWork() {
   final next = wccApply(
     wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeExplorer,
-          workTarget: kWorkTargetExplore,
-        ),
-      ],
+      units: [wccExplorerWorking()],
       tileKeysByRegionAndProvince: {
         WorkAppIds.ow: {
           WorkAppIds.provinceId: [WorkAppIds.tileKey],
@@ -143,12 +126,7 @@ void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
   const tileKey2 = WorkAppIds.originTileKey;
   final next = wccApply(
     wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeExplorer,
-          workTarget: kWorkTargetExplore,
-        ),
-      ],
+      units: [wccExplorerWorking()],
       tileKeysByRegionAndProvince: const {
         WorkAppIds.ow: {
           WorkAppIds.provinceId: [WorkAppIds.tileKey, tileKey2],
@@ -183,13 +161,8 @@ void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
 
 void _buildRoadCompletionIncreasesRoadLevel() {
   final next = wccApply(
-    wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeEngineer,
-          workTarget: kWorkTargetBuildRoad,
-        ),
-      ],
+    wccEngineerCompletionGame(
+      workTarget: kWorkTargetBuildRoad,
       tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, 0),
     ),
     tileMapByRegion: const {},
@@ -200,28 +173,7 @@ void _buildRoadCompletionIncreasesRoadLevel() {
 void _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
   const capitalTileKey = WorkAppIds.originTileKey;
   final next = wccApply(
-    wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeEngineer,
-          workTarget: kWorkTargetBuildRoad,
-        ),
-      ],
-      tileState: TileMapState()
-          .setRoadLevel(WorkAppIds.tileKey, 0)
-          .setRoadLevel(capitalTileKey, 2),
-      players: [
-        workAppPlayer(
-          capitalProvinceId: WorkAppIds.provinceId,
-          capitalTile: const CapitalTile(
-            regionId: WorkAppIds.ow,
-            provinceId: WorkAppIds.provinceId,
-            x: 1,
-            y: 0,
-          ),
-        ),
-      ],
-    ),
+    wccBuildRoadCapitalAdjacentGame(),
     tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
   wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
@@ -231,23 +183,7 @@ void _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrad
 void _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
   const portTileKey = WorkAppIds.originTileKey;
   final next = wccApply(
-    wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeEngineer,
-          workTarget: kWorkTargetBuildRoad,
-        ),
-      ],
-      tileState: TileMapState()
-          .setRoadLevel(WorkAppIds.tileKey, 1)
-          .setRoadLevel(portTileKey, 1),
-      portsByProvinceSeaboard: const {
-        '${WorkAppIds.provinceId}|sea1': portTileKey,
-      },
-      players: [
-        workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
-      ],
-    ),
+    wccBuildRoadPortAdjacentGame(),
     tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
   wccExpectRoadLevel(next, WorkAppIds.tileKey, 2);
@@ -256,34 +192,17 @@ void _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt
 
 void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
   final next = wccApply(
-    wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeEngineer,
-          workTarget: kWorkTargetBuildPort,
-        ),
-      ],
-    ),
+    wccEngineerCompletionGame(workTarget: kWorkTargetBuildPort),
     topology: wccPortSeaTopology(),
   );
   wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
-  expect(
-    next.worldState.portsByProvinceSeaboard.keys.any(
-      (k) => k.startsWith(WorkAppIds.provinceId),
-    ),
-    isTrue,
-  );
+  wccExpectPortRegisteredForProvince(next);
 }
 
 void _buildFortCompletionIncreasesProvinceFortLevel() {
   final next = wccApply(
-    wccGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeEngineer,
-          workTarget: kWorkTargetBuildFort,
-        ),
-      ],
+    wccEngineerCompletionGame(
+      workTarget: kWorkTargetBuildFort,
       provinces: [workAppOwnedProvince(fortLevel: 0)],
     ),
   );

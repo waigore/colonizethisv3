@@ -1,112 +1,65 @@
 part of 'work_order_application_expectations.dart';
 
 void _prospectAddsTilePlayerProspectedTilesWhenTerrainEligible() {
-  final next = waaApply(
-    waaProspectGame(),
-    waaProspectOrders(),
-    tileMapByRegion: {
-      WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(
-        TerrainType.hills,
-      ),
-    },
-  );
+  final next = waaProspectApply(terrain: TerrainType.hills);
   waaExpectProspected(next, expected: true);
   waaExpectUnitIdleAfterWork(next);
 }
 
 void _prospectOnNonMineralEligibleTerrainDoesNotAddTile() {
-  final next = waaApply(
-    waaProspectGame(),
-    waaProspectOrders(),
-    tileMapByRegion: {
-      WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(
-        TerrainType.plains,
-      ),
-    },
-  );
+  final next = waaProspectApply(terrain: TerrainType.plains);
   waaExpectProspected(next, expected: false);
 }
 
 void _prospectAddsTileWhenMineralResourcePresentWithoutTileMap() {
-  final next = waaApply(
-    waaProspectGame(resourceByTileKey: {WorkAppIds.tileKey: 'iron'}),
-    waaProspectOrders(),
+  final next = waaProspectApply(
+    resourceByTileKey: {WorkAppIds.tileKey: 'iron'},
   );
   waaExpectProspected(next, expected: true);
 }
 
 void _prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap() {
-  final next = waaApply(
-    waaProspectGame(resourceByTileKey: {WorkAppIds.tileKey: 'grain'}),
-    waaProspectOrders(),
+  final next = waaProspectApply(
+    resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
   );
   waaExpectProspected(next, expected: false);
 }
 
 void _buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1() {
-  final cost = workOrderCostBuildImprovement(0);
-  final game = workAppOwnedGame(
-    units: [workAppUnit(type: kUnitTypeBuilder)],
-    resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
-    players: [
-      workAppPlayer(
-        stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
-      ),
-    ],
-  );
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
-  );
+  final next = waaApplyBuildImprovement();
   waaExpectUnitIdle(next);
   waaExpectImprovementLevel(next, 1);
 }
 
 void _buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel() {
-  final cost = workOrderCostBuildFort(1);
-  final game = workAppOwnedGame(
-    units: [workAppUnit(type: kUnitTypeEngineer)],
-    provinces: [workAppOwnedProvince(fortLevel: 1)],
-    players: [
-      workAppPlayer(
-        stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
-        techUnlocked: const {kTechIdMineEngineering: true},
-      ),
-    ],
+  const fortLevel = 1;
+  final next = waaApplyBuildFort(
+    fortLevel: fortLevel,
+    techUnlocked: const {kTechIdMineEngineering: true},
   );
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
+  waaExpectCurrentWorkTiming(
+    next,
+    workTarget: kWorkTargetBuildFort,
+    totalTurns: totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
+    remainingTurns: 1,
+    originTileKey: WorkAppIds.tileKey,
+    assignedTileKey: WorkAppIds.tileKey,
   );
-  final u = waaSingleUnit(next);
-  expect(
-    u.currentWork!.totalTurns,
-    totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 1),
-  );
-  expect(u.currentWork!.remainingTurns, 1);
-  expect(u.originTileKey, WorkAppIds.tileKey);
-  expect(u.assignedTileKey, WorkAppIds.tileKey);
-  waaExpectFortLevel(next, 1);
+  waaExpectFortLevel(next, fortLevel);
 }
 
 void _counterSpyWorkOrderSetsCurrentWorkForSpyUnit() {
-  final game = workAppOwnedGame(
-    units: [workAppUnit(id: 'spy1', type: kUnitTypeSpy)],
-    provinces: [workAppOwnedProvince(ownerId: 'p2')],
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-      Player(id: 'p2', displayName: 'P2', isHuman: true),
-    ],
-  );
   final next = waaApply(
-    game,
+    waaCounterSpyForeignProvinceGame(),
     workAppSingleWorkOrder(unitId: 'spy1', target: kWorkTargetCounterSpy),
   );
-  final spyAfter = waaSingleUnit(next);
-  expect(spyAfter.currentWork, isNotNull);
-  expect(spyAfter.currentWork!.workTarget, kWorkTargetCounterSpy);
-  expect(spyAfter.currentWork!.totalTurns, 0);
-  expect(spyAfter.currentWork!.remainingTurns, 1);
+  waaExpectCurrentWorkTiming(
+    next,
+    unitId: 'spy1',
+    workTarget: kWorkTargetCounterSpy,
+    totalTurns: 0,
+    remainingTurns: 1,
+  );
 }
 
 void _purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey() {
@@ -114,14 +67,7 @@ void _purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey() {
   final game = workAppPurchaseLandGame(
     units: [waaMerchantOnMinor()],
     players: [workAppPlayer(treasury: cost + 100)],
-    overtureStates: const [
-      OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
+    overtureStates: [waaEmbassyOverture()],
   );
   final next = waaApply(game, waaPurchaseLandOrders());
   waaExpectPurchased(next, ownerId: 'p1');
@@ -141,10 +87,12 @@ void _purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe() {
 }
 
 void _purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
   final game = workAppPurchaseLandGame(
     units: [waaMerchantOnMinor()],
-    players: [workAppPlayer(treasury: cost + 100)],
+    players: [
+      workAppPlayer(treasury: WorkAppIds.purchaseLandGrainCost + 100),
+    ],
+    overtureStates: [waaEmbassyOverture()],
     diplomacyRelations: const [
       DiplomacyRelation(
         factionId1: 'p1',
@@ -160,59 +108,8 @@ void _purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe() {
 
 void _purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite() {
   const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = workAppPurchaseLandGame(
-    units: [
-      waaMerchantOnMinor(id: 'merchant1', ownerId: 'p1'),
-      waaMerchantOnMinor(id: 'merchant2', ownerId: 'p2'),
-    ],
-    players: [
-      workAppPlayer(
-        id: 'p1',
-        treasury: cost + 100,
-        capitalProvinceId: WorkAppIds.provinceId,
-      ),
-      workAppPlayer(
-        id: 'p2',
-        displayName: 'P2',
-        isHuman: false,
-        treasury: cost + 100,
-        capitalProvinceId: WorkAppIds.provinceId,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-      OvertureState(
-        gpId: 'p2',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
-  final orders = Orders(
-    workOrdersByPlayerId: {
-      'p1': [
-        const WorkOrder(
-          unitId: 'merchant1',
-          target: kWorkTargetPurchaseLand,
-          targetTileKey: WorkAppIds.tileKeyMinor,
-        ),
-      ],
-      'p2': [
-        const WorkOrder(
-          unitId: 'merchant2',
-          target: kWorkTargetPurchaseLand,
-          targetTileKey: WorkAppIds.tileKeyMinor,
-        ),
-      ],
-    },
-  );
-  final next = waaApply(game, orders);
+  final game = waaDualGpPurchaseLandGame();
+  final next = waaApply(game, waaDualPurchaseLandOrders());
   waaExpectPurchased(next, ownerId: 'p1');
   waaExpectTreasuryDelta(game, next, 'p1', -cost);
   waaExpectTreasuryUnchanged(game, next, 'p2');
@@ -229,82 +126,70 @@ void _buildFortWithSufficientMaterialsDeductsMaterials() {
 }
 
 void _buildFortLevel2SkippedWithoutMineEngineering() {
-  final game = waaEngineerFortGame(
+  final next = waaApplyBuildFort(
     fortLevel: 1,
     stockpile: const Stockpile(),
     techUnlocked: const {},
-  );
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
   );
   waaExpectFortLevel(next, 1);
   waaExpectUnitCurrentWorkNull(next);
 }
 
 void _buildFortLevel3SkippedWithoutModernForts() {
-  final game = waaEngineerFortGame(
+  final next = waaApplyBuildFort(
     fortLevel: 2,
     stockpile: const Stockpile(),
     techUnlocked: const {kTechIdMineEngineering: true},
-  );
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
   );
   waaExpectFortLevel(next, 2);
   waaExpectUnitCurrentWorkNull(next);
 }
 
 void _upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel() {
-  final game = workAppOwnedGame(
-    units: [
-      workAppWorkingUnit(
-        type: kUnitTypeBuilder,
-        workTarget: kWorkTargetUpgradeTown,
-      ),
-    ],
-    provinces: [workAppOwnedProvince(townDevelopmentLevel: 1)],
-    players: [
-      workAppPlayer(techUnlocked: const {kTechIdNationalBureaucracy: true}),
-    ],
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeBuilder,
+          workTarget: kWorkTargetUpgradeTown,
+        ),
+      ],
+      provinces: [workAppOwnedProvince(townDevelopmentLevel: 1)],
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdNationalBureaucracy: true}),
+      ],
+    ),
+    workAppProcessWorkOrders(),
   );
-  final next = waaApply(game, workAppProcessWorkOrders());
-  expect(
-    next.worldState.oldWorld.provinces.single.townDevelopmentLevel,
-    2,
-  );
+  waaExpectTownDevelopmentLevel(next, 2);
 }
 
 void _counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork() {
-  final p1Spy = workAppWorkingUnit(
-    id: 'spy1',
-    type: kUnitTypeSpy,
-    workTarget: kWorkTargetCounterSpy,
-    totalTurns: 0,
-    remainingTurns: 1,
-  );
-  final p2Spy = workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2');
-  final game = workAppOwnedGame(
-    turnNumber: 1,
-    globalGameSeed: 12345,
-    units: [p1Spy, p2Spy],
-    tileKeysByRegionAndProvince: {
-      WorkAppIds.ow: {
-        WorkAppIds.provinceId: [WorkAppIds.tileKey],
-      },
-    },
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-      Player(id: 'p2', displayName: 'P2', isHuman: true),
-    ],
-  );
   final next = waaApply(
-    game,
+    workAppOwnedGame(
+      turnNumber: 1,
+      globalGameSeed: 12345,
+      units: [
+        workAppWorkingUnit(
+          id: 'spy1',
+          type: kUnitTypeSpy,
+          workTarget: kWorkTargetCounterSpy,
+          totalTurns: 0,
+          remainingTurns: 1,
+        ),
+        workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
+      ],
+      tileKeysByRegionAndProvince: {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
+    ),
     workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
   );
-  final units = next.worldState.oldWorld.units;
-  expect(units.any((u) => u.id == 'spy1'), isTrue);
-  expect(units.any((u) => u.id == 'spy2'), isTrue);
-  expect(units.length, 2);
+  waaExpectUnitIdsPresent(next, const ['spy1', 'spy2']);
 }
