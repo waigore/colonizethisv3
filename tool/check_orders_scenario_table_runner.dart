@@ -32,11 +32,9 @@ const _lookBehindLines = 8;
 /// scenario-loop covered and must not reappear here.
 final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/debug_console/debug_console_supported_ids_test.dart',
-  'packages/colonizethis_orders/test/orders/append_military_regiment_armies_by_id_test.dart',
   'packages/colonizethis_orders/test/orders/debug_console_workers_test.dart',
   'packages/colonizethis_orders/test/orders/diplomatic_panel_actions_test.dart',
   'packages/colonizethis_orders/test/orders/draft_orders_mutations_test.dart',
-  'packages/colonizethis_orders/test/orders/merchant_purchase_land_candidate_tile_keys_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_diplomatic_minor_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_diplomatic_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_test.dart',
@@ -63,9 +61,7 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_keys_shared_validator_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_prefilter_purchase_land_test.dart',
   'packages/colonizethis_orders/test/orders/order_visibility_test.dart',
-  'packages/colonizethis_orders/test/orders/orders_logging_test.dart',
   'packages/colonizethis_orders/test/orders/per_player_work_target_selection_cache_test.dart',
-  'packages/colonizethis_orders/test/orders/upgrade_town_minor_tribe_test.dart',
   'packages/colonizethis_orders/test/orders/validators/build_order_treasury_no_bypass_test.dart',
   'packages/colonizethis_orders/test/orders/validators/build_order_validator_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/boycott_validator_test.dart',

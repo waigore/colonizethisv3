@@ -938,6 +938,31 @@ Migrated imperative `upgrade_town_minor_tribe_test.dart` and `build_rail_work_ru
 
 test/ LOC after slice 56: **34,073** (net +229 from post–slice 55; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 57: orders_logging + merchant purchase-land + append military regiment scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ol-ctlogger | ordersLog is a CtLogger with the distinct `orders` prefix | `orders_logging_test.dart` | `support/application/orders_logging_scenarios.dart` + expectations + thin runner | #3290 C2 |
+| ol-shared | ordersLog is the single shared instance for the orders domain | same | same | #3290 C2 |
+| ol-app-alias | ordersApplicationLog is an alias of the shared ordersLog | same | same | #3290 C2 |
+| ol-suggestion-prefix | orderSuggestionLog is rooted under the `orders` domain prefix | same | same | #3290 C2 |
+| ol-emits-prefix | ordersLog emits messages with the `orders:` prefix | same | same | #3290 C2 |
+| ol-no-logic-log | no lib/src/orders source consumes the core logicLog | same | same | #3290 C2 |
+| mpl-nw-first | lists NW tribe tiles before Old World minor tiles | `merchant_purchase_land_candidate_tile_keys_test.dart` | `support/suggestion/merchant_purchase_land_candidate_tile_keys_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| mpl-scan-membership | matches province scan membership (deterministic NW-first sort) | same | same | #3949 |
+| mpl-projection-union | matches projection union over non-player owners (slice 14) | same | same | #3949 |
+| mpl-dev-exclusive | excludes dev-exclusive reserved tiles like legacy path | same | same | #3949 |
+| amr-create-equiv | create-new-army path matches with and without armiesById | `append_military_regiment_armies_by_id_test.dart` | `support/application/append_military_regiment_armies_by_id_scenarios.dart` + fixtures/expectations + thin runner | #2394 |
+| amr-append-equiv | append-existing-army path matches with and without armiesById | same | same | #2394 |
+| amr-mutate-append | mutates armiesById in place when appending to an existing army | same | same | #2394 |
+| amr-mutate-create | mutates armiesById in place when creating a new army | same | same | #2394 |
+| amr-multi-recruit | multiple recruits with shared map match repeated scan-path runs | same | same | #2394 |
+| amr-partial-fallback | falls back to single-pass scan when armiesById lacks the entry | same | same | #2394 |
+
+Migrated imperative `orders_logging_test.dart`, `merchant_purchase_land_candidate_tile_keys_test.dart`, and `append_military_regiment_armies_by_id_test.dart` → table-driven scenarios with dedicated support modules. Removed all three from `ordersPreferScenarioTablesAllowlist`; also removed stale `upgrade_town_minor_tribe_test.dart` allowlist entry (migrated slice 56).
+
+test/ LOC after slice 57: **34,307** (net +234 from post–slice 56; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
