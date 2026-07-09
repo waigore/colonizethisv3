@@ -1,12 +1,11 @@
 // Compact applyBuildAndWorkOrders build-unit / training assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'build_unit_training_expectation_shorthand.dart';
 import 'build_unit_training_fixtures.dart';
-import 'orders_application_military_ship_skip_test_support.dart';
 
 /// Pins for [buildUnitTrainingScenarios] rows.
 part 'build_unit_training_expectations_part1.dart';
@@ -77,5 +76,3 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
       _merchantRequiresMerchantCompaniesTech();
   }
 }
-
-

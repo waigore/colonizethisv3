@@ -525,6 +525,15 @@ test/ LOC after slice 26: **32,135** (net +8 from post–slice 25; expectation b
 
 test/ LOC after slice 27: **32,158** (net +23 from post–slice 26; expectation bodies shortened, new `vbc*`/`vrw*`/`csp*` shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_work_fixtures_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 28: application_helpers + build_unit_training expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ah-shorthand | add `ahExpectParseTileKey` / `ahWorkingUnit` / `ahExpectMineralEligible` helpers; compact application-helpers expectation bodies | `application_helpers_expectations.dart` | `application_helpers_expectation_shorthand.dart` + compacted expectations | #3949 |
+| but-shorthand | add `butApply` / `butExpectNoOwUnitsAfter` / `butExpectValidRegimentBuild` / civilian-build helpers; compact build-unit/training expectation bodies | `build_unit_training_expectations_part{1,2}.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 28: **32,293** (net +135 from post–slice 27; expectation bodies shortened, new `ah*`/`but*` shorthand modules added). Remaining: further expectation compaction (`valid_work_tiles_*`, `order_suggestion_core_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
