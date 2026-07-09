@@ -1,90 +1,34 @@
 part of 'work_completion_expectations.dart';
 
-Unit _builderCompletingImprovement({
-  String ownerId = 'p1',
-  int totalTurns = 1,
-  int remainingTurns = 1,
-  bool withOriginAssignment = true,
-}) {
-  return workAppWorkingUnit(
-    type: kUnitTypeBuilder,
-    workTarget: kWorkTargetBuildImprovement,
-    ownerId: ownerId,
-    totalTurns: totalTurns,
-    remainingTurns: remainingTurns,
-    originTileKey: withOriginAssignment ? WorkAppIds.originTileKey : null,
-    assignedTileKey: withOriginAssignment ? WorkAppIds.tileKey : null,
-  );
-}
-
-Game _completionGame({
-  required List<Unit> units,
-  TileMapState? tileState,
-  List<Province>? provinces,
-  List<Player>? players,
-  Map<String, String>? resourceByTileKey,
-  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
-  Map<String, Map<String, String>>? playerVisibilityByTile,
-  Map<String, String>? portsByProvinceSeaboard,
-  int turnNumber = 0,
-  Map<String, bool>? aiControlByGpId,
-  String? lastHumanCompletedResearchCategory,
-  int? lastHumanResearchCategoryCompletionTurn,
-}) {
-  return workAppOwnedGame(
-    units: units,
-    provinces: provinces,
-    players: players,
-    tileState: tileState,
-    resourceByTileKey: resourceByTileKey,
-    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-    playerVisibilityByTile: playerVisibilityByTile,
-    portsByProvinceSeaboard: portsByProvinceSeaboard,
-    turnNumber: turnNumber,
-    aiControlByGpId: aiControlByGpId,
-    lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
-    lastHumanResearchCategoryCompletionTurn:
-        lastHumanResearchCategoryCompletionTurn,
-  );
-}
-
-void
-_buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
-      units: [_builderCompletingImprovement()],
+void _buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
+  final next = wccApply(
+    wccGame(
+      units: [wccBuilderImprovement()],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 1);
-  final after = next.worldState.oldWorld.units.single;
-  expect(after.tileKey, WorkAppIds.tileKey);
-  expect(after.originTileKey, isNull);
-  expect(after.assignedTileKey, isNull);
+  wccExpectImprovement(next, 1);
+  wccExpectUnitIdleCleared(next);
 }
 
 void _buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       turnNumber: 2,
-      units: [_builderCompletingImprovement()],
+      units: [wccBuilderImprovement()],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
       resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(next.lastHumanCompletedResearchCategory, 'gathering');
-  expect(next.lastHumanResearchCategoryCompletionTurn, 2);
+  wccExpectEnvyHint(next, 'gathering', 2);
 }
 
-void
-_buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
+void _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
   const aiId = 'ai1';
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       turnNumber: 1,
-      units: [_builderCompletingImprovement(ownerId: aiId)],
+      units: [wccBuilderImprovement(ownerId: aiId)],
       provinces: [workAppOwnedProvince(ownerId: aiId)],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
       resourceByTileKey: const {WorkAppIds.tileKey: 'coal'},
@@ -96,26 +40,19 @@ _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
       lastHumanCompletedResearchCategory: 'gathering',
       lastHumanResearchCategoryCompletionTurn: 0,
     ),
-    workAppProcessWorkOrders(),
   );
-  final envy = next.dossierEvidenceEntries
-      .where((e) => e.agendaType == 'envy')
-      .toList();
-  expect(envy, isNotEmpty);
-  expect(envy.single.subjectId, aiId);
-  expect(envy.single.scoreDelta, 1);
+  wccExpectEnvyEvidence(next, aiId, 1);
 }
 
 void _buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
-      units: [_builderCompletingImprovement()],
+  final next = wccApply(
+    wccGame(
+      units: [wccBuilderImprovement()],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
       resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 4);
+  wccExpectImprovement(next, 4);
 }
 
 void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
@@ -124,26 +61,26 @@ void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
     extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
     1,
   );
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
-      units: [_builderCompletingImprovement()],
+  final next = wccApply(
+    wccGame(
+      units: [wccBuilderImprovement()],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
       resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
       players: [
         workAppPlayer(techUnlocked: const {kTechIdSawMill: true}),
       ],
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 4);
+  wccExpectImprovement(next, 4);
 }
 
 void _workCancelledWhenProvinceContainingTargetTileIsConquered376() {
   // Unit p1 is working on a tile in P1; province P1 is conquered by p2.
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
-      units: [_builderCompletingImprovement(totalTurns: 2, remainingTurns: 2)],
-      // Province owned by p2 (conquered); unit still belongs to p1.
+  final next = wccApply(
+    wccGame(
+      units: [
+        wccBuilderImprovement(totalTurns: 2, remainingTurns: 2),
+      ],
       provinces: [workAppOwnedProvince(ownerId: 'p2')],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
       players: const [
@@ -151,22 +88,20 @@ void _workCancelledWhenProvinceContainingTargetTileIsConquered376() {
         Player(id: 'p2', displayName: 'P2', isHuman: true),
       ],
     ),
-    workAppProcessWorkOrders(),
   );
-  final uAfter = next.worldState.oldWorld.units.single;
+  final uAfter = wccSingleUnit(next);
   expect(uAfter.status, UnitStatus.idle);
   expect(uAfter.currentWork, isNull);
   expect(uAfter.tileKey, WorkAppIds.originTileKey);
   expect(uAfter.originTileKey, isNull);
   expect(uAfter.assignedTileKey, isNull);
-  // Improvement not applied (work was cancelled).
-  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 0);
+  wccExpectImprovement(next, 0);
 }
 
 void _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero() {
-  final game = _completionGame(
+  final game = wccGame(
     units: [
-      _builderCompletingImprovement(
+      wccBuilderImprovement(
         totalTurns: 2,
         remainingTurns: 2,
         withOriginAssignment: false,
@@ -174,26 +109,16 @@ void _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero() {
     ],
     tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
   );
-  final afterFirst = applyBuildAndWorkOrders(game, workAppProcessWorkOrders());
-  expect(
-    afterFirst.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
-    0,
-  );
-  final uAfterFirst = afterFirst.worldState.oldWorld.units.single;
-  expect(uAfterFirst.currentWork!.remainingTurns, 1);
-  final afterSecond = applyBuildAndWorkOrders(
-    afterFirst,
-    workAppProcessWorkOrders(),
-  );
-  expect(
-    afterSecond.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
-    1,
-  );
+  final afterFirst = wccApply(game);
+  wccExpectImprovement(afterFirst, 0);
+  expect(wccSingleUnit(afterFirst).currentWork!.remainingTurns, 1);
+  final afterSecond = wccApply(afterFirst);
+  wccExpectImprovement(afterSecond, 1);
 }
 
 void _exploreCompletionSetsVisibilityAndClearsCurrentWork() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeExplorer,
@@ -206,18 +131,18 @@ void _exploreCompletionSetsVisibilityAndClearsCurrentWork() {
         },
       },
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(
-    next.worldState.playerVisibilityByTile['p1']?[WorkAppIds.tileKey],
+  wccExpectVisibility(
+    next,
+    WorkAppIds.tileKey,
     VisibilityLevel.fullyVisible.name,
   );
 }
 
 void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
   const tileKey2 = WorkAppIds.originTileKey;
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeExplorer,
@@ -238,25 +163,27 @@ void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
         },
       },
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(
-    next.worldState.playerVisibilityByTile['p1']?[WorkAppIds.tileKey],
+  wccExpectVisibility(
+    next,
+    WorkAppIds.tileKey,
     VisibilityLevel.fullyVisible.name,
   );
-  expect(
-    next.worldState.playerVisibilityByTile['p1']?[tileKey2],
+  wccExpectVisibility(
+    next,
+    tileKey2,
     VisibilityLevel.fullyVisible.name,
   );
-  expect(
-    next.worldState.playerVisibilityByTile['p1']?['oldWorld|P1|9|9'],
+  wccExpectVisibility(
+    next,
+    'oldWorld|P1|9|9',
     VisibilityLevel.unknown.name,
   );
 }
 
 void _buildRoadCompletionIncreasesRoadLevel() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeEngineer,
@@ -265,17 +192,15 @@ void _buildRoadCompletionIncreasesRoadLevel() {
       ],
       tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, 0),
     ),
-    workAppProcessWorkOrders(),
     tileMapByRegion: const {},
   );
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
+  wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
 }
 
-void
-_buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
+void _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
   const capitalTileKey = WorkAppIds.originTileKey;
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeEngineer,
@@ -297,21 +222,16 @@ _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
         ),
       ],
     ),
-    workAppProcessWorkOrders(),
     tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
-
-  // Road built on target tile.
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
-  // Capital tile was already at level 2 and should remain 2 (no downgrade).
-  expect(next.worldState.tileState.roadLevel(capitalTileKey), 2);
+  wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
+  wccExpectRoadLevel(next, capitalTileKey, 2);
 }
 
-void
-_buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
+void _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
   const portTileKey = WorkAppIds.originTileKey;
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeEngineer,
@@ -328,34 +248,15 @@ _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
         workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
       ],
     ),
-    workAppProcessWorkOrders(),
     tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
   );
-
-  // Road on target tile upgraded from 1 -> 2.
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 2);
-  // Adjacent port tile upgraded from 1 -> 2.
-  expect(next.worldState.tileState.roadLevel(portTileKey), 2);
+  wccExpectRoadLevel(next, WorkAppIds.tileKey, 2);
+  wccExpectRoadLevel(next, portTileKey, 2);
 }
 
 void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'P1',
-        regionId: WorkAppIds.ow,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'sea1',
-        regionId: WorkAppIds.ow,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'P1', id2: 'sea1')],
-  );
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeEngineer,
@@ -363,10 +264,9 @@ void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
         ),
       ],
     ),
-    workAppProcessWorkOrders(),
-    topology: topology,
+    topology: wccPortSeaTopology(),
   );
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 4);
+  wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
   expect(
     next.worldState.portsByProvinceSeaboard.keys.any(
       (k) => k.startsWith(WorkAppIds.provinceId),
@@ -376,8 +276,8 @@ void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
 }
 
 void _buildFortCompletionIncreasesProvinceFortLevel() {
-  final next = applyBuildAndWorkOrders(
-    _completionGame(
+  final next = wccApply(
+    wccGame(
       units: [
         workAppWorkingUnit(
           type: kUnitTypeEngineer,
@@ -386,7 +286,6 @@ void _buildFortCompletionIncreasesProvinceFortLevel() {
       ],
       provinces: [workAppOwnedProvince(fortLevel: 0)],
     ),
-    workAppProcessWorkOrders(),
   );
-  expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
+  wccExpectFortLevel(next, 1);
 }
