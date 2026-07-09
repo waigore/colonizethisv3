@@ -1321,6 +1321,24 @@ Migrated imperative `order_suggestion_diplomacy_filter_test.dart` → table-driv
 
 test/ LOC after slice 76: **36,800** (net +127 from post–slice 75; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 77 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| odp-independent | isIndependentDiplomaticCandidate flags economic and boycott types | `order_suggestion_diplomatic_pass_test.dart` | `support/suggestion/order_suggestion_diplomatic_pass_scenarios.dart` + thin runner | #3949 |
+| odp-overtures | playerOverturesByTargetIdForPlayer keeps first row per target | same | same | #3949 |
+| odp-declare-war | acceptDeclareWarCandidatesForTargets skips self and at-war targets | same | same | #3949 |
+| odb-emit | emits a boycott toward another GP at peace when the issuer holds a colony | `order_suggestion_diplomatic_boycott_test.dart` | `support/suggestion/order_suggestion_diplomatic_boycott_scenarios.dart` + thin runner | #3949, #3758 R8 |
+| odb-coexist | boycott coexists with the single non-economic candidate for the same GP | same | same | #3949, #3758 R8 |
+| odb-no-colony | does not emit a boycott when the issuer holds no colony | same | same | #3949, #3758 R8 |
+| odb-no-dup | does not emit a duplicate boycott when one already exists | same | same | #3949, #3758 R8 |
+| odb-no-minor | does not emit a boycott toward a Minor/Tribe target | same | same | #3949, #3758 R8 |
+| odb-no-war | does not emit a boycott when at war with the target GP | same | same | #3949, #3758 R8 |
+
+Migrated imperative `order_suggestion_diplomatic_pass_test.dart` and `order_suggestion_diplomatic_boycott_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline descriptions for boycott emit/coexist scenarios. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 77: **36,943** (net +143 from post–slice 76; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

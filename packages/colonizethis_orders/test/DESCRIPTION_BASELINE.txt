@@ -125,7 +125,7 @@ default strategies refresh runs all population paths
 diplomatic merge drops AI order duplicating human (type,target)
 diplomatic: non-empty basePrefix replay remains equivalent
 diplomatic: sequential probes on one validator stay equivalent (#2394)
-does not block when a Consulate is held
+boycott coexists with the single non-economic candidate for the same GP
 does not block when an Embassy (above Consulate) is held
 does not emit a boycott toward a Minor/Tribe target
 does not emit a boycott when at war with the target GP
@@ -143,6 +143,7 @@ embassy requires existing trade consulate
 emitAcceptedCandidates collects accepted in iteration order
 emitAcceptedCandidates probes every candidate without dedup args
 emitAcceptedCandidates skips candidates already targeted
+emits a boycott toward another GP at peace when the issuer holds a colony
 emits suggest_work summaries for Explorer/Builder/Spy/Merchant
 Engineer build_road work order sets currentWork
 establishOverture consulate rejected when treasury too low
