@@ -1113,6 +1113,20 @@ Migrated imperative `order_suggestion_context_helpers_test.dart` → table-drive
 
 test/ LOC after slice 63: **35,375** (net +125 from post–slice 62; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 64 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osh-drops-absent | drops move into minor-owned province when relation row is absent | `order_suggestion_helpers_test.dart` | `support/suggestion/order_suggestion_helpers_scenarios.dart` + `order_suggestion_helpers_test.dart` | #2394 |
+| osh-keeps-war | keeps move into minor province when at war (relation row present) | same | same | #2394 |
+| osh-drops-peace | drops move into minor province when explicitly at peace | same | same | #2394 |
+| osh-keeps-own | keeps reordering-only move within own provinces | same | same | #2394 |
+| osh-keeps-draft-war | keeps move into minor at peace when draft orders declare war | same | same | #2394 |
+
+Migrated imperative `order_suggestion_helpers_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 64: **35,482** (net +107 from post–slice 63; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
