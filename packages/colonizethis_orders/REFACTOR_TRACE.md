@@ -1443,6 +1443,21 @@ Migrated imperative `order_suggestion_army_move_picker_test.dart` → table-driv
 
 test/ LOC after slice 83: **37,946** (net +43 from post–slice 82; support modules add LOC while runner shrinks). Remaining: `order_suggestion_api_impl_test.dart`, `order_suggestion_army_move_test.dart`, shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 84 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| am-cross-region | includes cross-region player-owned province as destination | `order_suggestion_army_move_test.dart` | `support/suggestion/order_suggestion_army_move_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| am-pv-cache | armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache matches legacy allProvinces scan | same | same | #3949 |
+| am-fallback-cache | fallback owned-province scan derives its set from ProvinceOwnerCache (Phase 6b) | same | same | #3949 |
+| am-fallback-empty | fallback yields no owned destinations when ProvinceOwnerCache has none for the player (Phase 6b negative) | same | same | #3949 |
+| am-alternate-draft | still proposes alternate destination when draft has prior army move | same | same | #3949 |
+| am-cached-scan | cached player-owned set matches default allProvinces scan | same | same | #3949 |
+
+Migrated imperative `order_suggestion_army_move_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for PlayerView-owned cache parity, ProvinceOwnerCache fallback paths, alternate-draft suggestion, and dest-ids cached scan scenarios. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 84: **38,054** (net +108 from post–slice 83; support modules add LOC while runner shrinks). Remaining: `order_suggestion_api_impl_test.dart`, shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

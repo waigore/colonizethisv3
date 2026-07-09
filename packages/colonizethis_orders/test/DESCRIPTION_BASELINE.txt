@@ -55,6 +55,7 @@ army move: into other GP with same-turn declare war (accepted)
 army move: into other GP without war (rejected)
 army move: into own adjacent province (accepted)
 army move: missing army (rejected)
+armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache matches legacy allProvinces scan
 assigns explore currentWork when province has discoverable tiles
 blockade order accepted when at war with province owner
 blockade order rejected when not at war with province owner
@@ -179,6 +180,8 @@ filterMoveOrdersByDiplomacy keeps move to at-war faction
 filters by visibility before order engine validation
 first invalid order plus subsequent rejected
 follows expected progression
+fallback owned-province scan derives its set from ProvinceOwnerCache (Phase 6b)
+fallback yields no owned destinations when ProvinceOwnerCache has none for the player (Phase 6b negative)
 forBasePrefix matches fresh forPlayer for same basePrefix
 getProvinceOwnerMap includes newWorld provinces
 getProvinceOwnerMap returns owner by full province id
@@ -457,6 +460,7 @@ ship build with topology null does not add fleet
 short-circuits when previous order rejected
 short-circuits to "Previous invalid" when previousRejected is true
 singleton handlers do not cross-support other simple targets
+still proposes alternate destination when draft has prior army move
 skips build when unitType unknown in RegimentEconomyCatalog
 skips fort level 2 when Mine Engineering not unlocked
 skips military build when tech not unlocked

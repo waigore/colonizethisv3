@@ -32,7 +32,6 @@ const _lookBehindLines = 8;
 /// scenario-loop covered and must not reappear here.
 final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_test.dart',
-  'packages/colonizethis_orders/test/orders/order_suggestion_army_move_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_shared_validator_equivalence_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_keys_shared_validator_test.dart',
 };
