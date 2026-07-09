@@ -1213,6 +1213,20 @@ Migrated imperative `order_suggestion_prospect_location_province_priority_test.d
 
 test/ LOC after slice 70: **36,155** (net +200 from post–slice 69; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 71 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| bav-accepts-formal-alliance | accepts when a formal alliance exists with the GP target | `validators/diplomatic/break_alliance_validator_test.dart` | `support/validators/diplomatic/break_alliance_validator_scenarios.dart` + thin runner | #3753 R11 |
+| bav-rejects-at-war | rejects while at war (war invariant cleared the alliance) | same | same | #3753 R11 |
+| bav-rejects-no-alliance | rejects when no formal alliance exists with the target | same | same | #3753 R11 |
+| bav-rejects-non-gp | rejects a non-Great-Power target | same | same | #3753 R11 |
+| bav-parent-accepts | accepts a valid breakAlliance order through the parent validator | same | same | #3753 R11 |
+
+Migrated imperative `validators/diplomatic/break_alliance_validator_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline description for parent-validator dispatch scenario. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 71: **36,240** (net +85 from post–slice 70; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

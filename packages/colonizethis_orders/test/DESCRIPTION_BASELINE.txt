@@ -15,6 +15,7 @@ accepted master train consumes peasant, paper, and treasury (#2692 S9 tier cover
 accepted recruit peasant order adds 1 peasant and deducts fabric
 accepts a single peasant recruit when fabric is available
 accepts a valid boycott order through the parent validator
+accepts a valid breakAlliance order through the parent validator
 accepts a valid offer when stockpile covers quantity
 accepts and debits treasury by the amount
 accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices

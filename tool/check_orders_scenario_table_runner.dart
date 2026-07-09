@@ -52,7 +52,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/order_suggestion_work_logging_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_keys_shared_validator_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_prefilter_purchase_land_test.dart',
-  'packages/colonizethis_orders/test/orders/validators/diplomatic/break_alliance_validator_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/diplomatic_sub_validators_aid_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/diplomatic_sub_validators_faction_membership_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/diplomatic_sub_validators_relations_test.dart',
