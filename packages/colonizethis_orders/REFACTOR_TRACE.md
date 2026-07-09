@@ -725,6 +725,29 @@ Merged `order_merge_part{1,2}_test.dart` → `orders/order_merge_test.dart` (≤
 
 test/ LOC after slice 44: **33,003** (net +137 from post–slice 43; scenario tables add support modules but remove two part runners). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 45: order_engine_core scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oec-add-order | add order and validate | `order_engine_core_part1_test.dart` | `support/engine/order_engine_core_scenarios.dart` + `order_engine_core_test.dart` | #3949 |
+| oec-remove-move | removeMoveOrder removes order at index | same | same | #3949 |
+| oec-remove-build | removeBuildOrder removes order at index | same | same | #3949 |
+| oec-work-rejected | addWorkOrderWithContext returns rejected when order invalid | same | same | #3949 |
+| oec-invalid-chain | first invalid order plus subsequent rejected | same | same | #3949 |
+| oec-projected-workers | projected effects returns worker count | same | same | #3949 |
+| oec-projected-locations | projectedEffects returns unitLocations when engine has move order | same | same | #3949 |
+| oec-projected-no-mutate | projectedEffects does not mutate passed-in game | same | same | #3949 |
+| oec-move-context | addMoveOrderWithContext uses world-state validation | same | same | #3949 |
+| oec-civilian-gp | civilian cannot move into other GP territory | `order_engine_core_part2_test.dart` | same | #3949 |
+| oec-military-no-war | military cannot move into other GP province without war | same | same | #943, #3949 |
+| oec-military-declare | military may move into other GP province with same-turn declareWar | same | same | #3949 |
+| oec-explorer-tribe | explorer may move into tribal province | same | same | #3949 |
+| oec-move-unknown-src | move order rejected when source province unknown | same | same | #3949 |
+
+Merged `order_engine_core_part{1,2}_test.dart` → `orders/order_engine_core_test.dart` (≤400 lines). Family LOC moved into `order_engine_core_expectations.dart` + `order_engine_core_fixtures.dart` + `order_engine_core_scenarios.dart`. Removed part files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 45: **32,881** (net −122 from post–slice 44; scenario tables add support modules but remove two part runners). Remaining: further imperative-suite compaction (`order_engine_move_and_work_context_part*`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
