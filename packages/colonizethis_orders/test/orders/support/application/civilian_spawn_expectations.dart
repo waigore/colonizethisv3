@@ -39,10 +39,11 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
             spawnProvinceId: 'oldWorld|P2',
           ),
         );
-        cspExpectOwUnitAt(
-          next: next,
-          tileKey: cspCapitalTileKey,
-          provinceId: cspCapitalProvinceId,
+        expect(next.worldState.oldWorld.units.length, 1);
+        expect(next.worldState.oldWorld.units.single.tileKey, cspCapitalTileKey);
+        expect(
+          next.worldState.oldWorld.units.single.locationProvinceId,
+          cspCapitalProvinceId,
         );
       }
     case CivilianSpawnTarget
@@ -68,10 +69,11 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
             spawnProvinceId: '',
           ),
         );
-        cspExpectOwUnitAt(
-          next: next,
-          tileKey: cspCapitalTileKey,
-          provinceId: cspCapitalProvinceId,
+        expect(next.worldState.oldWorld.units.length, 1);
+        expect(next.worldState.oldWorld.units.single.tileKey, cspCapitalTileKey);
+        expect(
+          next.worldState.oldWorld.units.single.locationProvinceId,
+          cspCapitalProvinceId,
         );
       }
     case CivilianSpawnTarget

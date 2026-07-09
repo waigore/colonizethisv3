@@ -113,20 +113,6 @@ void vwExpectAccepted(OrderValidationResult result) {
   expect(result.status, OrderValidationStatus.accepted);
 }
 
-void vwExpectWorkResults(
-  List<OrderValidationResult> results, {
-  required List<OrderValidationStatus> statuses,
-  String? lastReasonContains,
-}) {
-  expect(results, hasLength(statuses.length));
-  for (var i = 0; i < statuses.length; i++) {
-    expect(results[i].status, statuses[i]);
-  }
-  if (lastReasonContains != null) {
-    expect(results.last.reason, contains(lastReasonContains));
-  }
-}
-
 void vwExpectDualWorkOrders({
   required Game game,
   required WorkOrder first,
@@ -140,13 +126,16 @@ void vwExpectDualWorkOrders({
   engine
     ..addWorkOrder(playerId, first)
     ..addWorkOrder(playerId, second);
-  vwExpectWorkResults(
-    engine.validatePlayerOrdersWithContext(
-      game,
-      topology ?? ValidateWorkOw.topology(),
-      playerId,
-    ),
-    statuses: statuses,
-    lastReasonContains: lastReasonContains,
+  final results = engine.validatePlayerOrdersWithContext(
+    game,
+    topology ?? ValidateWorkOw.topology(),
+    playerId,
   );
+  expect(results, hasLength(statuses.length));
+  for (var i = 0; i < statuses.length; i++) {
+    expect(results[i].status, statuses[i]);
+  }
+  if (lastReasonContains != null) {
+    expect(results.last.reason, contains(lastReasonContains));
+  }
 }

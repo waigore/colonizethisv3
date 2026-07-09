@@ -26,25 +26,6 @@ void butExpectNoOwUnitsAfter(
   );
 }
 
-void butExpectShipBuildSpentNoFleet({
-  required Game game,
-  required Orders orders,
-  required Player baselinePlayer,
-  required Stockpile baselineStockpile,
-  required int buildTreasuryCost,
-  required Map<String, int> buildInputs,
-  MapTopology? topology,
-}) {
-  final next = butApply(game, orders, topology: topology);
-  expectShipBuildSpentButNoFleet(
-    next: next,
-    baselinePlayer: baselinePlayer,
-    baselineStockpile: baselineStockpile,
-    buildTreasuryCost: buildTreasuryCost,
-    buildInputs: buildInputs,
-  );
-}
-
 enum ButFluyteNoFleetVariant { nullTopology, nullCapital, isolatedSea }
 
 void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
@@ -58,17 +39,21 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
         variant == ButFluyteNoFleetVariant.nullCapital ? null : ButIds.prov('P1'),
     techUnlocked: {kTechIdSuperiorHullDesign: true},
   );
-  butExpectShipBuildSpentNoFleet(
-    game: butShipBuildGame(player: player),
-    orders: butOrdersFor('fluyte'),
+  final topology = switch (variant) {
+    ButFluyteNoFleetVariant.nullTopology => null,
+    ButFluyteNoFleetVariant.nullCapital => butCapitalAdjacentSeaTopology(),
+    ButFluyteNoFleetVariant.isolatedSea => butCapitalIsolatedSeaTopology(),
+  };
+  final next = butApply(
+    butShipBuildGame(player: player),
+    butOrdersFor('fluyte'),
+    topology: topology,
+  );
+  expectShipBuildSpentButNoFleet(
+    next: next,
     baselinePlayer: player,
     baselineStockpile: stockpile,
     buildTreasuryCost: shipEcon.buildTreasuryCost,
     buildInputs: shipEcon.buildInputs,
-    topology: switch (variant) {
-      ButFluyteNoFleetVariant.nullTopology => null,
-      ButFluyteNoFleetVariant.nullCapital => butCapitalAdjacentSeaTopology(),
-      ButFluyteNoFleetVariant.isolatedSea => butCapitalIsolatedSeaTopology(),
-    },
   );
 }

@@ -154,7 +154,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .exploreCompletionSetsVisibilityAndClearsCurrentWork:
       final next = wccApply(
           wccGame(
-            units: [wccExplorerWorking()],
+            units: [
+              workAppWorkingUnit(
+                type: kUnitTypeExplorer,
+                workTarget: kWorkTargetExplore,
+              ),
+            ],
             tileKeysByRegionAndProvince: {
               WorkAppIds.ow: {
                 WorkAppIds.provinceId: [WorkAppIds.tileKey],
@@ -172,7 +177,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
       const tileKey2 = WorkAppIds.originTileKey;
         final next = wccApply(
           wccGame(
-            units: [wccExplorerWorking()],
+            units: [
+              workAppWorkingUnit(
+                type: kUnitTypeExplorer,
+                workTarget: kWorkTargetExplore,
+              ),
+            ],
             tileKeysByRegionAndProvince: const {
               WorkAppIds.ow: {
                 WorkAppIds.provinceId: [WorkAppIds.tileKey, tileKey2],

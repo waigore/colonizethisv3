@@ -62,27 +62,6 @@ Game vwtMinorPurchaseGame(
       ),
     );
 
-Iterable<WorkOrder> vwtSuggestExplore(Game game, MapTopology topology) =>
-    suggestedWorkOrders(game: game, topology: topology).where(
-      (o) => o.target == kWorkTargetExplore,
-    );
-
-Iterable<WorkOrder> vwtSuggestProspect(Game game, MapTopology topology) =>
-    suggestedWorkOrders(game: game, topology: topology).where(
-      (o) => o.target == kWorkTargetProspect,
-    );
-
-Iterable<WorkOrder> vwtSuggestPurchaseLand(
-  Game game,
-  MapTopology topology,
-  String targetProvinceId,
-) =>
-    suggestedWorkOrders(game: game, topology: topology).where(
-      (o) =>
-          o.target == kWorkTargetPurchaseLand &&
-          Unit.provinceIdFromTileKey(o.targetTileKey) == targetProvinceId,
-    );
-
 void vwtExpectKeysEmpty(
   Game game,
   String unitId,

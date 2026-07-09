@@ -1895,6 +1895,20 @@ test/ LOC after slice 116: see PR. Remaining: further support-table compaction t
 
 test/ LOC after slice 117: see PR. Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 118: wcc/but/ah/vw/csp/vwt dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-wcc-engineer | drop `wccEngineerWorking`; inline engineer working unit at `wccEngineerCompletionGame` call site | `work_completion_expectation_shorthand_part1.dart` | same | #3949 |
+| dispatch-inline-wcc-explorer | inline `wccExplorerWorking` at explore-completion dispatcher cases | same | `work_completion_expectations.dart` | #3949 |
+| dispatch-inline-but-ship | fold `butExpectShipBuildSpentNoFleet` into `butExpectFluyteSpentNoFleet` | `build_unit_training_expectation_shorthand.dart` | same | #3949 |
+| dispatch-inline-ah-mineral | inline `ahGameWithResourceByTile` into `ahExpectMineralEligible` | `application_helpers_expectation_shorthand.dart` | same | #3949 |
+| dispatch-inline-vw-dual | fold `vwExpectWorkResults` into `vwExpectDualWorkOrders` | `order_engine_validate_work_expectation_shorthand_part1.dart` | same | #3949 |
+| dispatch-inline-csp-ow-unit | inline `cspExpectOwUnitAt` at civilian-spawn dispatcher cases | `civilian_spawn_expectation_shorthand.dart` | `civilian_spawn_expectations.dart` | #3949 |
+| dispatch-inline-vwt-suggest | inline `vwtSuggestExplore` / `vwtSuggestProspect` / `vwtSuggestPurchaseLand` at valid-work-tiles dispatcher cases | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+
+test/ LOC after slice 118: **37,656** (net −37 from post–slice 117). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

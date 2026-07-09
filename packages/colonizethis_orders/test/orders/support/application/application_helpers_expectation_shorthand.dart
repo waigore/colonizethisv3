@@ -5,21 +5,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game ahGameWithResourceByTile(Map<String, String> resourceByTileKey) {
-  return Game(
-    id: 'g-test',
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-    minorNations: const [],
-    tribes: const [],
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey,
-    ),
-  );
-}
-
 TileMapResult ahSingleTileMap({
   required TerrainType terrain,
   Resource? resource,
@@ -117,9 +102,23 @@ void ahExpectMineralEligible({
   Map<String, TileMapResult>? tileMapByRegion,
   required bool expected,
 }) {
-  final game = ahGameWithResourceByTile(resourceByTile);
   expect(
-    isMineralEligibleTile(game, tileMapByRegion, tileKey),
+    isMineralEligibleTile(
+      Game(
+        id: 'g-test',
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        minorNations: const [],
+        tribes: const [],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          resourceByTileKey: resourceByTile,
+        ),
+      ),
+      tileMapByRegion,
+      tileKey,
+    ),
     expected,
   );
 }

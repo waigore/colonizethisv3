@@ -193,12 +193,6 @@ BuildWorkState wccDispatchCompleted(
   return (state, unit, cw);
 }
 
-Unit wccEngineerWorking(String workTarget) =>
-    workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget);
-
-Unit wccExplorerWorking() =>
-    workAppWorkingUnit(type: kUnitTypeExplorer, workTarget: kWorkTargetExplore);
-
 Game wccEngineerCompletionGame({
   required String workTarget,
   TileMapState? tileState,
@@ -207,7 +201,9 @@ Game wccEngineerCompletionGame({
   Map<String, String>? portsByProvinceSeaboard,
 }) =>
     wccGame(
-      units: [wccEngineerWorking(workTarget)],
+      units: [
+        workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget),
+      ],
       tileState: tileState,
       provinces: provinces,
       players: players,

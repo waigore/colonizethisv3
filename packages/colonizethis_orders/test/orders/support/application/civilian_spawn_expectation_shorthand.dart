@@ -1,9 +1,7 @@
 // Compact civilian / New World spawn expectation shorthands (Refs #3949).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 const cspOw = 'oldWorld';
 const cspCapitalProvinceId = 'oldWorld|P1';
@@ -86,16 +84,3 @@ Orders cspBuildOrders(
       },
     );
 
-void cspExpectOwUnitAt({
-  required Game next,
-  required String tileKey,
-  required String provinceId,
-  int count = 1,
-}) {
-  expect(next.worldState.oldWorld.units.length, count);
-  expect(next.worldState.oldWorld.units.single.tileKey, tileKey);
-  expect(
-    next.worldState.oldWorld.units.single.locationProvinceId,
-    provinceId,
-  );
-}
