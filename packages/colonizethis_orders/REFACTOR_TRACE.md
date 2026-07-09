@@ -1171,6 +1171,17 @@ Migrated imperative `order_suggestion_build_civilian_suggestion_test.dart` → t
 
 test/ LOC after slice 67: **35,813** (net +67 from post–slice 66; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 68 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osbpr-accepts-peasant | accepts peasant_levies when treasury is zero but stockpile has spices | `order_suggestion_build_pending_riches_test.dart` | `support/suggestion/order_suggestion_build_pending_riches_scenarios.dart` + `order_suggestion_build_pending_riches_test.dart` | #2509 |
+| osbpr-incremental-probe | incremental build probe matches full-pass when riches fund build | same | same | #2509 |
+
+Migrated imperative `order_suggestion_build_pending_riches_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 68: **35,854** (net +41 from post–slice 67; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
