@@ -1020,6 +1020,32 @@ Migrated imperative `recruit_worker_order_validator_test.dart` and `build_order_
 
 test/ LOC after slice 59: **34,676** (net +138 from post–slice 58; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, work handlers, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 slice 60 — work_order_target_prechecks + cost_calculator + treasury_no_bypass scenario migration (#3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wotp-registers | registers expected work targets | `work_order_target_prechecks_test.dart` | `support/validators/work_order_target_prechecks_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| wotp-unregistered | runWorkOrderTargetPrecheck returns null for unregistered target | same | same | #3949 |
+| wotp-upgrade-no-tech | precheckUpgradeTown rejects without National Bureaucracy | same | same | #3949 |
+| wotp-upgrade-max | precheckUpgradeTown rejects when town development is already 4 | same | same | #3949 |
+| wotp-skip-foreign | kWorkTargetsSkippingDefaultForeignProvinceCheck lists dedicated targets | same | same | #3949 |
+| wotp-purchase-2394 | precheckPurchaseLand matches with or without DiplomacyFactionMembership (Refs #2394) | same | same | #2394 |
+| wotp-improvement | precheckBuildImprovement rejects unprospected mineral tile | same | same | #3949 |
+| wotp-foreign | precheckDefaultForeignProvince rejects builder in foreign province | same | same | #3949 |
+| wotp-dev-exclusive | precheckDevExclusiveTileConflict rejects duplicate dev work tile | same | same | #3949 |
+| wocc-null-cost | calculateCost returns null for counter_spy, purchase_land | `work_order_cost_calculator_test.dart` | `support/validators/work_order_cost_calculator_scenarios.dart` + expectations + thin runner | #3949 |
+| wocc-improvement | calculateCost returns cost map for build_improvement | same | same | #3949 |
+| wocc-fort | calculateCost for build_fort uses province fortLevel when not overridden | same | same | #3949 |
+| botnb-pin | peasant_levies is the cheapest, tech-free regiment (fixture pin) | `build_order_treasury_no_bypass_test.dart` | `support/validators/build_order_treasury_no_bypass_scenarios.dart` + fixtures/expectations + thin runner | #2924 |
+| botnb-ai-below | AI player below cheapest regiment treasury is rejected (no bypass) | same | same | #2924 |
+| botnb-ai-at | AI player at exactly the cheapest treasury is accepted (treasury gate is the sole blocker) | same | same | #2924 |
+| botnb-human-zero | human player at zero treasury is rejected (no human waiver) | same | same | #2924 |
+| botnb-agnostic | affordability gate is player-agnostic at zero treasury (human and AI both rejected) | same | same | #2924 |
+
+Migrated imperative `work_order_target_prechecks_test.dart`, `work_order_cost_calculator_test.dart`, and `build_order_treasury_no_bypass_test.dart` → table-driven scenarios with dedicated support modules. Removed all three from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 60: **34,850** (net +174 from post–slice 59; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, work handlers, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
