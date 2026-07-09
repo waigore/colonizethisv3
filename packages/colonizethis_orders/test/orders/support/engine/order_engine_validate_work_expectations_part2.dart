@@ -1,49 +1,23 @@
 part of 'order_engine_validate_work_expectations.dart';
 
 void _rejectsBuildImprovementOnMineralTileWhenNotProspected() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {ValidateWorkOw.tileKey: 'iron'},
-    ),
-    reasonContains: 'prospected',
-  );
+  vwExpectMineralBuildImprovementRejectedWhenNotProspected();
 }
 
 void _acceptsBuildImprovementOnMineralTileAfterProspected() {
-  const tileKey = ValidateWorkOw.tileKey;
-  vwExpectBuildImprovementAccepted(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {tileKey: 'iron'},
-      playerProspectedTiles: {
-        'p1': {tileKey},
-      },
-    ),
-  );
+  vwExpectMineralBuildImprovementAcceptedWhenProspected();
 }
 
 void _acceptsBuildImprovementOnGrainWhenTileNotProspected() {
-  vwExpectBuildImprovementAccepted(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {ValidateWorkOw.tileKey: 'grain'},
-    ),
-  );
+  vwExpectGrainBuildImprovementAcceptedWhenNotProspected();
 }
 
 void _rejectsBuildImprovementWhenTileHasNoResource() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementBaseGame(resourceByTileKey: {}),
-    reasonContains: 'no resource',
-  );
+  vwExpectBuildImprovementRejectedNoResource();
 }
 
 void _rejectsBuildImprovementWhenImprovementLevelAlready4() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementBaseGame(
-      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 4}),
-      stockpile: lumberCastIronStockpile(20),
-    ),
-    reasonContains: 'maximum',
-  );
+  vwExpectBuildImprovementRejectedAtLevel4();
 }
 
 void _rejectsBuildImprovementWhenTechCapWouldBeExceededEmptyTech() {
@@ -55,31 +29,15 @@ void _rejectsBuildImprovementWhenTechCapWouldBeExceeded() {
 }
 
 void _acceptsGrainUpgradeWhenExactNextLevelGrainTechIsUnlocked() {
-  vwExpectBuildImprovementAccepted(
-    game: buildImprovementBaseGame(
-      techUnlocked: const {kTechIdLandEnclosure: true},
-      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-      stockpile: lumberCastIronStockpile(10),
-    ),
-  );
+  vwExpectGrainUpgradeWithLandEnclosure();
 }
 
 void _acceptsBuildImprovementWhenTileHasResourceLevel4TechCapAllows() {
-  vwExpectBuildImprovementAccepted(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {ValidateWorkOw.tileKey: 'grain'},
-      tileState: const TileMapState(),
-      techUnlocked: const {kTechIdCircularSaw: true},
-    ),
-  );
+  vwExpectBuildImprovementAcceptedAtLevel4TechCap();
 }
 
 void _rejectsBuildImprovementInForeignUnpurchasedProvince() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementForeignProvinceGame(),
-    targetTileKey: validateWorkForeignTileKey(),
-    reasonContains: 'foreign or uncontrolled province',
-  );
+  vwExpectBuildImprovementRejectedForeignUnpurchased();
 }
 
 void _rejectsRaisingScrubTimberFromLevel1EvenWithCircularSaw() {
@@ -104,13 +62,7 @@ void _acceptsInitialScrubTimberImprovementLevel01() {
 }
 
 void _acceptsBuildImprovementOnPurchasedTileInForeignProvince() {
-  final foreignTileKey = validateWorkForeignTileKey();
-  vwExpectBuildImprovementAccepted(
-    game: buildImprovementForeignProvinceGame(
-      purchasedTilesByTileKey: {foreignTileKey: 'p1'},
-    ),
-    targetTileKey: foreignTileKey,
-  );
+  vwExpectBuildImprovementAcceptedOnPurchasedForeignTile();
 }
 
 void _rejectsBuildFortToLevel2WithoutMineEngineering() {
@@ -165,18 +117,12 @@ void _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1() {
 }
 
 void _rejectsBuildRoadInMinorProvinceWithoutEmbassyPath() {
-  vwExpectMinorProvinceRoadRejected(
-    minorProvinceEngineerRoadGame(),
-    reasonContains: 'foreign province',
-  );
+  vwExpectMinorProvinceRoadRejectedWithoutEmbassy();
 }
 
 void
 _rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile() {
-  vwExpectMinorProvinceRoadRejected(
-    minorProvinceEngineerRoadGame(overtureStates: minorProvinceEmbassyOverture),
-    reasonContains: 'cannot occupy',
-  );
+  vwExpectMinorProvinceRoadRejectedDespiteEmbassy();
 }
 
 void _rejectsUpgradeTownWithoutNationalBureaucracy() {

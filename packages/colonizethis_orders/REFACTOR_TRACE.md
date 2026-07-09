@@ -629,6 +629,19 @@ test/ LOC after slice 36: **33,002** (net +56 from post–slice 35; expectation 
 
 test/ LOC after slice 37: **33,113** (net +111 from post–slice 36; expectation bodies shortened, new `ah*`/`csp*`/`but*`/`vwt*`/`ved*`/`osc*`/`wpp*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 38: waa/wcc/vw/osc/vwt/but multi-family part1 compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-part1-shorthand | add `waaExpectProspectEligible` / `waaExpectProspectIneligible` / `waaExpectPurchaseLandSuccess` / `waaExpectDualGpPurchaseLandFirstWins` / `waaExpectBuildImprovementCompletesIdle` / `waaExpectBuildFortCurrentWork` / `waaExpectCounterSpyForeignCurrentWork` / `waaExpectBuildFortMaterialsDeducted` / `waaExpectBuildFortSkipped` / `waaExpectUpgradeTownDevelopmentApplied`; compact work-order application part1 bodies | `work_order_application_expectations_part1.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+| wcc-part1-shorthand | add `wccExpectBasicImprovementCompletion` / `wccExpectImprovementCapsAtLevel4` / `wccExpectBuildRoadLevelIncrease` / `wccExpectBuildRoadCapitalAdjacentPropagation` / `wccExpectBuildRoadPortAdjacentPropagation` / `wccExpectBuildPortCompletion` / `wccExpectBuildFortCompletion`; compact work-completion part1 bodies | `work_completion_expectations_part1.dart` | `work_completion_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part2-shorthand | add `vwExpectMineralBuildImprovement*` / `vwExpectGrainBuildImprovement*` / `vwExpectBuildImprovementRejectedNoResource` / `vwExpectBuildImprovementRejectedAtLevel4` / `vwExpectGrainUpgradeWithLandEnclosure` / `vwExpectBuildImprovementAcceptedAtLevel4TechCap` / `vwExpectBuildImprovementRejectedForeignUnpurchased` / `vwExpectBuildImprovementAcceptedOnPurchasedForeignTile` / `vwExpectMinorProvinceRoadRejected*`; compact validateWork part2 bodies | `order_engine_validate_work_expectations_part2.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| osc-part1-shorthand | add `oscExpectFoggedDestinationFirstMove` / `oscExpectMislocatedExplorerMoveUsesTileProvince` / `oscExpectNoExploreWhenProvinceUnknown` / `oscExpectNoProspectWhenProvinceNotFogged` / `oscExpectBuildImprovementOnSecondTileInProvince` / `oscExpectBuildImprovementOnOtherOwnedProvince`; compact core suggestion part1 bodies | `order_suggestion_core_expectations_part1.dart` | `order_suggestion_core_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part1-shorthand | add `vwtExpectVisProspectExcludesGrassAndProspectedIron`; compact valid-work-tiles part1 prospect-excludes body | `valid_work_tiles_expectations_part1.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+| but-part2-shorthand | add `butExpectCivilianTreasuryInsufficientRejected`; compact civilian treasury rejection body | `build_unit_training_expectations_part2.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 38: **33,276** (net +163 from post–slice 37; expectation bodies shortened, new `waa*`/`wcc*`/`vw*`/`osc*`/`vwt*`/`but*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

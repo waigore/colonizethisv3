@@ -500,3 +500,23 @@ void vwtExpectPurchaseLandExcluded(
     isEmpty,
   );
 }
+
+void vwtExpectVisProspectExcludesGrassAndProspectedIron({
+  String provinceLocalId = 'p1',
+}) {
+  final grassTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
+  final ironTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 1, 0);
+  vwtExpectVisProspectExcludesAll(
+    owTribeProspectGame(
+      provinceLocalId: provinceLocalId,
+      tileKeys: [grassTile, ironTile],
+      resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
+      visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
+      playerProspectedTiles: {
+        ValidWorkTilesTestSupport.playerId: {ironTile},
+      },
+    ),
+    owSingleProvinceTopology(provinceLocalId),
+    [grassTile, ironTile],
+  );
+}

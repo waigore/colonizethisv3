@@ -112,19 +112,5 @@ void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspe
 }
 
 void _getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {
-  final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-  vwtExpectVisProspectExcludesAll(
-    owTribeProspectGame(
-      provinceLocalId: 'p1',
-      tileKeys: [grassTile, ironTile],
-      resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
-      visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
-      playerProspectedTiles: {
-        ValidWorkTilesTestSupport.playerId: {ironTile},
-      },
-    ),
-    owSingleProvinceTopology('p1'),
-    [grassTile, ironTile],
-  );
+  vwtExpectVisProspectExcludesGrassAndProspectedIron();
 }

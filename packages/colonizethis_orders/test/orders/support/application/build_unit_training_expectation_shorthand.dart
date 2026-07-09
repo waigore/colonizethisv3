@@ -300,3 +300,14 @@ void butExpectMerchantTechGate({
     paperDelta: paperQty,
   );
 }
+
+void butExpectCivilianTreasuryInsufficientRejected() {
+  final game = butCivilianGame(treasury: 999, paper: 2);
+  final next = butApply(game, butOrdersFor(kUnitTypeBuilder));
+  expect(next.worldState.oldWorld.units, isEmpty);
+  expect(next.players.single.treasury, game.players.single.treasury);
+  expect(
+    next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
+    game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
+  );
+}

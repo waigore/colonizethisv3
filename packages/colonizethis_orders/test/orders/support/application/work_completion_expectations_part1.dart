@@ -1,9 +1,7 @@
 part of 'work_completion_expectations.dart';
 
 void _buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
-  final next = wccApply(wccBuilderImprovementAtLevel(0));
-  wccExpectImprovement(next, 1);
-  wccExpectUnitIdleCleared(next);
+  wccExpectBasicImprovementCompletion();
 }
 
 void _buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
@@ -15,14 +13,7 @@ void _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint(
 }
 
 void _buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax() {
-  final next = wccApply(
-    wccGame(
-      units: [wccBuilderImprovement()],
-      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
-      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
-    ),
-  );
-  wccExpectImprovement(next, 4);
+  wccExpectImprovementCapsAtLevel4();
 }
 
 void _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
@@ -46,51 +37,21 @@ void _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
 }
 
 void _buildRoadCompletionIncreasesRoadLevel() {
-  final next = wccApply(
-    wccEngineerCompletionGame(
-      workTarget: kWorkTargetBuildRoad,
-      tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, 0),
-    ),
-    tileMapByRegion: const {},
-  );
-  wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
+  wccExpectBuildRoadLevelIncrease();
 }
 
 void _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
-  const capitalTileKey = WorkAppIds.originTileKey;
-  final next = wccApply(
-    wccBuildRoadCapitalAdjacentGame(),
-    tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
-  );
-  wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
-  wccExpectRoadLevel(next, capitalTileKey, 2);
+  wccExpectBuildRoadCapitalAdjacentPropagation();
 }
 
 void _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
-  const portTileKey = WorkAppIds.originTileKey;
-  final next = wccApply(
-    wccBuildRoadPortAdjacentGame(),
-    tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
-  );
-  wccExpectRoadLevel(next, WorkAppIds.tileKey, 2);
-  wccExpectRoadLevel(next, portTileKey, 2);
+  wccExpectBuildRoadPortAdjacentPropagation();
 }
 
 void _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
-  final next = wccApply(
-    wccEngineerCompletionGame(workTarget: kWorkTargetBuildPort),
-    topology: wccPortSeaTopology(),
-  );
-  wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
-  wccExpectPortRegisteredForProvince(next);
+  wccExpectBuildPortCompletion();
 }
 
 void _buildFortCompletionIncreasesProvinceFortLevel() {
-  final next = wccApply(
-    wccEngineerCompletionGame(
-      workTarget: kWorkTargetBuildFort,
-      provinces: [workAppOwnedProvince(fortLevel: 0)],
-    ),
-  );
-  wccExpectFortLevel(next, 1);
+  wccExpectBuildFortCompletion();
 }

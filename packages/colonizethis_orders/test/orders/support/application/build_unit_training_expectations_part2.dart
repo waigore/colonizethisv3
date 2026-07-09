@@ -47,14 +47,7 @@ void _secondNavalBuildAddsShipToExistingHomeFleet() {
 }
 
 void _rejectsCivilianBuildWhenTreasuryInsufficient() {
-  final game = butCivilianGame(treasury: 999, paper: 2);
-  final next = butApply(game, butOrdersFor(kUnitTypeBuilder));
-  expect(next.worldState.oldWorld.units, isEmpty);
-  expect(next.players.single.treasury, game.players.single.treasury);
-  expect(
-    next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
-    game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
-  );
+  butExpectCivilianTreasuryInsufficientRejected();
 }
 
 void _rejectsCivilianBuildWhenPaperInsufficient() {

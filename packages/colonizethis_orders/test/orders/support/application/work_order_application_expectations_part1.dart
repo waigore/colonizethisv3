@@ -1,83 +1,39 @@
 part of 'work_order_application_expectations.dart';
 
 void _prospectAddsTilePlayerProspectedTilesWhenTerrainEligible() {
-  final next = waaProspectApply(terrain: TerrainType.hills);
-  waaExpectProspected(next, expected: true);
-  waaExpectUnitIdleAfterWork(next);
+  waaExpectProspectEligible(terrain: TerrainType.hills);
 }
 
 void _prospectOnNonMineralEligibleTerrainDoesNotAddTile() {
-  final next = waaProspectApply(terrain: TerrainType.plains);
-  waaExpectProspected(next, expected: false);
+  waaExpectProspectIneligible(terrain: TerrainType.plains);
 }
 
 void _prospectAddsTileWhenMineralResourcePresentWithoutTileMap() {
-  final next = waaProspectApply(
-    resourceByTileKey: {WorkAppIds.tileKey: 'iron'},
-  );
-  waaExpectProspected(next, expected: true);
+  waaExpectProspectEligible(resourceByTileKey: {WorkAppIds.tileKey: 'iron'});
 }
 
 void _prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap() {
-  final next = waaProspectApply(
-    resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
-  );
-  waaExpectProspected(next, expected: false);
+  waaExpectProspectIneligible(resourceByTileKey: {WorkAppIds.tileKey: 'grain'});
 }
 
 void _buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1() {
-  final next = waaApplyBuildImprovement();
-  waaExpectUnitIdle(next);
-  waaExpectImprovementLevel(next, 1);
+  waaExpectBuildImprovementCompletesIdle();
 }
 
 void _buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel() {
-  const fortLevel = 1;
-  final next = waaApplyBuildFort(
-    fortLevel: fortLevel,
-    techUnlocked: const {kTechIdMineEngineering: true},
-  );
-  waaExpectCurrentWorkTiming(
-    next,
-    workTarget: kWorkTargetBuildFort,
-    totalTurns: totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
-    remainingTurns: 1,
-    originTileKey: WorkAppIds.tileKey,
-    assignedTileKey: WorkAppIds.tileKey,
-  );
-  waaExpectFortLevel(next, fortLevel);
+  waaExpectBuildFortCurrentWork();
 }
 
 void _counterSpyWorkOrderSetsCurrentWorkForSpyUnit() {
-  final next = waaApply(
-    waaCounterSpyForeignProvinceGame(),
-    workAppSingleWorkOrder(unitId: 'spy1', target: kWorkTargetCounterSpy),
-  );
-  waaExpectCurrentWorkTiming(
-    next,
-    unitId: 'spy1',
-    workTarget: kWorkTargetCounterSpy,
-    totalTurns: 0,
-    remainingTurns: 1,
-  );
+  waaExpectCounterSpyForeignCurrentWork();
 }
 
 void _purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = workAppPurchaseLandGame(
-    units: [waaMerchantOnMinor()],
-    players: [workAppPlayer(treasury: cost + 100)],
-    overtureStates: [waaEmbassyOverture()],
-  );
-  final next = waaApply(game, waaPurchaseLandOrders());
-  waaExpectPurchased(next, ownerId: 'p1');
-  waaExpectTreasuryDelta(game, next, 'p1', -cost);
-  waaExpectUnitIdleAfterWork(next, tileKey: WorkAppIds.tileKeyMinor);
+  waaExpectPurchaseLandSuccess();
 }
 
 void _purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe() {
-  final game = waaPurchaseLandNoEmbassyGame();
-  waaExpectPurchaseLandRejected(game);
+  waaExpectPurchaseLandRejected(waaPurchaseLandNoEmbassyGame());
 }
 
 void _purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe() {
@@ -85,61 +41,33 @@ void _purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe() {
 }
 
 void _purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = waaDualGpPurchaseLandGame();
-  final next = waaApply(game, waaDualPurchaseLandOrders());
-  waaExpectPurchased(next, ownerId: 'p1');
-  waaExpectTreasuryDelta(game, next, 'p1', -cost);
-  waaExpectTreasuryUnchanged(game, next, 'p2');
+  waaExpectDualGpPurchaseLandFirstWins();
 }
 
 void _buildFortWithSufficientMaterialsDeductsMaterials() {
-  final cost = workOrderCostBuildFort(0);
-  final game = waaEngineerFortGame();
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
-  );
-  waaExpectStockpileDeducted(game, next, cost);
+  waaExpectBuildFortMaterialsDeducted();
 }
 
 void _buildFortLevel2SkippedWithoutMineEngineering() {
-  final next = waaApplyBuildFort(
+  waaExpectBuildFortSkipped(
     fortLevel: 1,
     stockpile: const Stockpile(),
     techUnlocked: const {},
+    expectedFortLevel: 1,
   );
-  waaExpectFortLevel(next, 1);
-  waaExpectUnitCurrentWorkNull(next);
 }
 
 void _buildFortLevel3SkippedWithoutModernForts() {
-  final next = waaApplyBuildFort(
+  waaExpectBuildFortSkipped(
     fortLevel: 2,
     stockpile: const Stockpile(),
     techUnlocked: const {kTechIdMineEngineering: true},
+    expectedFortLevel: 2,
   );
-  waaExpectFortLevel(next, 2);
-  waaExpectUnitCurrentWorkNull(next);
 }
 
 void _upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel() {
-  final next = waaApply(
-    workAppOwnedGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeBuilder,
-          workTarget: kWorkTargetUpgradeTown,
-        ),
-      ],
-      provinces: [workAppOwnedProvince(townDevelopmentLevel: 1)],
-      players: [
-        workAppPlayer(techUnlocked: const {kTechIdNationalBureaucracy: true}),
-      ],
-    ),
-    workAppProcessWorkOrders(),
-  );
-  waaExpectTownDevelopmentLevel(next, 2);
+  waaExpectUpgradeTownDevelopmentApplied();
 }
 
 void _counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork() {

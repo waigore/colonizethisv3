@@ -494,3 +494,101 @@ void vwExpectMinorProvinceRoadRejected(
       vwRunMinorProvinceRoad(game),
       reasonContains: reasonContains,
     );
+
+void vwExpectMineralBuildImprovementRejectedWhenNotProspected() {
+  vwExpectBuildImprovementRejected(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {ValidateWorkOw.tileKey: 'iron'},
+    ),
+    reasonContains: 'prospected',
+  );
+}
+
+void vwExpectMineralBuildImprovementAcceptedWhenProspected() {
+  const tileKey = ValidateWorkOw.tileKey;
+  vwExpectBuildImprovementAccepted(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {tileKey: 'iron'},
+      playerProspectedTiles: {
+        'p1': {tileKey},
+      },
+    ),
+  );
+}
+
+void vwExpectGrainBuildImprovementAcceptedWhenNotProspected() {
+  vwExpectBuildImprovementAccepted(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {ValidateWorkOw.tileKey: 'grain'},
+    ),
+  );
+}
+
+void vwExpectBuildImprovementRejectedNoResource() {
+  vwExpectBuildImprovementRejected(
+    game: buildImprovementBaseGame(resourceByTileKey: {}),
+    reasonContains: 'no resource',
+  );
+}
+
+void vwExpectBuildImprovementRejectedAtLevel4() {
+  vwExpectBuildImprovementRejected(
+    game: buildImprovementBaseGame(
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 4}),
+      stockpile: lumberCastIronStockpile(20),
+    ),
+    reasonContains: 'maximum',
+  );
+}
+
+void vwExpectGrainUpgradeWithLandEnclosure() {
+  vwExpectBuildImprovementAccepted(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {kTechIdLandEnclosure: true},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
+    ),
+  );
+}
+
+void vwExpectBuildImprovementAcceptedAtLevel4TechCap() {
+  vwExpectBuildImprovementAccepted(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {ValidateWorkOw.tileKey: 'grain'},
+      tileState: const TileMapState(),
+      techUnlocked: const {kTechIdCircularSaw: true},
+    ),
+  );
+}
+
+void vwExpectBuildImprovementRejectedForeignUnpurchased() {
+  vwExpectBuildImprovementRejected(
+    game: buildImprovementForeignProvinceGame(),
+    targetTileKey: validateWorkForeignTileKey(),
+    reasonContains: 'foreign or uncontrolled province',
+  );
+}
+
+void vwExpectBuildImprovementAcceptedOnPurchasedForeignTile() {
+  final foreignTileKey = validateWorkForeignTileKey();
+  vwExpectBuildImprovementAccepted(
+    game: buildImprovementForeignProvinceGame(
+      purchasedTilesByTileKey: {foreignTileKey: 'p1'},
+    ),
+    targetTileKey: foreignTileKey,
+  );
+}
+
+void vwExpectMinorProvinceRoadRejectedWithoutEmbassy() {
+  vwExpectMinorProvinceRoadRejected(
+    minorProvinceEngineerRoadGame(),
+    reasonContains: 'foreign province',
+  );
+}
+
+void vwExpectMinorProvinceRoadRejectedDespiteEmbassy() {
+  vwExpectMinorProvinceRoadRejected(
+    minorProvinceEngineerRoadGame(overtureStates: minorProvinceEmbassyOverture),
+    reasonContains: 'cannot occupy',
+  );
+}

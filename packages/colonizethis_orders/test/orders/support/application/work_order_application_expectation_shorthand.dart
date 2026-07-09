@@ -549,3 +549,128 @@ void waaExpectCounterSpyOngoingAssignmentPreservesUnits() {
   );
   waaExpectUnitIdsPresent(next, const ['spy1', 'spy2']);
 }
+
+void waaExpectProspectEligible({
+  TerrainType? terrain,
+  Map<String, String>? resourceByTileKey,
+}) {
+  final next = waaProspectApply(
+    terrain: terrain,
+    resourceByTileKey: resourceByTileKey,
+  );
+  waaExpectProspected(next, expected: true);
+  waaExpectUnitIdleAfterWork(next);
+}
+
+void waaExpectProspectIneligible({
+  TerrainType? terrain,
+  Map<String, String>? resourceByTileKey,
+}) {
+  final next = waaProspectApply(
+    terrain: terrain,
+    resourceByTileKey: resourceByTileKey,
+  );
+  waaExpectProspected(next, expected: false);
+}
+
+void waaExpectPurchaseLandSuccess() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  final game = workAppPurchaseLandGame(
+    units: [waaMerchantOnMinor()],
+    players: [workAppPlayer(treasury: cost + 100)],
+    overtureStates: [waaEmbassyOverture()],
+  );
+  final next = waaApply(game, waaPurchaseLandOrders());
+  waaExpectPurchased(next, ownerId: 'p1');
+  waaExpectTreasuryDelta(game, next, 'p1', -cost);
+  waaExpectUnitIdleAfterWork(next, tileKey: WorkAppIds.tileKeyMinor);
+}
+
+void waaExpectDualGpPurchaseLandFirstWins() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  final game = waaDualGpPurchaseLandGame();
+  final next = waaApply(game, waaDualPurchaseLandOrders());
+  waaExpectPurchased(next, ownerId: 'p1');
+  waaExpectTreasuryDelta(game, next, 'p1', -cost);
+  waaExpectTreasuryUnchanged(game, next, 'p2');
+}
+
+void waaExpectBuildImprovementCompletesIdle() {
+  final next = waaApplyBuildImprovement();
+  waaExpectUnitIdle(next);
+  waaExpectImprovementLevel(next, 1);
+}
+
+void waaExpectBuildFortCurrentWork({int fortLevel = 1}) {
+  final next = waaApplyBuildFort(
+    fortLevel: fortLevel,
+    techUnlocked: const {kTechIdMineEngineering: true},
+  );
+  waaExpectCurrentWorkTiming(
+    next,
+    workTarget: kWorkTargetBuildFort,
+    totalTurns: totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
+    remainingTurns: 1,
+    originTileKey: WorkAppIds.tileKey,
+    assignedTileKey: WorkAppIds.tileKey,
+  );
+  waaExpectFortLevel(next, fortLevel);
+}
+
+void waaExpectCounterSpyForeignCurrentWork({String spyId = 'spy1'}) {
+  final next = waaApply(
+    waaCounterSpyForeignProvinceGame(spyId: spyId),
+    workAppSingleWorkOrder(unitId: spyId, target: kWorkTargetCounterSpy),
+  );
+  waaExpectCurrentWorkTiming(
+    next,
+    unitId: spyId,
+    workTarget: kWorkTargetCounterSpy,
+    totalTurns: 0,
+    remainingTurns: 1,
+  );
+}
+
+void waaExpectBuildFortMaterialsDeducted() {
+  final cost = workOrderCostBuildFort(0);
+  final game = waaEngineerFortGame();
+  final next = waaApply(
+    game,
+    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
+  );
+  waaExpectStockpileDeducted(game, next, cost);
+}
+
+void waaExpectBuildFortSkipped({
+  required int fortLevel,
+  required Stockpile stockpile,
+  required Map<String, bool> techUnlocked,
+  required int expectedFortLevel,
+}) {
+  final next = waaApplyBuildFort(
+    fortLevel: fortLevel,
+    stockpile: stockpile,
+    techUnlocked: techUnlocked,
+  );
+  waaExpectFortLevel(next, expectedFortLevel);
+  waaExpectUnitCurrentWorkNull(next);
+}
+
+void waaExpectUpgradeTownDevelopmentApplied({int before = 1, int after = 2}) {
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [
+        workAppWorkingUnit(
+          type: kUnitTypeBuilder,
+          workTarget: kWorkTargetUpgradeTown,
+        ),
+      ],
+      provinces: [workAppOwnedProvince(townDevelopmentLevel: before)],
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdNationalBureaucracy: true}),
+      ],
+    ),
+    workAppProcessWorkOrders(),
+  );
+  waaExpectTownDevelopmentLevel(next, after);
+}
