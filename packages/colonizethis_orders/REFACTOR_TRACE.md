@@ -1677,6 +1677,24 @@ Deleted five thin dispatch-wrapper/part files; inlined preset calls in five expe
 
 test/ LOC after slice 98: **39,205** (net −186 from post–slice 97). Remaining: further support-table compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 99: part-shard merge + ice-equiv DRY + precheck embassy helper
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| part-merge-wcc | merge `work_completion_expectation_shorthand_part{2,3}` into part1 | `work_completion_expectation_shorthand*.dart` | single part1 shard | #3949 |
+| part-merge-vwt | merge `valid_work_tiles_{fixtures,expectation_shorthand}_part2` into part1 | same family | same | #3949 |
+| part-merge-osc | merge `order_suggestion_core_expectation_shorthand_part2` into part1 | same | same | #3949 |
+| part-merge-waa | merge `work_order_application_expectation_shorthand_part2` into part1 | same | same | #3949 |
+| part-merge-vw | merge `order_engine_validate_work_expectation_shorthand_part2` into part1 | same | same | #3949 |
+| part-merge-nov | inline `naval_order_validator_expectation_shorthand_part2` into main shorthand | `naval_order_validator_expectation_shorthand*.dart` | single file | #3949 |
+| ice-equiv-dry | extract `_iceValidatorFor` / `_expectIncrementalMatchesFullPass` for equivalence helpers | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+| vwt-single-tile-dedup | dedupe `vwtMinimalSingleTileGame` / `vwtExplorerSingleTileGame` via `_vwtSingleTileGame` | `valid_work_tiles_fixtures_part1.dart` | same | #3949 |
+| lib-precheck-embassy | extract `_rejectAtWarOrWithoutEmbassy` for upgrade_town + purchase_land | `work_order_target_prechecks.dart` | same | #3949 |
+
+Merged six multi-part shorthand/fixture libraries and inlined naval mission/move presets; DRY incremental equivalence assertion wiring; compact valid-work-tiles single-tile fixtures; lib item 7 embassy/at-war precheck helper.
+
+test/ LOC after slice 99: **39,180** (net −25 from post–slice 98). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

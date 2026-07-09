@@ -8,5 +8,4 @@ import 'package:colonizethis_test/test.dart';
 import 'valid_work_tiles_fixtures.dart';
 import 'valid_work_tiles_test_support.dart';
 part 'valid_work_tiles_expectation_shorthand_part1.dart';
-part 'valid_work_tiles_expectation_shorthand_part2.dart';
 

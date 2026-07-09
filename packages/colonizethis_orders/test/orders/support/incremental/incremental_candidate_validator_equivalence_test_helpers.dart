@@ -80,6 +80,35 @@ bool fullPassDiplomaticAccepted(
       .isAccepted;
 }
 
+IncrementalCandidateValidator _iceValidatorFor({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders basePrefix,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) =>
+    IncrementalCandidateValidator.forPlayer(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+      tileMapByRegion: tileMapByRegion,
+    );
+
+void _expectIncrementalMatchesFullPass({
+  required bool fullPass,
+  required bool incremental,
+  required String family,
+  required String label,
+}) {
+  expect(
+    incremental,
+    equals(fullPass),
+    reason:
+        '$family candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  );
+}
+
 void expectMoveEquivalent({
   required Game game,
   required MapTopology topology,
@@ -88,24 +117,22 @@ void expectMoveEquivalent({
   required MoveOrder candidate,
   required String label,
 }) {
-  final fullPass = fullPassMoveAccepted(
-    game,
-    topology,
-    playerId,
-    basePrefix,
-    candidate,
-  );
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-  ).isMoveAccepted(candidate);
-  expect(
-    incremental,
-    equals(fullPass),
-    reason:
-        'Move candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPassMoveAccepted(
+      game,
+      topology,
+      playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: _iceValidatorFor(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+    ).isMoveAccepted(candidate),
+    family: 'Move',
+    label: label,
   );
 }
 
@@ -117,24 +144,22 @@ void expectArmyMoveEquivalent({
   required ArmyMoveOrder candidate,
   required String label,
 }) {
-  final fullPass = fullPassArmyMoveAccepted(
-    game,
-    topology,
-    playerId,
-    basePrefix,
-    candidate,
-  );
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-  ).isArmyMoveAccepted(candidate);
-  expect(
-    incremental,
-    equals(fullPass),
-    reason:
-        'Army move candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPassArmyMoveAccepted(
+      game,
+      topology,
+      playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: _iceValidatorFor(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+    ).isArmyMoveAccepted(candidate),
+    family: 'Army move',
+    label: label,
   );
 }
 
@@ -146,24 +171,22 @@ void expectBuildEquivalent({
   required BuildUnitOrder candidate,
   required String label,
 }) {
-  final fullPass = fullPassBuildAccepted(
-    game,
-    topology,
-    playerId,
-    basePrefix,
-    candidate,
-  );
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-  ).isBuildAccepted(candidate);
-  expect(
-    incremental,
-    equals(fullPass),
-    reason:
-        'Build candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPassBuildAccepted(
+      game,
+      topology,
+      playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: _iceValidatorFor(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+    ).isBuildAccepted(candidate),
+    family: 'Build',
+    label: label,
   );
 }
 
@@ -176,26 +199,24 @@ void expectWorkEquivalent({
   required String label,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final fullPass = fullPassWorkAccepted(
-    game,
-    topology,
-    playerId,
-    basePrefix,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  );
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    tileMapByRegion: tileMapByRegion,
-  ).isWorkAccepted(candidate);
-  expect(
-    incremental,
-    equals(fullPass),
-    reason:
-        'Work candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPassWorkAccepted(
+      game,
+      topology,
+      playerId,
+      basePrefix,
+      candidate,
+      tileMapByRegion: tileMapByRegion,
+    ),
+    incremental: _iceValidatorFor(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+      tileMapByRegion: tileMapByRegion,
+    ).isWorkAccepted(candidate),
+    family: 'Work',
+    label: label,
   );
 }
 
@@ -207,24 +228,22 @@ void expectDiplomaticEquivalent({
   required DiplomaticOrder candidate,
   required String label,
 }) {
-  final fullPass = fullPassDiplomaticAccepted(
-    game,
-    topology,
-    playerId,
-    basePrefix,
-    candidate,
-  );
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-  ).isDiplomaticAccepted(candidate);
-  expect(
-    incremental,
-    equals(fullPass),
-    reason:
-        'Diplomatic candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPassDiplomaticAccepted(
+      game,
+      topology,
+      playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: _iceValidatorFor(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+    ).isDiplomaticAccepted(candidate),
+    family: 'Diplomatic',
+    label: label,
   );
 }
 

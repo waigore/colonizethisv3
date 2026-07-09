@@ -9,6 +9,4 @@ import 'package:colonizethis_orders/src/orders/orders_application_context.dart';
 import 'package:colonizethis_test/test.dart';
 import 'work_application_fixtures.dart';
 part 'work_completion_expectation_shorthand_part1.dart';
-part 'work_completion_expectation_shorthand_part2.dart';
-part 'work_completion_expectation_shorthand_part3.dart';
 
