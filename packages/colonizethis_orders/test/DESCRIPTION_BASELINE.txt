@@ -1,5 +1,6 @@
 AC-10: invalid declare war / offer peace still enumerated
 AC-6: minor at none shows all overture stages; only consulate enabled
+AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only
 AC1: emitted civilian candidates are deterministically sorted by unitType
 AC1: includes affordable civilian candidates when includeCivilianBuilds is true
 AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call

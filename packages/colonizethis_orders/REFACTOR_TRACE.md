@@ -1404,6 +1404,32 @@ Migrated imperative `order_suggestion_api_impl_diplomatic_minor_test.dart` and `
 
 test/ LOC after slice 81: **37,615** (net +85 from post–slice 80; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl core suite, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 82 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dpa-gp-row | GP row includes alliance, FTP, and four overture stages | `diplomatic_panel_actions_test.dart` | `support/diplomatic/diplomatic_panel_actions_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| dpa-formal-alliance | AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only | same | same | #3949 |
+| dpa-minor-row | Minor row omits alliance and FTP | same | same | #3949 |
+| dpa-gp-boycott | GP row includes boycott + revoke boycott (Refs #3753 S14) | same | same | #3949 |
+| dpa-minor-boycott | Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14) | same | same | #3949 |
+| dpa-ac6 | AC-6: minor at none shows all overture stages; only consulate enabled | same | same | #3949 |
+| dpa-s14-no-colony | S14: boycott disabled when human holds no colony | same | same | #3949 |
+| dpa-s14-colony | S14: boycott enabled when human holds a colony at peace | same | same | #3949 |
+| dpa-s14-revoke-on | S14: revoke enabled (and boycott disabled) with active boycott | same | same | #3949 |
+| dpa-s14-revoke-off | S14: revoke disabled when no active boycott exists | same | same | #3949 |
+| dpa-cooldown | post-break cooldown disables alliance with deterministic reason (#3811) | same | same | #3949 |
+| dpa-ac10 | AC-10: invalid declare war / offer peace still enumerated | same | same | #3949 |
+| dcs-commodity | sorted commodity ids match lexicographic sort of id set | `debug_console_supported_ids_test.dart` | `support/debug_console/debug_console_supported_ids_scenarios.dart` + expectations + thin runner | #3949 |
+| dcs-regiment | sorted regiment type ids match lexicographic sort of id set | same | same | #3949 |
+| dcs-ship | sorted ship type ids match lexicographic sort of id set | same | same | #3949 |
+| dcs-nonempty | sorted lists are non-empty when catalogs have entries | same | same | #3949 |
+| dcw-tiers | debug worker tier ids are canonical and lexicographically sorted | `debug_console_workers_test.dart` | `support/debug_console/debug_console_workers_scenarios.dart` + expectations + thin runner | #3949 |
+
+Migrated imperative `diplomatic_panel_actions_test.dart`, `debug_console_supported_ids_test.dart`, and `debug_console_workers_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline description for AC11/AC1 formal-alliance swap scenario. Removed all three files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 82: **37,903** (net +288 from post–slice 81; support modules add LOC while runners shrink). Remaining: further imperative-suite scenario migration (suggestion API impl core suite, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
