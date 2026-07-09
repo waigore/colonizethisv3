@@ -136,6 +136,10 @@ does not gate a Great Power-owned province
 does not gate the player own province or a null owner
 does not invoke the projector when no trade order is staged
 does not re-suggest a tech already assigned by a pending order
+does not return alliance toward a GP when a formal alliance exists
+does not return breakAlliance when relation level is allied but no formal alliance
+does not suggest diplomatic orders for completely unknown factions
+does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise
 drops move into minor province when explicitly at peace
 drops move into minor-owned province when relation row is absent
 each standard build handler supports only its target
@@ -385,7 +389,9 @@ removeBuildOrder removes order at index
 removeMoveOrder removes order at index
 removes order at index
 removeTradeOrderForPlayer deletes the matching staged order
+returns alliance (single diplo per target) for other GP when at peace and not allied
 returns alliance candidate when at peace and not allied
+returns breakAlliance toward GP when a formal alliance exists at peace
 returns declareWar toward GP when at peace and already allied
 returns empty for unknown unit id
 returns empty for unknown unit id with visibility
@@ -485,6 +491,7 @@ supports only prospect
 supports only purchase_land target
 throws StateError when no projector was injected
 throws StateError when a trade order is validated without a projector
+toward minor at peace with join-empire overture suggests declareWar (primary before economic)
 trade consulate debits treasury on accept
 trade consulate rejects when treasury too low (no debit)
 trade consulate rejects without diplomatic_expertise

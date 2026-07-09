@@ -1384,6 +1384,26 @@ Migrated imperative `order_suggestion_api_impl_trade_test.dart` and `order_sugge
 
 test/ LOC after slice 80: **37,530** (net +115 from post–slice 79; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl diplomatic/core suites, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — slice 81 (diplomatic API impl minor + GP scenarios)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osaidm-unknown | does not suggest diplomatic orders for completely unknown factions | `order_suggestion_api_impl_diplomatic_minor_test.dart` | `support/suggestion/order_suggestion_api_impl_diplomatic_minor_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| osaidm-establish | returns establishOverture for minor when treasury suffices | same | same | #3949 |
+| osaidm-no-expertise | does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise | same | same | #3949 |
+| osaidm-join-empire | toward minor at peace with join-empire overture suggests declareWar (primary before economic) | same | same | #3949 |
+| osaid-alliance-single | returns alliance (single diplo per target) for other GP when at peace and not allied | `order_suggestion_api_impl_diplomatic_test.dart` | `support/suggestion/order_suggestion_api_impl_diplomatic_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| osaid-declare-war | returns declareWar toward GP when at peace and already allied | same | same | #3949 |
+| osaid-break-alliance | returns breakAlliance toward GP when a formal alliance exists at peace | same | same | #3949 |
+| osaid-no-alliance | does not return alliance toward a GP when a formal alliance exists | same | same | #3949 |
+| osaid-no-break | does not return breakAlliance when relation level is allied but no formal alliance | same | same | #3949 |
+| osaid-offer-peace | returns offerPeace when at war with another GP | same | same | #3949 |
+| osaid-alliance-candidate | returns alliance candidate when at peace and not allied | same | same | #3949 |
+
+Migrated imperative `order_suggestion_api_impl_diplomatic_minor_test.dart` and `order_suggestion_api_impl_diplomatic_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for unknown-faction, diplomatic-expertise, join-empire, single-diplo, break-alliance, and formal-alliance guard scenarios. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 81: **37,615** (net +85 from post–slice 80; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl core suite, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
