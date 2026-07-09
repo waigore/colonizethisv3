@@ -13,6 +13,7 @@ accepts a single peasant recruit when fabric is available
 accepts a valid boycott order through the parent validator
 accepts a valid offer when stockpile covers quantity
 accepts and debits treasury by the amount
+accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices
 accepts build_rail on plains with Early Steam and road 1
 accepts Builder when treasury and paper sufficient
 accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)
@@ -430,6 +431,7 @@ ship build with capital not adjacent to sea does not add ship
 ship build with capitalProvinceId null does not add fleet
 ship build with topology null does not add fleet
 short-circuits when previous order rejected
+short-circuits to "Previous invalid" when previousRejected is true
 singleton handlers do not cross-support other simple targets
 skips build when unitType unknown in RegimentEconomyCatalog
 skips fort level 2 when Mine Engineering not unlocked

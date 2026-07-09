@@ -999,6 +999,27 @@ Migrated imperative `draft_orders_mutations_test.dart` and `order_visibility_tes
 
 test/ LOC after slice 58: **34,538** (net +231 from post–slice 57; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 slice 59 — recruit_worker + build_order validator scenario migration (#3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| rwov-accept-peasant | accepts peasant recruit and deducts 2 fabric, adds peasant | `recruit_worker_order_validator_test.dart` | `support/validators/recruit_worker_order_validator_scenarios.dart` + fixtures/expectations + thin runner | #2692 S4 |
+| rwov-reject-fabric | rejects peasant recruit when fabric is insufficient | same | same | #2692 S4 |
+| rwov-accept-apprentice | accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices | same | same | #2692 S4 |
+| rwov-reject-tech | rejects apprentice train when required tech is locked | same | same | #2692 S4 |
+| rwov-reject-peasant | rejects apprentice train when no peasant is available | same | same | #2692 S4 |
+| rwov-reject-treasury | rejects apprentice train when treasury is insufficient | same | same | #2692 S4 |
+| rwov-accept-journeyman | accepts journeyman train and applies 500 ducat + 5 paper cost | same | same | #2692 S4 |
+| rwov-accept-master | accepts master train and applies 1000 ducat + 10 paper cost | same | same | #2692 S4 |
+| rwov-prev-rejected | short-circuits to "Previous invalid" when previousRejected is true | same | same | #2692 S4 |
+| rwov-sequential | sequential apprentice trains drain peasants in submission order | same | same | #2692 S4 |
+| bov-prev-rejected | validate returns rejected when previousRejected is true | `build_order_validator_test.dart` | `support/validators/build_order_validator_scenarios.dart` + expectations + thin runner | #3949 |
+| bov-no-capital | civilian build is rejected when capital tile cannot be resolved | same | same | #3949 |
+
+Migrated imperative `recruit_worker_order_validator_test.dart` and `build_order_validator_test.dart` → table-driven scenarios with dedicated support modules. Removed both from `ordersPreferScenarioTablesAllowlist`. Joined formerly multi-line apprentice description added to `DESCRIPTION_BASELINE.txt`.
+
+test/ LOC after slice 59: **34,676** (net +138 from post–slice 58; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, work handlers, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
