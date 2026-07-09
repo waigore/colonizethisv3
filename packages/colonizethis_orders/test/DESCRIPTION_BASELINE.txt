@@ -41,6 +41,7 @@ accepts when at peace and leaves treasury unchanged
 accepts when at war and leaves treasury unchanged
 accepts when issuer holds a colony and target GP is at peace
 accepts when target is a Great Power and at peace
+accepts minor target with funds at or above scaled cost and preserves treasury (positive)
 accepts with an embassy and leaves treasury unchanged
 accepts with an embassy even when treasury is low (no upfront cost)
 add order and validate
@@ -114,6 +115,7 @@ clears work state and restores origin tile by default
 co-availability ordering is deterministic across repeated passes
 candidate set is deterministic across repeated suggestion calls
 co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile
+co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province
 co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget
 colonialIntelExploreProvinceIdsSorted lists sea-reachable NW
 contains returns false for missing membership
@@ -152,6 +154,7 @@ does not suggest tradeConsulate/embassy/nap overture toward minor without diplom
 drops move into minor province when explicitly at peace
 drops move into minor-owned province when relation row is absent
 each standard build handler supports only its target
+definitions moved out of the neutral core file into the orders domain
 embassy accepts and debits treasury when consulate exists
 embassy requires existing trade consulate
 embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar
@@ -224,6 +227,7 @@ isNavalMoveOrderAccepted returns a boolean result
 iron province without fogged visibility still yields no prospect (negative control)
 joinEmpire previous is nap
 joinEmpire rejects when relations below friendly threshold
+lib/src/constants.dart re-exports the same order constants (back-compat)
 keeps AI move orders when human has none for unit
 keeps at most one army move per army id
 keeps exact pending tile key for explore projection
@@ -319,6 +323,7 @@ plains: rejects without rail tech
 playerOverturesByTargetIdForPlayer keeps first row per target
 playerOwnedProvinceIds matches default path for same inputs
 post-break cooldown disables alliance with deterministic reason (#3811)
+precheckExplorerConsulateInMinorTribe rejects explore without Consulate
 precheck rejects upgrade_town when at war with tribe
 precheckBuildImprovement rejects unprospected mineral tile
 precheckDefaultForeignProvince rejects builder in foreign province
@@ -337,6 +342,7 @@ propagates road level to adjacent port tile when higher
 prospect on non-mineral-eligible terrain does not add tile
 prospect requires at least fogged
 prospect suggestion when province fogged and tiles in province
+public colonizethis_logic barrel still exposes the order constants
 provinceHasAtLeastVisibility returns false when parts.length != 4
 re-emits in-progress research so the resolver preserves progress
 rebinds pass validator to workingOrders after each target
@@ -389,11 +395,13 @@ rejects purchase_land when tile already owned by same player
 rejects purchase_land when tile has no resource
 rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)
 rejects second pending work order for same unit in one turn
+rejects join empire toward GP without Empire Building tech (negative)
 rejects unknown unit type
 rejects upgrade_town without National Bureaucracy
 rejects when already at war and preserves treasury
 rejects when amount is below the step
 rejects when at war with the target GP
+rejects when current stage is not NAP and preserves treasury (negative)
 rejects when at war with the target Great Power
 rejects when no active boycott exists for the pair
 rejects when no formal alliance exists with the target
@@ -401,6 +409,7 @@ rejects when not at war
 rejects when road level is 0
 rejects when road level is 3 (intermediate, not 1 or 2)
 rejects when road level is neither 1 nor 2 (too high)
+rejects when score below friendly threshold and preserves treasury (negative)
 rejects when stage is missing
 rejects when target is not a Great Power
 rejects when terrain is null
@@ -523,7 +532,9 @@ suggestDiplomaticOrders: cumulative list appendable and validates
 suggestDiplomaticOrders returns list
 suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)
 suggestion ordering is deterministic across repeated passes
+seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393)
 suggestMoveOrders excludes moves to other Great Power provinces
+suggestMoveOrders emits no MoveOrder for a unit that already has a draft WorkOrder
 suggestMoveOrders matches default path
 suggestMoveOrders only returns moves that pass validation
 suggestMoveOrders returns list
@@ -536,6 +547,7 @@ suggestRecruitWorkerOrders returns list (#2692 S7)
 suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)
 suggestResearchOrders returns list
 suggestWorkOrders explore target uses kWorkTargetExplore
+suggestWorkOrders full-candidate snapshot remains stable (Refs #2133 AC8)
 suggestWorkOrders logger lines never emit unbounded full list payload
 suggestWorkOrders matches default path
 suggestWorkOrders returns list
@@ -589,4 +601,5 @@ work order prospect rejected when province not fogged or better
 work order prospect rejected when tile already prospected
 work order prospect rejected when tile is not mineral-eligible
 work order rejected for invalid target for unit type
+work-target / mineral / prospect constants are defined in the orders domain file
 work: non-empty basePrefix replay remains equivalent

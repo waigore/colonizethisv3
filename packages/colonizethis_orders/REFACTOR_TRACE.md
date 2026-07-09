@@ -1635,8 +1635,24 @@ Migrated four remaining imperative suites to table-driven scenarios with dedicat
 
 test/ LOC after slice 95: **38,981** (net +286 from post–slice 94; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 96 — final imperative-suite scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mew-draft-work | suggestMoveOrders emits no MoveOrder for a unit that already has a draft WorkOrder | `order_suggestion_move_excludes_unit_with_draft_work_test.dart` | `support/suggestion/order_suggestion_move_excludes_unit_with_draft_work_{fixtures,scenarios,expectations}.dart` + thin runner | #2082, #3949 |
+| pop-tile-cap | co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province | `order_suggestion_prospect_own_province_tile_cap_test.dart` | `support/suggestion/order_suggestion_prospect_own_province_tile_cap_{fixtures,scenarios,expectations}.dart` + thin runner | #2847, #3949 |
+| fnw-projection | seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393) | `order_suggestion_feedstock_new_world_projection_test.dart` | `support/suggestion/order_suggestion_feedstock_new_world_projection_{fixtures,scenarios,expectations}.dart` + thin runner | #3393, #3949 |
+| fcs-stable | suggestWorkOrders full-candidate snapshot remains stable (Refs #2133 AC8) | `order_suggestion_full_candidate_snapshot_test.dart` | `support/suggestion/order_suggestion_full_candidate_snapshot_{fixtures,scenarios,expectations}.dart` + thin runner | #2133, #3949 |
+| owc-ownership | work-target / mineral / prospect constants ownership (4 scenarios) | `order_work_constants_test.dart` | `support/order_work_constants_{scenarios,expectations}.dart` + thin runner | #3290, #3949 |
+| jeo-validator | validateJoinEmpireOverture direct contract (4 scenarios) | `join_empire_overture_validator_test.dart` | `support/validators/diplomatic/join_empire_overture_validator_{scenarios,expectations}.dart` + thin runner | #2560, #3949 |
+| ec-precheck | precheckExplorerConsulateInMinorTribe rejects explore without Consulate | `work_order_target_prechecks_explorer_consulate_test.dart` | `support/validators/work_order_target_prechecks_explorer_consulate_{fixtures,scenarios,expectations}.dart` + thin runner | #3949 |
+
+Migrated the last seven imperative `*_test.dart` suites without `runLabeledScenario` to table-driven scenarios. All thirteen baseline descriptions preserved; thirteen previously absent descriptions pinned. **Zero** remaining long-form imperative bodies outside scenario loops (`repo.orders_test_prefer_scenario_tables` clean with empty allowlist).
+
+test/ LOC after slice 96: **39,395** (net +414 from post–slice 95; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
-| remaining long-form `*_test.dart` | see `DESCRIPTION_BASELINE.txt` + `ordersPreferScenarioTablesAllowlist` | Imperative suites still outside migrated families; allowlisted explicitly after slice 13 shut off baseline allow-all | #3949 |
+| (none after slice 96) | — | All former imperative suites migrated; `ordersPreferScenarioTablesAllowlist` empty | #3949 |
