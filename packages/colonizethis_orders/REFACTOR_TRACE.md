@@ -1371,6 +1371,19 @@ Migrated imperative `order_suggestion_research_multi_slot_test.dart` and `order_
 
 test/ LOC after slice 79: **37,415** (net +173 from post–slice 78; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — slice 80 (trade API impl + army-move heuristics scenarios)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osait-no-embassy | no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids | `order_suggestion_api_impl_trade_test.dart` | `support/suggestion/order_suggestion_api_impl_trade_scenarios.dart` + fixtures/expectations + thin runner | #2989 A6 |
+| osait-override | contextOverride passes through to the pure suggester | same | same | #2989 A6 |
+| osait-validator-clean | default impl returns validator-clean output for the wired context | same | same | #2989 A6 |
+| osamh-one-per-army | keeps at most one army move per army id | `order_suggestion_army_move_heuristics_test.dart` | `support/suggestion/order_suggestion_army_move_heuristics_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+
+Migrated imperative `order_suggestion_api_impl_trade_test.dart` and `order_suggestion_army_move_heuristics_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for no-embassy trade wiring and validator-clean output scenarios. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 80: **37,530** (net +115 from post–slice 79; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl diplomatic/core suites, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

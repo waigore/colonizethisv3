@@ -121,6 +121,7 @@ declares the canonical per-category phase order
 declareWar rejected when already at war
 declareWar remains allowed during cooldown
 declareWar then grantAid toward same target rejected
+default impl returns validator-clean output for the wired context
 default strategies refresh runs all population paths
 diplomatic merge drops AI order duplicating human (type,target)
 diplomatic: non-empty basePrefix replay remains equivalent
@@ -261,6 +262,7 @@ naval move: in-port fleet undock to adjacent sea zone (accepted)
 naval move: missing fleet (rejected)
 New World spawn adds unit to newWorld
 next is left inverse of previous for every non-terminal stage
+no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids
 no candidates logs noCandidateReason
 no explore suggestion when province unknown
 no feedstock prospect when the co-located tile is already prospected (negative control)
