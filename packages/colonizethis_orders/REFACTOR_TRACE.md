@@ -873,6 +873,23 @@ Migrated imperative `order_effects_projector_seam_test.dart` and `work_order_dur
 
 test/ LOC after slice 53: **33,471** (net +152 from post–slice 52; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — slice 54 (order resolution context + explorer consulate gate)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| orc-reuse-view | buildOrderResolutionContext reuses view and cached units (Refs #2836) | `order_resolution_context_test.dart` | `support/engine/order_resolution_context_scenarios.dart` + fixtures/expectations + thin runner | #2836 |
+| orc-from-view | orderResolutionContextFromView aliases provincesById | same | same | #3949 |
+| ecg-no-overture | blocks a Minor/Tribe province when no overture exists | `explorer_consulate_gate_predicate_test.dart` | `support/engine/explorer_consulate_gate_predicate_scenarios.dart` + fixtures/expectations + thin runner | #3753 R4 |
+| ecg-below-consulate | blocks when the overture is below Consulate (none) | same | same | #3753 R4 |
+| ecg-consulate-held | does not block when a Consulate is held | same | same | #3753 R4 |
+| ecg-embassy-held | does not block when an Embassy (above Consulate) is held | same | same | #3753 R4b |
+| ecg-gp-province | does not gate a Great Power-owned province | same | same | #3753 R4 |
+| ecg-own-null | does not gate the player own province or a null owner | same | same | #3753 R4 |
+
+Migrated imperative `order_resolution_context_test.dart` and `explorer_consulate_gate_predicate_test.dart` → table-driven scenarios with dedicated support modules. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 54: **33,665** (net +194 from post–slice 53). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
