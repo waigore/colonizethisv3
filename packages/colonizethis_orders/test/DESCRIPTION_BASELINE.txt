@@ -222,6 +222,7 @@ Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)
 mountain: allows with Dynamite
 mountain: rejects without Dynamite
 move order accepted for own province across regions
+move order rejected when destination is foreign province across regions
 move order rejected when destination province unknown
 move order rejected when source province unknown
 move: builder onto other GP province (rejected)

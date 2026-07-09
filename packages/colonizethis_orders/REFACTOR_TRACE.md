@@ -768,6 +768,22 @@ Merged `order_engine_move_and_work_context_part{1,2,3}_test.dart` → `orders/or
 
 test/ LOC after slice 46: **32,810** (net −71 from post–slice 45; scenario tables add support modules but remove three part runners). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 47: order_engine_naval_build_validation scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oenb-move-cross-own | move order accepted for own province across regions | `order_engine_naval_build_validation_test.dart` | `support/engine/order_engine_naval_build_validation_scenarios.dart` + thin runner | #3949 |
+| oenb-move-cross-foreign | move order rejected when destination is foreign province across regions | same | same | #3949 |
+| oenb-work-invalid | work order rejected for invalid target for unit type | same | same | #3949 |
+| oenb-initial-copy | initial orders copy: getter returns equal but distinct lists | same | same | #3949 |
+| oenb-naval-fleet | naval move order rejected when fleet not found | same | same | #3949 |
+| oenb-blockade-peace | blockade order rejected when not at war with province owner | same | same | #3949 |
+| oenb-blockade-war | blockade order accepted when at war with province owner | same | same | #3949 |
+
+Migrated imperative `order_engine_naval_build_validation_test.dart` → table-driven scenarios with `order_engine_naval_build_validation_expectations.dart`. Added missing baseline pin for foreign-province cross-region move rejection. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 47: **32,896** (net +86 from post–slice 46; scenario support modules add LOC while runner shrinks to ≤20 lines). Remaining: further imperative-suite compaction (`order_engine_naval_build_projection_and_workers_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
