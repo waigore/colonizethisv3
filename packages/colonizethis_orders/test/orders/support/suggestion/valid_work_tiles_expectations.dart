@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'valid_work_tiles_expectation_shorthand.dart';
 import 'valid_work_tiles_fixtures.dart';
 import 'valid_work_tiles_test_support.dart';
 part 'valid_work_tiles_expectations_part1.dart';

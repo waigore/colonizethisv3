@@ -279,20 +279,9 @@ void _suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit() {
 }
 
 void _suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut() {
-  final fx = NwPartialRevealHomeTarget(
-    homeLocalId: 'home',
-    targetLocalId: 'tribe1',
-    targetOwnerId: 'tribe1',
-  );
-  final game = fx.game(
-    id: 'g1916e1',
-    tribes: const [ValidWorkTilesTestSupport.defaultTribe],
-    // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
-    overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
-  );
-  final explore = suggestedWorkOrders(game: game, topology: fx.topology())
-      .where((o) => o.target == kWorkTargetExplore)
-      .toList();
+  final fx = vwtTribePartialFx();
+  final game = vwtTribeConsulateGame(fx, id: 'g1916e1');
+  final explore = vwtSuggestExplore(game, fx.topology()).toList();
   expect(explore, isNotEmpty);
   expect(
     explore.any(
@@ -316,37 +305,17 @@ void _suggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntr
     ],
   );
   expect(
-    suggestedWorkOrders(game: game, topology: fx.topology()).where(
-      (o) =>
-          o.target == kWorkTargetExplore &&
-          Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
+    vwtSuggestExplore(game, fx.topology()).where(
+      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
     ),
     isEmpty,
   );
 }
 
 void _suggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile() {
-  final keys = NwPartialRevealHomeTarget(
-    homeLocalId: 'home',
-    targetLocalId: 'tribe1',
-    targetOwnerId: 'tribe1',
-  );
-  final fx = NwPartialRevealHomeTarget(
-    homeLocalId: 'home',
-    targetLocalId: 'tribe1',
-    targetOwnerId: 'tribe1',
-    resourceByTileKey: {keys.t0: 'grain', keys.t1: 'iron'},
-  );
-  final game = fx.game(
-    id: 'g1916p1',
-    tribes: const [ValidWorkTilesTestSupport.defaultTribe],
-    // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
-    overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
-  );
-  final prospect = suggestedWorkOrders(
-    game: game,
-    topology: fx.topology(),
-  ).where((o) => o.target == kWorkTargetProspect).toList();
+  final fx = vwtTribeGrainIronFx();
+  final game = vwtTribeConsulateGame(fx, id: 'g1916p1');
+  final prospect = vwtSuggestProspect(game, fx.topology()).toList();
   expect(prospect, isNotEmpty);
   expect(prospect.any((o) => o.targetTileKey == fx.t1), isTrue);
 }

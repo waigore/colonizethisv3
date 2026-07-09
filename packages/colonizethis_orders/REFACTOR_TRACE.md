@@ -453,6 +453,15 @@ test/ LOC after slice 18: **32,043** (down ~60 from post–slice 17). Remaining:
 
 test/ LOC after slice 19: **32,038** (down ~5 from post–slice 18). Remaining: further expectation compaction (`valid_work_tiles_*` part2/3, `order_engine_validate_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 20: valid-work-tiles part2/3 expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-partial-reveal-shorthand | add tribe/minor partial-reveal game + suggest filter helpers; compact part2/3 explore/prospect/purchase bodies | `valid_work_tiles_expectations_part2.dart`, `valid_work_tiles_expectations_part3.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ice-corpus-split | split `iceExpect*` wrappers into dedicated support file to satisfy `repo.domain_package_test_file_size` | `incremental_candidate_validator_equivalence_test_helpers.dart` | `incremental_candidate_validator_equivalence_corpus_shorthand.dart` | #3949 |
+
+test/ LOC after slice 20: **32,043** (net ~0 from post–slice 19; part2/3 bodies shortened, shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
