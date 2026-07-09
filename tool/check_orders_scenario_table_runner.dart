@@ -30,9 +30,7 @@ const _lookBehindLines = 8;
 /// (Refs #3949 slice 13). New long bodies outside this set fail the gate.
 /// Documented-exception suites stay listed; migrated family runners are
 /// scenario-loop covered and must not reappear here.
-final Set<String> ordersPreferScenarioTablesAllowlist = {
-  'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_keys_shared_validator_test.dart',
-};
+final Set<String> ordersPreferScenarioTablesAllowlist = {};
 
 /// When true, every existing `*_test.dart` under the orders test tree is
 /// treated as allowlisted (wave-3 kickoff). Set false once migration coverage

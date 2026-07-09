@@ -1494,6 +1494,20 @@ Migrated imperative `order_suggestion_shared_validator_equivalence_test.dart` �
 
 test/ LOC after slice 86: **38,219** (net +44 from post–slice 85; support modules add LOC while runner shrinks). Remaining: `order_suggestion_work_tile_keys_shared_validator_test.dart`, lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+### Slice 87 — work-tile-keys shared-validator scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wtk-shared-validator | sharedCandidateValidator matches default path for same inputs | `order_suggestion_work_tile_keys_shared_validator_test.dart` | same + `support/suggestion/order_suggestion_work_tile_keys_shared_validator_{fixtures,scenarios,expectations}.dart` | #3949 |
+| wtk-owned-ids | playerOwnedProvinceIds matches default path for same inputs | same | same | #3949 |
+| wtk-units-by-id | optional unitsById matches default path | same | same | #3949 |
+| wtk-builder-behavior | matches prior behavior for builder improvement tiles | same | same | #3949 |
+| wtk-shared-view | shared view and validator matches default path | same | same | #3949 |
+
+Migrated imperative `order_suggestion_work_tile_keys_shared_validator_test.dart` → table-driven scenarios with dedicated support modules. Removed file from `ordersPreferScenarioTablesAllowlist` (allowlist now empty — all documented-exception imperative suites migrated).
+
+test/ LOC after slice 87: **38,210** (net −9 from post–slice 86; support modules add LOC while runner shrinks). Remaining: lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
