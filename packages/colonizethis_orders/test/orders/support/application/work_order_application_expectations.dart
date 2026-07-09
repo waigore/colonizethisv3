@@ -118,9 +118,24 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         .purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey:
       const cost = WorkAppIds.purchaseLandGrainCost;
         final game = workAppPurchaseLandGame(
-          units: [waaMerchantOnMinor()],
+          units: [
+            workAppUnit(
+              id: 'merchant1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: WorkAppIds.minorProvinceId,
+              tileKey: WorkAppIds.tileKeyMinor,
+            ),
+          ],
           players: [workAppPlayer(treasury: cost + 100)],
-          overtureStates: [waaEmbassyOverture()],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
         );
         final next = waaApply(game, waaPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: 'p1');

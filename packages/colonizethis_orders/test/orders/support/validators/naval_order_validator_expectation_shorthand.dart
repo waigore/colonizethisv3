@@ -62,13 +62,6 @@ void novExpectNavalMission({
 NavalMoveOrder novSeaMove(String fleetId, String seaZoneId) =>
     NavalMoveOrder(fleetId: fleetId, destinationSeaZoneId: seaZoneId);
 
-NavalMoveOrder novDockMove(String fleetId, String localProvinceId) =>
-    NavalMoveOrder(
-      fleetId: fleetId,
-      destinationPortProvinceId:
-          ProvinceId.full(kNavalOrderValidatorTestRegionId, localProvinceId),
-    );
-
 void novExpectAtSeaMove({
   required MapTopology topology,
   required String destSea,
@@ -158,7 +151,15 @@ void novExpectDockMove({
       ),
       topology: topology,
     ),
-    order: order ?? novDockMove(fleetId, portLocalId),
+    order:
+        order ??
+        NavalMoveOrder(
+          fleetId: fleetId,
+          destinationPortProvinceId: ProvinceId.full(
+            kNavalOrderValidatorTestRegionId,
+            portLocalId,
+          ),
+        ),
     status: status,
     reasonExact: reasonExact,
     reasonIsNull: reasonIsNull,

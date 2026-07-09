@@ -337,7 +337,11 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         expect(buildSuggestions, isEmpty);
     case ValidWorkTilesTarget
         .suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut:
-      final fx = vwtTribePartialFx();
+      final fx = NwPartialRevealHomeTarget(
+          homeLocalId: 'home',
+          targetLocalId: 'tribe1',
+          targetOwnerId: 'tribe1',
+        );
         final exploreGame = vwtTribeConsulateGame(fx, id: 'g1916e1');
         final exploreTopology = fx.topology();
         final explore = vwtSuggestExplore(exploreGame, exploreTopology).toList();

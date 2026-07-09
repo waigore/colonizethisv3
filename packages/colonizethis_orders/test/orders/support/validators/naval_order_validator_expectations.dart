@@ -167,7 +167,13 @@ void runNavalOrderValidatorExpectation(NavalOrderValidatorTarget target) {
           topology: novSingleSea(),
           status: OrderValidationStatus.rejected,
           reasonExact: 'Port province not found',
-          order: novDockMove('f1', 'Nonexistent'),
+          order: NavalMoveOrder(
+            fleetId: 'f1',
+            destinationPortProvinceId: ProvinceId.full(
+              kNavalOrderValidatorTestRegionId,
+              'Nonexistent',
+            ),
+          ),
         );
     case NavalOrderValidatorTarget.missionRejectsWhenPreviousRejected:
         novExpectNavalMission(

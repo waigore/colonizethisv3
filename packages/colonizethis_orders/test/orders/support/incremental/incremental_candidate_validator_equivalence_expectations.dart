@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'incremental_candidate_validator_equivalence_corpus_shorthand.dart';
 import 'incremental_candidate_validator_equivalence_test_helpers.dart';
 import 'incremental_candidate_validator_equivalence_expectation_shorthand.dart';
 
@@ -118,7 +117,10 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
       }
     case IncrementalEquivalenceTarget.workNonEmptyBasePrefix:
         final tile = iceTile('P2');
-        iceExpectWorkOnCorpus(
+        expectWorkEquivalent(
+          game: moveCorpusGame(),
+          topology: moveCorpusTopology(),
+          playerId: IceIds.playerId,
           basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
           candidate: WorkOrder(
             unitId: 'u_explorer',
@@ -128,7 +130,10 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           label: 'duplicate work unit with basePrefix',
         );
     case IncrementalEquivalenceTarget.diplomaticNonEmptyBasePrefix:
-        iceExpectDiplomaticOnCorpus(
+        expectDiplomaticEquivalent(
+          game: moveCorpusGame(),
+          topology: moveCorpusTopology(),
+          playerId: IceIds.playerId,
           basePrefix: iceDeclareWarPrefix('p2'),
           candidate: const DiplomaticOrder(
             type: DiplomaticOrderType.alliance,

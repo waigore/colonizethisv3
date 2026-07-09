@@ -1865,6 +1865,17 @@ test/ LOC after slice 113: **37,838** (net +21 from post–slice 112; dispatcher
 
 test/ LOC after slice 114: **37,710** (net −128 from post–slice 113). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 115: ICE merge, waa/vwt/nov dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-corpus-merge | merge `incremental_candidate_validator_equivalence_corpus_shorthand.dart` into `incremental_candidate_validator_equivalence_expectation_shorthand.dart`; inline single-site work/diplomatic corpus probes in dispatcher | `incremental_candidate_validator_equivalence_corpus_shorthand.dart` | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | #3949 |
+| dispatch-inline-waa-purchase | inline `waaMerchantOnMinor` / `waaEmbassyOverture` into purchase-land dispatcher; fold `waaExpectProspected` into `waaExpectProspect` | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-nov-dock | inline `novDockMove` into naval validator dispatcher + `novExpectDockMove` default | `naval_order_validator_expectation_shorthand.dart` | `naval_order_validator_expectations.dart` | #3949 |
+| dispatch-inline-vwt-tribe | drop `vwtTribePartialFx`; inline tribe partial-reveal fixture at dispatcher call site | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+
+test/ LOC after slice 115: **37,670** (net −40 from post–slice 114). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

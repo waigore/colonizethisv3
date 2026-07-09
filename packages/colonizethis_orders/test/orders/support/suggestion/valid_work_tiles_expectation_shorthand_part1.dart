@@ -1,21 +1,16 @@
 part of 'valid_work_tiles_expectation_shorthand.dart';
 
 
-NwPartialRevealHomeTarget vwtTribePartialFx({
-  Map<String, String> resourceByTileKey = const {},
-  Map<String, Set<String>> playerProspectedTiles = const {},
-}) =>
-    NwPartialRevealHomeTarget(
-      homeLocalId: 'home',
-      targetLocalId: 'tribe1',
-      targetOwnerId: 'tribe1',
-      resourceByTileKey: resourceByTileKey,
-      playerProspectedTiles: playerProspectedTiles,
-    );
-
 NwPartialRevealHomeTarget vwtTribeGrainIronFx({bool prospectedIron = false}) {
-  final base = vwtTribePartialFx();
-  return vwtTribePartialFx(
+  final base = NwPartialRevealHomeTarget(
+    homeLocalId: 'home',
+    targetLocalId: 'tribe1',
+    targetOwnerId: 'tribe1',
+  );
+  return NwPartialRevealHomeTarget(
+    homeLocalId: 'home',
+    targetLocalId: 'tribe1',
+    targetOwnerId: 'tribe1',
     resourceByTileKey: {base.t0: 'grain', base.t1: 'iron'},
     playerProspectedTiles: prospectedIron
         ? {ValidWorkTilesTestSupport.playerId: {base.t1}}

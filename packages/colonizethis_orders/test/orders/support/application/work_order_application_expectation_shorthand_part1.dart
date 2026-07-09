@@ -14,21 +14,6 @@ Game waaApply(
 
 Unit waaSingleUnit(Game game) => game.worldState.oldWorld.units.single;
 
-void waaExpectProspected(
-  Game next, {
-  required bool expected,
-  String playerId = 'p1',
-  String tileKey = WorkAppIds.tileKey,
-}) {
-  final prospected =
-      next.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  if (expected) {
-    expect(prospected, contains(tileKey));
-  } else {
-    expect(prospected, isNot(contains(tileKey)));
-  }
-}
-
 void waaExpectPurchased(
   Game next, {
   required String? ownerId,
@@ -112,15 +97,6 @@ Game waaProspectGame({Map<String, String>? resourceByTileKey}) =>
 
 Orders waaProspectOrders() =>
     workAppSingleWorkOrder(target: kWorkTargetProspect);
-
-Unit waaMerchantOnMinor({String id = 'merchant1', String ownerId = 'p1'}) =>
-    workAppUnit(
-      id: id,
-      type: kUnitTypeMerchant,
-      ownerId: ownerId,
-      locationProvinceId: WorkAppIds.minorProvinceId,
-      tileKey: WorkAppIds.tileKeyMinor,
-    );
 
 Orders waaPurchaseLandOrders({
   String unitId = 'merchant1',
@@ -220,17 +196,6 @@ void waaExpectCurrentWorkTiming(
   }
 }
 
-OvertureState waaEmbassyOverture({
-  String gpId = 'p1',
-  String targetId = 'minor1',
-}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.embassy,
-      sinceTurn: 0,
-    );
-
 Game waaApplyBuildRoad(Game game) =>
     waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));
 
@@ -243,7 +208,13 @@ void waaExpectProspect({
     terrain: terrain,
     resourceByTileKey: resourceByTileKey,
   );
-  waaExpectProspected(next, expected: expected);
+  final prospected =
+      next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
+  if (expected) {
+    expect(prospected, contains(WorkAppIds.tileKey));
+  } else {
+    expect(prospected, isNot(contains(WorkAppIds.tileKey)));
+  }
   if (expected) {
     final u = waaSingleUnit(next);
     expect(u.tileKey, WorkAppIds.tileKey);
