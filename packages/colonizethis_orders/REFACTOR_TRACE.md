@@ -699,6 +699,32 @@ test/ LOC after slice 42: **33,733** (net +206 from post–slice 41; expectation
 
 test/ LOC after slice 43: **32,866** (net −867 from post–slice 42; deleted 20 part-wrapper files, inlined dispatch to shorthand presets). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 44: order_merge scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| merge-moves | prefers human move orders over AI for same unit | `order_merge_part1_test.dart` | `support/merge/order_merge_scenarios.dart` + `order_merge_test.dart` | #3949 |
+| merge-moves-ai | keeps AI move orders when human has none for unit | same | same | #3949 |
+| merge-diplomatic | merges diplomatic orders with human precedence per (type,target) | same | same | #3949 |
+| merge-null-ai | returns human orders when aiOrders is null | same | same | #3949 |
+| merge-empty-ai | returns human orders when aiOrders is empty (all maps empty) | same | same | #3949 |
+| merge-build | merge build orders: human and AI both contribute | same | same | #3949 |
+| merge-work | merge work orders: human for unit A, AI for unit B | same | same | #3949 |
+| merge-research-human | merge research orders: human wins when both have orders | same | same | #3949 |
+| merge-research-ai | merge research orders: AI used when human has none | same | same | #3949 |
+| merge-naval-move | merge naval move orders: human and AI for different fleets | `order_merge_part2_test.dart` | same | #3949 |
+| merge-naval-mission | merge naval mission orders: human and AI for different fleets | same | same | #3949 |
+| merge-multi-player | multiple players: both get merged lists | same | same | #3949 |
+| merge-trade-ai | merges AI trade orders when human has none (Refs #2924) | same | same | #2924, #3949 |
+| merge-trade-human | human trade orders replace AI trade for same player | same | same | #3949 |
+| merge-diplomatic-dedup | diplomatic merge drops AI order duplicating human (type,target) | same | same | #3949 |
+| merge-build-append | build merge appends AI after human, capped at combined count | same | same | #3949 |
+| merge-stable-order | merge uses stable player ordering | same | same | #3949 |
+
+Merged `order_merge_part{1,2}_test.dart` → `orders/order_merge_test.dart` (≤400 lines). Family LOC moved into `order_merge_expectations.dart` + `order_merge_scenarios.dart`. Removed part files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 44: **33,003** (net +137 from post–slice 43; scenario tables add support modules but remove two part runners). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
