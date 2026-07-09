@@ -467,6 +467,7 @@ supports only explore target
 supports only prospect
 supports only purchase_land target
 throws StateError when no projector was injected
+throws StateError when a trade order is validated without a projector
 trade consulate debits treasury on accept
 trade consulate rejects when treasury too low (no debit)
 trade consulate rejects without diplomatic_expertise

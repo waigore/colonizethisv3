@@ -854,6 +854,25 @@ Migrated imperative `work_suggestion_pipeline_test.dart` and `validator_bundle_t
 
 test/ LOC after slice 52: **33,319** (net +126 from post–slice 51; scenario support modules add LOC while runners shrink). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 53: order_effects_projector_seam + work_order_duration_preview scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oeps-injected-output | uses the injected projector output | `order_effects_projector_seam_test.dart` | `support/engine/order_effects_projector_seam_scenarios.dart` + fixtures/expectations + thin runner | #3290 C2 |
+| oeps-no-projector | throws StateError when no projector was injected | same | same | #3290 C2 |
+| oeps-trade-no-projector | throws StateError when a trade order is validated without a projector | same | same | #3290 C2 |
+| oeps-trade-valid-offer | uses the injected projector and accepts a valid offer | same | same | #3290 C2 |
+| oeps-no-trade-skip | does not invoke the projector when no trade order is staged | same | same | #3290 C2 |
+| wodp-explore-scaled | returns scaled explore turns from province size | `work_order_duration_preview_test.dart` | `support/application/work_order_duration_preview_scenarios.dart` + expectations + thin runner | #3949 |
+| wodp-fort-scaled | returns fort-level scaled turns for build_fort | same | same | #3949 |
+| wodp-counter-spy | returns one turn for counter_spy | same | same | #3949 |
+| wodp-improvement-scaled | returns improvement-level scaled turns for build_improvement | same | same | #3949 |
+| wodp-prospect-purchase | returns minimum one turn for prospect and purchase_land | same | same | #3949 |
+
+Migrated imperative `order_effects_projector_seam_test.dart` and `work_order_duration_preview_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline trade-order projector baseline description. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 53: **33,471** (net +152 from post–slice 52; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

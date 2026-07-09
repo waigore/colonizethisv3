@@ -40,7 +40,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/draft_orders_mutations_test.dart',
   'packages/colonizethis_orders/test/orders/explorer_consulate_gate_predicate_test.dart',
   'packages/colonizethis_orders/test/orders/merchant_purchase_land_candidate_tile_keys_test.dart',
-  'packages/colonizethis_orders/test/orders/order_effects_projector_seam_test.dart',
   'packages/colonizethis_orders/test/orders/order_resolution_context_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_diplomatic_minor_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_api_impl_diplomatic_test.dart',
@@ -87,7 +86,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/work_handlers/explore_work_handler_test.dart',
   'packages/colonizethis_orders/test/orders/work_handlers/purchase_land_work_handler_test.dart',
   'packages/colonizethis_orders/test/orders/work_handlers/remaining_work_handlers_test.dart',
-  'packages/colonizethis_orders/test/orders/work_order_duration_preview_test.dart',
 };
 
 /// When true, every existing `*_test.dart` under the orders test tree is
