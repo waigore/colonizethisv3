@@ -9,6 +9,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'order_engine_validate_work_expectation_shorthand.dart';
 
+part 'order_engine_validate_work_expectations_late.dart';
+
 /// Pins for [orderEngineValidateWorkScenarios] rows.
 enum OrderEngineValidateWorkTarget {
   rejectsSecondPendingWorkOrderForSameUnitInOneTurn,
@@ -363,129 +365,29 @@ void runOrderEngineValidateWorkExpectation(
         );
     case OrderEngineValidateWorkTarget
         .rejectsBuildFortToLevel3WithoutModernForts:
-      vwExpectRejected(
-          vwValidateOwWorkTarget(
-            game: fortWorkGame(
-              fortLevel: 2,
-              stockpile: Stockpile()
-                  .applyDelta(CommodityCatalog.steel.id, 5)
-                  .applyDelta(CommodityCatalog.lumber.id, 5),
-              techUnlocked: const {kTechIdMineEngineering: true},
-            ),
-            unitId: 'eng1',
-            target: kWorkTargetBuildFort,
-          ),
-          reasonContains: 'Modern Forts',
-        );
+      vwLateRejectsBuildFortToLevel3WithoutModernForts();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailWhenTileTerrainDataIsMissing:
-      vwExpectRejected(
-          vwValidateOwWorkTarget(
-            game: gameWithRailUnit(
-              tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
-            ),
-            unitId: 'rail1',
-            target: kWorkTargetBuildRail,
-            tileMapByRegion: const {},
-          ),
-          reasonContains: 'terrain data required',
-        );
+      vwLateRejectsBuildRailWhenTileTerrainDataIsMissing();
     case OrderEngineValidateWorkTarget.rejectsBuildRailWhenRoadLevelIs0:
-      vwExpectRejected(
-          vwValidateOwWorkTarget(
-            game: gameWithRailUnit(
-              tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 0),
-            ),
-            unitId: 'rail1',
-            target: kWorkTargetBuildRail,
-            tileMapByRegion: {ValidateWorkOw.ow: railTileMap(TerrainType.plains)},
-          ),
-          reasonContains: 'existing road',
-        );
+      vwLateRejectsBuildRailWhenRoadLevelIs0();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailOnHillsWithOnlyEarlySteam:
-      vwExpectRejected(
-          vwValidateOwWorkTarget(
-            game: gameWithRailUnit(
-              tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
-              techUnlocked: const {kTechIdEarlySteamEngine: true},
-            ),
-            unitId: 'rail1',
-            target: kWorkTargetBuildRail,
-            tileMapByRegion: {ValidateWorkOw.ow: railTileMap(TerrainType.hills)},
-          ),
-          reasonContains: 'Later Steam',
-        );
+      vwLateRejectsBuildRailOnHillsWithOnlyEarlySteam();
     case OrderEngineValidateWorkTarget
         .acceptsBuildRailOnPlainsWithEarlySteamAndRoad1:
-      vwExpectAccepted(
-          vwValidateOwWorkTarget(
-            game: gameWithRailUnit(
-              tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
-            ),
-            unitId: 'rail1',
-            target: kWorkTargetBuildRail,
-            tileMapByRegion: {ValidateWorkOw.ow: railTileMap(TerrainType.plains)},
-          ),
-        );
+      vwLateAcceptsBuildRailOnPlainsWithEarlySteamAndRoad1();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceWithoutEmbassyPath:
-      vwExpectRejected(
-          vwValidateSingleWork(
-            game: minorProvinceEngineerRoadGame(),
-            playerId: 'gp1',
-            order: WorkOrder(
-              unitId: 'e1',
-              target: kWorkTargetBuildRoad,
-              targetTileKey: minorProvinceRoadTileKey(),
-            ),
-            topology: minorProvinceRoadTopology(),
-          ),
-          reasonContains: 'foreign province',
-        );
+      vwLateRejectsBuildRoadInMinorProvinceWithoutEmbassyPath();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile:
-      vwExpectRejected(
-          vwValidateSingleWork(
-            game: minorProvinceEngineerRoadGame(
-              overtureStates: minorProvinceEmbassyOverture,
-            ),
-            playerId: 'gp1',
-            order: WorkOrder(
-              unitId: 'e1',
-              target: kWorkTargetBuildRoad,
-              targetTileKey: minorProvinceRoadTileKey(),
-            ),
-            topology: minorProvinceRoadTopology(),
-          ),
-          reasonContains: 'cannot occupy',
-        );
+      vwLateRejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile();
     case OrderEngineValidateWorkTarget
         .rejectsUpgradeTownWithoutNationalBureaucracy:
-      vwExpectRejected(
-          vwValidateSingleWork(
-            game: upgradeTownWorkGame(techUnlocked: const {}),
-            order: const WorkOrder(
-              unitId: 'b1',
-              target: kWorkTargetUpgradeTown,
-              targetTileKey: ValidateWorkOw.tileKey,
-            ),
-          ),
-          reasonContains: 'National Bureaucracy',
-        );
+      vwLateRejectsUpgradeTownWithoutNationalBureaucracy();
     case OrderEngineValidateWorkTarget
         .acceptsUpgradeTownWhenNationalBureaucracyUnlocked:
-      vwExpectAccepted(
-          vwValidateSingleWork(
-            game: upgradeTownWorkGame(
-              techUnlocked: const {kTechIdNationalBureaucracy: true},
-            ),
-            order: const WorkOrder(
-              unitId: 'b1',
-              target: kWorkTargetUpgradeTown,
-              targetTileKey: ValidateWorkOw.tileKey,
-            ),
-          ),
-        );
-  }
+      vwLateAcceptsUpgradeTownWhenNationalBureaucracyUnlocked();
+}
 }
