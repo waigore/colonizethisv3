@@ -14,37 +14,20 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
   switch (target) {
     case CivilianSpawnTarget
         .civilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince:
-      _civilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince();
+      cspExpectExplorerSpawnAtCapital(
+        spawnProvinceId: 'oldWorld|P2',
+        otherOwnedProvinceId: 'oldWorld|P2',
+      );
     case CivilianSpawnTarget
         .civilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince:
-      _civilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince();
+      cspExpectExplorerSpawnAtCapital(peasants: 0);
     case CivilianSpawnTarget
         .civilianBuildWithMissingCapitalTileThrowsExplicitError:
-      _civilianBuildWithMissingCapitalTileThrowsExplicitError();
+      cspExpectMissingCapitalTileBuildError();
     case CivilianSpawnTarget.newWorldSpawnAddsUnitToNewWorld:
-      _newWorldSpawnAddsUnitToNewWorld();
+      cspExpectNewWorldMilitarySpawn(
+        provinceId: 'newWorld|N1',
+        unitType: 'peasant_levies',
+      );
   }
-}
-
-void
-_civilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince() {
-  cspExpectExplorerSpawnAtCapital(
-    spawnProvinceId: 'oldWorld|P2',
-    otherOwnedProvinceId: 'oldWorld|P2',
-  );
-}
-
-void _civilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince() {
-  cspExpectExplorerSpawnAtCapital(peasants: 0);
-}
-
-void _civilianBuildWithMissingCapitalTileThrowsExplicitError() {
-  cspExpectMissingCapitalTileBuildError();
-}
-
-void _newWorldSpawnAddsUnitToNewWorld() {
-  cspExpectNewWorldMilitarySpawn(
-    provinceId: 'newWorld|N1',
-    unitType: 'peasant_levies',
-  );
 }

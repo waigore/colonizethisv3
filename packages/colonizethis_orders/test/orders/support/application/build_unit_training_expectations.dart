@@ -2,15 +2,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 import 'build_unit_training_expectation_shorthand.dart';
 import 'build_unit_training_fixtures.dart';
 
 /// Pins for [buildUnitTrainingScenarios] rows.
-part 'build_unit_training_expectations_part1.dart';
-part 'build_unit_training_expectations_part2.dart';
-
 enum BuildUnitTrainingTarget {
   skipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog,
   skipsMilitaryBuildWhenZeroPeasants,
@@ -36,43 +32,72 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
   switch (target) {
     case BuildUnitTrainingTarget
         .skipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog:
-      _skipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog();
+      butExpectNoOwUnitsAfter(
+        butMilitaryBaseGame(peasants: 5, treasury: 1000),
+        butOrdersFor('unknown_regiment_xyz'),
+      );
     case BuildUnitTrainingTarget.skipsMilitaryBuildWhenZeroPeasants:
-      _skipsMilitaryBuildWhenZeroPeasants();
+      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+      butExpectNoOwUnitsAfter(
+        butRegimentBuildGame(
+          buildInputs: econ.buildInputs,
+          peasants: 0,
+          treasury: econ.buildTreasuryCost + 10,
+        ),
+        butOrdersFor('peasant_levies'),
+      );
     case BuildUnitTrainingTarget.skipsMilitaryBuildWhenTechNotUnlocked:
-      _skipsMilitaryBuildWhenTechNotUnlocked();
+      butExpectTechLockedRegimentSkipped();
     case BuildUnitTrainingTarget.skipsShipBuildWhenTechNotUnlocked:
-      _skipsShipBuildWhenTechNotUnlocked();
+      butExpectTechLockedShipSkipped();
     case BuildUnitTrainingTarget.shipBuildWithTopologyNullDoesNotAddFleet:
-      _shipBuildWithTopologyNullDoesNotAddFleet();
+      butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant.nullTopology);
     case BuildUnitTrainingTarget
         .shipBuildWithCapitalProvinceIdNullDoesNotAddFleet:
-      _shipBuildWithCapitalProvinceIdNullDoesNotAddFleet();
+      butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant.nullCapital);
     case BuildUnitTrainingTarget
         .shipBuildWithCapitalNotAdjacentToSeaDoesNotAddShip:
-      _shipBuildWithCapitalNotAdjacentToSeaDoesNotAddShip();
+      butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant.isolatedSea);
     case BuildUnitTrainingTarget.rejectsBuildWhenTreasuryIsInsufficient:
-      _rejectsBuildWhenTreasuryIsInsufficient();
+      butExpectTreasuryInsufficientRegimentBuildRejected();
     case BuildUnitTrainingTarget.rejectsBuildWhenMaterialsAreInsufficient:
-      _rejectsBuildWhenMaterialsAreInsufficient();
+      butExpectInsufficientMaterialsBuildRejected(
+        game: butMilitaryBaseGame(
+          peasants: 5,
+          treasury:
+              RegimentEconomyCatalog.byId['peasant_levies']!.buildTreasuryCost +
+              10,
+        ),
+        regimentId: 'peasant_levies',
+      );
     case BuildUnitTrainingTarget.appliesTreasuryStockpileAndWorkerCostsWhenValid:
-      _appliesTreasuryStockpileAndWorkerCostsWhenValid();
+      butExpectPeasantLevyBuildApplied();
     case BuildUnitTrainingTarget.returnsGameUnchangedWhenNoBuildOrWorkOrders:
-      _returnsGameUnchangedWhenNoBuildOrWorkOrders();
+      butExpectGameUnchangedAfterEmptyOrders(
+        butMilitaryBaseGame(peasants: 2, treasury: 100),
+      );
     case BuildUnitTrainingTarget
         .shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea:
-      _shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea();
+      butExpectFluyteShipBuildApplied();
     case BuildUnitTrainingTarget.rejectsNavalBuildWhenPeasantsAreZero:
-      _rejectsNavalBuildWhenPeasantsAreZero();
+      butExpectNavalBuildRejectedWhenNoPeasants();
     case BuildUnitTrainingTarget.secondNavalBuildAddsShipToExistingHomeFleet:
-      _secondNavalBuildAddsShipToExistingHomeFleet();
+      butExpectSecondFluyteAddsToHomeFleet();
     case BuildUnitTrainingTarget.rejectsCivilianBuildWhenTreasuryInsufficient:
-      _rejectsCivilianBuildWhenTreasuryInsufficient();
+      butExpectCivilianTreasuryInsufficientRejected();
     case BuildUnitTrainingTarget.rejectsCivilianBuildWhenPaperInsufficient:
-      _rejectsCivilianBuildWhenPaperInsufficient();
+      butExpectCivilianBuildRejected(
+        butCivilianGame(treasury: 1000, paper: 0),
+        kUnitTypeBuilder,
+      );
     case BuildUnitTrainingTarget.appliesTreasuryAndPaperCostWhenCivilianBuildValid:
-      _appliesTreasuryAndPaperCostWhenCivilianBuildValid();
+      butExpectCivilianBuildApplied(
+        game: butCivilianGame(treasury: 1100, paper: 3),
+        unitType: kUnitTypeBuilder,
+        treasuryDelta: 1000,
+        paperDelta: 2,
+      );
     case BuildUnitTrainingTarget.merchantRequiresMerchantCompaniesTech:
-      _merchantRequiresMerchantCompaniesTech();
+      butExpectMerchantTechGate(cash: 2000, paperQty: 4);
   }
 }

@@ -1,13 +1,8 @@
 // Compact applyBuildAndWorkOrders worker-pool phase assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'worker_pool_phase_expectation_shorthand.dart';
 
 /// Pins for [workerPoolPhaseScenarios] rows.
-part 'worker_pool_phase_expectations_part1.dart';
-
 enum WorkerPoolPhaseTarget {
   acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric,
   acceptedApprenticeTrainConsumesPeasantPaperAndTreasury,
@@ -24,32 +19,41 @@ void runWorkerPoolPhaseExpectation(WorkerPoolPhaseTarget target) {
   switch (target) {
     case WorkerPoolPhaseTarget
         .acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric:
-      _acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric();
+      wppExpectRecruitPeasantFromFabric();
     case WorkerPoolPhaseTarget
         .acceptedApprenticeTrainConsumesPeasantPaperAndTreasury:
-      _acceptedApprenticeTrainConsumesPeasantPaperAndTreasury();
+      wppExpectApprenticeTrain(
+        paper: 5,
+        peasants: 3,
+        treasury: 500,
+        expectedPeasants: 2,
+        expectedPaper: 3,
+        expectedTreasury: 300,
+      );
     case WorkerPoolPhaseTarget
         .recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction:
-      _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction();
+      wppExpectApprenticeTrainSkippedWhenUnaffordable(
+        paper: 5,
+        peasants: 3,
+        treasury: 100,
+      );
     case WorkerPoolPhaseTarget
         .acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage:
-      _acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage();
+      wppExpectJourneymanTrain2692S9();
     case WorkerPoolPhaseTarget
         .acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail:
-      _acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail();
+      wppExpectMasterTrain2692S9();
     case WorkerPoolPhaseTarget
         .masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage:
-      _masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage();
+      wppExpectMasterTrainSkipped2692S9TechGate();
     case WorkerPoolPhaseTarget
         .laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics:
-      _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics();
+      wppExpectSequentialPeasantThenApprentice2692S9();
     case WorkerPoolPhaseTarget
         .middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior:
-      _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior();
+      wppExpectSequentialApprenticeSkipThenPeasant2692S9();
     case WorkerPoolPhaseTarget
         .perPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin:
-      _perPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin();
+      wppExpectMultiPlayerApprenticeIsolation();
   }
 }
-
-

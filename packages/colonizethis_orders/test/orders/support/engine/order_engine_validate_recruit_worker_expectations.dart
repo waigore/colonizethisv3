@@ -16,31 +16,15 @@ void runOrderEngineValidateRecruitWorkerExpectation(
   switch (target) {
     case OrderEngineValidateRecruitWorkerTarget
         .acceptsASinglePeasantRecruitWhenFabricIsAvailable:
-      _acceptsASinglePeasantRecruitWhenFabricIsAvailable();
+      vrwExpectPeasantRecruitAccepted();
     case OrderEngineValidateRecruitWorkerTarget
         .rejectsApprenticeTrainWhenRequiredTechIsLocked:
-      _rejectsApprenticeTrainWhenRequiredTechIsLocked();
+      vrwExpectApprenticeTrainRejectedTechLocked();
     case OrderEngineValidateRecruitWorkerTarget
         .recruitConsumesLastPeasantBeforeMilitaryBuild:
-      _recruitConsumesLastPeasantBeforeMilitaryBuild();
+      vrwExpectRecruitConsumesPeasantBeforeMilitaryBuild();
     case OrderEngineValidateRecruitWorkerTarget
         .civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant:
-      _civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant();
+      vrwExpectRecruitThenCivilianBuildAccepted();
   }
-}
-
-void _acceptsASinglePeasantRecruitWhenFabricIsAvailable() {
-  vrwExpectPeasantRecruitAccepted();
-}
-
-void _rejectsApprenticeTrainWhenRequiredTechIsLocked() {
-  vrwExpectApprenticeTrainRejectedTechLocked();
-}
-
-void _recruitConsumesLastPeasantBeforeMilitaryBuild() {
-  vrwExpectRecruitConsumesPeasantBeforeMilitaryBuild();
-}
-
-void _civilianBuildAcceptedAfterRecruitConsumesOnlyPeasant() {
-  vrwExpectRecruitThenCivilianBuildAccepted();
 }

@@ -1664,6 +1664,19 @@ Explorer explore/prospect paths already route through `WorkSuggestionPipeline` (
 
 test/ LOC after slice 97: **39,391** (unchanged; lib-only slice). Remaining: support-table compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 98: dispatch-inline compaction + validateWork part merge
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-wpp-but | call `wpp*`/`but*`/`vbc*`/`vrw*`/`csp*` presets directly from scenario dispatch; delete thin part wrappers | `worker_pool_phase_expectations_part1.dart`, `build_unit_training_expectations_part{1,2}.dart` | consolidated expectation runners | #3949 |
+| dispatch-inline-engine-app | inline `vbc*`/`vrw*`/`csp*` dispatch (no `_rejects*` wrapper indirection) | `order_engine_validate_build_civilian_expectations.dart`, `order_engine_validate_recruit_worker_expectations.dart`, `civilian_spawn_expectations.dart` | same | #3949 |
+| vw-fixtures-merge | merge `order_engine_validate_work_fixtures_part2` into part1 | `order_engine_validate_work_fixtures_part2.dart` | `order_engine_validate_work_fixtures_part1.dart` | #3949 |
+| vw-shorthand-merge | merge `order_engine_validate_work_expectation_shorthand_part3` into part2 | `order_engine_validate_work_expectation_shorthand_part3.dart` | `order_engine_validate_work_expectation_shorthand_part2.dart` | #3949 |
+
+Deleted five thin dispatch-wrapper/part files; inlined preset calls in five expectation dispatchers; merged validateWork fixture and shorthand part shards under the 400-line cap.
+
+test/ LOC after slice 98: **39,205** (net −186 from post–slice 97). Remaining: further support-table compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
