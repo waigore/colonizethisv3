@@ -825,6 +825,17 @@ Migrated imperative `order_engine_validation_phase_plan_test.dart` and `order_su
 
 test/ LOC after slice 50: **33,109** (net +137 from post–slice 49; scenario support modules add LOC while runners shrink). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 51: order_engine_validator_injection scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevi-injected | OrderEngine validator factory allows injected validators | `order_engine_validator_injection_test.dart` | `support/engine/order_engine_validator_injection_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| oevi-six-bundles | validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4) | same | same | #2391 AC7 |
+
+Migrated imperative `order_engine_validator_injection_test.dart` → table-driven scenarios with `order_engine_validator_injection_expectations.dart` + `order_engine_validator_injection_fixtures.dart`. Removed file from `ordersPreferScenarioTablesAllowlist`. Pinned multiline former `test(` description for six-bundle factory-call count in baseline + scenario `label:`.
+
+test/ LOC after slice 51: **33,193** (net +84 from post–slice 50; scenario support modules add LOC while runner shrinks to 15 lines). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -259,6 +259,7 @@ offerPeace rejected when not at war
 optional unitsById matches default path
 OrderEngine add-with-context still invokes full validation
 OrderEngine validator factory allows injected validators
+validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4)
 orderResolutionContextFromView aliases provincesById
 ordersApplicationLog is an alias of the shared ordersLog
 ordersLog emits messages with the `orders:` prefix
