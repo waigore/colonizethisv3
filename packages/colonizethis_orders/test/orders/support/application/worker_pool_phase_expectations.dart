@@ -23,64 +23,153 @@ void runWorkerPoolPhaseExpectation(WorkerPoolPhaseTarget target) {
   switch (target) {
     case WorkerPoolPhaseTarget
         .acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric:
-      wppExpectRecruitPeasantFromFabric();
+      {
+        const fabric = 3;
+        final p = wppAfter(
+          wppPlayer(stockpile: wppStock({CommodityCatalog.fabric.id: fabric})),
+          [WorkerTier.peasant],
+        );
+        wppExpect(
+          p,
+          peasants: 1,
+          stock: {CommodityCatalog.fabric.id: fabric - 2},
+          treasury: 0,
+        );
+      }
     case WorkerPoolPhaseTarget
         .acceptedApprenticeTrainConsumesPeasantPaperAndTreasury:
-      wppExpectApprenticeTrain(
-        paper: 5,
-        peasants: 3,
-        treasury: 500,
-        expectedPeasants: 2,
-        expectedPaper: 3,
-        expectedTreasury: 300,
-      );
+      {
+        const paper = 5;
+        const peasants = 3;
+        const treasury = 500;
+        final p = wppAfter(
+          wppPlayer(
+            stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+            workerPool: WorkerPool(peasants: peasants),
+            treasury: treasury,
+            techUnlocked: wppApprenticeTech,
+          ),
+          [WorkerTier.apprentice],
+        );
+        wppExpect(
+          p,
+          peasants: 2,
+          apprentices: 1,
+          stock: {CommodityCatalog.paper.id: 3},
+          treasury: 300,
+        );
+      }
     case WorkerPoolPhaseTarget
         .recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction:
-      wppExpectApprenticeTrainSkippedWhenUnaffordable(
-        paper: 5,
-        peasants: 3,
-        treasury: 100,
-      );
+      {
+        const paper = 5;
+        const peasants = 3;
+        const treasury = 100;
+        final p = wppAfter(
+          wppPlayer(
+            stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+            workerPool: WorkerPool(peasants: peasants),
+            treasury: treasury,
+            techUnlocked: wppApprenticeTech,
+          ),
+          [WorkerTier.apprentice],
+        );
+        wppExpect(
+          p,
+          peasants: peasants,
+          apprentices: 0,
+          stock: {CommodityCatalog.paper.id: paper},
+          treasury: treasury,
+        );
+      }
     case WorkerPoolPhaseTarget
         .acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage:
-        wppExpectJourneymanTrain(
-          paper: 8,
-          peasants: 2,
-          treasury: 700,
-          expectedPeasants: 1,
-          expectedPaper: 3,
-          expectedTreasury: 200,
+      {
+        const paper = 8;
+        const peasants = 2;
+        const treasury = 700;
+        final p = wppAfter(
+          wppPlayer(
+            stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+            workerPool: WorkerPool(peasants: peasants),
+            treasury: treasury,
+            techUnlocked: wppJourneymanTech,
+          ),
+          [WorkerTier.journeyman],
+        );
+        wppExpect(
+          p,
+          peasants: 1,
+          journeymen: 1,
+          stock: {CommodityCatalog.paper.id: 3},
+          treasury: 200,
           peasantsReason: 'one peasant consumed',
           journeymenReason: 'one journeyman added',
           stockReasons: {
-            CommodityCatalog.paper.id: '5 paper deducted per SPEC § Recruiting cost table',
+            CommodityCatalog.paper.id:
+                '5 paper deducted per SPEC § Recruiting cost table',
           },
           treasuryReason: '500 ducats deducted per SPEC § Recruiting cost table',
         );
+      }
     case WorkerPoolPhaseTarget
         .acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail:
-        wppExpectMasterTrain(
-          paper: 12,
-          peasants: 1,
-          treasury: 1200,
-          expectedPeasants: 0,
-          expectedPaper: 2,
-          expectedTreasury: 200,
+      {
+        const paper = 12;
+        const peasants = 1;
+        const treasury = 1200;
+        final p = wppAfter(
+          wppPlayer(
+            stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+            workerPool: WorkerPool(peasants: peasants),
+            treasury: treasury,
+            techUnlocked: wppMasterTech,
+          ),
+          [WorkerTier.master],
+        );
+        wppExpect(
+          p,
+          peasants: 0,
+          masters: 1,
+          stock: {CommodityCatalog.paper.id: 2},
+          treasury: 200,
           peasantsReason: 'one peasant consumed',
           mastersReason: 'one master added',
           stockReasons: {
-            CommodityCatalog.paper.id: '10 paper deducted per SPEC § Recruiting cost table',
+            CommodityCatalog.paper.id:
+                '10 paper deducted per SPEC § Recruiting cost table',
           },
           treasuryReason: '1000 ducats deducted per SPEC § Recruiting cost table',
         );
+      }
     case WorkerPoolPhaseTarget
         .masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage:
-        wppExpectMasterTrainSkipped(
-          paper: 12,
-          peasants: 1,
-          treasury: 1200,
-          techUnlocked: const {kTechIdMasterArtisans: true},
+      {
+        const paper = 12;
+        const peasants = 1;
+        const treasury = 1200;
+        const techUnlocked = {kTechIdMasterArtisans: true};
+        final p = wppAfter(
+          wppPlayer(
+            stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+            workerPool: WorkerPool(peasants: peasants),
+            treasury: treasury,
+            techUnlocked: techUnlocked,
+          ),
+          [WorkerTier.master],
         );
+        wppExpect(
+          p,
+          peasants: peasants,
+          masters: 0,
+          stock: {CommodityCatalog.paper.id: paper},
+          treasury: treasury,
+          peasantsReason: 'peasant not consumed',
+          mastersReason: 'master not added',
+          stockReasons: {CommodityCatalog.paper.id: 'no paper deducted'},
+          treasuryReason: 'no treasury deducted',
+        );
+      }
     case WorkerPoolPhaseTarget
         .laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics:
         wppExpectSequentialTiers(

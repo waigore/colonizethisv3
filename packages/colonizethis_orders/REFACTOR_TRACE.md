@@ -1820,6 +1820,15 @@ test/ LOC after slice 109: **38,027** (net −67 from post–slice 108). Remaini
 
 test/ LOC after slice 110: **37,999** (net −28 from post–slice 109). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 111: wpp dispatcher-inline + work-target lint fix
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-wpp-single | inline six single-site `wppExpect*` wrappers into worker-pool phase dispatcher | `worker_pool_phase_expectation_shorthand.dart` | `worker_pool_phase_expectations.dart` | #3949 |
+| ci-work-target-lint | replace raw work-target literals in ownership expectations with constant cross-checks | `order_work_constants_expectations.dart` | same | #3949 |
+
+test/ LOC after slice 111: **37,929** (net −70 from post–slice 110). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
