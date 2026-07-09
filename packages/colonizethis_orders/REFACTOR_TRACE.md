@@ -1244,6 +1244,28 @@ Migrated imperative `validators/diplomatic/establish_overture_sub_validator_test
 
 test/ LOC after slice 72: **36,330** (net +90 from post–slice 71; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 73 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dsva-grant-non-positive | rejects non-positive amount | `validators/diplomatic/diplomatic_sub_validators_aid_test.dart` | `support/validators/diplomatic/diplomatic_sub_validators_aid_scenarios.dart` + thin runner | #2391 AC10 |
+| dsva-grant-below-step | rejects when amount is below the step | same | same | #2391 AC10 |
+| dsva-grant-not-multiple | rejects amount that is not a multiple of the step | same | same | #2391 AC10 |
+| dsva-grant-no-embassy | rejects without embassy | same | same | #2391 AC10 |
+| dsva-grant-low-treasury | rejects when treasury below amount and preserves treasury | same | same | #2391 AC10 |
+| dsva-grant-debits | accepts and debits treasury by the amount | same | same | #2391 AC10 |
+| dsva-subsidy-zero | rejects a zero percent | same | same | #3753 R3 |
+| dsva-subsidy-not-step | rejects a percent not a multiple of the step | same | same | #3753 R3 |
+| dsva-subsidy-above-max | rejects a percent above the maximum | same | same | #3753 R3 |
+| dsva-subsidy-no-overture | rejects without any overture | same | same | #3753 R3 |
+| dsva-subsidy-consulate-only | rejects with a Trade Consulate only (Refs #3753 R2) | same | same | #3753 R2 |
+| dsva-subsidy-accepts | accepts with an embassy and leaves treasury unchanged | same | same | #3753 R3 |
+| dsva-subsidy-low-treasury | accepts with an embassy even when treasury is low (no upfront cost) | same | same | #3753 R3 |
+
+Migrated imperative `validators/diplomatic/diplomatic_sub_validators_aid_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 73: **36,459** (net +129 from post–slice 72; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
