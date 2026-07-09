@@ -309,13 +309,13 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           2,
         );
     case WorkOrderApplicationTarget
+        .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
+      woaLateCounterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork();
     case WorkOrderApplicationTarget.unknownWorkTargetSkippedUnitStaysIdle:
-      final next = waaApply(
-          workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
-          workAppSingleWorkOrder(target: 'unknown_target'),
-        );
-        waaExpectUnitIdle(next);:
       woaLateUnknownWorkTargetSkippedUnitStaysIdle();
+    case WorkOrderApplicationTarget
+        .buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile:
+      woaLateBuildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile();
     case WorkOrderApplicationTarget
         .buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork:
       woaLateBuildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork();
@@ -329,12 +329,9 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion:
       woaLateExploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion();
     case WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork:
-      final next = waaApply(
-        waaEngineerRoadGame(),
-        workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
-      );
-        waaExpectUnitIdle(next);
-        waaExpectRoadLevel(next, 1);:
       woaLateEngineerBuildRoadWorkOrderSetsCurrentWork();
-}
+    case WorkOrderApplicationTarget
+        .buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient:
+      woaLateBuildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient();
+  }
 }

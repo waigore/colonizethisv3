@@ -1926,8 +1926,9 @@ test/ LOC after slice 119: **37,634** (net −20 from post–slice 118). Remaini
 | scenario_id | test description | source file(s) | target file | refs |
 |-------------|------------------|----------------|-------------|------|
 | waa-purchase-land-fixtures | extract `workAppPurchaseLandMerchant` / `workAppSingleGpPurchaseLandGame` / `workAppPurchaseLandOrders`; DRY single-GP purchase-land dispatcher cases | `work_order_application_expectations.dart` | `work_application_fixtures.dart` | #3949 |
-| vwt-single-tile-unify | fold `vwtMinimalSingleTileGame` / `vwtExplorerSingleTileGame` into `vwtSingleTileGame(withExplorer:)` | `valid_work_tiles_fixtures_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vwt-single-tile-unify | fold `vwtMinimalSingleTileGame` / `vwtExplorerSingleTileGame` into `vwtSingleTileGame(withExplorer:)` | `valid_work_tiles_fixtures_part2.dart` | `valid_work_tiles_expectations.dart` | #3949 |
 | waa-purchase-orders-move | drop `waaPurchaseLandOrders` from work-application shorthand | `work_order_application_expectation_shorthand_part1.dart` | `work_application_fixtures.dart` | #3949 |
+| woa-split-repair | repair corrupted `work_order_application_expectations_late.dart` split from CI gate commit | `work_order_application_expectations.dart` | `work_order_application_expectations_late.dart` | #3949 |
 
 test/ LOC after slice 120: **37,617** (net −17 from post–slice 119). Remaining: further support-table compaction toward ≤26,400.
 
