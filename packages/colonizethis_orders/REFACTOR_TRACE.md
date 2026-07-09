@@ -1876,6 +1876,15 @@ test/ LOC after slice 114: **37,710** (net −128 from post–slice 113). Remain
 
 test/ LOC after slice 115: **37,670** (net −40 from post–slice 114). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 116: waa prospect-chain + fort/road dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-prospect-chain | fold `waaProspectGame` / `waaProspectOrders` / `waaProspectApply` into `waaExpectProspect` | `work_order_application_expectation_shorthand_part1.dart` | same | #3949 |
+| dispatch-inline-waa-fort-road | inline `waaExpectFortLevel` / `waaExpectUnitCurrentWorkNull` / `waaApplyBuildRoad` into work-order-application dispatcher | same | `work_order_application_expectations.dart` | #3949 |
+
+test/ LOC after slice 116: see PR. Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

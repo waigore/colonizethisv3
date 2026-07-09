@@ -294,8 +294,8 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           stockpile: const Stockpile(),
           techUnlocked: const {},
         );
-        waaExpectFortLevel(next, 1);
-        waaExpectUnitCurrentWorkNull(next);
+        expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
+        expect(waaSingleUnit(next).currentWork, isNull);
       }
     case WorkOrderApplicationTarget.buildFortLevel3SkippedWithoutModernForts:
       {
@@ -304,8 +304,8 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           stockpile: const Stockpile(),
           techUnlocked: const {kTechIdMineEngineering: true},
         );
-        waaExpectFortLevel(next, 2);
-        waaExpectUnitCurrentWorkNull(next);
+        expect(next.worldState.oldWorld.provinces.single.fortLevel, 2);
+        expect(waaSingleUnit(next).currentWork, isNull);
       }
     case WorkOrderApplicationTarget
         .upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel:
@@ -375,7 +375,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           units: [workAppUnit(type: kUnitTypeEngineer)],
           players: [workAppPlayer(stockpile: const Stockpile())],
         );
-        final next = waaApplyBuildRoad(game);
+        final next = waaApply(
+          game,
+          workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+        );
         waaExpectUnitIdle(next);
         expect(
           next.players.single.stockpile.quantityOf(CommodityCatalog.lumber.id),
@@ -385,7 +388,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         .buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork:
       final cost = workOrderCostBuildRoad;
         final game = waaEngineerRoadGame();
-        final next = waaApplyBuildRoad(game);
+        final next = waaApply(
+          game,
+          workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+        );
         waaExpectUnitIdle(next);
         waaExpectRoadLevel(next, 1);
         waaExpectStockpileDeducted(game, next, cost);
@@ -473,7 +479,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
         waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
     case WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork:
-      final next = waaApplyBuildRoad(waaEngineerRoadGame());
+      final next = waaApply(
+        waaEngineerRoadGame(),
+        workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
+      );
         waaExpectUnitIdle(next);
         waaExpectRoadLevel(next, 1);
     case WorkOrderApplicationTarget

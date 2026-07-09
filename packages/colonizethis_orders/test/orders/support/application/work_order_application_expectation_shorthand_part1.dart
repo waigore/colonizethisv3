@@ -55,14 +55,6 @@ void waaExpectStockpileDeducted(
   }
 }
 
-void waaExpectFortLevel(Game next, int level) {
-  expect(next.worldState.oldWorld.provinces.single.fortLevel, level);
-}
-
-void waaExpectUnitCurrentWorkNull(Game next) {
-  expect(waaSingleUnit(next).currentWork, isNull);
-}
-
 void waaExpectUnitIdle(Game next) {
   final u = waaSingleUnit(next);
   expect(u.status, UnitStatus.idle);
@@ -88,15 +80,6 @@ void waaExpectExploreWork(
     expect(u.currentWork!.remainingTurns, remainingTurns);
   }
 }
-
-Game waaProspectGame({Map<String, String>? resourceByTileKey}) =>
-    workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeExplorer)],
-      resourceByTileKey: resourceByTileKey,
-    );
-
-Orders waaProspectOrders() =>
-    workAppSingleWorkOrder(target: kWorkTargetProspect);
 
 Orders waaPurchaseLandOrders({
   String unitId = 'merchant1',
@@ -140,22 +123,6 @@ Game waaEngineerFortGame({
       ],
     );
 
-Game waaProspectApply({
-  Map<String, String>? resourceByTileKey,
-  TerrainType? terrain,
-}) =>
-    waaApply(
-      waaProspectGame(resourceByTileKey: resourceByTileKey),
-      waaProspectOrders(),
-      tileMapByRegion: terrain == null
-          ? null
-          : {
-              WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(
-                terrain,
-              ),
-            },
-    );
-
 Game waaApplyBuildFort({
   int fortLevel = 1,
   Stockpile? stockpile,
@@ -196,17 +163,24 @@ void waaExpectCurrentWorkTiming(
   }
 }
 
-Game waaApplyBuildRoad(Game game) =>
-    waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));
-
 void waaExpectProspect({
   required bool expected,
   TerrainType? terrain,
   Map<String, String>? resourceByTileKey,
 }) {
-  final next = waaProspectApply(
-    terrain: terrain,
-    resourceByTileKey: resourceByTileKey,
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [workAppUnit(type: kUnitTypeExplorer)],
+      resourceByTileKey: resourceByTileKey,
+    ),
+    workAppSingleWorkOrder(target: kWorkTargetProspect),
+    tileMapByRegion: terrain == null
+        ? null
+        : {
+            WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(
+              terrain,
+            ),
+          },
   );
   final prospected =
       next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
