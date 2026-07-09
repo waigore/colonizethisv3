@@ -7,17 +7,9 @@ void _suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligi
 }
 
 void _suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy() {
-  final fx = vwtMinorPurchaseFx();
-  vwtExpectPurchaseLandIncluded(
-    fx,
-    gameId: 'g1916pl1',
-    overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
-  );
+  vwtExpectMinorPurchaseLandIncludedWithEmbassy();
 }
 
 void _suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail() {
-  vwtExpectPurchaseLandExcluded(
-    vwtMinorPurchaseFx(),
-    gameId: 'g1916pl2',
-  );
+  vwtExpectMinorPurchaseLandExcludedWithoutEmbassy();
 }

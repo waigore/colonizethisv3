@@ -1,11 +1,7 @@
 part of 'work_order_application_expectations.dart';
 
 void _unknownWorkTargetSkippedUnitStaysIdle() {
-  final next = waaApply(
-    workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
-    workAppSingleWorkOrder(target: 'unknown_target'),
-  );
-  waaExpectUnitIdle(next);
+  waaExpectUnknownTargetIdle();
 }
 
 void _buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile() {

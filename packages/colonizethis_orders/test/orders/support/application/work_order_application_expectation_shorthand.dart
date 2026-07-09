@@ -674,3 +674,11 @@ void waaExpectUpgradeTownDevelopmentApplied({int before = 1, int after = 2}) {
   );
   waaExpectTownDevelopmentLevel(next, after);
 }
+
+void waaExpectUnknownTargetIdle() {
+  final next = waaApply(
+    workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
+    workAppSingleWorkOrder(target: 'unknown_target'),
+  );
+  waaExpectUnitIdle(next);
+}

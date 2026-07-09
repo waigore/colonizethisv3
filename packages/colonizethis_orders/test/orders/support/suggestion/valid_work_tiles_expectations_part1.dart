@@ -106,9 +106,7 @@ void _buildImprovementExcludesSeaZoneTiles() {
 }
 
 void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected() {
-  final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-  vwtExpectMineralBuildGate(grainTile: grainTile, ironTile: ironTile);
+  vwtExpectOwnedMineralBuildGateDefaultTiles();
 }
 
 void _getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {

@@ -163,3 +163,79 @@ void novExpectDockMove({
     reasonIsNull: reasonIsNull,
   );
 }
+
+MapTopology _novSingleSeaTopology() => navalOrderValidatorTestTopology(
+  nodes: [navalOrderValidatorTestSeaNode('sea1')],
+);
+
+NavalOrderValidator _novAtSeaMissionValidator({
+  List<Province> oldWorldProvinces = const [],
+  List<Fleet>? fleets,
+}) =>
+    novValidator(
+      game: navalOrderValidatorTestGame(
+        oldWorldProvinces: oldWorldProvinces,
+        fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
+      ),
+      topology: _novSingleSeaTopology(),
+    );
+
+void novExpectMissionPreviousRejected() {
+  novExpectNavalMission(
+    validator: _novAtSeaMissionValidator(),
+    order: const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
+    previousRejected: true,
+    status: OrderValidationStatus.rejected,
+    reasonExact: 'Previous invalid',
+  );
+}
+
+void novExpectBlockadeNoTarget() {
+  novExpectNavalMission(
+    validator: _novAtSeaMissionValidator(),
+    order: NavalMissionOrder(
+      fleetId: 'f1',
+      mission: FleetMission.blockade.name,
+      targetProvinceId: null,
+    ),
+    status: OrderValidationStatus.rejected,
+    reasonExact: 'Blockade requires a target province',
+  );
+}
+
+void novExpectBlockadeUnprefixedTarget() {
+  novExpectNavalMission(
+    validator: _novAtSeaMissionValidator(),
+    order: NavalMissionOrder(
+      fleetId: 'f1',
+      mission: FleetMission.blockade.name,
+      targetProvinceId: 'P2',
+    ),
+    status: OrderValidationStatus.rejected,
+    reasonExact: 'Blockade requires a target province',
+  );
+}
+
+void novExpectBlockadeOwnProvince() {
+  novExpectNavalMission(
+    validator: _novAtSeaMissionValidator(
+      oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+    ),
+    order: NavalMissionOrder(
+      fleetId: 'f1',
+      mission: FleetMission.blockade.name,
+      targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
+    ),
+    status: OrderValidationStatus.rejected,
+    reasonExact: 'Cannot blockade own province',
+  );
+}
+
+void novExpectPatrolAcceptedAtSea() {
+  novExpectNavalMission(
+    validator: _novAtSeaMissionValidator(),
+    order: const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
+    status: OrderValidationStatus.accepted,
+    reasonIsNull: true,
+  );
+}

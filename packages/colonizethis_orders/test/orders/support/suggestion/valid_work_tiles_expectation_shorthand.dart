@@ -629,3 +629,26 @@ void vwtExpectNoBuildForReservedTilePair() {
     reservedTile: tile0,
   );
 }
+
+void vwtExpectMinorPurchaseLandIncludedWithEmbassy() {
+  final fx = vwtMinorPurchaseFx();
+  vwtExpectPurchaseLandIncluded(
+    fx,
+    gameId: 'g1916pl1',
+    overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
+  );
+}
+
+void vwtExpectMinorPurchaseLandExcludedWithoutEmbassy() {
+  vwtExpectPurchaseLandExcluded(
+    vwtMinorPurchaseFx(),
+    gameId: 'g1916pl2',
+  );
+}
+
+void vwtExpectOwnedMineralBuildGateDefaultTiles() {
+  vwtExpectMineralBuildGate(
+    grainTile: ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
+    ironTile: ValidWorkTilesTestSupport.tileKey('p1', 1, 0),
+  );
+}

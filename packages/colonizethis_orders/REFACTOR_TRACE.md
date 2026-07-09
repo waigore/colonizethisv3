@@ -666,6 +666,18 @@ test/ LOC after slice 39: **33,347** (net +71 from post–slice 38; expectation 
 
 test/ LOC after slice 40: **33,419** (net +72 from post–slice 39; expectation bodies shortened, new preset shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 41: mv/nov/vbc/waa/vwt validator preset compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-cases-shorthand | add `mvExpectBuilderCannotEnterGp` / `mvExpectMilitaryRegimentRejected` / `mvExpectArmyIntoGpNoWar` / `mvExpectBuilderCannotEnterMinor` / `mvExpectExplorerOntoMinor` / `mvExpectSpyOntoOtherGp` / `mvExpectExplorerCrossRegionTribe` / `mvExpectBuilderCrossRegionTribeInvalid` / `mvExpectShortCircuitPreviousRejected` / `mvExpectArmyIntoMinorNoWar` / `mvExpectArmyIntoGpWithDeclareWar` / `mvExpectArmyIntoMinorWithDeclareWar` / `mvExpectArmyIntoTribeWithDeclareWar` / `mvExpectArmyIntoMinorTribeNoWar`; compact move-validator cases_a/cases_b bodies | `move_validator_expectations_cases_{a,b}.dart` | `move_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+| nov-mission-shorthand | add `novExpectMissionPreviousRejected` / `novExpectBlockadeNoTarget` / `novExpectBlockadeUnprefixedTarget` / `novExpectBlockadeOwnProvince` / `novExpectPatrolAcceptedAtSea`; compact naval mission expectation bodies | `naval_order_validator_expectations_mission.dart` | `naval_order_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vbc-shorthand | add `vbcExpectUnknownUnitTypeRejected` / `vbcExpectBuilderRejectedLowTreasury` / `vbcExpectBuilderRejectedInsufficientPaper` / `vbcExpectMerchantRejectedNoTech` / `vbcExpectBuilderAcceptedDefaultSpawn` / `vbcExpectMerchantAcceptedWithTech` / `vbcExpectBuilderAcceptedEmptySpawnProvince` / `vbcExpectBuilderAcceptedForeignSpawnFallsBackToCapital`; compact validateBuild(civilian) bodies | `order_engine_validate_build_civilian_expectations.dart` | `order_engine_validate_build_civilian_expectation_shorthand.dart` + compacted expectations | #3949 |
+| waa-part2-shorthand | add `waaExpectUnknownTargetIdle`; compact unknown-work-target body | `work_order_application_expectations_part2.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part3-shorthand | add `vwtExpectMinorPurchaseLandIncludedWithEmbassy` / `vwtExpectMinorPurchaseLandExcludedWithoutEmbassy` / `vwtExpectOwnedMineralBuildGateDefaultTiles`; compact valid-work-tiles part1/part3 bodies | `valid_work_tiles_expectations_part{1,3}.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 41: **33,527** (net +108 from post–slice 40; expectation bodies shortened, new `mv*`/`nov*`/`vbc*`/`waa*`/`vwt*` preset shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
