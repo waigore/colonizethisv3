@@ -446,7 +446,10 @@ sequential apprentice trains drain peasants in submission order
 setSubsidy rejects a percent outside 5-20 in steps of 5
 setSubsidy requires an embassy (Refs #3753 R2)
 setSubsidy with an embassy and a valid percent is accepted
+shared factionMembership matches default armyMovePickerDestinations
+shared playerView and unitsById matches default armyMovePickerDestinations
 shared view and validator matches default path
+sharedCandidateValidator matches default and skips forPlayer rebuild
 sharedCandidateValidator matches default path for same inputs
 ship build with capital not adjacent to sea does not add ship
 ship build with capitalProvinceId null does not add fleet

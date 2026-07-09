@@ -1430,6 +1430,19 @@ Migrated imperative `diplomatic_panel_actions_test.dart`, `debug_console_support
 
 test/ LOC after slice 82: **37,903** (net +288 from post–slice 81; support modules add LOC while runners shrink). Remaining: further imperative-suite scenario migration (suggestion API impl core suite, army-move picker/test families, shared-validator equivalence, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 83 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| amp-cached-owned | cached player-owned set matches default destination picker path | `order_suggestion_army_move_picker_test.dart` | `support/suggestion/order_suggestion_army_move_picker_scenarios.dart` + expectations + fixtures + thin runner | #3949 |
+| amp-shared-view | shared playerView and unitsById matches default armyMovePickerDestinations | same | same | #3949 |
+| amp-shared-membership | shared factionMembership matches default armyMovePickerDestinations | same | same | #3949 |
+| amp-shared-validator | sharedCandidateValidator matches default and skips forPlayer rebuild | same | same | #3949 |
+
+Migrated imperative `order_suggestion_army_move_picker_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for shared playerView, shared factionMembership, and sharedCandidateValidator skip-rebuild scenarios. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 83: **37,946** (net +43 from post–slice 82; support modules add LOC while runner shrinks). Remaining: `order_suggestion_api_impl_test.dart`, `order_suggestion_army_move_test.dart`, shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
