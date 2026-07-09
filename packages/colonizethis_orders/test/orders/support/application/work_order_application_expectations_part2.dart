@@ -1,13 +1,11 @@
 part of 'work_order_application_expectations.dart';
 
 void _unknownWorkTargetSkippedUnitStaysIdle() {
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
     workAppSingleWorkOrder(target: 'unknown_target'),
   );
-  final u = next.worldState.oldWorld.units.single;
-  expect(u.status, UnitStatus.idle);
-  expect(u.currentWork, isNull);
+  waaExpectUnitIdle(next);
 }
 
 void _buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile() {
@@ -15,13 +13,11 @@ void _buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile() {
     units: [workAppUnit(type: kUnitTypeEngineer)],
     players: [workAppPlayer(stockpile: const Stockpile())],
   );
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
   );
-  final u = next.worldState.oldWorld.units.single;
-  expect(u.currentWork, isNull);
-  expect(u.status, UnitStatus.idle);
+  waaExpectUnitIdle(next);
   expect(
     next.players.single.stockpile.quantityOf(CommodityCatalog.lumber.id),
     0,
@@ -30,29 +26,14 @@ void _buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile() {
 
 void _buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork() {
   final cost = workOrderCostBuildRoad;
-  final game = workAppOwnedGame(
-    units: [workAppUnit(type: kUnitTypeEngineer)],
-    players: [
-      workAppPlayer(
-        stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
-      ),
-    ],
-  );
-  final next = applyBuildAndWorkOrders(
+  final game = waaEngineerRoadGame();
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
   );
-  final u = next.worldState.oldWorld.units.single;
-  // build_road totalTurns=1, so work completes in same phase; unit idle and road level 1.
-  expect(u.currentWork, isNull);
-  expect(u.status, UnitStatus.idle);
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
-  for (final e in cost.entries) {
-    expect(
-      next.players.single.stockpile.quantityOf(e.key),
-      game.players.single.stockpile.quantityOf(e.key) - e.value,
-    );
-  }
+  waaExpectUnitIdle(next);
+  waaExpectRoadLevel(next, 1);
+  waaExpectStockpileDeducted(game, next, cost);
 }
 
 void _counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince() {
@@ -65,13 +46,11 @@ void _counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince() {
     },
     players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
   );
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(unitId: 'spy1', target: kWorkTargetCounterSpy),
   );
-  final spyAfter = next.worldState.oldWorld.units.single;
-  expect(spyAfter.currentWork, isNotNull);
-  expect(spyAfter.currentWork!.workTarget, kWorkTargetCounterSpy);
+  waaExpectCounterSpyWork(next);
 }
 
 void _exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles() {
@@ -83,22 +62,20 @@ void _exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles() {
       },
     },
   );
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(target: kWorkTargetExplore),
   );
-  final u = next.worldState.oldWorld.units.single;
-  expect(u.currentWork, isNotNull);
-  expect(u.currentWork!.workTarget, kWorkTargetExplore);
+  final u = waaSingleUnit(next);
   expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
-  // One turn processed in same phase after applying.
-  expect(u.currentWork!.remainingTurns, u.currentWork!.totalTurns - 1);
+  waaExpectExploreWork(
+    next,
+    remainingTurns: u.currentWork!.totalTurns - 1,
+  );
 }
 
 void
 _exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion() {
-  // Region has two provinces with different tile counts; explorer in the
-  // smaller one should get totalTurns = ceil(3 * tilesInP / maxTilesInRegion).
   const provinceSmall = '${WorkAppIds.ow}|P1';
   const provinceLarge = '${WorkAppIds.ow}|P2';
   const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
@@ -122,53 +99,29 @@ _exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion(
     ],
     tileKeysByRegionAndProvince: const {
       WorkAppIds.ow: {
-        provinceSmall: [tileSmall1, tileSmall2], // tilesInP = 2
-        provinceLarge: [
-          tileLarge1,
-          tileLarge2,
-          tileLarge3,
-          tileLarge4,
-        ], // maxTilesInRegion = 4
+        provinceSmall: [tileSmall1, tileSmall2],
+        provinceLarge: [tileLarge1, tileLarge2, tileLarge3, tileLarge4],
       },
     },
   );
 
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(
       target: kWorkTargetExplore,
       targetTileKey: tileSmall1,
     ),
   );
-  final u = next.worldState.oldWorld.units.single;
-
-  // tilesInP = 2, maxTilesInRegion = 4 → ceil(3 * 2 / 4) = ceil(1.5) = 2.
-  expect(u.currentWork, isNotNull);
-  expect(u.currentWork!.workTarget, kWorkTargetExplore);
-  expect(u.currentWork!.totalTurns, 2);
-  // One turn processed in same phase after applying.
-  expect(u.currentWork!.remainingTurns, 1);
+  waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
 }
 
 void _engineerBuildRoadWorkOrderSetsCurrentWork() {
-  final cost = workOrderCostBuildRoad;
-  final game = workAppOwnedGame(
-    units: [workAppUnit(type: kUnitTypeEngineer)],
-    players: [
-      workAppPlayer(
-        stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
-      ),
-    ],
-  );
-  final next = applyBuildAndWorkOrders(
-    game,
+  final next = waaApply(
+    waaEngineerRoadGame(),
     workAppSingleWorkOrder(target: kWorkTargetBuildRoad),
   );
-  final u = next.worldState.oldWorld.units.single;
-  // build_road totalTurns=1, so work completes in same phase; unit idle and road level 1.
-  expect(u.currentWork, isNull);
-  expect(u.status, UnitStatus.idle);
-  expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), 1);
+  waaExpectUnitIdle(next);
+  waaExpectRoadLevel(next, 1);
 }
 
 void _buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient() {
@@ -182,12 +135,9 @@ void _buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient() {
       ),
     ],
   );
-  final next = applyBuildAndWorkOrders(
+  final next = waaApply(
     game,
     workAppSingleWorkOrder(target: kWorkTargetBuildPort),
   );
-  final u = next.worldState.oldWorld.units.single;
-  // build_port totalTurns=1, so work completes in same phase; unit idle.
-  expect(u.currentWork, isNull);
-  expect(u.status, UnitStatus.idle);
+  waaExpectUnitIdle(next);
 }

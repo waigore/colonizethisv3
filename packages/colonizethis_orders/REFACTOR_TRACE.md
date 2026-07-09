@@ -480,6 +480,15 @@ test/ LOC after slice 21: **31,860** (down ~183 from post–slice 20). Remaining
 
 test/ LOC after slice 22: **31,966** (net +106 from post–slice 21; expectation bodies shortened, new `vw*`/`vet*` shorthand modules added). Remaining: further expectation compaction (`order_suggestion_core_*`, `work_order_application_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 23: order_suggestion_core + work_order_application expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osc-shorthand | add `oscSuggest*` / `oscExpect*` / game-builder wrappers; compact core expectation bodies | `order_suggestion_core_expectations_part{1,2}.dart` | `order_suggestion_core_expectation_shorthand.dart` + compacted expectations | #3949 |
+| waa-shorthand | add `waaApply` / `waaExpect*` / engineer-road/fort helpers; compact application expectation bodies | `work_order_application_expectations_part{1,2}.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 23: **32,115** (net +149 from post–slice 22; expectation bodies shortened, new `osc*`/`waa*` shorthand modules added). Remaining: further expectation compaction (`work_completion_*`, `incremental_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

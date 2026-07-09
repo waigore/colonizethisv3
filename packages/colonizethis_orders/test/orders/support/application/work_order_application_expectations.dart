@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'orders_application_test_support.dart';
 import 'work_application_fixtures.dart';
+import 'work_order_application_expectation_shorthand.dart';
 
 /// Pins for [workOrderApplicationScenarios] rows.
 part 'work_order_application_expectations_part1.dart';
