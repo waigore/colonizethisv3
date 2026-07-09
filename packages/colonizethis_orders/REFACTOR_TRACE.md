@@ -1526,6 +1526,18 @@ Merged imperative `order_suggestion_recruit_worker_test.dart` + `order_suggestio
 
 test/ LOC after slice 88: **38,257** (net +47 from post–slice 87; support modules add LOC while parity shard deleted). Remaining: further imperative-suite compaction (colonial acquisition, declare-war intervention, purchase-land colonial, etc.), lib DRY items 5–6 opportunistic cleanup, scenario-table migration toward ≤26,400.
 
+### Slice 89 — colonial acquisition suggestion scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ca-join-empire | embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire | `order_suggestion_colonial_acquisition_join_empire_or_war_test.dart` | `support/suggestion/order_suggestion_colonial_acquisition_{fixtures,scenarios,expectations}.dart` + thin runner | #2509, #3949 |
+| ca-declare-war | embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar | same | same | #2509, #3949 |
+| ca-deterministic | candidate set is deterministic across repeated suggestion calls | same | same | #2509, #3949 |
+
+Migrated imperative `order_suggestion_colonial_acquisition_join_empire_or_war_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for all three colonial-acquisition candidate-emission scenarios.
+
+test/ LOC after slice 89: **38,273** (net +16 from post–slice 88; support modules add LOC while runner shrinks). Remaining: further imperative-suite compaction (declare-war intervention, purchase-land colonial, etc.), lib DRY items 5–6 opportunistic cleanup, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

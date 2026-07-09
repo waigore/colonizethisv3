@@ -107,6 +107,7 @@ civilian worker cannot move into Minor/Tribe territory
 clears currentWork, restores origin tile, and sets status idle
 clears work state and restores origin tile by default
 co-availability ordering is deterministic across repeated passes
+candidate set is deterministic across repeated suggestion calls
 co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile
 co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget
 colonialIntelExploreProvinceIdsSorted lists sea-reachable NW
@@ -147,6 +148,8 @@ drops move into minor-owned province when relation row is absent
 each standard build handler supports only its target
 embassy accepts and debits treasury when consulate exists
 embassy requires existing trade consulate
+embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar
+embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire
 emitAcceptedCandidates collects accepted in iteration order
 emitAcceptedCandidates probes every candidate without dedup args
 emitAcceptedCandidates skips candidates already targeted
