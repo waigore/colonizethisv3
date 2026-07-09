@@ -63,64 +63,6 @@ Orders iceDeclareWarPrefix(String targetFactionId) => Orders(
   },
 );
 
-void iceExpectMoveTo(
-  String unitId,
-  String tileKey, {
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  iceExpectMoveOnCorpus(
-    candidate: MoveOrder(unitId: unitId, destinationTileKey: tileKey),
-    label: label,
-    basePrefix: basePrefix,
-  );
-}
-
-void iceExpectArmyMoveTo(
-  String armyId,
-  String destLocalProv, {
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  iceExpectArmyMoveOnCorpus(
-    candidate: ArmyMoveOrder(
-      armyId: armyId,
-      destinationProvinceId: IceIds.prov(destLocalProv),
-    ),
-    label: label,
-    basePrefix: basePrefix,
-  );
-}
-
-void iceExpectNavalMoveTo(
-  String fleetId,
-  String destSeaZoneId, {
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  iceExpectNavalMoveOnCorpus(
-    candidate: NavalMoveOrder(
-      fleetId: fleetId,
-      destinationSeaZoneId: destSeaZoneId,
-    ),
-    label: label,
-    basePrefix: basePrefix,
-  );
-}
-
-void iceExpectNavalMissionFor(
-  String fleetId,
-  String mission, {
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  iceExpectNavalMissionOnCorpus(
-    candidate: NavalMissionOrder(fleetId: fleetId, mission: mission),
-    label: label,
-    basePrefix: basePrefix,
-  );
-}
-
 void iceExpectMoveOnCorpus({
   required MoveOrder candidate,
   required String label,

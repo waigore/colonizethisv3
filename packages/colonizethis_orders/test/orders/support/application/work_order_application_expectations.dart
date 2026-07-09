@@ -78,10 +78,13 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         expect(u.currentWork, isNull);
     case WorkOrderApplicationTarget
         .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel:
-      final fortNext = waaApplyBuildFort(
+      final fortNext = waaApply(
+        waaEngineerFortGame(
           fortLevel: 1,
           techUnlocked: const {kTechIdMineEngineering: true},
-        );
+        ),
+        workAppSingleWorkOrder(target: kWorkTargetBuildFort),
+      );
         waaExpectCurrentWorkTiming(
           fortNext,
           workTarget: kWorkTargetBuildFort,
@@ -289,20 +292,26 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .buildFortLevel2SkippedWithoutMineEngineering:
       {
-        final next = waaApplyBuildFort(
-          fortLevel: 1,
-          stockpile: const Stockpile(),
-          techUnlocked: const {},
+        final next = waaApply(
+          waaEngineerFortGame(
+            fortLevel: 1,
+            stockpile: const Stockpile(),
+            techUnlocked: const {},
+          ),
+          workAppSingleWorkOrder(target: kWorkTargetBuildFort),
         );
         expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
         expect(waaSingleUnit(next).currentWork, isNull);
       }
     case WorkOrderApplicationTarget.buildFortLevel3SkippedWithoutModernForts:
       {
-        final next = waaApplyBuildFort(
-          fortLevel: 2,
-          stockpile: const Stockpile(),
-          techUnlocked: const {kTechIdMineEngineering: true},
+        final next = waaApply(
+          waaEngineerFortGame(
+            fortLevel: 2,
+            stockpile: const Stockpile(),
+            techUnlocked: const {kTechIdMineEngineering: true},
+          ),
+          workAppSingleWorkOrder(target: kWorkTargetBuildFort),
         );
         expect(next.worldState.oldWorld.provinces.single.fortLevel, 2);
         expect(waaSingleUnit(next).currentWork, isNull);

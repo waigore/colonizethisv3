@@ -99,36 +99,3 @@ void cspExpectOwUnitAt({
     provinceId,
   );
 }
-
-void cspExpectExplorerSpawnAtCapital({
-  String? spawnProvinceId,
-  String? otherOwnedProvinceId,
-  int peasants = 1,
-}) {
-  final game = cspExplorerGame(
-    capitalProvinceId: cspCapitalProvinceId,
-    otherOwnedProvinceId: otherOwnedProvinceId,
-    capitalTile: const CapitalTile(
-      regionId: cspOw,
-      provinceId: cspCapitalProvinceId,
-      x: 0,
-      y: 1,
-    ),
-    peasants: peasants,
-  );
-  final next = applyBuildAndWorkOrders(
-    game,
-    cspBuildOrders(
-      kUnitTypeExplorer,
-      isMilitary:
-          buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
-          BuildUnitCategory.military,
-      spawnProvinceId: spawnProvinceId ?? otherOwnedProvinceId ?? '',
-    ),
-  );
-  cspExpectOwUnitAt(
-    next: next,
-    tileKey: cspCapitalTileKey,
-    provinceId: cspCapitalProvinceId,
-  );
-}

@@ -18,13 +18,62 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
   switch (target) {
     case CivilianSpawnTarget
         .civilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince:
-      cspExpectExplorerSpawnAtCapital(
-        spawnProvinceId: 'oldWorld|P2',
-        otherOwnedProvinceId: 'oldWorld|P2',
-      );
+      {
+        final game = cspExplorerGame(
+          capitalProvinceId: cspCapitalProvinceId,
+          otherOwnedProvinceId: 'oldWorld|P2',
+          capitalTile: const CapitalTile(
+            regionId: cspOw,
+            provinceId: cspCapitalProvinceId,
+            x: 0,
+            y: 1,
+          ),
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          cspBuildOrders(
+            kUnitTypeExplorer,
+            isMilitary:
+                buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
+                BuildUnitCategory.military,
+            spawnProvinceId: 'oldWorld|P2',
+          ),
+        );
+        cspExpectOwUnitAt(
+          next: next,
+          tileKey: cspCapitalTileKey,
+          provinceId: cspCapitalProvinceId,
+        );
+      }
     case CivilianSpawnTarget
         .civilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince:
-      cspExpectExplorerSpawnAtCapital(peasants: 0);
+      {
+        final game = cspExplorerGame(
+          capitalProvinceId: cspCapitalProvinceId,
+          capitalTile: const CapitalTile(
+            regionId: cspOw,
+            provinceId: cspCapitalProvinceId,
+            x: 0,
+            y: 1,
+          ),
+          peasants: 0,
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          cspBuildOrders(
+            kUnitTypeExplorer,
+            isMilitary:
+                buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
+                BuildUnitCategory.military,
+            spawnProvinceId: '',
+          ),
+        );
+        cspExpectOwUnitAt(
+          next: next,
+          tileKey: cspCapitalTileKey,
+          provinceId: cspCapitalProvinceId,
+        );
+      }
     case CivilianSpawnTarget
         .civilianBuildWithMissingCapitalTileThrowsExplicitError:
       {

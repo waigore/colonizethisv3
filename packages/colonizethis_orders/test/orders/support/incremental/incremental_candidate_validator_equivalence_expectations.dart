@@ -41,32 +41,75 @@ enum IncrementalEquivalenceTarget {
 void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
   switch (target) {
     case IncrementalEquivalenceTarget.moveBuilderOwnProvince:
-      iceExpectMoveTo('u_builder', iceTile('P2'), label: 'builder->own province');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'u_builder',
+          destinationTileKey: iceTile('P2'),
+        ),
+        label: 'builder->own province',
+      );
     case IncrementalEquivalenceTarget.moveBuilderOtherGp:
-      iceExpectMoveTo('u_builder', iceTile('P3'), label: 'builder->other GP province');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'u_builder',
+          destinationTileKey: iceTile('P3'),
+        ),
+        label: 'builder->other GP province',
+      );
     case IncrementalEquivalenceTarget.moveExplorerMinor:
-      iceExpectMoveTo('u_explorer', iceTile('P4'), label: 'explorer->minor province');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'u_explorer',
+          destinationTileKey: iceTile('P4'),
+        ),
+        label: 'explorer->minor province',
+      );
     case IncrementalEquivalenceTarget.moveSpyOtherGp:
-      iceExpectMoveTo('u_spy', iceTile('P3'), label: 'spy->other GP province');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'u_spy',
+          destinationTileKey: iceTile('P3'),
+        ),
+        label: 'spy->other GP province',
+      );
     case IncrementalEquivalenceTarget.moveMilitaryRegiment:
-      iceExpectMoveTo('u_pikemen', iceTile('P2'), label: 'pikemen via MoveOrder');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'u_pikemen',
+          destinationTileKey: iceTile('P2'),
+        ),
+        label: 'pikemen via MoveOrder',
+      );
     case IncrementalEquivalenceTarget.moveMissingUnit:
-      iceExpectMoveTo('unknown_unit', iceTile('P2'), label: 'unknown unit');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(
+          unitId: 'unknown_unit',
+          destinationTileKey: iceTile('P2'),
+        ),
+        label: 'unknown unit',
+      );
     case IncrementalEquivalenceTarget.moveEmptyDestination:
-      iceExpectMoveTo('u_builder', '', label: 'empty destination');
+      iceExpectMoveOnCorpus(
+        candidate: MoveOrder(unitId: 'u_builder', destinationTileKey: ''),
+        label: 'empty destination',
+      );
     case IncrementalEquivalenceTarget.moveXorWorkCascade:
         final tile = iceTile('P2');
-        iceExpectMoveTo(
-          'u_explorer',
-          tile,
+        iceExpectMoveOnCorpus(
+          candidate: MoveOrder(
+            unitId: 'u_explorer',
+            destinationTileKey: tile,
+          ),
           label: 'move w/ existing work for same unit',
           basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
         );
     case IncrementalEquivalenceTarget.moveNonEmptyBasePrefix:
         final tile = iceTile('P2');
-        iceExpectMoveTo(
-          'u_builder',
-          tile,
+        iceExpectMoveOnCorpus(
+          candidate: MoveOrder(
+            unitId: 'u_builder',
+            destinationTileKey: tile,
+          ),
           label: 'builder w/ prior explorer move in basePrefix',
           basePrefix: Orders(
             moveOrdersByPlayerId: {
@@ -207,56 +250,100 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
         );
       }
     case IncrementalEquivalenceTarget.armyMoveOwnAdjacent:
-      iceExpectArmyMoveTo('field_a', 'P2', label: 'own adjacent');
+      iceExpectArmyMoveOnCorpus(
+        candidate: ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: IceIds.prov('P2'),
+        ),
+        label: 'own adjacent',
+      );
     case IncrementalEquivalenceTarget.armyMoveGpNoWar:
-      iceExpectArmyMoveTo('field_a', 'P3', label: 'GP no war');
+      iceExpectArmyMoveOnCorpus(
+        candidate: ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: IceIds.prov('P3'),
+        ),
+        label: 'GP no war',
+      );
     case IncrementalEquivalenceTarget.armyMoveGpDeclareWar:
-      iceExpectArmyMoveTo(
-        'field_a',
-        'P3',
+      iceExpectArmyMoveOnCorpus(
+        candidate: ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: IceIds.prov('P3'),
+        ),
         label: 'GP with declare war',
         basePrefix: iceDeclareWarPrefix('p2'),
       );
     case IncrementalEquivalenceTarget.armyMoveMinorNoWar:
-      iceExpectArmyMoveTo('field_a', 'P4', label: 'minor no war');
+      iceExpectArmyMoveOnCorpus(
+        candidate: ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: IceIds.prov('P4'),
+        ),
+        label: 'minor no war',
+      );
     case IncrementalEquivalenceTarget.armyMoveMissingArmy:
-      iceExpectArmyMoveTo('unknown_army', 'P2', label: 'unknown army');
+      iceExpectArmyMoveOnCorpus(
+        candidate: ArmyMoveOrder(
+          armyId: 'unknown_army',
+          destinationProvinceId: IceIds.prov('P2'),
+        ),
+        label: 'unknown army',
+      );
     case IncrementalEquivalenceTarget.navalMoveAdjacentSea:
-      iceExpectNavalMoveTo(
-        'fleet_atSea',
-        'oldWorld|sea2',
+      iceExpectNavalMoveOnCorpus(
+        candidate: NavalMoveOrder(
+          fleetId: 'fleet_atSea',
+          destinationSeaZoneId: 'oldWorld|sea2',
+        ),
         label: 'sea1->sea2',
       );
     case IncrementalEquivalenceTarget.navalMoveNonAdjacentSea:
-      iceExpectNavalMoveTo(
-        'fleet_atSea',
-        'oldWorld|seaZ',
+      iceExpectNavalMoveOnCorpus(
+        candidate: NavalMoveOrder(
+          fleetId: 'fleet_atSea',
+          destinationSeaZoneId: 'oldWorld|seaZ',
+        ),
         label: 'sea1->unknown',
       );
     case IncrementalEquivalenceTarget.navalMoveUndock:
-      iceExpectNavalMoveTo(
-        'fleet_inPort',
-        'oldWorld|sea1',
+      iceExpectNavalMoveOnCorpus(
+        candidate: NavalMoveOrder(
+          fleetId: 'fleet_inPort',
+          destinationSeaZoneId: 'oldWorld|sea1',
+        ),
         label: 'inPort->sea1',
       );
     case IncrementalEquivalenceTarget.navalMoveMissingFleet:
-      iceExpectNavalMoveTo(
-        'unknown_fleet',
-        'oldWorld|sea1',
+      iceExpectNavalMoveOnCorpus(
+        candidate: NavalMoveOrder(
+          fleetId: 'unknown_fleet',
+          destinationSeaZoneId: 'oldWorld|sea1',
+        ),
         label: 'unknown fleet',
       );
     case IncrementalEquivalenceTarget.navalMissionPatrol:
-      iceExpectNavalMissionFor('fleet_atSea', 'patrol', label: 'patrol owned');
+      iceExpectNavalMissionOnCorpus(
+        candidate: NavalMissionOrder(
+          fleetId: 'fleet_atSea',
+          mission: 'patrol',
+        ),
+        label: 'patrol owned',
+      );
     case IncrementalEquivalenceTarget.navalMissionBlockadeNoTarget:
-      iceExpectNavalMissionFor(
-        'fleet_atSea',
-        'blockade',
+      iceExpectNavalMissionOnCorpus(
+        candidate: NavalMissionOrder(
+          fleetId: 'fleet_atSea',
+          mission: 'blockade',
+        ),
         label: 'blockade no target',
       );
     case IncrementalEquivalenceTarget.navalMissionMissingFleet:
-      iceExpectNavalMissionFor(
-        'unknown_fleet',
-        'patrol',
+      iceExpectNavalMissionOnCorpus(
+        candidate: NavalMissionOrder(
+          fleetId: 'unknown_fleet',
+          mission: 'patrol',
+        ),
         label: 'unknown fleet',
       );
   }

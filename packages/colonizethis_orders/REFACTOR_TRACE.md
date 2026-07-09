@@ -1885,6 +1885,16 @@ test/ LOC after slice 115: **37,670** (net −40 from post–slice 114). Remaini
 
 test/ LOC after slice 116: see PR. Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 117: ICE/waa/csp dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-ice-to | drop `iceExpectMoveTo` / `iceExpectArmyMoveTo` / `iceExpectNavalMoveTo` / `iceExpectNavalMissionFor`; call `iceExpect*OnCorpus` directly from incremental equivalence dispatcher | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | `incremental_candidate_validator_equivalence_expectations.dart` | #3949 |
+| dispatch-inline-waa-fort-apply | inline `waaApplyBuildFort` at fort dispatcher cases | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-csp-spawn | inline `cspExpectExplorerSpawnAtCapital` into civilian-spawn dispatcher | `civilian_spawn_expectation_shorthand.dart` | `civilian_spawn_expectations.dart` | #3949 |
+
+test/ LOC after slice 117: see PR. Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

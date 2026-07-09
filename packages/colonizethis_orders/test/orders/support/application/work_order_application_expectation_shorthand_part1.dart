@@ -123,20 +123,6 @@ Game waaEngineerFortGame({
       ],
     );
 
-Game waaApplyBuildFort({
-  int fortLevel = 1,
-  Stockpile? stockpile,
-  Map<String, bool>? techUnlocked,
-}) =>
-    waaApply(
-      waaEngineerFortGame(
-        fortLevel: fortLevel,
-        stockpile: stockpile,
-        techUnlocked: techUnlocked,
-      ),
-      workAppSingleWorkOrder(target: kWorkTargetBuildFort),
-    );
-
 void waaExpectCurrentWorkTiming(
   Game next, {
   required String workTarget,
