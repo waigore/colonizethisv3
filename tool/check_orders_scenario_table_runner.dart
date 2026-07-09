@@ -33,7 +33,6 @@ const _lookBehindLines = 8;
 final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/debug_console/debug_console_supported_ids_test.dart',
   'packages/colonizethis_orders/test/orders/append_military_regiment_armies_by_id_test.dart',
-  'packages/colonizethis_orders/test/orders/build_rail_work_rules_test.dart',
   'packages/colonizethis_orders/test/orders/debug_console_workers_test.dart',
   'packages/colonizethis_orders/test/orders/diplomatic_panel_actions_test.dart',
   'packages/colonizethis_orders/test/orders/draft_orders_mutations_test.dart',

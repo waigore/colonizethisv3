@@ -910,6 +910,34 @@ Migrated imperative `civilian_projected_tile_test.dart`, `propagate_road_to_adja
 
 test/ LOC after slice 55: **33,844** (net +179 from post–slice 54; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 56: upgrade_town Minor/Tribe + build_rail work-rules scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| utmt-prefilter-minor | prefilter includes minor town tile when embassy and peace | `upgrade_town_minor_tribe_test.dart` | `support/validators/upgrade_town_minor_tribe_scenarios.dart` + fixtures/expectations + thin runner | #3872 |
+| utmt-war-reject | precheck rejects upgrade_town when at war with tribe | same | same | #3872 |
+| brwr-road-too-high | rejects when road level is neither 1 nor 2 (too high) | `build_rail_work_rules_test.dart` | `support/application/build_rail_work_rules_scenarios.dart` + expectations + thin runner | #3949 |
+| brwr-road-intermediate | rejects when road level is 3 (intermediate, not 1 or 2) | same | same | #3949 |
+| brwr-road-zero | rejects when road level is 0 | same | same | #3949 |
+| brwr-terrain-null | rejects when terrain is null | same | same | #3949 |
+| brwr-plains-no-tech | plains: rejects without rail tech | same | same | #3949 |
+| brwr-plains-early | plains: allows with Early Steam | same | same | #3949 |
+| brwr-hills-no-tech | hills: rejects without Later Steam or Dynamite | same | same | #3949 |
+| brwr-hills-later | hills: allows with Later Steam | same | same | #3949 |
+| brwr-mountain-no-dyn | mountain: rejects without Dynamite | same | same | #3949 |
+| brwr-hills-dyn | hills: allows with Dynamite only | same | same | #3949 |
+| brwr-plains-later | plains: allows with Later Steam only | same | same | #3949 |
+| brwr-mountain-dyn | mountain: allows with Dynamite | same | same | #3949 |
+| brwr-malformed-key | returns null for malformed tile key | same | same | #3949 |
+| brwr-missing-region | returns null when region map is missing | same | same | #3949 |
+| brwr-non-int-coords | returns null when x or y are not integers | same | same | #3949 |
+| brwr-oob-coords | returns null when coordinates are out of bounds | same | same | #3949 |
+| brwr-terrain-map | returns terrain from tile map | same | same | #3949 |
+
+Migrated imperative `upgrade_town_minor_tribe_test.dart` and `build_rail_work_rules_test.dart` → table-driven scenarios with dedicated support modules. Removed `build_rail_work_rules_test.dart` from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 56: **34,073** (net +229 from post–slice 55; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
