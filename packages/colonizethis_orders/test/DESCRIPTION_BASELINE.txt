@@ -150,6 +150,8 @@ embassy accepts and debits treasury when consulate exists
 embassy requires existing trade consulate
 embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar
 embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire
+embassy-stage NW tribe: suggestWorkOrders is deterministic for repeated calls
+embassy-stage NW tribe: suggestWorkOrders surfaces purchase_land for Merchant
 emitAcceptedCandidates collects accepted in iteration order
 emitAcceptedCandidates probes every candidate without dedup args
 emitAcceptedCandidates skips candidates already targeted
@@ -274,6 +276,7 @@ naval move: missing fleet (rejected)
 New World spawn adds unit to newWorld
 next is left inverse of previous for every non-terminal stage
 no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids
+no embassy with NW tribe: suggestWorkOrders omits purchase_land for Merchant
 no candidates logs noCandidateReason
 no explore suggestion when province unknown
 no feedstock prospect when the co-located tile is already prospected (negative control)
@@ -520,6 +523,8 @@ supports only purchase_land target
 throws StateError when no projector was injected
 throws StateError when a trade order is validated without a projector
 toward minor at peace with join-empire overture suggests declareWar (primary before economic)
+tribe candidate is deterministic across repeated suggestDeclareWarOrders calls
+tribe stays in candidates when other GPs hold embassies on it
 trade consulate debits treasury on accept
 trade consulate rejects when treasury too low (no debit)
 trade consulate rejects without diplomatic_expertise

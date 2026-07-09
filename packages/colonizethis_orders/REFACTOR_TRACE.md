@@ -1538,6 +1538,20 @@ Migrated imperative `order_suggestion_colonial_acquisition_join_empire_or_war_te
 
 test/ LOC after slice 89: **38,273** (net +16 from post–slice 88; support modules add LOC while runner shrinks). Remaining: further imperative-suite compaction (declare-war intervention, purchase-land colonial, etc.), lib DRY items 5–6 opportunistic cleanup, scenario-table migration toward ≤26,400.
 
+### Slice 90 — declare-war intervention + purchase-land colonial scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dwir-tribe-candidate | tribe stays in candidates when other GPs hold embassies on it | `order_suggestion_declare_war_intervention_risk_test.dart` | `support/suggestion/order_suggestion_declare_war_intervention_risk_{fixtures,scenarios,expectations}.dart` + thin runner | #2509, #3949 |
+| dwir-deterministic | tribe candidate is deterministic across repeated suggestDeclareWarOrders calls | same | same | #2509, #3949 |
+| plc-embassy-purchase | embassy-stage NW tribe: suggestWorkOrders surfaces purchase_land for Merchant | `order_suggestion_work_purchase_land_colonial_test.dart` | `support/suggestion/order_suggestion_work_purchase_land_colonial_{fixtures,scenarios,expectations}.dart` + thin runner | #2509, #3949 |
+| plc-deterministic | embassy-stage NW tribe: suggestWorkOrders is deterministic for repeated calls | same | same | #2509, #3949 |
+| plc-no-embassy | no embassy with NW tribe: suggestWorkOrders omits purchase_land for Merchant | same | same | #2509, #3949 |
+
+Migrated imperative `order_suggestion_declare_war_intervention_risk_test.dart` and `order_suggestion_work_purchase_land_colonial_test.dart` → table-driven scenarios with dedicated support modules. Reused `colonialAcquisitionTopology` from colonial-acquisition fixtures for the shared four-node NW spine. Pinned previously absent baseline descriptions for all five scenarios.
+
+test/ LOC after slice 90: **38,247** (net −26 from post–slice 89; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
