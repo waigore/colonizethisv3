@@ -1998,6 +1998,17 @@ test/ LOC after slice 125: **37,384** (net +2 from post–slice 124; helper over
 
 test/ LOC after slice 126: **37,513** (net +129 from post–slice 125; helper definitions front-load overhead — switch bodies thinner for follow-up reuse). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 127: reverse single-use dispatch wrappers (vwt/vw/osc/wcc)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-dispatch-inline | inline nine single-site build/explore/move/suggest expectation wrappers into `valid_work_tiles_expectations.dart` | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vw-dispatch-inline | inline sixteen single-site validate-work expectation wrappers into dispatcher switch | `order_engine_validate_work_expectation_shorthand_part1.dart` | `order_engine_validate_work_expectations.dart` | #3949 |
+| osc-dispatch-inline | inline fourteen single-site core-suggestion expectation wrappers into dispatcher switch | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| wcc-dispatch-inline | inline envy-mirror / envy-evidence / tech-cap1291 work-completion cases into dispatcher switch | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+
+test/ LOC after slice 127: **37,339** (net −174 from post–slice 126). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
