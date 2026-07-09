@@ -582,6 +582,16 @@ test/ LOC after slice 32: **32,687** (net +92 from post–slice 31; expectation 
 
 test/ LOC after slice 33: **32,799** (net +112 from post–slice 32; part2 expectation bodies shortened, new `waa*`/`wcc*`/`vw*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 34: worker-pool / diplomatic / validateWork fixture compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wpp-tier-shorthand | add `wppExpectJourneymanTrain` / `wppExpectMasterTrain` / `wppExpectMasterTrainSkipped` / `wppExpectSequentialTiers` / `wppExpectMultiPlayerApprenticeIsolation`; compact worker-pool phase expectation bodies | `worker_pool_phase_expectations_part1.dart` | `worker_pool_phase_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ved-dup-shorthand | add `vedExpectSecondOrderRejected` / `vedExpectGrantAidThenSubsidyAccepted`; compact validate-diplomatic part1 bodies | `order_engine_validate_diplomatic_expectations_part1.dart` | `order_engine_validate_diplomatic_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-fixture-shorthand | add `vwSingleProvinceUnitGame` / `_vwProvince`; refactor build-improvement/scrub-cap/rail/fort fixtures onto shared builder | `order_engine_validate_work_fixtures_part1.dart` | `order_engine_validate_work_fixture_shorthand.dart` + thin fixture wrappers | #3949 |
+
+test/ LOC after slice 34: **32,847** (net +48 from post–slice 33; fixture/expectation bodies shortened, new `wpp*`/`ved*`/`vw*` shorthand modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

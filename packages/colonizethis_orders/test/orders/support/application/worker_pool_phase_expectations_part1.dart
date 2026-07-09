@@ -44,21 +44,13 @@ void _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeductio
 }
 
 void _acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({CommodityCatalog.paper.id: 8}),
-      workerPool: const WorkerPool(peasants: 2),
-      treasury: 700,
-      techUnlocked: wppJourneymanTech,
-    ),
-    [WorkerTier.journeyman],
-  );
-  wppExpect(
-    p,
-    peasants: 1,
-    journeymen: 1,
-    stock: {CommodityCatalog.paper.id: 3},
-    treasury: 200,
+  wppExpectJourneymanTrain(
+    paper: 8,
+    peasants: 2,
+    treasury: 700,
+    expectedPeasants: 1,
+    expectedPaper: 3,
+    expectedTreasury: 200,
     peasantsReason: 'one peasant consumed',
     journeymenReason: 'one journeyman added',
     stockReasons: {
@@ -69,21 +61,13 @@ void _acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage()
 }
 
 void _acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({CommodityCatalog.paper.id: 12}),
-      workerPool: const WorkerPool(peasants: 1),
-      treasury: 1200,
-      techUnlocked: wppMasterTech,
-    ),
-    [WorkerTier.master],
-  );
-  wppExpect(
-    p,
-    peasants: 0,
-    masters: 1,
-    stock: {CommodityCatalog.paper.id: 2},
-    treasury: 200,
+  wppExpectMasterTrain(
+    paper: 12,
+    peasants: 1,
+    treasury: 1200,
+    expectedPeasants: 0,
+    expectedPaper: 2,
+    expectedTreasury: 200,
     peasantsReason: 'one peasant consumed',
     mastersReason: 'one master added',
     stockReasons: {
@@ -94,46 +78,30 @@ void _acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3Mas
 }
 
 void _masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({CommodityCatalog.paper.id: 12}),
-      workerPool: const WorkerPool(peasants: 1),
-      treasury: 1200,
-      techUnlocked: const {kTechIdMasterArtisans: true},
-    ),
-    [WorkerTier.master],
-  );
-  wppExpect(
-    p,
+  wppExpectMasterTrainSkipped(
+    paper: 12,
     peasants: 1,
-    masters: 0,
-    stock: {CommodityCatalog.paper.id: 12},
     treasury: 1200,
-    peasantsReason: 'peasant not consumed',
-    mastersReason: 'master not added',
-    stockReasons: {CommodityCatalog.paper.id: 'no paper deducted'},
-    treasuryReason: 'no treasury deducted',
+    techUnlocked: const {kTechIdMasterArtisans: true},
   );
 }
 
 void _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({
-        CommodityCatalog.fabric.id: 2,
-        CommodityCatalog.paper.id: 2,
-      }),
-      treasury: 200,
-      techUnlocked: wppApprenticeTech,
-    ),
-    [WorkerTier.peasant, WorkerTier.apprentice],
-  );
-  wppExpect(
-    p,
+  wppExpectSequentialTiers(
+    stock: {
+      CommodityCatalog.fabric.id: 2,
+      CommodityCatalog.paper.id: 2,
+    },
     peasants: 0,
-    apprentices: 1,
-    stock: {CommodityCatalog.fabric.id: 0, CommodityCatalog.paper.id: 0},
-    treasury: 0,
+    treasury: 200,
+    tiers: [WorkerTier.peasant, WorkerTier.apprentice],
+    expectedPeasants: 0,
+    expectedApprentices: 1,
+    expectedStock: {
+      CommodityCatalog.fabric.id: 0,
+      CommodityCatalog.paper.id: 0,
+    },
+    expectedTreasury: 0,
     peasantsReason:
         'recruited peasant immediately consumed by the apprentice train',
     apprenticesReason: 'one apprentice added',
@@ -146,24 +114,21 @@ void _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSub
 }
 
 void _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({
-        CommodityCatalog.fabric.id: 4,
-        CommodityCatalog.paper.id: 4,
-      }),
-      workerPool: const WorkerPool(peasants: 1),
-      treasury: 400,
-      techUnlocked: wppApprenticeTech,
-    ),
-    [WorkerTier.apprentice, WorkerTier.apprentice, WorkerTier.peasant],
-  );
-  wppExpect(
-    p,
+  wppExpectSequentialTiers(
+    stock: {
+      CommodityCatalog.fabric.id: 4,
+      CommodityCatalog.paper.id: 4,
+    },
     peasants: 1,
-    apprentices: 1,
-    stock: {CommodityCatalog.paper.id: 2, CommodityCatalog.fabric.id: 2},
-    treasury: 200,
+    treasury: 400,
+    tiers: [WorkerTier.apprentice, WorkerTier.apprentice, WorkerTier.peasant],
+    expectedPeasants: 1,
+    expectedApprentices: 1,
+    expectedStock: {
+      CommodityCatalog.paper.id: 2,
+      CommodityCatalog.fabric.id: 2,
+    },
+    expectedTreasury: 200,
     peasantsReason:
         'apprentice consumed initial peasant; peasant recruit added 1',
     apprenticesReason: 'only the first apprentice train fired; second skipped',
@@ -176,41 +141,5 @@ void _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAga
 }
 
 void _perPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin() {
-  final apprenticePlayer = wppPlayer(
-    stockpile: wppStock({CommodityCatalog.paper.id: 4}),
-    workerPool: const WorkerPool(peasants: 2),
-    treasury: 300,
-    techUnlocked: wppApprenticeTech,
-  );
-  final game = wppEmptyWorldGame(
-    players: [
-      apprenticePlayer,
-      wppPlayer(
-        id: WppIds.player2,
-        displayName: 'B',
-        isHuman: false,
-        stockpile: wppStock({CommodityCatalog.paper.id: 4}),
-        workerPool: const WorkerPool(peasants: 2),
-        treasury: 300,
-        techUnlocked: wppApprenticeTech,
-      ),
-    ],
-  );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      WppIds.player1: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-      WppIds.player2: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-    },
-  );
-  final result = wppApply(game, orders);
-  for (final playerId in [WppIds.player1, WppIds.player2]) {
-    final p = result.players.firstWhere((p) => p.id == playerId);
-    wppExpect(
-      p,
-      peasants: 1,
-      apprentices: 1,
-      stock: {CommodityCatalog.paper.id: 2},
-      treasury: 100,
-    );
-  }
+  wppExpectMultiPlayerApprenticeIsolation();
 }

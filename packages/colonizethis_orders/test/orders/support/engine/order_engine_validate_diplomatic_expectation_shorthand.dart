@@ -106,3 +106,26 @@ void vedExpectAccepted(
   final result = vedSubmit(game, order, engine: engine);
   expect(result.status, OrderValidationStatus.accepted);
 }
+
+void vedExpectSecondOrderRejected(
+  Game game,
+  DiplomaticOrder first,
+  DiplomaticOrder second, {
+  OrderEngine? engine,
+  String? reasonContains,
+}) {
+  final activeEngine = engine ?? OrderEngine();
+  vedExpectAccepted(game, first, engine: activeEngine);
+  final result = vedSubmit(game, second, engine: activeEngine);
+  expect(result.status, OrderValidationStatus.rejected);
+  if (reasonContains != null) {
+    expect(result.reason, contains(reasonContains));
+  }
+}
+
+void vedExpectGrantAidThenSubsidyAccepted() {
+  final game = vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000);
+  final engine = OrderEngine();
+  vedExpectAccepted(game, vedGrantAid(1000), engine: engine);
+  vedExpectAccepted(game, vedSetSubsidy(10), engine: engine);
+}

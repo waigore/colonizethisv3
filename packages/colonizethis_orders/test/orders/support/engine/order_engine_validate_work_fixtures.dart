@@ -2,6 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+part 'order_engine_validate_work_fixture_shorthand.dart';
 part 'order_engine_validate_work_fixtures_part1.dart';
 part 'order_engine_validate_work_fixtures_part2.dart';
 

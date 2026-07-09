@@ -55,41 +55,27 @@ void _establishovertureEmbassyRequiresExistingConsulate() {
 }
 
 void _establishovertureSecondOrderForSameFactionInSameTurnRejected() {
-  final game = vedGpMinor(treasury: overtureConsulateCost * 3);
-  final engine = OrderEngine();
   final order = vedEstablishOverture(OvertureStage.tradeConsulate);
-  vedExpectAccepted(game, order, engine: engine);
-  final second = vedSubmit(game, order, engine: engine);
-  expect(second.status, OrderValidationStatus.rejected);
-  expect(
-    second.reason,
-    contains('Already have a diplomatic order for this faction this turn'),
+  vedExpectSecondOrderRejected(
+    vedGpMinor(treasury: overtureConsulateCost * 3),
+    order,
+    order,
+    reasonContains: 'Already have a diplomatic order for this faction this turn',
   );
 }
 
 void _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected() {
-  final game = vedTwoGpPeaceGame();
-  final engine = OrderEngine();
-  vedExpectAccepted(
-    game,
+  vedExpectSecondOrderRejected(
+    vedTwoGpPeaceGame(),
     const DiplomaticOrder(
       type: DiplomaticOrderType.declareWar,
       targetFactionId: 'gp2',
     ),
-    engine: engine,
-  );
-  final second = vedSubmit(
-    game,
     const DiplomaticOrder(
       type: DiplomaticOrderType.alliance,
       targetFactionId: 'gp2',
     ),
-    engine: engine,
-  );
-  expect(second.status, OrderValidationStatus.rejected);
-  expect(
-    second.reason,
-    contains('Already have a diplomatic order for this faction this turn'),
+    reasonContains: 'Already have a diplomatic order for this faction this turn',
   );
 }
 
@@ -115,10 +101,7 @@ void _grantaidRejectsAmountsNotAMultipleOf1000() {
 }
 
 void _grantaidThenSetSubsidyTowardSameTargetBothAccepted() {
-  final game = vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000);
-  final engine = OrderEngine();
-  vedExpectAccepted(game, vedGrantAid(1000), engine: engine);
-  vedExpectAccepted(game, vedSetSubsidy(10), engine: engine);
+  vedExpectGrantAidThenSubsidyAccepted();
 }
 
 void _setsubsidyRequiresAnEmbassyRefs3753R2() {
