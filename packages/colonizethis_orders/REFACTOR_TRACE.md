@@ -1578,6 +1578,22 @@ Merged imperative `order_suggestion_work_logging_prospect_test.dart` into the ex
 
 test/ LOC after slice 92: **38,494** (net +56 from post–slice 91; support modules add LOC while prospect shard deleted). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 93 — army-move armiesById + simple-AI validator-reuse scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| amv-accepted-parity | accepted result is identical with and without supplied armiesById | `army_move_validator_armies_by_id_test.dart` | `support/validators/army_move_validator_armies_by_id_{fixtures,scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+| amv-rejected-parity | rejected result is identical with and without supplied armiesById | same | same | #2394, #3949 |
+| amv-missing-id | armiesById missing the target army id is rejected as Invalid army move | same | same | #2394, #3949 |
+| amv-incremental-parity | IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path) | same | same | #2394, #3949 |
+| amv-faction-membership | factionMembership path matches legacy GP declare-war guard (Refs #2394) | same | same | #2394, #3949 |
+| savr-heuristic | builds one incremental validator per player heuristic pass | `simple_ai_validator_reuse_test.dart` | `support/suggestion/simple_ai_validator_reuse_{fixtures,scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+| savr-batch | builds one incremental validator per AI player in batch path | same | same | #2394, #3949 |
+
+Migrated imperative `army_move_validator_armies_by_id_test.dart` and `simple_ai_validator_reuse_test.dart` → table-driven scenarios with dedicated support modules. Pinned seven previously absent baseline descriptions.
+
+test/ LOC after slice 93: **38,623** (net +129 from post–slice 92; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

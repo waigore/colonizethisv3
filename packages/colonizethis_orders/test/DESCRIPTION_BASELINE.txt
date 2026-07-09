@@ -14,6 +14,7 @@ accepted apprentice train consumes peasant, paper, and treasury
 accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage)
 accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail)
 accepted recruit peasant order adds 1 peasant and deducts fabric
+accepted result is identical with and without supplied armiesById
 accepts a single peasant recruit when fabric is available
 accepts a valid boycott order through the parent validator
 accepts a valid breakAlliance order through the parent validator
@@ -46,6 +47,7 @@ add order and validate
 addMoveOrderWithContext uses world-state validation
 addWorkOrderWithContext returns rejected when order invalid
 append-existing-army path matches with and without armiesById
+armiesById missing the target army id is rejected as Invalid army move
 appends order for existing player list
 applies treasury and paper cost when civilian build valid
 applies treasury, stockpile and worker costs when valid
@@ -93,6 +95,8 @@ build_road completion propagates transport level to adjacent port tile and upgra
 build_road with targetTileKey uses tile key for region and province
 builder cross-region into tribe-owned province is still invalid
 builds one pass-level validator across multiple diplomatic targets
+builds one incremental validator per AI player in batch path
+builds one incremental validator per player heuristic pass
 cached player-owned set matches default allProvinces scan
 cached player-owned set matches default destination picker path
 calculateCost for build_fort uses province fortLevel when not overridden
@@ -182,6 +186,7 @@ Explorer may move onto Minor province tile (cross-region style)
 falls back to single-pass scan when armiesById lacks the entry
 false when no tile has 4-part key for region/province
 false when tile unknown
+factionMembership path matches legacy GP declare-war guard (Refs #2394)
 fills every empty slot with a distinct researchable tech
 filterMoveOrdersByDiplomacy does not drop civilian moves at peace
 filterMoveOrdersByDiplomacy keeps move to at-war faction
@@ -207,6 +212,7 @@ ignores tile keys with wrong number of parts
 includes cross-region player-owned province as destination
 includes resource tiles in tribe-owned provinces
 incremental build probe matches full-pass when riches fund build
+IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)
 indexExistingTargetsByEntityId skips empty targets when requested
 initial orders copy: getter returns equal but distinct lists
 isDiplomaticOrderAccepted returns a boolean result
@@ -337,6 +343,7 @@ refresh keeps cache isolated per player
 refresh replaces target membership on turn-boundary style update
 refresh stores and reads prospect membership
 registers expected work targets
+rejected result is identical with and without supplied armiesById
 rejected candidates log engineRejectedReason
 rejects a duplicate alliance when a formal alliance already exists
 rejects a duplicate boycott for the same pair
