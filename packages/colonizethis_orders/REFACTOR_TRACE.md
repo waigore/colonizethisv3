@@ -784,6 +784,17 @@ Migrated imperative `order_engine_naval_build_validation_test.dart` → table-dr
 
 test/ LOC after slice 47: **32,896** (net +86 from post–slice 46; scenario support modules add LOC while runner shrinks to ≤20 lines). Remaining: further imperative-suite compaction (`order_engine_naval_build_projection_and_workers_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 48: order_engine_naval_build_projection_and_workers scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oenb-pw-treasury | projectedEffects returns treasuryDelta when orders affect treasury | `order_engine_naval_build_projection_and_workers_test.dart` | `support/engine/order_engine_naval_build_projection_and_workers_scenarios.dart` + thin runner | #3949 |
+| oenb-pw-peasants | rejects naval build when peasants are zero | same | same | #3949 |
+
+Migrated imperative `order_engine_naval_build_projection_and_workers_test.dart` → table-driven scenarios with `order_engine_naval_build_projection_and_workers_expectations.dart`. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 48: **32,959** (net +63 from post–slice 47; scenario support modules add LOC while runner shrinks to ≤20 lines). Remaining: further imperative-suite compaction (`order_engine_civilian_move_xor_work_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
