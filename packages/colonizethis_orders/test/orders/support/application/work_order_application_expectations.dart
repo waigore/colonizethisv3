@@ -54,8 +54,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1:
       final next = waaApplyBuildImprovement();
-        waaExpectUnitIdle(next);
-        waaExpectImprovementLevel(next, 1);
+        expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 1);
+        final u = waaSingleUnit(next);
+        expect(u.status, UnitStatus.idle);
+        expect(u.currentWork, isNull);
     case WorkOrderApplicationTarget
         .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel:
       final fortNext = waaApplyBuildFort(
@@ -70,7 +72,7 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           originTileKey: WorkAppIds.tileKey,
           assignedTileKey: WorkAppIds.tileKey,
         );
-        waaExpectFortLevel(fortNext, 1);
+        expect(fortNext.worldState.oldWorld.provinces.single.fortLevel, 1);
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnit:
       final counterSpyNext = waaApply(
@@ -112,7 +114,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         final next = waaApply(game, waaDualPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: 'p1');
         waaExpectTreasuryDelta(game, next, 'p1', -cost);
-        waaExpectTreasuryUnchanged(game, next, 'p2');
+        expect(
+          next.playerById('p2')!.treasury,
+          game.playerById('p2')!.treasury,
+        );
     case WorkOrderApplicationTarget
         .buildFortWithSufficientMaterialsDeductsMaterials:
       final cost = workOrderCostBuildFort(0);
@@ -156,14 +161,21 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           ),
           workAppProcessWorkOrders(),
         );
-        waaExpectTownDevelopmentLevel(upgradeNext, 2);
+        expect(
+          upgradeNext.worldState.oldWorld.provinces.single.townDevelopmentLevel,
+          2,
+        );
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
       final next = waaApply(
           waaCounterSpyOngoingAssignmentGame(),
           workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
         );
-        waaExpectUnitIdsPresent(next, const ['spy1', 'spy2']);
+        final units = next.worldState.oldWorld.units;
+        expect(units.length, 2);
+        for (final id in const ['spy1', 'spy2']) {
+          expect(units.any((u) => u.id == id), isTrue);
+        }
     case WorkOrderApplicationTarget.unknownWorkTargetSkippedUnitStaysIdle:
       final next = waaApply(
           workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
@@ -199,7 +211,9 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
             target: kWorkTargetCounterSpy,
           ),
         );
-        waaExpectCounterSpyWork(capitalSpyNext);
+        final counterSpyU = waaSingleUnit(capitalSpyNext);
+        expect(counterSpyU.currentWork, isNotNull);
+        expect(counterSpyU.currentWork!.workTarget, kWorkTargetCounterSpy);
     case WorkOrderApplicationTarget
         .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles:
       final next = waaApply(

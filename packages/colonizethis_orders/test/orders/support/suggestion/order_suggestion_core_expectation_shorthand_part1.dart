@@ -1,59 +1,59 @@
 part of 'order_suggestion_core_expectation_shorthand.dart';
 
+List<T> _oscWithViewSuggest<T>(
+  Game game,
+  MapTopology topology,
+  Orders orders,
+  List<T> Function(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders orders,
+  ) suggest,
+) =>
+    suggest(oscView(game, topology), game, topology, orders);
 
 List<MoveOrder> oscSuggestMoves(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestMoveOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestMoveOrders);
 
 List<WorkOrder> oscSuggestWork(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestWorkOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestWorkOrders);
 
 List<BuildUnitOrder> oscSuggestBuild(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestBuildOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestBuildOrders);
 
 List<ResearchOrder> oscSuggestResearch(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestResearchOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestResearchOrders);
 
 List<NavalMissionOrder> oscSuggestNavalMission(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestNavalMissionOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestNavalMissionOrders);
 
 List<NavalMoveOrder> oscSuggestNavalMove(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) {
-  final view = oscView(game, topology);
-  return suggestNavalMoveOrders(view, game, topology, orders);
-}
+]) =>
+    _oscWithViewSuggest(game, topology, orders, suggestNavalMoveOrders);
 
 void oscExpectFirstMove(
   List<MoveOrder> suggestions, {
@@ -71,10 +71,6 @@ Iterable<WorkOrder> oscWorkWithTarget(
 ) =>
     suggestions.where((o) => o.target == target);
 
-void oscExpectWorkTargetEmpty(List<WorkOrder> suggestions, String target) {
-  expect(oscWorkWithTarget(suggestions, target), isEmpty);
-}
-
 void oscExpectWorkTargetNotEmpty(List<WorkOrder> suggestions, String target) {
   expect(oscWorkWithTarget(suggestions, target), isNotEmpty);
 }
@@ -88,15 +84,6 @@ void oscExpectThrowsSuggestMoveOnUnknownVisibility(
     () => suggestMoveOrders(view, game, topology, const Orders()),
     throwsStateError,
   );
-}
-
-void oscExpectProvinceViewMatchesAll(Game game, MapTopology topology) {
-  final fromAll = allProvinces(game.worldState).toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  final fromView = oscView(game, topology).provincesById.values.toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  expect(fromView.length, fromAll.length);
-  expect(fromView.map((p) => p.id).toList(), fromAll.map((p) => p.id).toList());
 }
 
 void oscExpectExploreTargetsProvince(
@@ -400,22 +387,6 @@ void oscExpectProspectTargetsTile(
   expect(
     oscWorkWithTarget(suggestions, kWorkTargetProspect).first.targetTileKey,
     tileKey,
-  );
-}
-
-void oscExpectWorkerSuggestStayInProvince(Game game, MapTopology topology) {
-  final suggestions = oscSuggestWork(game, topology);
-  for (final o in suggestions) {
-    expect(o.unitId, 'u1');
-    final u = oscView(game, topology).ownUnitsById[o.unitId];
-    expect(u, isNotNull);
-    expect(u!.locationProvinceId, OscIds.prov('p1'));
-  }
-}
-
-void oscExpectCapitalBuildSuggestList(Player player) {
-  oscExpectSuggestListType(
-    oscSuggestBuild(oscCapitalProvinceGame(player), oscCapitalTopology()),
   );
 }
 

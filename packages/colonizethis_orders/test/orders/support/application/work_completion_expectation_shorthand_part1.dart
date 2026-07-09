@@ -98,24 +98,6 @@ void wccExpectVisibility(
   expect(next.worldState.playerVisibilityByTile[playerId]?[tileKey], level);
 }
 
-void wccExpectFortLevel(Game next, int level) {
-  expect(next.worldState.oldWorld.provinces.single.fortLevel, level);
-}
-
-void wccExpectEnvyHint(Game next, String category, int turn) {
-  expect(next.lastHumanCompletedResearchCategory, category);
-  expect(next.lastHumanResearchCategoryCompletionTurn, turn);
-}
-
-void wccExpectEnvyEvidence(Game next, String subjectId, int scoreDelta) {
-  final envy = next.dossierEvidenceEntries
-      .where((e) => e.agendaType == 'envy')
-      .toList();
-  expect(envy, isNotEmpty);
-  expect(envy.single.subjectId, subjectId);
-  expect(envy.single.scoreDelta, scoreDelta);
-}
-
 Game wccRailGame({
   required int roadLevel,
   required List<Player> players,
@@ -260,28 +242,6 @@ Game wccBuilderImprovementAtLevel(int level) => wccGame(
       units: [wccBuilderImprovement()],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, level),
     );
-
-void wccExpectUnitCancelledToOrigin(Game next) {
-  final u = wccSingleUnit(next);
-  expect(u.status, UnitStatus.idle);
-  expect(u.currentWork, isNull);
-  expect(u.tileKey, WorkAppIds.originTileKey);
-  expect(u.originTileKey, isNull);
-  expect(u.assignedTileKey, isNull);
-}
-
-void wccExpectRemainingTurns(Game next, int remaining) {
-  expect(wccSingleUnit(next).currentWork!.remainingTurns, remaining);
-}
-
-void wccExpectPortRegisteredForProvince(Game next) {
-  expect(
-    next.worldState.portsByProvinceSeaboard.keys.any(
-      (k) => k.startsWith(WorkAppIds.provinceId),
-    ),
-    isTrue,
-  );
-}
 
 Game wccBuildRoadCapitalAdjacentGame() {
   const capitalTileKey = WorkAppIds.originTileKey;

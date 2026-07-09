@@ -185,24 +185,6 @@ void vwtExpectNoMovesToProvince(
   );
 }
 
-void vwtExpectBuildSuggestionsSorted(List<String> tileKeys) {
-  final game = owGrainBuildSuggestGame(tileKeys: tileKeys);
-  final topology = owSingleProvinceTopology('p1');
-  final buildSuggestions = suggestedWorkOrders(game: game, topology: topology)
-      .where((o) => o.target == kWorkTargetBuildImprovement)
-      .toList();
-  if (buildSuggestions.length > 1) {
-    for (var i = 0; i < buildSuggestions.length - 1; i++) {
-      expect(
-        buildSuggestions[i].targetTileKey.compareTo(
-          buildSuggestions[i + 1].targetTileKey,
-        ),
-        lessThanOrEqualTo(0),
-      );
-    }
-  }
-}
-
 void vwtExpectKeysEmpty(
   Game game,
   String unitId,
@@ -213,12 +195,6 @@ void vwtExpectKeysEmpty(
       ? vwtVisKeys(game, unitId, workTarget)
       : vwtPlainKeys(game, unitId, workTarget);
   expect(keys, isEmpty);
-}
-
-void vwtExpectVisMatchesPlain(Game game, String unitId, String workTarget) {
-  final withVis = vwtVisKeys(game, unitId, workTarget);
-  final withoutVis = vwtPlainKeys(game, unitId, workTarget);
-  expect(withVis.length, withoutVis.length);
 }
 
 void vwtExpectBuildVisMembership(
@@ -327,16 +303,6 @@ void vwtExpectNoBuildSuggestionForReservedTile({
         o.target == kWorkTargetBuildImprovement && o.targetTileKey == reservedTile,
   );
   expect(buildSuggestions, isEmpty);
-}
-
-void vwtExpectProspectExcludedWhenIronProspected(NwPartialRevealHomeTarget fx) {
-  expect(
-    vwtSuggestProspect(
-      vwtTribeConsulateGame(fx, id: 'g1916p2'),
-      fx.topology(),
-    ),
-    isEmpty,
-  );
 }
 
 void vwtExpectPurchaseLandIncluded(

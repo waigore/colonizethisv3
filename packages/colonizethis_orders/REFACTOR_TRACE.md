@@ -1748,6 +1748,18 @@ test/ LOC after slice 102: **38,477** (net −301 from post–slice 101). Remain
 
 test/ LOC after slice 103: **38,444** (net −33 from post–slice 102). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 104: dispatcher-only shorthand compaction + osc suggest DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osc-suggest-dry | add `_oscWithViewSuggest` helper; collapse six `oscSuggest*` one-liners | `order_suggestion_core_expectation_shorthand_part1.dart` | same | #3949 |
+| dispatch-inline-osc-single | inline `oscExpectWorkTargetEmpty` / `oscExpectProvinceViewMatchesAll` / `oscExpectWorkerSuggestStayInProvince` / `oscExpectCapitalBuildSuggestList` into core suggestion dispatcher | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| dispatch-inline-waa-single | inline dispatcher-only `waaExpectImprovementLevel` / `waaExpectTownDevelopmentLevel` / `waaExpectUnitIdsPresent` / `waaExpectCounterSpyWork` / fort-level tail into work-order application dispatcher | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-wcc-single | inline dispatcher-only `wccExpectEnvyHint` / `wccExpectEnvyEvidence` / `wccExpectUnitCancelledToOrigin` / `wccExpectRemainingTurns` / `wccExpectPortRegisteredForProvince` / `wccExpectFortLevel` into work-completion dispatcher | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+| dispatch-inline-vwt-single | inline `vwtExpectVisMatchesPlain` / `vwtExpectBuildSuggestionsSorted` / `vwtExpectProspectExcludedWhenIronProspected` into valid-work-tiles dispatcher | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+
+test/ LOC after slice 104: **38,389** (net −55 from post–slice 103). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

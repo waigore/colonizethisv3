@@ -100,19 +100,6 @@ void waaExpectRoadLevel(Game next, int level) {
   expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), level);
 }
 
-void waaExpectImprovementLevel(Game next, int level) {
-  expect(
-    next.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
-    level,
-  );
-}
-
-void waaExpectCounterSpyWork(Game next) {
-  final u = waaSingleUnit(next);
-  expect(u.currentWork, isNotNull);
-  expect(u.currentWork!.workTarget, kWorkTargetCounterSpy);
-}
-
 void waaExpectExploreWork(
   Game next, {
   int? totalTurns,
@@ -332,21 +319,6 @@ Orders waaDualPurchaseLandOrders() => Orders(
         ],
       },
     );
-
-void waaExpectTownDevelopmentLevel(Game next, int level) {
-  expect(
-    next.worldState.oldWorld.provinces.single.townDevelopmentLevel,
-    level,
-  );
-}
-
-void waaExpectUnitIdsPresent(Game next, List<String> ids) {
-  final units = next.worldState.oldWorld.units;
-  expect(units.length, ids.length);
-  for (final id in ids) {
-    expect(units.any((u) => u.id == id), isTrue);
-  }
-}
 
 Game waaApplyBuildRoad(Game game) =>
     waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));

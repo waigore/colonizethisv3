@@ -64,11 +64,10 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
           withVisibility: true,
         );
     case ValidWorkTilesTarget.filtersByVisibilityBeforeOrderEngineValidation:
-      vwtExpectVisMatchesPlain(
-          vwtColonistVisibilityFilterGame(),
-          'u1',
-          kWorkTargetBuildImprovement,
-        );
+      final visGame = vwtColonistVisibilityFilterGame();
+        final withVis = vwtVisKeys(visGame, 'u1', kWorkTargetBuildImprovement);
+        final withoutVis = vwtPlainKeys(visGame, 'u1', kWorkTargetBuildImprovement);
+        expect(withVis.length, withoutVis.length);
     case ValidWorkTilesTarget.buildImprovementReturnsOnlyControlledTilesWithResources:
       final tileWithResource = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
         final tileWithoutResource = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
@@ -198,11 +197,27 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
       final fx = owGpAdjacentMoveFixture();
         vwtExpectNoMovesToProvince(fx.game, fx.topology, fx.otherGpProvinceId);
     case ValidWorkTilesTarget.suggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch:
-      vwtExpectBuildSuggestionsSorted([
+      final tileKeys = [
           ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
           ValidWorkTilesTestSupport.tileKey('p1', 1, 0),
           ValidWorkTilesTestSupport.tileKey('p1', 2, 0),
-        ]);
+        ];
+        final sortGame = owGrainBuildSuggestGame(tileKeys: tileKeys);
+        final sortTopology = owSingleProvinceTopology('p1');
+        final buildSuggestions = suggestedWorkOrders(
+          game: sortGame,
+          topology: sortTopology,
+        ).where((o) => o.target == kWorkTargetBuildImprovement).toList();
+        if (buildSuggestions.length > 1) {
+          for (var i = 0; i < buildSuggestions.length - 1; i++) {
+            expect(
+              buildSuggestions[i].targetTileKey.compareTo(
+                buildSuggestions[i + 1].targetTileKey,
+              ),
+              lessThanOrEqualTo(0),
+            );
+          }
+        }
     case ValidWorkTilesTarget.suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit:
       final tile0 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
         final tile1 = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
@@ -246,9 +261,14 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral:
-      vwtExpectProspectExcludedWhenIronProspected(
-        vwtTribeGrainIronFx(prospectedIron: true),
-      );
+      final ironFx = vwtTribeGrainIronFx(prospectedIron: true);
+        expect(
+          vwtSuggestProspect(
+            vwtTribeConsulateGame(ironFx, id: 'g1916p2'),
+            ironFx.topology(),
+          ),
+          isEmpty,
+        );
     case ValidWorkTilesTarget
         .suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy:
       final fx = vwtMinorPurchaseFx();

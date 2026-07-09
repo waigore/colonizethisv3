@@ -49,7 +49,8 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
             resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
           ),
         );
-        wccExpectEnvyHint(next, 'gathering', 2);
+        expect(next.lastHumanCompletedResearchCategory, 'gathering');
+        expect(next.lastHumanResearchCategoryCompletionTurn, 2);
     case WorkCompletionTarget
         .buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint:
       const aiId = 'ai1';
@@ -69,7 +70,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
             lastHumanResearchCategoryCompletionTurn: 0,
           ),
         );
-        wccExpectEnvyEvidence(next, aiId, 1);
+        final envy = next.dossierEvidenceEntries
+            .where((e) => e.agendaType == 'envy')
+            .toList();
+        expect(envy, isNotEmpty);
+        expect(envy.single.subjectId, aiId);
+        expect(envy.single.scoreDelta, 1);
     case WorkCompletionTarget
         .buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax:
       final next = wccApply(
@@ -112,7 +118,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
             ],
           ),
         );
-        wccExpectUnitCancelledToOrigin(next);
+        final cancelled = wccSingleUnit(next);
+        expect(cancelled.status, UnitStatus.idle);
+        expect(cancelled.currentWork, isNull);
+        expect(cancelled.tileKey, WorkAppIds.originTileKey);
+        expect(cancelled.originTileKey, isNull);
+        expect(cancelled.assignedTileKey, isNull);
         wccExpectImprovement(next, 0);
     case WorkCompletionTarget
         .multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero:
@@ -128,7 +139,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         );
         final afterFirst = wccApply(game);
         wccExpectImprovement(afterFirst, 0);
-        wccExpectRemainingTurns(afterFirst, 1);
+        expect(wccSingleUnit(afterFirst).currentWork!.remainingTurns, 1);
         final afterSecond = wccApply(afterFirst);
         wccExpectImprovement(afterSecond, 1);
     case WorkCompletionTarget
@@ -218,7 +229,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
           topology: wccPortSeaTopology(),
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
-        wccExpectPortRegisteredForProvince(next);
+        expect(
+          next.worldState.portsByProvinceSeaboard.keys.any(
+            (k) => k.startsWith(WorkAppIds.provinceId),
+          ),
+          isTrue,
+        );
     case WorkCompletionTarget.buildFortCompletionIncreasesProvinceFortLevel:
       final next = wccApply(
           wccEngineerCompletionGame(
@@ -226,7 +242,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
             provinces: [workAppOwnedProvince(fortLevel: 0)],
           ),
         );
-        wccExpectFortLevel(next, 1);
+        expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
     case WorkCompletionTarget.buildRailCompletionLeavesRoadWhenTileHasNoRoad:
       final next = wccApply(
           wccRailGame(roadLevel: 0, players: wccSteamPlayers()),

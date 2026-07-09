@@ -61,10 +61,14 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           OscIds.prov('p2'),
         );
     case OrderSuggestionCoreTarget.noExploreSuggestionWhenProvinceUnknown:
-      oscExpectWorkTargetEmpty(
-          oscSuggestWork(oscExplorerProvinceGame(), oscProvinceTopology(['p1'])),
-          kWorkTargetExplore,
-        );
+      final exploreSuggestions = oscSuggestWork(
+        oscExplorerProvinceGame(),
+        oscProvinceTopology(['p1']),
+      );
+      expect(
+        oscWorkWithTarget(exploreSuggestions, kWorkTargetExplore),
+        isEmpty,
+      );
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersExploreTargetUsesKWorkTargetExplore:
       final t0 = OscIds.tile('p1', 0, 0);
@@ -88,16 +92,17 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         );
     case OrderSuggestionCoreTarget
         .noProspectSuggestionWhenProvinceNotAtLeastFogged:
-      oscExpectWorkTargetEmpty(
-          oscSuggestWork(
-            oscExplorerProvinceGame(
-              ownerId: 'tribe1',
-              visibilityByTile: {OscIds.tile('p1', 0, 0): 'unknown'},
-            ),
-            oscProvinceTopology(['p1']),
-          ),
-          kWorkTargetProspect,
-        );
+      final prospectSuggestions = oscSuggestWork(
+        oscExplorerProvinceGame(
+          ownerId: 'tribe1',
+          visibilityByTile: {OscIds.tile('p1', 0, 0): 'unknown'},
+        ),
+        oscProvinceTopology(['p1']),
+      );
+      expect(
+        oscWorkWithTarget(prospectSuggestions, kWorkTargetProspect),
+        isEmpty,
+      );
     case OrderSuggestionCoreTarget
         .prospectSuggestionWhenProvinceFoggedAndTilesInProvince:
       final tileKey = OscIds.tile('p1', 0, 0);
@@ -122,16 +127,32 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           ).worldState,
           minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
         );
-        oscExpectProvinceViewMatchesAll(game, oscProvinceTopology(['p1', 'p2']));
+        final fromAll = allProvinces(game.worldState).toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+        final fromView = oscView(game, oscProvinceTopology(['p1', 'p2']))
+            .provincesById
+            .values
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+        expect(fromView.length, fromAll.length);
+        expect(
+          fromView.map((p) => p.id).toList(),
+          fromAll.map((p) => p.id).toList(),
+        );
     case OrderSuggestionCoreTarget
         .getValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder:
       oscExpectDualBuilderVisKeysExcludeReserved(OscDualBuilderGrainTiles());
     case OrderSuggestionCoreTarget
         .workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile:
-      oscExpectWorkerSuggestStayInProvince(
-          oscBuilderWorkerSuggestGame(),
-          oscProvinceTopology(['p1']),
-        );
+      final workerGame = oscBuilderWorkerSuggestGame();
+        final workerTopology = oscProvinceTopology(['p1']);
+        final workerSuggestions = oscSuggestWork(workerGame, workerTopology);
+        for (final o in workerSuggestions) {
+          expect(o.unitId, 'u1');
+          final u = oscView(workerGame, workerTopology).ownUnitsById[o.unitId];
+          expect(u, isNotNull);
+          expect(u!.locationProvinceId, OscIds.prov('p1'));
+        }
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes:
       final tileNoResource = OscIds.tile('p1', 0, 0);
@@ -170,13 +191,18 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           ),
         );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsList:
-      oscExpectCapitalBuildSuggestList(
-          oscPlayer(
-            capitalProvinceId: OscIds.prov('p1'),
-            workerPool: const WorkerPool(peasants: 2),
-            treasury: 500,
+      oscExpectSuggestListType(
+        oscSuggestBuild(
+          oscCapitalProvinceGame(
+            oscPlayer(
+              capitalProvinceId: OscIds.prov('p1'),
+              workerPool: const WorkerPool(peasants: 2),
+              treasury: 500,
+            ),
           ),
-        );
+          oscCapitalTopology(),
+        ),
+      );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsShipWhenAffordable:
       oscExpectBuildIncludesShipTypes(
           oscCapitalProvinceGame(oscAffordableShipPlayer()),
