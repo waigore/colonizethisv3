@@ -254,9 +254,66 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         );
     case WorkCompletionTarget
         .upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord:
-      wccExpectUpgradeTownProvinceLevel();
+      final upgradeUnit =
+          workAppUnit(type: kUnitTypeBuilder, status: UnitStatus.working);
+        final upgradeProvince = Province(
+          id: WorkAppIds.provinceId,
+          regionId: WorkAppIds.ow,
+          ownerId: 'p1',
+          townDevelopmentLevel: 0,
+        );
+        final upgradeGame = wccGame(
+          turnNumber: 1,
+          units: [upgradeUnit],
+          provinces: [upgradeProvince],
+        );
+        const upgradeCw = CurrentWork(
+          workTarget: kWorkTargetUpgradeTown,
+          tileKey: WorkAppIds.tileKey,
+          totalTurns: 1,
+          remainingTurns: 0,
+        );
+        final (upgradeState, upgradeU, upgradeWork) = wccDispatchWorkSetup(
+          unit: upgradeUnit,
+          game: upgradeGame,
+          cw: upgradeCw,
+          oldProvinces: [upgradeProvince],
+        );
+        final upgradeNext =
+            wccDispatchCompleted(upgradeState, upgradeU, upgradeWork);
+        expect(upgradeNext.work.oldProvinces.single.townDevelopmentLevel, 1);
     case WorkCompletionTarget
         .exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord:
-      wccExpectExploreDispatchCapturesRegion();
+      final exploreUnit =
+          workAppUnit(type: kUnitTypeExplorer, status: UnitStatus.working);
+        final exploreGame = workAppOwnedGame(
+          turnNumber: 1,
+          units: [exploreUnit],
+          provinces: const [],
+        );
+        const exploreCw = CurrentWork(
+          workTarget: kWorkTargetExplore,
+          tileKey: WorkAppIds.tileKey,
+          totalTurns: 1,
+          remainingTurns: 0,
+        );
+        final (exploreState, exploreU, exploreWork) = wccDispatchWorkSetup(
+          unit: exploreUnit,
+          game: exploreGame,
+          cw: exploreCw,
+          oldProvinces: const [],
+        );
+        String? capturedRegionId;
+        final exploreNext = wccDispatchCompleted(
+          exploreState,
+          exploreU,
+          exploreWork,
+          onExploreRegion: (s, unit, regionId) {
+            capturedRegionId = regionId;
+            return s;
+          },
+        );
+        expect(capturedRegionId, WorkAppIds.ow);
+        expect(identical(exploreNext, exploreState), isTrue);
   }
 }

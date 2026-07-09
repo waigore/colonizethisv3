@@ -1738,6 +1738,16 @@ test/ LOC after slice 101: **38,778** (net −381 from post–slice 100). Remain
 
 test/ LOC after slice 102: **38,477** (net −301 from post–slice 101). Remaining: optional-param dispatch-inline (vwt/waa/wcc), further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 103: optional-param dispatch-inline compaction (vwt/waa/wcc)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-vwt-opt | inline 3 default-arg `vwtExpectVisProspect*` wrappers into valid-work-tiles dispatcher | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| dispatch-inline-waa-opt | inline 4 default-arg `waaExpect*` wrappers into work-order application dispatcher | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-wcc-opt | inline 2 default-arg `wccExpect*` wrappers into work-completion dispatcher | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+
+test/ LOC after slice 103: **38,444** (net −33 from post–slice 102). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

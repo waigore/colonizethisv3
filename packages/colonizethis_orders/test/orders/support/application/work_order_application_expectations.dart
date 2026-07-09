@@ -58,10 +58,35 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         waaExpectImprovementLevel(next, 1);
     case WorkOrderApplicationTarget
         .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel:
-      waaExpectBuildFortCurrentWork();
+      final fortNext = waaApplyBuildFort(
+          fortLevel: 1,
+          techUnlocked: const {kTechIdMineEngineering: true},
+        );
+        waaExpectCurrentWorkTiming(
+          fortNext,
+          workTarget: kWorkTargetBuildFort,
+          totalTurns: totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 1),
+          remainingTurns: 1,
+          originTileKey: WorkAppIds.tileKey,
+          assignedTileKey: WorkAppIds.tileKey,
+        );
+        waaExpectFortLevel(fortNext, 1);
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnit:
-      waaExpectCounterSpyForeignCurrentWork();
+      final counterSpyNext = waaApply(
+          waaCounterSpyForeignProvinceGame(),
+          workAppSingleWorkOrder(
+            unitId: 'spy1',
+            target: kWorkTargetCounterSpy,
+          ),
+        );
+        waaExpectCurrentWorkTiming(
+          counterSpyNext,
+          unitId: 'spy1',
+          workTarget: kWorkTargetCounterSpy,
+          totalTurns: 0,
+          remainingTurns: 1,
+        );
     case WorkOrderApplicationTarget
         .purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey:
       const cost = WorkAppIds.purchaseLandGrainCost;
@@ -114,7 +139,24 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
     case WorkOrderApplicationTarget
         .upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel:
-      waaExpectUpgradeTownDevelopmentApplied();
+      final upgradeNext = waaApply(
+          workAppOwnedGame(
+            units: [
+              workAppWorkingUnit(
+                type: kUnitTypeBuilder,
+                workTarget: kWorkTargetUpgradeTown,
+              ),
+            ],
+            provinces: [workAppOwnedProvince(townDevelopmentLevel: 1)],
+            players: [
+              workAppPlayer(
+                techUnlocked: const {kTechIdNationalBureaucracy: true},
+              ),
+            ],
+          ),
+          workAppProcessWorkOrders(),
+        );
+        waaExpectTownDevelopmentLevel(upgradeNext, 2);
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
       final next = waaApply(
@@ -150,7 +192,14 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         waaExpectStockpileDeducted(game, next, cost);
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince:
-      waaExpectCounterSpyOnCapital();
+      final capitalSpyNext = waaApply(
+          waaCounterSpyCapitalGame(),
+          workAppSingleWorkOrder(
+            unitId: 'spy1',
+            target: kWorkTargetCounterSpy,
+          ),
+        );
+        waaExpectCounterSpyWork(capitalSpyNext);
     case WorkOrderApplicationTarget
         .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles:
       final next = waaApply(

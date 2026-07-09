@@ -361,14 +361,6 @@ Game waaCounterSpyCapitalGame({String spyId = 'spy1'}) => workAppOwnedGame(
       players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
     );
 
-void waaExpectCounterSpyOnCapital({String spyId = 'spy1'}) {
-  final next = waaApply(
-    waaCounterSpyCapitalGame(spyId: spyId),
-    workAppSingleWorkOrder(unitId: spyId, target: kWorkTargetCounterSpy),
-  );
-  waaExpectCounterSpyWork(next);
-}
-
 Game waaExploreTwoTileGame() => workAppOwnedGame(
       units: [workAppUnit(type: kUnitTypeExplorer)],
       tileKeysByRegionAndProvince: {
@@ -488,36 +480,6 @@ void waaExpectProspectIneligible({
   waaExpectProspected(next, expected: false);
 }
 
-void waaExpectBuildFortCurrentWork({int fortLevel = 1}) {
-  final next = waaApplyBuildFort(
-    fortLevel: fortLevel,
-    techUnlocked: const {kTechIdMineEngineering: true},
-  );
-  waaExpectCurrentWorkTiming(
-    next,
-    workTarget: kWorkTargetBuildFort,
-    totalTurns: totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
-    remainingTurns: 1,
-    originTileKey: WorkAppIds.tileKey,
-    assignedTileKey: WorkAppIds.tileKey,
-  );
-  waaExpectFortLevel(next, fortLevel);
-}
-
-void waaExpectCounterSpyForeignCurrentWork({String spyId = 'spy1'}) {
-  final next = waaApply(
-    waaCounterSpyForeignProvinceGame(spyId: spyId),
-    workAppSingleWorkOrder(unitId: spyId, target: kWorkTargetCounterSpy),
-  );
-  waaExpectCurrentWorkTiming(
-    next,
-    unitId: spyId,
-    workTarget: kWorkTargetCounterSpy,
-    totalTurns: 0,
-    remainingTurns: 1,
-  );
-}
-
 void waaExpectBuildFortSkipped({
   required int fortLevel,
   required Stockpile stockpile,
@@ -531,23 +493,4 @@ void waaExpectBuildFortSkipped({
   );
   waaExpectFortLevel(next, expectedFortLevel);
   waaExpectUnitCurrentWorkNull(next);
-}
-
-void waaExpectUpgradeTownDevelopmentApplied({int before = 1, int after = 2}) {
-  final next = waaApply(
-    workAppOwnedGame(
-      units: [
-        workAppWorkingUnit(
-          type: kUnitTypeBuilder,
-          workTarget: kWorkTargetUpgradeTown,
-        ),
-      ],
-      provinces: [workAppOwnedProvince(townDevelopmentLevel: before)],
-      players: [
-        workAppPlayer(techUnlocked: const {kTechIdNationalBureaucracy: true}),
-      ],
-    ),
-    workAppProcessWorkOrders(),
-  );
-  waaExpectTownDevelopmentLevel(next, after);
 }

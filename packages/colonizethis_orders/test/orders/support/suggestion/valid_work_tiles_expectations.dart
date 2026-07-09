@@ -137,13 +137,48 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected:
-      vwtExpectVisProspectExcludesGrassAndProspectedIron();
+      final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+        vwtExpectVisProspectExcludesAll(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [grassTile, ironTile],
+            resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
+            visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
+            playerProspectedTiles: {
+              ValidWorkTilesTestSupport.playerId: {ironTile},
+            },
+          ),
+          owSingleProvinceTopology('p1'),
+          [grassTile, ironTile],
+        );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile:
-      vwtExpectVisProspectIncludesEligibleIronTile();
+      final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        vwtExpectVisProspectContains(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [ironTile],
+            resourceByTileKey: {ironTile: 'iron'},
+            visibilityByTile: {ironTile: 'fogged'},
+          ),
+          owSingleProvinceTopology('p1'),
+          ironTile,
+        );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility:
-      vwtExpectVisProspectExcludesWoolOnHillsTerrain();
+      final woolTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        vwtExpectVisProspectExcludes(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [woolTile],
+            resourceByTileKey: {woolTile: 'wool'},
+            visibilityByTile: {woolTile: 'fogged'},
+          ),
+          owSingleProvinceTopology('p1'),
+          woolTile,
+          tileMapByRegion: vwtHillsWoolTileMap('p1'),
+        );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces:
       final fx = owTribeExploreMultiProvinceFixture();

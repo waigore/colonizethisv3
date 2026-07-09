@@ -372,59 +372,6 @@ void vwtExpectPurchaseLandExcluded(
   );
 }
 
-void vwtExpectVisProspectExcludesGrassAndProspectedIron({
-  String provinceLocalId = 'p1',
-}) {
-  final grassTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
-  final ironTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 1, 0);
-  vwtExpectVisProspectExcludesAll(
-    owTribeProspectGame(
-      provinceLocalId: provinceLocalId,
-      tileKeys: [grassTile, ironTile],
-      resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
-      visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
-      playerProspectedTiles: {
-        ValidWorkTilesTestSupport.playerId: {ironTile},
-      },
-    ),
-    owSingleProvinceTopology(provinceLocalId),
-    [grassTile, ironTile],
-  );
-}
-
-void vwtExpectVisProspectIncludesEligibleIronTile({
-  String provinceLocalId = 'p1',
-}) {
-  final ironTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
-  vwtExpectVisProspectContains(
-    owTribeProspectGame(
-      provinceLocalId: provinceLocalId,
-      tileKeys: [ironTile],
-      resourceByTileKey: {ironTile: 'iron'},
-      visibilityByTile: {ironTile: 'fogged'},
-    ),
-    owSingleProvinceTopology(provinceLocalId),
-    ironTile,
-  );
-}
-
-void vwtExpectVisProspectExcludesWoolOnHillsTerrain({
-  String provinceLocalId = 'p1',
-}) {
-  final woolTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
-  vwtExpectVisProspectExcludes(
-    owTribeProspectGame(
-      provinceLocalId: provinceLocalId,
-      tileKeys: [woolTile],
-      resourceByTileKey: {woolTile: 'wool'},
-      visibilityByTile: {woolTile: 'fogged'},
-    ),
-    owSingleProvinceTopology(provinceLocalId),
-    woolTile,
-    tileMapByRegion: vwtHillsWoolTileMap(provinceLocalId),
-  );
-}
-
 void vwtExpectVisProspectExcludesAll(
   Game game,
   MapTopology topology,
