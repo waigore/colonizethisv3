@@ -62,17 +62,6 @@ void waaExpectExploreWork(
   }
 }
 
-Orders waaPurchaseLandOrders({
-  String unitId = 'merchant1',
-  String playerId = 'p1',
-}) =>
-    workAppSingleWorkOrder(
-      unitId: unitId,
-      playerId: playerId,
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: WorkAppIds.tileKeyMinor,
-    );
-
 Game waaEngineerRoadGame({Stockpile? stockpile}) => workAppOwnedGame(
       units: [workAppUnit(type: kUnitTypeEngineer)],
       players: [

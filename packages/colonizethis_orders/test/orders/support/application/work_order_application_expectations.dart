@@ -122,17 +122,7 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey:
       const cost = WorkAppIds.purchaseLandGrainCost;
-        final game = workAppPurchaseLandGame(
-          units: [
-            workAppUnit(
-              id: 'merchant1',
-              type: kUnitTypeMerchant,
-              ownerId: 'p1',
-              locationProvinceId: WorkAppIds.minorProvinceId,
-              tileKey: WorkAppIds.tileKeyMinor,
-            ),
-          ],
-          players: [workAppPlayer(treasury: cost + 100)],
+        final game = workAppSingleGpPurchaseLandGame(
           overtureStates: const [
             OvertureState(
               gpId: 'p1',
@@ -142,7 +132,7 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
             ),
           ],
         );
-        final next = waaApply(game, waaPurchaseLandOrders());
+        final next = waaApply(game, workAppPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: 'p1');
         expect(
           next.playerById('p1')!.treasury,
@@ -157,20 +147,8 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe:
       {
-        const cost = WorkAppIds.purchaseLandGrainCost;
-        final game = workAppPurchaseLandGame(
-          units: [
-            workAppUnit(
-              id: 'merchant1',
-              type: kUnitTypeMerchant,
-              ownerId: 'p1',
-              locationProvinceId: WorkAppIds.minorProvinceId,
-              tileKey: WorkAppIds.tileKeyMinor,
-            ),
-          ],
-          players: [workAppPlayer(treasury: cost + 100)],
-        );
-        final next = waaApply(game, waaPurchaseLandOrders());
+        final game = workAppSingleGpPurchaseLandGame();
+        final next = waaApply(game, workAppPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: null);
         expect(
           next.playerById('p1')!.treasury,
@@ -180,19 +158,8 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe:
       {
-        const cost = WorkAppIds.purchaseLandGrainCost;
-        final game = workAppPurchaseLandGame(
-          units: [
-            workAppUnit(
-              id: 'merchant1',
-              type: kUnitTypeMerchant,
-              ownerId: 'p1',
-              locationProvinceId: WorkAppIds.minorProvinceId,
-              tileKey: WorkAppIds.tileKeyMinor,
-            ),
-          ],
-          players: [workAppPlayer(treasury: cost + 100)],
-          overtureStates: [
+        final game = workAppSingleGpPurchaseLandGame(
+          overtureStates: const [
             OvertureState(
               gpId: 'p1',
               targetId: 'minor1',
@@ -208,7 +175,7 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
             ),
           ],
         );
-        final next = waaApply(game, waaPurchaseLandOrders());
+        final next = waaApply(game, workAppPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: null);
         expect(
           next.playerById('p1')!.treasury,
@@ -220,20 +187,8 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       const cost = WorkAppIds.purchaseLandGrainCost;
         final game = workAppPurchaseLandGame(
           units: [
-            workAppUnit(
-              id: 'merchant1',
-              type: kUnitTypeMerchant,
-              ownerId: 'p1',
-              locationProvinceId: WorkAppIds.minorProvinceId,
-              tileKey: WorkAppIds.tileKeyMinor,
-            ),
-            workAppUnit(
-              id: 'merchant2',
-              type: kUnitTypeMerchant,
-              ownerId: 'p2',
-              locationProvinceId: WorkAppIds.minorProvinceId,
-              tileKey: WorkAppIds.tileKeyMinor,
-            ),
+            workAppPurchaseLandMerchant(),
+            workAppPurchaseLandMerchant(id: 'merchant2', ownerId: 'p2'),
           ],
           players: [
             workAppPlayer(

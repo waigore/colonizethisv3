@@ -41,19 +41,19 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
   switch (target) {
     case ValidWorkTilesTarget.returnsEmptyForUnknownUnitId:
       vwtExpectKeysEmpty(
-          vwtMinimalSingleTileGame(),
+          vwtSingleTileGame(),
           'no-such-unit',
           kWorkTargetExplore,
         );
     case ValidWorkTilesTarget.returnsEmptyWhenWorkTargetNotAllowedForUnitType:
       vwtExpectKeysEmpty(
-          vwtExplorerSingleTileGame(),
+          vwtSingleTileGame(withExplorer: true),
           'u1',
           kWorkTargetBuildImprovement,
         );
     case ValidWorkTilesTarget.returnsEmptyForUnknownUnitIdWithVisibility:
       vwtExpectKeysEmpty(
-          vwtMinimalSingleTileGame(),
+          vwtSingleTileGame(),
           'no-such-unit',
           kWorkTargetExplore,
           withVisibility: true,

@@ -98,13 +98,13 @@ Game _vwtSingleTileGame({Unit? explorerUnit}) {
   );
 }
 
-Game vwtMinimalSingleTileGame() => _vwtSingleTileGame();
-
-Game vwtExplorerSingleTileGame() => _vwtSingleTileGame(
-      explorerUnit: ValidWorkTilesTestSupport.explorerUnit(
-        locationProvinceId: ValidWorkTilesTestSupport.provinceId('p1'),
-        tileKey: ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-      ),
+Game vwtSingleTileGame({bool withExplorer = false}) => _vwtSingleTileGame(
+      explorerUnit: withExplorer
+          ? ValidWorkTilesTestSupport.explorerUnit(
+              locationProvinceId: ValidWorkTilesTestSupport.provinceId('p1'),
+              tileKey: ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
+            )
+          : null,
     );
 
 Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
