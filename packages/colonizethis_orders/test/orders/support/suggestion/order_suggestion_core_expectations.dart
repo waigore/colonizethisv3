@@ -37,7 +37,21 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
   switch (target) {
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersOnlyReturnsMovesThatPassValidation:
-      final game = oscFoggedDestinationMoveGame();
+      {
+        final p1 = oscProvince('p1', ownerId: OscIds.playerId);
+        final p2 = oscProvince('p2');
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(provinces: [p1, p2], units: [oscExplorer()]),
+            tileKeysByRegionAndProvince: oscTilesByProvince({
+              'p2': [OscIds.tile('p2', 0, 0)],
+            }),
+            playerVisibilityByTile: oscVisibility({
+              OscIds.tile('p1', 0, 0): 'fullyVisible',
+              OscIds.tile('p2', 0, 0): 'fogged',
+            }),
+          ),
+        );
         final moves = oscSuggestMoves(
           game,
           oscTwoProvincesConnected('p1', 'p2'),
@@ -45,19 +59,58 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         expect(moves.length, 1);
         expect(moves.first.unitId, 'u1');
         expect(moves.first.destinationTileKey, OscIds.tile('p2', 0, 0));
+      }
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility:
-      final game = oscTwoProvinceExplorerUnknownVisibilityGame();
+      {
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [
+                oscProvince('p1', ownerId: OscIds.playerId),
+                oscProvince('p2', ownerId: OscIds.playerId),
+              ],
+              units: [oscExplorer()],
+            ),
+          ),
+        );
         final topology = oscTwoProvincesConnected('p1', 'p2');
         final view = oscView(game, topology);
         expect(
           () => suggestMoveOrders(view, game, topology, const Orders()),
           throwsStateError,
         );
+      }
     case OrderSuggestionCoreTarget
         .moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians:
-      final game = oscMislocatedExplorerMoveGame();
-        final topology = oscMislocatedExplorerTopology();
+      {
+        final unit = oscExplorer(
+          provinceLocal: 'p1',
+          tileKey: OscIds.tile('p2', 0, 0),
+        );
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [
+                oscProvince('p1', ownerId: OscIds.playerId),
+                oscProvince('p2', ownerId: OscIds.playerId),
+                oscProvince('p3', ownerId: OscIds.playerId),
+              ],
+              units: [unit],
+            ),
+            tileKeysByRegionAndProvince: oscTilesByProvince({
+              'p3': [OscIds.tile('p3', 0, 0)],
+            }),
+            playerVisibilityByTile: oscVisibility({
+              OscIds.tile('p2', 0, 0): 'fullyVisible',
+              OscIds.tile('p3', 0, 0): 'fogged',
+            }),
+          ),
+        );
+        final topology = oscProvinceTopology(
+          ['p1', 'p2', 'p3'],
+          edges: const [TopologyEdge(id1: 'p2', id2: 'p3')],
+        );
         final moves = oscSuggestMoves(game, topology);
         expect(moves.length, 1);
         expect(moves.first.unitId, 'u1');
@@ -66,6 +119,7 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           oscView(game, topology).ownUnitsById['u1']!.locationProvinceId,
           OscIds.prov('p2'),
         );
+      }
     case OrderSuggestionCoreTarget.noExploreSuggestionWhenProvinceUnknown:
       final exploreSuggestions = oscSuggestWork(
         oscExplorerProvinceGame(),
@@ -178,7 +232,19 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         expect(validB2, contains(setup.tileB));
     case OrderSuggestionCoreTarget
         .workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile:
-      final workerGame = oscBuilderWorkerSuggestGame();
+      {
+        final tileKey = OscIds.tile('p1', 0, 0);
+        final workerGame = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+              units: [oscBuilder()],
+            ),
+            playerVisibilityByTile: oscVisibility({tileKey: 'fullyVisible'}),
+            tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
+          ),
+          players: [oscBuilderPlayer()],
+        );
         final workerTopology = oscProvinceTopology(['p1']);
         final workerSuggestions = oscSuggestWork(workerGame, workerTopology);
         for (final o in workerSuggestions) {
@@ -187,6 +253,7 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           expect(u, isNotNull);
           expect(u!.locationProvinceId, OscIds.prov('p1'));
         }
+      }
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes:
       final tileNoResource = OscIds.tile('p1', 0, 0);
@@ -345,24 +412,84 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
       );
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
-      expect(
-        oscWorkWithTarget(
-          oscSuggestWork(oscSpyInOwnedProvinceGame(), oscProvinceTopology(['p1'])),
-          kWorkTargetCounterSpy,
-        ),
-        isNotEmpty,
-      );
+      {
+        final tileKey = OscIds.tile('p1', 0, 0);
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: kUnitTypeSpy,
+                  ownerId: OscIds.playerId,
+                  locationProvinceId: OscIds.prov('p1'),
+                ),
+              ],
+            ),
+            playerVisibilityByTile: oscVisibility({tileKey: 'fullyVisible'}),
+            tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
+          ),
+        );
+        expect(
+          oscWorkWithTarget(
+            oscSuggestWork(game, oscProvinceTopology(['p1'])),
+            kWorkTargetCounterSpy,
+          ),
+          isNotEmpty,
+        );
+      }
     case OrderSuggestionCoreTarget
         .purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile:
-      expect(
-        oscWorkWithTarget(
-          oscSuggestWork(
-            oscMerchantPurchaseLandGame(),
-            oscProvinceTopology(['p1', 'minor1']),
+      {
+        final tileKey = OscIds.tile('minor1', 0, 0);
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [
+                oscProvince('p1', ownerId: OscIds.playerId),
+                oscProvince('minor1', ownerId: 'minor1'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: kUnitTypeMerchant,
+                  ownerId: OscIds.playerId,
+                  locationProvinceId: OscIds.prov('p1'),
+                ),
+              ],
+            ),
+            playerVisibilityByTile: oscVisibility({
+              OscIds.tile('p1', 0, 0): 'fullyVisible',
+              tileKey: 'fullyVisible',
+            }),
+            tileKeysByRegionAndProvince: oscTilesByProvince({
+              'p1': [OscIds.tile('p1', 0, 0)],
+              'minor1': [tileKey],
+            }),
+            resourceByTileKey: {tileKey: 'grain'},
           ),
-          kWorkTargetPurchaseLand,
-        ),
-        isNotEmpty,
-      );
+          players: [oscPlayer(treasury: 500)],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+          overtureStates: const [
+            OvertureState(
+              gpId: OscIds.playerId,
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(
+          oscWorkWithTarget(
+            oscSuggestWork(
+              game,
+              oscProvinceTopology(['p1', 'minor1']),
+            ),
+            kWorkTargetPurchaseLand,
+          ),
+          isNotEmpty,
+        );
+      }
   }
 }

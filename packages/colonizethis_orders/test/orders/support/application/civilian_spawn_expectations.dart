@@ -27,6 +27,7 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
       cspExpectExplorerSpawnAtCapital(peasants: 0);
     case CivilianSpawnTarget
         .civilianBuildWithMissingCapitalTileThrowsExplicitError:
+      {
         final game = cspExplorerGame(
           capitalProvinceId: cspCapitalProvinceId,
           tileKeysByProvince: {
@@ -34,18 +35,42 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
           },
           peasants: 0,
         );
-        cspExpectMissingCapitalTileError(
-          game,
-          cspBuildOrders(
-            kUnitTypeExplorer,
-            isMilitary: false,
-            spawnProvinceId: cspCapitalProvinceId,
+        final orders = cspBuildOrders(
+          kUnitTypeExplorer,
+          isMilitary: false,
+          spawnProvinceId: cspCapitalProvinceId,
+        );
+        expect(
+          () => applyBuildAndWorkOrders(game, orders),
+          throwsA(
+            isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              contains('No capital tile to spawn civilian unit'),
+            ),
           ),
         );
+      }
     case CivilianSpawnTarget.newWorldSpawnAddsUnitToNewWorld:
-      cspExpectNewWorldMilitarySpawn(
-        provinceId: 'newWorld|N1',
-        unitType: 'peasant_levies',
-      );
+      {
+        const provinceId = 'newWorld|N1';
+        const unitType = 'peasant_levies';
+        final next = cspApply(
+          cspNewWorldMilitaryGame(provinceId: provinceId, unitType: unitType),
+          cspBuildOrders(
+            unitType,
+            isMilitary:
+                buildUnitCategoryForUnitType(unitType) ==
+                BuildUnitCategory.military,
+            spawnProvinceId: provinceId,
+          ),
+        );
+        expect(next.worldState.oldWorld.units, isEmpty);
+        expect(next.worldState.newWorld.units.length, 1);
+        expect(
+          next.worldState.newWorld.units.single.locationProvinceId,
+          provinceId,
+        );
+      }
   }
 }

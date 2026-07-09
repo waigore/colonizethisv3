@@ -69,7 +69,16 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           'u_builder',
           tile,
           label: 'builder w/ prior explorer move in basePrefix',
-          basePrefix: iceMovePrefix('u_explorer', 'P2'),
+          basePrefix: Orders(
+            moveOrdersByPlayerId: {
+              IceIds.playerId: [
+                MoveOrder(
+                  unitId: 'u_explorer',
+                  destinationTileKey: iceTile('P2'),
+                ),
+              ],
+            },
+          ),
         );
     case IncrementalEquivalenceTarget.buildSingleCandidate:
         expectBuildEquivalent(
@@ -81,10 +90,32 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           label: 'single build candidate',
         );
     case IncrementalEquivalenceTarget.buildSuccessiveProbes:
-        iceExpectBuildProbes([
+      {
+        final game = iceBuildCorpusGame();
+        const topology = iceBuildCorpusTopology;
+        const basePrefix = Orders();
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: IceIds.playerId,
+          basePrefix: basePrefix,
+        );
+        for (final candidate in [
           iceBuildUnit('pikemen'),
           iceBuildUnit('musketeers'),
-        ]);
+        ]) {
+          expect(
+            incremental.isBuildAccepted(candidate),
+            fullPassBuildAccepted(
+              game,
+              topology,
+              IceIds.playerId,
+              basePrefix,
+              candidate,
+            ),
+          );
+        }
+      }
     case IncrementalEquivalenceTarget.workNonEmptyBasePrefix:
         final tile = iceTile('P2');
         iceExpectWorkOnCorpus(
@@ -106,30 +137,70 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           label: 'same-target non-economic conflict',
         );
     case IncrementalEquivalenceTarget.diplomaticSequentialProbes:
-        iceExpectDiplomaticProbes(
-          [
-            const DiplomaticOrder(
-              type: DiplomaticOrderType.alliance,
-              targetFactionId: 'p2',
-            ),
-            const DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'p3',
-            ),
-            const DiplomaticOrder(
-              type: DiplomaticOrderType.alliance,
-              targetFactionId: 'p2',
-            ),
-          ],
-          basePrefix: iceDeclareWarPrefix('p2'),
+      {
+        final game = moveCorpusGame();
+        final topology = moveCorpusTopology();
+        final basePrefix = iceDeclareWarPrefix('p2');
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: IceIds.playerId,
+          basePrefix: basePrefix,
         );
-    case IncrementalEquivalenceTarget.prefetchedFactionMembership:
-        iceExpectPrefetchedArmyMove(
-          const ArmyMoveOrder(
-            armyId: 'field_a',
-            destinationProvinceId: 'oldWorld|P4',
+        for (final candidate in [
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.alliance,
+            targetFactionId: 'p2',
           ),
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'p3',
+          ),
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.alliance,
+            targetFactionId: 'p2',
+          ),
+        ]) {
+          expect(
+            incremental.isDiplomaticAccepted(candidate),
+            fullPassDiplomaticAccepted(
+              game,
+              topology,
+              IceIds.playerId,
+              basePrefix,
+              candidate,
+            ),
+          );
+        }
+      }
+    case IncrementalEquivalenceTarget.prefetchedFactionMembership:
+      {
+        const candidate = ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: 'oldWorld|P4',
         );
+        final game = armyCorpusGame();
+        final topology = armyCorpusTopology();
+        const basePrefix = Orders();
+        final prefetched = DiplomacyFactionMembership.from(game);
+        final baseline = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: IceIds.playerId,
+          basePrefix: basePrefix,
+        );
+        final withPrefetched = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: IceIds.playerId,
+          basePrefix: basePrefix,
+          factionMembership: prefetched,
+        );
+        expect(
+          withPrefetched.isArmyMoveAccepted(candidate),
+          baseline.isArmyMoveAccepted(candidate),
+        );
+      }
     case IncrementalEquivalenceTarget.armyMoveOwnAdjacent:
       iceExpectArmyMoveTo('field_a', 'P2', label: 'own adjacent');
     case IncrementalEquivalenceTarget.armyMoveGpNoWar:

@@ -39,27 +39,6 @@ TileMapResult ahSingleTileMap({
   );
 }
 
-void ahExpectParseTileKey(
-  String tileKey, {
-  required String regionId,
-  required String provinceLocalId,
-  required int x,
-  required int y,
-}) {
-  final parsed = parseTileKeyCoordinates(tileKey);
-  expect(parsed, isNotNull);
-  expect(parsed!.regionId, regionId);
-  expect(parsed.provinceLocalId, provinceLocalId);
-  expect(parsed.x, x);
-  expect(parsed.y, y);
-}
-
-void ahExpectMalformedTileKeys(List<String> tileKeys) {
-  for (final key in tileKeys) {
-    expect(parseTileKeyCoordinates(key), isNull);
-  }
-}
-
 Unit ahWorkingUnit({
   required String id,
   String type = 'worker',
@@ -132,21 +111,6 @@ Game ahOwBuilderGame(
   );
 }
 
-void ahExpectClearWorkUnchanged(Game game, String unitId) {
-  final result = clearUnitCurrentWork(game, unitId);
-  expect(identical(result, game), isTrue);
-}
-
-void ahExpectClearWorkIdleAtOrigin(Game game, String unitId, String originTile) {
-  final result = clearUnitCurrentWork(game, unitId);
-  final unit = result.worldState.oldWorld.units.single;
-  expect(unit.currentWork, isNull);
-  expect(unit.status, UnitStatus.idle);
-  expect(unit.tileKey, originTile);
-  expect(unit.originTileKey, isNull);
-  expect(unit.assignedTileKey, isNull);
-}
-
 void ahExpectMineralEligible({
   required Map<String, String> resourceByTile,
   required String tileKey,
@@ -161,58 +125,3 @@ void ahExpectMineralEligible({
 }
 
 const ahMineralTileKey = 'oldWorld|p1|0|0';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Unit ahIdleBuilderUnit({
-  String id = 'u1',
-  String ownerId = 'gp1',
-  String locationProvinceId = 'oldWorld|p1',
-  String tileKey = 'oldWorld|p1|0|0',
-}) {
-  return Unit(
-    id: id,
-    type: kUnitTypeBuilder,
-    ownerId: ownerId,
-    locationProvinceId: locationProvinceId,
-    tileKey: tileKey,
-  );
-}
-
-Unit ahBuilderWithImprovementWork({
-  String id = 'u1',
-  String ownerId = 'gp1',
-  String locationProvinceId = 'oldWorld|p1',
-  String tileKey = 'oldWorld|p1|0|0',
-  String originTileKey = 'oldWorld|p1|0|0',
-  String assignedTileKey = 'oldWorld|p1|1|0',
-  String workTileKey = 'oldWorld|p1|1|0',
-}) {
-  return Unit(
-    id: id,
-    type: kUnitTypeBuilder,
-    ownerId: ownerId,
-    locationProvinceId: locationProvinceId,
-    tileKey: tileKey,
-    originTileKey: originTileKey,
-    assignedTileKey: assignedTileKey,
-    status: UnitStatus.working,
-    currentWork: CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: workTileKey,
-      totalTurns: 2,
-      remainingTurns: 1,
-    ),
-  );
-}

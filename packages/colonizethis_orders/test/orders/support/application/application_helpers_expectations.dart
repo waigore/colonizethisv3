@@ -26,15 +26,19 @@ enum ApplicationHelpersTarget {
 void runApplicationHelpersExpectation(ApplicationHelpersTarget target) {
   switch (target) {
     case ApplicationHelpersTarget.returnsParsedCoordinatesForAValidTileKey:
-        ahExpectParseTileKey(
-          'oldWorld|P1|12|7',
-          regionId: 'oldWorld',
-          provinceLocalId: 'P1',
-          x: 12,
-          y: 7,
-        );
+      {
+        const tileKey = 'oldWorld|P1|12|7';
+        final parsed = parseTileKeyCoordinates(tileKey);
+        expect(parsed, isNotNull);
+        expect(parsed!.regionId, 'oldWorld');
+        expect(parsed.provinceLocalId, 'P1');
+        expect(parsed.x, 12);
+        expect(parsed.y, 7);
+      }
     case ApplicationHelpersTarget.returnsNullForMalformedTileKey:
-        ahExpectMalformedTileKeys(['oldWorld|P1|12', 'oldWorld|P1|x|7']);
+      for (final key in ['oldWorld|P1|12', 'oldWorld|P1|x|7']) {
+        expect(parseTileKeyCoordinates(key), isNull);
+      }
     case ApplicationHelpersTarget.clearsWorkStateAndRestoresOriginTileByDefault:
         ahExpectCancelWorkClearsState(
           ahWorkingUnit(id: 'u1'),
@@ -51,17 +55,49 @@ void runApplicationHelpersExpectation(ApplicationHelpersTarget target) {
           expectedTile: 'oldWorld|P1|0|0',
         );
     case ApplicationHelpersTarget.returnsGameUnchangedWhenUnitHasNoCurrentWork:
-        ahExpectClearWorkUnchanged(
-          ahOwBuilderGame(ahIdleBuilderUnit()),
-          'u1',
+      {
+        final game = ahOwBuilderGame(
+          Unit(
+            id: 'u1',
+            type: kUnitTypeBuilder,
+            ownerId: 'gp1',
+            locationProvinceId: 'oldWorld|p1',
+            tileKey: 'oldWorld|p1|0|0',
+          ),
         );
+        final result = clearUnitCurrentWork(game, 'u1');
+        expect(identical(result, game), isTrue);
+      }
     case ApplicationHelpersTarget
         .clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle:
-        ahExpectClearWorkIdleAtOrigin(
-          ahOwBuilderGame(ahBuilderWithImprovementWork()),
-          'u1',
-          'oldWorld|p1|0|0',
+      {
+        const originTile = 'oldWorld|p1|0|0';
+        final game = ahOwBuilderGame(
+          Unit(
+            id: 'u1',
+            type: kUnitTypeBuilder,
+            ownerId: 'gp1',
+            locationProvinceId: 'oldWorld|p1',
+            tileKey: originTile,
+            originTileKey: originTile,
+            assignedTileKey: 'oldWorld|p1|1|0',
+            status: UnitStatus.working,
+            currentWork: CurrentWork(
+              workTarget: kWorkTargetBuildImprovement,
+              tileKey: 'oldWorld|p1|1|0',
+              totalTurns: 2,
+              remainingTurns: 1,
+            ),
+          ),
         );
+        final result = clearUnitCurrentWork(game, 'u1');
+        final unit = result.worldState.oldWorld.units.single;
+        expect(unit.currentWork, isNull);
+        expect(unit.status, UnitStatus.idle);
+        expect(unit.tileKey, originTile);
+        expect(unit.originTileKey, isNull);
+        expect(unit.assignedTileKey, isNull);
+      }
     case ApplicationHelpersTarget
         .returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent:
         ahExpectMineralEligible(

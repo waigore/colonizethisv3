@@ -103,19 +103,6 @@ void cspExpectOwUnitAt({
   );
 }
 
-void cspExpectMissingCapitalTileError(Game game, Orders orders) {
-  expect(
-    () => applyBuildAndWorkOrders(game, orders),
-    throwsA(
-      isA<StateError>().having(
-        (e) => e.message,
-        'message',
-        contains('No capital tile to spawn civilian unit'),
-      ),
-    ),
-  );
-}
-
 void cspExpectExplorerSpawnAtCapital({
   String? spawnProvinceId,
   String? otherOwnedProvinceId,
@@ -148,28 +135,6 @@ void cspExpectExplorerSpawnAtCapital({
     provinceId: cspCapitalProvinceId,
   );
 }
-
-void cspExpectNewWorldMilitarySpawn({
-  required String provinceId,
-  required String unitType,
-}) {
-  final next = cspApply(
-    cspNewWorldMilitaryGame(provinceId: provinceId, unitType: unitType),
-    cspBuildOrders(
-      unitType,
-      isMilitary:
-          buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
-      spawnProvinceId: provinceId,
-    ),
-  );
-  expect(next.worldState.oldWorld.units, isEmpty);
-  expect(next.worldState.newWorld.units.length, 1);
-  expect(
-    next.worldState.newWorld.units.single.locationProvinceId,
-    provinceId,
-  );
-}
-
 
 Game cspNewWorldMilitaryGame({
   required String provinceId,

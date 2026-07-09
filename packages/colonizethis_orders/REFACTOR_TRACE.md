@@ -1829,6 +1829,17 @@ test/ LOC after slice 110: **37,999** (net −28 from post–slice 109). Remaini
 
 test/ LOC after slice 111: **37,929** (net −70 from post–slice 110). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 112: ah/ice/csp/osc single-site dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-ah-single | inline five single-site `ahExpect*` / unit builders into application-helpers dispatcher | `application_helpers_expectation_shorthand.dart` | `application_helpers_expectations.dart` | #3949 |
+| dispatch-inline-ice-single | inline `iceMovePrefix`, `iceExpectBuildProbes`, `iceExpectDiplomaticProbes`, `iceExpectPrefetchedArmyMove` into incremental equivalence dispatcher | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | `incremental_candidate_validator_equivalence_expectations.dart` | #3949 |
+| dispatch-inline-csp-single | inline `cspExpectMissingCapitalTileError` and `cspExpectNewWorldMilitarySpawn` into civilian-spawn dispatcher | `civilian_spawn_expectation_shorthand.dart` | `civilian_spawn_expectations.dart` | #3949 |
+| dispatch-inline-osc-single | inline six single-site osc game builders into core suggestion dispatcher | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+
+test/ LOC after slice 112: **37,817** (net −112 from post–slice 111). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
