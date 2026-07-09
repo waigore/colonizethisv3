@@ -474,6 +474,7 @@ suggestNavalMoveOrders returns list
 suggestRecruitWorkerOrders returns list (#2692 S7)
 suggestResearchOrders returns list
 suggestWorkOrders explore target uses kWorkTargetExplore
+suggestWorkOrders logger lines never emit unbounded full list payload
 suggestWorkOrders matches default path
 suggestWorkOrders returns list
 supports only counter_spy

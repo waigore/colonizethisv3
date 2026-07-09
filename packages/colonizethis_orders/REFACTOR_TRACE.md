@@ -1339,6 +1339,22 @@ Migrated imperative `order_suggestion_diplomatic_pass_test.dart` and `order_sugg
 
 test/ LOC after slice 77: **36,943** (net +143 from post–slice 76; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 78 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oswl-summaries | emits suggest_work summaries for Explorer/Builder/Spy/Merchant | `order_suggestion_work_logging_test.dart` | `support/suggestion/order_suggestion_work_logging_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| oswl-bounded | suggestWorkOrders logger lines never emit unbounded full list payload | same | same | #2133 |
+| ocie-sea-reachable | colonialIntelExploreProvinceIdsSorted lists sea-reachable NW | `order_suggestion_colonial_intel_explore_test.dart` | `support/suggestion/order_suggestion_colonial_intel_explore_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| noefp-build | suggestBuildOrders does not invoke validatePlayerOrdersWithContext | `order_suggestion_no_order_engine_full_pass_test.dart` | `support/suggestion/order_suggestion_no_order_engine_full_pass_scenarios.dart` + fixtures/expectations + thin runner | #2237 AC2 |
+| noefp-add-context | OrderEngine add-with-context still invokes full validation | same | same | #2237 |
+| osrd-slot1 | slot 1 takes the highest-weight unrepresented bucket (AC9) | `order_suggestion_research_diversify_test.dart` | `support/suggestion/order_suggestion_research_diversify_scenarios.dart` + fixtures/expectations + thin runner | #3472 AC9 |
+| osrd-weight-zero | weight 0 is identical to the greedy default (negative control) | same | same | #3472 |
+
+Migrated imperative `order_suggestion_work_logging_test.dart`, `order_suggestion_colonial_intel_explore_test.dart`, `order_suggestion_no_order_engine_full_pass_test.dart`, and `order_suggestion_research_diversify_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline description for bounded logger payload scenario. Removed all four files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 78: **37,242** (net −701 from post–slice 77; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
