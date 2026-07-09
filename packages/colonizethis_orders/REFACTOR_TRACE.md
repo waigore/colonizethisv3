@@ -1227,6 +1227,23 @@ Migrated imperative `validators/diplomatic/break_alliance_validator_test.dart` �
 
 test/ LOC after slice 71: **36,240** (net +85 from post–slice 70; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 72 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| eosv-rejects-missing-stage | rejects when stage is missing | `validators/diplomatic/establish_overture_sub_validator_test.dart` | `support/validators/diplomatic/establish_overture_sub_validator_scenarios.dart` + thin runner | #2391 AC10 |
+| eosv-consulate-debits | trade consulate debits treasury on accept | same | same | #2391 AC10 |
+| eosv-consulate-no-expertise | trade consulate rejects without diplomatic_expertise | same | same | #2391 AC10 |
+| eosv-consulate-low-treasury | trade consulate rejects when treasury too low (no debit) | same | same | #2391 AC10 |
+| eosv-embassy-requires-consulate | embassy requires existing trade consulate | same | same | #2391 AC10 |
+| eosv-embassy-debits | embassy accepts and debits treasury when consulate exists | same | same | #2391 AC10 |
+| eosv-nap-no-debit | nap requires existing embassy and does not debit treasury | same | same | #2391 AC10 |
+| eosv-join-empire-relations | joinEmpire rejects when relations below friendly threshold | same | same | #2391 AC10 |
+
+Migrated imperative `validators/diplomatic/establish_overture_sub_validator_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 72: **36,330** (net +90 from post–slice 71; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
