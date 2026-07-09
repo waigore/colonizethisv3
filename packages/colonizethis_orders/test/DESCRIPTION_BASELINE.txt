@@ -293,6 +293,7 @@ ownedProvinceIdsFromView returns full province ids for owner
 pending draft work short-circuits with zero engine probes
 pending draft: zero probes even with high-reveal world (issue #2133 scale)
 per-player order lists apply in isolation (#2692 S9 multi-player pin)
+peasant reservation: pending apprentice recruit drains the only peasant so a candidate apprentice is excluded but candidate peasant remains
 phase names are unique (no category runs twice)
 plains: allows with Early Steam
 plains: allows with Later Steam only
@@ -393,8 +394,12 @@ removeBuildOrder removes order at index
 removeMoveOrder removes order at index
 removes order at index
 removeTradeOrderForPlayer deletes the matching staged order
+empty stockpile + zero treasury + zero peasants -> empty list
+engine round-trip parity: accept/reject decision matches addRecruitWorkerOrderWithContext for every WorkerTier in a partial tech / peasant / treasury fixture
 returns alliance (single diplo per target) for other GP when at peace and not allied
 returns alliance candidate when at peace and not allied
+returns all four tiers when all techs unlocked and resources support every cost row
+returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows
 returns breakAlliance toward GP when a formal alliance exists at peace
 returns declareWar toward GP when at peace and already allied
 returns empty for unknown unit id
@@ -423,6 +428,14 @@ returns null when coordinates are out of bounds
 returns null when region map is missing
 returns null when x or y are not integers
 returns offerPeace when at war with another GP
+omits apprentice recruit when peasant pool is empty
+omits apprentice recruit when treasury is below 200 ducats
+omits peasant recruit when fabric is insufficient
+omits trained tiers when their required techs are locked
+omits apprentice recruit when peasant pool is empty
+omits apprentice recruit when treasury is below 200 ducats
+omits peasant recruit when fabric is insufficient
+omits trained tiers when their required techs are locked
 returns one turn for counter_spy
 returns orders unchanged when index invalid
 returns parsed coordinates for a valid tile key

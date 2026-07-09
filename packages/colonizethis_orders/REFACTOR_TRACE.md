@@ -1508,6 +1508,24 @@ Migrated imperative `order_suggestion_work_tile_keys_shared_validator_test.dart`
 
 test/ LOC after slice 87: **38,210** (net −9 from post–slice 86; support modules add LOC while runner shrinks). Remaining: lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+### Slice 88 — recruit-worker suggestion scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| rw-inclusion-peasant-apprentice | returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows | `order_suggestion_recruit_worker_test.dart`, `order_suggestion_recruit_worker_parity_test.dart` | `support/suggestion/order_suggestion_recruit_worker_{fixtures,scenarios,expectations}.dart` + thin runner | #2692 S7, #3949 |
+| rw-inclusion-tech-locked | omits trained tiers when their required techs are locked | same | same | #2692 S7, #3949 |
+| rw-inclusion-fabric | omits peasant recruit when fabric is insufficient | same | same | #2692 S7, #3949 |
+| rw-inclusion-treasury | omits apprentice recruit when treasury is below 200 ducats | same | same | #2692 S7, #3949 |
+| rw-inclusion-peasant-pool | omits apprentice recruit when peasant pool is empty | same | same | #2692 S7, #3949 |
+| rw-parity-all-tiers | returns all four tiers when all techs unlocked and resources support every cost row | same | same | #2692 S7, #3949 |
+| rw-parity-reservation | peasant reservation: pending apprentice recruit drains the only peasant so a candidate apprentice is excluded but candidate peasant remains | same | same | #2692 S7, #3949 |
+| rw-parity-engine | engine round-trip parity: accept/reject decision matches addRecruitWorkerOrderWithContext for every WorkerTier in a partial tech / peasant / treasury fixture | same | same | #2692 S7, #3949 |
+| rw-parity-empty | empty stockpile + zero treasury + zero peasants -> empty list | same | same | #2692 S7, #3949 |
+
+Merged imperative `order_suggestion_recruit_worker_test.dart` + `order_suggestion_recruit_worker_parity_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for all nine recruit-worker inclusion/parity scenarios. Deleted parity shard file.
+
+test/ LOC after slice 88: **38,257** (net +47 from post–slice 87; support modules add LOC while parity shard deleted). Remaining: further imperative-suite compaction (colonial acquisition, declare-war intervention, purchase-land colonial, etc.), lib DRY items 5–6 opportunistic cleanup, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
