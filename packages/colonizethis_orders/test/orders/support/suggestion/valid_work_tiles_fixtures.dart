@@ -6,6 +6,64 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'valid_work_tiles_test_support.dart';
 
+Province vwtOwnedProvince(String localId) => Province(
+  id: ValidWorkTilesTestSupport.provinceId(localId),
+  regionId: ValidWorkTilesTestSupport.ow,
+  ownerId: ValidWorkTilesTestSupport.playerId,
+);
+
+Province vwtProvince(String localId, String ownerId) => Province(
+  id: ValidWorkTilesTestSupport.provinceId(localId),
+  regionId: ValidWorkTilesTestSupport.ow,
+  ownerId: ownerId,
+);
+
+/// Explorer on p1 — build_improvement disallowed for unit type (visibility path).
+Game vwtExplorerDisallowedBuildGame() {
+  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  return ValidWorkTilesTestSupport.validWorkTilesGame(
+    oldWorld: RegionData(
+      provinces: [vwtOwnedProvince('p1')],
+      units: [
+        ValidWorkTilesTestSupport.explorerUnit(
+          locationProvinceId: provinceId,
+          tileKey: tile,
+        ),
+      ],
+    ),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      provinceId: [tile],
+    }),
+  );
+}
+
+/// Colonist on p1 with adjacent p2 — visibility filter vs plain keys parity.
+Game vwtColonistVisibilityFilterGame() {
+  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+  final p2 = ValidWorkTilesTestSupport.provinceId('p2');
+  final tileP1 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  final tileP2 = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
+  return ValidWorkTilesTestSupport.validWorkTilesGame(
+    oldWorld: RegionData(
+      provinces: [vwtOwnedProvince('p1')],
+      units: [
+        Unit(
+          id: 'u1',
+          type: 'Colonist',
+          ownerId: ValidWorkTilesTestSupport.playerId,
+          locationProvinceId: p1,
+          tileKey: tileP1,
+        ),
+      ],
+    ),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      p1: [tileP1],
+      p2: [tileP2],
+    }),
+  );
+}
+
 /// NW home + adjacent target province with partial visibility (home full, t0
 /// unknown, t1 fogged). Used by suggest explore/prospect scenario bodies.
 class NwPartialRevealHomeTarget {

@@ -543,6 +543,15 @@ test/ LOC after slice 28: **32,293** (net +135 from post–slice 27; expectation
 
 test/ LOC after slice 29: **32,413** (net +120 from post–slice 28; expectation bodies shortened, new `vwt*` fixtures/shorthand added). Remaining: further expectation compaction (`valid_work_tiles_part1`, `order_suggestion_core_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 30: valid_work_tiles part1 + order_suggestion_core expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-part1-shorthand | add `vwtExpectKeysEmpty` / `vwtExpectVisMatchesPlain` / `vwtExpectBuildVisMembership` / `vwtExpectVisProspectExcludesAll` / suggest-explore/prospect helpers; compact build-improvement + empty-key expectation bodies | `valid_work_tiles_expectations_part1.dart`, `valid_work_tiles_expectations_part2.dart` | `valid_work_tiles_expectation_shorthand.dart` + `valid_work_tiles_fixtures.dart` (`vwtOwnedProvince`, `vwtExplorerDisallowedBuildGame`, `vwtColonistVisibilityFilterGame`) | #3949 |
+| osc-core-shorthand | add `oscExpectThrowsSuggestMoveOnUnknownVisibility` / `oscExpectProvinceViewMatchesAll` / `oscExpectExploreTargetsProvince` / dual-builder + build-target helpers; compact core suggestion expectation bodies | `order_suggestion_core_expectations_part{1,2}.dart` | `order_suggestion_core_expectation_shorthand.dart` + `order_suggestion_core_fixtures.dart` (`oscPartialRevealExploreCacheGame`) | #3949 |
+
+test/ LOC after slice 30: **32,548** (net +135 from post–slice 29; expectation bodies shortened, new `vwt*`/`osc*` shorthand and fixture modules added). Remaining: further expectation compaction (remaining large support files, imperative suites), lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

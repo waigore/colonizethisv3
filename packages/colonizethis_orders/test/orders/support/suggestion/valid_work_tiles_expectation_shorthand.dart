@@ -210,6 +210,94 @@ void vwtExpectBuildSuggestionsSorted(List<String> tileKeys) {
   }
 }
 
+void vwtExpectKeysEmpty(
+  Game game,
+  String unitId,
+  String workTarget, {
+  bool withVisibility = false,
+}) {
+  final keys = withVisibility
+      ? vwtVisKeys(game, unitId, workTarget)
+      : vwtPlainKeys(game, unitId, workTarget);
+  expect(keys, isEmpty);
+}
+
+void vwtExpectVisMatchesPlain(Game game, String unitId, String workTarget) {
+  final withVis = vwtVisKeys(game, unitId, workTarget);
+  final withoutVis = vwtPlainKeys(game, unitId, workTarget);
+  expect(withVis.length, withoutVis.length);
+}
+
+void vwtExpectBuildVisMembership(
+  Game game, {
+  required Iterable<String> included,
+  Iterable<String> excluded = const [],
+}) {
+  final valid = vwtBuildVisKeys(game);
+  for (final tile in included) {
+    expect(valid.contains(tile), isTrue);
+  }
+  for (final tile in excluded) {
+    expect(valid.contains(tile), isFalse);
+  }
+}
+
+void vwtExpectVisProspectExcludesAll(
+  Game game,
+  MapTopology topology,
+  Iterable<String> tiles, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final valid = validWorkTilesWithVisibility(
+    game: game,
+    topology: topology,
+    unitId: 'u1',
+    workTarget: kWorkTargetProspect,
+    tileMapByRegion: tileMapByRegion,
+  );
+  for (final tile in tiles) {
+    expect(valid.contains(tile), isFalse);
+  }
+}
+
+void vwtExpectSuggestExploreTargetsProvince(
+  Game game,
+  MapTopology topology,
+  String provinceId,
+) {
+  final explore = vwtSuggestExplore(game, topology).toList();
+  expect(explore, isNotEmpty);
+  expect(
+    explore.any(
+      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provinceId,
+    ),
+    isTrue,
+  );
+}
+
+void vwtExpectSuggestExploreExcludesProvince(
+  Game game,
+  MapTopology topology,
+  String provinceId,
+) {
+  expect(
+    vwtSuggestExplore(game, topology).where(
+      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provinceId,
+    ),
+    isEmpty,
+  );
+}
+
+void vwtExpectSuggestProspectIncludesTile(
+  Game game,
+  MapTopology topology,
+  String tileKey,
+) {
+  final prospect = vwtSuggestProspect(game, topology).toList();
+  expect(prospect, isNotEmpty);
+  expect(prospect.any((o) => o.targetTileKey == tileKey), isTrue);
+}
+
 void vwtExpectNoBuildSuggestionForReservedTile({
   required List<String> tileKeys,
   required String reservedTile,

@@ -70,14 +70,10 @@ void _suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit() {
 
 void _suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut() {
   final fx = vwtTribePartialFx();
-  final game = vwtTribeConsulateGame(fx, id: 'g1916e1');
-  final explore = vwtSuggestExplore(game, fx.topology()).toList();
-  expect(explore, isNotEmpty);
-  expect(
-    explore.any(
-      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
-    ),
-    isTrue,
+  vwtExpectSuggestExploreTargetsProvince(
+    vwtTribeConsulateGame(fx, id: 'g1916e1'),
+    fx.topology(),
+    fx.provTarget,
   );
 }
 
@@ -87,25 +83,24 @@ void _suggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntr
     targetLocalId: 'gp2p',
     targetOwnerId: 'gp2',
   );
-  final game = fx.game(
-    id: 'g1916e2',
-    players: [
-      ValidWorkTilesTestSupport.defaultPlayer,
-      const Player(id: 'gp2', displayName: 'P2', isHuman: false),
-    ],
-  );
-  expect(
-    vwtSuggestExplore(game, fx.topology()).where(
-      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
+  vwtExpectSuggestExploreExcludesProvince(
+    fx.game(
+      id: 'g1916e2',
+      players: [
+        ValidWorkTilesTestSupport.defaultPlayer,
+        const Player(id: 'gp2', displayName: 'P2', isHuman: false),
+      ],
     ),
-    isEmpty,
+    fx.topology(),
+    fx.provTarget,
   );
 }
 
 void _suggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile() {
   final fx = vwtTribeGrainIronFx();
-  final game = vwtTribeConsulateGame(fx, id: 'g1916p1');
-  final prospect = vwtSuggestProspect(game, fx.topology()).toList();
-  expect(prospect, isNotEmpty);
-  expect(prospect.any((o) => o.targetTileKey == fx.t1), isTrue);
+  vwtExpectSuggestProspectIncludesTile(
+    vwtTribeConsulateGame(fx, id: 'g1916p1'),
+    fx.topology(),
+    fx.t1,
+  );
 }

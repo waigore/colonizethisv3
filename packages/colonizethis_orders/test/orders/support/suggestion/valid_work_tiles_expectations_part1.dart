@@ -52,208 +52,167 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
 }
 
 void _returnsEmptyForUnknownUnitId() {
-  expect(
-    vwtPlainKeys(vwtMinimalSingleTileGame(), 'no-such-unit', kWorkTargetExplore),
-    isEmpty,
+  vwtExpectKeysEmpty(
+    vwtMinimalSingleTileGame(),
+    'no-such-unit',
+    kWorkTargetExplore,
   );
 }
 
 void _returnsEmptyWhenWorkTargetNotAllowedForUnitType() {
-  expect(
-    vwtPlainKeys(
-      vwtExplorerSingleTileGame(),
-      'u1',
-      kWorkTargetBuildImprovement,
-    ),
-    isEmpty,
+  vwtExpectKeysEmpty(
+    vwtExplorerSingleTileGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
   );
 }
 
 void _returnsEmptyForUnknownUnitIdWithVisibility() {
-  expect(
-    vwtVisKeys(vwtMinimalSingleTileGame(), 'no-such-unit', kWorkTargetExplore),
-    isEmpty,
+  vwtExpectKeysEmpty(
+    vwtMinimalSingleTileGame(),
+    'no-such-unit',
+    kWorkTargetExplore,
+    withVisibility: true,
   );
 }
 
 void _returnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility() {
-  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
-  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final game = ValidWorkTilesTestSupport.validWorkTilesGame(
-    oldWorld: RegionData(
-      provinces: [_ownedProvince('p1')],
-      units: [
-        ValidWorkTilesTestSupport.explorerUnit(
-          locationProvinceId: provinceId,
-          tileKey: tile,
-        ),
-      ],
-    ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      provinceId: [tile],
-    }),
-  );
-  expect(
-    vwtVisKeys(game, 'u1', kWorkTargetBuildImprovement),
-    isEmpty,
+  vwtExpectKeysEmpty(
+    vwtExplorerDisallowedBuildGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
+    withVisibility: true,
   );
 }
 
 void _filtersByVisibilityBeforeOrderEngineValidation() {
-  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-  final p2 = ValidWorkTilesTestSupport.provinceId('p2');
-  final tileP1 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final tileP2 = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-  final unit = Unit(
-    id: 'u1',
-    type: 'Colonist',
-    ownerId: ValidWorkTilesTestSupport.playerId,
-    locationProvinceId: p1,
-    tileKey: tileP1,
+  vwtExpectVisMatchesPlain(
+    vwtColonistVisibilityFilterGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
   );
-  final game = ValidWorkTilesTestSupport.validWorkTilesGame(
-    oldWorld: RegionData(
-      provinces: [_ownedProvince('p1')],
-      units: [unit],
-    ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-      {
-        p1: [tileP1],
-        p2: [tileP2],
-      },
-    ),
-  );
-  final withVis = vwtVisKeys(game, 'u1', kWorkTargetBuildImprovement);
-  final withoutVis = vwtPlainKeys(game, 'u1', kWorkTargetBuildImprovement);
-  expect(withVis.length, withoutVis.length);
 }
 
 void _buildImprovementReturnsOnlyControlledTilesWithResources() {
   final tileWithResource = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   final tileWithoutResource = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
   final foreignTileWithResource = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-  final game = owBuilderVisibilityGame(
-    provinces: [_ownedProvince('p1'), _province('p2', 'other')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [
-        tileWithResource,
-        tileWithoutResource,
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'other')],
+      tilesByProvince: {
+        ValidWorkTilesTestSupport.provinceId('p1'): [
+          tileWithResource,
+          tileWithoutResource,
+        ],
+        ValidWorkTilesTestSupport.provinceId('p2'): [foreignTileWithResource],
+      },
+      resourceByTileKey: {
+        tileWithResource: 'grain',
+        foreignTileWithResource: 'iron',
+      },
+      builderTileKey: tileWithResource,
+      improvementByTile: {tileWithResource: 0},
+      extraPlayers: const [
+        Player(id: 'other', displayName: 'Other', isHuman: false),
       ],
-      ValidWorkTilesTestSupport.provinceId('p2'): [foreignTileWithResource],
-    },
-    resourceByTileKey: {
-      tileWithResource: 'grain',
-      foreignTileWithResource: 'iron',
-    },
-    builderTileKey: tileWithResource,
-    improvementByTile: {tileWithResource: 0},
-    extraPlayers: const [
-      Player(id: 'other', displayName: 'Other', isHuman: false),
-    ],
+    ),
+    included: [tileWithResource],
+    excluded: [tileWithoutResource, foreignTileWithResource],
   );
-  final valid = vwtBuildVisKeys(game);
-  expect(valid.contains(tileWithResource), isTrue);
-  expect(valid.contains(tileWithoutResource), isFalse);
-  expect(valid.contains(foreignTileWithResource), isFalse);
 }
 
 void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected() {
   final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
   final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+  final provinces = [vwtOwnedProvince('p1')];
   final tiles = {p1: [grainTile, ironTile]};
   final resources = {grainTile: 'grain', ironTile: 'iron'};
   final improvements = {grainTile: 0, ironTile: 0};
-  final provinces = [_ownedProvince('p1')];
-
-  final unprospected = owBuilderVisibilityGame(
-    provinces: provinces,
-    tilesByProvince: tiles,
-    resourceByTileKey: resources,
-    builderTileKey: grainTile,
-    improvementByTile: improvements,
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+    ),
+    included: [grainTile],
+    excluded: [ironTile],
   );
-  final validUnprospected = vwtBuildVisKeys(unprospected);
-  expect(validUnprospected.contains(grainTile), isTrue);
-  expect(validUnprospected.contains(ironTile), isFalse);
-
-  final prospected = owBuilderVisibilityGame(
-    provinces: provinces,
-    tilesByProvince: tiles,
-    resourceByTileKey: resources,
-    builderTileKey: grainTile,
-    improvementByTile: improvements,
-    playerProspectedTiles: {
-      ValidWorkTilesTestSupport.playerId: {ironTile},
-    },
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+      playerProspectedTiles: {
+        ValidWorkTilesTestSupport.playerId: {ironTile},
+      },
+    ),
+    included: [grainTile, ironTile],
   );
-  final validProspected = vwtBuildVisKeys(prospected);
-  expect(validProspected.contains(grainTile), isTrue);
-  expect(validProspected.contains(ironTile), isTrue);
 }
 
 void _buildImprovementIncludesPurchasedTilesWithResources() {
   final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
   final unpurchased = ValidWorkTilesTestSupport.tileKey('p2', 1, 0);
   final ownTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final game = owBuilderVisibilityGame(
-    provinces: [_ownedProvince('p1'), _province('p2', 'minor1')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [ownTile],
-      ValidWorkTilesTestSupport.provinceId('p2'): [purchased, unpurchased],
-    },
-    resourceByTileKey: {purchased: 'grain', unpurchased: 'grain'},
-    builderTileKey: ownTile,
-    purchasedTilesByTileKey: {
-      purchased: ValidWorkTilesTestSupport.playerId,
-    },
-    improvementByTile: {purchased: 0},
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'minor1')],
+      tilesByProvince: {
+        ValidWorkTilesTestSupport.provinceId('p1'): [ownTile],
+        ValidWorkTilesTestSupport.provinceId('p2'): [purchased, unpurchased],
+      },
+      resourceByTileKey: {purchased: 'grain', unpurchased: 'grain'},
+      builderTileKey: ownTile,
+      purchasedTilesByTileKey: {purchased: ValidWorkTilesTestSupport.playerId},
+      improvementByTile: {purchased: 0},
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+    ),
+    included: [purchased],
+    excluded: [unpurchased],
   );
-  final valid = vwtBuildVisKeys(game);
-  expect(valid.contains(purchased), isTrue);
-  expect(valid.contains(unpurchased), isFalse);
 }
 
 void _buildImprovementExcludesSeaZoneTiles() {
   final landTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   const seaZoneId = 's1';
   final seaTile = ValidWorkTilesTestSupport.tileKey(seaZoneId, 0, 0);
-  final game = owBuilderVisibilityGame(
-    provinces: [_ownedProvince('p1')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [landTile],
-    },
-    resourceByTileKey: {landTile: 'grain', seaTile: 'fish'},
-    builderTileKey: landTile,
-    improvementByTile: {landTile: 0},
-    seaZoneId: seaZoneId,
-    seaTiles: [seaTile],
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: [vwtOwnedProvince('p1')],
+      tilesByProvince: {
+        ValidWorkTilesTestSupport.provinceId('p1'): [landTile],
+      },
+      resourceByTileKey: {landTile: 'grain', seaTile: 'fish'},
+      builderTileKey: landTile,
+      improvementByTile: {landTile: 0},
+      seaZoneId: seaZoneId,
+      seaTiles: [seaTile],
+    ),
+    included: [landTile],
+    excluded: [seaTile],
   );
-  final valid = vwtBuildVisKeys(game);
-  expect(valid.contains(landTile), isTrue);
-  expect(valid.contains(seaTile), isFalse);
 }
 
 void _getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {
   final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-  final game = owTribeProspectGame(
-    provinceLocalId: 'p1',
-    tileKeys: [grassTile, ironTile],
-    resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
-    visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
-    playerProspectedTiles: {
-      ValidWorkTilesTestSupport.playerId: {ironTile},
-    },
+  vwtExpectVisProspectExcludesAll(
+    owTribeProspectGame(
+      provinceLocalId: 'p1',
+      tileKeys: [grassTile, ironTile],
+      resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
+      visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
+      playerProspectedTiles: {
+        ValidWorkTilesTestSupport.playerId: {ironTile},
+      },
+    ),
+    owSingleProvinceTopology('p1'),
+    [grassTile, ironTile],
   );
-  final topology = owSingleProvinceTopology('p1');
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetProspect,
-  );
-  expect(valid.contains(grassTile), isFalse);
-  expect(valid.contains(ironTile), isFalse);
 }
