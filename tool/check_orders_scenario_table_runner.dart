@@ -73,7 +73,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/per_player_work_target_selection_cache_test.dart',
   'packages/colonizethis_orders/test/orders/propagate_road_to_adjacent_capital_test.dart',
   'packages/colonizethis_orders/test/orders/upgrade_town_minor_tribe_test.dart',
-  'packages/colonizethis_orders/test/orders/validator_bundle_test.dart',
   'packages/colonizethis_orders/test/orders/validators/build_order_treasury_no_bypass_test.dart',
   'packages/colonizethis_orders/test/orders/validators/build_order_validator_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/boycott_validator_test.dart',
@@ -89,7 +88,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/work_handlers/purchase_land_work_handler_test.dart',
   'packages/colonizethis_orders/test/orders/work_handlers/remaining_work_handlers_test.dart',
   'packages/colonizethis_orders/test/orders/work_order_duration_preview_test.dart',
-  'packages/colonizethis_orders/test/orders/work_suggestion_pipeline_test.dart',
 };
 
 /// When true, every existing `*_test.dart` under the orders test tree is

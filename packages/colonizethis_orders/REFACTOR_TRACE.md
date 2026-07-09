@@ -836,6 +836,24 @@ Migrated imperative `order_engine_validator_injection_test.dart` → table-drive
 
 test/ LOC after slice 51: **33,193** (net +84 from post–slice 50; scenario support modules add LOC while runner shrinks to 15 lines). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 52: work_suggestion_pipeline + validator_bundle scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wsp-duplicate-pending | duplicate pending target short-circuits without adding suggestions | `work_suggestion_pipeline_test.dart` | `support/suggestion/work_suggestion_pipeline_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| wsp-first-accepted | first accepted candidate stops iteration when includeAllAccepted is false | same | same | #3949 |
+| wsp-include-all | includeAllAccepted collects multiple rows and logs includedCount | same | same | #3949 |
+| wsp-no-candidates | no candidates logs noCandidateReason | same | same | #3949 |
+| wsp-resolve-no-candidate | resolveNoCandidateReason overrides noCandidateReason when nothing yielded | same | same | #3949 |
+| wsp-max-probe | maxProbeAttempts override allows more than default cap of accepted rows | same | same | #3949 |
+| wsp-default-cap | default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows | same | same | #3949 |
+| wsp-rejected | rejected candidates log engineRejectedReason | same | same | #3949 |
+| vb-wired | createOrderValidators returns wired validators (Refs #2391 AC6) | `validator_bundle_test.dart` | `support/validators/validator_bundle_scenarios.dart` + fixtures/expectations + thin runner | #2391 AC6 |
+
+Migrated imperative `work_suggestion_pipeline_test.dart` and `validator_bundle_test.dart` → table-driven scenarios with dedicated support modules. Logger capture moved into `withWspLogCapture` fixture helper. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 52: **33,319** (net +126 from post–slice 51; scenario support modules add LOC while runners shrink). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
