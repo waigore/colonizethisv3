@@ -206,27 +206,10 @@ void runOrderEngineValidateWorkExpectation(
       );
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementOnMineralTileWhenNotProspected:
-        vwExpectRejected(
-          vwValidateBuildImprovement(
-            game: buildImprovementBaseGame(
-              resourceByTileKey: {ValidateWorkOw.tileKey: 'iron'},
-            ),
-          ),
-          reasonContains: 'prospected',
-        );
+      vwExpectBuildImprovementMineral(prospected: false);
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnMineralTileAfterProspected:
-      const tileKey = ValidateWorkOw.tileKey;
-        vwExpectAccepted(
-          vwValidateBuildImprovement(
-            game: buildImprovementBaseGame(
-              resourceByTileKey: {tileKey: 'iron'},
-              playerProspectedTiles: {
-                'p1': {tileKey},
-              },
-            ),
-          ),
-        );
+      vwExpectBuildImprovementMineral(prospected: true);
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnGrainWhenTileNotProspected:
       vwExpectAccepted(

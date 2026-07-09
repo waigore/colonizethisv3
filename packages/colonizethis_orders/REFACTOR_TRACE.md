@@ -1973,6 +1973,19 @@ test/ LOC after slice 123: **37,411** (net −271 from post–slice 122). Remain
 
 test/ LOC after slice 124: **37,382** (net −29 from post–slice 123). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 125: cross-family dispatch helpers + incremental corpus DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-prospect-vis-dispatch | extract `vwtProspectVisKeys` / `vwtExpectProspectVisContains` / `vwtExpectProspectVisExcludesAll`; compact three prospect visibility cases | `valid_work_tiles_expectations.dart` | `valid_work_tiles_expectation_shorthand_part1.dart` | #3949 |
+| vwt-mineral-build-dispatch | extract `vwtExpectMineralBuildVisBeforeAfterProspect`; compact mineral build-improvement visibility case | same | same | #3949 |
+| waa-purchase-dispatch | extract `waaExpectPurchaseRejected` / `waaExpectDualGpPurchaseFirstWins` / `waaExpectBuildImprovementCompletes` / `waaExpectFortSkipAtLevel`; compact purchase/build/fort dispatcher cases | `work_order_application_expectations.dart` | `work_order_application_expectation_shorthand_part1.dart` | #3949 |
+| vw-mineral-build-dispatch | extract `vwExpectBuildImprovementMineral`; compact mineral validate-work cases | `order_engine_validate_work_expectations.dart` | `order_engine_validate_work_expectation_shorthand_part1.dart` | #3949 |
+| osc-suggest-dispatch | extract `oscExpectMoveSuggestOne` / `oscExpectWorkTargetSuggestions` / `oscExpectBuildImprovementFirstTile`; compact move/explore/prospect/build suggestion cases | `order_suggestion_core_expectations.dart` | `order_suggestion_core_expectation_shorthand_part1.dart` | #3949 |
+| ice-corpus-dry | share `_iceCorpusProvinces` / visibility / tile-keys / topology nodes between move and army equivalence corpus games | `incremental_candidate_validator_equivalence_test_helpers_part1.dart` | same | #3949 |
+
+test/ LOC after slice 125: **37,384** (net +2 from post–slice 124; helper overhead ~balanced by dispatcher compaction). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

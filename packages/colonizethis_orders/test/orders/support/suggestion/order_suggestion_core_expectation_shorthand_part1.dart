@@ -14,6 +14,51 @@ List<WorkOrder> oscSuggestWork(
 ]) =>
     suggestWorkOrders(oscView(game, topology), game, topology, orders);
 
+void oscExpectMoveSuggestOne(
+  Game game,
+  MapTopology topology, {
+  required String destTileKey,
+  String unitId = 'u1',
+}) {
+  final moves = oscSuggestMoves(game, topology);
+  expect(moves.length, 1);
+  expect(moves.first.unitId, unitId);
+  expect(moves.first.destinationTileKey, destTileKey);
+}
+
+void oscExpectWorkTargetSuggestions({
+  required Game game,
+  required MapTopology topology,
+  required String target,
+  required bool expectNonEmpty,
+  String? expectedTileKey,
+  Orders orders = const Orders(),
+}) {
+  final ordersForTarget = oscWorkWithTarget(
+    oscSuggestWork(game, topology, orders),
+    target,
+  ).toList();
+  expect(ordersForTarget, expectNonEmpty ? isNotEmpty : isEmpty);
+  if (expectedTileKey != null && expectNonEmpty) {
+    expect(ordersForTarget.first.targetTileKey, expectedTileKey);
+  }
+}
+
+void oscExpectBuildImprovementFirstTile({
+  required Game game,
+  required MapTopology topology,
+  required String expectedTileKey,
+  Orders orders = const Orders(),
+  String unitId = 'b2',
+}) {
+  final buildImp = oscWorkWithTarget(
+    oscSuggestWork(game, topology, orders),
+    kWorkTargetBuildImprovement,
+  ).where((o) => o.unitId == unitId).toList();
+  expect(buildImp, isNotEmpty);
+  expect(buildImp.first.targetTileKey, expectedTileKey);
+}
+
 List<BuildUnitOrder> oscSuggestBuild(
   Game game,
   MapTopology topology, [

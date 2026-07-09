@@ -99,37 +99,7 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected:
-      final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-        final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-        final provinces = [vwtOwnedProvince('p1')];
-        final tiles = {p1: [grainTile, ironTile]};
-        final resources = {grainTile: 'grain', ironTile: 'iron'};
-        final improvements = {grainTile: 0, ironTile: 0};
-        vwtExpectBuildVisMembership(
-          owBuilderVisibilityGame(
-            provinces: provinces,
-            tilesByProvince: tiles,
-            resourceByTileKey: resources,
-            builderTileKey: grainTile,
-            improvementByTile: improvements,
-          ),
-          included: [grainTile],
-          excluded: [ironTile],
-        );
-        vwtExpectBuildVisMembership(
-          owBuilderVisibilityGame(
-            provinces: provinces,
-            tilesByProvince: tiles,
-            resourceByTileKey: resources,
-            builderTileKey: grainTile,
-            improvementByTile: improvements,
-            playerProspectedTiles: {
-              ValidWorkTilesTestSupport.playerId: {ironTile},
-            },
-          ),
-          included: [grainTile, ironTile],
-        );
+      vwtExpectMineralBuildVisBeforeAfterProspect();
     case ValidWorkTilesTarget.buildImprovementIncludesPurchasedTilesWithResources:
       final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
         final unpurchased = ValidWorkTilesTestSupport.tileKey('p2', 1, 0);
@@ -180,63 +150,42 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         .getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected:
       final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
         final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-        final excludeAllGame = owTribeProspectGame(
-          provinceLocalId: 'p1',
-          tileKeys: [grassTile, ironTile],
-          resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
-          visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
-          playerProspectedTiles: {
-            ValidWorkTilesTestSupport.playerId: {ironTile},
-          },
+        vwtExpectProspectVisExcludesAll(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [grassTile, ironTile],
+            resourceByTileKey: {grassTile: 'grain', ironTile: 'iron'},
+            visibilityByTile: {grassTile: 'fogged', ironTile: 'fogged'},
+            playerProspectedTiles: {
+              ValidWorkTilesTestSupport.playerId: {ironTile},
+            },
+          ),
+          [grassTile, ironTile],
         );
-        final excludeAllTopology = owSingleProvinceTopology('p1');
-        final excludeAllValid = validWorkTilesWithVisibility(
-          game: excludeAllGame,
-          topology: excludeAllTopology,
-          unitId: 'u1',
-          workTarget: kWorkTargetProspect,
-        );
-        for (final tile in [grassTile, ironTile]) {
-          expect(excludeAllValid.contains(tile), isFalse);
-        }
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile:
       final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        final prospectGame = owTribeProspectGame(
-          provinceLocalId: 'p1',
-          tileKeys: [ironTile],
-          resourceByTileKey: {ironTile: 'iron'},
-          visibilityByTile: {ironTile: 'fogged'},
-        );
-        final prospectTopology = owSingleProvinceTopology('p1');
-        expect(
-          validWorkTilesWithVisibility(
-            game: prospectGame,
-            topology: prospectTopology,
-            unitId: 'u1',
-            workTarget: kWorkTargetProspect,
+        vwtExpectProspectVisContains(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [ironTile],
+            resourceByTileKey: {ironTile: 'iron'},
+            visibilityByTile: {ironTile: 'fogged'},
           ),
-          contains(ironTile),
+          ironTile,
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility:
       final woolTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        final woolGame = owTribeProspectGame(
-          provinceLocalId: 'p1',
-          tileKeys: [woolTile],
-          resourceByTileKey: {woolTile: 'wool'},
-          visibilityByTile: {woolTile: 'fogged'},
-        );
-        final woolTopology = owSingleProvinceTopology('p1');
-        expect(
-          validWorkTilesWithVisibility(
-            game: woolGame,
-            topology: woolTopology,
-            unitId: 'u1',
-            workTarget: kWorkTargetProspect,
-            tileMapByRegion: vwtHillsWoolTileMap('p1'),
-          ).contains(woolTile),
-          isFalse,
+        vwtExpectProspectVisExcludesAll(
+          owTribeProspectGame(
+            provinceLocalId: 'p1',
+            tileKeys: [woolTile],
+            resourceByTileKey: {woolTile: 'wool'},
+            visibilityByTile: {woolTile: 'fogged'},
+          ),
+          [woolTile],
+          tileMapByRegion: vwtHillsWoolTileMap('p1'),
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces:

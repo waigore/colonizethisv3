@@ -56,3 +56,68 @@ void vwtExpectPartialRevealSuggestions({
   }
   expect(orders, expectNonEmpty ? isNotEmpty : isEmpty);
 }
+
+Set<String> vwtProspectVisKeys(
+  Game game, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) =>
+    validWorkTilesWithVisibility(
+      game: game,
+      topology: owSingleProvinceTopology('p1'),
+      unitId: 'u1',
+      workTarget: kWorkTargetProspect,
+      tileMapByRegion: tileMapByRegion,
+    );
+
+void vwtExpectProspectVisContains(
+  Game game,
+  String tile, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  expect(vwtProspectVisKeys(game, tileMapByRegion: tileMapByRegion), contains(tile));
+}
+
+void vwtExpectProspectVisExcludesAll(
+  Game game,
+  Iterable<String> tiles, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final valid = vwtProspectVisKeys(game, tileMapByRegion: tileMapByRegion);
+  for (final tile in tiles) {
+    expect(valid.contains(tile), isFalse);
+  }
+}
+
+void vwtExpectMineralBuildVisBeforeAfterProspect() {
+  final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+  final provinces = [vwtOwnedProvince('p1')];
+  final tiles = {p1: [grainTile, ironTile]};
+  final resources = {grainTile: 'grain', ironTile: 'iron'};
+  final improvements = {grainTile: 0, ironTile: 0};
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+    ),
+    included: [grainTile],
+    excluded: [ironTile],
+  );
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+      playerProspectedTiles: {
+        ValidWorkTilesTestSupport.playerId: {ironTile},
+      },
+    ),
+    included: [grainTile, ironTile],
+  );
+}

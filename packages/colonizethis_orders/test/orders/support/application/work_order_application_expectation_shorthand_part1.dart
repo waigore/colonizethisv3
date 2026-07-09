@@ -231,3 +231,111 @@ Game waaEngineerPortGame() {
     ],
   );
 }
+
+void waaExpectBuildImprovementCompletes() {
+  final cost = workOrderCostBuildImprovement(0);
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [workAppUnit(type: kUnitTypeBuilder)],
+      resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
+      players: [
+        workAppPlayer(
+          stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
+        ),
+      ],
+    ),
+    workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
+  );
+  expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 1);
+  waaExpectUnitIdle(next);
+}
+
+void waaExpectPurchaseRejected({
+  List<OvertureState> overtureStates = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+}) {
+  final game = workAppSingleGpPurchaseLandGame(
+    overtureStates: overtureStates,
+    diplomacyRelations: diplomacyRelations,
+  );
+  final next = waaApply(game, workAppPurchaseLandOrders());
+  waaExpectPurchased(next, ownerId: null);
+  expect(next.playerById('p1')!.treasury, game.playerById('p1')!.treasury);
+}
+
+void waaExpectDualGpPurchaseFirstWins() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  final game = workAppPurchaseLandGame(
+    units: [
+      workAppPurchaseLandMerchant(),
+      workAppPurchaseLandMerchant(id: 'merchant2', ownerId: 'p2'),
+    ],
+    players: [
+      workAppPlayer(
+        treasury: cost + 100,
+        capitalProvinceId: WorkAppIds.provinceId,
+      ),
+      workAppPlayer(
+        id: 'p2',
+        displayName: 'P2',
+        isHuman: false,
+        treasury: cost + 100,
+        capitalProvinceId: WorkAppIds.provinceId,
+      ),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: 'p1',
+        targetId: 'minor1',
+        stage: OvertureStage.embassy,
+        sinceTurn: 0,
+      ),
+      OvertureState(
+        gpId: 'p2',
+        targetId: 'minor1',
+        stage: OvertureStage.embassy,
+        sinceTurn: 0,
+      ),
+    ],
+  );
+  final next = waaApply(
+    game,
+    Orders(
+      workOrdersByPlayerId: {
+        'p1': [
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: kWorkTargetPurchaseLand,
+            targetTileKey: WorkAppIds.tileKeyMinor,
+          ),
+        ],
+        'p2': [
+          const WorkOrder(
+            unitId: 'merchant2',
+            target: kWorkTargetPurchaseLand,
+            targetTileKey: WorkAppIds.tileKeyMinor,
+          ),
+        ],
+      },
+    ),
+  );
+  waaExpectPurchased(next, ownerId: 'p1');
+  expect(
+    next.playerById('p1')!.treasury,
+    game.playerById('p1')!.treasury - cost,
+  );
+  expect(next.playerById('p2')!.treasury, game.playerById('p2')!.treasury);
+}
+
+void waaExpectFortSkipAtLevel(int fortLevel) {
+  final next = waaApply(
+    waaEngineerFortGame(
+      fortLevel: fortLevel,
+      stockpile: const Stockpile(),
+      techUnlocked: fortLevel == 1 ? const {} : const {kTechIdMineEngineering: true},
+    ),
+    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
+  );
+  expect(next.worldState.oldWorld.provinces.single.fortLevel, fortLevel);
+  expect(waaSingleUnit(next).currentWork, isNull);
+}

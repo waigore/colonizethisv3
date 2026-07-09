@@ -242,3 +242,22 @@ void vwExpectAcceptUpgradeTownWithNationalBureaucracy() {
     ),
   );
 }
+
+void vwExpectBuildImprovementMineral({required bool prospected}) {
+  const tileKey = ValidateWorkOw.tileKey;
+  final result = vwValidateBuildImprovement(
+    game: buildImprovementBaseGame(
+      resourceByTileKey: {tileKey: 'iron'},
+      playerProspectedTiles: prospected
+          ? {
+              'p1': {tileKey},
+            }
+          : null,
+    ),
+  );
+  if (prospected) {
+    vwExpectAccepted(result);
+  } else {
+    vwExpectRejected(result, reasonContains: 'prospected');
+  }
+}
