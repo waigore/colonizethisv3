@@ -1070,6 +1070,25 @@ Migrated imperative `explore_work_handler_test.dart`, `purchase_land_work_handle
 
 test/ LOC after slice 61: **35,153** (net +303 from post–slice 60; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, per_player_work_target_selection_cache, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 slice 62 — per_player_work_target_selection_cache scenario migration (#3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ppwtsc-default-refresh | default strategies refresh runs all population paths | `per_player_work_target_selection_cache_test.dart` | `support/per_player_work_target_selection_cache_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| ppwtsc-sorted | sorted returns deterministic ordering | same | same | #3949 |
+| ppwtsc-contains | contains returns false for missing membership | same | same | #3949 |
+| ppwtsc-turn-boundary | refresh replaces target membership on turn-boundary style update | same | same | #3949 |
+| ppwtsc-isolated | refresh keeps cache isolated per player | same | same | #3949 |
+| ppwtsc-prospect | refresh stores and reads prospect membership | same | same | #3949 |
+| ppwtsc-shared-validator | refresh injects one shared incremental validator for all strategies | same | same | #3949 |
+| ppwtsc-owned-ids | refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394) | same | same | #2394 |
+| ppwtsc-validator-view | refresh built validator reuses snapshot playerView (Refs #2394) | same | same | #2394 |
+| ppwtsc-external-validator | refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394) | same | same | #2394 |
+
+Migrated imperative `per_player_work_target_selection_cache_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 62: **35,250** (net +97 from post–slice 61; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
