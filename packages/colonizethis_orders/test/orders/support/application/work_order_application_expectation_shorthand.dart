@@ -354,3 +354,134 @@ void waaExpectUnitIdsPresent(Game next, List<String> ids) {
     expect(units.any((u) => u.id == id), isTrue);
   }
 }
+
+Game waaApplyBuildRoad(Game game) =>
+    waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));
+
+void waaExpectBuildRoadInsufficientMaterials() {
+  final game = workAppOwnedGame(
+    units: [workAppUnit(type: kUnitTypeEngineer)],
+    players: [workAppPlayer(stockpile: const Stockpile())],
+  );
+  final next = waaApplyBuildRoad(game);
+  waaExpectUnitIdle(next);
+  expect(
+    next.players.single.stockpile.quantityOf(CommodityCatalog.lumber.id),
+    0,
+  );
+}
+
+void waaExpectBuildRoadWithMaterialsDeductsStockpile() {
+  final cost = workOrderCostBuildRoad;
+  final game = waaEngineerRoadGame();
+  final next = waaApplyBuildRoad(game);
+  waaExpectUnitIdle(next);
+  waaExpectRoadLevel(next, 1);
+  waaExpectStockpileDeducted(game, next, cost);
+}
+
+Game waaCounterSpyCapitalGame({String spyId = 'spy1'}) => workAppOwnedGame(
+      units: [workAppUnit(id: spyId, type: kUnitTypeSpy)],
+      tileKeysByRegionAndProvince: const {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+      players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
+    );
+
+void waaExpectCounterSpyOnCapital({String spyId = 'spy1'}) {
+  final next = waaApply(
+    waaCounterSpyCapitalGame(spyId: spyId),
+    workAppSingleWorkOrder(unitId: spyId, target: kWorkTargetCounterSpy),
+  );
+  waaExpectCounterSpyWork(next);
+}
+
+Game waaExploreTwoTileGame() => workAppOwnedGame(
+      units: [workAppUnit(type: kUnitTypeExplorer)],
+      tileKeysByRegionAndProvince: {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey, WorkAppIds.originTileKey],
+        },
+      },
+    );
+
+void waaExpectExploreWorkStarted() {
+  final next = waaApply(
+    waaExploreTwoTileGame(),
+    workAppSingleWorkOrder(target: kWorkTargetExplore),
+  );
+  final u = waaSingleUnit(next);
+  expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
+  waaExpectExploreWork(
+    next,
+    remainingTurns: u.currentWork!.totalTurns - 1,
+  );
+}
+
+Game waaExploreFormulaGame() {
+  const provinceSmall = '${WorkAppIds.ow}|P1';
+  const provinceLarge = '${WorkAppIds.ow}|P2';
+  const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+  const tileSmall2 = '${WorkAppIds.ow}|P1|1|0';
+  const tileLarge1 = '${WorkAppIds.ow}|P2|0|0';
+  const tileLarge2 = '${WorkAppIds.ow}|P2|1|0';
+  const tileLarge3 = '${WorkAppIds.ow}|P2|2|0';
+  const tileLarge4 = '${WorkAppIds.ow}|P2|3|0';
+
+  return workAppOwnedGame(
+    units: [
+      workAppUnit(
+        type: kUnitTypeExplorer,
+        locationProvinceId: provinceSmall,
+        tileKey: tileSmall1,
+      ),
+    ],
+    provinces: const [
+      Province(id: provinceSmall, regionId: WorkAppIds.ow, ownerId: 'p1'),
+      Province(id: provinceLarge, regionId: WorkAppIds.ow, ownerId: 'p1'),
+    ],
+    tileKeysByRegionAndProvince: const {
+      WorkAppIds.ow: {
+        provinceSmall: [tileSmall1, tileSmall2],
+        provinceLarge: [tileLarge1, tileLarge2, tileLarge3, tileLarge4],
+      },
+    },
+  );
+}
+
+void waaExpectExploreFormulaTiming() {
+  const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+  final next = waaApply(
+    waaExploreFormulaGame(),
+    workAppSingleWorkOrder(
+      target: kWorkTargetExplore,
+      targetTileKey: tileSmall1,
+    ),
+  );
+  waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
+}
+
+void waaExpectEngineerBuildRoadApplied() {
+  final next = waaApplyBuildRoad(waaEngineerRoadGame());
+  waaExpectUnitIdle(next);
+  waaExpectRoadLevel(next, 1);
+}
+
+void waaExpectBuildPortApplied() {
+  final cost = workOrderMaterialCost(kWorkTargetBuildPort);
+  expect(cost, isNotNull);
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [workAppUnit(type: kUnitTypeEngineer)],
+      players: [
+        workAppPlayer(
+          stockpile: OrdersApplicationTestSupport.stockpileCovering(cost!),
+        ),
+      ],
+    ),
+    workAppSingleWorkOrder(target: kWorkTargetBuildPort),
+  );
+  waaExpectUnitIdle(next);
+}

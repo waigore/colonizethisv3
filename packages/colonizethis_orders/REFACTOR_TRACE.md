@@ -572,6 +572,16 @@ test/ LOC after slice 31: **32,595** (net +47 from post–slice 30; part1 expect
 
 test/ LOC after slice 32: **32,687** (net +92 from post–slice 31; expectation bodies shortened, new `but*`/`vw*`/`osc*`/`vwt*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 33: work application/completion part2 + validateWork part2 compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-part2-shorthand | add `waaApplyBuildRoad` / `waaExpectBuildRoadInsufficientMaterials` / `waaExpectBuildRoadWithMaterialsDeductsStockpile` / `waaCounterSpyCapitalGame` / `waaExpectCounterSpyOnCapital` / `waaExploreTwoTileGame` / `waaExpectExploreWorkStarted` / `waaExploreFormulaGame` / `waaExpectExploreFormulaTiming` / `waaExpectEngineerBuildRoadApplied` / `waaExpectBuildPortApplied`; compact work-order application part2 bodies | `work_order_application_expectations_part2.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+| wcc-part2-shorthand | add `wccSteamPlayers` / `wccExpectRailCompletionLeavesRoadWhenTileHasNoRoad` / `wccExpectRailCompletionSetsRoadLevelTo4WhenValid` / `wccExpectRailDispatchSetsRoadLevel` / `wccExpectUpgradeTownProvinceLevel` / `wccExpectExploreDispatchCapturesRegion`; compact work-completion part2 bodies | `work_completion_expectations_part2.dart` | `work_completion_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part2-shorthand | add `vwExpectScrubTimberRejected` / `vwExpectScrubTimberAccepted` / `vwExpectFortRejected` / `vwExpectRailRejected` / `vwExpectRailAccepted` / `vwExpectUpgradeTownOutcome`; compact validateWork part2 bodies | `order_engine_validate_work_expectations_part2.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 33: **32,799** (net +112 from post–slice 32; part2 expectation bodies shortened, new `waa*`/`wcc*`/`vw*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

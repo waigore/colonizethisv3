@@ -258,3 +258,85 @@ void vwExpectDualWorkOrders({
     lastReasonContains: lastReasonContains,
   );
 }
+
+void vwExpectScrubTimberRejected({
+  required int level,
+  required TerrainType terrain,
+  String reasonContains = 'Terrain caps',
+}) {
+  final result = vwValidateBuildImprovement(
+    game: scrubCapBaseGame(level: level),
+    tileMapByRegion: scrubCapTileMaps(terrain),
+  );
+  vwExpectRejected(result, reasonContains: reasonContains);
+  if (level == 1) {
+    expect(result.reason, contains('level 1'));
+  }
+}
+
+void vwExpectScrubTimberAccepted({
+  required int level,
+  required TerrainType terrain,
+}) {
+  vwExpectBuildImprovementAccepted(
+    game: scrubCapBaseGame(level: level),
+    tileMapByRegion: scrubCapTileMaps(terrain),
+  );
+}
+
+void vwExpectFortRejected({
+  required int fortLevel,
+  required Stockpile stockpile,
+  required Map<String, bool> techUnlocked,
+  required String reasonContains,
+}) {
+  vwExpectOwWorkTargetRejected(
+    game: fortWorkGame(
+      fortLevel: fortLevel,
+      stockpile: stockpile,
+      techUnlocked: techUnlocked,
+    ),
+    unitId: 'eng1',
+    target: kWorkTargetBuildFort,
+    reasonContains: reasonContains,
+  );
+}
+
+void vwExpectRailRejected({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required String reasonContains,
+}) {
+  vwExpectOwWorkTargetRejected(
+    game: game,
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
+    tileMapByRegion: tileMapByRegion,
+    reasonContains: reasonContains,
+  );
+}
+
+void vwExpectRailAccepted({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  vwExpectOwWorkTargetAccepted(
+    game: game,
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
+    tileMapByRegion: tileMapByRegion,
+  );
+}
+
+void vwExpectUpgradeTownOutcome({
+  required Map<String, bool> techUnlocked,
+  required bool accepted,
+  String? reasonContains,
+}) {
+  final result = vwRunUpgradeTown(upgradeTownWorkGame(techUnlocked: techUnlocked));
+  if (accepted) {
+    vwExpectAccepted(result);
+  } else {
+    vwExpectRejected(result, reasonContains: reasonContains!);
+  }
+}

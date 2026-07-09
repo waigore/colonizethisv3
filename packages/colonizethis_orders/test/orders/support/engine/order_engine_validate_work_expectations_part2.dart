@@ -99,25 +99,23 @@ void _rejectsBuildImprovementInForeignUnpurchasedProvince() {
 }
 
 void _rejectsRaisingScrubTimberFromLevel1EvenWithCircularSaw() {
-  final result = vwValidateBuildImprovement(
-    game: scrubCapBaseGame(level: 1),
-    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+  vwExpectScrubTimberRejected(
+    level: 1,
+    terrain: TerrainType.scrubForest,
   );
-  vwExpectRejected(result, reasonContains: 'Terrain caps');
-  expect(result.reason, contains('level 1'));
 }
 
 void _acceptsRaisingHardwoodTimberFromLevel1WithCircularSaw() {
-  vwExpectBuildImprovementAccepted(
-    game: scrubCapBaseGame(level: 1),
-    tileMapByRegion: scrubCapTileMaps(TerrainType.hardwoodForest),
+  vwExpectScrubTimberAccepted(
+    level: 1,
+    terrain: TerrainType.hardwoodForest,
   );
 }
 
 void _acceptsInitialScrubTimberImprovementLevel01() {
-  vwExpectBuildImprovementAccepted(
-    game: scrubCapBaseGame(level: 0),
-    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+  vwExpectScrubTimberAccepted(
+    level: 0,
+    terrain: TerrainType.scrubForest,
   );
 }
 
@@ -132,40 +130,33 @@ void _acceptsBuildImprovementOnPurchasedTileInForeignProvince() {
 }
 
 void _rejectsBuildFortToLevel2WithoutMineEngineering() {
-  vwExpectOwWorkTargetRejected(
-    game: fortWorkGame(
-      fortLevel: 1,
-      stockpile: Stockpile()
-          .applyDelta(CommodityCatalog.lumber.id, 4)
-          .applyDelta(CommodityCatalog.bronze.id, 4),
-      techUnlocked: {},
-    ),
-    unitId: 'eng1',
-    target: kWorkTargetBuildFort,
+  vwExpectFortRejected(
+    fortLevel: 1,
+    stockpile: Stockpile()
+        .applyDelta(CommodityCatalog.lumber.id, 4)
+        .applyDelta(CommodityCatalog.bronze.id, 4),
+    techUnlocked: {},
     reasonContains: 'Mine Engineering',
   );
 }
 
 void _rejectsBuildFortToLevel3WithoutModernForts() {
-  vwExpectOwWorkTargetRejected(
-    game: fortWorkGame(
-      fortLevel: 2,
-      stockpile: Stockpile()
-          .applyDelta(CommodityCatalog.steel.id, 5)
-          .applyDelta(CommodityCatalog.lumber.id, 5),
-      techUnlocked: const {kTechIdMineEngineering: true},
-    ),
-    unitId: 'eng1',
-    target: kWorkTargetBuildFort,
+  vwExpectFortRejected(
+    fortLevel: 2,
+    stockpile: Stockpile()
+        .applyDelta(CommodityCatalog.steel.id, 5)
+        .applyDelta(CommodityCatalog.lumber.id, 5),
+    techUnlocked: const {kTechIdMineEngineering: true},
     reasonContains: 'Modern Forts',
   );
 }
 
 void _rejectsBuildRailWhenTileTerrainDataIsMissing() {
-  vwExpectOwWorkTargetRejected(
-    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1)),
-    unitId: 'rail1',
-    target: kWorkTargetBuildRail,
+  vwExpectRailRejected(
+    game: gameWithRailUnit(
+      tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
+    ),
+    tileMapByRegion: const {},
     reasonContains: 'terrain data required',
   );
 }
@@ -173,10 +164,8 @@ void _rejectsBuildRailWhenTileTerrainDataIsMissing() {
 void _rejectsBuildRailWhenRoadLevelIs0() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  vwExpectOwWorkTargetRejected(
+  vwExpectRailRejected(
     game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 0)),
-    unitId: 'rail1',
-    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
     reasonContains: 'existing road',
   );
@@ -185,13 +174,11 @@ void _rejectsBuildRailWhenRoadLevelIs0() {
 void _rejectsBuildRailOnHillsWithOnlyEarlySteam() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  vwExpectOwWorkTargetRejected(
+  vwExpectRailRejected(
     game: gameWithRailUnit(
       tileState: TileMapState().setRoadLevel(tileKey, 1),
       techUnlocked: const {kTechIdEarlySteamEngine: true},
     ),
-    unitId: 'rail1',
-    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.hills)},
     reasonContains: 'Later Steam',
   );
@@ -200,10 +187,8 @@ void _rejectsBuildRailOnHillsWithOnlyEarlySteam() {
 void _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1() {
   const ow = ValidateWorkOw.ow;
   const tileKey = ValidateWorkOw.tileKey;
-  vwExpectOwWorkTargetAccepted(
+  vwExpectRailAccepted(
     game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 1)),
-    unitId: 'rail1',
-    target: kWorkTargetBuildRail,
     tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
   );
 }
@@ -226,18 +211,16 @@ _rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile() {
 }
 
 void _rejectsUpgradeTownWithoutNationalBureaucracy() {
-  vwExpectRejected(
-    vwRunUpgradeTown(upgradeTownWorkGame(techUnlocked: const {})),
+  vwExpectUpgradeTownOutcome(
+    techUnlocked: const {},
+    accepted: false,
     reasonContains: 'National Bureaucracy',
   );
 }
 
 void _acceptsUpgradeTownWhenNationalBureaucracyUnlocked() {
-  vwExpectAccepted(
-    vwRunUpgradeTown(
-      upgradeTownWorkGame(
-        techUnlocked: const {kTechIdNationalBureaucracy: true},
-      ),
-    ),
+  vwExpectUpgradeTownOutcome(
+    techUnlocked: const {kTechIdNationalBureaucracy: true},
+    accepted: true,
   );
 }
