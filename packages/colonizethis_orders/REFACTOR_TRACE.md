@@ -1182,6 +1182,18 @@ Migrated imperative `order_suggestion_build_pending_riches_test.dart` → table-
 
 test/ LOC after slice 68: **35,854** (net +41 from post–slice 67; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 69 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ospopbp-co-located-feedstock | co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget | `order_suggestion_prospect_own_province_budget_priority_test.dart` | `support/suggestion/order_suggestion_prospect_own_province_budget_priority_scenarios.dart` + `order_suggestion_prospect_own_province_budget_priority_test.dart` | #2847 |
+| ospopbp-no-feedstock-prospected | no feedstock prospect when the co-located tile is already prospected (negative control) | same | same | #2847 |
+| ospopbp-deterministic | own-province budget exemption is deterministic across runs | same | same | #2847 |
+
+Migrated imperative `order_suggestion_prospect_own_province_budget_priority_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline descriptions for co-located feedstock and negative-control scenarios. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 69: **35,955** (net +101 from post–slice 68; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

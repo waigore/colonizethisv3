@@ -104,6 +104,7 @@ civilian worker cannot move into Minor/Tribe territory
 clears currentWork, restores origin tile, and sets status idle
 clears work state and restores origin tile by default
 co-availability ordering is deterministic across repeated passes
+co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget
 colonialIntelExploreProvinceIdsSorted lists sea-reachable NW
 contains returns false for missing membership
 contextOverride passes through to the pure suggester
@@ -258,6 +259,7 @@ New World spawn adds unit to newWorld
 next is left inverse of previous for every non-terminal stage
 no candidates logs noCandidateReason
 no explore suggestion when province unknown
+no feedstock prospect when the co-located tile is already prospected (negative control)
 no lib/src/orders source consumes the core logicLog
 no prospect suggestion when province not at least fogged
 none maps to itself
