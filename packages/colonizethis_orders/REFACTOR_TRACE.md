@@ -1760,6 +1760,19 @@ test/ LOC after slice 103: **38,444** (net −33 from post–slice 102). Remaini
 
 test/ LOC after slice 104: **38,389** (net −55 from post–slice 103). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 105: vet/vrw/osc dispatcher-inline + feedstock tile-gate DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-vet | inline `vetExpectAccepted` / `vetExpectRejected` / `vetExpectAllRejected` into validate-trade dispatcher | `order_engine_validate_trade_expectation_shorthand.dart` | `order_engine_validate_trade_expectations.dart` | #3949 |
+| dispatch-inline-vrw | inline `vrwExpectSingleAccepted` / `vrwExpectSingleRejected` into validate-recruit-worker dispatcher | `order_engine_validate_recruit_worker_expectation_shorthand.dart` | `order_engine_validate_recruit_worker_expectations.dart` | #3949 |
+| dispatch-inline-osc-move | inline `oscExpectFirstMove` into core suggestion dispatcher | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| dispatch-inline-osc-list | inline `oscExpectSuggestListType` into core suggestion dispatcher | same | same | #3949 |
+| but-import-dedup | remove duplicate `build_unit_training_*` imports | `build_unit_training_expectations.dart` | same | #3949 |
+| lib-feedstock-tile-gate | extract `_feedstockExtractionWhenOwnsUnimprovedTile` for supplier + seller improvement-input gates | `feedstock_extraction_targets.dart` | same | #3949 |
+
+test/ LOC after slice 105: TBD (net reduction from vet/vrw/osc shorthand removal + import dedup). Remaining: further support-table compaction toward ≤26,400; optional army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

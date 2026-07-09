@@ -38,10 +38,13 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersOnlyReturnsMovesThatPassValidation:
       final game = oscFoggedDestinationMoveGame();
-        oscExpectFirstMove(
-          oscSuggestMoves(game, oscTwoProvincesConnected('p1', 'p2')),
-          destinationTileKey: OscIds.tile('p2', 0, 0),
+        final moves = oscSuggestMoves(
+          game,
+          oscTwoProvincesConnected('p1', 'p2'),
         );
+        expect(moves.length, 1);
+        expect(moves.first.unitId, 'u1');
+        expect(moves.first.destinationTileKey, OscIds.tile('p2', 0, 0));
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility:
       oscExpectThrowsSuggestMoveOnUnknownVisibility(
@@ -52,10 +55,10 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         .moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians:
       final game = oscMislocatedExplorerMoveGame();
         final topology = oscMislocatedExplorerTopology();
-        oscExpectFirstMove(
-          oscSuggestMoves(game, topology),
-          destinationTileKey: OscIds.tile('p3', 0, 0),
-        );
+        final moves = oscSuggestMoves(game, topology);
+        expect(moves.length, 1);
+        expect(moves.first.unitId, 'u1');
+        expect(moves.first.destinationTileKey, OscIds.tile('p3', 0, 0));
         expect(
           oscView(game, topology).ownUnitsById['u1']!.locationProvinceId,
           OscIds.prov('p2'),
@@ -184,14 +187,15 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         .suggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder:
       oscExpectDualBuilderSuggestSkipsReserved(OscDualBuilderGrainTiles());
     case OrderSuggestionCoreTarget.suggestNavalMissionOrdersReturnsList:
-      oscExpectSuggestListType(
-          oscSuggestNavalMission(
-            oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
-            oscSeaTopology(['sea1']),
-          ),
-        );
+      expect(
+        oscSuggestNavalMission(
+          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
+          oscSeaTopology(['sea1']),
+        ),
+        isA<List<NavalMissionOrder>>(),
+      );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsList:
-      oscExpectSuggestListType(
+      expect(
         oscSuggestBuild(
           oscCapitalProvinceGame(
             oscPlayer(
@@ -202,6 +206,7 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           ),
           oscCapitalTopology(),
         ),
+        isA<List<BuildUnitOrder>>(),
       );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsShipWhenAffordable:
       oscExpectBuildIncludesShipTypes(
@@ -215,25 +220,27 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           oscCapitalTopology(),
         );
     case OrderSuggestionCoreTarget.suggestResearchOrdersReturnsList:
-      oscExpectSuggestListType(
-          oscSuggestResearch(
-            oscGame(
-              worldState: oscWorld(),
-              players: [oscPlayer(treasury: 1000)],
-            ),
-            oscEmptyTopology(),
+      expect(
+        oscSuggestResearch(
+          oscGame(
+            worldState: oscWorld(),
+            players: [oscPlayer(treasury: 1000)],
           ),
-        );
+          oscEmptyTopology(),
+        ),
+        isA<List<ResearchOrder>>(),
+      );
     case OrderSuggestionCoreTarget.suggestNavalMoveOrdersReturnsList:
-      oscExpectSuggestListType(
-          oscSuggestNavalMove(
-            oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
-            oscSeaTopology(
-              ['sea1', 'sea2'],
-              edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
-            ),
+      expect(
+        oscSuggestNavalMove(
+          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
+          oscSeaTopology(
+            ['sea1', 'sea2'],
+            edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
           ),
-        );
+        ),
+        isA<List<NavalMoveOrder>>(),
+      );
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
       oscExpectWorkTargetNotEmpty(

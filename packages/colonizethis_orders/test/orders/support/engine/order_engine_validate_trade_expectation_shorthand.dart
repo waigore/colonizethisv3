@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 const vetRegionId = 'oldWorld';
 
@@ -67,30 +66,6 @@ OrderValidationResult vetAddTrade(
   TradeOrder order,
 ) =>
     engine.addTradeOrderWithContext(game, vetTopology, 'gp1', order);
-
-void vetExpectAccepted(OrderValidationResult result, {String? reason}) {
-  expect(result.isAccepted, isTrue, reason: reason);
-}
-
-void vetExpectRejected(
-  OrderValidationResult result, {
-  String? reason,
-}) {
-  expect(result.isAccepted, isFalse);
-  if (reason != null) {
-    expect(result.reason, reason);
-  }
-}
-
-void vetExpectAllRejected(
-  List<OrderValidationResult> results, {
-  Set<String>? reasons,
-}) {
-  expect(results.every((r) => !r.isAccepted), isTrue);
-  if (reasons != null) {
-    expect(results.map((r) => r.reason).toSet(), reasons);
-  }
-}
 
 
 

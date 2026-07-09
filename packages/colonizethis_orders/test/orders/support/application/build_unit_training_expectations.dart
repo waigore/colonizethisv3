@@ -8,9 +8,6 @@ import 'build_unit_training_fixtures.dart';
 import 'orders_application_military_ship_skip_test_support.dart';
 import 'build_unit_training_expectation_shorthand.dart';
 
-import 'build_unit_training_expectation_shorthand.dart';
-import 'build_unit_training_fixtures.dart';
-
 /// Pins for [buildUnitTrainingScenarios] rows.
 enum BuildUnitTrainingTarget {
   skipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog,

@@ -62,21 +62,6 @@ void vrwAddBuild(
   );
 }
 
-void vrwExpectSingleAccepted(List<OrderValidationResult> results) {
-  expect(results, hasLength(1));
-  expect(results.single.isAccepted, isTrue);
-}
-
-void vrwExpectSingleRejected(
-  List<OrderValidationResult> results, {
-  String? reason,
-}) {
-  expect(results.single.isAccepted, isFalse);
-  if (reason != null) {
-    expect(results.single.reason, reason);
-  }
-}
-
 Player vrwPlayer({
   Stockpile? stockpile,
   WorkerPool workerPool = const WorkerPool(),

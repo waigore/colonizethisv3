@@ -55,16 +55,6 @@ List<NavalMoveOrder> oscSuggestNavalMove(
 ]) =>
     _oscWithViewSuggest(game, topology, orders, suggestNavalMoveOrders);
 
-void oscExpectFirstMove(
-  List<MoveOrder> suggestions, {
-  String unitId = 'u1',
-  required String destinationTileKey,
-}) {
-  expect(suggestions.length, 1);
-  expect(suggestions.first.unitId, unitId);
-  expect(suggestions.first.destinationTileKey, destinationTileKey);
-}
-
 Iterable<WorkOrder> oscWorkWithTarget(
   List<WorkOrder> suggestions,
   String target,
@@ -140,12 +130,6 @@ void oscExpectBuildImprovementTargetsTile(
   );
   expect(buildImp, isNotEmpty);
   expect(buildImp.first.targetTileKey, tileKey, reason: reason);
-}
-
-void oscExpectSuggestListType<T>(
-  List<T> suggestions,
-) {
-  expect(suggestions, isA<List<T>>());
 }
 
 void oscExpectBuildIncludesShipTypes(Game game, MapTopology topology) {

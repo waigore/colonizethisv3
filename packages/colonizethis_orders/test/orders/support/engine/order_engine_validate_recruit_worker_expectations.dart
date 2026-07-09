@@ -27,7 +27,9 @@ void runOrderEngineValidateRecruitWorkerExpectation(
         );
         final engine = vrwEngine();
         vrwAddRecruit(engine, WorkerTier.peasant);
-        vrwExpectSingleAccepted(vrwValidate(game, engine));
+        final results = vrwValidate(game, engine);
+        expect(results, hasLength(1));
+        expect(results.single.isAccepted, isTrue);
     case OrderEngineValidateRecruitWorkerTarget
         .rejectsApprenticeTrainWhenRequiredTechIsLocked:
         final game = vrwGameWith(
@@ -40,10 +42,9 @@ void runOrderEngineValidateRecruitWorkerExpectation(
         );
         final engine = vrwEngine();
         vrwAddRecruit(engine, WorkerTier.apprentice);
-        vrwExpectSingleRejected(
-          vrwValidate(game, engine),
-          reason: kRecruitWorkerTechLocked,
-        );
+        final results = vrwValidate(game, engine);
+        expect(results.single.isAccepted, isFalse);
+        expect(results.single.reason, kRecruitWorkerTechLocked);
     case OrderEngineValidateRecruitWorkerTarget
         .recruitConsumesLastPeasantBeforeMilitaryBuild:
         final game = vrwGameWith(

@@ -36,7 +36,7 @@ void runOrderEngineValidateTradeExpectation(
           );
         final results = vetValidate(game, engine);
         expect(results, hasLength(1));
-        vetExpectAccepted(results.single);
+        expect(results.single.isAccepted, isTrue);
     case OrderEngineValidateTradeTarget
         .rejectsMutualExclusionWhenBidAndOfferShareACommodity:
         final game = vetGameWith(
@@ -58,9 +58,11 @@ void runOrderEngineValidateTradeExpectation(
             'gp1',
             validatorBid(CommodityCatalog.timber.id, 3),
           );
-        vetExpectAllRejected(
-          vetValidate(game, engine),
-          reasons: {TradeOrderRejectionReasons.mutualExclusion},
+        final results = vetValidate(game, engine);
+        expect(results.every((r) => !r.isAccepted), isTrue);
+        expect(
+          results.map((r) => r.reason).toSet(),
+          {TradeOrderRejectionReasons.mutualExclusion},
         );
     case OrderEngineValidateTradeTarget.rejectsOfferExceedingAvailableStockpile:
         final game = vetGameWith(
@@ -68,24 +70,25 @@ void runOrderEngineValidateTradeExpectation(
             stockpile: Stockpile(quantities: {CommodityCatalog.timber.id: 3}),
           ),
         );
-        vetExpectRejected(
-          vetAddTrade(
-            game,
-            vetTradeEngine(),
-            validatorOffer(CommodityCatalog.timber.id, 10),
-          ),
-          reason: TradeOrderRejectionReasons.offerExceedsStockpile,
+        final result = vetAddTrade(
+          game,
+          vetTradeEngine(),
+          validatorOffer(CommodityCatalog.timber.id, 10),
         );
+        expect(result.isAccepted, isFalse);
+        expect(result.reason, TradeOrderRejectionReasons.offerExceedsStockpile);
     case OrderEngineValidateTradeTarget.acceptsFirstBidWhenPlayerHasNoEmbassy:
         final game = vetGameWith(
           player: vetGp1(treasury: 500),
         );
-        vetExpectAccepted(
-          vetAddTrade(
-            game,
-            vetTradeEngine(),
-            validatorBid(CommodityCatalog.timber.id, 1),
-          ),
+        final result = vetAddTrade(
+          game,
+          vetTradeEngine(),
+          validatorBid(CommodityCatalog.timber.id, 1),
+        );
+        expect(
+          result.isAccepted,
+          isTrue,
           reason:
               'Baseline kWorldMarketBaselineBidTypeCap == 1 admits exactly '
               'one bid even for a no-embassy GP.',
@@ -102,9 +105,12 @@ void runOrderEngineValidateTradeExpectation(
             'gp1',
             validatorBid(CommodityCatalog.timber.id, 1),
           );
-        vetExpectRejected(
-          vetAddTrade(game, engine, validatorBid(CommodityCatalog.iron.id, 1)),
-          reason: TradeOrderRejectionReasons.bidTypeCapExceeded,
+        final result = vetAddTrade(
+          game,
+          engine,
+          validatorBid(CommodityCatalog.iron.id, 1),
         );
+        expect(result.isAccepted, isFalse);
+        expect(result.reason, TradeOrderRejectionReasons.bidTypeCapExceeded);
   }
 }
