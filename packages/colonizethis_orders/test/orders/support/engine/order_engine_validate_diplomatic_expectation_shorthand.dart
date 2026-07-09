@@ -129,3 +129,14 @@ void vedExpectGrantAidThenSubsidyAccepted() {
   vedExpectAccepted(game, vedGrantAid(1000), engine: engine);
   vedExpectAccepted(game, vedSetSubsidy(10), engine: engine);
 }
+
+void vedExpectGrantAidRejectedAfterPrior({
+  required DiplomaticOrder prior,
+  int treasury = 5000,
+}) {
+  final game = vedGpMinor(overtureStage: OvertureStage.embassy, treasury: treasury);
+  final engine = OrderEngine();
+  vedSubmit(game, prior, engine: engine);
+  final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
+  expect(grant.status, OrderValidationStatus.rejected);
+}

@@ -9,21 +9,7 @@ void _suggestMoveOrdersOnlyReturnsMovesThatPassValidation() {
 }
 
 void _suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility() {
-  final game = oscGame(
-    worldState: oscWorld(
-      oldWorld: RegionData(
-        provinces: [
-          oscProvince('p1', ownerId: OscIds.playerId),
-          oscProvince('p2', ownerId: OscIds.playerId),
-        ],
-        units: [oscExplorer()],
-      ),
-    ),
-  );
-  oscExpectThrowsSuggestMoveOnUnknownVisibility(
-    game,
-    oscTwoProvincesConnected('p1', 'p2'),
-  );
+  oscExpectMoveThrowsOnUnknownSourceVisibility();
 }
 
 void _moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians() {
@@ -47,18 +33,7 @@ void _noExploreSuggestionWhenProvinceUnknown() {
 }
 
 void _suggestWorkOrdersExploreTargetUsesKWorkTargetExplore() {
-  final t0 = OscIds.tile('p1', 0, 0);
-  final t1 = OscIds.tile('p1', 1, 0);
-  oscExpectWorkTargetNotEmpty(
-    oscSuggestWork(
-      oscExplorerProvinceGame(
-        visibilityByTile: {t0: 'fullyVisible', t1: 'unknown'},
-        tilesByLocal: {'p1': [t0, t1]},
-      ),
-      oscProvinceTopology(['p1']),
-    ),
-    kWorkTargetExplore,
-  );
+  oscExpectFoggedExploreSuggestion();
 }
 
 void _suggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope() {
@@ -83,30 +58,11 @@ void _noProspectSuggestionWhenProvinceNotAtLeastFogged() {
 }
 
 void _prospectSuggestionWhenProvinceFoggedAndTilesInProvince() {
-  final tileKey = OscIds.tile('p1', 0, 0);
-  final game = oscGame(
-    worldState: oscExplorerProvinceGame(
-      visibilityByTile: {tileKey: 'fogged'},
-      tilesByLocal: {'p1': [tileKey]},
-    ).worldState.copyWith(resourceByTileKey: {tileKey: 'iron'}),
-  );
-  oscExpectProspectTargetsTile(game, oscProvinceTopology(['p1']), tileKey);
+  oscExpectFoggedProspectTargetsIron();
 }
 
 void _playerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder() {
-  final game = oscGame(
-    worldState: oscExplorerProvinceGame(
-      extraProvinceLocals: ['p2'],
-      extraOwners: ['minor1'],
-      visibilityByTile: {OscIds.tile('p1', 0, 0): 'fogged'},
-      tilesByLocal: {
-        'p1': [OscIds.tile('p1', 0, 0)],
-        'p2': [OscIds.tile('p2', 0, 0)],
-      },
-    ).worldState,
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-  );
-  oscExpectProvinceViewMatchesAll(game, oscProvinceTopology(['p1', 'p2']));
+  oscExpectProvinceViewForProspectIteration();
 }
 
 void
@@ -115,19 +71,10 @@ _getValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPending
 }
 
 void _workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile() {
-  final tileKey = OscIds.tile('p1', 0, 0);
-  final game = oscGame(
-    worldState: oscWorld(
-      oldWorld: RegionData(
-        provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
-        units: [oscBuilder()],
-      ),
-      playerVisibilityByTile: oscVisibility({tileKey: 'fullyVisible'}),
-      tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
-    ),
-    players: [oscBuilderPlayer()],
+  oscExpectWorkerSuggestStayInProvince(
+    oscBuilderWorkerSuggestGame(),
+    oscProvinceTopology(['p1']),
   );
-  oscExpectWorkerSuggestStayInProvince(game, oscProvinceTopology(['p1']));
 }
 
 void

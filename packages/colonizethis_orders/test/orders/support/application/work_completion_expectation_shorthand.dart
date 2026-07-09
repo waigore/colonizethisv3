@@ -424,3 +424,145 @@ void wccExpectExploreDispatchCapturesRegion({
   expect(capturedRegionId, expectedRegion);
   expect(identical(next, state), isTrue);
 }
+
+void wccExpectImprovementWithEnvyHint() {
+  final next = wccApply(
+    wccGame(
+      turnNumber: 2,
+      units: [wccBuilderImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+    ),
+  );
+  wccExpectEnvyHint(next, 'gathering', 2);
+}
+
+void wccExpectAiEnvyEvidenceOnCoalCompletion() {
+  const aiId = 'ai1';
+  final next = wccApply(
+    wccGame(
+      turnNumber: 1,
+      units: [wccBuilderImprovement(ownerId: aiId)],
+      provinces: [workAppOwnedProvince(ownerId: aiId)],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'coal'},
+      players: const [
+        Player(id: 'human', displayName: 'H', isHuman: true),
+        Player(id: aiId, displayName: 'AI', isHuman: false),
+      ],
+      aiControlByGpId: const {aiId: true},
+      lastHumanCompletedResearchCategory: 'gathering',
+      lastHumanResearchCategoryCompletionTurn: 0,
+    ),
+  );
+  wccExpectEnvyEvidence(next, aiId, 1);
+}
+
+void wccExpectSawMillCapStillAllowsLevel4() {
+  expect(
+    extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
+    1,
+  );
+  final next = wccApply(
+    wccGame(
+      units: [wccBuilderImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+      players: [
+        workAppPlayer(techUnlocked: const {kTechIdSawMill: true}),
+      ],
+    ),
+  );
+  wccExpectImprovement(next, 4);
+}
+
+void wccExpectConqueredProvinceCancelsWork() {
+  final next = wccApply(
+    wccGame(
+      units: [
+        wccBuilderImprovement(totalTurns: 2, remainingTurns: 2),
+      ],
+      provinces: [workAppOwnedProvince(ownerId: 'p2')],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
+    ),
+  );
+  wccExpectUnitCancelledToOrigin(next);
+  wccExpectImprovement(next, 0);
+}
+
+void wccExpectTwoTurnImprovementCompletesOnSecondApply() {
+  final game = wccGame(
+    units: [
+      wccBuilderImprovement(
+        totalTurns: 2,
+        remainingTurns: 2,
+        withOriginAssignment: false,
+      ),
+    ],
+    tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+  );
+  final afterFirst = wccApply(game);
+  wccExpectImprovement(afterFirst, 0);
+  wccExpectRemainingTurns(afterFirst, 1);
+  final afterSecond = wccApply(afterFirst);
+  wccExpectImprovement(afterSecond, 1);
+}
+
+void wccExpectExploreSetsVisibility() {
+  final next = wccApply(
+    wccGame(
+      units: [wccExplorerWorking()],
+      tileKeysByRegionAndProvince: {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+    ),
+  );
+  wccExpectVisibility(
+    next,
+    WorkAppIds.tileKey,
+    VisibilityLevel.fullyVisible.name,
+  );
+}
+
+void wccExpectExploreRevealsBucketOnly() {
+  const tileKey2 = WorkAppIds.originTileKey;
+  final next = wccApply(
+    wccGame(
+      units: [wccExplorerWorking()],
+      tileKeysByRegionAndProvince: const {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey, tileKey2],
+          'P1': ['oldWorld|P1|9|9'],
+        },
+      },
+      playerVisibilityByTile: const {
+        'p1': {
+          WorkAppIds.tileKey: 'fogged',
+          tileKey2: 'unknown',
+          'oldWorld|P1|9|9': 'unknown',
+        },
+      },
+    ),
+  );
+  wccExpectVisibility(
+    next,
+    WorkAppIds.tileKey,
+    VisibilityLevel.fullyVisible.name,
+  );
+  wccExpectVisibility(
+    next,
+    tileKey2,
+    VisibilityLevel.fullyVisible.name,
+  );
+  wccExpectVisibility(
+    next,
+    'oldWorld|P1|9|9',
+    VisibilityLevel.unknown.name,
+  );
+}

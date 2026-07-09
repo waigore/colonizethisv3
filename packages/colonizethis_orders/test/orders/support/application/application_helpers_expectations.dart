@@ -1,8 +1,6 @@
 // Compact orders_application_helpers + clearUnitCurrentWork assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'application_helpers_expectation_shorthand.dart';
 
@@ -93,34 +91,18 @@ void _usesExplicitRestoredTileOverride() {
 }
 
 void _returnsGameUnchangedWhenUnitHasNoCurrentWork() {
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'gp1',
-    locationProvinceId: 'oldWorld|p1',
-    tileKey: 'oldWorld|p1|0|0',
+  ahExpectClearWorkUnchanged(
+    ahOwBuilderGame(ahIdleBuilderUnit()),
+    'u1',
   );
-  ahExpectClearWorkUnchanged(ahOwBuilderGame(unit), 'u1');
 }
 
 void _clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle() {
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeBuilder,
-    ownerId: 'gp1',
-    locationProvinceId: 'oldWorld|p1',
-    tileKey: 'oldWorld|p1|0|0',
-    originTileKey: 'oldWorld|p1|0|0',
-    assignedTileKey: 'oldWorld|p1|1|0',
-    status: UnitStatus.working,
-    currentWork: CurrentWork(
-      workTarget: kWorkTargetBuildImprovement,
-      tileKey: 'oldWorld|p1|1|0',
-      totalTurns: 2,
-      remainingTurns: 1,
-    ),
+  ahExpectClearWorkIdleAtOrigin(
+    ahOwBuilderGame(ahBuilderWithImprovementWork()),
+    'u1',
+    'oldWorld|p1|0|0',
   );
-  ahExpectClearWorkIdleAtOrigin(ahOwBuilderGame(unit), 'u1', 'oldWorld|p1|0|0');
 }
 
 void _returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent() {

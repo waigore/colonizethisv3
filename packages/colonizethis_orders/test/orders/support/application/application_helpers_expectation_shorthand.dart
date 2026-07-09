@@ -159,3 +159,45 @@ void ahExpectMineralEligible({
     expected,
   );
 }
+
+Unit ahIdleBuilderUnit({
+  String id = 'u1',
+  String ownerId = 'gp1',
+  String locationProvinceId = 'oldWorld|p1',
+  String tileKey = 'oldWorld|p1|0|0',
+}) {
+  return Unit(
+    id: id,
+    type: kUnitTypeBuilder,
+    ownerId: ownerId,
+    locationProvinceId: locationProvinceId,
+    tileKey: tileKey,
+  );
+}
+
+Unit ahBuilderWithImprovementWork({
+  String id = 'u1',
+  String ownerId = 'gp1',
+  String locationProvinceId = 'oldWorld|p1',
+  String tileKey = 'oldWorld|p1|0|0',
+  String originTileKey = 'oldWorld|p1|0|0',
+  String assignedTileKey = 'oldWorld|p1|1|0',
+  String workTileKey = 'oldWorld|p1|1|0',
+}) {
+  return Unit(
+    id: id,
+    type: kUnitTypeBuilder,
+    ownerId: ownerId,
+    locationProvinceId: locationProvinceId,
+    tileKey: tileKey,
+    originTileKey: originTileKey,
+    assignedTileKey: assignedTileKey,
+    status: UnitStatus.working,
+    currentWork: CurrentWork(
+      workTarget: kWorkTargetBuildImprovement,
+      tileKey: workTileKey,
+      totalTurns: 2,
+      remainingTurns: 1,
+    ),
+  );
+}

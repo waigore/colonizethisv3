@@ -2,10 +2,10 @@ part of 'move_validator_expectations.dart';
 
 void _builderCrossRegionTribeInvalid() {
   mvExpectUnitMove(
-    game: _crossRegionTribeGame(unitType: kUnitTypeBuilder),
+    game: mvCrossRegionTribeGame(unitType: kUnitTypeBuilder),
     topology: mvOwNwProvinceTopology(),
     unitId: 'u1',
-    destinationTileKey: '$_nw|P2|0|0',
+    destinationTileKey: '$mvNw|P2|0|0',
     status: OrderValidationStatus.rejected,
     reasonExact: 'Invalid move',
   );
@@ -13,14 +13,14 @@ void _builderCrossRegionTribeInvalid() {
 
 void _shortCircuitPreviousRejected() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: kUnitTypeBuilder,
       unitId: 'u1',
       destOwnerId: 'p1',
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 'u1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     previousRejected: true,
     status: OrderValidationStatus.rejected,
     reasonExact: 'Previous invalid',
@@ -29,13 +29,13 @@ void _shortCircuitPreviousRejected() {
 
 void _armyMoveIntoMinorWithoutWar() {
   mvExpectArmyMove(
-    game: _twoProvinceArmyGame(
+    game: mvTwoProvinceArmyGame(
       destOwnerId: 'minor1',
       minorNations: const [mvMinor1],
     ),
-    topology: owTopology,
-    armyProvinceId: '$_ow|P1',
-    destinationProvinceId: '$_ow|P2',
+    topology: mvOwTopology,
+    armyProvinceId: '$mvOw|P1',
+    destinationProvinceId: '$mvOw|P2',
     status: OrderValidationStatus.rejected,
     reasonContains: contains('declare war'),
   );
@@ -43,10 +43,10 @@ void _armyMoveIntoMinorWithoutWar() {
 
 void _armyMoveIntoGpWithDeclareWar() {
   mvExpectArmyMove(
-    game: _twoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
-    topology: owTopology,
-    armyProvinceId: '$_ow|P1',
-    destinationProvinceId: '$_ow|P2',
+    game: mvTwoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
+    topology: mvOwTopology,
+    armyProvinceId: '$mvOw|P1',
+    destinationProvinceId: '$mvOw|P2',
     draftOrders: const [
       DiplomaticOrder(
         type: DiplomaticOrderType.declareWar,
@@ -59,13 +59,13 @@ void _armyMoveIntoGpWithDeclareWar() {
 
 void _armyMoveIntoMinorWithDeclareWar() {
   mvExpectArmyMove(
-    game: _twoProvinceArmyGame(
+    game: mvTwoProvinceArmyGame(
       destOwnerId: 'minor1',
       minorNations: const [mvMinor1Capital],
     ),
-    topology: owTopology,
-    armyProvinceId: '$_ow|P1',
-    destinationProvinceId: '$_ow|P2',
+    topology: mvOwTopology,
+    armyProvinceId: '$mvOw|P1',
+    destinationProvinceId: '$mvOw|P2',
     draftOrders: const [
       DiplomaticOrder(
         type: DiplomaticOrderType.declareWar,
@@ -80,8 +80,8 @@ void _armyMoveIntoTribeWithDeclareWar() {
   mvExpectArmyMove(
     game: mvTribeArmyDeclareWarGame(),
     topology: mvNwTwoProvinceTopology(),
-    armyProvinceId: '$_nw|P1',
-    destinationProvinceId: '$_nw|P2',
+    armyProvinceId: '$mvNw|P1',
+    destinationProvinceId: '$mvNw|P2',
     draftOrders: const [
       DiplomaticOrder(
         type: DiplomaticOrderType.declareWar,
@@ -94,13 +94,13 @@ void _armyMoveIntoTribeWithDeclareWar() {
 
 void _armyMoveIntoMinorTribeWithoutWar() {
   mvExpectArmyMove(
-    game: _twoProvinceArmyGame(
+    game: mvTwoProvinceArmyGame(
       destOwnerId: 'minor1',
       minorNations: const [mvMinor1Capital],
     ),
-    topology: owTopology,
-    armyProvinceId: '$_ow|P1',
-    destinationProvinceId: '$_ow|P2',
+    topology: mvOwTopology,
+    armyProvinceId: '$mvOw|P1',
+    destinationProvinceId: '$mvOw|P2',
     status: OrderValidationStatus.rejected,
     reasonContainsAll: [
       contains('declare war'),

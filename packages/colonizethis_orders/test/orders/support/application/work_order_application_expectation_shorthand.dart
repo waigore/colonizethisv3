@@ -485,3 +485,67 @@ void waaExpectBuildPortApplied() {
   );
   waaExpectUnitIdle(next);
 }
+
+Game waaPurchaseLandNoEmbassyGame() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  return workAppPurchaseLandGame(
+    units: [waaMerchantOnMinor()],
+    players: [workAppPlayer(treasury: cost + 100)],
+  );
+}
+
+Game waaPurchaseLandAtWarGame() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  return workAppPurchaseLandGame(
+    units: [waaMerchantOnMinor()],
+    players: [
+      workAppPlayer(treasury: cost + 100),
+    ],
+    overtureStates: [waaEmbassyOverture()],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: 'p1',
+        factionId2: 'minor1',
+        state: RelationState.atWar,
+      ),
+    ],
+  );
+}
+
+void waaExpectPurchaseLandRejected(Game game) {
+  final next = waaApply(game, waaPurchaseLandOrders());
+  waaExpectPurchased(next, ownerId: null);
+  waaExpectTreasuryUnchanged(game, next, 'p1');
+}
+
+Game waaCounterSpyOngoingAssignmentGame() => workAppOwnedGame(
+      turnNumber: 1,
+      globalGameSeed: 12345,
+      units: [
+        workAppWorkingUnit(
+          id: 'spy1',
+          type: kUnitTypeSpy,
+          workTarget: kWorkTargetCounterSpy,
+          totalTurns: 0,
+          remainingTurns: 1,
+        ),
+        workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
+      ],
+      tileKeysByRegionAndProvince: {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
+    );
+
+void waaExpectCounterSpyOngoingAssignmentPreservesUnits() {
+  final next = waaApply(
+    waaCounterSpyOngoingAssignmentGame(),
+    workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
+  );
+  waaExpectUnitIdsPresent(next, const ['spy1', 'spy2']);
+}

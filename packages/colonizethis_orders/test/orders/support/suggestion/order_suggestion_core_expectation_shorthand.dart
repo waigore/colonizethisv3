@@ -369,6 +369,82 @@ MapTopology oscMislocatedExplorerTopology() => oscProvinceTopology(
   edges: const [TopologyEdge(id1: 'p2', id2: 'p3')],
 );
 
+Game oscTwoProvinceExplorerUnknownVisibilityGame() => oscGame(
+      worldState: oscWorld(
+        oldWorld: RegionData(
+          provinces: [
+            oscProvince('p1', ownerId: OscIds.playerId),
+            oscProvince('p2', ownerId: OscIds.playerId),
+          ],
+          units: [oscExplorer()],
+        ),
+      ),
+    );
+
+void oscExpectMoveThrowsOnUnknownSourceVisibility() {
+  oscExpectThrowsSuggestMoveOnUnknownVisibility(
+    oscTwoProvinceExplorerUnknownVisibilityGame(),
+    oscTwoProvincesConnected('p1', 'p2'),
+  );
+}
+
+void oscExpectFoggedExploreSuggestion() {
+  final t0 = OscIds.tile('p1', 0, 0);
+  final t1 = OscIds.tile('p1', 1, 0);
+  oscExpectWorkTargetNotEmpty(
+    oscSuggestWork(
+      oscExplorerProvinceGame(
+        visibilityByTile: {t0: 'fullyVisible', t1: 'unknown'},
+        tilesByLocal: {'p1': [t0, t1]},
+      ),
+      oscProvinceTopology(['p1']),
+    ),
+    kWorkTargetExplore,
+  );
+}
+
+void oscExpectFoggedProspectTargetsIron() {
+  final tileKey = OscIds.tile('p1', 0, 0);
+  final game = oscGame(
+    worldState: oscExplorerProvinceGame(
+      visibilityByTile: {tileKey: 'fogged'},
+      tilesByLocal: {'p1': [tileKey]},
+    ).worldState.copyWith(resourceByTileKey: {tileKey: 'iron'}),
+  );
+  oscExpectProspectTargetsTile(game, oscProvinceTopology(['p1']), tileKey);
+}
+
+void oscExpectProvinceViewForProspectIteration() {
+  final game = oscGame(
+    worldState: oscExplorerProvinceGame(
+      extraProvinceLocals: ['p2'],
+      extraOwners: ['minor1'],
+      visibilityByTile: {OscIds.tile('p1', 0, 0): 'fogged'},
+      tilesByLocal: {
+        'p1': [OscIds.tile('p1', 0, 0)],
+        'p2': [OscIds.tile('p2', 0, 0)],
+      },
+    ).worldState,
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+  );
+  oscExpectProvinceViewMatchesAll(game, oscProvinceTopology(['p1', 'p2']));
+}
+
+Game oscBuilderWorkerSuggestGame() {
+  final tileKey = OscIds.tile('p1', 0, 0);
+  return oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+        units: [oscBuilder()],
+      ),
+      playerVisibilityByTile: oscVisibility({tileKey: 'fullyVisible'}),
+      tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
+    ),
+    players: [oscBuilderPlayer()],
+  );
+}
+
 void oscExpectProspectTargetsTile(
   Game game,
   MapTopology topology,

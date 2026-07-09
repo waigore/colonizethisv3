@@ -592,6 +592,19 @@ test/ LOC after slice 33: **32,799** (net +112 from post–slice 32; part2 expec
 
 test/ LOC after slice 34: **32,847** (net +48 from post–slice 33; fixture/expectation bodies shortened, new `wpp*`/`ved*`/`vw*` shorthand modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 35: move-validator fixtures + multi-family part1 compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-fixtures | extract `mvTwoProvinceUnitGame` / `mvTwoProvinceArmyGame` / `mvCrossRegionTribeGame` / `mvOwTopology`; thin move-validator expectation runners | `move_validator_expectations.dart` | `move_validator_fixtures.dart` + compacted cases_a/b | #3949 |
+| wcc-part1-shorthand | add `wccExpectImprovementWithEnvyHint` / `wccExpectAiEnvyEvidenceOnCoalCompletion` / `wccExpectSawMillCapStillAllowsLevel4` / `wccExpectConqueredProvinceCancelsWork` / `wccExpectTwoTurnImprovementCompletesOnSecondApply` / `wccExpectExploreSetsVisibility` / `wccExpectExploreRevealsBucketOnly`; compact work-completion part1 bodies | `work_completion_expectations_part1.dart` | `work_completion_expectation_shorthand.dart` + compacted expectations | #3949 |
+| osc-part1-shorthand | add `oscTwoProvinceExplorerUnknownVisibilityGame` / `oscExpectMoveThrowsOnUnknownSourceVisibility` / `oscExpectFoggedExploreSuggestion` / `oscExpectFoggedProspectTargetsIron` / `oscExpectProvinceViewForProspectIteration` / `oscBuilderWorkerSuggestGame`; compact core suggestion part1 bodies | `order_suggestion_core_expectations_part1.dart` | `order_suggestion_core_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ah-shorthand | add `ahIdleBuilderUnit` / `ahBuilderWithImprovementWork`; compact application-helpers clear-work bodies | `application_helpers_expectations.dart` | `application_helpers_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ved-part2-shorthand | add `vedExpectGrantAidRejectedAfterPrior`; compact validate-diplomatic part2 bodies | `order_engine_validate_diplomatic_expectations_part2.dart` | `order_engine_validate_diplomatic_expectation_shorthand.dart` + compacted expectations | #3949 |
+| waa-part1-shorthand | add `waaPurchaseLandNoEmbassyGame` / `waaPurchaseLandAtWarGame` / `waaExpectPurchaseLandRejected` / `waaCounterSpyOngoingAssignmentGame` / `waaExpectCounterSpyOngoingAssignmentPreservesUnits`; compact work-order application part1 bodies | `work_order_application_expectations_part1.dart` | `work_order_application_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 35: **32,946** (net +99 from post–slice 34; expectation bodies shortened, new `mv*`/`wcc*`/`osc*`/`ah*`/`ved*`/`waa*` shorthand and fixture modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

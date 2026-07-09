@@ -2,15 +2,15 @@ part of 'move_validator_expectations.dart';
 
 void _civilianCannotMoveIntoOtherGp() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: kUnitTypeBuilder,
       unitId: 'u1',
       destOwnerId: 'p2',
       includeP2Player: true,
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 'u1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     status: OrderValidationStatus.rejected,
     reasonContains: contains('Invalid move'),
   );
@@ -18,15 +18,15 @@ void _civilianCannotMoveIntoOtherGp() {
 
 void _militaryRegimentMoveOrderRejected() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: 'pikemen',
       unitId: 'u1',
       destOwnerId: 'p2',
       includeP2Player: true,
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 'u1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     status: OrderValidationStatus.rejected,
     reasonContains: contains('army move'),
   );
@@ -34,10 +34,10 @@ void _militaryRegimentMoveOrderRejected() {
 
 void _armyMoveIntoOtherGpWithoutWar() {
   mvExpectArmyMove(
-    game: _twoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
-    topology: owTopology,
-    armyProvinceId: '$_ow|P1',
-    destinationProvinceId: '$_ow|P2',
+    game: mvTwoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
+    topology: mvOwTopology,
+    armyProvinceId: '$mvOw|P1',
+    destinationProvinceId: '$mvOw|P2',
     status: OrderValidationStatus.rejected,
     reasonContains: contains('declare war'),
   );
@@ -45,15 +45,15 @@ void _armyMoveIntoOtherGpWithoutWar() {
 
 void _civilianWorkerCannotMoveIntoMinor() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: kUnitTypeBuilder,
       unitId: 'u1',
       destOwnerId: 'minor1',
       minorNations: const [mvMinor1],
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 'u1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     status: OrderValidationStatus.rejected,
     reasonContains: contains('Invalid move'),
   );
@@ -61,42 +61,42 @@ void _civilianWorkerCannotMoveIntoMinor() {
 
 void _explorerOntoMinor() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: kUnitTypeExplorer,
       unitId: 'u1',
       destOwnerId: 'minor1',
-      unitTileKey: '$_ow|P1|0|0',
+      unitTileKey: '$mvOw|P1|0|0',
       minorNations: const [mvMinor1],
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 'u1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     status: OrderValidationStatus.accepted,
   );
 }
 
 void _spyOntoOtherGp() {
   mvExpectUnitMove(
-    game: _twoProvinceUnitGame(
+    game: mvTwoProvinceUnitGame(
       unitType: kUnitTypeSpy,
       unitId: 's1',
       destOwnerId: 'p2',
       includeP2Player: true,
-      unitTileKey: '$_ow|P1|0|0',
+      unitTileKey: '$mvOw|P1|0|0',
     ),
-    topology: owTopology,
+    topology: mvOwTopology,
     unitId: 's1',
-    destinationTileKey: '$_ow|P2|0|0',
+    destinationTileKey: '$mvOw|P2|0|0',
     status: OrderValidationStatus.accepted,
   );
 }
 
 void _explorerCrossRegionTribe() {
   mvExpectUnitMove(
-    game: _crossRegionTribeGame(unitType: kUnitTypeExplorer),
+    game: mvCrossRegionTribeGame(unitType: kUnitTypeExplorer),
     topology: mvOwNwProvinceTopology(),
     unitId: 'u1',
-    destinationTileKey: '$_nw|P2|0|0',
+    destinationTileKey: '$mvNw|P2|0|0',
     status: OrderValidationStatus.accepted,
   );
 }
