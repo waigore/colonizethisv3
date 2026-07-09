@@ -17,36 +17,16 @@ void runOrderEngineValidateTradeExpectation(
   switch (target) {
     case OrderEngineValidateTradeTarget
         .acceptsAValidOfferWhenStockpileCoversQuantity:
-      _acceptsAValidOfferWhenStockpileCoversQuantity();
+      vetExpectValidOfferAccepted();
     case OrderEngineValidateTradeTarget
         .rejectsMutualExclusionWhenBidAndOfferShareACommodity:
-      _rejectsMutualExclusionWhenBidAndOfferShareACommodity();
+      vetExpectMutualExclusionRejected();
     case OrderEngineValidateTradeTarget.rejectsOfferExceedingAvailableStockpile:
-      _rejectsOfferExceedingAvailableStockpile();
+      vetExpectOfferExceedsStockpileRejected();
     case OrderEngineValidateTradeTarget.acceptsFirstBidWhenPlayerHasNoEmbassy:
-      _acceptsFirstBidWhenPlayerHasNoEmbassy();
+      vetExpectFirstBidAcceptedNoEmbassy();
     case OrderEngineValidateTradeTarget
         .rejectsSecondDistinctCommodityBidWhenNoEmbassy:
-      _rejectsSecondDistinctCommodityBidWhenNoEmbassy();
+      vetExpectSecondBidRejectedNoEmbassy();
   }
-}
-
-void _acceptsAValidOfferWhenStockpileCoversQuantity() {
-  vetExpectValidOfferAccepted();
-}
-
-void _rejectsMutualExclusionWhenBidAndOfferShareACommodity() {
-  vetExpectMutualExclusionRejected();
-}
-
-void _rejectsOfferExceedingAvailableStockpile() {
-  vetExpectOfferExceedsStockpileRejected();
-}
-
-void _acceptsFirstBidWhenPlayerHasNoEmbassy() {
-  vetExpectFirstBidAcceptedNoEmbassy();
-}
-
-void _rejectsSecondDistinctCommodityBidWhenNoEmbassy() {
-  vetExpectSecondBidRejectedNoEmbassy();
 }

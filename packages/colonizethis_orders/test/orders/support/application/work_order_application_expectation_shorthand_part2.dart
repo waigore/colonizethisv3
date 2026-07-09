@@ -292,3 +292,21 @@ void waaExpectUnknownTargetIdle() {
   );
   waaExpectUnitIdle(next);
 }
+
+void waaExpectBuildFortLevel2SkippedWithoutMineEngineering() {
+  waaExpectBuildFortSkipped(
+    fortLevel: 1,
+    stockpile: const Stockpile(),
+    techUnlocked: const {},
+    expectedFortLevel: 1,
+  );
+}
+
+void waaExpectBuildFortLevel3SkippedWithoutModernForts() {
+  waaExpectBuildFortSkipped(
+    fortLevel: 2,
+    stockpile: const Stockpile(),
+    techUnlocked: const {kTechIdMineEngineering: true},
+    expectedFortLevel: 2,
+  );
+}

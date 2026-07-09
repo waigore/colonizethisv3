@@ -1,16 +1,8 @@
 // Compact MoveValidator / ArmyMoveValidator assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-
 import 'move_validator_expectation_shorthand.dart';
-import 'move_validator_fixtures.dart';
 
 /// Pins for [moveValidatorScenarios] rows.
-part 'move_validator_expectations_cases_a.dart';
-part 'move_validator_expectations_cases_b.dart';
-
 enum MoveValidatorTarget {
   civilianCannotMoveIntoOtherGp,
   militaryRegimentMoveOrderRejected,
@@ -31,33 +23,32 @@ enum MoveValidatorTarget {
 void runMoveValidatorExpectation(MoveValidatorTarget target) {
   switch (target) {
     case MoveValidatorTarget.civilianCannotMoveIntoOtherGp:
-      _civilianCannotMoveIntoOtherGp();
+      mvExpectBuilderCannotEnterGp();
     case MoveValidatorTarget.militaryRegimentMoveOrderRejected:
-      _militaryRegimentMoveOrderRejected();
+      mvExpectMilitaryRegimentRejected();
     case MoveValidatorTarget.armyMoveIntoOtherGpWithoutWar:
-      _armyMoveIntoOtherGpWithoutWar();
+      mvExpectArmyIntoGpNoWar();
     case MoveValidatorTarget.civilianWorkerCannotMoveIntoMinor:
-      _civilianWorkerCannotMoveIntoMinor();
+      mvExpectBuilderCannotEnterMinor();
     case MoveValidatorTarget.explorerOntoMinor:
-      _explorerOntoMinor();
+      mvExpectExplorerOntoMinor();
     case MoveValidatorTarget.spyOntoOtherGp:
-      _spyOntoOtherGp();
+      mvExpectSpyOntoOtherGp();
     case MoveValidatorTarget.explorerCrossRegionTribe:
-      _explorerCrossRegionTribe();
+      mvExpectExplorerCrossRegionTribe();
     case MoveValidatorTarget.builderCrossRegionTribeInvalid:
-      _builderCrossRegionTribeInvalid();
+      mvExpectBuilderCrossRegionTribeInvalid();
     case MoveValidatorTarget.shortCircuitPreviousRejected:
-      _shortCircuitPreviousRejected();
+      mvExpectShortCircuitPreviousRejected();
     case MoveValidatorTarget.armyMoveIntoMinorWithoutWar:
-      _armyMoveIntoMinorWithoutWar();
+      mvExpectArmyIntoMinorNoWar();
     case MoveValidatorTarget.armyMoveIntoGpWithDeclareWar:
-      _armyMoveIntoGpWithDeclareWar();
+      mvExpectArmyIntoGpWithDeclareWar();
     case MoveValidatorTarget.armyMoveIntoMinorWithDeclareWar:
-      _armyMoveIntoMinorWithDeclareWar();
+      mvExpectArmyIntoMinorWithDeclareWar();
     case MoveValidatorTarget.armyMoveIntoTribeWithDeclareWar:
-      _armyMoveIntoTribeWithDeclareWar();
+      mvExpectArmyIntoTribeWithDeclareWar();
     case MoveValidatorTarget.armyMoveIntoMinorTribeWithoutWar:
-      _armyMoveIntoMinorTribeWithoutWar();
+      mvExpectArmyIntoMinorTribeNoWar();
   }
 }
-

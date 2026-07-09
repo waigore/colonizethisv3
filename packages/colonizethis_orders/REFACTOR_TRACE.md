@@ -688,6 +688,17 @@ test/ LOC after slice 41: **33,527** (net +108 from post–slice 40; expectation
 
 test/ LOC after slice 42: **33,733** (net +206 from post–slice 41; expectation bodies shortened, new `nov*`/`ice*` preset helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 43: dispatch inline + ah/osc/vwt/wcc/waa/ved preset compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-ice | call `iceExpect*` directly from `runIncrementalEquivalenceExpectation`; delete part wrappers | `incremental_candidate_validator_equivalence_expectations_part{1,2}.dart` | `incremental_candidate_validator_equivalence_expectations.dart` | #3949 |
+| dispatch-inline-mv-nov | call `mvExpect*`/`novExpect*` directly from validator dispatch; delete part wrappers | `move_validator_expectations_cases_{a,b}.dart`, `naval_order_validator_expectations_{move,move_b,mission}.dart` | consolidated expectation runners | #3949 |
+| dispatch-inline-engine-app-sugg | call `ved*`/`vw*`/`vet*`/`wcc*`/`waa*`/`osc*`/`vwt*`/`ah*` presets directly from scenario dispatch; delete part wrappers | `order_engine_validate_*_expectations_part*.dart`, `work_*_expectations_part*.dart`, `order_suggestion_core_expectations_part*.dart`, `valid_work_tiles_expectations_part*.dart`, `application_helpers_expectations.dart` | consolidated expectation runners + shorthand presets | #3949 |
+| preset-shorthand-43 | add `vedExpectSecondGrantAidRejected` / `vedExpectDeclareWarThenGrantAidRejected`; `vwExpectScrubTimberLevel*` / `vwExpectRailRejected*` / `vwExpectUpgradeTown*`; `wccExpectRailDispatch*`; `waaExpectBuildFortLevel*Skipped*`; `ahExpectParse*` / `ahExpectCancelWork*` / `ahExpectClearWork*`; `oscExpectPartialRevealExploreCacheAligned` / `oscExpectDualBuilder*` / `oscExpectCapitalBuildSuggestDefaultList` / `oscExpectCounterSpyOnOwnedProvince`; `vwtExpectUnknownUnit*` / `vwtExpectExplorerDisallowed*` / `vwtExpectColonistVisibilityFilterMatchesPlain` | various `*_expectation_shorthand*.dart` | same + compacted dispatch bodies | #3949 |
+
+test/ LOC after slice 43: **32,866** (net −867 from post–slice 42; deleted 20 part-wrapper files, inlined dispatch to shorthand presets). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -1,16 +1,8 @@
 // Compact IncrementalCandidateValidator equivalence assertions (Refs #3949).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'incremental_candidate_validator_equivalence_corpus_shorthand.dart';
 import 'incremental_candidate_validator_equivalence_expectation_shorthand.dart';
-import 'incremental_candidate_validator_equivalence_test_helpers.dart';
 
 /// Pins for [incrementalCandidateValidatorEquivalenceScenarios] rows.
-part 'incremental_candidate_validator_equivalence_expectations_part1.dart';
-part 'incremental_candidate_validator_equivalence_expectations_part2.dart';
-
 enum IncrementalEquivalenceTarget {
   moveBuilderOwnProvince,
   moveBuilderOtherGp,
@@ -44,60 +36,58 @@ enum IncrementalEquivalenceTarget {
 void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
   switch (target) {
     case IncrementalEquivalenceTarget.moveBuilderOwnProvince:
-      _moveBuilderOwnProvince();
+      iceExpectMoveBuilderOwnProvince();
     case IncrementalEquivalenceTarget.moveBuilderOtherGp:
-      _moveBuilderOtherGp();
+      iceExpectMoveBuilderOtherGp();
     case IncrementalEquivalenceTarget.moveExplorerMinor:
-      _moveExplorerMinor();
+      iceExpectMoveExplorerMinor();
     case IncrementalEquivalenceTarget.moveSpyOtherGp:
-      _moveSpyOtherGp();
+      iceExpectMoveSpyOtherGp();
     case IncrementalEquivalenceTarget.moveMilitaryRegiment:
-      _moveMilitaryRegiment();
+      iceExpectMoveMilitaryRegiment();
     case IncrementalEquivalenceTarget.moveMissingUnit:
-      _moveMissingUnit();
+      iceExpectMoveMissingUnit();
     case IncrementalEquivalenceTarget.moveEmptyDestination:
-      _moveEmptyDestination();
+      iceExpectMoveEmptyDestination();
     case IncrementalEquivalenceTarget.moveXorWorkCascade:
-      _moveXorWorkCascade();
+      iceExpectMoveXorWorkCascade();
     case IncrementalEquivalenceTarget.moveNonEmptyBasePrefix:
-      _moveNonEmptyBasePrefix();
+      iceExpectMoveNonEmptyBasePrefix();
     case IncrementalEquivalenceTarget.buildSingleCandidate:
-      _buildSingleCandidate();
+      iceExpectBuildSingleCandidate();
     case IncrementalEquivalenceTarget.buildSuccessiveProbes:
-      _buildSuccessiveProbes();
+      iceExpectBuildSuccessiveProbes();
     case IncrementalEquivalenceTarget.workNonEmptyBasePrefix:
-      _workNonEmptyBasePrefix();
+      iceExpectWorkNonEmptyBasePrefix();
     case IncrementalEquivalenceTarget.diplomaticNonEmptyBasePrefix:
-      _diplomaticNonEmptyBasePrefix();
+      iceExpectDiplomaticNonEmptyBasePrefix();
     case IncrementalEquivalenceTarget.diplomaticSequentialProbes:
-      _diplomaticSequentialProbes();
+      iceExpectDiplomaticSequentialProbes();
     case IncrementalEquivalenceTarget.prefetchedFactionMembership:
-      _prefetchedFactionMembership();
+      iceExpectPrefetchedFactionMembershipProbe();
     case IncrementalEquivalenceTarget.armyMoveOwnAdjacent:
-      _armyMoveOwnAdjacent();
+      iceExpectArmyMoveOwnAdjacent();
     case IncrementalEquivalenceTarget.armyMoveGpNoWar:
-      _armyMoveGpNoWar();
+      iceExpectArmyMoveGpNoWar();
     case IncrementalEquivalenceTarget.armyMoveGpDeclareWar:
-      _armyMoveGpDeclareWar();
+      iceExpectArmyMoveGpDeclareWar();
     case IncrementalEquivalenceTarget.armyMoveMinorNoWar:
-      _armyMoveMinorNoWar();
+      iceExpectArmyMoveMinorNoWar();
     case IncrementalEquivalenceTarget.armyMoveMissingArmy:
-      _armyMoveMissingArmy();
+      iceExpectArmyMoveMissingArmy();
     case IncrementalEquivalenceTarget.navalMoveAdjacentSea:
-      _navalMoveAdjacentSea();
+      iceExpectNavalMoveAdjacentSea();
     case IncrementalEquivalenceTarget.navalMoveNonAdjacentSea:
-      _navalMoveNonAdjacentSea();
+      iceExpectNavalMoveNonAdjacentSea();
     case IncrementalEquivalenceTarget.navalMoveUndock:
-      _navalMoveUndock();
+      iceExpectNavalMoveUndock();
     case IncrementalEquivalenceTarget.navalMoveMissingFleet:
-      _navalMoveMissingFleet();
+      iceExpectNavalMoveMissingFleet();
     case IncrementalEquivalenceTarget.navalMissionPatrol:
-      _navalMissionPatrol();
+      iceExpectNavalMissionPatrol();
     case IncrementalEquivalenceTarget.navalMissionBlockadeNoTarget:
-      _navalMissionBlockadeNoTarget();
+      iceExpectNavalMissionBlockadeNoTarget();
     case IncrementalEquivalenceTarget.navalMissionMissingFleet:
-      _navalMissionMissingFleet();
+      iceExpectNavalMissionMissingFleet();
   }
 }
-
-

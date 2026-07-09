@@ -1,17 +1,10 @@
 // Compact NavalOrderValidator assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'naval_order_validator_expectation_shorthand.dart';
-import 'naval_order_validator_fixtures.dart';
-import 'naval_order_validator_test_support.dart';
 
 /// Pins for [navalOrderValidatorScenarios] rows.
-part 'naval_order_validator_expectations_move.dart';
-part 'naval_order_validator_expectations_move_b.dart';
-part 'naval_order_validator_expectations_mission.dart';
-
 enum NavalOrderValidatorTarget {
   moveRejectsWhenPreviousRejected,
   moveRejectsWhenFleetNotFound,
@@ -40,50 +33,48 @@ enum NavalOrderValidatorTarget {
 void runNavalOrderValidatorExpectation(NavalOrderValidatorTarget target) {
   switch (target) {
     case NavalOrderValidatorTarget.moveRejectsWhenPreviousRejected:
-      _navalmoveRejectsWhenPreviousRejected();
+      novExpectMovePreviousRejected();
     case NavalOrderValidatorTarget.moveRejectsWhenFleetNotFound:
-      _navalmoveRejectsWhenFleetNotFound();
+      novExpectFleetNotFound();
     case NavalOrderValidatorTarget.moveRejectsWhenFleetNotOwnedByPlayer:
-      _navalmoveRejectsWhenFleetNotOwnedByPlayer();
+      novExpectFleetNotOwned();
     case NavalOrderValidatorTarget.moveRejectsWhenHomeFleet:
-      _navalmoveRejectsWhenHomeFleet();
+      novExpectHomeFleetRejected();
     case NavalOrderValidatorTarget.moveAcceptAdjacentSeaZoneWhenAtSea:
-      _navalmoveAcceptAdjacentSeaZoneWhenAtSea();
+      novExpectAdjacentSeaAccepted();
     case NavalOrderValidatorTarget.moveRejectNonAdjacentSeaZone:
-      _navalmoveRejectNonAdjacentSeaZone();
+      novExpectNonAdjacentSeaRejected();
     case NavalOrderValidatorTarget.moveDockRejectWhenSeaZoneNotAdjacentToProvince:
-      _navalmoveDockRejectWhenSeaZoneNotAdjacentToProvince();
+      novExpectDockSeaNotAdjacent();
     case NavalOrderValidatorTarget.moveAcceptUndockFromPortToAdjacentSeaZone:
-      _navalmoveAcceptUndockFromPortToAdjacentSeaZone();
+      novExpectUndockAccepted();
     case NavalOrderValidatorTarget.moveAtSeaRejectsProvinceIdAsDestinationSeaZoneId:
-      _navalmoveAtSeaRejectsProvinceIdAsDestinationSeaZoneId();
+      novExpectProvinceAsSeaRejected();
     case NavalOrderValidatorTarget.moveInPortAcceptsAnySeaWithDirectPsEdgeToPort:
-      _navalmoveInPortAcceptsAnySeaWithDirectPsEdgeToPort();
+      novExpectInPortDirectPsEdgeAccepted();
     case NavalOrderValidatorTarget.moveInPortRejectsSeaOnlyReachableViaSsFromPortSea:
-      _navalmoveInPortRejectsSeaOnlyReachableViaSsFromPortSea();
+      novExpectInPortSsOnlyReachability();
     case NavalOrderValidatorTarget.moveRejectWhenInPortButInPortAtProvinceIdNull:
-      _navalmoveRejectWhenInPortButInPortAtProvinceIdNull();
+      novExpectBrokenInPortRejected();
     case NavalOrderValidatorTarget.moveDockAcceptWhenAtSeaAdjacentOwnedProvince:
-      _navalmoveDockAcceptWhenAtSeaAdjacentOwnedProvince();
+      novExpectDockAdjacentOwnedAccepted();
     case NavalOrderValidatorTarget.moveDockAcceptWhenPortProvinceIdIsLocalUnprefixed:
-      _navalmoveDockAcceptWhenPortProvinceIdIsLocalUnprefixed();
+      novExpectDockLocalPortIdAccepted();
     case NavalOrderValidatorTarget.moveDockRejectWhenFleetInPort:
-      _navalmoveDockRejectWhenFleetInPort();
+      novExpectDockFleetInPortRejected();
     case NavalOrderValidatorTarget.moveDockRejectWhenPortProvinceNotOwned:
-      _navalmoveDockRejectWhenPortProvinceNotOwned();
+      novExpectDockNotOwnedRejected();
     case NavalOrderValidatorTarget.moveDockRejectWhenPortProvinceNotFound:
-      _navalmoveDockRejectWhenPortProvinceNotFound();
+      novExpectDockPortNotFoundRejected();
     case NavalOrderValidatorTarget.missionRejectsWhenPreviousRejected:
-      _navalmissionRejectsWhenPreviousRejected();
+      novExpectMissionPreviousRejected();
     case NavalOrderValidatorTarget.missionBlockadeRequiresTargetProvince:
-      _navalmissionBlockadeRequiresTargetProvince();
+      novExpectBlockadeNoTarget();
     case NavalOrderValidatorTarget.missionBlockadeRejectWhenTargetNotPrefixed:
-      _navalmissionBlockadeRejectWhenTargetNotPrefixed();
+      novExpectBlockadeUnprefixedTarget();
     case NavalOrderValidatorTarget.missionBlockadeRejectWhenBlockadingOwnProvince:
-      _navalmissionBlockadeRejectWhenBlockadingOwnProvince();
+      novExpectBlockadeOwnProvince();
     case NavalOrderValidatorTarget.missionAcceptNonBlockadeMissionWhenFleetAtSea:
-      _navalmissionAcceptNonBlockadeMissionWhenFleetAtSea();
+      novExpectPatrolAcceptedAtSea();
   }
 }
-
-

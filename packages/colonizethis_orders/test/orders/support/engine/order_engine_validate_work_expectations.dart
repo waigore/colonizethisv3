@@ -1,16 +1,8 @@
 // Compact OrderEngine validateWork assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
-import 'order_engine_purchase_land_test_support.dart';
 import 'order_engine_validate_work_expectation_shorthand.dart';
-import 'order_engine_validate_work_fixtures.dart';
-part 'order_engine_validate_work_expectations_part1.dart';
-part 'order_engine_validate_work_expectations_part2.dart';
-
 
 /// Pins for [orderEngineValidateWorkScenarios] rows.
 enum OrderEngineValidateWorkTarget {
@@ -57,105 +49,105 @@ void runOrderEngineValidateWorkExpectation(
   switch (target) {
     case OrderEngineValidateWorkTarget
         .rejectsSecondPendingWorkOrderForSameUnitInOneTurn:
-      _rejectsSecondPendingWorkOrderForSameUnitInOneTurn();
+      vwExpectSecondPendingWorkOrderRejected();
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenNoEmbassyWithMinor:
-      _rejectsPurchaseLandWhenNoEmbassyWithMinor();
+      vwExpectPurchaseLandRejectedNoEmbassy();
     case OrderEngineValidateWorkTarget.rejectsPurchaseLandWhenAtWarWithFaction:
-      _rejectsPurchaseLandWhenAtWarWithFaction();
+      vwExpectPurchaseLandRejectedAtWar();
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenInsufficientTreasury:
-      _rejectsPurchaseLandWhenInsufficientTreasury();
+      vwExpectPurchaseLandRejectedInsufficientTreasury();
     case OrderEngineValidateWorkTarget.rejectsPurchaseLandWhenTileHasNoResource:
-      _rejectsPurchaseLandWhenTileHasNoResource();
+      vwExpectPurchaseLandRejectedNoResource();
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenMineralTileNotProspected:
-      _rejectsPurchaseLandWhenMineralTileNotProspected();
+      vwExpectPurchaseLandRejectedMineralNotProspected();
     case OrderEngineValidateWorkTarget
         .acceptsPurchaseLandWithEmbassyAtPeaceSufficientTreasuryTileWithResource:
-      _acceptsPurchaseLandWithEmbassyAtPeaceSufficientTreasuryTileWithResource();
+      vwExpectPurchaseLandAcceptedEmbassy();
     case OrderEngineValidateWorkTarget
         .rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExclusivity:
-      _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExclusivity();
+      vwExpectSameTileDevelopmentExclusivityRejected();
     case OrderEngineValidateWorkTarget
         .acceptsPurchaseLandForMineralWhenProspected:
-      _acceptsPurchaseLandForMineralWhenProspected();
+      vwExpectPurchaseLandAcceptedMineralProspected();
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenTileAlreadyPurchasedByAnotherGP:
-      _rejectsPurchaseLandWhenTileAlreadyPurchasedByAnotherGP();
+      vwExpectPurchaseLandRejectedAlreadyPurchasedByOther();
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenTileAlreadyOwnedBySamePlayer:
-      _rejectsPurchaseLandWhenTileAlreadyOwnedBySamePlayer();
+      vwExpectPurchaseLandRejectedAlreadyOwnedBySelf();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementOnMineralTileWhenNotProspected:
-      _rejectsBuildImprovementOnMineralTileWhenNotProspected();
+      vwExpectMineralBuildImprovementRejectedWhenNotProspected();
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnMineralTileAfterProspected:
-      _acceptsBuildImprovementOnMineralTileAfterProspected();
+      vwExpectMineralBuildImprovementAcceptedWhenProspected();
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnGrainWhenTileNotProspected:
-      _acceptsBuildImprovementOnGrainWhenTileNotProspected();
+      vwExpectGrainBuildImprovementAcceptedWhenNotProspected();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementWhenTileHasNoResource:
-      _rejectsBuildImprovementWhenTileHasNoResource();
+      vwExpectBuildImprovementRejectedNoResource();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementWhenImprovementLevelAlready4:
-      _rejectsBuildImprovementWhenImprovementLevelAlready4();
+      vwExpectBuildImprovementRejectedAtLevel4();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementWhenTechCapWouldBeExceededEmptyTech:
-      _rejectsBuildImprovementWhenTechCapWouldBeExceededEmptyTech();
+      vwExpectEmptyTechCapBuildImprovementRejected();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementWhenTechCapWouldBeExceeded:
-      _rejectsBuildImprovementWhenTechCapWouldBeExceeded();
+      vwExpectTechCapBuildImprovementRejected();
     case OrderEngineValidateWorkTarget
         .acceptsGrainUpgradeWhenExactNextLevelGrainTechIsUnlocked:
-      _acceptsGrainUpgradeWhenExactNextLevelGrainTechIsUnlocked();
+      vwExpectGrainUpgradeWithLandEnclosure();
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementWhenTileHasResourceLevel4TechCapAllows:
-      _acceptsBuildImprovementWhenTileHasResourceLevel4TechCapAllows();
+      vwExpectBuildImprovementAcceptedAtLevel4TechCap();
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementInForeignUnpurchasedProvince:
-      _rejectsBuildImprovementInForeignUnpurchasedProvince();
+      vwExpectBuildImprovementRejectedForeignUnpurchased();
     case OrderEngineValidateWorkTarget
         .rejectsRaisingScrubTimberFromLevel1EvenWithCircularSaw:
-      _rejectsRaisingScrubTimberFromLevel1EvenWithCircularSaw();
+      vwExpectScrubTimberLevel1Rejected();
     case OrderEngineValidateWorkTarget
         .acceptsRaisingHardwoodTimberFromLevel1WithCircularSaw:
-      _acceptsRaisingHardwoodTimberFromLevel1WithCircularSaw();
+      vwExpectHardwoodTimberLevel1Accepted();
     case OrderEngineValidateWorkTarget
         .acceptsInitialScrubTimberImprovementLevel01:
-      _acceptsInitialScrubTimberImprovementLevel01();
+      vwExpectScrubTimberLevel0Accepted();
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnPurchasedTileInForeignProvince:
-      _acceptsBuildImprovementOnPurchasedTileInForeignProvince();
+      vwExpectBuildImprovementAcceptedOnPurchasedForeignTile();
     case OrderEngineValidateWorkTarget
         .rejectsBuildFortToLevel2WithoutMineEngineering:
-      _rejectsBuildFortToLevel2WithoutMineEngineering();
+      vwExpectFortLevel2RejectedWithoutMineEngineering();
     case OrderEngineValidateWorkTarget
         .rejectsBuildFortToLevel3WithoutModernForts:
-      _rejectsBuildFortToLevel3WithoutModernForts();
+      vwExpectFortLevel3RejectedWithoutModernForts();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailWhenTileTerrainDataIsMissing:
-      _rejectsBuildRailWhenTileTerrainDataIsMissing();
+      vwExpectRailMissingTerrainDataRejected();
     case OrderEngineValidateWorkTarget.rejectsBuildRailWhenRoadLevelIs0:
-      _rejectsBuildRailWhenRoadLevelIs0();
+      vwExpectRailRejectedPlainsNoRoad();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailOnHillsWithOnlyEarlySteam:
-      _rejectsBuildRailOnHillsWithOnlyEarlySteam();
+      vwExpectRailRejectedHillsEarlySteamOnly();
     case OrderEngineValidateWorkTarget
         .acceptsBuildRailOnPlainsWithEarlySteamAndRoad1:
-      _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1();
+      vwExpectRailTerrainAccepted(terrain: TerrainType.plains);
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceWithoutEmbassyPath:
-      _rejectsBuildRoadInMinorProvinceWithoutEmbassyPath();
+      vwExpectMinorProvinceRoadRejectedWithoutEmbassy();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile:
-      _rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile();
+      vwExpectMinorProvinceRoadRejectedDespiteEmbassy();
     case OrderEngineValidateWorkTarget
         .rejectsUpgradeTownWithoutNationalBureaucracy:
-      _rejectsUpgradeTownWithoutNationalBureaucracy();
+      vwExpectUpgradeTownRejectedNoBureaucracy();
     case OrderEngineValidateWorkTarget
         .acceptsUpgradeTownWhenNationalBureaucracyUnlocked:
-      _acceptsUpgradeTownWhenNationalBureaucracyUnlocked();
+      vwExpectUpgradeTownAcceptedWithBureaucracy();
   }
 }

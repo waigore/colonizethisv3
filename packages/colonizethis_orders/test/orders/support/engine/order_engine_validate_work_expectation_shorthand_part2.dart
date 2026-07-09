@@ -127,3 +127,54 @@ void vwExpectUpgradeTownOutcome({
   }
 }
 
+void vwExpectScrubTimberLevel1Rejected() {
+  vwExpectScrubTimberRejected(
+    level: 1,
+    terrain: TerrainType.scrubForest,
+  );
+}
+
+void vwExpectHardwoodTimberLevel1Accepted() {
+  vwExpectScrubTimberAccepted(
+    level: 1,
+    terrain: TerrainType.hardwoodForest,
+  );
+}
+
+void vwExpectScrubTimberLevel0Accepted() {
+  vwExpectScrubTimberAccepted(
+    level: 0,
+    terrain: TerrainType.scrubForest,
+  );
+}
+
+void vwExpectRailRejectedPlainsNoRoad() {
+  vwExpectRailTerrainRejected(
+    terrain: TerrainType.plains,
+    roadLevel: 0,
+  );
+}
+
+void vwExpectRailRejectedHillsEarlySteamOnly() {
+  vwExpectRailTerrainRejected(
+    terrain: TerrainType.hills,
+    techUnlocked: const {kTechIdEarlySteamEngine: true},
+    reasonContains: 'Later Steam',
+  );
+}
+
+void vwExpectUpgradeTownRejectedNoBureaucracy() {
+  vwExpectUpgradeTownOutcome(
+    techUnlocked: const {},
+    accepted: false,
+    reasonContains: 'National Bureaucracy',
+  );
+}
+
+void vwExpectUpgradeTownAcceptedWithBureaucracy() {
+  vwExpectUpgradeTownOutcome(
+    techUnlocked: const {kTechIdNationalBureaucracy: true},
+    accepted: true,
+  );
+}
+

@@ -85,3 +85,19 @@ void wccExpectExploreDispatchCapturesRegion({
   expect(identical(next, state), isTrue);
 }
 
+void wccExpectRailDispatchSteamAccepted() {
+  wccExpectRailDispatchSetsRoadLevel(
+    roadLevel: 1,
+    players: wccSteamPlayers(),
+    expectedLevel: 4,
+  );
+}
+
+void wccExpectRailDispatchRejectedWithoutRoad() {
+  wccExpectRailDispatchSetsRoadLevel(
+    roadLevel: 0,
+    players: [workAppPlayer()],
+    expectedLevel: 0,
+  );
+}
+

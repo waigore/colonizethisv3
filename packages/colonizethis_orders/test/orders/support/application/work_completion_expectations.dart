@@ -1,17 +1,8 @@
 // Compact applyBuildAndWorkOrders work-completion assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-
-import 'work_application_fixtures.dart';
 import 'work_completion_expectation_shorthand.dart';
 
 /// Pins for [workCompletionScenarios] rows.
-part 'work_completion_expectations_part1.dart';
-part 'work_completion_expectations_part2.dart';
-
 enum WorkCompletionTarget {
   buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork,
   buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile,
@@ -39,60 +30,58 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
   switch (target) {
     case WorkCompletionTarget
         .buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork:
-      _buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork();
+      wccExpectBasicImprovementCompletion();
     case WorkCompletionTarget
         .buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile:
-      _buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile();
+      wccExpectImprovementWithEnvyHint();
     case WorkCompletionTarget
         .buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint:
-      _buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint();
+      wccExpectAiEnvyEvidenceOnCoalCompletion();
     case WorkCompletionTarget
         .buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax:
-      _buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax();
+      wccExpectImprovementCapsAtLevel4();
     case WorkCompletionTarget
         .buildImprovementCompletionDoesNotReApplyExtractionTechCap1291:
-      _buildImprovementCompletionDoesNotReApplyExtractionTechCap1291();
+      wccExpectSawMillCapStillAllowsLevel4();
     case WorkCompletionTarget
         .workCancelledWhenProvinceContainingTargetTileIsConquered376:
-      _workCancelledWhenProvinceContainingTargetTileIsConquered376();
+      wccExpectConqueredProvinceCancelsWork();
     case WorkCompletionTarget
         .multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero:
-      _multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero();
+      wccExpectTwoTurnImprovementCompletesOnSecondApply();
     case WorkCompletionTarget
         .exploreCompletionSetsVisibilityAndClearsCurrentWork:
-      _exploreCompletionSetsVisibilityAndClearsCurrentWork();
+      wccExpectExploreSetsVisibility();
     case WorkCompletionTarget
         .exploreCompletionRevealsEveryTileInCanonicalFullIdBucket:
-      _exploreCompletionRevealsEveryTileInCanonicalFullIdBucket();
+      wccExpectExploreRevealsBucketOnly();
     case WorkCompletionTarget.buildRoadCompletionIncreasesRoadLevel:
-      _buildRoadCompletionIncreasesRoadLevel();
+      wccExpectBuildRoadLevelIncrease();
     case WorkCompletionTarget
         .buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade:
-      _buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade();
+      wccExpectBuildRoadCapitalAdjacentPropagation();
     case WorkCompletionTarget
         .buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt:
-      _buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt();
+      wccExpectBuildRoadPortAdjacentPropagation();
     case WorkCompletionTarget
         .buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea:
-      _buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea();
+      wccExpectBuildPortCompletion();
     case WorkCompletionTarget.buildFortCompletionIncreasesProvinceFortLevel:
-      _buildFortCompletionIncreasesProvinceFortLevel();
+      wccExpectBuildFortCompletion();
     case WorkCompletionTarget.buildRailCompletionLeavesRoadWhenTileHasNoRoad:
-      _buildRailCompletionLeavesRoadWhenTileHasNoRoad();
+      wccExpectRailCompletionLeavesRoadWhenTileHasNoRoad();
     case WorkCompletionTarget.buildRailCompletionSetsRoadLevelTo4WhenValid:
-      _buildRailCompletionSetsRoadLevelTo4WhenValid();
+      wccExpectRailCompletionSetsRoadLevelTo4WhenValid();
     case WorkCompletionTarget.routesKWorkTargetBuildRailThroughHandlerMapEntry:
-      _routesKWorkTargetBuildRailThroughHandlerMapEntry();
+      wccExpectRailDispatchSteamAccepted();
     case WorkCompletionTarget
         .buildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies:
-      _buildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies();
+      wccExpectRailDispatchRejectedWithoutRoad();
     case WorkCompletionTarget
         .upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord:
-      _upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord();
+      wccExpectUpgradeTownProvinceLevel();
     case WorkCompletionTarget
         .exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord:
-      _exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord();
+      wccExpectExploreDispatchCapturesRegion();
   }
 }
-
-

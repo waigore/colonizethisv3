@@ -1,16 +1,8 @@
 // Compact order_suggestion_core assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
-
 import 'order_suggestion_core_expectation_shorthand.dart';
-import 'order_suggestion_core_fixtures.dart';
 
 /// Pins for [orderSuggestionCoreScenarios] rows.
-part 'order_suggestion_core_expectations_part1.dart';
-part 'order_suggestion_core_expectations_part2.dart';
-
 enum OrderSuggestionCoreTarget {
   suggestMoveOrdersOnlyReturnsMovesThatPassValidation,
   suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility,
@@ -40,65 +32,63 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
   switch (target) {
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersOnlyReturnsMovesThatPassValidation:
-      _suggestMoveOrdersOnlyReturnsMovesThatPassValidation();
+      oscExpectFoggedDestinationFirstMove();
     case OrderSuggestionCoreTarget
         .suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility:
-      _suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility();
+      oscExpectMoveThrowsOnUnknownSourceVisibility();
     case OrderSuggestionCoreTarget
         .moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians:
-      _moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians();
+      oscExpectMislocatedExplorerMoveUsesTileProvince();
     case OrderSuggestionCoreTarget.noExploreSuggestionWhenProvinceUnknown:
-      _noExploreSuggestionWhenProvinceUnknown();
+      oscExpectNoExploreWhenProvinceUnknown();
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersExploreTargetUsesKWorkTargetExplore:
-      _suggestWorkOrdersExploreTargetUsesKWorkTargetExplore();
+      oscExpectFoggedExploreSuggestion();
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope:
-      _suggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope();
+      oscExpectPartialRevealExploreCacheAligned();
     case OrderSuggestionCoreTarget
         .noProspectSuggestionWhenProvinceNotAtLeastFogged:
-      _noProspectSuggestionWhenProvinceNotAtLeastFogged();
+      oscExpectNoProspectWhenProvinceNotFogged();
     case OrderSuggestionCoreTarget
         .prospectSuggestionWhenProvinceFoggedAndTilesInProvince:
-      _prospectSuggestionWhenProvinceFoggedAndTilesInProvince();
+      oscExpectFoggedProspectTargetsIron();
     case OrderSuggestionCoreTarget
         .playerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder:
-      _playerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder();
+      oscExpectProvinceViewForProspectIteration();
     case OrderSuggestionCoreTarget
         .getValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder:
-      _getValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder();
+      oscExpectDualBuilderVisKeysExcludeReservedGrainTiles();
     case OrderSuggestionCoreTarget
         .workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile:
-      _workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile();
+      oscExpectWorkerSuggestStayInBuilderProvince();
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes:
-      _suggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes();
+      oscExpectBuildImprovementOnSecondTileInProvince();
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile:
-      _suggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile();
+      oscExpectBuildImprovementOnOtherOwnedProvince();
     case OrderSuggestionCoreTarget
         .suggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder:
-      _suggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder();
+      oscExpectDualBuilderSuggestSkipsReservedGrainTiles();
     case OrderSuggestionCoreTarget.suggestNavalMissionOrdersReturnsList:
-      _suggestNavalMissionOrdersReturnsList();
+      oscExpectNavalMissionSuggestList();
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsList:
-      _suggestBuildOrdersReturnsList();
+      oscExpectCapitalBuildSuggestDefaultList();
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsShipWhenAffordable:
-      _suggestBuildOrdersReturnsShipWhenAffordable();
+      oscExpectAffordableShipBuildSuggestions();
     case OrderSuggestionCoreTarget
         .suggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable:
-      _suggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable();
+      oscExpectAffordableRegimentAndShipBuildSuggestions();
     case OrderSuggestionCoreTarget.suggestResearchOrdersReturnsList:
-      _suggestResearchOrdersReturnsList();
+      oscExpectResearchSuggestList();
     case OrderSuggestionCoreTarget.suggestNavalMoveOrdersReturnsList:
-      _suggestNavalMoveOrdersReturnsList();
+      oscExpectNavalMoveSuggestList();
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
-      _counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles();
+      oscExpectCounterSpyOnOwnedProvince();
     case OrderSuggestionCoreTarget
         .purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile:
-      _purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile();
+      oscExpectMerchantPurchaseLandWorkSuggested();
   }
 }
-
-

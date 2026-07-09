@@ -2,17 +2,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
-import 'orders_application_test_support.dart';
 import 'work_application_fixtures.dart';
 import 'work_order_application_expectation_shorthand.dart';
 
 /// Pins for [workOrderApplicationScenarios] rows.
-part 'work_order_application_expectations_part1.dart';
-part 'work_order_application_expectations_part2.dart';
-
 enum WorkOrderApplicationTarget {
   prospectAddsTilePlayerProspectedTilesWhenTerrainEligible,
   prospectOnNonMineralEligibleTerrainDoesNotAddTile,
@@ -44,74 +38,72 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
   switch (target) {
     case WorkOrderApplicationTarget
         .prospectAddsTilePlayerProspectedTilesWhenTerrainEligible:
-      _prospectAddsTilePlayerProspectedTilesWhenTerrainEligible();
+      waaExpectProspectEligible(terrain: TerrainType.hills);
     case WorkOrderApplicationTarget
         .prospectOnNonMineralEligibleTerrainDoesNotAddTile:
-      _prospectOnNonMineralEligibleTerrainDoesNotAddTile();
+      waaExpectProspectIneligible(terrain: TerrainType.plains);
     case WorkOrderApplicationTarget
         .prospectAddsTileWhenMineralResourcePresentWithoutTileMap:
-      _prospectAddsTileWhenMineralResourcePresentWithoutTileMap();
+      waaExpectProspectEligible(resourceByTileKey: {WorkAppIds.tileKey: 'iron'});
     case WorkOrderApplicationTarget
         .prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap:
-      _prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap();
+      waaExpectProspectIneligible(resourceByTileKey: {WorkAppIds.tileKey: 'grain'});
     case WorkOrderApplicationTarget
         .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1:
-      _buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1();
+      waaExpectBuildImprovementCompletesIdle();
     case WorkOrderApplicationTarget
         .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel:
-      _buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel();
+      waaExpectBuildFortCurrentWork();
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnit:
-      _counterSpyWorkOrderSetsCurrentWorkForSpyUnit();
+      waaExpectCounterSpyForeignCurrentWork();
     case WorkOrderApplicationTarget
         .purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey:
-      _purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey();
+      waaExpectPurchaseLandSuccess();
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe:
-      _purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe();
+      waaExpectPurchaseLandRejected(waaPurchaseLandNoEmbassyGame());
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe:
-      _purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe();
+      waaExpectPurchaseLandRejected(waaPurchaseLandAtWarGame());
     case WorkOrderApplicationTarget
         .purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite:
-      _purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite();
+      waaExpectDualGpPurchaseLandFirstWins();
     case WorkOrderApplicationTarget
         .buildFortWithSufficientMaterialsDeductsMaterials:
-      _buildFortWithSufficientMaterialsDeductsMaterials();
+      waaExpectBuildFortMaterialsDeducted();
     case WorkOrderApplicationTarget
         .buildFortLevel2SkippedWithoutMineEngineering:
-      _buildFortLevel2SkippedWithoutMineEngineering();
+      waaExpectBuildFortLevel2SkippedWithoutMineEngineering();
     case WorkOrderApplicationTarget.buildFortLevel3SkippedWithoutModernForts:
-      _buildFortLevel3SkippedWithoutModernForts();
+      waaExpectBuildFortLevel3SkippedWithoutModernForts();
     case WorkOrderApplicationTarget
         .upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel:
-      _upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel();
+      waaExpectUpgradeTownDevelopmentApplied();
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
-      _counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork();
+      waaExpectCounterSpyOngoingAssignmentPreservesUnits();
     case WorkOrderApplicationTarget.unknownWorkTargetSkippedUnitStaysIdle:
-      _unknownWorkTargetSkippedUnitStaysIdle();
+      waaExpectUnknownTargetIdle();
     case WorkOrderApplicationTarget
         .buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile:
-      _buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile();
+      waaExpectBuildRoadInsufficientMaterials();
     case WorkOrderApplicationTarget
         .buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork:
-      _buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork();
+      waaExpectBuildRoadWithMaterialsDeductsStockpile();
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince:
-      _counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince();
+      waaExpectCounterSpyOnCapital();
     case WorkOrderApplicationTarget
         .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles:
-      _exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles();
+      waaExpectExploreWorkStarted();
     case WorkOrderApplicationTarget
         .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion:
-      _exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion();
+      waaExpectExploreFormulaTiming();
     case WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork:
-      _engineerBuildRoadWorkOrderSetsCurrentWork();
+      waaExpectEngineerBuildRoadApplied();
     case WorkOrderApplicationTarget
         .buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient:
-      _buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient();
+      waaExpectBuildPortApplied();
   }
 }
-
-

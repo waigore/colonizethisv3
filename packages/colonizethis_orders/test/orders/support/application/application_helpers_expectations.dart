@@ -22,111 +22,35 @@ enum ApplicationHelpersTarget {
 void runApplicationHelpersExpectation(ApplicationHelpersTarget target) {
   switch (target) {
     case ApplicationHelpersTarget.returnsParsedCoordinatesForAValidTileKey:
-      _returnsParsedCoordinatesForAValidTileKey();
+      ahExpectParseValidTileKeyDefault();
     case ApplicationHelpersTarget.returnsNullForMalformedTileKey:
-      _returnsNullForMalformedTileKey();
+      ahExpectParseMalformedTileKeysDefault();
     case ApplicationHelpersTarget.clearsWorkStateAndRestoresOriginTileByDefault:
-      _clearsWorkStateAndRestoresOriginTileByDefault();
+      ahExpectCancelWorkDefault();
     case ApplicationHelpersTarget.usesExplicitRestoredTileOverride:
-      _usesExplicitRestoredTileOverride();
+      ahExpectCancelWorkRestoredTileOverride();
     case ApplicationHelpersTarget.returnsGameUnchangedWhenUnitHasNoCurrentWork:
-      _returnsGameUnchangedWhenUnitHasNoCurrentWork();
+      ahExpectClearWorkUnchangedIdleBuilder();
     case ApplicationHelpersTarget
         .clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle:
-      _clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle();
+      ahExpectClearWorkBuilderImprovementIdleAtOrigin();
     case ApplicationHelpersTarget
         .returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent:
-      _returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent();
+      ahExpectMountainProspectableWithoutResource();
     case ApplicationHelpersTarget
         .returnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists:
-      _returnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists();
+      ahExpectPlainsGoldNotProspectable();
     case ApplicationHelpersTarget
         .returnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain:
-      _returnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain();
+      ahExpectHillsWoolNotProspectable();
     case ApplicationHelpersTarget
         .returnsTrueForIronOnHillsWithTileMapWhenNotProspected:
-      _returnsTrueForIronOnHillsWithTileMapWhenNotProspected();
+      ahExpectHillsIronProspectable();
     case ApplicationHelpersTarget.returnsFalseWhenResourceIsAbsent:
-      _returnsFalseWhenResourceIsAbsent();
+      ahExpectAbsentResourceNotMineral();
     case ApplicationHelpersTarget.returnsFalseForNonMineralResource:
-      _returnsFalseForNonMineralResource();
+      ahExpectGrainNotMineral();
     case ApplicationHelpersTarget.returnsTrueForMineralResource:
-      _returnsTrueForMineralResource();
+      ahExpectCoalMineral();
   }
-}
-
-void _returnsParsedCoordinatesForAValidTileKey() {
-  ahExpectParseTileKey(
-    'oldWorld|P1|12|7',
-    regionId: 'oldWorld',
-    provinceLocalId: 'P1',
-    x: 12,
-    y: 7,
-  );
-}
-
-void _returnsNullForMalformedTileKey() {
-  ahExpectMalformedTileKeys(['oldWorld|P1|12', 'oldWorld|P1|x|7']);
-}
-
-void _clearsWorkStateAndRestoresOriginTileByDefault() {
-  ahExpectCancelWorkClearsState(
-    ahWorkingUnit(id: 'u1'),
-    expectedTile: 'oldWorld|P1|1|1',
-  );
-}
-
-void _usesExplicitRestoredTileOverride() {
-  ahExpectCancelWorkClearsState(
-    ahWorkingUnit(
-      id: 'u2',
-      originTileKey: null,
-      assignedTileKey: null,
-    ),
-    restoredTile: 'oldWorld|P1|0|0',
-    expectedTile: 'oldWorld|P1|0|0',
-  );
-}
-
-void _returnsGameUnchangedWhenUnitHasNoCurrentWork() {
-  ahExpectClearWorkUnchanged(
-    ahOwBuilderGame(ahIdleBuilderUnit()),
-    'u1',
-  );
-}
-
-void _clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle() {
-  ahExpectClearWorkIdleAtOrigin(
-    ahOwBuilderGame(ahBuilderWithImprovementWork()),
-    'u1',
-    'oldWorld|p1|0|0',
-  );
-}
-
-void _returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent() {
-  ahExpectMountainProspectableWithoutResource();
-}
-
-void _returnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists() {
-  ahExpectPlainsGoldNotProspectable();
-}
-
-void _returnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain() {
-  ahExpectHillsWoolNotProspectable();
-}
-
-void _returnsTrueForIronOnHillsWithTileMapWhenNotProspected() {
-  ahExpectHillsIronProspectable();
-}
-
-void _returnsFalseWhenResourceIsAbsent() {
-  ahExpectAbsentResourceNotMineral();
-}
-
-void _returnsFalseForNonMineralResource() {
-  ahExpectGrainNotMineral();
-}
-
-void _returnsTrueForMineralResource() {
-  ahExpectCoalMineral();
 }

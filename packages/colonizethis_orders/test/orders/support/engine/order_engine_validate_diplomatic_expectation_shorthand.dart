@@ -275,3 +275,11 @@ void vedExpectGrantAidMultipleRejected() {
     reasonContains: 'multiple',
   );
 }
+
+void vedExpectSecondGrantAidRejected() {
+  vedExpectGrantAidRejectedAfterPrior(prior: vedGrantAid(1000));
+}
+
+void vedExpectDeclareWarThenGrantAidRejected() {
+  vedExpectGrantAidRejectedAfterPrior(prior: vedDeclareWarMinor);
+}

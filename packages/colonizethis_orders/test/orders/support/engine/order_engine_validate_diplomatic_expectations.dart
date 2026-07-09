@@ -1,12 +1,6 @@
 // Compact OrderEngine validateDiplomatic assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'order_engine_validate_diplomatic_expectation_shorthand.dart';
-part 'order_engine_validate_diplomatic_expectations_part1.dart';
-part 'order_engine_validate_diplomatic_expectations_part2.dart';
-
 
 enum OrderEngineValidateDiplomaticTarget {
   declarewarRejectedWhenAlreadyAtWar,
@@ -33,55 +27,53 @@ void runOrderEngineValidateDiplomaticExpectation(
 ) {
   switch (target) {
     case OrderEngineValidateDiplomaticTarget.declarewarRejectedWhenAlreadyAtWar:
-      _declarewarRejectedWhenAlreadyAtWar();
+      vedExpectDeclareWarRejectedWhenAtWar();
     case OrderEngineValidateDiplomaticTarget.offerpeaceRejectedWhenNotAtWar:
-      _offerpeaceRejectedWhenNotAtWar();
+      vedExpectOfferPeaceRejectedWhenNotAtWar();
     case OrderEngineValidateDiplomaticTarget
         .establishovertureRejectedWhenTargetIsAtWarWithGP:
-      _establishovertureRejectedWhenTargetIsAtWarWithGP();
+      vedExpectOvertureRejectedAtWar();
     case OrderEngineValidateDiplomaticTarget
         .establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise:
-      _establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise();
+      vedExpectConsulateRejectedNoDiplomaticExpertise();
     case OrderEngineValidateDiplomaticTarget
         .establishovertureConsulateRejectedWhenTreasuryTooLow:
-      _establishovertureConsulateRejectedWhenTreasuryTooLow();
+      vedExpectConsulateRejectedLowTreasury();
     case OrderEngineValidateDiplomaticTarget
         .establishovertureEmbassyRequiresExistingConsulate:
-      _establishovertureEmbassyRequiresExistingConsulate();
+      vedExpectEmbassyRequiresConsulate();
     case OrderEngineValidateDiplomaticTarget
         .establishovertureSecondOrderForSameFactionInSameTurnRejected:
-      _establishovertureSecondOrderForSameFactionInSameTurnRejected();
+      vedExpectDuplicateOvertureRejected();
     case OrderEngineValidateDiplomaticTarget
         .secondDiplomaticOrderToSameTargetDifferentTypeIsRejected:
-      _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected();
+      vedExpectGpAllianceDeclareWarConflictRejected();
     case OrderEngineValidateDiplomaticTarget
         .grantaidRequiresEmbassyAndSufficientTreasury:
-      _grantaidRequiresEmbassyAndSufficientTreasury();
+      vedExpectGrantAidEmbassyTreasuryRejected();
     case OrderEngineValidateDiplomaticTarget
         .grantaidRejectsAmountsNotAMultipleOf1000:
-      _grantaidRejectsAmountsNotAMultipleOf1000();
+      vedExpectGrantAidMultipleRejected();
     case OrderEngineValidateDiplomaticTarget
         .grantaidThenSetSubsidyTowardSameTargetBothAccepted:
-      _grantaidThenSetSubsidyTowardSameTargetBothAccepted();
+      vedExpectGrantAidThenSubsidyAccepted();
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyRequiresAnEmbassyRefs3753R2:
-      _setsubsidyRequiresAnEmbassyRefs3753R2();
+      vedExpectSubsidyEmbassyRequired();
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3:
-      _setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3();
+      vedExpectSubsidyAcceptedLowTreasury();
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyWithAnEmbassyAndAValidPercentIsAccepted:
-      _setsubsidyWithAnEmbassyAndAValidPercentIsAccepted();
+      vedExpectSubsidyAcceptedValidPercent();
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyRejectsAPercentOutside520InStepsOf5:
-      _setsubsidyRejectsAPercentOutside520InStepsOf5();
+      vedExpectSubsidyRejectedInvalidPercent();
     case OrderEngineValidateDiplomaticTarget
         .secondGrantAidTowardSameTargetRejected:
-      _secondGrantAidTowardSameTargetRejected();
+      vedExpectSecondGrantAidRejected();
     case OrderEngineValidateDiplomaticTarget
         .declarewarThenGrantAidTowardSameTargetRejected:
-      _declarewarThenGrantAidTowardSameTargetRejected();
+      vedExpectDeclareWarThenGrantAidRejected();
   }
 }
-
-

@@ -386,3 +386,45 @@ void vwtExpectPartialRevealExploreExcluded() {
   );
 }
 
+void vwtExpectUnknownUnitExploreEmpty() {
+  vwtExpectKeysEmpty(
+    vwtMinimalSingleTileGame(),
+    'no-such-unit',
+    kWorkTargetExplore,
+  );
+}
+
+void vwtExpectExplorerDisallowedBuildEmpty() {
+  vwtExpectKeysEmpty(
+    vwtExplorerSingleTileGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
+  );
+}
+
+void vwtExpectUnknownUnitExploreEmptyWithVisibility() {
+  vwtExpectKeysEmpty(
+    vwtMinimalSingleTileGame(),
+    'no-such-unit',
+    kWorkTargetExplore,
+    withVisibility: true,
+  );
+}
+
+void vwtExpectExplorerDisallowedBuildEmptyWithVisibility() {
+  vwtExpectKeysEmpty(
+    vwtExplorerDisallowedBuildGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
+    withVisibility: true,
+  );
+}
+
+void vwtExpectColonistVisibilityFilterMatchesPlain() {
+  vwtExpectVisMatchesPlain(
+    vwtColonistVisibilityFilterGame(),
+    'u1',
+    kWorkTargetBuildImprovement,
+  );
+}
+

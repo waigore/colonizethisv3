@@ -253,3 +253,43 @@ void oscExpectBuildImprovementOnOtherOwnedProvince() {
     tileP2,
   );
 }
+
+void oscExpectPartialRevealExploreCacheAligned() {
+  oscExpectExploreTargetsProvince(
+    oscPartialRevealExploreCacheGame(),
+    oscEmptyTopology(),
+    OscIds.prov('p_partial'),
+  );
+}
+
+void oscExpectDualBuilderVisKeysExcludeReservedGrainTiles() {
+  oscExpectDualBuilderVisKeysExcludeReserved(OscDualBuilderGrainTiles());
+}
+
+void oscExpectDualBuilderSuggestSkipsReservedGrainTiles() {
+  oscExpectDualBuilderSuggestSkipsReserved(OscDualBuilderGrainTiles());
+}
+
+void oscExpectWorkerSuggestStayInBuilderProvince() {
+  oscExpectWorkerSuggestStayInProvince(
+    oscBuilderWorkerSuggestGame(),
+    oscProvinceTopology(['p1']),
+  );
+}
+
+void oscExpectCapitalBuildSuggestDefaultList() {
+  oscExpectCapitalBuildSuggestList(
+    oscPlayer(
+      capitalProvinceId: OscIds.prov('p1'),
+      workerPool: const WorkerPool(peasants: 2),
+      treasury: 500,
+    ),
+  );
+}
+
+void oscExpectCounterSpyOnOwnedProvince() {
+  oscExpectWorkTargetNotEmpty(
+    oscSuggestWork(oscSpyInOwnedProvinceGame(), oscProvinceTopology(['p1'])),
+    kWorkTargetCounterSpy,
+  );
+}
