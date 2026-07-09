@@ -35,8 +35,7 @@ List<OrderEngineCivilianMoveXorWorkScenario>
                 OrderEngineCivilianMoveXorWorkTarget.rejectsWorkWhenMoveExists,
           ),
           OrderEngineCivilianMoveXorWorkScenario(
-            label:
-                'merged draft with move then work rejects work (move remains valid)',
+            label: 'merged draft with move then work rejects work (move remains valid)',
             target:
                 OrderEngineCivilianMoveXorWorkTarget.mergedDraftMoveThenWork,
           ),

@@ -806,6 +806,25 @@ Migrated imperative `order_engine_civilian_move_xor_work_test.dart` → table-dr
 
 test/ LOC after slice 49: **32,972** (net +13 from post–slice 48; scenario support modules add LOC while runner shrinks to ≤15 lines). Remaining: further imperative-suite compaction (`order_engine_validation_phase_plan_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 50: order_engine_validation_phase_plan + order_suggestion_work_feedstock_priority scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oevpp-phase-order | declares the canonical per-category phase order | `order_engine_validation_phase_plan_test.dart` | `support/engine/order_engine_validation_phase_plan_scenarios.dart` + thin runner | #3949 |
+| oevpp-unique | phase names are unique (no category runs twice) | same | same | #3949 |
+| oevpp-bundle-refresh | move + army-move share the initial bundle; resource/diplomatic/naval phases refresh; trade reuses the advanced bundle | same | same | #3949 |
+| osfp-gate-active | supplier gate active: the emitted build_improvement suggestion targets the unimproved iron feedstock tile, not the lex-first grain tile | `order_suggestion_work_feedstock_priority_test.dart` | `support/suggestion/order_suggestion_work_feedstock_priority_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| osfp-gate-inactive | supplier gate inactive (peer at quota): ordinary lexicographic ordering emits the grain tile (negative control) | same | same | #3949 |
+| osfp-castiron-waiver | supplier with lumber only: feedstock build_improvement is accepted under castIron waiver | same | same | #3949 |
+| osfp-deterministic | suggestion ordering is deterministic across repeated passes | same | same | #3949 |
+| osfp-co-timber-iron | supplier holds timber but no iron: the emitted build_improvement suggestion targets the least-held iron tile, not the lex-first timber tile | same | same | #3949 |
+| osfp-co-tie-break | supplier holds equal feedstock (zero of each): lexicographic tie-break emits the timber tile (negative control) | same | same | #3949 |
+| osfp-co-deterministic | co-availability ordering is deterministic across repeated passes | same | same | #3949 |
+
+Migrated imperative `order_engine_validation_phase_plan_test.dart` and `order_suggestion_work_feedstock_priority_test.dart` → table-driven scenarios with dedicated expectations (+ fixtures for feedstock). Removed both files from `ordersPreferScenarioTablesAllowlist`. Fixed slice 49 multiline `label:` pin so preserved-description CI collects `merged draft with move then work rejects work (move remains valid)`.
+
+test/ LOC after slice 50: **33,109** (net +137 from post–slice 49; scenario support modules add LOC while runners shrink). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
