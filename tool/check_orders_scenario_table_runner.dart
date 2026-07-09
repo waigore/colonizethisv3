@@ -66,9 +66,6 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/validators/diplomatic/diplomatic_sub_validators_faction_membership_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/diplomatic_sub_validators_relations_test.dart',
   'packages/colonizethis_orders/test/orders/validators/diplomatic/establish_overture_sub_validator_test.dart',
-  'packages/colonizethis_orders/test/orders/work_handlers/explore_work_handler_test.dart',
-  'packages/colonizethis_orders/test/orders/work_handlers/purchase_land_work_handler_test.dart',
-  'packages/colonizethis_orders/test/orders/work_handlers/remaining_work_handlers_test.dart',
 };
 
 /// When true, every existing `*_test.dart` under the orders test tree is

@@ -1046,6 +1046,30 @@ Migrated imperative `work_order_target_prechecks_test.dart`, `work_order_cost_ca
 
 test/ LOC after slice 60: **34,850** (net +174 from post–slice 59; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, work handlers, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 slice 61 — work handler scenario migration (#3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ewh-supports | supports only explore target | `explore_work_handler_test.dart` | `support/work_handlers/explore_work_handler_scenarios.dart` + expectations + thin runner | #3949 |
+| ewh-assigns | assigns explore currentWork when province has discoverable tiles | same | same | #3949 |
+| ewh-no-tiles | returns false when province has no tile keys in world state | same | same | #3949 |
+| plwh-supports | supports only purchase_land target | `purchase_land_work_handler_test.dart` | `support/work_handlers/purchase_land_work_handler_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| plwh-try-apply | tryApply assigns currentWork without treasury deduction | same | same | #3949 |
+| plwh-no-resource | returns unchanged treasury when tile has no resource entry | same | same | #3949 |
+| rwh-counter-supports | supports only counter_spy | `remaining_work_handlers_test.dart` | `support/work_handlers/remaining_work_handlers_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| rwh-counter-apply | tryApply assigns counter_spy work for spy unit | same | same | #3949 |
+| rwh-prospect-supports | supports only prospect | same | same | #3949 |
+| rwh-prospect-reject | tryApply returns false for non-mineral tile | same | same | #3949 |
+| rwh-already-working | returns false when unit already has currentWork | same | same | #3949 |
+| rwh-fort-tech | skips fort level 2 when Mine Engineering not unlocked | same | same | #3949 |
+| rwh-standard-supports | each standard build handler supports only its target | same | same | #3949 |
+| rwh-registry | maps every standard and simple work target to a handler | same | same | #3949 |
+| rwh-singleton | singleton handlers do not cross-support other simple targets | same | same | #3949 |
+
+Migrated imperative `explore_work_handler_test.dart`, `purchase_land_work_handler_test.dart`, and `remaining_work_handlers_test.dart` → table-driven scenarios with dedicated support modules. Removed all three from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 61: **35,153** (net +303 from post–slice 60; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, per_player_work_target_selection_cache, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
