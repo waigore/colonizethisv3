@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'order_engine_purchase_land_test_support.dart';
+import 'order_engine_validate_work_expectation_shorthand.dart';
 import 'order_engine_validate_work_fixtures.dart';
 part 'order_engine_validate_work_expectations_part1.dart';
 part 'order_engine_validate_work_expectations_part2.dart';
@@ -158,52 +159,3 @@ void runOrderEngineValidateWorkExpectation(
       _acceptsUpgradeTownWhenNationalBureaucracyUnlocked();
   }
 }
-
-OrderValidationResult _validateSingleWork({
-  required Game game,
-  required WorkOrder order,
-  MapTopology? topology,
-  Map<String, TileMapResult>? tileMapByRegion,
-  String playerId = 'p1',
-}) {
-  final engine = OrderEngine();
-  engine.addWorkOrder(playerId, order);
-  return engine
-      .validatePlayerOrdersWithContext(
-        game,
-        topology ?? ValidateWorkOw.topology(),
-        playerId,
-        tileMapByRegion: tileMapByRegion,
-      )
-      .single;
-}
-
-OrderValidationResult _validateBuildImprovement({
-  required Game game,
-  Map<String, TileMapResult>? tileMapByRegion,
-  String targetTileKey = ValidateWorkOw.tileKey,
-  String unitId = 'builder1',
-}) => _validateSingleWork(
-  game: game,
-  order: WorkOrder(
-    unitId: unitId,
-    target: kWorkTargetBuildImprovement,
-    targetTileKey: targetTileKey,
-  ),
-  tileMapByRegion: tileMapByRegion,
-);
-
-OrderValidationResult _validateOwWorkTarget({
-  required Game game,
-  required String unitId,
-  required String target,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) => _validateSingleWork(
-  game: game,
-  order: WorkOrder(
-    unitId: unitId,
-    target: target,
-    targetTileKey: ValidateWorkOw.tileKey,
-  ),
-  tileMapByRegion: tileMapByRegion,
-);

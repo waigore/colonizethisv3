@@ -471,6 +471,15 @@ test/ LOC after slice 20: **32,043** (net ~0 from post–slice 19; part2/3 bodie
 
 test/ LOC after slice 21: **31,860** (down ~183 from post–slice 20). Remaining: further expectation compaction (`order_engine_validate_work_*`, `order_engine_validate_trade_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 22: validateWork + validateTrade expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-shorthand | add `vwRun*` / `vwExpect*` purchase-land, build-improvement, OW-work-target wrappers; compact validateWork expectation bodies | `order_engine_validate_work_expectations_part{1,2}.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vet-shorthand | add `vetGameWith` / `vetGp1` / `vetExpect*` trade validation helpers; compact validateTrade expectation bodies | `order_engine_validate_trade_expectations.dart` | `order_engine_validate_trade_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 22: **31,966** (net +106 from post–slice 21; expectation bodies shortened, new `vw*`/`vet*` shorthand modules added). Remaining: further expectation compaction (`order_suggestion_core_*`, `work_order_application_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
