@@ -8,8 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-part 'valid_work_tiles_expectations_late.dart';
-
 /// Pins for [validWorkTilesScenarios] rows.
 enum ValidWorkTilesTarget {
   returnsEmptyForUnknownUnitId,
@@ -339,21 +337,79 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         expect(buildSuggestions, isEmpty);
     case ValidWorkTilesTarget
         .suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut:
-      vwtLateSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut();
+      final exploreFx = NwPartialRevealHomeTarget(
+        homeLocalId: 'home',
+        targetLocalId: 'tribe1',
+        targetOwnerId: 'tribe1',
+      );
+      vwtExpectPartialRevealSuggestions(
+        fx: exploreFx,
+        game: exploreFx.tribeConsulateGame('g1916e1'),
+        workTarget: kWorkTargetExplore,
+        expectNonEmpty: true,
+        provinceId: exploreFx.provTarget,
+      );
     case ValidWorkTilesTarget
         .suggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation:
-      vwtLateSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation();
+      final excludeFx = NwPartialRevealHomeTarget(
+        homeLocalId: 'home',
+        targetLocalId: 'gp2p',
+        targetOwnerId: 'gp2',
+      );
+      vwtExpectPartialRevealSuggestions(
+        fx: excludeFx,
+        game: excludeFx.game(
+          id: 'g1916e2',
+          players: [
+            ValidWorkTilesTestSupport.defaultPlayer,
+            const Player(id: 'gp2', displayName: 'P2', isHuman: false),
+          ],
+        ),
+        workTarget: kWorkTargetExplore,
+        expectNonEmpty: false,
+        provinceId: excludeFx.provTarget,
+      );
     case ValidWorkTilesTarget
         .suggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile:
-      vwtLateSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile();
+      final prospectFx = NwPartialRevealHomeTarget.tribeGrainIron();
+      vwtExpectPartialRevealSuggestions(
+        fx: prospectFx,
+        game: prospectFx.tribeConsulateGame('g1916p1'),
+        workTarget: kWorkTargetProspect,
+        expectNonEmpty: true,
+        tileKey: prospectFx.t1,
+      );
     case ValidWorkTilesTarget
         .suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral:
-      vwtLateSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral();
+      final ironFx = NwPartialRevealHomeTarget.tribeGrainIron(prospectedIron: true);
+      vwtExpectPartialRevealSuggestions(
+        fx: ironFx,
+        game: ironFx.tribeConsulateGame('g1916p2'),
+        workTarget: kWorkTargetProspect,
+        expectNonEmpty: false,
+      );
     case ValidWorkTilesTarget
         .suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy:
-      vwtLateSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy();
+      final purchaseFx = NwPartialRevealHomeTarget.minorPurchase();
+      vwtExpectPartialRevealSuggestions(
+        fx: purchaseFx,
+        game: purchaseFx.minorPurchaseGame(
+          'g1916pl1',
+          overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
+        ),
+        workTarget: kWorkTargetPurchaseLand,
+        expectNonEmpty: true,
+        provinceId: purchaseFx.provTarget,
+      );
     case ValidWorkTilesTarget
         .suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail:
-      vwtLateSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail();
+      final failPurchaseFx = NwPartialRevealHomeTarget.minorPurchase();
+      vwtExpectPartialRevealSuggestions(
+        fx: failPurchaseFx,
+        game: failPurchaseFx.minorPurchaseGame('g1916pl2'),
+        workTarget: kWorkTargetPurchaseLand,
+        expectNonEmpty: false,
+        provinceId: failPurchaseFx.provTarget,
+      );
 }
 }

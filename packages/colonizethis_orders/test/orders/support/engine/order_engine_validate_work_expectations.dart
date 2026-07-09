@@ -9,8 +9,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import 'order_engine_validate_work_expectation_shorthand.dart';
 
-part 'order_engine_validate_work_expectations_late.dart';
-
 /// Pins for [orderEngineValidateWorkScenarios] rows.
 enum OrderEngineValidateWorkTarget {
   rejectsSecondPendingWorkOrderForSameUnitInOneTurn,
@@ -365,29 +363,37 @@ void runOrderEngineValidateWorkExpectation(
         );
     case OrderEngineValidateWorkTarget
         .rejectsBuildFortToLevel3WithoutModernForts:
-      vwLateRejectsBuildFortToLevel3WithoutModernForts();
+      vwExpectRejectFortLevel3WithoutModernForts();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailWhenTileTerrainDataIsMissing:
-      vwLateRejectsBuildRailWhenTileTerrainDataIsMissing();
+      vwExpectRejectRailMissingTerrain();
     case OrderEngineValidateWorkTarget.rejectsBuildRailWhenRoadLevelIs0:
-      vwLateRejectsBuildRailWhenRoadLevelIs0();
+      vwExpectRejectRailWhenRoadLevelZero();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRailOnHillsWithOnlyEarlySteam:
-      vwLateRejectsBuildRailOnHillsWithOnlyEarlySteam();
+      vwExpectRejectRailOnHillsWithEarlySteamOnly();
     case OrderEngineValidateWorkTarget
         .acceptsBuildRailOnPlainsWithEarlySteamAndRoad1:
-      vwLateAcceptsBuildRailOnPlainsWithEarlySteamAndRoad1();
+      vwExpectAcceptRailOnPlainsWithEarlySteam();
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceWithoutEmbassyPath:
-      vwLateRejectsBuildRoadInMinorProvinceWithoutEmbassyPath();
+      vwExpectRejectMinorProvinceRoad(
+        game: minorProvinceEngineerRoadGame(),
+        reasonContains: 'foreign province',
+      );
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile:
-      vwLateRejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile();
+      vwExpectRejectMinorProvinceRoad(
+        game: minorProvinceEngineerRoadGame(
+          overtureStates: minorProvinceEmbassyOverture,
+        ),
+        reasonContains: 'cannot occupy',
+      );
     case OrderEngineValidateWorkTarget
         .rejectsUpgradeTownWithoutNationalBureaucracy:
-      vwLateRejectsUpgradeTownWithoutNationalBureaucracy();
+      vwExpectRejectUpgradeTownWithoutNationalBureaucracy();
     case OrderEngineValidateWorkTarget
         .acceptsUpgradeTownWhenNationalBureaucracyUnlocked:
-      vwLateAcceptsUpgradeTownWhenNationalBureaucracyUnlocked();
+      vwExpectAcceptUpgradeTownWithNationalBureaucracy();
 }
 }

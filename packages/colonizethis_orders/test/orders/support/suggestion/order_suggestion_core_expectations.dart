@@ -7,8 +7,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-part 'order_suggestion_core_expectations_late.dart';
-
 /// Pins for [orderSuggestionCoreScenarios] rows.
 enum OrderSuggestionCoreTarget {
   suggestMoveOrdersOnlyReturnsMovesThatPassValidation,
@@ -355,16 +353,34 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         );
     case OrderSuggestionCoreTarget
         .suggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable:
-      oscLateSuggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable();
+      oscExpectBothRegimentAndShipWhenAffordable();
     case OrderSuggestionCoreTarget.suggestResearchOrdersReturnsList:
-      oscLateSuggestResearchOrdersReturnsList();
+      oscExpectResearchOrdersReturnsList();
     case OrderSuggestionCoreTarget.suggestNavalMoveOrdersReturnsList:
-      oscLateSuggestNavalMoveOrdersReturnsList();
+      oscExpectNavalMoveOrdersReturnsList();
     case OrderSuggestionCoreTarget
         .counterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles:
-      oscLateCounterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles();
+      expect(
+        oscWorkWithTarget(
+          oscSuggestWork(
+            oscSpyCounterSuggestGame(),
+            oscProvinceTopology(['p1']),
+          ),
+          kWorkTargetCounterSpy,
+        ),
+        isNotEmpty,
+      );
     case OrderSuggestionCoreTarget
         .purchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile:
-      oscLatePurchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile();
+      expect(
+        oscWorkWithTarget(
+          oscSuggestWork(
+            oscMerchantPurchaseLandSuggestGame(),
+            oscProvinceTopology(['p1', 'minor1']),
+          ),
+          kWorkTargetPurchaseLand,
+        ),
+        isNotEmpty,
+      );
 }
 }
