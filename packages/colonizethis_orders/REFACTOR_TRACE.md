@@ -1355,6 +1355,22 @@ Migrated imperative `order_suggestion_work_logging_test.dart`, `order_suggestion
 
 test/ LOC after slice 78: **37,242** (net −701 from post–slice 77; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 79 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osrms-fills-slots | fills every empty slot with a distinct researchable tech | `order_suggestion_research_multi_slot_test.dart` | `support/suggestion/order_suggestion_research_multi_slot_scenarios.dart` + fixtures/expectations + thin runner | #3472 |
+| osrms-in-progress | re-emits in-progress research so the resolver preserves progress | same | same | #3472 |
+| osrms-zero-slots | returns no suggestions when there are zero research slots | same | same | #3472 |
+| osrms-pending-order | does not re-suggest a tech already assigned by a pending order | same | same | #3472 |
+| oswtpl-minor-gp | includes resource tiles in minor-owned provinces, excludes GP-owned | `order_suggestion_work_tile_prefilter_purchase_land_test.dart` | `support/suggestion/order_suggestion_work_tile_prefilter_purchase_land_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| oswtpl-tribe | includes resource tiles in tribe-owned provinces | same | same | #3949 |
+| oswtpl-owned-province | playerOwnedProvinceIds yields same candidates as internal scan (build_road) | same | same | #3949 |
+
+Migrated imperative `order_suggestion_research_multi_slot_test.dart` and `order_suggestion_work_tile_prefilter_purchase_land_test.dart` → table-driven scenarios with dedicated support modules. Removed both files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 79: **37,415** (net +173 from post–slice 78; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion API impl suites, army-move families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

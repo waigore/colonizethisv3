@@ -41,10 +41,8 @@ final Set<String> ordersPreferScenarioTablesAllowlist = {
   'packages/colonizethis_orders/test/orders/order_suggestion_army_move_heuristics_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_army_move_picker_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_army_move_test.dart',
-  'packages/colonizethis_orders/test/orders/order_suggestion_research_multi_slot_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_shared_validator_equivalence_test.dart',
   'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_keys_shared_validator_test.dart',
-  'packages/colonizethis_orders/test/orders/order_suggestion_work_tile_prefilter_purchase_land_test.dart',
 };
 
 /// When true, every existing `*_test.dart` under the orders test tree is
