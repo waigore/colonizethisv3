@@ -748,6 +748,26 @@ Merged `order_engine_core_part{1,2}_test.dart` → `orders/order_engine_core_tes
 
 test/ LOC after slice 45: **32,881** (net −122 from post–slice 44; scenario tables add support modules but remove two part runners). Remaining: further imperative-suite compaction (`order_engine_move_and_work_context_part*`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 46: order_engine_move_and_work_context scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oemwc-move-dest-unknown | move order rejected when destination province unknown | `order_engine_move_and_work_context_part1_test.dart` | `support/engine/order_engine_move_and_work_context_scenarios.dart` + `order_engine_move_and_work_context_test.dart` | #3949 |
+| oemwc-explore-unknown | work order explore rejected when province unknown | same | same | #3949 |
+| oemwc-explore-gp | work order explore rejected on foreign GP tile for explorer | same | same | #3949 |
+| oemwc-prospect-not-fogged | work order prospect rejected when province not fogged or better | same | same | #3949 |
+| oemwc-prospect-not-mineral | work order prospect rejected when tile is not mineral-eligible | same | same | #3949 |
+| oemwc-prospect-accepted | work order prospect accepted when mineral-eligible and visibility ok | `order_engine_move_and_work_context_part2_test.dart` | same | #3949 |
+| oemwc-prospect-no-consulate | work order prospect rejected in Tribe province without a consulate (Refs #3753 R4) | same | same | #3753, #3949 |
+| oemwc-prospect-gp | work order prospect rejected on foreign GP tile for explorer | same | same | #3949 |
+| oemwc-move-not-adjacent | move order rejected when destination not adjacent and not own province | same | same | #3949 |
+| oemwc-civilian-own-province | civilian move order accepted when destination not adjacent but own province | same | same | #3949 |
+| oemwc-prospect-already | work order prospect rejected when tile already prospected | `order_engine_move_and_work_context_part3_test.dart` | same | #3949 |
+
+Merged `order_engine_move_and_work_context_part{1,2,3}_test.dart` → `orders/order_engine_move_and_work_context_test.dart` (≤400 lines). Family LOC moved into `order_engine_move_and_work_context_expectations.dart` + `order_engine_move_and_work_context_fixtures.dart` + `order_engine_move_and_work_context_scenarios.dart`. Removed part files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 46: **32,810** (net −71 from post–slice 45; scenario tables add support modules but remove three part runners). Remaining: further imperative-suite compaction, lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
