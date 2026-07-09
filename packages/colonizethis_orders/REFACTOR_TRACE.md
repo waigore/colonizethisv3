@@ -678,6 +678,16 @@ test/ LOC after slice 40: **33,419** (net +72 from post–slice 39; expectation 
 
 test/ LOC after slice 41: **33,527** (net +108 from post–slice 40; expectation bodies shortened, new `mv*`/`nov*`/`vbc*`/`waa*`/`vwt*` preset shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 42: naval move + ICE equivalence preset compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| nov-move-shorthand | add `novExpectMovePreviousRejected` / `novExpectFleetNotFound` / `novExpectFleetNotOwned` / `novExpectHomeFleetRejected` / `novExpectAdjacentSeaAccepted` / `novExpectNonAdjacentSeaRejected` / `novExpectDockSeaNotAdjacent` / `novExpectUndockAccepted` / `novExpectProvinceAsSeaRejected` / `novExpectInPortDirectPsEdgeAccepted` / `novExpectInPortSsOnlyReachability` / `novExpectBrokenInPortRejected` / `novExpectDockAdjacentOwnedAccepted` / `novExpectDockLocalPortIdAccepted` / `novExpectDockFleetInPortRejected` / `novExpectDockNotOwnedRejected` / `novExpectDockPortNotFoundRejected`; compact naval move expectation bodies | `naval_order_validator_expectations_move.dart`, `naval_order_validator_expectations_move_b.dart` | `naval_order_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ice-corpus-shorthand | add `iceExpectMoveBuilderOwnProvince` / `iceExpectBuildSuccessiveProbes` / `iceExpectDiplomaticSequentialProbes` / `iceExpectArmyMoveGpDeclareWar` / `iceExpectNavalMoveAdjacentSea` / … (full move/build/work/diplomatic/army/naval preset set); compact ICE equivalence expectation bodies | `incremental_candidate_validator_equivalence_expectations_part{1,2}.dart` | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` + compacted expectations | #3949 |
+| nov-fixtures-import | break circular import: `naval_order_validator_fixtures.dart` uses `navalOrderValidatorForTest` directly so shorthand can import topology presets | `naval_order_validator_fixtures.dart` | same | #3949 |
+
+test/ LOC after slice 42: **33,733** (net +206 from post–slice 41; expectation bodies shortened, new `nov*`/`ice*` preset helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

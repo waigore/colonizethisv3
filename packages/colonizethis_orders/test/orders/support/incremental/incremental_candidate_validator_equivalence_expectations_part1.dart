@@ -1,141 +1,77 @@
 part of 'incremental_candidate_validator_equivalence_expectations.dart';
 
 void _moveBuilderOwnProvince() {
-  iceExpectMoveTo('u_builder', iceTile('P2'), label: 'builder->own province');
+  iceExpectMoveBuilderOwnProvince();
 }
 
 void _moveBuilderOtherGp() {
-  iceExpectMoveTo('u_builder', iceTile('P3'), label: 'builder->other GP province');
+  iceExpectMoveBuilderOtherGp();
 }
 
 void _moveExplorerMinor() {
-  iceExpectMoveTo('u_explorer', iceTile('P4'), label: 'explorer->minor province');
+  iceExpectMoveExplorerMinor();
 }
 
 void _moveSpyOtherGp() {
-  iceExpectMoveTo('u_spy', iceTile('P3'), label: 'spy->other GP province');
+  iceExpectMoveSpyOtherGp();
 }
 
 void _moveMilitaryRegiment() {
-  iceExpectMoveTo('u_pikemen', iceTile('P2'), label: 'pikemen via MoveOrder');
+  iceExpectMoveMilitaryRegiment();
 }
 
 void _moveMissingUnit() {
-  iceExpectMoveTo('unknown_unit', iceTile('P2'), label: 'unknown unit');
+  iceExpectMoveMissingUnit();
 }
 
 void _moveEmptyDestination() {
-  iceExpectMoveTo('u_builder', '', label: 'empty destination');
+  iceExpectMoveEmptyDestination();
 }
 
 void _moveXorWorkCascade() {
-  final tile = iceTile('P2');
-  iceExpectMoveTo(
-    'u_explorer',
-    tile,
-    label: 'move w/ existing work for same unit',
-    basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
-  );
+  iceExpectMoveXorWorkCascade();
 }
 
 void _moveNonEmptyBasePrefix() {
-  final tile = iceTile('P2');
-  iceExpectMoveTo(
-    'u_builder',
-    tile,
-    label: 'builder w/ prior explorer move in basePrefix',
-    basePrefix: iceMovePrefix('u_explorer', 'P2'),
-  );
+  iceExpectMoveNonEmptyBasePrefix();
 }
 
 void _buildSingleCandidate() {
-  expectBuildEquivalent(
-    game: iceBuildCorpusGame(),
-    topology: iceBuildCorpusTopology,
-    playerId: IceIds.playerId,
-    basePrefix: const Orders(),
-    candidate: iceBuildUnit('pikemen'),
-    label: 'single build candidate',
-  );
+  iceExpectBuildSingleCandidate();
 }
 
 void _buildSuccessiveProbes() {
-  iceExpectBuildProbes([
-    iceBuildUnit('pikemen'),
-    iceBuildUnit('musketeers'),
-  ]);
+  iceExpectBuildSuccessiveProbes();
 }
 
 void _workNonEmptyBasePrefix() {
-  final tile = iceTile('P2');
-  iceExpectWorkOnCorpus(
-    basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
-    candidate: WorkOrder(
-      unitId: 'u_explorer',
-      target: kWorkTargetExplore,
-      targetTileKey: tile,
-    ),
-    label: 'duplicate work unit with basePrefix',
-  );
+  iceExpectWorkNonEmptyBasePrefix();
 }
 
 void _diplomaticNonEmptyBasePrefix() {
-  iceExpectDiplomaticOnCorpus(
-    basePrefix: iceDeclareWarPrefix('p2'),
-    candidate: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'p2',
-    ),
-    label: 'same-target non-economic conflict',
-  );
+  iceExpectDiplomaticNonEmptyBasePrefix();
 }
 
 void _diplomaticSequentialProbes() {
-  iceExpectDiplomaticProbes(
-    [
-      const DiplomaticOrder(
-        type: DiplomaticOrderType.alliance,
-        targetFactionId: 'p2',
-      ),
-      const DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: 'p3',
-      ),
-      const DiplomaticOrder(
-        type: DiplomaticOrderType.alliance,
-        targetFactionId: 'p2',
-      ),
-    ],
-    basePrefix: iceDeclareWarPrefix('p2'),
-  );
+  iceExpectDiplomaticSequentialProbes();
 }
 
 void _prefetchedFactionMembership() {
-  iceExpectPrefetchedArmyMove(
-    const ArmyMoveOrder(
-      armyId: 'field_a',
-      destinationProvinceId: 'oldWorld|P4',
-    ),
-  );
+  iceExpectPrefetchedFactionMembershipProbe();
 }
 
 void _armyMoveOwnAdjacent() {
-  iceExpectArmyMoveTo('field_a', 'P2', label: 'own adjacent');
+  iceExpectArmyMoveOwnAdjacent();
 }
 
 void _armyMoveGpNoWar() {
-  iceExpectArmyMoveTo('field_a', 'P3', label: 'GP no war');
+  iceExpectArmyMoveGpNoWar();
 }
 
 void _armyMoveGpDeclareWar() {
-  iceExpectArmyMoveTo(
-    'field_a',
-    'P3',
-    label: 'GP with declare war',
-    basePrefix: iceDeclareWarPrefix('p2'),
-  );
+  iceExpectArmyMoveGpDeclareWar();
 }
 
 void _armyMoveMinorNoWar() {
-  iceExpectArmyMoveTo('field_a', 'P4', label: 'minor no war');
+  iceExpectArmyMoveMinorNoWar();
 }

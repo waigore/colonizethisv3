@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'naval_order_validator_expectation_shorthand.dart';
 import 'naval_order_validator_test_support.dart';
 
 MapTopology novSingleSea() => navalOrderValidatorTestTopology(
@@ -85,7 +84,7 @@ NavalOrderValidator novValidatorAtSea({
   List<Province>? oldWorldProvinces,
   List<Player>? players,
 }) =>
-    novValidator(
+    navalOrderValidatorForTest(
       game: navalOrderValidatorTestGame(
         fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
         oldWorldProvinces: oldWorldProvinces ?? const [],
@@ -106,7 +105,7 @@ NavalOrderValidator novValidatorInPort({
   List<Fleet>? fleets,
   String portLocalId = 'P1',
 }) =>
-    novValidator(
+    navalOrderValidatorForTest(
       game: navalOrderValidatorTestGame(
         oldWorldProvinces: novOwnedP1Provinces(),
         fleets: fleets ?? [navalOrderValidatorTestFleetInPort()],

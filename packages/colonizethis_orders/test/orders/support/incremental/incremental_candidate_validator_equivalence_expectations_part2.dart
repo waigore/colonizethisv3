@@ -1,49 +1,33 @@
 part of 'incremental_candidate_validator_equivalence_expectations.dart';
 
 void _armyMoveMissingArmy() {
-  iceExpectArmyMoveTo('unknown_army', 'P2', label: 'unknown army');
+  iceExpectArmyMoveMissingArmy();
 }
 
 void _navalMoveAdjacentSea() {
-  iceExpectNavalMoveTo(
-    'fleet_atSea',
-    'oldWorld|sea2',
-    label: 'sea1->sea2',
-  );
+  iceExpectNavalMoveAdjacentSea();
 }
 
 void _navalMoveNonAdjacentSea() {
-  iceExpectNavalMoveTo(
-    'fleet_atSea',
-    'oldWorld|seaZ',
-    label: 'sea1->unknown',
-  );
+  iceExpectNavalMoveNonAdjacentSea();
 }
 
 void _navalMoveUndock() {
-  iceExpectNavalMoveTo(
-    'fleet_inPort',
-    'oldWorld|sea1',
-    label: 'inPort->sea1',
-  );
+  iceExpectNavalMoveUndock();
 }
 
 void _navalMoveMissingFleet() {
-  iceExpectNavalMoveTo(
-    'unknown_fleet',
-    'oldWorld|sea1',
-    label: 'unknown fleet',
-  );
+  iceExpectNavalMoveMissingFleet();
 }
 
 void _navalMissionPatrol() {
-  iceExpectNavalMissionFor('fleet_atSea', 'patrol', label: 'patrol owned');
+  iceExpectNavalMissionPatrol();
 }
 
 void _navalMissionBlockadeNoTarget() {
-  iceExpectNavalMissionFor('fleet_atSea', 'blockade', label: 'blockade no target');
+  iceExpectNavalMissionBlockadeNoTarget();
 }
 
 void _navalMissionMissingFleet() {
-  iceExpectNavalMissionFor('unknown_fleet', 'patrol', label: 'unknown fleet');
+  iceExpectNavalMissionMissingFleet();
 }
