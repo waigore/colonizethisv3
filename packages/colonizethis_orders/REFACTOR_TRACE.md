@@ -1612,6 +1612,29 @@ Migrated imperative `order_suggestion_shared_validator_negative_test.dart` and `
 
 test/ LOC after slice 94: **38,695** (net +72 from post–slice 93; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 95 — feedstock bootstrap, town-work prefilter, lock-recovery guard, build-phase index maps scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wocfb-castiron-lumber | omits castIron for unimproved feedstock tile when gate active and stockpile has lumber only | `work_order_cost_calculator_feedstock_bootstrap_test.dart` | `support/validators/work_order_cost_calculator_feedstock_bootstrap_{fixtures,scenarios,expectations}.dart` + thin runner | #2847, #3949 |
+| wocfb-castiron-affordable | keeps full cost when castIron is already affordable (negative control) | same | same | #3949 |
+| wocfb-non-feedstock | keeps full cost on non-feedstock tile while gate active (negative control) | same | same | #3949 |
+| wocfb-lumber-bootstrap | omits lumber and castIron for unimproved feedstock tile when gate active and stockpile has neither input (Refs #2847 lumber bootstrap) | same | same | #2847, #3949 |
+| wocfb-no-lumber-waiver | does not waive lumber when castIron is already affordable (negative control) | same | same | #3949 |
+| vwt-town-owned | upgrade_town includes town tiles only in owned provinces with a town | `order_suggestion_work_tile_prefilter_town_work_test.dart` | `support/suggestion/order_suggestion_work_tile_prefilter_town_work_{fixtures,scenarios,expectations}.dart` + thin runner | #3949 |
+| vwt-fort-match | build_fort matches upgrade_town town-tile prefilter for shared owned set | same | same | #3949 |
+| vwt-cache-path | default path derives owned provinces from ProvinceOwnerCache (Phase 6b) | same | same | #3949 |
+| blr-positive | positive control: a broke GP with riches CAN train the cheapest regiment (proves the negative guard is non-vacuous) | `order_suggestion_build_lock_recovery_affordability_guard_test.dart` | `support/suggestion/order_suggestion_build_lock_recovery_affordability_guard_{fixtures,scenarios,expectations}.dart` + thin runner | #2924, #3949 |
+| blr-ai-no-bypass | affordability regression guard: AI GP at treasury 0 with no riches gets zero regiment build candidates (no AI bypass) | same | same | #2924, #3949 |
+| blr-human-suggestions | human-player guard: human at treasury 0 with no riches gets zero regiment suggestions (no human waiver) | same | same | #2924, #3949 |
+| blr-human-validation | human-player guard: the build-validation path rejects a human regiment build at treasury 0 (UI submission path, no waiver) | same | same | #2924, #3949 |
+| rbpi-military | consecutive military recruits build one home army with all regiments | `run_build_phase_index_maps_test.dart` | `support/application/run_build_phase_index_maps_{fixtures,scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+| rbpi-naval | consecutive ship recruits add ships to a single home fleet (cache reuse) | same | same | #2394, #3949 |
+
+Migrated four remaining imperative suites to table-driven scenarios with dedicated support modules. All fourteen baseline descriptions preserved.
+
+test/ LOC after slice 95: **38,981** (net +286 from post–slice 94; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
