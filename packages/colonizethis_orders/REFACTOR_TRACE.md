@@ -890,6 +890,26 @@ Migrated imperative `order_resolution_context_test.dart` and `explorer_consulate
 
 test/ LOC after slice 54: **33,665** (net +194 from post–slice 53). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 55: civilian projected tile + propagate road + partial province reveal scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| cpt-prefers-pending | prefers pending work-order target tile key | `civilian_projected_tile_test.dart` | `support/application/civilian_projected_tile_scenarios.dart` + expectations + thin runner | #3949 |
+| cpt-explore-exact | keeps exact pending tile key for explore projection | same | same | #3949 |
+| prac-null-player | returns unchanged when player is null | `propagate_road_to_adjacent_capital_test.dart` | `support/application/propagate_road_to_adjacent_capital_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| prac-bad-key | returns unchanged when tile key is malformed | same | same | #3949 |
+| prac-capital | propagates road level to adjacent capital tile when higher | same | same | #3949 |
+| prac-port | propagates road level to adjacent port tile when higher | same | same | #3949 |
+| ppr-includes-prefixed | includes prefixed province id when land tiles mix unknown and known | `partial_province_reveal_test.dart` | `support/engine/partial_province_reveal_scenarios.dart` + expectations + thin runner | #3949 |
+| ppr-excludes-unprefixed | excludes unprefixed province keys and uniform visibility | same | same | #3949 |
+| ppr-resolve-provinces | partial reveal ids resolve via provincesById to same set as allProvinces filter | same | same | #3949 |
+| ppr-empty-scan | returns empty list without scanning when id set is empty | same | same | #3949 |
+| ppr-sorted-match | returns matching provinces sorted by id | same | same | #3949 |
+
+Migrated imperative `civilian_projected_tile_test.dart`, `propagate_road_to_adjacent_capital_test.dart`, and `partial_province_reveal_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline partial-reveal baseline descriptions as single-line scenario labels. Removed all three files from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 55: **33,844** (net +179 from post–slice 54; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
