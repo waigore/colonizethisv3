@@ -221,3 +221,87 @@ Game wccEngineerCompletionGame({
     oldProvinces: const [],
   );
 }
+
+void wccExpectBuildImprovementCompletesToLevel(
+  int toLevel, {
+  int fromLevel = 0,
+  Map<String, String>? resourceByTileKey,
+  int turnNumber = 0,
+  String ownerId = 'p1',
+  List<Player>? players,
+  Map<String, bool>? aiControlByGpId,
+  String? lastHumanCompletedResearchCategory,
+  int? lastHumanResearchCategoryCompletionTurn,
+}) {
+  final next = wccApply(
+    workAppOwnedGame(
+      turnNumber: turnNumber,
+      units: [wccBuilderImprovement(ownerId: ownerId)],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, fromLevel),
+      resourceByTileKey: resourceByTileKey,
+      provinces: ownerId != 'p1' ? [workAppOwnedProvince(ownerId: ownerId)] : null,
+      players: players,
+      aiControlByGpId: aiControlByGpId,
+      lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
+      lastHumanResearchCategoryCompletionTurn:
+          lastHumanResearchCategoryCompletionTurn,
+    ),
+  );
+  wccExpectImprovement(next, toLevel);
+  final after = wccSingleUnit(next);
+  expect(after.tileKey, WorkAppIds.tileKey);
+  expect(after.originTileKey, isNull);
+  expect(after.assignedTileKey, isNull);
+}
+
+void wccExpectBuildImprovementEnvyMirrorHint() {
+  final next = wccApply(
+    workAppOwnedGame(
+      turnNumber: 2,
+      units: [wccBuilderImprovement()],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+    ),
+  );
+  expect(next.lastHumanCompletedResearchCategory, 'gathering');
+  expect(next.lastHumanResearchCategoryCompletionTurn, 2);
+}
+
+void wccExpectBuildImprovementEnvyEvidenceForAi() {
+  const aiId = 'ai1';
+  final next = wccApply(
+    workAppOwnedGame(
+      turnNumber: 1,
+      units: [wccBuilderImprovement(ownerId: aiId)],
+      provinces: [workAppOwnedProvince(ownerId: aiId)],
+      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+      resourceByTileKey: const {WorkAppIds.tileKey: 'coal'},
+      players: const [
+        Player(id: 'human', displayName: 'H', isHuman: true),
+        Player(id: aiId, displayName: 'AI', isHuman: false),
+      ],
+      aiControlByGpId: const {aiId: true},
+      lastHumanCompletedResearchCategory: 'gathering',
+      lastHumanResearchCategoryCompletionTurn: 0,
+    ),
+  );
+  final envy = next.dossierEvidenceEntries
+      .where((e) => e.agendaType == 'envy')
+      .toList();
+  expect(envy, isNotEmpty);
+  expect(envy.single.subjectId, aiId);
+  expect(envy.single.scoreDelta, 1);
+}
+
+void wccExpectBuildImprovementTechCap1291Unchanged() {
+  expect(
+    extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
+    1,
+  );
+  wccExpectBuildImprovementCompletesToLevel(
+    4,
+    fromLevel: 3,
+    resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+    players: [workAppPlayer(techUnlocked: const {kTechIdSawMill: true})],
+  );
+}

@@ -36,81 +36,23 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
   switch (target) {
     case WorkCompletionTarget
         .buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork:
-      final next = wccApply(
-          workAppOwnedGame(
-            units: [wccBuilderImprovement()],
-            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
-          ),
-        );
-        wccExpectImprovement(next, 1);
-        final after = wccSingleUnit(next);
-        expect(after.tileKey, WorkAppIds.tileKey);
-        expect(after.originTileKey, isNull);
-        expect(after.assignedTileKey, isNull);
+      wccExpectBuildImprovementCompletesToLevel(1);
     case WorkCompletionTarget
         .buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile:
-      final next = wccApply(
-          workAppOwnedGame(
-            turnNumber: 2,
-            units: [wccBuilderImprovement()],
-            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
-            resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
-          ),
-        );
-        expect(next.lastHumanCompletedResearchCategory, 'gathering');
-        expect(next.lastHumanResearchCategoryCompletionTurn, 2);
+      wccExpectBuildImprovementEnvyMirrorHint();
     case WorkCompletionTarget
         .buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint:
-      const aiId = 'ai1';
-        final next = wccApply(
-          workAppOwnedGame(
-            turnNumber: 1,
-            units: [wccBuilderImprovement(ownerId: aiId)],
-            provinces: [workAppOwnedProvince(ownerId: aiId)],
-            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
-            resourceByTileKey: const {WorkAppIds.tileKey: 'coal'},
-            players: const [
-              Player(id: 'human', displayName: 'H', isHuman: true),
-              Player(id: aiId, displayName: 'AI', isHuman: false),
-            ],
-            aiControlByGpId: const {aiId: true},
-            lastHumanCompletedResearchCategory: 'gathering',
-            lastHumanResearchCategoryCompletionTurn: 0,
-          ),
-        );
-        final envy = next.dossierEvidenceEntries
-            .where((e) => e.agendaType == 'envy')
-            .toList();
-        expect(envy, isNotEmpty);
-        expect(envy.single.subjectId, aiId);
-        expect(envy.single.scoreDelta, 1);
+      wccExpectBuildImprovementEnvyEvidenceForAi();
     case WorkCompletionTarget
         .buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax:
-      final next = wccApply(
-          workAppOwnedGame(
-            units: [wccBuilderImprovement()],
-            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
-            resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
-          ),
-        );
-        wccExpectImprovement(next, 4);
+      wccExpectBuildImprovementCompletesToLevel(
+        4,
+        fromLevel: 3,
+        resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
+      );
     case WorkCompletionTarget
         .buildImprovementCompletionDoesNotReApplyExtractionTechCap1291:
-      expect(
-          extractionCapForResourceForUnlocked(const {kTechIdSawMill: true}, 'grain'),
-          1,
-        );
-        final next = wccApply(
-          workAppOwnedGame(
-            units: [wccBuilderImprovement()],
-            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
-            resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
-            players: [
-              workAppPlayer(techUnlocked: const {kTechIdSawMill: true}),
-            ],
-          ),
-        );
-        wccExpectImprovement(next, 4);
+      wccExpectBuildImprovementTechCap1291Unchanged();
     case WorkCompletionTarget
         .workCancelledWhenProvinceContainingTargetTileIsConquered376:
       final next = wccApply(

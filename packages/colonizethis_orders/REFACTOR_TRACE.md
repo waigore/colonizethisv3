@@ -1986,6 +1986,18 @@ test/ LOC after slice 124: **37,382** (net −29 from post–slice 123). Remaini
 
 test/ LOC after slice 125: **37,384** (net +2 from post–slice 124; helper overhead ~balanced by dispatcher compaction). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 126: purchase/build dispatch + move/work-completion DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-purchase-dispatch | extract `vwExpectPurchaseLandRejected` / `vwExpectPurchaseLandAccepted` / `vwExpectPurchaseLandMineral`; compact ten purchase-land validate-work cases | `order_engine_validate_work_expectations.dart` | `order_engine_validate_work_expectation_shorthand_part1.dart` | #3949 |
+| vw-build-dispatch | extract `vwExpectBuildImprovementOutcome` / tech-cap/scrub/fort dispatch helpers; compact build-improvement validate-work cases | same | same | #3949 |
+| vwt-build-vis-dispatch | extract `vwtExpectControlledTilesWithResourcesOnly` / purchased/sea/explore/move/suggest dispatch helpers | `valid_work_tiles_expectations.dart` | `valid_work_tiles_expectation_shorthand_part1.dart` | #3949 |
+| osc-move-dispatch | extract move validation/throws/civilian-location dispatch helpers; compact naval/build list-return cases | `order_suggestion_core_expectations.dart` | `order_suggestion_core_expectation_shorthand_part1.dart` | #3949 |
+| wcc-build-dispatch | extract `wccExpectBuildImprovementCompletesToLevel` / envy-mirror / tech-cap1291 helpers | `work_completion_expectations.dart` | `work_completion_expectation_shorthand_part1.dart` | #3949 |
+
+test/ LOC after slice 126: **37,513** (net +129 from post–slice 125; helper definitions front-load overhead — switch bodies thinner for follow-up reuse). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

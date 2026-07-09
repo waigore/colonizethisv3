@@ -261,3 +261,197 @@ void vwExpectBuildImprovementMineral({required bool prospected}) {
     vwExpectRejected(result, reasonContains: 'prospected');
   }
 }
+
+void vwExpectPurchaseLandRejected({
+  int treasury = 500,
+  List<OvertureState>? overtureStates = purchaseLandEmbassyOverture,
+  List<DiplomacyRelation>? diplomacyRelations,
+  Map<String, String>? resourceByTileKey,
+  Map<String, Set<String>>? playerProspectedTiles,
+  Map<String, String>? purchasedTilesByTileKey,
+  required String reasonContains,
+}) {
+  vwExpectRejected(
+    vwRunPurchaseLand(
+      vwPurchaseLandGame(
+        treasury: treasury,
+        overtureStates: overtureStates,
+        diplomacyRelations: diplomacyRelations,
+        resourceByTileKey: resourceByTileKey,
+        playerProspectedTiles: playerProspectedTiles,
+        purchasedTilesByTileKey: purchasedTilesByTileKey,
+      ),
+    ),
+    reasonContains: reasonContains,
+  );
+}
+
+void vwExpectPurchaseLandAccepted({
+  int treasury = 500,
+  List<OvertureState>? overtureStates = purchaseLandEmbassyOverture,
+  Map<String, String>? resourceByTileKey,
+  Map<String, Set<String>>? playerProspectedTiles,
+}) {
+  vwExpectAccepted(
+    vwRunPurchaseLand(
+      vwPurchaseLandGame(
+        treasury: treasury,
+        overtureStates: overtureStates,
+        resourceByTileKey: resourceByTileKey,
+        playerProspectedTiles: playerProspectedTiles,
+      ),
+    ),
+  );
+}
+
+void vwExpectPurchaseLandMineral({required bool prospected}) {
+  final tk = PurchaseLandTestFixture.tileKey;
+  if (prospected) {
+    vwExpectPurchaseLandAccepted(
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {'p1': {tk}},
+    );
+  } else {
+    vwExpectPurchaseLandRejected(
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {},
+      reasonContains: 'prospected',
+    );
+  }
+}
+
+void vwExpectBuildImprovementOutcome({
+  required Game game,
+  Map<String, TileMapResult>? tileMapByRegion,
+  String targetTileKey = ValidateWorkOw.tileKey,
+  required bool accepted,
+  String? reasonContains,
+  void Function(OrderValidationResult result)? onRejected,
+}) {
+  final result = vwValidateBuildImprovement(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    targetTileKey: targetTileKey,
+  );
+  if (accepted) {
+    vwExpectAccepted(result);
+  } else {
+    vwExpectRejected(result, reasonContains: reasonContains);
+    onRejected?.call(result);
+  }
+}
+
+void vwExpectDualPendingWorkRejected() {
+  const tileA = ValidateWorkOw.tileKey;
+  const tileB = '${ValidateWorkOw.provinceId}|1|0';
+  vwExpectDualWorkOrders(
+    game: dualTilePendingWorkGame(),
+    first: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileA,
+    ),
+    second: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileB,
+    ),
+    statuses: const [
+      OrderValidationStatus.accepted,
+      OrderValidationStatus.rejected,
+    ],
+    lastReasonContains: 'Only one work order per unit is allowed each turn',
+  );
+}
+
+void vwExpectBuilderEngineerSameTileExclusivityRejected() {
+  const tileKey = ValidateWorkOw.tileKey;
+  vwExpectDualWorkOrders(
+    game: builderEngineerSameTileExclusivityGame(),
+    first: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileKey,
+    ),
+    second: const WorkOrder(
+      unitId: 'engineer1',
+      target: kWorkTargetBuildRoad,
+      targetTileKey: tileKey,
+    ),
+    statuses: const [
+      OrderValidationStatus.accepted,
+      OrderValidationStatus.rejected,
+    ],
+    lastReasonContains: 'Tile already has development or purchase work',
+  );
+}
+
+void vwExpectBuildImprovementTechCapEmptyTechRejected() {
+  vwExpectBuildImprovementOutcome(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
+    ),
+    accepted: false,
+    reasonContains: 'Insufficient tech',
+    onRejected: (result) {
+      expect(result.reason, contains('grain'));
+      expect(result.reason, contains('cap 1'));
+    },
+  );
+}
+
+void vwExpectScrubTimberRejectAtLevel1() {
+  vwExpectBuildImprovementOutcome(
+    game: scrubCapBaseGame(level: 1),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+    accepted: false,
+    reasonContains: 'Terrain caps',
+    onRejected: (result) => expect(result.reason, contains('level 1')),
+  );
+}
+
+void vwExpectHardwoodTimberAcceptAtLevel1() {
+  vwExpectBuildImprovementOutcome(
+    game: scrubCapBaseGame(level: 1),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.hardwoodForest),
+    accepted: true,
+  );
+}
+
+void vwExpectInitialScrubTimberAcceptAtLevel0() {
+  vwExpectBuildImprovementOutcome(
+    game: scrubCapBaseGame(level: 0),
+    tileMapByRegion: scrubCapTileMaps(TerrainType.scrubForest),
+    accepted: true,
+  );
+}
+
+void vwExpectBuildImprovementOnPurchasedForeignTile() {
+  final foreignTileKey = validateWorkForeignTileKey();
+  vwExpectBuildImprovementOutcome(
+    game: buildImprovementForeignProvinceGame(
+      purchasedTilesByTileKey: {foreignTileKey: 'p1'},
+    ),
+    targetTileKey: foreignTileKey,
+    accepted: true,
+  );
+}
+
+void vwExpectRejectFortLevel2WithoutMineEngineering() {
+  vwExpectRejected(
+    vwValidateOwWorkTarget(
+      game: fortWorkGame(
+        fortLevel: 1,
+        stockpile: Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 4)
+            .applyDelta(CommodityCatalog.bronze.id, 4),
+        techUnlocked: const {},
+      ),
+      unitId: 'eng1',
+      target: kWorkTargetBuildFort,
+    ),
+    reasonContains: 'Mine Engineering',
+  );
+}

@@ -69,83 +69,14 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         final withoutVis = vwtPlainKeys(visGame, 'u1', kWorkTargetBuildImprovement);
         expect(withVis.length, withoutVis.length);
     case ValidWorkTilesTarget.buildImprovementReturnsOnlyControlledTilesWithResources:
-      final tileWithResource = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        final tileWithoutResource = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-        final foreignTileWithResource = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-        vwtExpectBuildVisMembership(
-          owBuilderVisibilityGame(
-            provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'other')],
-            tilesByProvince: {
-              ValidWorkTilesTestSupport.provinceId('p1'): [
-                tileWithResource,
-                tileWithoutResource,
-              ],
-              ValidWorkTilesTestSupport.provinceId('p2'): [
-                foreignTileWithResource,
-              ],
-            },
-            resourceByTileKey: {
-              tileWithResource: 'grain',
-              foreignTileWithResource: 'iron',
-            },
-            builderTileKey: tileWithResource,
-            improvementByTile: {tileWithResource: 0},
-            extraPlayers: const [
-              Player(id: 'other', displayName: 'Other', isHuman: false),
-            ],
-          ),
-          included: [tileWithResource],
-          excluded: [tileWithoutResource, foreignTileWithResource],
-        );
+      vwtExpectControlledTilesWithResourcesOnly();
     case ValidWorkTilesTarget
         .buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected:
       vwtExpectMineralBuildVisBeforeAfterProspect();
     case ValidWorkTilesTarget.buildImprovementIncludesPurchasedTilesWithResources:
-      final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-        final unpurchased = ValidWorkTilesTestSupport.tileKey('p2', 1, 0);
-        final ownTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        vwtExpectBuildVisMembership(
-          owBuilderVisibilityGame(
-            provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'minor1')],
-            tilesByProvince: {
-              ValidWorkTilesTestSupport.provinceId('p1'): [ownTile],
-              ValidWorkTilesTestSupport.provinceId('p2'): [
-                purchased,
-                unpurchased,
-              ],
-            },
-            resourceByTileKey: {purchased: 'grain', unpurchased: 'grain'},
-            builderTileKey: ownTile,
-            improvementByTile: {purchased: 0},
-            purchasedTilesByTileKey: {
-              purchased: ValidWorkTilesTestSupport.playerId,
-            },
-            minorNations: const [
-              MinorNation(id: 'minor1', displayName: 'Minor'),
-            ],
-          ),
-          included: [purchased],
-          excluded: [unpurchased],
-        );
+      vwtExpectPurchasedTilesIncluded();
     case ValidWorkTilesTarget.buildImprovementExcludesSeaZoneTiles:
-      final landTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        const seaZoneId = 's1';
-        final seaTile = ValidWorkTilesTestSupport.tileKey(seaZoneId, 0, 0);
-        vwtExpectBuildVisMembership(
-          owBuilderVisibilityGame(
-            provinces: [vwtOwnedProvince('p1')],
-            tilesByProvince: {
-              ValidWorkTilesTestSupport.provinceId('p1'): [landTile],
-            },
-            resourceByTileKey: {landTile: 'grain', seaTile: 'fish'},
-            builderTileKey: landTile,
-            improvementByTile: {landTile: 0},
-            seaZoneId: seaZoneId,
-            seaTiles: [seaTile],
-          ),
-          included: [landTile],
-          excluded: [seaTile],
-        );
+      vwtExpectSeaZoneExcludedFromBuild();
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected:
       final grassTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
@@ -189,101 +120,16 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces:
-      final fx = owTribeExploreMultiProvinceFixture();
-        final exploreValid = validWorkTilesWithVisibility(
-          game: fx.game,
-          topology: ValidWorkTilesTestSupport.emptyTopology,
-          unitId: 'u1',
-          workTarget: kWorkTargetExplore,
-        );
-        for (final tile in [fx.partialKnownTile]) {
-          expect(exploreValid, contains(tile));
-        }
-        for (final tile in [fx.fullTile, fx.unknownTile]) {
-          expect(exploreValid, isNot(contains(tile)));
-        }
+      vwtExpectExplorePartialProvinceScan();
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture:
-      final latencyGame = owTribeExploreLatencyGame();
-        final latencyTopology = ValidWorkTilesTestSupport.emptyTopology;
-        final sw = Stopwatch()..start();
-        final valid = validWorkTilesWithVisibility(
-          game: latencyGame,
-          topology: latencyTopology,
-          unitId: 'u1',
-          workTarget: kWorkTargetExplore,
-        );
-        sw.stop();
-        expect(valid, isNotEmpty);
-        expect(sw.elapsedMilliseconds, lessThan(1000));
+      vwtExpectExploreLatencyUnderOneSecond();
     case ValidWorkTilesTarget.suggestmoveordersExcludesMovesToOtherGreatPowerProvinces:
-      final fx = owGpAdjacentMoveFixture();
-        final view = buildPlayerView(
-          fx.game,
-          fx.topology,
-          ValidWorkTilesTestSupport.playerId,
-        );
-        final suggestions = suggestMoveOrders(
-          view,
-          fx.game,
-          fx.topology,
-          const Orders(),
-        );
-        expect(
-          suggestions.where(
-            (m) =>
-                Unit.provinceIdFromTileKey(m.destinationTileKey) ==
-                fx.otherGpProvinceId,
-          ),
-          isEmpty,
-        );
+      vwtExpectMoveExcludesGpProvince();
     case ValidWorkTilesTarget.suggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch:
-      final tileKeys = [
-          ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-          ValidWorkTilesTestSupport.tileKey('p1', 1, 0),
-          ValidWorkTilesTestSupport.tileKey('p1', 2, 0),
-        ];
-        final sortGame = owGrainBuildSuggestGame(tileKeys: tileKeys);
-        final sortTopology = owSingleProvinceTopology('p1');
-        final buildSuggestions = suggestedWorkOrders(
-          game: sortGame,
-          topology: sortTopology,
-        ).where((o) => o.target == kWorkTargetBuildImprovement).toList();
-        if (buildSuggestions.length > 1) {
-          for (var i = 0; i < buildSuggestions.length - 1; i++) {
-            expect(
-              buildSuggestions[i].targetTileKey.compareTo(
-                buildSuggestions[i + 1].targetTileKey,
-              ),
-              lessThanOrEqualTo(0),
-            );
-          }
-        }
+      vwtExpectBuildSuggestSortedByTileKey();
     case ValidWorkTilesTarget.suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit:
-      final tile0 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        final tile1 = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-        final reservedGame = owGrainBuildSuggestGame(tileKeys: [tile0, tile1]);
-        final reservedTopology = owSingleProvinceTopology('p1');
-        final buildSuggestions = suggestedWorkOrders(
-          game: reservedGame,
-          topology: reservedTopology,
-          currentOrders: Orders(
-            workOrdersByPlayerId: {
-              ValidWorkTilesTestSupport.playerId: [
-                WorkOrder(
-                  unitId: 'u1',
-                  target: kWorkTargetBuildImprovement,
-                  targetTileKey: tile0,
-                ),
-              ],
-            },
-          ),
-        ).where(
-          (o) =>
-              o.target == kWorkTargetBuildImprovement &&
-              o.targetTileKey == tile0,
-        );
-        expect(buildSuggestions, isEmpty);
+      vwtExpectBuildSuggestExcludesReservedTile();
     case ValidWorkTilesTarget
         .suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut:
       final exploreFx = NwPartialRevealHomeTarget(

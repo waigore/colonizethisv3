@@ -278,3 +278,236 @@ Game oscMerchantPurchaseLandSuggestGame() {
     ],
   );
 }
+
+void oscExpectMovePassesValidationToAdjacentProvince() {
+  oscExpectMoveSuggestOne(
+    oscGame(
+      worldState: oscWorld(
+        oldWorld: RegionData(
+          provinces: [
+            oscProvince('p1', ownerId: OscIds.playerId),
+            oscProvince('p2'),
+          ],
+          units: [oscExplorer()],
+        ),
+        tileKeysByRegionAndProvince: oscTilesByProvince({
+          'p2': [OscIds.tile('p2', 0, 0)],
+        }),
+        playerVisibilityByTile: oscVisibility({
+          OscIds.tile('p1', 0, 0): 'fullyVisible',
+          OscIds.tile('p2', 0, 0): 'fogged',
+        }),
+      ),
+    ),
+    oscTwoProvincesConnected('p1', 'p2'),
+    destTileKey: OscIds.tile('p2', 0, 0),
+  );
+}
+
+void oscExpectMoveThrowsWhenSourceProvinceUnknown() {
+  final game = oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [
+          oscProvince('p1', ownerId: OscIds.playerId),
+          oscProvince('p2', ownerId: OscIds.playerId),
+        ],
+        units: [oscExplorer()],
+      ),
+    ),
+  );
+  expect(
+    () => suggestMoveOrders(
+      oscView(game, oscTwoProvincesConnected('p1', 'p2')),
+      game,
+      oscTwoProvincesConnected('p1', 'p2'),
+      const Orders(),
+    ),
+    throwsStateError,
+  );
+}
+
+void oscExpectCivilianMoveUsesTileKeyDerivedLocation() {
+  final unit = oscExplorer(
+    provinceLocal: 'p1',
+    tileKey: OscIds.tile('p2', 0, 0),
+  );
+  final game = oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [
+          oscProvince('p1', ownerId: OscIds.playerId),
+          oscProvince('p2', ownerId: OscIds.playerId),
+          oscProvince('p3', ownerId: OscIds.playerId),
+        ],
+        units: [unit],
+      ),
+      tileKeysByRegionAndProvince: oscTilesByProvince({
+        'p3': [OscIds.tile('p3', 0, 0)],
+      }),
+      playerVisibilityByTile: oscVisibility({
+        OscIds.tile('p2', 0, 0): 'fullyVisible',
+        OscIds.tile('p3', 0, 0): 'fogged',
+      }),
+    ),
+  );
+  final topology = oscProvinceTopology(
+    ['p1', 'p2', 'p3'],
+    edges: const [TopologyEdge(id1: 'p2', id2: 'p3')],
+  );
+  final moves = oscSuggestMoves(game, topology);
+  expect(moves.length, 1);
+  expect(moves.first.unitId, 'u1');
+  expect(moves.first.destinationTileKey, OscIds.tile('p3', 0, 0));
+  expect(
+    oscView(game, topology).ownUnitsById['u1']!.locationProvinceId,
+    OscIds.prov('p2'),
+  );
+}
+
+void oscExpectExploreTargetUsesExplore() {
+  final t0 = OscIds.tile('p1', 0, 0);
+  final t1 = OscIds.tile('p1', 1, 0);
+  final suggestions = oscSuggestWork(
+    oscExplorerProvinceGame(
+      visibilityByTile: {t0: 'fullyVisible', t1: 'unknown'},
+      tilesByLocal: {'p1': [t0, t1]},
+    ),
+    oscProvinceTopology(['p1']),
+  );
+  expect(
+    oscWorkWithTarget(suggestions, kWorkTargetExplore),
+    isNotEmpty,
+  );
+}
+
+void oscExpectPartialRevealExploreCacheScope() {
+  final game = oscPartialRevealExploreCacheGame();
+  final topology = oscEmptyTopology();
+  final explore = oscWorkWithTarget(
+    oscSuggestWork(game, topology),
+    kWorkTargetExplore,
+  );
+  expect(explore, isNotEmpty);
+  expect(
+    Unit.provinceIdFromTileKey(explore.first.targetTileKey),
+    OscIds.prov('p_partial'),
+  );
+}
+
+void oscExpectProvinceViewMatchesAllForProspect() {
+  final game = oscGame(
+    worldState: oscExplorerProvinceGame(
+      extraProvinceLocals: ['p2'],
+      extraOwners: ['minor1'],
+      visibilityByTile: {OscIds.tile('p1', 0, 0): 'fogged'},
+      tilesByLocal: {
+        'p1': [OscIds.tile('p1', 0, 0)],
+        'p2': [OscIds.tile('p2', 0, 0)],
+      },
+    ).worldState,
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+  );
+  final fromAll = allProvinces(game.worldState).toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final fromView = oscView(game, oscProvinceTopology(['p1', 'p2']))
+      .provincesById
+      .values
+      .toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  expect(fromView.length, fromAll.length);
+  expect(
+    fromView.map((p) => p.id).toList(),
+    fromAll.map((p) => p.id).toList(),
+  );
+}
+
+void oscExpectReservedTileExcludedFromValidKeys() {
+  final setup = OscDualBuilderGrainTiles();
+  final validB2 = getValidWorkOrderTileKeysWithVisibility(
+    game: setup.game(),
+    topology: setup.topology(),
+    view: oscView(setup.game(), setup.topology()),
+    unitId: 'b2',
+    workTarget: kWorkTargetBuildImprovement,
+    currentOrders: setup.ordersReservingTileA(),
+  );
+  expect(validB2, isNot(contains(setup.tileA)));
+  expect(validB2, contains(setup.tileB));
+}
+
+void oscExpectWorkerSuggestionsUseUnitLocation() {
+  final tileKey = OscIds.tile('p1', 0, 0);
+  final workerGame = oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+        units: [oscBuilder()],
+      ),
+      playerVisibilityByTile: oscVisibility({tileKey: 'fullyVisible'}),
+      tileKeysByRegionAndProvince: oscTilesByProvince({'p1': [tileKey]}),
+    ),
+    players: [oscBuilderPlayer()],
+  );
+  final workerTopology = oscProvinceTopology(['p1']);
+  for (final o in oscSuggestWork(workerGame, workerTopology)) {
+    expect(o.unitId, 'u1');
+    final u = oscView(workerGame, workerTopology).ownUnitsById[o.unitId];
+    expect(u, isNotNull);
+    expect(u!.locationProvinceId, OscIds.prov('p1'));
+  }
+}
+
+void oscExpectNavalMissionOrdersReturnsList() {
+  final game = oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')]));
+  final topology = oscSeaTopology(['sea1']);
+  expect(
+    suggestNavalMissionOrders(
+      oscView(game, topology),
+      game,
+      topology,
+      const Orders(),
+    ),
+    isA<List<NavalMissionOrder>>(),
+  );
+}
+
+void oscExpectBuildOrdersReturnsList() {
+  expect(
+    oscSuggestBuild(
+      oscCapitalProvinceGame(
+        oscPlayer(
+          capitalProvinceId: OscIds.prov('p1'),
+          workerPool: const WorkerPool(peasants: 2),
+          treasury: 500,
+        ),
+      ),
+      oscCapitalTopology(),
+    ),
+    isA<List<BuildUnitOrder>>(),
+  );
+}
+
+void oscExpectBuildOrdersReturnsShipWhenAffordable() {
+  final shipTreasury = ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost;
+  final shipStockpile = const Stockpile()
+      .applyDelta(CommodityCatalog.lumber.id, 2)
+      .applyDelta(CommodityCatalog.fabric.id, 2);
+  final shipTypes = oscSuggestBuild(
+    oscCapitalProvinceGame(
+      oscPlayer(
+        capitalProvinceId: OscIds.prov('p1'),
+        workerPool: const WorkerPool(peasants: 1),
+        treasury: shipTreasury,
+        stockpile: shipStockpile,
+      ),
+    ),
+    oscCapitalTopology(),
+  ).where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).toList();
+  expect(
+    shipTypes,
+    isNotEmpty,
+    reason:
+        'suggestBuildOrders should include ships when player has capital, treasury and stockpile for fluyte/carrack',
+  );
+}
