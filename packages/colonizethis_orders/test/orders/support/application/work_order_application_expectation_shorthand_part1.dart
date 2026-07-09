@@ -351,28 +351,6 @@ void waaExpectUnitIdsPresent(Game next, List<String> ids) {
 Game waaApplyBuildRoad(Game game) =>
     waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));
 
-void waaExpectBuildRoadInsufficientMaterials() {
-  final game = workAppOwnedGame(
-    units: [workAppUnit(type: kUnitTypeEngineer)],
-    players: [workAppPlayer(stockpile: const Stockpile())],
-  );
-  final next = waaApplyBuildRoad(game);
-  waaExpectUnitIdle(next);
-  expect(
-    next.players.single.stockpile.quantityOf(CommodityCatalog.lumber.id),
-    0,
-  );
-}
-
-void waaExpectBuildRoadWithMaterialsDeductsStockpile() {
-  final cost = workOrderCostBuildRoad;
-  final game = waaEngineerRoadGame();
-  final next = waaApplyBuildRoad(game);
-  waaExpectUnitIdle(next);
-  waaExpectRoadLevel(next, 1);
-  waaExpectStockpileDeducted(game, next, cost);
-}
-
 Game waaCounterSpyCapitalGame({String spyId = 'spy1'}) => workAppOwnedGame(
       units: [workAppUnit(id: spyId, type: kUnitTypeSpy)],
       tileKeysByRegionAndProvince: const {
@@ -399,19 +377,6 @@ Game waaExploreTwoTileGame() => workAppOwnedGame(
         },
       },
     );
-
-void waaExpectExploreWorkStarted() {
-  final next = waaApply(
-    waaExploreTwoTileGame(),
-    workAppSingleWorkOrder(target: kWorkTargetExplore),
-  );
-  final u = waaSingleUnit(next);
-  expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
-  waaExpectExploreWork(
-    next,
-    remainingTurns: u.currentWork!.totalTurns - 1,
-  );
-}
 
 Game waaExploreFormulaGame() {
   const provinceSmall = '${WorkAppIds.ow}|P1';
@@ -442,41 +407,6 @@ Game waaExploreFormulaGame() {
       },
     },
   );
-}
-
-void waaExpectExploreFormulaTiming() {
-  const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
-  final next = waaApply(
-    waaExploreFormulaGame(),
-    workAppSingleWorkOrder(
-      target: kWorkTargetExplore,
-      targetTileKey: tileSmall1,
-    ),
-  );
-  waaExpectExploreWork(next, totalTurns: 2, remainingTurns: 1);
-}
-
-void waaExpectEngineerBuildRoadApplied() {
-  final next = waaApplyBuildRoad(waaEngineerRoadGame());
-  waaExpectUnitIdle(next);
-  waaExpectRoadLevel(next, 1);
-}
-
-void waaExpectBuildPortApplied() {
-  final cost = workOrderMaterialCost(kWorkTargetBuildPort);
-  expect(cost, isNotNull);
-  final next = waaApply(
-    workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeEngineer)],
-      players: [
-        workAppPlayer(
-          stockpile: OrdersApplicationTestSupport.stockpileCovering(cost!),
-        ),
-      ],
-    ),
-    workAppSingleWorkOrder(target: kWorkTargetBuildPort),
-  );
-  waaExpectUnitIdle(next);
 }
 
 Game waaPurchaseLandNoEmbassyGame() {
@@ -535,14 +465,6 @@ Game waaCounterSpyOngoingAssignmentGame() => workAppOwnedGame(
       ],
     );
 
-void waaExpectCounterSpyOngoingAssignmentPreservesUnits() {
-  final next = waaApply(
-    waaCounterSpyOngoingAssignmentGame(),
-    workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
-  );
-  waaExpectUnitIdsPresent(next, const ['spy1', 'spy2']);
-}
-
 void waaExpectProspectEligible({
   TerrainType? terrain,
   Map<String, String>? resourceByTileKey,
@@ -564,34 +486,6 @@ void waaExpectProspectIneligible({
     resourceByTileKey: resourceByTileKey,
   );
   waaExpectProspected(next, expected: false);
-}
-
-void waaExpectPurchaseLandSuccess() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = workAppPurchaseLandGame(
-    units: [waaMerchantOnMinor()],
-    players: [workAppPlayer(treasury: cost + 100)],
-    overtureStates: [waaEmbassyOverture()],
-  );
-  final next = waaApply(game, waaPurchaseLandOrders());
-  waaExpectPurchased(next, ownerId: 'p1');
-  waaExpectTreasuryDelta(game, next, 'p1', -cost);
-  waaExpectUnitIdleAfterWork(next, tileKey: WorkAppIds.tileKeyMinor);
-}
-
-void waaExpectDualGpPurchaseLandFirstWins() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = waaDualGpPurchaseLandGame();
-  final next = waaApply(game, waaDualPurchaseLandOrders());
-  waaExpectPurchased(next, ownerId: 'p1');
-  waaExpectTreasuryDelta(game, next, 'p1', -cost);
-  waaExpectTreasuryUnchanged(game, next, 'p2');
-}
-
-void waaExpectBuildImprovementCompletesIdle() {
-  final next = waaApplyBuildImprovement();
-  waaExpectUnitIdle(next);
-  waaExpectImprovementLevel(next, 1);
 }
 
 void waaExpectBuildFortCurrentWork({int fortLevel = 1}) {
@@ -622,16 +516,6 @@ void waaExpectCounterSpyForeignCurrentWork({String spyId = 'spy1'}) {
     totalTurns: 0,
     remainingTurns: 1,
   );
-}
-
-void waaExpectBuildFortMaterialsDeducted() {
-  final cost = workOrderCostBuildFort(0);
-  final game = waaEngineerFortGame();
-  final next = waaApply(
-    game,
-    workAppSingleWorkOrder(target: kWorkTargetBuildFort),
-  );
-  waaExpectStockpileDeducted(game, next, cost);
 }
 
 void waaExpectBuildFortSkipped({
@@ -666,30 +550,4 @@ void waaExpectUpgradeTownDevelopmentApplied({int before = 1, int after = 2}) {
     workAppProcessWorkOrders(),
   );
   waaExpectTownDevelopmentLevel(next, after);
-}
-
-void waaExpectUnknownTargetIdle() {
-  final next = waaApply(
-    workAppOwnedGame(units: [workAppUnit(type: kUnitTypeBuilder)]),
-    workAppSingleWorkOrder(target: 'unknown_target'),
-  );
-  waaExpectUnitIdle(next);
-}
-
-void waaExpectBuildFortLevel2SkippedWithoutMineEngineering() {
-  waaExpectBuildFortSkipped(
-    fortLevel: 1,
-    stockpile: const Stockpile(),
-    techUnlocked: const {},
-    expectedFortLevel: 1,
-  );
-}
-
-void waaExpectBuildFortLevel3SkippedWithoutModernForts() {
-  waaExpectBuildFortSkipped(
-    fortLevel: 2,
-    stockpile: const Stockpile(),
-    techUnlocked: const {kTechIdMineEngineering: true},
-    expectedFortLevel: 2,
-  );
 }
