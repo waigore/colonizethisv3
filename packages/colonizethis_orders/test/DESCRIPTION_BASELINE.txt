@@ -451,6 +451,7 @@ setSubsidy requires an embassy (Refs #3753 R2)
 setSubsidy with an embassy and a valid percent is accepted
 shared factionMembership matches default armyMovePickerDestinations
 shared playerView and unitsById matches default armyMovePickerDestinations
+shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)
 shared view and validator matches default path
 sharedCandidateValidator matches default and skips forPlayer rebuild
 sharedCandidateValidator matches default path for same inputs

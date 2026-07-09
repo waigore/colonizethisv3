@@ -1478,6 +1478,22 @@ Migrated imperative `order_suggestion_api_impl_test.dart` → table-driven scena
 
 test/ LOC after slice 85: **38,175** (net +121 from post–slice 84; support modules add LOC while runner shrinks). Remaining: shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+### Slice 86 — shared-validator equivalence scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| shared-equiv-move | suggestMoveOrders matches default path | `order_suggestion_shared_validator_equivalence_test.dart` | same + `support/suggestion/order_suggestion_shared_validator_equivalence_{scenarios,expectations}.dart` | #3949 |
+| shared-equiv-army-move | suggestArmyMoveOrders matches default path | same | same | #3949 |
+| shared-equiv-work | suggestWorkOrders matches default path | same | same | #3949 |
+| shared-equiv-build | suggestBuildOrders matches default path | same | same | #3949 |
+| shared-equiv-diplo-deterministic | suggestDiplomaticOrders is deterministic across repeated calls | same | same | #3949 |
+| shared-equiv-external-view | shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild) | same | same | #2394 |
+| shared-equiv-for-base-prefix | forBasePrefix matches fresh forPlayer for same basePrefix | same | same | #3949 |
+
+Migrated imperative `order_suggestion_shared_validator_equivalence_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline description for external view/unitsById equivalence scenario. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 86: **38,219** (net +44 from post–slice 85; support modules add LOC while runner shrinks). Remaining: `order_suggestion_work_tile_keys_shared_validator_test.dart`, lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
