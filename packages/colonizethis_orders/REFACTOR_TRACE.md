@@ -1305,6 +1305,22 @@ Migrated imperative `validators/diplomatic/diplomatic_sub_validators_faction_mem
 
 test/ LOC after slice 75: **36,673** (net +69 from post–slice 74; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 76 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| odf-owner-map | matches the projection-derived owner map across both regions | `order_suggestion_diplomacy_filter_test.dart` | `support/suggestion/order_suggestion_diplomacy_filter_scenarios.dart` + thin runner | #3949 |
+| odf-unowned | excludes unowned (null-owner) provinces | same | same | #3949 |
+| odf-empty-owner | excludes empty-string owner provinces (isNotEmpty parity) | same | same | #3949 |
+| odf-full-id | getProvinceOwnerMap returns owner by full province id | same | same | #3949 |
+| odf-nw | getProvinceOwnerMap includes newWorld provinces | same | same | #3949 |
+| odf-peace | filterMoveOrdersByDiplomacy does not drop civilian moves at peace | same | same | #3949 |
+| odf-war | filterMoveOrdersByDiplomacy keeps move to at-war faction | same | same | #3949 |
+
+Migrated imperative `order_suggestion_diplomacy_filter_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 76: **36,800** (net +127 from post–slice 75; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
