@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'move_validator_expectation_shorthand.dart';
 import 'move_validator_test_support.dart';
 
 /// Pins for [moveValidatorScenarios] rows.
@@ -156,47 +157,6 @@ Game _crossRegionTribeGame({required String unitType}) {
     ),
     players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
     tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe1')],
-  );
-}
-
-OrderValidationResult _validateUnitMove({
-  required Game game,
-  required MapTopology topology,
-  required String unitId,
-  required String destinationTileKey,
-  bool previousRejected = false,
-}) {
-  const validator = MoveValidator();
-  return validator.validate(
-    MoveOrder(unitId: unitId, destinationTileKey: destinationTileKey),
-    game,
-    'p1',
-    moveValidatorTestContext(game, topology, 'p1'),
-    const [],
-    topology,
-    previousRejected: previousRejected,
-  );
-}
-
-OrderValidationResult _validateArmyMove({
-  required Game game,
-  required MapTopology topology,
-  required String armyProvinceId,
-  required String destinationProvinceId,
-  List<DiplomaticOrder> draftOrders = const [],
-}) {
-  final view = buildPlayerView(game, topology, 'p1');
-  const validator = ArmyMoveValidator();
-  return validator.validate(
-    ArmyMoveOrder(
-      armyId: fieldArmyIdFor('p1', armyProvinceId),
-      destinationProvinceId: destinationProvinceId,
-    ),
-    game,
-    'p1',
-    draftOrders,
-    view,
-    topology,
   );
 }
 

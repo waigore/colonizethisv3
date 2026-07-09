@@ -506,6 +506,15 @@ test/ LOC after slice 24: **32,147** (net +32 from post–slice 23; expectation 
 
 test/ LOC after slice 25: **32,127** (net −20 from post–slice 24; expectation bodies shortened, new `wpp*`/`ice-equiv*` shorthand modules added). Remaining: further expectation compaction, lib DRY items 5–6, … toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 26: move + naval validator expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-shorthand | add `mvExpectUnitMove` / `mvExpectArmyMove` / tribe-army game helpers; compact move-validator expectation bodies | `move_validator_expectations_cases_{a,b}.dart` | `move_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+| nov-shorthand | add `novExpectNavalMove` / `novExpectNavalMission` / dock+sea order builders; compact naval-validator expectation bodies | `naval_order_validator_expectations_move*.dart`, `naval_order_validator_expectations_mission.dart` | `naval_order_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 26: **32,135** (net +8 from post–slice 25; expectation bodies shortened, new `mv*`/`nov*` shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_build_civilian`, `civilian_spawn`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
