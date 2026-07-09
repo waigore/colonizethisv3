@@ -4,30 +4,17 @@ void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
   const tileA = ValidateWorkOw.tileKey;
   const tileB = '${ValidateWorkOw.provinceId}|1|0';
 
-  final engine = OrderEngine();
-  engine
-    ..addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: tileA,
-      ),
-    )
-    ..addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: tileB,
-      ),
-    );
-
-  vwExpectWorkResults(
-    engine.validatePlayerOrdersWithContext(
-      dualTilePendingWorkGame(),
-      ValidateWorkOw.topology(),
-      'p1',
+  vwExpectDualWorkOrders(
+    game: dualTilePendingWorkGame(),
+    first: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileA,
+    ),
+    second: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileB,
     ),
     statuses: const [
       OrderValidationStatus.accepted,
@@ -109,30 +96,17 @@ _acceptsPurchaseLandWithEmbassyAtPeaceSufficientTreasuryTileWithResource() {
 void
 _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExclusivity() {
   const tileKey = ValidateWorkOw.tileKey;
-  final engine = OrderEngine();
-  engine
-    ..addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'builder1',
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: tileKey,
-      ),
-    )
-    ..addWorkOrder(
-      'p1',
-      const WorkOrder(
-        unitId: 'engineer1',
-        target: kWorkTargetBuildRoad,
-        targetTileKey: tileKey,
-      ),
-    );
-
-  vwExpectWorkResults(
-    engine.validatePlayerOrdersWithContext(
-      builderEngineerSameTileExclusivityGame(),
-      ValidateWorkOw.topology(),
-      'p1',
+  vwExpectDualWorkOrders(
+    game: builderEngineerSameTileExclusivityGame(),
+    first: const WorkOrder(
+      unitId: 'builder1',
+      target: kWorkTargetBuildImprovement,
+      targetTileKey: tileKey,
+    ),
+    second: const WorkOrder(
+      unitId: 'engineer1',
+      target: kWorkTargetBuildRoad,
+      targetTileKey: tileKey,
     ),
     statuses: const [
       OrderValidationStatus.accepted,

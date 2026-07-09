@@ -1,20 +1,7 @@
 part of 'order_suggestion_core_expectations.dart';
 
 void _suggestMoveOrdersOnlyReturnsMovesThatPassValidation() {
-  final p1 = oscProvince('p1', ownerId: OscIds.playerId);
-  final p2 = oscProvince('p2');
-  final game = oscGame(
-    worldState: oscWorld(
-      oldWorld: RegionData(provinces: [p1, p2], units: [oscExplorer()]),
-      tileKeysByRegionAndProvince: oscTilesByProvince({
-        'p2': [OscIds.tile('p2', 0, 0)],
-      }),
-      playerVisibilityByTile: oscVisibility({
-        OscIds.tile('p1', 0, 0): 'fullyVisible',
-        OscIds.tile('p2', 0, 0): 'fogged',
-      }),
-    ),
-  );
+  final game = oscFoggedDestinationMoveGame();
   oscExpectFirstMove(
     oscSuggestMoves(game, oscTwoProvincesConnected('p1', 'p2')),
     destinationTileKey: OscIds.tile('p2', 0, 0),
@@ -33,35 +20,15 @@ void _suggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility() {
       ),
     ),
   );
-  final topology = oscTwoProvincesConnected('p1', 'p2');
-  oscExpectThrowsSuggestMoveOnUnknownVisibility(game, topology);
+  oscExpectThrowsSuggestMoveOnUnknownVisibility(
+    game,
+    oscTwoProvincesConnected('p1', 'p2'),
+  );
 }
 
 void _moveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians() {
-  final unit = oscExplorer(provinceLocal: 'p1', tileKey: OscIds.tile('p2', 0, 0));
-  final game = oscGame(
-    worldState: oscWorld(
-      oldWorld: RegionData(
-        provinces: [
-          oscProvince('p1', ownerId: OscIds.playerId),
-          oscProvince('p2', ownerId: OscIds.playerId),
-          oscProvince('p3', ownerId: OscIds.playerId),
-        ],
-        units: [unit],
-      ),
-      tileKeysByRegionAndProvince: oscTilesByProvince({
-        'p3': [OscIds.tile('p3', 0, 0)],
-      }),
-      playerVisibilityByTile: oscVisibility({
-        OscIds.tile('p2', 0, 0): 'fullyVisible',
-        OscIds.tile('p3', 0, 0): 'fogged',
-      }),
-    ),
-  );
-  final topology = oscProvinceTopology(
-    ['p1', 'p2', 'p3'],
-    edges: const [TopologyEdge(id1: 'p2', id2: 'p3')],
-  );
+  final game = oscMislocatedExplorerMoveGame();
+  final topology = oscMislocatedExplorerTopology();
   oscExpectFirstMove(
     oscSuggestMoves(game, topology),
     destinationTileKey: OscIds.tile('p3', 0, 0),
@@ -123,12 +90,7 @@ void _prospectSuggestionWhenProvinceFoggedAndTilesInProvince() {
       tilesByLocal: {'p1': [tileKey]},
     ).worldState.copyWith(resourceByTileKey: {tileKey: 'iron'}),
   );
-  final suggestions = oscSuggestWork(game, oscProvinceTopology(['p1']));
-  oscExpectWorkTargetNotEmpty(suggestions, kWorkTargetProspect);
-  expect(
-    oscWorkWithTarget(suggestions, kWorkTargetProspect).first.targetTileKey,
-    tileKey,
-  );
+  oscExpectProspectTargetsTile(game, oscProvinceTopology(['p1']), tileKey);
 }
 
 void _playerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder() {
@@ -165,14 +127,7 @@ void _workSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile() {
     ),
     players: [oscBuilderPlayer()],
   );
-  final topology = oscProvinceTopology(['p1']);
-  final suggestions = oscSuggestWork(game, topology);
-  for (final o in suggestions) {
-    expect(o.unitId, 'u1');
-    final u = oscView(game, topology).ownUnitsById[o.unitId];
-    expect(u, isNotNull);
-    expect(u!.locationProvinceId, OscIds.prov('p1'));
-  }
+  oscExpectWorkerSuggestStayInProvince(game, oscProvinceTopology(['p1']));
 }
 
 void

@@ -561,6 +561,17 @@ test/ LOC after slice 30: **32,548** (net +135 from post–slice 29; expectation
 
 test/ LOC after slice 31: **32,595** (net +47 from post–slice 30; part1 expectation bodies shortened, new `waa*`/`wcc*` shorthand helpers added). Remaining: further expectation compaction (remaining large support files, imperative suites), lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 32: build_unit_training + validateWork + osc core + vwt part1 compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| but-part2-shorthand | add `butExpectFluyteShipBuildApplied` / `butExpectNavalBuildRejectedWhenNoPeasants` / `butExpectSecondFluyteAddsToHomeFleet` / `butExpectMerchantTechGate`; compact build-unit/training part2 bodies | `build_unit_training_expectations_part2.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part1-shorthand | add `vwExpectDualWorkOrders`; compact validateWork part1 dual-order bodies | `order_engine_validate_work_expectations_part1.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| osc-part1-shorthand | add `oscFoggedDestinationMoveGame` / `oscMislocatedExplorerMoveGame` / `oscExpectProspectTargetsTile` / `oscExpectWorkerSuggestStayInProvince`; compact core suggestion part1 bodies | `order_suggestion_core_expectations_part1.dart` | `order_suggestion_core_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part1-shorthand | add `vwtExpectMineralBuildGate` / `vwtExpectBuildResourceFilter`; compact valid-work-tiles part1 build-improvement bodies | `valid_work_tiles_expectations_part1.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 32: **32,687** (net +92 from post–slice 31; expectation bodies shortened, new `but*`/`vw*`/`osc*`/`vwt*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

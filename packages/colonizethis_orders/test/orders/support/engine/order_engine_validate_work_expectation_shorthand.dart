@@ -234,3 +234,27 @@ void vwExpectWorkResults(
     expect(results.last.reason, contains(lastReasonContains));
   }
 }
+
+void vwExpectDualWorkOrders({
+  required Game game,
+  required WorkOrder first,
+  required WorkOrder second,
+  required List<OrderValidationStatus> statuses,
+  String? lastReasonContains,
+  MapTopology? topology,
+  String playerId = 'p1',
+}) {
+  final engine = OrderEngine();
+  engine
+    ..addWorkOrder(playerId, first)
+    ..addWorkOrder(playerId, second);
+  vwExpectWorkResults(
+    engine.validatePlayerOrdersWithContext(
+      game,
+      topology ?? ValidateWorkOw.topology(),
+      playerId,
+    ),
+    statuses: statuses,
+    lastReasonContains: lastReasonContains,
+  );
+}

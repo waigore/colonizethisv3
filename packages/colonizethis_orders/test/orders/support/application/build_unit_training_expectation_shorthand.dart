@@ -116,3 +116,148 @@ void butExpectCivilianBuildApplied({
         paperDelta,
   );
 }
+
+void butExpectInsufficientMaterialsBuildRejected({
+  required Game game,
+  required String regimentId,
+}) {
+  final next = butApply(game, butOrdersFor(regimentId));
+  expect(next.worldState.oldWorld.units, isEmpty);
+  expect(
+    next.players.single.workerPool.peasants,
+    game.players.single.workerPool.peasants,
+  );
+}
+
+Player butFluyteShipBuildPlayer({
+  Stockpile? stockpile,
+  int peasants = 2,
+  int treasury = 100,
+  String displayName = 'Spain',
+}) {
+  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+  return butShipBuildPlayer(
+    stockpile: stockpile ?? butStockpileCovering(shipEcon.buildInputs),
+    peasants: peasants,
+    treasury: treasury,
+    capitalProvinceId: ButIds.prov('P1'),
+    techUnlocked: {kTechIdSuperiorHullDesign: true},
+    displayName: displayName,
+  );
+}
+
+Game butFluyteShipBuildGame(Player player) =>
+    butShipBuildGame(player: player, provinceId: 'P1').copyWith(
+      players: [
+        player.copyWith(
+          stockpile: butStockpileCovering(
+            ShipEconomyCatalog.byId['fluyte']!.buildInputs,
+          ),
+          treasury:
+              ShipEconomyCatalog.byId['fluyte']!.buildTreasuryCost + 10,
+        ),
+      ],
+    );
+
+void butExpectFluyteShipBuildApplied({String displayName = 'Spain'}) {
+  final topology = butCapitalAdjacentSeaTopology();
+  final next = butApply(
+    butFluyteShipBuildGame(butFluyteShipBuildPlayer(displayName: displayName)),
+    butOrdersFor('fluyte'),
+    topology: topology,
+  );
+  butExpectFleetContainsShip(next, 'fluyte');
+  expect(next.players.single.workerPool.peasants, 1);
+}
+
+void butExpectNavalBuildRejectedWhenNoPeasants() {
+  final topology = butCapitalAdjacentSeaTopology();
+  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+  final player = butShipBuildPlayer(
+    stockpile: butStockpileCovering(shipEcon.buildInputs),
+    peasants: 0,
+    treasury: shipEcon.buildTreasuryCost + 10,
+    capitalProvinceId: ButIds.prov('P1'),
+    techUnlocked: {kTechIdSuperiorHullDesign: true},
+    displayName: 'Spain',
+  );
+  final game = butShipBuildGame(player: player, provinceId: 'P1');
+  final next = butApply(game, butOrdersFor('fluyte'), topology: topology);
+  expect(next.worldState.fleets, isEmpty);
+  expect(next.players.single.workerPool.peasants, 0);
+  expect(next.players.single.treasury, player.treasury);
+}
+
+void butExpectSecondFluyteAddsToHomeFleet() {
+  const topology = MapTopology(
+    nodes: [
+      TopologyNode(
+        id: 'P1',
+        regionId: ButIds.ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'Sea1',
+        regionId: ButIds.ow,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: 'P1', id2: 'Sea1')],
+  );
+  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+  final player = butShipBuildPlayer(
+    stockpile: butDoubleShipBuildStockpile(shipEcon.buildInputs),
+    peasants: 2,
+    treasury: shipEcon.buildTreasuryCost * 2 + 10,
+    capitalProvinceId: ButIds.prov('P1'),
+    techUnlocked: {kTechIdSuperiorHullDesign: true},
+  );
+  final next = butApply(
+    butSecondNavalBuildGame(
+      player: player,
+      fleets: [
+        Fleet(
+          id: 'fleet_p1',
+          ownerId: ButIds.playerId,
+          seaZoneId: 'Sea1',
+          regionId: ButIds.ow,
+          shipTypeIds: ['fluyte'],
+        ),
+      ],
+    ),
+    butOrdersFor('fluyte', spawnProvinceId: ButIds.prov('P1')),
+    topology: topology,
+  );
+  final p1Fleet = next.worldState.fleets
+      .where((f) => f.ownerId == ButIds.playerId)
+      .single;
+  expect(p1Fleet.shipTypeIds.length, 2);
+  expect(p1Fleet.shipTypeIds, contains('fluyte'));
+  expect(next.players.single.workerPool.peasants, 1);
+}
+
+void butExpectMerchantTechGate({
+  required int cash,
+  required int paperQty,
+}) {
+  final orders = butOrdersFor(kUnitTypeMerchant);
+  final gameNoTech = butCivilianGame(
+    treasury: cash + 100,
+    paper: paperQty + 1,
+    techUnlocked: {},
+  );
+  final nextNoTech = butApply(gameNoTech, orders);
+  expect(nextNoTech.worldState.oldWorld.units, isEmpty);
+  expect(nextNoTech.players.single.treasury, gameNoTech.players.single.treasury);
+
+  butExpectCivilianBuildApplied(
+    game: butCivilianGame(
+      treasury: cash + 100,
+      paper: paperQty + 1,
+      techUnlocked: {kTechIdMerchantCompanies: true},
+    ),
+    unitType: kUnitTypeMerchant,
+    treasuryDelta: cash,
+    paperDelta: paperQty,
+  );
+}

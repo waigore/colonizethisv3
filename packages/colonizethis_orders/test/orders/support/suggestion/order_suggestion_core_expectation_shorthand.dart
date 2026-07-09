@@ -324,6 +324,74 @@ Game oscSpyInOwnedProvinceGame() {
   );
 }
 
+Game oscFoggedDestinationMoveGame() {
+  final p1 = oscProvince('p1', ownerId: OscIds.playerId);
+  final p2 = oscProvince('p2');
+  return oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(provinces: [p1, p2], units: [oscExplorer()]),
+      tileKeysByRegionAndProvince: oscTilesByProvince({
+        'p2': [OscIds.tile('p2', 0, 0)],
+      }),
+      playerVisibilityByTile: oscVisibility({
+        OscIds.tile('p1', 0, 0): 'fullyVisible',
+        OscIds.tile('p2', 0, 0): 'fogged',
+      }),
+    ),
+  );
+}
+
+Game oscMislocatedExplorerMoveGame() {
+  final unit = oscExplorer(provinceLocal: 'p1', tileKey: OscIds.tile('p2', 0, 0));
+  return oscGame(
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [
+          oscProvince('p1', ownerId: OscIds.playerId),
+          oscProvince('p2', ownerId: OscIds.playerId),
+          oscProvince('p3', ownerId: OscIds.playerId),
+        ],
+        units: [unit],
+      ),
+      tileKeysByRegionAndProvince: oscTilesByProvince({
+        'p3': [OscIds.tile('p3', 0, 0)],
+      }),
+      playerVisibilityByTile: oscVisibility({
+        OscIds.tile('p2', 0, 0): 'fullyVisible',
+        OscIds.tile('p3', 0, 0): 'fogged',
+      }),
+    ),
+  );
+}
+
+MapTopology oscMislocatedExplorerTopology() => oscProvinceTopology(
+  ['p1', 'p2', 'p3'],
+  edges: const [TopologyEdge(id1: 'p2', id2: 'p3')],
+);
+
+void oscExpectProspectTargetsTile(
+  Game game,
+  MapTopology topology,
+  String tileKey,
+) {
+  final suggestions = oscSuggestWork(game, topology);
+  oscExpectWorkTargetNotEmpty(suggestions, kWorkTargetProspect);
+  expect(
+    oscWorkWithTarget(suggestions, kWorkTargetProspect).first.targetTileKey,
+    tileKey,
+  );
+}
+
+void oscExpectWorkerSuggestStayInProvince(Game game, MapTopology topology) {
+  final suggestions = oscSuggestWork(game, topology);
+  for (final o in suggestions) {
+    expect(o.unitId, 'u1');
+    final u = oscView(game, topology).ownUnitsById[o.unitId];
+    expect(u, isNotNull);
+    expect(u!.locationProvinceId, OscIds.prov('p1'));
+  }
+}
+
 Game oscMerchantPurchaseLandGame() {
   final tileKey = OscIds.tile('minor1', 0, 0);
   return oscGame(

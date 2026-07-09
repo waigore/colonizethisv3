@@ -242,6 +242,73 @@ void vwtExpectBuildVisMembership(
   }
 }
 
+void vwtExpectMineralBuildGate({
+  required String grainTile,
+  required String ironTile,
+}) {
+  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+  final provinces = [vwtOwnedProvince('p1')];
+  final tiles = {p1: [grainTile, ironTile]};
+  final resources = {grainTile: 'grain', ironTile: 'iron'};
+  final improvements = {grainTile: 0, ironTile: 0};
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+    ),
+    included: [grainTile],
+    excluded: [ironTile],
+  );
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tiles,
+      resourceByTileKey: resources,
+      builderTileKey: grainTile,
+      improvementByTile: improvements,
+      playerProspectedTiles: {
+        ValidWorkTilesTestSupport.playerId: {ironTile},
+      },
+    ),
+    included: [grainTile, ironTile],
+  );
+}
+
+void vwtExpectBuildResourceFilter({
+  required List<Province> provinces,
+  required Map<String, List<String>> tilesByProvince,
+  required Map<String, String> resourceByTileKey,
+  required String builderTileKey,
+  required List<String> included,
+  required List<String> excluded,
+  Map<String, int>? improvementByTile,
+  List<Player>? extraPlayers,
+  Map<String, String>? purchasedTilesByTileKey,
+  List<MinorNation>? minorNations,
+  String? seaZoneId,
+  List<String>? seaTiles,
+}) {
+  vwtExpectBuildVisMembership(
+    owBuilderVisibilityGame(
+      provinces: provinces,
+      tilesByProvince: tilesByProvince,
+      resourceByTileKey: resourceByTileKey,
+      builderTileKey: builderTileKey,
+      improvementByTile: improvementByTile ?? const {},
+      extraPlayers: extraPlayers,
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
+      minorNations: minorNations,
+      seaZoneId: seaZoneId,
+      seaTiles: seaTiles,
+    ),
+    included: included,
+    excluded: excluded,
+  );
+}
+
 void vwtExpectVisProspectExcludesAll(
   Game game,
   MapTopology topology,
