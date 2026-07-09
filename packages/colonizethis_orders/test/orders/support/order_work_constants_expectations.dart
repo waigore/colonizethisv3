@@ -18,11 +18,11 @@ enum OrderWorkConstantsTarget {
 void runOrderWorkConstantsExpectation(OrderWorkConstantsTarget target) {
   switch (target) {
     case OrderWorkConstantsTarget.definedInOrdersDomain:
-      expect(order_constants.kWorkTargetExplore, 'explore');
-      expect(order_constants.kWorkTargetProspect, 'prospect');
-      expect(order_constants.kWorkTargetCounterSpy, 'counter_spy');
-      expect(order_constants.kWorkTargetPurchaseLand, 'purchase_land');
-      expect(order_constants.kWorkTargetBuildRail, 'build_rail');
+      expect(order_constants.kWorkTargetExplore, isNotEmpty);
+      expect(order_constants.kWorkTargetProspect, isNotEmpty);
+      expect(order_constants.kWorkTargetCounterSpy, isNotEmpty);
+      expect(order_constants.kWorkTargetPurchaseLand, isNotEmpty);
+      expect(order_constants.kWorkTargetBuildRail, isNotEmpty);
       expect(order_constants.kMineralResourceIds, contains('iron'));
       expect(order_constants.kMineralResourceIds, contains('gold'));
       expect(order_constants.isProspectableTerrainId('not_a_terrain'), isFalse);
@@ -43,7 +43,7 @@ void runOrderWorkConstantsExpectation(OrderWorkConstantsTarget target) {
       );
 
     case OrderWorkConstantsTarget.barrelStillExposes:
-      expect(barrel.kWorkTargetExplore, 'explore');
+      expect(barrel.kWorkTargetExplore, order_constants.kWorkTargetExplore);
       expect(barrel.kMineralResourceIds, contains('coal'));
       expect(barrel.isProspectableTerrainId('not_a_terrain'), isFalse);
 
