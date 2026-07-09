@@ -793,7 +793,18 @@ test/ LOC after slice 47: **32,896** (net +86 from post–slice 46; scenario sup
 
 Migrated imperative `order_engine_naval_build_projection_and_workers_test.dart` → table-driven scenarios with `order_engine_naval_build_projection_and_workers_expectations.dart`. Removed file from `ordersPreferScenarioTablesAllowlist`.
 
-test/ LOC after slice 48: **32,959** (net +63 from post–slice 47; scenario support modules add LOC while runner shrinks to ≤20 lines). Remaining: further imperative-suite compaction (`order_engine_civilian_move_xor_work_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+test/ LOC after slice 48: **32,959** (net +63 from post–slice 47; scenario support modules add LOC while runner shrinks to ≤20 lines). Remaining: further imperative-suite compaction (`order_engine_validation_phase_plan_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
+## Wave 3 — Slice 49: order_engine_civilian_move_xor_work scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ocmxw-reject-work | rejects work when same civilian already has a move order | `order_engine_civilian_move_xor_work_test.dart` | `support/engine/order_engine_civilian_move_xor_work_scenarios.dart` + thin runner | #3949 |
+| ocmxw-merged-draft | merged draft with move then work rejects work (move remains valid) | same | same | #3949 |
+
+Migrated imperative `order_engine_civilian_move_xor_work_test.dart` → table-driven scenarios with `order_engine_civilian_move_xor_work_expectations.dart` + `order_engine_civilian_move_xor_work_fixtures.dart`. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 49: **32,972** (net +13 from post–slice 48; scenario support modules add LOC while runner shrinks to ≤15 lines). Remaining: further imperative-suite compaction (`order_engine_validation_phase_plan_test.dart`, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
 ## Wave 3 — documented exceptions (kickoff)
 
