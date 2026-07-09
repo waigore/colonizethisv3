@@ -75,10 +75,6 @@ void wccExpectRoadLevel(Game next, String tileKey, int level) {
   expect(next.worldState.tileState.roadLevel(tileKey), level);
 }
 
-void wccExpectRoadLevelOn(TileMapState tileState, String tileKey, int level) {
-  expect(tileState.roadLevel(tileKey), level);
-}
-
 void wccExpectVisibility(
   Game next,
   String tileKey,

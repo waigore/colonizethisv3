@@ -1909,6 +1909,18 @@ test/ LOC after slice 117: see PR. Remaining: further support-table compaction t
 
 test/ LOC after slice 118: **37,656** (net −37 from post–slice 117). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 119: vwt fixture consolidation + waa/wcc/vw dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-nw-partial-reveal | move `vwtTribeGrainIronFx` / `vwtMinorPurchaseFx` / `vwtTribeConsulateGame` / `vwtMinorPurchaseGame` onto `NwPartialRevealHomeTarget` | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_fixtures_part1.dart` | #3949 |
+| dispatch-inline-vwt-build-vis | fold `vwtBuildVisKeys` into `vwtExpectBuildVisMembership` | `valid_work_tiles_fixtures_part1.dart` | `valid_work_tiles_expectation_shorthand_part1.dart` | #3949 |
+| dispatch-inline-waa-treasury | inline `waaExpectTreasuryUnchanged` / `waaExpectTreasuryDelta` at purchase-land dispatcher cases | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-wcc-rail | inline `wccExpectRoadLevelOn` at build-rail dispatcher cases | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+| dispatch-inline-vw-run | inline `vwRunUpgradeTown` / `vwRunMinorProvinceRoad` at validate-work dispatcher cases | `order_engine_validate_work_expectation_shorthand_part1.dart` | `order_engine_validate_work_expectations.dart` | #3949 |
+
+test/ LOC after slice 119: **37,634** (net −20 from post–slice 118). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

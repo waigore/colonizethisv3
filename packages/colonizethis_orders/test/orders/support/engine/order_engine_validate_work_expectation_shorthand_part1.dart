@@ -11,26 +11,6 @@ OrderValidationResult vwRunPurchaseLand(Game game) => vwValidateSingleWork(
   topology: PurchaseLandTestFixture.topology(),
 );
 
-OrderValidationResult vwRunUpgradeTown(Game game) => vwValidateSingleWork(
-  game: game,
-  order: const WorkOrder(
-    unitId: 'b1',
-    target: kWorkTargetUpgradeTown,
-    targetTileKey: ValidateWorkOw.tileKey,
-  ),
-);
-
-OrderValidationResult vwRunMinorProvinceRoad(Game game) => vwValidateSingleWork(
-  game: game,
-  playerId: 'gp1',
-  order: WorkOrder(
-    unitId: 'e1',
-    target: kWorkTargetBuildRoad,
-    targetTileKey: minorProvinceRoadTileKey(),
-  ),
-  topology: minorProvinceRoadTopology(),
-);
-
 Game vwPurchaseLandGame({
   required int treasury,
   List<OvertureState>? overtureStates,

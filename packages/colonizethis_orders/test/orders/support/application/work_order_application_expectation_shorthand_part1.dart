@@ -22,25 +22,6 @@ void waaExpectPurchased(
   expect(next.worldState.purchasedTilesByTileKey[tileKey], ownerId);
 }
 
-void waaExpectTreasuryUnchanged(Game before, Game after, String playerId) {
-  expect(
-    after.playerById(playerId)!.treasury,
-    before.playerById(playerId)!.treasury,
-  );
-}
-
-void waaExpectTreasuryDelta(
-  Game before,
-  Game after,
-  String playerId,
-  int delta,
-) {
-  expect(
-    after.playerById(playerId)!.treasury,
-    before.playerById(playerId)!.treasury + delta,
-  );
-}
-
 void waaExpectStockpileDeducted(
   Game before,
   Game after,

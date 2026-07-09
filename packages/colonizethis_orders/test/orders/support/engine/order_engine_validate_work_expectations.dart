@@ -431,31 +431,59 @@ void runOrderEngineValidateWorkExpectation(
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceWithoutEmbassyPath:
       vwExpectRejected(
-          vwRunMinorProvinceRoad(minorProvinceEngineerRoadGame()),
+          vwValidateSingleWork(
+            game: minorProvinceEngineerRoadGame(),
+            playerId: 'gp1',
+            order: WorkOrder(
+              unitId: 'e1',
+              target: kWorkTargetBuildRoad,
+              targetTileKey: minorProvinceRoadTileKey(),
+            ),
+            topology: minorProvinceRoadTopology(),
+          ),
           reasonContains: 'foreign province',
         );
     case OrderEngineValidateWorkTarget
         .rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile:
       vwExpectRejected(
-          vwRunMinorProvinceRoad(
-            minorProvinceEngineerRoadGame(
+          vwValidateSingleWork(
+            game: minorProvinceEngineerRoadGame(
               overtureStates: minorProvinceEmbassyOverture,
             ),
+            playerId: 'gp1',
+            order: WorkOrder(
+              unitId: 'e1',
+              target: kWorkTargetBuildRoad,
+              targetTileKey: minorProvinceRoadTileKey(),
+            ),
+            topology: minorProvinceRoadTopology(),
           ),
           reasonContains: 'cannot occupy',
         );
     case OrderEngineValidateWorkTarget
         .rejectsUpgradeTownWithoutNationalBureaucracy:
       vwExpectRejected(
-          vwRunUpgradeTown(upgradeTownWorkGame(techUnlocked: const {})),
+          vwValidateSingleWork(
+            game: upgradeTownWorkGame(techUnlocked: const {}),
+            order: const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetUpgradeTown,
+              targetTileKey: ValidateWorkOw.tileKey,
+            ),
+          ),
           reasonContains: 'National Bureaucracy',
         );
     case OrderEngineValidateWorkTarget
         .acceptsUpgradeTownWhenNationalBureaucracyUnlocked:
       vwExpectAccepted(
-          vwRunUpgradeTown(
-            upgradeTownWorkGame(
+          vwValidateSingleWork(
+            game: upgradeTownWorkGame(
               techUnlocked: const {kTechIdNationalBureaucracy: true},
+            ),
+            order: const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetUpgradeTown,
+              targetTileKey: ValidateWorkOw.tileKey,
             ),
           ),
         );

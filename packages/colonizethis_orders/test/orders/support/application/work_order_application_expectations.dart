@@ -142,7 +142,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
         final next = waaApply(game, waaPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: 'p1');
-        waaExpectTreasuryDelta(game, next, 'p1', -cost);
+        expect(
+          next.playerById('p1')!.treasury,
+          game.playerById('p1')!.treasury - cost,
+        );
         final purchasedUnit = waaSingleUnit(next);
         expect(purchasedUnit.tileKey, WorkAppIds.tileKeyMinor);
         expect(purchasedUnit.status, UnitStatus.idle);
@@ -167,7 +170,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
         final next = waaApply(game, waaPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: null);
-        waaExpectTreasuryUnchanged(game, next, 'p1');
+        expect(
+          next.playerById('p1')!.treasury,
+          game.playerById('p1')!.treasury,
+        );
       }
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe:
@@ -202,7 +208,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
         final next = waaApply(game, waaPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: null);
-        waaExpectTreasuryUnchanged(game, next, 'p1');
+        expect(
+          next.playerById('p1')!.treasury,
+          game.playerById('p1')!.treasury,
+        );
       }
     case WorkOrderApplicationTarget
         .purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite:
@@ -275,7 +284,10 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
           ),
         );
         waaExpectPurchased(next, ownerId: 'p1');
-        waaExpectTreasuryDelta(game, next, 'p1', -cost);
+        expect(
+          next.playerById('p1')!.treasury,
+          game.playerById('p1')!.treasury - cost,
+        );
         expect(
           next.playerById('p2')!.treasury,
           game.playerById('p2')!.treasury,

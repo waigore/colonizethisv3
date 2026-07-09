@@ -322,11 +322,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
           players: wccSteamPlayers(),
         );
         final railNext = wccDispatchCompleted(railState, railUnit, railCw);
-        wccExpectRoadLevelOn(
-          railNext.work.tileState,
-          WorkAppIds.tileKey,
-          4,
-        );
+        expect(railNext.work.tileState.roadLevel(WorkAppIds.tileKey), 4);
     case WorkCompletionTarget
         .buildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies:
         final (noopState, noopUnit, noopCw) = wccDispatchRailSetup(
@@ -334,11 +330,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
           players: [workAppPlayer()],
         );
         final noopNext = wccDispatchCompleted(noopState, noopUnit, noopCw);
-        wccExpectRoadLevelOn(
-          noopNext.work.tileState,
-          WorkAppIds.tileKey,
-          0,
-        );
+        expect(noopNext.work.tileState.roadLevel(WorkAppIds.tileKey), 0);
     case WorkCompletionTarget
         .upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord:
       final upgradeUnit =

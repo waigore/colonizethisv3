@@ -187,6 +187,62 @@ class NwPartialRevealHomeTarget {
     minorNations: minorNations ?? const [],
     overtureStates: overtureStates ?? const [],
   );
+
+  static NwPartialRevealHomeTarget tribeGrainIron({bool prospectedIron = false}) {
+    final base = NwPartialRevealHomeTarget(
+      homeLocalId: 'home',
+      targetLocalId: 'tribe1',
+      targetOwnerId: 'tribe1',
+    );
+    return NwPartialRevealHomeTarget(
+      homeLocalId: 'home',
+      targetLocalId: 'tribe1',
+      targetOwnerId: 'tribe1',
+      resourceByTileKey: {base.t0: 'grain', base.t1: 'iron'},
+      playerProspectedTiles: prospectedIron
+          ? {ValidWorkTilesTestSupport.playerId: {base.t1}}
+          : const {},
+    );
+  }
+
+  static NwPartialRevealHomeTarget minorPurchase({
+    Map<String, String> resourceByTileKey = const {},
+  }) {
+    final base = NwPartialRevealHomeTarget(
+      homeLocalId: 'own',
+      targetLocalId: 'm1',
+      targetOwnerId: 'minor1',
+    );
+    return NwPartialRevealHomeTarget(
+      homeLocalId: 'own',
+      targetLocalId: 'm1',
+      targetOwnerId: 'minor1',
+      resourceByTileKey: resourceByTileKey.isEmpty
+          ? {base.t1: 'grain'}
+          : resourceByTileKey,
+    );
+  }
+
+  Game tribeConsulateGame(String id) => game(
+        id: id,
+        tribes: const [ValidWorkTilesTestSupport.defaultTribe],
+        overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
+      );
+
+  Game minorPurchaseGame(String id, {List<OvertureState>? overtureStates}) =>
+      game(
+        id: id,
+        players: [ValidWorkTilesTestSupport.playerWithTreasury()],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+        overtureStates: overtureStates,
+        unit: Unit(
+          id: 'u1',
+          type: kUnitTypeMerchant,
+          ownerId: ValidWorkTilesTestSupport.playerId,
+          locationProvinceId: provHome,
+          tileKey: tileHome,
+        ),
+      );
 }
 
 /// OW single-province builder game used by build_improvement visibility cases.
@@ -424,9 +480,6 @@ Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
       unitId: unitId,
       workTarget: workTarget,
     );
-
-Set<String> vwtBuildVisKeys(Game game, {String unitId = 'u1'}) =>
-    vwtVisKeys(game, unitId, kWorkTargetBuildImprovement);
 
 /// Tribe-owned OW provinces with mixed visibility for explore visibility scans.
 ({Game game, String partialKnownTile, String fullTile, String unknownTile})
