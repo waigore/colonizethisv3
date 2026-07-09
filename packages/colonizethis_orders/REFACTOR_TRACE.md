@@ -1289,6 +1289,22 @@ Migrated imperative `validators/diplomatic/diplomatic_sub_validators_relations_t
 
 test/ LOC after slice 74: **36,604** (net +145 from post–slice 73; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 75 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dsfmem-alliance-equiv | accepts known GP target identically with and without snapshot | `validators/diplomatic/diplomatic_sub_validators_faction_membership_test.dart` | `support/validators/diplomatic/diplomatic_sub_validators_faction_membership_scenarios.dart` + thin runner | #2394 |
+| dsfmem-alliance-non-gp | rejects non-GP target identically when snapshot has no GP membership | same | same | #2394 |
+| dsfmem-alliance-snapshot | snapshot is consulted on active path: rejects target listed only in Game.players | same | same | #2394 |
+| dsfmem-overture-equiv | accepts Trade Consulate toward Minor identically with snapshot | same | same | #2394 |
+| dsfmem-overture-snapshot | snapshot is consulted: rejects overture toward target absent from snapshot | same | same | #2394 |
+| dsfmem-parent-equiv | accepts equivalent classification with snapshot snapshot present | same | same | #2394 |
+| dsfmem-parent-snapshot | snapshot is consulted on active path: rejects unknown target id | same | same | #2394 |
+
+Migrated imperative `validators/diplomatic/diplomatic_sub_validators_faction_membership_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 75: **36,673** (net +69 from post–slice 74; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
