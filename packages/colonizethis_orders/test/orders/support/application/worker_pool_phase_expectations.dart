@@ -2,8 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
+import 'worker_pool_phase_expectation_shorthand.dart';
 import 'worker_pool_phase_fixtures.dart';
 
 /// Pins for [workerPoolPhaseScenarios] rows.

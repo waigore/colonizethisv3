@@ -497,6 +497,15 @@ test/ LOC after slice 23: **32,115** (net +149 from post–slice 22; expectation
 
 test/ LOC after slice 24: **32,147** (net +32 from post–slice 23; expectation bodies shortened, new `wcc*` shorthand module added). Remaining: further expectation compaction (`incremental_*`, `worker_pool_phase_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 25: worker-pool + incremental expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wpp-shorthand | add `wppStock` / `wppAfter` / `wppExpect*` / `wppExpectApprenticeTrain` helpers; compact worker-pool phase expectation bodies | `worker_pool_phase_expectations_part1.dart` | `worker_pool_phase_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ice-equiv-shorthand | add `iceBuildUnit` / `ice*Prefix` / `iceExpect*Probes` / `iceExpectPrefetchedArmyMove` helpers; compact incremental equivalence part1 bodies | `incremental_candidate_validator_equivalence_expectations_part1.dart` | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 25: **32,127** (net −20 from post–slice 24; expectation bodies shortened, new `wpp*`/`ice-equiv*` shorthand modules added). Remaining: further expectation compaction, lib DRY items 5–6, … toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
