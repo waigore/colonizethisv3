@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'incremental_candidate_validator_equivalence_corpus_shorthand.dart';
 import 'incremental_candidate_validator_equivalence_test_helpers.dart';
 
 /// Pins for [incrementalCandidateValidatorEquivalenceScenarios] rows.
