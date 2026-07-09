@@ -52,3 +52,19 @@ ProjectedResourceLedgers? ensureProjectedResourcePrefixReplay<T, V>({
   setCachedLedgers(ledgers);
   return ledgers;
 }
+
+/// Validates [candidate] against a fresh projected validator built from [snap].
+///
+/// Returns `false` when [snap] is `null` (prefix replay failed or was
+/// short-circuited). Collapses the recruit-worker / build candidate probes in
+/// [IncrementalCandidateValidatorPrefixReplay].
+bool validateProjectedCandidateAfterPrefixReplay<TCandidate, V>({
+  required ProjectedResourceLedgers? snap,
+  required V Function(ProjectedResourceLedgers snap) createCandidateValidator,
+  required TCandidate candidate,
+  required OrderValidationResult Function(V validator, TCandidate order) validate,
+}) {
+  if (snap == null) return false;
+  final candidateValidator = createCandidateValidator(snap);
+  return validate(candidateValidator, candidate).isAccepted;
+}

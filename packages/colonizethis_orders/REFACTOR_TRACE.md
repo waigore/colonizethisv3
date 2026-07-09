@@ -1651,6 +1651,19 @@ Migrated the last seven imperative `*_test.dart` suites without `runLabeledScena
 
 test/ LOC after slice 96: **39,395** (net +414 from post–slice 95; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 97: validation orchestration append + projected-candidate probe DRY
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| lib-validation-append | extract shared `appendValidationResults` / `appendValidationResultsWithState` for engine validation phases | `order_engine_validation.dart` | `order_validation_result_append.dart` + engine caller | #3949 |
+| lib-projected-candidate | extract `validateProjectedCandidateAfterPrefixReplay` for recruit/build incremental candidate probes | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` + replay callers | #3949 |
+| lib-explorer-bundled-leg | dedupe bundled civilian work move-leg precheck between explore and prospect paths | `order_suggestion_work_explorer.dart` | same (`_bundledWorkMoveLegRejectionReason`) | #3949 |
+| gate-hot-files | extend `ordersFileSizeGatedFiles` for `order_validation_result_append.dart` | `tool/check_orders_file_size.dart` | same | #3949 |
+
+Explorer explore/prospect paths already route through `WorkSuggestionPipeline` (slice 13); this slice completes remaining lib DRY item 5 append/candidate helpers and item 6 explorer bundled-leg dedup.
+
+test/ LOC after slice 97: **39,391** (unchanged; lib-only slice). Remaining: support-table compaction toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -66,16 +66,18 @@ extension IncrementalCandidateValidatorPrefixReplay
         workers: validator.workers,
       ),
     );
-    if (snap == null) return false;
-    final candidateValidator = createProjectedRecruitWorkerValidator(
-      player: player,
-      stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
-      treasury: snap.treasury,
-      workerPool: snap.workers,
+    return validateProjectedCandidateAfterPrefixReplay(
+      snap: snap,
+      createCandidateValidator: (ledgers) => createProjectedRecruitWorkerValidator(
+        player: player,
+        stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+      candidate: candidate,
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
     );
-    return candidateValidator
-        .validate(candidate, previousRejected: false)
-        .isAccepted;
   }
 
   bool isBuildAccepted(BuildUnitOrder candidate) {
@@ -109,17 +111,19 @@ extension IncrementalCandidateValidatorPrefixReplay
         workers: validator.workers,
       ),
     );
-    if (snap == null) return false;
-    final candidateValidator = createProjectedBuildValidator(
-      game: game,
-      player: player,
-      stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
-      treasury: snap.treasury,
-      workerPool: snap.workers,
+    return validateProjectedCandidateAfterPrefixReplay(
+      snap: snap,
+      createCandidateValidator: (ledgers) => createProjectedBuildValidator(
+        game: game,
+        player: player,
+        stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+      candidate: candidate,
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
     );
-    return candidateValidator
-        .validate(candidate, previousRejected: false)
-        .isAccepted;
   }
 
   bool isWorkAccepted(WorkOrder candidate) {
