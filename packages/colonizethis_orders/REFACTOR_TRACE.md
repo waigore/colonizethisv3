@@ -1089,6 +1089,30 @@ Migrated imperative `per_player_work_target_selection_cache_test.dart` → table
 
 test/ LOC after slice 62: **35,250** (net +97 from post–slice 61; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 63 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osch-append-existing | appends order for existing player list | `order_suggestion_context_helpers_test.dart` | `support/suggestion/order_suggestion_context_helpers_scenarios.dart` + `order_suggestion_context_helpers_test.dart` | #3949 |
+| osch-append-absent | creates new player list when absent | same | same | #3949 |
+| osch-next-progression | follows expected progression | same | same | #3949 |
+| osch-next-final | returns null when already at final stage | same | same | #3949 |
+| osch-prev-inverse | next is left inverse of previous for every non-terminal stage | same | same | #3949 |
+| osch-prev-then-next | previous then next restores stage for every stage past none | same | same | #3949 |
+| osch-prev-reverse | reverses next for progression chain | same | same | #3949 |
+| osch-prev-none | none maps to itself | same | same | #3949 |
+| osch-prev-join | joinEmpire previous is nap | same | same | #3949 |
+| osch-naval-move | isNavalMoveOrderAccepted returns a boolean result | same | same | #3949 |
+| osch-naval-mission | isNavalMissionOrderAccepted returns a boolean result | same | same | #3949 |
+| osch-diplomatic | isDiplomaticOrderAccepted returns a boolean result | same | same | #3949 |
+| osch-diplomatic-default | isDiplomaticOrderAccepted matches default path when view/units shared | same | same | #3949 |
+| osch-shared-validator | stateless accept helpers reuse sharedCandidateValidator without rebuild | same | same | #2394 |
+| osch-with-validator | isDiplomaticOrderAcceptedWithValidator matches isDiplomaticOrderAccepted | same | same | #3949 |
+
+Migrated imperative `order_suggestion_context_helpers_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 63: **35,375** (net +125 from post–slice 62; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

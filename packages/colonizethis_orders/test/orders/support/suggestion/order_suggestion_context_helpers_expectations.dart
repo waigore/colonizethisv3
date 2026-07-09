@@ -1,0 +1,257 @@
+// Compact order suggestion context helper assertions (Refs #3949 wave 3).
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/incremental_candidate_validator.dart';
+import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'order_suggestion_context_helpers_fixtures.dart';
+
+/// Pins for [orderSuggestionContextHelpersScenarios] rows.
+enum OrderSuggestionContextHelpersTarget {
+  appendDiplomaticOrderForTrialExisting,
+  appendDiplomaticOrderForTrialAbsent,
+  overtureNextProgression,
+  overtureNextFinalNull,
+  overturePreviousLeftInverse,
+  overturePreviousThenNext,
+  overturePreviousReversesNext,
+  overturePreviousNoneSelf,
+  overturePreviousJoinEmpireNap,
+  navalMoveAcceptedBoolean,
+  navalMissionAcceptedBoolean,
+  diplomaticAcceptedBoolean,
+  diplomaticAcceptedMatchesDefaultPath,
+  statelessAcceptHelpersReuseValidator,
+  diplomaticAcceptedWithValidatorMatches,
+}
+
+void runOrderSuggestionContextHelpersExpectation(
+  OrderSuggestionContextHelpersTarget target,
+) {
+  switch (target) {
+    case OrderSuggestionContextHelpersTarget.appendDiplomaticOrderForTrialExisting:
+      const existing = DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: 'minorA',
+      );
+      const added = DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: 'minorB',
+      );
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp1': [existing],
+        },
+      );
+
+      final updated = appendDiplomaticOrderForTrial(orders, 'gp1', added);
+
+      expect(updated.diplomaticOrdersByPlayerId['gp1'], [existing, added]);
+      expect(orders.diplomaticOrdersByPlayerId['gp1'], [existing]);
+
+    case OrderSuggestionContextHelpersTarget.appendDiplomaticOrderForTrialAbsent:
+      const added = DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: 'gp2',
+      );
+      const orders = Orders();
+
+      final updated = appendDiplomaticOrderForTrial(orders, 'gp9', added);
+
+      expect(updated.diplomaticOrdersByPlayerId['gp9'], [added]);
+      expect(orders.diplomaticOrdersByPlayerId.containsKey('gp9'), isFalse);
+
+    case OrderSuggestionContextHelpersTarget.overtureNextProgression:
+      expect(OvertureStage.none.next, OvertureStage.tradeConsulate);
+      expect(OvertureStage.tradeConsulate.next, OvertureStage.embassy);
+      expect(OvertureStage.embassy.next, OvertureStage.nap);
+      expect(OvertureStage.nap.next, OvertureStage.joinEmpire);
+
+    case OrderSuggestionContextHelpersTarget.overtureNextFinalNull:
+      expect(OvertureStage.joinEmpire.next, isNull);
+
+    case OrderSuggestionContextHelpersTarget.overturePreviousLeftInverse:
+      for (final stage in OvertureStage.values) {
+        final forward = stage.next;
+        if (forward == null) {
+          continue;
+        }
+        expect(forward.previous, stage);
+      }
+
+    case OrderSuggestionContextHelpersTarget.overturePreviousThenNext:
+      for (final stage in OvertureStage.values) {
+        if (stage == OvertureStage.none) {
+          continue;
+        }
+        expect(stage.previous.next, stage);
+      }
+
+    case OrderSuggestionContextHelpersTarget.overturePreviousReversesNext:
+      for (final stage in [
+        OvertureStage.none,
+        OvertureStage.tradeConsulate,
+        OvertureStage.embassy,
+        OvertureStage.nap,
+      ]) {
+        final forward = stage.next!;
+        expect(forward.previous, stage);
+      }
+
+    case OrderSuggestionContextHelpersTarget.overturePreviousNoneSelf:
+      expect(OvertureStage.none.previous, OvertureStage.none);
+
+    case OrderSuggestionContextHelpersTarget.overturePreviousJoinEmpireNap:
+      expect(OvertureStage.joinEmpire.previous, OvertureStage.nap);
+
+    case OrderSuggestionContextHelpersTarget.navalMoveAcceptedBoolean:
+      final accepted = isNavalMoveOrderAccepted(
+        oschMinimalGame,
+        oschEmptyTopology,
+        'gp1',
+        const Orders(),
+        const NavalMoveOrder(
+          fleetId: 'fleet1',
+          destinationSeaZoneId: 'sea1',
+        ),
+      );
+      expect(accepted, isFalse);
+
+    case OrderSuggestionContextHelpersTarget.navalMissionAcceptedBoolean:
+      final accepted = isNavalMissionOrderAccepted(
+        oschMinimalGame,
+        oschEmptyTopology,
+        'gp1',
+        const Orders(),
+        const NavalMissionOrder(
+          fleetId: 'fleet1',
+          mission: 'patrol',
+        ),
+      );
+      expect(accepted, isFalse);
+
+    case OrderSuggestionContextHelpersTarget.diplomaticAcceptedBoolean:
+      final accepted = isDiplomaticOrderAccepted(
+        oschMinimalGame,
+        oschEmptyTopology,
+        'gp1',
+        const Orders(),
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'minor1',
+        ),
+      );
+      expect(accepted, isFalse);
+
+    case OrderSuggestionContextHelpersTarget.diplomaticAcceptedMatchesDefaultPath:
+      final game = oschDiplomacyGame();
+      const candidate = oschAllianceCandidate;
+      final sharedView = buildPlayerView(game, oschEmptyTopology, 'gp1');
+      final sharedUnits = unitsByIdFromWorld(game.worldState);
+      final defaultPath = isDiplomaticOrderAccepted(
+        game,
+        oschEmptyTopology,
+        'gp1',
+        const Orders(),
+        candidate,
+      );
+      final sharedPath = isDiplomaticOrderAccepted(
+        game,
+        oschEmptyTopology,
+        'gp1',
+        const Orders(),
+        candidate,
+        resolution: orderResolutionContextFromView(
+          sharedView,
+          game,
+          unitsById: sharedUnits,
+        ),
+      );
+      expect(sharedPath, defaultPath);
+      expect(defaultPath, isTrue);
+
+    case OrderSuggestionContextHelpersTarget.statelessAcceptHelpersReuseValidator:
+      final game = oschDiplomacyGame();
+      const topology = oschEmptyTopology;
+      const baseOrders = Orders();
+      final sharedView = buildPlayerView(game, topology, 'gp1');
+      final sharedUnits = unitsByIdFromWorld(game.worldState);
+      resetIncrementalCandidateValidatorBuildCountForTests();
+      final sharedValidator = buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: 'gp1',
+        baseOrders: baseOrders,
+        resolution: orderResolutionContextFromView(
+          sharedView,
+          game,
+          unitsById: sharedUnits,
+        ),
+      );
+      expect(incrementalCandidateValidatorBuildCountForTests, 1);
+
+      const candidate = oschAllianceCandidate;
+      for (var i = 0; i < 5; i++) {
+        isDiplomaticOrderAccepted(
+          game,
+          topology,
+          'gp1',
+          baseOrders,
+          candidate,
+          sharedCandidateValidator: sharedValidator,
+        );
+        isMoveOrderAccepted(
+          game,
+          topology,
+          'gp1',
+          baseOrders,
+          const MoveOrder(unitId: 'u1', destinationTileKey: 't'),
+          sharedCandidateValidator: sharedValidator,
+        );
+      }
+      expect(
+        incrementalCandidateValidatorBuildCountForTests,
+        1,
+        reason:
+            'shared validator path must not call buildIncrementalCandidateValidator '
+            'per probe (Refs #2394)',
+      );
+
+    case OrderSuggestionContextHelpersTarget.diplomaticAcceptedWithValidatorMatches:
+      final game = oschDiplomacyGame();
+      const topology = oschEmptyTopology;
+      const candidate = oschAllianceCandidate;
+      const baseOrders = Orders();
+      final sharedView = buildPlayerView(game, topology, 'gp1');
+      final sharedUnits = unitsByIdFromWorld(game.worldState);
+      final validator = buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: 'gp1',
+        baseOrders: baseOrders,
+        resolution: orderResolutionContextFromView(
+          sharedView,
+          game,
+          unitsById: sharedUnits,
+        ),
+      );
+      expect(
+        isDiplomaticOrderAcceptedWithValidator(validator, candidate),
+        isDiplomaticOrderAccepted(
+          game,
+          topology,
+          'gp1',
+          baseOrders,
+          candidate,
+          resolution: orderResolutionContextFromView(
+            sharedView,
+            game,
+            unitsById: sharedUnits,
+          ),
+        ),
+      );
+  }
+}
