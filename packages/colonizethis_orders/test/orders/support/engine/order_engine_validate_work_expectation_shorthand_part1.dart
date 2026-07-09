@@ -125,36 +125,8 @@ void vwExpectPurchaseLandRejected(
 void vwExpectPurchaseLandAccepted(Game game) =>
     vwExpectAccepted(vwRunPurchaseLand(game));
 
-void vwExpectPurchaseLandRejectedNoEmbassy() => vwExpectPurchaseLandRejected(
-  vwPurchaseLandGame(treasury: 500),
-  reasonContains: 'embassy',
-);
 
-void vwExpectPurchaseLandRejectedAtWar() => vwExpectPurchaseLandRejected(
-  vwPurchaseLandGame(
-    treasury: 500,
-    overtureStates: purchaseLandEmbassyOverture,
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'p1',
-        factionId2: 'minor1',
-        state: RelationState.atWar,
-      ),
-    ],
-  ),
-  reasonContains: 'war',
-);
 
-void vwExpectPurchaseLandRejectedInsufficientTreasury() {
-  const cost = 15 * 10;
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: cost - 1,
-      overtureStates: purchaseLandEmbassyOverture,
-    ),
-    reasonContains: 'Insufficient treasury',
-  );
-}
 
 void vwExpectBuildImprovementRejected({
   required Game game,
@@ -376,11 +348,3 @@ void vwExpectMinorProvinceRoadRejected(
       reasonContains: reasonContains,
     );
 
-void vwExpectMineralBuildImprovementRejectedWhenNotProspected() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {ValidateWorkOw.tileKey: 'iron'},
-    ),
-    reasonContains: 'prospected',
-  );
-}

@@ -81,16 +81,6 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
   );
 }
 
-void butExpectTreasuryInsufficientRegimentBuildRejected() {
-  final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-  final game = butMilitaryBaseGame(
-    peasants: 5,
-    treasury: econ.buildTreasuryCost - 1,
-  );
-  final next = butApply(game, butOrdersFor('peasant_levies'));
-  expect(next.worldState.oldWorld.units, isEmpty);
-  butExpectTreasuryAndPeasantsUnchanged(game, next);
-}
 
 void butExpectValidRegimentBuild({
   required Game game,
@@ -209,71 +199,7 @@ void butExpectFluyteShipBuildApplied({String displayName = 'Spain'}) {
   expect(next.players.single.workerPool.peasants, 1);
 }
 
-void butExpectNavalBuildRejectedWhenNoPeasants() {
-  final topology = butCapitalAdjacentSeaTopology();
-  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  final player = butShipBuildPlayer(
-    stockpile: butStockpileCovering(shipEcon.buildInputs),
-    peasants: 0,
-    treasury: shipEcon.buildTreasuryCost + 10,
-    capitalProvinceId: ButIds.prov('P1'),
-    techUnlocked: {kTechIdSuperiorHullDesign: true},
-    displayName: 'Spain',
-  );
-  final game = butShipBuildGame(player: player, provinceId: 'P1');
-  final next = butApply(game, butOrdersFor('fluyte'), topology: topology);
-  expect(next.worldState.fleets, isEmpty);
-  expect(next.players.single.workerPool.peasants, 0);
-  expect(next.players.single.treasury, player.treasury);
-}
 
-void butExpectSecondFluyteAddsToHomeFleet() {
-  const topology = MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'P1',
-        regionId: ButIds.ow,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'Sea1',
-        regionId: ButIds.ow,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [TopologyEdge(id1: 'P1', id2: 'Sea1')],
-  );
-  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  final player = butShipBuildPlayer(
-    stockpile: butDoubleShipBuildStockpile(shipEcon.buildInputs),
-    peasants: 2,
-    treasury: shipEcon.buildTreasuryCost * 2 + 10,
-    capitalProvinceId: ButIds.prov('P1'),
-    techUnlocked: {kTechIdSuperiorHullDesign: true},
-  );
-  final next = butApply(
-    butSecondNavalBuildGame(
-      player: player,
-      fleets: [
-        Fleet(
-          id: 'fleet_p1',
-          ownerId: ButIds.playerId,
-          seaZoneId: 'Sea1',
-          regionId: ButIds.ow,
-          shipTypeIds: ['fluyte'],
-        ),
-      ],
-    ),
-    butOrdersFor('fluyte', spawnProvinceId: ButIds.prov('P1')),
-    topology: topology,
-  );
-  final p1Fleet = next.worldState.fleets
-      .where((f) => f.ownerId == ButIds.playerId)
-      .single;
-  expect(p1Fleet.shipTypeIds.length, 2);
-  expect(p1Fleet.shipTypeIds, contains('fluyte'));
-  expect(next.players.single.workerPool.peasants, 1);
-}
 
 void butExpectMerchantTechGate({
   required int cash,
@@ -301,65 +227,6 @@ void butExpectMerchantTechGate({
   );
 }
 
-void butExpectCivilianTreasuryInsufficientRejected() {
-  final game = butCivilianGame(treasury: 999, paper: 2);
-  final next = butApply(game, butOrdersFor(kUnitTypeBuilder));
-  expect(next.worldState.oldWorld.units, isEmpty);
-  expect(next.players.single.treasury, game.players.single.treasury);
-  expect(
-    next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
-    game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
-  );
-}
 
-void butExpectTechLockedRegimentSkipped() {
-  final regimentWithTech = unlockingTechByRegimentId.keys.firstOrNull;
-  if (regimentWithTech == null) return;
-  final econ = RegimentEconomyCatalog.byId[regimentWithTech];
-  if (econ == null) return;
-  butExpectNoOwUnitsAfter(
-    butRegimentBuildGame(
-      buildInputs: econ.buildInputs,
-      peasants: 3,
-      treasury: econ.buildTreasuryCost + 10,
-      techUnlocked: {},
-    ),
-    butOrdersFor(regimentWithTech),
-  );
-}
 
-void butExpectTechLockedShipSkipped() {
-  const shipTypeId = 'fluyte';
-  final shipEcon = ShipEconomyCatalog.byId[shipTypeId];
-  if (shipEcon == null || unlockingTechByShipId[shipTypeId] == null) return;
-  butExpectNoOwUnitsAfter(
-    butShipBuildGame(
-      player: butShipBuildPlayer(
-        stockpile: butStockpileCovering(shipEcon.buildInputs),
-        peasants: 0,
-        treasury: shipEcon.buildTreasuryCost + 10,
-        capitalProvinceId: ButIds.prov('P1'),
-        techUnlocked: {},
-      ),
-    ),
-    butOrdersFor(shipTypeId),
-    topology: butCapitalAdjacentSeaTopology(),
-  );
-}
 
-void butExpectPeasantLevyBuildApplied() {
-  final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-  final player = Player(
-    id: ButIds.playerId,
-    displayName: 'Player 1',
-    isHuman: true,
-    stockpile: butStockpileCovering(econ.buildInputs),
-    workerPool: const WorkerPool(peasants: 3),
-    treasury: econ.buildTreasuryCost + 5,
-  );
-  butExpectValidRegimentBuild(
-    game: butOwGame(players: [player]),
-    regimentId: 'peasant_levies',
-    baselinePlayer: player,
-  );
-}

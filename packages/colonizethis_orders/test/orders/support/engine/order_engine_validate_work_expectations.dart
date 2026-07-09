@@ -76,12 +76,35 @@ void runOrderEngineValidateWorkExpectation(
         );
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenNoEmbassyWithMinor:
-      vwExpectPurchaseLandRejectedNoEmbassy();
+      vwExpectPurchaseLandRejected(
+        vwPurchaseLandGame(treasury: 500),
+        reasonContains: 'embassy',
+      );
     case OrderEngineValidateWorkTarget.rejectsPurchaseLandWhenAtWarWithFaction:
-      vwExpectPurchaseLandRejectedAtWar();
+      vwExpectPurchaseLandRejected(
+        vwPurchaseLandGame(
+          treasury: 500,
+          overtureStates: purchaseLandEmbassyOverture,
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'p1',
+              factionId2: 'minor1',
+              state: RelationState.atWar,
+            ),
+          ],
+        ),
+        reasonContains: 'war',
+      );
     case OrderEngineValidateWorkTarget
         .rejectsPurchaseLandWhenInsufficientTreasury:
-      vwExpectPurchaseLandRejectedInsufficientTreasury();
+        const cost = 15 * 10;
+        vwExpectPurchaseLandRejected(
+          vwPurchaseLandGame(
+            treasury: cost - 1,
+            overtureStates: purchaseLandEmbassyOverture,
+          ),
+          reasonContains: 'Insufficient treasury',
+        );
     case OrderEngineValidateWorkTarget.rejectsPurchaseLandWhenTileHasNoResource:
       vwExpectPurchaseLandRejected(
         vwPurchaseLandGame(
@@ -167,7 +190,12 @@ void runOrderEngineValidateWorkExpectation(
           );
     case OrderEngineValidateWorkTarget
         .rejectsBuildImprovementOnMineralTileWhenNotProspected:
-      vwExpectMineralBuildImprovementRejectedWhenNotProspected();
+        vwExpectBuildImprovementRejected(
+          game: buildImprovementBaseGame(
+            resourceByTileKey: {ValidateWorkOw.tileKey: 'iron'},
+          ),
+          reasonContains: 'prospected',
+        );
     case OrderEngineValidateWorkTarget
         .acceptsBuildImprovementOnMineralTileAfterProspected:
       const tileKey = ValidateWorkOw.tileKey;

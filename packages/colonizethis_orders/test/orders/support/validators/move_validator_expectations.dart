@@ -1,5 +1,11 @@
 // Compact MoveValidator / ArmyMoveValidator assertions (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+import 'move_validator_fixtures.dart';
+import 'move_validator_test_support.dart';
 import 'move_validator_expectation_shorthand.dart';
 
 /// Pins for [moveValidatorScenarios] rows.
@@ -23,32 +29,186 @@ enum MoveValidatorTarget {
 void runMoveValidatorExpectation(MoveValidatorTarget target) {
   switch (target) {
     case MoveValidatorTarget.civilianCannotMoveIntoOtherGp:
-      mvExpectBuilderCannotEnterGp();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: kUnitTypeBuilder,
+            unitId: 'u1',
+            destOwnerId: 'p2',
+            includeP2Player: true,
+          ),
+          topology: mvOwTopology,
+          unitId: 'u1',
+          destinationTileKey: mvDestTile,
+          status: OrderValidationStatus.rejected,
+          reasonContains: contains('Invalid move'),
+        );
     case MoveValidatorTarget.militaryRegimentMoveOrderRejected:
-      mvExpectMilitaryRegimentRejected();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: 'pikemen',
+            unitId: 'u1',
+            destOwnerId: 'p2',
+            includeP2Player: true,
+          ),
+          topology: mvOwTopology,
+          unitId: 'u1',
+          destinationTileKey: mvDestTile,
+          status: OrderValidationStatus.rejected,
+          reasonContains: contains('army move'),
+        );
     case MoveValidatorTarget.armyMoveIntoOtherGpWithoutWar:
-      mvExpectArmyIntoGpNoWar();
+        mvExpectArmyMove(
+          game: mvTwoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
+          topology: mvOwTopology,
+          armyProvinceId: '$mvOw|P1',
+          destinationProvinceId: '$mvOw|P2',
+          status: OrderValidationStatus.rejected,
+          reasonContains: contains('declare war'),
+        );
     case MoveValidatorTarget.civilianWorkerCannotMoveIntoMinor:
-      mvExpectBuilderCannotEnterMinor();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: kUnitTypeBuilder,
+            unitId: 'u1',
+            destOwnerId: 'minor1',
+            minorNations: const [mvMinor1],
+          ),
+          topology: mvOwTopology,
+          unitId: 'u1',
+          destinationTileKey: mvDestTile,
+          status: OrderValidationStatus.rejected,
+          reasonContains: contains('Invalid move'),
+        );
     case MoveValidatorTarget.explorerOntoMinor:
-      mvExpectExplorerOntoMinor();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: kUnitTypeExplorer,
+            unitId: 'u1',
+            destOwnerId: 'minor1',
+            unitTileKey: '$mvOw|P1|0|0',
+            minorNations: const [mvMinor1],
+          ),
+          topology: mvOwTopology,
+          unitId: 'u1',
+          destinationTileKey: mvDestTile,
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.spyOntoOtherGp:
-      mvExpectSpyOntoOtherGp();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: kUnitTypeSpy,
+            unitId: 's1',
+            destOwnerId: 'p2',
+            includeP2Player: true,
+            unitTileKey: '$mvOw|P1|0|0',
+          ),
+          topology: mvOwTopology,
+          unitId: 's1',
+          destinationTileKey: mvDestTile,
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.explorerCrossRegionTribe:
-      mvExpectExplorerCrossRegionTribe();
+        mvExpectUnitMove(
+          game: mvCrossRegionTribeGame(unitType: kUnitTypeExplorer),
+          topology: mvOwNwProvinceTopology(),
+          unitId: 'u1',
+          destinationTileKey: '$mvNw|P2|0|0',
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.builderCrossRegionTribeInvalid:
-      mvExpectBuilderCrossRegionTribeInvalid();
+        mvExpectUnitMove(
+          game: mvCrossRegionTribeGame(unitType: kUnitTypeBuilder),
+          topology: mvOwNwProvinceTopology(),
+          unitId: 'u1',
+          destinationTileKey: '$mvNw|P2|0|0',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid move',
+        );
     case MoveValidatorTarget.shortCircuitPreviousRejected:
-      mvExpectShortCircuitPreviousRejected();
+        mvExpectUnitMove(
+          game: mvTwoProvinceUnitGame(
+            unitType: kUnitTypeBuilder,
+            unitId: 'u1',
+            destOwnerId: 'p1',
+          ),
+          topology: mvOwTopology,
+          unitId: 'u1',
+          destinationTileKey: mvDestTile,
+          previousRejected: true,
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Previous invalid',
+        );
     case MoveValidatorTarget.armyMoveIntoMinorWithoutWar:
-      mvExpectArmyIntoMinorNoWar();
+        mvExpectArmyMove(
+          game: mvTwoProvinceArmyGame(
+            destOwnerId: 'minor1',
+            minorNations: const [mvMinor1],
+          ),
+          topology: mvOwTopology,
+          armyProvinceId: '$mvOw|P1',
+          destinationProvinceId: '$mvOw|P2',
+          status: OrderValidationStatus.rejected,
+          reasonContains: contains('declare war'),
+        );
     case MoveValidatorTarget.armyMoveIntoGpWithDeclareWar:
-      mvExpectArmyIntoGpWithDeclareWar();
+        mvExpectArmyMove(
+          game: mvTwoProvinceArmyGame(destOwnerId: 'p2', includeP2Player: true),
+          topology: mvOwTopology,
+          armyProvinceId: '$mvOw|P1',
+          destinationProvinceId: '$mvOw|P2',
+          draftOrders: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
+          ],
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.armyMoveIntoMinorWithDeclareWar:
-      mvExpectArmyIntoMinorWithDeclareWar();
+        mvExpectArmyMove(
+          game: mvTwoProvinceArmyGame(
+            destOwnerId: 'minor1',
+            minorNations: const [mvMinor1Capital],
+          ),
+          topology: mvOwTopology,
+          armyProvinceId: '$mvOw|P1',
+          destinationProvinceId: '$mvOw|P2',
+          draftOrders: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.armyMoveIntoTribeWithDeclareWar:
-      mvExpectArmyIntoTribeWithDeclareWar();
+        mvExpectArmyMove(
+          game: mvTribeArmyDeclareWarGame(),
+          topology: mvNwTwoProvinceTopology(),
+          armyProvinceId: '$mvNw|P1',
+          destinationProvinceId: '$mvNw|P2',
+          draftOrders: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          status: OrderValidationStatus.accepted,
+        );
     case MoveValidatorTarget.armyMoveIntoMinorTribeWithoutWar:
-      mvExpectArmyIntoMinorTribeNoWar();
+        mvExpectArmyMove(
+          game: mvTwoProvinceArmyGame(
+            destOwnerId: 'minor1',
+            minorNations: const [mvMinor1Capital],
+          ),
+          topology: mvOwTopology,
+          armyProvinceId: '$mvOw|P1',
+          destinationProvinceId: '$mvOw|P2',
+          status: OrderValidationStatus.rejected,
+          reasonContainsAll: [
+            contains('declare war'),
+            contains('Minor Nation or Tribe'),
+          ],
+        );
   }
 }

@@ -7,6 +7,7 @@ import 'move_validator_test_support.dart';
 
 const mvOw = 'oldWorld';
 const mvNw = 'newWorld';
+const mvDestTile = '$mvOw|P2|0|0';
 
 Map<String, Map<String, String>> mvP1FogPairVisibility({
   required String destRegion,

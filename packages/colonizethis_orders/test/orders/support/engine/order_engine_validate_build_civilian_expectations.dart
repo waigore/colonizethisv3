@@ -1,5 +1,10 @@
 // Compact OrderEngine validateBuild(civilian) assertions (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+import 'order_engine_validate_build_civilian_test_support.dart';
 import 'order_engine_validate_build_civilian_expectation_shorthand.dart';
 
 /// Pins for [orderEngineValidateBuildCivilianScenarios] rows.
@@ -19,27 +24,76 @@ void runOrderEngineValidateBuildCivilianExpectation(
 ) {
   switch (target) {
     case OrderEngineValidateBuildCivilianTarget.rejectsUnknownUnitType:
-      vbcExpectUnknownUnitTypeRejected();
+        vbcExpectRejected(
+          buildCivilianValidationGame(treasury: 5000),
+          'UnknownTypeXyz',
+          reason: 'Insufficient resources',
+        );
     case OrderEngineValidateBuildCivilianTarget
         .rejectsBuilderWhenTreasuryTooLow:
-      vbcExpectBuilderRejectedLowTreasury();
+        vbcExpectRejected(
+          buildCivilianValidationGame(treasury: 999, paper: 5),
+          kUnitTypeBuilder,
+          reason: 'Insufficient treasury',
+        );
     case OrderEngineValidateBuildCivilianTarget
         .rejectsBuilderWhenPaperInsufficient:
-      vbcExpectBuilderRejectedInsufficientPaper();
+        vbcExpectRejected(
+          buildCivilianValidationGame(treasury: 2000),
+          kUnitTypeBuilder,
+          reason: 'Insufficient materials',
+        );
     case OrderEngineValidateBuildCivilianTarget
         .rejectsMerchantWhenMerchantCompaniesNotUnlocked:
-      vbcExpectMerchantRejectedNoTech();
+        vbcExpectRejected(
+          buildCivilianValidationGame(treasury: 3000, paper: 5),
+          kUnitTypeMerchant,
+          reason: 'Required technology not unlocked',
+        );
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuilderWhenTreasuryAndPaperSufficient:
-      vbcExpectBuilderAcceptedDefaultSpawn();
+        vbcExpectAccepted(
+          buildCivilianValidationGame(treasury: 2000, paper: 5),
+          kUnitTypeBuilder,
+        );
     case OrderEngineValidateBuildCivilianTarget
         .acceptsMerchantWhenTechAndResourcesOk:
-      vbcExpectMerchantAcceptedWithTech();
+        vbcExpectAccepted(
+          buildCivilianValidationGame(
+            treasury: 3000,
+            paper: 5,
+            techUnlocked: const {kTechIdMerchantCompanies: true},
+          ),
+          kUnitTypeMerchant,
+        );
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuildWhenSpawnProvinceIdIsEmptyFallsBackToCapital:
-      vbcExpectBuilderAcceptedEmptySpawnProvince();
+        vbcExpectAccepted(
+          buildCivilianValidationGame(treasury: 2000, paper: 5),
+          kUnitTypeBuilder,
+          spawnProvinceId: '',
+        );
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuildWhenSpawnProvinceIdIsForeignFallsBackToCapital:
-      vbcExpectBuilderAcceptedForeignSpawnFallsBackToCapital();
+        vbcExpectAccepted(
+          buildCivilianValidationGame(
+            treasury: 2000,
+            paper: 5,
+            provinces: const [
+              Province(
+                id: '$oldWorldRegionId|P1',
+                regionId: oldWorldRegionId,
+                ownerId: 'p1',
+              ),
+              Province(
+                id: '$oldWorldRegionId|P2',
+                regionId: oldWorldRegionId,
+                ownerId: 'p2',
+              ),
+            ],
+          ),
+          kUnitTypeBuilder,
+          spawnProvinceId: '$oldWorldRegionId|P2',
+        );
   }
 }

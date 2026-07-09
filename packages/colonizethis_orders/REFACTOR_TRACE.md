@@ -1718,6 +1718,26 @@ test/ LOC after slice 100: **39,159** (net −21 from post–slice 99). Remainin
 
 test/ LOC after slice 101: **38,778** (net −381 from post–slice 100). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 102: remaining-family zero-arg dispatch-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-mv | inline 14 zero-arg `mvExpect*` wrappers into move-validator dispatcher | `move_validator_expectation_shorthand.dart` | `move_validator_expectations.dart` | #3949 |
+| dispatch-inline-nov | inline 22 zero-arg `novExpect*` wrappers into naval-validator dispatcher | `naval_order_validator_expectation_shorthand.dart` | `naval_order_validator_expectations.dart` | #3949 |
+| dispatch-inline-ah | inline 13 zero-arg `ahExpect*` wrappers into application-helpers dispatcher | `application_helpers_expectation_shorthand.dart` | `application_helpers_expectations.dart` | #3949 |
+| dispatch-inline-ved | inline 17 zero-arg `vedExpect*` wrappers into validate-diplomatic dispatcher | `order_engine_validate_diplomatic_expectation_shorthand.dart` | `order_engine_validate_diplomatic_expectations.dart` | #3949 |
+| dispatch-inline-ice | inline 27 zero-arg `iceExpect*` wrappers into incremental-equivalence dispatcher | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | `incremental_candidate_validator_equivalence_expectations.dart` | #3949 |
+| dispatch-inline-vbc | inline 8 zero-arg `vbcExpect*` wrappers into validate-build-civilian dispatcher | `order_engine_validate_build_civilian_expectation_shorthand.dart` | `order_engine_validate_build_civilian_expectations.dart` | #3949 |
+| dispatch-inline-but | inline 7 zero-arg `butExpect*` wrappers into build-unit-training dispatcher | `build_unit_training_expectation_shorthand.dart` | `build_unit_training_expectations.dart` | #3949 |
+| dispatch-inline-wpp | inline 6 zero-arg `wppExpect*` wrappers into worker-pool-phase dispatcher | `worker_pool_phase_expectation_shorthand.dart` | `worker_pool_phase_expectations.dart` | #3949 |
+| dispatch-inline-csp | inline 1 zero-arg `cspExpect*` wrapper into civilian-spawn dispatcher | `civilian_spawn_expectation_shorthand.dart` | `civilian_spawn_expectations.dart` | #3949 |
+| dispatch-inline-vrw | inline 4 zero-arg `vrwExpect*` wrappers into validate-recruit-worker dispatcher | `order_engine_validate_recruit_worker_expectation_shorthand.dart` | `order_engine_validate_recruit_worker_expectations.dart` | #3949 |
+| dispatch-inline-vet | inline 5 zero-arg `vetExpect*` wrappers into validate-trade dispatcher | `order_engine_validate_trade_expectation_shorthand.dart` | `order_engine_validate_trade_expectations.dart` | #3949 |
+| dispatch-inline-vw-tail | inline 4 remaining zero-arg `vwExpect*` wrappers into validateWork dispatcher | `order_engine_validate_work_expectation_shorthand_part1.dart` | `order_engine_validate_work_expectations.dart` | #3949 |
+| mv-dest-tile-export | export `mvDestTile` from fixtures; rename `_novAtSeaMissionValidator` → public helper | `move_validator_fixtures.dart`, `naval_order_validator_expectation_shorthand.dart` | same | #3949 |
+
+test/ LOC after slice 102: **38,477** (net −301 from post–slice 101). Remaining: optional-param dispatch-inline (vwt/waa/wcc), further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

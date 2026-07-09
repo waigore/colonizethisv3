@@ -162,130 +162,18 @@ void ahExpectMineralEligible({
 
 const ahMineralTileKey = 'oldWorld|p1|0|0';
 
-void ahExpectMountainProspectableWithoutResource() {
-  ahExpectMineralEligible(
-    resourceByTile: const {},
-    tileKey: ahMineralTileKey,
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(terrain: TerrainType.mountain),
-    },
-    expected: true,
-  );
-}
 
-void ahExpectPlainsGoldNotProspectable() {
-  ahExpectMineralEligible(
-    resourceByTile: const {ahMineralTileKey: 'gold'},
-    tileKey: ahMineralTileKey,
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.plains,
-        resource: Resource.gold,
-      ),
-    },
-    expected: false,
-  );
-}
 
-void ahExpectHillsWoolNotProspectable() {
-  ahExpectMineralEligible(
-    resourceByTile: const {ahMineralTileKey: 'wool'},
-    tileKey: ahMineralTileKey,
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.hills,
-        resource: Resource.wool,
-      ),
-    },
-    expected: false,
-  );
-}
 
-void ahExpectHillsIronProspectable() {
-  ahExpectMineralEligible(
-    resourceByTile: const {ahMineralTileKey: 'iron'},
-    tileKey: ahMineralTileKey,
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.hills,
-        resource: Resource.iron,
-      ),
-    },
-    expected: true,
-  );
-}
 
-void ahExpectAbsentResourceNotMineral() {
-  ahExpectMineralEligible(
-    resourceByTile: const {},
-    tileKey: ahMineralTileKey,
-    expected: false,
-  );
-}
 
-void ahExpectGrainNotMineral() {
-  ahExpectMineralEligible(
-    resourceByTile: const {ahMineralTileKey: 'grain'},
-    tileKey: ahMineralTileKey,
-    expected: false,
-  );
-}
 
-void ahExpectCoalMineral() {
-  ahExpectMineralEligible(
-    resourceByTile: const {ahMineralTileKey: 'coal'},
-    tileKey: ahMineralTileKey,
-    expected: true,
-  );
-}
 
-void ahExpectParseValidTileKeyDefault() {
-  ahExpectParseTileKey(
-    'oldWorld|P1|12|7',
-    regionId: 'oldWorld',
-    provinceLocalId: 'P1',
-    x: 12,
-    y: 7,
-  );
-}
 
-void ahExpectParseMalformedTileKeysDefault() {
-  ahExpectMalformedTileKeys(['oldWorld|P1|12', 'oldWorld|P1|x|7']);
-}
 
-void ahExpectCancelWorkDefault() {
-  ahExpectCancelWorkClearsState(
-    ahWorkingUnit(id: 'u1'),
-    expectedTile: 'oldWorld|P1|1|1',
-  );
-}
 
-void ahExpectCancelWorkRestoredTileOverride() {
-  ahExpectCancelWorkClearsState(
-    ahWorkingUnit(
-      id: 'u2',
-      originTileKey: null,
-      assignedTileKey: null,
-    ),
-    restoredTile: 'oldWorld|P1|0|0',
-    expectedTile: 'oldWorld|P1|0|0',
-  );
-}
 
-void ahExpectClearWorkUnchangedIdleBuilder() {
-  ahExpectClearWorkUnchanged(
-    ahOwBuilderGame(ahIdleBuilderUnit()),
-    'u1',
-  );
-}
 
-void ahExpectClearWorkBuilderImprovementIdleAtOrigin() {
-  ahExpectClearWorkIdleAtOrigin(
-    ahOwBuilderGame(ahBuilderWithImprovementWork()),
-    'u1',
-    'oldWorld|p1|0|0',
-  );
-}
 
 Unit ahIdleBuilderUnit({
   String id = 'u1',

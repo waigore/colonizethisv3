@@ -170,23 +170,6 @@ void cspExpectNewWorldMilitarySpawn({
   );
 }
 
-void cspExpectMissingCapitalTileBuildError() {
-  final game = cspExplorerGame(
-    capitalProvinceId: cspCapitalProvinceId,
-    tileKeysByProvince: {
-      cspCapitalProvinceId: ['oldWorld|P1|0|0'],
-    },
-    peasants: 0,
-  );
-  cspExpectMissingCapitalTileError(
-    game,
-    cspBuildOrders(
-      kUnitTypeExplorer,
-      isMilitary: false,
-      spawnProvinceId: cspCapitalProvinceId,
-    ),
-  );
-}
 
 Game cspNewWorldMilitaryGame({
   required String provinceId,
