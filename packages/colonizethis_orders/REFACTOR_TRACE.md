@@ -1932,6 +1932,17 @@ test/ LOC after slice 119: **37,634** (net −20 from post–slice 118). Remaini
 
 test/ LOC after slice 120: **37,617** (net −17 from post–slice 119). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 121: wcc alias DRY, restore upgradeTown case, drop late part
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wcc-drop-game-alias | remove `wccGame` pass-through; call `workAppOwnedGame` at work-completion sites | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+| wcc-steam-default | fold `wccSteamPlayers` into optional `players` on `wccRailGame` / `wccDispatchRailSetup` | same | same | #3949 |
+| wcc-late-inline | merge explore closure case into main switch; delete `work_completion_expectations_late.dart` | `work_completion_expectations_late.dart` | `work_completion_expectations.dart` | #3949 |
+| wcc-upgrade-town-repair | restore `upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord` case dropped during CI split | `work_completion_expectations.dart` | same | #3949 |
+
+test/ LOC after slice 121: **37,726** (net −13 from pre-slice-121 **37,739**; restores upgradeTown scenario dropped in CI split; net of alias/late removal). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

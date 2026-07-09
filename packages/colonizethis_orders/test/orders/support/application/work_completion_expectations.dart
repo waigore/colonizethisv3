@@ -8,8 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
-part 'work_completion_expectations_late.dart';
-
 /// Pins for [workCompletionScenarios] rows.
 enum WorkCompletionTarget {
   buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork,
@@ -39,7 +37,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
     case WorkCompletionTarget
         .buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork:
       final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [wccBuilderImprovement()],
             tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
           ),
@@ -52,7 +50,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
     case WorkCompletionTarget
         .buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile:
       final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             turnNumber: 2,
             units: [wccBuilderImprovement()],
             tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
@@ -65,7 +63,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .buildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint:
       const aiId = 'ai1';
         final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             turnNumber: 1,
             units: [wccBuilderImprovement(ownerId: aiId)],
             provinces: [workAppOwnedProvince(ownerId: aiId)],
@@ -89,7 +87,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
     case WorkCompletionTarget
         .buildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax:
       final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [wccBuilderImprovement()],
             tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
             resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
@@ -103,7 +101,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
           1,
         );
         final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [wccBuilderImprovement()],
             tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 3),
             resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
@@ -116,7 +114,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
     case WorkCompletionTarget
         .workCancelledWhenProvinceContainingTargetTileIsConquered376:
       final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [
               wccBuilderImprovement(totalTurns: 2, remainingTurns: 2),
             ],
@@ -137,7 +135,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         wccExpectImprovement(next, 0);
     case WorkCompletionTarget
         .multiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero:
-      final game = wccGame(
+      final game = workAppOwnedGame(
           units: [
             wccBuilderImprovement(
               totalTurns: 2,
@@ -155,7 +153,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
     case WorkCompletionTarget
         .exploreCompletionSetsVisibilityAndClearsCurrentWork:
       final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [
               workAppWorkingUnit(
                 type: kUnitTypeExplorer,
@@ -178,7 +176,7 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .exploreCompletionRevealsEveryTileInCanonicalFullIdBucket:
       const tileKey2 = WorkAppIds.originTileKey;
         final next = wccApply(
-          wccGame(
+          workAppOwnedGame(
             units: [
               workAppWorkingUnit(
                 type: kUnitTypeExplorer,
@@ -308,20 +306,19 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
     case WorkCompletionTarget.buildRailCompletionLeavesRoadWhenTileHasNoRoad:
       final next = wccApply(
-          wccRailGame(roadLevel: 0, players: wccSteamPlayers()),
+          wccRailGame(roadLevel: 0),
           tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 0);
     case WorkCompletionTarget.buildRailCompletionSetsRoadLevelTo4WhenValid:
       final next = wccApply(
-          wccRailGame(roadLevel: 1, players: wccSteamPlayers()),
+          wccRailGame(roadLevel: 1),
           tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
     case WorkCompletionTarget.routesKWorkTargetBuildRailThroughHandlerMapEntry:
         final (railState, railUnit, railCw) = wccDispatchRailSetup(
           roadLevel: 1,
-          players: wccSteamPlayers(),
         );
         final railNext = wccDispatchCompleted(railState, railUnit, railCw);
         expect(railNext.work.tileState.roadLevel(WorkAppIds.tileKey), 4);
@@ -334,8 +331,67 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         final noopNext = wccDispatchCompleted(noopState, noopUnit, noopCw);
         expect(noopNext.work.tileState.roadLevel(WorkAppIds.tileKey), 0);
     case WorkCompletionTarget
+        .upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord:
+      final upgradeUnit =
+          workAppUnit(type: kUnitTypeBuilder, status: UnitStatus.working);
+        final upgradeProvince = Province(
+          id: WorkAppIds.provinceId,
+          regionId: WorkAppIds.ow,
+          ownerId: 'p1',
+          townDevelopmentLevel: 0,
+        );
+        final upgradeGame = workAppOwnedGame(
+          turnNumber: 1,
+          units: [upgradeUnit],
+          provinces: [upgradeProvince],
+        );
+        const upgradeCw = CurrentWork(
+          workTarget: kWorkTargetUpgradeTown,
+          tileKey: WorkAppIds.tileKey,
+          totalTurns: 1,
+          remainingTurns: 0,
+        );
+        final (upgradeState, upgradeU, upgradeWork) = wccDispatchWorkSetup(
+          unit: upgradeUnit,
+          game: upgradeGame,
+          cw: upgradeCw,
+          oldProvinces: [upgradeProvince],
+        );
+        final upgradeNext =
+            wccDispatchCompleted(upgradeState, upgradeU, upgradeWork);
+        expect(upgradeNext.work.oldProvinces.single.townDevelopmentLevel, 1);
     case WorkCompletionTarget
         .exploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord:
-      wccLateExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord();
+      final exploreUnit =
+          workAppUnit(type: kUnitTypeExplorer, status: UnitStatus.working);
+        final exploreGame = workAppOwnedGame(
+          turnNumber: 1,
+          units: [exploreUnit],
+          provinces: const [],
+        );
+        const exploreCw = CurrentWork(
+          workTarget: kWorkTargetExplore,
+          tileKey: WorkAppIds.tileKey,
+          totalTurns: 1,
+          remainingTurns: 0,
+        );
+        final (exploreState, exploreU, exploreWork) = wccDispatchWorkSetup(
+          unit: exploreUnit,
+          game: exploreGame,
+          cw: exploreCw,
+          oldProvinces: const [],
+        );
+        String? capturedRegionId;
+        final exploreNext = wccDispatchCompleted(
+          exploreState,
+          exploreU,
+          exploreWork,
+          onExploreRegion: (s, unit, regionId) {
+            capturedRegionId = regionId;
+            return s;
+          },
+        );
+        expect(capturedRegionId, WorkAppIds.ow);
+        expect(identical(exploreNext, exploreState), isTrue);
 }
 }

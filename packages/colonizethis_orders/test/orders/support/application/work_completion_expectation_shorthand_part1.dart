@@ -1,37 +1,5 @@
 part of 'work_completion_expectation_shorthand.dart';
 
-
-Game wccGame({
-  required List<Unit> units,
-  TileMapState? tileState,
-  List<Province>? provinces,
-  List<Player>? players,
-  Map<String, String>? resourceByTileKey,
-  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
-  Map<String, Map<String, String>>? playerVisibilityByTile,
-  Map<String, String>? portsByProvinceSeaboard,
-  int turnNumber = 0,
-  Map<String, bool>? aiControlByGpId,
-  String? lastHumanCompletedResearchCategory,
-  int? lastHumanResearchCategoryCompletionTurn,
-}) {
-  return workAppOwnedGame(
-    units: units,
-    provinces: provinces,
-    players: players,
-    tileState: tileState,
-    resourceByTileKey: resourceByTileKey,
-    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-    playerVisibilityByTile: playerVisibilityByTile,
-    portsByProvinceSeaboard: portsByProvinceSeaboard,
-    turnNumber: turnNumber,
-    aiControlByGpId: aiControlByGpId,
-    lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
-    lastHumanResearchCategoryCompletionTurn:
-        lastHumanResearchCategoryCompletionTurn,
-  );
-}
-
 Unit wccBuilderImprovement({
   String ownerId = 'p1',
   int totalTurns = 1,
@@ -86,7 +54,7 @@ void wccExpectVisibility(
 
 Game wccRailGame({
   required int roadLevel,
-  required List<Player> players,
+  List<Player>? players,
   int turnNumber = 0,
   bool working = true,
 }) {
@@ -96,32 +64,30 @@ Game wccRailGame({
           workTarget: kWorkTargetBuildRail,
         )
       : workAppUnit(type: kUnitTypeRailBuilder, status: UnitStatus.working);
-  return wccGame(
+  return workAppOwnedGame(
     turnNumber: turnNumber,
     units: [unit],
     tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel),
-    players: players,
+    players: players ??
+        [workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true})],
   );
 }
 
-List<Player> wccSteamPlayers() => [
-      workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
-    ];
-
 (BuildWorkState, Unit, CurrentWork) wccDispatchRailSetup({
   required int roadLevel,
-  required List<Player> players,
+  List<Player>? players,
 }) {
   final unit = workAppUnit(
     type: kUnitTypeRailBuilder,
     status: UnitStatus.working,
   );
   final tileState = TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel);
-  final game = wccGame(
+  final game = workAppOwnedGame(
     turnNumber: 1,
     units: [unit],
     tileState: tileState,
-    players: players,
+    players: players ??
+        [workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true})],
   );
   final work = WorkOrderState(
     unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
@@ -196,7 +162,7 @@ Game wccEngineerCompletionGame({
   List<Player>? players,
   Map<String, String>? portsByProvinceSeaboard,
 }) =>
-    wccGame(
+    workAppOwnedGame(
       units: [
         workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget),
       ],
