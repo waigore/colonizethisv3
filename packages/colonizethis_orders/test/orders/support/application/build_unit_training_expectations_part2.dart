@@ -1,13 +1,12 @@
 part of 'build_unit_training_expectations.dart';
 
-
 void _rejectsBuildWhenMaterialsAreInsufficient() {
   final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-  final game = _militaryBaseGame(
+  final game = butMilitaryBaseGame(
     peasants: 5,
     treasury: econ.buildTreasuryCost + 10,
   );
-  final next = applyBuildAndWorkOrders(game, _ordersFor('peasant_levies'));
+  final next = applyBuildAndWorkOrders(game, butOrdersFor('peasant_levies'));
   expect(next.worldState.oldWorld.units, isEmpty);
   expect(
     next.players.single.workerPool.peasants,
@@ -17,27 +16,17 @@ void _rejectsBuildWhenMaterialsAreInsufficient() {
 
 void _appliesTreasuryStockpileAndWorkerCostsWhenValid() {
   final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-  final stockpile = _stockpileCovering(econ.buildInputs);
+  final stockpile = butStockpileCovering(econ.buildInputs);
   final player = Player(
-    id: 'p1',
+    id: ButIds.playerId,
     displayName: 'Player 1',
     isHuman: true,
     stockpile: stockpile,
     workerPool: const WorkerPool(peasants: 3),
     treasury: econ.buildTreasuryCost + 5,
   );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(
-      provinces: [
-        Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
-      ],
-      units: [],
-    ),
-    newWorld: const RegionData(),
-  );
-  final game = Game(id: 'g', worldState: world, players: [player]);
-  final next = applyBuildAndWorkOrders(game, _ordersFor('peasant_levies'));
+  final game = butOwGame(players: [player]);
+  final next = applyBuildAndWorkOrders(game, butOrdersFor('peasant_levies'));
   final nextPlayer = next.players.single;
   expect(next.worldState.oldWorld.units.length, 1);
   expect(next.worldState.oldWorld.units.single.type, 'peasant_levies');
@@ -51,7 +40,7 @@ void _appliesTreasuryStockpileAndWorkerCostsWhenValid() {
 }
 
 void _returnsGameUnchangedWhenNoBuildOrWorkOrders() {
-  final game = _militaryBaseGame(peasants: 2, treasury: 100);
+  final game = butMilitaryBaseGame(peasants: 2, treasury: 100);
   final next = applyBuildAndWorkOrders(game, const Orders());
   expect(
     next.worldState.oldWorld.units.length,
@@ -65,28 +54,18 @@ void _returnsGameUnchangedWhenNoBuildOrWorkOrders() {
 }
 
 void _shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea() {
-  final topology = _capitalAdjacentSeaTopology();
-  final player = Player(
-    id: 'p1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|P1',
+  final topology = butCapitalAdjacentSeaTopology();
+  final player = butShipBuildPlayer(
     stockpile: const Stockpile(),
-    workerPool: const WorkerPool(peasants: 2),
+    peasants: 2,
     treasury: 100,
+    capitalProvinceId: ButIds.prov('P1'),
     techUnlocked: {kTechIdSuperiorHullDesign: true},
+    displayName: 'Spain',
   );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(
-      provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
-      units: [],
-    ),
-    newWorld: const RegionData(),
-  );
-  final game = Game(id: 'g', worldState: world, players: [player]);
+  final game = butShipBuildGame(player: player, provinceId: 'P1');
   final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  final stockpile = _stockpileCovering(shipEcon.buildInputs);
+  final stockpile = butStockpileCovering(shipEcon.buildInputs);
   final gameWithStock = game.copyWith(
     players: [
       player.copyWith(
@@ -97,13 +76,13 @@ void _shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea() {
   );
   final next = applyBuildAndWorkOrders(
     gameWithStock,
-    _ordersFor('fluyte'),
+    butOrdersFor('fluyte'),
     topology: topology,
   );
   expect(next.worldState.fleets, isNotEmpty);
   expect(
     next.worldState.fleets.any(
-      (f) => f.ownerId == 'p1' && f.shipTypeIds.contains('fluyte'),
+      (f) => f.ownerId == ButIds.playerId && f.shipTypeIds.contains('fluyte'),
     ),
     isTrue,
   );
@@ -111,31 +90,21 @@ void _shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea() {
 }
 
 void _rejectsNavalBuildWhenPeasantsAreZero() {
-  final topology = _capitalAdjacentSeaTopology();
+  final topology = butCapitalAdjacentSeaTopology();
   final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  final stockpile = _stockpileCovering(shipEcon.buildInputs);
-  final player = Player(
-    id: 'p1',
-    displayName: 'Spain',
-    isHuman: true,
-    capitalProvinceId: 'oldWorld|P1',
+  final stockpile = butStockpileCovering(shipEcon.buildInputs);
+  final player = butShipBuildPlayer(
     stockpile: stockpile,
-    workerPool: const WorkerPool(peasants: 0),
+    peasants: 0,
     treasury: shipEcon.buildTreasuryCost + 10,
+    capitalProvinceId: ButIds.prov('P1'),
     techUnlocked: {kTechIdSuperiorHullDesign: true},
+    displayName: 'Spain',
   );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(
-      provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
-      units: [],
-    ),
-    newWorld: const RegionData(),
-  );
-  final game = Game(id: 'g', worldState: world, players: [player]);
+  final game = butShipBuildGame(player: player, provinceId: 'P1');
   final next = applyBuildAndWorkOrders(
     game,
-    _ordersFor('fluyte'),
+    butOrdersFor('fluyte'),
     topology: topology,
   );
   expect(next.worldState.fleets, isEmpty);
@@ -144,61 +113,57 @@ void _rejectsNavalBuildWhenPeasantsAreZero() {
 }
 
 void _secondNavalBuildAddsShipToExistingHomeFleet() {
-  const ow = 'oldWorld';
   final topology = const MapTopology(
     nodes: [
-      TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-      TopologyNode(id: 'Sea1', regionId: ow, type: TopologyNodeType.seaZone),
+      TopologyNode(
+        id: 'P1',
+        regionId: ButIds.ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'Sea1',
+        regionId: ButIds.ow,
+        type: TopologyNodeType.seaZone,
+      ),
     ],
     edges: [TopologyEdge(id1: 'P1', id2: 'Sea1')],
   );
   final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  var stockpile = const Stockpile();
-  for (final e in shipEcon.buildInputs.entries) {
-    stockpile = stockpile.applyDelta(e.key, e.value * 2 + 1);
-  }
-  final player = Player(
-    id: 'p1',
-    displayName: 'P1',
-    isHuman: true,
-    capitalProvinceId: '$ow|P1',
-    stockpile: stockpile,
-    workerPool: const WorkerPool(peasants: 2),
+  final player = butShipBuildPlayer(
+    stockpile: butDoubleShipBuildStockpile(shipEcon.buildInputs),
+    peasants: 2,
     treasury: shipEcon.buildTreasuryCost * 2 + 10,
+    capitalProvinceId: ButIds.prov('P1'),
     techUnlocked: {kTechIdSuperiorHullDesign: true},
   );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-      units: [],
-    ),
-    newWorld: const RegionData(),
+  final game = butSecondNavalBuildGame(
+    player: player,
     fleets: [
       Fleet(
         id: 'fleet_p1',
-        ownerId: 'p1',
+        ownerId: ButIds.playerId,
         seaZoneId: 'Sea1',
-        regionId: ow,
+        regionId: ButIds.ow,
         shipTypeIds: ['fluyte'],
       ),
     ],
   );
-  final game = Game(id: 'g', worldState: world, players: [player]);
   final next = applyBuildAndWorkOrders(
     game,
-    _ordersFor('fluyte', spawnProvinceId: '$ow|P1'),
+    butOrdersFor('fluyte', spawnProvinceId: ButIds.prov('P1')),
     topology: topology,
   );
-  final p1Fleet = next.worldState.fleets.where((f) => f.ownerId == 'p1').single;
+  final p1Fleet = next.worldState.fleets
+      .where((f) => f.ownerId == ButIds.playerId)
+      .single;
   expect(p1Fleet.shipTypeIds.length, 2);
   expect(p1Fleet.shipTypeIds, contains('fluyte'));
   expect(next.players.single.workerPool.peasants, 1);
 }
 
 void _rejectsCivilianBuildWhenTreasuryInsufficient() {
-  final game = _civilianGame(treasury: 999, paper: 2);
-  final next = applyBuildAndWorkOrders(game, _ordersFor(kUnitTypeBuilder));
+  final game = butCivilianGame(treasury: 999, paper: 2);
+  final next = applyBuildAndWorkOrders(game, butOrdersFor(kUnitTypeBuilder));
   expect(next.worldState.oldWorld.units, isEmpty);
   expect(next.players.single.treasury, game.players.single.treasury);
   expect(
@@ -208,8 +173,8 @@ void _rejectsCivilianBuildWhenTreasuryInsufficient() {
 }
 
 void _rejectsCivilianBuildWhenPaperInsufficient() {
-  final game = _civilianGame(treasury: 1000, paper: 0);
-  final next = applyBuildAndWorkOrders(game, _ordersFor(kUnitTypeBuilder));
+  final game = butCivilianGame(treasury: 1000, paper: 0);
+  final next = applyBuildAndWorkOrders(game, butOrdersFor(kUnitTypeBuilder));
   expect(next.worldState.oldWorld.units, isEmpty);
   expect(next.players.single.treasury, game.players.single.treasury);
 }
@@ -217,8 +182,8 @@ void _rejectsCivilianBuildWhenPaperInsufficient() {
 void _appliesTreasuryAndPaperCostWhenCivilianBuildValid() {
   const cash = 1000;
   const paperQty = 2;
-  final game = _civilianGame(treasury: cash + 100, paper: paperQty + 1);
-  final next = applyBuildAndWorkOrders(game, _ordersFor(kUnitTypeBuilder));
+  final game = butCivilianGame(treasury: cash + 100, paper: paperQty + 1);
+  final next = applyBuildAndWorkOrders(game, butOrdersFor(kUnitTypeBuilder));
   expect(next.worldState.oldWorld.units.length, 1);
   expect(next.worldState.oldWorld.units.single.type, kUnitTypeBuilder);
   expect(next.players.single.treasury, game.players.single.treasury - cash);
@@ -232,12 +197,12 @@ void _appliesTreasuryAndPaperCostWhenCivilianBuildValid() {
 void _merchantRequiresMerchantCompaniesTech() {
   const cash = 2000;
   const paperQty = 4;
-  final gameNoTech = _civilianGame(
+  final gameNoTech = butCivilianGame(
     treasury: cash + 100,
     paper: paperQty + 1,
     techUnlocked: {},
   );
-  final orders = _ordersFor(kUnitTypeMerchant);
+  final orders = butOrdersFor(kUnitTypeMerchant);
   final nextNoTech = applyBuildAndWorkOrders(gameNoTech, orders);
   expect(nextNoTech.worldState.oldWorld.units, isEmpty);
   expect(
@@ -245,7 +210,7 @@ void _merchantRequiresMerchantCompaniesTech() {
     gameNoTech.players.single.treasury,
   );
 
-  final gameWithTech = _civilianGame(
+  final gameWithTech = butCivilianGame(
     treasury: cash + 100,
     paper: paperQty + 1,
     techUnlocked: {kTechIdMerchantCompanies: true},

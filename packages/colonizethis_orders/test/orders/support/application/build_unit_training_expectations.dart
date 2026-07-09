@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'build_unit_training_fixtures.dart';
 import 'orders_application_military_ship_skip_test_support.dart';
 
 /// Pins for [buildUnitTrainingScenarios] rows.
