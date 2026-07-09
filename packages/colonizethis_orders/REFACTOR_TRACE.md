@@ -1127,6 +1127,21 @@ Migrated imperative `order_suggestion_helpers_test.dart` → table-driven scenar
 
 test/ LOC after slice 64: **35,482** (net +107 from post–slice 63; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 65 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ospc-index-skip-empty | indexExistingTargetsByEntityId skips empty targets when requested | `order_suggestion_pass_context_test.dart` | `support/suggestion/order_suggestion_pass_context_scenarios.dart` + `order_suggestion_pass_context_test.dart` | #3500 |
+| ospc-emit-order | emitAcceptedCandidates collects accepted in iteration order | same | same | #3500 |
+| ospc-emit-skip-targeted | emitAcceptedCandidates skips candidates already targeted | same | same | #3500 |
+| ospc-emit-no-dedup | emitAcceptedCandidates probes every candidate without dedup args | same | same | #3500 |
+| ospc-capped-probe | runCappedSuggestionProbeLoop respects acceptance and probe caps | same | same | #3500 |
+| ospc-owned-provinces | ownedProvinceIdsFromView returns full province ids for owner | same | same | #3500 |
+
+Migrated imperative `order_suggestion_pass_context_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 65: **35,619** (net +137 from post–slice 64; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
