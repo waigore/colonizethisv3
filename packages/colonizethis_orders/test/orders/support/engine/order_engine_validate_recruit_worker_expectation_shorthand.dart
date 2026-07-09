@@ -76,3 +76,116 @@ void vrwExpectSingleRejected(
     expect(results.single.reason, reason);
   }
 }
+
+Player vrwPlayer({
+  Stockpile? stockpile,
+  WorkerPool workerPool = const WorkerPool(),
+  int treasury = 0,
+  String? capitalProvinceId,
+  CapitalTile? capitalTile,
+  Map<String, bool> techUnlocked = const {},
+}) =>
+    Player(
+      id: 'p1',
+      displayName: 'P',
+      isHuman: true,
+      stockpile: stockpile ?? Stockpile.empty,
+      workerPool: workerPool,
+      treasury: treasury,
+      capitalProvinceId: capitalProvinceId,
+      capitalTile: capitalTile,
+      techUnlocked: techUnlocked,
+    );
+
+void vrwExpectPeasantRecruitAccepted() {
+  final game = vrwGameWith(
+    player: vrwPlayer(
+      stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 2}),
+    ),
+  );
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.peasant);
+  vrwExpectSingleAccepted(vrwValidate(game, engine));
+}
+
+void vrwExpectApprenticeTrainRejectedTechLocked() {
+  final game = vrwGameWith(
+    player: vrwPlayer(
+      stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 5}),
+      workerPool: const WorkerPool(peasants: 1),
+      treasury: 500,
+      techUnlocked: const {kTechIdApprenticeWorkers: true},
+    ),
+  );
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwExpectSingleRejected(
+    vrwValidate(game, engine),
+    reason: kRecruitWorkerTechLocked,
+  );
+}
+
+void vrwExpectRecruitConsumesPeasantBeforeMilitaryBuild() {
+  final game = vrwGameWith(
+    player: vrwPlayer(
+      capitalProvinceId: vrwProvinceId,
+      stockpile: Stockpile(
+        quantities: {
+          CommodityCatalog.paper.id: 50,
+          CommodityCatalog.steel.id: 50,
+          CommodityCatalog.fabric.id: 50,
+        },
+      ),
+      workerPool: const WorkerPool(peasants: 1),
+      treasury: 5000,
+      techUnlocked: const {
+        kTechIdApprenticeWorkers: true,
+        kTechIdSugarRefining: true,
+      },
+    ),
+  );
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwAddBuild(engine, 'peasant_levies', isMilitary: true);
+  final results = vrwValidate(game, engine);
+  expect(results, hasLength(2));
+  expect(results[0].isAccepted, isTrue, reason: 'recruit accepted');
+  expect(
+    results[1].isAccepted,
+    isFalse,
+    reason: 'build rejected because peasant was consumed by recruit',
+  );
+  expect(results[1].reason, 'Insufficient workers');
+}
+
+void vrwExpectRecruitThenCivilianBuildAccepted() {
+  final game = vrwGameWith(
+    player: vrwPlayer(
+      capitalProvinceId: vrwProvinceId,
+      capitalTile: const CapitalTile(
+        regionId: vrwRegionId,
+        provinceId: 'P1',
+        x: 0,
+        y: 0,
+      ),
+      stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 20}),
+      workerPool: const WorkerPool(peasants: 1),
+      treasury: 5000,
+      techUnlocked: const {
+        kTechIdApprenticeWorkers: true,
+        kTechIdSugarRefining: true,
+      },
+    ),
+  );
+  final engine = vrwEngine();
+  vrwAddRecruit(engine, WorkerTier.apprentice);
+  vrwAddBuild(engine, kUnitTypeBuilder, isMilitary: false);
+  final results = vrwValidate(game, engine);
+  expect(results, hasLength(2));
+  expect(results[0].isAccepted, isTrue);
+  expect(
+    results[1].isAccepted,
+    isTrue,
+    reason: 'civilian builder does not consume peasants',
+  );
+}

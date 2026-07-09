@@ -520,3 +520,75 @@ void vwtExpectVisProspectExcludesGrassAndProspectedIron({
     [grassTile, ironTile],
   );
 }
+
+void vwtExpectVisProspectIncludesEligibleIronTile({
+  String provinceLocalId = 'p1',
+}) {
+  final ironTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
+  vwtExpectVisProspectContains(
+    owTribeProspectGame(
+      provinceLocalId: provinceLocalId,
+      tileKeys: [ironTile],
+      resourceByTileKey: {ironTile: 'iron'},
+      visibilityByTile: {ironTile: 'fogged'},
+    ),
+    owSingleProvinceTopology(provinceLocalId),
+    ironTile,
+  );
+}
+
+void vwtExpectVisProspectExcludesWoolOnHillsTerrain({
+  String provinceLocalId = 'p1',
+}) {
+  final woolTile = ValidWorkTilesTestSupport.tileKey(provinceLocalId, 0, 0);
+  vwtExpectVisProspectExcludes(
+    owTribeProspectGame(
+      provinceLocalId: provinceLocalId,
+      tileKeys: [woolTile],
+      resourceByTileKey: {woolTile: 'wool'},
+      visibilityByTile: {woolTile: 'fogged'},
+    ),
+    owSingleProvinceTopology(provinceLocalId),
+    woolTile,
+    tileMapByRegion: vwtHillsWoolTileMap(provinceLocalId),
+  );
+}
+
+void vwtExpectVisExplorePartialProvincesOnly() {
+  final fx = owTribeExploreMultiProvinceFixture();
+  vwtExpectVisExplore(
+    game: fx.game,
+    topology: ValidWorkTilesTestSupport.emptyTopology,
+    includedTiles: [fx.partialKnownTile],
+    excludedTiles: [fx.fullTile, fx.unknownTile],
+  );
+}
+
+void vwtExpectVisExploreLargeMapUnderOneSecond() {
+  vwtExpectVisExploreLatencyUnder(
+    game: owTribeExploreLatencyGame(),
+    topology: ValidWorkTilesTestSupport.emptyTopology,
+  );
+}
+
+void vwtExpectNoMovesToOtherGpProvince() {
+  final fx = owGpAdjacentMoveFixture();
+  vwtExpectNoMovesToProvince(fx.game, fx.topology, fx.otherGpProvinceId);
+}
+
+void vwtExpectBuildSuggestionsSortedThreeTiles() {
+  vwtExpectBuildSuggestionsSorted([
+    ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
+    ValidWorkTilesTestSupport.tileKey('p1', 1, 0),
+    ValidWorkTilesTestSupport.tileKey('p1', 2, 0),
+  ]);
+}
+
+void vwtExpectNoBuildForReservedTilePair() {
+  final tile0 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  final tile1 = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+  vwtExpectNoBuildSuggestionForReservedTile(
+    tileKeys: [tile0, tile1],
+    reservedTile: tile0,
+  );
+}

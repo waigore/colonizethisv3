@@ -642,6 +642,17 @@ test/ LOC after slice 37: **33,113** (net +111 from post–slice 36; expectation
 
 test/ LOC after slice 38: **33,276** (net +163 from post–slice 37; expectation bodies shortened, new `waa*`/`wcc*`/`vw*`/`osc*`/`vwt*`/`but*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 39: vrw/vet/vw/vwt engine+suggestion expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vrw-shorthand | add `vrwPlayer` / `vrwExpectPeasantRecruitAccepted` / `vrwExpectApprenticeTrainRejectedTechLocked` / `vrwExpectRecruitConsumesPeasantBeforeMilitaryBuild` / `vrwExpectRecruitThenCivilianBuildAccepted`; compact validateRecruitWorker bodies | `order_engine_validate_recruit_worker_expectations.dart` | `order_engine_validate_recruit_worker_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vet-shorthand | add `vetExpectValidOfferAccepted` / `vetExpectMutualExclusionRejected` / `vetExpectOfferExceedsStockpileRejected` / `vetExpectFirstBidAcceptedNoEmbassy` / `vetExpectSecondBidRejectedNoEmbassy`; compact validateTrade bodies | `order_engine_validate_trade_expectations.dart` | `order_engine_validate_trade_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part1-shorthand | add `vwExpectSecondPendingWorkOrderRejected` / `vwExpectSameTileDevelopmentExclusivityRejected`; compact validateWork part1 dual-order bodies | `order_engine_validate_work_expectations_part1.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part2-shorthand | add `vwtExpectVisProspectIncludesEligibleIronTile` / `vwtExpectVisProspectExcludesWoolOnHillsTerrain` / `vwtExpectVisExplorePartialProvincesOnly` / `vwtExpectVisExploreLargeMapUnderOneSecond` / `vwtExpectNoMovesToOtherGpProvince` / `vwtExpectBuildSuggestionsSortedThreeTiles` / `vwtExpectNoBuildForReservedTilePair`; compact valid-work-tiles part2 bodies | `valid_work_tiles_expectations_part2.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 39: **33,347** (net +71 from post–slice 38; expectation bodies shortened, new `vrw*`/`vet*`/`vw*`/`vwt*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
