@@ -1074,10 +1074,31 @@ rules:
 
   - rule_id: repo.orders_test_dedup_gp_minor_game
     group: architecture
-    title: colonizethis_orders tests must not redefine GP–Minor game builders outside diplomatic_orders_test_fixtures.dart (Refs #3877)
+    title: colonizethis_orders tests must not redefine GP–Minor game builders outside support/diplomatic/diplomatic_orders_test_fixtures.dart (Refs #3877/#3949)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_test_dedup_gp_minor_game.dart
+
+  - rule_id: repo.orders_test_preserved_descriptions
+    group: testing
+    title: orders test descriptions in DESCRIPTION_BASELINE.txt must survive runner consolidation (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_preserved_descriptions.dart
+
+  - rule_id: repo.orders_test_prefer_scenario_tables
+    group: testing
+    title: colonizethis_orders prefer scenario-table runners for new long imperative tests (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_scenario_table_runner.dart
+
+  - rule_id: repo.orders_test_support_layout
+    group: testing
+    title: colonizethis_orders non-test Dart under test/orders/ must live in test/orders/support/ (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_support_layout.dart
 
   - rule_id: repo.orders_test_no_src_imports
     group: testing

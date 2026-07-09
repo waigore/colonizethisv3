@@ -1,0 +1,52 @@
+// Compact getValidWorkOrderTileKeys / suggestWorkOrders assertions (Refs #3949 wave 3).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'valid_work_tiles_fixtures.dart';
+import 'valid_work_tiles_test_support.dart';
+part 'valid_work_tiles_expectations_part1.dart';
+part 'valid_work_tiles_expectations_part2.dart';
+part 'valid_work_tiles_expectations_part3.dart';
+
+
+/// Pins for [validWorkTilesScenarios] rows.
+enum ValidWorkTilesTarget {
+  returnsEmptyForUnknownUnitId,
+  returnsEmptyWhenWorkTargetNotAllowedForUnitType,
+  returnsEmptyForUnknownUnitIdWithVisibility,
+  returnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility,
+  filtersByVisibilityBeforeOrderEngineValidation,
+  buildImprovementReturnsOnlyControlledTilesWithResources,
+  buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected,
+  buildImprovementIncludesPurchasedTilesWithResources,
+  buildImprovementExcludesSeaZoneTiles,
+  getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected,
+  getvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile,
+  getvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility,
+  getvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces,
+  getvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture,
+  suggestmoveordersExcludesMovesToOtherGreatPowerProvinces,
+  suggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch,
+  suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit,
+  suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut,
+  suggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation,
+  suggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile,
+  suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral,
+  suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy,
+  suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail,
+}
+
+Province _ownedProvince(String localId) => Province(
+  id: ValidWorkTilesTestSupport.provinceId(localId),
+  regionId: ValidWorkTilesTestSupport.ow,
+  ownerId: ValidWorkTilesTestSupport.playerId,
+);
+
+Province _province(String localId, String ownerId) => Province(
+  id: ValidWorkTilesTestSupport.provinceId(localId),
+  regionId: ValidWorkTilesTestSupport.ow,
+  ownerId: ownerId,
+);

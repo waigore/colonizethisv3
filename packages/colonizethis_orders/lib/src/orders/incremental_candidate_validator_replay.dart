@@ -23,6 +23,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_validators.dart';
 import 'order_validator_factory.dart';
+import 'projected_economy_prefix_replay.dart';
 import 'unit_type_helpers.dart';
 
 extension IncrementalCandidateValidatorPrefixReplay
@@ -38,34 +39,34 @@ extension IncrementalCandidateValidatorPrefixReplay
   bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    if (cache.recruitWorkerPrefixReplaySucceeded == false) {
-      return false;
-    }
-    if (cache.postRecruitWorkerPrefixEconomy == null) {
-      final prefixValidator = createProjectedRecruitWorkerValidator(
+    final existing =
+        basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
+        const <RecruitWorkerOrder>[];
+    final snap = ensureProjectedResourcePrefixReplay(
+      prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
+      cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
+      setPrefixReplaySucceeded: (v) {
+        cache.recruitWorkerPrefixReplaySucceeded = v;
+      },
+      setCachedLedgers: (ledgers) {
+        cache.postRecruitWorkerPrefixEconomy = ledgers;
+      },
+      existingOrders: existing,
+      createPrefixValidator: () => createProjectedRecruitWorkerValidator(
         player: player,
         stockpile: player.stockpile,
         treasury: player.treasury,
         workerPool: player.workerPool,
-      );
-      final existing =
-          basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
-          const <RecruitWorkerOrder>[];
-      for (final order in existing) {
-        final result = prefixValidator.validate(order, previousRejected: false);
-        if (!result.isAccepted) {
-          cache.recruitWorkerPrefixReplaySucceeded = false;
-          return false;
-        }
-      }
-      cache.recruitWorkerPrefixReplaySucceeded = true;
-      cache.postRecruitWorkerPrefixEconomy = (
-        stockpile: prefixValidator.stockpile,
-        treasury: prefixValidator.treasury,
-        workers: prefixValidator.workers,
-      );
-    }
-    final snap = cache.postRecruitWorkerPrefixEconomy!;
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
+    );
+    if (snap == null) return false;
     final candidateValidator = createProjectedRecruitWorkerValidator(
       player: player,
       stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
@@ -80,45 +81,39 @@ extension IncrementalCandidateValidatorPrefixReplay
   bool isBuildAccepted(BuildUnitOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    if (cache.buildPrefixReplaySucceeded == false) {
-      return false;
-    }
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    if (cache.postBuildPrefixEconomy == null) {
-      final prefixValidator = createProjectedBuildValidator(
+    final snap = ensureProjectedResourcePrefixReplay(
+      prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
+      cachedLedgers: cache.postBuildPrefixEconomy,
+      setPrefixReplaySucceeded: (v) {
+        cache.buildPrefixReplaySucceeded = v;
+      },
+      setCachedLedgers: (ledgers) {
+        cache.postBuildPrefixEconomy = ledgers;
+      },
+      existingOrders: builds,
+      createPrefixValidator: () => createProjectedBuildValidator(
         game: game,
         player: player,
         stockpile: player.stockpile,
         treasury: player.treasury,
         workerPool: player.workerPool,
-      );
-      for (final existing in builds) {
-        final result = prefixValidator.validate(
-          existing,
-          previousRejected: false,
-        );
-        if (!result.isAccepted) {
-          cache.buildPrefixReplaySucceeded = false;
-          return false;
-        }
-      }
-      cache.buildPrefixReplaySucceeded = true;
-      cache.postBuildPrefixEconomy = (
-        stockpile: prefixValidator.stockpile,
-        treasury: prefixValidator.treasury,
-        workers: prefixValidator.workers,
-      );
-    }
-    final snap = cache.postBuildPrefixEconomy!;
-    final candidateStockpile = Stockpile(
-      quantities: snap.stockpile.copyQuantities(),
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
     );
+    if (snap == null) return false;
     final candidateValidator = createProjectedBuildValidator(
       game: game,
       player: player,
-      stockpile: candidateStockpile,
+      stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
       treasury: snap.treasury,
       workerPool: snap.workers,
     );
@@ -193,7 +188,11 @@ extension IncrementalCandidateValidatorPrefixReplay
         .result;
   }
 
-  ({bool ok, OrderValidationResult? reject, DiplomaticOrderValidator? validator})
+  ({
+    bool ok,
+    OrderValidationResult? reject,
+    DiplomaticOrderValidator? validator,
+  })
   _prepareDiplomaticCandidateValidator({
     String? playerNotFoundReason,
     String? prefixReplayFailedReason,
@@ -236,9 +235,7 @@ extension IncrementalCandidateValidatorPrefixReplay
           cache.diplomaticPrefixReplaySucceeded = false;
           return (
             ok: false,
-            reject: prefixReplayFailedReason == null
-                ? null
-                : result.result,
+            reject: prefixReplayFailedReason == null ? null : result.result,
             validator: null,
           );
         }
@@ -337,9 +334,7 @@ extension IncrementalCandidateValidatorProjection
     final baseDev = Set<String>.from(_devExclusiveTiles());
     if (works.isEmpty) {
       final proj = (
-        stockpile: Stockpile(
-          quantities: afterBuild.stockpile.copyQuantities(),
-        ),
+        stockpile: Stockpile(quantities: afterBuild.stockpile.copyQuantities()),
         treasury: afterBuild.treasury,
         seenUnitIds: <String>{},
         devExclusive: baseDev,

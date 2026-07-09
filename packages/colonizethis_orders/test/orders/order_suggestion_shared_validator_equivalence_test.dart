@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'order_suggestion_shared_validator_test_helpers.dart';
+import 'support/suggestion/order_suggestion_shared_validator_test_helpers.dart';
 
 /// Equivalence coverage for the optional `sharedCandidateValidator` parameter
 /// on top-level suggest functions (Refs #2394,

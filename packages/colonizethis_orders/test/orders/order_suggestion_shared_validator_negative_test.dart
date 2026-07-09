@@ -3,7 +3,7 @@ import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'order_suggestion_shared_validator_test_helpers.dart';
+import 'support/suggestion/order_suggestion_shared_validator_test_helpers.dart';
 
 /// Negative coverage for the optional `sharedCandidateValidator` parameter
 /// (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds): each
