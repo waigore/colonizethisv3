@@ -11,6 +11,8 @@ import 'work_suggestion_pipeline_fixtures.dart';
 enum OrderSuggestionWorkLoggingTarget {
   emitsSummariesForCivilianTypes,
   loggerLinesNeverEmitUnboundedFullListPayload,
+  multipleProspectTilesEmitIncludedCount,
+  pendingTargetsPreserveDuplicateCheckAndLogOrdering,
 }
 
 void runOrderSuggestionWorkLoggingExpectation(
@@ -90,6 +92,58 @@ void runOrderSuggestionWorkLoggingExpectation(
             );
           }
         }
+      });
+
+    case OrderSuggestionWorkLoggingTarget.multipleProspectTilesEmitIncludedCount:
+      withWspLogCapture((events) {
+        final fixture = osgwTwoIronTilesFoggedGame();
+        final suggestions = suggestWorkOrders(
+          fixture.view,
+          fixture.game,
+          fixture.topology,
+          const Orders(),
+        );
+        final prospectOrders = suggestions
+            .where((o) => o.target == kWorkTargetProspect)
+            .toList();
+        expect(
+          prospectOrders.length,
+          greaterThanOrEqualTo(2),
+          reason:
+              'fixture must surface multiple prospect rows to assert summary',
+        );
+
+        final prospectLines = wspSuggestWorkLines(events)
+            .where((l) => l.contains('target=prospect'))
+            .toList();
+        expect(prospectLines, hasLength(1));
+        expect(
+          prospectLines.single,
+          contains('includedCount=${prospectOrders.length}'),
+        );
+        expect(prospectLines.single, contains('outcome=included'));
+        expect(prospectLines.single, contains('tile=-'));
+      });
+
+    case OrderSuggestionWorkLoggingTarget
+        .pendingTargetsPreserveDuplicateCheckAndLogOrdering:
+      withWspLogCapture((events) {
+        final fixture = osgwExplorerPendingDuplicateGame();
+        suggestWorkOrders(
+          fixture.view,
+          fixture.game,
+          fixture.topology,
+          fixture.orders,
+        );
+
+        final explorerLines = wspSuggestWorkLines(events)
+            .where((line) => line.contains('unitId=u_explorer'))
+            .toList();
+        expect(explorerLines, hasLength(2));
+        expect(explorerLines[0], contains('target=explore'));
+        expect(explorerLines[0], contains('reason=duplicate_pending'));
+        expect(explorerLines[1], contains('target=prospect'));
+        expect(explorerLines[1], contains('reason=duplicate_pending'));
       });
   }
 }

@@ -142,3 +142,128 @@ Player osgwPlayer({int treasury = 5000}) => Player(
     view: buildPlayerView(game, topology, _playerId),
   );
 }
+
+({Game game, MapTopology topology, PlayerView view})
+    osgwTwoIronTilesFoggedGame() {
+  const provinceId = '$_ow|p1';
+  const t0 = '$_ow|p1|0|0';
+  const t1 = '$_ow|p1|1|0';
+  final player = Player(
+    id: _playerId,
+    displayName: 'GP',
+    isHuman: false,
+  );
+  final province = Province(
+    id: provinceId,
+    regionId: _ow,
+    ownerId: _playerId,
+  );
+  final explorer = Unit(
+    id: 'u_explorer',
+    type: kUnitTypeExplorer,
+    ownerId: _playerId,
+    locationProvinceId: provinceId,
+    tileKey: t0,
+    status: UnitStatus.idle,
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(provinces: [province], units: [explorer]),
+    newWorld: const RegionData(),
+    tileKeysByRegionAndProvince: {
+      _ow: {
+        provinceId: [t0, t1],
+      },
+    },
+    resourceByTileKey: const {t0: 'iron', t1: 'iron'},
+    playerVisibilityByTile: const {
+      _playerId: {t0: 'fogged', t1: 'fogged'},
+    },
+  );
+  final game = Game(
+    id: 'g-prospect-log',
+    worldState: world,
+    players: [player],
+    minorNations: const [],
+    tribes: const [],
+  );
+  final topology = MapTopology(
+    nodes: [
+      TopologyNode(id: 'p1', regionId: _ow, type: TopologyNodeType.province),
+    ],
+    edges: const [],
+  );
+  return (
+    game: game,
+    topology: topology,
+    view: buildPlayerView(game, topology, _playerId),
+  );
+}
+
+({Game game, MapTopology topology, PlayerView view, Orders orders})
+    osgwExplorerPendingDuplicateGame() {
+  const provinceId = '$_ow|p1';
+  const tile = '$_ow|p1|0|0';
+  final player = osgwPlayer();
+  final province = Province(
+    id: provinceId,
+    regionId: _ow,
+    ownerId: _playerId,
+  );
+  final explorer = Unit(
+    id: 'u_explorer',
+    type: kUnitTypeExplorer,
+    ownerId: _playerId,
+    locationProvinceId: provinceId,
+    tileKey: tile,
+    status: UnitStatus.idle,
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(provinces: [province], units: [explorer]),
+    newWorld: const RegionData(),
+    tileKeysByRegionAndProvince: {
+      _ow: {
+        provinceId: [tile],
+      },
+    },
+    playerVisibilityByTile: {
+      _playerId: {tile: 'fullyVisible'},
+    },
+  );
+  final game = Game(
+    id: 'g-order',
+    worldState: world,
+    players: [player],
+    minorNations: const [],
+    tribes: const [],
+  );
+  final topology = MapTopology(
+    nodes: [
+      TopologyNode(id: 'p1', regionId: _ow, type: TopologyNodeType.province),
+    ],
+    edges: const [],
+  );
+  final orders = Orders(
+    workOrdersByPlayerId: {
+      _playerId: const [
+        WorkOrder(
+          unitId: 'u_explorer',
+          target: kWorkTargetExplore,
+          targetTileKey: tile,
+        ),
+        WorkOrder(
+          unitId: 'u_explorer',
+          target: kWorkTargetProspect,
+          targetTileKey: tile,
+        ),
+      ],
+    },
+  );
+  return (
+    game: game,
+    topology: topology,
+    view: buildPlayerView(game, topology, _playerId),
+    orders: orders,
+  );
+}

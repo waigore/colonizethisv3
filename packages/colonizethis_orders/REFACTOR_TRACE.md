@@ -1564,6 +1564,20 @@ Migrated imperative `order_suggestion_declare_war_colonial_discovery_test.dart`,
 
 test/ LOC after slice 91: **38,438** (net +191 from post–slice 90; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 92 — work-logging prospect merge + diplomatic validator-reuse scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oswl-prospect-included-count | explorer multiple prospect tiles emit one suggest_work with includedCount | `order_suggestion_work_logging_prospect_test.dart` | `support/suggestion/order_suggestion_work_logging_{fixtures,scenarios,expectations}.dart` + `order_suggestion_work_logging_test.dart` | #3949 |
+| oswl-pending-duplicate | explorer pending targets preserve duplicate check and log ordering | same | same | #3949 |
+| dvr-one-pass | builds one pass-level validator across multiple diplomatic targets | `order_suggestion_diplomatic_validator_reuse_test.dart` | `support/suggestion/order_suggestion_diplomatic_validator_reuse_{fixtures,scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+| dvr-shared-supplied | skips pass-level build when sharedCandidateValidator is supplied | same | same | #2394, #3949 |
+| dvr-rebind | rebinds pass validator to workingOrders after each target | same | same | #2394, #3949 |
+
+Merged imperative `order_suggestion_work_logging_prospect_test.dart` into the existing work-logging scenario family. Migrated imperative `order_suggestion_diplomatic_validator_reuse_test.dart` → table-driven scenarios with dedicated support modules. Pinned five previously absent baseline descriptions. Deleted prospect shard file.
+
+test/ LOC after slice 92: **38,494** (net +56 from post–slice 91; support modules add LOC while prospect shard deleted). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

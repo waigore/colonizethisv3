@@ -36,4 +36,14 @@ List<OrderSuggestionWorkLoggingScenario> orderSuggestionWorkLoggingScenarios() =
             .loggerLinesNeverEmitUnboundedFullListPayload,
         refs: '#2133',
       ),
+      OrderSuggestionWorkLoggingScenario(
+        label: 'explorer multiple prospect tiles emit one suggest_work with includedCount',
+        target: OrderSuggestionWorkLoggingTarget
+            .multipleProspectTilesEmitIncludedCount,
+      ),
+      OrderSuggestionWorkLoggingScenario(
+        label: 'explorer pending targets preserve duplicate check and log ordering',
+        target: OrderSuggestionWorkLoggingTarget
+            .pendingTargetsPreserveDuplicateCheckAndLogOrdering,
+      ),
     ];

@@ -92,6 +92,7 @@ build_road completion propagates transport level to adjacent capital tile (no do
 build_road completion propagates transport level to adjacent port tile and upgrades it
 build_road with targetTileKey uses tile key for region and province
 builder cross-region into tribe-owned province is still invalid
+builds one pass-level validator across multiple diplomatic targets
 cached player-owned set matches default allProvinces scan
 cached player-owned set matches default destination picker path
 calculateCost for build_fort uses province fortLevel when not overridden
@@ -175,6 +176,8 @@ explore requires partial reveal (known + unknown land tiles)
 explore work order sets currentWork when province has tiles
 explorer can move cross-region into tribe-owned province
 explorer may move into tribal province
+explorer multiple prospect tiles emit one suggest_work with includedCount
+explorer pending targets preserve duplicate check and log ordering
 Explorer may move onto Minor province tile (cross-region style)
 falls back to single-pass scan when armiesById lacks the entry
 false when no tile has 4-part key for region/province
@@ -327,6 +330,7 @@ prospect requires at least fogged
 prospect suggestion when province fogged and tiles in province
 provinceHasAtLeastVisibility returns false when parts.length != 4
 re-emits in-progress research so the resolver preserves progress
+rebinds pass validator to workingOrders after each target
 recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers
 recruit that fails affordability checks does not mutate the player (no partial deduction)
 refresh keeps cache isolated per player
@@ -486,6 +490,7 @@ skips build when unitType unknown in RegimentEconomyCatalog
 skips fort level 2 when Mine Engineering not unlocked
 skips military build when tech not unlocked
 skips military build when zero peasants
+skips pass-level build when sharedCandidateValidator is supplied
 skips ship build when tech not unlocked
 slot 1 takes the highest-weight unrepresented bucket (AC9)
 snapshot is consulted on active path: rejects unknown target id
