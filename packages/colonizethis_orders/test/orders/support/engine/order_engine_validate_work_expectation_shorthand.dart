@@ -157,6 +157,100 @@ void vwExpectPurchaseLandRejected(
 void vwExpectPurchaseLandAccepted(Game game) =>
     vwExpectAccepted(vwRunPurchaseLand(game).single);
 
+void vwExpectPurchaseLandRejectedNoEmbassy() => vwExpectPurchaseLandRejected(
+  vwPurchaseLandGame(treasury: 500),
+  reasonContains: 'embassy',
+);
+
+void vwExpectPurchaseLandRejectedAtWar() => vwExpectPurchaseLandRejected(
+  vwPurchaseLandGame(
+    treasury: 500,
+    overtureStates: purchaseLandEmbassyOverture,
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: 'p1',
+        factionId2: 'minor1',
+        state: RelationState.atWar,
+      ),
+    ],
+  ),
+  reasonContains: 'war',
+);
+
+void vwExpectPurchaseLandRejectedInsufficientTreasury() {
+  const cost = 15 * 10;
+  vwExpectPurchaseLandRejected(
+    vwPurchaseLandGame(
+      treasury: cost - 1,
+      overtureStates: purchaseLandEmbassyOverture,
+    ),
+    reasonContains: 'Insufficient treasury',
+  );
+}
+
+void vwExpectPurchaseLandRejectedNoResource() => vwExpectPurchaseLandRejected(
+  vwPurchaseLandGame(
+    treasury: 500,
+    overtureStates: purchaseLandEmbassyOverture,
+    resourceByTileKey: {},
+  ),
+  reasonContains: 'no resource',
+);
+
+void vwExpectPurchaseLandRejectedMineralNotProspected() {
+  final tk = PurchaseLandTestFixture.tileKey;
+  vwExpectPurchaseLandRejected(
+    vwPurchaseLandGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {},
+    ),
+    reasonContains: 'prospected',
+  );
+}
+
+void vwExpectPurchaseLandAcceptedEmbassy() => vwExpectPurchaseLandAccepted(
+  vwPurchaseLandGame(
+    treasury: 500,
+    overtureStates: purchaseLandEmbassyOverture,
+  ),
+);
+
+void vwExpectPurchaseLandAcceptedMineralProspected() {
+  final tk = PurchaseLandTestFixture.tileKey;
+  vwExpectPurchaseLandAccepted(
+    vwPurchaseLandGame(
+      treasury: 500,
+      overtureStates: purchaseLandEmbassyOverture,
+      resourceByTileKey: {tk: 'iron'},
+      playerProspectedTiles: {
+        'p1': {tk},
+      },
+    ),
+  );
+}
+
+void vwExpectPurchaseLandRejectedAlreadyPurchasedByOther() =>
+    vwExpectPurchaseLandRejected(
+      vwPurchaseLandGame(
+        treasury: 500,
+        overtureStates: purchaseLandEmbassyOverture,
+        purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p2'},
+      ),
+      reasonContains: 'Tile already purchased by another power',
+    );
+
+void vwExpectPurchaseLandRejectedAlreadyOwnedBySelf() =>
+    vwExpectPurchaseLandRejected(
+      vwPurchaseLandGame(
+        treasury: 500,
+        overtureStates: purchaseLandEmbassyOverture,
+        purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p1'},
+      ),
+      reasonContains: 'You already own this tile',
+    );
+
 void vwExpectBuildImprovementRejected({
   required Game game,
   String? reasonContains,
@@ -340,3 +434,63 @@ void vwExpectUpgradeTownOutcome({
     vwExpectRejected(result, reasonContains: reasonContains!);
   }
 }
+
+void vwExpectEmptyTechCapBuildImprovementRejected() {
+  final result = vwValidateBuildImprovement(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
+    ),
+  );
+  vwExpectRejected(result, reasonContains: 'Insufficient tech');
+  expect(result.reason, contains('grain'));
+  expect(result.reason, contains('cap 1'));
+}
+
+void vwExpectTechCapBuildImprovementRejected() {
+  vwExpectBuildImprovementRejected(
+    game: buildImprovementBaseGame(
+      techUnlocked: const {kTechIdSawMill: true},
+      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
+      stockpile: lumberCastIronStockpile(10),
+    ),
+    reasonContains: 'Insufficient tech',
+  );
+}
+
+void vwExpectRailTerrainRejected({
+  required TerrainType terrain,
+  Map<String, bool>? techUnlocked,
+  int roadLevel = 1,
+  String reasonContains = 'existing road',
+}) {
+  const ow = ValidateWorkOw.ow;
+  const tileKey = ValidateWorkOw.tileKey;
+  vwExpectRailRejected(
+    game: gameWithRailUnit(
+      tileState: TileMapState().setRoadLevel(tileKey, roadLevel),
+      techUnlocked: techUnlocked,
+    ),
+    tileMapByRegion: {ow: railTileMap(terrain)},
+    reasonContains: reasonContains,
+  );
+}
+
+void vwExpectRailTerrainAccepted({required TerrainType terrain}) {
+  const ow = ValidateWorkOw.ow;
+  const tileKey = ValidateWorkOw.tileKey;
+  vwExpectRailAccepted(
+    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 1)),
+    tileMapByRegion: {ow: railTileMap(terrain)},
+  );
+}
+
+void vwExpectMinorProvinceRoadRejected(
+  Game game, {
+  required String reasonContains,
+}) =>
+    vwExpectRejected(
+      vwRunMinorProvinceRoad(game),
+      reasonContains: reasonContains,
+    );

@@ -47,27 +47,11 @@ void _rejectsBuildImprovementWhenImprovementLevelAlready4() {
 }
 
 void _rejectsBuildImprovementWhenTechCapWouldBeExceededEmptyTech() {
-  final result = vwValidateBuildImprovement(
-    game: buildImprovementBaseGame(
-      techUnlocked: const {},
-      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-      stockpile: lumberCastIronStockpile(10),
-    ),
-  );
-  vwExpectRejected(result, reasonContains: 'Insufficient tech');
-  expect(result.reason, contains('grain'));
-  expect(result.reason, contains('cap 1'));
+  vwExpectEmptyTechCapBuildImprovementRejected();
 }
 
 void _rejectsBuildImprovementWhenTechCapWouldBeExceeded() {
-  vwExpectBuildImprovementRejected(
-    game: buildImprovementBaseGame(
-      techUnlocked: const {kTechIdSawMill: true},
-      tileState: const TileMapState(improvementByTile: {'oldWorld|P1|0|0': 1}),
-      stockpile: lumberCastIronStockpile(10),
-    ),
-    reasonContains: 'Insufficient tech',
-  );
+  vwExpectTechCapBuildImprovementRejected();
 }
 
 void _acceptsGrainUpgradeWhenExactNextLevelGrainTechIsUnlocked() {
@@ -162,50 +146,35 @@ void _rejectsBuildRailWhenTileTerrainDataIsMissing() {
 }
 
 void _rejectsBuildRailWhenRoadLevelIs0() {
-  const ow = ValidateWorkOw.ow;
-  const tileKey = ValidateWorkOw.tileKey;
-  vwExpectRailRejected(
-    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 0)),
-    tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
-    reasonContains: 'existing road',
+  vwExpectRailTerrainRejected(
+    terrain: TerrainType.plains,
+    roadLevel: 0,
   );
 }
 
 void _rejectsBuildRailOnHillsWithOnlyEarlySteam() {
-  const ow = ValidateWorkOw.ow;
-  const tileKey = ValidateWorkOw.tileKey;
-  vwExpectRailRejected(
-    game: gameWithRailUnit(
-      tileState: TileMapState().setRoadLevel(tileKey, 1),
-      techUnlocked: const {kTechIdEarlySteamEngine: true},
-    ),
-    tileMapByRegion: {ow: railTileMap(TerrainType.hills)},
+  vwExpectRailTerrainRejected(
+    terrain: TerrainType.hills,
+    techUnlocked: const {kTechIdEarlySteamEngine: true},
     reasonContains: 'Later Steam',
   );
 }
 
 void _acceptsBuildRailOnPlainsWithEarlySteamAndRoad1() {
-  const ow = ValidateWorkOw.ow;
-  const tileKey = ValidateWorkOw.tileKey;
-  vwExpectRailAccepted(
-    game: gameWithRailUnit(tileState: TileMapState().setRoadLevel(tileKey, 1)),
-    tileMapByRegion: {ow: railTileMap(TerrainType.plains)},
-  );
+  vwExpectRailTerrainAccepted(terrain: TerrainType.plains);
 }
 
 void _rejectsBuildRoadInMinorProvinceWithoutEmbassyPath() {
-  vwExpectRejected(
-    vwRunMinorProvinceRoad(minorProvinceEngineerRoadGame()),
+  vwExpectMinorProvinceRoadRejected(
+    minorProvinceEngineerRoadGame(),
     reasonContains: 'foreign province',
   );
 }
 
 void
 _rejectsBuildRoadInMinorProvinceEvenWithEmbassyWhenOccupancyDisallowsTile() {
-  vwExpectRejected(
-    vwRunMinorProvinceRoad(
-      minorProvinceEngineerRoadGame(overtureStates: minorProvinceEmbassyOverture),
-    ),
+  vwExpectMinorProvinceRoadRejected(
+    minorProvinceEngineerRoadGame(overtureStates: minorProvinceEmbassyOverture),
     reasonContains: 'cannot occupy',
   );
 }

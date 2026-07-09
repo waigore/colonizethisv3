@@ -25,72 +25,28 @@ void _rejectsSecondPendingWorkOrderForSameUnitInOneTurn() {
 }
 
 void _rejectsPurchaseLandWhenNoEmbassyWithMinor() {
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(treasury: 500),
-    reasonContains: 'embassy',
-  );
+  vwExpectPurchaseLandRejectedNoEmbassy();
 }
 
 void _rejectsPurchaseLandWhenAtWarWithFaction() {
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'p1',
-          factionId2: 'minor1',
-          state: RelationState.atWar,
-        ),
-      ],
-    ),
-    reasonContains: 'war',
-  );
+  vwExpectPurchaseLandRejectedAtWar();
 }
 
 void _rejectsPurchaseLandWhenInsufficientTreasury() {
-  const cost = 15 * 10; // grain default base 10
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: cost - 1,
-      overtureStates: purchaseLandEmbassyOverture,
-    ),
-    reasonContains: 'Insufficient treasury',
-  );
+  vwExpectPurchaseLandRejectedInsufficientTreasury();
 }
 
 void _rejectsPurchaseLandWhenTileHasNoResource() {
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      resourceByTileKey: {},
-    ),
-    reasonContains: 'no resource',
-  );
+  vwExpectPurchaseLandRejectedNoResource();
 }
 
 void _rejectsPurchaseLandWhenMineralTileNotProspected() {
-  final tk = PurchaseLandTestFixture.tileKey;
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      resourceByTileKey: {tk: 'iron'},
-      playerProspectedTiles: {},
-    ),
-    reasonContains: 'prospected',
-  );
+  vwExpectPurchaseLandRejectedMineralNotProspected();
 }
 
 void
 _acceptsPurchaseLandWithEmbassyAtPeaceSufficientTreasuryTileWithResource() {
-  vwExpectPurchaseLandAccepted(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-    ),
-  );
+  vwExpectPurchaseLandAcceptedEmbassy();
 }
 
 void
@@ -117,37 +73,13 @@ _rejectsSecondBuilderEngineerMerchantWorkOrderOnSameTileForSamePlayerPerTileExcl
 }
 
 void _acceptsPurchaseLandForMineralWhenProspected() {
-  final tk = PurchaseLandTestFixture.tileKey;
-  vwExpectPurchaseLandAccepted(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      resourceByTileKey: {tk: 'iron'},
-      playerProspectedTiles: {
-        'p1': {tk},
-      },
-    ),
-  );
+  vwExpectPurchaseLandAcceptedMineralProspected();
 }
 
 void _rejectsPurchaseLandWhenTileAlreadyPurchasedByAnotherGP() {
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p2'},
-    ),
-    reasonContains: 'Tile already purchased by another power',
-  );
+  vwExpectPurchaseLandRejectedAlreadyPurchasedByOther();
 }
 
 void _rejectsPurchaseLandWhenTileAlreadyOwnedBySamePlayer() {
-  vwExpectPurchaseLandRejected(
-    vwPurchaseLandGame(
-      treasury: 500,
-      overtureStates: purchaseLandEmbassyOverture,
-      purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p1'},
-    ),
-    reasonContains: 'You already own this tile',
-  );
+  vwExpectPurchaseLandRejectedAlreadyOwnedBySelf();
 }

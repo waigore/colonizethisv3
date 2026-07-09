@@ -67,3 +67,99 @@ NavalMoveOrder novDockMove(String fleetId, String localProvinceId) =>
       destinationPortProvinceId:
           ProvinceId.full(kNavalOrderValidatorTestRegionId, localProvinceId),
     );
+
+void novExpectAtSeaMove({
+  required MapTopology topology,
+  required String destSea,
+  required OrderValidationStatus status,
+  String fleetId = 'f1',
+  bool previousRejected = false,
+  List<Fleet>? fleets,
+  List<Player>? players,
+  String? reasonExact,
+  bool reasonIsNull = false,
+}) {
+  novExpectNavalMove(
+    validator: novValidator(
+      game: navalOrderValidatorTestGame(
+        fleets: fleets ?? [navalOrderValidatorTestFleetAtSea(fleetId: fleetId)],
+        players: players ??
+            const [
+              Player(
+                id: kNavalOrderValidatorTestPlayerId,
+                displayName: 'P1',
+                isHuman: true,
+              ),
+            ],
+      ),
+      topology: topology,
+    ),
+    order: novSeaMove(fleetId, destSea),
+    previousRejected: previousRejected,
+    status: status,
+    reasonExact: reasonExact,
+    reasonIsNull: reasonIsNull,
+  );
+}
+
+void novExpectInPortMove({
+  required MapTopology topology,
+  required String destSea,
+  required OrderValidationStatus status,
+  String fleetId = 'f1',
+  List<Fleet>? fleets,
+  String? reasonExact,
+  bool reasonIsNull = false,
+}) {
+  novExpectNavalMove(
+    validator: novValidator(
+      game: navalOrderValidatorTestGame(
+        oldWorldProvinces: [
+          navalOrderValidatorTestOwnedProvince('P1'),
+        ],
+        fleets: fleets ?? [navalOrderValidatorTestFleetInPort(fleetId: fleetId)],
+      ),
+      topology: topology,
+    ),
+    order: novSeaMove(fleetId, destSea),
+    status: status,
+    reasonExact: reasonExact,
+    reasonIsNull: reasonIsNull,
+  );
+}
+
+void novExpectDockMove({
+  required MapTopology topology,
+  required OrderValidationStatus status,
+  String fleetId = 'f1',
+  String portLocalId = 'P1',
+  List<Fleet>? fleets,
+  List<Province>? oldWorldProvinces,
+  List<Player>? players,
+  NavalMoveOrder? order,
+  String? reasonExact,
+  bool reasonIsNull = false,
+}) {
+  novExpectNavalMove(
+    validator: novValidator(
+      game: navalOrderValidatorTestGame(
+        oldWorldProvinces: oldWorldProvinces ??
+            [navalOrderValidatorTestOwnedProvince(portLocalId)],
+        fleets: fleets ?? [navalOrderValidatorTestFleetAtSea(fleetId: fleetId)],
+        players: players ??
+            const [
+              Player(
+                id: kNavalOrderValidatorTestPlayerId,
+                displayName: 'P1',
+                isHuman: true,
+              ),
+            ],
+      ),
+      topology: topology,
+    ),
+    order: order ?? novDockMove(fleetId, portLocalId),
+    status: status,
+    reasonExact: reasonExact,
+    reasonIsNull: reasonIsNull,
+  );
+}

@@ -605,6 +605,16 @@ test/ LOC after slice 34: **32,847** (net +48 from post–slice 33; fixture/expe
 
 test/ LOC after slice 35: **32,946** (net +99 from post–slice 34; expectation bodies shortened, new `mv*`/`wcc*`/`osc*`/`ah*`/`ved*`/`waa*` shorthand and fixture modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 36: naval fixtures + validateWork purchase/rail compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| nov-fixtures | add `novTwoAdjacentSeas` / `novThreeSeasLinear` / `novSeaProvinceAdjacent` / `novPortDualSea` / `novPortSeaChain` topology presets + `novValidatorAtSea` / `novValidatorInPort`; compact naval move expectation bodies | `naval_order_validator_expectations_move.dart`, `naval_order_validator_expectations_move_b.dart` | `naval_order_validator_fixtures.dart` + `naval_order_validator_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part1-shorthand | add `vwExpectPurchaseLandRejectedNoEmbassy` / `vwExpectPurchaseLandRejectedAtWar` / `vwExpectPurchaseLandRejectedInsufficientTreasury` / `vwExpectPurchaseLandRejectedNoResource` / `vwExpectPurchaseLandRejectedMineralNotProspected` / `vwExpectPurchaseLandAcceptedEmbassy` / `vwExpectPurchaseLandAcceptedMineralProspected` / `vwExpectPurchaseLandRejectedAlreadyPurchasedByOther` / `vwExpectPurchaseLandRejectedAlreadyOwnedBySelf`; compact validateWork part1 bodies | `order_engine_validate_work_expectations_part1.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part2-shorthand | add `vwExpectEmptyTechCapBuildImprovementRejected` / `vwExpectTechCapBuildImprovementRejected` / `vwExpectRailTerrainRejected` / `vwExpectRailTerrainAccepted` / `vwExpectMinorProvinceRoadRejected`; compact validateWork part2 bodies | `order_engine_validate_work_expectations_part2.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 36: **33,002** (net +56 from post–slice 35; expectation bodies shortened, new `nov*`/`vw*` shorthand and fixture modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
