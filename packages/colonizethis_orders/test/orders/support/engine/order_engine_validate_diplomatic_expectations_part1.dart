@@ -1,156 +1,65 @@
 part of 'order_engine_validate_diplomatic_expectations.dart';
 
 void _declarewarRejectedWhenAlreadyAtWar() {
-  final game = gpMinorGame(
-    relationState: RelationState.atWar,
-    treasury: gpMinorOrderEngineTreasury,
+  vedExpectRejected(
+    vedGpMinor(relationState: RelationState.atWar),
+    vedDeclareWarMinor,
+    reasonContains: 'Already at war',
   );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: 'minor1',
-    ),
-  );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('Already at war'));
 }
 
 void _offerpeaceRejectedWhenNotAtWar() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    treasury: gpMinorOrderEngineTreasury,
+  vedExpectRejected(
+    vedGpMinor(),
+    vedOfferPeaceMinor,
+    reasonContains: 'not at war',
   );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.offerPeace,
-      targetFactionId: 'minor1',
-    ),
-  );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('not at war'));
 }
 
 void _establishovertureRejectedWhenTargetIsAtWarWithGP() {
-  final game = gpMinorGame(
-    relationState: RelationState.atWar,
-    overtureStage: OvertureStage.none,
-    treasury: overtureConsulateCost + 100,
-  );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.tradeConsulate,
+  vedExpectRejected(
+    vedGpMinor(
+      relationState: RelationState.atWar,
+      treasury: overtureConsulateCost + 100,
     ),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'at war',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('at war'));
 }
 
 void _establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.none,
-    treasury: overtureConsulateCost + 100,
-    techUnlocked: const {},
-  );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.tradeConsulate,
+  vedExpectRejected(
+    vedGpMinor(
+      treasury: overtureConsulateCost + 100,
+      techUnlocked: const {},
     ),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'Diplomatic Expertise',
   );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('Diplomatic Expertise'));
 }
 
 void _establishovertureConsulateRejectedWhenTreasuryTooLow() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.none,
-    treasury: overtureConsulateCost - 1,
+  vedExpectRejected(
+    vedGpMinor(treasury: overtureConsulateCost - 1),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'Insufficient treasury',
   );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.tradeConsulate,
-    ),
-  );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('Insufficient treasury'));
 }
 
 void _establishovertureEmbassyRequiresExistingConsulate() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.none,
-    treasury: overtureEmbassyCost + 1000,
+  vedExpectRejected(
+    vedGpMinor(treasury: overtureEmbassyCost + 1000),
+    vedEstablishOverture(OvertureStage.embassy),
+    reasonContains: 'requires existing Trade Consulate',
   );
-  final engine = OrderEngine();
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.embassy,
-    ),
-  );
-  expect(result.status, OrderValidationStatus.rejected);
-  expect(result.reason, contains('requires existing Trade Consulate'));
 }
 
 void _establishovertureSecondOrderForSameFactionInSameTurnRejected() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.none,
-    treasury: overtureConsulateCost * 3,
-  );
+  final game = vedGpMinor(treasury: overtureConsulateCost * 3);
   final engine = OrderEngine();
-  final first = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.tradeConsulate,
-    ),
-  );
-  expect(first.status, OrderValidationStatus.accepted);
-  final second = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'minor1',
-      overtureStage: OvertureStage.tradeConsulate,
-    ),
-  );
+  final order = vedEstablishOverture(OvertureStage.tradeConsulate);
+  vedExpectAccepted(game, order, engine: engine);
+  final second = vedSubmit(game, order, engine: engine);
   expect(second.status, OrderValidationStatus.rejected);
   expect(
     second.reason,
@@ -159,45 +68,23 @@ void _establishovertureSecondOrderForSameFactionInSameTurnRejected() {
 }
 
 void _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected() {
-  final game = Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: RelationState.atPeace,
-        level: RelationLevel.neutral,
-      ),
-    ],
-  );
+  final game = vedTwoGpPeaceGame();
   final engine = OrderEngine();
-  final first = engine.addDiplomaticOrderWithContext(
+  vedExpectAccepted(
     game,
-    emptyTopology,
-    'gp1',
     const DiplomaticOrder(
       type: DiplomaticOrderType.declareWar,
       targetFactionId: 'gp2',
     ),
+    engine: engine,
   );
-  expect(first.status, OrderValidationStatus.accepted);
-  final second = engine.addDiplomaticOrderWithContext(
+  final second = vedSubmit(
     game,
-    emptyTopology,
-    'gp1',
     const DiplomaticOrder(
       type: DiplomaticOrderType.alliance,
       targetFactionId: 'gp2',
     ),
+    engine: engine,
   );
   expect(second.status, OrderValidationStatus.rejected);
   expect(
@@ -207,193 +94,71 @@ void _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected() {
 }
 
 void _grantaidRequiresEmbassyAndSufficientTreasury() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.tradeConsulate,
-    treasury: 5000,
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+    vedGrantAid(1000),
+    reasonContains: 'Embassy required',
   );
-  final noEmbassy = OrderEngine().addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.grantAid,
-      targetFactionId: 'minor1',
-      amount: 1000,
-    ),
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 500),
+    vedGrantAid(1000),
+    reasonContains: 'Insufficient treasury',
   );
-  expect(noEmbassy.status, OrderValidationStatus.rejected);
-  expect(noEmbassy.reason, contains('Embassy required'));
-
-  final gameWithEmbassy = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 500,
-  );
-  final insufficient = OrderEngine().addDiplomaticOrderWithContext(
-    gameWithEmbassy,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.grantAid,
-      targetFactionId: 'minor1',
-      amount: 1000,
-    ),
-  );
-  expect(insufficient.status, OrderValidationStatus.rejected);
-  expect(insufficient.reason, contains('Insufficient treasury'));
 }
 
 void _grantaidRejectsAmountsNotAMultipleOf1000() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 5000,
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedGrantAid(1500),
+    reasonContains: 'multiple',
   );
-  final bad = OrderEngine().addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.grantAid,
-      targetFactionId: 'minor1',
-      amount: 1500,
-    ),
-  );
-  expect(bad.status, OrderValidationStatus.rejected);
-  expect(bad.reason, contains('multiple'));
 }
 
 void _grantaidThenSetSubsidyTowardSameTargetBothAccepted() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 5000,
-  );
-  final eng = OrderEngine();
-  final g = eng.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.grantAid,
-      targetFactionId: 'minor1',
-      amount: 1000,
-    ),
-  );
-  expect(g.status, OrderValidationStatus.accepted);
-  final s = eng.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 10,
-    ),
-  );
-  expect(s.status, OrderValidationStatus.accepted);
+  final game = vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000);
+  final engine = OrderEngine();
+  vedExpectAccepted(game, vedGrantAid(1000), engine: engine);
+  vedExpectAccepted(game, vedSetSubsidy(10), engine: engine);
 }
 
 void _setsubsidyRequiresAnEmbassyRefs3753R2() {
   // No overture at all is rejected for the embassy prerequisite. A valid
   // percent is supplied so validation reaches the embassy check.
-  final gameNoOverture = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.none,
-    treasury: 5000,
+  vedExpectRejected(
+    vedGpMinor(treasury: 5000),
+    vedSetSubsidy(10),
+    reasonContains: 'Embassy required',
   );
-  final noOverture = OrderEngine().addDiplomaticOrderWithContext(
-    gameNoOverture,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 10,
-    ),
-  );
-  expect(noOverture.status, OrderValidationStatus.rejected);
-  expect(noOverture.reason, contains('Embassy required'));
 
   // A Trade Consulate alone is no longer sufficient for SetSubsidy.
-  final gameConsulateOnly = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.tradeConsulate,
-    treasury: 5000,
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+    vedSetSubsidy(10),
+    reasonContains: 'Embassy required',
   );
-  final consulateOnly = OrderEngine().addDiplomaticOrderWithContext(
-    gameConsulateOnly,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 10,
-    ),
-  );
-  expect(consulateOnly.status, OrderValidationStatus.rejected);
-  expect(consulateOnly.reason, contains('Embassy required'));
 }
 
 void
 _setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3() {
-  final gameLowTreasury = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 10,
-  );
-  final accepted = OrderEngine().addDiplomaticOrderWithContext(
-    gameLowTreasury,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 20,
-    ),
-  );
   // Percent subsidies charge nothing upfront, so even a near-empty treasury
   // is accepted.
-  expect(accepted.status, OrderValidationStatus.accepted);
+  vedExpectAccepted(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 10),
+    vedSetSubsidy(20),
+  );
 }
 
 void _setsubsidyWithAnEmbassyAndAValidPercentIsAccepted() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 5000,
+  vedExpectAccepted(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedSetSubsidy(5),
   );
-  final accepted = OrderEngine().addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 5,
-    ),
-  );
-  expect(accepted.status, OrderValidationStatus.accepted);
 }
 
 void _setsubsidyRejectsAPercentOutside520InStepsOf5() {
-  final game = gpMinorGame(
-    relationState: RelationState.atPeace,
-    overtureStage: OvertureStage.embassy,
-    treasury: 5000,
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedSetSubsidy(7),
+    reasonContains: 'steps of',
   );
-  final engine = OrderEngine();
-  final r = engine.addDiplomaticOrderWithContext(
-    game,
-    emptyTopology,
-    'gp1',
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'minor1',
-      amount: 7,
-    ),
-  );
-  expect(r.status, OrderValidationStatus.rejected);
-  expect(r.reason, contains('steps of'));
 }

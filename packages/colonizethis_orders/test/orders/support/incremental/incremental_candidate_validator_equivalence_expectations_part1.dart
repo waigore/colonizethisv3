@@ -1,112 +1,92 @@
 part of 'incremental_candidate_validator_equivalence_expectations.dart';
 
 void _moveBuilderOwnProvince() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'u_builder',
-      destinationTileKey: 'oldWorld|P2|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_builder',
+    iceTile('P2'),
     label: 'builder->own province',
   );
 }
 
 void _moveBuilderOtherGp() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'u_builder',
-      destinationTileKey: 'oldWorld|P3|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_builder',
+    iceTile('P3'),
     label: 'builder->other GP province',
   );
 }
 
 void _moveExplorerMinor() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'u_explorer',
-      destinationTileKey: 'oldWorld|P4|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_explorer',
+    iceTile('P4'),
     label: 'explorer->minor province',
   );
 }
 
 void _moveSpyOtherGp() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'u_spy',
-      destinationTileKey: 'oldWorld|P3|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_spy',
+    iceTile('P3'),
     label: 'spy->other GP province',
   );
 }
 
 void _moveMilitaryRegiment() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'u_pikemen',
-      destinationTileKey: 'oldWorld|P2|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_pikemen',
+    iceTile('P2'),
     label: 'pikemen via MoveOrder',
   );
 }
 
 void _moveMissingUnit() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(
-      unitId: 'unknown_unit',
-      destinationTileKey: 'oldWorld|P2|0|0',
-    ),
+  iceExpectMoveTo(
+    'unknown_unit',
+    iceTile('P2'),
     label: 'unknown unit',
   );
 }
 
 void _moveEmptyDestination() {
-  iceExpectMoveOnCorpus(
-    candidate: const MoveOrder(unitId: 'u_builder', destinationTileKey: ''),
-    label: 'empty destination',
-  );
+  iceExpectMoveTo('u_builder', '', label: 'empty destination');
 }
 
 void _moveXorWorkCascade() {
+  final tile = iceTile('P2');
   final basePrefix = Orders(
     workOrdersByPlayerId: {
       IceIds.playerId: [
-        const WorkOrder(
+        WorkOrder(
           unitId: 'u_explorer',
           target: kWorkTargetExplore,
-          targetTileKey: 'oldWorld|P2|0|0',
+          targetTileKey: tile,
         ),
       ],
     },
   );
-  iceExpectMoveOnCorpus(
-    basePrefix: basePrefix,
-    candidate: const MoveOrder(
-      unitId: 'u_explorer',
-      destinationTileKey: 'oldWorld|P2|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_explorer',
+    tile,
     label: 'move w/ existing work for same unit',
+    basePrefix: basePrefix,
   );
 }
 
 void _moveNonEmptyBasePrefix() {
+  final tile = iceTile('P2');
   final basePrefix = Orders(
     moveOrdersByPlayerId: {
       IceIds.playerId: [
-        const MoveOrder(
-          unitId: 'u_explorer',
-          destinationTileKey: 'oldWorld|P2|0|0',
-        ),
+        MoveOrder(unitId: 'u_explorer', destinationTileKey: tile),
       ],
     },
   );
-  iceExpectMoveOnCorpus(
-    basePrefix: basePrefix,
-    candidate: const MoveOrder(
-      unitId: 'u_builder',
-      destinationTileKey: 'oldWorld|P2|0|0',
-    ),
+  iceExpectMoveTo(
+    'u_builder',
+    tile,
     label: 'builder w/ prior explorer move in basePrefix',
+    basePrefix: basePrefix,
   );
 }
 
@@ -156,23 +136,24 @@ void _buildSuccessiveProbes() {
 }
 
 void _workNonEmptyBasePrefix() {
+  final tile = iceTile('P2');
   final basePrefix = Orders(
     workOrdersByPlayerId: {
       IceIds.playerId: [
-        const WorkOrder(
+        WorkOrder(
           unitId: 'u_explorer',
           target: kWorkTargetExplore,
-          targetTileKey: 'oldWorld|P2|0|0',
+          targetTileKey: tile,
         ),
       ],
     },
   );
   iceExpectWorkOnCorpus(
     basePrefix: basePrefix,
-    candidate: const WorkOrder(
+    candidate: WorkOrder(
       unitId: 'u_explorer',
       target: kWorkTargetExplore,
-      targetTileKey: 'oldWorld|P2|0|0',
+      targetTileKey: tile,
     ),
     label: 'duplicate work unit with basePrefix',
   );
@@ -287,23 +268,11 @@ void _prefetchedFactionMembership() {
 }
 
 void _armyMoveOwnAdjacent() {
-  iceExpectArmyMoveOnCorpus(
-    candidate: const ArmyMoveOrder(
-      armyId: 'field_a',
-      destinationProvinceId: 'oldWorld|P2',
-    ),
-    label: 'own adjacent',
-  );
+  iceExpectArmyMoveTo('field_a', 'P2', label: 'own adjacent');
 }
 
 void _armyMoveGpNoWar() {
-  iceExpectArmyMoveOnCorpus(
-    candidate: const ArmyMoveOrder(
-      armyId: 'field_a',
-      destinationProvinceId: 'oldWorld|P3',
-    ),
-    label: 'GP no war',
-  );
+  iceExpectArmyMoveTo('field_a', 'P3', label: 'GP no war');
 }
 
 void _armyMoveGpDeclareWar() {
@@ -317,22 +286,14 @@ void _armyMoveGpDeclareWar() {
       ],
     },
   );
-  iceExpectArmyMoveOnCorpus(
-    basePrefix: basePrefix,
-    candidate: const ArmyMoveOrder(
-      armyId: 'field_a',
-      destinationProvinceId: 'oldWorld|P3',
-    ),
+  iceExpectArmyMoveTo(
+    'field_a',
+    'P3',
     label: 'GP with declare war',
+    basePrefix: basePrefix,
   );
 }
 
 void _armyMoveMinorNoWar() {
-  iceExpectArmyMoveOnCorpus(
-    candidate: const ArmyMoveOrder(
-      armyId: 'field_a',
-      destinationProvinceId: 'oldWorld|P4',
-    ),
-    label: 'minor no war',
-  );
+  iceExpectArmyMoveTo('field_a', 'P4', label: 'minor no war');
 }

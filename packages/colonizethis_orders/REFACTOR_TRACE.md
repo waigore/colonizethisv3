@@ -462,6 +462,15 @@ test/ LOC after slice 19: **32,038** (down ~5 from post–slice 18). Remaining: 
 
 test/ LOC after slice 20: **32,043** (net ~0 from post–slice 19; part2/3 bodies shortened, shorthand modules added). Remaining: further expectation compaction (`order_engine_validate_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 21: diplomatic + ICE corpus expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ved-shorthand | add `vedSubmit` / `vedExpect*` wrappers + common diplomatic order builders; compact validate-diplomatic expectation bodies | `order_engine_validate_diplomatic_expectations_part{1,2}.dart` | `order_engine_validate_diplomatic_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ice-move-shorthand | add `iceTile` / `iceExpectMoveTo` / `iceExpectArmyMoveTo` / naval `*To` / `*For` helpers; compact ICE equivalence part1/2 bodies | `incremental_candidate_validator_equivalence_expectations_part{1,2}.dart` | extended `incremental_candidate_validator_equivalence_corpus_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 21: **31,860** (down ~183 from post–slice 20). Remaining: further expectation compaction (`order_engine_validate_work_*`, `order_engine_validate_trade_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
