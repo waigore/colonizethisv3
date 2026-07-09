@@ -477,6 +477,7 @@ suggestArmyMoveOrders matches default path
 suggestBuildOrders does not invoke validatePlayerOrdersWithContext
 suggestBuildOrders matches default path
 suggestBuildOrders returns list
+suggestBuildOrders includes ship types when player can afford a ship
 suggestBuildOrders returns ship when affordable
 suggestDiplomaticOrders is deterministic across repeated calls
 suggestDiplomaticOrders returns list
@@ -487,7 +488,9 @@ suggestMoveOrders only returns moves that pass validation
 suggestMoveOrders returns list
 suggestNavalMissionOrders returns list
 suggestNavalMoveOrders returns list
+suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)
 suggestRecruitWorkerOrders returns list (#2692 S7)
+suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)
 suggestResearchOrders returns list
 suggestWorkOrders explore target uses kWorkTargetExplore
 suggestWorkOrders logger lines never emit unbounded full list payload

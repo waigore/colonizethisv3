@@ -1458,6 +1458,26 @@ Migrated imperative `order_suggestion_army_move_test.dart` → table-driven scen
 
 test/ LOC after slice 84: **38,054** (net +108 from post–slice 83; support modules add LOC while runner shrinks). Remaining: `order_suggestion_api_impl_test.dart`, shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 85 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| api-move-list | suggestMoveOrders returns list | `order_suggestion_api_impl_test.dart` | `support/suggestion/order_suggestion_api_impl_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| api-work-list | suggestWorkOrders returns list | same | same | #3949 |
+| api-build-list | suggestBuildOrders returns list | same | same | #3949 |
+| api-build-ship | suggestBuildOrders includes ship types when player can afford a ship | same | same | #3949 |
+| api-research-list | suggestResearchOrders returns list | same | same | #3949 |
+| api-naval-move-list | suggestNavalMoveOrders returns list | same | same | #3949 |
+| api-naval-mission-list | suggestNavalMissionOrders returns list | same | same | #3949 |
+| api-naval-units-by-id | suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394) | same | same | #2394 |
+| api-diplo-list | suggestDiplomaticOrders returns list | same | same | #3949 |
+| api-recruit-list | suggestRecruitWorkerOrders returns list (#2692 S7) | same | same | #2692 S7 |
+| api-recruit-peasant | suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7) | same | same | #2692 S7 |
+
+Migrated imperative `order_suggestion_api_impl_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent baseline descriptions for affordable-ship build, naval unitsById parity, and fabric-affordable peasant recruit scenarios. Removed file from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 85: **38,175** (net +121 from post–slice 84; support modules add LOC while runner shrinks). Remaining: shared-validator equivalence families, lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
