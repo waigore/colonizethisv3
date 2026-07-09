@@ -1943,6 +1943,16 @@ test/ LOC after slice 120: **37,617** (net −17 from post–slice 119). Remaini
 
 test/ LOC after slice 121: **37,726** (net −13 from pre-slice-121 **37,739**; restores upgradeTown scenario dropped in CI split; net of alias/late removal). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 122: validate-work fixture DRY, incremental part merge, dispatch setup helpers
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-upgrade-town-dry | fold `upgradeTownWorkGame` onto `vwSingleProvinceUnitGame`; drop fixtures part2 | `order_engine_validate_work_fixtures_part2.dart` | `order_engine_validate_work_fixtures_part1.dart` | #3949 |
+| incremental-part-merge | merge equivalence corpus helpers part2 into part1 | `incremental_candidate_validator_equivalence_test_helpers_part2.dart` | `incremental_candidate_validator_equivalence_test_helpers_part1.dart` | #3949 |
+| wcc-dispatch-setup | extract `wccDispatchUpgradeTownSetup` / `wccDispatchExploreSetup`; compact dispatch cases | `work_completion_expectations.dart` | `work_completion_expectation_shorthand_part1.dart` | #3949 |
+
+test/ LOC after slice 122: **37,682** (net −44 from post–slice 121). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -45,4 +45,3 @@ const minorProvinceEmbassyOverture = [
 ];
 
 String minorProvinceRoadTileKey() => '${ValidateWorkOw.ow}|MN|0|0';
-part 'order_engine_validate_work_fixtures_part2.dart';

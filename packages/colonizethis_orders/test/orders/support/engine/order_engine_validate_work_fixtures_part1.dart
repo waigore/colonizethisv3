@@ -374,3 +374,13 @@ MapTopology minorProvinceRoadTopology() {
   );
 }
 
+Game upgradeTownWorkGame({required Map<String, bool> techUnlocked}) =>
+    vwSingleProvinceUnitGame(
+      unitId: 'b1',
+      unitType: kUnitTypeBuilder,
+      townTileKey: ValidateWorkOw.tileKey,
+      townDevelopmentLevel: 1,
+      techUnlocked: techUnlocked,
+      stockpile: lumberCastIronStockpile(10),
+    );
+
