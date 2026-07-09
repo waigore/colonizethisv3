@@ -1,9 +1,10 @@
 // Compact applyBuildAndWorkOrders worker-pool phase assertions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'worker_pool_phase_fixtures.dart';
 
 /// Pins for [workerPoolPhaseScenarios] rows.
 part 'worker_pool_phase_expectations_part1.dart';

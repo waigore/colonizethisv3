@@ -1,11 +1,7 @@
 part of 'incremental_candidate_validator_equivalence_expectations.dart';
 
 void _moveBuilderOwnProvince() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'u_builder',
       destinationTileKey: 'oldWorld|P2|0|0',
@@ -15,11 +11,7 @@ void _moveBuilderOwnProvince() {
 }
 
 void _moveBuilderOtherGp() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'u_builder',
       destinationTileKey: 'oldWorld|P3|0|0',
@@ -29,11 +21,7 @@ void _moveBuilderOtherGp() {
 }
 
 void _moveExplorerMinor() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'u_explorer',
       destinationTileKey: 'oldWorld|P4|0|0',
@@ -43,11 +31,7 @@ void _moveExplorerMinor() {
 }
 
 void _moveSpyOtherGp() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'u_spy',
       destinationTileKey: 'oldWorld|P3|0|0',
@@ -57,11 +41,7 @@ void _moveSpyOtherGp() {
 }
 
 void _moveMilitaryRegiment() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'u_pikemen',
       destinationTileKey: 'oldWorld|P2|0|0',
@@ -71,11 +51,7 @@ void _moveMilitaryRegiment() {
 }
 
 void _moveMissingUnit() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(
       unitId: 'unknown_unit',
       destinationTileKey: 'oldWorld|P2|0|0',
@@ -85,11 +61,7 @@ void _moveMissingUnit() {
 }
 
 void _moveEmptyDestination() {
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectMoveOnCorpus(
     candidate: const MoveOrder(unitId: 'u_builder', destinationTileKey: ''),
     label: 'empty destination',
   );
@@ -98,7 +70,7 @@ void _moveEmptyDestination() {
 void _moveXorWorkCascade() {
   final basePrefix = Orders(
     workOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const WorkOrder(
           unitId: 'u_explorer',
           target: kWorkTargetExplore,
@@ -107,10 +79,7 @@ void _moveXorWorkCascade() {
       ],
     },
   );
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
+  iceExpectMoveOnCorpus(
     basePrefix: basePrefix,
     candidate: const MoveOrder(
       unitId: 'u_explorer',
@@ -123,7 +92,7 @@ void _moveXorWorkCascade() {
 void _moveNonEmptyBasePrefix() {
   final basePrefix = Orders(
     moveOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const MoveOrder(
           unitId: 'u_explorer',
           destinationTileKey: 'oldWorld|P2|0|0',
@@ -131,10 +100,7 @@ void _moveNonEmptyBasePrefix() {
       ],
     },
   );
-  expectMoveEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
+  iceExpectMoveOnCorpus(
     basePrefix: basePrefix,
     candidate: const MoveOrder(
       unitId: 'u_builder',
@@ -144,28 +110,11 @@ void _moveNonEmptyBasePrefix() {
   );
 }
 
-Game _buildCorpusGame() => TestFixtures.gameWithSingleOwnedProvince(
-  ownerPlayerId: 'p1',
-  provinceId: 'oldWorld|p1',
-  treasury: 999,
-);
-
-const _buildCorpusTopology = MapTopology(
-  nodes: [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: [],
-);
-
 void _buildSingleCandidate() {
   expectBuildEquivalent(
-    game: _buildCorpusGame(),
-    topology: _buildCorpusTopology,
-    playerId: 'p1',
+    game: iceBuildCorpusGame(),
+    topology: iceBuildCorpusTopology,
+    playerId: IceIds.playerId,
     basePrefix: const Orders(),
     candidate: const BuildUnitOrder(
       unitType: 'pikemen',
@@ -177,8 +126,8 @@ void _buildSingleCandidate() {
 }
 
 void _buildSuccessiveProbes() {
-  final game = _buildCorpusGame();
-  const topology = _buildCorpusTopology;
+  final game = iceBuildCorpusGame();
+  const topology = iceBuildCorpusTopology;
   const basePrefix = Orders();
   const candidateA = BuildUnitOrder(
     unitType: 'pikemen',
@@ -193,23 +142,23 @@ void _buildSuccessiveProbes() {
   final incremental = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
-    playerId: 'p1',
+    playerId: IceIds.playerId,
     basePrefix: basePrefix,
   );
   expect(
     incremental.isBuildAccepted(candidateA),
-    fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateA),
+    fullPassBuildAccepted(game, topology, IceIds.playerId, basePrefix, candidateA),
   );
   expect(
     incremental.isBuildAccepted(candidateB),
-    fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateB),
+    fullPassBuildAccepted(game, topology, IceIds.playerId, basePrefix, candidateB),
   );
 }
 
 void _workNonEmptyBasePrefix() {
   final basePrefix = Orders(
     workOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const WorkOrder(
           unitId: 'u_explorer',
           target: kWorkTargetExplore,
@@ -218,10 +167,7 @@ void _workNonEmptyBasePrefix() {
       ],
     },
   );
-  expectWorkEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
+  iceExpectWorkOnCorpus(
     basePrefix: basePrefix,
     candidate: const WorkOrder(
       unitId: 'u_explorer',
@@ -235,7 +181,7 @@ void _workNonEmptyBasePrefix() {
 void _diplomaticNonEmptyBasePrefix() {
   final basePrefix = Orders(
     diplomaticOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const DiplomaticOrder(
           type: DiplomaticOrderType.declareWar,
           targetFactionId: 'p2',
@@ -243,10 +189,7 @@ void _diplomaticNonEmptyBasePrefix() {
       ],
     },
   );
-  expectDiplomaticEquivalent(
-    game: moveCorpusGame(),
-    topology: moveCorpusTopology(),
-    playerId: 'p1',
+  iceExpectDiplomaticOnCorpus(
     basePrefix: basePrefix,
     candidate: const DiplomaticOrder(
       type: DiplomaticOrderType.alliance,
@@ -261,7 +204,7 @@ void _diplomaticSequentialProbes() {
   final topology = moveCorpusTopology();
   final basePrefix = Orders(
     diplomaticOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const DiplomaticOrder(
           type: DiplomaticOrderType.declareWar,
           targetFactionId: 'p2',
@@ -280,39 +223,56 @@ void _diplomaticSequentialProbes() {
   final incremental = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
-    playerId: 'p1',
+    playerId: IceIds.playerId,
     basePrefix: basePrefix,
   );
   expect(
     incremental.isDiplomaticAccepted(candidateA),
-    fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+    fullPassDiplomaticAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      basePrefix,
+      candidateA,
+    ),
   );
   expect(
     incremental.isDiplomaticAccepted(candidateB),
-    fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateB),
+    fullPassDiplomaticAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      basePrefix,
+      candidateB,
+    ),
   );
   expect(
     incremental.isDiplomaticAccepted(candidateA),
-    fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+    fullPassDiplomaticAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      basePrefix,
+      candidateA,
+    ),
   );
 }
 
 void _prefetchedFactionMembership() {
   final game = armyCorpusGame();
   final topology = armyCorpusTopology();
-  const playerId = 'p1';
   const basePrefix = Orders();
   final prefetched = DiplomacyFactionMembership.from(game);
   final baseline = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
-    playerId: playerId,
+    playerId: IceIds.playerId,
     basePrefix: basePrefix,
   );
   final withPrefetched = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
-    playerId: playerId,
+    playerId: IceIds.playerId,
     basePrefix: basePrefix,
     factionMembership: prefetched,
   );
@@ -327,11 +287,7 @@ void _prefetchedFactionMembership() {
 }
 
 void _armyMoveOwnAdjacent() {
-  expectArmyMoveEquivalent(
-    game: armyCorpusGame(),
-    topology: armyCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectArmyMoveOnCorpus(
     candidate: const ArmyMoveOrder(
       armyId: 'field_a',
       destinationProvinceId: 'oldWorld|P2',
@@ -341,11 +297,7 @@ void _armyMoveOwnAdjacent() {
 }
 
 void _armyMoveGpNoWar() {
-  expectArmyMoveEquivalent(
-    game: armyCorpusGame(),
-    topology: armyCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectArmyMoveOnCorpus(
     candidate: const ArmyMoveOrder(
       armyId: 'field_a',
       destinationProvinceId: 'oldWorld|P3',
@@ -357,7 +309,7 @@ void _armyMoveGpNoWar() {
 void _armyMoveGpDeclareWar() {
   final basePrefix = Orders(
     diplomaticOrdersByPlayerId: {
-      'p1': [
+      IceIds.playerId: [
         const DiplomaticOrder(
           type: DiplomaticOrderType.declareWar,
           targetFactionId: 'p2',
@@ -365,10 +317,7 @@ void _armyMoveGpDeclareWar() {
       ],
     },
   );
-  expectArmyMoveEquivalent(
-    game: armyCorpusGame(),
-    topology: armyCorpusTopology(),
-    playerId: 'p1',
+  iceExpectArmyMoveOnCorpus(
     basePrefix: basePrefix,
     candidate: const ArmyMoveOrder(
       armyId: 'field_a',
@@ -379,11 +328,7 @@ void _armyMoveGpDeclareWar() {
 }
 
 void _armyMoveMinorNoWar() {
-  expectArmyMoveEquivalent(
-    game: armyCorpusGame(),
-    topology: armyCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectArmyMoveOnCorpus(
     candidate: const ArmyMoveOrder(
       armyId: 'field_a',
       destinationProvinceId: 'oldWorld|P4',

@@ -1,12 +1,7 @@
 part of 'incremental_candidate_validator_equivalence_expectations.dart';
 
-
 void _armyMoveMissingArmy() {
-  expectArmyMoveEquivalent(
-    game: armyCorpusGame(),
-    topology: armyCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectArmyMoveOnCorpus(
     candidate: const ArmyMoveOrder(
       armyId: 'unknown_army',
       destinationProvinceId: 'oldWorld|P2',
@@ -16,11 +11,7 @@ void _armyMoveMissingArmy() {
 }
 
 void _navalMoveAdjacentSea() {
-  expectNavalMoveEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMoveOnCorpus(
     candidate: const NavalMoveOrder(
       fleetId: 'fleet_atSea',
       destinationSeaZoneId: 'oldWorld|sea2',
@@ -30,11 +21,7 @@ void _navalMoveAdjacentSea() {
 }
 
 void _navalMoveNonAdjacentSea() {
-  expectNavalMoveEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMoveOnCorpus(
     candidate: const NavalMoveOrder(
       fleetId: 'fleet_atSea',
       destinationSeaZoneId: 'oldWorld|seaZ',
@@ -44,11 +31,7 @@ void _navalMoveNonAdjacentSea() {
 }
 
 void _navalMoveUndock() {
-  expectNavalMoveEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMoveOnCorpus(
     candidate: const NavalMoveOrder(
       fleetId: 'fleet_inPort',
       destinationSeaZoneId: 'oldWorld|sea1',
@@ -58,11 +41,7 @@ void _navalMoveUndock() {
 }
 
 void _navalMoveMissingFleet() {
-  expectNavalMoveEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMoveOnCorpus(
     candidate: const NavalMoveOrder(
       fleetId: 'unknown_fleet',
       destinationSeaZoneId: 'oldWorld|sea1',
@@ -72,11 +51,7 @@ void _navalMoveMissingFleet() {
 }
 
 void _navalMissionPatrol() {
-  expectNavalMissionEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMissionOnCorpus(
     candidate: const NavalMissionOrder(
       fleetId: 'fleet_atSea',
       mission: 'patrol',
@@ -86,11 +61,7 @@ void _navalMissionPatrol() {
 }
 
 void _navalMissionBlockadeNoTarget() {
-  expectNavalMissionEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMissionOnCorpus(
     candidate: const NavalMissionOrder(
       fleetId: 'fleet_atSea',
       mission: 'blockade',
@@ -100,11 +71,7 @@ void _navalMissionBlockadeNoTarget() {
 }
 
 void _navalMissionMissingFleet() {
-  expectNavalMissionEquivalent(
-    game: navalCorpusGame(),
-    topology: navalCorpusTopology(),
-    playerId: 'p1',
-    basePrefix: const Orders(),
+  iceExpectNavalMissionOnCorpus(
     candidate: const NavalMissionOrder(
       fleetId: 'unknown_fleet',
       mission: 'patrol',

@@ -1,65 +1,39 @@
 part of 'worker_pool_phase_expectations.dart';
 
-Game _emptyWorldGame({required List<Player> players}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-  );
-}
-
 void _acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 3}),
-        workerPool: const WorkerPool(peasants: 0),
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.peasant]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 1);
   expect(p.stockpile.quantityOf(CommodityCatalog.fabric.id), 1);
   expect(p.treasury, 0);
 }
 
 void _acceptedApprenticeTrainConsumesPeasantPaperAndTreasury() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 5}),
         workerPool: const WorkerPool(peasants: 3),
         treasury: 500,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: wppApprenticeTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.apprentice]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 2);
   expect(p.workerPool.apprentices, 1);
   expect(p.stockpile.quantityOf(CommodityCatalog.paper.id), 3);
@@ -67,29 +41,21 @@ void _acceptedApprenticeTrainConsumesPeasantPaperAndTreasury() {
 }
 
 void _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 5}),
         workerPool: const WorkerPool(peasants: 3),
         treasury: 100,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: wppApprenticeTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.apprentice]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 3);
   expect(p.workerPool.apprentices, 0);
   expect(p.stockpile.quantityOf(CommodityCatalog.paper.id), 5);
@@ -97,29 +63,21 @@ void _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeductio
 }
 
 void _acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 8}),
         workerPool: const WorkerPool(peasants: 2),
         treasury: 700,
-        techUnlocked: const {
-          kTechIdTrainedJourneymen: true,
-          kTechIdCigarProduction: true,
-        },
+        techUnlocked: wppJourneymanTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.journeyman]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 1, reason: 'one peasant consumed');
   expect(p.workerPool.journeymen, 1, reason: 'one journeyman added');
   expect(
@@ -135,29 +93,21 @@ void _acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage()
 }
 
 void _acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 12}),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 1200,
-        techUnlocked: const {
-          kTechIdMasterArtisans: true,
-          kTechIdHatProduction: true,
-        },
+        techUnlocked: wppMasterTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.master)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.master]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 0, reason: 'one peasant consumed');
   expect(p.workerPool.masters, 1, reason: 'one master added');
   expect(
@@ -173,12 +123,9 @@ void _acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3Mas
 }
 
 void _masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 12}),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 1200,
@@ -186,13 +133,11 @@ void _masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.master)],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [WorkerTier.master]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(p.workerPool.peasants, 1, reason: 'peasant not consumed');
   expect(p.workerPool.masters, 0, reason: 'master not added');
   expect(
@@ -204,12 +149,9 @@ void _masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage
 }
 
 void _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(
           quantities: {
             CommodityCatalog.fabric.id: 2,
@@ -218,23 +160,18 @@ void _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSub
         ),
         workerPool: const WorkerPool(peasants: 0),
         treasury: 200,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: wppApprenticeTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [
-        RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-        RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-      ],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [
+      WorkerTier.peasant,
+      WorkerTier.apprentice,
+    ]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(
     p.workerPool.peasants,
     0,
@@ -255,12 +192,9 @@ void _laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSub
 }
 
 void _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior() {
-  final game = _emptyWorldGame(
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
+      wppPlayer(
         stockpile: Stockpile(
           quantities: {
             CommodityCatalog.fabric.id: 4,
@@ -269,24 +203,19 @@ void _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAga
         ),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 400,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: wppApprenticeTech,
       ),
     ],
   );
-  final orders = Orders(
-    recruitWorkerOrdersByPlayerId: {
-      'p1': const [
-        RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-        RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-      ],
-    },
+  final p = wppPlayerAfter(
+    game,
+    wppRecruitOrders(WppIds.player1, [
+      WorkerTier.apprentice,
+      WorkerTier.apprentice,
+      WorkerTier.peasant,
+    ]),
+    WppIds.player1,
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p = result.players.single;
   expect(
     p.workerPool.peasants,
     1,
@@ -315,43 +244,35 @@ void _middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAga
 }
 
 void _perPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin() {
-  final game = _emptyWorldGame(
+  final apprenticePlayer = wppPlayer(
+    stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 4}),
+    workerPool: const WorkerPool(peasants: 2),
+    treasury: 300,
+    techUnlocked: wppApprenticeTech,
+  );
+  final game = wppEmptyWorldGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 4}),
-        workerPool: const WorkerPool(peasants: 2),
-        treasury: 300,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      ),
-      Player(
-        id: 'p2',
+      apprenticePlayer,
+      wppPlayer(
+        id: WppIds.player2,
         displayName: 'B',
         isHuman: false,
         stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 4}),
         workerPool: const WorkerPool(peasants: 2),
         treasury: 300,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: wppApprenticeTech,
       ),
     ],
   );
   final orders = Orders(
     recruitWorkerOrdersByPlayerId: {
-      'p1': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-      'p2': const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+      WppIds.player1: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+      WppIds.player2: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
     },
   );
-  final result = applyBuildAndWorkOrders(game, orders);
-  final p1 = result.players.firstWhere((p) => p.id == 'p1');
-  final p2 = result.players.firstWhere((p) => p.id == 'p2');
+  final result = wppApply(game, orders);
+  final p1 = result.players.firstWhere((p) => p.id == WppIds.player1);
+  final p2 = result.players.firstWhere((p) => p.id == WppIds.player2);
   expect(p1.workerPool.peasants, 1);
   expect(p1.workerPool.apprentices, 1);
   expect(p1.stockpile.quantityOf(CommodityCatalog.paper.id), 2);

@@ -52,70 +52,26 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
 }
 
 void _returnsEmptyForUnknownUnitId() {
-  final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-      {
-        ValidWorkTilesTestSupport.provinceId('p1'): [
-          ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-        ],
-      },
-    ),
+  expect(
+    vwtPlainKeys(vwtMinimalSingleTileGame(), 'no-such-unit', kWorkTargetExplore),
+    isEmpty,
   );
-  final valid = getValidWorkOrderTileKeys(
-    game,
-    ValidWorkTilesTestSupport.emptyTopology,
-    ValidWorkTilesTestSupport.playerId,
-    'no-such-unit',
-    kWorkTargetExplore,
-    const Orders(),
-  );
-  expect(valid, isEmpty);
 }
 
 void _returnsEmptyWhenWorkTargetNotAllowedForUnitType() {
-  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
-  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final unit = ValidWorkTilesTestSupport.explorerUnit(
-    locationProvinceId: provinceId,
-    tileKey: tile,
-  );
-  final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
-    oldWorld: RegionData(
-      provinces: [_ownedProvince('p1')],
-      units: [unit],
+  expect(
+    vwtPlainKeys(
+      vwtExplorerSingleTileGame(),
+      'u1',
+      kWorkTargetBuildImprovement,
     ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-      {provinceId: [tile]},
-    ),
+    isEmpty,
   );
-  final valid = getValidWorkOrderTileKeys(
-    game,
-    ValidWorkTilesTestSupport.emptyTopology,
-    ValidWorkTilesTestSupport.playerId,
-    'u1',
-    kWorkTargetBuildImprovement,
-    const Orders(),
-  );
-  expect(valid, isEmpty);
 }
 
 void _returnsEmptyForUnknownUnitIdWithVisibility() {
-  final game = ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-      {
-        ValidWorkTilesTestSupport.provinceId('p1'): [
-          ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-        ],
-      },
-    ),
-  );
   expect(
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: ValidWorkTilesTestSupport.emptyTopology,
-      unitId: 'no-such-unit',
-      workTarget: kWorkTargetExplore,
-    ),
+    vwtVisKeys(vwtMinimalSingleTileGame(), 'no-such-unit', kWorkTargetExplore),
     isEmpty,
   );
 }
@@ -123,26 +79,22 @@ void _returnsEmptyForUnknownUnitIdWithVisibility() {
 void _returnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility() {
   final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
   final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final unit = ValidWorkTilesTestSupport.explorerUnit(
-    locationProvinceId: provinceId,
-    tileKey: tile,
-  );
   final game = ValidWorkTilesTestSupport.validWorkTilesGame(
     oldWorld: RegionData(
       provinces: [_ownedProvince('p1')],
-      units: [unit],
+      units: [
+        ValidWorkTilesTestSupport.explorerUnit(
+          locationProvinceId: provinceId,
+          tileKey: tile,
+        ),
+      ],
     ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-      {provinceId: [tile]},
-    ),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      provinceId: [tile],
+    }),
   );
   expect(
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: ValidWorkTilesTestSupport.emptyTopology,
-      unitId: 'u1',
-      workTarget: kWorkTargetBuildImprovement,
-    ),
+    vwtVisKeys(game, 'u1', kWorkTargetBuildImprovement),
     isEmpty,
   );
 }
@@ -171,21 +123,8 @@ void _filtersByVisibilityBeforeOrderEngineValidation() {
       },
     ),
   );
-  final topology = ValidWorkTilesTestSupport.emptyTopology;
-  final withVis = validWorkTilesWithVisibility(
-    game: game,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
-  final withoutVis = getValidWorkOrderTileKeys(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-    'u1',
-    kWorkTargetBuildImprovement,
-    const Orders(),
-  );
+  final withVis = vwtVisKeys(game, 'u1', kWorkTargetBuildImprovement);
+  final withoutVis = vwtPlainKeys(game, 'u1', kWorkTargetBuildImprovement);
   expect(withVis.length, withoutVis.length);
 }
 
@@ -212,12 +151,7 @@ void _buildImprovementReturnsOnlyControlledTilesWithResources() {
       Player(id: 'other', displayName: 'Other', isHuman: false),
     ],
   );
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: ValidWorkTilesTestSupport.emptyTopology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
+  final valid = vwtBuildVisKeys(game);
   expect(valid.contains(tileWithResource), isTrue);
   expect(valid.contains(tileWithoutResource), isFalse);
   expect(valid.contains(foreignTileWithResource), isFalse);
@@ -231,7 +165,6 @@ void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspe
   final resources = {grainTile: 'grain', ironTile: 'iron'};
   final improvements = {grainTile: 0, ironTile: 0};
   final provinces = [_ownedProvince('p1')];
-  final topology = ValidWorkTilesTestSupport.emptyTopology;
 
   final unprospected = owBuilderVisibilityGame(
     provinces: provinces,
@@ -240,12 +173,7 @@ void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspe
     builderTileKey: grainTile,
     improvementByTile: improvements,
   );
-  final validUnprospected = validWorkTilesWithVisibility(
-    game: unprospected,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
+  final validUnprospected = vwtBuildVisKeys(unprospected);
   expect(validUnprospected.contains(grainTile), isTrue);
   expect(validUnprospected.contains(ironTile), isFalse);
 
@@ -259,12 +187,7 @@ void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspe
       ValidWorkTilesTestSupport.playerId: {ironTile},
     },
   );
-  final validProspected = validWorkTilesWithVisibility(
-    game: prospected,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
+  final validProspected = vwtBuildVisKeys(prospected);
   expect(validProspected.contains(grainTile), isTrue);
   expect(validProspected.contains(ironTile), isTrue);
 }
@@ -287,12 +210,7 @@ void _buildImprovementIncludesPurchasedTilesWithResources() {
     improvementByTile: {purchased: 0},
     minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
   );
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: ValidWorkTilesTestSupport.emptyTopology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
+  final valid = vwtBuildVisKeys(game);
   expect(valid.contains(purchased), isTrue);
   expect(valid.contains(unpurchased), isFalse);
 }
@@ -312,12 +230,7 @@ void _buildImprovementExcludesSeaZoneTiles() {
     seaZoneId: seaZoneId,
     seaTiles: [seaTile],
   );
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: ValidWorkTilesTestSupport.emptyTopology,
-    unitId: 'u1',
-    workTarget: kWorkTargetBuildImprovement,
-  );
+  final valid = vwtBuildVisKeys(game);
   expect(valid.contains(landTile), isTrue);
   expect(valid.contains(seaTile), isFalse);
 }

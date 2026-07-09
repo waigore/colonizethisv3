@@ -326,3 +326,61 @@ List<WorkOrder> suggestedWorkOrders({
   );
   return suggestWorkOrders(view, game, topology, currentOrders);
 }
+
+const _vwtTopology = ValidWorkTilesTestSupport.emptyTopology;
+
+Game vwtMinimalSingleTileGame() {
+  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      p1: [tile],
+    }),
+  );
+}
+
+Game vwtExplorerSingleTileGame() {
+  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: provinceId,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: ValidWorkTilesTestSupport.playerId,
+        ),
+      ],
+      units: [
+        ValidWorkTilesTestSupport.explorerUnit(
+          locationProvinceId: provinceId,
+          tileKey: tile,
+        ),
+      ],
+    ),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      provinceId: [tile],
+    }),
+  );
+}
+
+Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
+    getValidWorkOrderTileKeys(
+      game,
+      _vwtTopology,
+      ValidWorkTilesTestSupport.playerId,
+      unitId,
+      workTarget,
+      const Orders(),
+    );
+
+Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
+    validWorkTilesWithVisibility(
+      game: game,
+      topology: _vwtTopology,
+      unitId: unitId,
+      workTarget: workTarget,
+    );
+
+Set<String> vwtBuildVisKeys(Game game, {String unitId = 'u1'}) =>
+    vwtVisKeys(game, unitId, kWorkTargetBuildImprovement);

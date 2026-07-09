@@ -443,6 +443,16 @@ test/ LOC after slice 17: **31,872** (down ~207 from post–slice 16). Remaining
 
 test/ LOC after slice 18: **32,043** (down ~60 from post–slice 17). Remaining: further expectation compaction (`incremental_*`, `valid_work_tiles_*`, `worker_pool_phase_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 19: worker-pool / incremental / valid-work-tiles expectation fixtures
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wpp-fixtures | extract OW empty-world player/recruit helpers; compact worker-pool phase expectation bodies | `worker_pool_phase_expectations_part1.dart` | `worker_pool_phase_fixtures.dart` + compacted expectations | #3949 |
+| ice-corpus-shorthand | add corpus `iceExpect*` wrappers + build corpus helpers on shared test_helpers | `incremental_candidate_validator_equivalence_expectations_part{1,2}.dart` | extended `incremental_candidate_validator_equivalence_test_helpers.dart` + compacted expectations | #3949 |
+| vwt-query-shorthand | add `vwtPlainKeys` / `vwtVisKeys` / `vwtBuildVisKeys` + single-tile game helpers; compact part1 bodies | `valid_work_tiles_expectations_part1.dart` | extended `valid_work_tiles_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 19: **32,038** (down ~5 from post–slice 18). Remaining: further expectation compaction (`valid_work_tiles_*` part2/3, `order_engine_validate_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
