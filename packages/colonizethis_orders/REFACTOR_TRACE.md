@@ -1799,6 +1799,16 @@ test/ LOC after slice 107: **38,193** (net −111 from post–slice 106). Remain
 
 test/ LOC after slice 108: **38,094** (net −99 from post–slice 107). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 109: but/vwt/wcc dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-but-single | inline eight single-site `butExpect*` wrappers into build-unit training dispatcher | `build_unit_training_expectation_shorthand.dart` | `build_unit_training_expectations.dart` | #3949 |
+| dispatch-inline-vwt-vis | inline `vwtExpectVisProspectExcludesAll` / `vwtExpectVisProspectExcludes` / `vwtExpectVisExplore` into valid-work-tiles dispatcher | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| dispatch-inline-wcc-rail | inline `wccExpectRailDispatchSetsRoadLevel` into work-completion dispatcher | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+
+test/ LOC after slice 109: **38,027** (net −67 from post–slice 108). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

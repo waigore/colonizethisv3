@@ -26,14 +26,6 @@ void butExpectNoOwUnitsAfter(
   );
 }
 
-void butExpectTreasuryAndPeasantsUnchanged(Game before, Game after) {
-  expect(after.players.single.treasury, before.players.single.treasury);
-  expect(
-    after.players.single.workerPool.peasants,
-    before.players.single.workerPool.peasants,
-  );
-}
-
 void butExpectShipBuildSpentNoFleet({
   required Game game,
   required Orders orders,
@@ -82,82 +74,6 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
 }
 
 
-void butExpectValidRegimentBuild({
-  required Game game,
-  required String regimentId,
-  required Player baselinePlayer,
-}) {
-  final econ = RegimentEconomyCatalog.byId[regimentId]!;
-  final next = butApply(game, butOrdersFor(regimentId));
-  final nextPlayer = next.players.single;
-  expect(next.worldState.oldWorld.units.length, 1);
-  expect(next.worldState.oldWorld.units.single.type, regimentId);
-  expect(nextPlayer.treasury, baselinePlayer.treasury - econ.buildTreasuryCost);
-  expect(
-    nextPlayer.workerPool.peasants,
-    baselinePlayer.workerPool.peasants - 1,
-  );
-  for (final entry in econ.buildInputs.entries) {
-    final before = baselinePlayer.stockpile.quantityOf(entry.key);
-    final after = nextPlayer.stockpile.quantityOf(entry.key);
-    expect(after, before - entry.value);
-  }
-}
-
-void butExpectGameUnchangedAfterEmptyOrders(Game game) {
-  final next = butApply(game, const Orders());
-  expect(
-    next.worldState.oldWorld.units.length,
-    game.worldState.oldWorld.units.length,
-  );
-  butExpectTreasuryAndPeasantsUnchanged(game, next);
-}
-
-void butExpectFleetContainsShip(Game next, String shipTypeId) {
-  expect(next.worldState.fleets, isNotEmpty);
-  expect(
-    next.worldState.fleets.any(
-      (f) => f.ownerId == ButIds.playerId && f.shipTypeIds.contains(shipTypeId),
-    ),
-    isTrue,
-  );
-}
-
-void butExpectCivilianBuildRejected(Game game, String unitType) {
-  final next = butApply(game, butOrdersFor(unitType));
-  expect(next.worldState.oldWorld.units, isEmpty);
-  expect(next.players.single.treasury, game.players.single.treasury);
-}
-
-void butExpectCivilianBuildApplied({
-  required Game game,
-  required String unitType,
-  required int treasuryDelta,
-  required int paperDelta,
-}) {
-  final next = butApply(game, butOrdersFor(unitType));
-  expect(next.worldState.oldWorld.units.length, 1);
-  expect(next.worldState.oldWorld.units.single.type, unitType);
-  expect(next.players.single.treasury, game.players.single.treasury - treasuryDelta);
-  expect(
-    next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
-    game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id) -
-        paperDelta,
-  );
-}
-
-void butExpectInsufficientMaterialsBuildRejected({
-  required Game game,
-  required String regimentId,
-}) {
-  final next = butApply(game, butOrdersFor(regimentId));
-  expect(next.worldState.oldWorld.units, isEmpty);
-  expect(
-    next.players.single.workerPool.peasants,
-    game.players.single.workerPool.peasants,
-  );
-}
-
 Player butFluyteShipBuildPlayer({
   Stockpile? stockpile,
   int peasants = 2,
@@ -187,46 +103,3 @@ Game butFluyteShipBuildGame(Player player) =>
         ),
       ],
     );
-
-void butExpectFluyteShipBuildApplied({String displayName = 'Spain'}) {
-  final topology = butCapitalAdjacentSeaTopology();
-  final next = butApply(
-    butFluyteShipBuildGame(butFluyteShipBuildPlayer(displayName: displayName)),
-    butOrdersFor('fluyte'),
-    topology: topology,
-  );
-  butExpectFleetContainsShip(next, 'fluyte');
-  expect(next.players.single.workerPool.peasants, 1);
-}
-
-
-
-void butExpectMerchantTechGate({
-  required int cash,
-  required int paperQty,
-}) {
-  final orders = butOrdersFor(kUnitTypeMerchant);
-  final gameNoTech = butCivilianGame(
-    treasury: cash + 100,
-    paper: paperQty + 1,
-    techUnlocked: {},
-  );
-  final nextNoTech = butApply(gameNoTech, orders);
-  expect(nextNoTech.worldState.oldWorld.units, isEmpty);
-  expect(nextNoTech.players.single.treasury, gameNoTech.players.single.treasury);
-
-  butExpectCivilianBuildApplied(
-    game: butCivilianGame(
-      treasury: cash + 100,
-      paper: paperQty + 1,
-      techUnlocked: {kTechIdMerchantCompanies: true},
-    ),
-    unitType: kUnitTypeMerchant,
-    treasuryDelta: cash,
-    paperDelta: paperQty,
-  );
-}
-
-
-
-

@@ -259,17 +259,27 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
     case WorkCompletionTarget.routesKWorkTargetBuildRailThroughHandlerMapEntry:
-      wccExpectRailDispatchSetsRoadLevel(
+        final (railState, railUnit, railCw) = wccDispatchRailSetup(
           roadLevel: 1,
           players: wccSteamPlayers(),
-          expectedLevel: 4,
+        );
+        final railNext = wccDispatchCompleted(railState, railUnit, railCw);
+        wccExpectRoadLevelOn(
+          railNext.work.tileState,
+          WorkAppIds.tileKey,
+          4,
         );
     case WorkCompletionTarget
         .buildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies:
-      wccExpectRailDispatchSetsRoadLevel(
+        final (noopState, noopUnit, noopCw) = wccDispatchRailSetup(
           roadLevel: 0,
           players: [workAppPlayer()],
-          expectedLevel: 0,
+        );
+        final noopNext = wccDispatchCompleted(noopState, noopUnit, noopCw);
+        wccExpectRoadLevelOn(
+          noopNext.work.tileState,
+          WorkAppIds.tileKey,
+          0,
         );
     case WorkCompletionTarget
         .upgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord:

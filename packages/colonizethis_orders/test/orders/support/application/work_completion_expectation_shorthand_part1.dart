@@ -273,16 +273,3 @@ Game wccBuildRoadPortAdjacentGame() {
 List<Player> wccSteamPlayers() => [
       workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
     ];
-
-void wccExpectRailDispatchSetsRoadLevel({
-  required int roadLevel,
-  required List<Player> players,
-  required int expectedLevel,
-}) {
-  final (state, unit, cw) = wccDispatchRailSetup(
-    roadLevel: roadLevel,
-    players: players,
-  );
-  final next = wccDispatchCompleted(state, unit, cw);
-  wccExpectRoadLevelOn(next.work.tileState, WorkAppIds.tileKey, expectedLevel);
-}

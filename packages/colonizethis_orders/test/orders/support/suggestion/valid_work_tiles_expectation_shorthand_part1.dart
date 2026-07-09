@@ -88,44 +88,6 @@ Iterable<WorkOrder> vwtSuggestPurchaseLand(
           Unit.provinceIdFromTileKey(o.targetTileKey) == targetProvinceId,
     );
 
-void vwtExpectVisProspectExcludes(
-  Game game,
-  MapTopology topology,
-  String tile, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  expect(
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: topology,
-      unitId: 'u1',
-      workTarget: kWorkTargetProspect,
-      tileMapByRegion: tileMapByRegion,
-    ).contains(tile),
-    isFalse,
-  );
-}
-
-void vwtExpectVisExplore({
-  required Game game,
-  required MapTopology topology,
-  required Iterable<String> includedTiles,
-  Iterable<String> excludedTiles = const [],
-}) {
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetExplore,
-  );
-  for (final tile in includedTiles) {
-    expect(valid, contains(tile));
-  }
-  for (final tile in excludedTiles) {
-    expect(valid, isNot(contains(tile)));
-  }
-}
-
 void vwtExpectKeysEmpty(
   Game game,
   String unitId,
@@ -182,23 +144,5 @@ void vwtExpectBuildResourceFilter({
     included: included,
     excluded: excluded,
   );
-}
-
-void vwtExpectVisProspectExcludesAll(
-  Game game,
-  MapTopology topology,
-  Iterable<String> tiles, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetProspect,
-    tileMapByRegion: tileMapByRegion,
-  );
-  for (final tile in tiles) {
-    expect(valid.contains(tile), isFalse);
-  }
 }
 

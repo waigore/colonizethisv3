@@ -95,17 +95,24 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
         );
         final next = butApply(game, butOrdersFor('peasant_levies'));
         expect(next.worldState.oldWorld.units, isEmpty);
-        butExpectTreasuryAndPeasantsUnchanged(game, next);
+        expect(next.players.single.treasury, game.players.single.treasury);
+        expect(
+          next.players.single.workerPool.peasants,
+          game.players.single.workerPool.peasants,
+        );
     case BuildUnitTrainingTarget.rejectsBuildWhenMaterialsAreInsufficient:
-      butExpectInsufficientMaterialsBuildRejected(
-        game: butMilitaryBaseGame(
+        final rejectGame = butMilitaryBaseGame(
           peasants: 5,
           treasury:
               RegimentEconomyCatalog.byId['peasant_levies']!.buildTreasuryCost +
               10,
-        ),
-        regimentId: 'peasant_levies',
-      );
+        );
+        final rejectNext = butApply(rejectGame, butOrdersFor('peasant_levies'));
+        expect(rejectNext.worldState.oldWorld.units, isEmpty);
+        expect(
+          rejectNext.players.single.workerPool.peasants,
+          rejectGame.players.single.workerPool.peasants,
+        );
     case BuildUnitTrainingTarget.appliesTreasuryStockpileAndWorkerCostsWhenValid:
         final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
         final player = Player(
@@ -116,18 +123,55 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
           workerPool: const WorkerPool(peasants: 3),
           treasury: econ.buildTreasuryCost + 5,
         );
-        butExpectValidRegimentBuild(
-          game: butOwGame(players: [player]),
-          regimentId: 'peasant_levies',
-          baselinePlayer: player,
+        final validGame = butOwGame(players: [player]);
+        final validNext = butApply(validGame, butOrdersFor('peasant_levies'));
+        final nextPlayer = validNext.players.single;
+        expect(validNext.worldState.oldWorld.units.length, 1);
+        expect(validNext.worldState.oldWorld.units.single.type, 'peasant_levies');
+        expect(
+          nextPlayer.treasury,
+          player.treasury - econ.buildTreasuryCost,
         );
+        expect(nextPlayer.workerPool.peasants, player.workerPool.peasants - 1);
+        for (final entry in econ.buildInputs.entries) {
+          expect(
+            nextPlayer.stockpile.quantityOf(entry.key),
+            player.stockpile.quantityOf(entry.key) - entry.value,
+          );
+        }
     case BuildUnitTrainingTarget.returnsGameUnchangedWhenNoBuildOrWorkOrders:
-      butExpectGameUnchangedAfterEmptyOrders(
-        butMilitaryBaseGame(peasants: 2, treasury: 100),
-      );
+        final unchangedGame = butMilitaryBaseGame(peasants: 2, treasury: 100);
+        final unchangedNext = butApply(unchangedGame, const Orders());
+        expect(
+          unchangedNext.worldState.oldWorld.units.length,
+          unchangedGame.worldState.oldWorld.units.length,
+        );
+        expect(
+          unchangedNext.players.single.treasury,
+          unchangedGame.players.single.treasury,
+        );
+        expect(
+          unchangedNext.players.single.workerPool.peasants,
+          unchangedGame.players.single.workerPool.peasants,
+        );
     case BuildUnitTrainingTarget
         .shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea:
-      butExpectFluyteShipBuildApplied();
+        final fluyteTopology = butCapitalAdjacentSeaTopology();
+        final fluyteNext = butApply(
+          butFluyteShipBuildGame(butFluyteShipBuildPlayer(displayName: 'Spain')),
+          butOrdersFor('fluyte'),
+          topology: fluyteTopology,
+        );
+        expect(fluyteNext.worldState.fleets, isNotEmpty);
+        expect(
+          fluyteNext.worldState.fleets.any(
+            (f) =>
+                f.ownerId == ButIds.playerId &&
+                f.shipTypeIds.contains('fluyte'),
+          ),
+          isTrue,
+        );
+        expect(fluyteNext.players.single.workerPool.peasants, 1);
     case BuildUnitTrainingTarget.rejectsNavalBuildWhenPeasantsAreZero:
         final topology = butCapitalAdjacentSeaTopology();
         final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
@@ -200,18 +244,75 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
           game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
         );
     case BuildUnitTrainingTarget.rejectsCivilianBuildWhenPaperInsufficient:
-      butExpectCivilianBuildRejected(
-        butCivilianGame(treasury: 1000, paper: 0),
-        kUnitTypeBuilder,
-      );
+        final civilianRejectGame = butCivilianGame(treasury: 1000, paper: 0);
+        final civilianRejectNext =
+            butApply(civilianRejectGame, butOrdersFor(kUnitTypeBuilder));
+        expect(civilianRejectNext.worldState.oldWorld.units, isEmpty);
+        expect(
+          civilianRejectNext.players.single.treasury,
+          civilianRejectGame.players.single.treasury,
+        );
     case BuildUnitTrainingTarget.appliesTreasuryAndPaperCostWhenCivilianBuildValid:
-      butExpectCivilianBuildApplied(
-        game: butCivilianGame(treasury: 1100, paper: 3),
-        unitType: kUnitTypeBuilder,
-        treasuryDelta: 1000,
-        paperDelta: 2,
-      );
+        final civilianGame = butCivilianGame(treasury: 1100, paper: 3);
+        final civilianNext =
+            butApply(civilianGame, butOrdersFor(kUnitTypeBuilder));
+        expect(civilianNext.worldState.oldWorld.units.length, 1);
+        expect(
+          civilianNext.worldState.oldWorld.units.single.type,
+          kUnitTypeBuilder,
+        );
+        expect(
+          civilianNext.players.single.treasury,
+          civilianGame.players.single.treasury - 1000,
+        );
+        expect(
+          civilianNext.players.single.stockpile.quantityOf(
+            CommodityCatalog.paper.id,
+          ),
+          civilianGame.players.single.stockpile.quantityOf(
+                CommodityCatalog.paper.id,
+              ) -
+              2,
+        );
     case BuildUnitTrainingTarget.merchantRequiresMerchantCompaniesTech:
-      butExpectMerchantTechGate(cash: 2000, paperQty: 4);
+        const merchantCash = 2000;
+        const merchantPaperQty = 4;
+        final merchantOrders = butOrdersFor(kUnitTypeMerchant);
+        final merchantGameNoTech = butCivilianGame(
+          treasury: merchantCash + 100,
+          paper: merchantPaperQty + 1,
+          techUnlocked: {},
+        );
+        final merchantNextNoTech = butApply(merchantGameNoTech, merchantOrders);
+        expect(merchantNextNoTech.worldState.oldWorld.units, isEmpty);
+        expect(
+          merchantNextNoTech.players.single.treasury,
+          merchantGameNoTech.players.single.treasury,
+        );
+        final merchantGameWithTech = butCivilianGame(
+          treasury: merchantCash + 100,
+          paper: merchantPaperQty + 1,
+          techUnlocked: {kTechIdMerchantCompanies: true},
+        );
+        final merchantNextWithTech =
+            butApply(merchantGameWithTech, merchantOrders);
+        expect(merchantNextWithTech.worldState.oldWorld.units.length, 1);
+        expect(
+          merchantNextWithTech.worldState.oldWorld.units.single.type,
+          kUnitTypeMerchant,
+        );
+        expect(
+          merchantNextWithTech.players.single.treasury,
+          merchantGameWithTech.players.single.treasury - merchantCash,
+        );
+        expect(
+          merchantNextWithTech.players.single.stockpile.quantityOf(
+            CommodityCatalog.paper.id,
+          ),
+          merchantGameWithTech.players.single.stockpile.quantityOf(
+                CommodityCatalog.paper.id,
+              ) -
+              merchantPaperQty,
+        );
   }
 }
