@@ -1552,6 +1552,18 @@ Migrated imperative `order_suggestion_declare_war_intervention_risk_test.dart` a
 
 test/ LOC after slice 90: **38,247** (net −26 from post–slice 89; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
 
+### Slice 91 — colonial discovery, API declare-war, naval validator-reuse scenario migration
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dwc-first-contact | suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate) | `order_suggestion_declare_war_colonial_discovery_test.dart` | `support/suggestion/order_suggestion_declare_war_colonial_discovery_{fixtures,scenarios,expectations}.dart` + thin runner | #3620, #3949 |
+| dw-api-minor | returns declareWar toward minor when establishOverture would win in suggestDiplomaticOrders | `order_suggestion_api_impl_declare_war_test.dart` | `support/suggestion/order_suggestion_api_impl_declare_war_{fixtures,scenarios,expectations}.dart` + thin runner | #3949 |
+| nvr-shared | suggestNavalMoveOrders and suggestNavalMissionOrders reuse one validator | `order_suggestion_naval_validator_reuse_test.dart` | `support/suggestion/order_suggestion_naval_validator_reuse_{fixtures,scenarios,expectations}.dart` + thin runner | #2394, #3949 |
+
+Migrated imperative `order_suggestion_declare_war_colonial_discovery_test.dart`, `order_suggestion_api_impl_declare_war_test.dart`, and `order_suggestion_naval_validator_reuse_test.dart` → table-driven scenarios with dedicated support modules. Reused `colonialAcquisitionTopology` for colonial-discovery fixtures. Pinned previously absent baseline descriptions for all three scenarios.
+
+test/ LOC after slice 91: **38,438** (net +191 from post–slice 90; support modules add LOC while runners shrink). Remaining: lib DRY items 5–6 opportunistic cleanup, further imperative-suite compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

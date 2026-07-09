@@ -408,6 +408,7 @@ returns all four tiers when all techs unlocked and resources support every cost 
 returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows
 returns breakAlliance toward GP when a formal alliance exists at peace
 returns declareWar toward GP when at peace and already allied
+returns declareWar toward minor when establishOverture would win in suggestDiplomaticOrders
 returns empty for unknown unit id
 returns empty for unknown unit id with visibility
 returns empty list without scanning when id set is empty
@@ -501,6 +502,7 @@ suggestBuildOrders includes ship types when player can afford a ship
 suggestBuildOrders returns ship when affordable
 suggestDiplomaticOrders is deterministic across repeated calls
 suggestDiplomaticOrders returns list
+suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)
 suggestion ordering is deterministic across repeated passes
 suggestMoveOrders excludes moves to other Great Power provinces
 suggestMoveOrders matches default path
@@ -509,6 +511,7 @@ suggestMoveOrders returns list
 suggestNavalMissionOrders returns list
 suggestNavalMoveOrders returns list
 suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)
+suggestNavalMoveOrders and suggestNavalMissionOrders reuse one validator
 suggestRecruitWorkerOrders returns list (#2692 S7)
 suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)
 suggestResearchOrders returns list
