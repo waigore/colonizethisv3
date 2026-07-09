@@ -1782,6 +1782,14 @@ test/ LOC after slice 105: **38,344** (net −45 from post–slice 104). Remaini
 
 test/ LOC after slice 106: **38,304** (net −40 from post–slice 105). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 107: vw composite dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-vw-composite | inline purchase-land / build-improvement / scrub-timber / fort / rail / minor-road / upgrade-town composite `vwExpect*` wrappers into validateWork dispatcher | `order_engine_validate_work_expectation_shorthand_part1.dart` | `order_engine_validate_work_expectations.dart` | #3949 |
+
+test/ LOC after slice 107: **38,193** (net −111 from post–slice 106). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
