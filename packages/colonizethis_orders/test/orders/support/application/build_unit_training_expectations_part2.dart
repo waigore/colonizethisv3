@@ -12,20 +12,7 @@ void _rejectsBuildWhenMaterialsAreInsufficient() {
 }
 
 void _appliesTreasuryStockpileAndWorkerCostsWhenValid() {
-  final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-  final player = Player(
-    id: ButIds.playerId,
-    displayName: 'Player 1',
-    isHuman: true,
-    stockpile: butStockpileCovering(econ.buildInputs),
-    workerPool: const WorkerPool(peasants: 3),
-    treasury: econ.buildTreasuryCost + 5,
-  );
-  butExpectValidRegimentBuild(
-    game: butOwGame(players: [player]),
-    regimentId: 'peasant_levies',
-    baselinePlayer: player,
-  );
+  butExpectPeasantLevyBuildApplied();
 }
 
 void _returnsGameUnchangedWhenNoBuildOrWorkOrders() {

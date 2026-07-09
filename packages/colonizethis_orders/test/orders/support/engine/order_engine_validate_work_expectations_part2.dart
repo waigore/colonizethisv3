@@ -66,35 +66,15 @@ void _acceptsBuildImprovementOnPurchasedTileInForeignProvince() {
 }
 
 void _rejectsBuildFortToLevel2WithoutMineEngineering() {
-  vwExpectFortRejected(
-    fortLevel: 1,
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 4)
-        .applyDelta(CommodityCatalog.bronze.id, 4),
-    techUnlocked: {},
-    reasonContains: 'Mine Engineering',
-  );
+  vwExpectFortLevel2RejectedWithoutMineEngineering();
 }
 
 void _rejectsBuildFortToLevel3WithoutModernForts() {
-  vwExpectFortRejected(
-    fortLevel: 2,
-    stockpile: Stockpile()
-        .applyDelta(CommodityCatalog.steel.id, 5)
-        .applyDelta(CommodityCatalog.lumber.id, 5),
-    techUnlocked: const {kTechIdMineEngineering: true},
-    reasonContains: 'Modern Forts',
-  );
+  vwExpectFortLevel3RejectedWithoutModernForts();
 }
 
 void _rejectsBuildRailWhenTileTerrainDataIsMissing() {
-  vwExpectRailRejected(
-    game: gameWithRailUnit(
-      tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
-    ),
-    tileMapByRegion: const {},
-    reasonContains: 'terrain data required',
-  );
+  vwExpectRailMissingTerrainDataRejected();
 }
 
 void _rejectsBuildRailWhenRoadLevelIs0() {

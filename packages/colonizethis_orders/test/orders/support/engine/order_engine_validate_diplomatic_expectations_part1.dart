@@ -25,49 +25,19 @@ void _establishovertureEmbassyRequiresExistingConsulate() {
 }
 
 void _establishovertureSecondOrderForSameFactionInSameTurnRejected() {
-  final order = vedEstablishOverture(OvertureStage.tradeConsulate);
-  vedExpectSecondOrderRejected(
-    vedGpMinor(treasury: overtureConsulateCost * 3),
-    order,
-    order,
-    reasonContains: 'Already have a diplomatic order for this faction this turn',
-  );
+  vedExpectDuplicateOvertureRejected();
 }
 
 void _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected() {
-  vedExpectSecondOrderRejected(
-    vedTwoGpPeaceGame(),
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: 'gp2',
-    ),
-    const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'gp2',
-    ),
-    reasonContains: 'Already have a diplomatic order for this faction this turn',
-  );
+  vedExpectGpAllianceDeclareWarConflictRejected();
 }
 
 void _grantaidRequiresEmbassyAndSufficientTreasury() {
-  vedExpectRejected(
-    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
-    vedGrantAid(1000),
-    reasonContains: 'Embassy required',
-  );
-  vedExpectRejected(
-    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 500),
-    vedGrantAid(1000),
-    reasonContains: 'Insufficient treasury',
-  );
+  vedExpectGrantAidEmbassyTreasuryRejected();
 }
 
 void _grantaidRejectsAmountsNotAMultipleOf1000() {
-  vedExpectRejected(
-    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
-    vedGrantAid(1500),
-    reasonContains: 'multiple',
-  );
+  vedExpectGrantAidMultipleRejected();
 }
 
 void _grantaidThenSetSubsidyTowardSameTargetBothAccepted() {

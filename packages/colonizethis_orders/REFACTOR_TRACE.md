@@ -653,6 +653,19 @@ test/ LOC after slice 38: **33,276** (net +163 from post–slice 37; expectation
 
 test/ LOC after slice 39: **33,347** (net +71 from post–slice 38; expectation bodies shortened, new `vrw*`/`vet*`/`vw*`/`vwt*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 40: ved/vw/vwt/but/wpp preset compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ved-part1-shorthand | add `vedExpectDuplicateOvertureRejected` / `vedExpectGpAllianceDeclareWarConflictRejected` / `vedExpectGrantAidEmbassyTreasuryRejected` / `vedExpectGrantAidMultipleRejected`; compact validate-diplomatic part1 duplicate-order and grant-aid bodies | `order_engine_validate_diplomatic_expectations_part1.dart` | `order_engine_validate_diplomatic_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vw-part2-shorthand | add `vwExpectFortLevel2RejectedWithoutMineEngineering` / `vwExpectFortLevel3RejectedWithoutModernForts` / `vwExpectRailMissingTerrainDataRejected`; compact validateWork part2 fort/rail bodies | `order_engine_validate_work_expectations_part2.dart` | `order_engine_validate_work_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part2-shorthand | add `vwtExpectPartialRevealExploreIncluded` / `vwtExpectPartialRevealExploreExcluded` / `vwtExpectPartialRevealProspectIncluded`; compact valid-work-tiles part2 partial-reveal bodies | `valid_work_tiles_expectations_part2.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+| but-part1-shorthand | add `butExpectTechLockedRegimentSkipped` / `butExpectTechLockedShipSkipped`; compact build-unit/training part1 tech-gate bodies | `build_unit_training_expectations_part1.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+| but-part2-shorthand | add `butExpectPeasantLevyBuildApplied`; compact build-unit/training part2 valid-regiment body | `build_unit_training_expectations_part2.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+| wpp-part1-shorthand | add `wppExpectJourneymanTrain2692S9` / `wppExpectMasterTrain2692S9` / `wppExpectMasterTrainSkipped2692S9TechGate` / `wppExpectSequentialPeasantThenApprentice2692S9` / `wppExpectSequentialApprenticeSkipThenPeasant2692S9`; compact worker-pool phase part1 tier/ordering bodies | `worker_pool_phase_expectations_part1.dart` | `worker_pool_phase_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 40: **33,419** (net +72 from post–slice 39; expectation bodies shortened, new preset shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

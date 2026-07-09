@@ -311,3 +311,55 @@ void butExpectCivilianTreasuryInsufficientRejected() {
     game.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
   );
 }
+
+void butExpectTechLockedRegimentSkipped() {
+  final regimentWithTech = unlockingTechByRegimentId.keys.firstOrNull;
+  if (regimentWithTech == null) return;
+  final econ = RegimentEconomyCatalog.byId[regimentWithTech];
+  if (econ == null) return;
+  butExpectNoOwUnitsAfter(
+    butRegimentBuildGame(
+      buildInputs: econ.buildInputs,
+      peasants: 3,
+      treasury: econ.buildTreasuryCost + 10,
+      techUnlocked: {},
+    ),
+    butOrdersFor(regimentWithTech),
+  );
+}
+
+void butExpectTechLockedShipSkipped() {
+  const shipTypeId = 'fluyte';
+  final shipEcon = ShipEconomyCatalog.byId[shipTypeId];
+  if (shipEcon == null || unlockingTechByShipId[shipTypeId] == null) return;
+  butExpectNoOwUnitsAfter(
+    butShipBuildGame(
+      player: butShipBuildPlayer(
+        stockpile: butStockpileCovering(shipEcon.buildInputs),
+        peasants: 0,
+        treasury: shipEcon.buildTreasuryCost + 10,
+        capitalProvinceId: ButIds.prov('P1'),
+        techUnlocked: {},
+      ),
+    ),
+    butOrdersFor(shipTypeId),
+    topology: butCapitalAdjacentSeaTopology(),
+  );
+}
+
+void butExpectPeasantLevyBuildApplied() {
+  final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+  final player = Player(
+    id: ButIds.playerId,
+    displayName: 'Player 1',
+    isHuman: true,
+    stockpile: butStockpileCovering(econ.buildInputs),
+    workerPool: const WorkerPool(peasants: 3),
+    treasury: econ.buildTreasuryCost + 5,
+  );
+  butExpectValidRegimentBuild(
+    game: butOwGame(players: [player]),
+    regimentId: 'peasant_levies',
+    baselinePlayer: player,
+  );
+}

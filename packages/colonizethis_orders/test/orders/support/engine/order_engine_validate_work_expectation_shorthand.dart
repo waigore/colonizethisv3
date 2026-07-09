@@ -637,3 +637,35 @@ void vwExpectMinorProvinceRoadRejectedDespiteEmbassy() {
     reasonContains: 'cannot occupy',
   );
 }
+
+void vwExpectFortLevel2RejectedWithoutMineEngineering() {
+  vwExpectFortRejected(
+    fortLevel: 1,
+    stockpile: Stockpile()
+        .applyDelta(CommodityCatalog.lumber.id, 4)
+        .applyDelta(CommodityCatalog.bronze.id, 4),
+    techUnlocked: const {},
+    reasonContains: 'Mine Engineering',
+  );
+}
+
+void vwExpectFortLevel3RejectedWithoutModernForts() {
+  vwExpectFortRejected(
+    fortLevel: 2,
+    stockpile: Stockpile()
+        .applyDelta(CommodityCatalog.steel.id, 5)
+        .applyDelta(CommodityCatalog.lumber.id, 5),
+    techUnlocked: const {kTechIdMineEngineering: true},
+    reasonContains: 'Modern Forts',
+  );
+}
+
+void vwExpectRailMissingTerrainDataRejected() {
+  vwExpectRailRejected(
+    game: gameWithRailUnit(
+      tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
+    ),
+    tileMapByRegion: const {},
+    reasonContains: 'terrain data required',
+  );
+}

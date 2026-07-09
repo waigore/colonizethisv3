@@ -365,6 +365,43 @@ void vwtExpectSuggestProspectIncludesTile(
   expect(prospect.any((o) => o.targetTileKey == tileKey), isTrue);
 }
 
+void vwtExpectPartialRevealExploreIncluded() {
+  final fx = vwtTribePartialFx();
+  vwtExpectSuggestExploreTargetsProvince(
+    vwtTribeConsulateGame(fx, id: 'g1916e1'),
+    fx.topology(),
+    fx.provTarget,
+  );
+}
+
+void vwtExpectPartialRevealExploreExcluded() {
+  final fx = NwPartialRevealHomeTarget(
+    homeLocalId: 'home',
+    targetLocalId: 'gp2p',
+    targetOwnerId: 'gp2',
+  );
+  vwtExpectSuggestExploreExcludesProvince(
+    fx.game(
+      id: 'g1916e2',
+      players: [
+        ValidWorkTilesTestSupport.defaultPlayer,
+        const Player(id: 'gp2', displayName: 'P2', isHuman: false),
+      ],
+    ),
+    fx.topology(),
+    fx.provTarget,
+  );
+}
+
+void vwtExpectPartialRevealProspectIncluded() {
+  final fx = vwtTribeGrainIronFx();
+  vwtExpectSuggestProspectIncludesTile(
+    vwtTribeConsulateGame(fx, id: 'g1916p1'),
+    fx.topology(),
+    fx.t1,
+  );
+}
+
 void vwtExpectNoBuildSuggestionForReservedTile({
   required List<String> tileKeys,
   required String reservedTile,

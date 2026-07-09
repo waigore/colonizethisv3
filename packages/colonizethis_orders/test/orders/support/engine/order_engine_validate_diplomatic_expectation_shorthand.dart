@@ -229,3 +229,49 @@ void vedExpectSubsidyRejectedInvalidPercent() {
     reasonContains: 'steps of',
   );
 }
+
+void vedExpectDuplicateOvertureRejected() {
+  final order = vedEstablishOverture(OvertureStage.tradeConsulate);
+  vedExpectSecondOrderRejected(
+    vedGpMinor(treasury: overtureConsulateCost * 3),
+    order,
+    order,
+    reasonContains: 'Already have a diplomatic order for this faction this turn',
+  );
+}
+
+void vedExpectGpAllianceDeclareWarConflictRejected() {
+  vedExpectSecondOrderRejected(
+    vedTwoGpPeaceGame(),
+    const DiplomaticOrder(
+      type: DiplomaticOrderType.declareWar,
+      targetFactionId: 'gp2',
+    ),
+    const DiplomaticOrder(
+      type: DiplomaticOrderType.alliance,
+      targetFactionId: 'gp2',
+    ),
+    reasonContains: 'Already have a diplomatic order for this faction this turn',
+  );
+}
+
+void vedExpectGrantAidEmbassyTreasuryRejected() {
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+    vedGrantAid(1000),
+    reasonContains: 'Embassy required',
+  );
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 500),
+    vedGrantAid(1000),
+    reasonContains: 'Insufficient treasury',
+  );
+}
+
+void vedExpectGrantAidMultipleRejected() {
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedGrantAid(1500),
+    reasonContains: 'multiple',
+  );
+}

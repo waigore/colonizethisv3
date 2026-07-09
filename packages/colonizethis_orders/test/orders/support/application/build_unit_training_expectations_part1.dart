@@ -20,38 +20,11 @@ void _skipsMilitaryBuildWhenZeroPeasants() {
 }
 
 void _skipsMilitaryBuildWhenTechNotUnlocked() {
-  final regimentWithTech = unlockingTechByRegimentId.keys.firstOrNull;
-  if (regimentWithTech == null) return;
-  final econ = RegimentEconomyCatalog.byId[regimentWithTech];
-  if (econ == null) return;
-  butExpectNoOwUnitsAfter(
-    butRegimentBuildGame(
-      buildInputs: econ.buildInputs,
-      peasants: 3,
-      treasury: econ.buildTreasuryCost + 10,
-      techUnlocked: {},
-    ),
-    butOrdersFor(regimentWithTech),
-  );
+  butExpectTechLockedRegimentSkipped();
 }
 
 void _skipsShipBuildWhenTechNotUnlocked() {
-  const shipTypeId = 'fluyte';
-  final shipEcon = ShipEconomyCatalog.byId[shipTypeId];
-  if (shipEcon == null || unlockingTechByShipId[shipTypeId] == null) return;
-  butExpectNoOwUnitsAfter(
-    butShipBuildGame(
-      player: butShipBuildPlayer(
-        stockpile: butStockpileCovering(shipEcon.buildInputs),
-        peasants: 0,
-        treasury: shipEcon.buildTreasuryCost + 10,
-        capitalProvinceId: ButIds.prov('P1'),
-        techUnlocked: {},
-      ),
-    ),
-    butOrdersFor(shipTypeId),
-    topology: butCapitalAdjacentSeaTopology(),
-  );
+  butExpectTechLockedShipSkipped();
 }
 
 void _shipBuildWithTopologyNullDoesNotAddFleet() {
