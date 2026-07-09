@@ -1266,6 +1266,29 @@ Migrated imperative `validators/diplomatic/diplomatic_sub_validators_aid_test.da
 
 test/ LOC after slice 73: **36,459** (net +129 from post–slice 72; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 74 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dsrel-declare-war-peace | accepts when at peace and leaves treasury unchanged | `validators/diplomatic/diplomatic_sub_validators_relations_test.dart` | `support/validators/diplomatic/diplomatic_sub_validators_relations_scenarios.dart` + thin runner | #2391 AC10 |
+| dsrel-declare-war-reject | rejects when already at war and preserves treasury | same | same | #2391 AC10 |
+| dsrel-offer-peace-war | accepts when at war and leaves treasury unchanged | same | same | #2391 AC10 |
+| dsrel-offer-peace-reject | rejects when not at war | same | same | #2391 AC10 |
+| dsrel-alliance-non-gp | rejects when target is not a Great Power | same | same | #2391 AC10 |
+| dsrel-alliance-at-war | rejects when at war with the target Great Power | same | same | #2391 AC10 |
+| dsrel-alliance-peace | accepts when target is a Great Power and at peace | same | same | #2391 AC10 |
+| dsrel-alliance-duplicate | rejects a duplicate alliance when a formal alliance already exists | same | same | #2391 AC10 |
+| dsrel-cooldown-alliance | blocks alliance toward the cooled-down GP | same | same | #3811 AC10 |
+| dsrel-cooldown-overture | blocks establishOverture toward the cooled-down GP | same | same | #3811 AC10 |
+| dsrel-cooldown-ftp | blocks establishFtp toward the cooled-down GP | same | same | #3811 AC10 |
+| dsrel-cooldown-grant-aid | blocks grantAid toward the cooled-down GP | same | same | #3811 AC10 |
+| dsrel-cooldown-subsidy | blocks setSubsidy toward the cooled-down GP | same | same | #3811 AC10 |
+| dsrel-cooldown-declare-war | declareWar remains allowed during cooldown | same | same | #3811 AC10 |
+
+Migrated imperative `validators/diplomatic/diplomatic_sub_validators_relations_test.dart` → table-driven scenarios with dedicated support modules. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 74: **36,604** (net +145 from post–slice 73; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite scenario migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
