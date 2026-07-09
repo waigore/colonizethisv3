@@ -1142,6 +1142,18 @@ Migrated imperative `order_suggestion_pass_context_test.dart` → table-driven s
 
 test/ LOC after slice 65: **35,619** (net +137 from post–slice 64; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 66 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osua-pending-short-circuit | pending draft work short-circuits with zero engine probes | `order_suggestion_unit_availability_test.dart` | `support/suggestion/order_suggestion_unit_availability_scenarios.dart` + `order_suggestion_unit_availability_test.dart` | #2133 |
+| osua-pending-scale | pending draft: zero probes even with high-reveal world (issue #2133 scale) | same | same | #2133 |
+| osua-multi-target | multi-target availability matches shared-validator tile keys per target | same | same | #2133 |
+
+Migrated imperative `order_suggestion_unit_availability_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline descriptions for scale and multi-target scenarios. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 66: **35,746** (net +127 from post–slice 65; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
