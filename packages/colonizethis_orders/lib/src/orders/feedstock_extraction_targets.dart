@@ -72,11 +72,7 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
   final player = game.playerById(playerId);
   if (player == null) return const <String>{};
   if (regimentCountForPlayer(game, playerId) != 0) return const <String>{};
-  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
-  if (ow < 2 || !isBelowObserverConquestQuota(ow)) return const <String>{};
-  if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) {
-    return const <String>{};
-  }
+  if (!isBelowQuotaZeroNwSeller(game, playerId)) return const <String>{};
   final missingInputs = <CommodityId>{
     for (final entry
         in RegimentEconomyCatalog.peasantLevies.buildInputs.entries)

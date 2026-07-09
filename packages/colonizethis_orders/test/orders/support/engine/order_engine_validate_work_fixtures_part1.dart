@@ -1,5 +1,92 @@
 part of 'order_engine_validate_work_fixtures.dart';
 
+Province _vwProvince({
+  required String provinceId,
+  required String ow,
+  int fortLevel = 0,
+  String? townTileKey,
+  int? townDevelopmentLevel,
+}) =>
+    Province(
+      id: provinceId,
+      regionId: ow,
+      ownerId: 'p1',
+      fortLevel: fortLevel,
+      townTileKey: townTileKey,
+      townDevelopmentLevel: townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+    );
+
+Game vwSingleProvinceUnitGame({
+  required String unitId,
+  required String unitType,
+  Map<String, String>? resourceByTileKey,
+  TileMapState tileState = const TileMapState(),
+  Map<String, bool>? techUnlocked,
+  Stockpile? stockpile,
+  Map<String, Set<String>>? playerProspectedTiles,
+  int fortLevel = 0,
+  String? townTileKey,
+  int? townDevelopmentLevel,
+  List<String>? extraTileKeys,
+  int turnNumber = 0,
+}) {
+  const ow = ValidateWorkOw.ow;
+  const provinceId = ValidateWorkOw.provinceId;
+  const tileKey = ValidateWorkOw.tileKey;
+  final tileKeys = [tileKey, ...?extraTileKeys];
+  final visibility = {
+    for (final key in tileKeys) key: 'fullyVisible',
+  };
+  return Game(
+    id: 'g1',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: RegionData(
+        provinces: [
+          _vwProvince(
+            provinceId: provinceId,
+            ow: ow,
+            fortLevel: fortLevel,
+            townTileKey: townTileKey,
+            townDevelopmentLevel: townDevelopmentLevel,
+          ),
+        ],
+        units: [
+          Unit(
+            id: unitId,
+            type: unitType,
+            ownerId: 'p1',
+            locationProvinceId: provinceId,
+            tileKey: tileKey,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      resourceByTileKey: resourceByTileKey ?? const {},
+      tileState: tileState,
+      tileKeysByRegionAndProvince: {
+        ow: {
+          provinceId: tileKeys,
+        },
+      },
+      playerVisibilityByTile: {
+        'p1': visibility,
+      },
+      playerProspectedTiles: playerProspectedTiles ?? const {},
+    ),
+    players: [
+      Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: provinceId,
+        stockpile: stockpile ?? const Stockpile(),
+        techUnlocked: techUnlocked ?? const {},
+      ),
+    ],
+  );
+}
+
 Game buildImprovementBaseGame({
   Map<String, String>? resourceByTileKey,
   TileMapState tileState = const TileMapState(),
@@ -159,49 +246,16 @@ Game fortWorkGame({
     );
 
 Game dualTilePendingWorkGame() {
-  const regionId = ValidateWorkOw.ow;
-  const provinceId = ValidateWorkOw.provinceId;
+  const tileB = '${ValidateWorkOw.provinceId}|1|0';
   const tileA = ValidateWorkOw.tileKey;
-  const tileB = '$provinceId|1|0';
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: regionId, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileA,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        regionId: {
-          provinceId: [tileA, tileB],
-        },
-      },
-      resourceByTileKey: const {tileA: 'grain', tileB: 'grain'},
-      playerVisibilityByTile: const {
-        'p1': {tileA: 'fullyVisible', tileB: 'fullyVisible'},
-      },
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: lumberCastIronStockpile(20),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
-    ],
+  return vwSingleProvinceUnitGame(
+    unitId: 'builder1',
+    unitType: kUnitTypeBuilder,
+    extraTileKeys: [tileB],
+    resourceByTileKey: const {tileA: 'grain', tileB: 'grain'},
+    stockpile: lumberCastIronStockpile(20),
+    techUnlocked: const {kTechIdCircularSaw: true},
+    turnNumber: 1,
   );
 }
 

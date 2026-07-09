@@ -1,60 +1,35 @@
 part of 'order_engine_validate_work_expectation_shorthand.dart';
 
 
-List<OrderValidationResult> vwRunPurchaseLand(Game game) {
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    WorkOrder(
-      unitId: 'merchant1',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: PurchaseLandTestFixture.tileKey,
-    ),
-  );
-  return engine.validatePlayerOrdersWithContext(
-    game,
-    PurchaseLandTestFixture.topology(),
-    'p1',
-  );
-}
+OrderValidationResult vwRunPurchaseLand(Game game) => vwValidateSingleWork(
+  game: game,
+  order: WorkOrder(
+    unitId: 'merchant1',
+    target: kWorkTargetPurchaseLand,
+    targetTileKey: PurchaseLandTestFixture.tileKey,
+  ),
+  topology: PurchaseLandTestFixture.topology(),
+);
 
-OrderValidationResult vwRunUpgradeTown(Game game) {
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'p1',
-    const WorkOrder(
-      unitId: 'b1',
-      target: kWorkTargetUpgradeTown,
-      targetTileKey: ValidateWorkOw.tileKey,
-    ),
-  );
-  return engine
-      .validatePlayerOrdersWithContext(
-        game,
-        ValidateWorkOw.topology(),
-        'p1',
-      )
-      .single;
-}
+OrderValidationResult vwRunUpgradeTown(Game game) => vwValidateSingleWork(
+  game: game,
+  order: const WorkOrder(
+    unitId: 'b1',
+    target: kWorkTargetUpgradeTown,
+    targetTileKey: ValidateWorkOw.tileKey,
+  ),
+);
 
-OrderValidationResult vwRunMinorProvinceRoad(Game game) {
-  final engine = OrderEngine();
-  engine.addWorkOrder(
-    'gp1',
-    WorkOrder(
-      unitId: 'e1',
-      target: kWorkTargetBuildRoad,
-      targetTileKey: minorProvinceRoadTileKey(),
-    ),
-  );
-  return engine
-      .validatePlayerOrdersWithContext(
-        game,
-        minorProvinceRoadTopology(),
-        'gp1',
-      )
-      .single;
-}
+OrderValidationResult vwRunMinorProvinceRoad(Game game) => vwValidateSingleWork(
+  game: game,
+  playerId: 'gp1',
+  order: WorkOrder(
+    unitId: 'e1',
+    target: kWorkTargetBuildRoad,
+    targetTileKey: minorProvinceRoadTileKey(),
+  ),
+  topology: minorProvinceRoadTopology(),
+);
 
 Game vwPurchaseLandGame({
   required int treasury,
@@ -143,12 +118,12 @@ void vwExpectPurchaseLandRejected(
   String? reasonContains,
 }) =>
     vwExpectRejected(
-      vwRunPurchaseLand(game).single,
+      vwRunPurchaseLand(game),
       reasonContains: reasonContains,
     );
 
 void vwExpectPurchaseLandAccepted(Game game) =>
-    vwExpectAccepted(vwRunPurchaseLand(game).single);
+    vwExpectAccepted(vwRunPurchaseLand(game));
 
 void vwExpectPurchaseLandRejectedNoEmbassy() => vwExpectPurchaseLandRejected(
   vwPurchaseLandGame(treasury: 500),

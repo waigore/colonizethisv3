@@ -3,18 +3,26 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+bool _fullPassAddOrderAccepted(
+  Orders basePrefix,
+  OrderValidationResult Function(OrderEngine engine) add,
+) {
+  final engine = OrderEngine(initialOrders: basePrefix);
+  return add(engine).isAccepted;
+}
+
 bool fullPassMoveAccepted(
   Game game,
   MapTopology topology,
   String playerId,
   Orders basePrefix,
   MoveOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: basePrefix);
-  return engine
-      .addMoveOrderWithContext(game, topology, playerId, candidate)
-      .isAccepted;
-}
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) =>
+          engine.addMoveOrderWithContext(game, topology, playerId, candidate),
+    );
 
 bool fullPassArmyMoveAccepted(
   Game game,
@@ -40,12 +48,12 @@ bool fullPassBuildAccepted(
   String playerId,
   Orders basePrefix,
   BuildUnitOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: basePrefix);
-  return engine
-      .addBuildOrderWithContext(game, topology, playerId, candidate)
-      .isAccepted;
-}
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) =>
+          engine.addBuildOrderWithContext(game, topology, playerId, candidate),
+    );
 
 bool fullPassWorkAccepted(
   Game game,
@@ -54,18 +62,17 @@ bool fullPassWorkAccepted(
   Orders basePrefix,
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final engine = OrderEngine(initialOrders: basePrefix);
-  return engine
-      .addWorkOrderWithContext(
+}) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) => engine.addWorkOrderWithContext(
         game,
         topology,
         playerId,
         candidate,
         tileMapByRegion: tileMapByRegion,
-      )
-      .isAccepted;
-}
+      ),
+    );
 
 bool fullPassDiplomaticAccepted(
   Game game,
@@ -73,12 +80,16 @@ bool fullPassDiplomaticAccepted(
   String playerId,
   Orders basePrefix,
   DiplomaticOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: basePrefix);
-  return engine
-      .addDiplomaticOrderWithContext(game, topology, playerId, candidate)
-      .isAccepted;
-}
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) => engine.addDiplomaticOrderWithContext(
+        game,
+        topology,
+        playerId,
+        candidate,
+      ),
+    );
 
 IncrementalCandidateValidator _iceValidatorFor({
   required Game game,
@@ -109,6 +120,33 @@ void _expectIncrementalMatchesFullPass({
   );
 }
 
+void expectCandidateFamilyEquivalent({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders basePrefix,
+  required String family,
+  required String label,
+  required bool Function() fullPass,
+  required bool Function(IncrementalCandidateValidator validator) incremental,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  _expectIncrementalMatchesFullPass(
+    fullPass: fullPass(),
+    incremental: incremental(
+      _iceValidatorFor(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: basePrefix,
+        tileMapByRegion: tileMapByRegion,
+      ),
+    ),
+    family: family,
+    label: label,
+  );
+}
+
 void expectMoveEquivalent({
   required Game game,
   required MapTopology topology,
@@ -117,22 +155,21 @@ void expectMoveEquivalent({
   required MoveOrder candidate,
   required String label,
 }) {
-  _expectIncrementalMatchesFullPass(
-    fullPass: fullPassMoveAccepted(
+  expectCandidateFamilyEquivalent(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    family: 'Move',
+    label: label,
+    fullPass: () => fullPassMoveAccepted(
       game,
       topology,
       playerId,
       basePrefix,
       candidate,
     ),
-    incremental: _iceValidatorFor(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-    ).isMoveAccepted(candidate),
-    family: 'Move',
-    label: label,
+    incremental: (validator) => validator.isMoveAccepted(candidate),
   );
 }
 
@@ -144,22 +181,21 @@ void expectArmyMoveEquivalent({
   required ArmyMoveOrder candidate,
   required String label,
 }) {
-  _expectIncrementalMatchesFullPass(
-    fullPass: fullPassArmyMoveAccepted(
+  expectCandidateFamilyEquivalent(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    family: 'Army move',
+    label: label,
+    fullPass: () => fullPassArmyMoveAccepted(
       game,
       topology,
       playerId,
       basePrefix,
       candidate,
     ),
-    incremental: _iceValidatorFor(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-    ).isArmyMoveAccepted(candidate),
-    family: 'Army move',
-    label: label,
+    incremental: (validator) => validator.isArmyMoveAccepted(candidate),
   );
 }
 
@@ -171,22 +207,21 @@ void expectBuildEquivalent({
   required BuildUnitOrder candidate,
   required String label,
 }) {
-  _expectIncrementalMatchesFullPass(
-    fullPass: fullPassBuildAccepted(
+  expectCandidateFamilyEquivalent(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    family: 'Build',
+    label: label,
+    fullPass: () => fullPassBuildAccepted(
       game,
       topology,
       playerId,
       basePrefix,
       candidate,
     ),
-    incremental: _iceValidatorFor(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-    ).isBuildAccepted(candidate),
-    family: 'Build',
-    label: label,
+    incremental: (validator) => validator.isBuildAccepted(candidate),
   );
 }
 
@@ -199,8 +234,15 @@ void expectWorkEquivalent({
   required String label,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  _expectIncrementalMatchesFullPass(
-    fullPass: fullPassWorkAccepted(
+  expectCandidateFamilyEquivalent(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    family: 'Work',
+    label: label,
+    tileMapByRegion: tileMapByRegion,
+    fullPass: () => fullPassWorkAccepted(
       game,
       topology,
       playerId,
@@ -208,15 +250,7 @@ void expectWorkEquivalent({
       candidate,
       tileMapByRegion: tileMapByRegion,
     ),
-    incremental: _iceValidatorFor(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-      tileMapByRegion: tileMapByRegion,
-    ).isWorkAccepted(candidate),
-    family: 'Work',
-    label: label,
+    incremental: (validator) => validator.isWorkAccepted(candidate),
   );
 }
 
@@ -228,22 +262,21 @@ void expectDiplomaticEquivalent({
   required DiplomaticOrder candidate,
   required String label,
 }) {
-  _expectIncrementalMatchesFullPass(
-    fullPass: fullPassDiplomaticAccepted(
+  expectCandidateFamilyEquivalent(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    family: 'Diplomatic',
+    label: label,
+    fullPass: () => fullPassDiplomaticAccepted(
       game,
       topology,
       playerId,
       basePrefix,
       candidate,
     ),
-    incremental: _iceValidatorFor(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-    ).isDiplomaticAccepted(candidate),
-    family: 'Diplomatic',
-    label: label,
+    incremental: (validator) => validator.isDiplomaticAccepted(candidate),
   );
 }
 

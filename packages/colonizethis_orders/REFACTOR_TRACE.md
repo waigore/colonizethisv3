@@ -1695,6 +1695,17 @@ Merged six multi-part shorthand/fixture libraries and inlined naval mission/move
 
 test/ LOC after slice 99: **39,180** (net −25 from post–slice 98). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
 
+## Wave 3 — Slice 100: validateWork run DRY + ice-equiv family helper + fixture merge
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-run-dry | route `vwRunPurchaseLand` / `vwRunUpgradeTown` / `vwRunMinorProvinceRoad` through `vwValidateSingleWork` | `order_engine_validate_work_expectation_shorthand_part1.dart` | same | #3949 |
+| ice-family-equiv | extract `expectCandidateFamilyEquivalent` + `_fullPassAddOrderAccepted` for equivalence helpers | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+| vw-fixture-merge | merge `order_engine_validate_work_fixture_shorthand` into `fixtures_part1`; extend `vwSingleProvinceUnitGame` with `extraTileKeys`/`turnNumber`; compact `dualTilePendingWorkGame` | `order_engine_validate_work_fixture_shorthand.dart` | `order_engine_validate_work_fixtures_part1.dart` | #3949 |
+| lib-feedstock-gate | reuse `isBelowQuotaZeroNwSeller` in `regimentBuildInputFeedstockExtractionResourceIds` | `feedstock_extraction_targets.dart` | same | #3949 |
+
+test/ LOC after slice 100: **39,159** (net −21 from post–slice 99). Remaining: further support-table compaction toward ≤26,400; optional feedstock/army-move cleanup (item 7).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
