@@ -52,27 +52,6 @@ Game vedGpMinor({
       techUnlocked: techUnlocked,
     );
 
-Game vedTwoGpPeaceGame({int turnNumber = 1}) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: const [
-    Player(id: 'gp1', displayName: 'A', isHuman: false),
-    Player(id: 'gp2', displayName: 'B', isHuman: false),
-  ],
-  diplomacyRelations: const [
-    DiplomacyRelation(
-      factionId1: 'gp1',
-      factionId2: 'gp2',
-      state: RelationState.atPeace,
-      level: RelationLevel.neutral,
-    ),
-  ],
-);
-
 OrderValidationResult vedSubmit(
   Game game,
   DiplomaticOrder order, {

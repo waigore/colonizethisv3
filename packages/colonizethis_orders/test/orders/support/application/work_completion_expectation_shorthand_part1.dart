@@ -108,23 +108,9 @@ Game wccRailGame({
   );
 }
 
-MapTopology wccPortSeaTopology() {
-  return const MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'P1',
-        regionId: WorkAppIds.ow,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'sea1',
-        regionId: WorkAppIds.ow,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [TopologyEdge(id1: 'P1', id2: 'sea1')],
-  );
-}
+List<Player> wccSteamPlayers() => [
+      workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
+    ];
 
 (BuildWorkState, Unit, CurrentWork) wccDispatchRailSetup({
   required int roadLevel,
@@ -227,49 +213,3 @@ Game wccEngineerCompletionGame({
       players: players,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
     );
-
-Game wccBuilderImprovementAtLevel(int level) => wccGame(
-      units: [wccBuilderImprovement()],
-      tileState: TileMapState().setImprovement(WorkAppIds.tileKey, level),
-    );
-
-Game wccBuildRoadCapitalAdjacentGame() {
-  const capitalTileKey = WorkAppIds.originTileKey;
-  return wccEngineerCompletionGame(
-    workTarget: kWorkTargetBuildRoad,
-    tileState: TileMapState()
-        .setRoadLevel(WorkAppIds.tileKey, 0)
-        .setRoadLevel(capitalTileKey, 2),
-    players: [
-      workAppPlayer(
-        capitalProvinceId: WorkAppIds.provinceId,
-        capitalTile: const CapitalTile(
-          regionId: WorkAppIds.ow,
-          provinceId: WorkAppIds.provinceId,
-          x: 1,
-          y: 0,
-        ),
-      ),
-    ],
-  );
-}
-
-Game wccBuildRoadPortAdjacentGame() {
-  const portTileKey = WorkAppIds.originTileKey;
-  return wccEngineerCompletionGame(
-    workTarget: kWorkTargetBuildRoad,
-    tileState: TileMapState()
-        .setRoadLevel(WorkAppIds.tileKey, 1)
-        .setRoadLevel(portTileKey, 1),
-    portsByProvinceSeaboard: const {
-      '${WorkAppIds.provinceId}|sea1': portTileKey,
-    },
-    players: [
-      workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
-    ],
-  );
-}
-
-List<Player> wccSteamPlayers() => [
-      workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
-    ];

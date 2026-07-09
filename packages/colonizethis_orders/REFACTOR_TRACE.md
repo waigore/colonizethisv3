@@ -1840,6 +1840,18 @@ test/ LOC after slice 111: **37,929** (net −70 from post–slice 110). Remaini
 
 test/ LOC after slice 112: **37,817** (net −112 from post–slice 111). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 113: wcc/waa/mv/ved/csp single-site dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-wcc-single | inline `wccBuilderImprovementAtLevel`, `wccBuildRoadCapitalAdjacentGame`, `wccBuildRoadPortAdjacentGame`, `wccPortSeaTopology` into work-completion dispatcher | `work_completion_expectation_shorthand_part1.dart` | `work_completion_expectations.dart` | #3949 |
+| dispatch-inline-waa-single | inline purchase-land rejection games, dual-GP purchase, counter-spy games, explore games, build-improvement apply into work-order-application dispatcher | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| dispatch-inline-mv-single | inline `mvTribeArmyDeclareWarGame` + `mvNwTwoProvinceTopology` into move-validator dispatcher | `move_validator_expectation_shorthand.dart` | `move_validator_expectations.dart` | #3949 |
+| dispatch-inline-ved-single | inline `vedTwoGpPeaceGame` into validate-diplomatic dispatcher | `order_engine_validate_diplomatic_expectation_shorthand.dart` | `order_engine_validate_diplomatic_expectations.dart` | #3949 |
+| dispatch-inline-csp-single | inline `cspNewWorldMilitaryGame` + drop `cspApply` wrapper into civilian-spawn dispatcher | `civilian_spawn_expectation_shorthand.dart` | `civilian_spawn_expectations.dart` | #3949 |
+
+test/ LOC after slice 113: **37,838** (net +21 from post–slice 112; dispatcher bodies for multi-step game builders outweigh removed shorthand wrappers in this batch). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

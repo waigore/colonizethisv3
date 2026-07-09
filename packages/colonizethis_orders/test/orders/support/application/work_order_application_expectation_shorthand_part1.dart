@@ -180,26 +180,6 @@ Game waaProspectApply({
             },
     );
 
-Game waaApplyBuildImprovement({
-  String unitType = kUnitTypeBuilder,
-  Map<String, String>? resourceByTileKey,
-}) {
-  final cost = workOrderCostBuildImprovement(0);
-  return waaApply(
-    workAppOwnedGame(
-      units: [workAppUnit(type: unitType)],
-      resourceByTileKey:
-          resourceByTileKey ?? {WorkAppIds.tileKey: 'grain'},
-      players: [
-        workAppPlayer(
-          stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
-        ),
-      ],
-    ),
-    workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
-  );
-}
-
 Game waaApplyBuildFort({
   int fortLevel = 1,
   Stockpile? stockpile,
@@ -240,16 +220,6 @@ void waaExpectCurrentWorkTiming(
   }
 }
 
-Game waaCounterSpyForeignProvinceGame({String spyId = 'spy1'}) =>
-    workAppOwnedGame(
-      units: [workAppUnit(id: spyId, type: kUnitTypeSpy)],
-      provinces: [workAppOwnedProvince(ownerId: 'p2')],
-      players: const [
-        Player(id: 'p1', displayName: 'P1', isHuman: true),
-        Player(id: 'p2', displayName: 'P2', isHuman: true),
-      ],
-    );
-
 OvertureState waaEmbassyOverture({
   String gpId = 'p1',
   String targetId = 'minor1',
@@ -261,161 +231,8 @@ OvertureState waaEmbassyOverture({
       sinceTurn: 0,
     );
 
-Game waaDualGpPurchaseLandGame() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  return workAppPurchaseLandGame(
-    units: [
-      waaMerchantOnMinor(id: 'merchant1', ownerId: 'p1'),
-      waaMerchantOnMinor(id: 'merchant2', ownerId: 'p2'),
-    ],
-    players: [
-      workAppPlayer(
-        id: 'p1',
-        treasury: cost + 100,
-        capitalProvinceId: WorkAppIds.provinceId,
-      ),
-      workAppPlayer(
-        id: 'p2',
-        displayName: 'P2',
-        isHuman: false,
-        treasury: cost + 100,
-        capitalProvinceId: WorkAppIds.provinceId,
-      ),
-    ],
-    overtureStates: [
-      waaEmbassyOverture(),
-      waaEmbassyOverture(gpId: 'p2'),
-    ],
-  );
-}
-
-Orders waaDualPurchaseLandOrders() => Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          const WorkOrder(
-            unitId: 'merchant1',
-            target: kWorkTargetPurchaseLand,
-            targetTileKey: WorkAppIds.tileKeyMinor,
-          ),
-        ],
-        'p2': [
-          const WorkOrder(
-            unitId: 'merchant2',
-            target: kWorkTargetPurchaseLand,
-            targetTileKey: WorkAppIds.tileKeyMinor,
-          ),
-        ],
-      },
-    );
-
 Game waaApplyBuildRoad(Game game) =>
     waaApply(game, workAppSingleWorkOrder(target: kWorkTargetBuildRoad));
-
-Game waaCounterSpyCapitalGame({String spyId = 'spy1'}) => workAppOwnedGame(
-      units: [workAppUnit(id: spyId, type: kUnitTypeSpy)],
-      tileKeysByRegionAndProvince: const {
-        WorkAppIds.ow: {
-          WorkAppIds.provinceId: [WorkAppIds.tileKey],
-        },
-      },
-      players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
-    );
-
-Game waaExploreTwoTileGame() => workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeExplorer)],
-      tileKeysByRegionAndProvince: {
-        WorkAppIds.ow: {
-          WorkAppIds.provinceId: [WorkAppIds.tileKey, WorkAppIds.originTileKey],
-        },
-      },
-    );
-
-Game waaExploreFormulaGame() {
-  const provinceSmall = '${WorkAppIds.ow}|P1';
-  const provinceLarge = '${WorkAppIds.ow}|P2';
-  const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
-  const tileSmall2 = '${WorkAppIds.ow}|P1|1|0';
-  const tileLarge1 = '${WorkAppIds.ow}|P2|0|0';
-  const tileLarge2 = '${WorkAppIds.ow}|P2|1|0';
-  const tileLarge3 = '${WorkAppIds.ow}|P2|2|0';
-  const tileLarge4 = '${WorkAppIds.ow}|P2|3|0';
-
-  return workAppOwnedGame(
-    units: [
-      workAppUnit(
-        type: kUnitTypeExplorer,
-        locationProvinceId: provinceSmall,
-        tileKey: tileSmall1,
-      ),
-    ],
-    provinces: const [
-      Province(id: provinceSmall, regionId: WorkAppIds.ow, ownerId: 'p1'),
-      Province(id: provinceLarge, regionId: WorkAppIds.ow, ownerId: 'p1'),
-    ],
-    tileKeysByRegionAndProvince: const {
-      WorkAppIds.ow: {
-        provinceSmall: [tileSmall1, tileSmall2],
-        provinceLarge: [tileLarge1, tileLarge2, tileLarge3, tileLarge4],
-      },
-    },
-  );
-}
-
-Game waaPurchaseLandNoEmbassyGame() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  return workAppPurchaseLandGame(
-    units: [waaMerchantOnMinor()],
-    players: [workAppPlayer(treasury: cost + 100)],
-  );
-}
-
-Game waaPurchaseLandAtWarGame() {
-  const cost = WorkAppIds.purchaseLandGrainCost;
-  return workAppPurchaseLandGame(
-    units: [waaMerchantOnMinor()],
-    players: [
-      workAppPlayer(treasury: cost + 100),
-    ],
-    overtureStates: [waaEmbassyOverture()],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'p1',
-        factionId2: 'minor1',
-        state: RelationState.atWar,
-      ),
-    ],
-  );
-}
-
-void waaExpectPurchaseLandRejected(Game game) {
-  final next = waaApply(game, waaPurchaseLandOrders());
-  waaExpectPurchased(next, ownerId: null);
-  waaExpectTreasuryUnchanged(game, next, 'p1');
-}
-
-Game waaCounterSpyOngoingAssignmentGame() => workAppOwnedGame(
-      turnNumber: 1,
-      globalGameSeed: 12345,
-      units: [
-        workAppWorkingUnit(
-          id: 'spy1',
-          type: kUnitTypeSpy,
-          workTarget: kWorkTargetCounterSpy,
-          totalTurns: 0,
-          remainingTurns: 1,
-        ),
-        workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
-      ],
-      tileKeysByRegionAndProvince: {
-        WorkAppIds.ow: {
-          WorkAppIds.provinceId: [WorkAppIds.tileKey],
-        },
-      },
-      players: const [
-        Player(id: 'p1', displayName: 'P1', isHuman: true),
-        Player(id: 'p2', displayName: 'P2', isHuman: true),
-      ],
-    );
 
 void waaExpectProspect({
   required bool expected,

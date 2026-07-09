@@ -88,7 +88,29 @@ void runOrderEngineValidateDiplomaticExpectation(
     case OrderEngineValidateDiplomaticTarget
         .secondDiplomaticOrderToSameTargetDifferentTypeIsRejected:
         vedExpectSecondOrderRejected(
-          vedTwoGpPeaceGame(),
+          Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: const RegionData(),
+              newWorld: const RegionData(),
+            ),
+            players: const [
+              Player(id: 'gp1', displayName: 'A', isHuman: false),
+              Player(id: 'gp2', displayName: 'B', isHuman: false),
+            ],
+            diplomacyRelations: const [
+              DiplomacyRelation(
+                factionId1: 'gp1',
+                factionId2: 'gp2',
+                state: RelationState.atPeace,
+                level: RelationLevel.neutral,
+              ),
+            ],
+          ),
           const DiplomaticOrder(
             type: DiplomaticOrderType.declareWar,
             targetFactionId: 'gp2',

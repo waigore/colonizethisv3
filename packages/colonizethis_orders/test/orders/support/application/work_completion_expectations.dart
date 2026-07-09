@@ -36,7 +36,12 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
   switch (target) {
     case WorkCompletionTarget
         .buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork:
-      final next = wccApply(wccBuilderImprovementAtLevel(0));
+      final next = wccApply(
+          wccGame(
+            units: [wccBuilderImprovement()],
+            tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
+          ),
+        );
         wccExpectImprovement(next, 1);
         final after = wccSingleUnit(next);
         expect(after.tileKey, WorkAppIds.tileKey);
@@ -211,7 +216,23 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .buildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade:
       const capitalTileKey = WorkAppIds.originTileKey;
         final next = wccApply(
-          wccBuildRoadCapitalAdjacentGame(),
+          wccEngineerCompletionGame(
+            workTarget: kWorkTargetBuildRoad,
+            tileState: TileMapState()
+                .setRoadLevel(WorkAppIds.tileKey, 0)
+                .setRoadLevel(capitalTileKey, 2),
+            players: [
+              workAppPlayer(
+                capitalProvinceId: WorkAppIds.provinceId,
+                capitalTile: const CapitalTile(
+                  regionId: WorkAppIds.ow,
+                  provinceId: WorkAppIds.provinceId,
+                  x: 1,
+                  y: 0,
+                ),
+              ),
+            ],
+          ),
           tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
@@ -220,7 +241,20 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .buildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt:
       const portTileKey = WorkAppIds.originTileKey;
         final next = wccApply(
-          wccBuildRoadPortAdjacentGame(),
+          wccEngineerCompletionGame(
+            workTarget: kWorkTargetBuildRoad,
+            tileState: TileMapState()
+                .setRoadLevel(WorkAppIds.tileKey, 1)
+                .setRoadLevel(portTileKey, 1),
+            portsByProvinceSeaboard: const {
+              '${WorkAppIds.provinceId}|sea1': portTileKey,
+            },
+            players: [
+              workAppPlayer(
+                techUnlocked: const {kTechIdRoadConstruction: true},
+              ),
+            ],
+          ),
           tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 2);
@@ -229,7 +263,21 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .buildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea:
       final next = wccApply(
           wccEngineerCompletionGame(workTarget: kWorkTargetBuildPort),
-          topology: wccPortSeaTopology(),
+          topology: const MapTopology(
+            nodes: [
+              TopologyNode(
+                id: 'P1',
+                regionId: WorkAppIds.ow,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: 'sea1',
+                regionId: WorkAppIds.ow,
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: [TopologyEdge(id1: 'P1', id2: 'sea1')],
+          ),
         );
         wccExpectRoadLevel(next, WorkAppIds.tileKey, 4);
         expect(

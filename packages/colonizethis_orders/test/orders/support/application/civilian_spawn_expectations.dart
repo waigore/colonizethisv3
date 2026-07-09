@@ -55,8 +55,42 @@ void runCivilianSpawnExpectation(CivilianSpawnTarget target) {
       {
         const provinceId = 'newWorld|N1';
         const unitType = 'peasant_levies';
-        final next = cspApply(
-          cspNewWorldMilitaryGame(provinceId: provinceId, unitType: unitType),
+        const nw = 'newWorld';
+        final econ = RegimentEconomyCatalog.byId[unitType]!;
+        final baseGame = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: nw, ownerId: 'p1'),
+              ],
+              units: [],
+            ),
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              stockpile: const Stockpile(),
+              workerPool: const WorkerPool(peasants: 1),
+              treasury: 500,
+            ),
+          ],
+        );
+        final game = baseGame.copyWith(
+          players: [
+            baseGame.players.single.copyWith(
+              stockpile: cspStockpileCovering(econ.buildInputs),
+              treasury: econ.buildTreasuryCost + 10,
+            ),
+          ],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
           cspBuildOrders(
             unitType,
             isMilitary:

@@ -86,9 +86,6 @@ Orders cspBuildOrders(
       },
     );
 
-Game cspApply(Game game, Orders orders) =>
-    applyBuildAndWorkOrders(game, orders);
-
 void cspExpectOwUnitAt({
   required Game next,
   required String tileKey,
@@ -119,7 +116,7 @@ void cspExpectExplorerSpawnAtCapital({
     ),
     peasants: peasants,
   );
-  final next = cspApply(
+  final next = applyBuildAndWorkOrders(
     game,
     cspBuildOrders(
       kUnitTypeExplorer,
@@ -133,43 +130,5 @@ void cspExpectExplorerSpawnAtCapital({
     next: next,
     tileKey: cspCapitalTileKey,
     provinceId: cspCapitalProvinceId,
-  );
-}
-
-Game cspNewWorldMilitaryGame({
-  required String provinceId,
-  required String unitType,
-}) {
-  const nw = 'newWorld';
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [Province(id: provinceId, regionId: nw, ownerId: 'p1')],
-        units: [],
-      ),
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: const Stockpile(),
-        workerPool: const WorkerPool(peasants: 1),
-        treasury: 500,
-      ),
-    ],
-  );
-  final econ = RegimentEconomyCatalog.byId[unitType]!;
-  return game.copyWith(
-    players: [
-      game.players.single.copyWith(
-        stockpile: cspStockpileCovering(econ.buildInputs),
-        treasury: econ.buildTreasuryCost + 10,
-      ),
-    ],
   );
 }

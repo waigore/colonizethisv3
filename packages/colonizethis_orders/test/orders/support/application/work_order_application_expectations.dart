@@ -59,7 +59,19 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
       );
     case WorkOrderApplicationTarget
         .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1:
-      final next = waaApplyBuildImprovement();
+      final cost = workOrderCostBuildImprovement(0);
+        final next = waaApply(
+          workAppOwnedGame(
+            units: [workAppUnit(type: kUnitTypeBuilder)],
+            resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
+            players: [
+              workAppPlayer(
+                stockpile: OrdersApplicationTestSupport.stockpileCovering(cost),
+              ),
+            ],
+          ),
+          workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
+        );
         expect(next.worldState.tileState.improvementLevel(WorkAppIds.tileKey), 1);
         final u = waaSingleUnit(next);
         expect(u.status, UnitStatus.idle);
@@ -82,7 +94,14 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnit:
       final counterSpyNext = waaApply(
-          waaCounterSpyForeignProvinceGame(),
+          workAppOwnedGame(
+            units: [workAppUnit(id: 'spy1', type: kUnitTypeSpy)],
+            provinces: [workAppOwnedProvince(ownerId: 'p2')],
+            players: const [
+              Player(id: 'p1', displayName: 'P1', isHuman: true),
+              Player(id: 'p2', displayName: 'P2', isHuman: true),
+            ],
+          ),
           workAppSingleWorkOrder(
             unitId: 'spy1',
             target: kWorkTargetCounterSpy,
@@ -114,15 +133,129 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         expect(purchasedUnit.assignedTileKey, isNull);
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe:
-      waaExpectPurchaseLandRejected(waaPurchaseLandNoEmbassyGame());
+      {
+        const cost = WorkAppIds.purchaseLandGrainCost;
+        final game = workAppPurchaseLandGame(
+          units: [
+            workAppUnit(
+              id: 'merchant1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: WorkAppIds.minorProvinceId,
+              tileKey: WorkAppIds.tileKeyMinor,
+            ),
+          ],
+          players: [workAppPlayer(treasury: cost + 100)],
+        );
+        final next = waaApply(game, waaPurchaseLandOrders());
+        waaExpectPurchased(next, ownerId: null);
+        waaExpectTreasuryUnchanged(game, next, 'p1');
+      }
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe:
-      waaExpectPurchaseLandRejected(waaPurchaseLandAtWarGame());
+      {
+        const cost = WorkAppIds.purchaseLandGrainCost;
+        final game = workAppPurchaseLandGame(
+          units: [
+            workAppUnit(
+              id: 'merchant1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: WorkAppIds.minorProvinceId,
+              tileKey: WorkAppIds.tileKeyMinor,
+            ),
+          ],
+          players: [workAppPlayer(treasury: cost + 100)],
+          overtureStates: [
+            OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'p1',
+              factionId2: 'minor1',
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final next = waaApply(game, waaPurchaseLandOrders());
+        waaExpectPurchased(next, ownerId: null);
+        waaExpectTreasuryUnchanged(game, next, 'p1');
+      }
     case WorkOrderApplicationTarget
         .purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite:
       const cost = WorkAppIds.purchaseLandGrainCost;
-        final game = waaDualGpPurchaseLandGame();
-        final next = waaApply(game, waaDualPurchaseLandOrders());
+        final game = workAppPurchaseLandGame(
+          units: [
+            workAppUnit(
+              id: 'merchant1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: WorkAppIds.minorProvinceId,
+              tileKey: WorkAppIds.tileKeyMinor,
+            ),
+            workAppUnit(
+              id: 'merchant2',
+              type: kUnitTypeMerchant,
+              ownerId: 'p2',
+              locationProvinceId: WorkAppIds.minorProvinceId,
+              tileKey: WorkAppIds.tileKeyMinor,
+            ),
+          ],
+          players: [
+            workAppPlayer(
+              id: 'p1',
+              treasury: cost + 100,
+              capitalProvinceId: WorkAppIds.provinceId,
+            ),
+            workAppPlayer(
+              id: 'p2',
+              displayName: 'P2',
+              isHuman: false,
+              treasury: cost + 100,
+              capitalProvinceId: WorkAppIds.provinceId,
+            ),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+            OvertureState(
+              gpId: 'p2',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        final next = waaApply(
+          game,
+          Orders(
+            workOrdersByPlayerId: {
+              'p1': [
+                const WorkOrder(
+                  unitId: 'merchant1',
+                  target: kWorkTargetPurchaseLand,
+                  targetTileKey: WorkAppIds.tileKeyMinor,
+                ),
+              ],
+              'p2': [
+                const WorkOrder(
+                  unitId: 'merchant2',
+                  target: kWorkTargetPurchaseLand,
+                  targetTileKey: WorkAppIds.tileKeyMinor,
+                ),
+              ],
+            },
+          ),
+        );
         waaExpectPurchased(next, ownerId: 'p1');
         waaExpectTreasuryDelta(game, next, 'p1', -cost);
         expect(
@@ -179,7 +312,29 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork:
       final next = waaApply(
-          waaCounterSpyOngoingAssignmentGame(),
+          workAppOwnedGame(
+            turnNumber: 1,
+            globalGameSeed: 12345,
+            units: [
+              workAppWorkingUnit(
+                id: 'spy1',
+                type: kUnitTypeSpy,
+                workTarget: kWorkTargetCounterSpy,
+                totalTurns: 0,
+                remainingTurns: 1,
+              ),
+              workAppUnit(id: 'spy2', type: kUnitTypeSpy, ownerId: 'p2'),
+            ],
+            tileKeysByRegionAndProvince: {
+              WorkAppIds.ow: {
+                WorkAppIds.provinceId: [WorkAppIds.tileKey],
+              },
+            },
+            players: const [
+              Player(id: 'p1', displayName: 'P1', isHuman: true),
+              Player(id: 'p2', displayName: 'P2', isHuman: true),
+            ],
+          ),
           workAppProcessWorkOrders(playerIds: const ['p1', 'p2']),
         );
         final units = next.worldState.oldWorld.units;
@@ -216,7 +371,15 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince:
       final capitalSpyNext = waaApply(
-          waaCounterSpyCapitalGame(),
+          workAppOwnedGame(
+            units: [workAppUnit(id: 'spy1', type: kUnitTypeSpy)],
+            tileKeysByRegionAndProvince: const {
+              WorkAppIds.ow: {
+                WorkAppIds.provinceId: [WorkAppIds.tileKey],
+              },
+            },
+            players: [workAppPlayer(capitalProvinceId: WorkAppIds.provinceId)],
+          ),
           workAppSingleWorkOrder(
             unitId: 'spy1',
             target: kWorkTargetCounterSpy,
@@ -228,7 +391,17 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
     case WorkOrderApplicationTarget
         .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles:
       final next = waaApply(
-          waaExploreTwoTileGame(),
+          workAppOwnedGame(
+            units: [workAppUnit(type: kUnitTypeExplorer)],
+            tileKeysByRegionAndProvince: {
+              WorkAppIds.ow: {
+                WorkAppIds.provinceId: [
+                  WorkAppIds.tileKey,
+                  WorkAppIds.originTileKey,
+                ],
+              },
+            },
+          ),
           workAppSingleWorkOrder(target: kWorkTargetExplore),
         );
         final u = waaSingleUnit(next);
@@ -239,9 +412,39 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         );
     case WorkOrderApplicationTarget
         .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion:
-      const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+      const provinceSmall = '${WorkAppIds.ow}|P1';
+        const provinceLarge = '${WorkAppIds.ow}|P2';
+        const tileSmall1 = '${WorkAppIds.ow}|P1|0|0';
+        const tileSmall2 = '${WorkAppIds.ow}|P1|1|0';
+        const tileLarge1 = '${WorkAppIds.ow}|P2|0|0';
+        const tileLarge2 = '${WorkAppIds.ow}|P2|1|0';
+        const tileLarge3 = '${WorkAppIds.ow}|P2|2|0';
+        const tileLarge4 = '${WorkAppIds.ow}|P2|3|0';
         final next = waaApply(
-          waaExploreFormulaGame(),
+          workAppOwnedGame(
+            units: [
+              workAppUnit(
+                type: kUnitTypeExplorer,
+                locationProvinceId: provinceSmall,
+                tileKey: tileSmall1,
+              ),
+            ],
+            provinces: const [
+              Province(id: provinceSmall, regionId: WorkAppIds.ow, ownerId: 'p1'),
+              Province(id: provinceLarge, regionId: WorkAppIds.ow, ownerId: 'p1'),
+            ],
+            tileKeysByRegionAndProvince: const {
+              WorkAppIds.ow: {
+                provinceSmall: [tileSmall1, tileSmall2],
+                provinceLarge: [
+                  tileLarge1,
+                  tileLarge2,
+                  tileLarge3,
+                  tileLarge4,
+                ],
+              },
+            },
+          ),
           workAppSingleWorkOrder(
             target: kWorkTargetExplore,
             targetTileKey: tileSmall1,

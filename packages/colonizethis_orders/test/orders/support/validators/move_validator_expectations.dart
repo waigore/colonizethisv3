@@ -183,8 +183,67 @@ void runMoveValidatorExpectation(MoveValidatorTarget target) {
         );
     case MoveValidatorTarget.armyMoveIntoTribeWithDeclareWar:
         mvExpectArmyMove(
-          game: mvTribeArmyDeclareWarGame(),
-          topology: mvNwTwoProvinceTopology(),
+          game: Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: const RegionData(),
+              newWorld: RegionData(
+                provinces: [
+                  Province(
+                    id: 'newWorld|P1',
+                    regionId: 'newWorld',
+                    ownerId: 'p1',
+                  ),
+                  Province(
+                    id: 'newWorld|P2',
+                    regionId: 'newWorld',
+                    ownerId: 'tribe1',
+                  ),
+                ],
+                units: [
+                  Unit(
+                    id: 'u1',
+                    type: 'pikemen',
+                    ownerId: 'p1',
+                    locationProvinceId: 'newWorld|P1',
+                  ),
+                ],
+              ),
+              armies: [
+                moveValidatorTestFieldArmy('newWorld', 'p1', 'P1', 'u1'),
+              ],
+              playerVisibilityByTile: const {
+                'p1': {
+                  'newWorld|P1|0|0': 'fullyVisible',
+                  'newWorld|P2|0|0': 'fogged',
+                },
+              },
+            ),
+            players: const [
+              Player(id: 'p1', displayName: 'P1', isHuman: true),
+            ],
+            tribes: const [mvTribe1Capital],
+            diplomacyRelations: const [],
+          ),
+          topology: const MapTopology(
+            nodes: [
+              TopologyNode(
+                id: 'P1',
+                regionId: 'newWorld',
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: 'P2',
+                regionId: 'newWorld',
+                type: TopologyNodeType.province,
+              ),
+            ],
+            edges: [TopologyEdge(id1: 'P1', id2: 'P2')],
+          ),
           armyProvinceId: '$mvNw|P1',
           destinationProvinceId: '$mvNw|P2',
           draftOrders: const [
