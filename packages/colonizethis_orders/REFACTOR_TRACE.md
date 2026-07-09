@@ -534,6 +534,15 @@ test/ LOC after slice 27: **32,158** (net +23 from post–slice 26; expectation 
 
 test/ LOC after slice 28: **32,293** (net +135 from post–slice 27; expectation bodies shortened, new `ah*`/`but*` shorthand modules added). Remaining: further expectation compaction (`valid_work_tiles_*`, `order_suggestion_core_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 29: valid_work_tiles part2 expectation compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-vis-shorthand | add `vwtExpectVisProspect*` / `vwtExpectVisExplore*` / `vwtExpectVisExploreLatencyUnder` helpers; compact prospect/explore visibility expectation bodies | `valid_work_tiles_expectations_part2.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-suggest-shorthand | add `vwtExpectNoMovesToProvince` / `vwtExpectBuildSuggestionsSorted` / `vwtExpectNoBuildSuggestionForReservedTile`; compact suggest move/work expectation bodies | `valid_work_tiles_expectations_part2.dart` | same + `valid_work_tiles_fixtures.dart` (`owTribeExploreMultiProvinceFixture`, `owTribeExploreLatencyGame`, `owGpAdjacentMoveFixture`, `vwtHillsWoolTileMap`) | #3949 |
+
+test/ LOC after slice 29: **32,413** (net +120 from post–slice 28; expectation bodies shortened, new `vwt*` fixtures/shorthand added). Remaining: further expectation compaction (`valid_work_tiles_part1`, `order_suggestion_core_*`, lib DRY items 5–6, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 import 'valid_work_tiles_fixtures.dart';
 import 'valid_work_tiles_test_support.dart';
@@ -93,3 +94,145 @@ Iterable<WorkOrder> vwtSuggestPurchaseLand(
           o.target == kWorkTargetPurchaseLand &&
           Unit.provinceIdFromTileKey(o.targetTileKey) == targetProvinceId,
     );
+
+void vwtExpectVisProspectContains(
+  Game game,
+  MapTopology topology,
+  String tile, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  expect(
+    validWorkTilesWithVisibility(
+      game: game,
+      topology: topology,
+      unitId: 'u1',
+      workTarget: kWorkTargetProspect,
+      tileMapByRegion: tileMapByRegion,
+    ),
+    contains(tile),
+  );
+}
+
+void vwtExpectVisProspectExcludes(
+  Game game,
+  MapTopology topology,
+  String tile, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  expect(
+    validWorkTilesWithVisibility(
+      game: game,
+      topology: topology,
+      unitId: 'u1',
+      workTarget: kWorkTargetProspect,
+      tileMapByRegion: tileMapByRegion,
+    ).contains(tile),
+    isFalse,
+  );
+}
+
+void vwtExpectVisExplore({
+  required Game game,
+  required MapTopology topology,
+  required Iterable<String> includedTiles,
+  Iterable<String> excludedTiles = const [],
+}) {
+  final valid = validWorkTilesWithVisibility(
+    game: game,
+    topology: topology,
+    unitId: 'u1',
+    workTarget: kWorkTargetExplore,
+  );
+  for (final tile in includedTiles) {
+    expect(valid, contains(tile));
+  }
+  for (final tile in excludedTiles) {
+    expect(valid, isNot(contains(tile)));
+  }
+}
+
+void vwtExpectVisExploreLatencyUnder({
+  required Game game,
+  required MapTopology topology,
+  int maxMs = 1000,
+}) {
+  final sw = Stopwatch()..start();
+  final valid = validWorkTilesWithVisibility(
+    game: game,
+    topology: topology,
+    unitId: 'u1',
+    workTarget: kWorkTargetExplore,
+  );
+  sw.stop();
+  expect(valid, isNotEmpty);
+  expect(sw.elapsedMilliseconds, lessThan(maxMs));
+}
+
+void vwtExpectNoMovesToProvince(
+  Game game,
+  MapTopology topology,
+  String provinceId,
+) {
+  final view = buildPlayerView(
+    game,
+    topology,
+    ValidWorkTilesTestSupport.playerId,
+  );
+  final suggestions = suggestMoveOrders(
+    view,
+    game,
+    topology,
+    const Orders(),
+  );
+  expect(
+    suggestions.where(
+      (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == provinceId,
+    ),
+    isEmpty,
+  );
+}
+
+void vwtExpectBuildSuggestionsSorted(List<String> tileKeys) {
+  final game = owGrainBuildSuggestGame(tileKeys: tileKeys);
+  final topology = owSingleProvinceTopology('p1');
+  final buildSuggestions = suggestedWorkOrders(game: game, topology: topology)
+      .where((o) => o.target == kWorkTargetBuildImprovement)
+      .toList();
+  if (buildSuggestions.length > 1) {
+    for (var i = 0; i < buildSuggestions.length - 1; i++) {
+      expect(
+        buildSuggestions[i].targetTileKey.compareTo(
+          buildSuggestions[i + 1].targetTileKey,
+        ),
+        lessThanOrEqualTo(0),
+      );
+    }
+  }
+}
+
+void vwtExpectNoBuildSuggestionForReservedTile({
+  required List<String> tileKeys,
+  required String reservedTile,
+}) {
+  final game = owGrainBuildSuggestGame(tileKeys: tileKeys);
+  final topology = owSingleProvinceTopology('p1');
+  final buildSuggestions = suggestedWorkOrders(
+    game: game,
+    topology: topology,
+    currentOrders: Orders(
+      workOrdersByPlayerId: {
+        ValidWorkTilesTestSupport.playerId: [
+          WorkOrder(
+            unitId: 'u1',
+            target: kWorkTargetBuildImprovement,
+            targetTileKey: reservedTile,
+          ),
+        ],
+      },
+    ),
+  ).where(
+    (o) =>
+        o.target == kWorkTargetBuildImprovement && o.targetTileKey == reservedTile,
+  );
+  expect(buildSuggestions, isEmpty);
+}
