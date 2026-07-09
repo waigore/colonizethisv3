@@ -179,9 +179,27 @@ void runOrderEngineValidateDiplomaticExpectation(
         );
     case OrderEngineValidateDiplomaticTarget
         .secondGrantAidTowardSameTargetRejected:
-        vedExpectGrantAidRejectedAfterPrior(prior: vedGrantAid(1000));
+        {
+          final game = vedGpMinor(
+            overtureStage: OvertureStage.embassy,
+            treasury: 5000,
+          );
+          final engine = OrderEngine();
+          vedSubmit(game, vedGrantAid(1000), engine: engine);
+          final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
+          expect(grant.status, OrderValidationStatus.rejected);
+        }
     case OrderEngineValidateDiplomaticTarget
         .declarewarThenGrantAidTowardSameTargetRejected:
-        vedExpectGrantAidRejectedAfterPrior(prior: vedDeclareWarMinor);
+        {
+          final game = vedGpMinor(
+            overtureStage: OvertureStage.embassy,
+            treasury: 5000,
+          );
+          final engine = OrderEngine();
+          vedSubmit(game, vedDeclareWarMinor, engine: engine);
+          final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
+          expect(grant.status, OrderValidationStatus.rejected);
+        }
   }
 }

@@ -94,17 +94,3 @@ void mvExpectArmyMove({
     expect(result.reason, matcher);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

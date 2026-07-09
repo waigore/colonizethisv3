@@ -1,38 +1,25 @@
 part of 'order_suggestion_core_expectation_shorthand.dart';
 
-List<T> _oscWithViewSuggest<T>(
-  Game game,
-  MapTopology topology,
-  Orders orders,
-  List<T> Function(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders orders,
-  ) suggest,
-) =>
-    suggest(oscView(game, topology), game, topology, orders);
-
 List<MoveOrder> oscSuggestMoves(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
 ]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestMoveOrders);
+    suggestMoveOrders(oscView(game, topology), game, topology, orders);
 
 List<WorkOrder> oscSuggestWork(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
 ]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestWorkOrders);
+    suggestWorkOrders(oscView(game, topology), game, topology, orders);
 
 List<BuildUnitOrder> oscSuggestBuild(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
 ]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestBuildOrders);
+    suggestBuildOrders(oscView(game, topology), game, topology, orders);
 
 Iterable<WorkOrder> oscWorkWithTarget(
   List<WorkOrder> suggestions,

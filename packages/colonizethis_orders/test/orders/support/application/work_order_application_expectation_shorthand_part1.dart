@@ -253,18 +253,3 @@ void waaExpectProspect({
     expect(u.assignedTileKey, isNull);
   }
 }
-
-void waaExpectBuildFortSkipped({
-  required int fortLevel,
-  required Stockpile stockpile,
-  required Map<String, bool> techUnlocked,
-  required int expectedFortLevel,
-}) {
-  final next = waaApplyBuildFort(
-    fortLevel: fortLevel,
-    stockpile: stockpile,
-    techUnlocked: techUnlocked,
-  );
-  waaExpectFortLevel(next, expectedFortLevel);
-  waaExpectUnitCurrentWorkNull(next);
-}

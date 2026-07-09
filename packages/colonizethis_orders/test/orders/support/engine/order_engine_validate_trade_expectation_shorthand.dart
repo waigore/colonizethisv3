@@ -66,8 +66,3 @@ OrderValidationResult vetAddTrade(
   TradeOrder order,
 ) =>
     engine.addTradeOrderWithContext(game, vetTopology, 'gp1', order);
-
-
-
-
-

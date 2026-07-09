@@ -24,76 +24,101 @@ void runOrderEngineValidateBuildCivilianExpectation(
 ) {
   switch (target) {
     case OrderEngineValidateBuildCivilianTarget.rejectsUnknownUnitType:
-        vbcExpectRejected(
-          buildCivilianValidationGame(treasury: 5000),
-          'UnknownTypeXyz',
-          reason: 'Insufficient resources',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 5000),
+            vbcOrder('UnknownTypeXyz'),
+          );
+          expect(result.status, OrderValidationStatus.rejected);
+          expect(result.reason, 'Insufficient resources');
+        }
     case OrderEngineValidateBuildCivilianTarget
         .rejectsBuilderWhenTreasuryTooLow:
-        vbcExpectRejected(
-          buildCivilianValidationGame(treasury: 999, paper: 5),
-          kUnitTypeBuilder,
-          reason: 'Insufficient treasury',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 999, paper: 5),
+            vbcOrder(kUnitTypeBuilder),
+          );
+          expect(result.status, OrderValidationStatus.rejected);
+          expect(result.reason, 'Insufficient treasury');
+        }
     case OrderEngineValidateBuildCivilianTarget
         .rejectsBuilderWhenPaperInsufficient:
-        vbcExpectRejected(
-          buildCivilianValidationGame(treasury: 2000),
-          kUnitTypeBuilder,
-          reason: 'Insufficient materials',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 2000),
+            vbcOrder(kUnitTypeBuilder),
+          );
+          expect(result.status, OrderValidationStatus.rejected);
+          expect(result.reason, 'Insufficient materials');
+        }
     case OrderEngineValidateBuildCivilianTarget
         .rejectsMerchantWhenMerchantCompaniesNotUnlocked:
-        vbcExpectRejected(
-          buildCivilianValidationGame(treasury: 3000, paper: 5),
-          kUnitTypeMerchant,
-          reason: 'Required technology not unlocked',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 3000, paper: 5),
+            vbcOrder(kUnitTypeMerchant),
+          );
+          expect(result.status, OrderValidationStatus.rejected);
+          expect(result.reason, 'Required technology not unlocked');
+        }
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuilderWhenTreasuryAndPaperSufficient:
-        vbcExpectAccepted(
-          buildCivilianValidationGame(treasury: 2000, paper: 5),
-          kUnitTypeBuilder,
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 2000, paper: 5),
+            vbcOrder(kUnitTypeBuilder),
+          );
+          expect(result.status, OrderValidationStatus.accepted);
+        }
     case OrderEngineValidateBuildCivilianTarget
         .acceptsMerchantWhenTechAndResourcesOk:
-        vbcExpectAccepted(
-          buildCivilianValidationGame(
-            treasury: 3000,
-            paper: 5,
-            techUnlocked: const {kTechIdMerchantCompanies: true},
-          ),
-          kUnitTypeMerchant,
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(
+              treasury: 3000,
+              paper: 5,
+              techUnlocked: const {kTechIdMerchantCompanies: true},
+            ),
+            vbcOrder(kUnitTypeMerchant),
+          );
+          expect(result.status, OrderValidationStatus.accepted);
+        }
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuildWhenSpawnProvinceIdIsEmptyFallsBackToCapital:
-        vbcExpectAccepted(
-          buildCivilianValidationGame(treasury: 2000, paper: 5),
-          kUnitTypeBuilder,
-          spawnProvinceId: '',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(treasury: 2000, paper: 5),
+            vbcOrder(kUnitTypeBuilder, spawnProvinceId: ''),
+          );
+          expect(result.status, OrderValidationStatus.accepted);
+        }
     case OrderEngineValidateBuildCivilianTarget
         .acceptsBuildWhenSpawnProvinceIdIsForeignFallsBackToCapital:
-        vbcExpectAccepted(
-          buildCivilianValidationGame(
-            treasury: 2000,
-            paper: 5,
-            provinces: const [
-              Province(
-                id: '$oldWorldRegionId|P1',
-                regionId: oldWorldRegionId,
-                ownerId: 'p1',
-              ),
-              Province(
-                id: '$oldWorldRegionId|P2',
-                regionId: oldWorldRegionId,
-                ownerId: 'p2',
-              ),
-            ],
-          ),
-          kUnitTypeBuilder,
-          spawnProvinceId: '$oldWorldRegionId|P2',
-        );
+        {
+          final result = validateSingleBuildUnitOrder(
+            buildCivilianValidationGame(
+              treasury: 2000,
+              paper: 5,
+              provinces: const [
+                Province(
+                  id: '$oldWorldRegionId|P1',
+                  regionId: oldWorldRegionId,
+                  ownerId: 'p1',
+                ),
+                Province(
+                  id: '$oldWorldRegionId|P2',
+                  regionId: oldWorldRegionId,
+                  ownerId: 'p2',
+                ),
+              ],
+            ),
+            vbcOrder(
+              kUnitTypeBuilder,
+              spawnProvinceId: '$oldWorldRegionId|P2',
+            ),
+          );
+          expect(result.status, OrderValidationStatus.accepted);
+        }
   }
 }

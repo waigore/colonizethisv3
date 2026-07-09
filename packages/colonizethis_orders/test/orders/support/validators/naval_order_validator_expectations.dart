@@ -9,8 +9,6 @@ import 'naval_order_validator_test_support.dart';
 import 'naval_order_validator_fixtures.dart';
 import 'naval_order_validator_expectation_shorthand.dart';
 
-import 'naval_order_validator_expectation_shorthand.dart';
-
 /// Pins for [navalOrderValidatorScenarios] rows.
 enum NavalOrderValidatorTarget {
   moveRejectsWhenPreviousRejected,

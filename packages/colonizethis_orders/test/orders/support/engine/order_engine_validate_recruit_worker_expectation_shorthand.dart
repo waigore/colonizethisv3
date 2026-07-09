@@ -81,7 +81,3 @@ Player vrwPlayer({
       capitalTile: capitalTile,
       techUnlocked: techUnlocked,
     );
-
-
-
-

@@ -1852,6 +1852,19 @@ test/ LOC after slice 112: **37,817** (net −112 from post–slice 111). Remain
 
 test/ LOC after slice 113: **37,838** (net +21 from post–slice 112; dispatcher bodies for multi-step game builders outweigh removed shorthand wrappers in this batch). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 114: vwt/vbc/ved/waa/osc dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-vwt-build-filter | inline `vwtExpectBuildResourceFilter` composite into valid-work-tiles dispatcher | `valid_work_tiles_expectation_shorthand_part1.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| dispatch-inline-osc-view | drop `_oscWithViewSuggest`; call `oscView` directly in suggest helpers | `order_suggestion_core_expectation_shorthand_part1.dart` | same | #3949 |
+| dispatch-inline-ved-grant-aid | inline `vedExpectGrantAidRejectedAfterPrior` into diplomatic dispatcher | `order_engine_validate_diplomatic_expectation_shorthand.dart` | `order_engine_validate_diplomatic_expectations.dart` | #3949 |
+| dispatch-inline-vbc-validate | inline `vbcExpectRejected` / `vbcExpectAccepted` into build-civilian dispatcher | `order_engine_validate_build_civilian_expectation_shorthand.dart` | `order_engine_validate_build_civilian_expectations.dart` | #3949 |
+| dispatch-inline-waa-fort-skip | inline `waaExpectBuildFortSkipped` into work-order-application dispatcher | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+| lint-naval-import | remove duplicate naval shorthand import | `naval_order_validator_expectations.dart` | same | #3949 |
+
+test/ LOC after slice 114: **37,710** (net −128 from post–slice 113). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

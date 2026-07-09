@@ -273,19 +273,25 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         waaExpectStockpileDeducted(game, next, cost);
     case WorkOrderApplicationTarget
         .buildFortLevel2SkippedWithoutMineEngineering:
-      waaExpectBuildFortSkipped(
+      {
+        final next = waaApplyBuildFort(
           fortLevel: 1,
           stockpile: const Stockpile(),
           techUnlocked: const {},
-          expectedFortLevel: 1,
         );
+        waaExpectFortLevel(next, 1);
+        waaExpectUnitCurrentWorkNull(next);
+      }
     case WorkOrderApplicationTarget.buildFortLevel3SkippedWithoutModernForts:
-      waaExpectBuildFortSkipped(
+      {
+        final next = waaApplyBuildFort(
           fortLevel: 2,
           stockpile: const Stockpile(),
           techUnlocked: const {kTechIdMineEngineering: true},
-          expectedFortLevel: 2,
         );
+        waaExpectFortLevel(next, 2);
+        waaExpectUnitCurrentWorkNull(next);
+      }
     case WorkOrderApplicationTarget
         .upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel:
       final upgradeNext = waaApply(

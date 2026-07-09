@@ -113,36 +113,3 @@ void vwtExpectBuildVisMembership(
     expect(valid.contains(tile), isFalse);
   }
 }
-
-void vwtExpectBuildResourceFilter({
-  required List<Province> provinces,
-  required Map<String, List<String>> tilesByProvince,
-  required Map<String, String> resourceByTileKey,
-  required String builderTileKey,
-  required List<String> included,
-  required List<String> excluded,
-  Map<String, int>? improvementByTile,
-  List<Player>? extraPlayers,
-  Map<String, String>? purchasedTilesByTileKey,
-  List<MinorNation>? minorNations,
-  String? seaZoneId,
-  List<String>? seaTiles,
-}) {
-  vwtExpectBuildVisMembership(
-    owBuilderVisibilityGame(
-      provinces: provinces,
-      tilesByProvince: tilesByProvince,
-      resourceByTileKey: resourceByTileKey,
-      builderTileKey: builderTileKey,
-      improvementByTile: improvementByTile ?? const {},
-      extraPlayers: extraPlayers,
-      purchasedTilesByTileKey: purchasedTilesByTileKey,
-      minorNations: minorNations,
-      seaZoneId: seaZoneId,
-      seaTiles: seaTiles,
-    ),
-    included: included,
-    excluded: excluded,
-  );
-}
-
