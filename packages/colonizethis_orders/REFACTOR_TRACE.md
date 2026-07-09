@@ -435,6 +435,14 @@ test/ LOC after slice 16: **32,079** (down ~306 from post–slice 15). Remaining
 
 test/ LOC after slice 17: **31,872** (down ~207 from post–slice 16). Remaining: further expectation compaction (`build_unit_training_*`, `incremental_*`, `valid_work_tiles_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 18: build-unit/training expectation fixtures
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| but-fixtures | extract OW game/player/order/topology/stockpile helpers; compact build-unit + training expectation bodies | `build_unit_training_expectations_part1.dart`, `build_unit_training_expectations_part2.dart` | `build_unit_training_fixtures.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 18: **32,043** (down ~60 from post–slice 17). Remaining: further expectation compaction (`incremental_*`, `valid_work_tiles_*`, `worker_pool_phase_*`, …) toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
