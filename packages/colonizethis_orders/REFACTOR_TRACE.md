@@ -1971,7 +1971,7 @@ test/ LOC after slice 123: **37,411** (net −271 from post–slice 122). Remain
 | osc-late-dispatch | extract `oscExpectBothRegimentAndShipWhenAffordable`, research/naval list checks, spy/merchant suggest games; inline five late cases | `order_suggestion_core_expectations_late.dart` | `order_suggestion_core_expectation_shorthand_part1.dart` + `order_suggestion_core_expectations.dart` | #3949 |
 | vw-late-dispatch | extract fort/rail/minor-road/upgrade-town dispatch helpers; inline nine late cases | `order_engine_validate_work_expectations_late.dart` | `order_engine_validate_work_expectation_shorthand_part1.dart` + `order_engine_validate_work_expectations.dart` | #3949 |
 
-test/ LOC after slice 124: see PR. Remaining: further support-table compaction toward ≤26,400.
+test/ LOC after slice 124: **37,382** (net −29 from post–slice 123). Remaining: further support-table compaction toward ≤26,400.
 
 ## Wave 3 — documented exceptions (kickoff)
 
