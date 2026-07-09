@@ -1,15 +1,14 @@
 part of 'worker_pool_phase_expectations.dart';
 
 void _acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric() {
-  final p = wppAfter(
-    wppPlayer(stockpile: wppStock({CommodityCatalog.fabric.id: 3})),
-    [WorkerTier.peasant],
-  );
-  wppExpect(
-    p,
-    peasants: 1,
-    stock: {CommodityCatalog.fabric.id: 1},
-    treasury: 0,
+  wppExpectRecruitPeasantFromFabric();
+}
+
+void _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
+  wppExpectApprenticeTrainSkippedWhenUnaffordable(
+    paper: 5,
+    peasants: 3,
+    treasury: 100,
   );
 }
 
@@ -21,25 +20,6 @@ void _acceptedApprenticeTrainConsumesPeasantPaperAndTreasury() {
     expectedPeasants: 2,
     expectedPaper: 3,
     expectedTreasury: 300,
-  );
-}
-
-void _recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
-  final p = wppAfter(
-    wppPlayer(
-      stockpile: wppStock({CommodityCatalog.paper.id: 5}),
-      workerPool: const WorkerPool(peasants: 3),
-      treasury: 100,
-      techUnlocked: wppApprenticeTech,
-    ),
-    [WorkerTier.apprentice],
-  );
-  wppExpect(
-    p,
-    peasants: 3,
-    apprentices: 0,
-    stock: {CommodityCatalog.paper.id: 5},
-    treasury: 100,
   );
 }
 

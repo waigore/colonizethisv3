@@ -391,3 +391,112 @@ void vwtExpectNoBuildSuggestionForReservedTile({
   );
   expect(buildSuggestions, isEmpty);
 }
+
+void vwtExpectControlledTilesWithResourcesOnly() {
+  final tileWithResource = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  final tileWithoutResource = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+  final foreignTileWithResource = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
+  vwtExpectBuildResourceFilter(
+    provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'other')],
+    tilesByProvince: {
+      ValidWorkTilesTestSupport.provinceId('p1'): [
+        tileWithResource,
+        tileWithoutResource,
+      ],
+      ValidWorkTilesTestSupport.provinceId('p2'): [foreignTileWithResource],
+    },
+    resourceByTileKey: {
+      tileWithResource: 'grain',
+      foreignTileWithResource: 'iron',
+    },
+    builderTileKey: tileWithResource,
+    improvementByTile: {tileWithResource: 0},
+    extraPlayers: const [
+      Player(id: 'other', displayName: 'Other', isHuman: false),
+    ],
+    included: [tileWithResource],
+    excluded: [tileWithoutResource, foreignTileWithResource],
+  );
+}
+
+void vwtExpectPurchasedTileIncluded() {
+  final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
+  final unpurchased = ValidWorkTilesTestSupport.tileKey('p2', 1, 0);
+  final ownTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  vwtExpectBuildResourceFilter(
+    provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'minor1')],
+    tilesByProvince: {
+      ValidWorkTilesTestSupport.provinceId('p1'): [ownTile],
+      ValidWorkTilesTestSupport.provinceId('p2'): [purchased, unpurchased],
+    },
+    resourceByTileKey: {purchased: 'grain', unpurchased: 'grain'},
+    builderTileKey: ownTile,
+    improvementByTile: {purchased: 0},
+    purchasedTilesByTileKey: {purchased: ValidWorkTilesTestSupport.playerId},
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+    included: [purchased],
+    excluded: [unpurchased],
+  );
+}
+
+void vwtExpectSeaZoneTileExcluded() {
+  final landTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  const seaZoneId = 's1';
+  final seaTile = ValidWorkTilesTestSupport.tileKey(seaZoneId, 0, 0);
+  vwtExpectBuildResourceFilter(
+    provinces: [vwtOwnedProvince('p1')],
+    tilesByProvince: {
+      ValidWorkTilesTestSupport.provinceId('p1'): [landTile],
+    },
+    resourceByTileKey: {landTile: 'grain', seaTile: 'fish'},
+    builderTileKey: landTile,
+    improvementByTile: {landTile: 0},
+    seaZoneId: seaZoneId,
+    seaTiles: [seaTile],
+    included: [landTile],
+    excluded: [seaTile],
+  );
+}
+
+void vwtExpectProspectExcludedWhenIronProspected(NwPartialRevealHomeTarget fx) {
+  expect(
+    vwtSuggestProspect(
+      vwtTribeConsulateGame(fx, id: 'g1916p2'),
+      fx.topology(),
+    ),
+    isEmpty,
+  );
+}
+
+void vwtExpectPurchaseLandIncluded(
+  NwPartialRevealHomeTarget fx, {
+  required String gameId,
+  List<OvertureState>? overtureStates,
+}) {
+  expect(
+    vwtSuggestPurchaseLand(
+      vwtMinorPurchaseGame(
+        fx,
+        id: gameId,
+        overtureStates: overtureStates,
+      ),
+      fx.topology(),
+      fx.provTarget,
+    ),
+    isNotEmpty,
+  );
+}
+
+void vwtExpectPurchaseLandExcluded(
+  NwPartialRevealHomeTarget fx, {
+  required String gameId,
+}) {
+  expect(
+    vwtSuggestPurchaseLand(
+      vwtMinorPurchaseGame(fx, id: gameId),
+      fx.topology(),
+      fx.provTarget,
+    ),
+    isEmpty,
+  );
+}

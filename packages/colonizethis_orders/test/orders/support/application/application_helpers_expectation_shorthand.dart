@@ -160,6 +160,85 @@ void ahExpectMineralEligible({
   );
 }
 
+const ahMineralTileKey = 'oldWorld|p1|0|0';
+
+void ahExpectMountainProspectableWithoutResource() {
+  ahExpectMineralEligible(
+    resourceByTile: const {},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(terrain: TerrainType.mountain),
+    },
+    expected: true,
+  );
+}
+
+void ahExpectPlainsGoldNotProspectable() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'gold'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.plains,
+        resource: Resource.gold,
+      ),
+    },
+    expected: false,
+  );
+}
+
+void ahExpectHillsWoolNotProspectable() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'wool'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.hills,
+        resource: Resource.wool,
+      ),
+    },
+    expected: false,
+  );
+}
+
+void ahExpectHillsIronProspectable() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'iron'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.hills,
+        resource: Resource.iron,
+      ),
+    },
+    expected: true,
+  );
+}
+
+void ahExpectAbsentResourceNotMineral() {
+  ahExpectMineralEligible(
+    resourceByTile: const {},
+    tileKey: ahMineralTileKey,
+    expected: false,
+  );
+}
+
+void ahExpectGrainNotMineral() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'grain'},
+    tileKey: ahMineralTileKey,
+    expected: false,
+  );
+}
+
+void ahExpectCoalMineral() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'coal'},
+    tileKey: ahMineralTileKey,
+    expected: true,
+  );
+}
+
 Unit ahIdleBuilderUnit({
   String id = 'u1',
   String ownerId = 'gp1',

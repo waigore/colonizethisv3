@@ -114,10 +114,5 @@ _suggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder
 }
 
 void _suggestNavalMissionOrdersReturnsList() {
-  oscExpectSuggestListType(
-    oscSuggestNavalMission(
-      oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
-      oscSeaTopology(['sea1']),
-    ),
-  );
+  oscExpectNavalMissionSuggestList();
 }

@@ -116,6 +116,78 @@ void cspExpectMissingCapitalTileError(Game game, Orders orders) {
   );
 }
 
+void cspExpectExplorerSpawnAtCapital({
+  String? spawnProvinceId,
+  String? otherOwnedProvinceId,
+  int peasants = 1,
+}) {
+  final game = cspExplorerGame(
+    capitalProvinceId: cspCapitalProvinceId,
+    otherOwnedProvinceId: otherOwnedProvinceId,
+    capitalTile: const CapitalTile(
+      regionId: cspOw,
+      provinceId: cspCapitalProvinceId,
+      x: 0,
+      y: 1,
+    ),
+    peasants: peasants,
+  );
+  final next = cspApply(
+    game,
+    cspBuildOrders(
+      kUnitTypeExplorer,
+      isMilitary:
+          buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
+          BuildUnitCategory.military,
+      spawnProvinceId: spawnProvinceId ?? otherOwnedProvinceId ?? '',
+    ),
+  );
+  cspExpectOwUnitAt(
+    next: next,
+    tileKey: cspCapitalTileKey,
+    provinceId: cspCapitalProvinceId,
+  );
+}
+
+void cspExpectNewWorldMilitarySpawn({
+  required String provinceId,
+  required String unitType,
+}) {
+  final next = cspApply(
+    cspNewWorldMilitaryGame(provinceId: provinceId, unitType: unitType),
+    cspBuildOrders(
+      unitType,
+      isMilitary:
+          buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
+      spawnProvinceId: provinceId,
+    ),
+  );
+  expect(next.worldState.oldWorld.units, isEmpty);
+  expect(next.worldState.newWorld.units.length, 1);
+  expect(
+    next.worldState.newWorld.units.single.locationProvinceId,
+    provinceId,
+  );
+}
+
+void cspExpectMissingCapitalTileBuildError() {
+  final game = cspExplorerGame(
+    capitalProvinceId: cspCapitalProvinceId,
+    tileKeysByProvince: {
+      cspCapitalProvinceId: ['oldWorld|P1|0|0'],
+    },
+    peasants: 0,
+  );
+  cspExpectMissingCapitalTileError(
+    game,
+    cspBuildOrders(
+      kUnitTypeExplorer,
+      isMilitary: false,
+      spawnProvinceId: cspCapitalProvinceId,
+    ),
+  );
+}
+
 Game cspNewWorldMilitaryGame({
   required String provinceId,
   required String unitType,

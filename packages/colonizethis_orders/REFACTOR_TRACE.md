@@ -615,6 +615,20 @@ test/ LOC after slice 35: **32,946** (net +99 from post–slice 34; expectation 
 
 test/ LOC after slice 36: **33,002** (net +56 from post–slice 35; expectation bodies shortened, new `nov*`/`vw*` shorthand and fixture modules added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
 
+## Wave 3 — Slice 37: multi-family mineral/spawn/build/vwt/ved/osc/wpp compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ah-mineral-shorthand | add `ahExpectMountainProspectableWithoutResource` / `ahExpectPlainsGoldNotProspectable` / `ahExpectHillsWoolNotProspectable` / `ahExpectHillsIronProspectable` / `ahExpectAbsentResourceNotMineral` / `ahExpectGrainNotMineral` / `ahExpectCoalMineral`; compact application-helpers mineral eligibility bodies | `application_helpers_expectations.dart` | `application_helpers_expectation_shorthand.dart` + compacted expectations | #3949 |
+| csp-spawn-shorthand | add `cspExpectExplorerSpawnAtCapital` / `cspExpectNewWorldMilitarySpawn`; compact civilian spawn expectation bodies | `civilian_spawn_expectations.dart` | `civilian_spawn_expectation_shorthand.dart` + compacted expectations | #3949 |
+| but-part1-shorthand | add `butExpectFluyteSpentNoFleet` / `butExpectTreasuryInsufficientRegimentBuildRejected`; compact build-unit/training part1 ship-failure and treasury bodies | `build_unit_training_expectations_part1.dart` | `build_unit_training_expectation_shorthand.dart` + compacted expectations | #3949 |
+| vwt-part1-part3-shorthand | add `vwtExpectControlledTilesWithResourcesOnly` / `vwtExpectPurchasedTileIncluded` / `vwtExpectSeaZoneTileExcluded` / `vwtExpectProspectExcludedWhenIronProspected` / `vwtExpectPurchaseLandIncluded` / `vwtExpectPurchaseLandExcluded`; compact valid-work-tiles part1/part3 bodies | `valid_work_tiles_expectations_part{1,3}.dart` | `valid_work_tiles_expectation_shorthand.dart` + compacted expectations | #3949 |
+| ved-part1-shorthand | add `vedExpectDeclareWarRejectedWhenAtWar` / `vedExpectOfferPeaceRejectedWhenNotAtWar` / `vedExpectOvertureRejectedAtWar` / `vedExpectConsulateRejectedNoDiplomaticExpertise` / `vedExpectConsulateRejectedLowTreasury` / `vedExpectEmbassyRequiresConsulate` / `vedExpectSubsidyEmbassyRequired` / `vedExpectSubsidyAcceptedLowTreasury` / `vedExpectSubsidyAcceptedValidPercent` / `vedExpectSubsidyRejectedInvalidPercent`; compact validate-diplomatic part1 bodies | `order_engine_validate_diplomatic_expectations_part1.dart` | `order_engine_validate_diplomatic_expectation_shorthand.dart` + compacted expectations | #3949 |
+| osc-core-shorthand | add `oscExpectCapitalBuildSuggestList` / `oscExpectAffordableShipBuildSuggestions` / `oscExpectAffordableRegimentAndShipBuildSuggestions` / `oscExpectResearchSuggestList` / `oscExpectNavalMoveSuggestList` / `oscExpectNavalMissionSuggestList` / `oscExpectMerchantPurchaseLandWorkSuggested`; compact core suggestion part1/part2 bodies | `order_suggestion_core_expectations_part{1,2}.dart` | `order_suggestion_core_expectation_shorthand.dart` + compacted expectations | #3949 |
+| wpp-tier-shorthand | add `wppExpectRecruitPeasantFromFabric` / `wppExpectApprenticeTrainSkippedWhenUnaffordable`; compact worker-pool phase expectation bodies | `worker_pool_phase_expectations_part1.dart` | `worker_pool_phase_expectation_shorthand.dart` + compacted expectations | #3949 |
+
+test/ LOC after slice 37: **33,113** (net +111 from post–slice 36; expectation bodies shortened, new `ah*`/`csp*`/`but*`/`vwt*`/`ved*`/`osc*`/`wpp*` shorthand helpers added). Remaining: further expectation compaction, lib DRY items 5–6, scenario-table migration harness + CI gates toward ≤26,400; optional opportunistic precheck/feedstock/army-move cleanup.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

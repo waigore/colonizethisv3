@@ -94,75 +94,21 @@ void _filtersByVisibilityBeforeOrderEngineValidation() {
 }
 
 void _buildImprovementReturnsOnlyControlledTilesWithResources() {
-  final tileWithResource = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final tileWithoutResource = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-  final foreignTileWithResource = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-  vwtExpectBuildResourceFilter(
-    provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'other')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [
-        tileWithResource,
-        tileWithoutResource,
-      ],
-      ValidWorkTilesTestSupport.provinceId('p2'): [foreignTileWithResource],
-    },
-    resourceByTileKey: {
-      tileWithResource: 'grain',
-      foreignTileWithResource: 'iron',
-    },
-    builderTileKey: tileWithResource,
-    improvementByTile: {tileWithResource: 0},
-    extraPlayers: const [
-      Player(id: 'other', displayName: 'Other', isHuman: false),
-    ],
-    included: [tileWithResource],
-    excluded: [tileWithoutResource, foreignTileWithResource],
-  );
+  vwtExpectControlledTilesWithResourcesOnly();
+}
+
+void _buildImprovementIncludesPurchasedTilesWithResources() {
+  vwtExpectPurchasedTileIncluded();
+}
+
+void _buildImprovementExcludesSeaZoneTiles() {
+  vwtExpectSeaZoneTileExcluded();
 }
 
 void _buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected() {
   final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
   vwtExpectMineralBuildGate(grainTile: grainTile, ironTile: ironTile);
-}
-
-void _buildImprovementIncludesPurchasedTilesWithResources() {
-  final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-  final unpurchased = ValidWorkTilesTestSupport.tileKey('p2', 1, 0);
-  final ownTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  vwtExpectBuildResourceFilter(
-    provinces: [vwtOwnedProvince('p1'), vwtProvince('p2', 'minor1')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [ownTile],
-      ValidWorkTilesTestSupport.provinceId('p2'): [purchased, unpurchased],
-    },
-    resourceByTileKey: {purchased: 'grain', unpurchased: 'grain'},
-    builderTileKey: ownTile,
-    improvementByTile: {purchased: 0},
-    purchasedTilesByTileKey: {purchased: ValidWorkTilesTestSupport.playerId},
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
-    included: [purchased],
-    excluded: [unpurchased],
-  );
-}
-
-void _buildImprovementExcludesSeaZoneTiles() {
-  final landTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  const seaZoneId = 's1';
-  final seaTile = ValidWorkTilesTestSupport.tileKey(seaZoneId, 0, 0);
-  vwtExpectBuildResourceFilter(
-    provinces: [vwtOwnedProvince('p1')],
-    tilesByProvince: {
-      ValidWorkTilesTestSupport.provinceId('p1'): [landTile],
-    },
-    resourceByTileKey: {landTile: 'grain', seaTile: 'fish'},
-    builderTileKey: landTile,
-    improvementByTile: {landTile: 0},
-    seaZoneId: seaZoneId,
-    seaTiles: [seaTile],
-    included: [landTile],
-    excluded: [seaTile],
-  );
 }
 
 void _getvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {

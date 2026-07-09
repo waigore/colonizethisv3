@@ -1,57 +1,27 @@
 part of 'order_engine_validate_diplomatic_expectations.dart';
 
 void _declarewarRejectedWhenAlreadyAtWar() {
-  vedExpectRejected(
-    vedGpMinor(relationState: RelationState.atWar),
-    vedDeclareWarMinor,
-    reasonContains: 'Already at war',
-  );
+  vedExpectDeclareWarRejectedWhenAtWar();
 }
 
 void _offerpeaceRejectedWhenNotAtWar() {
-  vedExpectRejected(
-    vedGpMinor(),
-    vedOfferPeaceMinor,
-    reasonContains: 'not at war',
-  );
+  vedExpectOfferPeaceRejectedWhenNotAtWar();
 }
 
 void _establishovertureRejectedWhenTargetIsAtWarWithGP() {
-  vedExpectRejected(
-    vedGpMinor(
-      relationState: RelationState.atWar,
-      treasury: overtureConsulateCost + 100,
-    ),
-    vedEstablishOverture(OvertureStage.tradeConsulate),
-    reasonContains: 'at war',
-  );
+  vedExpectOvertureRejectedAtWar();
 }
 
 void _establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise() {
-  vedExpectRejected(
-    vedGpMinor(
-      treasury: overtureConsulateCost + 100,
-      techUnlocked: const {},
-    ),
-    vedEstablishOverture(OvertureStage.tradeConsulate),
-    reasonContains: 'Diplomatic Expertise',
-  );
+  vedExpectConsulateRejectedNoDiplomaticExpertise();
 }
 
 void _establishovertureConsulateRejectedWhenTreasuryTooLow() {
-  vedExpectRejected(
-    vedGpMinor(treasury: overtureConsulateCost - 1),
-    vedEstablishOverture(OvertureStage.tradeConsulate),
-    reasonContains: 'Insufficient treasury',
-  );
+  vedExpectConsulateRejectedLowTreasury();
 }
 
 void _establishovertureEmbassyRequiresExistingConsulate() {
-  vedExpectRejected(
-    vedGpMinor(treasury: overtureEmbassyCost + 1000),
-    vedEstablishOverture(OvertureStage.embassy),
-    reasonContains: 'requires existing Trade Consulate',
-  );
+  vedExpectEmbassyRequiresConsulate();
 }
 
 void _establishovertureSecondOrderForSameFactionInSameTurnRejected() {
@@ -105,43 +75,18 @@ void _grantaidThenSetSubsidyTowardSameTargetBothAccepted() {
 }
 
 void _setsubsidyRequiresAnEmbassyRefs3753R2() {
-  // No overture at all is rejected for the embassy prerequisite. A valid
-  // percent is supplied so validation reaches the embassy check.
-  vedExpectRejected(
-    vedGpMinor(treasury: 5000),
-    vedSetSubsidy(10),
-    reasonContains: 'Embassy required',
-  );
-
-  // A Trade Consulate alone is no longer sufficient for SetSubsidy.
-  vedExpectRejected(
-    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
-    vedSetSubsidy(10),
-    reasonContains: 'Embassy required',
-  );
+  vedExpectSubsidyEmbassyRequired();
 }
 
 void
 _setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3() {
-  // Percent subsidies charge nothing upfront, so even a near-empty treasury
-  // is accepted.
-  vedExpectAccepted(
-    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 10),
-    vedSetSubsidy(20),
-  );
+  vedExpectSubsidyAcceptedLowTreasury();
 }
 
 void _setsubsidyWithAnEmbassyAndAValidPercentIsAccepted() {
-  vedExpectAccepted(
-    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
-    vedSetSubsidy(5),
-  );
+  vedExpectSubsidyAcceptedValidPercent();
 }
 
 void _setsubsidyRejectsAPercentOutside520InStepsOf5() {
-  vedExpectRejected(
-    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
-    vedSetSubsidy(7),
-    reasonContains: 'steps of',
-  );
+  vedExpectSubsidyRejectedInvalidPercent();
 }

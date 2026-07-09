@@ -1,7 +1,5 @@
 // Compact orders_application_helpers + clearUnitCurrentWork assertions (Refs #3949 wave 3).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-
 import 'application_helpers_expectation_shorthand.dart';
 
 /// Pins for [applicationHelpersScenarios] rows.
@@ -106,78 +104,29 @@ void _clearsCurrentWorkRestoresOriginTileAndSetsStatusIdle() {
 }
 
 void _returnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent() {
-  ahExpectMineralEligible(
-    resourceByTile: const {},
-    tileKey: 'oldWorld|p1|0|0',
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(terrain: TerrainType.mountain),
-    },
-    expected: true,
-  );
+  ahExpectMountainProspectableWithoutResource();
 }
 
 void _returnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists() {
-  ahExpectMineralEligible(
-    resourceByTile: const {'oldWorld|p1|0|0': 'gold'},
-    tileKey: 'oldWorld|p1|0|0',
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.plains,
-        resource: Resource.gold,
-      ),
-    },
-    expected: false,
-  );
+  ahExpectPlainsGoldNotProspectable();
 }
 
 void _returnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain() {
-  ahExpectMineralEligible(
-    resourceByTile: const {'oldWorld|p1|0|0': 'wool'},
-    tileKey: 'oldWorld|p1|0|0',
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.hills,
-        resource: Resource.wool,
-      ),
-    },
-    expected: false,
-  );
+  ahExpectHillsWoolNotProspectable();
 }
 
 void _returnsTrueForIronOnHillsWithTileMapWhenNotProspected() {
-  ahExpectMineralEligible(
-    resourceByTile: const {'oldWorld|p1|0|0': 'iron'},
-    tileKey: 'oldWorld|p1|0|0',
-    tileMapByRegion: {
-      'oldWorld': ahSingleTileMap(
-        terrain: TerrainType.hills,
-        resource: Resource.iron,
-      ),
-    },
-    expected: true,
-  );
+  ahExpectHillsIronProspectable();
 }
 
 void _returnsFalseWhenResourceIsAbsent() {
-  ahExpectMineralEligible(
-    resourceByTile: const {},
-    tileKey: 'oldWorld|p1|0|0',
-    expected: false,
-  );
+  ahExpectAbsentResourceNotMineral();
 }
 
 void _returnsFalseForNonMineralResource() {
-  ahExpectMineralEligible(
-    resourceByTile: const {'oldWorld|p1|0|0': 'grain'},
-    tileKey: 'oldWorld|p1|0|0',
-    expected: false,
-  );
+  ahExpectGrainNotMineral();
 }
 
 void _returnsTrueForMineralResource() {
-  ahExpectMineralEligible(
-    resourceByTile: const {'oldWorld|p1|0|0': 'coal'},
-    tileKey: 'oldWorld|p1|0|0',
-    expected: true,
-  );
+  ahExpectCoalMineral();
 }

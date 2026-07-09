@@ -15,6 +15,42 @@ Player wppAfter(Player player, List<WorkerTier> tiers) => wppPlayerAfter(
   WppIds.player1,
 );
 
+void wppExpectRecruitPeasantFromFabric({int fabric = 3}) {
+  final p = wppAfter(
+    wppPlayer(stockpile: wppStock({CommodityCatalog.fabric.id: fabric})),
+    [WorkerTier.peasant],
+  );
+  wppExpect(
+    p,
+    peasants: 1,
+    stock: {CommodityCatalog.fabric.id: fabric - 2},
+    treasury: 0,
+  );
+}
+
+void wppExpectApprenticeTrainSkippedWhenUnaffordable({
+  required int paper,
+  required int peasants,
+  required int treasury,
+}) {
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: wppApprenticeTech,
+    ),
+    [WorkerTier.apprentice],
+  );
+  wppExpect(
+    p,
+    peasants: peasants,
+    apprentices: 0,
+    stock: {CommodityCatalog.paper.id: paper},
+    treasury: treasury,
+  );
+}
+
 void wppExpect(
   Player p, {
   int? peasants,

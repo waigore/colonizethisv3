@@ -468,6 +468,69 @@ void oscExpectWorkerSuggestStayInProvince(Game game, MapTopology topology) {
   }
 }
 
+void oscExpectMerchantPurchaseLandWorkSuggested() {
+  oscExpectWorkTargetNotEmpty(
+    oscSuggestWork(
+      oscMerchantPurchaseLandGame(),
+      oscProvinceTopology(['p1', 'minor1']),
+    ),
+    kWorkTargetPurchaseLand,
+  );
+}
+
+void oscExpectCapitalBuildSuggestList(Player player) {
+  oscExpectSuggestListType(
+    oscSuggestBuild(oscCapitalProvinceGame(player), oscCapitalTopology()),
+  );
+}
+
+void oscExpectAffordableShipBuildSuggestions() {
+  oscExpectBuildIncludesShipTypes(
+    oscCapitalProvinceGame(oscAffordableShipPlayer()),
+    oscCapitalTopology(),
+  );
+}
+
+void oscExpectAffordableRegimentAndShipBuildSuggestions() {
+  oscExpectBuildIncludesRegimentAndShip(
+    oscCapitalProvinceGame(oscAffordableBothPlayer()),
+    oscCapitalTopology(),
+  );
+}
+
+void oscExpectResearchSuggestList() {
+  oscExpectSuggestListType(
+    oscSuggestResearch(
+      oscGame(
+        worldState: oscWorld(),
+        players: [oscPlayer(treasury: 1000)],
+      ),
+      oscEmptyTopology(),
+    ),
+  );
+}
+
+void oscExpectNavalMoveSuggestList() {
+  oscExpectSuggestListType(
+    oscSuggestNavalMove(
+      oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
+      oscSeaTopology(
+        ['sea1', 'sea2'],
+        edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
+      ),
+    ),
+  );
+}
+
+void oscExpectNavalMissionSuggestList() {
+  oscExpectSuggestListType(
+    oscSuggestNavalMission(
+      oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
+      oscSeaTopology(['sea1']),
+    ),
+  );
+}
+
 Game oscMerchantPurchaseLandGame() {
   final tileKey = OscIds.tile('minor1', 0, 0);
   return oscGame(

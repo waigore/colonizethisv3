@@ -1,40 +1,23 @@
 part of 'valid_work_tiles_expectations.dart';
 
 void _suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral() {
-  final fx = vwtTribeGrainIronFx(prospectedIron: true);
-  expect(
-    vwtSuggestProspect(
-      vwtTribeConsulateGame(fx, id: 'g1916p2'),
-      fx.topology(),
-    ),
-    isEmpty,
+  vwtExpectProspectExcludedWhenIronProspected(
+    vwtTribeGrainIronFx(prospectedIron: true),
   );
 }
 
 void _suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy() {
   final fx = vwtMinorPurchaseFx();
-  expect(
-    vwtSuggestPurchaseLand(
-      vwtMinorPurchaseGame(
-        fx,
-        id: 'g1916pl1',
-        overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
-      ),
-      fx.topology(),
-      fx.provTarget,
-    ),
-    isNotEmpty,
+  vwtExpectPurchaseLandIncluded(
+    fx,
+    gameId: 'g1916pl1',
+    overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
   );
 }
 
 void _suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail() {
-  final fx = vwtMinorPurchaseFx();
-  expect(
-    vwtSuggestPurchaseLand(
-      vwtMinorPurchaseGame(fx, id: 'g1916pl2'),
-      fx.topology(),
-      fx.provTarget,
-    ),
-    isEmpty,
+  vwtExpectPurchaseLandExcluded(
+    vwtMinorPurchaseFx(),
+    gameId: 'g1916pl2',
   );
 }

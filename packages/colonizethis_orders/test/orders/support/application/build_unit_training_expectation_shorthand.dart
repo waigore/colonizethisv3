@@ -53,6 +53,45 @@ void butExpectShipBuildSpentNoFleet({
   );
 }
 
+enum ButFluyteNoFleetVariant { nullTopology, nullCapital, isolatedSea }
+
+void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
+  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
+  final stockpile = butStockpileCovering(shipEcon.buildInputs);
+  final player = butShipBuildPlayer(
+    stockpile: stockpile,
+    peasants: 1,
+    treasury: shipEcon.buildTreasuryCost + 10,
+    capitalProvinceId:
+        variant == ButFluyteNoFleetVariant.nullCapital ? null : ButIds.prov('P1'),
+    techUnlocked: {kTechIdSuperiorHullDesign: true},
+  );
+  butExpectShipBuildSpentNoFleet(
+    game: butShipBuildGame(player: player),
+    orders: butOrdersFor('fluyte'),
+    baselinePlayer: player,
+    baselineStockpile: stockpile,
+    buildTreasuryCost: shipEcon.buildTreasuryCost,
+    buildInputs: shipEcon.buildInputs,
+    topology: switch (variant) {
+      ButFluyteNoFleetVariant.nullTopology => null,
+      ButFluyteNoFleetVariant.nullCapital => butCapitalAdjacentSeaTopology(),
+      ButFluyteNoFleetVariant.isolatedSea => butCapitalIsolatedSeaTopology(),
+    },
+  );
+}
+
+void butExpectTreasuryInsufficientRegimentBuildRejected() {
+  final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+  final game = butMilitaryBaseGame(
+    peasants: 5,
+    treasury: econ.buildTreasuryCost - 1,
+  );
+  final next = butApply(game, butOrdersFor('peasant_levies'));
+  expect(next.worldState.oldWorld.units, isEmpty);
+  butExpectTreasuryAndPeasantsUnchanged(game, next);
+}
+
 void butExpectValidRegimentBuild({
   required Game game,
   required String regimentId,

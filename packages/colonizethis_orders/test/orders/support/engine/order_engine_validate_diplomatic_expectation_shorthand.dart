@@ -140,3 +140,92 @@ void vedExpectGrantAidRejectedAfterPrior({
   final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
   expect(grant.status, OrderValidationStatus.rejected);
 }
+
+void vedExpectDeclareWarRejectedWhenAtWar() {
+  vedExpectRejected(
+    vedGpMinor(relationState: RelationState.atWar),
+    vedDeclareWarMinor,
+    reasonContains: 'Already at war',
+  );
+}
+
+void vedExpectOfferPeaceRejectedWhenNotAtWar() {
+  vedExpectRejected(
+    vedGpMinor(),
+    vedOfferPeaceMinor,
+    reasonContains: 'not at war',
+  );
+}
+
+void vedExpectOvertureRejectedAtWar() {
+  vedExpectRejected(
+    vedGpMinor(
+      relationState: RelationState.atWar,
+      treasury: overtureConsulateCost + 100,
+    ),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'at war',
+  );
+}
+
+void vedExpectConsulateRejectedNoDiplomaticExpertise() {
+  vedExpectRejected(
+    vedGpMinor(
+      treasury: overtureConsulateCost + 100,
+      techUnlocked: const {},
+    ),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'Diplomatic Expertise',
+  );
+}
+
+void vedExpectConsulateRejectedLowTreasury() {
+  vedExpectRejected(
+    vedGpMinor(treasury: overtureConsulateCost - 1),
+    vedEstablishOverture(OvertureStage.tradeConsulate),
+    reasonContains: 'Insufficient treasury',
+  );
+}
+
+void vedExpectEmbassyRequiresConsulate() {
+  vedExpectRejected(
+    vedGpMinor(treasury: overtureEmbassyCost + 1000),
+    vedEstablishOverture(OvertureStage.embassy),
+    reasonContains: 'requires existing Trade Consulate',
+  );
+}
+
+void vedExpectSubsidyEmbassyRequired() {
+  vedExpectRejected(
+    vedGpMinor(treasury: 5000),
+    vedSetSubsidy(10),
+    reasonContains: 'Embassy required',
+  );
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+    vedSetSubsidy(10),
+    reasonContains: 'Embassy required',
+  );
+}
+
+void vedExpectSubsidyAcceptedLowTreasury() {
+  vedExpectAccepted(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 10),
+    vedSetSubsidy(20),
+  );
+}
+
+void vedExpectSubsidyAcceptedValidPercent() {
+  vedExpectAccepted(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedSetSubsidy(5),
+  );
+}
+
+void vedExpectSubsidyRejectedInvalidPercent() {
+  vedExpectRejected(
+    vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+    vedSetSubsidy(7),
+    reasonContains: 'steps of',
+  );
+}
