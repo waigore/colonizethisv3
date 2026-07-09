@@ -104,6 +104,7 @@ civilian worker cannot move into Minor/Tribe territory
 clears currentWork, restores origin tile, and sets status idle
 clears work state and restores origin tile by default
 co-availability ordering is deterministic across repeated passes
+co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile
 co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget
 colonialIntelExploreProvinceIdsSorted lists sea-reachable NW
 contains returns false for missing membership
@@ -193,6 +194,7 @@ isDiplomaticOrderAccepted returns a boolean result
 isIndependentDiplomaticCandidate flags economic and boycott types
 isNavalMissionOrderAccepted returns a boolean result
 isNavalMoveOrderAccepted returns a boolean result
+iron province without fogged visibility still yields no prospect (negative control)
 joinEmpire previous is nap
 joinEmpire rejects when relations below friendly threshold
 keeps AI move orders when human has none for unit

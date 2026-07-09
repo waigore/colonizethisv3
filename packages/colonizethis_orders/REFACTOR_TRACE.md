@@ -1194,6 +1194,25 @@ Migrated imperative `order_suggestion_prospect_own_province_budget_priority_test
 
 test/ LOC after slice 69: **35,955** (net +101 from post–slice 68; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 70 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osplpp-co-located | co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile | `order_suggestion_prospect_location_province_priority_test.dart` | `support/suggestion/order_suggestion_prospect_location_province_priority_scenarios.dart` + thin runner | #2847 |
+| osplpp-no-fogged | iron province without fogged visibility still yields no prospect (negative control) | same | same | #2847 |
+| bv-accepts-peace | accepts when issuer holds a colony and target GP is at peace | `validators/diplomatic/boycott_validator_test.dart` | `support/validators/diplomatic/boycott_validator_scenarios.dart` + thin runner | #3753 R6 |
+| bv-rejects-no-colony | rejects when the issuer holds no colony | same | same | #3753 R6 |
+| bv-rejects-war | rejects when at war with the target GP | same | same | #3753 R6 |
+| bv-rejects-duplicate | rejects a duplicate boycott for the same pair | same | same | #3753 R6 |
+| bv-rejects-non-gp | rejects a non-Great-Power target | same | same | #3753 R6 |
+| bv-revoke-accepts | accepts when an active boycott exists for the pair | same | same | #3753 R6 |
+| bv-revoke-rejects | rejects when no active boycott exists for the pair | same | same | #3753 R6 |
+| bv-parent-accepts | accepts a valid boycott order through the parent validator | same | same | #3753 R6 |
+
+Migrated imperative `order_suggestion_prospect_location_province_priority_test.dart` and `validators/diplomatic/boycott_validator_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline descriptions for prospect location scenarios. Removed `boycott_validator_test.dart` from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 70: **36,155** (net +200 from post–slice 69; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, remaining diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
