@@ -963,6 +963,42 @@ Migrated imperative `orders_logging_test.dart`, `merchant_purchase_land_candidat
 
 test/ LOC after slice 57: **34,307** (net +234 from post–slice 56; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 slice 58 — draft_orders_mutations + order_visibility scenario migration (#3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dom-remove-index | removes order at index | `draft_orders_mutations_test.dart` | `support/application/draft_orders_mutations_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| dom-invalid-index | returns orders unchanged when index invalid | same | same | #3949 |
+| dom-trade-empty | tradeOrderForPlayerCommodity returns null on empty orders | same | same | #2993 E5b |
+| dom-trade-match | tradeOrderForPlayerCommodity returns the matching staged order | same | same | #2993 E5b |
+| dom-trade-add | applyTradeOrderForPlayer adds when no prior order exists | same | same | #2993 E5b |
+| dom-trade-replace | applyTradeOrderForPlayer replaces a prior order for the same commodity (mutual exclusion: bid -> offer cannot coexist) | same | same | #2993 E5b |
+| dom-trade-scope | applyTradeOrderForPlayer scopes per-player (other players' orders are not affected) | same | same | #2993 E5b |
+| dom-trade-remove | removeTradeOrderForPlayer deletes the matching staged order | same | same | #2993 E5b |
+| dom-trade-noop-empty | removeTradeOrderForPlayer is a no-op (returns same instance) when the player has no staged orders | same | same | #2993 E5b |
+| dom-trade-noop-missing | removeTradeOrderForPlayer is a no-op (returns same instance) when the commodity is not present in the staged list | same | same | #2993 E5b |
+| ov-prov-no-tile | false when no tile has 4-part key for region/province | `order_visibility_test.dart` | `support/application/order_visibility_scenarios.dart` + fixtures/expectations + thin runner | #3949 |
+| ov-prov-min | true when a tile in province has at least min visibility | same | same | #3949 |
+| ov-prov-bad-parts | ignores tile keys with wrong number of parts | same | same | #3949 |
+| ov-prov-wrong-count | provinceHasAtLeastVisibility returns false when parts.length != 4 | same | same | #3949 |
+| ov-tile-min | true when tile has at least min level | same | same | #3949 |
+| ov-tile-unknown | false when tile unknown | same | same | #3949 |
+| ov-move-src | true when province has at least fogged | same | same | #3949 |
+| ov-move-dest | true when province has at least fogged | same | same | #3949 |
+| ov-work-explore | explore requires partial reveal (known + unknown land tiles) | same | same | #3949 |
+| ov-work-explore-reject | explore rejects province with no unknown land tile | same | same | #3949 |
+| ov-work-explore-no-ws | explore rejects when worldState omitted | same | same | #3949 |
+| ov-work-prospect | prospect requires at least fogged | same | same | #3949 |
+| ov-work-build | build_improvement allows owned province | same | same | #3949 |
+| ov-work-unknown | unknown workTarget returns false | same | same | #3949 |
+| ov-work-counter-spy | counter_spy allows owned province without fogged | same | same | #3949 |
+| ov-work-fort | build_fort with fogged visibility on owned province | same | same | #3949 |
+| ov-work-road | build_road with targetTileKey uses tile key for region and province | same | same | #3949 |
+
+Migrated imperative `draft_orders_mutations_test.dart` and `order_visibility_test.dart` → table-driven scenarios with dedicated support modules. Removed both from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 58: **34,538** (net +231 from post–slice 57; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
