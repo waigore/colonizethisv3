@@ -235,10 +235,15 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         expect(b2Build, isNotEmpty);
         expect(b2Build.first.targetTileKey, setup.tileB);
     case OrderSuggestionCoreTarget.suggestNavalMissionOrdersReturnsList:
+      final navalMissionGame =
+          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')]));
+      final navalMissionTopology = oscSeaTopology(['sea1']);
       expect(
-        oscSuggestNavalMission(
-          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
-          oscSeaTopology(['sea1']),
+        suggestNavalMissionOrders(
+          oscView(navalMissionGame, navalMissionTopology),
+          navalMissionGame,
+          navalMissionTopology,
+          const Orders(),
         ),
         isA<List<NavalMissionOrder>>(),
       );
@@ -257,7 +262,18 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         isA<List<BuildUnitOrder>>(),
       );
     case OrderSuggestionCoreTarget.suggestBuildOrdersReturnsShipWhenAffordable:
-      final game = oscCapitalProvinceGame(oscAffordableShipPlayer());
+      final shipTreasury = ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost;
+        final shipStockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 2)
+            .applyDelta(CommodityCatalog.fabric.id, 2);
+        final game = oscCapitalProvinceGame(
+          oscPlayer(
+            capitalProvinceId: OscIds.prov('p1'),
+            workerPool: const WorkerPool(peasants: 1),
+            treasury: shipTreasury,
+            stockpile: shipStockpile,
+          ),
+        );
         final topology = oscCapitalTopology();
         final shipTypes = oscSuggestBuild(game, topology)
             .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
@@ -270,7 +286,20 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
         );
     case OrderSuggestionCoreTarget
         .suggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable:
-      final game = oscCapitalProvinceGame(oscAffordableBothPlayer());
+      final bothTreasury =
+          ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost + 1000;
+        final bothStockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 5)
+            .applyDelta(CommodityCatalog.fabric.id, 5)
+            .applyDelta(CommodityCatalog.castIron.id, 5);
+        final game = oscCapitalProvinceGame(
+          oscPlayer(
+            capitalProvinceId: OscIds.prov('p1'),
+            workerPool: const WorkerPool(peasants: 2, apprentices: 1),
+            treasury: bothTreasury,
+            stockpile: bothStockpile,
+          ),
+        );
         final topology = oscCapitalTopology();
         final suggestions = oscSuggestBuild(game, topology);
         expect(
@@ -284,24 +313,33 @@ void runOrderSuggestionCoreExpectation(OrderSuggestionCoreTarget target) {
           reason: 'should suggest ships when affordable',
         );
     case OrderSuggestionCoreTarget.suggestResearchOrdersReturnsList:
+      final researchGame = oscGame(
+        worldState: oscWorld(),
+        players: [oscPlayer(treasury: 1000)],
+      );
+      final researchTopology = oscEmptyTopology();
       expect(
-        oscSuggestResearch(
-          oscGame(
-            worldState: oscWorld(),
-            players: [oscPlayer(treasury: 1000)],
-          ),
-          oscEmptyTopology(),
+        suggestResearchOrders(
+          oscView(researchGame, researchTopology),
+          researchGame,
+          researchTopology,
+          const Orders(),
         ),
         isA<List<ResearchOrder>>(),
       );
     case OrderSuggestionCoreTarget.suggestNavalMoveOrdersReturnsList:
+      final navalMoveGame =
+          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')]));
+      final navalMoveTopology = oscSeaTopology(
+        ['sea1', 'sea2'],
+        edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
+      );
       expect(
-        oscSuggestNavalMove(
-          oscGame(worldState: oscWorld(fleets: [oscFleetAtSea('sea1')])),
-          oscSeaTopology(
-            ['sea1', 'sea2'],
-            edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
-          ),
+        suggestNavalMoveOrders(
+          oscView(navalMoveGame, navalMoveTopology),
+          navalMoveGame,
+          navalMoveTopology,
+          const Orders(),
         ),
         isA<List<NavalMoveOrder>>(),
       );

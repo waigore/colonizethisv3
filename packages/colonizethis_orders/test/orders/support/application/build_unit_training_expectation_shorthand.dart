@@ -72,34 +72,3 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
     },
   );
 }
-
-
-Player butFluyteShipBuildPlayer({
-  Stockpile? stockpile,
-  int peasants = 2,
-  int treasury = 100,
-  String displayName = 'Spain',
-}) {
-  final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
-  return butShipBuildPlayer(
-    stockpile: stockpile ?? butStockpileCovering(shipEcon.buildInputs),
-    peasants: peasants,
-    treasury: treasury,
-    capitalProvinceId: ButIds.prov('P1'),
-    techUnlocked: {kTechIdSuperiorHullDesign: true},
-    displayName: displayName,
-  );
-}
-
-Game butFluyteShipBuildGame(Player player) =>
-    butShipBuildGame(player: player, provinceId: 'P1').copyWith(
-      players: [
-        player.copyWith(
-          stockpile: butStockpileCovering(
-            ShipEconomyCatalog.byId['fluyte']!.buildInputs,
-          ),
-          treasury:
-              ShipEconomyCatalog.byId['fluyte']!.buildTreasuryCost + 10,
-        ),
-      ],
-    );

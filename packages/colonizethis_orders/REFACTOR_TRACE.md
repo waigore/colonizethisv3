@@ -1809,6 +1809,17 @@ test/ LOC after slice 108: **38,094** (net −99 from post–slice 107). Remaini
 
 test/ LOC after slice 109: **38,027** (net −67 from post–slice 108). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 110: osc/but/waa dispatcher-inline compaction
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dispatch-inline-osc-suggest | inline `oscSuggestResearch` / `oscSuggestNavalMission` / `oscSuggestNavalMove` into core suggestion dispatcher | `order_suggestion_core_expectation_shorthand_part1.dart` | `order_suggestion_core_expectations.dart` | #3949 |
+| dispatch-inline-osc-affordable | inline `oscAffordableShipPlayer` / `oscAffordableBothPlayer` into core suggestion dispatcher | same | same | #3949 |
+| dispatch-inline-but-fluyte | inline `butFluyteShipBuildPlayer` / `butFluyteShipBuildGame` into build-unit-training dispatcher | `build_unit_training_expectation_shorthand.dart` | `build_unit_training_expectations.dart` | #3949 |
+| dispatch-inline-waa-prospect | merge `waaExpectProspectEligible` / `waaExpectProspectIneligible` + inline `waaExpectUnitIdleAfterWork` tail | `work_order_application_expectation_shorthand_part1.dart` | `work_order_application_expectations.dart` | #3949 |
+
+test/ LOC after slice 110: **37,999** (net −28 from post–slice 109). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

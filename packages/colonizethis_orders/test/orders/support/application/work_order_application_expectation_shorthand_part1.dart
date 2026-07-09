@@ -29,18 +29,6 @@ void waaExpectProspected(
   }
 }
 
-void waaExpectUnitIdleAfterWork(
-  Game next, {
-  String tileKey = WorkAppIds.tileKey,
-}) {
-  final u = waaSingleUnit(next);
-  expect(u.tileKey, tileKey);
-  expect(u.status, UnitStatus.idle);
-  expect(u.currentWork, isNull);
-  expect(u.originTileKey, isNull);
-  expect(u.assignedTileKey, isNull);
-}
-
 void waaExpectPurchased(
   Game next, {
   required String? ownerId,
@@ -429,7 +417,8 @@ Game waaCounterSpyOngoingAssignmentGame() => workAppOwnedGame(
       ],
     );
 
-void waaExpectProspectEligible({
+void waaExpectProspect({
+  required bool expected,
   TerrainType? terrain,
   Map<String, String>? resourceByTileKey,
 }) {
@@ -437,19 +426,15 @@ void waaExpectProspectEligible({
     terrain: terrain,
     resourceByTileKey: resourceByTileKey,
   );
-  waaExpectProspected(next, expected: true);
-  waaExpectUnitIdleAfterWork(next);
-}
-
-void waaExpectProspectIneligible({
-  TerrainType? terrain,
-  Map<String, String>? resourceByTileKey,
-}) {
-  final next = waaProspectApply(
-    terrain: terrain,
-    resourceByTileKey: resourceByTileKey,
-  );
-  waaExpectProspected(next, expected: false);
+  waaExpectProspected(next, expected: expected);
+  if (expected) {
+    final u = waaSingleUnit(next);
+    expect(u.tileKey, WorkAppIds.tileKey);
+    expect(u.status, UnitStatus.idle);
+    expect(u.currentWork, isNull);
+    expect(u.originTileKey, isNull);
+    expect(u.assignedTileKey, isNull);
+  }
 }
 
 void waaExpectBuildFortSkipped({

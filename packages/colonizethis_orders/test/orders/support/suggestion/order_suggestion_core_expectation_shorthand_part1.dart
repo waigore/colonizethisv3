@@ -34,27 +34,6 @@ List<BuildUnitOrder> oscSuggestBuild(
 ]) =>
     _oscWithViewSuggest(game, topology, orders, suggestBuildOrders);
 
-List<ResearchOrder> oscSuggestResearch(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestResearchOrders);
-
-List<NavalMissionOrder> oscSuggestNavalMission(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestNavalMissionOrders);
-
-List<NavalMoveOrder> oscSuggestNavalMove(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) =>
-    _oscWithViewSuggest(game, topology, orders, suggestNavalMoveOrders);
-
 Iterable<WorkOrder> oscWorkWithTarget(
   List<WorkOrder> suggestions,
   String target,
@@ -140,34 +119,6 @@ Game oscBuilderImprovementGame({
       ),
     ),
     players: [oscBuilderPlayer()],
-  );
-}
-
-Player oscAffordableShipPlayer() {
-  final treasury = ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost;
-  final stockpile = const Stockpile()
-      .applyDelta(CommodityCatalog.lumber.id, 2)
-      .applyDelta(CommodityCatalog.fabric.id, 2);
-  return oscPlayer(
-    capitalProvinceId: OscIds.prov('p1'),
-    workerPool: const WorkerPool(peasants: 1),
-    treasury: treasury,
-    stockpile: stockpile,
-  );
-}
-
-Player oscAffordableBothPlayer() {
-  final treasury =
-      ShipEconomyCatalog.byId['carrack']!.buildTreasuryCost + 1000;
-  final stockpile = const Stockpile()
-      .applyDelta(CommodityCatalog.lumber.id, 5)
-      .applyDelta(CommodityCatalog.fabric.id, 5)
-      .applyDelta(CommodityCatalog.castIron.id, 5);
-  return oscPlayer(
-    capitalProvinceId: OscIds.prov('p1'),
-    workerPool: const WorkerPool(peasants: 2, apprentices: 1),
-    treasury: treasury,
-    stockpile: stockpile,
   );
 }
 

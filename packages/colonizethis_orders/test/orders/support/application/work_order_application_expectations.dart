@@ -41,16 +41,22 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
   switch (target) {
     case WorkOrderApplicationTarget
         .prospectAddsTilePlayerProspectedTilesWhenTerrainEligible:
-      waaExpectProspectEligible(terrain: TerrainType.hills);
+      waaExpectProspect(expected: true, terrain: TerrainType.hills);
     case WorkOrderApplicationTarget
         .prospectOnNonMineralEligibleTerrainDoesNotAddTile:
-      waaExpectProspectIneligible(terrain: TerrainType.plains);
+      waaExpectProspect(expected: false, terrain: TerrainType.plains);
     case WorkOrderApplicationTarget
         .prospectAddsTileWhenMineralResourcePresentWithoutTileMap:
-      waaExpectProspectEligible(resourceByTileKey: {WorkAppIds.tileKey: 'iron'});
+      waaExpectProspect(
+        expected: true,
+        resourceByTileKey: {WorkAppIds.tileKey: 'iron'},
+      );
     case WorkOrderApplicationTarget
         .prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap:
-      waaExpectProspectIneligible(resourceByTileKey: {WorkAppIds.tileKey: 'grain'});
+      waaExpectProspect(
+        expected: false,
+        resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
+      );
     case WorkOrderApplicationTarget
         .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1:
       final next = waaApplyBuildImprovement();
@@ -100,7 +106,12 @@ void runWorkOrderApplicationExpectation(WorkOrderApplicationTarget target) {
         final next = waaApply(game, waaPurchaseLandOrders());
         waaExpectPurchased(next, ownerId: 'p1');
         waaExpectTreasuryDelta(game, next, 'p1', -cost);
-        waaExpectUnitIdleAfterWork(next, tileKey: WorkAppIds.tileKeyMinor);
+        final purchasedUnit = waaSingleUnit(next);
+        expect(purchasedUnit.tileKey, WorkAppIds.tileKeyMinor);
+        expect(purchasedUnit.status, UnitStatus.idle);
+        expect(purchasedUnit.currentWork, isNull);
+        expect(purchasedUnit.originTileKey, isNull);
+        expect(purchasedUnit.assignedTileKey, isNull);
     case WorkOrderApplicationTarget
         .purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe:
       waaExpectPurchaseLandRejected(waaPurchaseLandNoEmbassyGame());

@@ -157,8 +157,26 @@ void runBuildUnitTrainingExpectation(BuildUnitTrainingTarget target) {
     case BuildUnitTrainingTarget
         .shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea:
         final fluyteTopology = butCapitalAdjacentSeaTopology();
+        final fluyteShipEcon = ShipEconomyCatalog.byId['fluyte']!;
+        final fluytePlayer = butShipBuildPlayer(
+          stockpile: butStockpileCovering(fluyteShipEcon.buildInputs),
+          peasants: 2,
+          treasury: fluyteShipEcon.buildTreasuryCost + 10,
+          capitalProvinceId: ButIds.prov('P1'),
+          techUnlocked: {kTechIdSuperiorHullDesign: true},
+          displayName: 'Spain',
+        );
+        final fluyteGame = butShipBuildGame(player: fluytePlayer, provinceId: 'P1')
+            .copyWith(
+          players: [
+            fluytePlayer.copyWith(
+              stockpile: butStockpileCovering(fluyteShipEcon.buildInputs),
+              treasury: fluyteShipEcon.buildTreasuryCost + 10,
+            ),
+          ],
+        );
         final fluyteNext = butApply(
-          butFluyteShipBuildGame(butFluyteShipBuildPlayer(displayName: 'Spain')),
+          fluyteGame,
           butOrdersFor('fluyte'),
           topology: fluyteTopology,
         );
