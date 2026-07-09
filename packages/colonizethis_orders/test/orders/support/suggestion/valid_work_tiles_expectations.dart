@@ -95,9 +95,36 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .buildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected:
-      vwtExpectMineralBuildGate(
-          grainTile: ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-          ironTile: ValidWorkTilesTestSupport.tileKey('p1', 1, 0),
+      final grainTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+        final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
+        final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+        final provinces = [vwtOwnedProvince('p1')];
+        final tiles = {p1: [grainTile, ironTile]};
+        final resources = {grainTile: 'grain', ironTile: 'iron'};
+        final improvements = {grainTile: 0, ironTile: 0};
+        vwtExpectBuildVisMembership(
+          owBuilderVisibilityGame(
+            provinces: provinces,
+            tilesByProvince: tiles,
+            resourceByTileKey: resources,
+            builderTileKey: grainTile,
+            improvementByTile: improvements,
+          ),
+          included: [grainTile],
+          excluded: [ironTile],
+        );
+        vwtExpectBuildVisMembership(
+          owBuilderVisibilityGame(
+            provinces: provinces,
+            tilesByProvince: tiles,
+            resourceByTileKey: resources,
+            builderTileKey: grainTile,
+            improvementByTile: improvements,
+            playerProspectedTiles: {
+              ValidWorkTilesTestSupport.playerId: {ironTile},
+            },
+          ),
+          included: [grainTile, ironTile],
         );
     case ValidWorkTilesTarget.buildImprovementIncludesPurchasedTilesWithResources:
       final purchased = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
@@ -154,15 +181,21 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile:
       final ironTile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-        vwtExpectVisProspectContains(
-          owTribeProspectGame(
-            provinceLocalId: 'p1',
-            tileKeys: [ironTile],
-            resourceByTileKey: {ironTile: 'iron'},
-            visibilityByTile: {ironTile: 'fogged'},
+        final prospectGame = owTribeProspectGame(
+          provinceLocalId: 'p1',
+          tileKeys: [ironTile],
+          resourceByTileKey: {ironTile: 'iron'},
+          visibilityByTile: {ironTile: 'fogged'},
+        );
+        final prospectTopology = owSingleProvinceTopology('p1');
+        expect(
+          validWorkTilesWithVisibility(
+            game: prospectGame,
+            topology: prospectTopology,
+            unitId: 'u1',
+            workTarget: kWorkTargetProspect,
           ),
-          owSingleProvinceTopology('p1'),
-          ironTile,
+          contains(ironTile),
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility:
@@ -189,13 +222,39 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget
         .getvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture:
-      vwtExpectVisExploreLatencyUnder(
-          game: owTribeExploreLatencyGame(),
-          topology: ValidWorkTilesTestSupport.emptyTopology,
+      final latencyGame = owTribeExploreLatencyGame();
+        final latencyTopology = ValidWorkTilesTestSupport.emptyTopology;
+        final sw = Stopwatch()..start();
+        final valid = validWorkTilesWithVisibility(
+          game: latencyGame,
+          topology: latencyTopology,
+          unitId: 'u1',
+          workTarget: kWorkTargetExplore,
         );
+        sw.stop();
+        expect(valid, isNotEmpty);
+        expect(sw.elapsedMilliseconds, lessThan(1000));
     case ValidWorkTilesTarget.suggestmoveordersExcludesMovesToOtherGreatPowerProvinces:
       final fx = owGpAdjacentMoveFixture();
-        vwtExpectNoMovesToProvince(fx.game, fx.topology, fx.otherGpProvinceId);
+        final view = buildPlayerView(
+          fx.game,
+          fx.topology,
+          ValidWorkTilesTestSupport.playerId,
+        );
+        final suggestions = suggestMoveOrders(
+          view,
+          fx.game,
+          fx.topology,
+          const Orders(),
+        );
+        expect(
+          suggestions.where(
+            (m) =>
+                Unit.provinceIdFromTileKey(m.destinationTileKey) ==
+                fx.otherGpProvinceId,
+          ),
+          isEmpty,
+        );
     case ValidWorkTilesTarget.suggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch:
       final tileKeys = [
           ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
@@ -221,17 +280,41 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
     case ValidWorkTilesTarget.suggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit:
       final tile0 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
         final tile1 = ValidWorkTilesTestSupport.tileKey('p1', 1, 0);
-        vwtExpectNoBuildSuggestionForReservedTile(
-          tileKeys: [tile0, tile1],
-          reservedTile: tile0,
+        final reservedGame = owGrainBuildSuggestGame(tileKeys: [tile0, tile1]);
+        final reservedTopology = owSingleProvinceTopology('p1');
+        final buildSuggestions = suggestedWorkOrders(
+          game: reservedGame,
+          topology: reservedTopology,
+          currentOrders: Orders(
+            workOrdersByPlayerId: {
+              ValidWorkTilesTestSupport.playerId: [
+                WorkOrder(
+                  unitId: 'u1',
+                  target: kWorkTargetBuildImprovement,
+                  targetTileKey: tile0,
+                ),
+              ],
+            },
+          ),
+        ).where(
+          (o) =>
+              o.target == kWorkTargetBuildImprovement &&
+              o.targetTileKey == tile0,
         );
+        expect(buildSuggestions, isEmpty);
     case ValidWorkTilesTarget
         .suggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut:
       final fx = vwtTribePartialFx();
-        vwtExpectSuggestExploreTargetsProvince(
-          vwtTribeConsulateGame(fx, id: 'g1916e1'),
-          fx.topology(),
-          fx.provTarget,
+        final exploreGame = vwtTribeConsulateGame(fx, id: 'g1916e1');
+        final exploreTopology = fx.topology();
+        final explore = vwtSuggestExplore(exploreGame, exploreTopology).toList();
+        expect(explore, isNotEmpty);
+        expect(
+          explore.any(
+            (o) =>
+                Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
+          ),
+          isTrue,
         );
     case ValidWorkTilesTarget
         .suggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation:
@@ -240,25 +323,29 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
           targetLocalId: 'gp2p',
           targetOwnerId: 'gp2',
         );
-        vwtExpectSuggestExploreExcludesProvince(
-          fx.game(
-            id: 'g1916e2',
-            players: [
-              ValidWorkTilesTestSupport.defaultPlayer,
-              const Player(id: 'gp2', displayName: 'P2', isHuman: false),
-            ],
+        final excludeGame = fx.game(
+          id: 'g1916e2',
+          players: [
+            ValidWorkTilesTestSupport.defaultPlayer,
+            const Player(id: 'gp2', displayName: 'P2', isHuman: false),
+          ],
+        );
+        final excludeTopology = fx.topology();
+        expect(
+          vwtSuggestExplore(excludeGame, excludeTopology).where(
+            (o) =>
+                Unit.provinceIdFromTileKey(o.targetTileKey) == fx.provTarget,
           ),
-          fx.topology(),
-          fx.provTarget,
+          isEmpty,
         );
     case ValidWorkTilesTarget
         .suggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile:
       final fx = vwtTribeGrainIronFx();
-        vwtExpectSuggestProspectIncludesTile(
-          vwtTribeConsulateGame(fx, id: 'g1916p1'),
-          fx.topology(),
-          fx.t1,
-        );
+        final prospectGame = vwtTribeConsulateGame(fx, id: 'g1916p1');
+        final prospectTopology = fx.topology();
+        final prospect = vwtSuggestProspect(prospectGame, prospectTopology).toList();
+        expect(prospect, isNotEmpty);
+        expect(prospect.any((o) => o.targetTileKey == fx.t1), isTrue);
     case ValidWorkTilesTarget
         .suggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral:
       final ironFx = vwtTribeGrainIronFx(prospectedIron: true);
@@ -272,16 +359,28 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
     case ValidWorkTilesTarget
         .suggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy:
       final fx = vwtMinorPurchaseFx();
-        vwtExpectPurchaseLandIncluded(
-          fx,
-          gameId: 'g1916pl1',
-          overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
+        expect(
+          vwtSuggestPurchaseLand(
+            vwtMinorPurchaseGame(
+              fx,
+              id: 'g1916pl1',
+              overtureStates: [ValidWorkTilesTestSupport.embassyOverture()],
+            ),
+            fx.topology(),
+            fx.provTarget,
+          ),
+          isNotEmpty,
         );
     case ValidWorkTilesTarget
         .suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail:
-      vwtExpectPurchaseLandExcluded(
-          vwtMinorPurchaseFx(),
-          gameId: 'g1916pl2',
+      final purchaseFx = vwtMinorPurchaseFx();
+        expect(
+          vwtSuggestPurchaseLand(
+            vwtMinorPurchaseGame(purchaseFx, id: 'g1916pl2'),
+            purchaseFx.topology(),
+            purchaseFx.provTarget,
+          ),
+          isEmpty,
         );
   }
 }

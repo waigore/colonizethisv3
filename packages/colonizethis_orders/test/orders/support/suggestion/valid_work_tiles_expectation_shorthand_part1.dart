@@ -88,24 +88,6 @@ Iterable<WorkOrder> vwtSuggestPurchaseLand(
           Unit.provinceIdFromTileKey(o.targetTileKey) == targetProvinceId,
     );
 
-void vwtExpectVisProspectContains(
-  Game game,
-  MapTopology topology,
-  String tile, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  expect(
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: topology,
-      unitId: 'u1',
-      workTarget: kWorkTargetProspect,
-      tileMapByRegion: tileMapByRegion,
-    ),
-    contains(tile),
-  );
-}
-
 void vwtExpectVisProspectExcludes(
   Game game,
   MapTopology topology,
@@ -144,47 +126,6 @@ void vwtExpectVisExplore({
   }
 }
 
-void vwtExpectVisExploreLatencyUnder({
-  required Game game,
-  required MapTopology topology,
-  int maxMs = 1000,
-}) {
-  final sw = Stopwatch()..start();
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: topology,
-    unitId: 'u1',
-    workTarget: kWorkTargetExplore,
-  );
-  sw.stop();
-  expect(valid, isNotEmpty);
-  expect(sw.elapsedMilliseconds, lessThan(maxMs));
-}
-
-void vwtExpectNoMovesToProvince(
-  Game game,
-  MapTopology topology,
-  String provinceId,
-) {
-  final view = buildPlayerView(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-  );
-  final suggestions = suggestMoveOrders(
-    view,
-    game,
-    topology,
-    const Orders(),
-  );
-  expect(
-    suggestions.where(
-      (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == provinceId,
-    ),
-    isEmpty,
-  );
-}
-
 void vwtExpectKeysEmpty(
   Game game,
   String unitId,
@@ -209,41 +150,6 @@ void vwtExpectBuildVisMembership(
   for (final tile in excluded) {
     expect(valid.contains(tile), isFalse);
   }
-}
-
-void vwtExpectMineralBuildGate({
-  required String grainTile,
-  required String ironTile,
-}) {
-  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-  final provinces = [vwtOwnedProvince('p1')];
-  final tiles = {p1: [grainTile, ironTile]};
-  final resources = {grainTile: 'grain', ironTile: 'iron'};
-  final improvements = {grainTile: 0, ironTile: 0};
-  vwtExpectBuildVisMembership(
-    owBuilderVisibilityGame(
-      provinces: provinces,
-      tilesByProvince: tiles,
-      resourceByTileKey: resources,
-      builderTileKey: grainTile,
-      improvementByTile: improvements,
-    ),
-    included: [grainTile],
-    excluded: [ironTile],
-  );
-  vwtExpectBuildVisMembership(
-    owBuilderVisibilityGame(
-      provinces: provinces,
-      tilesByProvince: tiles,
-      resourceByTileKey: resources,
-      builderTileKey: grainTile,
-      improvementByTile: improvements,
-      playerProspectedTiles: {
-        ValidWorkTilesTestSupport.playerId: {ironTile},
-      },
-    ),
-    included: [grainTile, ironTile],
-  );
 }
 
 void vwtExpectBuildResourceFilter({
@@ -278,66 +184,6 @@ void vwtExpectBuildResourceFilter({
   );
 }
 
-void vwtExpectNoBuildSuggestionForReservedTile({
-  required List<String> tileKeys,
-  required String reservedTile,
-}) {
-  final game = owGrainBuildSuggestGame(tileKeys: tileKeys);
-  final topology = owSingleProvinceTopology('p1');
-  final buildSuggestions = suggestedWorkOrders(
-    game: game,
-    topology: topology,
-    currentOrders: Orders(
-      workOrdersByPlayerId: {
-        ValidWorkTilesTestSupport.playerId: [
-          WorkOrder(
-            unitId: 'u1',
-            target: kWorkTargetBuildImprovement,
-            targetTileKey: reservedTile,
-          ),
-        ],
-      },
-    ),
-  ).where(
-    (o) =>
-        o.target == kWorkTargetBuildImprovement && o.targetTileKey == reservedTile,
-  );
-  expect(buildSuggestions, isEmpty);
-}
-
-void vwtExpectPurchaseLandIncluded(
-  NwPartialRevealHomeTarget fx, {
-  required String gameId,
-  List<OvertureState>? overtureStates,
-}) {
-  expect(
-    vwtSuggestPurchaseLand(
-      vwtMinorPurchaseGame(
-        fx,
-        id: gameId,
-        overtureStates: overtureStates,
-      ),
-      fx.topology(),
-      fx.provTarget,
-    ),
-    isNotEmpty,
-  );
-}
-
-void vwtExpectPurchaseLandExcluded(
-  NwPartialRevealHomeTarget fx, {
-  required String gameId,
-}) {
-  expect(
-    vwtSuggestPurchaseLand(
-      vwtMinorPurchaseGame(fx, id: gameId),
-      fx.topology(),
-      fx.provTarget,
-    ),
-    isEmpty,
-  );
-}
-
 void vwtExpectVisProspectExcludesAll(
   Game game,
   MapTopology topology,
@@ -356,40 +202,3 @@ void vwtExpectVisProspectExcludesAll(
   }
 }
 
-void vwtExpectSuggestExploreTargetsProvince(
-  Game game,
-  MapTopology topology,
-  String provinceId,
-) {
-  final explore = vwtSuggestExplore(game, topology).toList();
-  expect(explore, isNotEmpty);
-  expect(
-    explore.any(
-      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provinceId,
-    ),
-    isTrue,
-  );
-}
-
-void vwtExpectSuggestExploreExcludesProvince(
-  Game game,
-  MapTopology topology,
-  String provinceId,
-) {
-  expect(
-    vwtSuggestExplore(game, topology).where(
-      (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provinceId,
-    ),
-    isEmpty,
-  );
-}
-
-void vwtExpectSuggestProspectIncludesTile(
-  Game game,
-  MapTopology topology,
-  String tileKey,
-) {
-  final prospect = vwtSuggestProspect(game, topology).toList();
-  expect(prospect, isNotEmpty);
-  expect(prospect.any((o) => o.targetTileKey == tileKey), isTrue);
-}

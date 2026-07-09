@@ -71,16 +71,6 @@ void wccExpectImprovement(
   expect(next.worldState.tileState.improvementLevel(tileKey), level);
 }
 
-void wccExpectUnitIdleCleared(
-  Game next, {
-  String tileKey = WorkAppIds.tileKey,
-}) {
-  final after = wccSingleUnit(next);
-  expect(after.tileKey, tileKey);
-  expect(after.originTileKey, isNull);
-  expect(after.assignedTileKey, isNull);
-}
-
 void wccExpectRoadLevel(Game next, String tileKey, int level) {
   expect(next.worldState.tileState.roadLevel(tileKey), level);
 }

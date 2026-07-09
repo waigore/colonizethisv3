@@ -38,7 +38,10 @@ void runWorkCompletionExpectation(WorkCompletionTarget target) {
         .buildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork:
       final next = wccApply(wccBuilderImprovementAtLevel(0));
         wccExpectImprovement(next, 1);
-        wccExpectUnitIdleCleared(next);
+        final after = wccSingleUnit(next);
+        expect(after.tileKey, WorkAppIds.tileKey);
+        expect(after.originTileKey, isNull);
+        expect(after.assignedTileKey, isNull);
     case WorkCompletionTarget
         .buildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile:
       final next = wccApply(
