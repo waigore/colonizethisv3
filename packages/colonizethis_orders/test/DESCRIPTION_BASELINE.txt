@@ -1,8 +1,12 @@
 AC-10: invalid declare war / offer peace still enumerated
 AC-6: minor at none shows all overture stages; only consulate enabled
+AC1: emitted civilian candidates are deterministically sorted by unitType
+AC1: includes affordable civilian candidates when includeCivilianBuilds is true
+AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call
 AC12: no civilian candidates when paper is below the minimum cost
 AC12: no civilian candidates when treasury is zero
 AC5: Merchant excluded when merchant_companies is not unlocked
+AC5: Merchant included when merchant_companies is unlocked and affordable
 AC9: identical inputs produce identical civilian enumeration
 acceptDeclareWarCandidatesForTargets skips self and at-war targets
 accepted apprentice train consumes peasant, paper, and treasury

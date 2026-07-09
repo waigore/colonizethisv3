@@ -1154,6 +1154,23 @@ Migrated imperative `order_suggestion_unit_availability_test.dart` → table-dri
 
 test/ LOC after slice 66: **35,746** (net +127 from post–slice 65; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
 
+## Wave 3 — Slice 67 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osbcs-includes-affordable | AC1: includes affordable civilian candidates when includeCivilianBuilds is true | `order_suggestion_build_civilian_suggestion_test.dart` | `support/suggestion/order_suggestion_build_civilian_suggestion_scenarios.dart` + `order_suggestion_build_civilian_suggestion_test.dart` | #3793 |
+| osbcs-sorted | AC1: emitted civilian candidates are deterministically sorted by unitType | same | same | #3793 |
+| osbcs-default-false | AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call | same | same | #3793 |
+| osbcs-merchant-excluded | AC5: Merchant excluded when merchant_companies is not unlocked | same | same | #3793 |
+| osbcs-merchant-included | AC5: Merchant included when merchant_companies is unlocked and affordable | same | same | #3793 |
+| osbcs-identical | AC9: identical inputs produce identical civilian enumeration | same | same | #3793 |
+| osbcs-zero-treasury | AC12: no civilian candidates when treasury is zero | same | same | #3793 |
+| osbcs-low-paper | AC12: no civilian candidates when paper is below the minimum cost | same | same | #3793 |
+
+Migrated imperative `order_suggestion_build_civilian_suggestion_test.dart` → table-driven scenarios with dedicated support modules. Pinned previously absent multiline baseline descriptions for AC1/AC1b/AC5 merchant-included scenarios. Removed from `ordersPreferScenarioTablesAllowlist`.
+
+test/ LOC after slice 67: **35,813** (net +67 from post–slice 66; scenario support modules add LOC while runners shrink to thin loops). Remaining: further imperative-suite migration (suggestion families, diplomatic validators, etc.), lib DRY items 5–6, scenario-table migration toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
