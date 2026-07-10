@@ -3,7 +3,9 @@ import 'package:colonizethis_save/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
+import 'game_save_session.dart';
 import 'incompatible_save_format_exception.dart';
+import 'loadable_save_entry.dart';
 import 'reconcile_legacy_spy_work.dart';
 
 final _log = packageLogger();
@@ -14,6 +16,12 @@ const String _suffixCombinedTopology = '_combinedTopology';
 const String _suffixWarpLinks = '_warpLinks';
 const String _saveFormatVersionKey = 'saveFormatVersion';
 const String _saveGamePayloadKey = 'game';
+const String _draftOrdersKey = 'draftOrders';
+const String _productionDesiredOutputKey = 'productionDesiredOutputByRecipe';
+const String _displayNameKey = 'displayName';
+
+/// Fixed label for the auto-save row in [listLoadableSaves] (UI may localize).
+const String kAutoSaveListLabel = 'Auto-save';
 
 const List<String> _mapDataKeySuffixes = <String>[
   _suffixTileMapByRegion,
@@ -23,8 +31,9 @@ const List<String> _mapDataKeySuffixes = <String>[
 ];
 
 /// Current save format version for game envelopes written by [GameSaveAdapter].
-const int kSaveFormatVersion = 1;
-const Set<int> _supportedSaveFormatVersions = {kSaveFormatVersion};
+/// v2 adds mid-turn draft fields; v1 remains readable with empty draft defaults.
+const int kSaveFormatVersion = 2;
+const Set<int> _supportedSaveFormatVersions = {1, kSaveFormatVersion};
 
 /// Fixed Hive key stem for the single auto-save slot. Not listed in [listGameIds].
 /// See SPEC/program/save-load.md § Auto-save slot.
@@ -33,13 +42,24 @@ const String kAutoSaveSlotId = '__colonizethis_autosave';
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
 /// Map data (tile maps, topology) is required for playable saves. See SPEC/program/save-load.md.
 class GameSaveAdapter {
-  /// Saves [game] to [box] as a versioned envelope.
-  void save(Box<dynamic> box, Game game) {
+  /// Saves [game] to [box] as a versioned envelope (optionally with mid-turn drafts).
+  void save(
+    Box<dynamic> box,
+    Game game, {
+    Orders draftOrders = const Orders(),
+    Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
+    String? displayName,
+  }) {
     _log.i('saving gameId=${game.id}');
-    box.put(game.id, {
-      _saveFormatVersionKey: kSaveFormatVersion,
-      _saveGamePayloadKey: game.toJson(),
-    });
+    box.put(
+      game.id,
+      _buildEnvelope(
+        game,
+        draftOrders: draftOrders,
+        productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+        displayName: displayName,
+      ),
+    );
     _log.i('saved gameId=${game.id}');
   }
 
@@ -52,12 +72,20 @@ class GameSaveAdapter {
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
     List<WarpLink>? warpLinks,
+    Orders draftOrders = const Orders(),
+    Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
+    String? displayName,
   }) {
     _log.i('saving auto-save slot logicalGameId=${game.id}');
-    box.put(kAutoSaveSlotId, {
-      _saveFormatVersionKey: kSaveFormatVersion,
-      _saveGamePayloadKey: game.toJson(),
-    });
+    box.put(
+      kAutoSaveSlotId,
+      _buildEnvelope(
+        game,
+        draftOrders: draftOrders,
+        productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+        displayName: displayName,
+      ),
+    );
     saveMapData(
       box,
       kAutoSaveSlotId,
@@ -67,6 +95,21 @@ class GameSaveAdapter {
       warpLinks: warpLinks,
     );
     _log.i('saved auto-save slot logicalGameId=${game.id}');
+  }
+
+  Map<String, dynamic> _buildEnvelope(
+    Game game, {
+    required Orders draftOrders,
+    required Map<String, int> productionDesiredOutputByRecipe,
+    String? displayName,
+  }) {
+    return <String, dynamic>{
+      _saveFormatVersionKey: kSaveFormatVersion,
+      _saveGamePayloadKey: game.toJson(),
+      _draftOrdersKey: draftOrders.toJson(),
+      _productionDesiredOutputKey: productionDesiredOutputByRecipe,
+      if (displayName != null) _displayNameKey: displayName,
+    };
   }
 
   /// Returns true when the auto-save slot holds a playable game + map data.
@@ -112,7 +155,12 @@ class GameSaveAdapter {
   }
 
   /// Loads game by [gameId]. Returns null if not found or invalid.
-  Game? load(Box<dynamic> box, String gameId) {
+  Game? load(Box<dynamic> box, String gameId) =>
+      loadSession(box, gameId)?.game;
+
+  /// Loads [gameId] with mid-turn draft fields. Missing draft keys default to
+  /// empty [Orders] / `{}` / null [GameSaveSession.displayName].
+  GameSaveSession? loadSession(Box<dynamic> box, String gameId) {
     _log.i('loading gameId=$gameId');
     final raw = box.get(gameId);
     if (raw == null) {
@@ -139,8 +187,16 @@ class GameSaveAdapter {
           Game.fromJson(Map<String, dynamic>.from(gameRaw)),
         ),
       );
+      final session = GameSaveSession(
+        game: game,
+        draftOrders: _parseDraftOrders(envelope[_draftOrdersKey]),
+        productionDesiredOutputByRecipe: _parseDesiredOutput(
+          envelope[_productionDesiredOutputKey],
+        ),
+        displayName: _parseDisplayName(envelope[_displayNameKey]),
+      );
       _log.i('loaded gameId=$gameId');
-      return game;
+      return session;
     } catch (e, st) {
       _log.e('load failed gameId=$gameId', error: e, stackTrace: st);
       return null;
@@ -150,7 +206,11 @@ class GameSaveAdapter {
   /// Loads [gameId] or throws [IncompatibleSaveFormatException] when the stored
   /// [saveFormatVersion] is missing or unsupported, or the payload is not a map.
   /// Returns null only when [gameId] is absent from [box].
-  Game? loadStrict(Box<dynamic> box, String gameId) {
+  Game? loadStrict(Box<dynamic> box, String gameId) =>
+      loadSessionStrict(box, gameId)?.game;
+
+  /// Strict variant of [loadSession].
+  GameSaveSession? loadSessionStrict(Box<dynamic> box, String gameId) {
     _log.i('loading strict gameId=$gameId');
     final raw = box.get(gameId);
     if (raw == null) {
@@ -176,8 +236,46 @@ class GameSaveAdapter {
         Game.fromJson(Map<String, dynamic>.from(gameRaw)),
       ),
     );
+    final session = GameSaveSession(
+      game: game,
+      draftOrders: _parseDraftOrders(envelope[_draftOrdersKey]),
+      productionDesiredOutputByRecipe: _parseDesiredOutput(
+        envelope[_productionDesiredOutputKey],
+      ),
+      displayName: _parseDisplayName(envelope[_displayNameKey]),
+    );
     _log.i('loaded strict gameId=$gameId');
-    return game;
+    return session;
+  }
+
+  Orders _parseDraftOrders(Object? raw) {
+    if (raw is! Map<dynamic, dynamic>) {
+      return const Orders();
+    }
+    return Orders.fromJson(Map<String, dynamic>.from(raw));
+  }
+
+  Map<String, int> _parseDesiredOutput(Object? raw) {
+    if (raw is! Map<dynamic, dynamic>) {
+      return const <String, int>{};
+    }
+    final out = <String, int>{};
+    for (final entry in raw.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key is! String || value is! int || value < 0) {
+        continue;
+      }
+      out[key] = value;
+    }
+    return out;
+  }
+
+  String? _parseDisplayName(Object? raw) {
+    if (raw is! String || raw.isEmpty) {
+      return null;
+    }
+    return raw;
   }
 
   /// Lists all game ids stored in [box]. Excludes internal map-data keys.
@@ -216,6 +314,38 @@ class GameSaveAdapter {
     }
 
     return result;
+  }
+
+  /// Manual saves from [listGameIds] plus a valid auto-save row when present.
+  /// Does not change [listGameIds] exclusion of [kAutoSaveSlotId].
+  List<LoadableSaveEntry> listLoadableSaves(Box<dynamic> box) {
+    final entries = <LoadableSaveEntry>[];
+    final manualIds = listGameIds(box)..sort();
+    for (final id in manualIds) {
+      final session = loadSession(box, id);
+      final turn = session?.game.worldState.turnState.turnNumber;
+      final label = session?.displayName;
+      entries.add(
+        LoadableSaveEntry(
+          storageId: id,
+          label: (label != null && label.isNotEmpty) ? label : id,
+          kind: LoadableSaveKind.manual,
+          turnNumber: turn,
+        ),
+      );
+    }
+    if (hasValidAutoSave(box)) {
+      final session = loadSession(box, kAutoSaveSlotId);
+      entries.add(
+        LoadableSaveEntry(
+          storageId: kAutoSaveSlotId,
+          label: kAutoSaveListLabel,
+          kind: LoadableSaveKind.autoSave,
+          turnNumber: session?.game.worldState.turnState.turnNumber,
+        ),
+      );
+    }
+    return entries;
   }
 
   /// Saves required map data for [gameId].

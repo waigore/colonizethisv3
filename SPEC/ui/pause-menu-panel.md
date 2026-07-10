@@ -8,7 +8,7 @@
 
 ## Widget contract
 
-`PauseMenuPanel` is a `StatelessWidget` (`app/lib/features/game/widgets/panels/pause_menu_panel.dart`). It owns no state and emits all user actions on the supplied bus; it never calls `Navigator` directly.
+`PauseMenuPanel` is a `ConsumerWidget` (`app/lib/features/game/widgets/panels/pause_menu_panel.dart`). It watches `turnResolutionBlockingProvider` and emits all user actions on the supplied bus; it never calls `Navigator` directly.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -56,8 +56,8 @@ The panel has no custom close button — dismissal goes through Resume, Exit to 
 
 | State | Trigger | Render / behaviour |
 |-------|---------|--------------------|
-| Default | Panel is opened by `OpenPauseMenuPanelEvent` while a game is active. | Title `Game Paused`, `CtBrassDivider`, then five `CtNinePatchButton` rows in declared order. **Resume** and **Exit to Main Menu** are enabled. **Save Game**, **Load Game**, and **Settings** render in a disabled state (`onPressed: null`, 0.4 opacity per the catalog disabled contract) because no backing flow is wired yet; a follow-up issue (referenced in the implementation TODO) will enable them. |
-| Resume during turn resolution | Panel was opened while `turnResolutionBlockingProvider == true`. | Same five-button render. Tapping **Resume** emits a `ClosePanelEvent` only, which the bus handler always allows (see [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress). The next-turn handler in [`game-screen.md`](game-screen.md) is unaffected. |
+| Default | Panel is opened by `OpenPauseMenuPanelEvent` while a game is active and `turnResolutionBlockingProvider == false`. | Title `Game Paused`, `CtBrassDivider`, then five `CtNinePatchButton` rows in declared order. **Resume**, **Save Game**, **Load Game**, and **Exit to Main Menu** are enabled. **Settings** remains disabled (`onPressed: null`). **Save Game** emits `OpenDialogEvent(save_game_name)`; **Load Game** emits `OpenDialogEvent(load_game_list, {fromPause: true})`. |
+| Resume during turn resolution | Panel was opened while `turnResolutionBlockingProvider == true`. | Same five-button render. **Save Game** and **Load Game** are disabled. Tapping **Resume** emits a `ClosePanelEvent` only, which the bus handler always allows (see [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress). The next-turn handler in [`game-screen.md`](game-screen.md) is unaffected. |
 
 Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu.md`](game-side-menu.md) (the hamburger drawer). Adding it back here is a SPEC change (file a separate issue).
 
@@ -66,7 +66,9 @@ Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu
 ## Navigation
 
 - **Resume** — Emits exactly one `ClosePanelEvent`. The bus handler dismisses the sheet; no other bus events fire.
-- **Save Game / Load Game / Settings** — Disabled placeholders (`onPressed: null`). Tapping is a no-op; no bus events fire. Wiring is tracked in a follow-up issue per the Variants table.
+- **Save Game** — When `turnResolutionBlockingProvider == false`, emits `OpenDialogEvent('save_game_name')` ([save-game-name-dialog.md](save-game-name-dialog.md)). When blocking, disabled (`onPressed: null`).
+- **Load Game** — When not blocking, emits `OpenDialogEvent('load_game_list', {fromPause: true})` ([load-game-list-dialog.md](load-game-list-dialog.md)). When blocking, disabled.
+- **Settings** — Disabled placeholder (`onPressed: null`). Tapping is a no-op.
 - **Exit to Main Menu** — Emits `ClosePanelEvent` first (closing the pause sheet), then emits `RequestExitToMainMenuFlowEvent` on the bus in the same tap handler. The `AppEventHandler` reacts by showing `showExitToMainMenuConfirmDialog` and, when the player confirms, emitting `NavigateToShellEvent`; on cancel no further event fires. Emission order on the bus stream is `ClosePanelEvent` followed by `RequestExitToMainMenuFlowEvent`.
 - **No direct `Navigator.pop` / `Navigator.pushNamed`** inside the widget. All cross-screen transitions go via the bus, matching [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Banned `Navigator` chains.
 
@@ -92,9 +94,13 @@ Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu
   When the widget tree is inspected,
   Then the tree contains exactly one `CtDialogShell`, exactly one `CtBrassDivider`, and exactly five `CtNinePatchButton` rows. The button labels read, in stream order top-to-bottom, `appL10n(context).game_pauseMenu_resume`, `appL10n(context).game_pauseMenu_saveGame`, `appL10n(context).game_pauseMenu_loadGame`, `appL10n(context).game_pauseMenu_settings`, `appL10n(context).game_pauseMenu_exitToMainMenu`.
 
-- Given `PauseMenuPanel` is mounted,
-  When the **Save Game**, **Load Game**, and **Settings** buttons are inspected,
-  Then each `CtNinePatchButton`'s `onPressed` is `null` and the surface renders at the disabled-opacity contract from `SPEC/ui/pixel-art-ui-catalog.md` (no taps are dispatched to the bus when interacted with).
+- Given `PauseMenuPanel` is mounted and `turnResolutionBlockingProvider == false`,
+  When the **Save Game** and **Load Game** buttons are inspected,
+  Then each is enabled; tapping **Save Game** emits `OpenDialogEvent` with id `save_game_name`, and tapping **Load Game** emits `OpenDialogEvent` with id `load_game_list` and `fromPause: true`. **Settings** remains disabled (`onPressed: null`).
+
+- Given `PauseMenuPanel` is mounted and `turnResolutionBlockingProvider == true`,
+  When the **Save Game** and **Load Game** buttons are inspected,
+  Then each `CtNinePatchButton`'s `onPressed` is `null` and no dialog open events fire when interacted with.
 
 - Given `PauseMenuPanel` is mounted with a bus `B` and a listener `L` is attached to `B.stream`,
   When the user taps the **Resume** button,

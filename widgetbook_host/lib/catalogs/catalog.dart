@@ -9,7 +9,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart' show GameSaveAdapter;
+import 'package:colonizethis_save/colonizethis_save.dart'
+    show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +47,8 @@ import 'package:colonizethis_app/features/game/widgets/units/military/military_u
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
+import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
+import 'package:colonizethis_app/features/shell/save_load/save_game_name_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
@@ -261,6 +264,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
+  ...saveLoadDialogDirectories,
   ...nextTurnConfirmationDialogDirectories,
   ...gameInitializingDirectories,
   ...gameSideMenuDirectories,

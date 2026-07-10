@@ -41,12 +41,18 @@ _GameMapCache _gameServiceRequireMapData(GameService service, String gameId) {
   return loaded;
 }
 
-Game? _gameServiceLoadGame(GameService service, String gameId) {
-  final game = service._adapter.load(service._box, gameId);
-  if (game == null) return null;
+Game? _gameServiceLoadGame(GameService service, String gameId) =>
+    _gameServiceLoadGameSession(service, gameId)?.game;
+
+GameSaveSession? _gameServiceLoadGameSession(
+  GameService service,
+  String gameId,
+) {
+  final session = service._adapter.loadSession(service._box, gameId);
+  if (session == null) return null;
   try {
     _gameServiceRequireMapData(service, gameId);
-    return game;
+    return session;
   } catch (e, st) {
     packageLogger().e(
       'required map data missing/invalid for gameId=$gameId',
@@ -99,29 +105,80 @@ void _gameServiceSaveGame(GameService service, Game game) {
   service._adapter.save(service._box, toSave);
 }
 
+void _gameServiceSaveGameSession(
+  GameService service, {
+  required Game sessionGame,
+  required String saveGameId,
+  required Orders draftOrders,
+  required Map<String, int> productionDesiredOutputByRecipe,
+  String? displayName,
+  required bool mirrorAutoSave,
+}) {
+  final preparedBase =
+      service.prepareGameForPersistence?.call(sessionGame) ?? sessionGame;
+  final toSave = preparedBase.copyWith(id: saveGameId);
+  final md = _gameServiceRequiredMapDataView(service, sessionGame.id);
+  service._adapter.save(
+    service._box,
+    toSave,
+    draftOrders: draftOrders,
+    productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+    displayName: displayName,
+  );
+  service._adapter.saveMapData(
+    service._box,
+    saveGameId,
+    tileMapByRegion: md.tileMapByRegion,
+    topologyByRegion: md.topologyByRegion,
+    combinedTopology: md.combinedTopology,
+    warpLinks: md.warpLinks,
+  );
+  service._mapCache[saveGameId] = _GameMapCache(
+    combinedTopology: md.combinedTopology,
+    tileMapByRegion: md.tileMapByRegion,
+    topologyByRegion: md.topologyByRegion,
+    warpLinks: md.warpLinks,
+  );
+  if (mirrorAutoSave) {
+    _gameServiceMirrorAutoSave(
+      service,
+      preparedBase,
+      draftOrders: draftOrders,
+      productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+      displayName: displayName,
+    );
+  }
+}
+
 List<String> _gameServiceListGameIds(GameService service) =>
     service._adapter.listGameIds(service._box);
+
+List<LoadableSaveEntry> _gameServiceListLoadableSaves(GameService service) =>
+    service._adapter.listLoadableSaves(service._box);
 
 bool _gameServiceHasValidAutoSave(GameService service) =>
     service._adapter.hasValidAutoSave(service._box);
 
-Game? _gameServiceLoadAutoSaveGame(GameService service) {
+Game? _gameServiceLoadAutoSaveGame(GameService service) =>
+    _gameServiceLoadAutoSaveSession(service)?.game;
+
+GameSaveSession? _gameServiceLoadAutoSaveSession(GameService service) {
   if (!service._adapter.hasValidAutoSave(service._box)) {
     return null;
   }
-  final game = service._adapter.load(service._box, kAutoSaveSlotId);
-  if (game == null) {
+  final session = service._adapter.loadSession(service._box, kAutoSaveSlotId);
+  if (session == null) {
     return null;
   }
   try {
     final mapData = service._adapter.loadMapData(service._box, kAutoSaveSlotId);
-    service._mapCache[game.id] = _GameMapCache(
+    service._mapCache[session.game.id] = _GameMapCache(
       combinedTopology: mapData.combinedTopology,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
       warpLinks: mapData.warpLinks,
     );
-    return game;
+    return session;
   } catch (e, st) {
     packageLogger().e(
       'save: loadAutoSaveGame failed',
@@ -133,7 +190,13 @@ Game? _gameServiceLoadAutoSaveGame(GameService service) {
   }
 }
 
-void _gameServiceMirrorAutoSave(GameService service, Game game) {
+void _gameServiceMirrorAutoSave(
+  GameService service,
+  Game game, {
+  Orders draftOrders = const Orders(),
+  Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
+  String? displayName,
+}) {
   try {
     final md = _gameServiceRequiredMapDataView(service, game.id);
     service._adapter.saveAutoSave(
@@ -143,6 +206,9 @@ void _gameServiceMirrorAutoSave(GameService service, Game game) {
       topologyByRegion: md.topologyByRegion,
       combinedTopology: md.combinedTopology,
       warpLinks: md.warpLinks,
+      draftOrders: draftOrders,
+      productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+      displayName: displayName,
     );
   } catch (e, st) {
     packageLogger().e(

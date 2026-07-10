@@ -897,5 +897,143 @@ void main() {
       final loaded = adapter.load(box, 'missingVersion');
       expect(loaded, isNull);
     });
+
+    test('draft envelope round-trip preserves orders desired and displayName', () {
+      final game = Game(
+        id: 'draft_rt',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      const drafts = Orders(
+        buildUnitOrdersByPlayerId: {
+          'pl1': [
+            BuildUnitOrder(
+              unitType: 'peasant',
+              isMilitary: false,
+              spawnProvinceId: 'oldWorld|cap',
+            ),
+          ],
+        },
+      );
+      const desired = {'recipe_grain': 3};
+      adapter.save(
+        box,
+        game,
+        draftOrders: drafts,
+        productionDesiredOutputByRecipe: desired,
+        displayName: 'Spain - Leader - 4',
+      );
+      final session = adapter.loadSession(box, 'draft_rt');
+      expect(session, isNotNull);
+      expect(session!.displayName, 'Spain - Leader - 4');
+      expect(session.productionDesiredOutputByRecipe, desired);
+      expect(
+        session.draftOrders.buildUnitOrdersByPlayerId['pl1']!.single.unitType,
+        'peasant',
+      );
+    });
+
+    test('legacy v1 envelope loads empty draft defaults', () {
+      final game = Game(
+        id: 'legacy_v1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      box.put('legacy_v1', {
+        'saveFormatVersion': 1,
+        'game': game.toJson(),
+      });
+      final session = adapter.loadSession(box, 'legacy_v1');
+      expect(session, isNotNull);
+      expect(session!.draftOrders, const Orders());
+      expect(session.productionDesiredOutputByRecipe, isEmpty);
+      expect(session.displayName, isNull);
+    });
+
+    test('listLoadableSaves includes manual and auto-save rows', () {
+      final game = Game(
+        id: 'manual_a',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      adapter.save(box, game, displayName: 'My Spain');
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 'p1'],
+          ['p2', 's1'],
+        ],
+      );
+      final topo = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [],
+      );
+      adapter.saveAutoSave(
+        box,
+        game.copyWith(id: 'session_live'),
+        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+        topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+        combinedTopology: topo,
+      );
+      final entries = adapter.listLoadableSaves(box);
+      expect(adapter.listGameIds(box), isNot(contains(kAutoSaveSlotId)));
+      expect(entries.any((e) => e.storageId == 'manual_a'), isTrue);
+      expect(
+        entries.where((e) => e.storageId == 'manual_a').single.label,
+        'My Spain',
+      );
+      final auto = entries.where((e) => e.kind == LoadableSaveKind.autoSave);
+      expect(auto, hasLength(1));
+      expect(auto.single.storageId, kAutoSaveSlotId);
+      expect(auto.single.label, kAutoSaveListLabel);
+    });
+  });
+
+  group('sanitizeGameId', () {
+    test('trims whitespace and replaces runs with underscore', () {
+      expect(sanitizeGameId('  My Save  '), 'My_Save');
+      expect(sanitizeGameId('a   b'), 'a_b');
+    });
+
+    test('strips map-data suffixes', () {
+      expect(sanitizeGameId('slot_tileMapByRegion'), 'slot');
+      expect(sanitizeGameId('x_topologyByRegion'), 'x');
+      expect(sanitizeGameId('y_combinedTopology'), 'y');
+      expect(sanitizeGameId('z_warpLinks'), 'z');
+    });
+
+    test('returns null for empty or whitespace-only', () {
+      expect(sanitizeGameId(''), isNull);
+      expect(sanitizeGameId('   '), isNull);
+    });
   });
 }
