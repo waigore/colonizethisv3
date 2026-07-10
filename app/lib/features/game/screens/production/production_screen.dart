@@ -17,8 +17,7 @@ import '../../../../providers/production_allocation_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../../widgets/ct_top_bar.dart';
-import '../../../../widgets/strict_asset_icon.dart';
+import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/production/production_commodity_breakdown_dialog.dart';
 import '../../widgets/production/production_labour_helpers.dart';
 import '../../widgets/production/production_panel.dart';
@@ -59,8 +58,7 @@ class ProductionScreen extends ConsumerWidget {
   /// assert against the SPEC string without coupling to the localization
   /// indirection or duplicating the literal — mirrors the pattern used
   /// by `TradeScreen`, `DiplomacyScreen`, and `TechnologyScreen`.
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String topBarBackLabel = 'Map';
+  static const String topBarBackLabel = GameFeatureScreenTopBar.backLabel;
 
   /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
   /// literal `"Production"` (Cinzel display font is configured at the
@@ -83,15 +81,10 @@ class ProductionScreen extends ConsumerWidget {
     return CtGameFeatureScreenShell(
       game: game,
       attachGameToUiListener: attachGameToUiListener,
-      topBar: CtTopBar(
+      topBar: GameFeatureScreenTopBar.build(
         key: topBarKey,
         title: topBarTitle,
-        backButtonLabel: topBarBackLabel,
-        icon: const StrictAssetIcon(
-          assetPath: _topBarIconAsset,
-          width: 18,
-          height: 18,
-        ),
+        iconAsset: _topBarIconAsset,
       ),
       bodyBuilder: (context, shellRef, displayGame) => _ProductionScreenBody(
         displayGame: displayGame,

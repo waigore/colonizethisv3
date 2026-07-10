@@ -61,6 +61,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/yarn_test_fixtures.dart';
+
 import 'support/min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
@@ -92,13 +94,6 @@ const String _kLoadErrorPrefix = 'Could not load intro dialogue';
 /// `intervention_dialogue_overlay_320dp_min_viewport_test.dart` so the
 /// narrow-pin reuses the same deterministic fast-path through
 /// `CtFullScreenDialogueShell`.
-class _FailingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.error(StateError('missing game intro yarn'));
-  }
-}
-
 /// Pumps [overlay] at [size] under the running editorial-monocle theme.
 ///
 /// Delegates to the shared `pumpAtMinViewport` harness
@@ -141,7 +136,7 @@ void main() {
     () {
       Widget buildOverlay() {
         return GameStartIntroOverlay(
-          assetBundle: _FailingAssetBundle(),
+          assetBundle: YarnThrowingAssetBundle(error: StateError('missing game intro yarn')),
           onDismissed: () {},
           child: const SizedBox.expand(),
         );
