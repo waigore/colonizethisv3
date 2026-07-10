@@ -1186,6 +1186,16 @@ test_support LOC: **14,974** (net −486 vs slice 67 / 15,460). Economy `test/` 
 
 test_support LOC: **14,629** (net −345 vs slice 68 / 14,974; −831 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 70+.
 
+## Phase 3 — Slice 70 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| deal-matcher-format-off | `// dart format off` densifies priority/basic/FRR/treasury DealMatcher scenario tables | `deal_matcher_*_scenarios.dart` | #2924, #2989, #3115, #3753, #3939 |
+| frr-profit-price-format-off | densifies FirstRightProfit + PriceDiscovery scenario tables | `first_right_profit_scenarios.dart`, `price_discovery_scenarios.dart` | #3753, #3939 |
+| town-validator-purchased-format-off | densifies town-bonus, validator rules/cap/treasury, purchased-tile index, non-GP extraction, resource-extractor scenario tables | `town_manufacturing_bonus_scenarios.dart`, `validator_*_scenarios.dart`, `purchased_tile_index_scenarios.dart`, `non_gp_extraction_scenarios.dart`, `resource_extractor_scenarios.dart` | #2991, #3093, #3123, #3661, #3872, #3939 |
+
+test_support LOC: **12,991** (net −1,638 vs slice 69 / 14,629). Economy `test/` **1,368** (unchanged). Further format-off / fixture compaction for ≥20% test_support reduction (≤8,200) deferred to slice 71+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

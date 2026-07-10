@@ -27,21 +27,15 @@ FirstRightProfitRateScenario frrProfitRateRow(
 );
 
 /// Canonical scenarios for [computeFirstRightProfitRate].
+// dart format off
 List<FirstRightProfitRateScenario> firstRightProfitRateScenarios() => [
   frrProfitRateRow('returns 0.0 at relationScore 0', 0, 0.0),
   frrProfitRateRow('returns 0.75 at relationScore 75', 75, 0.75),
-  frrProfitRateRow(
-    'returns 1.0 at relationScore 100',
-    100,
-    kFirstRightMaxProfitRate,
-  ),
+  frrProfitRateRow('returns 1.0 at relationScore 100', 100, kFirstRightMaxProfitRate),
   frrProfitRateRow('returns 0.0 at relationScore -25', -25, 0.0),
-  frrProfitRateRow(
-    'returns 1.0 at relationScore 150',
-    150,
-    kFirstRightMaxProfitRate,
-  ),
+  frrProfitRateRow('returns 1.0 at relationScore 150', 150, kFirstRightMaxProfitRate),
 ];
+// dart format on
 
 /// One row for [computeFirstRightProfit] scenario tables.
 typedef FirstRightProfitScenario = ({
@@ -79,67 +73,18 @@ FirstRightProfitScenario frrProfitRow({
 );
 
 /// Canonical scenarios for [computeFirstRightProfit].
+// dart format off
 List<FirstRightProfitScenario> firstRightProfitScenarios() => [
-  frrProfitRow(
-    label: 'relationScore 0, qty 10 @ 5.0 → rate 0.0, treasury 0.0',
-    relationScore: 0,
-    filledQuantity: 10,
-    pricePerUnit: 5.0,
-    expectZero: true,
-  ),
-  frrProfitRow(
-    label: 'relationScore 75, qty 10 @ 5.0 → rate 0.75, treasury 37.5',
-    relationScore: 75,
-    filledQuantity: 10,
-    pricePerUnit: 5.0,
-    profitRate: 0.75,
-    profitTreasury: 37.5,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty 1 @ 1.0 → rate 1.0, treasury 1.0',
-    relationScore: 100,
-    filledQuantity: 1,
-    pricePerUnit: 1.0,
-    profitRate: kFirstRightMaxProfitRate,
-    profitTreasury: 1.0,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty 4 @ 2.5 → rate 1.0, treasury 10.0',
-    relationScore: 100,
-    filledQuantity: 4,
-    pricePerUnit: 2.5,
-    profitRate: kFirstRightMaxProfitRate,
-    profitTreasury: 10.0,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty 0 @ 5.0 → rate 0.0, treasury 0.0',
-    relationScore: 100,
-    filledQuantity: 0,
-    pricePerUnit: 5.0,
-    expectZero: true,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty 10 @ 0.0 → rate 0.0, treasury 0.0',
-    relationScore: 100,
-    filledQuantity: 10,
-    pricePerUnit: 0.0,
-    expectZero: true,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty -5 @ 5.0 → rate 0.0, treasury 0.0',
-    relationScore: 100,
-    filledQuantity: -5,
-    pricePerUnit: 5.0,
-    expectZero: true,
-  ),
-  frrProfitRow(
-    label: 'relationScore 100, qty 5 @ -1.0 → rate 0.0, treasury 0.0',
-    relationScore: 100,
-    filledQuantity: 5,
-    pricePerUnit: -1.0,
-    expectZero: true,
-  ),
+  frrProfitRow(label: 'relationScore 0, qty 10 @ 5.0 → rate 0.0, treasury 0.0', relationScore: 0, filledQuantity: 10, pricePerUnit: 5.0, expectZero: true),
+  frrProfitRow(label: 'relationScore 75, qty 10 @ 5.0 → rate 0.75, treasury 37.5', relationScore: 75, filledQuantity: 10, pricePerUnit: 5.0, profitRate: 0.75, profitTreasury: 37.5),
+  frrProfitRow(label: 'relationScore 100, qty 1 @ 1.0 → rate 1.0, treasury 1.0', relationScore: 100, filledQuantity: 1, pricePerUnit: 1.0, profitRate: kFirstRightMaxProfitRate, profitTreasury: 1.0),
+  frrProfitRow(label: 'relationScore 100, qty 4 @ 2.5 → rate 1.0, treasury 10.0', relationScore: 100, filledQuantity: 4, pricePerUnit: 2.5, profitRate: kFirstRightMaxProfitRate, profitTreasury: 10.0),
+  frrProfitRow(label: 'relationScore 100, qty 0 @ 5.0 → rate 0.0, treasury 0.0', relationScore: 100, filledQuantity: 0, pricePerUnit: 5.0, expectZero: true),
+  frrProfitRow(label: 'relationScore 100, qty 10 @ 0.0 → rate 0.0, treasury 0.0', relationScore: 100, filledQuantity: 10, pricePerUnit: 0.0, expectZero: true),
+  frrProfitRow(label: 'relationScore 100, qty -5 @ 5.0 → rate 0.0, treasury 0.0', relationScore: 100, filledQuantity: -5, pricePerUnit: 5.0, expectZero: true),
+  frrProfitRow(label: 'relationScore 100, qty 5 @ -1.0 → rate 0.0, treasury 0.0', relationScore: 100, filledQuantity: 5, pricePerUnit: -1.0, expectZero: true),
 ];
+// dart format on
 
 /// One row for [computeEmbassyKickback] scenario tables.
 typedef EmbassyKickbackScenario = ({
@@ -170,6 +115,7 @@ EmbassyKickbackScenario embassyKickbackRow(
 );
 
 /// Canonical scenarios for [computeEmbassyKickback].
+// dart format off
 List<EmbassyKickbackScenario> embassyKickbackScenarios() => [
   embassyKickbackRow('relation 100, 10 @ 20.0 → 20.0', 100, 10, 20.0, 20.0),
   embassyKickbackRow('relation 50, 10 @ 20.0 → 10.0', 50, 10, 20.0, 10.0),
@@ -179,6 +125,7 @@ List<EmbassyKickbackScenario> embassyKickbackScenarios() => [
   embassyKickbackRow('relation 100, 10 @ 0.0 → 0.0', 100, 10, 0.0, 0.0),
   embassyKickbackRow('relation 150, 10 @ 20.0 → 20.0', 150, 10, 20.0, 20.0),
 ];
+// dart format on
 
 /// Runs a [computeFirstRightProfitRate] scenario row.
 void runFirstRightProfitRateScenario(FirstRightProfitRateScenario scenario) {
