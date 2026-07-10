@@ -95,6 +95,36 @@ bool fullPassDiplomaticAccepted(
       ),
     );
 
+bool fullPassNavalMoveAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  NavalMoveOrder candidate,
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) =>
+          engine.addNavalMoveOrderWithContext(game, topology, playerId, candidate),
+    );
+
+bool fullPassNavalMissionAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  NavalMissionOrder candidate,
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) => engine.addNavalMissionOrderWithContext(
+        game,
+        topology,
+        playerId,
+        candidate,
+      ),
+    );
+
 IncrementalCandidateValidator _iceValidatorFor({
   required Game game,
   required MapTopology topology,
@@ -148,138 +178,5 @@ void expectCandidateFamilyEquivalent({
     ),
     family: family,
     label: label,
-  );
-}
-
-void expectMoveEquivalent({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required Orders basePrefix,
-  required MoveOrder candidate,
-  required String label,
-}) {
-  expectCandidateFamilyEquivalent(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    family: 'Move',
-    label: label,
-    fullPass: () => fullPassMoveAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isMoveAccepted(candidate),
-  );
-}
-
-void expectArmyMoveEquivalent({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required Orders basePrefix,
-  required ArmyMoveOrder candidate,
-  required String label,
-}) {
-  expectCandidateFamilyEquivalent(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    family: 'Army move',
-    label: label,
-    fullPass: () => fullPassArmyMoveAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isArmyMoveAccepted(candidate),
-  );
-}
-
-void expectBuildEquivalent({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required Orders basePrefix,
-  required BuildUnitOrder candidate,
-  required String label,
-}) {
-  expectCandidateFamilyEquivalent(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    family: 'Build',
-    label: label,
-    fullPass: () => fullPassBuildAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isBuildAccepted(candidate),
-  );
-}
-
-void expectWorkEquivalent({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required Orders basePrefix,
-  required WorkOrder candidate,
-  required String label,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  expectCandidateFamilyEquivalent(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    family: 'Work',
-    label: label,
-    tileMapByRegion: tileMapByRegion,
-    fullPass: () => fullPassWorkAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    ),
-    incremental: (validator) => validator.isWorkAccepted(candidate),
-  );
-}
-
-void expectDiplomaticEquivalent({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required Orders basePrefix,
-  required DiplomaticOrder candidate,
-  required String label,
-}) {
-  expectCandidateFamilyEquivalent(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: basePrefix,
-    family: 'Diplomatic',
-    label: label,
-    fullPass: () => fullPassDiplomaticAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isDiplomaticAccepted(candidate),
   );
 }

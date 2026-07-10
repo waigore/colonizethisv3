@@ -141,3 +141,76 @@ MapTopology armyCorpusTopology() {
     ],
   );
 }
+
+Game navalCorpusGame() {
+  const ow = _iceCorpusOw;
+  return Game(
+    id: 'g_naval_eq',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: '$ow|coastA', regionId: ow, ownerId: 'p1'),
+          Province(id: '$ow|coastB', regionId: ow, ownerId: 'p1'),
+        ],
+      ),
+      newWorld: const RegionData(),
+      fleets: [
+        Fleet(
+          id: 'fleet_atSea',
+          ownerId: 'p1',
+          regionId: ow,
+          seaZoneId: '$ow|sea1',
+          shipTypeIds: const ['carrack'],
+        ),
+        Fleet(
+          id: 'fleet_inPort',
+          ownerId: 'p1',
+          regionId: ow,
+          inPortAtProvinceId: '$ow|coastA',
+          shipTypeIds: const ['carrack'],
+        ),
+      ],
+      tileKeysByRegionAndProvince: const {
+        ow: {
+          '$ow|coastA': ['$ow|coastA|0|0'],
+          '$ow|coastB': ['$ow|coastB|0|0'],
+        },
+      },
+    ),
+    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  );
+}
+
+MapTopology navalCorpusTopology() {
+  const ow = _iceCorpusOw;
+  return MapTopology(
+    nodes: const [
+      TopologyNode(
+        id: '$ow|coastA',
+        regionId: ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: '$ow|coastB',
+        regionId: ow,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: '$ow|sea1',
+        regionId: ow,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: '$ow|sea2',
+        regionId: ow,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: const [
+      TopologyEdge(id1: '$ow|sea1', id2: '$ow|sea2'),
+      TopologyEdge(id1: '$ow|sea1', id2: '$ow|coastA'),
+      TopologyEdge(id1: '$ow|sea2', id2: '$ow|coastB'),
+    ],
+  );
+}

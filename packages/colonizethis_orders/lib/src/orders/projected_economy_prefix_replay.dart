@@ -68,3 +68,34 @@ bool validateProjectedCandidateAfterPrefixReplay<TCandidate, V>({
   final candidateValidator = createCandidateValidator(snap);
   return validate(candidateValidator, candidate).isAccepted;
 }
+
+/// Prefix replay + candidate probe for recruit-worker / build incremental paths.
+bool acceptProjectedResourcePrefixCandidate<TOrder, V>({
+  required bool? prefixReplaySucceeded,
+  required ProjectedResourceLedgers? cachedLedgers,
+  required void Function(bool value) setPrefixReplaySucceeded,
+  required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
+  required List<TOrder> existingOrders,
+  required V Function() createPrefixValidator,
+  required OrderValidationResult Function(V validator, TOrder order) validate,
+  required ProjectedResourceLedgers Function(V validator) readLedgers,
+  required V Function(ProjectedResourceLedgers snap) createCandidateValidator,
+  required TOrder candidate,
+}) {
+  final snap = ensureProjectedResourcePrefixReplay<TOrder, V>(
+    prefixReplaySucceeded: prefixReplaySucceeded,
+    cachedLedgers: cachedLedgers,
+    setPrefixReplaySucceeded: setPrefixReplaySucceeded,
+    setCachedLedgers: setCachedLedgers,
+    existingOrders: existingOrders,
+    createPrefixValidator: createPrefixValidator,
+    validate: validate,
+    readLedgers: readLedgers,
+  );
+  return validateProjectedCandidateAfterPrefixReplay(
+    snap: snap,
+    createCandidateValidator: createCandidateValidator,
+    candidate: candidate,
+    validate: validate,
+  );
+}

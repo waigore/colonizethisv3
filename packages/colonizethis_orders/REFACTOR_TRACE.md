@@ -2052,6 +2052,15 @@ test/ LOC after slice 130: **37,242** (net −33 from post–slice 129). Remaini
 
 No scenario semantics changed; CI `repo.domain_package_test_file_size` gate green.
 
+## Wave 3 — Slice 132: incremental equivalence DRY + projected prefix candidate helper
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-wrapper-inline | drop `expectMoveEquivalent` / `expectArmyMoveEquivalent` / `expectBuildEquivalent` / `expectWorkEquivalent` / `expectDiplomaticEquivalent` / naval equivalents; call `expectCandidateFamilyEquivalent` at corpus sites | `incremental_candidate_validator_equivalence_test_helpers.dart`, `incremental_candidate_validator_equivalence_naval_helpers.dart` (deleted) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart`, `incremental_candidate_validator_equivalence_expectations.dart`, `incremental_candidate_validator_equivalence_corpus.dart` | #3949 |
+| lib-prefix-candidate | extract `acceptProjectedResourcePrefixCandidate`; fold recruit-worker / build incremental probes | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` | #3949 |
+
+test/ LOC after slice 132: **37,208** (net −34 from post–slice 131). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -42,7 +42,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final existing =
         basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
         const <RecruitWorkerOrder>[];
-    final snap = ensureProjectedResourcePrefixReplay(
+    return acceptProjectedResourcePrefixCandidate(
       prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
       cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
       setPrefixReplaySucceeded: (v) {
@@ -65,9 +65,6 @@ extension IncrementalCandidateValidatorPrefixReplay
         treasury: validator.treasury,
         workers: validator.workers,
       ),
-    );
-    return validateProjectedCandidateAfterPrefixReplay(
-      snap: snap,
       createCandidateValidator: (ledgers) => createProjectedRecruitWorkerValidator(
         player: player,
         stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
@@ -75,8 +72,6 @@ extension IncrementalCandidateValidatorPrefixReplay
         workerPool: ledgers.workers,
       ),
       candidate: candidate,
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
     );
   }
 
@@ -86,7 +81,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    final snap = ensureProjectedResourcePrefixReplay(
+    return acceptProjectedResourcePrefixCandidate(
       prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
       cachedLedgers: cache.postBuildPrefixEconomy,
       setPrefixReplaySucceeded: (v) {
@@ -110,9 +105,6 @@ extension IncrementalCandidateValidatorPrefixReplay
         treasury: validator.treasury,
         workers: validator.workers,
       ),
-    );
-    return validateProjectedCandidateAfterPrefixReplay(
-      snap: snap,
       createCandidateValidator: (ledgers) => createProjectedBuildValidator(
         game: game,
         player: player,
@@ -121,8 +113,6 @@ extension IncrementalCandidateValidatorPrefixReplay
         workerPool: ledgers.workers,
       ),
       candidate: candidate,
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
     );
   }
 

@@ -123,13 +123,22 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           ),
         );
     case IncrementalEquivalenceTarget.buildSingleCandidate:
-        expectBuildEquivalent(
+        expectCandidateFamilyEquivalent(
           game: iceBuildCorpusGame(),
           topology: iceBuildCorpusTopology,
           playerId: IceIds.playerId,
           basePrefix: const Orders(),
-          candidate: iceBuildUnit('pikemen'),
+          family: 'Build',
           label: 'single build candidate',
+          fullPass: () => fullPassBuildAccepted(
+            iceBuildCorpusGame(),
+            iceBuildCorpusTopology,
+            IceIds.playerId,
+            const Orders(),
+            iceBuildUnit('pikemen'),
+          ),
+          incremental: (validator) =>
+              validator.isBuildAccepted(iceBuildUnit('pikemen')),
         );
     case IncrementalEquivalenceTarget.buildSuccessiveProbes:
       {
@@ -160,29 +169,53 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
       }
     case IncrementalEquivalenceTarget.workNonEmptyBasePrefix:
         final tile = iceTile('P2');
-        expectWorkEquivalent(
-          game: moveCorpusGame(),
-          topology: moveCorpusTopology(),
+        final game = moveCorpusGame();
+        final topology = moveCorpusTopology();
+        final basePrefix = iceExploreWorkPrefix('u_explorer', 'P2');
+        final candidate = WorkOrder(
+          unitId: 'u_explorer',
+          target: kWorkTargetExplore,
+          targetTileKey: tile,
+        );
+        expectCandidateFamilyEquivalent(
+          game: game,
+          topology: topology,
           playerId: IceIds.playerId,
-          basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
-          candidate: WorkOrder(
-            unitId: 'u_explorer',
-            target: kWorkTargetExplore,
-            targetTileKey: tile,
-          ),
+          basePrefix: basePrefix,
+          family: 'Work',
           label: 'duplicate work unit with basePrefix',
+          fullPass: () => fullPassWorkAccepted(
+            game,
+            topology,
+            IceIds.playerId,
+            basePrefix,
+            candidate,
+          ),
+          incremental: (validator) => validator.isWorkAccepted(candidate),
         );
     case IncrementalEquivalenceTarget.diplomaticNonEmptyBasePrefix:
-        expectDiplomaticEquivalent(
-          game: moveCorpusGame(),
-          topology: moveCorpusTopology(),
+        final game = moveCorpusGame();
+        final topology = moveCorpusTopology();
+        final basePrefix = iceDeclareWarPrefix('p2');
+        const candidate = DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'p2',
+        );
+        expectCandidateFamilyEquivalent(
+          game: game,
+          topology: topology,
           playerId: IceIds.playerId,
-          basePrefix: iceDeclareWarPrefix('p2'),
-          candidate: const DiplomaticOrder(
-            type: DiplomaticOrderType.alliance,
-            targetFactionId: 'p2',
-          ),
+          basePrefix: basePrefix,
+          family: 'Diplomatic',
           label: 'same-target non-economic conflict',
+          fullPass: () => fullPassDiplomaticAccepted(
+            game,
+            topology,
+            IceIds.playerId,
+            basePrefix,
+            candidate,
+          ),
+          incremental: (validator) => validator.isDiplomaticAccepted(candidate),
         );
     case IncrementalEquivalenceTarget.diplomaticSequentialProbes:
       {
