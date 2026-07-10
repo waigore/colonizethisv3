@@ -25,6 +25,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/golden_capture_harness.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
@@ -119,27 +120,14 @@ Widget _goldenHost({
   required Key boundaryKey,
   required Widget child,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: Center(
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: child,
-        ),
-      ),
-    ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    includeLocalizations: true,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: child,
   );
 }
 
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 void main() {
   suppressLogsForTests();
@@ -163,7 +151,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     expect(find.byType(GpNationColorPennant), findsNWidgets(2));
     final gp1Pennant = tester.widget<GpNationColorPennant>(
@@ -204,7 +192,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     expect(find.byType(GpNationColorPennant), findsNWidgets(2));
     for (final id in ['gp1', 'gp3']) {
@@ -244,7 +232,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     expect(tester.takeException(), isNull);
     expect(find.byType(GpNationColorPennant), findsNWidgets(2));
@@ -269,7 +257,7 @@ void main() {
         child: TechTreeWidget(game: game, player: player),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     final cropRotation = find.text('Crop Rotation');
     await tester.ensureVisible(cropRotation);
@@ -301,7 +289,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     expect(find.text('GP One'), findsOneWidget);
     expect(find.text('GP Three'), findsOneWidget);
@@ -331,7 +319,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     final gp4Pennant = tester.widget<GpNationColorPennant>(
       find.byKey(
@@ -385,7 +373,7 @@ void main() {
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpForGolden(tester, settle: false);
 
     expect(find.text('GP nation-color pennants (highlighted = you)'), findsOneWidget);
     expect(find.byType(GpNationColorPennant), findsNWidgets(2));

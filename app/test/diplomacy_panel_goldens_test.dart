@@ -32,18 +32,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/tribe_first_contact_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 
-/// `pumpAndSettle` can hang on this surface (animated chrome keeps the ticker
-/// busy); bounded pumps flush layout and the deferred build instead.
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
+import 'support/diplomacy_panel_test_support.dart';
+import 'support/golden_capture_harness.dart';
 
 /// Minimal in-memory [AssetBundle] returning the supplied yarn text so the
 /// herald golden is deterministic and offline (mirrors
@@ -278,25 +273,17 @@ Widget _panelHost({
   double width = 460,
   double height = 1000,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: Center(
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              topology: topology,
-              currentOrders: const Orders(),
-              bus: AppEventBus.create(),
-            ),
-          ),
-        ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    child: SizedBox(
+      width: width,
+      height: height,
+      child: DiplomacyPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        currentOrders: const Orders(),
+        bus: AppEventBus.create(),
       ),
     ),
   );
@@ -310,8 +297,7 @@ void main() {
   testWidgets('AC-1 golden: empty-state panel shows headings + tribe placeholder', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 1100));
+        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_empty_state_golden');
 
     await tester.pumpWidget(
@@ -321,7 +307,7 @@ void main() {
         boundaryKey: boundaryKey,
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Great Powers'), findsOneWidget);
     expect(find.text('Minor Nations'), findsOneWidget);
@@ -337,8 +323,7 @@ void main() {
   testWidgets('AC-7/AC-10 golden: GP row shows overture + FTP controls, disabled stages present', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 1100));
+        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_gp_row_golden');
 
     await tester.pumpWidget(
@@ -348,7 +333,7 @@ void main() {
         boundaryKey: boundaryKey,
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Great Powers'), findsOneWidget);
     expect(find.text('Castile'), findsOneWidget);
@@ -371,8 +356,7 @@ void main() {
   testWidgets('AC-4 (#3625) golden: allied GP row shows ALLIANCE treaty badge', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 1100));
+        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_gp_alliance_row_golden');
 
     await tester.pumpWidget(
@@ -382,7 +366,7 @@ void main() {
         boundaryKey: boundaryKey,
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Castile'), findsOneWidget);
     expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
@@ -399,13 +383,12 @@ void main() {
   testWidgets(
     'wide GP-row golden: trailing action cluster flows left-to-right (Refs #3621)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      // SPEC/ui/diplomacy-panel.md § Acceptance criteria (wide-viewport GP-row
+            // SPEC/ui/diplomacy-panel.md § Acceptance criteria (wide-viewport GP-row
       // golden, Refs #3621): the host panel is 800 dp wide (> 500 dp
       // kDiplomacyRowNarrowMaxWidth) so the GP row renders the wide variant
       // with the trailing compact action cluster, unlike the 460 dp narrow
       // AC-7 golden above.
-      await tester.binding.setSurfaceSize(const Size(1000, 1200));
+      await configureGoldenSurface(tester, size: const Size(1000, 1200));
       const boundaryKey = ValueKey<String>('diplomacy_gp_row_wide_golden');
 
       await tester.pumpWidget(
@@ -417,7 +400,7 @@ void main() {
           height: 1200,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // The wide variant lays the row body out as a Row (info column + trailing
       // action cluster), not the narrow Column.
@@ -469,8 +452,7 @@ void main() {
   testWidgets('AC-6 golden: discovered Tribe row shows overture controls', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 1100));
+        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_tribe_row_golden');
 
     await tester.pumpWidget(
@@ -480,7 +462,7 @@ void main() {
         boundaryKey: boundaryKey,
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Tribes'), findsOneWidget);
     expect(find.text('Powhatan'), findsOneWidget);
@@ -496,25 +478,22 @@ void main() {
   testWidgets('AC-4 golden: first-contact herald (OVL80001) names tribe and capital', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 800));
+        await configureGoldenSurface(tester, size: const Size(600, 800));
     const boundaryKey = ValueKey<String>('tribe_first_contact_herald_golden');
 
     await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppThemes.editorialMonocle,
-        home: RepaintBoundary(
-          key: boundaryKey,
-          child: TribeFirstContactOverlay(
-            tribeName: 'Powhatan',
-            capitalName: 'Werowocomoco',
-            assetBundle: _StringAssetBundle({
-              kDialogueTribeFirstContactAsset: _kHeraldYarn,
-            }),
-            onDismissed: () {},
-            child: const ColoredBox(color: Color(0xFF101014)),
-          ),
+      wrapGoldenBoundary(
+        boundaryKey: boundaryKey,
+        center: false,
+        useScaffold: false,
+        child: TribeFirstContactOverlay(
+          tribeName: 'Powhatan',
+          capitalName: 'Werowocomoco',
+          assetBundle: _StringAssetBundle({
+            kDialogueTribeFirstContactAsset: _kHeraldYarn,
+          }),
+          onDismissed: () {},
+          child: const ColoredBox(color: Color(0xFF101014)),
         ),
       ),
     );
@@ -535,8 +514,7 @@ void main() {
   testWidgets(
     'R12/R13 golden: colony Tribe row shows standing chips + relation meter',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 1100));
+            await configureGoldenSurface(tester, size: const Size(600, 1100));
       const boundaryKey = ValueKey<String>('diplomacy_colony_tribe_row_golden');
 
       await tester.pumpWidget(
@@ -546,7 +524,7 @@ void main() {
           boundaryKey: boundaryKey,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster ACs
       // (Refs #3753 R12): colony Tribe surfaces Colony + Embassy chips and an
@@ -571,8 +549,7 @@ void main() {
   testWidgets(
     'R3/R8/R12 golden: subsidized Minor row shows subsidy line + overseas chip',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 1100));
+            await configureGoldenSurface(tester, size: const Size(600, 1100));
       const boundaryKey = ValueKey<String>(
         'diplomacy_subsidized_minor_row_golden',
       );
@@ -584,7 +561,7 @@ void main() {
           boundaryKey: boundaryKey,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Per-faction row → Outgoing economic
       // diplomacy + § Diplomatic standing chip cluster (Refs #3753 R3/R8/R12):
