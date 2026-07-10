@@ -2090,6 +2090,14 @@ test/ LOC after slice 134: **37,318** (net +20 from post–slice 133; lib/player
 
 test/ LOC after slice 135: **37,290** (net −28 from post–slice 134). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 136: ICE row runners + delete runs module
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-row-runners | add `iceRunMoveRow` / `iceRunArmyMoveRow` / `iceRunNavalMoveRow` / `iceRunNavalMissionRow`; inline scenario closures; delete `incremental_candidate_validator_equivalence_runs.dart` | `incremental_candidate_validator_equivalence_runs.dart` (deleted) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` + `incremental_candidate_validator_equivalence_scenarios.dart` | #3949 |
+
+test/ LOC after slice 136: **37,244** (net −46 from post–slice 135). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

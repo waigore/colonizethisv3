@@ -254,3 +254,63 @@ void iceExpectNavalMissionOnCorpus({
     incremental: (validator) => validator.isNavalMissionAccepted(candidate),
   );
 }
+
+void iceRunMoveRow({
+  required String unitId,
+  required String destLocal,
+  required String label,
+  Orders basePrefix = const Orders(),
+}) {
+  iceExpectMoveOnCorpus(
+    candidate: MoveOrder(
+      unitId: unitId,
+      destinationTileKey: destLocal.isEmpty ? '' : iceTile(destLocal),
+    ),
+    label: label,
+    basePrefix: basePrefix,
+  );
+}
+
+void iceRunArmyMoveRow({
+  required String armyId,
+  required String destLocal,
+  required String label,
+  Orders basePrefix = const Orders(),
+}) {
+  iceExpectArmyMoveOnCorpus(
+    candidate: ArmyMoveOrder(
+      armyId: armyId,
+      destinationProvinceId: IceIds.prov(destLocal),
+    ),
+    label: label,
+    basePrefix: basePrefix,
+  );
+}
+
+void iceRunNavalMoveRow({
+  required String fleetId,
+  required String destSeaZoneId,
+  required String label,
+}) {
+  iceExpectNavalMoveOnCorpus(
+    candidate: NavalMoveOrder(
+      fleetId: fleetId,
+      destinationSeaZoneId: destSeaZoneId,
+    ),
+    label: label,
+  );
+}
+
+void iceRunNavalMissionRow({
+  required String fleetId,
+  required String mission,
+  required String label,
+}) {
+  iceExpectNavalMissionOnCorpus(
+    candidate: NavalMissionOrder(
+      fleetId: fleetId,
+      mission: mission,
+    ),
+    label: label,
+  );
+}
