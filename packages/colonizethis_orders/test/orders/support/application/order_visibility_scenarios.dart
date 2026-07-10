@@ -1,44 +1,44 @@
 // Table-driven order-visibility scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_visibility_expectations.dart';
+import 'order_visibility_run_rows.dart';
 
 /// One row in order-visibility scenario tables.
 class OrderVisibilityScenario implements RefsScenario {
   const OrderVisibilityScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderVisibilityTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runOrderVisibilityScenario(OrderVisibilityScenario scenario) {
-  runOrderVisibilityExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Scenarios for provinceHasAtLeastVisibility.
 List<OrderVisibilityScenario> provinceHasAtLeastVisibilityScenarios() => const [
       OrderVisibilityScenario(
         label: 'false when no tile has 4-part key for region/province',
-        target: OrderVisibilityTarget.provinceHasAtLeastVisibilityNoTileKey,
+        run: ovRunProvinceHasAtLeastVisibilityNoTileKey,
       ),
       OrderVisibilityScenario(
         label: 'true when a tile in province has at least min visibility',
-        target: OrderVisibilityTarget.provinceHasAtLeastVisibilityTileMeetsMin,
+        run: ovRunProvinceHasAtLeastVisibilityTileMeetsMin,
       ),
       OrderVisibilityScenario(
         label: 'ignores tile keys with wrong number of parts',
-        target: OrderVisibilityTarget.provinceHasAtLeastVisibilityIgnoresBadKeyParts,
+        run: ovRunProvinceHasAtLeastVisibilityIgnoresBadKeyParts,
       ),
       OrderVisibilityScenario(
         label: 'provinceHasAtLeastVisibility returns false when parts.length != 4',
-        target: OrderVisibilityTarget.provinceHasAtLeastVisibilityWrongPartCount,
+        run: ovRunProvinceHasAtLeastVisibilityWrongPartCount,
       ),
     ];
 
@@ -46,11 +46,11 @@ List<OrderVisibilityScenario> provinceHasAtLeastVisibilityScenarios() => const [
 List<OrderVisibilityScenario> tileHasAtLeastVisibilityScenarios() => const [
       OrderVisibilityScenario(
         label: 'true when tile has at least min level',
-        target: OrderVisibilityTarget.tileHasAtLeastVisibilityTrue,
+        run: ovRunTileHasAtLeastVisibilityTrue,
       ),
       OrderVisibilityScenario(
         label: 'false when tile unknown',
-        target: OrderVisibilityTarget.tileHasAtLeastVisibilityUnknown,
+        run: ovRunTileHasAtLeastVisibilityUnknown,
       ),
     ];
 
@@ -58,7 +58,7 @@ List<OrderVisibilityScenario> tileHasAtLeastVisibilityScenarios() => const [
 List<OrderVisibilityScenario> moveSourceVisibilityOkScenarios() => const [
       OrderVisibilityScenario(
         label: 'true when province has at least fogged',
-        target: OrderVisibilityTarget.moveSourceVisibilityOkFogged,
+        run: ovRunMoveSourceVisibilityOkFogged,
       ),
     ];
 
@@ -66,7 +66,7 @@ List<OrderVisibilityScenario> moveSourceVisibilityOkScenarios() => const [
 List<OrderVisibilityScenario> moveDestVisibilityOkScenarios() => const [
       OrderVisibilityScenario(
         label: 'true when province has at least fogged',
-        target: OrderVisibilityTarget.moveDestVisibilityOkFogged,
+        run: ovRunMoveDestVisibilityOkFogged,
       ),
     ];
 
@@ -74,38 +74,38 @@ List<OrderVisibilityScenario> moveDestVisibilityOkScenarios() => const [
 List<OrderVisibilityScenario> workOrderVisibilityOkScenarios() => const [
       OrderVisibilityScenario(
         label: 'explore requires partial reveal (known + unknown land tiles)',
-        target: OrderVisibilityTarget.workExplorePartialReveal,
+        run: ovRunWorkExplorePartialReveal,
       ),
       OrderVisibilityScenario(
         label: 'explore rejects province with no unknown land tile',
-        target: OrderVisibilityTarget.workExploreRejectsNoUnknownLand,
+        run: ovRunWorkExploreRejectsNoUnknownLand,
       ),
       OrderVisibilityScenario(
         label: 'explore rejects when worldState omitted',
-        target: OrderVisibilityTarget.workExploreRejectsWithoutWorldState,
+        run: ovRunWorkExploreRejectsWithoutWorldState,
       ),
       OrderVisibilityScenario(
         label: 'prospect requires at least fogged',
-        target: OrderVisibilityTarget.workProspectRequiresFogged,
+        run: ovRunWorkProspectRequiresFogged,
       ),
       OrderVisibilityScenario(
         label: 'build_improvement allows owned province',
-        target: OrderVisibilityTarget.workBuildImprovementOwnedProvince,
+        run: ovRunWorkBuildImprovementOwnedProvince,
       ),
       OrderVisibilityScenario(
         label: 'unknown workTarget returns false',
-        target: OrderVisibilityTarget.workUnknownTargetReturnsFalse,
+        run: ovRunWorkUnknownTargetReturnsFalse,
       ),
       OrderVisibilityScenario(
         label: 'counter_spy allows owned province without fogged',
-        target: OrderVisibilityTarget.workCounterSpyOwnedWithoutFogged,
+        run: ovRunWorkCounterSpyOwnedWithoutFogged,
       ),
       OrderVisibilityScenario(
         label: 'build_fort with fogged visibility on owned province',
-        target: OrderVisibilityTarget.workBuildFortFoggedOwned,
+        run: ovRunWorkBuildFortFoggedOwned,
       ),
       OrderVisibilityScenario(
         label: 'build_road with targetTileKey uses tile key for region and province',
-        target: OrderVisibilityTarget.workBuildRoadTargetTileKey,
+        run: ovRunWorkBuildRoadTargetTileKey,
       ),
     ];

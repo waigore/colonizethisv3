@@ -2197,7 +2197,21 @@ test/ LOC after slice 144: **36,671** (net −84 from post–slice 143). Remaini
 | rwov-dispatch-collapse | drop `RecruitWorkerOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `recruit_worker_order_validator_expectations.dart` (deleted) | `recruit_worker_order_validator_run_rows.dart` + thin `recruit_worker_order_validator_scenarios.dart` | #3949 |
 | amvabi-dispatch-collapse | drop `ArmyMoveValidatorArmiesByIdTarget` enum + switch; scenario rows hold `run` tear-offs | `army_move_validator_armies_by_id_expectations.dart` (deleted) | `army_move_validator_armies_by_id_run_rows.dart` + thin `army_move_validator_armies_by_id_scenarios.dart` | #3949 |
 
-test/ LOC after slice 145: see PR (`find … wc -l`). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~62 expectations modules).
+test/ LOC after slice 145: **36,586** (net −85 from post–slice 144). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~62 expectations modules).
+
+## Wave 3 — Slice 146: application scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ah-dispatch-collapse | drop `ApplicationHelpersTarget` enum + switch; scenario rows hold `run` tear-offs | `application_helpers_expectations.dart` (deleted) | `application_helpers_run_rows.dart` + thin `application_helpers_scenarios.dart` | #3949 |
+| csp-dispatch-collapse | drop `CivilianSpawnTarget` enum + switch; scenario rows hold `run` tear-offs | `civilian_spawn_expectations.dart` (deleted) | `civilian_spawn_run_rows.dart` + thin `civilian_spawn_scenarios.dart` | #3949 |
+| dom-dispatch-collapse | drop `DraftOrdersMutationsTarget` enum + switch; scenario rows hold `run` tear-offs | `draft_orders_mutations_expectations.dart` (deleted) | `draft_orders_mutations_run_rows.dart` + thin `draft_orders_mutations_scenarios.dart` | #3949 |
+| ov-dispatch-collapse | drop `OrderVisibilityTarget` enum + switch; scenario rows hold `run` tear-offs | `order_visibility_expectations.dart` (deleted) | `order_visibility_run_rows.dart` + thin `order_visibility_scenarios.dart` | #3949 |
+| ol-dispatch-collapse | drop `OrdersLoggingTarget` enum + switch; scenario rows hold `run` tear-offs | `orders_logging_expectations.dart` (deleted) | `orders_logging_run_rows.dart` + thin `orders_logging_scenarios.dart` | #3949 |
+| wpp-dispatch-collapse | drop `WorkerPoolPhaseTarget` enum + switch; scenario rows hold `run` tear-offs | `worker_pool_phase_expectations.dart` (deleted) | `worker_pool_phase_run_rows.dart` + thin `worker_pool_phase_scenarios.dart` | #3949 |
+| cpt-dispatch-collapse | drop `CivilianProjectedTileTarget` enum + switch; scenario rows hold `run` tear-offs | `civilian_projected_tile_expectations.dart` (deleted) | `civilian_projected_tile_run_rows.dart` + thin `civilian_projected_tile_scenarios.dart` | #3949 |
+
+test/ LOC after slice 146: **36,481** (net −105 from post–slice 145). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~55 expectations modules).
 
 ## Wave 3 — documented exceptions (kickoff)
 
