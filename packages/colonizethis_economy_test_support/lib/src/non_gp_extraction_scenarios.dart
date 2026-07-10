@@ -58,7 +58,7 @@ void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
   scenario.verify(result);
 }
 
-/// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57 / 58).
+/// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57 / 58 / 66).
 NonGpExtractionScenario nonGpMinorRow({
   required String label,
   required NonGpExtractionExpectation expect,
@@ -66,8 +66,6 @@ NonGpExtractionScenario nonGpMinorRow({
   required Set<String> connected,
   List<TileImprovementSpec> tileSpecs = const [],
   int townDev = 1,
-  int width = 2,
-  int height = 2,
   int capitalTileGrainBonusPerTurn = 0,
   String? refs,
 }) => nonGpExtractionRow(
@@ -77,9 +75,7 @@ NonGpExtractionScenario nonGpMinorRow({
     townDev: townDev,
     capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
   ),
-  tileMapByRegion: {
-    'oldWorld': nonGpProvMap('oldWorld|m1', width, height, resources),
-  },
+  tileMapByRegion: {'oldWorld': nonGpProvMap('oldWorld|m1', resources)},
   connectivityByFactionId: connectivityByFaction({'m1': connected}),
   expect: expect,
   refs: refs,
@@ -127,7 +123,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       ],
     ),
     tileMapByRegion: {
-      'newWorld': nonGpProvMap('newWorld|t1', 2, 2, [
+      'newWorld': nonGpProvMap('newWorld|t1', [
         [null, Resource.iron],
         [null, Resource.grain],
       ]),
@@ -148,8 +144,6 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
         'capital-tile grain bonus is NOT applied to non-GP totals '
         '(SPEC AC: Great-Power-only rule)',
     capitalTileGrainBonusPerTurn: 5,
-    width: 1,
-    height: 1,
     resources: const [
       [null],
     ],
@@ -161,8 +155,6 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     label:
         'non-GP output is land-only (SPEC AC: no overseas bucket, no GP-side '
         'side-effects on Player.stockpile)',
-    width: 1,
-    height: 1,
     tileSpecs: const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)],
     resources: const [
       [Resource.timber],
@@ -209,7 +201,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       ],
     ),
     tileMapByRegion: {
-      'oldWorld': nonGpProvMap('oldWorld|m2', 1, 1, const [
+      'oldWorld': nonGpProvMap('oldWorld|m2', const [
         [Resource.grain],
       ]),
     },
@@ -225,7 +217,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       tileSpecs: const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)],
     ),
     tileMapByRegion: {
-      'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
+      'oldWorld': nonGpProvMap('oldWorld|m1', const [
         [Resource.grain],
       ]),
     },
@@ -268,8 +260,6 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
       label:
           'aggregates multiple connected non-mineral tiles of the same commodity '
           'into a single per-faction total',
-      width: 3,
-      height: 1,
       tileSpecs: const [
         TileImprovementSpec('oldWorld|m1|0|0', 1, 1),
         TileImprovementSpec('oldWorld|m1|1|0', 1, 1),
@@ -287,8 +277,6 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
     nonGpMinorRow(
       label:
           'capital province at minimum town development level 1 caps yield to 1',
-      width: 2,
-      height: 1,
       townDev: 1,
       tileSpecs: const [TileImprovementSpec('oldWorld|m1|1|0', 1, 1)],
       resources: const [

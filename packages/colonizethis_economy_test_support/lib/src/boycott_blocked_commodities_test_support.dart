@@ -52,8 +52,6 @@ Game gameWithColonyTribeBoycottTest({
 Map<String, TileMapResult> tileMapsForBoycottColonyTribeTest() => {
   boycottColonyTribeNwRegionId: nonGpProvMap(
     boycottColonyTribeProvinceId,
-    1,
-    1,
     const [
       [Resource.furs],
     ],

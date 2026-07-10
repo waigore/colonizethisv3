@@ -73,14 +73,7 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
 }) => nonGpAutoOfferRow(
   label: label,
   game: nonGpMinorM1Game(tileSpecs: tileSpecs ?? const []),
-  tileMapByRegion: {
-    'oldWorld': nonGpProvMap(
-      'oldWorld|m1',
-      resources.first.length,
-      resources.length,
-      resources,
-    ),
-  },
+  tileMapByRegion: {'oldWorld': nonGpProvMap('oldWorld|m1', resources)},
   connectivityByFactionId: emptyConnectivity
       ? const {}
       : connectivityByFaction({'m1': connected}),

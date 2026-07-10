@@ -129,33 +129,39 @@ const _gpProvinceId = '$_ow|p1';
 const _gpTownKey = '$_gpProvinceId|0|0';
 const _gpTimberTile = '$_gpProvinceId|1|0';
 
-TileMapResult _gpTimberTileMap() => TileMapResult(
-  width: 2,
-  height: 1,
-  grid: const [
-    ['p1', 'p1'],
-  ],
-  resourceGrid: const [
-    [null, Resource.timber],
-  ],
-  terrainGrid: const [
-    [null, TerrainType.hardwoodForest],
-  ],
-);
-
-Game _gpTownTimberGame() => spainExtractorGame(
-  techUnlocked: {kTechIdCircularSaw: true},
-  oldWorld: RegionData(provinces: [owP1Province(townTileKey: _gpTownKey)]),
-  tileKeysByRegionAndProvince: {
-    _ow: {
-      _gpProvinceId: [_gpTownKey, _gpTimberTile],
-    },
-  },
-  tileState: tileStateFromSpecs(const [
-    TileImprovementSpec(_gpTimberTile, 4, 4),
-    TileImprovementSpec(_gpTownKey, 0, 1),
-  ]),
-);
+({Game game, Map<String, TileMapResult> tileMaps}) _gpTownTimberFixture() {
+  final tileMaps = {
+    _ow: TileMapResult(
+      width: 2,
+      height: 1,
+      grid: const [
+        ['p1', 'p1'],
+      ],
+      resourceGrid: const [
+        [null, Resource.timber],
+      ],
+      terrainGrid: const [
+        [null, TerrainType.hardwoodForest],
+      ],
+    ),
+  };
+  return (
+    game: spainExtractorGame(
+      techUnlocked: {kTechIdCircularSaw: true},
+      oldWorld: RegionData(provinces: [owP1Province(townTileKey: _gpTownKey)]),
+      tileKeysByRegionAndProvince: {
+        _ow: {
+          _gpProvinceId: [_gpTownKey, _gpTimberTile],
+        },
+      },
+      tileState: tileStateFromSpecs(const [
+        TileImprovementSpec(_gpTimberTile, 4, 4),
+        TileImprovementSpec(_gpTownKey, 0, 1),
+      ]),
+    ),
+    tileMaps: tileMaps,
+  );
+}
 
 void runTownManufacturingBonusGamePin(
   TownManufacturingBonusGamePin pin,
@@ -163,10 +169,10 @@ void runTownManufacturingBonusGamePin(
 ) {
   switch (pin) {
     case TownManufacturingBonusGamePin.gpTownTimberBonus:
-      final game = _gpTownTimberGame();
+      final f = _gpTownTimberFixture();
       final live = computeTownManufacturingBonusForGame(
-        game: game,
-        tileMapByRegion: {_ow: _gpTimberTileMap()},
+        game: f.game,
+        tileMapByRegion: f.tileMaps,
         gpConnectivityByPlayerId: connectivityFor({_gpTownKey, _gpTimberTile}),
         nonGpConnectivityByFactionId: const {},
       );
@@ -221,35 +227,31 @@ void runTownManufacturingBonusGamePin(
         autoOffers: offers,
       );
     case TownManufacturingBonusGamePin.previewMatchesLive:
-      final game = _gpTownTimberGame();
-      final tileMaps = {_ow: _gpTimberTileMap()};
+      final f = _gpTownTimberFixture();
       const topology = MapTopology();
-      final gpConnectivity = resolveConnectivity(
-        game: game,
-        tileMapByRegion: tileMaps,
-        topology: topology,
-      );
-      final nonGpConnectivity = resolveNonGreatPowerConnectivity(
-        game: game,
-        tileMapByRegion: tileMaps,
-        topology: topology,
-      );
       final live = computeTownManufacturingBonusForGame(
-        game: game,
-        tileMapByRegion: tileMaps,
-        gpConnectivityByPlayerId: gpConnectivity,
-        nonGpConnectivityByFactionId: nonGpConnectivity,
-      );
-      final preview = previewTownManufacturingBonusByProvince(
-        game: game,
-        topology: topology,
-        tileMapByRegion: tileMaps,
+        game: f.game,
+        tileMapByRegion: f.tileMaps,
+        gpConnectivityByPlayerId: resolveConnectivity(
+          game: f.game,
+          tileMapByRegion: f.tileMaps,
+          topology: topology,
+        ),
+        nonGpConnectivityByFactionId: resolveNonGreatPowerConnectivity(
+          game: f.game,
+          tileMapByRegion: f.tileMaps,
+          topology: topology,
+        ),
       );
       assertTownManufacturingBonusGameExpectation(
         expectation: expect,
         bonusByProvinceId: live.bonusByProvinceId,
         bonusByFactionId: live.bonusByFactionId,
-        previewByProvince: preview,
+        previewByProvince: previewTownManufacturingBonusByProvince(
+          game: f.game,
+          topology: topology,
+          tileMapByRegion: f.tileMaps,
+        ),
       );
     case TownManufacturingBonusGamePin.previewEmpty:
       final game = TestFixtures.minimalGame();

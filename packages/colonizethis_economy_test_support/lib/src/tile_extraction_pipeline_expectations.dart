@@ -11,7 +11,7 @@ import 'tile_extraction_pipeline_scenarios.dart';
 const _resourceContextProvinceId = 'oldWorld|p1';
 
 TileMapResult _tileMapForResourceContext() {
-  return nonGpProvMap(_resourceContextProvinceId, 2, 1, [
+  return nonGpProvMap(_resourceContextProvinceId, [
     [Resource.grain, Resource.iron],
   ]);
 }
@@ -82,7 +82,7 @@ _extractionContextFixtures() {
   final province = capitalProvinceForNonGpExtractionTest(
     provinceId: _extractionContextProvinceId,
   );
-  final tileMap = nonGpProvMap(_extractionContextProvinceId, 1, 1, [
+  final tileMap = nonGpProvMap(_extractionContextProvinceId, [
     [Resource.grain],
   ]);
   return (tileMapByRegion: {'oldWorld': tileMap}, province: province);

@@ -77,14 +77,12 @@ TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
   return state;
 }
 
-/// Square tile map of size [width] × [height] where every cell belongs to the
-/// same prefixed [provinceId] and resources are read from [resources].
-TileMapResult nonGpProvMap(
-  String provinceId,
-  int width,
-  int height,
-  List<List<Resource?>> resources,
-) {
+/// Square tile map where every cell belongs to the same prefixed [provinceId]
+/// and resources are read from [resources] (dimensions inferred from the
+/// matrix; Refs #3939 slice 66).
+TileMapResult nonGpProvMap(String provinceId, List<List<Resource?>> resources) {
+  final height = resources.length;
+  final width = resources.first.length;
   final localId = provinceId.split('|').last;
   final grid = List<List<String>>.generate(
     height,
@@ -286,10 +284,10 @@ nonGpMinorTribeTimberFursFixture({List<TileImprovementSpec>? tileSpecs}) {
   return (
     game: nonGpMinorAndTribeGame(tileSpecs: specs),
     tileMapByRegion: {
-      'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
+      'oldWorld': nonGpProvMap('oldWorld|m1', const [
         [Resource.timber],
       ]),
-      'newWorld': nonGpProvMap('newWorld|t1', 1, 1, const [
+      'newWorld': nonGpProvMap('newWorld|t1', const [
         [Resource.furs],
       ]),
     },

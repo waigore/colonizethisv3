@@ -1150,6 +1150,16 @@ test_support LOC: **15,506** (net −141 vs slice 63 / 15,647). Economy `test/` 
 
 test_support LOC: **15,494** (net −12 vs slice 64 / 15,506). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 66+.
 
+## Phase 3 — Slice 66 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-map-shape | `nonGpProvMap` derives width/height from resource rows; `nonGpMinorRow` drops redundant width/height | `extraction_fixture_support.dart`, `non_gp_extraction_scenarios.dart`, callers | #2991, #3939 |
+| extractor-lazy-game | `gameForTileState` keeps town-rule and missing-province overrides synchronized with scenario tile specs | `resource_extractor_scenarios.dart` | #3661, #3939 |
+| town-gp-fixture | `_gpTownTimberFixture` shares GP town-timber game/map across live-bonus and preview parity pins | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+
+test_support LOC: **15,564** (net −18 vs pre-slice 15,582 / −30 vs slice 65 documented 15,494 after format drift). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 67+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

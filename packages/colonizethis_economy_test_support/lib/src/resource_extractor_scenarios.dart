@@ -29,6 +29,7 @@ typedef ResourceExtractorScenario = ({
   int Function(String playerId)? techCapForPlayer,
   bool useOverseasGame,
   Game? gameOverride,
+  Game Function(TileMapState tileState)? gameForTileState,
   Map<String, ConnectivityResult>? connectivityByPlayer,
   TechCapComparisonPin? techCapComparisonPin,
   BlockadedOverseasPin? blockadedOverseasPin,
@@ -70,6 +71,7 @@ ResourceExtractorScenario extractionScenario({
   int Function(String playerId)? techCapForPlayer,
   bool useOverseasGame = false,
   Game? gameOverride,
+  Game Function(TileMapState tileState)? gameForTileState,
   Map<String, ConnectivityResult>? connectivityByPlayer,
   String? expectLogMessageContains,
   TechCapComparisonPin? techCapComparisonPin,
@@ -106,6 +108,7 @@ ResourceExtractorScenario extractionScenario({
     techCapForPlayer: techCapForPlayer,
     useOverseasGame: useOverseasGame,
     gameOverride: gameOverride,
+    gameForTileState: gameForTileState,
     connectivityByPlayer: connectivityByPlayer,
     techCapComparisonPin: techCapComparisonPin,
     blockadedOverseasPin: blockadedOverseasPin,
@@ -133,6 +136,8 @@ Map<String, TileMapResult> _tileMapByRegionFor(
 
 Game _gameFor(ResourceExtractorScenario scenario, TileMapState tileState) {
   if (scenario.gameOverride != null) return scenario.gameOverride!;
+  final lazy = scenario.gameForTileState;
+  if (lazy != null) return lazy(tileState);
   if (scenario.useOverseasGame) {
     return overseasResourceExtractorGame(tileState: tileState);
   }
@@ -320,7 +325,6 @@ List<ResourceExtractorScenario> resourceExtractorSpecialCaseScenarios({
   required TileMapResult grainTileMap,
 }) {
   final blockade = blockadedOverseasExtractionFixture();
-  final missingSpecs = [owP1Imp(2, 2)];
   return [
     extractionScenario(
       label: 'overseas totals when connected tile in different region',
@@ -417,11 +421,10 @@ List<ResourceExtractorScenario> resourceExtractorSpecialCaseScenarios({
       label:
           'skips connected tile and logs when province missing from region (world-model)',
       tileMap: grainTileMap,
-      improvements: missingSpecs,
+      improvements: [owP1Imp(2, 2)],
       connected: {kOwP1Tile00},
-      gameOverride: provinceMissingExtractorGame(
-        tileState: tileStateFromSpecs(missingSpecs),
-      ),
+      gameForTileState: (tileState) =>
+          provinceMissingExtractorGame(tileState: tileState),
       expectLogMessageContains: 'extraction province missing',
       expect: const ResourceExtractorExpectation(
         landAbsent: ['grain'],
@@ -454,8 +457,8 @@ ResourceExtractorScenario _townRuleScenario({
     improvements: _townRuleTileSpecs,
     connected: {tileKey},
     pathTransportCap: const {tileKey: 4},
-    gameOverride: townRuleTwoProvinceExtractorGame(
-      tileState: tileStateFromSpecs(_townRuleTileSpecs),
+    gameForTileState: (tileState) => townRuleTwoProvinceExtractorGame(
+      tileState: tileState,
       p1TownTileKey: kOwP1Tile00,
       p2TownTileKey: p2TownTileKey,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
