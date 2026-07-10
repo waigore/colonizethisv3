@@ -43,10 +43,19 @@ void runLabeledScenarioGroup<S>(
   });
 }
 
+/// Thrown when [runLabeledScenarios] cannot resolve a row label.
+class ScenarioLabelRequiredException implements Exception {
+  ScenarioLabelRequiredException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'ScenarioLabelRequiredException: $message';
+}
+
 String _scenarioLabel<S>(S scenario, String Function(S scenario)? labelOf) {
   if (labelOf != null) return labelOf(scenario);
   if (scenario is LabeledScenario) return scenario.label;
-  throw ArgumentError(
+  throw ScenarioLabelRequiredException(
     'runLabeledScenarios: pass labelOf for non-LabeledScenario rows',
   );
 }
