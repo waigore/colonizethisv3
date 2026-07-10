@@ -247,6 +247,34 @@ DealMatcherScenario boycottTradeRow({
   refs: refs,
 );
 
+/// Compact single-faction unfilled bid map (Refs #3939 slice 60).
+Map<String, List<TradeOrder>> matcherUnfilledBid(
+  String faction,
+  String commodity,
+  int qty, {
+  int priority = 1,
+}) => {
+  faction: [matcherBid(commodity, qty, priority: priority)],
+};
+
+/// Compact single-faction unfilled offer map (Refs #3939 slice 60).
+Map<String, List<TradeOrder>> matcherUnfilledOffer(
+  String faction,
+  String commodity,
+  int qty, {
+  int priority = 1,
+}) => {
+  faction: [matcherOffer(commodity, qty, priority: priority)],
+};
+
+/// Compact [MarketActivity] pin (Refs #3939 slice 60).
+MarketActivity matcherActivity({int bid = 0, int offer = 0, int filled = 0}) =>
+    MarketActivity(
+      totalBidQuantity: bid,
+      totalOfferQuantity: offer,
+      filledQuantity: filled,
+    );
+
 /// Offers-only or bids-only carry-forward row (Refs #3939 slice 42).
 DealMatcherScenario matcherUnilateralRow({
   required String label,

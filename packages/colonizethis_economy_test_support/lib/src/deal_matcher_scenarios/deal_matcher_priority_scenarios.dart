@@ -1,7 +1,5 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
@@ -32,9 +30,12 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
       filledDealExpectations: const [
         FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
       ],
-      unfilledBidsByFactionId: {
-        'buyerOther': [matcherBid('timber', 5, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'buyerOther',
+        'timber',
+        5,
+        priority: 1,
+      ),
     ),
   ),
   matcherFtpTimberRow(
@@ -52,9 +53,12 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
           isFtpMatch: true,
         ),
       ],
-      unfilledBidsByFactionId: {
-        'gpC': [matcherBid('timber', 10, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpC',
+        'timber',
+        10,
+        priority: 1,
+      ),
     ),
     refs: '#2989',
   ),
@@ -117,9 +121,12 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
     expect: DealMatchExpectation(
       filledDealExpectations: const [FilledDealExpectation(quantity: 4)],
       unfilledOffersEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5, priority: 3)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'b',
+        'timber',
+        5,
+        priority: 3,
+      ),
     ),
   ),
 ];
@@ -167,17 +174,11 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       tradeCapacityByFactionId: {'b': 100, 'c': 100},
     ),
     expect: DealMatchExpectation(
-      activityByCommodityId: const {
-        'timber': MarketActivity(
-          totalBidQuantity: 7,
-          totalOfferQuantity: 10,
-          filledQuantity: 7,
-        ),
+      activityByCommodityId: {
+        'timber': matcherActivity(bid: 7, offer: 10, filled: 7),
       },
       unfilledBidsEmpty: true,
-      unfilledOffersByFactionId: {
-        'a': [matcherOffer('timber', 3)],
-      },
+      unfilledOffersByFactionId: matcherUnfilledOffer('a', 'timber', 3),
     ),
   ),
   matcherRow(
@@ -212,9 +213,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         buyerFactionId: 'gpHigh',
         quantity: 5,
       ),
-      unfilledBidsByFactionId: {
-        'gpLow': [matcherBid('timber', 5, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpLow',
+        'timber',
+        5,
+        priority: 1,
+      ),
     ),
   ),
   sellPriorityMinorSellerRow(
@@ -236,9 +240,12 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     },
     expect: DealMatchExpectation(
       firstFilledDeal: const FilledDealExpectation(buyerFactionId: 'gpLow'),
-      unfilledBidsByFactionId: {
-        'gpHigh': [matcherBid('timber', 5, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpHigh',
+        'timber',
+        5,
+        priority: 1,
+      ),
     ),
   ),
   sellPriorityMinorSellerRow(

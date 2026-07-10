@@ -1,7 +1,6 @@
 // FRR DealMatcher scenarios (Refs #3836, #3939).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../frr_scenarios/frr_d5_test_support.dart';
 import 'deal_matcher_expectations.dart';
@@ -33,9 +32,12 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
         buyerFactionId: 'gpB',
         quantity: 6,
       ),
-      unfilledBidsByFactionId: {
-        'gpB': [matcherBid('timber', 4, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpB',
+        'timber',
+        4,
+        priority: 1,
+      ),
       unfilledOffersEmpty: true,
     ),
   ),
@@ -156,9 +158,12 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
           isFirstRightOfRefusalMatch: true,
         ),
       ],
-      unfilledBidsByFactionId: {
-        'gpA': [matcherBid('timber', 2, priority: 5)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpA',
+        'timber',
+        2,
+        priority: 5,
+      ),
     ),
     refs: '#2992',
   ),
@@ -173,13 +178,9 @@ List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
       'gpA': [matcherBid('timber', 6, priority: 5)],
       'gpB': [matcherBid('timber', 6, priority: 1)],
     },
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       activityByCommodityId: {
-        'timber': MarketActivity(
-          totalBidQuantity: 12,
-          totalOfferQuantity: 10,
-          filledQuantity: 10,
-        ),
+        'timber': matcherActivity(bid: 12, offer: 10, filled: 10),
       },
     ),
   ),

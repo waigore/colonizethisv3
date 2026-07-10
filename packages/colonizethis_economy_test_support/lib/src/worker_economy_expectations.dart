@@ -1,6 +1,5 @@
 // Compact worker labour primitive assertions (Refs #3939 phase 3 slice 33).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

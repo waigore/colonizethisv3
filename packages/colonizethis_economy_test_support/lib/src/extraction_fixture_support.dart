@@ -227,21 +227,29 @@ TileMapResult nonGpProvMap(
 /// Empty non-GP [Game] (no provinces / minors / tribes) (Refs #3939 slice 58).
 Game nonGpEmptyGame() => gameForNonGpExtractionTest(provinces: const []);
 
-/// Standard `m1` OW capital + [testMinor] shell (Refs #3939 slice 58).
+/// Standard `m1` OW capital + [testMinor] shell (Refs #3939 slice 58 / 60).
 Game nonGpMinorM1Game({
   List<TileImprovementSpec> tileSpecs = const [],
   int townDev = 1,
   int capitalTileGrainBonusPerTurn = 0,
+  String id = 'g_test',
+  String? townTileKey,
+  List<Player> players = const [],
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
 }) => gameForNonGpExtractionTest(
+  id: id,
   provinces: [
     capitalProvinceForNonGpExtractionTest(
       provinceId: 'oldWorld|m1',
       townDev: townDev,
+      townTileKey: townTileKey,
     ),
   ],
   tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
   minorNations: [testMinor()],
   capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+  players: players,
+  tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
 );
 
 /// `m1` OW + `t1` NW dual-faction non-GP shell (Refs #3939 slice 58).
@@ -314,24 +322,25 @@ nonGpMinorTribeTimberFursFixture({List<TileImprovementSpec>? tileSpecs}) {
   );
 }
 
+CapitalTile _factionCapitalTile(String provinceId, {int x = 0, int y = 0}) =>
+    CapitalTile(
+      regionId: provinceId.split('|').first,
+      provinceId: provinceId,
+      x: x,
+      y: y,
+    );
+
 /// A standard one-tile minor nation in `oldWorld|m1` with capital at (0,0).
 MinorNation testMinor({
   String id = 'm1',
   String provinceId = 'oldWorld|m1',
   int capitalX = 0,
   int capitalY = 0,
-}) {
-  return MinorNation(
-    id: id,
-    capitalProvinceId: provinceId,
-    capitalTile: CapitalTile(
-      regionId: provinceId.split('|').first,
-      provinceId: provinceId,
-      x: capitalX,
-      y: capitalY,
-    ),
-  );
-}
+}) => MinorNation(
+  id: id,
+  capitalProvinceId: provinceId,
+  capitalTile: _factionCapitalTile(provinceId, x: capitalX, y: capitalY),
+);
 
 /// A standard one-tile tribe in `newWorld|t1` with capital at (0,0).
 Tribe testTribe({
@@ -339,18 +348,11 @@ Tribe testTribe({
   String provinceId = 'newWorld|t1',
   int capitalX = 0,
   int capitalY = 0,
-}) {
-  return Tribe(
-    id: id,
-    capitalProvinceId: provinceId,
-    capitalTile: CapitalTile(
-      regionId: provinceId.split('|').first,
-      provinceId: provinceId,
-      x: capitalX,
-      y: capitalY,
-    ),
-  );
-}
+}) => Tribe(
+  id: id,
+  capitalProvinceId: provinceId,
+  capitalTile: _factionCapitalTile(provinceId, x: capitalX, y: capitalY),
+);
 
 Province _owProvince(
   String localId, {

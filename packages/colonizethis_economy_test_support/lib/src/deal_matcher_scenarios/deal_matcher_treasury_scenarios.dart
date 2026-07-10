@@ -23,9 +23,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
         quantity: 3,
         pricePerUnit: 30.0,
       ),
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('timber', 7)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 7),
     ),
     refs: '#3115',
   ),
@@ -49,9 +47,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
         commodityId: 'alpha',
         quantity: 5,
       ),
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('beta', 5)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'beta', 5),
     ),
     refs: '#3115',
   ),
@@ -62,9 +58,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     treasuryBudgetByBuyerFactionId: const {'gp1': -50},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('timber', 10)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 10),
     ),
   ),
   matcherRow(
@@ -153,9 +147,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     treasuryBudgetByBuyerFactionId: const <String, int>{},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
-      unfilledBidsByFactionId: {
-        'gp1': [matcherBid('timber', 5)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 5),
     ),
   ),
   matcherPairRow(

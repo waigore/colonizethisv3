@@ -1081,6 +1081,18 @@ test_support LOC: **16,362** (net −59 vs slice 57 / 16,421). Economy `test/` *
 
 test_support LOC: **15,960** (net −402 vs slice 58 / 16,362; includes dart format pass). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 60+.
 
+## Phase 3 — Slice 60 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| extractor-dsl-collapse | Fold `_extractorRow` into `extractionScenario`; drop IIFE special-case rows; share `_p1Grid2x2` | `resource_extractor_scenarios.dart` | #3939 |
+| non-gp-shell-extend | Extend `nonGpMinorM1Game` (id/townTileKey/players/tileKeys); DRY Minor/Tribe capital tile | `extraction_fixture_support.dart`, `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| frr-empty-determinism | `frrEmptyCreditsRow`; move determinism re-run into `runFrrCreditsScenario`; drop static expect factory | `frr_credits_scenarios.dart`, `frr_credits_expectations.dart` | #2992, #3753, #3939 |
+| matcher-unfilled-activity | `matcherUnfilledBid` / `matcherUnfilledOffer` / `matcherActivity`; town techGated parent-input reuse | `deal_matcher_*`, `town_manufacturing_bonus_*` | #3115, #3939 |
+| suggester-treasury-ids | Treasury suggester rows use string commodity ids; drop unused imports; declare `logger` dep | `trade_order_suggester_scenarios.dart`, `pubspec.yaml` | #3123, #3939 |
+
+test_support LOC: **15,916** (net −44 vs slice 59 / 15,960). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 61+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

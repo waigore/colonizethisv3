@@ -1,6 +1,5 @@
 // Table-driven TradeOrderSuggester scenarios (Refs #3856, #3939 slices 14 / 46).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -312,13 +311,10 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() => [
     label: 'treasury budget is consumed across distinct bids in id order',
     bidTypeCap: 6,
     treasuryBudgetForBids: 90,
-    worldMarketState: WorldMarketState(
-      prices: {CommodityCatalog.iron.id: 30, CommodityCatalog.timber.id: 30},
+    worldMarketState: const WorldMarketState(
+      prices: {'iron': 30, 'timber': 30},
     ),
-    commodityNeedByCommodityId: {
-      CommodityCatalog.iron.id: 5,
-      CommodityCatalog.timber.id: 5,
-    },
+    commodityNeedByCommodityId: const {'iron': 5, 'timber': 5},
     expect: SuggesterExpectation(
       bidsLength: 1,
       singleBid: suggesterPin('iron', 3),
@@ -328,20 +324,16 @@ List<TradeOrderSuggesterScenario> tradeOrderSuggesterTreasuryCapScenarios() => [
   suggesterRow(
     label: 'single bid is partial-capped by treasury',
     treasuryBudgetForBids: 90,
-    worldMarketState: WorldMarketState(
-      prices: {CommodityCatalog.timber.id: 30},
-    ),
-    commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
+    worldMarketState: const WorldMarketState(prices: {'timber': 30}),
+    commodityNeedByCommodityId: const {'timber': 5},
     expect: SuggesterExpectation(singleBid: suggesterPin('timber', 3)),
     refs: '#3123',
   ),
   suggesterRow(
     label: 'zero treasury budget suppresses bids entirely',
     treasuryBudgetForBids: 0,
-    worldMarketState: WorldMarketState(
-      prices: {CommodityCatalog.timber.id: 30},
-    ),
-    commodityNeedByCommodityId: {CommodityCatalog.timber.id: 5},
+    worldMarketState: const WorldMarketState(prices: {'timber': 30}),
+    commodityNeedByCommodityId: const {'timber': 5},
     expect: const SuggesterExpectation(bidsEmpty: true),
     refs: '#3123',
   ),

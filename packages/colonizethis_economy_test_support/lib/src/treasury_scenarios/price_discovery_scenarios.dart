@@ -1,7 +1,6 @@
 // Table-driven PriceDiscovery scenarios (Refs #3856).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'price_discovery_expectations.dart';

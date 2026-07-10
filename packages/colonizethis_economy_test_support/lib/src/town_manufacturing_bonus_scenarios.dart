@@ -43,8 +43,12 @@ TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity,
   techUnlocked: techUnlocked,
   refs: refs,
-  verify: (bonus) =>
-      assertTownManufacturingBonusProvinceExpectation(bonus, expect),
+  verify: (bonus) => assertTownManufacturingBonusProvinceExpectation(
+    bonus,
+    expect,
+    townDevelopmentLevel: townDevelopmentLevel,
+    townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity,
+  ),
 );
 
 /// Canonical scenarios for [computeTownManufacturingBonusForProvince].
@@ -93,8 +97,6 @@ townManufacturingBonusProvinceScenarios() => [
         techUnlocked: {kTechIdCottonWeaving: true},
         withTechCommodityAmounts: {CommodityCatalog.fabric.id: 2},
         withTechAbsentCommodities: <CommodityId>[],
-        townDevelopmentLevel: 2,
-        townConnectedDeliveredRawByCommodity: {CommodityCatalog.cotton.id: 8},
       ),
     ),
   ),
@@ -197,19 +199,11 @@ void runTownManufacturingBonusGamePin(
       );
     case TownManufacturingBonusGamePin.minorDeliveredRaw:
       const tileKey = 'oldWorld|m1|0|0';
-      final game = gameForNonGpExtractionTest(
+      final game = nonGpMinorM1Game(
         id: 'g_town_bonus_minor',
-        provinces: [
-          capitalProvinceForNonGpExtractionTest(
-            provinceId: 'oldWorld|m1',
-            townDev: 4,
-            townTileKey: tileKey,
-          ),
-        ],
-        tileState: tileStateFromSpecs(const [
-          TileImprovementSpec(tileKey, 1, 1),
-        ]),
-        minorNations: [testMinor()],
+        townDev: 4,
+        townTileKey: tileKey,
+        tileSpecs: const [TileImprovementSpec(tileKey, 1, 1)],
         players: const [Player(id: 'gpA', displayName: 'GP A', isHuman: true)],
         tileKeysByRegionAndProvince: {
           'oldWorld': {
