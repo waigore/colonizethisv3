@@ -33,8 +33,7 @@ List<ResolveRichesToTreasuryScenario> resolveRichesToTreasuryScenarios() => [
       CommodityCatalog.silver.id: 1,
     },
     richesCashMultiplier: null,
-    expectedTreasuryDelta:
-        2 * 50 + richesBasePrice(CommodityCatalog.silver.id),
+    expectedTreasuryDelta: 2 * 50 + richesBasePrice(CommodityCatalog.silver.id),
     expectedStockpile: {
       CommodityCatalog.spices.id: 0,
       CommodityCatalog.silver.id: 0,
@@ -105,24 +104,24 @@ typedef PendingRichesTreasuryDeltaScenario = ({
   String? refs,
 });
 
-List<PendingRichesTreasuryDeltaScenario> pendingRichesTreasuryDeltaScenarios() =>
-    [
-      (
-        label: 'matches resolveRichesToTreasury treasuryDelta',
-        stockpileDeltas: {
-          CommodityCatalog.spices.id: 3,
-          CommodityCatalog.gold.id: 1,
-        },
-        expectedDelta: 0,
-        refs: null,
-      ),
-      (
-        label: 'returns zero when stockpile has no riches',
-        stockpileDeltas: {CommodityCatalog.grain.id: 5},
-        expectedDelta: 0,
-        refs: null,
-      ),
-    ];
+List<PendingRichesTreasuryDeltaScenario>
+pendingRichesTreasuryDeltaScenarios() => [
+  (
+    label: 'matches resolveRichesToTreasury treasuryDelta',
+    stockpileDeltas: {
+      CommodityCatalog.spices.id: 3,
+      CommodityCatalog.gold.id: 1,
+    },
+    expectedDelta: 0,
+    refs: null,
+  ),
+  (
+    label: 'returns zero when stockpile has no riches',
+    stockpileDeltas: {CommodityCatalog.grain.id: 5},
+    expectedDelta: 0,
+    refs: null,
+  ),
+];
 
 void verifyPendingRichesTreasuryDeltaScenario(
   PendingRichesTreasuryDeltaScenario scenario,
@@ -135,5 +134,8 @@ void verifyPendingRichesTreasuryDeltaScenario(
     );
     return;
   }
-  expect(pendingRichesTreasuryDelta(stockpile: stockpile), scenario.expectedDelta);
+  expect(
+    pendingRichesTreasuryDelta(stockpile: stockpile),
+    scenario.expectedDelta,
+  );
 }

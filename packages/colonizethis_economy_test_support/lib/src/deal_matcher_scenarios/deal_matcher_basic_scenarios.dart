@@ -9,7 +9,7 @@ import 'deal_matcher_test_support.dart';
 
 /// Empty-input and basic-fill scenarios from `world_market_deal_matcher_test.dart`.
 List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'no offers and no bids returns DealMatchResult.empty',
     inputs: matcherInputs(),
     expect: const DealMatchExpectation(resultEqualsEmpty: true),
@@ -47,7 +47,7 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
       },
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'single offer 10 vs single bid 5 fills 5, offer carries 5 forward',
     expect: DealMatchExpectation(
       filledDealsLength: 1,
@@ -71,7 +71,7 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
       },
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'missing price for commodity records pricePerUnit = 0.0',
     commodity: 'iron',
     offerQty: 5,
@@ -82,7 +82,7 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
       firstFilledDeal: FilledDealExpectation(pricePerUnit: 0.0),
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'zero-quantity offer emits no deal and no carry-forward',
     offerQty: 0,
     expect: DealMatchExpectation(
@@ -97,8 +97,9 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
 
 /// Cargo-enforcement scenarios from `world_market_deal_matcher_test.dart`.
 List<DealMatcherScenario> dealMatcherCargoScenarios() => [
-  matcherZeroCargoBuyerRow(
+  matcherPairRow(
     label: 'buyer with no tradeCapacity entry treated as zero cargo',
+    buyerCapacity: null,
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledBidsByFactionId: {
@@ -106,8 +107,9 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
       },
     ),
   ),
-  DealMatcherScenario.expect(
-    label: 'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with '
+  matcherRow(
+    label:
+        'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with '
         'tradeCapacity 15 -> A fills 8, B partial 7, B carry 3',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -144,7 +146,7 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
     ),
     refs: null,
   ),
-  matcherZeroCargoBuyerRow(
+  matcherPairRow(
     label: 'negative tradeCapacity is clamped to zero',
     offerQty: 5,
     buyerCapacity: -50,
@@ -181,7 +183,7 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
     expect: const DealMatchExpectation(filledDealsEmpty: true),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'only the boycotted GP is blocked; other buyers still trade',
     inputs: matcherInputs(
       offersByFactionId: {

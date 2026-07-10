@@ -15,26 +15,27 @@ class TradeOrderValidatorScenario {
     this.refs,
   });
 
-  TradeOrderValidatorScenario.expect({
-    required String label,
-    required TradeOrderValidationContext context,
-    required List<TradeOrder> proposedOrders,
-    required ValidatorExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          context: context,
-          proposedOrders: proposedOrders,
-          verify: (results) => assertValidatorExpectation(results, expect),
-          refs: refs,
-        );
-
   final TradeOrderValidationContext context;
   final List<TradeOrder> proposedOrders;
   final String label;
   final void Function(List<OrderValidationResult> results) verify;
   final String? refs;
 }
+
+/// Compact expect-wired row (Refs #3939 slice 59).
+TradeOrderValidatorScenario validatorExpectRow({
+  required String label,
+  required TradeOrderValidationContext context,
+  required List<TradeOrder> proposedOrders,
+  required ValidatorExpectation expect,
+  String? refs,
+}) => TradeOrderValidatorScenario(
+  label: label,
+  context: context,
+  proposedOrders: proposedOrders,
+  verify: (results) => assertValidatorExpectation(results, expect),
+  refs: refs,
+);
 
 void runTradeOrderValidatorScenario(TradeOrderValidatorScenario scenario) {
   final results = TradeOrderValidator.validate(

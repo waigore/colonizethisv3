@@ -128,7 +128,8 @@ ConsumptionScenario resolveConsumptionScenario({
   required ResolveConsumptionPins pins,
   bool expectUnknownShipThrows = false,
 }) {
-  final resolvedStockpile = stockpile ??
+  final resolvedStockpile =
+      stockpile ??
       (stockpileDeltas == null
           ? const Stockpile()
           : stockpileWithDeltas(stockpileDeltas));

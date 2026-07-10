@@ -23,8 +23,7 @@ TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) =>
 TileMapResult singleResourceTileMap(
   Resource resource, {
   String province = 'M1',
-}) =>
-    singleTileMap(resource, province: province);
+}) => singleTileMap(resource, province: province);
 
 /// Builds a single-region `tileMapByRegion` map for [regionId] placing
 /// [resource] at coordinates `(0, 0)` of [province].
@@ -68,11 +67,9 @@ List<TileImprovementSpec> tileImps(
   Iterable<String> tileKeys, [
   int improvement = 1,
   int roadLevel = 1,
-]) =>
-    [
-      for (final key in tileKeys)
-        TileImprovementSpec(key, improvement, roadLevel),
-    ];
+]) => [
+  for (final key in tileKeys) TileImprovementSpec(key, improvement, roadLevel),
+];
 
 /// Builds a [TileMapState] from [specs], applying only non-zero levels.
 TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
@@ -92,13 +89,12 @@ TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
 TileMapResult tileMapFromGrids({
   required List<List<String>> grid,
   required List<List<Resource?>> resourceGrid,
-}) =>
-    TileMapResult(
-      width: grid.first.length,
-      height: grid.length,
-      grid: grid,
-      resourceGrid: resourceGrid,
-    );
+}) => TileMapResult(
+  width: grid.first.length,
+  height: grid.length,
+  grid: grid,
+  resourceGrid: resourceGrid,
+);
 
 /// Square tile map of size [width] × [height] where every cell belongs to the
 /// same prefixed [provinceId] and resources are read from [resources].
@@ -136,9 +132,9 @@ Map<String, ConnectivityResult> connectivityFor(
 Map<String, ConnectivityResult> connectivityByFaction(
   Map<String, Set<String>> byFaction,
 ) => {
-      for (final e in byFaction.entries)
-        e.key: ConnectivityResult(connected: e.value),
-    };
+  for (final e in byFaction.entries)
+    e.key: ConnectivityResult(connected: e.value),
+};
 
 /// Canonical capital-province tile key `oldWorld|p1|0|0` (Refs #3939 slice 53).
 const String kOwP1Tile00 = 'oldWorld|p1|0|0';
@@ -153,21 +149,21 @@ Player spainPl1Player({
   Map<String, bool>? techUnlocked,
   String capitalProvinceId = 'oldWorld|p1',
   CapitalTile? capitalTile,
-}) =>
-    Player(
-      id: 'pl1',
-      displayName: 'Spain',
-      isHuman: true,
-      capitalProvinceId: capitalProvinceId,
-      capitalTile: capitalTile ??
-          const CapitalTile(
-            regionId: 'oldWorld',
-            provinceId: 'oldWorld|p1',
-            x: 0,
-            y: 0,
-          ),
-      techUnlocked: techUnlocked,
-    );
+}) => Player(
+  id: 'pl1',
+  displayName: 'Spain',
+  isHuman: true,
+  capitalProvinceId: capitalProvinceId,
+  capitalTile:
+      capitalTile ??
+      const CapitalTile(
+        regionId: 'oldWorld',
+        provinceId: 'oldWorld|p1',
+        x: 0,
+        y: 0,
+      ),
+  techUnlocked: techUnlocked,
+);
 
 /// A capital-province row with sane defaults for non-GP extraction tests.
 Province capitalProvinceForNonGpExtractionTest({
@@ -196,8 +192,7 @@ Game gameForNonGpExtractionTest({
   List<Province> newWorldProvinces = const [],
   String id = 'g_test',
   List<Player> players = const [],
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
 }) {
   return Game(
     id: id,
@@ -222,13 +217,12 @@ TileMapResult nonGpProvMap(
   int width,
   int height,
   List<List<Resource?>> resources,
-) =>
-    tileMapAllInProvinceForNonGpExtractionTest(
-      provinceId: provinceId,
-      width: width,
-      height: height,
-      resources: resources,
-    );
+) => tileMapAllInProvinceForNonGpExtractionTest(
+  provinceId: provinceId,
+  width: width,
+  height: height,
+  resources: resources,
+);
 
 /// Empty non-GP [Game] (no provinces / minors / tribes) (Refs #3939 slice 58).
 Game nonGpEmptyGame() => gameForNonGpExtractionTest(provinces: const []);
@@ -238,59 +232,87 @@ Game nonGpMinorM1Game({
   List<TileImprovementSpec> tileSpecs = const [],
   int townDev = 1,
   int capitalTileGrainBonusPerTurn = 0,
-}) =>
-    gameForNonGpExtractionTest(
-      provinces: [
-        capitalProvinceForNonGpExtractionTest(
-          provinceId: 'oldWorld|m1',
-          townDev: townDev,
-        ),
-      ],
-      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
-      minorNations: [testMinor()],
-      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
-    );
+}) => gameForNonGpExtractionTest(
+  provinces: [
+    capitalProvinceForNonGpExtractionTest(
+      provinceId: 'oldWorld|m1',
+      townDev: townDev,
+    ),
+  ],
+  tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+  minorNations: [testMinor()],
+  capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+);
 
 /// `m1` OW + `t1` NW dual-faction non-GP shell (Refs #3939 slice 58).
 Game nonGpMinorAndTribeGame({
   List<TileImprovementSpec> tileSpecs = const [],
   int minorTownDev = 1,
   int tribeTownDev = 1,
-}) =>
-    gameForNonGpExtractionTest(
-      provinces: [
-        capitalProvinceForNonGpExtractionTest(
-          provinceId: 'oldWorld|m1',
-          townDev: minorTownDev,
-        ),
-      ],
-      newWorldProvinces: [
-        capitalProvinceForNonGpExtractionTest(
-          provinceId: 'newWorld|t1',
-          townDev: tribeTownDev,
-        ),
-      ],
-      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
-      minorNations: [testMinor()],
-      tribes: [testTribe()],
-    );
+}) => gameForNonGpExtractionTest(
+  provinces: [
+    capitalProvinceForNonGpExtractionTest(
+      provinceId: 'oldWorld|m1',
+      townDev: minorTownDev,
+    ),
+  ],
+  newWorldProvinces: [
+    capitalProvinceForNonGpExtractionTest(
+      provinceId: 'newWorld|t1',
+      townDev: tribeTownDev,
+    ),
+  ],
+  tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+  minorNations: [testMinor()],
+  tribes: [testTribe()],
+);
 
 /// Tribe-only NW shell for mineral-exclusion rows (Refs #3939 slice 58).
 Game nonGpTribeNwGame({
   List<TileImprovementSpec> tileSpecs = const [],
   int townDev = 1,
-}) =>
-    gameForNonGpExtractionTest(
-      provinces: const [],
-      newWorldProvinces: [
-        capitalProvinceForNonGpExtractionTest(
-          provinceId: 'newWorld|t1',
-          townDev: townDev,
-        ),
-      ],
-      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
-      tribes: [testTribe()],
-    );
+}) => gameForNonGpExtractionTest(
+  provinces: const [],
+  newWorldProvinces: [
+    capitalProvinceForNonGpExtractionTest(
+      provinceId: 'newWorld|t1',
+      townDev: townDev,
+    ),
+  ],
+  tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+  tribes: [testTribe()],
+);
+
+/// Dual-faction timber/furs fixture shared by extraction + auto-offer rows
+/// (Refs #3939 slice 59).
+({
+  Game game,
+  Map<String, TileMapResult> tileMapByRegion,
+  Map<String, ConnectivityResult> connectivityByFactionId,
+})
+nonGpMinorTribeTimberFursFixture({List<TileImprovementSpec>? tileSpecs}) {
+  final specs =
+      tileSpecs ??
+      const [
+        TileImprovementSpec('oldWorld|m1|0|0', 1, 1),
+        TileImprovementSpec('newWorld|t1|0|0', 1, 1),
+      ];
+  return (
+    game: nonGpMinorAndTribeGame(tileSpecs: specs),
+    tileMapByRegion: {
+      'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
+        [Resource.timber],
+      ]),
+      'newWorld': nonGpProvMap('newWorld|t1', 1, 1, const [
+        [Resource.furs],
+      ]),
+    },
+    connectivityByFactionId: connectivityByFaction({
+      'm1': {'oldWorld|m1|0|0'},
+      't1': {'newWorld|t1|0|0'},
+    }),
+  );
+}
 
 /// A standard one-tile minor nation in `oldWorld|m1` with capital at (0,0).
 MinorNation testMinor({
@@ -335,20 +357,16 @@ Province _owProvince(
   int townDevelopmentLevel = 4,
   String ownerId = 'pl1',
   String? townTileKey,
-}) =>
-    Province(
-      id: 'oldWorld|$localId',
-      regionId: 'oldWorld',
-      ownerId: ownerId,
-      townDevelopmentLevel: townDevelopmentLevel,
-      townTileKey: townTileKey,
-    );
+}) => Province(
+  id: 'oldWorld|$localId',
+  regionId: 'oldWorld',
+  ownerId: ownerId,
+  townDevelopmentLevel: townDevelopmentLevel,
+  townTileKey: townTileKey,
+);
 
 /// Canonical `oldWorld|p1` province owned by Spain/`pl1` (Refs #3939 slice 58).
-Province owP1Province({
-  int townDevelopmentLevel = 4,
-  String? townTileKey,
-}) =>
+Province owP1Province({int townDevelopmentLevel = 4, String? townTileKey}) =>
     _owProvince(
       'p1',
       townDevelopmentLevel: townDevelopmentLevel,
@@ -363,27 +381,22 @@ Game spainExtractorGame({
   Map<String, bool>? techUnlocked,
   Map<String, Set<String>>? playerProspectedTiles,
   Map<String, String> portsByProvinceSeaboard = const {},
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
   CapitalTile? capitalTile,
   int capitalTileGrainBonusPerTurn = 0,
-}) =>
-    TestFixtures.minimalGame(
-      id: 'g1',
-      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
-      oldWorld: oldWorld,
-      newWorld: newWorld,
-      tileState: tileState,
-      playerProspectedTiles: playerProspectedTiles,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-      players: [
-        spainPl1Player(
-          techUnlocked: techUnlocked,
-          capitalTile: capitalTile,
-        ),
-      ],
-    );
+}) => TestFixtures.minimalGame(
+  id: 'g1',
+  capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+  oldWorld: oldWorld,
+  newWorld: newWorld,
+  tileState: tileState,
+  playerProspectedTiles: playerProspectedTiles,
+  portsByProvinceSeaboard: portsByProvinceSeaboard,
+  tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+  players: [
+    spainPl1Player(techUnlocked: techUnlocked, capitalTile: capitalTile),
+  ],
+);
 
 /// Single-owned-province extraction setup: player `pl1` ("Spain") owns
 /// `oldWorld|p1` (capital tile at 0,0) at [townDevelopmentLevel].
@@ -423,7 +436,10 @@ Game townRuleTwoProvinceExtractorGame({
   Map<String, String>? portsByProvinceSeaboard,
   String playerId = 'pl1',
 }) {
-  assert(playerId == 'pl1', 'townRuleTwoProvinceExtractorGame uses spainPl1Player');
+  assert(
+    playerId == 'pl1',
+    'townRuleTwoProvinceExtractorGame uses spainPl1Player',
+  );
   return spainExtractorGame(
     tileState: tileState,
     oldWorld: RegionData(
@@ -457,19 +473,12 @@ Game overseasResourceExtractorGame({required TileMapState tileState}) =>
       ),
     );
 
-TopologyNode _topoNode(
-  String id,
-  String regionId,
-  TopologyNodeType type,
-) =>
+TopologyNode _topoNode(String id, String regionId, TopologyNodeType type) =>
     TopologyNode(id: id, regionId: regionId, type: type);
 
 /// Dual-region blockaded-port extraction fixture (Refs #3939 phase 3 slice 23).
-({
-  Game game,
-  Map<String, TileMapResult> tileMapByRegion,
-  MapTopology topology,
-}) blockadedOverseasExtractionFixture() {
+({Game game, Map<String, TileMapResult> tileMapByRegion, MapTopology topology})
+blockadedOverseasExtractionFixture() {
   const ow = 'oldWorld';
   const nw = 'newWorld';
   final tileMapOw = tileMapFromGrids(

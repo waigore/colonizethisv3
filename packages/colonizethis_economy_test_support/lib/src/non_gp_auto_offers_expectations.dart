@@ -91,14 +91,23 @@ void _assertFactionAutoOffersExpectation(
     );
   }
   if (factionExpectation.singleCommodityId != null) {
-    expect(orders!.first.commodityId, equals(factionExpectation.singleCommodityId));
+    expect(
+      orders!.first.commodityId,
+      equals(factionExpectation.singleCommodityId),
+    );
   }
   if (factionExpectation.singleOriginTileKey != null) {
-    expect(orders!.first.originTileKey, equals(factionExpectation.singleOriginTileKey));
+    expect(
+      orders!.first.originTileKey,
+      equals(factionExpectation.singleOriginTileKey),
+    );
   }
   if (factionExpectation.excludeCommodity != null) {
     for (final order in orders!) {
-      expect(order.commodityId, isNot(equals(factionExpectation.excludeCommodity)));
+      expect(
+        order.commodityId,
+        isNot(equals(factionExpectation.excludeCommodity)),
+      );
     }
   }
 }
@@ -115,7 +124,10 @@ void assertNonGpAutoOffersExpectation(
     expect(result.keys, equals(expectation.factionKeys));
   }
   if (expectation.factionKeysUnordered != null) {
-    expect(result.keys, unorderedEquals(expectation.factionKeysUnordered!.toList()));
+    expect(
+      result.keys,
+      unorderedEquals(expectation.factionKeysUnordered!.toList()),
+    );
   }
   if (expectation.offersByFaction != null) {
     for (final entry in expectation.offersByFaction!.entries) {

@@ -41,11 +41,10 @@ void runCargoHoldsExpectation(CargoHoldsPins pins) {
 CargoHoldsForHomeFleetScenario cargoHoldsScenario({
   required String label,
   required CargoHoldsPins pins,
-}) =>
-    CargoHoldsForHomeFleetScenario(
-      label: label,
-      run: () => runCargoHoldsExpectation(pins),
-    );
+}) => CargoHoldsForHomeFleetScenario(
+  label: label,
+  run: () => runCargoHoldsExpectation(pins),
+);
 
 /// Pins for [allocateOverseasToStockpile] rows.
 typedef AllocateOverseasPins = ({
@@ -87,8 +86,7 @@ void runAllocateOverseasExpectation(AllocateOverseasPins pins) {
 AllocateOverseasToStockpileScenario allocateOverseasScenario({
   required String label,
   required AllocateOverseasPins pins,
-}) =>
-    AllocateOverseasToStockpileScenario(
-      label: label,
-      run: () => runAllocateOverseasExpectation(pins),
-    );
+}) => AllocateOverseasToStockpileScenario(
+  label: label,
+  run: () => runAllocateOverseasExpectation(pins),
+);

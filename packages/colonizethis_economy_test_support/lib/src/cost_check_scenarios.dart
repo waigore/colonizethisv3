@@ -80,11 +80,7 @@ List<CheckPreconditionsInOrderScenario> checkPreconditionsInOrderScenarios() =>
       ),
       checkPreconditionsInOrderScenario(
         label: 'empty precondition list passes (returns null)',
-        pins: (
-          steps: [],
-          expectedReason: null,
-          expectedEvaluated: null,
-        ),
+        pins: (steps: [], expectedReason: null, expectedEvaluated: null),
         refs: '#3517',
       ),
     ];

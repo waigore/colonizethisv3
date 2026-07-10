@@ -26,8 +26,10 @@ class FrrCreditsScenario {
 
   final List<FilledDeal> filledDeals;
   final PurchasedTileIndex? purchasedTileIndex;
-  final num Function(String owningGpId, String sourceFactionId) relationScoreFor;
-  final Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor;
+  final num Function(String owningGpId, String sourceFactionId)
+  relationScoreFor;
+  final Map<String, num> Function(String sourceFactionId)?
+  embassyGpRelationsFor;
   final String label;
   final void Function(FirstRightCreditsResult result) verify;
   final String? refs;
@@ -55,15 +57,17 @@ FrrCreditsScenario frrCreditsRow({
   Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor,
   String? refs,
 }) {
-  final num Function(String, String) relation = relationScoreFor ??
+  final num Function(String, String) relation =
+      relationScoreFor ??
       (constantRelation != null
           ? frrConstantRelation(constantRelation)
           : frrAlwaysZeroRelation);
   return FrrCreditsScenario(
     label: label,
     filledDeals: filledDeals ?? [dealOn('k1', buyer: 'gpB')],
-    purchasedTileIndex:
-        nullPurchasedTileIndex ? null : (purchasedTileIndex ?? frrIdxK1GpA()),
+    purchasedTileIndex: nullPurchasedTileIndex
+        ? null
+        : (purchasedTileIndex ?? frrIdxK1GpA()),
     relationScoreFor: relation,
     embassyGpRelationsFor: embassyGpRelationsFor,
     verify: (result) => assertFrrCreditsExpectation(result, expect),
@@ -76,10 +80,7 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   frrCreditsRow(
     label: 'empty input returns FirstRightCreditsResult.empty (no deals)',
     filledDeals: const <FilledDeal>[],
-    expect: const FrrCreditsExpectation(
-      empty: true,
-      totalProfitTreasury: 0.0,
-    ),
+    expect: const FrrCreditsExpectation(empty: true, totalProfitTreasury: 0.0),
     refs: '#2992',
   ),
   frrCreditsRow(
@@ -231,9 +232,7 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     label:
         'R8.7 — buyer == tile owner: no tile-owner share, other embassy GPs '
         'still get kickbacks',
-    filledDeals: [
-      dealOn('k1', buyer: 'gpA', quantity: 10, pricePerUnit: 20.0),
-    ],
+    filledDeals: [dealOn('k1', buyer: 'gpA', quantity: 10, pricePerUnit: 20.0)],
     constantRelation: 100,
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
     expect: const FrrCreditsExpectation(
@@ -357,10 +356,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     }),
     expect: const FrrCreditsExpectation(
       treasuryCreditKeysContainAll: [kFrrIssueAcD5GpA, kFrrIssueAcD5GpB],
-      treasuryCreditCloseTo: {
-        kFrrIssueAcD5GpA: 60.0,
-        kFrrIssueAcD5GpB: 20.0,
-      },
+      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 60.0, kFrrIssueAcD5GpB: 20.0},
       totalProfitTreasury: 80.0,
     ),
     refs: '#2992 D5 AC5',
@@ -394,10 +390,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
       ),
     ]),
     relationScoreFor: frrRelationTable(const {
-      kFrrIssueAcD5GpA: {
-        kFrrIssueAcD5MinorM1: 100,
-        kFrrIssueAcD5MinorM2: 25,
-      },
+      kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 100, kFrrIssueAcD5MinorM2: 25},
     }),
     expect: const FrrCreditsExpectation(
       creditedDealsLength: 2,

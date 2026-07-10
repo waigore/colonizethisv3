@@ -13,12 +13,11 @@ const _spawnProvinceId = 'oldWorld|p1';
 BuildUnitOrder _buildOrder({
   required String unitType,
   required bool isMilitary,
-}) =>
-    BuildUnitOrder(
-      unitType: unitType,
-      isMilitary: isMilitary,
-      spawnProvinceId: _spawnProvinceId,
-    );
+}) => BuildUnitOrder(
+  unitType: unitType,
+  isMilitary: isMilitary,
+  spawnProvinceId: _spawnProvinceId,
+);
 
 /// Pins for unknown-unit afford/reject rows.
 typedef BuildCostUnknownUnitPins = ({
@@ -64,11 +63,10 @@ void runBuildCostUnknownUnitExpectation(BuildCostUnknownUnitPins pins) {
 BuildCostScenario buildCostUnknownUnitScenario({
   required String label,
   required BuildCostUnknownUnitPins pins,
-}) =>
-    BuildCostScenario(
-      label: label,
-      run: () => runBuildCostUnknownUnitExpectation(pins),
-    );
+}) => BuildCostScenario(
+  label: label,
+  run: () => runBuildCostUnknownUnitExpectation(pins),
+);
 
 /// Pins for afford-then-apply catalog rows.
 typedef BuildCostAffordApplyPins = ({
@@ -85,8 +83,12 @@ void runBuildCostAffordApplyExpectation(BuildCostAffordApplyPins pins) {
     unitType: pins.unitType,
     isMilitary: pins.isMilitary,
   );
-  final (econ, stockpile, treasuryStart, peasantsDelta) =
-      _catalogContextForUnit(
+  final (
+    econ,
+    stockpile,
+    treasuryStart,
+    peasantsDelta,
+  ) = _catalogContextForUnit(
     unitType: pins.unitType,
     isMilitary: pins.isMilitary,
     peasants: pins.peasants,
@@ -114,12 +116,8 @@ void runBuildCostAffordApplyExpectation(BuildCostAffordApplyPins pins) {
   }
 }
 
-(
-  dynamic econ,
-  Stockpile stockpile,
-  int treasuryStart,
-  int peasantsDelta,
-) _catalogContextForUnit({
+(dynamic econ, Stockpile stockpile, int treasuryStart, int peasantsDelta)
+_catalogContextForUnit({
   required String unitType,
   required bool isMilitary,
   required int peasants,
@@ -144,22 +142,16 @@ void runBuildCostAffordApplyExpectation(BuildCostAffordApplyPins pins) {
     );
   }
   final econ = CivilianEconomyCatalog.byId[unitType]!;
-  return (
-    econ,
-    stockpileWithDeltas(econ.buildInputs),
-    treasuryPadding,
-    0,
-  );
+  return (econ, stockpileWithDeltas(econ.buildInputs), treasuryPadding, 0);
 }
 
 BuildCostScenario buildCostAffordApplyScenario({
   required String label,
   required BuildCostAffordApplyPins pins,
-}) =>
-    BuildCostScenario(
-      label: label,
-      run: () => runBuildCostAffordApplyExpectation(pins),
-    );
+}) => BuildCostScenario(
+  label: label,
+  run: () => runBuildCostAffordApplyExpectation(pins),
+);
 
 /// Pins for afford-reject rows.
 typedef BuildCostAffordRejectPins = ({
@@ -198,8 +190,7 @@ void runBuildCostAffordRejectExpectation(BuildCostAffordRejectPins pins) {
 BuildCostScenario buildCostAffordRejectScenario({
   required String label,
   required BuildCostAffordRejectPins pins,
-}) =>
-    BuildCostScenario(
-      label: label,
-      run: () => runBuildCostAffordRejectExpectation(pins),
-    );
+}) => BuildCostScenario(
+  label: label,
+  run: () => runBuildCostAffordRejectExpectation(pins),
+);

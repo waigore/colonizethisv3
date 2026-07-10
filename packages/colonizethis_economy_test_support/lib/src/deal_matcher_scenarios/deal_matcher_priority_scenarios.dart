@@ -30,10 +30,7 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpBuyer: 'buyerFtp',
     expect: DealMatchExpectation(
       filledDealExpectations: const [
-        FilledDealExpectation(
-          buyerFactionId: 'buyerFtp',
-          isFtpMatch: true,
-        ),
+        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
       ],
       unfilledBidsByFactionId: {
         'buyerOther': [matcherBid('timber', 5, priority: 1)],
@@ -83,16 +80,14 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpSeller: 'alpha',
     ftpBuyer: 'zeta',
     expect: const DealMatchExpectation(
-      filledDealExpectations: [
-        FilledDealExpectation(isFtpMatch: true),
-      ],
+      filledDealExpectations: [FilledDealExpectation(isFtpMatch: true)],
     ),
   ),
 ];
 
 /// Multi-commodity and carry-forward from priority test file.
 List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'commodities are iterated in alphabetical order (deterministic)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -108,7 +103,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
       filledDealCommodityIds: ['alpha', 'zeta'],
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'partial fills produce carry-forward orders with copyWith semantics',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -131,7 +126,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
 
 /// Lock-recovery seller priority (Refs #2924 F12).
 List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'fills lock-recovery seller before earlier-id affluent seller',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -159,7 +154,7 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
 
 /// Activity bookkeeping from priority test file.
 List<DealMatcherScenario> dealMatcherActivityScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'activity totals reflect input quantities, not just fills',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -185,7 +180,7 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       },
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'priceChangePercent stays 0.0 (composed separately by phase handler)',
     inputs: matcherInputs(
@@ -277,7 +272,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
       firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'priority tier remains absolute over relation tiebreaker',
     inputs: matcherInputs(
       offersByFactionId: {

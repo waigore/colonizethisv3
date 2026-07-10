@@ -41,9 +41,7 @@ void runTileContributionConnectedPin({
         ),
       ],
     ),
-    tileState: tileStateFromSpecs(const [
-      TileImprovementSpec(_tileKey, 1, 1),
-    ]),
+    tileState: tileStateFromSpecs(const [TileImprovementSpec(_tileKey, 1, 1)]),
     players: [player],
   );
   final contribution = computeTileExtractionContributionForPlayer(
@@ -88,9 +86,7 @@ void runTileContributionConnectedPin({
   }
 }
 
-void runTileContributionDisconnectedPin({
-  required TileMapResult grainTileMap,
-}) {
+void runTileContributionDisconnectedPin({required TileMapResult grainTileMap}) {
   final player = spainPl1Player(capitalProvinceId: _provinceId);
   final game = TestFixtures.minimalGame(
     id: 'g1',
@@ -133,19 +129,18 @@ TileExtractionContributionScenario tileExtractionContributionScenario({
   required TileExtractionContributionPin pin,
   TileContributionConnectedPin? connectedPins,
   TileMapResult? grainTileMap,
-}) =>
-    TileExtractionContributionScenario(
-      label: label,
-      run: () {
-        final tileMap = grainTileMap ?? singleResourceTileMap(Resource.grain);
-        switch (pin) {
-          case TileExtractionContributionPin.connectedGrainExcludesCapitalBonus:
-            runTileContributionConnectedPin(
-              grainTileMap: tileMap,
-              pins: connectedPins!,
-            );
-          case TileExtractionContributionPin.disconnectedNull:
-            runTileContributionDisconnectedPin(grainTileMap: tileMap);
-        }
-      },
-    );
+}) => TileExtractionContributionScenario(
+  label: label,
+  run: () {
+    final tileMap = grainTileMap ?? singleResourceTileMap(Resource.grain);
+    switch (pin) {
+      case TileExtractionContributionPin.connectedGrainExcludesCapitalBonus:
+        runTileContributionConnectedPin(
+          grainTileMap: tileMap,
+          pins: connectedPins!,
+        );
+      case TileExtractionContributionPin.disconnectedNull:
+        runTileContributionDisconnectedPin(grainTileMap: tileMap);
+    }
+  },
+);

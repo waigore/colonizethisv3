@@ -37,16 +37,15 @@ NonGpAutoOffersScenario _autoOfferRow({
   required Map<String, ConnectivityResult> connectivityByFactionId,
   required NonGpAutoOffersExpectation expect,
   String? refs,
-}) =>
-    NonGpAutoOffersScenario(
-      label: label,
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-      connectivityByFactionId: connectivityByFactionId,
-      verify: (result) =>
-          assertNonGpAutoOffersExpectation(result, expect, game: game),
-      refs: refs,
-    );
+}) => NonGpAutoOffersScenario(
+  label: label,
+  game: game,
+  tileMapByRegion: tileMapByRegion,
+  connectivityByFactionId: connectivityByFactionId,
+  verify: (result) =>
+      assertNonGpAutoOffersExpectation(result, expect, game: game),
+  refs: refs,
+);
 
 void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
   final result = computeNonGreatPowerAutoOffers(
@@ -66,24 +65,23 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
   List<TileImprovementSpec>? tileSpecs,
   bool emptyConnectivity = false,
   String? refs = '#2991 C4',
-}) =>
-    _autoOfferRow(
-      label: label,
-      game: nonGpMinorM1Game(tileSpecs: tileSpecs ?? const []),
-      tileMapByRegion: {
-        'oldWorld': nonGpProvMap(
-          'oldWorld|m1',
-          resources.first.length,
-          resources.length,
-          resources,
-        ),
-      },
-      connectivityByFactionId: emptyConnectivity
-          ? const {}
-          : connectivityByFaction({'m1': connected}),
-      expect: expect,
-      refs: refs,
-    );
+}) => _autoOfferRow(
+  label: label,
+  game: nonGpMinorM1Game(tileSpecs: tileSpecs ?? const []),
+  tileMapByRegion: {
+    'oldWorld': nonGpProvMap(
+      'oldWorld|m1',
+      resources.first.length,
+      resources.length,
+      resources,
+    ),
+  },
+  connectivityByFactionId: emptyConnectivity
+      ? const {}
+      : connectivityByFaction({'m1': connected}),
+  expect: expect,
+  refs: refs,
+);
 
 /// Compact purchased-tile C6 auto-offer row (Refs #3939 slice 47).
 NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
@@ -92,168 +90,147 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
   required Resource resource,
   String tileKey = 'oldWorld|m1|0|0',
   String? refs = '#2991 C6',
-}) =>
-    _autoOfferRow(
-      label: label,
-      game: minorTileAutoOfferGame(
-        tileKey: tileKey,
-        improvementLevel: 1,
-        roadLevel: 1,
-        purchasedTilesByTileKey: {tileKey: 'gpA'},
-      ),
-      tileMapByRegion: {
-        'oldWorld': singleResourceTileMap(resource, province: 'm1'),
-      },
-      connectivityByFactionId: connectivityByFaction({
-        'm1': {tileKey},
-      }),
-      expect: expect,
-      refs: refs,
-    );
+}) => _autoOfferRow(
+  label: label,
+  game: minorTileAutoOfferGame(
+    tileKey: tileKey,
+    improvementLevel: 1,
+    roadLevel: 1,
+    purchasedTilesByTileKey: {tileKey: 'gpA'},
+  ),
+  tileMapByRegion: {
+    'oldWorld': singleResourceTileMap(resource, province: 'm1'),
+  },
+  connectivityByFactionId: connectivityByFaction({
+    'm1': {tileKey},
+  }),
+  expect: expect,
+  refs: refs,
+);
 
 /// Canonical scenarios from `non_gp_auto_offers_test.dart` (Issue #2991 C4).
 List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
-      ..._nonGpAutoOffersEmptyScenarios(),
-      ..._nonGpAutoOffersOfferScenarios(),
-      ..._nonGpAutoOffersPurchasedTileScenarios(),
-    ];
+  ..._nonGpAutoOffersEmptyScenarios(),
+  ..._nonGpAutoOffersOfferScenarios(),
+  ..._nonGpAutoOffersPurchasedTileScenarios(),
+];
 
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
-      _autoOfferRow(
-        label: 'empty when no minors and no tribes are configured',
-        game: nonGpEmptyGame(),
-        tileMapByRegion: const {},
-        connectivityByFactionId: const {},
-        expect: const NonGpAutoOffersExpectation(empty: true),
-        refs: '#2991 C4',
-      ),
-      _autoOfferRow(
-        label: 'empty when tileMapByRegion is empty',
-        game: nonGpMinorM1Game(),
-        tileMapByRegion: const {},
-        connectivityByFactionId: connectivityByFaction({
-          'm1': {'oldWorld|m1|0|0'},
-        }),
-        expect: const NonGpAutoOffersExpectation(empty: true),
-        refs: '#2991 C4',
-      ),
-      nonGpAutoOfferMinorRow(
-        label:
-            'factions with no connectivity entry do not appear in the auto-offer map',
-        tileSpecs: tileImps(const ['oldWorld|m1|0|0'], 1, 0),
-        resources: const [
-          [Resource.timber],
-        ],
-        connected: const {},
-        emptyConnectivity: true,
-        expect: const NonGpAutoOffersExpectation(empty: true),
-      ),
-    ];
+  _autoOfferRow(
+    label: 'empty when no minors and no tribes are configured',
+    game: nonGpEmptyGame(),
+    tileMapByRegion: const {},
+    connectivityByFactionId: const {},
+    expect: const NonGpAutoOffersExpectation(empty: true),
+    refs: '#2991 C4',
+  ),
+  _autoOfferRow(
+    label: 'empty when tileMapByRegion is empty',
+    game: nonGpMinorM1Game(),
+    tileMapByRegion: const {},
+    connectivityByFactionId: connectivityByFaction({
+      'm1': {'oldWorld|m1|0|0'},
+    }),
+    expect: const NonGpAutoOffersExpectation(empty: true),
+    refs: '#2991 C4',
+  ),
+  nonGpAutoOfferMinorRow(
+    label:
+        'factions with no connectivity entry do not appear in the auto-offer map',
+    tileSpecs: tileImps(const ['oldWorld|m1|0|0'], 1, 0),
+    resources: const [
+      [Resource.timber],
+    ],
+    connected: const {},
+    emptyConnectivity: true,
+    expect: const NonGpAutoOffersExpectation(empty: true),
+  ),
+];
 
-List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
-      nonGpAutoOfferMinorRow(
-        label:
-            'emits one priority-1 offer per non-riches tile with originTileKey set',
-        tileSpecs: tileImps(const [
-          'oldWorld|m1|0|0',
-          'oldWorld|m1|1|0',
-        ]),
-        resources: const [
-          [Resource.timber, Resource.grain],
-        ],
-        connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-        expect: const NonGpAutoOffersExpectation(
-          factionKeys: {'m1'},
-          offersByFaction: {
-            'm1': FactionAutoOffersExpectation(
-              length: 2,
-              standardPriorityOneOffers: true,
-              commodityIds: ['timber', 'grain'],
-              originTileKeys: ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
-            ),
-          },
-        ),
-      ),
-      _autoOfferRow(
-        label: 'aggregates minor and tribe offers in the same result map',
-        game: nonGpMinorAndTribeGame(
-          tileSpecs: tileImps(const [
-            'oldWorld|m1|0|0',
-            'newWorld|t1|0|0',
-          ]),
-        ),
-        tileMapByRegion: {
-          'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
-            [Resource.timber],
-          ]),
-          'newWorld': nonGpProvMap('newWorld|t1', 1, 1, const [
-            [Resource.furs],
-          ]),
+List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
+  final dual = nonGpMinorTribeTimberFursFixture();
+  return [
+    nonGpAutoOfferMinorRow(
+      label:
+          'emits one priority-1 offer per non-riches tile with originTileKey set',
+      tileSpecs: tileImps(const ['oldWorld|m1|0|0', 'oldWorld|m1|1|0']),
+      resources: const [
+        [Resource.timber, Resource.grain],
+      ],
+      connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
+      expect: const NonGpAutoOffersExpectation(
+        factionKeys: {'m1'},
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 2,
+            standardPriorityOneOffers: true,
+            commodityIds: ['timber', 'grain'],
+            originTileKeys: ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
+          ),
         },
-        connectivityByFactionId: connectivityByFaction({
-          'm1': {'oldWorld|m1|0|0'},
-          't1': {'newWorld|t1|0|0'},
-        }),
-        expect: const NonGpAutoOffersExpectation(
-          factionKeysUnordered: ['m1', 't1'],
-          offersByFaction: {
-            'm1': FactionAutoOffersExpectation(
-              length: 1,
-              singleCommodityId: 'timber',
-            ),
-            't1': FactionAutoOffersExpectation(
-              length: 1,
-              singleCommodityId: 'furs',
-            ),
-          },
-        ),
-        refs: '#2991 C4',
       ),
-      nonGpAutoOfferMinorRow(
-        label: 'excludes riches commodities (spices) per Requirement 11 — '
-            'riches do not trade on the world market',
-        tileSpecs: tileImps(const [
-          'oldWorld|m1|0|0',
-          'oldWorld|m1|1|0',
-        ]),
-        resources: const [
-          [Resource.spices, Resource.grain],
-        ],
-        connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-        expect: const NonGpAutoOffersExpectation(
-          factionKeys: {'m1'},
-          offersByFaction: {
-            'm1': FactionAutoOffersExpectation(
-              length: 1,
-              singleCommodityId: 'grain',
-              singleOriginTileKey: 'oldWorld|m1|1|0',
-              excludeCommodity: 'spices',
-            ),
-          },
-        ),
+    ),
+    _autoOfferRow(
+      label: 'aggregates minor and tribe offers in the same result map',
+      game: dual.game,
+      tileMapByRegion: dual.tileMapByRegion,
+      connectivityByFactionId: dual.connectivityByFactionId,
+      expect: const NonGpAutoOffersExpectation(
+        factionKeysUnordered: ['m1', 't1'],
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 1,
+            singleCommodityId: 'timber',
+          ),
+          't1': FactionAutoOffersExpectation(
+            length: 1,
+            singleCommodityId: 'furs',
+          ),
+        },
       ),
-      nonGpAutoOfferMinorRow(
-        label:
-            'minerals stay excluded (covered by computeNonGreatPowerExtraction '
-            'mineral filter) — no offer emitted for an iron tile even if developed',
-        tileSpecs: tileImps(const [
-          'oldWorld|m1|0|0',
-          'oldWorld|m1|1|0',
-        ]),
-        resources: const [
-          [Resource.iron, Resource.grain],
-        ],
-        connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-        expect: const NonGpAutoOffersExpectation(
-          offersByFaction: {
-            'm1': FactionAutoOffersExpectation(
-              length: 1,
-              singleCommodityId: 'grain',
-            ),
-          },
-        ),
+      refs: '#2991 C4',
+    ),
+    nonGpAutoOfferMinorRow(
+      label:
+          'excludes riches commodities (spices) per Requirement 11 — '
+          'riches do not trade on the world market',
+      tileSpecs: tileImps(const ['oldWorld|m1|0|0', 'oldWorld|m1|1|0']),
+      resources: const [
+        [Resource.spices, Resource.grain],
+      ],
+      connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
+      expect: const NonGpAutoOffersExpectation(
+        factionKeys: {'m1'},
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 1,
+            singleCommodityId: 'grain',
+            singleOriginTileKey: 'oldWorld|m1|1|0',
+            excludeCommodity: 'spices',
+          ),
+        },
       ),
-    ];
+    ),
+    nonGpAutoOfferMinorRow(
+      label:
+          'minerals stay excluded (covered by computeNonGreatPowerExtraction '
+          'mineral filter) — no offer emitted for an iron tile even if developed',
+      tileSpecs: tileImps(const ['oldWorld|m1|0|0', 'oldWorld|m1|1|0']),
+      resources: const [
+        [Resource.iron, Resource.grain],
+      ],
+      connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
+      expect: const NonGpAutoOffersExpectation(
+        offersByFaction: {
+          'm1': FactionAutoOffersExpectation(
+            length: 1,
+            singleCommodityId: 'grain',
+          ),
+        },
+      ),
+    ),
+  ];
+}
 
 /// Purchased-tile parity scenarios (Refs #2991 C6, #3939).
 List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
@@ -262,7 +239,8 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
 
   return [
     nonGpAutoOfferPurchasedRow(
-      label: 'purchased non-riches tile (timber) emits a priority-1 auto-offer '
+      label:
+          'purchased non-riches tile (timber) emits a priority-1 auto-offer '
           'keyed under the minor with originTileKey equal to the purchased '
           'tile key',
       resource: Resource.timber,
@@ -279,16 +257,15 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       ),
     ),
     _autoOfferRow(
-      label: 'purchased non-riches tile parity with unpurchased tile — both tiles '
+      label:
+          'purchased non-riches tile parity with unpurchased tile — both tiles '
           'emit auto-offers with identical quantity and priority; only '
           'originTileKey differs',
       game: twoMinorTimberTilesAutoOfferGame(
         purchasedTileKey: purchasedTileKey,
         unpurchasedTileKey: unpurchasedTileKey,
       ),
-      tileMapByRegion: {
-        'oldWorld': twoTileSameResourceMap(Resource.timber),
-      },
+      tileMapByRegion: {'oldWorld': twoTileSameResourceMap(Resource.timber)},
       connectivityByFactionId: connectivityByFaction({
         'm1': {purchasedTileKey, unpurchasedTileKey},
       }),
@@ -305,7 +282,8 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       refs: '#2991 C6',
     ),
     nonGpAutoOfferPurchasedRow(
-      label: 'PurchasedTileIndex.fromGame is built independently of auto-offer '
+      label:
+          'PurchasedTileIndex.fromGame is built independently of auto-offer '
           "emission — the minor's auto-offer for a purchased timber tile "
           'carries the originTileKey that the index can map back to the '
           'owning GP for FRR routing',
@@ -319,14 +297,16 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       ),
     ),
     nonGpAutoOfferPurchasedRow(
-      label: 'purchased gold tile (mineral riches) emits no auto-offer — riches '
+      label:
+          'purchased gold tile (mineral riches) emits no auto-offer — riches '
           'handoff (C5) routes the yield to the owning GP treasury in '
           'phase 3 instead',
       resource: Resource.gold,
       expect: const NonGpAutoOffersExpectation(empty: true),
     ),
     nonGpAutoOfferPurchasedRow(
-      label: 'purchased spices tile (non-mineral riches) emits no auto-offer — '
+      label:
+          'purchased spices tile (non-mineral riches) emits no auto-offer — '
           'spices route through the riches handoff (C5) instead of the '
           'world market',
       resource: Resource.spices,

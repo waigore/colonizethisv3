@@ -9,13 +9,13 @@ import 'core_economy_test_support.dart';
 import 'trade_interception_scenarios.dart';
 
 Fleet _patrolFleet({String id = 'f1'}) => Fleet(
-      id: id,
-      ownerId: 'p2',
-      seaZoneId: 'sea1',
-      regionId: 'oldWorld',
-      shipTypeIds: const ['carrack'],
-      mission: FleetMission.patrol,
-    );
+  id: id,
+  ownerId: 'p2',
+  seaZoneId: 'sea1',
+  regionId: 'oldWorld',
+  shipTypeIds: const ['carrack'],
+  mission: FleetMission.patrol,
+);
 
 /// Pins for [applyTradeInterception] rows.
 enum ApplyTradeInterceptionTarget {
@@ -33,8 +33,7 @@ enum ApplyTradeInterceptionTarget {
 void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
   switch (target) {
     case ApplyTradeInterceptionTarget.emptyOverseas:
-      final game =
-          tradeInterceptionGame(defaultRelation: RelationState.atWar);
+      final game = tradeInterceptionGame(defaultRelation: RelationState.atWar);
       final result = applyTradeInterception(game, 'p1', {}, seed: 42);
       expect(result.reducedDelivered, isEmpty);
       expect(result.updatedFleets, game.worldState.fleets);
@@ -45,8 +44,7 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
       expect(result.reducedDelivered[CommodityCatalog.grain.id], 10);
       expect(result.updatedFleets, game.worldState.fleets);
     case ApplyTradeInterceptionTarget.atWarNoInterceptor:
-      final game =
-          tradeInterceptionGame(defaultRelation: RelationState.atWar);
+      final game = tradeInterceptionGame(defaultRelation: RelationState.atWar);
       final delivered = {CommodityCatalog.grain.id: 12};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 7);
       expect(result.reducedDelivered[CommodityCatalog.grain.id], 12);
@@ -57,12 +55,7 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
         fleets: [_patrolFleet()],
       );
       final delivered = {CommodityCatalog.grain.id: 20};
-      final result = applyTradeInterception(
-        game,
-        'p1',
-        delivered,
-        seed: 12345,
-      );
+      final result = applyTradeInterception(game, 'p1', delivered, seed: 12345);
       final reduced = result.reducedDelivered[CommodityCatalog.grain.id];
       expect(reduced, isNotNull);
       expect(reduced!, lessThan(20));
@@ -80,14 +73,12 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
         b.reducedDelivered[CommodityCatalog.grain.id],
       );
     case ApplyTradeInterceptionTarget.privateeringBaseline:
-      final game =
-          tradeInterceptionPrivateeringGame(enemyHasPrivateering: false);
-      final result = applyTradeInterception(
-        game,
-        'p1',
-        {CommodityCatalog.grain.id: 100},
-        seed: 42,
+      final game = tradeInterceptionPrivateeringGame(
+        enemyHasPrivateering: false,
       );
+      final result = applyTradeInterception(game, 'p1', {
+        CommodityCatalog.grain.id: 100,
+      }, seed: 42);
       expect(result.reducedDelivered[CommodityCatalog.grain.id], 77);
     case ApplyTradeInterceptionTarget.privateeringBoosted:
       final baseline = applyTradeInterception(
@@ -174,12 +165,11 @@ ApplyTradeInterceptionScenario applyTradeInterceptionScenario({
   required String label,
   required ApplyTradeInterceptionTarget target,
   String? refs,
-}) =>
-    ApplyTradeInterceptionScenario(
-      label: label,
-      run: () => runApplyTradeInterceptionExpectation(target),
-      refs: refs,
-    );
+}) => ApplyTradeInterceptionScenario(
+  label: label,
+  run: () => runApplyTradeInterceptionExpectation(target),
+  refs: refs,
+);
 
 /// Pins for [scanTradeInterceptionInputs] rows.
 enum TradeInterceptionScanTarget {
@@ -224,10 +214,7 @@ void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
       );
       expect(scan.playerMerchantShips, 2);
       expect(scan.escortStrength, greaterThan(0.0));
-      expect(
-        kMerchantShipTypeIds,
-        containsAll(<String>{'fluyte', 'carrack'}),
-      );
+      expect(kMerchantShipTypeIds, containsAll(<String>{'fluyte', 'carrack'}));
     case TradeInterceptionScanTarget.enemyBlockade:
       final scan = scanTradeInterceptionInputs(
         [
@@ -245,11 +232,8 @@ void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
       expect(scan.interceptScore, greaterThan(0.0));
     case TradeInterceptionScanTarget.privateeringScales:
       List<Fleet> enemyPatrol() => [
-            tradeInterceptionScanFleet(
-              ownerId: 'p2',
-              shipTypeIds: const ['sloop'],
-            ),
-          ];
+        tradeInterceptionScanFleet(ownerId: 'p2', shipTypeIds: const ['sloop']),
+      ];
       final baseline = scanTradeInterceptionInputs(
         enemyPatrol(),
         const <String>{'p2'},
@@ -265,10 +249,7 @@ void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
       expect(baseline.interceptScore, greaterThan(0.0));
       expect(
         boosted.interceptScore,
-        closeTo(
-          baseline.interceptScore * kPrivateeringTradeRaidBonus,
-          1e-9,
-        ),
+        closeTo(baseline.interceptScore * kPrivateeringTradeRaidBonus, 1e-9),
       );
   }
 }
@@ -277,9 +258,8 @@ TradeInterceptionScanScenario tradeInterceptionScanScenario({
   required String label,
   required TradeInterceptionScanTarget target,
   String? refs,
-}) =>
-    TradeInterceptionScanScenario(
-      label: label,
-      run: () => runTradeInterceptionScanExpectation(target),
-      refs: refs,
-    );
+}) => TradeInterceptionScanScenario(
+  label: label,
+  run: () => runTradeInterceptionScanExpectation(target),
+  refs: refs,
+);

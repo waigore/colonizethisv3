@@ -45,12 +45,11 @@ EconomyProductionScenario resolveProductionScenario({
   required String label,
   required ResolveProductionPins pins,
   String? refs,
-}) =>
-    EconomyProductionScenario(
-      label: label,
-      run: () => runResolveProductionExpectation(pins),
-      refs: refs,
-    );
+}) => EconomyProductionScenario(
+  label: label,
+  run: () => runResolveProductionExpectation(pins),
+  refs: refs,
+);
 
 /// Pins for [effectiveLabourForWorkers] rows.
 typedef EffectiveLabourPins = ({
@@ -71,9 +70,8 @@ EconomyProductionScenario effectiveLabourScenario({
   required String label,
   required EffectiveLabourPins pins,
   String? refs,
-}) =>
-    EconomyProductionScenario(
-      label: label,
-      run: () => runEffectiveLabourExpectation(pins),
-      refs: refs,
-    );
+}) => EconomyProductionScenario(
+  label: label,
+  run: () => runEffectiveLabourExpectation(pins),
+  refs: refs,
+);

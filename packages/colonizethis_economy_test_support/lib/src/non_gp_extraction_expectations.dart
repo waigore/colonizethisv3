@@ -42,7 +42,10 @@ void assertNonGpExtractionExpectation(
     }
   }
   if (expectation.factionKeysUnordered != null) {
-    expect(result.keys, unorderedEquals(expectation.factionKeysUnordered!.toList()));
+    expect(
+      result.keys,
+      unorderedEquals(expectation.factionKeysUnordered!.toList()),
+    );
   }
   if (expectation.excludesCommodity != null) {
     final (factionId, commodity) = expectation.excludesCommodity!;

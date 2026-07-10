@@ -54,7 +54,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     refs: '#3093',
   ),
   validatorTreasuryTimberBid(
-    label: 'treasury cap takes precedence over bidExceedsCargoCapacity (rule 5 '
+    label:
+        'treasury cap takes precedence over bidExceedsCargoCapacity (rule 5 '
         'before rule 6)',
     treasuryBudgetForBids: 10,
     tradeCargoCapacity: 100,
@@ -66,15 +67,18 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     refs: '#3093',
   ),
   validatorUnknownPriceBidRow(
-    label: 'bids with no effective market price contribute zero treasury spend '
+    label:
+        'bids with no effective market price contribute zero treasury spend '
         '(defensive guard against unknown / future commodity ids)',
   ),
   validatorManufacturedBudgetRejectRow(
-    label: 'manufactured commodity bids now consume the catalog base price '
+    label:
+        'manufactured commodity bids now consume the catalog base price '
         '(Refs #3093 manufactured-default-prices slice)',
   ),
   validatorTreasuryTimberIronBids(
-    label: 'accepts cumulative spend equal to treasuryBudgetForBids across '
+    label:
+        'accepts cumulative spend equal to treasuryBudgetForBids across '
         'distinct commodities in submission order (Refs #3123)',
     treasuryBudgetForBids: 100,
     timberPrice: 30,
@@ -87,7 +91,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     refs: '#3123',
   ),
   validatorTreasuryTimberIronBids(
-    label: 'rejected bid does not consume the running spend budget — greedy '
+    label:
+        'rejected bid does not consume the running spend budget — greedy '
         'continuation admits a later smaller bid that fits (Refs #3123)',
     treasuryBudgetForBids: 100,
     timberPrice: 30,
@@ -117,8 +122,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   ),
 ];
 
-List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() =>
-    [
+List<TradeOrderValidatorScenario>
+tradeOrderValidatorTreasuryCatalogScenarios() => [
   validatorTreasuryTimberBids(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',
     treasuryBudgetForBids: 0,
@@ -133,7 +138,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
     refs: '#3123',
   ),
   validatorCatalogAdmitRow(
-    label: 'admits a bid priced solely from the catalog default when budget '
+    label:
+        'admits a bid priced solely from the catalog default when budget '
         'allows (Refs #3123 AC: rule 5 must not reject for unknown price '
         'when an initial/default price exists)',
     commodityId: CommodityCatalog.timber.id,
@@ -143,7 +149,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() 
         'timber must have a catalog default for this AC pin',
   ),
   validatorCatalogAdmitRow(
-    label: 'admits a manufactured-commodity bid priced from the catalog '
+    label:
+        'admits a manufactured-commodity bid priced from the catalog '
         'default when budget allows (Refs #3123 AC, manufactured branch)',
     commodityId: CommodityCatalog.lumber.id,
     bidQty: 1,

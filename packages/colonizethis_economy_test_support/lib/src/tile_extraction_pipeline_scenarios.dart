@@ -26,20 +26,20 @@ void runResolveTileKeyResourceContextScenario(
 
 /// Canonical scenarios for [resolveTileKeyResourceContext].
 List<ResolveTileKeyResourceContextScenario>
-    resolveTileKeyResourceContextScenarios() => [
-          resolveTileKeyResourceContextScenario(
-            label: 'returns resource context for valid tile key',
-            target: ResolveTileKeyResourceContextTarget.validGrain,
-          ),
-          resolveTileKeyResourceContextScenario(
-            label: 'maps commodity id via resource.name consistently',
-            target: ResolveTileKeyResourceContextTarget.ironCommodityMapping,
-          ),
-          resolveTileKeyResourceContextScenario(
-            label: 'returns null for invalid or out-of-range keys',
-            target: ResolveTileKeyResourceContextTarget.invalidKeys,
-          ),
-        ];
+resolveTileKeyResourceContextScenarios() => [
+  resolveTileKeyResourceContextScenario(
+    label: 'returns resource context for valid tile key',
+    target: ResolveTileKeyResourceContextTarget.validGrain,
+  ),
+  resolveTileKeyResourceContextScenario(
+    label: 'maps commodity id via resource.name consistently',
+    target: ResolveTileKeyResourceContextTarget.ironCommodityMapping,
+  ),
+  resolveTileKeyResourceContextScenario(
+    label: 'returns null for invalid or out-of-range keys',
+    target: ResolveTileKeyResourceContextTarget.invalidKeys,
+  ),
+];
 
 /// One row in [resolveTileKeyExtractionContextScenarios].
 class ResolveTileKeyExtractionContextScenario implements RefsScenario {
@@ -64,17 +64,17 @@ void runResolveTileKeyExtractionContextScenario(
 
 /// Canonical scenarios for [resolveTileKeyExtractionContext].
 List<ResolveTileKeyExtractionContextScenario>
-    resolveTileKeyExtractionContextScenarios() => [
-          resolveTileKeyExtractionContextScenario(
-            label: 'resolves province from provincesByFullId index',
-            target: ResolveTileKeyExtractionContextTarget.fromIndex,
-          ),
-          resolveTileKeyExtractionContextScenario(
-            label: 'falls back to game.worldState when index misses',
-            target: ResolveTileKeyExtractionContextTarget.fallbackGame,
-          ),
-          resolveTileKeyExtractionContextScenario(
-            label: 'returns null when province row is missing',
-            target: ResolveTileKeyExtractionContextTarget.missingProvince,
-          ),
-        ];
+resolveTileKeyExtractionContextScenarios() => [
+  resolveTileKeyExtractionContextScenario(
+    label: 'resolves province from provincesByFullId index',
+    target: ResolveTileKeyExtractionContextTarget.fromIndex,
+  ),
+  resolveTileKeyExtractionContextScenario(
+    label: 'falls back to game.worldState when index misses',
+    target: ResolveTileKeyExtractionContextTarget.fallbackGame,
+  ),
+  resolveTileKeyExtractionContextScenario(
+    label: 'returns null when province row is missing',
+    target: ResolveTileKeyExtractionContextTarget.missingProvince,
+  ),
+];

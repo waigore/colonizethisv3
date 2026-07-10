@@ -22,8 +22,8 @@ TileMapResult _tileMapForResourceContext() {
 }
 
 Map<String, TileMapResult> _resourceContextTileMapByRegion() => {
-      'oldWorld': _tileMapForResourceContext(),
-    };
+  'oldWorld': _tileMapForResourceContext(),
+};
 
 /// Pins for [resolveTileKeyResourceContext] rows.
 enum ResolveTileKeyResourceContextTarget {
@@ -74,17 +74,16 @@ ResolveTileKeyResourceContextScenario resolveTileKeyResourceContextScenario({
   required String label,
   required ResolveTileKeyResourceContextTarget target,
   String? refs,
-}) =>
-    ResolveTileKeyResourceContextScenario(
-      label: label,
-      run: () => runResolveTileKeyResourceContextExpectation(target),
-      refs: refs,
-    );
+}) => ResolveTileKeyResourceContextScenario(
+  label: label,
+  run: () => runResolveTileKeyResourceContextExpectation(target),
+  refs: refs,
+);
 
 const _extractionContextProvinceId = 'oldWorld|p1';
 
 ({Map<String, TileMapResult> tileMapByRegion, Province province})
-    _extractionContextFixtures() {
+_extractionContextFixtures() {
   final province = capitalProvinceForNonGpExtractionTest(
     provinceId: _extractionContextProvinceId,
   );
@@ -96,10 +95,7 @@ const _extractionContextProvinceId = 'oldWorld|p1';
       [Resource.grain],
     ],
   );
-  return (
-    tileMapByRegion: {'oldWorld': tileMap},
-    province: province,
-  );
+  return (tileMapByRegion: {'oldWorld': tileMap}, province: province);
 }
 
 /// Pins for [resolveTileKeyExtractionContext] rows.
@@ -145,13 +141,13 @@ void runResolveTileKeyExtractionContextExpectation(
   }
 }
 
-ResolveTileKeyExtractionContextScenario resolveTileKeyExtractionContextScenario({
+ResolveTileKeyExtractionContextScenario
+resolveTileKeyExtractionContextScenario({
   required String label,
   required ResolveTileKeyExtractionContextTarget target,
   String? refs,
-}) =>
-    ResolveTileKeyExtractionContextScenario(
-      label: label,
-      run: () => runResolveTileKeyExtractionContextExpectation(target),
-      refs: refs,
-    );
+}) => ResolveTileKeyExtractionContextScenario(
+  label: label,
+  run: () => runResolveTileKeyExtractionContextExpectation(target),
+  refs: refs,
+);

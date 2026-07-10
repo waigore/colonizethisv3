@@ -1070,6 +1070,17 @@ test_support LOC: **16,421** (net −139 vs slice 56 baseline 16,560). Economy `
 
 test_support LOC: **16,362** (net −59 vs slice 57 / 16,421). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 59+.
 
+## Phase 3 — Slice 59 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| drop-remaining-expect-ctors | Remove remaining dual `.expect` ctors; wire `matcherRow` / `validatorExpectRow` / `playerContextRow` / `validatorContextRow` / `purchasedTileIndexRow` / `lockRecoveryBidsRow` | `*_scenarios.dart`, `deal_matcher_test_support.dart` | #3939 |
+| matcher-pair-unify | Extend `matcherPairTrade` (nullable cargo + treasury map); collapse Ab/zero-cargo/Agp1 helpers into `matcherPairRow` | `deal_matcher_test_support.dart`, `deal_matcher_*_scenarios.dart` | #3115, #3939 |
+| non-gp-dual-fixture | `nonGpMinorTribeTimberFursFixture` shared by extraction + auto-offer dual-faction rows | `extraction_fixture_support.dart`, `non_gp_*_scenarios.dart` | #2991, #3939 |
+| label-scan-full-file | `check_economy_test_preserved_descriptions` scans scenario files as whole text so dart-format `label:\\n '…'` pins still match | `tool/check_economy_test_preserved_descriptions.dart` | #3939 |
+
+test_support LOC: **15,960** (net −402 vs slice 58 / 16,362; includes dart format pass). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 60+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

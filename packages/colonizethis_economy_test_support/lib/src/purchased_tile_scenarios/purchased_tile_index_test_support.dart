@@ -7,19 +7,16 @@ export '../purchased_tile_fixture_support.dart'
     show purchasedTileFixtureGame, minorPurchasedTileGame;
 
 /// Canonical minor-owned purchased-tile scenario used by AC-D1-2 and AC-D1-7.
-Game minorOwnedPurchasedTileIndexGame() => minorPurchasedTileGame(
-      minorDisplayName: 'Minor 1',
-    );
+Game minorOwnedPurchasedTileIndexGame() =>
+    minorPurchasedTileGame(minorDisplayName: 'Minor 1');
 
 /// Tribe-owned purchased tile in `oldWorld|T1` purchased by `gpA`.
-Game tribeOwnedPurchasedTileIndexGame() => tribePurchasedTileGame(
-      tribeDisplayName: 'Tribe 1',
-    );
+Game tribeOwnedPurchasedTileIndexGame() =>
+    tribePurchasedTileGame(tribeDisplayName: 'Tribe 1');
 
 /// Purchased tile whose containing province is now GP-owned (post-conquest).
-Game gpOwnedProvinceExcludesPurchasedTileGame() => gpProvincePurchasedTileGame(
-      ownerGpId: 'gpB',
-    );
+Game gpOwnedProvinceExcludesPurchasedTileGame() =>
+    gpProvincePurchasedTileGame(ownerGpId: 'gpB');
 
 /// Purchased tile in an unowned province.
 Game unownedProvincePurchasedTileGame() {
@@ -29,7 +26,9 @@ Game unownedProvincePurchasedTileGame() {
   return purchasedTileFixtureGame(
     provinces: [Province(id: provinceId, regionId: ow)],
     tileKeysByRegionAndProvince: const {
-      ow: {provinceId: [tileKey]},
+      ow: {
+        provinceId: [tileKey],
+      },
     },
     purchasedTilesByTileKey: const {tileKey: 'gpA'},
   );
@@ -66,15 +65,16 @@ Game mixedMinorTribePurchasedTileGame() {
       Province(id: tribeProvinceId, regionId: nw, ownerId: 'T1'),
     ],
     tileKeysByRegionAndProvince: const {
-      ow: {minorProvinceId: [minorTileKey]},
-      nw: {tribeProvinceId: [tribeTileKey]},
+      ow: {
+        minorProvinceId: [minorTileKey],
+      },
+      nw: {
+        tribeProvinceId: [tribeTileKey],
+      },
     },
     minorNations: const [MinorNation(id: 'M1', displayName: 'Minor 1')],
     tribes: const [Tribe(id: 'T1', displayName: 'Tribe 1')],
-    purchasedTilesByTileKey: const {
-      minorTileKey: 'gpA',
-      tribeTileKey: 'gpB',
-    },
+    purchasedTilesByTileKey: const {minorTileKey: 'gpA', tribeTileKey: 'gpB'},
   );
 }
 

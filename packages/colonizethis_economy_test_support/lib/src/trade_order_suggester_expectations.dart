@@ -89,8 +89,10 @@ void assertSuggesterExpectation(
     expect(result.bids, hasLength(expectation.bidsLength!));
   }
   if (expectation.offerCommodityIds != null) {
-    expect(result.offers.map((o) => o.commodityId).toList(),
-        expectation.offerCommodityIds);
+    expect(
+      result.offers.map((o) => o.commodityId).toList(),
+      expectation.offerCommodityIds,
+    );
   }
   if (expectation.bidCommodityIds != null) {
     expect(

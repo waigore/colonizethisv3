@@ -27,21 +27,21 @@ BoycottBlockedCommoditiesScenario _boycottColonyRow({
   Map<String, ConnectivityResult>? connectivityByFactionId,
   Map<String, List<TradeOrder>>? autoOffersByFactionId,
   String? refs,
-}) =>
-    BoycottBlockedCommoditiesScenario.expect(
-      label: label,
-      buildGame: () => gameWithColonyTribeBoycottTest(
-        colonyStates: colonyStates,
-        boycottStates: boycottStates,
-      ),
-      buyerPlayerId: buyerPlayerId,
-      expect: expect,
-      useDefaultTileMaps: useDefaultTileMaps,
-      useDefaultTopology: useDefaultTopology,
-      connectivityByFactionId: connectivityByFactionId,
-      autoOffersByFactionId: autoOffersByFactionId,
-      refs: refs,
-    );
+}) => BoycottBlockedCommoditiesScenario(
+  label: label,
+  buildGame: () => gameWithColonyTribeBoycottTest(
+    colonyStates: colonyStates,
+    boycottStates: boycottStates,
+  ),
+  buyerPlayerId: buyerPlayerId,
+  useDefaultTileMaps: useDefaultTileMaps,
+  useDefaultTopology: useDefaultTopology,
+  connectivityByFactionId: connectivityByFactionId,
+  autoOffersByFactionId: autoOffersByFactionId,
+  verify: (blocked) =>
+      assertBoycottBlockedCommoditiesExpectation(blocked, expect),
+  refs: refs,
+);
 
 /// One row in [boycottBlockedCommoditiesScenarios].
 class BoycottBlockedCommoditiesScenario {
@@ -57,29 +57,6 @@ class BoycottBlockedCommoditiesScenario {
     this.refs,
   });
 
-  BoycottBlockedCommoditiesScenario.expect({
-    required String label,
-    required Game Function() buildGame,
-    required String buyerPlayerId,
-    required BoycottBlockedCommoditiesExpectation expect,
-    bool useDefaultTileMaps = true,
-    bool useDefaultTopology = true,
-    Map<String, ConnectivityResult>? connectivityByFactionId,
-    Map<String, List<TradeOrder>>? autoOffersByFactionId,
-    String? refs,
-  }) : this(
-          label: label,
-          buildGame: buildGame,
-          buyerPlayerId: buyerPlayerId,
-          useDefaultTileMaps: useDefaultTileMaps,
-          useDefaultTopology: useDefaultTopology,
-          connectivityByFactionId: connectivityByFactionId,
-          autoOffersByFactionId: autoOffersByFactionId,
-          verify: (blocked) =>
-              assertBoycottBlockedCommoditiesExpectation(blocked, expect),
-          refs: refs,
-        );
-
   final String label;
   final Game Function() buildGame;
   final String buyerPlayerId;
@@ -92,58 +69,58 @@ class BoycottBlockedCommoditiesScenario {
 }
 
 /// Canonical scenarios for [boycottedColonySellableCommodityIds].
-List<BoycottBlockedCommoditiesScenario> boycottBlockedCommoditiesScenarios() =>
-    [
-      _boycottColonyRow(
-        label:
-            'returns the colony Tribe sellable commodities for the boycotted buyer',
-        expect: const BoycottBlockedCommoditiesExpectation(
-          blockedCommodityIds: {'furs'},
-        ),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'honors precomputed auto-offers without recomputing connectivity',
-        connectivityByFactionId: const {},
-        autoOffersByFactionId: {
-          't1': [testOffer('furs', 1)],
-        },
-        expect: const BoycottBlockedCommoditiesExpectation(
-          blockedCommodityIds: {'furs'},
-        ),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'empty for a buyer that is not the boycott target',
-        buyerPlayerId: 'gpA',
-        expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'empty when no boycott is active',
-        boycottStates: const [],
-        expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'empty when the boycotting GP holds no colony',
-        colonyStates: const [],
-        expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'empty when tile maps are omitted (unit-test path unaffected)',
-        useDefaultTileMaps: false,
-        expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
-        refs: '#3758',
-      ),
-      _boycottColonyRow(
-        label: 'empty when topology is absent',
-        useDefaultTopology: false,
-        expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
-        refs: '#3758',
-      ),
-    ];
+List<BoycottBlockedCommoditiesScenario>
+boycottBlockedCommoditiesScenarios() => [
+  _boycottColonyRow(
+    label:
+        'returns the colony Tribe sellable commodities for the boycotted buyer',
+    expect: const BoycottBlockedCommoditiesExpectation(
+      blockedCommodityIds: {'furs'},
+    ),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'honors precomputed auto-offers without recomputing connectivity',
+    connectivityByFactionId: const {},
+    autoOffersByFactionId: {
+      't1': [testOffer('furs', 1)],
+    },
+    expect: const BoycottBlockedCommoditiesExpectation(
+      blockedCommodityIds: {'furs'},
+    ),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'empty for a buyer that is not the boycott target',
+    buyerPlayerId: 'gpA',
+    expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'empty when no boycott is active',
+    boycottStates: const [],
+    expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'empty when the boycotting GP holds no colony',
+    colonyStates: const [],
+    expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'empty when tile maps are omitted (unit-test path unaffected)',
+    useDefaultTileMaps: false,
+    expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
+    refs: '#3758',
+  ),
+  _boycottColonyRow(
+    label: 'empty when topology is absent',
+    useDefaultTopology: false,
+    expect: const BoycottBlockedCommoditiesExpectation(isEmpty: true),
+    refs: '#3758',
+  ),
+];
 
 /// Runs a boycott-blocked-commodities scenario row.
 void runBoycottBlockedCommoditiesScenario({

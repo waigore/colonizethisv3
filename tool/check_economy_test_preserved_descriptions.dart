@@ -126,14 +126,12 @@ Set<String> collectEconomyTestDescriptions({
 
   final scenarioPaths = scenarioSourcesByPath.keys.toList()..sort();
   for (final path in scenarioPaths) {
-    final lines = scenarioSourcesByPath[path]!.split('\n');
-    for (final line in lines) {
-      if (economyTestDescriptionIsCommentLine(line)) continue;
-      for (final match in economyScenarioLabelPattern.allMatches(line)) {
-        final description = match.group(1) ?? match.group(2);
-        if (description == null || description.isEmpty) continue;
-        descriptions.add(description);
-      }
+    final source = scenarioSourcesByPath[path]!;
+    // Full-file scan so dart-format `label:\n  '…'` still matches (Refs #3939).
+    for (final match in economyScenarioLabelPattern.allMatches(source)) {
+      final description = match.group(1) ?? match.group(2);
+      if (description == null || description.isEmpty) continue;
+      descriptions.add(description);
     }
   }
   return descriptions;

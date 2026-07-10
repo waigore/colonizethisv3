@@ -28,9 +28,7 @@ Game twoMinorTimberTilesAutoOfferGame({
   const provinceId = 'oldWorld|m1';
   return purchasedTileFixtureGame(
     gameId: 'g_c6_parity',
-    provinces: [
-      capitalProvinceForNonGpExtractionTest(provinceId: provinceId),
-    ],
+    provinces: [capitalProvinceForNonGpExtractionTest(provinceId: provinceId)],
     tileKeysByRegionAndProvince: {
       'oldWorld': {
         provinceId: [purchasedTileKey, unpurchasedTileKey],
@@ -38,9 +36,8 @@ Game twoMinorTimberTilesAutoOfferGame({
     },
     minorNations: [testMinor()],
     purchasedTilesByTileKey: {purchasedTileKey: 'gpA'},
-    tileState: tileStateFromSpecs(tileImps([
-      purchasedTileKey,
-      unpurchasedTileKey,
-    ])),
+    tileState: tileStateFromSpecs(
+      tileImps([purchasedTileKey, unpurchasedTileKey]),
+    ),
   );
 }

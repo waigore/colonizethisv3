@@ -1,7 +1,6 @@
 // Table-driven FirstRightProfit scenarios (Refs #3856, #3939 slices 14 / 45).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_test/test.dart';
 
 import 'frr_profit_expectations.dart';
 
@@ -14,18 +13,6 @@ class FirstRightProfitRateScenario {
     this.refs,
   });
 
-  FirstRightProfitRateScenario.expect({
-    required String label,
-    required int score,
-    required FrrProfitRateExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          score: score,
-          verify: (result) => assertFrrProfitRateExpectation(result, expect),
-          refs: refs,
-        );
-
   final String label;
   final int score;
   final void Function(double result) verify;
@@ -36,12 +23,14 @@ FirstRightProfitRateScenario frrProfitRateRow(
   String label,
   int score,
   double expected,
-) =>
-    FirstRightProfitRateScenario.expect(
-      label: label,
-      score: score,
-      expect: FrrProfitRateExpectation(expected: expected),
-    );
+) => FirstRightProfitRateScenario(
+  label: label,
+  score: score,
+  verify: (result) => assertFrrProfitRateExpectation(
+    result,
+    FrrProfitRateExpectation(expected: expected),
+  ),
+);
 
 /// Canonical scenarios for [computeFirstRightProfitRate].
 List<FirstRightProfitRateScenario> firstRightProfitRateScenarios() => [
@@ -71,22 +60,6 @@ class FirstRightProfitScenario {
     this.refs,
   });
 
-  FirstRightProfitScenario.expect({
-    required String label,
-    required int relationScore,
-    required int filledQuantity,
-    required double pricePerUnit,
-    required FrrProfitExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          relationScore: relationScore,
-          filledQuantity: filledQuantity,
-          pricePerUnit: pricePerUnit,
-          verify: (result) => assertFrrProfitExpectation(result, expect),
-          refs: refs,
-        );
-
   final String label;
   final int relationScore;
   final int filledQuantity;
@@ -103,19 +76,21 @@ FirstRightProfitScenario frrProfitRow({
   bool expectZero = false,
   double? profitRate,
   double? profitTreasury,
-}) =>
-    FirstRightProfitScenario.expect(
-      label: label,
-      relationScore: relationScore,
-      filledQuantity: filledQuantity,
-      pricePerUnit: pricePerUnit,
-      expect: expectZero
-          ? const FrrProfitExpectation(expectZero: true)
-          : FrrProfitExpectation(
-              profitRate: profitRate,
-              profitTreasury: profitTreasury,
-            ),
-    );
+}) => FirstRightProfitScenario(
+  label: label,
+  relationScore: relationScore,
+  filledQuantity: filledQuantity,
+  pricePerUnit: pricePerUnit,
+  verify: (result) => assertFrrProfitExpectation(
+    result,
+    expectZero
+        ? const FrrProfitExpectation(expectZero: true)
+        : FrrProfitExpectation(
+            profitRate: profitRate,
+            profitTreasury: profitTreasury,
+          ),
+  ),
+);
 
 /// Canonical scenarios for [computeFirstRightProfit].
 List<FirstRightProfitScenario> firstRightProfitScenarios() => [
@@ -191,22 +166,6 @@ class EmbassyKickbackScenario {
     this.refs,
   });
 
-  EmbassyKickbackScenario.expect({
-    required String label,
-    required num relationScore,
-    required int filledQuantity,
-    required double pricePerUnit,
-    required EmbassyKickbackExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          relationScore: relationScore,
-          filledQuantity: filledQuantity,
-          pricePerUnit: pricePerUnit,
-          verify: (result) => assertEmbassyKickbackExpectation(result, expect),
-          refs: refs,
-        );
-
   final String label;
   final num relationScore;
   final int filledQuantity;
@@ -221,14 +180,16 @@ EmbassyKickbackScenario embassyKickbackRow(
   int filledQuantity,
   double pricePerUnit,
   double expected,
-) =>
-    EmbassyKickbackScenario.expect(
-      label: label,
-      relationScore: relationScore,
-      filledQuantity: filledQuantity,
-      pricePerUnit: pricePerUnit,
-      expect: EmbassyKickbackExpectation(expected: expected),
-    );
+) => EmbassyKickbackScenario(
+  label: label,
+  relationScore: relationScore,
+  filledQuantity: filledQuantity,
+  pricePerUnit: pricePerUnit,
+  verify: (result) => assertEmbassyKickbackExpectation(
+    result,
+    EmbassyKickbackExpectation(expected: expected),
+  ),
+);
 
 /// Canonical scenarios for [computeEmbassyKickback].
 List<EmbassyKickbackScenario> embassyKickbackScenarios() => [

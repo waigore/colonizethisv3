@@ -54,8 +54,7 @@ void assertTreasuryUiCompositionExpectation({
       );
     }
   }
-  final int resolvedHeadroom =
-      expectation.headroom ?? budget - currentSpend;
+  final int resolvedHeadroom = expectation.headroom ?? budget - currentSpend;
   if (expectation.headroom != null) {
     expect(resolvedHeadroom, expectation.headroom);
   }
@@ -122,10 +121,7 @@ void assertTreasuryAvailableExpectation({
         playerId: playerId,
         projectedNonBidTreasuryDelta: 0,
       ),
-      treasuryAvailableForBidsByPlayer(
-        game: game,
-        playerId: playerId,
-      ),
+      treasuryAvailableForBidsByPlayer(game: game, playerId: playerId),
     );
   }
   if (expectation.ignoredProjectedDeltaWhenTreasuryZero != null) {

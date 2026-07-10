@@ -20,30 +20,6 @@ class PurchasedTileRichesScenario {
     this.refs,
   });
 
-  PurchasedTileRichesScenario.expect({
-    required String label,
-    required Game Function() buildGame,
-    required Map<String, TileMapResult> Function() tileMaps,
-    required PurchasedTileRichesExpectation expect,
-    double? richesCashMultiplier,
-    String? refs,
-  }) : this(
-          label: label,
-          buildGame: buildGame,
-          tileMaps: tileMaps,
-          richesCashMultiplier: richesCashMultiplier,
-          verify: (result, index, game) =>
-              assertPurchasedTileRichesExpectation(
-            result,
-            index,
-            game,
-            expect,
-            tileMapByRegion: tileMaps(),
-            richesCashMultiplier: richesCashMultiplier ?? 1.0,
-          ),
-          refs: refs,
-        );
-
   final String label;
   final Game Function() buildGame;
   final Map<String, TileMapResult> Function() tileMaps;
@@ -52,11 +28,12 @@ class PurchasedTileRichesScenario {
     PurchasedTileRichesResult result,
     PurchasedTileIndex index,
     Game game,
-  ) verify;
+  )
+  verify;
   final String? refs;
 }
 
-/// Compact [PurchasedTileRichesScenario.expect] builder (Refs #3939 slice 48).
+/// Compact purchased-tile riches row (Refs #3939 slice 48 / 59).
 PurchasedTileRichesScenario purchasedTileRichesRow({
   required String label,
   required PurchasedTileRichesExpectation expect,
@@ -70,19 +47,29 @@ PurchasedTileRichesScenario purchasedTileRichesRow({
   String? refs,
 }) {
   final resolvedResource = resource ?? Resource.gold;
-  return PurchasedTileRichesScenario.expect(
+  final Game Function() resolvedBuild =
+      buildGame ??
+      () => purchasedTileScenario(
+        resource: resolvedResource,
+        improvementLevel: improvementLevel,
+        roadLevel: roadLevel,
+        portsByProvinceSeaboard: portsByProvinceSeaboard,
+      );
+  final Map<String, TileMapResult> Function() resolvedMaps =
+      tileMaps ?? () => tileMapByRegionForResource(resolvedResource);
+  return PurchasedTileRichesScenario(
     label: label,
-    buildGame: buildGame ??
-        () => purchasedTileScenario(
-              resource: resolvedResource,
-              improvementLevel: improvementLevel,
-              roadLevel: roadLevel,
-              portsByProvinceSeaboard: portsByProvinceSeaboard,
-            ),
-    tileMaps: tileMaps ??
-        () => tileMapByRegionForResource(resolvedResource),
+    buildGame: resolvedBuild,
+    tileMaps: resolvedMaps,
     richesCashMultiplier: richesCashMultiplier,
-    expect: expect,
+    verify: (result, index, game) => assertPurchasedTileRichesExpectation(
+      result,
+      index,
+      game,
+      expect,
+      tileMapByRegion: resolvedMaps(),
+      richesCashMultiplier: richesCashMultiplier ?? 1.0,
+    ),
     refs: refs,
   );
 }
@@ -149,7 +136,8 @@ List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
     refs: '#2991 C5',
   ),
   purchasedTileRichesRow(
-    label: 'tile with no road and no port produces no credit (transport level 0 '
+    label:
+        'tile with no road and no port produces no credit (transport level 0 '
         'caps yield to 0)',
     roadLevel: 0,
     expect: const PurchasedTileRichesExpectation(
@@ -200,7 +188,8 @@ List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
     ),
   ),
   purchasedTileRichesRow(
-    label: 'multi-tile aggregation — distinct GPs each accrue their own credits',
+    label:
+        'multi-tile aggregation — distinct GPs each accrue their own credits',
     buildGame: multiGpPurchasedTileRichesGame,
     tileMaps: multiGpPurchasedTileRichesTileMaps,
     expect: PurchasedTileRichesExpectation(

@@ -27,7 +27,8 @@ class TownManufacturingBonusProvinceExpectation {
     List<CommodityId> withTechAbsentCommodities,
     int townDevelopmentLevel,
     Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
-  })? techGated;
+  })?
+  techGated;
 }
 
 void assertTownManufacturingBonusProvinceExpectation(
@@ -91,11 +92,8 @@ class TownManufacturingBonusGameExpectation {
   final Map<String, TownManufacturingAutoOfferExpectation>? autoOffers;
   final bool previewMatchesLive;
   final bool previewEmpty;
-  final ({
-    String provinceId,
-    String factionId,
-    CommodityId commodityId,
-  })? previewProvinceMatchesFactionCommodity;
+  final ({String provinceId, String factionId, CommodityId commodityId})?
+  previewProvinceMatchesFactionCommodity;
 }
 
 void assertTownManufacturingBonusGameExpectation({
@@ -118,10 +116,7 @@ void assertTownManufacturingBonusGameExpectation({
   }
   if (expectation.deliveredRawGreaterThanZero != null) {
     for (final entry in expectation.deliveredRawGreaterThanZero!.entries) {
-      expect(
-        deliveredRawByProvince![entry.key]?[entry.value],
-        greaterThan(0),
-      );
+      expect(deliveredRawByProvince![entry.key]?[entry.value], greaterThan(0));
     }
   }
   if (expectation.autoOffers != null) {

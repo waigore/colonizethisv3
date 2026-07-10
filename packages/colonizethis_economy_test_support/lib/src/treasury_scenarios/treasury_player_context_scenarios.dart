@@ -1,7 +1,5 @@
 // Table-driven world-market player-context facade scenarios (Refs #3856, #3939 slice 19).
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'treasury_player_context_expectations.dart';
 
 /// One row in a player-context scenario table.
@@ -12,29 +10,31 @@ class PlayerContextScenario {
     this.refs,
   });
 
-  PlayerContextScenario.expect({
-    required String label,
-    required PlayerContextExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          run: () => assertPlayerContextExpectation(expect),
-          refs: refs,
-        );
-
   final String label;
   final void Function() run;
   final String? refs;
 }
 
 /// Runs [scenario] (setup + assertions live in [PlayerContextScenario.run]).
+
+/// Compact expect-wired row (Refs #3939 slice 59).
+PlayerContextScenario playerContextRow({
+  required String label,
+  required PlayerContextExpectation expect,
+  String? refs,
+}) => PlayerContextScenario(
+  label: label,
+  run: () => assertPlayerContextExpectation(expect),
+  refs: refs,
+);
+
 void runPlayerContextScenario(PlayerContextScenario scenario) {
   scenario.run();
 }
 
 /// `worldMarketPlayerContextFromGame` snapshot cases (Refs #3615 Cluster 2).
 List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
-  PlayerContextScenario.expect(
+  playerContextRow(
     label: 'surfaces the raw treasury budget for a known player',
     expect: const PlayerContextExpectation(
       target: PlayerContextScenarioTarget.snapshot,
@@ -44,7 +44,7 @@ List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
     ),
     refs: '#3615',
   ),
-  PlayerContextScenario.expect(
+  playerContextRow(
     label: 'negative treasury clamps the snapshot budget at 0',
     expect: const PlayerContextExpectation(
       target: PlayerContextScenarioTarget.snapshot,
@@ -53,7 +53,7 @@ List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
     ),
     refs: '#3615',
   ),
-  PlayerContextScenario.expect(
+  playerContextRow(
     label: 'ghost player id returns a zero-budget snapshot (ghost guard)',
     expect: const PlayerContextExpectation(
       target: PlayerContextScenarioTarget.snapshot,
@@ -63,7 +63,7 @@ List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
     ),
     refs: '#3615',
   ),
-  PlayerContextScenario.expect(
+  playerContextRow(
     label:
         'staged orders + projectedTreasuryDelta reduce the snapshot budget '
         'by the projected non-bid deficit',
@@ -78,36 +78,36 @@ List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
 ];
 
 /// Factory parity over the shared snapshot (single build path).
-List<PlayerContextScenario> worldMarketPlayerContextFactoryParityScenarios() =>
-    [
-      PlayerContextScenario.expect(
-        label:
-            'validation and suggestion factories reuse identical shared scalars '
-            'for the same (game, player)',
-        expect: const PlayerContextExpectation(
-          target: PlayerContextScenarioTarget.factoryParityScalars,
-          treasury: 175,
-        ),
-        refs: '#3615',
-      ),
-      PlayerContextScenario.expect(
-        label:
-            'validation and suggestion factories share the same staged '
-            'treasury-budget composition',
-        expect: const PlayerContextExpectation(
-          target: PlayerContextScenarioTarget.factoryParityTreasury,
-          treasury: 175,
-          treasuryBudgetForBids: 125,
-          projectedTreasuryDelta: -50,
-        ),
-        refs: '#3615',
-      ),
-    ];
+List<PlayerContextScenario>
+worldMarketPlayerContextFactoryParityScenarios() => [
+  playerContextRow(
+    label:
+        'validation and suggestion factories reuse identical shared scalars '
+        'for the same (game, player)',
+    expect: const PlayerContextExpectation(
+      target: PlayerContextScenarioTarget.factoryParityScalars,
+      treasury: 175,
+    ),
+    refs: '#3615',
+  ),
+  playerContextRow(
+    label:
+        'validation and suggestion factories share the same staged '
+        'treasury-budget composition',
+    expect: const PlayerContextExpectation(
+      target: PlayerContextScenarioTarget.factoryParityTreasury,
+      treasury: 175,
+      treasuryBudgetForBids: 125,
+      projectedTreasuryDelta: -50,
+    ),
+    refs: '#3615',
+  ),
+];
 
 /// `tradeSuggestionContextFromGame` concern-specific behavior.
 List<PlayerContextScenario>
 tradeSuggestionContextFromGameBehaviorScenarios() => [
-  PlayerContextScenario.expect(
+  playerContextRow(
     label:
         'passes the caller-supplied availability through unchanged (suggester '
         'raw-stockpile source is not replaced by offer caps)',
@@ -118,7 +118,7 @@ tradeSuggestionContextFromGameBehaviorScenarios() => [
     ),
     refs: '#3615',
   ),
-  PlayerContextScenario.expect(
+  playerContextRow(
     label: 'keeps the suggester defaults when need and priorities are omitted',
     expect: const PlayerContextExpectation(
       target: PlayerContextScenarioTarget.suggestion,
@@ -127,7 +127,7 @@ tradeSuggestionContextFromGameBehaviorScenarios() => [
     ),
     refs: '#3615',
   ),
-  PlayerContextScenario.expect(
+  playerContextRow(
     label: 'forwards caller need and priority overrides',
     expect: const PlayerContextExpectation(
       target: PlayerContextScenarioTarget.suggestion,

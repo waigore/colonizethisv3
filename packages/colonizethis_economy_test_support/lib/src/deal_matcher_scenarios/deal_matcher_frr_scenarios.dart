@@ -63,7 +63,8 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
     ),
   ),
   frrNoEffectRow(
-    label: 'offer without originTileKey is unaffected by FRR even when index '
+    label:
+        'offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions',
     offersByFactionId: {
       'sellerX': [matcherOffer('timber', 10)],
@@ -71,12 +72,11 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
     purchasedTileIndex: frrMatcherTestIndex(),
   ),
   frrNoEffectRow(
-    label: 'offer with originTileKey not present in index falls back to normal '
+    label:
+        'offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)',
     offersByFactionId: {
-      'M2': [
-        matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
-      ],
+      'M2': [matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3')],
     },
     purchasedTileIndex: frrMatcherTestIndex(),
   ),
@@ -89,7 +89,7 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'multiple purchased tiles owned by the same GP each route through FRR',
     inputs: matcherInputs(
@@ -124,7 +124,7 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
     ),
     refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'FRR pass respects multiple bids from the owning GP in submission order',
     inputs: matcherInputs(
@@ -190,10 +190,7 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
     label:
         'rival priority-1 bid loses to owning-GP priority-5 bid; rival '
         'priority-1 bid carries forward intact',
-    bidPriorityByBuyer: const {
-      kFrrIssueAcD5GpA: 5,
-      kFrrIssueAcD5GpB: 1,
-    },
+    bidPriorityByBuyer: const {kFrrIssueAcD5GpA: 5, kFrrIssueAcD5GpB: 1},
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       frrFilledDeal: const FilledDealExpectation(
@@ -212,10 +209,7 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         'FTP-paired rival bid at same priority loses to owning GP; FTP '
         'partner bid carries forward (FRR overrides FTP)',
     offerQty: 6,
-    bidPriorityByBuyer: const {
-      kFrrIssueAcD5GpA: 1,
-      kFrrIssueAcD5GpFtp: 1,
-    },
+    bidPriorityByBuyer: const {kFrrIssueAcD5GpA: 1, kFrrIssueAcD5GpFtp: 1},
     ftpPairKeys: {
       DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
     },

@@ -48,8 +48,10 @@ void runStagedBidSpendScenario(
       resourceRules: rules,
     ),
     resolveStagedBidSpendExpected(scenario, rules),
-    reason: scenario.label == 'ignores bids with non-positive quantity '
-        '(defensive guard)'
+    reason:
+        scenario.label ==
+            'ignores bids with non-positive quantity '
+                '(defensive guard)'
         ? 'quantity == 0 should contribute nothing to the running total'
         : null,
   );
@@ -76,13 +78,16 @@ List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
       expectedSpend: 4 * 30 + 2 * 80,
     ),
     stagedBidSpendRow(
-      label: 'uses catalog defaults when a bid commodity is missing from prices',
+      label:
+          'uses catalog defaults when a bid commodity is missing from prices',
       orders: [bidOrder('timber', 3)],
       prices: const <CommodityId, int>{},
-      expectedSpendFn: (rules) => 3 * rules.defaultMarketPriceForCommodityId('timber')!,
+      expectedSpendFn: (rules) =>
+          3 * rules.defaultMarketPriceForCommodityId('timber')!,
     ),
     stagedBidSpendRow(
-      label: 'sums spend across raw + manufactured bids using catalog defaults '
+      label:
+          'sums spend across raw + manufactured bids using catalog defaults '
           '(Refs #3093 manufactured-default-prices)',
       orders: [bidOrder('lumber', 5), bidOrder('timber', 2)],
       prices: const <CommodityId, int>{},
@@ -91,11 +96,13 @@ List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
           2 * rules.defaultMarketPriceForCommodityId('timber')!,
     ),
     stagedBidSpendRow(
-      label: 'skips bids on commodities with no effective price (defensive guard '
+      label:
+          'skips bids on commodities with no effective price (defensive guard '
           'against unknown / future ids)',
       orders: [bidOrder('not_a_commodity', 5), bidOrder('timber', 2)],
       prices: const <CommodityId, int>{},
-      expectedSpendFn: (rules) => 2 * rules.defaultMarketPriceForCommodityId('timber')!,
+      expectedSpendFn: (rules) =>
+          2 * rules.defaultMarketPriceForCommodityId('timber')!,
       refs: null,
     ),
     stagedBidSpendRow(
@@ -134,26 +141,6 @@ class CarryForwardBidNotionalScenario {
     this.refs,
   });
 
-  CarryForwardBidNotionalScenario.expect({
-    required String label,
-    required List<TradeOrder> bids,
-    required Map<CommodityId, int> prices,
-    required CarryForwardBidNotionalExpectation expect,
-    String playerId = 'gp1',
-    String? refs,
-  }) : this(
-          label: label,
-          bids: bids,
-          prices: prices,
-          playerId: playerId,
-          verify: (notional, rules) => assertCarryForwardBidNotionalExpectation(
-                notional: notional,
-                rules: rules,
-                expectation: expect,
-              ),
-          refs: refs,
-        );
-
   final String label;
   final List<TradeOrder> bids;
   final Map<CommodityId, int> prices;
@@ -181,13 +168,17 @@ void runCarryForwardBidNotionalScenario(
 }
 
 List<CarryForwardBidNotionalScenario> carryForwardBidNotionalScenarios() => [
-  CarryForwardBidNotionalScenario.expect(
+  CarryForwardBidNotionalScenario(
     label: 'falls back to catalog default price when world price is missing',
     bids: [testBid('timber', 4)],
     prices: const <CommodityId, int>{},
-    expect: const CarryForwardBidNotionalExpectation(
-      catalogCommodity: 'timber',
-      quantity: 4,
+    verify: (notional, rules) => assertCarryForwardBidNotionalExpectation(
+      notional: notional,
+      rules: rules,
+      expectation: const CarryForwardBidNotionalExpectation(
+        catalogCommodity: 'timber',
+        quantity: 4,
+      ),
     ),
     refs: '#3122',
   ),
@@ -207,14 +198,13 @@ BidSpendParityScenario bidSpendParityScenarioExpect({
   required Map<CommodityId, int> prices,
   String playerId = _gp,
   required BidSpendParityExpectation expect,
-}) =>
-    (
-      label: label,
-      bids: bids,
-      prices: prices,
-      playerId: playerId,
-      expect: expect,
-    );
+}) => (
+  label: label,
+  bids: bids,
+  prices: prices,
+  playerId: playerId,
+  expect: expect,
+);
 
 void runBidSpendParityScenario(
   BidSpendParityScenario scenario,
@@ -254,7 +244,8 @@ List<BidSpendParityScenario> bidSpendParityScenarios() => [
     expect: const BidSpendParityExpectation(stagedSpend: 4 * 30 + 2 * 80),
   ),
   bidSpendParityScenarioExpect(
-    label: 'both apply identical defensive skips '
+    label:
+        'both apply identical defensive skips '
         '(offers, zero qty, unpriced ids)',
     bids: [
       testOffer('timber', 9),
@@ -296,5 +287,3 @@ List<BidSpendParityScenario> bidSpendParityScenarios() => [
     ),
   ),
 ];
-
-

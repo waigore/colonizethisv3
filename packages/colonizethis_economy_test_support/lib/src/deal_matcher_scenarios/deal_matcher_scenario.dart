@@ -16,26 +16,27 @@ class DealMatcherScenario implements RefsScenario {
     this.refs,
   });
 
-  DealMatcherScenario.expect({
-    required String label,
-    required DealMatchInputs inputs,
-    required DealMatchExpectation expect,
-    bool deterministicRerun = false,
-    String? refs,
-  }) : this(
-          label: label,
-          inputs: inputs,
-          verify: (result) => assertDealMatchExpectation(result, expect),
-          deterministicRerun: deterministicRerun,
-          refs: refs,
-        );
-
   final String label;
   final DealMatchInputs inputs;
   final void Function(DealMatchResult result) verify;
   final bool deterministicRerun;
   final String? refs;
 }
+
+/// Compact expect-wired row (Refs #3939 slice 59).
+DealMatcherScenario matcherRow({
+  required String label,
+  required DealMatchInputs inputs,
+  required DealMatchExpectation expect,
+  bool deterministicRerun = false,
+  String? refs,
+}) => DealMatcherScenario(
+  label: label,
+  inputs: inputs,
+  verify: (result) => assertDealMatchExpectation(result, expect),
+  deterministicRerun: deterministicRerun,
+  refs: refs,
+);
 
 void runDealMatcherScenario(DealMatcherScenario scenario) {
   final result = DealMatcher.matchDeals(scenario.inputs);

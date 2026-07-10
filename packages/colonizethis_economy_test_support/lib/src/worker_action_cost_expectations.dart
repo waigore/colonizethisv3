@@ -48,12 +48,11 @@ WorkerActionCostScenario canAffordRecruitWorkerScenario({
   required String label,
   required CanAffordRecruitWorkerPins pins,
   String? refs,
-}) =>
-    WorkerActionCostScenario(
-      label: label,
-      run: () => runCanAffordRecruitWorkerExpectation(pins),
-      refs: refs,
-    );
+}) => WorkerActionCostScenario(
+  label: label,
+  run: () => runCanAffordRecruitWorkerExpectation(pins),
+  refs: refs,
+);
 
 /// Pins for [applyRecruitWorkerCostDeduction] rows.
 typedef ApplyRecruitWorkerCostPins = ({
@@ -88,19 +87,15 @@ WorkerActionCostScenario applyRecruitWorkerCostScenario({
   required String label,
   required ApplyRecruitWorkerCostPins pins,
   String? refs,
-}) =>
-    WorkerActionCostScenario(
-      label: label,
-      run: () => runApplyRecruitWorkerCostExpectation(pins),
-      refs: refs,
-    );
+}) => WorkerActionCostScenario(
+  label: label,
+  run: () => runApplyRecruitWorkerCostExpectation(pins),
+  refs: refs,
+);
 
 void runApprenticeTechConsistencyExpectation() {
   const order = RecruitWorkerOrder(targetTier: WorkerTier.apprentice);
-  final stockpile = const Stockpile().applyDelta(
-    CommodityCatalog.paper.id,
-    2,
-  );
+  final stockpile = const Stockpile().applyDelta(CommodityCatalog.paper.id, 2);
   expect(
     canAffordRecruitWorker(
       _playerWithTech(_journeymanTech),
@@ -128,9 +123,8 @@ void runApprenticeTechConsistencyExpectation() {
 WorkerActionCostScenario apprenticeTechConsistencyScenario({
   required String label,
   String? refs,
-}) =>
-    WorkerActionCostScenario(
-      label: label,
-      run: runApprenticeTechConsistencyExpectation,
-      refs: refs,
-    );
+}) => WorkerActionCostScenario(
+  label: label,
+  run: runApprenticeTechConsistencyExpectation,
+  refs: refs,
+);

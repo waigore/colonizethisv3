@@ -77,10 +77,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
 List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
   workerFoodScenario(
     label: 'feeds trained tiers (2 food) and peasants (1 food)',
-    stockpile: const Stockpile().applyDelta(
-      CommodityCatalog.grain.id,
-      100,
-    ),
+    stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 100),
     workers: const WorkerPool(
       masters: 1,
       journeymen: 1,

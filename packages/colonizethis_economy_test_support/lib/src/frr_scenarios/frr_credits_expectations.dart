@@ -68,35 +68,33 @@ class FrrCreditsExpectation {
     required List<FilledDeal> filledDeals,
     required PurchasedTileIndex purchasedTileIndex,
     required int Function(String gpId, String sourceFactionId) relationScoreFor,
-  }) =>
-      FrrCreditsExpectation(
-        deterministicRerun: true,
-        treasuryCreditFirstKey: firstTreasuryCreditKey,
-        custom: (result) {
-          final second = computeFirstRightCredits(
-            filledDeals: filledDeals,
-            purchasedTileIndex: purchasedTileIndex,
-            relationScoreFor: relationScoreFor,
-          );
-          expect(
-            result.treasuryCreditByGpId.keys.toList(),
-            equals(second.treasuryCreditByGpId.keys.toList()),
-          );
-          for (final key in result.treasuryCreditByGpId.keys) {
-            expect(
-              result.treasuryCreditByGpId[key],
-              equals(second.treasuryCreditByGpId[key]),
-            );
-          }
-          expect(result.creditedDeals.length, second.creditedDeals.length);
-          expect(
-            result.treasuryCreditByGpId.keys.first,
-            firstTreasuryCreditKey,
-            reason:
-                'insertion order tracks first deal mentioning each owning GP',
-          );
-        },
+  }) => FrrCreditsExpectation(
+    deterministicRerun: true,
+    treasuryCreditFirstKey: firstTreasuryCreditKey,
+    custom: (result) {
+      final second = computeFirstRightCredits(
+        filledDeals: filledDeals,
+        purchasedTileIndex: purchasedTileIndex,
+        relationScoreFor: relationScoreFor,
       );
+      expect(
+        result.treasuryCreditByGpId.keys.toList(),
+        equals(second.treasuryCreditByGpId.keys.toList()),
+      );
+      for (final key in result.treasuryCreditByGpId.keys) {
+        expect(
+          result.treasuryCreditByGpId[key],
+          equals(second.treasuryCreditByGpId[key]),
+        );
+      }
+      expect(result.creditedDeals.length, second.creditedDeals.length);
+      expect(
+        result.treasuryCreditByGpId.keys.first,
+        firstTreasuryCreditKey,
+        reason: 'insertion order tracks first deal mentioning each owning GP',
+      );
+    },
+  );
 }
 
 void assertFrrCreditsExpectation(
@@ -126,7 +124,10 @@ void assertFrrCreditsExpectation(
   }
   if (expectation.treasuryCreditCloseTo != null) {
     for (final entry in expectation.treasuryCreditCloseTo!.entries) {
-      expect(result.treasuryCreditByGpId[entry.key], closeTo(entry.value, 1e-12));
+      expect(
+        result.treasuryCreditByGpId[entry.key],
+        closeTo(entry.value, 1e-12),
+      );
     }
   }
   if (expectation.treasuryCreditKeysContainAll != null) {
@@ -142,7 +143,10 @@ void assertFrrCreditsExpectation(
   }
   if (expectation.embassyKickbackCloseTo != null) {
     for (final entry in expectation.embassyKickbackCloseTo!.entries) {
-      expect(result.embassyKickbackByGpId[entry.key], closeTo(entry.value, 1e-12));
+      expect(
+        result.embassyKickbackByGpId[entry.key],
+        closeTo(entry.value, 1e-12),
+      );
     }
   }
   if (expectation.embassyKickbackEmpty) {
@@ -159,13 +163,22 @@ void assertFrrCreditsExpectation(
     }
   }
   if (expectation.totalProfitTreasury != null) {
-    expect(result.totalProfitTreasury, closeTo(expectation.totalProfitTreasury!, 1e-12));
+    expect(
+      result.totalProfitTreasury,
+      closeTo(expectation.totalProfitTreasury!, 1e-12),
+    );
   }
   if (expectation.totalEmbassyKickback != null) {
-    expect(result.totalEmbassyKickback, closeTo(expectation.totalEmbassyKickback!, 1e-12));
+    expect(
+      result.totalEmbassyKickback,
+      closeTo(expectation.totalEmbassyKickback!, 1e-12),
+    );
   }
   if (expectation.singleCreditedDealBuyer != null) {
-    expect(result.creditedDeals.single.deal.buyerFactionId, expectation.singleCreditedDealBuyer);
+    expect(
+      result.creditedDeals.single.deal.buyerFactionId,
+      expectation.singleCreditedDealBuyer,
+    );
   }
   if (expectation.singleCreditedDealOwningGpId != null) {
     expect(
@@ -201,7 +214,10 @@ void assertFrrCreditsExpectation(
     expect(result.creditedDeals.single.profit, FirstRightProfit.zero);
   }
   if (expectation.treasuryCreditKeysExact != null) {
-    expect(result.treasuryCreditByGpId.keys, expectation.treasuryCreditKeysExact);
+    expect(
+      result.treasuryCreditByGpId.keys,
+      expectation.treasuryCreditKeysExact,
+    );
   }
   expectation.custom?.call(result);
 }

@@ -16,9 +16,7 @@ typedef OverseasTonnageCase = ({
 });
 
 /// Pins for [overseasShippedTonnageFromExtractionTotals] rows.
-typedef OverseasShippedTonnagePins = ({
-  List<OverseasTonnageCase> cases,
-});
+typedef OverseasShippedTonnagePins = ({List<OverseasTonnageCase> cases});
 
 void runOverseasShippedTonnageExpectation(OverseasShippedTonnagePins pins) {
   for (final caseRow in pins.cases) {
@@ -35,11 +33,10 @@ void runOverseasShippedTonnageExpectation(OverseasShippedTonnagePins pins) {
 OverseasShippedTonnageScenario overseasShippedTonnageScenario({
   required String label,
   required OverseasShippedTonnagePins pins,
-}) =>
-    OverseasShippedTonnageScenario(
-      label: label,
-      run: () => runOverseasShippedTonnageExpectation(pins),
-    );
+}) => OverseasShippedTonnageScenario(
+  label: label,
+  run: () => runOverseasShippedTonnageExpectation(pins),
+);
 
 void runTradeCargoCapacityEmptyTileMapsExpectation() {
   final game = minimalGpGame();
@@ -54,9 +51,8 @@ void runTradeCargoCapacityEmptyTileMapsExpectation() {
   );
 }
 
-TradeCargoCapacityForGreatPowerScenario tradeCargoCapacityEmptyTileMapsScenario({
-  required String label,
-}) =>
+TradeCargoCapacityForGreatPowerScenario
+tradeCargoCapacityEmptyTileMapsScenario({required String label}) =>
     TradeCargoCapacityForGreatPowerScenario(
       label: label,
       run: runTradeCargoCapacityEmptyTileMapsExpectation,
@@ -76,8 +72,10 @@ final Map<String, TileMapResult> _nonEmptyTileMapForTradeCargo = {
   ),
 };
 
-const MapTopology _emptyTopologyForTradeCargo =
-    MapTopology(nodes: [], edges: []);
+const MapTopology _emptyTopologyForTradeCargo = MapTopology(
+  nodes: [],
+  edges: [],
+);
 
 /// Pins for forecast-overseas-tonnage rows.
 typedef ForecastOverseasTonnagePins = ({
@@ -114,12 +112,11 @@ ExtractionByIdBypassScenario forecastOverseasTonnageScenario({
   required String label,
   required ForecastOverseasTonnagePins pins,
   String? refs,
-}) =>
-    ExtractionByIdBypassScenario(
-      label: label,
-      run: () => runForecastOverseasTonnageExpectation(pins),
-      refs: refs,
-    );
+}) => ExtractionByIdBypassScenario(
+  label: label,
+  run: () => runForecastOverseasTonnageExpectation(pins),
+  refs: refs,
+);
 
 /// Pins for trade-cargo capacity with pre-computed extraction rows.
 typedef TradeCargoCapacityExtractionPins = ({
@@ -147,12 +144,11 @@ ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({
   required String label,
   required TradeCargoCapacityExtractionPins pins,
   String? refs,
-}) =>
-    ExtractionByIdBypassScenario(
-      label: label,
-      run: () => runTradeCargoCapacityExtractionExpectation(pins),
-      refs: refs,
-    );
+}) => ExtractionByIdBypassScenario(
+  label: label,
+  run: () => runTradeCargoCapacityExtractionExpectation(pins),
+  refs: refs,
+);
 
 void runComputeExtractionTotalsEmptyMapsExpectation() {
   final game = _gameWithGp('gp1');
@@ -169,9 +165,8 @@ void runComputeExtractionTotalsEmptyMapsExpectation() {
 ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({
   required String label,
   String? refs,
-}) =>
-    ExtractionByIdBypassScenario(
-      label: label,
-      run: runComputeExtractionTotalsEmptyMapsExpectation,
-      refs: refs,
-    );
+}) => ExtractionByIdBypassScenario(
+  label: label,
+  run: runComputeExtractionTotalsEmptyMapsExpectation,
+  refs: refs,
+);

@@ -106,21 +106,24 @@ final List<EffectiveMarketPriceScenario> effectiveMarketPriceScenarios = [
     refs: '#3093',
   ),
   effectiveMarketPriceRow(
-    label: 'falls back to ResourceRules.defaultMarketPriceForCommodityId when '
+    label:
+        'falls back to ResourceRules.defaultMarketPriceForCommodityId when '
         'the prices map omits the commodity',
     commodityId: 'timber',
     useCatalogDefault: true,
     refs: '#3093',
   ),
   effectiveMarketPriceRow(
-    label: 'falls back to the catalog manufactured base price when the '
+    label:
+        'falls back to the catalog manufactured base price when the '
         'prices map omits the commodity (Refs #3093 manufactured-default-prices)',
     commodityId: 'lumber',
     useCatalogDefault: true,
     refs: '#3093',
   ),
   effectiveMarketPriceRow(
-    label: 'returns null only when neither prices nor catalog has a value '
+    label:
+        'returns null only when neither prices nor catalog has a value '
         '(defensive fallback for unknown / future commodity ids)',
     commodityId: 'not_a_commodity',
     expectNull: true,
@@ -168,34 +171,34 @@ typedef MaxAffordableBidQuantityScenario = ({
 
 final List<MaxAffordableBidQuantityScenario> maxAffordableBidQuantityScenarios =
     [
-  maxAffordableBidQtyRow(
-    label: 'floor(treasury / price) when price is positive',
-    expected: 3,
-    refs: '#3115',
-  ),
-  maxAffordableBidQtyRow(
-    label: 'zero treasury budget yields zero',
-    remainingTreasuryBudget: 0,
-    expected: 0,
-    refs: '#3115',
-  ),
-  maxAffordableBidQtyRow(
-    label: 'missing-price free-fill returns bid remaining',
-    bidRemaining: 8,
-    pricePerUnit: 0.0,
-    remainingTreasuryBudget: 10,
-    expected: 8,
-    refs: '#3115',
-  ),
-  maxAffordableBidQtyRow(
-    label: 'negative price preserves free-fill contract',
-    bidRemaining: 5,
-    pricePerUnit: -1.0,
-    remainingTreasuryBudget: 0,
-    expected: 5,
-    refs: '#3115',
-  ),
-];
+      maxAffordableBidQtyRow(
+        label: 'floor(treasury / price) when price is positive',
+        expected: 3,
+        refs: '#3115',
+      ),
+      maxAffordableBidQtyRow(
+        label: 'zero treasury budget yields zero',
+        remainingTreasuryBudget: 0,
+        expected: 0,
+        refs: '#3115',
+      ),
+      maxAffordableBidQtyRow(
+        label: 'missing-price free-fill returns bid remaining',
+        bidRemaining: 8,
+        pricePerUnit: 0.0,
+        remainingTreasuryBudget: 10,
+        expected: 8,
+        refs: '#3115',
+      ),
+      maxAffordableBidQtyRow(
+        label: 'negative price preserves free-fill contract',
+        bidRemaining: 5,
+        pricePerUnit: -1.0,
+        remainingTreasuryBudget: 0,
+        expected: 5,
+        refs: '#3115',
+      ),
+    ];
 
 /// One row in [decrementTreasuryForFillScenarios].
 typedef DecrementTreasuryForFillScenario = ({
@@ -210,26 +213,28 @@ typedef DecrementTreasuryForFillScenario = ({
 
 final List<DecrementTreasuryForFillScenario> decrementTreasuryForFillScenarios =
     [
-  decrementTreasuryFillRow(
-    label: 'decrements running treasury tally after a priced fill',
-    matchQty: 3,
-    pricePerUnit: 30.0,
-    expectedTreasury: 10,
-    refs: '#3856',
-  ),
-  decrementTreasuryFillRow(
-    label: 'skips decrement on missing-price free-fill path',
-    matchQty: 5,
-    pricePerUnit: 0.0,
-    expectedTreasury: 100,
-    refs: '#3856',
-  ),
-];
+      decrementTreasuryFillRow(
+        label: 'decrements running treasury tally after a priced fill',
+        matchQty: 3,
+        pricePerUnit: 30.0,
+        expectedTreasury: 10,
+        refs: '#3856',
+      ),
+      decrementTreasuryFillRow(
+        label: 'skips decrement on missing-price free-fill path',
+        matchQty: 5,
+        pricePerUnit: 0.0,
+        expectedTreasury: 100,
+        refs: '#3856',
+      ),
+    ];
 
 void runDecrementTreasuryForFillScenario(
   DecrementTreasuryForFillScenario scenario,
 ) {
-  final remaining = <String, int>{scenario.buyerFactionId: scenario.initialTreasury};
+  final remaining = <String, int>{
+    scenario.buyerFactionId: scenario.initialTreasury,
+  };
   decrementTreasuryForFill(
     buyerFactionId: scenario.buyerFactionId,
     matchQty: scenario.matchQty,
@@ -252,13 +257,12 @@ GpTreasuryCreditScenario<T> gpTreasuryCreditScenarioExpect<T extends num>({
   void Function(GpTreasuryCreditAccumulator<T> acc)? setup,
   required GpTreasuryCreditExpectation<T> expect,
   String? refs,
-}) =>
-    (
-      label: label,
-      setup: setup ?? (_) {},
-      verify: (acc) => assertGpTreasuryCreditExpectation(acc, expect),
-      refs: refs,
-    );
+}) => (
+  label: label,
+  setup: setup ?? (_) {},
+  verify: (acc) => assertGpTreasuryCreditExpectation(acc, expect),
+  refs: refs,
+);
 
 void runGpTreasuryCreditScenario<T extends num>(
   GpTreasuryCreditScenario<T> scenario,
@@ -312,7 +316,9 @@ List<GpTreasuryCreditScenario<int>> gpTreasuryCreditIntScenarios() => [
       ..add('gpA', 7)
       ..add('gpB', 11)
       ..add('gpA', 2),
-    expect: const GpTreasuryCreditExpectation<int>(totalEqualsNaiveViewSum: true),
+    expect: const GpTreasuryCreditExpectation<int>(
+      totalEqualsNaiveViewSum: true,
+    ),
   ),
 ];
 
@@ -356,5 +362,4 @@ void runGpTreasuryCreditIntScenario(GpTreasuryCreditScenario<int> scenario) =>
 
 void runGpTreasuryCreditDoubleScenario(
   GpTreasuryCreditScenario<double> scenario,
-) =>
-    runGpTreasuryCreditScenario(scenario, 0.0);
+) => runGpTreasuryCreditScenario(scenario, 0.0);

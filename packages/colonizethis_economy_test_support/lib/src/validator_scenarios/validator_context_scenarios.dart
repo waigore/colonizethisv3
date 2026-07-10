@@ -10,20 +10,21 @@ class TradeOrderValidatorContextScenario {
     this.refs,
   });
 
-  TradeOrderValidatorContextScenario.expect({
-    required String label,
-    required ValidatorContextExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          run: () => assertValidatorContextExpectation(expect),
-          refs: refs,
-        );
-
   final String label;
   final void Function() run;
   final String? refs;
 }
+
+/// Compact expect-wired row (Refs #3939 slice 59).
+TradeOrderValidatorContextScenario validatorContextRow({
+  required String label,
+  required ValidatorContextExpectation expect,
+  String? refs,
+}) => TradeOrderValidatorContextScenario(
+  label: label,
+  run: () => assertValidatorContextExpectation(expect),
+  refs: refs,
+);
 
 void runTradeOrderValidatorContextScenario(
   TradeOrderValidatorContextScenario scenario,
@@ -35,8 +36,9 @@ void runTradeOrderValidatorContextScenario(
 /// `world_market_trade_order_validator_context_treasury_test.dart`.
 List<TradeOrderValidatorContextScenario>
 tradeOrderValidatorContextTreasuryScenarios() => [
-  TradeOrderValidatorContextScenario.expect(
-    label: 'positive treasury surfaces as TradeOrderValidationContext.'
+  validatorContextRow(
+    label:
+        'positive treasury surfaces as TradeOrderValidationContext.'
         'treasuryBudgetForBids',
     expect: const ValidatorContextExpectation(
       target: ValidatorContextScenarioTarget.treasuryBudget,
@@ -45,8 +47,9 @@ tradeOrderValidatorContextTreasuryScenarios() => [
     ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario.expect(
-    label: 'treasury at or below zero yields a zero bid budget that rejects any '
+  validatorContextRow(
+    label:
+        'treasury at or below zero yields a zero bid budget that rejects any '
         'priced bid end-to-end (negative clamps; zero passes through) '
         '(SPEC/game/world-market.md — cross-commodity bid treasury cap)',
     expect: const ValidatorContextExpectation(
@@ -54,7 +57,7 @@ tradeOrderValidatorContextTreasuryScenarios() => [
     ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario.expect(
+  validatorContextRow(
     label: 'ghost player id returns a zero-budget context (ghost guard)',
     expect: const ValidatorContextExpectation(
       target: ValidatorContextScenarioTarget.ghostPlayerZeroBudget,
@@ -62,8 +65,9 @@ tradeOrderValidatorContextTreasuryScenarios() => [
     ),
     refs: '#3123',
   ),
-  TradeOrderValidatorContextScenario.expect(
-    label: 'caller-supplied projectedTreasuryDelta reduces the budget by the '
+  validatorContextRow(
+    label:
+        'caller-supplied projectedTreasuryDelta reduces the budget by the '
         'projected non-bid deficit (Refs #3290 economy->orders inversion)',
     expect: const ValidatorContextExpectation(
       target: ValidatorContextScenarioTarget.projectedDeltaReducesBudget,
@@ -73,8 +77,9 @@ tradeOrderValidatorContextTreasuryScenarios() => [
     ),
     refs: '#3290',
   ),
-  TradeOrderValidatorContextScenario.expect(
-    label: 'caller-supplied non-negative projectedTreasuryDelta leaves the raw '
+  validatorContextRow(
+    label:
+        'caller-supplied non-negative projectedTreasuryDelta leaves the raw '
         'treasury budget unchanged (income does not raise the budget)',
     expect: const ValidatorContextExpectation(
       target: ValidatorContextScenarioTarget.nonNegativeProjectedDeltaUnchanged,
@@ -84,8 +89,9 @@ tradeOrderValidatorContextTreasuryScenarios() => [
     ),
     refs: '#3290',
   ),
-  TradeOrderValidatorContextScenario.expect(
-    label: 'omitting projectedTreasuryDelta keeps the raw-treasury budget even '
+  validatorContextRow(
+    label:
+        'omitting projectedTreasuryDelta keeps the raw-treasury budget even '
         'when staged orders are supplied',
     expect: const ValidatorContextExpectation(
       target: ValidatorContextScenarioTarget.omitProjectedDeltaUnchanged,

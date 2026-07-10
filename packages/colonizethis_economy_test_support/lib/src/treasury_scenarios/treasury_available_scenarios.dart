@@ -40,7 +40,8 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
     refs: null,
   ),
   treasuryAvailableRow(
-    label: 'default projectedNonBidTreasuryDelta == 0 preserves the legacy '
+    label:
+        'default projectedNonBidTreasuryDelta == 0 preserves the legacy '
         '"raw treasury" contract for callers without a projection',
     treasury: 175,
     expected: 175,
@@ -48,7 +49,8 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
     extra: TreasuryAvailableExpectation(omitProjectedDeltaAlias: true),
   ),
   treasuryAvailableRow(
-    label: 'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit '
+    label:
+        'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit '
         'from raw treasury (positive AC #1)',
     treasury: 100,
     projectedNonBidTreasuryDelta: -40,
@@ -56,7 +58,8 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
     refs: '#3093',
   ),
   treasuryAvailableRow(
-    label: 'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury '
+    label:
+        'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury '
         '(conservative — net non-bid income never raises the budget)',
     treasury: 100,
     projectedNonBidTreasuryDelta: 50,
@@ -71,7 +74,8 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
     refs: null,
   ),
   treasuryAvailableRow(
-    label: 'projected deficit larger than treasury still clamps at 0 (not negative)',
+    label:
+        'projected deficit larger than treasury still clamps at 0 (not negative)',
     treasury: 50,
     projectedNonBidTreasuryDelta: -120,
     expected: 0,
@@ -88,7 +92,8 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
     ),
   ),
   treasuryAvailableRow(
-    label: 'unknown playerId returns 0 even when a non-zero '
+    label:
+        'unknown playerId returns 0 even when a non-zero '
         'projectedNonBidTreasuryDelta is supplied',
     treasury: 100,
     playerId: 'gp_ghost',
@@ -127,36 +132,6 @@ class TreasuryUiCompositionScenario {
     this.refs,
   });
 
-  TreasuryUiCompositionScenario.expect({
-    required String label,
-    required int treasury,
-    Map<CommodityId, int> prices = const {},
-    List<TradeOrder> stagedBids = const [],
-    int projectedNonBidTreasuryDelta = 0,
-    required TreasuryUiCompositionExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          treasury: treasury,
-          prices: prices,
-          stagedBids: stagedBids,
-          projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
-          verify: ({
-            required game,
-            required rules,
-            required budget,
-            required currentSpend,
-          }) =>
-              assertTreasuryUiCompositionExpectation(
-            game: game,
-            rules: rules,
-            budget: budget,
-            currentSpend: currentSpend,
-            expectation: expect,
-          ),
-          refs: refs,
-        );
-
   final String label;
   final int treasury;
   final Map<CommodityId, int> prices;
@@ -181,22 +156,34 @@ TreasuryUiCompositionScenario treasuryUiCompositionRow({
   List<TradeOrder> stagedBids = const [],
   int projectedNonBidTreasuryDelta = 0,
   String? refs = '#3093',
-}) =>
-    TreasuryUiCompositionScenario.expect(
-      label: label,
-      treasury: treasury,
-      prices: prices,
-      stagedBids: stagedBids,
-      projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
-      expect: expect,
-      refs: refs,
-    );
+}) => TreasuryUiCompositionScenario(
+  label: label,
+  treasury: treasury,
+  prices: prices,
+  stagedBids: stagedBids,
+  projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
+  verify:
+      ({
+        required game,
+        required rules,
+        required budget,
+        required currentSpend,
+      }) => assertTreasuryUiCompositionExpectation(
+        game: game,
+        rules: rules,
+        budget: budget,
+        currentSpend: currentSpend,
+        expectation: expect,
+      ),
+  refs: refs,
+);
 
 List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
   data.ResourceRules rules,
 ) => [
   treasuryUiCompositionRow(
-    label: 'treasury 100, market price timber 30, no staged bids → headroom for '
+    label:
+        'treasury 100, market price timber 30, no staged bids → headroom for '
         'fresh row equals raw treasury (allows up to qty 3)',
     prices: const {'timber': 30},
     expect: const TreasuryUiCompositionExpectation(
@@ -205,7 +192,8 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
     ),
   ),
   treasuryUiCompositionRow(
-    label: 'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid '
+    label:
+        'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid '
         'for iron (price 80) is refused (headroom 10 < 80)',
     prices: const {'timber': 30, 'iron': 80},
     stagedBids: [bidOrder('timber', 3)],
@@ -216,7 +204,8 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
     ),
   ),
   treasuryUiCompositionRow(
-    label: 'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → '
+    label:
+        'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → '
         'next increment would make spend 120 (> 100), so the UI must silent-no-op',
     prices: const {'timber': 30},
     stagedBids: [bidOrder('timber', 3)],
@@ -226,7 +215,8 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
     ),
   ),
   treasuryUiCompositionRow(
-    label: 'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
+    label:
+        'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
         'no staged bids), market price timber 30 → budget = 60, default qty '
         '1 fits and headroom permits up to qty 2 (spend 60)',
     prices: const {'timber': 30},
@@ -238,7 +228,8 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
     ),
   ),
   treasuryUiCompositionRow(
-    label: 'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
+    label:
+        'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
         'so no bid (even default qty 1) can be staged on any priced '
         'commodity (silent no-op gate)',
     treasury: 50,

@@ -27,7 +27,8 @@ List<TileExtractionContributionScenario> tileExtractionContributionScenarios({
   required TileMapResult grainTileMap,
 }) => [
   tileExtractionContributionScenario(
-    label: 'tile extraction contribution excludes aggregate capital grain bonus',
+    label:
+        'tile extraction contribution excludes aggregate capital grain bonus',
     pin: TileExtractionContributionPin.connectedGrainExcludesCapitalBonus,
     grainTileMap: grainTileMap,
     connectedPins: (

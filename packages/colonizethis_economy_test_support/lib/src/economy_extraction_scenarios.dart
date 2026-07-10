@@ -29,69 +29,54 @@ void runApplyExtractionToStockpileScenario(
 }
 
 /// Canonical scenarios for [applyExtractionToStockpile].
-List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() =>
-    [
-      applyExtractionToStockpileScenario(
-        label: 'adds extracted quantities to stockpile',
-        extracted: {
-          CommodityCatalog.grain.id: 5,
-          CommodityCatalog.iron.id: 2,
-        },
-        expectedQuantities: {
-          CommodityCatalog.grain.id: 5,
-          CommodityCatalog.iron.id: 2,
-        },
-      ),
-      applyExtractionToStockpileScenario(
-        label: 'accumulates on existing stockpile',
-        initialDeltas: {
-          CommodityCatalog.grain.id: 3,
-          CommodityCatalog.meat.id: 1,
-        },
-        extracted: {
-          CommodityCatalog.grain.id: 4,
-          CommodityCatalog.meat.id: 2,
-        },
-        expectedQuantities: {
-          CommodityCatalog.grain.id: 7,
-          CommodityCatalog.meat.id: 3,
-        },
-      ),
-      applyExtractionToStockpileScenario(
-        label: 'ignores negative values in extracted',
-        initialDeltas: {CommodityCatalog.grain.id: 10},
-        extracted: {
-          CommodityCatalog.grain.id: -2,
-          CommodityCatalog.meat.id: 3,
-        },
-        expectedQuantities: {
-          CommodityCatalog.grain.id: 10,
-          CommodityCatalog.meat.id: 3,
-        },
-      ),
-      applyExtractionToStockpileScenario(
-        label: 'zero quantities do not change stockpile',
-        initialDeltas: {CommodityCatalog.grain.id: 5},
-        extracted: {
-          CommodityCatalog.grain.id: 0,
-          CommodityCatalog.iron.id: 0,
-        },
-        expectedQuantities: {CommodityCatalog.grain.id: 5},
-      ),
-      applyExtractionToStockpileScenario(
-        label: 'empty extracted returns same stockpile',
-        initialDeltas: {CommodityCatalog.grain.id: 5},
-        extracted: const {},
-        expectedQuantities: {CommodityCatalog.grain.id: 5},
-      ),
-      applyExtractionToStockpileScenario(
-        label:
-            'adds large extraction without storage cap (unbounded strategic stockpile)',
-        initialDeltas: {CommodityCatalog.grain.id: 1000000},
-        extracted: {CommodityCatalog.grain.id: 500000},
-        expectedQuantities: {CommodityCatalog.grain.id: 1500000},
-      ),
-    ];
+List<ApplyExtractionToStockpileScenario>
+applyExtractionToStockpileScenarios() => [
+  applyExtractionToStockpileScenario(
+    label: 'adds extracted quantities to stockpile',
+    extracted: {CommodityCatalog.grain.id: 5, CommodityCatalog.iron.id: 2},
+    expectedQuantities: {
+      CommodityCatalog.grain.id: 5,
+      CommodityCatalog.iron.id: 2,
+    },
+  ),
+  applyExtractionToStockpileScenario(
+    label: 'accumulates on existing stockpile',
+    initialDeltas: {CommodityCatalog.grain.id: 3, CommodityCatalog.meat.id: 1},
+    extracted: {CommodityCatalog.grain.id: 4, CommodityCatalog.meat.id: 2},
+    expectedQuantities: {
+      CommodityCatalog.grain.id: 7,
+      CommodityCatalog.meat.id: 3,
+    },
+  ),
+  applyExtractionToStockpileScenario(
+    label: 'ignores negative values in extracted',
+    initialDeltas: {CommodityCatalog.grain.id: 10},
+    extracted: {CommodityCatalog.grain.id: -2, CommodityCatalog.meat.id: 3},
+    expectedQuantities: {
+      CommodityCatalog.grain.id: 10,
+      CommodityCatalog.meat.id: 3,
+    },
+  ),
+  applyExtractionToStockpileScenario(
+    label: 'zero quantities do not change stockpile',
+    initialDeltas: {CommodityCatalog.grain.id: 5},
+    extracted: {CommodityCatalog.grain.id: 0, CommodityCatalog.iron.id: 0},
+    expectedQuantities: {CommodityCatalog.grain.id: 5},
+  ),
+  applyExtractionToStockpileScenario(
+    label: 'empty extracted returns same stockpile',
+    initialDeltas: {CommodityCatalog.grain.id: 5},
+    extracted: const {},
+    expectedQuantities: {CommodityCatalog.grain.id: 5},
+  ),
+  applyExtractionToStockpileScenario(
+    label:
+        'adds large extraction without storage cap (unbounded strategic stockpile)',
+    initialDeltas: {CommodityCatalog.grain.id: 1000000},
+    extracted: {CommodityCatalog.grain.id: 500000},
+    expectedQuantities: {CommodityCatalog.grain.id: 1500000},
+  ),
+];
 
 /// One row in [applyExtractionForPlayersScenarios].
 class ApplyExtractionForPlayersScenario implements RefsScenario {
@@ -135,11 +120,7 @@ List<ApplyExtractionForPlayersScenario> applyExtractionForPlayersScenarios() =>
         label: 'players with no extraction keep existing stockpile',
         game: minimalTwoPlayerGame(
           players: [
-            const Player(
-              id: 'p1',
-              displayName: 'A',
-              isHuman: true,
-            ).copyWith(
+            const Player(id: 'p1', displayName: 'A', isHuman: true).copyWith(
               stockpile: const Stockpile().applyDelta(
                 CommodityCatalog.grain.id,
                 7,

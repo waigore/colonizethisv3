@@ -26,11 +26,10 @@ void runWorkMaterialAffordExpectation(WorkMaterialAffordPins pins) {
 ProjectedCostEngineWorkMaterialScenario workMaterialAffordScenario({
   required String label,
   required WorkMaterialAffordPins pins,
-}) =>
-    ProjectedCostEngineWorkMaterialScenario(
-      label: label,
-      run: () => runWorkMaterialAffordExpectation(pins),
-    );
+}) => ProjectedCostEngineWorkMaterialScenario(
+  label: label,
+  run: () => runWorkMaterialAffordExpectation(pins),
+);
 
 /// Pins for work-material deduction rows.
 typedef WorkMaterialDeductPins = ({
@@ -41,8 +40,10 @@ typedef WorkMaterialDeductPins = ({
 
 void runWorkMaterialDeductExpectation(WorkMaterialDeductPins pins) {
   final stockpile = stockpileWithDeltas(pins.stockpileDeltas);
-  final after =
-      ProjectedCostEngine.deductWorkMaterialCost(stockpile, pins.cost);
+  final after = ProjectedCostEngine.deductWorkMaterialCost(
+    stockpile,
+    pins.cost,
+  );
   for (final entry in pins.expectedQuantities.entries) {
     expect(after.quantityOf(entry.key), entry.value);
   }
@@ -51,11 +52,10 @@ void runWorkMaterialDeductExpectation(WorkMaterialDeductPins pins) {
 ProjectedCostEngineWorkMaterialScenario workMaterialDeductScenario({
   required String label,
   required WorkMaterialDeductPins pins,
-}) =>
-    ProjectedCostEngineWorkMaterialScenario(
-      label: label,
-      run: () => runWorkMaterialDeductExpectation(pins),
-    );
+}) => ProjectedCostEngineWorkMaterialScenario(
+  label: label,
+  run: () => runWorkMaterialDeductExpectation(pins),
+);
 
 const _delegationPlayer = Player(id: 'p1', displayName: 'P', isHuman: true);
 
@@ -92,11 +92,10 @@ void runBuildAffordDelegationExpectation() {
 
 ProjectedCostEngineBuildScenario buildAffordDelegationScenario({
   required String label,
-}) =>
-    ProjectedCostEngineBuildScenario(
-      label: label,
-      run: runBuildAffordDelegationExpectation,
-    );
+}) => ProjectedCostEngineBuildScenario(
+  label: label,
+  run: runBuildAffordDelegationExpectation,
+);
 
 const _applyDeductionPlayer = Player(
   id: 'p1',
@@ -146,8 +145,7 @@ void runBuildApplyDeductionDelegationExpectation() {
 
 ProjectedCostEngineBuildScenario buildApplyDeductionDelegationScenario({
   required String label,
-}) =>
-    ProjectedCostEngineBuildScenario(
-      label: label,
-      run: runBuildApplyDeductionDelegationExpectation,
-    );
+}) => ProjectedCostEngineBuildScenario(
+  label: label,
+  run: runBuildApplyDeductionDelegationExpectation,
+);

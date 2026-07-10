@@ -13,13 +13,9 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'truncates a single oversized bid to floor(treasury / price)',
-    inputs: matcherPairTrade(
-      buyer: 'gp1',
-      bidQty: 10,
-      treasuryBudget: 100,
-    ),
+    inputs: matcherPairTrade(buyer: 'gp1', bidQty: 10, treasuryBudget: 100),
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: const FilledDealExpectation(
@@ -33,7 +29,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'per-buyer running tally exhausts treasury across bids in order',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -59,8 +55,10 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     ),
     refs: '#3115',
   ),
-  matcherAgp1Row(
+  matcherPairRow(
     label: 'negative-treasury buyer treated as zero budget (full suppression)',
+    buyer: 'gp1',
+    bidQty: 10,
     treasuryBudgetByBuyerFactionId: const {'gp1': -50},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
@@ -69,7 +67,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       },
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'FRR pre-pass respects treasury clamp',
     inputs: matcherPairTrade(
       seller: 'M1',
@@ -96,15 +94,11 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
         'truncated bid (full bid quantity carried in note)',
-    inputs: matcherPairTrade(
-      buyer: 'gp1',
-      bidQty: 10,
-      treasuryBudget: 100,
-    ),
+    inputs: matcherPairTrade(buyer: 'gp1', bidQty: 10, treasuryBudget: 100),
     expect: const DealMatchExpectation(
       activityNotesByCommodityId: {
         'timber': [
@@ -119,7 +113,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     ),
     refs: '#3115',
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'two identical runs produce byte-identical FilledDeal sequences',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -136,9 +130,10 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     expect: const DealMatchExpectation(),
     refs: '#3115',
   ),
-  matcherAgp1Row(
+  matcherPairRow(
     label:
         'zero-price commodity preserves legacy free-fill (no treasury debit)',
+    buyer: 'gp1',
     commodity: 'iron',
     offerQty: 5,
     bidQty: 5,
@@ -146,15 +141,13 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     pricesByCommodityId: const <CommodityId, double>{},
     expect: const DealMatchExpectation(
       filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        pricePerUnit: 0.0,
-        quantity: 5,
-      ),
+      firstFilledDeal: FilledDealExpectation(pricePerUnit: 0.0, quantity: 5),
       activityNotesEmptyForCommodities: ['iron'],
     ),
   ),
-  matcherAgp1Row(
+  matcherPairRow(
     label: 'missing buyer entry in treasury budget treated as zero',
+    buyer: 'gp1',
     offerQty: 5,
     bidQty: 5,
     treasuryBudgetByBuyerFactionId: const <String, int>{},
@@ -165,9 +158,11 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       },
     ),
   ),
-  matcherAgp1Row(
-    label: 'unaffordable bid at non-zero price emits a note even with zero '
+  matcherPairRow(
+    label:
+        'unaffordable bid at non-zero price emits a note even with zero '
         'fill quantity',
+    buyer: 'gp1',
     offerQty: 1,
     bidQty: 1,
     treasuryBudgetByBuyerFactionId: const {'gp1': 10},
@@ -185,9 +180,12 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
       },
     ),
   ),
-  matcherAgp1Row(
-    label: 'cargo clamps tighter than treasury → matchQty falls back to cargo, '
+  matcherPairRow(
+    label:
+        'cargo clamps tighter than treasury → matchQty falls back to cargo, '
         'no truncation note emitted',
+    buyer: 'gp1',
+    bidQty: 10,
     buyerCapacity: 4,
     treasuryBudgetByBuyerFactionId: const {'gp1': 10_000},
     expect: const DealMatchExpectation(

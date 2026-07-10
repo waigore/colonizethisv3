@@ -96,8 +96,8 @@ void assertValidatorExpectation(
   if (expectation.catalogDefaultCommodityId != null) {
     final int? catalogDefault = ResourceRules.defaultRules
         .defaultMarketPriceForCommodityId(
-      expectation.catalogDefaultCommodityId!,
-    );
+          expectation.catalogDefaultCommodityId!,
+        );
     expect(
       catalogDefault,
       isNotNull,
@@ -106,11 +106,7 @@ void assertValidatorExpectation(
   }
   if (expectation.orderAcceptedPin != null) {
     final pin = expectation.orderAcceptedPin!;
-    expect(
-      results[pin.index].isAccepted,
-      pin.accepted,
-      reason: pin.reason,
-    );
+    expect(results[pin.index].isAccepted, pin.accepted, reason: pin.reason);
   }
   if (expectation.firstOrderReason != null) {
     expect(results.first.reason, expectation.firstOrderReason);
@@ -151,7 +147,9 @@ class ValidatorContextExpectation {
   final bool stagedOrdersEmpty;
 }
 
-void assertValidatorContextExpectation(ValidatorContextExpectation expectation) {
+void assertValidatorContextExpectation(
+  ValidatorContextExpectation expectation,
+) {
   switch (expectation.target) {
     case ValidatorContextScenarioTarget.treasuryBudget:
       final game = buildTreasuryBidBudgetGame(treasury: expectation.treasury);

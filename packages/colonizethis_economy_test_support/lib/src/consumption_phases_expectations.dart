@@ -43,16 +43,15 @@ ConsumptionScenario militaryFoodScenario({
   Map<String, int>? regimentCountsById,
   int? militaryUnits,
   required FoodConsumptionPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runMilitaryFoodConsumption(
-        stockpileGrain: stockpileGrain,
-        regimentCountsById: regimentCountsById,
-        militaryUnits: militaryUnits,
-        pins: pins,
-      ),
-    );
+}) => ConsumptionScenario(
+  label: label,
+  run: () => runMilitaryFoodConsumption(
+    stockpileGrain: stockpileGrain,
+    regimentCountsById: regimentCountsById,
+    militaryUnits: militaryUnits,
+    pins: pins,
+  ),
+);
 
 void runNavyFoodConsumption({
   required int stockpileGrain,
@@ -89,16 +88,15 @@ ConsumptionScenario navyFoodScenario({
   Map<String, int>? shipCountsById,
   FoodConsumptionPins? pins,
   bool expectUnknownShipThrows = false,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runNavyFoodConsumption(
-        stockpileGrain: stockpileGrain,
-        shipCountsById: shipCountsById,
-        pins: pins,
-        expectUnknownShipThrows: expectUnknownShipThrows,
-      ),
-    );
+}) => ConsumptionScenario(
+  label: label,
+  run: () => runNavyFoodConsumption(
+    stockpileGrain: stockpileGrain,
+    shipCountsById: shipCountsById,
+    pins: pins,
+    expectUnknownShipThrows: expectUnknownShipThrows,
+  ),
+);
 
 /// Data-driven expectations for [consumeWorkerFood] rows.
 class WorkerFoodConsumptionExpectation {
@@ -150,21 +148,17 @@ ConsumptionScenario workerFoodScenario({
   required Stockpile stockpile,
   required WorkerPool workers,
   required WorkerFoodConsumptionExpectation expectation,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runWorkerFoodConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        expectation: expectation,
-      ),
-    );
+}) => ConsumptionScenario(
+  label: label,
+  run: () => runWorkerFoodConsumption(
+    stockpile: stockpile,
+    workers: workers,
+    expectation: expectation,
+  ),
+);
 
 /// Pins for [assignWorkerLuxury] rows.
-typedef WorkerLuxuryPins = ({
-  int withLuxury,
-  int sugarRemaining,
-});
+typedef WorkerLuxuryPins = ({int withLuxury, int sugarRemaining});
 
 void runWorkerLuxuryAssignment({
   required Stockpile stockpile,
@@ -185,15 +179,14 @@ ConsumptionScenario workerLuxuryScenario({
   required Stockpile stockpile,
   required int foodFedCount,
   required WorkerLuxuryPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runWorkerLuxuryAssignment(
-        stockpile: stockpile,
-        foodFedCount: foodFedCount,
-        pins: pins,
-      ),
-    );
+}) => ConsumptionScenario(
+  label: label,
+  run: () => runWorkerLuxuryAssignment(
+    stockpile: stockpile,
+    foodFedCount: foodFedCount,
+    pins: pins,
+  ),
+);
 
 /// Pins for [consumeFoodUnits] rows.
 typedef FoodUnitsPins = ({
@@ -223,12 +216,11 @@ ConsumptionScenario foodUnitsScenario({
   required Stockpile stockpile,
   required int required,
   required FoodUnitsPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runFoodUnitsConsumption(
-        stockpile: stockpile,
-        requiredUnits: required,
-        pins: pins,
-      ),
-    );
+}) => ConsumptionScenario(
+  label: label,
+  run: () => runFoodUnitsConsumption(
+    stockpile: stockpile,
+    requiredUnits: required,
+    pins: pins,
+  ),
+);

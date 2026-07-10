@@ -8,10 +8,7 @@ import 'package:colonizethis_test/test.dart';
 import 'worker_economy_scenarios.dart';
 
 /// Pins for [effectiveLabourFromIdleCounts] rows.
-typedef IdleLabourPins = ({
-  WorkerIdleCounts idle,
-  int expected,
-});
+typedef IdleLabourPins = ({WorkerIdleCounts idle, int expected});
 
 void runIdleLabourExpectation(IdleLabourPins pins) {
   expect(effectiveLabourFromIdleCounts(pins.idle), pins.expected);
@@ -20,11 +17,10 @@ void runIdleLabourExpectation(IdleLabourPins pins) {
 WorkerEconomyScenario idleLabourScenario({
   required String label,
   required IdleLabourPins pins,
-}) =>
-    WorkerEconomyScenario(
-      label: label,
-      run: () => runIdleLabourExpectation(pins),
-    );
+}) => WorkerEconomyScenario(
+  label: label,
+  run: () => runIdleLabourExpectation(pins),
+);
 
 /// Pins for [effectiveLabourForWorkers] rows.
 typedef EffectiveLabourPins = ({
@@ -46,8 +42,7 @@ void runEffectiveLabourExpectation(EffectiveLabourPins pins) {
 WorkerEconomyScenario effectiveLabourScenario({
   required String label,
   required EffectiveLabourPins pins,
-}) =>
-    WorkerEconomyScenario(
-      label: label,
-      run: () => runEffectiveLabourExpectation(pins),
-    );
+}) => WorkerEconomyScenario(
+  label: label,
+  run: () => runEffectiveLabourExpectation(pins),
+);
