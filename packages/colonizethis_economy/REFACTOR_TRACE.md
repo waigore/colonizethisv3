@@ -1119,6 +1119,18 @@ test_support LOC: **15,863** (net −53 vs slice 60 / 15,916). Economy `test/` *
 
 test_support LOC: **15,766** (net −97 vs slice 61 / 15,863). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 63+.
 
+## Phase 3 — Slice 63 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| scenario-runner-labelOf | `runLabeledScenarios` / `runLabeledScenarioGroup` accept optional `labelOf` for typedef/record rows | `scenario_runner.dart` | #3939 |
+| deal-matcher-typedef | `DealMatcherScenario` class → typedef; matcher runners pass `labelOf` | `deal_matcher_scenario.dart`, `world_market_deal_matcher_test.dart` | #3939 |
+| validator-typedef | `TradeOrderValidatorScenario` class → typedef | `validator_scenario.dart` | #3939 |
+| label-run-typedef-batch | Convert commodity-totals / cost-check / worker-economy / consumption / build-cost / production / worker-action-cost / validator-context / player-context classes to typedefs | `*_scenarios.dart`, `*_expectations.dart` | #3939 |
+| domain-row-typedef-batch | Convert lock-recovery / boycott / non-GP auto-offers / town-game / treasury-UI composition classes to typedefs | matching scenario modules + thin runners | #3939 |
+
+test_support LOC: **15,647** (net −119 vs slice 62 / 15,766). Economy `test/` **1,349** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 64+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

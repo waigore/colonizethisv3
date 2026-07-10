@@ -6,25 +6,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'lock_recovery_minor_bids_expectations.dart';
 import 'lock_recovery_minor_bids_test_support.dart';
 
-/// One row in [lockRecoveryMinorBidsScenarios].
-class LockRecoveryMinorBidsScenario {
-  const LockRecoveryMinorBidsScenario({
-    required this.label,
-    required this.game,
-    required this.verify,
-  });
-
-  final String label;
-  final Game game;
-  final void Function(Map<String, List<TradeOrder>> bids) verify;
-}
+/// One row in [lockRecoveryMinorBidsScenarios] (Refs #3939 slice 63).
+typedef LockRecoveryMinorBidsScenario = ({
+  String label,
+  Game game,
+  void Function(Map<String, List<TradeOrder>> bids) verify,
+});
 
 /// Compact expect-wired row (Refs #3939 slice 59).
 LockRecoveryMinorBidsScenario lockRecoveryBidsRow({
   required String label,
   required Game game,
   required LockRecoveryMinorBidsExpectation expect,
-}) => LockRecoveryMinorBidsScenario(
+}) => (
   label: label,
   game: game,
   verify: (bids) => assertLockRecoveryMinorBidsExpectation(bids, expect),

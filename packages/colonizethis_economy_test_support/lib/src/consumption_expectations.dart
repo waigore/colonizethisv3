@@ -132,7 +132,7 @@ ConsumptionScenario resolveConsumptionScenario({
       (stockpileDeltas == null
           ? const Stockpile()
           : stockpileWithDeltas(stockpileDeltas));
-  return ConsumptionScenario(
+  return (
     label: label,
     run: () => runResolveConsumption(
       stockpile: resolvedStockpile,
@@ -142,5 +142,6 @@ ConsumptionScenario resolveConsumptionScenario({
       pins: pins,
       expectUnknownShipThrows: expectUnknownShipThrows,
     ),
+    refs: null,
   );
 }

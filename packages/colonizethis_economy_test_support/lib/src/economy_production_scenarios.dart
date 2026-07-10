@@ -6,18 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'core_economy_test_support.dart';
 import 'economy_production_expectations.dart';
 
-/// One row in an economy-production scenario table.
-class EconomyProductionScenario {
-  const EconomyProductionScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `EconomyProductionScenario` tables (Refs #3939 slice 63).
+typedef EconomyProductionScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 /// Runs [scenario] (setup + assertions live in [EconomyProductionScenario.run]).
 void runEconomyProductionScenario(EconomyProductionScenario scenario) {

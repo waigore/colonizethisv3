@@ -27,7 +27,7 @@ BoycottBlockedCommoditiesScenario _boycottColonyRow({
   Map<String, ConnectivityResult>? connectivityByFactionId,
   Map<String, List<TradeOrder>>? autoOffersByFactionId,
   String? refs,
-}) => BoycottBlockedCommoditiesScenario(
+}) => (
   label: label,
   buildGame: () => gameWithColonyTribeBoycottTest(
     colonyStates: colonyStates,
@@ -43,30 +43,18 @@ BoycottBlockedCommoditiesScenario _boycottColonyRow({
   refs: refs,
 );
 
-/// One row in [boycottBlockedCommoditiesScenarios].
-class BoycottBlockedCommoditiesScenario {
-  const BoycottBlockedCommoditiesScenario({
-    required this.label,
-    required this.buildGame,
-    required this.buyerPlayerId,
-    required this.verify,
-    this.useDefaultTileMaps = true,
-    this.useDefaultTopology = true,
-    this.connectivityByFactionId,
-    this.autoOffersByFactionId,
-    this.refs,
-  });
-
-  final String label;
-  final Game Function() buildGame;
-  final String buyerPlayerId;
-  final bool useDefaultTileMaps;
-  final bool useDefaultTopology;
-  final Map<String, ConnectivityResult>? connectivityByFactionId;
-  final Map<String, List<TradeOrder>>? autoOffersByFactionId;
-  final void Function(Set<CommodityId> blocked) verify;
-  final String? refs;
-}
+/// One row in [boycottBlockedCommoditiesScenarios] (Refs #3939 slice 63).
+typedef BoycottBlockedCommoditiesScenario = ({
+  String label,
+  Game Function() buildGame,
+  String buyerPlayerId,
+  bool useDefaultTileMaps,
+  bool useDefaultTopology,
+  Map<String, ConnectivityResult>? connectivityByFactionId,
+  Map<String, List<TradeOrder>>? autoOffersByFactionId,
+  void Function(Set<CommodityId> blocked) verify,
+  String? refs,
+});
 
 /// Canonical scenarios for [boycottedColonySellableCommodityIds].
 List<BoycottBlockedCommoditiesScenario>

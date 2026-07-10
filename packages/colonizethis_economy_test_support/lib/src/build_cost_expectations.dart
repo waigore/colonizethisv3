@@ -63,9 +63,10 @@ void runBuildCostUnknownUnitExpectation(BuildCostUnknownUnitPins pins) {
 BuildCostScenario buildCostUnknownUnitScenario({
   required String label,
   required BuildCostUnknownUnitPins pins,
-}) => BuildCostScenario(
+}) => (
   label: label,
   run: () => runBuildCostUnknownUnitExpectation(pins),
+  refs: null,
 );
 
 /// Pins for afford-then-apply catalog rows.
@@ -148,9 +149,10 @@ _catalogContextForUnit({
 BuildCostScenario buildCostAffordApplyScenario({
   required String label,
   required BuildCostAffordApplyPins pins,
-}) => BuildCostScenario(
+}) => (
   label: label,
   run: () => runBuildCostAffordApplyExpectation(pins),
+  refs: null,
 );
 
 /// Pins for afford-reject rows.
@@ -190,7 +192,8 @@ void runBuildCostAffordRejectExpectation(BuildCostAffordRejectPins pins) {
 BuildCostScenario buildCostAffordRejectScenario({
   required String label,
   required BuildCostAffordRejectPins pins,
-}) => BuildCostScenario(
+}) => (
   label: label,
   run: () => runBuildCostAffordRejectExpectation(pins),
+  refs: null,
 );

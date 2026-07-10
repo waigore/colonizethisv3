@@ -48,7 +48,7 @@ WorkerActionCostScenario canAffordRecruitWorkerScenario({
   required String label,
   required CanAffordRecruitWorkerPins pins,
   String? refs,
-}) => WorkerActionCostScenario(
+}) => (
   label: label,
   run: () => runCanAffordRecruitWorkerExpectation(pins),
   refs: refs,
@@ -87,7 +87,7 @@ WorkerActionCostScenario applyRecruitWorkerCostScenario({
   required String label,
   required ApplyRecruitWorkerCostPins pins,
   String? refs,
-}) => WorkerActionCostScenario(
+}) => (
   label: label,
   run: () => runApplyRecruitWorkerCostExpectation(pins),
   refs: refs,
@@ -123,8 +123,4 @@ void runApprenticeTechConsistencyExpectation() {
 WorkerActionCostScenario apprenticeTechConsistencyScenario({
   required String label,
   String? refs,
-}) => WorkerActionCostScenario(
-  label: label,
-  run: runApprenticeTechConsistencyExpectation,
-  refs: refs,
-);
+}) => (label: label, run: runApprenticeTechConsistencyExpectation, refs: refs);

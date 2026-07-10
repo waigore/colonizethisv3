@@ -5,5 +5,6 @@ void main() {
     'checkPreconditionsInOrder (Refs #3517 Cluster 2)',
     checkPreconditionsInOrderScenarios(),
     runCheckPreconditionsInOrderScenario,
+    labelOf: (s) => s.label,
   );
 }

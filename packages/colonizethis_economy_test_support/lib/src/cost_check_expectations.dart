@@ -45,7 +45,7 @@ CheckPreconditionsInOrderScenario checkPreconditionsInOrderScenario({
   required String label,
   required CheckPreconditionsInOrderPins pins,
   String? refs,
-}) => CheckPreconditionsInOrderScenario(
+}) => (
   label: label,
   run: () => runCheckPreconditionsInOrderExpectation(pins),
   refs: refs,

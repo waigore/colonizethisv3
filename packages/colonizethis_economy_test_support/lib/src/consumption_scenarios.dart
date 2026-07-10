@@ -4,18 +4,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'consumption_expectations.dart';
 
-/// One row in a resolveConsumption scenario table.
-class ConsumptionScenario {
-  const ConsumptionScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `ConsumptionScenario` tables (Refs #3939 slice 63).
+typedef ConsumptionScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 /// Runs [scenario] (setup + assertions live in [ConsumptionScenario.run]).
 void runConsumptionScenario(ConsumptionScenario scenario) {

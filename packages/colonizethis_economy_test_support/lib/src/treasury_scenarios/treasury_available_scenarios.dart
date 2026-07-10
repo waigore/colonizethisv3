@@ -120,32 +120,23 @@ void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   expect(actual, scenario.expected);
 }
 
-/// UI composition scenarios reconstructing treasury-bid-cap math end-to-end.
-class TreasuryUiCompositionScenario {
-  const TreasuryUiCompositionScenario({
-    required this.label,
-    required this.treasury,
-    this.prices = const {},
-    this.stagedBids = const [],
-    this.projectedNonBidTreasuryDelta = 0,
-    required this.verify,
-    this.refs,
-  });
-
-  final String label;
-  final int treasury;
-  final Map<CommodityId, int> prices;
-  final List<TradeOrder> stagedBids;
-  final int projectedNonBidTreasuryDelta;
-  final void Function({
+/// UI composition scenarios reconstructing treasury-bid-cap math end-to-end
+/// (Refs #3939 slice 63).
+typedef TreasuryUiCompositionScenario = ({
+  String label,
+  int treasury,
+  Map<CommodityId, int> prices,
+  List<TradeOrder> stagedBids,
+  int projectedNonBidTreasuryDelta,
+  void Function({
     required Game game,
     required data.ResourceRules rules,
     required int budget,
     required int currentSpend,
   })
-  verify;
-  final String? refs;
-}
+  verify,
+  String? refs,
+});
 
 /// Compact UI composition row (Refs #3939 slice 52).
 TreasuryUiCompositionScenario treasuryUiCompositionRow({
@@ -156,7 +147,7 @@ TreasuryUiCompositionScenario treasuryUiCompositionRow({
   List<TradeOrder> stagedBids = const [],
   int projectedNonBidTreasuryDelta = 0,
   String? refs = '#3093',
-}) => TreasuryUiCompositionScenario(
+}) => (
   label: label,
   treasury: treasury,
   prices: prices,

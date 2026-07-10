@@ -2,27 +2,19 @@
 
 import 'treasury_player_context_expectations.dart';
 
-/// One row in a player-context scenario table.
-class PlayerContextScenario {
-  const PlayerContextScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
-
-/// Runs [scenario] (setup + assertions live in [PlayerContextScenario.run]).
+/// One row for `PlayerContextScenario` tables (Refs #3939 slice 63).
+typedef PlayerContextScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 /// Compact expect-wired row (Refs #3939 slice 59).
 PlayerContextScenario playerContextRow({
   required String label,
   required PlayerContextExpectation expect,
   String? refs,
-}) => PlayerContextScenario(
+}) => (
   label: label,
   run: () => assertPlayerContextExpectation(expect),
   refs: refs,

@@ -42,7 +42,7 @@ ConsumptionScenario militaryFoodScenario({
   Map<String, int>? regimentCountsById,
   int? militaryUnits,
   required FoodConsumptionPins pins,
-}) => ConsumptionScenario(
+}) => (
   label: label,
   run: () => runMilitaryFoodConsumption(
     stockpileGrain: stockpileGrain,
@@ -50,6 +50,7 @@ ConsumptionScenario militaryFoodScenario({
     militaryUnits: militaryUnits,
     pins: pins,
   ),
+  refs: null,
 );
 
 void runNavyFoodConsumption({
@@ -87,7 +88,7 @@ ConsumptionScenario navyFoodScenario({
   Map<String, int>? shipCountsById,
   FoodConsumptionPins? pins,
   bool expectUnknownShipThrows = false,
-}) => ConsumptionScenario(
+}) => (
   label: label,
   run: () => runNavyFoodConsumption(
     stockpileGrain: stockpileGrain,
@@ -95,6 +96,7 @@ ConsumptionScenario navyFoodScenario({
     pins: pins,
     expectUnknownShipThrows: expectUnknownShipThrows,
   ),
+  refs: null,
 );
 
 /// Data-driven expectations for [consumeWorkerFood] rows.
@@ -147,13 +149,14 @@ ConsumptionScenario workerFoodScenario({
   required Stockpile stockpile,
   required WorkerPool workers,
   required WorkerFoodConsumptionExpectation expectation,
-}) => ConsumptionScenario(
+}) => (
   label: label,
   run: () => runWorkerFoodConsumption(
     stockpile: stockpile,
     workers: workers,
     expectation: expectation,
   ),
+  refs: null,
 );
 
 /// Pins for [assignWorkerLuxury] rows.
@@ -178,13 +181,14 @@ ConsumptionScenario workerLuxuryScenario({
   required Stockpile stockpile,
   required int foodFedCount,
   required WorkerLuxuryPins pins,
-}) => ConsumptionScenario(
+}) => (
   label: label,
   run: () => runWorkerLuxuryAssignment(
     stockpile: stockpile,
     foodFedCount: foodFedCount,
     pins: pins,
   ),
+  refs: null,
 );
 
 /// Pins for [consumeFoodUnits] rows.
@@ -215,11 +219,12 @@ ConsumptionScenario foodUnitsScenario({
   required Stockpile stockpile,
   required int required,
   required FoodUnitsPins pins,
-}) => ConsumptionScenario(
+}) => (
   label: label,
   run: () => runFoodUnitsConsumption(
     stockpile: stockpile,
     requiredUnits: required,
     pins: pins,
   ),
+  refs: null,
 );

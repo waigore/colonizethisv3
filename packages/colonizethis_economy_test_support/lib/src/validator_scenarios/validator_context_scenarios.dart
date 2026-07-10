@@ -2,25 +2,19 @@
 
 import 'validator_expectations.dart';
 
-/// One row for `tradeOrderValidationContextFromGame` treasury scenarios.
-class TradeOrderValidatorContextScenario {
-  const TradeOrderValidatorContextScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `TradeOrderValidatorContextScenario` tables (Refs #3939 slice 63).
+typedef TradeOrderValidatorContextScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 /// Compact expect-wired row (Refs #3939 slice 59).
 TradeOrderValidatorContextScenario validatorContextRow({
   required String label,
   required ValidatorContextExpectation expect,
   String? refs,
-}) => TradeOrderValidatorContextScenario(
+}) => (
   label: label,
   run: () => assertValidatorContextExpectation(expect),
   refs: refs,

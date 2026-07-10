@@ -24,5 +24,6 @@ void main() {
     'computeNonGreatPowerAutoOffers — purchased-tile parity (Refs #2991 C6)',
     nonGpAutoOffersPurchasedTileScenarios(),
     runNonGpAutoOffersScenario,
+    labelOf: (s) => s.label,
   );
 }

@@ -4,18 +4,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'worker_economy_expectations.dart';
 
-/// One row in a worker-economy labour scenario table.
-class WorkerEconomyScenario {
-  const WorkerEconomyScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `WorkerEconomyScenario` tables (Refs #3939 slice 63).
+typedef WorkerEconomyScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runWorkerEconomyScenario(WorkerEconomyScenario scenario) {
   scenario.run();

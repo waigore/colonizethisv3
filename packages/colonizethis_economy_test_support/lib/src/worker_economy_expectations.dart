@@ -16,10 +16,7 @@ void runIdleLabourExpectation(IdleLabourPins pins) {
 WorkerEconomyScenario idleLabourScenario({
   required String label,
   required IdleLabourPins pins,
-}) => WorkerEconomyScenario(
-  label: label,
-  run: () => runIdleLabourExpectation(pins),
-);
+}) => (label: label, run: () => runIdleLabourExpectation(pins), refs: null);
 
 /// Pins for [effectiveLabourForWorkers] rows.
 typedef EffectiveLabourPins = ({
@@ -41,7 +38,5 @@ void runEffectiveLabourExpectation(EffectiveLabourPins pins) {
 WorkerEconomyScenario effectiveLabourScenario({
   required String label,
   required EffectiveLabourPins pins,
-}) => WorkerEconomyScenario(
-  label: label,
-  run: () => runEffectiveLabourExpectation(pins),
-);
+}) =>
+    (label: label, run: () => runEffectiveLabourExpectation(pins), refs: null);

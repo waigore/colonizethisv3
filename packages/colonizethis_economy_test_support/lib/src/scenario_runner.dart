@@ -18,22 +18,35 @@ void runLabeledScenario(String label, void Function() body) {
 }
 
 /// Registers one test per [scenarios] row using [run].
-void runLabeledScenarios<S extends LabeledScenario>(
+///
+/// Pass [labelOf] for typedef/record rows. Class rows that implement
+/// [LabeledScenario] may omit it (Refs #3939 slice 63).
+void runLabeledScenarios<S>(
   Iterable<S> scenarios,
-  void Function(S scenario) run,
-) {
+  void Function(S scenario) run, {
+  String Function(S scenario)? labelOf,
+}) {
   for (final scenario in scenarios) {
-    runLabeledScenario(scenario.label, () => run(scenario));
+    runLabeledScenario(_scenarioLabel(scenario, labelOf), () => run(scenario));
   }
 }
 
 /// Registers a [groupName] containing table-driven scenario tests.
-void runLabeledScenarioGroup<S extends LabeledScenario>(
+void runLabeledScenarioGroup<S>(
   String groupName,
   Iterable<S> scenarios,
-  void Function(S scenario) run,
-) {
+  void Function(S scenario) run, {
+  String Function(S scenario)? labelOf,
+}) {
   group(groupName, () {
-    runLabeledScenarios(scenarios, run);
+    runLabeledScenarios(scenarios, run, labelOf: labelOf);
   });
+}
+
+String _scenarioLabel<S>(S scenario, String Function(S scenario)? labelOf) {
+  if (labelOf != null) return labelOf(scenario);
+  if (scenario is LabeledScenario) return scenario.label;
+  throw ArgumentError(
+    'runLabeledScenarios: pass labelOf for non-LabeledScenario rows',
+  );
 }

@@ -7,7 +7,6 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
-import 'scenario_runner.dart';
 import 'town_manufacturing_bonus_expectations.dart';
 
 /// One row in [townManufacturingBonusProvinceScenarios].
@@ -111,22 +110,13 @@ enum TownManufacturingBonusGamePin {
   previewEmpty,
 }
 
-/// One row in [townManufacturingBonusGameScenarios].
-class TownManufacturingBonusGameScenario implements RefsScenario {
-  const TownManufacturingBonusGameScenario({
-    required this.label,
-    required this.pin,
-    required this.expect,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final TownManufacturingBonusGamePin pin;
-  final TownManufacturingBonusGameExpectation expect;
-  @override
-  final String? refs;
-}
+/// One row in [townManufacturingBonusGameScenarios] (Refs #3939 slice 63).
+typedef TownManufacturingBonusGameScenario = ({
+  String label,
+  TownManufacturingBonusGamePin pin,
+  TownManufacturingBonusGameExpectation expect,
+  String? refs,
+});
 
 void runTownManufacturingBonusGameScenario(
   TownManufacturingBonusGameScenario scenario,
@@ -278,7 +268,7 @@ void runTownManufacturingBonusGamePin(
 /// Canonical fixture-backed scenarios for game-level town manufacturing bonus.
 List<TownManufacturingBonusGameScenario>
 townManufacturingBonusGameScenarios() => [
-  TownManufacturingBonusGameScenario(
+  (
     label: 'GP town-connected timber yields lumber bonus in bonusByFactionId',
     pin: TownManufacturingBonusGamePin.gpTownTimberBonus,
     expect: TownManufacturingBonusGameExpectation(
@@ -289,7 +279,7 @@ townManufacturingBonusGameScenarios() => [
     ),
     refs: '#3872',
   ),
-  TownManufacturingBonusGameScenario(
+  (
     label: 'minor town-connected timber accumulates delivered raw extraction',
     pin: TownManufacturingBonusGamePin.minorDeliveredRaw,
     expect: TownManufacturingBonusGameExpectation(
@@ -297,7 +287,7 @@ townManufacturingBonusGameScenarios() => [
     ),
     refs: '#3872',
   ),
-  TownManufacturingBonusGameScenario(
+  (
     label:
         'townManufacturingBonusToAutoOffers emits priority-1 offers for minors',
     pin: TownManufacturingBonusGamePin.autoOffersMinor,
@@ -313,7 +303,7 @@ townManufacturingBonusGameScenarios() => [
     ),
     refs: '#3872',
   ),
-  TownManufacturingBonusGameScenario(
+  (
     label:
         'previewTownManufacturingBonusByProvince matches live bonusByProvinceId when connectivity resolves',
     pin: TownManufacturingBonusGamePin.previewMatchesLive,
@@ -327,7 +317,7 @@ townManufacturingBonusGameScenarios() => [
     ),
     refs: '#3872',
   ),
-  TownManufacturingBonusGameScenario(
+  (
     label:
         'previewTownManufacturingBonusByProvince returns empty without tile maps',
     pin: TownManufacturingBonusGamePin.previewEmpty,

@@ -5,14 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'build_cost_expectations.dart';
 
-/// One row in a build-cost scenario table.
-class BuildCostScenario {
-  const BuildCostScenario({required this.label, required this.run, this.refs});
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `BuildCostScenario` tables (Refs #3939 slice 63).
+typedef BuildCostScenario = ({String label, void Function() run, String? refs});
 
 /// Runs [scenario] (setup + assertions live in [BuildCostScenario.run]).
 void runBuildCostScenario(BuildCostScenario scenario) {

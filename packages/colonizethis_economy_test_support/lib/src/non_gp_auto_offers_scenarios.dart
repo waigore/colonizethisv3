@@ -8,27 +8,17 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'extraction_fixture_support.dart';
 import 'non_gp_auto_offers_expectations.dart';
 import 'non_gp_auto_offers_test_support.dart';
-import 'scenario_runner.dart';
 
-/// One row for `computeNonGreatPowerAutoOffers` scenario tables.
-class NonGpAutoOffersScenario implements RefsScenario {
-  const NonGpAutoOffersScenario({
-    required this.label,
-    required this.game,
-    required this.tileMapByRegion,
-    required this.connectivityByFactionId,
-    required this.verify,
-    this.refs,
-  });
-
-  final String label;
-  final Game game;
-  final Map<String, TileMapResult> tileMapByRegion;
-  final Map<String, ConnectivityResult> connectivityByFactionId;
-  final void Function(Map<String, List<TradeOrder>> result) verify;
-  @override
-  final String? refs;
-}
+/// One row for `computeNonGreatPowerAutoOffers` scenario tables
+/// (Refs #3939 slice 63).
+typedef NonGpAutoOffersScenario = ({
+  String label,
+  Game game,
+  Map<String, TileMapResult> tileMapByRegion,
+  Map<String, ConnectivityResult> connectivityByFactionId,
+  void Function(Map<String, List<TradeOrder>> result) verify,
+  String? refs,
+});
 
 NonGpAutoOffersScenario nonGpAutoOfferRow({
   required String label,
@@ -37,7 +27,7 @@ NonGpAutoOffersScenario nonGpAutoOfferRow({
   required Map<String, ConnectivityResult> connectivityByFactionId,
   required NonGpAutoOffersExpectation expect,
   String? refs,
-}) => NonGpAutoOffersScenario(
+}) => (
   label: label,
   game: game,
   tileMapByRegion: tileMapByRegion,

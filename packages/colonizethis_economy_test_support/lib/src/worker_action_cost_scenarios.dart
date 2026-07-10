@@ -6,18 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'worker_action_cost_expectations.dart';
 
-/// One row in a worker-action-cost scenario table.
-class WorkerActionCostScenario {
-  const WorkerActionCostScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `WorkerActionCostScenario` tables (Refs #3939 slice 63).
+typedef WorkerActionCostScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 /// Runs [scenario] (setup + assertions live in [WorkerActionCostScenario.run]).
 void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {

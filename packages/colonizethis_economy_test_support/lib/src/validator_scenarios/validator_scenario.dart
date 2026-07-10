@@ -5,22 +5,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'validator_expectations.dart';
 
-/// One row for validator cap / rules / treasury scenarios.
-class TradeOrderValidatorScenario {
-  const TradeOrderValidatorScenario({
-    required this.label,
-    required this.context,
-    required this.proposedOrders,
-    required this.verify,
-    this.refs,
-  });
-
-  final TradeOrderValidationContext context;
-  final List<TradeOrder> proposedOrders;
-  final String label;
-  final void Function(List<OrderValidationResult> results) verify;
-  final String? refs;
-}
+/// One row for validator cap / rules / treasury scenarios (Refs #3939 slice 63).
+typedef TradeOrderValidatorScenario = ({
+  String label,
+  TradeOrderValidationContext context,
+  List<TradeOrder> proposedOrders,
+  void Function(List<OrderValidationResult> results) verify,
+  String? refs,
+});
 
 /// Compact expect-wired row (Refs #3939 slice 59).
 TradeOrderValidatorScenario validatorExpectRow({
@@ -29,7 +21,7 @@ TradeOrderValidatorScenario validatorExpectRow({
   required List<TradeOrder> proposedOrders,
   required ValidatorExpectation expect,
   String? refs,
-}) => TradeOrderValidatorScenario(
+}) => (
   label: label,
   context: context,
   proposedOrders: proposedOrders,

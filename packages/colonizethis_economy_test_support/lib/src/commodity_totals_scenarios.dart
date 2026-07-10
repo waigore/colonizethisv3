@@ -2,12 +2,8 @@
 
 import 'commodity_totals_expectations.dart';
 
-class CommodityTotalsScenario {
-  const CommodityTotalsScenario({required this.label, required this.run});
-
-  final String label;
-  final void Function() run;
-}
+/// One row for commodity-totals helper tables (Refs #3939 slice 63).
+typedef CommodityTotalsScenario = ({String label, void Function() run});
 
 void runCommodityTotalsScenario(CommodityTotalsScenario scenario) {
   scenario.run();
