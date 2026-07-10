@@ -61,13 +61,42 @@ extension IncrementalCandidateValidatorPrefixReplay
   /// in [basePrefix] are replayed in submission order against the player's
   /// snapshot worker pool / stockpile / treasury so the candidate sees the
   /// post-prefix peasant reservation ledger.
+  bool _acceptProjectedResourcePrefixForPlayer<TOrder, V>({
+    required Player player,
+    required List<TOrder> existingOrders,
+    required bool? prefixReplaySucceeded,
+    required ProjectedResourceLedgers? cachedLedgers,
+    required void Function(bool value) setPrefixReplaySucceeded,
+    required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
+    required V Function(ProjectedResourceLedgers ledgers) createValidator,
+    required ProjectedResourceLedgers Function(V validator) readLedgers,
+    required OrderValidationResult Function(V validator, TOrder order) validate,
+    required TOrder candidate,
+  }) =>
+      _acceptProjectedResourcePrefix(
+        prefixReplaySucceeded: prefixReplaySucceeded,
+        cachedLedgers: cachedLedgers,
+        setPrefixReplaySucceeded: setPrefixReplaySucceeded,
+        setCachedLedgers: setCachedLedgers,
+        existingOrders: existingOrders,
+        createPrefixValidator: () =>
+            createValidator(projectedResourceLedgersFromPlayer(player)),
+        validate: validate,
+        readLedgers: readLedgers,
+        createCandidateValidator: (ledgers) =>
+            createValidator(copiedProjectedResourceLedgers(ledgers)),
+        candidate: candidate,
+      );
+
   bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
     final player = _player();
     if (player == null) return false;
     final existing =
         basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
         const <RecruitWorkerOrder>[];
-    return _acceptProjectedResourcePrefix(
+    return _acceptProjectedResourcePrefixForPlayer(
+      player: player,
+      existingOrders: existing,
       prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
       cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
       setPrefixReplaySucceeded: (v) {
@@ -76,26 +105,19 @@ extension IncrementalCandidateValidatorPrefixReplay
       setCachedLedgers: (ledgers) {
         cache.postRecruitWorkerPrefixEconomy = ledgers;
       },
-      existingOrders: existing,
-      createPrefixValidator: () => createProjectedRecruitWorkerValidator(
+      createValidator: (ledgers) => createProjectedRecruitWorkerValidator(
         player: player,
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-        workerPool: player.workerPool,
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
       ),
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
       readLedgers: (validator) => (
         stockpile: validator.stockpile,
         treasury: validator.treasury,
         workers: validator.workers,
       ),
-      createCandidateValidator: (ledgers) => createProjectedRecruitWorkerValidator(
-        player: player,
-        stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
-        treasury: ledgers.treasury,
-        workerPool: ledgers.workers,
-      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
       candidate: candidate,
     );
   }
@@ -106,7 +128,9 @@ extension IncrementalCandidateValidatorPrefixReplay
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    return _acceptProjectedResourcePrefix(
+    return _acceptProjectedResourcePrefixForPlayer(
+      player: player,
+      existingOrders: builds,
       prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
       cachedLedgers: cache.postBuildPrefixEconomy,
       setPrefixReplaySucceeded: (v) {
@@ -115,28 +139,20 @@ extension IncrementalCandidateValidatorPrefixReplay
       setCachedLedgers: (ledgers) {
         cache.postBuildPrefixEconomy = ledgers;
       },
-      existingOrders: builds,
-      createPrefixValidator: () => createProjectedBuildValidator(
+      createValidator: (ledgers) => createProjectedBuildValidator(
         game: game,
         player: player,
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-        workerPool: player.workerPool,
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
       ),
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
       readLedgers: (validator) => (
         stockpile: validator.stockpile,
         treasury: validator.treasury,
         workers: validator.workers,
       ),
-      createCandidateValidator: (ledgers) => createProjectedBuildValidator(
-        game: game,
-        player: player,
-        stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
-        treasury: ledgers.treasury,
-        workerPool: ledgers.workers,
-      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
       candidate: candidate,
     );
   }

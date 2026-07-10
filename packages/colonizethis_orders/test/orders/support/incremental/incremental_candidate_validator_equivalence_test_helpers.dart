@@ -212,3 +212,56 @@ void expectCandidateFamilyEquivalent({
     label: label,
   );
 }
+
+void iceExpectSequentialIncrementalMatchesFullPass<TCandidate>({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  Orders basePrefix = const Orders(),
+  required List<TCandidate> candidates,
+  required bool Function(IncrementalCandidateValidator validator, TCandidate candidate)
+      incremental,
+  required bool Function(TCandidate candidate) fullPass,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    tileMapByRegion: tileMapByRegion,
+  );
+  for (final candidate in candidates) {
+    expect(
+      incremental(validator, candidate),
+      fullPass(candidate),
+    );
+  }
+}
+
+void iceExpectPrefetchedArmyMoveEquivalence({
+  required ArmyMoveOrder candidate,
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  Orders basePrefix = const Orders(),
+}) {
+  final prefetched = DiplomacyFactionMembership.from(game);
+  final baseline = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+  );
+  final withPrefetched = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    factionMembership: prefetched,
+  );
+  expect(
+    withPrefetched.isArmyMoveAccepted(candidate),
+    baseline.isArmyMoveAccepted(candidate),
+  );
+}

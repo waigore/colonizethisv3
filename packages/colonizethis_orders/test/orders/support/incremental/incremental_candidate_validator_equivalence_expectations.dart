@@ -127,32 +127,24 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           label: 'single build candidate',
         );
     case IncrementalEquivalenceTarget.buildSuccessiveProbes:
-      {
-        final game = iceBuildCorpusGame();
-        const topology = iceBuildCorpusTopology;
-        const basePrefix = Orders();
-        final incremental = IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: IceIds.playerId,
-          basePrefix: basePrefix,
-        );
-        for (final candidate in [
+      iceExpectSequentialIncrementalMatchesFullPass(
+        game: iceBuildCorpusGame(),
+        topology: iceBuildCorpusTopology,
+        playerId: IceIds.playerId,
+        candidates: [
           iceBuildUnit('pikemen'),
           iceBuildUnit('musketeers'),
-        ]) {
-          expect(
-            incremental.isBuildAccepted(candidate),
-            fullPassBuildAccepted(
-              game,
-              topology,
-              IceIds.playerId,
-              basePrefix,
-              candidate,
-            ),
-          );
-        }
-      }
+        ],
+        incremental: (validator, candidate) =>
+            validator.isBuildAccepted(candidate),
+        fullPass: (candidate) => fullPassBuildAccepted(
+          iceBuildCorpusGame(),
+          iceBuildCorpusTopology,
+          IceIds.playerId,
+          const Orders(),
+          candidate,
+        ),
+      );
     case IncrementalEquivalenceTarget.workNonEmptyBasePrefix:
         final tile = iceTile('P2');
         iceExpectWorkOnCorpus(
@@ -178,70 +170,45 @@ void runIncrementalEquivalenceExpectation(IncrementalEquivalenceTarget target) {
           basePrefix: iceDeclareWarPrefix('p2'),
         );
     case IncrementalEquivalenceTarget.diplomaticSequentialProbes:
-      {
-        final game = moveCorpusGame();
-        final topology = moveCorpusTopology();
-        final basePrefix = iceDeclareWarPrefix('p2');
-        final incremental = IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: IceIds.playerId,
-          basePrefix: basePrefix,
-        );
-        for (final candidate in [
-          const DiplomaticOrder(
+      iceExpectSequentialIncrementalMatchesFullPass(
+        game: moveCorpusGame(),
+        topology: moveCorpusTopology(),
+        playerId: IceIds.playerId,
+        basePrefix: iceDeclareWarPrefix('p2'),
+        candidates: const [
+          DiplomaticOrder(
             type: DiplomaticOrderType.alliance,
             targetFactionId: 'p2',
           ),
-          const DiplomaticOrder(
+          DiplomaticOrder(
             type: DiplomaticOrderType.declareWar,
             targetFactionId: 'p3',
           ),
-          const DiplomaticOrder(
+          DiplomaticOrder(
             type: DiplomaticOrderType.alliance,
             targetFactionId: 'p2',
           ),
-        ]) {
-          expect(
-            incremental.isDiplomaticAccepted(candidate),
-            fullPassDiplomaticAccepted(
-              game,
-              topology,
-              IceIds.playerId,
-              basePrefix,
-              candidate,
-            ),
-          );
-        }
-      }
+        ],
+        incremental: (validator, candidate) =>
+            validator.isDiplomaticAccepted(candidate),
+        fullPass: (candidate) => fullPassDiplomaticAccepted(
+          moveCorpusGame(),
+          moveCorpusTopology(),
+          IceIds.playerId,
+          iceDeclareWarPrefix('p2'),
+          candidate,
+        ),
+      );
     case IncrementalEquivalenceTarget.prefetchedFactionMembership:
-      {
-        const candidate = ArmyMoveOrder(
+      iceExpectPrefetchedArmyMoveEquivalence(
+        candidate: const ArmyMoveOrder(
           armyId: 'field_a',
           destinationProvinceId: 'oldWorld|P4',
-        );
-        final game = armyCorpusGame();
-        final topology = armyCorpusTopology();
-        const basePrefix = Orders();
-        final prefetched = DiplomacyFactionMembership.from(game);
-        final baseline = IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: IceIds.playerId,
-          basePrefix: basePrefix,
-        );
-        final withPrefetched = IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: IceIds.playerId,
-          basePrefix: basePrefix,
-          factionMembership: prefetched,
-        );
-        expect(
-          withPrefetched.isArmyMoveAccepted(candidate),
-          baseline.isArmyMoveAccepted(candidate),
-        );
-      }
+        ),
+        game: armyCorpusGame(),
+        topology: armyCorpusTopology(),
+        playerId: IceIds.playerId,
+      );
     case IncrementalEquivalenceTarget.armyMoveOwnAdjacent:
       iceExpectArmyMoveOnCorpus(
         candidate: ArmyMoveOrder(

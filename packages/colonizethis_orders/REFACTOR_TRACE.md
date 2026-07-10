@@ -2071,6 +2071,15 @@ test/ LOC after slice 132: **37,208** (net −34 from post–slice 131). Remaini
 
 test/ LOC after slice 133: see PR. Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 134: player-ledgers prefix replay DRY + ICE sequential probe helpers
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| lib-player-ledgers | extract `projectedResourceLedgersFromPlayer` / `copiedProjectedResourceLedgers` + `_acceptProjectedResourcePrefixForPlayer`; fold recruit/build incremental probes | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` | #3949 |
+| ice-sequential-probes | extract `iceExpectSequentialIncrementalMatchesFullPass` + `iceExpectPrefetchedArmyMoveEquivalence`; compact build/diplomatic sequential and prefetched army cases | `incremental_candidate_validator_equivalence_expectations.dart` | `incremental_candidate_validator_equivalence_test_helpers.dart` | #3949 |
+
+test/ LOC after slice 134: **37,318** (net +20 from post–slice 133; lib/player-ledgers helper overhead — expectations switch bodies thinner). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

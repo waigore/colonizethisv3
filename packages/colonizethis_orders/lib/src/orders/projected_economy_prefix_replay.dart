@@ -18,6 +18,22 @@ typedef ProjectedResourceLedgers = ({
   WorkerPool workers,
 });
 
+/// Economy + worker-pool snapshot from a player's turn-start state.
+ProjectedResourceLedgers projectedResourceLedgersFromPlayer(Player player) => (
+      stockpile: player.stockpile,
+      treasury: player.treasury,
+      workers: player.workerPool,
+    );
+
+/// Immutable stockpile copy for candidate probes after prefix replay.
+ProjectedResourceLedgers copiedProjectedResourceLedgers(
+  ProjectedResourceLedgers ledgers,
+) => (
+      stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
+      treasury: ledgers.treasury,
+      workers: ledgers.workers,
+    );
+
 /// Ensures [existingOrders] replay onto a projected validator once.
 ///
 /// Returns cached/fresh [ProjectedResourceLedgers] when every prefix order is
