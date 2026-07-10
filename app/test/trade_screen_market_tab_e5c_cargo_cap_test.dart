@@ -31,104 +31,18 @@
 //    warning still mount with live text values; the chip / stepper
 //    taps are blocked by the existing `IgnorePointer` wrapper.
 
-import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'support/trade_screen_test_support.dart';
 
-const String _humanPlayerId = 'gp_h';
-const String _capProvinceId = 'oldWorld|cap1';
-
-/// Builds a game whose human player has either:
-///   * no home fleet (so `cargoHoldsForHomeFleet` falls back to the
-///     `defaultCargoHoldsStub = 24`), or
-///   * a synthetic home fleet whose ship-type ids sum to
-///     [tradeCargoCapacityOverride] cargo holds (used to pin the
-///     capacity at 10 for the saturation / clamp ACs).
-///
-/// Cargo-hold totals chosen so `tradeCargoCapacity == 10`:
-///   * `galleon` (cargoHold 6) + `fluyte` (cargoHold 4) = 10.
-Game _buildGame({int? tradeCargoCapacityOverride}) {
-  final List<Fleet> fleets = <Fleet>[];
-  if (tradeCargoCapacityOverride != null) {
-    // Validate the override mapping at call-site so a stale catalog
-    // change is caught by the test runner instead of producing a
-    // mis-sized fleet.
-    final int galleonHolds = NavalStatsCatalog.galleon.cargoHold;
-    final int fluyteHolds = NavalStatsCatalog.fluyte.cargoHold;
-    if (galleonHolds + fluyteHolds != 10) {
-      throw StateError(
-        'NavalStatsCatalog cargoHold drift: '
-        'galleon=$galleonHolds + fluyte=$fluyteHolds != 10. '
-        'Update the override mapping in this test.',
-      );
-    }
-    if (tradeCargoCapacityOverride != 10) {
-      throw StateError(
-        'Only tradeCargoCapacityOverride == 10 is currently '
-        'supported by this test harness.',
-      );
-    }
-    fleets.add(
-      Fleet(
-        id: homeFleetIdFor(_humanPlayerId),
-        ownerId: _humanPlayerId,
-        regionId: 'oldWorld',
-        inPortAtProvinceId: _capProvinceId,
-        ships: const [
-          ShipInstance(id: 'h1', typeId: 'galleon'),
-          ShipInstance(id: 'h2', typeId: 'fluyte'),
-        ],
-      ),
-    );
-  }
-  return Game(
-    id: 'test_trade_screen_e5c',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: 'cap1',
-            regionId: 'oldWorld',
-            // ignore: avoid_hardcoded_strings_in_widgets
-            displayName: 'Capital',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      fleets: fleets,
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: const [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: _humanPlayerId, displayName: 'England', isHuman: true,
-          // Cargo-cap test: treasury must never bind so the rule-7
-          // bid-treasury cap (active now that manufactured commodities
-          // carry catalog base prices per #3093) cannot clamp the
-          // cargo-cap quantities being asserted here. The largest
-          // possible bid in this file is bounded by tradeCargoCapacity
-          // (max 24 cargo units); a treasury of 100_000 keeps the
-          // most expensive manufactured commodity well within budget.
-          treasury: 100000),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: const WorldMarketState(),
-  );
-}
+const String _humanPlayerId = kTradeTestHumanPlayerId;
 
 Orders _orders(List<TradeOrder> tradeOrders) {
   return Orders(
@@ -156,66 +70,14 @@ TradeOrder _offer(CommodityId commodityId, int quantity) {
   );
 }
 
-/// Mirrors the E5b harness — pumps [TradeScreen] in isolation under a
-/// [ProviderScope] that exposes [currentGameProvider],
-/// [currentOrdersProvider], and a (mockable) [shellPlayerContextProvider].
-/// Uses a tall (1024 × 4096) test viewport so every alphabetical row
-/// in the 22-commodity list lays out inside the scroll view at once.
-Future<ProviderContainer> _pumpTradeScreen(
-  WidgetTester tester, {
-  required Game game,
-  Orders initialOrders = const Orders(),
-  bool canMutateViaUi = true,
-}) async {
-  final Player player = game.players.first;
-  final ProviderContainer container = ProviderContainer(
-    overrides: [
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      currentOrdersProvider.overrideWith(
-        () => CurrentOrdersNotifier(initialOrders),
-      ),
-      shellPlayerContextProvider.overrideWith(
-        (ref) => ShellPlayerContext(
-          effectiveHumanPlayerId: player.id,
-          viewingPlayerId: player.id,
-          mapVisibilityMode: CtMapVisibilityMode.full,
-          playerView: null,
-          omniscientDetail: false,
-          showPlayerChrome: true,
-          canMutateViaUi: canMutateViaUi,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          debugCommandTargetPlayerId: player.id,
-          inObservePhase: !canMutateViaUi,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          observeBannerLabel: canMutateViaUi ? null : 'Observing',
-          treasuryNotDefined: false,
-          cargoNotDefined: false,
-        ),
-      ),
-    ],
-  );
-  addTearDown(container.dispose);
-  await pumpAppShellWithContainer(
-    tester,
-    container: container,
-    viewport: const Size(1024, 4096),
-    child: TradeScreen(game: game, player: player),
-  );
-  return container;
-}
-
 CommodityId get _timber => CommodityCatalog.timber.id;
 CommodityId get _iron => CommodityCatalog.iron.id;
 CommodityId get _fabric => CommodityCatalog.fabric.id;
 CommodityId get _grain => CommodityCatalog.grain.id;
 
-TradeOrder? _stagedOrder(
-  ProviderContainer container,
-  CommodityId commodityId,
-) {
+TradeOrder? _stagedOrder(ProviderContainer container, CommodityId commodityId) {
   final Orders orders = container.read(currentOrdersProvider);
-  final List<TradeOrder>? list =
-      orders.tradeOrdersByPlayerId[_humanPlayerId];
+  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[_humanPlayerId];
   if (list == null) return null;
   for (final TradeOrder o in list) {
     if (o.commodityId == commodityId) return o;
@@ -225,8 +87,7 @@ TradeOrder? _stagedOrder(
 
 int _totalStagedBid(ProviderContainer container) {
   final Orders orders = container.read(currentOrdersProvider);
-  final List<TradeOrder>? list =
-      orders.tradeOrdersByPlayerId[_humanPlayerId];
+  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[_humanPlayerId];
   if (list == null || list.isEmpty) return 0;
   int total = 0;
   for (final TradeOrder o in list) {
@@ -245,370 +106,325 @@ String _cargoIndicatorText(WidgetTester tester) {
 void main() {
   suppressLogsForTests();
 
-  group(
-    'TradeScreen Market tab cargo indicator + cap + warning '
-    '(Refs #2993 E5c)',
-    () {
-      testWidgets(
-        'no home fleet and no staged orders → indicator reads '
+  group('TradeScreen Market tab cargo indicator + cap + warning '
+      '(Refs #2993 E5c)', () {
+    testWidgets('no home fleet and no staged orders → indicator reads '
         '"Cargo remaining: 24" (defaultCargoHoldsStub) and the '
-        'warning row is absent',
-        (tester) async {
-          await _pumpTradeScreen(tester, game: _buildGame());
-
-          expect(
-            find.byKey(TradeScreen.marketCargoIndicatorKey),
-            findsOneWidget,
-          );
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
+        'warning row is absent', (tester) async {
+      await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(id: 'test_trade_screen_e5c', treasury: 100000),
       );
 
-      testWidgets(
-        'staged offers do not consume cargo → indicator stays at the '
-        'full capacity and the warning row is absent',
-        (tester) async {
-          await _pumpTradeScreen(
-            tester,
-            game: _buildGame(),
-            initialOrders: _orders(<TradeOrder>[
-              _offer(_fabric, 7),
-              _offer(_timber, 3),
-            ]),
-          );
+      expect(find.byKey(TradeScreen.marketCargoIndicatorKey), findsOneWidget);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+    });
 
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
+    testWidgets('staged offers do not consume cargo → indicator stays at the '
+        'full capacity and the warning row is absent', (tester) async {
+      await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(id: 'test_trade_screen_e5c', treasury: 100000),
+        initialOrders: _orders(<TradeOrder>[
+          _offer(_fabric, 7),
+          _offer(_timber, 3),
+        ]),
       );
 
-      testWidgets(
-        'staged bids totalling 7 (timber 4 + iron 3) under capacity 24 → '
-        'indicator reads "Cargo remaining: 17" and no warning is shown',
-        (tester) async {
-          await _pumpTradeScreen(
-            tester,
-            game: _buildGame(),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 4),
-              _bid(_iron, 3),
-            ]),
-          );
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+    });
 
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 17');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
-      );
+    testWidgets(
+      'staged bids totalling 7 (timber 4 + iron 3) under capacity 24 → '
+      'indicator reads "Cargo remaining: 17" and no warning is shown',
+      (tester) async {
+        await pumpTradeScreenWithContainer(
+          tester,
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_e5c',
+            treasury: 100000,
+          ),
+          initialOrders: _orders(<TradeOrder>[
+            _bid(_timber, 4),
+            _bid(_iron, 3),
+          ]),
+        );
 
-      testWidgets(
-        'capacity 10 with bids totalling 10 → indicator reads '
+        expect(_cargoIndicatorText(tester), 'Cargo remaining: 17');
+        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      },
+    );
+
+    testWidgets('capacity 10 with bids totalling 10 → indicator reads '
         '"Cargo remaining: 0" AND the warning row is mounted with '
-        'the canonical copy',
-        (tester) async {
-          await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 6),
-              _bid(_iron, 4),
-            ]),
-          );
-
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
-          expect(
-            find.text(TradeScreen.cargoLimitWarningText),
-            findsOneWidget,
-          );
-        },
+        'the canonical copy', (tester) async {
+      await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_bid(_timber, 6), _bid(_iron, 4)]),
       );
 
-      testWidgets(
-        'capacity 10 with bid timber 6 (cargo remaining 4): incrementing '
-        'timber `+` four times brings staged quantity to 10 then the '
-        'fifth `+` tap is a silent no-op (cross-commodity total clamped '
-        'at 10) and the warning row mounts at saturation',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[_bid(_timber, 6)]),
-          );
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
+    });
 
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 4');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
+    testWidgets(
+      'capacity 10 with bid timber 6 (cargo remaining 4): incrementing '
+      'timber `+` four times brings staged quantity to 10 then the '
+      'fifth `+` tap is a silent no-op (cross-commodity total clamped '
+      'at 10) and the warning row mounts at saturation',
+      (tester) async {
+        final ProviderContainer container = await pumpTradeScreenWithContainer(
+          tester,
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_e5c',
+            treasury: 100000,
+            tradeCargoCapacityOverride: 10,
+          ),
+          initialOrders: _orders(<TradeOrder>[_bid(_timber, 6)]),
+        );
 
-          for (int i = 0; i < 4; i++) {
-            await tester
-                .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
-            await tester.pump();
-          }
-          expect(_stagedOrder(container, _timber)?.quantity, 10);
-          expect(_totalStagedBid(container), 10);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
+        expect(_cargoIndicatorText(tester), 'Cargo remaining: 4');
+        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
 
-          // 5th increment is blocked by the cross-commodity cap.
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
+        for (int i = 0; i < 4; i++) {
+          await tester.tap(
+            find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+          );
           await tester.pump();
-          expect(
-            _stagedOrder(container, _timber)?.quantity,
-            10,
-            reason: 'Refs #2993 E5c: bid increment blocked when '
-                'cross-commodity bid total saturates tradeCargoCapacity.',
-          );
-          expect(_totalStagedBid(container), 10);
-        },
-      );
+        }
+        expect(_stagedOrder(container, _timber)?.quantity, 10);
+        expect(_totalStagedBid(container), 10);
+        expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
 
-      testWidgets(
-        'capacity 10 with cargo saturated (timber 6 + iron 4): tapping '
+        // 5th increment is blocked by the cross-commodity cap.
+        await tester.tap(
+          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+        );
+        await tester.pump();
+        expect(
+          _stagedOrder(container, _timber)?.quantity,
+          10,
+          reason:
+              'Refs #2993 E5c: bid increment blocked when '
+              'cross-commodity bid total saturates tradeCargoCapacity.',
+        );
+        expect(_totalStagedBid(container), 10);
+      },
+    );
+
+    testWidgets('capacity 10 with cargo saturated (timber 6 + iron 4): tapping '
         '`Bid` on a fresh commodity (grain) is a silent no-op — no '
         'TradeOrder for grain is staged and the cross-commodity bid '
-        'total stays at 10',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 6),
-              _bid(_iron, 4),
-            ]),
-          );
-
-          expect(_stagedOrder(container, _grain), isNull);
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowBidChipKey(_grain)));
-          await tester.pump();
-
-          expect(
-            _stagedOrder(container, _grain),
-            isNull,
-            reason: 'Refs #2993 E5c: Bid toggle is a no-op when '
-                'maxAllowedBidQuantity <= 0.',
-          );
-          expect(_totalStagedBid(container), 10);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
-        },
+        'total stays at 10', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_bid(_timber, 6), _bid(_iron, 4)]),
       );
 
-      testWidgets(
-        'capacity 10 with cargo saturated and a staged offer: tapping '
+      expect(_stagedOrder(container, _grain), isNull);
+
+      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_grain)));
+      await tester.pump();
+
+      expect(
+        _stagedOrder(container, _grain),
+        isNull,
+        reason:
+            'Refs #2993 E5c: Bid toggle is a no-op when '
+            'maxAllowedBidQuantity <= 0.',
+      );
+      expect(_totalStagedBid(container), 10);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+    });
+
+    testWidgets('capacity 10 with cargo saturated and a staged offer: tapping '
         '`Bid` on the offer row is also blocked (the prior offer '
-        'survives because the toggle is rejected)',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 6),
-              _bid(_iron, 4),
-              _offer(_fabric, 5),
-            ]),
-          );
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
-          await tester.pump();
-
-          final TradeOrder? fabric = _stagedOrder(container, _fabric);
-          expect(
-            fabric?.type,
-            TradeOrderType.offer,
-            reason: 'Refs #2993 E5c: bid toggle is rejected when '
-                'maxAllowedBidQuantity <= 0; the prior offer stays.',
-          );
-          expect(fabric?.quantity, 5);
-          expect(_totalStagedBid(container), 10);
-        },
+        'survives because the toggle is rejected)', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[
+          _bid(_timber, 6),
+          _bid(_iron, 4),
+          _offer(_fabric, 5),
+        ]),
       );
 
-      testWidgets(
-        'capacity 10 with offer fabric 8 (cargo remaining 10): tapping '
+      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.pump();
+
+      final TradeOrder? fabric = _stagedOrder(container, _fabric);
+      expect(
+        fabric?.type,
+        TradeOrderType.offer,
+        reason:
+            'Refs #2993 E5c: bid toggle is rejected when '
+            'maxAllowedBidQuantity <= 0; the prior offer stays.',
+      );
+      expect(fabric?.quantity, 5);
+      expect(_totalStagedBid(container), 10);
+    });
+
+    testWidgets('capacity 10 with offer fabric 8 (cargo remaining 10): tapping '
         '`Bid` on fabric preserves the prior quantity (8 ≤ 10) and '
-        'reduces cargo remaining to 2',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[_offer(_fabric, 8)]),
-          );
-
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
-          await tester.pump();
-
-          final TradeOrder? fabric = _stagedOrder(container, _fabric);
-          expect(fabric?.type, TradeOrderType.bid);
-          expect(fabric?.quantity, 8);
-          expect(_totalStagedBid(container), 8);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 2');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
+        'reduces cargo remaining to 2', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_offer(_fabric, 8)]),
       );
 
-      testWidgets(
-        'capacity 10 with bid timber 9 (cargo remaining 1) AND offer '
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
+
+      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.pump();
+
+      final TradeOrder? fabric = _stagedOrder(container, _fabric);
+      expect(fabric?.type, TradeOrderType.bid);
+      expect(fabric?.quantity, 8);
+      expect(_totalStagedBid(container), 8);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 2');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+    });
+
+    testWidgets('capacity 10 with bid timber 9 (cargo remaining 1) AND offer '
         'fabric 5: tapping `Bid` on fabric clamps the new staged '
-        'quantity to the remaining cargo (1, not the prior 5)',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 9),
-              _offer(_fabric, 5),
-            ]),
-          );
-
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
-          await tester.pump();
-
-          final TradeOrder? fabric = _stagedOrder(container, _fabric);
-          expect(fabric?.type, TradeOrderType.bid);
-          expect(
-            fabric?.quantity,
-            1,
-            reason: 'Refs #2993 E5c: bid toggle clamps quantity to '
-                'maxAllowedBidQuantity (remainingCargo + priorBidContribution).',
-          );
-          expect(_totalStagedBid(container), 10);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
-        },
+        'quantity to the remaining cargo (1, not the prior 5)', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[
+          _bid(_timber, 9),
+          _offer(_fabric, 5),
+        ]),
       );
 
-      testWidgets(
-        'capacity 10 saturated with bid timber 10: tapping `−` on '
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
+
+      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.pump();
+
+      final TradeOrder? fabric = _stagedOrder(container, _fabric);
+      expect(fabric?.type, TradeOrderType.bid);
+      expect(
+        fabric?.quantity,
+        1,
+        reason:
+            'Refs #2993 E5c: bid toggle clamps quantity to '
+            'maxAllowedBidQuantity (remainingCargo + priorBidContribution).',
+      );
+      expect(_totalStagedBid(container), 10);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+    });
+
+    testWidgets('capacity 10 saturated with bid timber 10: tapping `−` on '
         'timber frees one unit of cargo, removes the warning row, and '
-        'updates the indicator to "Cargo remaining: 1"',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[_bid(_timber, 10)]),
-          );
-
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowDecrementKey(_timber)));
-          await tester.pump();
-
-          expect(_stagedOrder(container, _timber)?.quantity, 9);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
+        'updates the indicator to "Cargo remaining: 1"', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_bid(_timber, 10)]),
       );
 
-      testWidgets(
-        'capacity 10 saturated with bid timber 10: tapping `None` on '
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+
+      await tester.tap(find.byKey(TradeScreen.marketRowDecrementKey(_timber)));
+      await tester.pump();
+
+      expect(_stagedOrder(container, _timber)?.quantity, 9);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+    });
+
+    testWidgets('capacity 10 saturated with bid timber 10: tapping `None` on '
         'timber removes the staged TradeOrder, frees the entire cargo '
-        'budget, and removes the warning row',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[_bid(_timber, 10)]),
-          );
-
-          await tester
-              .tap(find.byKey(TradeScreen.marketRowNoneChipKey(_timber)));
-          await tester.pump();
-
-          expect(_stagedOrder(container, _timber), isNull);
-          expect(_totalStagedBid(container), 0);
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsNothing,
-          );
-        },
+        'budget, and removes the warning row', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_bid(_timber, 10)]),
       );
 
-      testWidgets(
-        'observe mode (canMutateViaUi == false): the cargo indicator '
+      await tester.tap(find.byKey(TradeScreen.marketRowNoneChipKey(_timber)));
+      await tester.pump();
+
+      expect(_stagedOrder(container, _timber), isNull);
+      expect(_totalStagedBid(container), 0);
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+    });
+
+    testWidgets('observe mode (canMutateViaUi == false): the cargo indicator '
         'and warning row stay mounted with live text values; the chip '
         'taps are blocked by the existing IgnorePointer wrapper so '
-        'currentOrdersProvider is not mutated',
-        (tester) async {
-          final ProviderContainer container = await _pumpTradeScreen(
-            tester,
-            game: _buildGame(tradeCargoCapacityOverride: 10),
-            initialOrders: _orders(<TradeOrder>[
-              _bid(_timber, 6),
-              _bid(_iron, 4),
-            ]),
-            canMutateViaUi: false,
-          );
-
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-          expect(
-            find.byKey(TradeScreen.marketCargoWarningKey),
-            findsOneWidget,
-          );
-
-          // Attempting to tap the increment / None chip is swallowed by
-          // IgnorePointer (`warnIfMissed: false` silences the expected
-          // hit-test warning that surfaces when the wrapper absorbs
-          // the pointer event).
-          await tester.tap(
-            find.byKey(TradeScreen.marketRowNoneChipKey(_timber)),
-            warnIfMissed: false,
-          );
-          await tester.pump();
-
-          expect(
-            _stagedOrder(container, _timber)?.quantity,
-            6,
-            reason: 'Observe mode must not mutate currentOrdersProvider.',
-          );
-          expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-        },
+        'currentOrdersProvider is not mutated', (tester) async {
+      final ProviderContainer container = await pumpTradeScreenWithContainer(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_e5c',
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
+        ),
+        initialOrders: _orders(<TradeOrder>[_bid(_timber, 6), _bid(_iron, 4)]),
+        canMutateViaUi: false,
       );
-    },
-  );
+
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+
+      // Attempting to tap the increment / None chip is swallowed by
+      // IgnorePointer (`warnIfMissed: false` silences the expected
+      // hit-test warning that surfaces when the wrapper absorbs
+      // the pointer event).
+      await tester.tap(
+        find.byKey(TradeScreen.marketRowNoneChipKey(_timber)),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+
+      expect(
+        _stagedOrder(container, _timber)?.quantity,
+        6,
+        reason: 'Observe mode must not mutate currentOrdersProvider.',
+      );
+      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+    });
+  });
 }

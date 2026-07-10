@@ -10,7 +10,6 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart' show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';
@@ -31,6 +30,7 @@ import 'package:hive/hive.dart';
 
 import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
+import 'support/trade_screen_test_support.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
@@ -56,27 +56,6 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  ShellPlayerContext globalObserveShellContext() {
-    return const ShellPlayerContext(
-      effectiveHumanPlayerId: null,
-      viewingPlayerId: null,
-      mapVisibilityMode: CtMapVisibilityMode.full,
-      playerView: null,
-      omniscientDetail: true,
-      // Hides player chrome so `shellPanelsNotDefined(ref)` returns true and
-      // body switches to ObserveModeNotDefinedPanel — matches the global
-      // observe branch in `shellPlayerContextProvider` (observe-mode.md).
-      showPlayerChrome: false,
-      canMutateViaUi: false,
-      debugCommandTargetPlayerId: null,
-      inObservePhase: true,
-      // ignore: avoid_hardcoded_strings_in_widgets
-      observeBannerLabel: 'Observing: global',
-      treasuryNotDefined: true,
-      cargoNotDefined: true,
-    );
-  }
-
   baseOverrides({bool globalObserve = false}) => [
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
@@ -93,7 +72,7 @@ void main() {
     }),
     if (globalObserve)
       shellPlayerContextProvider.overrideWithValue(
-        globalObserveShellContext(),
+        tradeTestGlobalObserveShellContext(),
       ),
   ];
 
@@ -230,8 +209,8 @@ void main() {
 
         final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
         expect(observePanelFinder, findsOneWidget);
-        final ObserveModeNotDefinedPanel observePanel =
-            tester.widget<ObserveModeNotDefinedPanel>(observePanelFinder);
+        final ObserveModeNotDefinedPanel observePanel = tester
+            .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(observePanel.title, 'Trade');
 
@@ -243,28 +222,27 @@ void main() {
       },
     );
 
-    testWidgets(
-      'CtTopBar back affordance pops back to the host route',
-      (tester) async {
-        await tester.pumpWidget(buildTradeRouteHost());
-        await pumpSettleCapped(tester);
+    testWidgets('CtTopBar back affordance pops back to the host route', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTradeRouteHost());
+      await pumpSettleCapped(tester);
 
-        await tester.tap(find.text('open trade'));
-        await pumpSettleCapped(tester);
-        expect(find.byType(TradeScreen), findsOneWidget);
+      await tester.tap(find.text('open trade'));
+      await pumpSettleCapped(tester);
+      expect(find.byType(TradeScreen), findsOneWidget);
 
-        final back = find.descendant(
-          of: find.byType(CtTopBar),
-          matching: find.byType(CtBackButton),
-        );
-        expect(back, findsOneWidget);
-        await tester.tap(back);
-        await pumpSettleCapped(tester);
+      final back = find.descendant(
+        of: find.byType(CtTopBar),
+        matching: find.byType(CtBackButton),
+      );
+      expect(back, findsOneWidget);
+      await tester.tap(back);
+      await pumpSettleCapped(tester);
 
-        expect(find.byType(TradeScreen), findsNothing);
-        expect(find.text('open trade'), findsOneWidget);
-      },
-    );
+      expect(find.byType(TradeScreen), findsNothing);
+      expect(find.text('open trade'), findsOneWidget);
+    });
   });
 
   group('TradeScreen tab scaffold slice (Refs #2993 E4)', () {
@@ -415,65 +393,54 @@ void main() {
         // the live content; their per-row contents are exercised by the
         // dedicated E6 panel tests in trade_screen_deal_book_tab_e6_test.dart.
         expect(find.byKey(TradeScreen.dealBookBidsPanelKey), findsOneWidget);
-        expect(
-          find.byKey(TradeScreen.dealBookOffersPanelKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreen.dealBookBidsTotalsKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreen.dealBookOffersTotalsKey),
-          findsOneWidget,
-        );
+        expect(find.byKey(TradeScreen.dealBookOffersPanelKey), findsOneWidget);
+        expect(find.byKey(TradeScreen.dealBookBidsTotalsKey), findsOneWidget);
+        expect(find.byKey(TradeScreen.dealBookOffersTotalsKey), findsOneWidget);
       },
     );
   });
 
   group('GameMapEmpireLeftRail Trade button (Refs #2993 E3)', () {
-    testWidgets(
-      'rail exposes kEmpireTradeButtonKey between Production and '
-      'Civilian Units',
-      (tester) async {
-        await tester.pumpWidget(buildLeftRailHost());
-        await pumpSettleCapped(tester);
+    testWidgets('rail exposes kEmpireTradeButtonKey between Production and '
+        'Civilian Units', (tester) async {
+      await tester.pumpWidget(buildLeftRailHost());
+      await pumpSettleCapped(tester);
 
-        final trade = find.byKey(kEmpireTradeButtonKey);
-        expect(trade, findsOneWidget);
+      final trade = find.byKey(kEmpireTradeButtonKey);
+      expect(trade, findsOneWidget);
 
-        final productionTopLeft = tester
-            .getTopLeft(find.byKey(kEmpireProductionButtonKey));
-        final tradeTopLeft = tester.getTopLeft(trade);
-        final civilianTopLeft = tester
-            .getTopLeft(find.byKey(kEmpireCivilianUnitsButtonKey));
+      final productionTopLeft = tester.getTopLeft(
+        find.byKey(kEmpireProductionButtonKey),
+      );
+      final tradeTopLeft = tester.getTopLeft(trade);
+      final civilianTopLeft = tester.getTopLeft(
+        find.byKey(kEmpireCivilianUnitsButtonKey),
+      );
 
-        // Vertical stack ordering: Production -> Trade -> Civilian Units.
-        expect(
-          tradeTopLeft.dy,
-          greaterThan(productionTopLeft.dy),
-          reason: 'Trade button sits below Production per SPEC #2993 R4.',
-        );
-        expect(
-          civilianTopLeft.dy,
-          greaterThan(tradeTopLeft.dy),
-          reason: 'Civilian Units sits below Trade per SPEC #2993 R4.',
-        );
-      },
-    );
+      // Vertical stack ordering: Production -> Trade -> Civilian Units.
+      expect(
+        tradeTopLeft.dy,
+        greaterThan(productionTopLeft.dy),
+        reason: 'Trade button sits below Production per SPEC #2993 R4.',
+      );
+      expect(
+        civilianTopLeft.dy,
+        greaterThan(tradeTopLeft.dy),
+        reason: 'Civilian Units sits below Trade per SPEC #2993 R4.',
+      );
+    });
 
-    testWidgets(
-      'tapping Trade navigates to TradeScreen via Routes.generate',
-      (tester) async {
-        await tester.pumpWidget(buildLeftRailHost());
-        await pumpSettleCapped(tester);
+    testWidgets('tapping Trade navigates to TradeScreen via Routes.generate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildLeftRailHost());
+      await pumpSettleCapped(tester);
 
-        await tester.tap(find.byKey(kEmpireTradeButtonKey));
-        await pumpSettleCapped(tester);
+      await tester.tap(find.byKey(kEmpireTradeButtonKey));
+      await pumpSettleCapped(tester);
 
-        expect(find.byType(TradeScreen), findsOneWidget);
-        expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-      },
-    );
+      expect(find.byType(TradeScreen), findsOneWidget);
+      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+    });
   });
 }

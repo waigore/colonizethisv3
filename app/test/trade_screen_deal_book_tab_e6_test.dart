@@ -21,73 +21,24 @@
 //    so the player can audit why a deal cleared.
 
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'support/trade_screen_test_support.dart';
 
-/// Synthetic [Game] with the human player `gp_h` and a foreign GP
-/// `gp_a` used to prove player isolation in the ledger filter. The
-/// `worldMarketState` is fully caller-controlled so each test pins the
-/// scenario it cares about (filled deals, carry-forwards, empties).
-Game _buildGame({
-  Map<CommodityId, MarketActivity> activity = const <CommodityId, MarketActivity>{},
-  Map<String, List<TradeOrder>> carryForwardBids =
-      const <String, List<TradeOrder>>{},
-  Map<String, List<TradeOrder>> carryForwardOffers =
-      const <String, List<TradeOrder>>{},
-}) {
-  return Game(
-    id: 'test_trade_screen_deal_book_e6',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: 'gp_h', displayName: 'England', isHuman: true, treasury: 500),
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: 'gp_a', displayName: 'Aragon', isHuman: false, treasury: 500),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: WorldMarketState(
-      prices: const <CommodityId, int>{},
-      lastTurnActivity: activity,
-      carryForwardOffersByFactionId: carryForwardOffers,
-      carryForwardBidsByFactionId: carryForwardBids,
-    ),
-  );
-}
-
-Future<void> _pumpDealBookTab(
-  WidgetTester tester, {
-  required Game game,
-}) async {
-  final Player player = game.players.firstWhere((p) => p.isHuman);
-  await pumpAppShell(
-    tester,
-    overrides: [
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    ],
-    child: TradeScreen(game: game, player: player),
-  );
-  // Tab into the Deal Book tab so the live content is foregrounded.
-  final dealBookLabel = find.descendant(
-    of: find.byType(CtTabStrip),
-    matching: find.text(TradeScreen.dealBookTabLabel),
-  );
-  expect(dealBookLabel, findsOneWidget);
-  await tester.tap(dealBookLabel);
-  await tester.pump();
-}
+const List<Player> _players = <Player>[
+  // ignore: avoid_hardcoded_strings_in_widgets
+  Player(
+    id: kTradeTestHumanPlayerId,
+    displayName: 'England',
+    isHuman: true,
+    treasury: 500,
+  ),
+  // ignore: avoid_hardcoded_strings_in_widgets
+  Player(id: 'gp_a', displayName: 'Aragon', isHuman: false, treasury: 500),
+];
 
 void main() {
   suppressLogsForTests();
@@ -97,35 +48,24 @@ void main() {
       'empty state: panels show empty copy and totals read 0 when the '
       'player has no filled deals and no carry-forwards',
       (tester) async {
-        await _pumpDealBookTab(tester, game: _buildGame());
+        await pumpTradeScreen(
+          tester,
+          game: buildTradeTestGame(players: _players),
+          selectDealBookTab: true,
+        );
 
         // Both empty-state keys are mounted because both filled and
         // unfilled lists are empty per side.
-        expect(
-          find.byKey(TradeScreen.dealBookBidsEmptyKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreen.dealBookOffersEmptyKey),
-          findsOneWidget,
-        );
+        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsOneWidget);
+        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
         // Empty-state copy renders the per-side literal.
-        expect(
-          find.text(TradeScreen.dealBookBidsEmptyText),
-          findsOneWidget,
-        );
-        expect(
-          find.text(TradeScreen.dealBookOffersEmptyText),
-          findsOneWidget,
-        );
+        expect(find.text(TradeScreen.dealBookBidsEmptyText), findsOneWidget);
+        expect(find.text(TradeScreen.dealBookOffersEmptyText), findsOneWidget);
         // Totals rows are always mounted and render 0 in the empty case.
         final bidsTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookBidsTotalsKey),
         );
-        expect(
-          bidsTotals.data,
-          '${TradeScreen.dealBookTotalSpentLabel}: 0',
-        );
+        expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 0');
         final offersTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookOffersTotalsKey),
         );
@@ -140,8 +80,9 @@ void main() {
       'filled bid row floors legacy fractional pricePerUnit to integer '
       'display (Refs #3093)',
       (tester) async {
-        final game = _buildGame(
-          activity: const <CommodityId, MarketActivity>{
+        final game = buildTradeTestGame(
+          players: _players,
+          lastTurnActivity: const <CommodityId, MarketActivity>{
             'timber': MarketActivity(
               totalBidQuantity: 5,
               totalOfferQuantity: 5,
@@ -158,17 +99,14 @@ void main() {
             ),
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
         final bidsTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookBidsTotalsKey),
         );
-        expect(
-          bidsTotals.data,
-          '${TradeScreen.dealBookTotalSpentLabel}: 150',
-        );
+        expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 150');
       },
     );
 
@@ -176,8 +114,9 @@ void main() {
       'filled bid (player == buyer) renders with notional and contributes '
       'to the bids panel total spent; unrelated deal is excluded',
       (tester) async {
-        final game = _buildGame(
-          activity: const <CommodityId, MarketActivity>{
+        final game = buildTradeTestGame(
+          players: _players,
+          lastTurnActivity: const <CommodityId, MarketActivity>{
             'timber': MarketActivity(
               totalBidQuantity: 5,
               totalOfferQuantity: 5,
@@ -211,33 +150,24 @@ void main() {
             ),
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // The bids panel has exactly one filled row keyed at index 0
         // (the timber buy), and the empty-state key is absent because
         // the panel is no longer empty.
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideBids,
-              0,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideBids,
-              1,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 1),
           ),
           findsNothing,
         );
-        expect(
-          find.byKey(TradeScreen.dealBookBidsEmptyKey),
-          findsNothing,
-        );
+        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
 
         // Row text encodes quantity × price = notional and uses the
         // commodity id as the leading label per the SPEC E6 contract.
@@ -249,17 +179,11 @@ void main() {
         final bidsTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookBidsTotalsKey),
         );
-        expect(
-          bidsTotals.data,
-          '${TradeScreen.dealBookTotalSpentLabel}: 150',
-        );
+        expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 150');
 
         // The offers panel stays empty (the player did not sell
         // anything this turn).
-        expect(
-          find.byKey(TradeScreen.dealBookOffersEmptyKey),
-          findsOneWidget,
-        );
+        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
         final offersTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookOffersTotalsKey),
         );
@@ -275,8 +199,9 @@ void main() {
       'into the total received; multiple deals across commodities tally '
       'a combined total',
       (tester) async {
-        final game = _buildGame(
-          activity: const <CommodityId, MarketActivity>{
+        final game = buildTradeTestGame(
+          players: _players,
+          lastTurnActivity: const <CommodityId, MarketActivity>{
             'timber': MarketActivity(
               totalBidQuantity: 7,
               totalOfferQuantity: 7,
@@ -307,25 +232,19 @@ void main() {
             ),
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // Both filled rows render in the offers panel (indices 0 and 1
         // in encounter order — ordered by lastTurnActivity map iteration).
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideOffers,
-              0,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideOffers,
-              1,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 1),
           ),
           findsOneWidget,
         );
@@ -340,10 +259,7 @@ void main() {
         );
 
         // The bids panel stays empty because the player did not buy.
-        expect(
-          find.byKey(TradeScreen.dealBookBidsEmptyKey),
-          findsOneWidget,
-        );
+        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsOneWidget);
       },
     );
 
@@ -351,7 +267,8 @@ void main() {
       'carry-forward bids render in the bids panel and do NOT contribute '
       'to the total spent (they have not cleared)',
       (tester) async {
-        final game = _buildGame(
+        final game = buildTradeTestGame(
+          players: _players,
           carryForwardBids: <String, List<TradeOrder>>{
             'gp_h': <TradeOrder>[
               TradeOrder(
@@ -363,30 +280,21 @@ void main() {
             ],
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // Unfilled row keyed under the bids side.
         expect(
           find.byKey(
-            TradeScreen.dealBookUnfilledRowKey(
-              TradeScreen.dealBookSideBids,
-              0,
-            ),
+            TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(
-          find.text('timber — qty 8 (priority 2)'),
-          findsOneWidget,
-        );
+        expect(find.text('timber — qty 8 (priority 2)'), findsOneWidget);
         // No filled row pinned for the bids side.
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideBids,
-              0,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
           ),
           findsNothing,
         );
@@ -394,20 +302,11 @@ void main() {
         final bidsTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookBidsTotalsKey),
         );
-        expect(
-          bidsTotals.data,
-          '${TradeScreen.dealBookTotalSpentLabel}: 0',
-        );
+        expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 0');
         // Bids panel is no longer empty (carry-forward populates it).
-        expect(
-          find.byKey(TradeScreen.dealBookBidsEmptyKey),
-          findsNothing,
-        );
+        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
         // Offers panel still empty.
-        expect(
-          find.byKey(TradeScreen.dealBookOffersEmptyKey),
-          findsOneWidget,
-        );
+        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
       },
     );
 
@@ -415,7 +314,8 @@ void main() {
       'carry-forward offers render in the offers panel; per-side filter '
       'isolation: another player\'s carry-forwards never appear',
       (tester) async {
-        final game = _buildGame(
+        final game = buildTradeTestGame(
+          players: _players,
           carryForwardOffers: <String, List<TradeOrder>>{
             'gp_h': <TradeOrder>[
               TradeOrder(
@@ -443,7 +343,7 @@ void main() {
             ],
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // Two carry-forward rows from gp_h scoped to the offers side.
         expect(
@@ -474,8 +374,9 @@ void main() {
       'FRR / FTP tags render on filled rows when the matcher annotated '
       'the deal so players can audit how a fill cleared',
       (tester) async {
-        final game = _buildGame(
-          activity: const <CommodityId, MarketActivity>{
+        final game = buildTradeTestGame(
+          players: _players,
+          lastTurnActivity: const <CommodityId, MarketActivity>{
             'timber': MarketActivity(
               totalBidQuantity: 6,
               totalOfferQuantity: 6,
@@ -502,24 +403,18 @@ void main() {
             ),
           },
         );
-        await _pumpDealBookTab(tester, game: game);
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // Both deals appear as filled bid rows for the human player.
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideBids,
-              0,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(
-              TradeScreen.dealBookSideBids,
-              1,
-            ),
+            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 1),
           ),
           findsOneWidget,
         );
@@ -533,51 +428,51 @@ void main() {
         final bidsTotals = tester.widget<Text>(
           find.byKey(TradeScreen.dealBookBidsTotalsKey),
         );
-        expect(
-          bidsTotals.data,
-          '${TradeScreen.dealBookTotalSpentLabel}: 180',
-        );
+        expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 180');
       },
     );
 
-    testWidgets(
-      'side-by-side layout: when the viewport is at least '
-      'dealBookTwoPanelMinWidth (600 dp) wide, the bids panel sits to '
-      'the left of the offers panel',
-      (tester) async {
-        // 700 dp wide × 800 dp tall — wider than the 600 dp threshold.
-        tester.view.physicalSize = const Size(700 * 3, 800 * 3);
-        tester.view.devicePixelRatio = 3.0;
-        addTearDown(() {
-          tester.view.resetPhysicalSize();
-          tester.view.resetDevicePixelRatio();
-        });
+    testWidgets('side-by-side layout: when the viewport is at least '
+        'dealBookTwoPanelMinWidth (600 dp) wide, the bids panel sits to '
+        'the left of the offers panel', (tester) async {
+      // 700 dp wide × 800 dp tall — wider than the 600 dp threshold.
+      tester.view.physicalSize = const Size(700 * 3, 800 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
-        await _pumpDealBookTab(tester, game: _buildGame());
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(players: _players),
+        selectDealBookTab: true,
+      );
 
-        final Offset bidsTopLeft =
-            tester.getTopLeft(find.byKey(TradeScreen.dealBookBidsPanelKey));
-        final Offset offersTopLeft =
-            tester.getTopLeft(find.byKey(TradeScreen.dealBookOffersPanelKey));
+      final Offset bidsTopLeft = tester.getTopLeft(
+        find.byKey(TradeScreen.dealBookBidsPanelKey),
+      );
+      final Offset offersTopLeft = tester.getTopLeft(
+        find.byKey(TradeScreen.dealBookOffersPanelKey),
+      );
 
-        expect(
-          offersTopLeft.dx,
-          greaterThan(bidsTopLeft.dx),
-          reason:
-              'SPEC/ui/trade-screen.md § Body — Deal Book tab pins the '
-              'bids panel to the left of the offers panel when the '
-              'viewport meets the dealBookTwoPanelMinWidth threshold.',
-        );
-        // Same baseline Y so the panels read as a single row.
-        expect(
-          offersTopLeft.dy,
-          equals(bidsTopLeft.dy),
-          reason:
-              'Two-panel mode aligns the bids and offers panels at the '
-              'same top so the ledger reads as one row.',
-        );
-      },
-    );
+      expect(
+        offersTopLeft.dx,
+        greaterThan(bidsTopLeft.dx),
+        reason:
+            'SPEC/ui/trade-screen.md § Body — Deal Book tab pins the '
+            'bids panel to the left of the offers panel when the '
+            'viewport meets the dealBookTwoPanelMinWidth threshold.',
+      );
+      // Same baseline Y so the panels read as a single row.
+      expect(
+        offersTopLeft.dy,
+        equals(bidsTopLeft.dy),
+        reason:
+            'Two-panel mode aligns the bids and offers panels at the '
+            'same top so the ledger reads as one row.',
+      );
+    });
 
     testWidgets(
       'stacked layout: at the 320 dp minimum viewport the offers panel '
@@ -592,14 +487,20 @@ void main() {
           tester.view.resetDevicePixelRatio();
         });
 
-        await _pumpDealBookTab(tester, game: _buildGame());
+        await pumpTradeScreen(
+          tester,
+          game: buildTradeTestGame(players: _players),
+          selectDealBookTab: true,
+        );
 
         expect(tester.takeException(), isNull);
 
-        final Offset bidsTopLeft =
-            tester.getTopLeft(find.byKey(TradeScreen.dealBookBidsPanelKey));
-        final Offset offersTopLeft =
-            tester.getTopLeft(find.byKey(TradeScreen.dealBookOffersPanelKey));
+        final Offset bidsTopLeft = tester.getTopLeft(
+          find.byKey(TradeScreen.dealBookBidsPanelKey),
+        );
+        final Offset offersTopLeft = tester.getTopLeft(
+          find.byKey(TradeScreen.dealBookOffersPanelKey),
+        );
         expect(
           offersTopLeft.dy,
           greaterThan(bidsTopLeft.dy),
