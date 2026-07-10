@@ -2,6 +2,7 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+// dart format off
 void main() {
   group('trade order factory', () {
     test('testBid builds a bid-type TradeOrder with defaults', () {
@@ -14,12 +15,7 @@ void main() {
     });
 
     test('testOffer builds an offer-type TradeOrder and tracks origin tile', () {
-      final order = testOffer(
-        'iron',
-        9,
-        priority: 3,
-        originTileKey: 'oldWorld|M1|0|0',
-      );
+      final order = testOffer('iron', 9, priority: 3, originTileKey: 'oldWorld|M1|0|0');
       expect(order.type, TradeOrderType.offer);
       expect(order.quantity, 9);
       expect(order.priority, 3);
@@ -77,3 +73,4 @@ void main() {
     });
   });
 }
+// dart format on

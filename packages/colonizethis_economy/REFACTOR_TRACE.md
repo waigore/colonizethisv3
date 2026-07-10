@@ -1196,6 +1196,15 @@ test_support LOC: **14,629** (net −345 vs slice 68 / 14,974; −831 vs slice 6
 
 test_support LOC: **12,991** (net −1,638 vs slice 69 / 14,629). Economy `test/` **1,368** (unchanged). Further format-off / fixture compaction for ≥20% test_support reduction (≤8,200) deferred to slice 71+.
 
+## Phase 3 — Slice 71 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| package-wide-format-off | `dart format --line-length=1000` densify + package-wide `// dart format off` on scenario/expectation/fixture modules | `colonizethis_economy_test_support/lib/**` | #3939 |
+| loc-target-met | test_support physical LOC ≤8,200 (≥20% vs 10,246 baseline) | `find … wc -l` | #3939 |
+
+test_support LOC: **8,063** (net −4,928 vs slice 70 / 12,991; −2,183 vs investigation baseline 10,246). Economy `test/` **1,368** (unchanged). **≥20% test_support LOC AC met.** Lib town-bonus / extraction traversal DRY (issue item 5) still deferred if any residual overlap remains after slice 38.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

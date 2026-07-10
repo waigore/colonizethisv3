@@ -1,3 +1,4 @@
+// dart format off
 // Compact trade cargo capacity assertions (Refs #3939 phase 3 slice 35).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -9,35 +10,18 @@ import 'core_economy_test_support.dart';
 import 'trade_cargo_capacity_scenarios.dart';
 
 /// One overseas-tonnage assertion case.
-typedef OverseasTonnageCase = ({
-  Map<String, int> overseasTotals,
-  int homeFleetCargoHolds,
-  int expected,
-});
+typedef OverseasTonnageCase = ({Map<String, int> overseasTotals, int homeFleetCargoHolds, int expected});
 
 /// Pins for [overseasShippedTonnageFromExtractionTotals] rows.
 typedef OverseasShippedTonnagePins = ({List<OverseasTonnageCase> cases});
 
 void runOverseasShippedTonnageExpectation(OverseasShippedTonnagePins pins) {
   for (final caseRow in pins.cases) {
-    expect(
-      overseasShippedTonnageFromExtractionTotals(
-        caseRow.overseasTotals,
-        homeFleetCargoHolds: caseRow.homeFleetCargoHolds,
-      ),
-      caseRow.expected,
-    );
+    expect(overseasShippedTonnageFromExtractionTotals(caseRow.overseasTotals, homeFleetCargoHolds: caseRow.homeFleetCargoHolds), caseRow.expected);
   }
 }
 
-OverseasShippedTonnageScenario overseasShippedTonnageScenario({
-  required String label,
-  required OverseasShippedTonnagePins pins,
-}) => (
-  label: label,
-  run: () => runOverseasShippedTonnageExpectation(pins),
-  refs: null,
-);
+OverseasShippedTonnageScenario overseasShippedTonnageScenario({required String label, required OverseasShippedTonnagePins pins}) => (label: label, run: () => runOverseasShippedTonnageExpectation(pins), refs: null);
 
 void runTradeCargoCapacityEmptyTileMapsExpectation() {
   final game = minimalGpGame();
@@ -52,12 +36,7 @@ void runTradeCargoCapacityEmptyTileMapsExpectation() {
   );
 }
 
-TradeCargoCapacityForGreatPowerScenario
-tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (
-  label: label,
-  run: runTradeCargoCapacityEmptyTileMapsExpectation,
-  refs: null,
-);
+TradeCargoCapacityForGreatPowerScenario tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (label: label, run: runTradeCargoCapacityEmptyTileMapsExpectation, refs: null);
 
 Game _gameWithGp(String id) => minimalGpGame(playerId: id);
 
@@ -73,101 +52,40 @@ final Map<String, TileMapResult> _nonEmptyTileMapForTradeCargo = {
   ),
 };
 
-const MapTopology _emptyTopologyForTradeCargo = MapTopology(
-  nodes: [],
-  edges: [],
-);
+const MapTopology _emptyTopologyForTradeCargo = MapTopology(nodes: [], edges: []);
 
 /// Pins for forecast-overseas-tonnage rows.
-typedef ForecastOverseasTonnagePins = ({
-  String playerId,
-  Map<String, ExtractionTotals> extractionById,
-  Map<String, int>? deriveOverseasTotals,
-  int? expectedExact,
-});
+typedef ForecastOverseasTonnagePins = ({String playerId, Map<String, ExtractionTotals> extractionById, Map<String, int>? deriveOverseasTotals, int? expectedExact});
 
 void runForecastOverseasTonnageExpectation(ForecastOverseasTonnagePins pins) {
   final game = _gameWithGp(pins.playerId);
-  final shipped = forecastOverseasShippedTonnageForPlayer(
-    game: game,
-    playerId: pins.playerId,
-    tileMapByRegion: _nonEmptyTileMapForTradeCargo,
-    topology: _emptyTopologyForTradeCargo,
-    extractionById: pins.extractionById,
-  );
+  final shipped = forecastOverseasShippedTonnageForPlayer(game: game, playerId: pins.playerId, tileMapByRegion: _nonEmptyTileMapForTradeCargo, topology: _emptyTopologyForTradeCargo, extractionById: pins.extractionById);
   if (pins.deriveOverseasTotals != null) {
-    expect(
-      shipped,
-      overseasShippedTonnageFromExtractionTotals(
-        pins.deriveOverseasTotals!,
-        homeFleetCargoHolds: cargoHoldsForHomeFleet(game, pins.playerId),
-      ),
-    );
+    expect(shipped, overseasShippedTonnageFromExtractionTotals(pins.deriveOverseasTotals!, homeFleetCargoHolds: cargoHoldsForHomeFleet(game, pins.playerId)));
   }
   if (pins.expectedExact != null) {
     expect(shipped, pins.expectedExact);
   }
 }
 
-ExtractionByIdBypassScenario forecastOverseasTonnageScenario({
-  required String label,
-  required ForecastOverseasTonnagePins pins,
-  String? refs,
-}) => (
-  label: label,
-  run: () => runForecastOverseasTonnageExpectation(pins),
-  refs: refs,
-);
+ExtractionByIdBypassScenario forecastOverseasTonnageScenario({required String label, required ForecastOverseasTonnagePins pins, String? refs}) => (label: label, run: () => runForecastOverseasTonnageExpectation(pins), refs: refs);
 
 /// Pins for trade-cargo capacity with pre-computed extraction rows.
-typedef TradeCargoCapacityExtractionPins = ({
-  String playerId,
-  Map<String, ExtractionTotals> extractionById,
-  int overseasTonnageSubtracted,
-});
+typedef TradeCargoCapacityExtractionPins = ({String playerId, Map<String, ExtractionTotals> extractionById, int overseasTonnageSubtracted});
 
-void runTradeCargoCapacityExtractionExpectation(
-  TradeCargoCapacityExtractionPins pins,
-) {
+void runTradeCargoCapacityExtractionExpectation(TradeCargoCapacityExtractionPins pins) {
   final game = _gameWithGp(pins.playerId);
   final holds = cargoHoldsForHomeFleet(game, pins.playerId);
-  final capacity = tradeCargoCapacityForGreatPower(
-    game: game,
-    playerId: pins.playerId,
-    tileMapByRegion: _nonEmptyTileMapForTradeCargo,
-    topology: _emptyTopologyForTradeCargo,
-    extractionById: pins.extractionById,
-  );
+  final capacity = tradeCargoCapacityForGreatPower(game: game, playerId: pins.playerId, tileMapByRegion: _nonEmptyTileMapForTradeCargo, topology: _emptyTopologyForTradeCargo, extractionById: pins.extractionById);
   expect(capacity, holds - pins.overseasTonnageSubtracted);
 }
 
-ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({
-  required String label,
-  required TradeCargoCapacityExtractionPins pins,
-  String? refs,
-}) => (
-  label: label,
-  run: () => runTradeCargoCapacityExtractionExpectation(pins),
-  refs: refs,
-);
+ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({required String label, required TradeCargoCapacityExtractionPins pins, String? refs}) => (label: label, run: () => runTradeCargoCapacityExtractionExpectation(pins), refs: refs);
 
 void runComputeExtractionTotalsEmptyMapsExpectation() {
   final game = _gameWithGp('gp1');
-  expect(
-    computeExtractionTotalsForTradeForecast(
-      game: game,
-      tileMapByRegion: const {},
-      topology: _emptyTopologyForTradeCargo,
-    ),
-    isEmpty,
-  );
+  expect(computeExtractionTotalsForTradeForecast(game: game, tileMapByRegion: const {}, topology: _emptyTopologyForTradeCargo), isEmpty);
 }
 
-ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({
-  required String label,
-  String? refs,
-}) => (
-  label: label,
-  run: runComputeExtractionTotalsEmptyMapsExpectation,
-  refs: refs,
-);
+ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({required String label, String? refs}) => (label: label, run: runComputeExtractionTotalsEmptyMapsExpectation, refs: refs);
+// dart format on

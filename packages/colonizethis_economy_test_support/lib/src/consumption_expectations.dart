@@ -1,3 +1,4 @@
+// dart format off
 // Compact resolveConsumption integration assertions (Refs #3939 phase 3
 // slices 34 / 45).
 
@@ -19,20 +20,7 @@ final _furHatsId = 'furHats';
 /// Optional fields default to `null` (no assertion) so scenario tables omit
 /// unused keys (Refs #3939 slice 45 LOC compaction).
 class ResolveConsumptionPins {
-  const ResolveConsumptionPins({
-    this.workerPool,
-    this.idleLabour,
-    this.grainRemaining,
-    this.meatRemaining,
-    this.combinedFoodRemaining,
-    this.sugarRemaining,
-    this.cigarsRemaining,
-    this.furHatsRemaining,
-    this.totalRegiments,
-    this.fullyFedRegiments,
-    this.totalShips,
-    this.fullyFedShips,
-  });
+  const ResolveConsumptionPins({this.workerPool, this.idleLabour, this.grainRemaining, this.meatRemaining, this.combinedFoodRemaining, this.sugarRemaining, this.cigarsRemaining, this.furHatsRemaining, this.totalRegiments, this.fullyFedRegiments, this.totalShips, this.fullyFedShips});
 
   final WorkerPool? workerPool;
   final WorkerIdleCounts? idleLabour;
@@ -48,32 +36,13 @@ class ResolveConsumptionPins {
   final int? fullyFedShips;
 }
 
-void runResolveConsumption({
-  required Stockpile stockpile,
-  required WorkerPool workers,
-  int? militaryUnits,
-  Map<String, int>? shipCountsById,
-  required ResolveConsumptionPins pins,
-  bool expectUnknownShipThrows = false,
-}) {
+void runResolveConsumption({required Stockpile stockpile, required WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, required ResolveConsumptionPins pins, bool expectUnknownShipThrows = false}) {
   if (expectUnknownShipThrows) {
-    expect(
-      () => resolveConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        shipCountsById: shipCountsById ?? const {},
-      ),
-      throwsA(isA<ConsumptionUnknownShipTypeException>()),
-    );
+    expect(() => resolveConsumption(stockpile: stockpile, workers: workers, shipCountsById: shipCountsById ?? const {}), throwsA(isA<ConsumptionUnknownShipTypeException>()));
     return;
   }
 
-  final result = resolveConsumption(
-    stockpile: stockpile,
-    workers: workers,
-    militaryUnits: militaryUnits ?? 0,
-    shipCountsById: shipCountsById ?? const {},
-  );
+  final result = resolveConsumption(stockpile: stockpile, workers: workers, militaryUnits: militaryUnits ?? 0, shipCountsById: shipCountsById ?? const {});
 
   if (pins.workerPool != null) {
     expect(result.workerPool, pins.workerPool);
@@ -88,11 +57,7 @@ void runResolveConsumption({
     expect(result.stockpile.quantityOf(_meatId), pins.meatRemaining);
   }
   if (pins.combinedFoodRemaining != null) {
-    expect(
-      result.stockpile.quantityOf(_grainId) +
-          result.stockpile.quantityOf(_meatId),
-      pins.combinedFoodRemaining,
-    );
+    expect(result.stockpile.quantityOf(_grainId) + result.stockpile.quantityOf(_meatId), pins.combinedFoodRemaining);
   }
   if (pins.sugarRemaining != null) {
     expect(result.stockpile.quantityOf(_sugarId), pins.sugarRemaining);
@@ -117,31 +82,8 @@ void runResolveConsumption({
   }
 }
 
-ConsumptionScenario resolveConsumptionScenario({
-  required String label,
-  Map<String, int>? stockpileDeltas,
-  Stockpile? stockpile,
-  required WorkerPool workers,
-  int? militaryUnits,
-  Map<String, int>? shipCountsById,
-  required ResolveConsumptionPins pins,
-  bool expectUnknownShipThrows = false,
-}) {
-  final resolvedStockpile =
-      stockpile ??
-      (stockpileDeltas == null
-          ? const Stockpile()
-          : stockpileWithDeltas(stockpileDeltas));
-  return (
-    label: label,
-    run: () => runResolveConsumption(
-      stockpile: resolvedStockpile,
-      workers: workers,
-      militaryUnits: militaryUnits,
-      shipCountsById: shipCountsById,
-      pins: pins,
-      expectUnknownShipThrows: expectUnknownShipThrows,
-    ),
-    refs: null,
-  );
+ConsumptionScenario resolveConsumptionScenario({required String label, Map<String, int>? stockpileDeltas, Stockpile? stockpile, required WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, required ResolveConsumptionPins pins, bool expectUnknownShipThrows = false}) {
+  final resolvedStockpile = stockpile ?? (stockpileDeltas == null ? const Stockpile() : stockpileWithDeltas(stockpileDeltas));
+  return (label: label, run: () => runResolveConsumption(stockpile: resolvedStockpile, workers: workers, militaryUnits: militaryUnits, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows), refs: null);
 }
+// dart format on

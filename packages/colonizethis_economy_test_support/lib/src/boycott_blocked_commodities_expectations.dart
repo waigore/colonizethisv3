@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Data-driven expectations for [BoycottBlockedCommoditiesScenario] rows.
+// dart format off
 class BoycottBlockedCommoditiesExpectation {
   const BoycottBlockedCommoditiesExpectation({
     this.blockedCommodityIds,
@@ -29,3 +30,4 @@ void assertBoycottBlockedCommoditiesExpectation(
     expect(blocked, equals(expectation.blockedCommodityIds));
   }
 }
+// dart format on

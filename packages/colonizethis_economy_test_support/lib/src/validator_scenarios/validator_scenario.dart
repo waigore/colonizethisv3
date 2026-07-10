@@ -15,6 +15,7 @@ typedef TradeOrderValidatorScenario = ({
 });
 
 /// Compact expect-wired row (Refs #3939 slice 59).
+// dart format off
 TradeOrderValidatorScenario validatorExpectRow({
   required String label,
   required TradeOrderValidationContext context,
@@ -36,3 +37,4 @@ void runTradeOrderValidatorScenario(TradeOrderValidatorScenario scenario) {
   );
   scenario.verify(results);
 }
+// dart format on
