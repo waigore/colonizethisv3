@@ -1,3 +1,4 @@
+// dart format off
 // Compact commodity totals helper assertions (Refs #3939 phase 3 slice 33).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -9,12 +10,7 @@ import 'commodity_totals_scenarios.dart';
 typedef AddUnitsStep = ({String key, int delta});
 
 /// Pins for [addUnits] rows.
-typedef AddUnitsPins = ({
-  Map<String, int> initial,
-  List<AddUnitsStep> steps,
-  Map<String, int> expected,
-  List<String>? keyOrder,
-});
+typedef AddUnitsPins = ({Map<String, int> initial, List<AddUnitsStep> steps, Map<String, int> expected, List<String>? keyOrder});
 
 void runAddUnitsExpectation(AddUnitsPins pins) {
   final m = Map<String, int>.from(pins.initial);
@@ -27,10 +23,7 @@ void runAddUnitsExpectation(AddUnitsPins pins) {
   }
 }
 
-CommodityTotalsScenario addUnitsScenario({
-  required String label,
-  required AddUnitsPins pins,
-}) => (label: label, run: () => runAddUnitsExpectation(pins));
+CommodityTotalsScenario addUnitsScenario({required String label, required AddUnitsPins pins}) => (label: label, run: () => runAddUnitsExpectation(pins));
 
 /// One [sumValues] assertion case.
 typedef SumValuesCase = ({List<int> values, int expected});
@@ -44,10 +37,7 @@ void runSumValuesExpectation(SumValuesPins pins) {
   }
 }
 
-CommodityTotalsScenario sumValuesScenario({
-  required String label,
-  required SumValuesPins pins,
-}) => (label: label, run: () => runSumValuesExpectation(pins));
+CommodityTotalsScenario sumValuesScenario({required String label, required SumValuesPins pins}) => (label: label, run: () => runSumValuesExpectation(pins));
 
 /// Pins for [sumNestedValues] rows.
 typedef SumNestedValuesPins = ({List<Map<String, int>> maps, int expected});
@@ -56,7 +46,5 @@ void runSumNestedValuesExpectation(SumNestedValuesPins pins) {
   expect(sumNestedValues(pins.maps), pins.expected);
 }
 
-CommodityTotalsScenario sumNestedValuesScenario({
-  required String label,
-  required SumNestedValuesPins pins,
-}) => (label: label, run: () => runSumNestedValuesExpectation(pins));
+CommodityTotalsScenario sumNestedValuesScenario({required String label, required SumNestedValuesPins pins}) => (label: label, run: () => runSumNestedValuesExpectation(pins));
+// dart format on

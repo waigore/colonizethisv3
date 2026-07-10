@@ -8,6 +8,7 @@ import 'purchased_tile_fixture_support.dart';
 
 export 'purchased_tile_fixture_support.dart' show minorTileAutoOfferGame;
 
+// dart format off
 /// 2x1 tile map for province `m1` where both tiles carry [resource].
 TileMapResult twoTileSameResourceMap(Resource resource) => TileMapResult(
   width: 2,
@@ -21,10 +22,7 @@ TileMapResult twoTileSameResourceMap(Resource resource) => TileMapResult(
 );
 
 /// Two timber tiles in the same province — one purchased, one not.
-Game twoMinorTimberTilesAutoOfferGame({
-  required String purchasedTileKey,
-  required String unpurchasedTileKey,
-}) {
+Game twoMinorTimberTilesAutoOfferGame({required String purchasedTileKey, required String unpurchasedTileKey}) {
   const provinceId = 'oldWorld|m1';
   return purchasedTileFixtureGame(
     gameId: 'g_c6_parity',
@@ -36,8 +34,7 @@ Game twoMinorTimberTilesAutoOfferGame({
     },
     minorNations: [testMinor()],
     purchasedTilesByTileKey: {purchasedTileKey: 'gpA'},
-    tileState: tileStateFromSpecs(
-      tileImps([purchasedTileKey, unpurchasedTileKey]),
-    ),
+    tileState: tileStateFromSpecs(tileImps([purchasedTileKey, unpurchasedTileKey])),
   );
 }
+// dart format on

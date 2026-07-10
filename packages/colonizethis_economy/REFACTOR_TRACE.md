@@ -1150,6 +1150,61 @@ test_support LOC: **15,506** (net −141 vs slice 63 / 15,647). Economy `test/` 
 
 test_support LOC: **15,494** (net −12 vs slice 64 / 15,506). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 66+.
 
+## Phase 3 — Slice 66 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-map-shape | `nonGpProvMap` derives width/height from resource rows; `nonGpMinorRow` drops redundant width/height | `extraction_fixture_support.dart`, `non_gp_extraction_scenarios.dart`, callers | #2991, #3939 |
+| extractor-lazy-game | `gameForTileState` keeps town-rule and missing-province overrides synchronized with scenario tile specs | `resource_extractor_scenarios.dart` | #3661, #3939 |
+| town-gp-fixture | `_gpTownTimberFixture` shares GP town-timber game/map across live-bonus and preview parity pins | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+
+test_support LOC: **15,564** (net −18 vs pre-slice 15,582 / −30 vs slice 65 documented 15,494 after format drift). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 67+.
+
+## Phase 3 — Slice 67 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| unfilled-timber-default | `matcherUnfilledBid` / `matcherUnfilledOffer` take qty positionally; commodity defaults to timber | `deal_matcher_test_support.dart`, DealMatcher scenario modules | #3939 |
+| matcher-single-fill | `matcherSingleFillExpect` finishes `matcherFilled` migration for basic/treasury/boycott rows | `deal_matcher_*_scenarios.dart` | #3115, #3939 |
+| frr-owner-offers-row | `frrOwnerOffersRow` densifies multi-tile / multi-bid owning-GP FRR matcher rows | `deal_matcher_frr_scenarios.dart`, `deal_matcher_test_support.dart` | #2992, #3939 |
+
+test_support LOC: **15,460** (net −25 vs post-merge working tree 15,485 / −104 vs slice 66 documented 15,564). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 68+.
+
+## Phase 3 — Slice 68 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-format-off | `// dart format off` densifies treasury pure-helper / available / sellable / bid-spend scenario tables | `treasury_scenarios/treasury_*_scenarios.dart` | #3093, #3115, #3123, #3939 |
+
+test_support LOC: **14,974** (net −486 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 69+.
+
+## Phase 3 — Slice 69 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-suggester-format-off | `// dart format off` densifies FRR credits + TradeOrderSuggester scenario tables | `frr_credits_scenarios.dart`, `trade_order_suggester_scenarios.dart` | #2992, #2989, #3123, #3753, #3939 |
+
+test_support LOC: **14,629** (net −345 vs slice 68 / 14,974; −831 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 70+.
+
+## Phase 3 — Slice 70 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| deal-matcher-format-off | `// dart format off` densifies priority/basic/FRR/treasury DealMatcher scenario tables | `deal_matcher_*_scenarios.dart` | #2924, #2989, #3115, #3753, #3939 |
+| frr-profit-price-format-off | densifies FirstRightProfit + PriceDiscovery scenario tables | `first_right_profit_scenarios.dart`, `price_discovery_scenarios.dart` | #3753, #3939 |
+| town-validator-purchased-format-off | densifies town-bonus, validator rules/cap/treasury, purchased-tile index, non-GP extraction, resource-extractor scenario tables | `town_manufacturing_bonus_scenarios.dart`, `validator_*_scenarios.dart`, `purchased_tile_index_scenarios.dart`, `non_gp_extraction_scenarios.dart`, `resource_extractor_scenarios.dart` | #2991, #3093, #3123, #3661, #3872, #3939 |
+
+test_support LOC: **12,991** (net −1,638 vs slice 69 / 14,629). Economy `test/` **1,368** (unchanged). Further format-off / fixture compaction for ≥20% test_support reduction (≤8,200) deferred to slice 71+.
+
+## Phase 3 — Slice 71 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| package-wide-format-off | `dart format --line-length=1000` densify + package-wide `// dart format off` on scenario/expectation/fixture modules | `colonizethis_economy_test_support/lib/**` | #3939 |
+| loc-target-met | test_support physical LOC ≤8,200 (≥20% vs 10,246 baseline) | `find … wc -l` | #3939 |
+
+test_support LOC: **8,063** (net −4,928 vs slice 70 / 12,991; −2,183 vs investigation baseline 10,246). Economy `test/` **1,368** (unchanged). **≥20% test_support LOC AC met.** Lib town-bonus / extraction traversal DRY (issue item 5) still deferred if any residual overlap remains after slice 38.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.
