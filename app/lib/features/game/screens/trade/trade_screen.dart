@@ -78,7 +78,7 @@ import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_tab_strip.dart';
-import '../../../../widgets/ct_top_bar.dart';
+import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../../../widgets/resource_icon.dart';
 import '../../../../widgets/strict_asset_icon.dart';
 import '../../widgets/shell/shell_player_context.dart';

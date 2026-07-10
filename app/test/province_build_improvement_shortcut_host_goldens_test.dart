@@ -6,7 +6,6 @@
 // shortcut enablement.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
@@ -28,6 +27,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/golden_capture_harness.dart';
 
 final MapTopology _goldenCombinedTopology = MapTopology(
   nodes: const [
@@ -257,12 +258,13 @@ void main() {
     final playerId = game.players.first.id;
     final playerView = buildPlayerView(game, _goldenCombinedTopology, playerId);
     const tileKey = 'oldWorld|p1|0|0';
+    const boundaryKey = ValueKey('province_bi_shortcut_wide_golden');
 
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(360, 720));
-
+    await configureGoldenSurface(tester, size: const Size(360, 720));
     await tester.pumpWidget(
-      ProviderScope(
+      wrapGoldenBoundary(
+        boundaryKey: boundaryKey,
+        wrapInProviderScope: true,
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
@@ -275,24 +277,14 @@ void main() {
             () => CurrentOrdersNotifier(const Orders()),
           ),
         ],
-        child: MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
-            body: Center(
-              child: RepaintBoundary(
-                key: const ValueKey('province_bi_shortcut_wide_golden'),
-                child: SizedBox(
-                  width: 320,
-                  child: GameMapProvinceDetailSidePanel(
-                    game: game,
-                    region: region,
-                    humanPlayerId: playerId,
-                    playerView: playerView,
-                    workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-                  ),
-                ),
-              ),
-            ),
+        child: SizedBox(
+          width: 320,
+          child: GameMapProvinceDetailSidePanel(
+            game: game,
+            region: region,
+            humanPlayerId: playerId,
+            playerView: playerView,
+            workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
           ),
         ),
       ),
@@ -302,7 +294,7 @@ void main() {
     container
         .read(mapProvincePanelProvider.notifier)
         .reportMapTileTapped(tileKey);
-    await tester.pumpAndSettle();
+    await pumpForGolden(tester);
   }
 
   Future<void> pumpNarrowHost(WidgetTester tester) async {
@@ -316,12 +308,15 @@ void main() {
       playerView: playerView,
     );
     const tileKey = 'oldWorld|p1|0|0';
+    const boundaryKey = ValueKey('province_bi_shortcut_narrow_golden');
 
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(400, 600));
-
+    await configureGoldenSurface(tester, size: const Size(400, 600));
     await tester.pumpWidget(
-      ProviderScope(
+      wrapGoldenBoundary(
+        boundaryKey: boundaryKey,
+        center: false,
+        alignment: Alignment.bottomCenter,
+        wrapInProviderScope: true,
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
@@ -334,23 +329,12 @@ void main() {
             () => CurrentOrdersNotifier(const Orders()),
           ),
         ],
-        child: MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: RepaintBoundary(
-                key: const ValueKey('province_bi_shortcut_narrow_golden'),
-                child: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: playerId,
-                  playerView: playerView,
-                  workTargetSelectionCache: workTargetSelectionCache,
-                ),
-              ),
-            ),
-          ),
+        child: GameMapNarrowDetailOverlaySlot(
+          game: game,
+          region: region,
+          humanPlayerId: playerId,
+          playerView: playerView,
+          workTargetSelectionCache: workTargetSelectionCache,
         ),
       ),
     );
@@ -359,7 +343,7 @@ void main() {
     container
         .read(mapProvincePanelProvider.notifier)
         .reportMapTileTapped(tileKey);
-    await tester.pumpAndSettle();
+    await pumpForGolden(tester);
   }
 
   testWidgets(

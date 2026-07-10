@@ -26,14 +26,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'support/yarn_test_fixtures.dart';
 
-class _FailingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.error(StateError('missing intervention yarn'));
-  }
-}
+import 'support/app_shell_harness.dart';
 
 const Game _kFixtureGame = Game(
   id: 'iv_dark_chrome',
@@ -72,7 +67,7 @@ Future<void> _pumpDegradedOverlay(
         game: _kFixtureGame,
         prompts: _kFixturePrompts,
         skipIntroForTest: true,
-        assetBundle: _FailingAssetBundle(),
+        assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
         onDecisions: (_) {},
         child: const Scaffold(body: Text('child')),
       ),
