@@ -2021,6 +2021,16 @@ test/ LOC after slice 127: **37,339** (net −174 from post–slice 126). Remain
 
 test/ LOC after slice 128: **37,317** (net −22 from post–slice 127). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 129: collapse split support parts + purchase-land/partial-reveal wrapper inline
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| support-part-merge | merge `work_order_application_expectations` / `order_suggestion_core_expectations` / incremental equivalence helpers / shorthand / fixture `*_part*` files into parent barrels; delete 13 part files | `*_part*.dart` (deleted) | parent support modules | #3949 |
+| vw-purchase-inline | drop `vwRunPurchaseLand` / `vwPurchaseLandGame`; inline purchase-land validate at `vwExpectPurchaseLand*` call sites | `order_engine_validate_work_expectation_shorthand.dart` | same | #3949 |
+| vwt-partial-reveal-inline | fold `vwtPartialRevealSuggestions` into `vwtExpectPartialRevealSuggestions` | `valid_work_tiles_expectation_shorthand.dart` | same | #3949 |
+
+test/ LOC after slice 129: **37,275** (net −42 from post–slice 128). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
