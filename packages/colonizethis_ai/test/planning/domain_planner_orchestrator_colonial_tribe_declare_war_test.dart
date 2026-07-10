@@ -52,10 +52,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Explicit NW-acquisition-zero phase plan emulating the legacy
 // hard-suppress contract for the EXPAND negative-control assertion
@@ -81,83 +82,8 @@ const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
   priorityWeights: _nwAcquisitionZeroExpand,
 );
 
-// gp1 owns 11 OW provinces (>= the observer quota of 10), so the GP is
-// past EXPAND and `isBelowObserverConquestQuota` is false. Combined with
-// a non-empty `invadableNewWorldProvinceIdsSorted` set, this places the
-// GP in COLONIAL per `observerGoalPhaseFor`.
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
-
-// Sub-quota OW set used for the EXPAND negative control.
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-Game _scenarioGame({required List<String> gp1OwProvinces}) {
-  return Game(
-    id: 'g-2509-colonial-tribe-declare',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in gp1OwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army for gp1 keeps `regimentCountForPlayer` > 0 and
-      // avoids the zero-regiment stalemate peace paths that would coexist
-      // with declare-war scoring in unrelated ways. Mirrors the guard used
-      // in the EXPAND/COLONIAL two-GP peace pins
-      // (`domain_planner_orchestrator_{expand,colonial}_two_gp_peace_test.dart`).
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: gp1OwProvinces.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-  );
-}
+// Uses kGp1OwProvincesAtQuota / kGp1OwProvincesBelowQuota from
+// domain_planner_orchestrator_test_support.dart (Refs #3941).
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _tribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -247,7 +173,10 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners COLONIAL tribe declareWar', () {
     test('emits declareWar toward visible NW tribe when in COLONIAL', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesAtQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();
@@ -286,7 +215,10 @@ void main() {
     });
 
     test('suppresses tribe declareWar in EXPAND below OW quota', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -334,7 +266,10 @@ void main() {
 
     test('emits identical diplomatic orders for identical COLONIAL inputs',
         () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-colonial-tribe-declare',
+        gp1OwProvinces: kGp1OwProvincesAtQuota,
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();

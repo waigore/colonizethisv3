@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../core/services/region_map/region_map_widget_bindings.dart';
 import '../core/services/subscription_tracker.dart';
 
+part 'ct_region_map_state_handlers.dart';
 part 'ct_region_map_state.dart';
 part 'ct_region_map_viewport.dart';
 

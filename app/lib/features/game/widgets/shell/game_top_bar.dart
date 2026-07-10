@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 
 part 'game_top_bar_hamburger.dart';
+part 'game_top_bar_layout.dart';
 part 'game_top_bar_pause_button.dart';
 
 /// In-game shell top bar: 36 px dark editorial-monocle chrome with a
@@ -145,96 +147,6 @@ class GameTopBar extends StatelessWidget {
   /// Stable widget key for the outer bar surface (DecoratedBox).
   static const Key surfaceKey = Key('game_top_bar_surface');
 
-  Widget _buildObserveBanner(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle observeStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
-          color: EditorialMonoclePalette.muted,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        );
-    return Text(
-      observeBannerLabel!,
-      key: observeBannerKey,
-      style: observeStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildTurnDisplay(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle turnStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
-          color: EditorialMonoclePalette.fg,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-          letterSpacing: 0.04 * 13,
-        );
-    return Text(
-      turnDisplayText,
-      key: turnDisplayKey,
-      style: turnStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  Widget _buildNextTurnButton({required bool compactHorizontalPadding}) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: nextTurnMinHeight,
-        maxHeight: nextTurnMinHeight,
-      ),
-      child: CtNinePatchButton(
-        key: kGameMapNextTurnButtonKey,
-        enabled: nextTurnEnabled,
-        onPressed: nextTurnEnabled ? () => onNextTurn() : null,
-        disabledOpacityOverride: kNextTurnDisabledOpacity,
-        minHeight: nextTurnMinHeight,
-        padding: EdgeInsets.symmetric(
-          horizontal: compactHorizontalPadding ? 8 : 12,
-          vertical: 4,
-        ),
-        child: Text(
-          nextTurnText,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildNarrowRowChildren({required bool isMinViewport}) {
-    return <Widget>[
-      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
-      const SizedBox(width: leadingGap),
-      Expanded(
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: _buildNextTurnButton(compactHorizontalPadding: isMinViewport),
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildWideRowChildren(BuildContext context) {
-    return <Widget>[
-      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
-      const SizedBox(width: leadingGap),
-      if (observeBannerLabel != null) ...<Widget>[
-        _buildObserveBanner(context),
-        const SizedBox(width: leadingGap),
-      ],
-      Expanded(child: Center(child: _buildTurnDisplay(context))),
-      const SizedBox(width: trailingGap),
-      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
-      const SizedBox(width: trailingGap),
-      _buildNextTurnButton(compactHorizontalPadding: false),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final double viewportWidth = MediaQuery.sizeOf(context).width;
@@ -259,8 +171,8 @@ class GameTopBar extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: isNarrow
-                ? _buildNarrowRowChildren(isMinViewport: isMinViewport)
-                : _buildWideRowChildren(context),
+                ? buildNarrowRowChildren(isMinViewport: isMinViewport)
+                : buildWideRowChildren(context),
           ),
         ),
       ),

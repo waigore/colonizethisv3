@@ -93,7 +93,7 @@ absence does not block UI implementation work.
 ### Color tokens
 
 OKLCH values are the editable source. The Dart implementation in
-`app/lib/config/editorial_monocle_palette.dart` converts each triple to the
+`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart` converts each triple to the
 sRGB hex shown alongside via the Björn Ottosson OKLab → linear-sRGB matrix
 plus IEC 61966-2-1 gamma encoding. Tests pin the conversion against these
 hex values.
@@ -171,8 +171,8 @@ tokens") and §S4 ("Zero `const Color(0x...)` in `app/lib/features/` and
 | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Dev-tooling screen SYS10001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart` | Dev-tooling screen SYS20001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/widgets/chrome/**` | Ct-* catalog widget implementations. These widgets implement the design-system primitives; consumer code in the rest of `features/**` must use the catalog widget, not raw Material colors. |
-| `app/lib/widgets/ct_main_menu_collage.dart` | Decorative `CustomPainter` library host for `CtMainMenuCollage` (`SHEL10002`). Glyph paint bodies live in `part` files under the file-size cap. |
-| `app/lib/widgets/ct_main_menu_collage_painter.dart` | `part of 'ct_main_menu_collage.dart'` — painter `saveLayer` alpha multiplier (`Paint().color = const Color(0xFFFFFFFF).withValues(alpha: _collageOpacity)`). The literal is a compositing argument — any other color would tint the layer contents — and the editorial-monocle palette has no semantic token for pure-white-alpha compositing. Analogous to the Flame renderer allowlist. |
+| `packages/colonizethis_app_ui_chrome/lib/widgets/ct_main_menu_collage.dart` | Decorative `CustomPainter` library host for `CtMainMenuCollage` (`SHEL10002`). Glyph paint bodies live in `part` files under the file-size cap. |
+| `packages/colonizethis_app_ui_chrome/lib/widgets/ct_main_menu_collage_painter.dart` | `part of 'ct_main_menu_collage.dart'` — painter `saveLayer` alpha multiplier (`Paint().color = const Color(0xFFFFFFFF).withValues(alpha: _collageOpacity)`). The literal is a compositing argument — any other color would tint the layer contents — and the editorial-monocle palette has no semantic token for pure-white-alpha compositing. Analogous to the Flame renderer allowlist. |
 | `app/lib/widgets/main_menu.dart` | Main-menu button hover `ColorFilter.mode(Colors.black.withValues(alpha: 0.15), BlendMode.darken)` composite. The literal is a blend operand whose semantic role is "darken by 15%", not a theme color reference; the editorial-monocle palette has no semantic token for compositing-only blend operands. |
 | `app/lib/widgets/main_menu_buttons.dart` | `part of 'main_menu.dart'` button widgets split out under the file-size cap (`SPEC/program/dart-file-non-comment-line-size.md`). Hosts the same main-menu button hover `ColorFilter.mode(Colors.black.withValues(alpha: 0.15), BlendMode.darken)` composite as `main_menu.dart`; the literal is a "darken by 15%" blend operand, not a theme color reference. |
 
@@ -202,8 +202,7 @@ mention the banned tokens by name without tripping the check.
   deliberately omits `transparent` from the ban list).
 - **Given** a file path is on the whole-file allowlist documented above
   (including the `app/lib/widgets/` canvas-compositing entries
-  `ct_main_menu_collage.dart`, its split-out painter part file
-  `ct_main_menu_collage_painter.dart`, `main_menu.dart`, and its split-out part file
+  `main_menu.dart`, and its split-out part file
   `main_menu_buttons.dart`), **when** repo lint runs
   the same rule, **then** the rule does not flag banned literals inside that
   file (scope-only exclusion; the rule does not load keyed per-violation
@@ -273,7 +272,7 @@ hue family:
 The opaque base color (`oklch(8% 0.01 30)`) is darker than `--bg-deep` so
 the scrim reads as a near-black wash; the `0.70` alpha keeps the underlying
 map / shell readable underneath. The Dart implementation exposes this token
-as `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`).
+as `EditorialMonoclePalette.dialogScrim` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`).
 Widgets MUST resolve the scrim through that token (or, for `showDialog`
 calls, by passing `EditorialMonoclePalette.dialogScrim` as `barrierColor`)
 rather than hard-coding `Colors.black54` / hex literals.

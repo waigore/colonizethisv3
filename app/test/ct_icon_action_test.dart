@@ -2,7 +2,7 @@
 // SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog —
 // CtIconAction. Refs #2914 (Phase 1 §S8).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

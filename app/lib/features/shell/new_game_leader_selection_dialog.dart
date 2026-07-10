@@ -6,10 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -21,7 +21,10 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 part 'new_game_leader_selection_dialog_state_base.dart';
 part 'new_game_leader_selection_dialog_slots.dart';
 part 'new_game_leader_selection_dialog_slot_row.dart';
-part 'new_game_leader_selection_dialog_setup_fields.dart';
+part 'new_game_leader_selection_dialog_slot_row_pickers.dart';
+part 'new_game_leader_selection_dialog_setup_fields_header.dart';
+part 'new_game_leader_selection_dialog_setup_fields_options.dart';
+part 'new_game_leader_selection_dialog_setup_fields_footer.dart';
 
 const int _kNumSlots = 6;
 
@@ -121,7 +124,9 @@ class _NewGameLeaderSelectionDialogState extends State<NewGameLeaderSelectionDia
         _NewGameLeaderSelectionDialogStateBase,
         _NewGameLeaderSelectionDialogSlots,
         _NewGameLeaderSelectionDialogSlotRow,
-        _NewGameLeaderSelectionDialogSetupFields {
+        _NewGameLeaderSelectionDialogSetupFieldsHeader,
+        _NewGameLeaderSelectionDialogSetupFieldsOptions,
+        _NewGameLeaderSelectionDialogSetupFieldsFooter {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);

@@ -4,10 +4,10 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../core/utils/currency_format.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -16,7 +16,9 @@ import '../production/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
 import 'train_dialog_chrome.dart';
 
-part 'train_commodity_cost_dialog_base_widgets.dart';
+part 'train_commodity_cost_dialog_base_costs.dart';
+part 'train_commodity_cost_dialog_base_resource_bar.dart';
+part 'train_commodity_cost_dialog_base_unit_row.dart';
 
 /// A single trainable entry consumed by [CommodityCostTrainDialogState].
 ///
@@ -72,46 +74,18 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
   @override
   Iterable<String> get unitTypeIds => _entries.map((e) => e.unitTypeId);
 
-  int _totalTreasuryCost() {
-    var total = 0;
-    for (final e in _entries) {
-      total += (counts[e.unitTypeId] ?? 0) * e.buildTreasuryCost;
-    }
-    return total;
-  }
-
-  int _totalPeasantCost() {
-    var total = 0;
-    for (final e in _entries) {
-      total += counts[e.unitTypeId] ?? 0;
-    }
-    return total;
-  }
-
-  Map<String, int> _totalCommodityCosts() {
-    final totals = <String, int>{};
-    for (final e in _entries) {
-      final count = counts[e.unitTypeId] ?? 0;
-      if (count <= 0) continue;
-      for (final input in e.buildInputs.entries) {
-        totals[input.key] = (totals[input.key] ?? 0) + (input.value * count);
-      }
-    }
-    return totals;
-  }
-
   @override
   bool canAffordIncrement(String unitTypeId) {
     final econ = _entriesById[unitTypeId];
     if (econ == null) return false;
     if (isLocked(unitTypeId)) return false;
 
-    final newTreasury = _totalTreasuryCost() + econ.buildTreasuryCost;
-    final newPeasants = _totalPeasantCost() + 1;
+    final newTreasury = totalTreasuryCost() + econ.buildTreasuryCost;
+    final newPeasants = totalPeasantCost() + 1;
     if (newTreasury > treasury) return false;
     if (newPeasants > peasants) return false;
 
-    final totals = _totalCommodityCosts();
+    final totals = totalCommodityCosts();
     for (final input in econ.buildInputs.entries) {
       totals[input.key] = (totals[input.key] ?? 0) + input.value;
     }
@@ -121,46 +95,19 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
     return true;
   }
 
-  /// Treasury left after subtracting all currently committed unit costs.
-  int _remainingTreasury() => treasury - _totalTreasuryCost();
-
-  /// Peasants left after subtracting all currently committed unit costs.
-  int _remainingPeasants() => peasants - _totalPeasantCost();
-
-  /// Stockpile of [commodityId] left after subtracting committed costs.
-  int _remainingCommodity(String commodityId, Map<String, int> committed) =>
-      stockpileQty(commodityId) - (committed[commodityId] ?? 0);
-
-  String? get _deficitHint {
-    final deficits = <String>[];
-    if (_totalTreasuryCost() > treasury) deficits.add('Treasury');
-    if (_totalPeasantCost() > peasants) deficits.add('Peasants');
-    final totalComms = _totalCommodityCosts();
-    for (final e in totalComms.entries) {
-      if (e.value > stockpileQty(e.key)) {
-        deficits.add(commodityDisplayName(e.key));
-      }
-    }
-    if (deficits.isEmpty) return null;
-    // Per-clause `{Name} low` joined with `", "` per
-    // `SPEC/ui/train-military-dialog.md` / `SPEC/ui/train-naval-dialog.md`
-    // § Deficit hint.
-    return deficits.map((name) => '$name low').join(', ');
-  }
-
   @override
   List<Widget> buildBody(AppLocalizations l10n) {
     return [
       const SizedBox(height: CtSpacing.ml),
       _CommodityCostResourceBar(
         treasury: treasury,
-        remainingTreasury: _remainingTreasury(),
+        remainingTreasury: remainingTreasury(),
         peasants: peasants,
-        remainingPeasants: _remainingPeasants(),
+        remainingPeasants: remainingPeasants(),
         stockpile: player?.stockpile ?? const Stockpile(),
-        committedCommodities: _totalCommodityCosts(),
+        committedCommodities: totalCommodityCosts(),
         commodityIds: resourceBarCommodityIds,
-        deficitHint: _deficitHint,
+        deficitHint: commodityCostDeficitHint,
         l10n: l10n,
       ),
       const SizedBox(height: CtSpacing.ml),
@@ -185,10 +132,10 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
 
   Widget _buildUnitRow(CommodityCostUnitEntry econ) {
     final locked = isLocked(econ.unitTypeId);
-    final committed = _totalCommodityCosts();
+    final committed = totalCommodityCosts();
     final insufficientCommodityIds = <String>{
       for (final input in econ.buildInputs.entries)
-        if (!locked && _remainingCommodity(input.key, committed) < input.value)
+        if (!locked && remainingCommodity(input.key, committed) < input.value)
           input.key,
     };
     return _CommodityCostUnitRow(
@@ -201,8 +148,8 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
       canIncrement: canAffordIncrement(econ.unitTypeId),
       canDecrement: (counts[econ.unitTypeId] ?? 0) > 0,
       treasuryInsufficient:
-          !locked && _remainingTreasury() < econ.buildTreasuryCost,
-      peasantInsufficient: !locked && _remainingPeasants() < 1,
+          !locked && remainingTreasury() < econ.buildTreasuryCost,
+      peasantInsufficient: !locked && remainingPeasants() < 1,
       insufficientCommodityIds: insufficientCommodityIds,
       onIncrement: () => increment(econ.unitTypeId),
       onDecrement: () => decrement(econ.unitTypeId),

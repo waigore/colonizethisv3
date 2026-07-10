@@ -5,7 +5,8 @@ extension _SessionCommands on _AppEventHandlerScopeState {
     return [
       ..._observeSessionListeners(bus),
       ..._civilianWorkSessionListeners(bus),
-      ..._navalArmySessionListeners(bus),
+      ..._navalSessionListeners(bus),
+      ..._armySessionListeners(bus),
       ..._diplomacySessionListeners(bus),
       ..._debugSessionListeners(bus),
     ];

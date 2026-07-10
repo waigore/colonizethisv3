@@ -76,78 +76,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _owProvincePrefix = 'oldWorld|gp1_';
-const String _nwTribeProvince = 'newWorld|tribe1_nw0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _nwTribeProvince = kOrchestratorTribeNwProvince;
 const String _fleetId = 'f_nw';
 const String _nwSeaZoneId = 'newWorld|sea_priority';
-
-// 9 GP-owned OW provinces (`kObserverColonialLiteNearQuotaOw`). At turn
-// `kObserverColonialLiteMinTurn` the GP enters COLONIAL-lite; at turn 90
-// the same OW count keeps the GP in EXPAND (the EXPAND/COLONIAL-lite
-// branch flips purely on the turn number, isolating the contract under
-// test).
-const List<String> _gp1OwProvincesNearQuota = <String>[
-  '${_owProvincePrefix}0',
-  '${_owProvincePrefix}1',
-  '${_owProvincePrefix}2',
-  '${_owProvincePrefix}3',
-  '${_owProvincePrefix}4',
-  '${_owProvincePrefix}5',
-  '${_owProvincePrefix}6',
-  '${_owProvincePrefix}7',
-  '${_owProvincePrefix}8',
-];
-
-/// Builds a near-quota GP scenario where the only NW province is owned by
-/// a tribe — satisfying `isObserverColonialLitePhase`'s
-/// `globalNewWorldHasNonGpOwnership` precondition. The Game holds no fleet
-/// units (the `runNavalPlanner` skip check fires on `weight` only; naval
-/// candidates are supplied entirely by the fake suggestion API, so the
-/// fixture stays minimal).
-Game _scenarioGame({required int turnNumber}) {
-  return Game(
-    id: 'g-2509-colonial-lite-naval-allow',
-    worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in _gp1OwProvincesNearQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _nwTribeProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        // `henry` has the lowest military weight (20) among canonical
-        // leaders (`ai_personality_config.dart`). The < 25 naval skip
-        // floor depends on this — a higher-military leader (e.g.
-        // `napoleon` military=90) would emit naval moves even without
-        // the colonial boost, hiding the negative-control regression.
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-  );
-}
 
 /// Fake API surfaces a single colonial naval move candidate (toward a
 /// `newWorld|` sea zone) so the orchestrator output cleanly reflects
@@ -216,7 +151,10 @@ void main() {
       'COLONIAL-lite emits the colonial naval move candidate under the '
       'colonial pressure boost',
       () {
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+        final game = buildOrchestratorColonialLiteNavalAllowScenarioGame(
+          id: 'g-2509-colonial-lite-naval-allow',
+          turnNumber: kObserverColonialLiteMinTurn,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshotWithColonialTarget();
@@ -293,7 +231,10 @@ void main() {
         // COLONIAL-lite ALLOW contract is therefore the
         // **phase-classification check** below — emitted moves no
         // longer carry information about hard-phase suppression.
-        final game = _scenarioGame(turnNumber: 90);
+        final game = buildOrchestratorColonialLiteNavalAllowScenarioGame(
+          id: 'g-2509-colonial-lite-naval-allow',
+          turnNumber: 90,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshotWithColonialTarget();
@@ -350,7 +291,10 @@ void main() {
     test(
       'emits identical naval move orders for identical COLONIAL-lite inputs',
       () {
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+        final game = buildOrchestratorColonialLiteNavalAllowScenarioGame(
+          id: 'g-2509-colonial-lite-naval-allow',
+          turnNumber: kObserverColonialLiteMinTurn,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _nearQuotaSnapshotWithColonialTarget();

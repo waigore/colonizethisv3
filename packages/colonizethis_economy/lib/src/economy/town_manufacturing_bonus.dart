@@ -4,11 +4,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'commodity_totals.dart';
-import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
+import 'non_gp_extraction_shared.dart';
 import 'resource_extractor.dart';
 import 'sea_transport.dart';
-import 'tile_extraction_pipeline.dart';
+import 'town_connected_tile_walk.dart';
 
 /// Town manufacturing clustering bonus (Refs #3872).
 /// SPEC/game/extraction-and-improvements.md § Town manufacturing bonus.
@@ -161,41 +161,42 @@ void _accumulateGpProvinceExtraction({
       game.worldState.playerProspectedTiles[player.id] ?? const {};
   final capitalRegionId = player.capitalTile?.regionId;
 
-  for (final tileKey in connected) {
-    if (!townConnected.contains(tileKey)) continue;
-    final tileProvinceId = _fullProvinceIdFromTileKey(tileKey);
-    if (tileProvinceId != province.id) continue;
-
-    final contribution = computeTileExtractionContributionForPlayer(
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-      player: player,
-      tileKey: tileKey,
-      connectedTileKeys: connected,
-      pathTransportCap: pathTransportCap,
-      connectedByRoadRule: roadRuleTiles,
-      portTileKeys: portTileKeys,
-      prospectedTileKeys: prospected,
-      capitalRegionId: capitalRegionId,
-      techCapForPlayer: (_) => extractionCapForUnlocked(player.techUnlocked),
-      techCapForPlayerAndResource: (_, resourceId) =>
-          extractionCapForResourceForUnlocked(player.techUnlocked, resourceId),
-      provincesByFullId: provincesByFullId,
-    );
-    if (contribution == null || contribution.units <= 0) continue;
-
-    if (contribution.isLandRelativeToCapital) {
-      final totals = landByProvince.putIfAbsent(province.id, () => {});
-      addUnits(totals, contribution.commodityId, contribution.units);
-    } else {
-      final byProvince = overseasByPlayerProvince.putIfAbsent(
-        player.id,
-        () => {},
+  forEachTownConnectedTileInProvince(
+    connectedTiles: connected,
+    townConnected: townConnected,
+    provinceId: province.id,
+    onTile: (tileKey) {
+      final contribution = computeTileExtractionContributionForPlayer(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        player: player,
+        tileKey: tileKey,
+        connectedTileKeys: connected,
+        pathTransportCap: pathTransportCap,
+        connectedByRoadRule: roadRuleTiles,
+        portTileKeys: portTileKeys,
+        prospectedTileKeys: prospected,
+        capitalRegionId: capitalRegionId,
+        techCapForPlayer: (_) => extractionCapForUnlocked(player.techUnlocked),
+        techCapForPlayerAndResource: (_, resourceId) =>
+            extractionCapForResourceForUnlocked(player.techUnlocked, resourceId),
+        provincesByFullId: provincesByFullId,
       );
-      final totals = byProvince.putIfAbsent(province.id, () => {});
-      addUnits(totals, contribution.commodityId, contribution.units);
-    }
-  }
+      if (contribution == null || contribution.units <= 0) return;
+
+      if (contribution.isLandRelativeToCapital) {
+        final totals = landByProvince.putIfAbsent(province.id, () => {});
+        addUnits(totals, contribution.commodityId, contribution.units);
+      } else {
+        final byProvince = overseasByPlayerProvince.putIfAbsent(
+          player.id,
+          () => {},
+        );
+        final totals = byProvince.putIfAbsent(province.id, () => {});
+        addUnits(totals, contribution.commodityId, contribution.units);
+      }
+    },
+  );
 }
 
 void _accumulateNonGpProvinceExtraction({
@@ -209,35 +210,20 @@ void _accumulateNonGpProvinceExtraction({
   required Set<String> portTileKeys,
   required Map<String, Map<CommodityId, int>> landByProvince,
 }) {
-  final capitalProvinceId = _capitalProvinceIdForOwner(game, ownerId);
-  final capitalRegionId = _capitalRegionIdForOwner(game, ownerId);
-  if (capitalProvinceId == null || capitalRegionId == null) return;
-
-  for (final tileKey in connectivity.connected) {
-    if (!townConnected.contains(tileKey)) continue;
-    final tileProvinceId = _fullProvinceIdFromTileKey(tileKey);
-    if (tileProvinceId != province.id) continue;
-
-    final contribution = computeTileYieldContribution(
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-      tileKey: tileKey,
-      connectedTileKeys: connectivity.connected,
-      pathTransportCap: connectivity.pathTransportCap,
-      connectedByRoadRule: connectivity.connectedByRoadRule,
-      portTileKeys: portTileKeys,
-      capitalProvinceId: capitalProvinceId,
-      capitalRegionId: capitalRegionId,
-      logContext: 'town_bonus_non_gp',
-      provincesByFullId: provincesByFullId,
-      techCapForCommodity: (_) => defaultExtractionCap,
-      isCommodityExtractable: (tileKey, commodityId) =>
-          !kMineralResourceIds.contains(commodityId),
-    );
-    if (contribution == null || contribution.units <= 0) continue;
-    final totals = landByProvince.putIfAbsent(province.id, () => {});
-    addUnits(totals, contribution.commodityId, contribution.units);
-  }
+  forEachTownConnectedNonGpTileContributionInProvince(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    ownerId: ownerId,
+    province: province,
+    townConnected: townConnected,
+    connectivity: connectivity,
+    provincesByFullId: provincesByFullId,
+    portTileKeys: portTileKeys,
+    onContribution: (contribution) {
+      final totals = landByProvince.putIfAbsent(province.id, () => {});
+      addUnits(totals, contribution.commodityId, contribution.units);
+    },
+  );
 }
 
 void _applyOverseasCargoDeliveryToProvinces({
@@ -417,34 +403,4 @@ Map<String, List<TradeOrder>> townManufacturingBonusToAutoOffers({
 Map<String, bool>? _techUnlockedForOwner(Game game, String ownerId) {
   final player = game.playerById(ownerId);
   return player?.techUnlocked;
-}
-
-String? _capitalProvinceIdForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalProvinceId;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalProvinceId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalProvinceId;
-  }
-  return null;
-}
-
-String? _capitalRegionIdForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalTile?.regionId;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalTile?.regionId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalTile?.regionId;
-  }
-  return null;
-}
-
-String? _fullProvinceIdFromTileKey(String tileKey) {
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return null;
-  return ProvinceId.full(coords.regionId, coords.provinceLocalId);
 }

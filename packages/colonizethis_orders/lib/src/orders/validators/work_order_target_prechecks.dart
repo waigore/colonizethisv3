@@ -65,6 +65,24 @@ const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
   kWorkTargetUpgradeTown,
 };
 
+OrderValidationResult? _rejectAtWarOrWithoutEmbassy(
+  Game game,
+  String playerId,
+  String otherFactionId, {
+  required String atWarMessage,
+  required String embassyMessage,
+}) {
+  final rel = getRelation(game, playerId, otherFactionId);
+  if (rel?.atWar == true) {
+    return OrderValidationResult.rejected(atWarMessage);
+  }
+  final overture = getOverture(game, playerId, otherFactionId);
+  if (overture == null || !overture.hasEmbassy) {
+    return OrderValidationResult.rejected(embassyMessage);
+  }
+  return null;
+}
+
 OrderValidationResult? precheckUpgradeTown(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder order,
@@ -106,17 +124,16 @@ OrderValidationResult? precheckUpgradeTown(
         'upgrade_town target must be an owned or Minor/Tribe province town',
       );
     }
-    final rel = getRelation(ctx.game, ctx.playerId, provinceOwnerId);
-    if (rel?.atWar == true) {
-      return OrderValidationResult.rejected(
-        'Cannot upgrade town: at war with that faction',
-      );
-    }
-    final overture = getOverture(ctx.game, ctx.playerId, provinceOwnerId);
-    if (overture == null || !overture.hasEmbassy) {
-      return OrderValidationResult.rejected(
-        'Cannot upgrade town: embassy required with that Minor/Tribe',
-      );
+    final embassyRejection = _rejectAtWarOrWithoutEmbassy(
+      ctx.game,
+      ctx.playerId,
+      provinceOwnerId,
+      atWarMessage: 'Cannot upgrade town: at war with that faction',
+      embassyMessage:
+          'Cannot upgrade town: embassy required with that Minor/Tribe',
+    );
+    if (embassyRejection != null) {
+      return embassyRejection;
     }
   }
   return null;
@@ -158,17 +175,16 @@ OrderValidationResult? precheckPurchaseLand(
       'purchase_land target must be a Minor or Tribe province',
     );
   }
-  final rel = getRelation(ctx.game, ctx.playerId, ownerId);
-  if (rel?.atWar == true) {
-    return OrderValidationResult.rejected(
-      'Cannot purchase land: at war with that faction',
-    );
-  }
-  final overture = getOverture(ctx.game, ctx.playerId, ownerId);
-  if (overture == null || !overture.hasEmbassy) {
-    return OrderValidationResult.rejected(
-      'Cannot purchase land: embassy required with that Minor/Tribe',
-    );
+  final embassyRejection = _rejectAtWarOrWithoutEmbassy(
+    ctx.game,
+    ctx.playerId,
+    ownerId,
+    atWarMessage: 'Cannot purchase land: at war with that faction',
+    embassyMessage:
+        'Cannot purchase land: embassy required with that Minor/Tribe',
+  );
+  if (embassyRejection != null) {
+    return embassyRejection;
   }
   final resourceId = ctx.game.worldState.resourceAtTile(o.targetTileKey);
   if (resourceId == null || resourceId.isEmpty) {

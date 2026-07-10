@@ -31,7 +31,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show gameMapWideOverlayRightInset, kMapOverlayEdgeInset;
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

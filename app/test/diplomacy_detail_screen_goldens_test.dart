@@ -12,24 +12,18 @@
 // SPEC: SPEC/ui/diplomacy-detail-screen.md; SPEC/ui/diplomacy-panel.md §
 // Diplomatic standing chip cluster acceptance criteria (Refs #3753 R12).
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
+import 'support/golden_capture_harness.dart';
 import 'support/widget_test_assets.dart';
-
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 Widget _detailHost({
   required Game game,
@@ -40,23 +34,19 @@ Widget _detailHost({
   required Key boundaryKey,
   DiplomacyRelation? relation,
 }) {
-  return ProviderScope(
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: RepaintBoundary(
-        key: boundaryKey,
-        child: DiplomacyDetailScreen(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          factionId: factionId,
-          factionDisplayName: factionDisplayName,
-          kind: kind,
-          relation: relation ?? getRelation(game, humanPlayerId, factionId),
-        ),
-      ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    center: false,
+    useScaffold: false,
+    includeLocalizations: true,
+    wrapInProviderScope: true,
+    child: DiplomacyDetailScreen(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      factionId: factionId,
+      factionDisplayName: factionDisplayName,
+      kind: kind,
+      relation: relation ?? getRelation(game, humanPlayerId, factionId),
     ),
   );
 }
@@ -191,8 +181,7 @@ void main() {
   testWidgets(
     'GAME30002 golden: colony Tribe detail shows standing chips + relation meter',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 900));
+            await configureGoldenSurface(tester, size: const Size(600, 900));
       const boundaryKey = ValueKey<String>(
         'diplomacy_detail_colony_tribe_golden',
       );
@@ -208,7 +197,7 @@ void main() {
           boundaryKey: boundaryKey,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('CURRENT RELATION'), findsOneWidget);
       expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
@@ -231,8 +220,7 @@ void main() {
   testWidgets(
     'GAME30002 golden: subsidized Minor detail shows overseas chip + relation meter',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 900));
+            await configureGoldenSurface(tester, size: const Size(600, 900));
       const boundaryKey = ValueKey<String>(
         'diplomacy_detail_subsidized_minor_golden',
       );
@@ -248,7 +236,7 @@ void main() {
           boundaryKey: boundaryKey,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.text('CURRENT RELATION'), findsOneWidget);
       expect(find.text(kDiplomacyChipEmbassy), findsWidgets);

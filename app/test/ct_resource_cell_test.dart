@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';

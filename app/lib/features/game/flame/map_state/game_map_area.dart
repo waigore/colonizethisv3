@@ -12,11 +12,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, RegionMapViewData;
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
@@ -37,7 +39,7 @@ import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../screens/game/game_screen_shared.dart';
 import '../map_area/map_area.dart'
@@ -64,11 +66,13 @@ part 'game_map_area_state_base.dart';
 part 'game_map_area_selection.dart';
 part 'game_map_area_view.dart';
 part 'game_map_area_turn_resolution.dart';
+part 'game_map_area_turn_resolution_session.dart';
 part 'game_map_area_turn_feed_labels.dart';
 part 'game_map_area_turn_feed.dart';
 part 'game_map_area_events.dart';
 part 'game_map_area_e2e.dart';
 part 'game_map_area_lifecycle.dart';
+part 'game_map_area_build_map_stack_chrome.dart';
 part 'game_map_area_build_map_stack.dart';
 part 'game_map_area_build_overlays.dart';
 part 'game_map_area_build.dart';
@@ -100,6 +104,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea>
         _GameMapAreaEvents,
         _GameMapAreaE2e,
         _GameMapAreaLifecycle,
+        _GameMapAreaBuildMapStackChrome,
         _GameMapAreaBuildMapStack,
         _GameMapAreaBuildOverlays,
         _GameMapAreaBuild {}

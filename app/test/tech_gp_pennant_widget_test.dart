@@ -11,7 +11,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/tech_gp_pennan
 import 'package:colonizethis_app/features/game/widgets/technology/tech_researchers_list_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 
 import 'support/panel_test_fixtures.dart';

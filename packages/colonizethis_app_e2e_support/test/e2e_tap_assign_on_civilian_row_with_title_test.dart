@@ -38,7 +38,7 @@
 //     lexically first `Assign` regardless of row title.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/themes.dart' show AppThemes;
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart'
     show CivilianUnitRowCard;

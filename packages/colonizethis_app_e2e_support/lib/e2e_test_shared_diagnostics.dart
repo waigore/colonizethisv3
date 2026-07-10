@@ -13,7 +13,7 @@
 /// `e2e_test_shared.dart` or the public-name barrel.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show

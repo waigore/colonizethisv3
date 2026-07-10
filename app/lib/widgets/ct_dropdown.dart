@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_dialog_shell.dart';
 import 'ct_nine_patch_button.dart';
+
+part 'ct_dropdown_trigger.dart';
+part 'ct_dropdown_picker.dart';
 
 /// Animation timing for the trigger chevron rotation between
 /// closed (chevron-down) and open (chevron-up) states per
@@ -73,159 +76,14 @@ class CtDropdown<T> extends StatefulWidget {
 class _CtDropdownState<T> extends State<CtDropdown<T>> {
   bool _isOpen = false;
 
-  String _labelFor(T v) =>
+  String labelFor(T v) =>
       widget.itemLabel != null ? widget.itemLabel!(v) : v.toString();
 
   @override
   Widget build(BuildContext context) {
     return CtNinePatchButton(
-      onPressed: () => _openPicker(context),
-      child: _buttonChild(context),
+      onPressed: () => openPicker(context),
+      child: buttonChild(context),
     );
-  }
-
-  Widget _buttonChild(BuildContext context) {
-    final selected = widget.value != null && widget.items.contains(widget.value)
-        ? _labelFor(widget.value as T)
-        : (widget.hint ?? 'Select');
-
-    final Widget labelWidget = Text(selected, overflow: TextOverflow.ellipsis);
-
-    Widget? leading;
-    if (widget.value != null &&
-        widget.items.contains(widget.value) &&
-        widget.itemLeading != null) {
-      leading = widget.itemLeading!(context, widget.value as T);
-    }
-
-    Widget buttonChild = labelWidget;
-
-    if (widget.isExpanded) {
-      buttonChild = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (leading != null) ...[leading, const SizedBox(width: 8)],
-          Expanded(child: labelWidget),
-          const SizedBox(width: 8),
-          _buildChevron(),
-        ],
-      );
-    } else if (leading != null) {
-      buttonChild = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          leading,
-          const SizedBox(width: 8),
-          Flexible(child: labelWidget),
-        ],
-      );
-    }
-
-    return buttonChild;
-  }
-
-  /// Trigger chevron-down glyph that rotates 180° to chevron-up when the
-  /// picker opens, per #2859 R5d. The chevron colour resolves to
-  /// `--accent-dim` from the editorial-monocle palette; no hex literals.
-  Widget _buildChevron() {
-    return AnimatedRotation(
-      key: CtDropdown.kChevronAnimatedRotationKey,
-      turns: _isOpen ? _kChevronOpenTurns : _kChevronClosedTurns,
-      duration: kCtDropdownChevronAnimationDuration,
-      curve: Curves.easeOut,
-      child: Icon(
-        Icons.expand_more,
-        size: 16,
-        color: EditorialMonoclePalette.accentDim,
-      ),
-    );
-  }
-
-  Future<void> _openPicker(BuildContext context) async {
-    if (!mounted) return;
-    setState(() => _isOpen = true);
-    try {
-      final chosen = await showDialog<T>(
-        context: context,
-        builder: (ctx) => CtDialogShell(
-          maxWidth: 320,
-          maxHeight: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.hint != null) ...[
-                Text(widget.hint!, style: Theme.of(ctx).textTheme.titleMedium),
-                const SizedBox(height: 8),
-              ],
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: widget.items.length,
-                itemBuilder: (context, index) {
-                  final v = widget.items[index];
-                  final label = _labelFor(v);
-                  final rowLeading = widget.itemLeading?.call(context, v);
-                  final bool isSelected =
-                      widget.value != null && v == widget.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: DecoratedBox(
-                      key: isSelected
-                          ? CtDropdown.kCtDropdownPickerSelectedRowKey
-                          : null,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? EditorialMonoclePalette.accentDim
-                            : null,
-                        border: Border(
-                          left: BorderSide(
-                            color: isSelected
-                                ? EditorialMonoclePalette.accent
-                                : Colors.transparent,
-                            width: kCtDropdownPickerSelectedLeftEdgeWidth,
-                          ),
-                        ),
-                      ),
-                      child: CtNinePatchButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop(v);
-                        },
-                        enabled: true,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              if (rowLeading != null) ...[
-                                rowLeading,
-                                const SizedBox(width: 8),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  label,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      );
-      if (chosen != null) {
-        widget.onChanged(chosen);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isOpen = false);
-      }
-    }
   }
 }

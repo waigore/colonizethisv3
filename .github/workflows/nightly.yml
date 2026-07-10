@@ -79,7 +79,7 @@ jobs:
       - name: Generate app localizations
         run: |
           set -e
-          cd app
+          cd packages/colonizethis_app_l10n
           flutter gen-l10n
 
       - name: Compile app entrypoints (Flutter analyze)
@@ -101,7 +101,7 @@ jobs:
           [ -d .pub-cache ] && parts+=(.pub-cache)
           [ -d .dart_tool ] && parts+=(.dart_tool)
           [ -d app/.dart_tool ] && parts+=(app/.dart_tool)
-          [ -d app/lib/l10n ] && parts+=(app/lib/l10n)
+          [ -d packages/colonizethis_app_l10n/lib/l10n ] && parts+=(packages/colonizethis_app_l10n/lib/l10n)
           tar czf app-test-cache.tar.gz "${parts[@]}"
 
       - name: Upload app test cache

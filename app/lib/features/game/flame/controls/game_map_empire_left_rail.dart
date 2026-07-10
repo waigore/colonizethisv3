@@ -1,10 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_models/colonizethis_models.dart' show AppEventBus;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
@@ -15,6 +16,7 @@ import '../../../../widgets/strict_asset_icon.dart';
 import '../../screens/game/game_screen_shared.dart';
 
 part 'game_map_empire_left_rail_button.dart';
+part 'game_map_empire_left_rail_buttons.dart';
 
 /// Always-visible icon column for empire actions on the in-game map.
 ///
@@ -76,125 +78,20 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
     final topology = mapData?.combinedTopology ?? MapTopology();
     final bus = ref.read(appEventBusProvider);
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
-    final gapHeight = narrow ? narrowRowGap : rowGap;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _EmpireRailButton(
-          buttonKey: kEmpireProductionButtonKey,
-          tooltip: 'Production',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_production.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(
-              ct_models.NavigateToRouteEvent(Routes.production, {
-                'game': game,
-                'humanPlayerId': humanPlayerId,
-              }),
-            );
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireTradeButtonKey,
-          tooltip: 'Trade',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_trade.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(
-              ct_models.NavigateToRouteEvent(Routes.trade, {
-                'game': game,
-                'humanPlayerId': humanPlayerId,
-              }),
-            );
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireCivilianUnitsButtonKey,
-          tooltip: 'Civilian Units',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(const ct_models.OpenCivilianUnitsPanelEvent());
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireMilitaryUnitsButtonKey,
-          tooltip: 'Military Units',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_military_units.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(const ct_models.OpenMilitaryUnitsPanelEvent());
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireNavalUnitsButtonKey,
-          tooltip: 'Naval Units',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_naval_units.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(const ct_models.OpenNavalUnitsPanelEvent());
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireDiplomacyButtonKey,
-          tooltip: 'Diplomacy',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(
-              ct_models.NavigateToRouteEvent(Routes.diplomacy, {
-                'game': game,
-                'humanPlayerId': humanPlayerId,
-                'topology': topology,
-                'currentOrders': orders,
-              }),
-            );
-          },
-        ),
-        SizedBox(height: gapHeight),
-        _EmpireRailButton(
-          buttonKey: kEmpireTechnologyButtonKey,
-          tooltip: 'Technology',
-          iconAsset: '${kAppIconAssetPrefix}ui_icon_technology.png',
-          narrow: narrow,
-          onTap: () {
-            onIconTappedWhileSelectionMode?.call();
-            bus.emit(
-              ct_models.NavigateToRouteEvent(Routes.technology, {
-                'game': game,
-                'humanPlayerId': humanPlayerId,
-                'currentOrders': orders,
-              }),
-            );
-          },
-        ),
-        if (debugConsoleEnabled) ...<Widget>[
-          SizedBox(height: gapHeight),
-          _EmpireRailButton(
-            buttonKey: kEmpireDebugConsoleButtonKey,
-            tooltip: 'Debug Console',
-            iconAsset: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
-            narrow: narrow,
-            onTap: () {
-              onIconTappedWhileSelectionMode?.call();
-              bus.emit(const ct_models.ToggleDebugConsolePanelEvent());
-            },
-          ),
-        ],
-      ],
+      children: _buildEmpireRailButtons(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        orders: orders,
+        bus: bus,
+        narrow: narrow,
+        debugConsoleEnabled: debugConsoleEnabled,
+        onIconTappedWhileSelectionMode: onIconTappedWhileSelectionMode,
+      ),
     );
   }
 }

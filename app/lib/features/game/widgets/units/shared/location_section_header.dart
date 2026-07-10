@@ -1,7 +1,7 @@
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_spacing.dart';
 
 /// Sub-header for a province or sea zone within a region in military/naval panels.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -11,6 +11,8 @@ import '../../../../widgets/ct_spacing.dart';
 
 part 'train_dialog_chrome_resource_bar.dart';
 part 'train_dialog_chrome_unit_row.dart';
+part 'train_dialog_chrome_unit_row_cost.dart';
+part 'train_dialog_chrome_unit_row_controls.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
 /// `SPEC/ui/train-military-dialog.md` / `SPEC/ui/train-naval-dialog.md` and the

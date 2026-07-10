@@ -24,11 +24,11 @@ const _excludedPaths = <String>{
   /// `ai_personality_config.dart` applies. App code reaches civilian unit
   /// types via `kUnitType*` constants from `colonizethis_models`; the l10n
   /// values here are independent translation strings.
-  'app/lib/l10n/app_localizations_en_part1.dart',
-  'app/lib/l10n/app_localizations_en_part2.dart',
-  'app/lib/l10n/app_localizations_en_part3.dart',
-  'app/lib/l10n/app_localizations_en_part4.dart',
-  'app/lib/l10n/app_localizations_en_part5.dart',
+  'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part1.dart',
+  'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part2.dart',
+  'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part3.dart',
+  'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part4.dart',
+  'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part5.dart',
 };
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.

@@ -6,7 +6,7 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Canonical GP–Minor fixture module for orders diplomatic tests (Refs #3877).
 const ordersGpMinorFixtureModule =
-    'packages/colonizethis_orders/test/orders/diplomatic_orders_test_fixtures.dart';
+    'packages/colonizethis_orders/test/orders/support/diplomatic/diplomatic_orders_test_fixtures.dart';
 
 const _ordersTestPathPrefix = 'packages/colonizethis_orders/test/';
 

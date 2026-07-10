@@ -44,23 +44,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
-const String _nationId = 'gp1';
+const String _nationId = kOrchestratorGp1NationId;
 const String _blockerGpId = 'gp2';
 const String _nonBlockerGpId = 'gp3';
 
-// gp1 owns 8 OW provinces (below the quota of 10 -> EXPAND).
-const List<String> _gp1Provinces = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-];
+// gp1 owns 8 OW provinces via [kGp1OwProvincesExpandTwoGp]
+// (below the quota of 10 -> EXPAND).
 
 // gp2 owns three OW provinces; all three appear in
 // `invadableProvinceIdsSorted` so it is the primary frontier blocker.
@@ -81,7 +73,7 @@ Game _expandTwoGpWarsScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1Provinces)
+          for (final id in kGp1OwProvincesExpandTwoGp)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
           for (final id in _gp2InvadableProvinces)
             Province(id: id, regionId: 'oldWorld', ownerId: _blockerGpId),
@@ -105,7 +97,7 @@ Game _expandTwoGpWarsScenarioGame() {
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1Provinces.first,
+          stationedProvinceId: kGp1OwProvincesExpandTwoGp.first,
           regimentUnitIds: const ['u_gp1'],
           isHomeArmy: true,
         ),

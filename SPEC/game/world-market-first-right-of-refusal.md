@@ -350,7 +350,10 @@ priority override above tiers AND FTP, #2 relation 75 mid-sample
 credit, #3 relation 100 upper-bound credit, #4 relation 0
 zero-credit + buyer == owning GP exclusion, #5 multi-GP attribution
 without cross-credit) are mapped 1:1 to `group(...)`s in
-`packages/colonizethis_economy/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`.
+`packages/colonizethis_economy/test/economy/world_market/world_market_deal_matcher_test.dart`
+(AC #1) and
+`packages/colonizethis_economy/test/economy/world_market/first_right_credits_test.dart`
+(AC #2–#5).
 The per-component AC tests above remain authoritative; D5 is the
 `verify-github-issue` traceability layer. **#3753 R8 supersedes the #2992
 overseas-profit amounts** (tile-owner full relation-linear share, no 40%

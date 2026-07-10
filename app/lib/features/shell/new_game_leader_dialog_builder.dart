@@ -5,7 +5,7 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app/providers/blessed_ai_profiles_provider.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';

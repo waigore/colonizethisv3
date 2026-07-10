@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/test_support/seed42_init_game_result.dart';
+import 'package:colonizethis_app_fixtures/test_support/seed42_init_game_result.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 

@@ -195,6 +195,27 @@ rules:
     runner: dart
     script: tool/check_economy_test_no_src_imports.dart
 
+  - rule_id: repo.economy_test_no_cross_package_src_imports
+    group: testing
+    title: colonizethis_economy test/ must not import package:*/src/ (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_cross_package_src_imports.dart
+
+  - rule_id: repo.economy_test_preserved_descriptions
+    group: testing
+    title: economy test descriptions in DESCRIPTION_BASELINE.txt must survive runner consolidation (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_preserved_descriptions.dart
+
+  - rule_id: repo.economy_test_prefer_scenario_tables
+    group: testing
+    title: colonizethis_economy tests should use scenario-table loops for long imperative bodies (Refs #3939)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_scenario_table_runner.dart
+
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
     title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)
@@ -473,6 +494,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_shell_panel_dedup.dart
+
+  - rule_id: repo.app_main_line_budget
+    group: structure
+    title: colonizethis_app main role must stay at or below 59_000 lines
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_app_main_line_budget.dart
+
+  - rule_id: repo.app_no_stray_l10n_gen
+    group: structure
+    title: app/lib must not contain generated l10n Dart (belongs in colonizethis_app_l10n)
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_app_no_stray_l10n_gen.dart
 
   - rule_id: repo.app_widgetbook_catalog_location
     group: architecture
@@ -1039,10 +1074,31 @@ rules:
 
   - rule_id: repo.orders_test_dedup_gp_minor_game
     group: architecture
-    title: colonizethis_orders tests must not redefine GP–Minor game builders outside diplomatic_orders_test_fixtures.dart (Refs #3877)
+    title: colonizethis_orders tests must not redefine GP–Minor game builders outside support/diplomatic/diplomatic_orders_test_fixtures.dart (Refs #3877/#3949)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_test_dedup_gp_minor_game.dart
+
+  - rule_id: repo.orders_test_preserved_descriptions
+    group: testing
+    title: orders test descriptions in DESCRIPTION_BASELINE.txt must survive runner consolidation (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_preserved_descriptions.dart
+
+  - rule_id: repo.orders_test_prefer_scenario_tables
+    group: testing
+    title: colonizethis_orders prefer scenario-table runners for new long imperative tests (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_scenario_table_runner.dart
+
+  - rule_id: repo.orders_test_support_layout
+    group: testing
+    title: colonizethis_orders non-test Dart under test/orders/ must live in test/orders/support/ (Refs #3949)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_support_layout.dart
 
   - rule_id: repo.orders_test_no_src_imports
     group: testing
@@ -1071,6 +1127,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.ai_orchestrator_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai domain_planner_orchestrator_* tests must import shared OW-quota fixtures from domain_planner_orchestrator_test_support.dart (no local _gp1OwProvincesBelowQuota / _gp1OwProvincesAtQuota copies) (Refs #3941)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_orchestrator_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_test_no_matrix_part_shards
+    group: testing
+    title: colonizethis_ai planning matrix suites must not keep *_partN_test.dart shards alongside a sibling *_support.dart (Refs #3941)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_test_no_matrix_part_shards.dart
 
   - rule_id: repo.ai_test_mirrors_lib
     group: structure

@@ -174,14 +174,16 @@ class StoryShim {
     expect(code, 0);
   });
 
-  test('ignores violations under app/lib/test_support/', () {
+  test('ignores violations under colonizethis_app_fixtures test_support/', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_app_no_duplicate_helpers_test_support_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeCanonicalHelpers(temp);
 
-    File('${temp.path}/app/lib/test_support/expected_lines.dart')
+    File(
+      '${temp.path}/packages/colonizethis_app_fixtures/lib/test_support/expected_lines.dart',
+    )
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 String eraRoman(int era) => 'IV';
@@ -205,7 +207,9 @@ String _commodityDisplayName(String id) => id;
       ..writeAsStringSync('''
 String eraRoman(int era) => 'GEN';
 ''');
-    File('${temp.path}/app/lib/l10n/gen/app_l10n_flutter_gen.dart')
+    File(
+      '${temp.path}/packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen.dart',
+    )
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 String _eraRoman(int era) => 'L10N';

@@ -23,11 +23,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 
+import 'support/golden_capture_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 // Three prerequisite-free tier-1 techs occupy slots 0-2, mirroring the
@@ -67,29 +67,14 @@ Future<void> _pumpBoundary(
   required Key boundaryKey,
   required Size viewport,
   required Widget child,
-}) async {
-  addTearDown(tester.view.reset);
-  tester.view.physicalSize = viewport;
-  tester.view.devicePixelRatio = 1.0;
-
-  await tester.pumpWidget(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
-      home: Scaffold(
-        body: Center(
-          child: RepaintBoundary(
-            key: boundaryKey,
-            child: child,
-          ),
-        ),
-      ),
-    ),
+}) {
+  return pumpGoldenHost(
+    tester,
+    boundaryKey: boundaryKey,
+    physicalSize: viewport,
+    includeLocalizations: true,
+    child: child,
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {

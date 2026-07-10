@@ -1,5 +1,5 @@
-import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart'
     show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'

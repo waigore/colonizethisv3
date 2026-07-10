@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:colonizethis_app/config/app_display_strings.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../config/routes.dart';

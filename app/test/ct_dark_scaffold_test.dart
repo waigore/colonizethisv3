@@ -2,7 +2,7 @@
 // screen wrapper promoted from the private _DarkChromeShell in
 // CtGameFeatureScreenShell. SPEC/ui/components/ct-dark-scaffold.md.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dark_scaffold.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

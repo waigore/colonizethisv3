@@ -9,10 +9,8 @@
 //   - `observer_goal_phase_gp_blocker_peace_matrix_test.dart`
 //     (GP-blocker contracts: `primaryColonialGpBlocker` +
 //     `primaryInvadableOldWorldGpBlocker`).
-//   - `observer_goal_phase_gp_blocker_peace_matrix_part2_test.dart`
-//     (COLONIAL + EXPAND peace-target guard ladders).
-//   - `observer_goal_phase_gp_blocker_peace_matrix_part3_test.dart`
-//     (DEVELOP + stalled-below-quota peace-target guard ladders).
+//   - Peace/blocker case tables also live here so one contract file
+//     stays under the non-comment line gate (Refs #3941).
 //
 // All six functions under test share the exact signature
 // `({required Game game, required AIWorldSnapshot snapshot})` returning

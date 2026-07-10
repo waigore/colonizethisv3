@@ -21,10 +21,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 
+import 'support/golden_capture_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 Future<void> _pumpPanel(
@@ -33,39 +32,24 @@ Future<void> _pumpPanel(
   required Size viewport,
   required Game game,
   required Player player,
-}) async {
-  addTearDown(tester.view.reset);
-  tester.view.physicalSize = viewport;
-  tester.view.devicePixelRatio = 1.0;
-
-  await tester.pumpWidget(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
-      home: Scaffold(
-        body: Center(
-          child: RepaintBoundary(
-            key: boundaryKey,
-            child: SizedBox(
-              width: viewport.width,
-              height: viewport.height,
-              child: SingleChildScrollView(
-                child: TechnologyPanel(
-                  game: game,
-                  player: player,
-                  onOrdersChanged: (_) {},
-                ),
-              ),
-            ),
-          ),
+}) {
+  return pumpGoldenHost(
+    tester,
+    boundaryKey: boundaryKey,
+    physicalSize: viewport,
+    includeLocalizations: true,
+    child: SizedBox(
+      width: viewport.width,
+      height: viewport.height,
+      child: SingleChildScrollView(
+        child: TechnologyPanel(
+          game: game,
+          player: player,
+          onOrdersChanged: (_) {},
         ),
       ),
     ),
   );
-  await tester.pumpAndSettle();
 }
 
 void main() {

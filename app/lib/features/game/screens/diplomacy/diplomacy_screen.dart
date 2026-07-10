@@ -11,8 +11,7 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../../widgets/ct_top_bar.dart';
-import '../../../../widgets/strict_asset_icon.dart';
+import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart' show shellPlayerContextProvider;
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import '../../widgets/diplomacy/diplomacy_panel.dart';
@@ -31,8 +30,7 @@ class DiplomacyScreen extends ConsumerWidget {
   /// Localized back-button label rendered immediately after the chevron
   /// on the dark-theme `CtTopBar`. SPEC/ui/diplomacy-panel.md § Top bar
   /// requires the literal `"Map"` so the affordance reads `"← Map"`.
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String topBarBackLabel = 'Map';
+  static const String topBarBackLabel = GameFeatureScreenTopBar.backLabel;
 
   /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
   /// literal `"Diplomacy"` (Cinzel display font is configured at the
@@ -57,15 +55,10 @@ class DiplomacyScreen extends ConsumerWidget {
     final bus = ref.watch(appEventBusProvider);
     return CtGameFeatureScreenShell(
       game: game,
-      topBar: const CtTopBar(
+      topBar: GameFeatureScreenTopBar.build(
         key: topBarKey,
         title: topBarTitle,
-        backButtonLabel: topBarBackLabel,
-        icon: StrictAssetIcon(
-          assetPath: topBarIconAsset,
-          width: 18,
-          height: 18,
-        ),
+        iconAsset: topBarIconAsset,
       ),
       bodyBuilder: (context, shellRef, displayGame) {
         final shell = shellRef.read(shellPlayerContextProvider);

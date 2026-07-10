@@ -1,4 +1,34 @@
-part of 'expand_phase_planner.dart';
+/// EXPAND-phase peer-stalled and survival peace deciders (Refs #3941).
+///
+/// Standalone library extracted from the `expand_phase_planner.dart` part
+/// tree so peer-peace collectors stay under review gates without bloating
+/// the planner root module.
+library;
+
+import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'expand_peace_frontier_helpers.dart'
+    show
+        anyMinorOwnsOldWorldProvince,
+        hasUninvadedOldWorldMinor,
+        isMutualBelowQuotaPlateauPeer,
+        isOldWorldGpOnlyInvadableFrontier,
+        primaryInvadableOldWorldGpBlocker,
+        soleAtWarGreatPowerId;
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByMinor,
+        factionOwnsInvadableOldWorldProvince,
+        gpAtWarPeaceTargetsWhere,
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled,
+        mutualExhaustedGpStalemateSideQualifies,
+        nonGreatPowerAtWarPeaceTargetsWhere,
+        peaceTargetsExcludingBlocker,
+        tribeAtWarPeaceTargetsWhere;
+import 'planning_imports.dart';
 
 /// Maximum OW province gap a below-quota peer war is peaced across when an
 /// uninvaded OW minor pivot remains on the map (Refs #2509).
@@ -133,7 +163,7 @@ List<String> belowQuotaPeerGpPeaceTargets({
   if (!isBelowObserverConquestQuota(ownOw)) {
     return const [];
   }
-  final minorsOnMap = _anyMinorOwnsOldWorldProvince(game);
+  final minorsOnMap = anyMinorOwnsOldWorldProvince(game);
   final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
     game: game,
     snapshot: snapshot,

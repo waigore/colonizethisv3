@@ -12,11 +12,9 @@
 // pixel baseline under `app/test/goldens/`. No advance tap is needed — the
 // combined step is the first thing shown.
 //
-// Harness mirrors `diplomacy_panel_goldens_test.dart`: a keyed `RepaintBoundary`
-// wraps the surface, an in-memory `AssetBundle` pins deterministic Yarn, and
-// `AppThemes.editorialMonocle` supplies the dark-theme chrome
-// (`colonizethis-ui-design.mdc`). Text renders in the flutter_test Ahem font, so
-// the goldens are deterministic across platforms.
+// Host: `configureGoldenSurface` + `wrapGoldenBoundary` from
+// `support/golden_capture_harness.dart`; Yarn fakes from
+// `support/yarn_test_fixtures.dart` (Refs #3952).
 //
 // SPEC: SPEC/ui/game-start-intro-overlay.md § Acceptance Criteria (Refs #3628
 // AC-1/AC-3 golden coverage) and SPEC/ui/tribe-first-contact-overlay.md §
@@ -29,7 +27,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
@@ -37,90 +34,8 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/tribe_first_cont
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-/// Minimal in-memory [AssetBundle] returning the supplied yarn text so the
-/// goldens are deterministic and offline (mirrors
-/// `tribe_first_contact_overlay_test.dart`).
-class _StringAssetBundle extends Fake implements AssetBundle {
-  _StringAssetBundle(this._assets);
-
-  final Map<String, String> _assets;
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    final text = _assets[key];
-    if (text == null) throw Exception('missing asset: $key');
-    return text;
-  }
-}
-
-// OVL10001 fixture: the production `game_start_intro` node shape (one narrative
-// line followed by `-> I shall.`), kept short so the golden is decoupled from
-// future intro-copy edits.
-const _kIntroYarn = '''
-title: game_start_intro
----
-The age of imperialism draweth nigh.
--> I shall.
-===
-''';
-
-// OVL80001 fixture: mirrors the production `{\$var}` interpolation so the herald
-// golden exercises the same variable-binding path as the overlay.
-const _kHeraldYarn = '''
-title: tribe_first_contact
----
-Scouts return with word of the {\$tribeName}, who hold their seat at {\$capitalName}.
--> Continue
-===
-''';
-
-// Overture intro fixture: the production `DialoguePoint/overture_target_response`
-// node shape (one narrative line then `-> Continue`), kept short so the golden is
-// decoupled from future intro-copy edits.
-const _kOvertureYarn = '''
-title: DialoguePoint/overture_target_response
----
-Envoys await thy word on the overtures laid before the Crown.
--> Continue
-===
-''';
-
-// Intervention intro fixture: the production `intervention.yarn` requires all
-// five nodes to be present at parse time (intro + situation + three reactions)
-// and interpolates `{\$var}` faction names, so the fixture mirrors that shape.
-// The intro node is intentionally a single line then `-> Continue` so advancing
-// once reaches the combined choice step.
-const _kInterventionYarn = r'''
-title: DialoguePoint/intervention_intro
----
-Heavy tidings cross thy desk from distant shores; the Crown looketh to thee.
--> Continue
-===
-
-title: DialoguePoint/intervention_situation
----
-Word arriveth that {$aggressorName} hath proclaimed open war against {$defenderName}; {$interveningName} cannot feign ignorance.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_intervene
----
-{$aggressorName} rendeth the air with oaths.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_do_nothing
----
-{$aggressorName} smirketh.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_protest
----
-{$aggressorName} returneth a chill note.
--> Continue
-===
-''';
+import 'support/golden_capture_harness.dart';
+import 'support/yarn_test_fixtures.dart';
 
 /// Minimal [Game] with two GPs and one minor nation, sufficient to drive the
 /// overture / intervention overlays through their phase-1 Yarn intro.
@@ -142,6 +57,24 @@ Game _minimalGame() {
   );
 }
 
+Future<void> _pumpDialogueGolden(
+  WidgetTester tester, {
+  required Key boundaryKey,
+  required Widget child,
+}) async {
+  await configureGoldenSurface(tester, size: const Size(600, 800));
+  await tester.pumpWidget(
+    wrapGoldenBoundary(
+      boundaryKey: boundaryKey,
+      center: false,
+      useScaffold: false,
+      child: child,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -149,28 +82,19 @@ void main() {
   testWidgets(
     'OVL10001 collapsed-step golden: intro narrative renders once above the single "I shall." option (#3628)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 800));
       const boundaryKey = ValueKey<String>('game_start_intro_combined_golden');
 
-      await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          home: RepaintBoundary(
-            key: boundaryKey,
-            child: GameStartIntroOverlay(
-              assetBundle: _StringAssetBundle({
-                kDialogueGameIntroAsset: _kIntroYarn,
-              }),
-              onDismissed: () {},
-              child: const ColoredBox(color: Color(0xFF101014)),
-            ),
-          ),
+      await _pumpDialogueGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        child: GameStartIntroOverlay(
+          assetBundle: YarnStringAssetBundle({
+            kDialogueGameIntroAsset: kYarnGameStartIntroShort,
+          }),
+          onDismissed: () {},
+          child: const ColoredBox(color: Color(0xFF101014)),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
 
       // Collapsed step (first body): narrative once + a single button labelled
       // with the Yarn option text "I shall." (not a generic Continue).
@@ -189,32 +113,23 @@ void main() {
   testWidgets(
     'OVL80001 combined-step golden: scout narrative + tribe/capital stay above the Continue option (#3628)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 800));
       const boundaryKey = ValueKey<String>(
         'tribe_first_contact_combined_golden',
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          home: RepaintBoundary(
-            key: boundaryKey,
-            child: TribeFirstContactOverlay(
-              tribeName: 'Powhatan',
-              capitalName: 'Werowocomoco',
-              assetBundle: _StringAssetBundle({
-                kDialogueTribeFirstContactAsset: _kHeraldYarn,
-              }),
-              onDismissed: () {},
-              child: const ColoredBox(color: Color(0xFF101014)),
-            ),
-          ),
+      await _pumpDialogueGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        child: TribeFirstContactOverlay(
+          tribeName: 'Powhatan',
+          capitalName: 'Werowocomoco',
+          assetBundle: YarnStringAssetBundle({
+            kDialogueTribeFirstContactAsset: kYarnTribeFirstContactShort,
+          }),
+          onDismissed: () {},
+          child: const ColoredBox(color: Color(0xFF101014)),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
 
       // Collapsed step (first body): scout narrative (with interpolated names)
       // renders once together with a single Continue option button.
@@ -236,36 +151,27 @@ void main() {
   testWidgets(
     'Overture combined-step golden: intro narrative stays above the Continue option (#3628)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 800));
       const boundaryKey = ValueKey<String>('overture_intro_combined_golden');
 
-      await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          home: RepaintBoundary(
-            key: boundaryKey,
-            child: OvertureDialogueOverlay(
-              game: _minimalGame(),
-              pendingOvertures: const [
-                OvertureOffer(
-                  offererGpId: 'gp2',
-                  targetFactionId: 'gp1',
-                  stage: OvertureStage.embassy,
-                ),
-              ],
-              assetBundle: _StringAssetBundle({
-                kDialogueOvertureAsset: _kOvertureYarn,
-              }),
-              onDecisions: (_) {},
-              child: const ColoredBox(color: Color(0xFF101014)),
+      await _pumpDialogueGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        child: OvertureDialogueOverlay(
+          game: _minimalGame(),
+          pendingOvertures: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.embassy,
             ),
-          ),
+          ],
+          assetBundle: YarnStringAssetBundle({
+            kDialogueOvertureAsset: kYarnOvertureIntroShort,
+          }),
+          onDecisions: (_) {},
+          child: const ColoredBox(color: Color(0xFF101014)),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
 
       // Collapsed step (first body): intro narrative once + a single Continue
       // option button.
@@ -283,31 +189,28 @@ void main() {
   testWidgets(
     'Intervention combined-step golden: intro narrative stays above the Continue option (#3628)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 800));
       const boundaryKey = ValueKey<String>('intervention_intro_combined_golden');
 
+      await configureGoldenSurface(tester, size: const Size(600, 800));
       await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          home: RepaintBoundary(
-            key: boundaryKey,
-            child: InterventionDialogueOverlay(
-              game: _minimalGame(),
-              prompts: const [
-                InterventionPrompt(
-                  aggressorGpId: 'gp2',
-                  defenderMinorOrTribeId: 'minor1',
-                  interveningGpId: 'gp1',
-                ),
-              ],
-              assetBundle: _StringAssetBundle({
-                kDialogueInterventionAsset: _kInterventionYarn,
-              }),
-              onDecisions: (_) {},
-              child: const ColoredBox(color: Color(0xFF101014)),
-            ),
+        wrapGoldenBoundary(
+          boundaryKey: boundaryKey,
+          center: false,
+          useScaffold: false,
+          child: InterventionDialogueOverlay(
+            game: _minimalGame(),
+            prompts: const [
+              InterventionPrompt(
+                aggressorGpId: 'gp2',
+                defenderMinorOrTribeId: 'minor1',
+                interveningGpId: 'gp1',
+              ),
+            ],
+            assetBundle: YarnStringAssetBundle({
+              kDialogueInterventionAsset: kYarnInterventionCombinedShort,
+            }),
+            onDecisions: (_) {},
+            child: const ColoredBox(color: Color(0xFF101014)),
           ),
         ),
       );

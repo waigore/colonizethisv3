@@ -41,7 +41,7 @@
 // SPEC/ui/components/train-dialog-chrome.md, SPEC/ui/train-military-dialog.md,
 // SPEC/ui/train-naval-dialog.md (`UNIT60001`).
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
@@ -55,6 +55,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/game_fixture.dart';
+import 'support/golden_capture_harness.dart';
 
 /// Canonical golden host viewport for the train dialogs (tall enough to render
 /// the header, resource bar, and the first unit rows without the scroll body
@@ -81,13 +82,11 @@ void _expectEditorialMonocleDarkChrome(WidgetTester tester) {
 }
 
 Widget _host({required Key boundaryKey, required Widget child}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: RepaintBoundary(key: boundaryKey, child: child),
-    ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    center: false,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: child,
   );
 }
 
@@ -224,10 +223,9 @@ void main() {
   }
 
   Future<void> pumpHost(WidgetTester tester, Widget child, Key key) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(_hostViewport);
+    await configureGoldenSurface(tester, size: _hostViewport);
     await tester.pumpWidget(_host(boundaryKey: key, child: child));
-    await tester.pumpAndSettle();
+    await pumpForGolden(tester);
   }
 
   testWidgets(

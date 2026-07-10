@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../widgets/shell/game_top_bar.dart';
 import '../../widgets/shell/game_tab_bar.dart';

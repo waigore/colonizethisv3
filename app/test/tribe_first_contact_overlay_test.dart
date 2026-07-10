@@ -7,35 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-// Mirrors the production `{$var}` interpolation syntax (issue #3463) so the
-// widget test fails if Dart binds Yarn variables without the `$` prefix.
-const _kTestYarn = '''
-title: tribe_first_contact
----
-Scouts return from the New World with word of a people hitherto unknown to thy crown. They name themselves {\$tribeName}, and hold their seat at {\$capitalName}.
--> Continue
-===
-''';
-
-class _StringAssetBundle extends Fake implements AssetBundle {
-  _StringAssetBundle(this._assets);
-
-  final Map<String, String> _assets;
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    final text = _assets[key];
-    if (text == null) throw Exception('missing asset: $key');
-    return text;
-  }
-}
-
-class _ThrowingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    throw Exception('missing asset');
-  }
-}
+import 'support/yarn_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -50,8 +22,8 @@ void main() {
             home: TribeFirstContactOverlay(
               tribeName: 'Maya',
               capitalName: 'Chichen',
-              assetBundle: _StringAssetBundle({
-                kDialogueTribeFirstContactAsset: _kTestYarn,
+              assetBundle: YarnStringAssetBundle({
+                kDialogueTribeFirstContactAsset: kYarnTribeFirstContactHerald,
               }),
               onDismissed: () {},
               child: const Text('underlay'),
@@ -80,8 +52,8 @@ void main() {
             home: TribeFirstContactOverlay(
               tribeName: 'Maya',
               capitalName: 'Chichen',
-              assetBundle: _StringAssetBundle({
-                kDialogueTribeFirstContactAsset: _kTestYarn,
+              assetBundle: YarnStringAssetBundle({
+                kDialogueTribeFirstContactAsset: kYarnTribeFirstContactHerald,
               }),
               onDismissed: () => dismissed++,
               child: const Text('underlay'),
@@ -118,7 +90,7 @@ void main() {
           home: TribeFirstContactOverlay(
             tribeName: 'Maya',
             capitalName: 'Chichen',
-            assetBundle: _ThrowingAssetBundle(),
+            assetBundle: YarnThrowingAssetBundle(),
             onDismissed: () => dismissed = true,
             child: const Text('underlay'),
           ),

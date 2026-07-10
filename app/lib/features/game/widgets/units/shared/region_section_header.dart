@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../../config/themes.dart';
 import '../../../../../widgets/ct_section_label.dart';
 import '../../../../../widgets/ct_spacing.dart';

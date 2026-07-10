@@ -76,12 +76,20 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedTradeScreenFile(relativePath)) {
+      final visitor = _TradeScreenHostVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
-      'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport or '
-      'widgetbook use-case scaffolding found.',
+      'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
+      'widgetbook use-case, or trade-screen host scaffolding found.',
     );
     return 0;
   }
@@ -98,7 +106,9 @@ int runCheckAppTestNoDuplicateScaffolding(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
     'app/test/support/min_viewport_harness.dart. '
     'Widgetbook: use findWidgetbookUseCase from '
-    'app/test/support/widgetbook_test_harness.dart.',
+    'app/test/support/widgetbook_test_harness.dart. '
+    'Trade: use buildTradeTestGame / pumpTradeScreen* from '
+    'app/test/support/trade_screen_test_support.dart.',
   );
   return 1;
 }
@@ -126,6 +136,18 @@ bool _isGovernedMinViewportFile(String relativePath) {
   }
   if (relativePath.endsWith('.g.dart') ||
       relativePath.endsWith('.mocks.dart')) {
+    return false;
+  }
+  return true;
+}
+
+/// True for `app/test/trade_screen_*_test.dart` (Refs #3952), excluding support.
+bool _isGovernedTradeScreenFile(String relativePath) {
+  final name = p.basename(relativePath);
+  if (!name.startsWith('trade_screen_') || !name.endsWith('_test.dart')) {
+    return false;
+  }
+  if (relativePath.startsWith('app/test/support/')) {
     return false;
   }
   return true;
@@ -222,6 +244,45 @@ class _WidgetbookUseCaseVisitor extends RecursiveAstVisitor<void> {
       _report(
         node.name.offset,
         'function "_useCase" duplicates widgetbook_test_harness.dart',
+      );
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+class _TradeScreenHostVisitor extends RecursiveAstVisitor<void> {
+  _TradeScreenHostVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  static const Set<String> _forbiddenNames = {
+    '_buildGame',
+    '_buildGameForTradeScreen',
+    '_buildStandaloneGame',
+    '_pumpTradeScreen',
+    '_pumpTradeScreenObserveMode',
+    '_pumpTradeScreenStandalone',
+    '_pumpDealBookTab',
+  };
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (_forbiddenNames.contains(name)) {
+      _report(
+        node.name.offset,
+        'function "$name" duplicates trade_screen_test_support.dart',
       );
     }
     super.visitFunctionDeclaration(node);

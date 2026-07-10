@@ -4,17 +4,18 @@
 
 library;
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
-import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 
 part 'production_labour_section_tier_row.dart';
+part 'production_labour_section_tier_row_controls.dart';
 
 /// Labour controls section appended to the Workers section of the
 /// Available subpanel. Renders one row per worker tier with recruit/train

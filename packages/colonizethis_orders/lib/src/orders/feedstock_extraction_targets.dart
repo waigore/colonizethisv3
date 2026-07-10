@@ -72,11 +72,7 @@ Set<String> regimentBuildInputFeedstockExtractionResourceIds(
   final player = game.playerById(playerId);
   if (player == null) return const <String>{};
   if (regimentCountForPlayer(game, playerId) != 0) return const <String>{};
-  final ow = oldWorldProvinceCountOwnedBy(game, playerId);
-  if (ow < 2 || !isBelowObserverConquestQuota(ow)) return const <String>{};
-  if (_newWorldProvinceCountOwnedBy(game, playerId) != 0) {
-    return const <String>{};
-  }
+  if (!isBelowQuotaZeroNwSeller(game, playerId)) return const <String>{};
   final missingInputs = <CommodityId>{
     for (final entry
         in RegimentEconomyCatalog.peasantLevies.buildInputs.entries)
@@ -108,6 +104,18 @@ bool _ownsUnimprovedFeedstockResourceTile(
     if (ws.tileState.improvementLevel(entry.key) < 1) return true;
   }
   return false;
+}
+
+Set<String> _feedstockExtractionWhenOwnsUnimprovedTile(
+  Game game,
+  String playerId,
+  Set<String> feedstock,
+) {
+  if (feedstock.isEmpty) return const <String>{};
+  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
+    return const <String>{};
+  }
+  return feedstock;
 }
 
 /// Level-0 `build_improvement` material cost (`{lumber: 1, castIron: 1}`,
@@ -178,10 +186,7 @@ Set<String> supplierImprovementInputFeedstockExtractionResourceIds(
   if (neededInputs.isEmpty) return const <String>{};
   final feedstock = feedstockCommodityIdsForRecipeOutputs(neededInputs);
   if (feedstock.isEmpty) return const <String>{};
-  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
-    return const <String>{};
-  }
-  return feedstock;
+  return _feedstockExtractionWhenOwnsUnimprovedTile(game, playerId, feedstock);
 }
 
 /// Resource ids a below-quota zero-NW lock-recovery **seller** should extract so
@@ -206,11 +211,7 @@ Set<String> sellerImprovementInputFeedstockExtractionResourceIds(
   String playerId,
 ) {
   final feedstock = sellerImprovementInputFeedstockResourceIds(game, playerId);
-  if (feedstock.isEmpty) return const <String>{};
-  if (!_ownsUnimprovedFeedstockResourceTile(game, playerId, feedstock)) {
-    return const <String>{};
-  }
-  return feedstock;
+  return _feedstockExtractionWhenOwnsUnimprovedTile(game, playerId, feedstock);
 }
 
 /// The production-recipe feedstock commodities (`timber` for `lumber`;

@@ -9,12 +9,13 @@ import 'package:path/path.dart' as p;
 /// and the phase-plan null fallback (`phasePlan != null ? … : … ? 1.0 : 0.0`)
 /// under `packages/colonizethis_ai/lib/**` outside the canonical helper file.
 /// Planner code MUST call `colonialPressureScaleFromWeight` from
-/// `planning_helpers.dart` instead.
+/// `planning_weight_scale.dart` instead.
 
 const _aiLibRelative = 'packages/colonizethis_ai/lib';
 
-const _allowedRelative =
-    'packages/colonizethis_ai/lib/src/planning/planning_helpers.dart';
+const _allowedRelatives = <String>{
+  'packages/colonizethis_ai/lib/src/planning/planning_weight_scale.dart',
+};
 
 final RegExp _inlineColonialPressureFallback = RegExp(
   r'\?\s*\([^)]+\?\s*1\.0\s*:\s*0\.0\s*\)',
@@ -39,11 +40,13 @@ int runCheckAiDedupColonialPressureScale(
     return 1;
   }
 
-  final allowedPath = p.normalize(p.join(root, _allowedRelative));
+  final allowedPaths = {
+    for (final rel in _allowedRelatives) p.normalize(p.join(root, rel)),
+  };
   final violations = <String>[];
   for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    if (p.normalize(entity.path) == allowedPath) continue;
+    if (allowedPaths.contains(p.normalize(entity.path))) continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
     final match = _inlineColonialPressureFallback.firstMatch(content);
@@ -61,7 +64,7 @@ int runCheckAiDedupColonialPressureScale(
   logE(
     'check_ai_dedup_colonial_pressure_scale: found ${violations.length} '
     'inline colonial-pressure fallback(s) in $_aiLibRelative. Use '
-    '`colonialPressureScaleFromWeight` from planning_helpers.dart instead.',
+    '`colonialPressureScaleFromWeight` from planning_weight_scale.dart (via planning_helpers.dart barrel) instead.',
   );
   for (final v in violations) {
     logE(' - $v');

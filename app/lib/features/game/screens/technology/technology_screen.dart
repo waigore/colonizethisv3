@@ -6,17 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/ct_top_bar.dart';
-import '../../../../widgets/strict_asset_icon.dart';
+import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import '../../widgets/technology/tech_tree_widget.dart';
 import '../../widgets/technology/technology_panel.dart';
+
+part 'technology_screen_top_bar.dart';
+part 'technology_screen_body.dart';
 
 /// Full-screen Technology screen with two tabs: Research Slots and Tech Tree.
 ///
@@ -36,8 +38,7 @@ class TechnologyScreen extends ConsumerStatefulWidget {
   /// Localized back-button label rendered immediately after the chevron on
   /// the dark-theme `CtTopBar`. SPEC requires the literal `"Map"` so the
   /// affordance reads `"← Map"`.
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String topBarBackLabel = 'Map';
+  static const String topBarBackLabel = GameFeatureScreenTopBar.backLabel;
 
   /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
   /// literal `"Technology"` (Cinzel display font is configured at the
@@ -69,8 +70,6 @@ class TechnologyScreen extends ConsumerStatefulWidget {
   ConsumerState<TechnologyScreen> createState() => _TechnologyScreenState();
 }
 
-enum _TechnologyTab { slots, tree }
-
 class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
   _TechnologyTab _tab = _TechnologyTab.slots;
 
@@ -84,15 +83,10 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
     final currentOrders = ref.watch(currentOrdersProvider);
     return CtGameFeatureScreenShell(
       game: widget.game,
-      topBar: CtTopBar(
+      topBar: GameFeatureScreenTopBar.build(
         key: TechnologyScreen.topBarKey,
         title: TechnologyScreen.topBarTitle,
-        backButtonLabel: TechnologyScreen.topBarBackLabel,
-        icon: const StrictAssetIcon(
-          assetPath: TechnologyScreen.topBarIconAsset,
-          width: 18,
-          height: 18,
-        ),
+        iconAsset: TechnologyScreen.topBarIconAsset,
         trailing: _TechnologyTabToggle(
           selected: _tab,
           onSelect: _select,
@@ -124,148 +118,5 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         }
       },
     );
-  }
-}
-
-/// Slots / Tree toggle for the trailing slot of the technology top bar.
-///
-/// Implements the mockup `.tab-row` rule with two non-Material chip buttons
-/// painted in the dark editorial-monocle palette. Selected chip uses
-/// `--accent` border + accent-tinted background; unselected uses `--border`
-/// + transparent background. No Material `Chip` / `ChoiceChip` /
-/// `ToggleButtons` per the catalog ban.
-class _TechnologyTabToggle extends StatelessWidget {
-  const _TechnologyTabToggle({required this.selected, required this.onSelect});
-
-  final _TechnologyTab selected;
-  final void Function(_TechnologyTab next) onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        _TechnologyTabChip(
-          key: TechnologyScreen.slotsToggleKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          label: 'Slots',
-          selected: selected == _TechnologyTab.slots,
-          onTap: () => onSelect(_TechnologyTab.slots),
-        ),
-        const SizedBox(width: 6),
-        _TechnologyTabChip(
-          key: TechnologyScreen.treeToggleKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          label: 'Tree',
-          selected: selected == _TechnologyTab.tree,
-          onTap: () => onSelect(_TechnologyTab.tree),
-        ),
-      ],
-    );
-  }
-}
-
-class _TechnologyTabChip extends StatelessWidget {
-  const _TechnologyTabChip({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  static const double _verticalPadding = 4;
-  static const double _horizontalPadding = 10;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle base =
-        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final Color borderColor = selected
-        ? EditorialMonoclePalette.accent
-        : EditorialMonoclePalette.border;
-    final Color labelColor = selected
-        ? EditorialMonoclePalette.accentBright
-        : EditorialMonoclePalette.muted;
-    final Color backgroundColor = selected
-        ? EditorialMonoclePalette.accent.withValues(alpha: 0.18)
-        : Colors.transparent;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(
-              horizontal: _horizontalPadding,
-              vertical: _verticalPadding,
-            ),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              border: Border.all(color: borderColor, width: 1),
-            ),
-            child: Text(
-              label,
-              style: base.copyWith(
-                color: labelColor,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                letterSpacing: 0.04,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SlotsBody extends StatelessWidget {
-  const _SlotsBody({
-    required this.game,
-    required this.player,
-    this.currentOrders = const Orders(),
-    this.onOrdersChanged,
-  });
-
-  final Game game;
-  final Player player;
-  final Orders currentOrders;
-  final void Function(Orders orders)? onOrdersChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(CtSpacing.l),
-      child: TechnologyPanel(
-        game: game,
-        player: player,
-        currentOrders: currentOrders,
-        onOrdersChanged: onOrdersChanged,
-      ),
-    );
-  }
-}
-
-class _TreeBody extends StatelessWidget {
-  const _TreeBody({required this.game, required this.player});
-
-  final Game game;
-  final Player player;
-
-  @override
-  Widget build(BuildContext context) {
-    return TechTreeWidget(game: game, player: player);
   }
 }

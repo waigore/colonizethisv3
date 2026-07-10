@@ -21,6 +21,20 @@ import 'dart:io' show Directory, File, FileSystemEntity;
 
 import 'package:colonizethis_test/test.dart';
 
+/// Reads a library file plus any `part` files it declares (Dart 3 library
+/// unit). Used by static source-contract tests after `part` extractions.
+String _libraryUnitSource(String libraryRelPath) {
+  final libraryFile = File(libraryRelPath);
+  final librarySource = libraryFile.readAsStringSync();
+  final dir = libraryFile.parent.path;
+  final partRegex = RegExp(r"^\s*part\s+'([^']+)';", multiLine: true);
+  final partSources = partRegex
+      .allMatches(librarySource)
+      .map((m) => File('$dir/${m.group(1)!}').readAsStringSync())
+      .join('\n');
+  return '$librarySource\n$partSources';
+}
+
 void main() {
   group('Refs #2914 S1: debug console scrim uses EditorialMonoclePalette', () {
     test(
@@ -34,7 +48,7 @@ void main() {
         isTrue,
         reason: 'fixture file must exist at $relativePath',
       );
-      final String source = file.readAsStringSync();
+      final String source = _libraryUnitSource(relativePath);
 
       expect(
         source.contains('EditorialMonoclePalette.dialogScrim'),

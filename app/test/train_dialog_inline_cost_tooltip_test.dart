@@ -22,7 +22,7 @@ import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_h
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -363,6 +363,9 @@ void main() {
         final String chromeUnitRow = File(
           'lib/features/game/widgets/train/train_dialog_chrome_unit_row.dart',
         ).readAsStringSync();
+        final String chromeUnitRowCost = File(
+          'lib/features/game/widgets/train/train_dialog_chrome_unit_row_cost.dart',
+        ).readAsStringSync();
         // Refs #3686: the military/naval cost rows (incl. the inline cost
         // segments) are now rendered by the shared commodity-cost base, so the
         // single `TrainDialogInlineCost` reference lives there rather than in
@@ -370,8 +373,8 @@ void main() {
         final String commodityCostBase = File(
           'lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart',
         ).readAsStringSync();
-        final String commodityCostWidgets = File(
-          'lib/features/game/widgets/train/train_commodity_cost_dialog_base_widgets.dart',
+        final String commodityCostUnitRow = File(
+          'lib/features/game/widgets/train/train_commodity_cost_dialog_base_unit_row.dart',
         ).readAsStringSync();
 
         expect(
@@ -393,15 +396,16 @@ void main() {
         );
         expect(
           chrome.contains('class TrainDialogInlineCost') ||
-              chromeUnitRow.contains('class TrainDialogInlineCost'),
+              chromeUnitRow.contains('class TrainDialogInlineCost') ||
+              chromeUnitRowCost.contains('class TrainDialogInlineCost'),
           isTrue,
           reason:
               'TrainDialogInlineCost must be the single shared cost segment in '
-              'train_dialog_chrome.dart (or its unit-row part).',
+              'train_dialog_chrome.dart (or its unit-row part files).',
         );
         expect(
           commodityCostBase.contains('TrainDialogInlineCost') ||
-              commodityCostWidgets.contains('TrainDialogInlineCost'),
+              commodityCostUnitRow.contains('TrainDialogInlineCost'),
           isTrue,
         );
       },

@@ -27,107 +27,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _minorId = 'minor1';
-const String _owMinorProvince = 'oldWorld|minor1';
-const String _owHomeProvince = 'oldWorld|gp1_0';
-
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  _owHomeProvince,
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-const _embassyOverture = OvertureState(
-  gpId: _nationId,
-  targetId: _minorId,
-  stage: OvertureStage.embassy,
-  sinceTurn: 0,
-);
-
-/// Builds an EXPAND below-quota scenario where:
-/// - gp1 owns 7 OW provinces with a single invadable minor (forces
-///   `needRegimentsToExpand` because `regimentCount == 0`).
-/// - gp1's home army has no regiment unit ids so `regimentCount == 0`
-///   and `forceRegimentRebuild` triggers in `_appendEconomyBuildOrders`.
-/// - gp1's treasury is well above the cheapest regiment build cost so
-///   the build planner can actually pick a regiment.
-/// - WorldMarketState has integer prices so the treasury planner's
-///   per-bid clamp resolves a non-null effective price for fabric.
-Game _scenarioGame({
-  required int treasury,
-  required Stockpile stockpile,
-}) {
-  return Game(
-    id: 'g-3122-orchestrator-pending-cost',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 30),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in _gp1OwProvincesBelowQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _owMinorProvince,
-            regionId: 'oldWorld',
-            ownerId: _minorId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      armies: const [
-        // Empty regiment ids → regimentCount == 0 →
-        // forceRegimentRebuild fires under expand quota pressure.
-        Army(
-          id: 'home_a',
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owHomeProvince,
-          regimentUnitIds: <String>[],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'napoleon',
-        capitalProvinceId: _owHomeProvince,
-        stockpile: stockpile,
-        workerPool: const WorkerPool(peasants: 5),
-        treasury: treasury,
-      ),
-    ],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor One'),
-    ],
-    overtureStates: const [_embassyOverture],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    ],
-    worldMarketState: WorldMarketState.withDefaultPrices(const {
-      'timber': 20,
-      'iron': 20,
-      // Fabric price (10) is strictly below the recipe's input cost
-      // when valued at the wool price (50), so the F3 price gate in
-      // `runTreasuryPlanner` admits a fabric bid for the deficit.
-      'fabric': 10,
-      'wool': 50,
-      'cotton': 50,
-    }),
-  );
-}
+const String _nationId = kOrchestratorGp1NationId;
+const String _minorId = kOrchestratorMinorId;
+const String _owMinorProvince = kOrchestratorOwMinorProvince;
+const String _owHomeProvince = kOrchestratorOwHomeProvince;
 
 const AIConfig _aiConfig = AIConfig(
   leaderId: 'napoleon',
@@ -197,7 +102,10 @@ void main() {
           final stockpile = const Stockpile()
               .applyDelta('wool', 4)
               .applyDelta('fabric', 1);
-          final game = _scenarioGame(treasury: 4000, stockpile: stockpile);
+          final game = buildOrchestratorPendingCostTradeScenarioGame(
+            treasury: 4000,
+            stockpile: stockpile,
+          );
           const peasantBuild = BuildUnitOrder(
             unitType: 'peasant_levies',
             isMilitary: true,
@@ -285,7 +193,7 @@ void main() {
           // Tiny treasury so no bid budget remains for any commodity;
           // every recomputed bid is clamped to zero and the recomputed
           // list cannot equal the mock list.
-          final game = _scenarioGame(
+          final game = buildOrchestratorPendingCostTradeScenarioGame(
             treasury: 0,
             stockpile: const Stockpile().applyDelta('timber', 80),
           );
@@ -341,7 +249,7 @@ void main() {
               priority: 5,
             ),
           ];
-          final game = _scenarioGame(
+          final game = buildOrchestratorPendingCostTradeScenarioGame(
             treasury: 0,
             stockpile: const Stockpile(),
           );

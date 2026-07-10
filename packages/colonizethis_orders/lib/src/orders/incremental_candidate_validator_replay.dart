@@ -23,10 +23,38 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_validators.dart';
 import 'order_validator_factory.dart';
+import 'projected_economy_prefix_replay.dart';
 import 'unit_type_helpers.dart';
 
 extension IncrementalCandidateValidatorPrefixReplay
     on IncrementalCandidateValidator {
+  bool _acceptPlayerProjectedResourceOrder<TOrder, V>({
+    required Player player,
+    required List<TOrder> existingOrders,
+    required bool? prefixReplaySucceeded,
+    required ProjectedResourceLedgers? cachedLedgers,
+    required void Function(bool value) setPrefixReplaySucceeded,
+    required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
+    required V Function(ProjectedResourceLedgers ledgers) createValidator,
+    required ProjectedResourceLedgers Function(V validator) readLedgers,
+    required OrderValidationResult Function(V validator, TOrder order) validate,
+    required TOrder candidate,
+  }) =>
+      acceptProjectedResourcePrefixCandidate(
+        prefixReplaySucceeded: prefixReplaySucceeded,
+        cachedLedgers: cachedLedgers,
+        setPrefixReplaySucceeded: setPrefixReplaySucceeded,
+        setCachedLedgers: setCachedLedgers,
+        existingOrders: existingOrders,
+        createPrefixValidator: () =>
+            createValidator(projectedResourceLedgersFromPlayer(player)),
+        validate: validate,
+        readLedgers: readLedgers,
+        createCandidateValidator: (ledgers) =>
+            createValidator(copiedProjectedResourceLedgers(ledgers)),
+        candidate: candidate,
+      );
+
   /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
   /// worker orders in [basePrefix] (Refs #2692 S7,
   /// SPEC/program/order-suggestions.md § Recruit worker orders).
@@ -38,93 +66,70 @@ extension IncrementalCandidateValidatorPrefixReplay
   bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    if (cache.recruitWorkerPrefixReplaySucceeded == false) {
-      return false;
-    }
-    if (cache.postRecruitWorkerPrefixEconomy == null) {
-      final prefixValidator = createProjectedRecruitWorkerValidator(
-        player: player,
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-        workerPool: player.workerPool,
-      );
-      final existing =
-          basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
-          const <RecruitWorkerOrder>[];
-      for (final order in existing) {
-        final result = prefixValidator.validate(order, previousRejected: false);
-        if (!result.isAccepted) {
-          cache.recruitWorkerPrefixReplaySucceeded = false;
-          return false;
-        }
-      }
-      cache.recruitWorkerPrefixReplaySucceeded = true;
-      cache.postRecruitWorkerPrefixEconomy = (
-        stockpile: prefixValidator.stockpile,
-        treasury: prefixValidator.treasury,
-        workers: prefixValidator.workers,
-      );
-    }
-    final snap = cache.postRecruitWorkerPrefixEconomy!;
-    final candidateValidator = createProjectedRecruitWorkerValidator(
+    final existing =
+        basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
+        const <RecruitWorkerOrder>[];
+    return _acceptPlayerProjectedResourceOrder(
       player: player,
-      stockpile: Stockpile(quantities: snap.stockpile.copyQuantities()),
-      treasury: snap.treasury,
-      workerPool: snap.workers,
+      existingOrders: existing,
+      prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
+      cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
+      setPrefixReplaySucceeded: (v) {
+        cache.recruitWorkerPrefixReplaySucceeded = v;
+      },
+      setCachedLedgers: (ledgers) {
+        cache.postRecruitWorkerPrefixEconomy = ledgers;
+      },
+      createValidator: (ledgers) => createProjectedRecruitWorkerValidator(
+        player: player,
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      candidate: candidate,
     );
-    return candidateValidator
-        .validate(candidate, previousRejected: false)
-        .isAccepted;
   }
 
   bool isBuildAccepted(BuildUnitOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    if (cache.buildPrefixReplaySucceeded == false) {
-      return false;
-    }
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    if (cache.postBuildPrefixEconomy == null) {
-      final prefixValidator = createProjectedBuildValidator(
+    return _acceptPlayerProjectedResourceOrder(
+      player: player,
+      existingOrders: builds,
+      prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
+      cachedLedgers: cache.postBuildPrefixEconomy,
+      setPrefixReplaySucceeded: (v) {
+        cache.buildPrefixReplaySucceeded = v;
+      },
+      setCachedLedgers: (ledgers) {
+        cache.postBuildPrefixEconomy = ledgers;
+      },
+      createValidator: (ledgers) => createProjectedBuildValidator(
         game: game,
         player: player,
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-        workerPool: player.workerPool,
-      );
-      for (final existing in builds) {
-        final result = prefixValidator.validate(
-          existing,
-          previousRejected: false,
-        );
-        if (!result.isAccepted) {
-          cache.buildPrefixReplaySucceeded = false;
-          return false;
-        }
-      }
-      cache.buildPrefixReplaySucceeded = true;
-      cache.postBuildPrefixEconomy = (
-        stockpile: prefixValidator.stockpile,
-        treasury: prefixValidator.treasury,
-        workers: prefixValidator.workers,
-      );
-    }
-    final snap = cache.postBuildPrefixEconomy!;
-    final candidateStockpile = Stockpile(
-      quantities: snap.stockpile.copyQuantities(),
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      candidate: candidate,
     );
-    final candidateValidator = createProjectedBuildValidator(
-      game: game,
-      player: player,
-      stockpile: candidateStockpile,
-      treasury: snap.treasury,
-      workerPool: snap.workers,
-    );
-    return candidateValidator
-        .validate(candidate, previousRejected: false)
-        .isAccepted;
   }
 
   bool isWorkAccepted(WorkOrder candidate) {
@@ -193,7 +198,11 @@ extension IncrementalCandidateValidatorPrefixReplay
         .result;
   }
 
-  ({bool ok, OrderValidationResult? reject, DiplomaticOrderValidator? validator})
+  ({
+    bool ok,
+    OrderValidationResult? reject,
+    DiplomaticOrderValidator? validator,
+  })
   _prepareDiplomaticCandidateValidator({
     String? playerNotFoundReason,
     String? prefixReplayFailedReason,
@@ -236,9 +245,7 @@ extension IncrementalCandidateValidatorPrefixReplay
           cache.diplomaticPrefixReplaySucceeded = false;
           return (
             ok: false,
-            reject: prefixReplayFailedReason == null
-                ? null
-                : result.result,
+            reject: prefixReplayFailedReason == null ? null : result.result,
             validator: null,
           );
         }
@@ -268,31 +275,42 @@ extension IncrementalCandidateValidatorProjection
     if (cached != null) {
       return cached;
     }
-    final buildValidator = createProjectedBuildValidator(
-      game: game,
-      player: player,
-      stockpile: player.stockpile,
-      treasury: player.treasury,
-      workerPool: player.workerPool,
-    );
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    for (final existing in builds) {
-      final result = buildValidator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) {
-        final fallback = (
-          stockpile: player.stockpile,
-          treasury: player.treasury,
-        );
-        cache.economyAfterBuildOrders = fallback;
-        return fallback;
-      }
-    }
-    final projected = (
-      stockpile: buildValidator.stockpile,
-      treasury: buildValidator.treasury,
+    bool? prefixReplaySucceeded;
+    ProjectedResourceLedgers? cachedLedgers;
+    final snap = ensureProjectedResourcePrefixReplay<BuildUnitOrder,
+        BuildOrderValidator>(
+      prefixReplaySucceeded: prefixReplaySucceeded,
+      cachedLedgers: cachedLedgers,
+      setPrefixReplaySucceeded: (value) => prefixReplaySucceeded = value,
+      setCachedLedgers: (ledgers) => cachedLedgers = ledgers,
+      existingOrders: builds,
+      createPrefixValidator: () => createProjectedBuildValidator(
+        game: game,
+        player: player,
+        stockpile: player.stockpile,
+        treasury: player.treasury,
+        workerPool: player.workerPool,
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
     );
+    if (snap == null) {
+      final fallback = (
+        stockpile: player.stockpile,
+        treasury: player.treasury,
+      );
+      cache.economyAfterBuildOrders = fallback;
+      return fallback;
+    }
+    final projected = (stockpile: snap.stockpile, treasury: snap.treasury);
     cache.economyAfterBuildOrders = projected;
     return projected;
   }
@@ -337,9 +355,7 @@ extension IncrementalCandidateValidatorProjection
     final baseDev = Set<String>.from(_devExclusiveTiles());
     if (works.isEmpty) {
       final proj = (
-        stockpile: Stockpile(
-          quantities: afterBuild.stockpile.copyQuantities(),
-        ),
+        stockpile: Stockpile(quantities: afterBuild.stockpile.copyQuantities()),
         treasury: afterBuild.treasury,
         seenUnitIds: <String>{},
         devExclusive: baseDev,

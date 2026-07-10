@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

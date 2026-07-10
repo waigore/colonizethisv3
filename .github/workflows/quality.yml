@@ -256,7 +256,7 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -e
-          cd app
+          cd packages/colonizethis_app_l10n
           flutter gen-l10n
 
       - name: Compile app entrypoints (Flutter analyze)
@@ -282,7 +282,8 @@ jobs:
           [ -d .pub-cache ] && parts+=(.pub-cache)
           [ -d .dart_tool ] && parts+=(.dart_tool)
           [ -d app/.dart_tool ] && parts+=(app/.dart_tool)
-          [ -d app/lib/l10n ] && parts+=(app/lib/l10n)
+          [ -d packages/colonizethis_app_l10n/.dart_tool ] && parts+=(packages/colonizethis_app_l10n/.dart_tool)
+          [ -d packages/colonizethis_app_l10n/lib/l10n ] && parts+=(packages/colonizethis_app_l10n/lib/l10n)
           if [ ${#parts[@]} -eq 0 ]; then
             echo "Nothing to pack"
             exit 1
@@ -365,16 +366,16 @@ jobs:
         run: |
           set -euo pipefail
           rels=(
-            app/lib/l10n/app_localizations_en.dart
-            app/lib/l10n/app_localizations_contract.dart
-            app/lib/l10n/app_localizations_delegate.dart
-            app/lib/l10n/l10n.dart
-            app/lib/l10n/app_localizations_lookup.dart
-            app/lib/l10n/app_localizations_en_part1.dart
-            app/lib/l10n/app_localizations_en_part2.dart
-            app/lib/l10n/app_localizations_en_part3.dart
-            app/lib/l10n/app_localizations_en_part4.dart
-            app/lib/l10n/app_localizations_en_part5.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_contract.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_delegate.dart
+            packages/colonizethis_app_l10n/lib/l10n/l10n.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_lookup.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part1.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part2.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part3.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part4.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part5.dart
           )
           for f in "${rels[@]}"; do
             test -f "$f" || { echo "missing tracked l10n file: $f"; exit 1; }
@@ -756,7 +757,7 @@ jobs:
       - name: App flutter gen-l10n (workspace parity)
         run: |
           set -e
-          cd app
+          cd packages/colonizethis_app_l10n
           flutter gen-l10n
 
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
@@ -827,8 +828,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -e
-          if [ -d app ]; then
-            cd app
+          if [ -d packages/colonizethis_app_l10n ]; then
+            cd packages/colonizethis_app_l10n
             flutter gen-l10n
             if [ -f lib/l10n/gen/untranslated.json ]; then
               content=$(cat lib/l10n/gen/untranslated.json | tr -d '[:space:]')

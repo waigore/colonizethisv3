@@ -2,8 +2,8 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../l10n/l10n.dart';
 import '../province_overlay/sea_zone_name_resolver.dart';
 import '../units/shared/region_labels.dart';
 import 'split_entity_dialog.dart';

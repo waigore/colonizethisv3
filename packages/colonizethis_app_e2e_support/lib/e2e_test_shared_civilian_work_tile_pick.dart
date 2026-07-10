@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/config/ct_e2e.dart'
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart'
     show kCtE2ESelectFirstValidWorkTileKey;
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,0 +1,51 @@
+// Table-driven BuildOrderValidator scenarios (Refs #3949 wave 3).
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/validators/stateful_validator.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_test/test.dart';
+import '../scenario_runner.dart';
+
+void bovRunValidateRejectedWhenPreviousRejected() {
+  final game = TestFixtures.gameWithSingleOwnedProvince(id: 'g1');
+  final validator = BuildOrderValidator(game: game, player: game.players.first);
+  expect(validator, isA<StatefulValidator>());
+  final order = BuildUnitOrder(
+    unitType: kUnitTypeBuilder,
+    isMilitary: false,
+    spawnProvinceId: 'oldWorld|p1',
+  );
+  final result = validator.validate(order, previousRejected: true);
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, 'Previous invalid');
+}
+
+void bovRunCivilianBuildRejectedNoCapitalTile() {
+  final game = TestFixtures.gameWithSingleOwnedProvince(
+    id: 'g2',
+    treasury: 999,
+  );
+  final validator = BuildOrderValidator(game: game, player: game.players.first);
+  final order = BuildUnitOrder(
+    unitType: kUnitTypeBuilder,
+    isMilitary: false,
+    spawnProvinceId: 'oldWorld|p1',
+  );
+
+  final result = validator.validate(order, previousRejected: false);
+  expect(result.status, OrderValidationStatus.rejected);
+  expect(result.reason, 'No capital tile to spawn civilian unit');
+}
+
+/// Canonical scenarios for BuildOrderValidator.
+List<RunnableScenario> buildOrderValidatorScenarios() => [
+  RunnableScenario(
+    label: 'validate returns rejected when previousRejected is true',
+    run: bovRunValidateRejectedWhenPreviousRejected,
+  ),
+  RunnableScenario(
+    label: 'civilian build is rejected when capital tile cannot be resolved',
+    run: bovRunCivilianBuildRejectedNoCapitalTile,
+  ),
+];
