@@ -5,22 +5,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Data-driven expectations for [LockRecoveryMinorBidsScenario] rows.
+// dart format off
 class LockRecoveryMinorBidsExpectation {
-  const LockRecoveryMinorBidsExpectation({
-    this.isEmpty,
-    this.minorIds,
-    this.urgentGrainBidPerMinor,
-  });
+  const LockRecoveryMinorBidsExpectation({this.isEmpty, this.minorIds, this.urgentGrainBidPerMinor});
 
   final bool? isEmpty;
   final List<String>? minorIds;
   final bool? urgentGrainBidPerMinor;
 }
 
-void assertLockRecoveryMinorBidsExpectation(
-  Map<String, List<TradeOrder>> bids,
-  LockRecoveryMinorBidsExpectation expectation,
-) {
+void assertLockRecoveryMinorBidsExpectation(Map<String, List<TradeOrder>> bids, LockRecoveryMinorBidsExpectation expectation) {
   if (expectation.isEmpty != null) {
     if (expectation.isEmpty!) {
       expect(bids, isEmpty);
@@ -41,3 +35,4 @@ void assertLockRecoveryMinorBidsExpectation(
     }
   }
 }
+// dart format on

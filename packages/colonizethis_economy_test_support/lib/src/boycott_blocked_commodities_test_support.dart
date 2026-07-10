@@ -1,3 +1,4 @@
+// dart format off
 // Shared fixtures for `boycottedColonySellableCommodityIds` tests (Refs #3758
 // S7/R12; #3831 Phase 4 hoisting from near-cap economy test files).
 
@@ -14,27 +15,15 @@ const boycottColonyTribeProvinceId = 'newWorld|t1';
 
 /// Builds a minimal game with a one-tile New-World tribe `t1` whose developed
 /// tile produces furs so `computeNonGreatPowerAutoOffers` emits a furs offer.
-Game gameWithColonyTribeBoycottTest({
-  List<ColonyState> colonyStates = const [],
-  List<BoycottState> boycottStates = const [],
-}) {
-  final tileState = TileMapState()
-      .setImprovement('newWorld|t1|0|0', 1)
-      .setRoadLevel('newWorld|t1|0|0', 1);
+Game gameWithColonyTribeBoycottTest({List<ColonyState> colonyStates = const [], List<BoycottState> boycottStates = const []}) {
+  final tileState = TileMapState().setImprovement('newWorld|t1|0|0', 1).setRoadLevel('newWorld|t1|0|0', 1);
   return Game(
     id: 'g_boycott_test',
     worldState: WorldState(
       turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(
-        provinces: [
-          Province(
-            id: boycottColonyTribeProvinceId,
-            regionId: boycottColonyTribeNwRegionId,
-            ownerId: 't1',
-            townDevelopmentLevel: 1,
-          ),
-        ],
+        provinces: [Province(id: boycottColonyTribeProvinceId, regionId: boycottColonyTribeNwRegionId, ownerId: 't1', townDevelopmentLevel: 1)],
       ),
       tileState: tileState,
     ),
@@ -50,24 +39,14 @@ Game gameWithColonyTribeBoycottTest({
 
 /// Tile maps for [gameWithColonyTribeBoycottTest] (single furs tile in `t1`).
 Map<String, TileMapResult> tileMapsForBoycottColonyTribeTest() => {
-  boycottColonyTribeNwRegionId: nonGpProvMap(
-    boycottColonyTribeProvinceId,
-    1,
-    1,
-    const [
-      [Resource.furs],
-    ],
-  ),
+  boycottColonyTribeNwRegionId: nonGpProvMap(boycottColonyTribeProvinceId, const [
+    [Resource.furs],
+  ]),
 };
 
 /// Minimal topology for boycott colony-tribe fixtures.
 MapTopology topologyForBoycottColonyTribeTest() => const MapTopology(
-  nodes: [
-    TopologyNode(
-      id: 't1',
-      regionId: boycottColonyTribeNwRegionId,
-      type: TopologyNodeType.province,
-    ),
-  ],
+  nodes: [TopologyNode(id: 't1', regionId: boycottColonyTribeNwRegionId, type: TopologyNodeType.province)],
   edges: [],
 );
+// dart format on

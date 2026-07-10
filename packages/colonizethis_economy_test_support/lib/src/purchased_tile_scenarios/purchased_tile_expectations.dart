@@ -1,3 +1,4 @@
+// dart format off
 // Compact purchased-tile index and riches assertions (Refs #3939 phase 3 slice 17).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -7,19 +8,7 @@ import 'package:colonizethis_test/test.dart';
 
 /// Data-driven expectations for [PurchasedTileIndexFromGameScenario] rows.
 class PurchasedTileIndexExpectation {
-  const PurchasedTileIndexExpectation({
-    this.length,
-    this.isEmpty,
-    this.isNotEmpty,
-    this.attributionForTileKeyNull,
-    this.attributionForTileKeysNull,
-    this.attributionsEmpty = false,
-    this.singleAttribution,
-    this.multiAttributions,
-    this.attributionsTileKeysContainAll,
-    this.deterministicIndexRerun = false,
-    this.deterministicRerunTileKey,
-  });
+  const PurchasedTileIndexExpectation({this.length, this.isEmpty, this.isNotEmpty, this.attributionForTileKeyNull, this.attributionForTileKeysNull, this.attributionsEmpty = false, this.singleAttribution, this.multiAttributions, this.attributionsTileKeysContainAll, this.deterministicIndexRerun = false, this.deterministicRerunTileKey});
 
   final int? length;
   final bool? isEmpty;
@@ -35,12 +24,7 @@ class PurchasedTileIndexExpectation {
 }
 
 class PurchasedTileAttributionExpectation {
-  const PurchasedTileAttributionExpectation({
-    required this.tileKey,
-    this.owningGpId,
-    this.sourceFactionId,
-    this.provinceId,
-  });
+  const PurchasedTileAttributionExpectation({required this.tileKey, this.owningGpId, this.sourceFactionId, this.provinceId});
 
   final String tileKey;
   final String? owningGpId;
@@ -48,11 +32,7 @@ class PurchasedTileAttributionExpectation {
   final String? provinceId;
 }
 
-void assertPurchasedTileIndexExpectation(
-  PurchasedTileIndex index,
-  PurchasedTileIndexExpectation expectation, {
-  Game? gameForDeterminismRerun,
-}) {
+void assertPurchasedTileIndexExpectation(PurchasedTileIndex index, PurchasedTileIndexExpectation expectation, {Game? gameForDeterminismRerun}) {
   if (expectation.length != null) {
     expect(index.length, expectation.length);
   }
@@ -63,10 +43,7 @@ void assertPurchasedTileIndexExpectation(
     expect(index.isNotEmpty, expectation.isNotEmpty);
   }
   if (expectation.attributionForTileKeyNull != null) {
-    expect(
-      index.attributionForTileKey(expectation.attributionForTileKeyNull!),
-      isNull,
-    );
+    expect(index.attributionForTileKey(expectation.attributionForTileKeyNull!), isNull);
   }
   if (expectation.attributionForTileKeysNull != null) {
     for (final tileKey in expectation.attributionForTileKeysNull!) {
@@ -77,18 +54,13 @@ void assertPurchasedTileIndexExpectation(
     expect(index.attributions, isEmpty);
   }
   if (expectation.singleAttribution != null) {
-    final attr = index.attributionForTileKey(
-      expectation.singleAttribution!.tileKey,
-    );
+    final attr = index.attributionForTileKey(expectation.singleAttribution!.tileKey);
     expect(attr, isNotNull);
     if (expectation.singleAttribution!.owningGpId != null) {
       expect(attr!.owningGpId, expectation.singleAttribution!.owningGpId);
     }
     if (expectation.singleAttribution!.sourceFactionId != null) {
-      expect(
-        attr!.sourceFactionId,
-        expectation.singleAttribution!.sourceFactionId,
-      );
+      expect(attr!.sourceFactionId, expectation.singleAttribution!.sourceFactionId);
     }
     if (expectation.singleAttribution!.provinceId != null) {
       expect(attr!.provinceId, expectation.singleAttribution!.provinceId);
@@ -111,10 +83,7 @@ void assertPurchasedTileIndexExpectation(
     }
   }
   if (expectation.attributionsTileKeysContainAll != null) {
-    expect(
-      index.attributions.map((a) => a.tileKey).toSet(),
-      containsAll(expectation.attributionsTileKeysContainAll!),
-    );
+    expect(index.attributions.map((a) => a.tileKey).toSet(), containsAll(expectation.attributionsTileKeysContainAll!));
   }
   if (expectation.deterministicIndexRerun) {
     final game = gameForDeterminismRerun;
@@ -124,32 +93,14 @@ void assertPurchasedTileIndexExpectation(
     expect(index.length, first.length);
     expect(first.length, second.length);
     if (expectation.deterministicRerunTileKey != null) {
-      expect(
-        first.attributionForTileKey(expectation.deterministicRerunTileKey!),
-        equals(
-          second.attributionForTileKey(expectation.deterministicRerunTileKey!),
-        ),
-      );
+      expect(first.attributionForTileKey(expectation.deterministicRerunTileKey!), equals(second.attributionForTileKey(expectation.deterministicRerunTileKey!)));
     }
   }
 }
 
 /// Data-driven expectations for [PurchasedTileRichesScenario] rows.
 class PurchasedTileRichesExpectation {
-  const PurchasedTileRichesExpectation({
-    this.indexLength,
-    this.creditsLength,
-    this.creditsEmpty = false,
-    this.treasuryCreditEmpty = false,
-    this.equalsEmpty = false,
-    this.isEmpty,
-    this.singleCredit,
-    this.treasuryCreditByGpId,
-    this.treasuryCreditCloseTo,
-    this.totalTreasuryCredit,
-    this.totalTreasuryCreditCloseTo,
-    this.deterministicRichesRerun = false,
-  });
+  const PurchasedTileRichesExpectation({this.indexLength, this.creditsLength, this.creditsEmpty = false, this.treasuryCreditEmpty = false, this.equalsEmpty = false, this.isEmpty, this.singleCredit, this.treasuryCreditByGpId, this.treasuryCreditCloseTo, this.totalTreasuryCredit, this.totalTreasuryCreditCloseTo, this.deterministicRichesRerun = false});
 
   final int? indexLength;
   final int? creditsLength;
@@ -166,15 +117,7 @@ class PurchasedTileRichesExpectation {
 }
 
 class PurchasedTileRichesCreditExpectation {
-  const PurchasedTileRichesCreditExpectation({
-    this.tileKey,
-    this.owningGpId,
-    this.sourceFactionId,
-    this.commodityId,
-    this.units,
-    this.treasuryDelta,
-    this.treasuryDeltaCloseTo,
-  });
+  const PurchasedTileRichesCreditExpectation({this.tileKey, this.owningGpId, this.sourceFactionId, this.commodityId, this.units, this.treasuryDelta, this.treasuryDeltaCloseTo});
 
   final String? tileKey;
   final String? owningGpId;
@@ -185,14 +128,7 @@ class PurchasedTileRichesCreditExpectation {
   final int? treasuryDeltaCloseTo;
 }
 
-void assertPurchasedTileRichesExpectation(
-  PurchasedTileRichesResult result,
-  PurchasedTileIndex index,
-  Game game,
-  PurchasedTileRichesExpectation expectation, {
-  Map<String, TileMapResult> tileMapByRegion = const {},
-  double richesCashMultiplier = 1.0,
-}) {
+void assertPurchasedTileRichesExpectation(PurchasedTileRichesResult result, PurchasedTileIndex index, Game game, PurchasedTileRichesExpectation expectation, {Map<String, TileMapResult> tileMapByRegion = const {}, double richesCashMultiplier = 1.0}) {
   if (expectation.indexLength != null) {
     expect(index.length, expectation.indexLength);
   }
@@ -237,10 +173,7 @@ void assertPurchasedTileRichesExpectation(
     }
   }
   if (expectation.treasuryCreditByGpId != null) {
-    expect(
-      result.treasuryCreditByGpId,
-      equals(expectation.treasuryCreditByGpId),
-    );
+    expect(result.treasuryCreditByGpId, equals(expectation.treasuryCreditByGpId));
   }
   if (expectation.treasuryCreditCloseTo != null) {
     for (final entry in expectation.treasuryCreditCloseTo!.entries) {
@@ -251,20 +184,13 @@ void assertPurchasedTileRichesExpectation(
     expect(result.totalTreasuryCredit, equals(expectation.totalTreasuryCredit));
   }
   if (expectation.totalTreasuryCreditCloseTo != null) {
-    expect(
-      result.totalTreasuryCredit,
-      equals(expectation.totalTreasuryCreditCloseTo),
-    );
+    expect(result.totalTreasuryCredit, equals(expectation.totalTreasuryCreditCloseTo));
   }
   if (expectation.deterministicRichesRerun) {
-    final r2 = computePurchasedTileRichesCredits(
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-      purchasedTileIndex: index,
-      richesCashMultiplier: richesCashMultiplier,
-    );
+    final r2 = computePurchasedTileRichesCredits(game: game, tileMapByRegion: tileMapByRegion, purchasedTileIndex: index, richesCashMultiplier: richesCashMultiplier);
     expect(result.credits.length, equals(r2.credits.length));
     expect(result.totalTreasuryCredit, equals(r2.totalTreasuryCredit));
     expect(result.treasuryCreditByGpId, equals(r2.treasuryCreditByGpId));
   }
 }
+// dart format on

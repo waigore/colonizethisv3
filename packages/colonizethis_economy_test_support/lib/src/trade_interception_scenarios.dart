@@ -2,68 +2,29 @@
 
 import 'trade_interception_expectations.dart';
 
+// dart format off
 /// One row in [applyTradeInterceptionScenarios] (Refs #3939 slice 64).
-typedef ApplyTradeInterceptionScenario = ({
-  String label,
-  void Function() run,
-  String? refs,
-});
+typedef ApplyTradeInterceptionScenario = ({String label, void Function() run, String? refs});
 
-void runApplyTradeInterceptionScenario(
-  ApplyTradeInterceptionScenario scenario,
-) {
+void runApplyTradeInterceptionScenario(ApplyTradeInterceptionScenario scenario) {
   scenario.run();
 }
 
 /// Canonical scenarios for [applyTradeInterception].
 List<ApplyTradeInterceptionScenario> applyTradeInterceptionScenarios() => [
-  applyTradeInterceptionScenario(
-    label: 'returns as-is when overseasDelivered is empty',
-    target: ApplyTradeInterceptionTarget.emptyOverseas,
-  ),
-  applyTradeInterceptionScenario(
-    label: 'returns full delivered when no enemies at war',
-    target: ApplyTradeInterceptionTarget.noEnemiesAtWar,
-  ),
-  applyTradeInterceptionScenario(
-    label: 'returns full delivered when at war but no interceptor fleet',
-    target: ApplyTradeInterceptionTarget.atWarNoInterceptor,
-  ),
-  applyTradeInterceptionScenario(
-    label: 'reduces cargo when enemy has patrol fleet',
-    target: ApplyTradeInterceptionTarget.enemyPatrolReduces,
-  ),
-  applyTradeInterceptionScenario(
-    label: 'is deterministic for a fixed seed',
-    target: ApplyTradeInterceptionTarget.deterministicSeed,
-  ),
-  applyTradeInterceptionScenario(
-    label: 'enemy without privateering reduces cargo by the baseline',
-    target: ApplyTradeInterceptionTarget.privateeringBaseline,
-    refs: '#3470',
-  ),
-  applyTradeInterceptionScenario(
-    label: 'enemy with privateering reduces cargo more (strictly less kept)',
-    target: ApplyTradeInterceptionTarget.privateeringBoosted,
-    refs: '#3470',
-  ),
-  applyTradeInterceptionScenario(
-    label: 'privateering trade-raid result is deterministic for a fixed seed',
-    target: ApplyTradeInterceptionTarget.privateeringDeterministic,
-    refs: '#3470',
-  ),
-  applyTradeInterceptionScenario(
-    label: 'can remove merchant ships when interception triggers and RNG hits',
-    target: ApplyTradeInterceptionTarget.shipRemovalLoop,
-  ),
+  applyTradeInterceptionScenario(label: 'returns as-is when overseasDelivered is empty', target: ApplyTradeInterceptionTarget.emptyOverseas),
+  applyTradeInterceptionScenario(label: 'returns full delivered when no enemies at war', target: ApplyTradeInterceptionTarget.noEnemiesAtWar),
+  applyTradeInterceptionScenario(label: 'returns full delivered when at war but no interceptor fleet', target: ApplyTradeInterceptionTarget.atWarNoInterceptor),
+  applyTradeInterceptionScenario(label: 'reduces cargo when enemy has patrol fleet', target: ApplyTradeInterceptionTarget.enemyPatrolReduces),
+  applyTradeInterceptionScenario(label: 'is deterministic for a fixed seed', target: ApplyTradeInterceptionTarget.deterministicSeed),
+  applyTradeInterceptionScenario(label: 'enemy without privateering reduces cargo by the baseline', target: ApplyTradeInterceptionTarget.privateeringBaseline, refs: '#3470'),
+  applyTradeInterceptionScenario(label: 'enemy with privateering reduces cargo more (strictly less kept)', target: ApplyTradeInterceptionTarget.privateeringBoosted, refs: '#3470'),
+  applyTradeInterceptionScenario(label: 'privateering trade-raid result is deterministic for a fixed seed', target: ApplyTradeInterceptionTarget.privateeringDeterministic, refs: '#3470'),
+  applyTradeInterceptionScenario(label: 'can remove merchant ships when interception triggers and RNG hits', target: ApplyTradeInterceptionTarget.shipRemovalLoop),
 ];
 
 /// One row in [tradeInterceptionScanScenarios] (Refs #3939 slice 64).
-typedef TradeInterceptionScanScenario = ({
-  String label,
-  void Function() run,
-  String? refs,
-});
+typedef TradeInterceptionScanScenario = ({String label, void Function() run, String? refs});
 
 void runTradeInterceptionScanScenario(TradeInterceptionScanScenario scenario) {
   scenario.run();
@@ -71,20 +32,9 @@ void runTradeInterceptionScanScenario(TradeInterceptionScanScenario scenario) {
 
 /// Canonical scenarios for [scanTradeInterceptionInputs].
 List<TradeInterceptionScanScenario> tradeInterceptionScanScenarios() => [
-  tradeInterceptionScanScenario(
-    label: 'no enemy patrol/blockade fleets yields zero intercept score',
-    target: TradeInterceptionScanTarget.noEnemyPatrol,
-  ),
-  tradeInterceptionScanScenario(
-    label: 'player merchant ships counted; escorts feed escort strength',
-    target: TradeInterceptionScanTarget.merchantEscortCount,
-  ),
-  tradeInterceptionScanScenario(
-    label: 'enemy blockade fleet sets the blockade flag',
-    target: TradeInterceptionScanTarget.enemyBlockade,
-  ),
-  tradeInterceptionScanScenario(
-    label: 'privateering enemy scales intercept score above the baseline',
-    target: TradeInterceptionScanTarget.privateeringScales,
-  ),
+  tradeInterceptionScanScenario(label: 'no enemy patrol/blockade fleets yields zero intercept score', target: TradeInterceptionScanTarget.noEnemyPatrol),
+  tradeInterceptionScanScenario(label: 'player merchant ships counted; escorts feed escort strength', target: TradeInterceptionScanTarget.merchantEscortCount),
+  tradeInterceptionScanScenario(label: 'enemy blockade fleet sets the blockade flag', target: TradeInterceptionScanTarget.enemyBlockade),
+  tradeInterceptionScanScenario(label: 'privateering enemy scales intercept score above the baseline', target: TradeInterceptionScanTarget.privateeringScales),
 ];
+// dart format on

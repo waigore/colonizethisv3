@@ -1,6 +1,7 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+// dart format off
 import '../trade_order_factory.dart';
 import 'validator_expectations.dart';
 import 'validator_scenario.dart';
@@ -9,229 +10,92 @@ import 'validator_scenario.dart';
 /// `SPEC/program/world-market-resolution.md` § Trade order validation.
 /// Refs #2989 A5. The bid/offer builders delegate to the canonical shared
 /// `TradeOrder` factory (Refs #3427 step 14 / #3615 Cluster 6).
-TradeOrder validatorBid(String commodityId, int quantity, {int priority = 1}) =>
-    testBid(commodityId, quantity, priority: priority);
+TradeOrder validatorBid(String commodityId, int quantity, {int priority = 1}) => testBid(commodityId, quantity, priority: priority);
 
-TradeOrder validatorOffer(
-  String commodityId,
-  int quantity, {
-  int priority = 1,
-}) => testOffer(commodityId, quantity, priority: priority);
+TradeOrder validatorOffer(String commodityId, int quantity, {int priority = 1}) => testOffer(commodityId, quantity, priority: priority);
 
-TradeOrderValidationContext validatorCtx({
-  String playerId = 'gp1',
-  int bidTypeCap = 6,
-  int tradeCargoCapacity = 100,
-  int treasuryBudgetForBids = 1 << 30,
-  Map<CommodityId, int> availableStockpileByCommodityId =
-      const <CommodityId, int>{},
-  WorldMarketState worldMarketState = const WorldMarketState(),
-}) => TradeOrderValidationContext(
-  playerId: playerId,
-  bidTypeCap: bidTypeCap,
-  tradeCargoCapacity: tradeCargoCapacity,
-  availableStockpileByCommodityId: availableStockpileByCommodityId,
-  treasuryBudgetForBids: treasuryBudgetForBids,
-  worldMarketState: worldMarketState,
-);
+TradeOrderValidationContext validatorCtx({String playerId = 'gp1', int bidTypeCap = 6, int tradeCargoCapacity = 100, int treasuryBudgetForBids = 1 << 30, Map<CommodityId, int> availableStockpileByCommodityId = const <CommodityId, int>{}, WorldMarketState worldMarketState = const WorldMarketState()}) => TradeOrderValidationContext(playerId: playerId, bidTypeCap: bidTypeCap, tradeCargoCapacity: tradeCargoCapacity, availableStockpileByCommodityId: availableStockpileByCommodityId, treasuryBudgetForBids: treasuryBudgetForBids, worldMarketState: worldMarketState);
 
 /// Shared timber-only price preset for treasury-cap validator scenarios.
-TradeOrderValidationContext validatorCtxTimber({
-  int treasuryBudgetForBids = 1 << 30,
-  int tradeCargoCapacity = 100,
-  int timberPrice = 30,
-}) => validatorCtx(
+TradeOrderValidationContext validatorCtxTimber({int treasuryBudgetForBids = 1 << 30, int tradeCargoCapacity = 100, int timberPrice = 30}) => validatorCtx(
   treasuryBudgetForBids: treasuryBudgetForBids,
   tradeCargoCapacity: tradeCargoCapacity,
   worldMarketState: WorldMarketState(prices: {'timber': timberPrice}),
 );
 
 /// Shared timber/iron price preset for treasury-cap validator scenarios.
-TradeOrderValidationContext validatorCtxTimberIron({
-  int treasuryBudgetForBids = 1 << 30,
-  int tradeCargoCapacity = 100,
-  int timberPrice = 30,
-  int ironPrice = 30,
-}) => validatorCtx(
+TradeOrderValidationContext validatorCtxTimberIron({int treasuryBudgetForBids = 1 << 30, int tradeCargoCapacity = 100, int timberPrice = 30, int ironPrice = 30}) => validatorCtx(
   treasuryBudgetForBids: treasuryBudgetForBids,
   tradeCargoCapacity: tradeCargoCapacity,
-  worldMarketState: WorldMarketState(
-    prices: {'timber': timberPrice, 'iron': ironPrice},
-  ),
+  worldMarketState: WorldMarketState(prices: {'timber': timberPrice, 'iron': ironPrice}),
 );
 
 /// Empty live-price preset — catalog defaults apply (rule 5 manufactured/raw).
-TradeOrderValidationContext validatorCtxCatalogDefaults({
-  int treasuryBudgetForBids = 1 << 30,
-  int tradeCargoCapacity = 100,
-}) => validatorCtx(
-  treasuryBudgetForBids: treasuryBudgetForBids,
-  tradeCargoCapacity: tradeCargoCapacity,
-  worldMarketState: const WorldMarketState(),
-);
+TradeOrderValidationContext validatorCtxCatalogDefaults({int treasuryBudgetForBids = 1 << 30, int tradeCargoCapacity = 100}) => validatorCtx(treasuryBudgetForBids: treasuryBudgetForBids, tradeCargoCapacity: tradeCargoCapacity, worldMarketState: const WorldMarketState());
 
 /// Catalog-default lumber budget preset for manufactured-commodity treasury rows.
-TradeOrderValidationContext validatorCtxLumberBudget({
-  required int treasuryBudgetForBids,
-  int tradeCargoCapacity = 100,
-}) => validatorCtxCatalogDefaults(
-  treasuryBudgetForBids: treasuryBudgetForBids,
-  tradeCargoCapacity: tradeCargoCapacity,
-);
+TradeOrderValidationContext validatorCtxLumberBudget({required int treasuryBudgetForBids, int tradeCargoCapacity = 100}) => validatorCtxCatalogDefaults(treasuryBudgetForBids: treasuryBudgetForBids, tradeCargoCapacity: tradeCargoCapacity);
 
 /// Shared stockpile preset for offer-cap validator scenarios.
-TradeOrderValidationContext validatorCtxWithStockpile(
-  Map<CommodityId, int> stockpile, {
-  int bidTypeCap = 6,
-  int tradeCargoCapacity = 100,
-  int treasuryBudgetForBids = 1 << 30,
-}) => validatorCtx(
-  availableStockpileByCommodityId: stockpile,
-  bidTypeCap: bidTypeCap,
-  tradeCargoCapacity: tradeCargoCapacity,
-  treasuryBudgetForBids: treasuryBudgetForBids,
-);
+TradeOrderValidationContext validatorCtxWithStockpile(Map<CommodityId, int> stockpile, {int bidTypeCap = 6, int tradeCargoCapacity = 100, int treasuryBudgetForBids = 1 << 30}) => validatorCtx(availableStockpileByCommodityId: stockpile, bidTypeCap: bidTypeCap, tradeCargoCapacity: tradeCargoCapacity, treasuryBudgetForBids: treasuryBudgetForBids);
 
 /// Compact single-timber-bid row for treasury-cap validator scenarios (Refs #3939 slice 40).
-TradeOrderValidatorScenario validatorTreasuryTimberBid({
-  required String label,
-  required int treasuryBudgetForBids,
-  required int bidQty,
-  required ValidatorExpectation expect,
-  int tradeCargoCapacity = 100,
-  int timberPrice = 30,
-  String? refs,
-}) => validatorExpectRow(
+TradeOrderValidatorScenario validatorTreasuryTimberBid({required String label, required int treasuryBudgetForBids, required int bidQty, required ValidatorExpectation expect, int tradeCargoCapacity = 100, int timberPrice = 30, String? refs}) => validatorExpectRow(
   label: label,
-  context: validatorCtxTimber(
-    treasuryBudgetForBids: treasuryBudgetForBids,
-    tradeCargoCapacity: tradeCargoCapacity,
-    timberPrice: timberPrice,
-  ),
+  context: validatorCtxTimber(treasuryBudgetForBids: treasuryBudgetForBids, tradeCargoCapacity: tradeCargoCapacity, timberPrice: timberPrice),
   proposedOrders: [validatorBid('timber', bidQty)],
   expect: expect,
   refs: refs,
 );
 
 /// Compact multi-bid row with timber-only price preset (Refs #3939 slice 40).
-TradeOrderValidatorScenario validatorTreasuryTimberBids({
-  required String label,
-  required int treasuryBudgetForBids,
-  required List<TradeOrder> proposedOrders,
-  required ValidatorExpectation expect,
-  int tradeCargoCapacity = 100,
-  int timberPrice = 30,
-  String? refs,
-}) => validatorExpectRow(
+TradeOrderValidatorScenario validatorTreasuryTimberBids({required String label, required int treasuryBudgetForBids, required List<TradeOrder> proposedOrders, required ValidatorExpectation expect, int tradeCargoCapacity = 100, int timberPrice = 30, String? refs}) => validatorExpectRow(
   label: label,
-  context: validatorCtxTimber(
-    treasuryBudgetForBids: treasuryBudgetForBids,
-    tradeCargoCapacity: tradeCargoCapacity,
-    timberPrice: timberPrice,
-  ),
+  context: validatorCtxTimber(treasuryBudgetForBids: treasuryBudgetForBids, tradeCargoCapacity: tradeCargoCapacity, timberPrice: timberPrice),
   proposedOrders: proposedOrders,
   expect: expect,
   refs: refs,
 );
 
 /// Compact multi-bid row with timber/iron price preset (Refs #3939 slice 40).
-TradeOrderValidatorScenario validatorTreasuryTimberIronBids({
-  required String label,
-  required int treasuryBudgetForBids,
-  required List<TradeOrder> proposedOrders,
-  required ValidatorExpectation expect,
-  int tradeCargoCapacity = 100,
-  int timberPrice = 30,
-  int ironPrice = 30,
-  String? refs,
-}) => validatorExpectRow(
+TradeOrderValidatorScenario validatorTreasuryTimberIronBids({required String label, required int treasuryBudgetForBids, required List<TradeOrder> proposedOrders, required ValidatorExpectation expect, int tradeCargoCapacity = 100, int timberPrice = 30, int ironPrice = 30, String? refs}) => validatorExpectRow(
   label: label,
-  context: validatorCtxTimberIron(
-    treasuryBudgetForBids: treasuryBudgetForBids,
-    tradeCargoCapacity: tradeCargoCapacity,
-    timberPrice: timberPrice,
-    ironPrice: ironPrice,
-  ),
+  context: validatorCtxTimberIron(treasuryBudgetForBids: treasuryBudgetForBids, tradeCargoCapacity: tradeCargoCapacity, timberPrice: timberPrice, ironPrice: ironPrice),
   proposedOrders: proposedOrders,
   expect: expect,
   refs: refs,
 );
 
 /// Unknown commodity bid contributes zero treasury spend (Refs #3939 slice 43).
-TradeOrderValidatorScenario validatorUnknownPriceBidRow({
-  required String label,
-  String? refs = '#3093',
-}) => validatorExpectRow(
-  label: label,
-  context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 0),
-  proposedOrders: [validatorBid('not_a_real_commodity', 10)],
-  expect: const ValidatorExpectation(singleAccepted: true),
-  refs: refs,
-);
+TradeOrderValidatorScenario validatorUnknownPriceBidRow({required String label, String? refs = '#3093'}) => validatorExpectRow(label: label, context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 0), proposedOrders: [validatorBid('not_a_real_commodity', 10)], expect: const ValidatorExpectation(singleAccepted: true), refs: refs);
 
 /// Manufactured commodity bid rejected when budget insufficient (Refs #3939 slice 43).
-TradeOrderValidatorScenario validatorManufacturedBudgetRejectRow({
-  required String label,
-  String? refs = '#3093',
-}) => validatorExpectRow(
+TradeOrderValidatorScenario validatorManufacturedBudgetRejectRow({required String label, String? refs = '#3093'}) => validatorExpectRow(
   label: label,
   context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 100),
   proposedOrders: [validatorBid('lumber', 10)],
-  expect: const ValidatorExpectation(
-    singleRejectedWithReason:
-        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-  ),
+  expect: const ValidatorExpectation(singleRejectedWithReason: TradeOrderRejectionReasons.bidExceedsTreasuryBudget),
   refs: refs,
 );
 
 /// Catalog-default priced bid admitted when budget allows (Refs #3939 slice 43).
-TradeOrderValidatorScenario validatorCatalogAdmitRow({
-  required String label,
-  required CommodityId commodityId,
-  required int bidQty,
-  required int treasuryBudgetForBids,
-  required String catalogDefaultNotNullReason,
-  String? refs = '#3123',
-}) => validatorExpectRow(
+TradeOrderValidatorScenario validatorCatalogAdmitRow({required String label, required CommodityId commodityId, required int bidQty, required int treasuryBudgetForBids, required String catalogDefaultNotNullReason, String? refs = '#3123'}) => validatorExpectRow(
   label: label,
-  context: validatorCtxCatalogDefaults(
-    treasuryBudgetForBids: treasuryBudgetForBids,
-  ),
+  context: validatorCtxCatalogDefaults(treasuryBudgetForBids: treasuryBudgetForBids),
   proposedOrders: [validatorBid(commodityId, bidQty)],
-  expect: ValidatorExpectation(
-    catalogDefaultCommodityId: commodityId,
-    catalogDefaultNotNullReason: catalogDefaultNotNullReason,
-    singleAccepted: true,
-  ),
+  expect: ValidatorExpectation(catalogDefaultCommodityId: commodityId, catalogDefaultNotNullReason: catalogDefaultNotNullReason, singleAccepted: true),
   refs: refs,
 );
 
 /// Compact rules/caps validator row (Refs #3939 slice 51).
-TradeOrderValidatorScenario validatorRow({
-  required String label,
-  required ValidatorExpectation expect,
-  TradeOrderValidationContext? context,
-  List<TradeOrder>? proposedOrders,
-  String? refs = '#2989',
-}) => validatorExpectRow(
-  label: label,
-  context: context ?? validatorCtx(),
-  proposedOrders: proposedOrders ?? const [],
-  expect: expect,
-  refs: refs,
-);
+TradeOrderValidatorScenario validatorRow({required String label, required ValidatorExpectation expect, TradeOrderValidationContext? context, List<TradeOrder>? proposedOrders, String? refs = '#2989'}) => validatorExpectRow(label: label, context: context ?? validatorCtx(), proposedOrders: proposedOrders ?? const [], expect: expect, refs: refs);
 
 /// Single-order reject with [reason] (Refs #3939 slice 51).
-TradeOrderValidatorScenario validatorRejectRow({
-  required String label,
-  required String reason,
-  required TradeOrder order,
-  TradeOrderValidationContext? context,
-  String? refs = '#2989',
-}) => validatorRow(
+TradeOrderValidatorScenario validatorRejectRow({required String label, required String reason, required TradeOrder order, TradeOrderValidationContext? context, String? refs = '#2989'}) => validatorRow(
   label: label,
   context: context,
   proposedOrders: [order],
   expect: ValidatorExpectation(singleRejectedWithReason: reason),
   refs: refs,
 );
+// dart format on
