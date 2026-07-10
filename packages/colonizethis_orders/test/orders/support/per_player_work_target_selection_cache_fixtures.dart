@@ -10,29 +10,16 @@ WorkTargetSelectionSnapshot ppwtscSnapshotForPlayer(String playerId) {
     game: Game(
       id: 'g_$playerId',
       worldState: const WorldState(
-        turnState: TurnState(
-          phase: TurnPhase.orders,
-          turnNumber: 1,
-        ),
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(provinces: [], units: []),
         newWorld: RegionData(provinces: [], units: []),
       ),
-      players: [
-        Player(
-          id: playerId,
-          displayName: playerId,
-          isHuman: true,
-        ),
-      ],
+      players: [Player(id: playerId, displayName: playerId, isHuman: true)],
     ),
     playerId: playerId,
     playerView: PlayerView(
       playerId: playerId,
-      player: Player(
-        id: playerId,
-        displayName: playerId,
-        isHuman: true,
-      ),
+      player: Player(id: playerId, displayName: playerId, isHuman: true),
       ownUnitsById: const {},
       provincesById: const {},
       visibilityByTile: const {'oldWorld|p1|0|0': VisibilityLevel.fogged},

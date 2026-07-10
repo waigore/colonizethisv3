@@ -251,10 +251,7 @@ void iceRunNavalMissionRow({
 }) {
   final game = navalCorpusGame();
   final topology = navalCorpusTopology();
-  final candidate = NavalMissionOrder(
-    fleetId: fleetId,
-    mission: mission,
-  );
+  final candidate = NavalMissionOrder(fleetId: fleetId, mission: mission);
   iceExpectFamilyOnCorpus(
     game: game,
     topology: topology,

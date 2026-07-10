@@ -1,76 +1,236 @@
 // Table-driven DefaultOrderSuggestionAPI suggestion scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_api_impl_run_rows.dart';
+import 'order_suggestion_api_impl_fixtures.dart';
 
-/// One row in [orderSuggestionApiImplScenarios].
-class OrderSuggestionApiImplScenario implements RefsScenario {
-  const OrderSuggestionApiImplScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
+const _api = DefaultOrderSuggestionAPI();
 
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+void osaiRunSuggestMoveOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestMoveOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<MoveOrder>>());
 }
 
-void runOrderSuggestionApiImplScenario(
-  OrderSuggestionApiImplScenario scenario,
-) {
-  scenario.run();
+void osaiRunSuggestWorkOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestWorkOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<WorkOrder>>());
 }
 
-List<OrderSuggestionApiImplScenario>
-orderSuggestionApiImplScenarios() => const [
-  OrderSuggestionApiImplScenario(
+void osaiRunSuggestBuildOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestBuildOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<BuildUnitOrder>>());
+}
+
+void osaiRunSuggestBuildOrdersIncludesShipWhenAffordable() {
+  final game = apiImplAffordableShipGame();
+  final view = apiImplViewFor(game, apiImplSingleProvinceTopology);
+  final list = _api.suggestBuildOrders(
+    view,
+    game,
+    apiImplSingleProvinceTopology,
+    apiImplEmptyOrders,
+  );
+  final shipBuilds = list
+      .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
+      .toList();
+  expect(
+    shipBuilds,
+    isNotEmpty,
+    reason: 'API should suggest ship builds when affordable',
+  );
+}
+
+void osaiRunSuggestResearchOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestResearchOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<ResearchOrder>>());
+}
+
+void osaiRunSuggestNavalMoveOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestNavalMoveOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<NavalMoveOrder>>());
+}
+
+void osaiRunSuggestNavalMissionOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestNavalMissionOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<NavalMissionOrder>>());
+}
+
+void osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final unitsById = unitsByIdFromWorld(game.worldState);
+  final moveDefault = _api.suggestNavalMoveOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  final moveShared = _api.suggestNavalMoveOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
+  );
+  expect(moveShared, moveDefault);
+  final missionDefault = _api.suggestNavalMissionOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  final missionShared = _api.suggestNavalMissionOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
+  );
+  expect(missionShared, missionDefault);
+}
+
+void osaiRunSuggestDiplomaticOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestDiplomaticOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<DiplomaticOrder>>());
+}
+
+void osaiRunSuggestRecruitWorkerOrdersReturnsList() {
+  final game = apiImplDefaultGame();
+  final view = apiImplViewFor(game, apiImplBaseTopology);
+  final list = _api.suggestRecruitWorkerOrders(
+    view,
+    game,
+    apiImplBaseTopology,
+    apiImplEmptyOrders,
+  );
+  expect(list, isA<List<RecruitWorkerOrder>>());
+}
+
+void osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable() {
+  final game = apiImplFabricRecruitGame();
+  final view = apiImplViewFor(game, apiImplSingleProvinceTopology);
+  final list = _api.suggestRecruitWorkerOrders(
+    view,
+    game,
+    apiImplSingleProvinceTopology,
+    apiImplEmptyOrders,
+  );
+  expect(
+    list.any((o) => o.targetTier == WorkerTier.peasant),
+    isTrue,
+    reason:
+        'API impl must surface peasant recruit when 2 fabric affords '
+        'the cost row',
+  );
+}
+
+List<RunnableScenario> orderSuggestionApiImplScenarios() => const [
+  RunnableScenario(
     label: 'suggestMoveOrders returns list',
     run: osaiRunSuggestMoveOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestWorkOrders returns list',
     run: osaiRunSuggestWorkOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestBuildOrders returns list',
     run: osaiRunSuggestBuildOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label:
         'suggestBuildOrders includes ship types when player can afford a ship',
     run: osaiRunSuggestBuildOrdersIncludesShipWhenAffordable,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestResearchOrders returns list',
     run: osaiRunSuggestResearchOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestNavalMoveOrders returns list',
     run: osaiRunSuggestNavalMoveOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestNavalMissionOrders returns list',
     run: osaiRunSuggestNavalMissionOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label:
         'suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)',
     run: osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById,
     refs: '#2394',
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestDiplomaticOrders returns list',
     run: osaiRunSuggestDiplomaticOrdersReturnsList,
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label: 'suggestRecruitWorkerOrders returns list (#2692 S7)',
     run: osaiRunSuggestRecruitWorkerOrdersReturnsList,
     refs: '#2692 S7',
   ),
-  OrderSuggestionApiImplScenario(
+  RunnableScenario(
     label:
         'suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)',
     run: osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable,

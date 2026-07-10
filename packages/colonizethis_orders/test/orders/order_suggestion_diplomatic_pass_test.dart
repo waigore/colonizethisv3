@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'order_suggestion_diplomatic_pass',
     orderSuggestionDiplomaticPassScenarios(),
-    runOrderSuggestionDiplomaticPassScenario,
+    runRunnableScenario,
   );
 }

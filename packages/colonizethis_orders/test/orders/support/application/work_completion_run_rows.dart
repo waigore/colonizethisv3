@@ -8,11 +8,13 @@ import 'package:colonizethis_test/test.dart';
 import 'work_application_fixtures.dart';
 import 'work_completion_expectation_shorthand.dart';
 
-void wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
+void
+wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
   wccExpectBuildImprovementCompletesToLevel(1);
 }
 
-void wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
+void
+wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
   final envyHintNext = wccApply(
     workAppOwnedGame(
       turnNumber: 2,
@@ -25,7 +27,8 @@ void wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile(
   expect(envyHintNext.lastHumanResearchCategoryCompletionTurn, 2);
 }
 
-void wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
+void
+wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
   const aiId = 'ai1';
   final envyEvidenceNext = wccApply(
     workAppOwnedGame(
@@ -68,16 +71,16 @@ void wccRunBuildImprovementCompletionDoesNotReApplyExtractionTechCap1291() {
     4,
     fromLevel: 3,
     resourceByTileKey: const {WorkAppIds.tileKey: 'grain'},
-    players: [workAppPlayer(techUnlocked: const {kTechIdSawMill: true})],
+    players: [
+      workAppPlayer(techUnlocked: const {kTechIdSawMill: true}),
+    ],
   );
 }
 
 void wccRunWorkCancelledWhenProvinceContainingTargetTileIsConquered376() {
   final next = wccApply(
     workAppOwnedGame(
-      units: [
-        wccBuilderImprovement(totalTurns: 2, remainingTurns: 2),
-      ],
+      units: [wccBuilderImprovement(totalTurns: 2, remainingTurns: 2)],
       provinces: [workAppOwnedProvince(ownerId: 'p2')],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, 0),
       players: const [
@@ -166,16 +169,8 @@ void wccRunExploreCompletionRevealsEveryTileInCanonicalFullIdBucket() {
     WorkAppIds.tileKey,
     VisibilityLevel.fullyVisible.name,
   );
-  wccExpectVisibility(
-    next,
-    tileKey2,
-    VisibilityLevel.fullyVisible.name,
-  );
-  wccExpectVisibility(
-    next,
-    'oldWorld|P1|9|9',
-    VisibilityLevel.unknown.name,
-  );
+  wccExpectVisibility(next, tileKey2, VisibilityLevel.fullyVisible.name);
+  wccExpectVisibility(next, 'oldWorld|P1|9|9', VisibilityLevel.unknown.name);
 }
 
 void wccRunBuildRoadCompletionIncreasesRoadLevel() {
@@ -189,7 +184,8 @@ void wccRunBuildRoadCompletionIncreasesRoadLevel() {
   wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
 }
 
-void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
+void
+wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
   const capitalTileKey = WorkAppIds.originTileKey;
   final next = wccApply(
     wccEngineerCompletionGame(
@@ -215,7 +211,8 @@ void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDow
   wccExpectRoadLevel(next, capitalTileKey, 2);
 }
 
-void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
+void
+wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
   const portTileKey = WorkAppIds.originTileKey;
   final next = wccApply(
     wccEngineerCompletionGame(
@@ -227,9 +224,7 @@ void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgra
         '${WorkAppIds.provinceId}|sea1': portTileKey,
       },
       players: [
-        workAppPlayer(
-          techUnlocked: const {kTechIdRoadConstruction: true},
-        ),
+        workAppPlayer(techUnlocked: const {kTechIdRoadConstruction: true}),
       ],
     ),
     tileMapByRegion: {WorkAppIds.ow: workAppSimpleTileMap()},
@@ -298,7 +293,8 @@ void wccRunRoutesKWorkTargetBuildRailThroughHandlerMapEntry() {
   expect(railNext.work.tileState.roadLevel(WorkAppIds.tileKey), 4);
 }
 
-void wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies() {
+void
+wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies() {
   final (noopState, noopUnit, noopCw) = wccDispatchRailSetup(
     roadLevel: 0,
     players: [workAppPlayer()],
@@ -307,9 +303,12 @@ void wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies()
   expect(noopNext.work.tileState.roadLevel(WorkAppIds.tileKey), 0);
 }
 
-void wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord() {
-  final upgradeUnit =
-      workAppUnit(type: kUnitTypeBuilder, status: UnitStatus.working);
+void
+wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord() {
+  final upgradeUnit = workAppUnit(
+    type: kUnitTypeBuilder,
+    status: UnitStatus.working,
+  );
   final upgradeProvince = Province(
     id: WorkAppIds.provinceId,
     regionId: WorkAppIds.ow,
@@ -337,9 +336,12 @@ void wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWork
   expect(upgradeNext.work.oldProvinces.single.townDevelopmentLevel, 1);
 }
 
-void wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord() {
-  final exploreUnit =
-      workAppUnit(type: kUnitTypeExplorer, status: UnitStatus.working);
+void
+wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord() {
+  final exploreUnit = workAppUnit(
+    type: kUnitTypeExplorer,
+    status: UnitStatus.working,
+  );
   final exploreGame = workAppOwnedGame(
     turnNumber: 1,
     units: [exploreUnit],

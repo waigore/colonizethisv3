@@ -12,25 +12,20 @@ const _nvP2 = 'p2';
 String _nvTile(String region, String localProv) => '$region|$localProv|0|0';
 
 MapTopology _nvCrossRegionTopology() => const MapTopology(
-      nodes: [
-        TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province),
-        TopologyNode(id: 'P2', regionId: _nvNw, type: TopologyNodeType.province),
-      ],
-      edges: [],
-    );
+  nodes: [
+    TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province),
+    TopologyNode(id: 'P2', regionId: _nvNw, type: TopologyNodeType.province),
+  ],
+  edges: [],
+);
 
-Game _nvCrossRegionGame({
-  required String unitType,
-  required String nwOwnerId,
-}) {
+Game _nvCrossRegionGame({required String unitType, required String nwOwnerId}) {
   return Game(
     id: 'g1',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
-        provinces: [
-          Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
-        ],
+        provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
         units: [
           Unit(
             id: 'u1',
@@ -82,11 +77,7 @@ void nvExpectInvalidWorkTargetRejected() {
   final engine = OrderEngine()
     ..addWorkOrder(
       _nvP1,
-      WorkOrder(
-        unitId: 'u1',
-        target: 'unknown_target',
-        targetTileKey: tileKey,
-      ),
+      WorkOrder(unitId: 'u1', target: 'unknown_target', targetTileKey: tileKey),
     );
   final results = engine.validatePlayerOrdersWithContext(
     Game(
@@ -108,13 +99,19 @@ void nvExpectInvalidWorkTargetRejected() {
           ],
         ),
         newWorld: const RegionData(),
-        playerVisibilityByTile: {_nvP1: {tileKey: 'fullyVisible'}},
+        playerVisibilityByTile: {
+          _nvP1: {tileKey: 'fullyVisible'},
+        },
       ),
       players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)],
     ),
     const MapTopology(
       nodes: [
-        TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province),
+        TopologyNode(
+          id: 'P1',
+          regionId: _nvOw,
+          type: TopologyNodeType.province,
+        ),
       ],
       edges: [],
     ),
@@ -129,10 +126,7 @@ void nvExpectInitialOrdersCopyDistinct() {
     initialOrders: Orders(
       moveOrdersByPlayerId: {
         _nvP1: [
-          const MoveOrder(
-            unitId: 'u1',
-            destinationTileKey: 'oldWorld|P2|0|0',
-          ),
+          const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
         ],
       },
     ),
@@ -176,9 +170,21 @@ void nvExpectNavalMoveFleetNotFoundRejected() {
     ),
     MapTopology(
       nodes: const [
-        TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province),
-        TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone),
-        TopologyNode(id: 'sea2', regionId: _nvOw, type: TopologyNodeType.seaZone),
+        TopologyNode(
+          id: 'P1',
+          regionId: _nvOw,
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'sea1',
+          regionId: _nvOw,
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: 'sea2',
+          regionId: _nvOw,
+          type: TopologyNodeType.seaZone,
+        ),
       ],
       edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
     ),
@@ -230,7 +236,11 @@ void nvExpectBlockadeMission({
     ),
     const MapTopology(
       nodes: [
-        TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone),
+        TopologyNode(
+          id: 'sea1',
+          regionId: _nvOw,
+          type: TopologyNodeType.seaZone,
+        ),
       ],
       edges: [],
     ),

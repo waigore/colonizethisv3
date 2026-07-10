@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDiplomaticOrders',
     orderSuggestionApiImplDiplomaticScenarios(),
-    runOrderSuggestionApiImplDiplomaticScenario,
+    runRunnableScenario,
   );
 }

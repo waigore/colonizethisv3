@@ -1,6 +1,5 @@
 // Compact work-completion expectation shorthands (Refs #3949).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -30,13 +29,12 @@ Game wccApply(
   Game game, {
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
-}) =>
-    applyBuildAndWorkOrders(
-      game,
-      workAppProcessWorkOrders(),
-      tileMapByRegion: tileMapByRegion,
-      topology: topology,
-    );
+}) => applyBuildAndWorkOrders(
+  game,
+  workAppProcessWorkOrders(),
+  tileMapByRegion: tileMapByRegion,
+  topology: topology,
+);
 
 Unit wccSingleUnit(Game game) => game.worldState.oldWorld.units.single;
 
@@ -77,8 +75,11 @@ Game wccRailGame({
     turnNumber: turnNumber,
     units: [unit],
     tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel),
-    players: players ??
-        [workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true})],
+    players:
+        players ??
+        [
+          workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
+        ],
   );
 }
 
@@ -95,8 +96,11 @@ Game wccRailGame({
     turnNumber: 1,
     units: [unit],
     tileState: tileState,
-    players: players ??
-        [workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true})],
+    players:
+        players ??
+        [
+          workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true}),
+        ],
   );
   final work = WorkOrderState(
     unitsById: (oldWorld: {unit.id: unit}, newWorld: const {}),
@@ -128,15 +132,14 @@ BuildWorkState wccDispatchCompleted(
   Unit unit,
   CurrentWork cw, {
   BuildWorkState Function(BuildWorkState, Unit, String)? onExploreRegion,
-}) =>
-    dispatchCompletedWorkTarget(
-      state,
-      unit,
-      cw,
-      () => state.game.worldState.oldWorld.provinces,
-      (w, p) => w.copyWith(oldProvinces: p),
-      onExploreRegion ?? (s, u, regionId) => s,
-    );
+}) => dispatchCompletedWorkTarget(
+  state,
+  unit,
+  cw,
+  () => state.game.worldState.oldWorld.provinces,
+  (w, p) => w.copyWith(oldProvinces: p),
+  onExploreRegion ?? (s, u, regionId) => s,
+);
 
 (BuildWorkState, Unit, CurrentWork) wccDispatchWorkSetup({
   required Unit unit,
@@ -170,16 +173,13 @@ Game wccEngineerCompletionGame({
   List<Province>? provinces,
   List<Player>? players,
   Map<String, String>? portsByProvinceSeaboard,
-}) =>
-    workAppOwnedGame(
-      units: [
-        workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget),
-      ],
-      tileState: tileState,
-      provinces: provinces,
-      players: players,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-    );
+}) => workAppOwnedGame(
+  units: [workAppWorkingUnit(type: kUnitTypeEngineer, workTarget: workTarget)],
+  tileState: tileState,
+  provinces: provinces,
+  players: players,
+  portsByProvinceSeaboard: portsByProvinceSeaboard,
+);
 
 void wccExpectBuildImprovementCompletesToLevel(
   int toLevel, {
@@ -198,7 +198,9 @@ void wccExpectBuildImprovementCompletesToLevel(
       units: [wccBuilderImprovement(ownerId: ownerId)],
       tileState: TileMapState().setImprovement(WorkAppIds.tileKey, fromLevel),
       resourceByTileKey: resourceByTileKey,
-      provinces: ownerId != 'p1' ? [workAppOwnedProvince(ownerId: ownerId)] : null,
+      provinces: ownerId != 'p1'
+          ? [workAppOwnedProvince(ownerId: ownerId)]
+          : null,
       players: players,
       aiControlByGpId: aiControlByGpId,
       lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,

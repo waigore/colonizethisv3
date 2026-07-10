@@ -17,7 +17,7 @@ void main() {
 
     runLabeledScenarios(
       orderSuggestionNoOrderEngineFullPassScenarios(),
-      runOrderSuggestionNoOrderEngineFullPassScenario,
+      runRunnableScenario,
     );
   });
 }

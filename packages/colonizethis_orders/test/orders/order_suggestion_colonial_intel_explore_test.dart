@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'colonial intel explore',
     orderSuggestionColonialIntelExploreScenarios(),
-    runOrderSuggestionColonialIntelExploreScenario,
+    runRunnableScenario,
   );
 }

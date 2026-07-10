@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'naval suggestion sharedCandidateValidator (Refs #2394)',
     orderSuggestionNavalValidatorReuseScenarios(),
-    runOrderSuggestionNavalValidatorReuseScenario,
+    runRunnableScenario,
   );
 }

@@ -5,7 +5,8 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 
 const explorerConsulatePrecheckPlayerId = 'gp1';
 const explorerConsulatePrecheckOw = 'oldWorld';
-const explorerConsulatePrecheckTribeProvinceId = '$explorerConsulatePrecheckOw|t1';
+const explorerConsulatePrecheckTribeProvinceId =
+    '$explorerConsulatePrecheckOw|t1';
 const explorerConsulatePrecheckTileKey =
     '$explorerConsulatePrecheckTribeProvinceId|0|0';
 

@@ -40,6 +40,6 @@ void main() {
   runLabeledScenarioGroup(
     'colonial purchase_land suggestions (Refs #2509)',
     orderSuggestionWorkPurchaseLandColonialScenarios(),
-    runOrderSuggestionWorkPurchaseLandColonialScenario,
+    runRunnableScenario,
   );
 }

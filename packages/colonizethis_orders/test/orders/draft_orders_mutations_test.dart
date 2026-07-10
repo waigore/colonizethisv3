@@ -9,12 +9,12 @@ void main() {
   runLabeledScenarioGroup(
     'removePendingWorkOrderAt',
     removePendingWorkOrderAtScenarios(),
-    runDraftOrdersMutationsScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'tradeOrderForPlayerCommodity / applyTradeOrderForPlayer / '
     'removeTradeOrderForPlayer (Refs #2993 E5b)',
     draftOrdersTradeMutationScenarios(),
-    runDraftOrdersMutationsScenario,
+    runRunnableScenario,
   );
 }

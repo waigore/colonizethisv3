@@ -2323,6 +2323,18 @@ test/ LOC after slice 151: **35,721** (net −281 from post–slice 150). Remain
 
 test/ LOC after slice 152: **35,374** (net −347 from post–slice 151). Remaining: further support-table compaction toward ≤26,400; **enum+switch expectation dispatchers fully eliminated**; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 153: merge run_rows into scenarios + shared RunnableScenario
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| run-rows-merge | merge 98 `*_run_rows.dart` into sibling `*_scenarios.dart` (≤400 lines; preserve multi-line imports) | `test/orders/support/**/*_run_rows.dart` (deleted except 7 large/tail families) | matching `*_scenarios.dart` | #3949 |
+| runnable-scenario | add shared `RunnableScenario` / `runRunnableScenario`; delete per-family scenario classes + runners | 108 family scenario modules + `*_test.dart` runners | `support/scenario_runner.dart` | #3949 |
+| unused-import-sweep | `dart fix` unused imports after merge/class collapse | merged scenario modules | same | #3949 |
+
+Preserved: description baseline, support-layout, prefer-scenario-tables, domain test file-size ≤400. Remaining large split families still use `*_run_rows.dart` (+ tails): `order_suggestion_core`, `valid_work_tiles`, `work_order_application`, `build_unit_training`, `work_completion`, `order_engine_core`, `order_merge`.
+
+test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'establishOvertureSubValidator',
     establishOvertureSubValidatorScenarios(),
-    runEstablishOvertureSubValidatorScenario,
+    runRunnableScenario,
   );
 }

@@ -8,11 +8,10 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 const orcPlayerId = 'p1';
 
 Game orcMinimalGame() => TestFixtures.minimalGame(
-      players: const [Player(id: orcPlayerId, displayName: 'P1', isHuman: true)],
-    );
+  players: const [Player(id: orcPlayerId, displayName: 'P1', isHuman: true)],
+);
 
-MapTopology orcEmptyTopology() =>
-    const MapTopology(nodes: [], edges: []);
+MapTopology orcEmptyTopology() => const MapTopology(nodes: [], edges: []);
 
 PlayerView orcPlayerView(Game game) =>
     buildPlayerView(game, orcEmptyTopology(), orcPlayerId);

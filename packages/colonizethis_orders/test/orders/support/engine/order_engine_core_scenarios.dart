@@ -3,82 +3,64 @@
 import '../scenario_runner.dart';
 import 'order_engine_core_run_rows.dart';
 
-/// One row in [orderEngineCoreScenarios].
-class OrderEngineCoreScenario implements RefsScenario {
-  const OrderEngineCoreScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
-
-void runOrderEngineCoreScenario(OrderEngineCoreScenario scenario) =>
-    scenario.run();
-
 /// Canonical scenarios for OrderEngine core family tests.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_core_part*_test.dart` descriptions (single-line `label:` for CI).
-List<OrderEngineCoreScenario> orderEngineCoreScenarios() => [
-  OrderEngineCoreScenario(
+List<RunnableScenario> orderEngineCoreScenarios() => [
+  RunnableScenario(
     label: 'add order and validate',
     run: oecRunAddOrderAndValidate,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'removeMoveOrder removes order at index',
     run: oecRunRemoveMoveOrderAtIndex,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'removeBuildOrder removes order at index',
     run: oecRunRemoveBuildOrderAtIndex,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'addWorkOrderWithContext returns rejected when order invalid',
     run: oecRunAddWorkOrderWithContextRejected,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'first invalid order plus subsequent rejected',
     run: oecRunFirstInvalidPlusSubsequentRejected,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'projected effects returns worker count',
     run: oecRunProjectedEffectsWorkerCount,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'projectedEffects returns unitLocations when engine has move order',
     run: oecRunProjectedEffectsUnitLocations,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'projectedEffects does not mutate passed-in game',
     run: oecRunProjectedEffectsNoGameMutation,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'addMoveOrderWithContext uses world-state validation',
     run: oecRunAddMoveOrderWithContextValidation,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'civilian cannot move into other GP territory',
     run: oecRunCivilianCannotMoveIntoGpTerritory,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'military cannot move into other GP province without war',
     run: oecRunMilitaryCannotMoveIntoGpWithoutWar,
     refs: '#943',
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'military may move into other GP province with same-turn declareWar',
     run: oecRunMilitaryMayMoveIntoGpWithDeclareWar,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'explorer may move into tribal province',
     run: oecRunExplorerMayMoveIntoTribalProvince,
   ),
-  OrderEngineCoreScenario(
+  RunnableScenario(
     label: 'move order rejected when source province unknown',
     run: oecRunMoveRejectedWhenSourceProvinceUnknown,
   ),

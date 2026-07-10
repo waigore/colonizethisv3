@@ -6,33 +6,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../scenario_runner.dart';
 import 'order_engine_naval_build_validation_expectation_shorthand.dart';
 
-/// One row in [orderEngineNavalBuildValidationScenarios].
-class OrderEngineNavalBuildValidationScenario implements RefsScenario {
-  const OrderEngineNavalBuildValidationScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
-
-void runOrderEngineNavalBuildValidationScenario(
-  OrderEngineNavalBuildValidationScenario scenario,
-) {
-  scenario.run();
-}
-
 /// Canonical scenarios for OrderEngine naval/build validation family tests.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_naval_build_validation_test.dart` descriptions.
-List<OrderEngineNavalBuildValidationScenario>
-orderEngineNavalBuildValidationScenarios() => [
-  OrderEngineNavalBuildValidationScenario(
+List<RunnableScenario> orderEngineNavalBuildValidationScenarios() => [
+  RunnableScenario(
     label: 'move order accepted for own province across regions',
     run: () => nvExpectCrossRegionMove(
       unitType: kUnitTypeBuilder,
@@ -40,27 +18,28 @@ orderEngineNavalBuildValidationScenarios() => [
       expectedStatus: OrderValidationStatus.accepted,
     ),
   ),
-  OrderEngineNavalBuildValidationScenario(
-    label: 'move order rejected when destination is foreign province across regions',
+  RunnableScenario(
+    label:
+        'move order rejected when destination is foreign province across regions',
     run: () => nvExpectCrossRegionMove(
       unitType: 'musketeers',
       nwOwnerId: 'p2',
       expectedStatus: OrderValidationStatus.rejected,
     ),
   ),
-  OrderEngineNavalBuildValidationScenario(
+  RunnableScenario(
     label: 'work order rejected for invalid target for unit type',
     run: nvExpectInvalidWorkTargetRejected,
   ),
-  OrderEngineNavalBuildValidationScenario(
+  RunnableScenario(
     label: 'initial orders copy: getter returns equal but distinct lists',
     run: nvExpectInitialOrdersCopyDistinct,
   ),
-  OrderEngineNavalBuildValidationScenario(
+  RunnableScenario(
     label: 'naval move order rejected when fleet not found',
     run: nvExpectNavalMoveFleetNotFoundRejected,
   ),
-  OrderEngineNavalBuildValidationScenario(
+  RunnableScenario(
     label: 'blockade order rejected when not at war with province owner',
     run: () => nvExpectBlockadeMission(
       relationState: RelationState.atPeace,
@@ -68,7 +47,7 @@ orderEngineNavalBuildValidationScenarios() => [
       reasonContains: 'at war',
     ),
   ),
-  OrderEngineNavalBuildValidationScenario(
+  RunnableScenario(
     label: 'blockade order accepted when at war with province owner',
     run: () => nvExpectBlockadeMission(
       relationState: RelationState.atWar,

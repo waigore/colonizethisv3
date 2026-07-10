@@ -2,7 +2,6 @@
 //
 // Refs #3753 R11. SPEC/program/orders.md § Diplomatic orders / break alliance.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 Game breakAllianceValidatorTwoGpAllianceGame({

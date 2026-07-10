@@ -1,36 +1,78 @@
 // Table-driven civilian projected-tile scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
+import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'civilian_projected_tile_run_rows.dart';
 
-/// One row in [civilianProjectedTileScenarios].
-class CivilianProjectedTileScenario implements RefsScenario {
-  const CivilianProjectedTileScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
+const _playerId = 'p1';
 
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+void cptRunPrefersPendingWorkOrderTargetTileKey() {
+  final unit = Unit(
+    id: 'u1',
+    type: kUnitTypeBuilder,
+    ownerId: _playerId,
+    locationProvinceId: 'oldWorld|p1',
+    tileKey: 'oldWorld|p1|0|0',
+    assignedTileKey: 'oldWorld|p1|1|0',
+  );
+  const orders = Orders(
+    workOrdersByPlayerId: {
+      _playerId: [
+        WorkOrder(
+          unitId: 'u1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'oldWorld|p2|2|3',
+        ),
+      ],
+    },
+  );
+
+  final projected = projectedCivilianTileKey(
+    unit: unit,
+    playerId: _playerId,
+    orders: orders,
+  );
+  expect(projected, 'oldWorld|p2|2|3');
 }
 
-void runCivilianProjectedTileScenario(CivilianProjectedTileScenario scenario) {
-  scenario.run();
+void cptRunKeepsExactPendingTileKeyForExplore() {
+  final unit = Unit(
+    id: 'u1',
+    type: kUnitTypeExplorer,
+    ownerId: _playerId,
+    locationProvinceId: 'oldWorld|p1',
+    tileKey: 'oldWorld|p1|0|0',
+  );
+  const orders = Orders(
+    workOrdersByPlayerId: {
+      _playerId: [
+        WorkOrder(
+          unitId: 'u1',
+          target: kWorkTargetExplore,
+          targetTileKey: 'oldWorld|p9|7|8',
+        ),
+      ],
+    },
+  );
+
+  final projected = projectedCivilianTileKey(
+    unit: unit,
+    playerId: _playerId,
+    orders: orders,
+  );
+  expect(projected, 'oldWorld|p9|7|8');
 }
 
 /// Canonical scenarios for civilian_projected_tile family tests.
-List<CivilianProjectedTileScenario> civilianProjectedTileScenarios() =>
-    const [
-      CivilianProjectedTileScenario(
-        label: 'prefers pending work-order target tile key',
-        run: cptRunPrefersPendingWorkOrderTargetTileKey,
-      ),
-      CivilianProjectedTileScenario(
-        label: 'keeps exact pending tile key for explore projection',
-        run: cptRunKeepsExactPendingTileKeyForExplore,
-      ),
-    ];
+List<RunnableScenario> civilianProjectedTileScenarios() => const [
+  RunnableScenario(
+    label: 'prefers pending work-order target tile key',
+    run: cptRunPrefersPendingWorkOrderTargetTileKey,
+  ),
+  RunnableScenario(
+    label: 'keeps exact pending tile key for explore projection',
+    run: cptRunKeepsExactPendingTileKeyForExplore,
+  ),
+];

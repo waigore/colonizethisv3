@@ -11,6 +11,6 @@ void main() {
   runLabeledScenarioGroup(
     'DefaultOrderSuggestionAPI.suggestTradeOrders — wiring',
     orderSuggestionApiImplTradeScenarios(),
-    runOrderSuggestionApiImplTradeScenario,
+    runRunnableScenario,
   );
 }

@@ -1,6 +1,5 @@
 // Compact order-engine validateWork expectation shorthands (Refs #3949).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -32,37 +31,32 @@ OrderValidationResult vwValidateBuildImprovement({
   Map<String, TileMapResult>? tileMapByRegion,
   String targetTileKey = ValidateWorkOw.tileKey,
   String unitId = 'builder1',
-}) =>
-    vwValidateSingleWork(
-      game: game,
-      order: WorkOrder(
-        unitId: unitId,
-        target: kWorkTargetBuildImprovement,
-        targetTileKey: targetTileKey,
-      ),
-      tileMapByRegion: tileMapByRegion,
-    );
+}) => vwValidateSingleWork(
+  game: game,
+  order: WorkOrder(
+    unitId: unitId,
+    target: kWorkTargetBuildImprovement,
+    targetTileKey: targetTileKey,
+  ),
+  tileMapByRegion: tileMapByRegion,
+);
 
 OrderValidationResult vwValidateOwWorkTarget({
   required Game game,
   required String unitId,
   required String target,
   Map<String, TileMapResult>? tileMapByRegion,
-}) =>
-    vwValidateSingleWork(
-      game: game,
-      order: WorkOrder(
-        unitId: unitId,
-        target: target,
-        targetTileKey: ValidateWorkOw.tileKey,
-      ),
-      tileMapByRegion: tileMapByRegion,
-    );
+}) => vwValidateSingleWork(
+  game: game,
+  order: WorkOrder(
+    unitId: unitId,
+    target: target,
+    targetTileKey: ValidateWorkOw.tileKey,
+  ),
+  tileMapByRegion: tileMapByRegion,
+);
 
-void vwExpectRejected(
-  OrderValidationResult result, {
-  String? reasonContains,
-}) {
+void vwExpectRejected(OrderValidationResult result, {String? reasonContains}) {
   expect(result.status, OrderValidationStatus.rejected);
   if (reasonContains != null) {
     expect(result.reason, contains(reasonContains));
@@ -197,7 +191,9 @@ void vwExpectPurchaseLandMineral({required bool prospected}) {
   if (prospected) {
     vwExpectPurchaseLandAccepted(
       resourceByTileKey: {tk: 'iron'},
-      playerProspectedTiles: {'p1': {tk}},
+      playerProspectedTiles: {
+        'p1': {tk},
+      },
     );
   } else {
     vwExpectPurchaseLandRejected(
@@ -257,10 +253,7 @@ void vwExpectRailBuildOutcome({
   String? reasonContains,
 }) {
   final result = vwValidateOwWorkTarget(
-    game: gameWithRailUnit(
-      tileState: tileState,
-      techUnlocked: techUnlocked,
-    ),
+    game: gameWithRailUnit(tileState: tileState, techUnlocked: techUnlocked),
     unitId: 'rail1',
     target: kWorkTargetBuildRail,
     tileMapByRegion: tileMapByRegion,

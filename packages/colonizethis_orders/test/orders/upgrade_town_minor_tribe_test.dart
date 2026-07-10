@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'upgrade_town on Minor/Tribe towns (Refs #3872)',
     upgradeTownMinorTribeScenarios(),
-    runUpgradeTownMinorTribeScenario,
+    runRunnableScenario,
   );
 }

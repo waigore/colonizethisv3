@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'workOrderTargetPrechecks',
     workOrderTargetPrechecksScenarios(),
-    runWorkOrderTargetPrecheckScenario,
+    runRunnableScenario,
   );
 }

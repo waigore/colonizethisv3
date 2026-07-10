@@ -195,41 +195,36 @@ Unit workAppWorkingUnit({
 Unit workAppPurchaseLandMerchant({
   String id = 'merchant1',
   String ownerId = 'p1',
-}) =>
-    workAppUnit(
-      id: id,
-      type: kUnitTypeMerchant,
-      ownerId: ownerId,
-      locationProvinceId: WorkAppIds.minorProvinceId,
-      tileKey: WorkAppIds.tileKeyMinor,
-    );
+}) => workAppUnit(
+  id: id,
+  type: kUnitTypeMerchant,
+  ownerId: ownerId,
+  locationProvinceId: WorkAppIds.minorProvinceId,
+  tileKey: WorkAppIds.tileKeyMinor,
+);
 
 Game workAppSingleGpPurchaseLandGame({
   List<OvertureState> overtureStates = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
   int treasuryExtra = 100,
-}) =>
-    workAppPurchaseLandGame(
-      units: [workAppPurchaseLandMerchant()],
-      players: [
-        workAppPlayer(
-          treasury: WorkAppIds.purchaseLandGrainCost + treasuryExtra,
-        ),
-      ],
-      overtureStates: overtureStates,
-      diplomacyRelations: diplomacyRelations,
-    );
+}) => workAppPurchaseLandGame(
+  units: [workAppPurchaseLandMerchant()],
+  players: [
+    workAppPlayer(treasury: WorkAppIds.purchaseLandGrainCost + treasuryExtra),
+  ],
+  overtureStates: overtureStates,
+  diplomacyRelations: diplomacyRelations,
+);
 
 Orders workAppPurchaseLandOrders({
   String unitId = 'merchant1',
   String playerId = 'p1',
-}) =>
-    workAppSingleWorkOrder(
-      unitId: unitId,
-      playerId: playerId,
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: WorkAppIds.tileKeyMinor,
-    );
+}) => workAppSingleWorkOrder(
+  unitId: unitId,
+  playerId: playerId,
+  target: kWorkTargetPurchaseLand,
+  targetTileKey: WorkAppIds.tileKeyMinor,
+);
 
 /// Home + minor province purchase-land setup (merchant on minor tile).
 Game workAppPurchaseLandGame({

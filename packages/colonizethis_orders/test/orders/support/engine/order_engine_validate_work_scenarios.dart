@@ -10,31 +10,10 @@ import 'order_engine_purchase_land_test_support.dart';
 import 'order_engine_validate_work_expectation_shorthand.dart';
 import 'order_engine_validate_work_fixtures.dart';
 
-/// One row in [orderEngineValidateWorkScenarios].
-class OrderEngineValidateWorkScenario implements RefsScenario {
-  const OrderEngineValidateWorkScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
-
-void runOrderEngineValidateWorkScenario(
-  OrderEngineValidateWorkScenario scenario,
-) {
-  scenario.run();
-}
-
 /// Canonical scenarios for order_engine_validate_work family tests.
-List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
+List<RunnableScenario> orderEngineValidateWorkScenarios() => [
   // dart format off
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects second pending work order for same unit in one turn',
     run: () {
       const tileA = ValidateWorkOw.tileKey;
@@ -59,14 +38,14 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       );
     },
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when no embassy with Minor',
     run: () => vwExpectPurchaseLandRejected(
       overtureStates: null,
       reasonContains: 'embassy',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when at war with faction',
     run: () => vwExpectPurchaseLandRejected(
       diplomacyRelations: const [
@@ -79,29 +58,29 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'war',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when insufficient treasury',
     run: () => vwExpectPurchaseLandRejected(
       treasury: 15 * 10 - 1,
       reasonContains: 'Insufficient treasury',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when tile has no resource',
     run: () => vwExpectPurchaseLandRejected(
       resourceByTileKey: {},
       reasonContains: 'no resource',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when mineral tile not prospected',
     run: () => vwExpectPurchaseLandMineral(prospected: false),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource',
     run: vwExpectPurchaseLandAccepted,
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects second Builder/Engineer/Merchant work order on same tile for same player (per-tile exclusivity)',
     run: () {
       const exclusivityTileKey = ValidateWorkOw.tileKey;
@@ -125,33 +104,33 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       );
     },
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts purchase_land for mineral when prospected',
     run: () => vwExpectPurchaseLandMineral(prospected: true),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when tile already purchased by another GP',
     run: () => vwExpectPurchaseLandRejected(
       purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p2'},
       reasonContains: 'Tile already purchased by another power',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects purchase_land when tile already owned by same player',
     run: () => vwExpectPurchaseLandRejected(
       purchasedTilesByTileKey: {PurchaseLandTestFixture.tileKey: 'p1'},
       reasonContains: 'You already own this tile',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement on mineral tile when not prospected',
     run: () => vwExpectBuildImprovementMineral(prospected: false),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts build_improvement on mineral tile after prospected',
     run: () => vwExpectBuildImprovementMineral(prospected: true),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts build_improvement on grain when tile not prospected',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -160,7 +139,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement when tile has no resource',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(resourceByTileKey: {}),
@@ -168,7 +147,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'no resource',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement when improvement level already 4',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -179,7 +158,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'maximum',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement when tech cap would be exceeded (empty tech)',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -195,7 +174,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       },
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement when tech cap would be exceeded',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -207,7 +186,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'Insufficient tech',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts grain upgrade when exact next-level grain tech is unlocked',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -218,7 +197,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts build_improvement when tile has resource, level < 4, tech cap allows',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementBaseGame(
@@ -229,7 +208,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_improvement in foreign, unpurchased province',
     run: () => vwExpectBuildImprovementOutcome(
       game: buildImprovementForeignProvinceGame(),
@@ -238,7 +217,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'foreign or uncontrolled province',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects raising scrub timber from level 1 even with circular_saw',
     run: () => vwExpectBuildImprovementOutcome(
       game: scrubCapBaseGame(level: 1),
@@ -248,7 +227,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       onRejected: (result) => expect(result.reason, contains('level 1')),
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts raising hardwood timber from level 1 with circular_saw',
     run: () => vwExpectBuildImprovementOutcome(
       game: scrubCapBaseGame(level: 1),
@@ -256,7 +235,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts initial scrub timber improvement (level 0 -> 1)',
     run: () => vwExpectBuildImprovementOutcome(
       game: scrubCapBaseGame(level: 0),
@@ -264,7 +243,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts build_improvement on purchased tile in foreign province',
     run: () {
       final foreignTileKey = validateWorkForeignTileKey();
@@ -277,7 +256,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       );
     },
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_fort to level 2 without Mine Engineering',
     run: () => vwExpectFortBuildRejected(
       fortLevel: 1,
@@ -287,7 +266,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'Mine Engineering',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_fort to level 3 without Modern Forts',
     run: () => vwExpectFortBuildRejected(
       fortLevel: 2,
@@ -298,7 +277,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'Modern Forts',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_rail when tile terrain data is missing',
     run: () => vwExpectRailBuildOutcome(
       tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
@@ -307,7 +286,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'terrain data required',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_rail when road level is 0',
     run: () => vwExpectRailBuildOutcome(
       tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 0),
@@ -316,7 +295,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'existing road',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_rail on hills with only Early Steam',
     run: () => vwExpectRailBuildOutcome(
       tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
@@ -326,7 +305,7 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'Later Steam',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts build_rail on plains with Early Steam and road 1',
     run: () => vwExpectRailBuildOutcome(
       tileState: TileMapState().setRoadLevel(ValidateWorkOw.tileKey, 1),
@@ -334,14 +313,14 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       accepted: true,
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_road in minor province without embassy path',
     run: () => vwExpectRejectMinorProvinceRoad(
       game: minorProvinceEngineerRoadGame(),
       reasonContains: 'foreign province',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects build_road in minor province even with embassy when occupancy disallows tile',
     run: () => vwExpectRejectMinorProvinceRoad(
       game: minorProvinceEngineerRoadGame(
@@ -350,11 +329,11 @@ List<OrderEngineValidateWorkScenario> orderEngineValidateWorkScenarios() => [
       reasonContains: 'cannot occupy',
     ),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'rejects upgrade_town without National Bureaucracy',
     run: () => vwExpectUpgradeTownOutcome(accepted: false, techUnlocked: const {}),
   ),
-  OrderEngineValidateWorkScenario(
+  RunnableScenario(
     label: 'accepts upgrade_town when National Bureaucracy unlocked',
     run: () => vwExpectUpgradeTownOutcome(
       accepted: true,

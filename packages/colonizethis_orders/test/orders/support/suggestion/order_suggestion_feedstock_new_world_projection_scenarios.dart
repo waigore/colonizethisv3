@@ -1,29 +1,37 @@
 // Table-driven feedstock new-world projection scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/ai_api.dart'
+    show feedstockExtractionResourceIdsForPlayer;
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_feedstock_new_world_projection_run_rows.dart';
 
-class OrderSuggestionFeedstockNewWorldProjectionScenario
-    implements LabeledScenario {
-  const OrderSuggestionFeedstockNewWorldProjectionScenario({
-    required this.label,
-    required this.run,
-  });
+import 'order_suggestion_feedstock_new_world_projection_fixtures.dart';
 
-  @override
-  final String label;
-  final void Function() run;
+void osfnwpRunSellerNwDeactivatesGate() {
+  expect(
+    feedstockExtractionResourceIdsForPlayer(
+      feedstockNwProjectionGame(),
+      feedstockNwProjectionSupplierId,
+    ),
+    contains('iron'),
+  );
+
+  final game = feedstockNwProjectionGame(sellerNw: 1);
+  expect(
+    feedstockExtractionResourceIdsForPlayer(
+      game,
+      feedstockNwProjectionSupplierId,
+    ),
+    isEmpty,
+    reason:
+        'a below-quota seller owning a New World province is no longer a '
+        'zero-NW lock-recovery seller, so the peer-supplier gate must empty',
+  );
 }
 
-void runOrderSuggestionFeedstockNewWorldProjectionScenario(
-  OrderSuggestionFeedstockNewWorldProjectionScenario scenario,
-) {
-  scenario.run();
-}
-
-List<OrderSuggestionFeedstockNewWorldProjectionScenario>
+List<RunnableScenario>
 orderSuggestionFeedstockNewWorldProjectionScenarios() => const [
-  OrderSuggestionFeedstockNewWorldProjectionScenario(
+  RunnableScenario(
     label:
         'seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393)',
     run: osfnwpRunSellerNwDeactivatesGate,

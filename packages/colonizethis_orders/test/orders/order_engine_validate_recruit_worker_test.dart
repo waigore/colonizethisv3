@@ -9,7 +9,7 @@ void main() {
   group('OrderEngine validation pass — RecruitWorkerOrder (#2692 S4)', () {
     runLabeledScenarios(
       orderEngineValidateRecruitWorkerScenarios(),
-      runOrderEngineValidateRecruitWorkerScenario,
+      runRunnableScenario,
     );
   });
 }

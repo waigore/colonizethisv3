@@ -1,39 +1,70 @@
 // Table-driven OrderEngine civilian move XOR work scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_engine_civilian_move_xor_work_run_rows.dart';
+import 'order_engine_civilian_move_xor_work_fixtures.dart';
 
-/// One row in [orderEngineCivilianMoveXorWorkScenarios].
-class OrderEngineCivilianMoveXorWorkScenario implements RefsScenario {
-  const OrderEngineCivilianMoveXorWorkScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+void oecmxwRunRejectsWorkWhenMoveExists() {
+  final game = ocmxwExplorerOnP1Game();
+  final topology = ocmxwTwoProvinceTopology();
+  final engine = OrderEngine();
+  final moveRes = engine.addMoveOrderWithContext(
+    game,
+    topology,
+    'p1',
+    const MoveOrder(unitId: 'u1', destinationTileKey: ocmxwTileB),
+  );
+  expect(moveRes.isAccepted, isTrue, reason: moveRes.reason);
+  final workResult = engine.addWorkOrderWithContext(
+    game,
+    topology,
+    'p1',
+    WorkOrder(
+      unitId: 'u1',
+      target: kWorkTargetExplore,
+      targetTileKey: ocmxwExploreTargetTile,
+    ),
+  );
+  expect(workResult.isAccepted, isFalse);
+  expect(workResult.reason, kReasonCivilianMoveXorWorkOrder);
 }
 
-void runOrderEngineCivilianMoveXorWorkScenario(
-  OrderEngineCivilianMoveXorWorkScenario scenario,
-) {
-  scenario.run();
+void oecmxwRunMergedDraftMoveThenWork() {
+  final game = ocmxwExplorerOnP1Game();
+  final topology = ocmxwTwoProvinceTopology();
+  final engine = OrderEngine(
+    initialOrders: Orders(
+      moveOrdersByPlayerId: {
+        'p1': [const MoveOrder(unitId: 'u1', destinationTileKey: ocmxwTileB)],
+      },
+      workOrdersByPlayerId: {
+        'p1': [
+          WorkOrder(
+            unitId: 'u1',
+            target: kWorkTargetExplore,
+            targetTileKey: ocmxwExploreTargetTile,
+          ),
+        ],
+      },
+    ),
+  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+  expect(results.first.isAccepted, isTrue);
+  expect(results.last.isAccepted, isFalse);
+  expect(results.last.reason, kReasonCivilianMoveXorWorkOrder);
 }
 
 /// Canonical scenarios for civilian move XOR work family.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_civilian_move_xor_work_test.dart` descriptions.
-List<OrderEngineCivilianMoveXorWorkScenario>
-orderEngineCivilianMoveXorWorkScenarios() => const [
-  OrderEngineCivilianMoveXorWorkScenario(
+List<RunnableScenario> orderEngineCivilianMoveXorWorkScenarios() => const [
+  RunnableScenario(
     label: 'rejects work when same civilian already has a move order',
     run: oecmxwRunRejectsWorkWhenMoveExists,
   ),
-  OrderEngineCivilianMoveXorWorkScenario(
+  RunnableScenario(
     label: 'merged draft with move then work rejects work (move remains valid)',
     run: oecmxwRunMergedDraftMoveThenWork,
   ),

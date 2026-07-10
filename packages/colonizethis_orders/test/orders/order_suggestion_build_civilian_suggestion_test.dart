@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestBuildOrders civilian enumeration (Refs #3793)',
     suggestBuildOrdersCivilianEnumerationScenarios(),
-    runOrderSuggestionBuildCivilianSuggestionScenario,
+    runRunnableScenario,
   );
 }

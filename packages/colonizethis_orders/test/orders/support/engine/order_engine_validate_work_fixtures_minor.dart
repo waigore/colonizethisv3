@@ -66,4 +66,3 @@ MapTopology minorProvinceRoadTopology() {
     edges: [],
   );
 }
-

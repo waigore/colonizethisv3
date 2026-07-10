@@ -1,6 +1,5 @@
 // Compact work-order application expectation shorthands (Refs #3949).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,12 +11,7 @@ Game waaApply(
   Game game,
   Orders orders, {
   Map<String, TileMapResult>? tileMapByRegion,
-}) =>
-    applyBuildAndWorkOrders(
-      game,
-      orders,
-      tileMapByRegion: tileMapByRegion,
-    );
+}) => applyBuildAndWorkOrders(game, orders, tileMapByRegion: tileMapByRegion);
 
 Unit waaSingleUnit(Game game) => game.worldState.oldWorld.units.single;
 
@@ -53,11 +47,7 @@ void waaExpectRoadLevel(Game next, int level) {
   expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), level);
 }
 
-void waaExpectExploreWork(
-  Game next, {
-  int? totalTurns,
-  int? remainingTurns,
-}) {
+void waaExpectExploreWork(Game next, {int? totalTurns, int? remainingTurns}) {
   final u = waaSingleUnit(next);
   expect(u.currentWork, isNotNull);
   expect(u.currentWork!.workTarget, kWorkTargetExplore);
@@ -70,35 +60,36 @@ void waaExpectExploreWork(
 }
 
 Game waaEngineerRoadGame({Stockpile? stockpile}) => workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeEngineer)],
-      players: [
-        workAppPlayer(
-          stockpile: stockpile ??
-              OrdersApplicationTestSupport.stockpileCovering(
-                workOrderCostBuildRoad,
-              ),
-        ),
-      ],
-    );
+  units: [workAppUnit(type: kUnitTypeEngineer)],
+  players: [
+    workAppPlayer(
+      stockpile:
+          stockpile ??
+          OrdersApplicationTestSupport.stockpileCovering(
+            workOrderCostBuildRoad,
+          ),
+    ),
+  ],
+);
 
 Game waaEngineerFortGame({
   int fortLevel = 0,
   Stockpile? stockpile,
   Map<String, bool>? techUnlocked,
-}) =>
-    workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeEngineer)],
-      provinces: [workAppOwnedProvince(fortLevel: fortLevel)],
-      players: [
-        workAppPlayer(
-          stockpile: stockpile ??
-              OrdersApplicationTestSupport.stockpileCovering(
-                workOrderCostBuildFort(fortLevel),
-              ),
-          techUnlocked: techUnlocked,
-        ),
-      ],
-    );
+}) => workAppOwnedGame(
+  units: [workAppUnit(type: kUnitTypeEngineer)],
+  provinces: [workAppOwnedProvince(fortLevel: fortLevel)],
+  players: [
+    workAppPlayer(
+      stockpile:
+          stockpile ??
+          OrdersApplicationTestSupport.stockpileCovering(
+            workOrderCostBuildFort(fortLevel),
+          ),
+      techUnlocked: techUnlocked,
+    ),
+  ],
+);
 
 void waaExpectCurrentWorkTiming(
   Game next, {
@@ -180,7 +171,9 @@ void waaExpectFortSkipAtLevel(int fortLevel) {
     waaEngineerFortGame(
       fortLevel: fortLevel,
       stockpile: const Stockpile(),
-      techUnlocked: fortLevel == 1 ? const {} : const {kTechIdMineEngineering: true},
+      techUnlocked: fortLevel == 1
+          ? const {}
+          : const {kTechIdMineEngineering: true},
     ),
     workAppSingleWorkOrder(target: kWorkTargetBuildFort),
   );

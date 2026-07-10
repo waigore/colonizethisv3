@@ -44,12 +44,7 @@ Game gpMinorGame({
       techUnlocked: techUnlocked ?? const {kTechIdDiplomaticExpertise: true},
     ),
     if (includeSecondGp)
-      Player(
-        id: 'gp2',
-        displayName: 'B',
-        isHuman: false,
-        treasury: 5000,
-      ),
+      Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 5000),
   ];
 
   final diplomacyRelations = includeSecondGp
@@ -74,7 +69,8 @@ Game gpMinorGame({
           ),
         ];
 
-  final resolvedOvertureStates = overtureStates ??
+  final resolvedOvertureStates =
+      overtureStates ??
       [
         OvertureState(
           gpId: 'gp1',

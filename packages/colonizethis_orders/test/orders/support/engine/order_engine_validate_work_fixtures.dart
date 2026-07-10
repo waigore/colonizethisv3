@@ -13,15 +13,14 @@ Province _vwProvince({
   int fortLevel = 0,
   String? townTileKey,
   int? townDevelopmentLevel,
-}) =>
-    Province(
-      id: provinceId,
-      regionId: ow,
-      ownerId: 'p1',
-      fortLevel: fortLevel,
-      townTileKey: townTileKey,
-      townDevelopmentLevel: townDevelopmentLevel ?? kTownDevelopmentLevelMin,
-    );
+}) => Province(
+  id: provinceId,
+  regionId: ow,
+  ownerId: 'p1',
+  fortLevel: fortLevel,
+  townTileKey: townTileKey,
+  townDevelopmentLevel: townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+);
 
 Game vwSingleProvinceUnitGame({
   required String unitId,
@@ -41,9 +40,7 @@ Game vwSingleProvinceUnitGame({
   const provinceId = ValidateWorkOw.provinceId;
   const tileKey = ValidateWorkOw.tileKey;
   final tileKeys = [tileKey, ...?extraTileKeys];
-  final visibility = {
-    for (final key in tileKeys) key: 'fullyVisible',
-  };
+  final visibility = {for (final key in tileKeys) key: 'fullyVisible'};
   return Game(
     id: 'g1',
     worldState: WorldState(
@@ -72,13 +69,9 @@ Game vwSingleProvinceUnitGame({
       resourceByTileKey: resourceByTileKey ?? const {},
       tileState: tileState,
       tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: tileKeys,
-        },
+        ow: {provinceId: tileKeys},
       },
-      playerVisibilityByTile: {
-        'p1': visibility,
-      },
+      playerVisibilityByTile: {'p1': visibility},
       playerProspectedTiles: playerProspectedTiles ?? const {},
     ),
     players: [
@@ -171,14 +164,13 @@ Game gameWithRailUnit({
   required TileMapState tileState,
   Map<String, bool>? techUnlocked,
   Stockpile? stockpile,
-}) =>
-    vwSingleProvinceUnitGame(
-      unitId: 'rail1',
-      unitType: kUnitTypeRailBuilder,
-      tileState: tileState,
-      stockpile: stockpile ?? railStockpile(),
-      techUnlocked: techUnlocked ?? const {kTechIdEarlySteamEngine: true},
-    );
+}) => vwSingleProvinceUnitGame(
+  unitId: 'rail1',
+  unitType: kUnitTypeRailBuilder,
+  tileState: tileState,
+  stockpile: stockpile ?? railStockpile(),
+  techUnlocked: techUnlocked ?? const {kTechIdEarlySteamEngine: true},
+);
 
 Game buildImprovementForeignProvinceGame({
   Map<String, String>? purchasedTilesByTileKey,
@@ -243,14 +235,13 @@ Game fortWorkGame({
   required int fortLevel,
   required Stockpile stockpile,
   Map<String, bool>? techUnlocked,
-}) =>
-    vwSingleProvinceUnitGame(
-      unitId: 'eng1',
-      unitType: kUnitTypeEngineer,
-      fortLevel: fortLevel,
-      stockpile: stockpile,
-      techUnlocked: techUnlocked,
-    );
+}) => vwSingleProvinceUnitGame(
+  unitId: 'eng1',
+  unitType: kUnitTypeEngineer,
+  fortLevel: fortLevel,
+  stockpile: stockpile,
+  techUnlocked: techUnlocked,
+);
 
 Game dualTilePendingWorkGame() {
   const tileB = '${ValidateWorkOw.provinceId}|1|0';

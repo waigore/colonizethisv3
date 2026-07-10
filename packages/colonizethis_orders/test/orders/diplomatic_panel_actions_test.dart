@@ -11,12 +11,12 @@ void main() {
   runLabeledScenarioGroup(
     'diplomaticPanelActionCandidates',
     diplomaticPanelActionCandidatesScenarios(),
-    runDiplomaticPanelActionCandidatesScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'enumerateDiplomaticPanelActionsForTarget',
     diplomaticPanelEnumerateScenarios(),
-    runDiplomaticPanelEnumerateScenario,
+    runRunnableScenario,
   );
 }

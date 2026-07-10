@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'validateJoinEmpireOverture (free function)',
     joinEmpireOvertureValidatorScenarios(),
-    runJoinEmpireOvertureValidatorScenario,
+    runRunnableScenario,
   );
 }

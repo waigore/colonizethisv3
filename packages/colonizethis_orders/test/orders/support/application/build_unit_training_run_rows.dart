@@ -7,7 +7,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'build_unit_training_expectation_shorthand.dart';
 import 'build_unit_training_fixtures.dart';
-import 'orders_application_military_ship_skip_test_support.dart';
 
 void butRunSkipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog() {
   butExpectNoOwUnitsAfter(
@@ -119,10 +118,7 @@ void butRunAppliesTreasuryStockpileAndWorkerCostsWhenValid() {
   final nextPlayer = validNext.players.single;
   expect(validNext.worldState.oldWorld.units.length, 1);
   expect(validNext.worldState.oldWorld.units.single.type, 'peasant_levies');
-  expect(
-    nextPlayer.treasury,
-    player.treasury - econ.buildTreasuryCost,
-  );
+  expect(nextPlayer.treasury, player.treasury - econ.buildTreasuryCost);
   expect(nextPlayer.workerPool.peasants, player.workerPool.peasants - 1);
   for (final entry in econ.buildInputs.entries) {
     expect(
@@ -162,13 +158,13 @@ void butRunShipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea() {
   );
   final fluyteGame = butShipBuildGame(player: fluytePlayer, provinceId: 'P1')
       .copyWith(
-    players: [
-      fluytePlayer.copyWith(
-        stockpile: butStockpileCovering(fluyteShipEcon.buildInputs),
-        treasury: fluyteShipEcon.buildTreasuryCost + 10,
-      ),
-    ],
-  );
+        players: [
+          fluytePlayer.copyWith(
+            stockpile: butStockpileCovering(fluyteShipEcon.buildInputs),
+            treasury: fluyteShipEcon.buildTreasuryCost + 10,
+          ),
+        ],
+      );
   final fluyteNext = butApply(
     fluyteGame,
     butOrdersFor('fluyte'),
@@ -177,8 +173,7 @@ void butRunShipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea() {
   expect(fluyteNext.worldState.fleets, isNotEmpty);
   expect(
     fluyteNext.worldState.fleets.any(
-      (f) =>
-          f.ownerId == ButIds.playerId && f.shipTypeIds.contains('fluyte'),
+      (f) => f.ownerId == ButIds.playerId && f.shipTypeIds.contains('fluyte'),
     ),
     isTrue,
   );
@@ -264,8 +259,10 @@ void butRunRejectsCivilianBuildWhenTreasuryInsufficient() {
 
 void butRunRejectsCivilianBuildWhenPaperInsufficient() {
   final civilianRejectGame = butCivilianGame(treasury: 1000, paper: 0);
-  final civilianRejectNext =
-      butApply(civilianRejectGame, butOrdersFor(kUnitTypeBuilder));
+  final civilianRejectNext = butApply(
+    civilianRejectGame,
+    butOrdersFor(kUnitTypeBuilder),
+  );
   expect(civilianRejectNext.worldState.oldWorld.units, isEmpty);
   expect(
     civilianRejectNext.players.single.treasury,
@@ -277,18 +274,13 @@ void butRunAppliesTreasuryAndPaperCostWhenCivilianBuildValid() {
   final civilianGame = butCivilianGame(treasury: 1100, paper: 3);
   final civilianNext = butApply(civilianGame, butOrdersFor(kUnitTypeBuilder));
   expect(civilianNext.worldState.oldWorld.units.length, 1);
-  expect(
-    civilianNext.worldState.oldWorld.units.single.type,
-    kUnitTypeBuilder,
-  );
+  expect(civilianNext.worldState.oldWorld.units.single.type, kUnitTypeBuilder);
   expect(
     civilianNext.players.single.treasury,
     civilianGame.players.single.treasury - 1000,
   );
   expect(
-    civilianNext.players.single.stockpile.quantityOf(
-      CommodityCatalog.paper.id,
-    ),
+    civilianNext.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
     civilianGame.players.single.stockpile.quantityOf(
           CommodityCatalog.paper.id,
         ) -
@@ -316,8 +308,7 @@ void butRunMerchantRequiresMerchantCompaniesTech() {
     paper: merchantPaperQty + 1,
     techUnlocked: {kTechIdMerchantCompanies: true},
   );
-  final merchantNextWithTech =
-      butApply(merchantGameWithTech, merchantOrders);
+  final merchantNextWithTech = butApply(merchantGameWithTech, merchantOrders);
   expect(merchantNextWithTech.worldState.oldWorld.units.length, 1);
   expect(
     merchantNextWithTech.worldState.oldWorld.units.single.type,

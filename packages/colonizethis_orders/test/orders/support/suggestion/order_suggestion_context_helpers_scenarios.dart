@@ -1,107 +1,319 @@
 // Table-driven order suggestion context helper scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_context_helpers_run_rows.dart';
+import 'order_suggestion_context_helpers_fixtures.dart';
 
-/// One row in order suggestion context helper scenario tables.
-class OrderSuggestionContextHelpersScenario implements RefsScenario {
-  const OrderSuggestionContextHelpersScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
+void oschRunAppendDiplomaticOrderForTrialExisting() {
+  const existing = DiplomaticOrder(
+    type: DiplomaticOrderType.offerPeace,
+    targetFactionId: 'minorA',
+  );
+  const added = DiplomaticOrder(
+    type: DiplomaticOrderType.declareWar,
+    targetFactionId: 'minorB',
+  );
+  final orders = Orders(
+    diplomaticOrdersByPlayerId: {
+      'gp1': [existing],
+    },
+  );
 
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+  final updated = appendDiplomaticOrderForTrial(orders, 'gp1', added);
+
+  expect(updated.diplomaticOrdersByPlayerId['gp1'], [existing, added]);
+  expect(orders.diplomaticOrdersByPlayerId['gp1'], [existing]);
 }
 
-void runOrderSuggestionContextHelpersScenario(
-  OrderSuggestionContextHelpersScenario scenario,
-) {
-  scenario.run();
+void oschRunAppendDiplomaticOrderForTrialAbsent() {
+  const added = DiplomaticOrder(
+    type: DiplomaticOrderType.alliance,
+    targetFactionId: 'gp2',
+  );
+  const orders = Orders();
+
+  final updated = appendDiplomaticOrderForTrial(orders, 'gp9', added);
+
+  expect(updated.diplomaticOrdersByPlayerId['gp9'], [added]);
+  expect(orders.diplomaticOrdersByPlayerId.containsKey('gp9'), isFalse);
+}
+
+void oschRunOvertureNextProgression() {
+  expect(OvertureStage.none.next, OvertureStage.tradeConsulate);
+  expect(OvertureStage.tradeConsulate.next, OvertureStage.embassy);
+  expect(OvertureStage.embassy.next, OvertureStage.nap);
+  expect(OvertureStage.nap.next, OvertureStage.joinEmpire);
+}
+
+void oschRunOvertureNextFinalNull() {
+  expect(OvertureStage.joinEmpire.next, isNull);
+}
+
+void oschRunOverturePreviousLeftInverse() {
+  for (final stage in OvertureStage.values) {
+    final forward = stage.next;
+    if (forward == null) {
+      continue;
+    }
+    expect(forward.previous, stage);
+  }
+}
+
+void oschRunOverturePreviousThenNext() {
+  for (final stage in OvertureStage.values) {
+    if (stage == OvertureStage.none) {
+      continue;
+    }
+    expect(stage.previous.next, stage);
+  }
+}
+
+void oschRunOverturePreviousReversesNext() {
+  for (final stage in [
+    OvertureStage.none,
+    OvertureStage.tradeConsulate,
+    OvertureStage.embassy,
+    OvertureStage.nap,
+  ]) {
+    final forward = stage.next!;
+    expect(forward.previous, stage);
+  }
+}
+
+void oschRunOverturePreviousNoneSelf() {
+  expect(OvertureStage.none.previous, OvertureStage.none);
+}
+
+void oschRunOverturePreviousJoinEmpireNap() {
+  expect(OvertureStage.joinEmpire.previous, OvertureStage.nap);
+}
+
+void oschRunNavalMoveAcceptedBoolean() {
+  final accepted = isNavalMoveOrderAccepted(
+    oschMinimalGame,
+    oschEmptyTopology,
+    'gp1',
+    const Orders(),
+    const NavalMoveOrder(fleetId: 'fleet1', destinationSeaZoneId: 'sea1'),
+  );
+  expect(accepted, isFalse);
+}
+
+void oschRunNavalMissionAcceptedBoolean() {
+  final accepted = isNavalMissionOrderAccepted(
+    oschMinimalGame,
+    oschEmptyTopology,
+    'gp1',
+    const Orders(),
+    const NavalMissionOrder(fleetId: 'fleet1', mission: 'patrol'),
+  );
+  expect(accepted, isFalse);
+}
+
+void oschRunDiplomaticAcceptedBoolean() {
+  final accepted = isDiplomaticOrderAccepted(
+    oschMinimalGame,
+    oschEmptyTopology,
+    'gp1',
+    const Orders(),
+    const DiplomaticOrder(
+      type: DiplomaticOrderType.declareWar,
+      targetFactionId: 'minor1',
+    ),
+  );
+  expect(accepted, isFalse);
+}
+
+void oschRunDiplomaticAcceptedMatchesDefaultPath() {
+  final game = oschDiplomacyGame();
+  const candidate = oschAllianceCandidate;
+  final sharedView = buildPlayerView(game, oschEmptyTopology, 'gp1');
+  final sharedUnits = unitsByIdFromWorld(game.worldState);
+  final defaultPath = isDiplomaticOrderAccepted(
+    game,
+    oschEmptyTopology,
+    'gp1',
+    const Orders(),
+    candidate,
+  );
+  final sharedPath = isDiplomaticOrderAccepted(
+    game,
+    oschEmptyTopology,
+    'gp1',
+    const Orders(),
+    candidate,
+    resolution: orderResolutionContextFromView(
+      sharedView,
+      game,
+      unitsById: sharedUnits,
+    ),
+  );
+  expect(sharedPath, defaultPath);
+  expect(defaultPath, isTrue);
+}
+
+void oschRunStatelessAcceptHelpersReuseValidator() {
+  final game = oschDiplomacyGame();
+  const topology = oschEmptyTopology;
+  const baseOrders = Orders();
+  final sharedView = buildPlayerView(game, topology, 'gp1');
+  final sharedUnits = unitsByIdFromWorld(game.worldState);
+  resetIncrementalCandidateValidatorBuildCountForTests();
+  final sharedValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: 'gp1',
+    baseOrders: baseOrders,
+    resolution: orderResolutionContextFromView(
+      sharedView,
+      game,
+      unitsById: sharedUnits,
+    ),
+  );
+  expect(incrementalCandidateValidatorBuildCountForTests, 1);
+
+  const candidate = oschAllianceCandidate;
+  for (var i = 0; i < 5; i++) {
+    isDiplomaticOrderAccepted(
+      game,
+      topology,
+      'gp1',
+      baseOrders,
+      candidate,
+      sharedCandidateValidator: sharedValidator,
+    );
+    isMoveOrderAccepted(
+      game,
+      topology,
+      'gp1',
+      baseOrders,
+      const MoveOrder(unitId: 'u1', destinationTileKey: 't'),
+      sharedCandidateValidator: sharedValidator,
+    );
+  }
+  expect(
+    incrementalCandidateValidatorBuildCountForTests,
+    1,
+    reason:
+        'shared validator path must not call buildIncrementalCandidateValidator '
+        'per probe (Refs #2394)',
+  );
+}
+
+void oschRunDiplomaticAcceptedWithValidatorMatches() {
+  final game = oschDiplomacyGame();
+  const topology = oschEmptyTopology;
+  const candidate = oschAllianceCandidate;
+  const baseOrders = Orders();
+  final sharedView = buildPlayerView(game, topology, 'gp1');
+  final sharedUnits = unitsByIdFromWorld(game.worldState);
+  final validator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: 'gp1',
+    baseOrders: baseOrders,
+    resolution: orderResolutionContextFromView(
+      sharedView,
+      game,
+      unitsById: sharedUnits,
+    ),
+  );
+  expect(
+    isDiplomaticOrderAcceptedWithValidator(validator, candidate),
+    isDiplomaticOrderAccepted(
+      game,
+      topology,
+      'gp1',
+      baseOrders,
+      candidate,
+      resolution: orderResolutionContextFromView(
+        sharedView,
+        game,
+        unitsById: sharedUnits,
+      ),
+    ),
+  );
 }
 
 /// Scenarios for appendDiplomaticOrderForTrial.
-List<OrderSuggestionContextHelpersScenario>
-appendDiplomaticOrderForTrialScenarios() => const [
-  OrderSuggestionContextHelpersScenario(
+List<RunnableScenario> appendDiplomaticOrderForTrialScenarios() => const [
+  RunnableScenario(
     label: 'appends order for existing player list',
     run: oschRunAppendDiplomaticOrderForTrialExisting,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'creates new player list when absent',
     run: oschRunAppendDiplomaticOrderForTrialAbsent,
   ),
 ];
 
 /// Scenarios for OvertureStageChain.next.
-List<OrderSuggestionContextHelpersScenario> overtureStageChainNextScenarios() =>
-    const [
-      OrderSuggestionContextHelpersScenario(
-        label: 'follows expected progression',
-        run: oschRunOvertureNextProgression,
-      ),
-      OrderSuggestionContextHelpersScenario(
-        label: 'returns null when already at final stage',
-        run: oschRunOvertureNextFinalNull,
-      ),
-    ];
+List<RunnableScenario> overtureStageChainNextScenarios() => const [
+  RunnableScenario(
+    label: 'follows expected progression',
+    run: oschRunOvertureNextProgression,
+  ),
+  RunnableScenario(
+    label: 'returns null when already at final stage',
+    run: oschRunOvertureNextFinalNull,
+  ),
+];
 
 /// Scenarios for OvertureStageChain.previous.
-List<OrderSuggestionContextHelpersScenario>
-overtureStageChainPreviousScenarios() => const [
-  OrderSuggestionContextHelpersScenario(
+List<RunnableScenario> overtureStageChainPreviousScenarios() => const [
+  RunnableScenario(
     label: 'next is left inverse of previous for every non-terminal stage',
     run: oschRunOverturePreviousLeftInverse,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'previous then next restores stage for every stage past none',
     run: oschRunOverturePreviousThenNext,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'reverses next for progression chain',
     run: oschRunOverturePreviousReversesNext,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'none maps to itself',
     run: oschRunOverturePreviousNoneSelf,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'joinEmpire previous is nap',
     run: oschRunOverturePreviousJoinEmpireNap,
   ),
 ];
 
 /// Scenarios for acceptance wrapper helpers.
-List<OrderSuggestionContextHelpersScenario>
+List<RunnableScenario>
 orderSuggestionContextAcceptanceWrapperScenarios() => const [
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'isNavalMoveOrderAccepted returns a boolean result',
     run: oschRunNavalMoveAcceptedBoolean,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'isNavalMissionOrderAccepted returns a boolean result',
     run: oschRunNavalMissionAcceptedBoolean,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label: 'isDiplomaticOrderAccepted returns a boolean result',
     run: oschRunDiplomaticAcceptedBoolean,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label:
         'isDiplomaticOrderAccepted matches default path when view/units shared',
     run: oschRunDiplomaticAcceptedMatchesDefaultPath,
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label:
         'stateless accept helpers reuse sharedCandidateValidator without rebuild',
     run: oschRunStatelessAcceptHelpersReuseValidator,
     refs: '#2394',
   ),
-  OrderSuggestionContextHelpersScenario(
+  RunnableScenario(
     label:
         'isDiplomaticOrderAcceptedWithValidator matches isDiplomaticOrderAccepted',
     run: oschRunDiplomaticAcceptedWithValidatorMatches,

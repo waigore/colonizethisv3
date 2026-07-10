@@ -18,6 +18,6 @@ void main() {
   runLabeledScenarioGroup(
     'knownDiplomaticTargetFactionIds colonial discovery',
     orderSuggestionDeclareWarColonialDiscoveryScenarios(),
-    runOrderSuggestionDeclareWarColonialDiscoveryScenario,
+    runRunnableScenario,
   );
 }

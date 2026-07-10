@@ -9,12 +9,12 @@ void main() {
   runLabeledScenarioGroup(
     'generateOrdersWithSimpleHeuristics validator reuse (Refs #2394)',
     simpleAiValidatorReuseHeuristicScenarios(),
-    runSimpleAiValidatorReuseScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'generateOrdersForGame validator reuse (Refs #2394)',
     simpleAiValidatorReuseBatchScenarios(),
-    runSimpleAiValidatorReuseScenario,
+    runRunnableScenario,
   );
 }

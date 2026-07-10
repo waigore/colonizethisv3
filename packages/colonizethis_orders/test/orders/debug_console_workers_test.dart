@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'debugConsoleSupportedWorkerTierIds',
     debugConsoleWorkersScenarios(),
-    runDebugConsoleWorkersScenario,
+    runRunnableScenario,
   );
 }

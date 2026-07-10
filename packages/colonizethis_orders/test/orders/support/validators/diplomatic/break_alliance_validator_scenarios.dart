@@ -1,61 +1,135 @@
 // Table-driven breakAlliance validator scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/validators/diplomatic/break_alliance_validator.dart';
+import 'package:colonizethis_test/test.dart';
 import '../../scenario_runner.dart';
-import 'break_alliance_validator_run_rows.dart';
 
-/// One row in breakAlliance validator scenario tables.
-class BreakAllianceValidatorScenario implements RefsScenario {
-  const BreakAllianceValidatorScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
+import 'break_alliance_validator_fixtures.dart';
+import 'diplomatic_sub_validators_test_support.dart';
 
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+void balRunAcceptsFormalAllianceWithGpTarget() {
+  final game = breakAllianceValidatorTwoGpAllianceGame();
+  final r =
+      breakAllianceSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
+      ).validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: 'gp2',
+        ),
+        treasury: 0,
+      );
+  expect(r.result.status, OrderValidationStatus.accepted);
+  expect(r.treasury, 0);
 }
 
-void runBreakAllianceValidatorScenario(BreakAllianceValidatorScenario scenario) =>
-    scenario.run();
+void balRunRejectsWhileAtWar() {
+  final game = breakAllianceValidatorTwoGpAllianceGame(
+    formalAlliance: false,
+    state: RelationState.atWar,
+  );
+  final r =
+      breakAllianceSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
+      ).validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: 'gp2',
+        ),
+        treasury: 0,
+      );
+  expect(r.result.status, OrderValidationStatus.rejected);
+  expect(r.result.reason, contains('formal alliance'));
+}
 
-List<BreakAllianceValidatorScenario> breakAllianceSubValidatorScenarios() =>
+void balRunRejectsNoFormalAlliance() {
+  final game = breakAllianceValidatorTwoGpAllianceGame(formalAlliance: false);
+  final r =
+      breakAllianceSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
+      ).validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: 'gp2',
+        ),
+        treasury: 0,
+      );
+  expect(r.result.status, OrderValidationStatus.rejected);
+  expect(r.result.reason, contains('formal alliance'));
+}
+
+void balRunRejectsNonGpTarget() {
+  final game = breakAllianceValidatorTwoGpAllianceGame();
+  final r =
+      breakAllianceSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
+      ).validate(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: 'minor1',
+        ),
+        treasury: 0,
+      );
+  expect(r.result.status, OrderValidationStatus.rejected);
+  expect(r.result.reason, contains('Great Power'));
+}
+
+void balRunParentValidatorAcceptsValidBreakAlliance() {
+  final game = breakAllianceValidatorTwoGpAllianceGame();
+  final validator = DiplomaticOrderValidator(
+    game: game,
+    playerId: 'gp1',
+    initialTreasury: 0,
+  );
+  final r = validator.validate(
+    const DiplomaticOrder(
+      type: DiplomaticOrderType.breakAlliance,
+      targetFactionId: 'gp2',
+    ),
+    previousRejected: false,
+  );
+  expect(r.result.status, OrderValidationStatus.accepted);
+}
+
+/// One row in breakAlliance validator scenario tables.
+
+List<RunnableScenario> breakAllianceSubValidatorScenarios() => const [
+  RunnableScenario(
+    label: 'accepts when a formal alliance exists with the GP target',
+    run: balRunAcceptsFormalAllianceWithGpTarget,
+    refs: '#3753 R11',
+  ),
+  RunnableScenario(
+    label: 'rejects while at war (war invariant cleared the alliance)',
+    run: balRunRejectsWhileAtWar,
+    refs: '#3753 R11',
+  ),
+  RunnableScenario(
+    label: 'rejects when no formal alliance exists with the target',
+    run: balRunRejectsNoFormalAlliance,
+    refs: '#3753 R11',
+  ),
+  RunnableScenario(
+    label: 'rejects a non-Great-Power target',
+    run: balRunRejectsNonGpTarget,
+    refs: '#3753 R11',
+  ),
+];
+
+List<RunnableScenario> diplomaticOrderValidatorBreakAllianceScenarios() =>
     const [
-      BreakAllianceValidatorScenario(
-        label: 'accepts when a formal alliance exists with the GP target',
-        run: balRunAcceptsFormalAllianceWithGpTarget,
-        refs: '#3753 R11',
-      ),
-      BreakAllianceValidatorScenario(
-        label: 'rejects while at war (war invariant cleared the alliance)',
-        run: balRunRejectsWhileAtWar,
-        refs: '#3753 R11',
-      ),
-      BreakAllianceValidatorScenario(
-        label: 'rejects when no formal alliance exists with the target',
-        run: balRunRejectsNoFormalAlliance,
-        refs: '#3753 R11',
-      ),
-      BreakAllianceValidatorScenario(
-        label: 'rejects a non-Great-Power target',
-        run: balRunRejectsNonGpTarget,
-        refs: '#3753 R11',
-      ),
-    ];
-
-List<BreakAllianceValidatorScenario>
-diplomaticOrderValidatorBreakAllianceScenarios() => const [
-      BreakAllianceValidatorScenario(
-        label: 'accepts a valid breakAlliance order through the parent validator',
+      RunnableScenario(
+        label:
+            'accepts a valid breakAlliance order through the parent validator',
         run: balRunParentValidatorAcceptsValidBreakAlliance,
         refs: '#3753 R11',
       ),
     ];
 
 /// All breakAlliance validator scenarios (union of behavior-family tables).
-List<BreakAllianceValidatorScenario> breakAllianceValidatorScenarios() => [
-      ...breakAllianceSubValidatorScenarios(),
-      ...diplomaticOrderValidatorBreakAllianceScenarios(),
-    ];
+List<RunnableScenario> breakAllianceValidatorScenarios() => [
+  ...breakAllianceSubValidatorScenarios(),
+  ...diplomaticOrderValidatorBreakAllianceScenarios(),
+];

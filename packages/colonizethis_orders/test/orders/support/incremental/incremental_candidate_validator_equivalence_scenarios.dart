@@ -1,6 +1,5 @@
 // Table-driven IncrementalCandidateValidator equivalence scenarios (Refs #3949).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -8,30 +7,9 @@ import '../scenario_runner.dart';
 import 'incremental_candidate_validator_equivalence_expectation_shorthand.dart';
 import 'incremental_candidate_validator_equivalence_test_helpers.dart';
 
-class IncrementalEquivalenceScenario implements RefsScenario {
-  const IncrementalEquivalenceScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
-
-void runIncrementalEquivalenceScenario(
-  IncrementalEquivalenceScenario scenario,
-) {
-  scenario.run();
-}
-
-List<IncrementalEquivalenceScenario>
-incrementalCandidateValidatorEquivalenceScenarios() => [
+List<RunnableScenario> incrementalCandidateValidatorEquivalenceScenarios() => [
   // dart format off
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: builder onto own province (accepted)',
     run: () => iceRunMoveRow(
       unitId: 'u_builder',
@@ -39,7 +17,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'builder->own province',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: builder onto other GP province (rejected)',
     run: () => iceRunMoveRow(
       unitId: 'u_builder',
@@ -47,7 +25,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'builder->other GP province',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: explorer onto Minor province (accepted)',
     run: () => iceRunMoveRow(
       unitId: 'u_explorer',
@@ -55,7 +33,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'explorer->minor province',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: spy onto other GP province (accepted)',
     run: () => iceRunMoveRow(
       unitId: 'u_spy',
@@ -63,7 +41,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'spy->other GP province',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: military regiment via MoveOrder (rejected)',
     run: () => iceRunMoveRow(
       unitId: 'u_pikemen',
@@ -71,7 +49,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'pikemen via MoveOrder',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: missing unit (rejected)',
     run: () => iceRunMoveRow(
       unitId: 'unknown_unit',
@@ -79,7 +57,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'unknown unit',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: empty destination tile (rejected)',
     run: () => iceRunMoveRow(
       unitId: 'u_builder',
@@ -87,7 +65,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'empty destination',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: rejected because basePrefix has work order for same unit (move XOR work cascade)',
     run: () => iceRunMoveRow(
       unitId: 'u_explorer',
@@ -96,7 +74,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'move: with non-empty accepted basePrefix (accepted)',
     run: () => iceRunMoveRow(
       unitId: 'u_builder',
@@ -114,14 +92,14 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       ),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'build: candidate remains equivalent to full-pass path',
     run: () => iceExpectBuildOnCorpus(
       candidate: iceBuildUnit('pikemen'),
       label: 'single build candidate',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'build: successive candidate probes stay full-pass equivalent (#2394)',
     run: () => iceExpectSequentialIncrementalMatchesFullPass(
       game: iceBuildCorpusGame(),
@@ -142,7 +120,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       ),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'work: non-empty basePrefix replay remains equivalent',
     run: () => iceExpectWorkOnCorpus(
       game: moveCorpusGame(),
@@ -156,7 +134,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       basePrefix: iceExploreWorkPrefix('u_explorer', 'P2'),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'diplomatic: non-empty basePrefix replay remains equivalent',
     run: () => iceExpectDiplomaticOnCorpus(
       game: moveCorpusGame(),
@@ -169,7 +147,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       basePrefix: iceDeclareWarPrefix('p2'),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'diplomatic: sequential probes on one validator stay equivalent (#2394)',
     run: () => iceExpectSequentialIncrementalMatchesFullPass(
       game: moveCorpusGame(),
@@ -201,7 +179,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       ),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
     run: () => iceExpectPrefetchedArmyMoveEquivalence(
       candidate: const ArmyMoveOrder(
@@ -213,7 +191,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       playerId: IceIds.playerId,
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'army move: into own adjacent province (accepted)',
     run: () => iceRunArmyMoveRow(
       armyId: 'field_a',
@@ -221,7 +199,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'own adjacent',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'army move: into other GP without war (rejected)',
     run: () => iceRunArmyMoveRow(
       armyId: 'field_a',
@@ -229,7 +207,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'GP no war',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'army move: into other GP with same-turn declare war (accepted)',
     run: () => iceRunArmyMoveRow(
       armyId: 'field_a',
@@ -238,7 +216,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       basePrefix: iceDeclareWarPrefix('p2'),
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'army move: into Minor without war (rejected)',
     run: () => iceRunArmyMoveRow(
       armyId: 'field_a',
@@ -246,7 +224,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'minor no war',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'army move: missing army (rejected)',
     run: () => iceRunArmyMoveRow(
       armyId: 'unknown_army',
@@ -254,7 +232,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'unknown army',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval move: at-sea fleet to adjacent sea zone (accepted)',
     run: () => iceRunNavalMoveRow(
       fleetId: 'fleet_atSea',
@@ -262,7 +240,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'sea1->sea2',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval move: at-sea fleet to non-adjacent sea zone (rejected)',
     run: () => iceRunNavalMoveRow(
       fleetId: 'fleet_atSea',
@@ -270,7 +248,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'sea1->unknown',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval move: in-port fleet undock to adjacent sea zone (accepted)',
     run: () => iceRunNavalMoveRow(
       fleetId: 'fleet_inPort',
@@ -278,7 +256,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'inPort->sea1',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval move: missing fleet (rejected)',
     run: () => iceRunNavalMoveRow(
       fleetId: 'unknown_fleet',
@@ -286,7 +264,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'unknown fleet',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval mission: patrol owned fleet (accepted)',
     run: () => iceRunNavalMissionRow(
       fleetId: 'fleet_atSea',
@@ -294,7 +272,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'patrol owned',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval mission: blockade without target province (rejected)',
     run: () => iceRunNavalMissionRow(
       fleetId: 'fleet_atSea',
@@ -302,7 +280,7 @@ incrementalCandidateValidatorEquivalenceScenarios() => [
       label: 'blockade no target',
     ),
   ),
-  IncrementalEquivalenceScenario(
+  RunnableScenario(
     label: 'naval mission: missing fleet (rejected)',
     run: () => iceRunNavalMissionRow(
       fleetId: 'unknown_fleet',

@@ -137,8 +137,8 @@ OrderEngine oeviEngineWithCountingFactory(void Function() onFactoryCall) {
 }
 
 Game oeviMinimalSinglePlayerGame() => TestFixtures.minimalGame(
-      players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-    );
+  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+);
 
 Game oeviDefaultGame() => TestFixtures.minimalGame();
 

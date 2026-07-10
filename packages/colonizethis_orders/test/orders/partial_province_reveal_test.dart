@@ -9,11 +9,11 @@ void main() {
   runLabeledScenarioGroup(
     'partiallyRevealedPrefixedProvinceIdsForPlayer',
     partialProvinceRevealPrefixedIdsScenarios(),
-    runPartialProvinceRevealScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'sortedProvincesForPartialRevealPrefixedIds',
     sortedProvincesForPartialRevealScenarios(),
-    runPartialProvinceRevealScenario,
+    runRunnableScenario,
   );
 }

@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'ordersLog (Refs #3290 C2)',
     ordersLoggingScenarios(),
-    runOrdersLoggingScenario,
+    runRunnableScenario,
   );
 }

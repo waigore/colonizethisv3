@@ -13,6 +13,6 @@ void main() {
     'suggestWorkOrders prospect probes explorer location province first '
     '(Refs #2847 H8-extraction)',
     suggestWorkOrdersProspectLocationProvincePriorityScenarios(),
-    runOrderSuggestionProspectLocationProvincePriorityScenario,
+    runRunnableScenario,
   );
 }

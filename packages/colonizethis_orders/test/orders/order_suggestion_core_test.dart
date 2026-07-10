@@ -10,9 +10,6 @@ import 'support/suggestion/order_suggestion_core_scenarios.dart';
 
 void main() {
   group('Order suggestion', () {
-    runLabeledScenarios(
-      orderSuggestionCoreScenarios(),
-      runOrderSuggestionCoreScenario,
-    );
+    runLabeledScenarios(orderSuggestionCoreScenarios(), runRunnableScenario);
   });
 }

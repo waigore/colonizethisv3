@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'propagateRoadToAdjacentCapitalOrPort',
     propagateRoadToAdjacentCapitalScenarios(),
-    runPropagateRoadToAdjacentCapitalScenario,
+    runRunnableScenario,
   );
 }

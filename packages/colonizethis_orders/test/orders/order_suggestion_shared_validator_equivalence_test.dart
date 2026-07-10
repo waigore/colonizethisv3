@@ -17,6 +17,6 @@ void main() {
   runLabeledScenarioGroup(
     'shared validator equivalence (Refs #2394)',
     orderSuggestionSharedValidatorEquivalenceScenarios(),
-    runOrderSuggestionSharedValidatorEquivalenceScenario,
+    runRunnableScenario,
   );
 }

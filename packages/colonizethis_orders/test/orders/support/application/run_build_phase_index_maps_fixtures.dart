@@ -10,7 +10,10 @@ Game runBuildPhaseMilitaryGame({required int regimentCount}) {
   final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
   var stockpile = const Stockpile();
   for (final entry in econ.buildInputs.entries) {
-    stockpile = stockpile.applyDelta(entry.key, entry.value * regimentCount + 1);
+    stockpile = stockpile.applyDelta(
+      entry.key,
+      entry.value * regimentCount + 1,
+    );
   }
   final player = Player(
     id: runBuildPhasePlayerId,
@@ -89,7 +92,11 @@ Game runBuildPhaseNavalGame({required int shipCount}) {
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
     oldWorld: const RegionData(
       provinces: [
-        Province(id: 'P1', regionId: 'oldWorld', ownerId: runBuildPhasePlayerId),
+        Province(
+          id: 'P1',
+          regionId: 'oldWorld',
+          ownerId: runBuildPhasePlayerId,
+        ),
       ],
       units: [],
     ),

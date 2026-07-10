@@ -12,13 +12,12 @@ const mvDestTile = '$mvOw|P2|0|0';
 Map<String, Map<String, String>> mvP1FogPairVisibility({
   required String destRegion,
   required String destLocal,
-}) =>
-    {
-      'p1': {
-        '$mvOw|P1|0|0': 'fullyVisible',
-        '$destRegion|$destLocal|0|0': 'fogged',
-      },
-    };
+}) => {
+  'p1': {
+    '$mvOw|P1|0|0': 'fullyVisible',
+    '$destRegion|$destLocal|0|0': 'fogged',
+  },
+};
 
 MapTopology get mvOwTopology => moveValidatorTestTwoProvinceTopology(mvOw);
 
@@ -127,7 +126,9 @@ Game mvCrossRegionTribeGame({required String unitType}) {
         ],
       ),
       newWorld: const RegionData(
-        provinces: [Province(id: '$mvNw|P2', regionId: mvNw, ownerId: 'tribe1')],
+        provinces: [
+          Province(id: '$mvNw|P2', regionId: mvNw, ownerId: 'tribe1'),
+        ],
       ),
       playerVisibilityByTile: mvP1FogPairVisibility(
         destRegion: mvNw,

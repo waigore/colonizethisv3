@@ -3,98 +3,79 @@
 import '../scenario_runner.dart';
 import 'build_unit_training_run_rows.dart';
 
-/// One row in [buildUnitTrainingScenarios].
-class BuildUnitTrainingScenario implements RefsScenario {
-  const BuildUnitTrainingScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
-
-void runBuildUnitTrainingScenario(BuildUnitTrainingScenario scenario) {
-  scenario.run();
-}
-
 /// Canonical scenarios for military ship-skip + training-cost family tests.
 /// Labels match former suite descriptions (single-line `label:` for CI).
-List<BuildUnitTrainingScenario> buildUnitTrainingScenarios() => const [
+List<RunnableScenario> buildUnitTrainingScenarios() => const [
   // dart format off
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips build when unitType unknown in RegimentEconomyCatalog',
     run: butRunSkipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips military build when zero peasants',
     run: butRunSkipsMilitaryBuildWhenZeroPeasants,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips military build when tech not unlocked',
     run: butRunSkipsMilitaryBuildWhenTechNotUnlocked,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips ship build when tech not unlocked',
     run: butRunSkipsShipBuildWhenTechNotUnlocked,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with topology null does not add fleet',
     run: butRunShipBuildWithTopologyNullDoesNotAddFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with capitalProvinceId null does not add fleet',
     run: butRunShipBuildWithCapitalProvinceIdNullDoesNotAddFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with capital not adjacent to sea does not add ship',
     run: butRunShipBuildWithCapitalNotAdjacentToSeaDoesNotAddShip,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects build when treasury is insufficient',
     run: butRunRejectsBuildWhenTreasuryIsInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects build when materials are insufficient',
     run: butRunRejectsBuildWhenMaterialsAreInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'applies treasury, stockpile and worker costs when valid',
     run: butRunAppliesTreasuryStockpileAndWorkerCostsWhenValid,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'returns game unchanged when no build or work orders',
     run: butRunReturnsGameUnchangedWhenNoBuildOrWorkOrders,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build adds ship to fleet when topology and capital with sea',
     run: butRunShipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects naval build when peasants are zero',
     run: butRunRejectsNavalBuildWhenPeasantsAreZero,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'second naval build adds ship to existing home fleet',
     run: butRunSecondNavalBuildAddsShipToExistingHomeFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects civilian build when treasury insufficient',
     run: butRunRejectsCivilianBuildWhenTreasuryInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects civilian build when paper insufficient',
     run: butRunRejectsCivilianBuildWhenPaperInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'applies treasury and paper cost when civilian build valid',
     run: butRunAppliesTreasuryAndPaperCostWhenCivilianBuildValid,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'Merchant requires merchant_companies tech',
     run: butRunMerchantRequiresMerchantCompaniesTech,
   ),

@@ -14,6 +14,6 @@ void main() {
   runLabeledScenarioGroup(
     'Refs #2924 regiment build affordability no-bypass guard',
     buildOrderTreasuryNoBypassScenarios(),
-    runBuildOrderTreasuryNoBypassScenario,
+    runRunnableScenario,
   );
 }

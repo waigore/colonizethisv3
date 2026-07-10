@@ -11,9 +11,6 @@ import 'support/scenario_runner.dart';
 
 void main() {
   group('orders_application helpers', () {
-    runLabeledScenarios(
-      applicationHelpersScenarios(),
-      runApplicationHelpersScenario,
-    );
+    runLabeledScenarios(applicationHelpersScenarios(), runRunnableScenario);
   });
 }

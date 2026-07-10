@@ -10,9 +10,6 @@ import '../support/validators/move_validator_scenarios.dart';
 
 void main() {
   group('MoveValidator', () {
-    runLabeledScenarios(
-      moveValidatorScenarios(),
-      runMoveValidatorScenario,
-    );
+    runLabeledScenarios(moveValidatorScenarios(), runRunnableScenario);
   });
 }

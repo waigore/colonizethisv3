@@ -12,7 +12,7 @@ void main() {
   group('OrderEngine validateWork', () {
     runLabeledScenarios(
       orderEngineValidateWorkScenarios(),
-      runOrderEngineValidateWorkScenario,
+      runRunnableScenario,
     );
   });
 }

@@ -25,7 +25,8 @@ Game cspExplorerGame({
   int peasants = 1,
 }) {
   final explorerEcon = CivilianEconomyCatalog.byId[kUnitTypeExplorer]!;
-  final tileMap = tileKeysByProvince ??
+  final tileMap =
+      tileKeysByProvince ??
       {
         capitalProvinceId: ['oldWorld|P1|0|0', cspCapitalTileKey],
         if (otherOwnedProvinceId != null)
@@ -71,16 +72,14 @@ Orders cspBuildOrders(
   String unitType, {
   required bool isMilitary,
   required String spawnProvinceId,
-}) =>
-    Orders(
-      buildUnitOrdersByPlayerId: {
-        'p1': [
-          BuildUnitOrder(
-            unitType: unitType,
-            isMilitary: isMilitary,
-            spawnProvinceId: spawnProvinceId,
-          ),
-        ],
-      },
-    );
-
+}) => Orders(
+  buildUnitOrdersByPlayerId: {
+    'p1': [
+      BuildUnitOrder(
+        unitType: unitType,
+        isMilitary: isMilitary,
+        spawnProvinceId: spawnProvinceId,
+      ),
+    ],
+  },
+);

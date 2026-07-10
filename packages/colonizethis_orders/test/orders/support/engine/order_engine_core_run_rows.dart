@@ -54,9 +54,7 @@ void oecRunAddWorkOrderWithContextRejected() {
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
-        provinces: [
-          Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        ],
+        provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
         units: [
           Unit(
             id: 'u1',
@@ -101,11 +99,7 @@ void oecRunFirstInvalidPlusSubsequentRejected() {
     'p1',
     const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P3|0|0'),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.length, 3);
   expect(results[0].status, OrderValidationStatus.accepted);
   expect(results[1].status, OrderValidationStatus.rejected);
@@ -119,9 +113,7 @@ void oecRunProjectedEffectsWorkerCount() {
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
-        provinces: [
-          Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        ],
+        provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
         units: [],
       ),
       newWorld: const RegionData(),
@@ -176,9 +168,7 @@ void oecRunProjectedEffectsNoGameMutation() {
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
-        provinces: [
-          Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        ],
+        provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
         units: [],
       ),
       newWorld: const RegionData(),
@@ -222,11 +212,7 @@ void oecRunCivilianCannotMoveIntoGpTerritory() {
     'p1',
     const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
 }
 
@@ -241,11 +227,7 @@ void oecRunMilitaryCannotMoveIntoGpWithoutWar() {
       destinationProvinceId: '$oecOw|P2',
     ),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.rejected);
   expect(results.single.reason, contains('declare war'));
 }
@@ -268,11 +250,7 @@ void oecRunMilitaryMayMoveIntoGpWithDeclareWar() {
         destinationProvinceId: '$oecOw|P2',
       ),
     );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.length, 2);
   expect(
     results.every((r) => r.status == OrderValidationStatus.accepted),
@@ -292,11 +270,7 @@ void oecRunExplorerMayMoveIntoTribalProvince() {
     'p1',
     const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.single.status, OrderValidationStatus.accepted);
 }
 
@@ -308,11 +282,7 @@ void oecRunMoveRejectedWhenSourceProvinceUnknown() {
     'p1',
     const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
   );
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    'p1',
-  );
+  final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
   expect(results.length, 1);
   expect(results[0].status, OrderValidationStatus.rejected);
   expect(results[0].reason, contains('visible'));

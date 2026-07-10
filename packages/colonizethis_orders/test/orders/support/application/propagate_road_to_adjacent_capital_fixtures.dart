@@ -10,37 +10,37 @@ const pracBuildKey = '$pracOw|P|1|0';
 const pracNextLevel = 3;
 
 TileMapResult pracPlain3x3TileMap() => TileMapResult(
-      width: 3,
-      height: 3,
-      grid: const [
-        ['P', 'P', 'P'],
-        ['P', 'P', 'P'],
-        ['P', 'P', 'P'],
-      ],
-      terrainGrid: [
-        [for (var i = 0; i < 3; i++) TerrainType.plains],
-        [for (var i = 0; i < 3; i++) TerrainType.plains],
-        [for (var i = 0; i < 3; i++) TerrainType.plains],
-      ],
-    );
+  width: 3,
+  height: 3,
+  grid: const [
+    ['P', 'P', 'P'],
+    ['P', 'P', 'P'],
+    ['P', 'P', 'P'],
+  ],
+  terrainGrid: [
+    [for (var i = 0; i < 3; i++) TerrainType.plains],
+    [for (var i = 0; i < 3; i++) TerrainType.plains],
+    [for (var i = 0; i < 3; i++) TerrainType.plains],
+  ],
+);
 
 WorldState pracEmptyWorldState() => const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    );
+  turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+  oldWorld: RegionData(),
+  newWorld: RegionData(),
+);
 
 Player pracPlayerWithCapital() => const Player(
-      id: 'p1',
-      displayName: 'P1',
-      isHuman: true,
-      capitalTile: CapitalTile(
-        regionId: pracOw,
-        provinceId: pracProvinceFull,
-        x: 0,
-        y: 0,
-      ),
-    );
+  id: 'p1',
+  displayName: 'P1',
+  isHuman: true,
+  capitalTile: CapitalTile(
+    regionId: pracOw,
+    provinceId: pracProvinceFull,
+    x: 0,
+    y: 0,
+  ),
+);
 
 const pracPlayerWithoutCapital = Player(
   id: 'p1',

@@ -9,7 +9,7 @@ void main() {
   group('OrderEngine validateDiplomatic', () {
     runLabeledScenarios(
       orderEngineValidateDiplomaticScenarios(),
-      runOrderEngineValidateDiplomaticScenario,
+      runRunnableScenario,
     );
   });
 }

@@ -44,25 +44,23 @@ Game vedGpMinor({
   OvertureStage overtureStage = OvertureStage.none,
   int? treasury,
   Map<String, bool>? techUnlocked,
-}) =>
-    gpMinorGame(
-      relationState: relationState,
-      overtureStage: overtureStage,
-      treasury: treasury ?? gpMinorOrderEngineTreasury,
-      techUnlocked: techUnlocked,
-    );
+}) => gpMinorGame(
+  relationState: relationState,
+  overtureStage: overtureStage,
+  treasury: treasury ?? gpMinorOrderEngineTreasury,
+  techUnlocked: techUnlocked,
+);
 
 OrderValidationResult vedSubmit(
   Game game,
   DiplomaticOrder order, {
   OrderEngine? engine,
-}) =>
-    (engine ?? OrderEngine()).addDiplomaticOrderWithContext(
-      game,
-      emptyTopology,
-      VedIds.gp,
-      order,
-    );
+}) => (engine ?? OrderEngine()).addDiplomaticOrderWithContext(
+  game,
+  emptyTopology,
+  VedIds.gp,
+  order,
+);
 
 void vedExpectRejected(
   Game game,

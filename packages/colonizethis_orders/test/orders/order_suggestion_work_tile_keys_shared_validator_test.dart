@@ -11,12 +11,12 @@ void main() {
   runLabeledScenarioGroup(
     'getValidWorkOrderTileKeysWithVisibility shared validator',
     orderSuggestionWorkTileKeysSharedValidatorVisibilityScenarios(),
-    runOrderSuggestionWorkTileKeysSharedValidatorScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'getValidWorkOrderTileKeys PlayerView reuse',
     orderSuggestionWorkTileKeysSharedValidatorPlayerViewScenarios(),
-    runOrderSuggestionWorkTileKeysSharedValidatorScenario,
+    runRunnableScenario,
   );
 }

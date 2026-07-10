@@ -10,16 +10,16 @@ void main() {
   runLabeledScenarioGroup(
     'allianceSubValidator factionMembership',
     allianceSubValidatorFactionMembershipScenarios(),
-    runDiplomaticSubValidatorsFactionMembershipScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'establishOvertureSubValidator factionMembership',
     establishOvertureSubValidatorFactionMembershipScenarios(),
-    runDiplomaticSubValidatorsFactionMembershipScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'DiplomaticOrderValidator factionMembership',
     diplomaticOrderValidatorFactionMembershipScenarios(),
-    runDiplomaticSubValidatorsFactionMembershipScenario,
+    runRunnableScenario,
   );
 }

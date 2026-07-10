@@ -29,11 +29,10 @@ bool _fullPassContextOrderAccepted<TOrder>(
     TOrder candidate,
   )
   add,
-) =>
-    _fullPassAddOrderAccepted(
-      basePrefix,
-      (engine) => add(engine, game, topology, playerId, candidate),
-    );
+) => _fullPassAddOrderAccepted(
+  basePrefix,
+  (engine) => add(engine, game, topology, playerId, candidate),
+);
 
 bool fullPassMoveAccepted(
   Game game,
@@ -41,16 +40,15 @@ bool fullPassMoveAccepted(
   String playerId,
   Orders basePrefix,
   MoveOrder candidate,
-) =>
-    _fullPassContextOrderAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      (engine, g, t, pid, order) =>
-          engine.addMoveOrderWithContext(g, t, pid, order),
-    );
+) => _fullPassContextOrderAccepted(
+  game,
+  topology,
+  playerId,
+  basePrefix,
+  candidate,
+  (engine, g, t, pid, order) =>
+      engine.addMoveOrderWithContext(g, t, pid, order),
+);
 
 bool fullPassArmyMoveAccepted(
   Game game,
@@ -76,16 +74,15 @@ bool fullPassBuildAccepted(
   String playerId,
   Orders basePrefix,
   BuildUnitOrder candidate,
-) =>
-    _fullPassContextOrderAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      (engine, g, t, pid, order) =>
-          engine.addBuildOrderWithContext(g, t, pid, order),
-    );
+) => _fullPassContextOrderAccepted(
+  game,
+  topology,
+  playerId,
+  basePrefix,
+  candidate,
+  (engine, g, t, pid, order) =>
+      engine.addBuildOrderWithContext(g, t, pid, order),
+);
 
 bool fullPassWorkAccepted(
   Game game,
@@ -94,17 +91,16 @@ bool fullPassWorkAccepted(
   Orders basePrefix,
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
-}) =>
-    _fullPassAddOrderAccepted(
-      basePrefix,
-      (engine) => engine.addWorkOrderWithContext(
-        game,
-        topology,
-        playerId,
-        candidate,
-        tileMapByRegion: tileMapByRegion,
-      ),
-    );
+}) => _fullPassAddOrderAccepted(
+  basePrefix,
+  (engine) => engine.addWorkOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+    tileMapByRegion: tileMapByRegion,
+  ),
+);
 
 bool fullPassDiplomaticAccepted(
   Game game,
@@ -112,16 +108,15 @@ bool fullPassDiplomaticAccepted(
   String playerId,
   Orders basePrefix,
   DiplomaticOrder candidate,
-) =>
-    _fullPassContextOrderAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      (engine, g, t, pid, order) =>
-          engine.addDiplomaticOrderWithContext(g, t, pid, order),
-    );
+) => _fullPassContextOrderAccepted(
+  game,
+  topology,
+  playerId,
+  basePrefix,
+  candidate,
+  (engine, g, t, pid, order) =>
+      engine.addDiplomaticOrderWithContext(g, t, pid, order),
+);
 
 bool fullPassNavalMoveAccepted(
   Game game,
@@ -129,16 +124,15 @@ bool fullPassNavalMoveAccepted(
   String playerId,
   Orders basePrefix,
   NavalMoveOrder candidate,
-) =>
-    _fullPassContextOrderAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      (engine, g, t, pid, order) =>
-          engine.addNavalMoveOrderWithContext(g, t, pid, order),
-    );
+) => _fullPassContextOrderAccepted(
+  game,
+  topology,
+  playerId,
+  basePrefix,
+  candidate,
+  (engine, g, t, pid, order) =>
+      engine.addNavalMoveOrderWithContext(g, t, pid, order),
+);
 
 bool fullPassNavalMissionAccepted(
   Game game,
@@ -146,16 +140,15 @@ bool fullPassNavalMissionAccepted(
   String playerId,
   Orders basePrefix,
   NavalMissionOrder candidate,
-) =>
-    _fullPassContextOrderAccepted(
-      game,
-      topology,
-      playerId,
-      basePrefix,
-      candidate,
-      (engine, g, t, pid, order) =>
-          engine.addNavalMissionOrderWithContext(g, t, pid, order),
-    );
+) => _fullPassContextOrderAccepted(
+  game,
+  topology,
+  playerId,
+  basePrefix,
+  candidate,
+  (engine, g, t, pid, order) =>
+      engine.addNavalMissionOrderWithContext(g, t, pid, order),
+);
 
 IncrementalCandidateValidator _iceValidatorFor({
   required Game game,
@@ -163,14 +156,13 @@ IncrementalCandidateValidator _iceValidatorFor({
   required String playerId,
   required Orders basePrefix,
   Map<String, TileMapResult>? tileMapByRegion,
-}) =>
-    IncrementalCandidateValidator.forPlayer(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      basePrefix: basePrefix,
-      tileMapByRegion: tileMapByRegion,
-    );
+}) => IncrementalCandidateValidator.forPlayer(
+  game: game,
+  topology: topology,
+  playerId: playerId,
+  basePrefix: basePrefix,
+  tileMapByRegion: tileMapByRegion,
+);
 
 void _expectIncrementalMatchesFullPass({
   required bool fullPass,
@@ -219,8 +211,11 @@ void iceExpectSequentialIncrementalMatchesFullPass<TCandidate>({
   required String playerId,
   Orders basePrefix = const Orders(),
   required List<TCandidate> candidates,
-  required bool Function(IncrementalCandidateValidator validator, TCandidate candidate)
-      incremental,
+  required bool Function(
+    IncrementalCandidateValidator validator,
+    TCandidate candidate,
+  )
+  incremental,
   required bool Function(TCandidate candidate) fullPass,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
@@ -232,10 +227,7 @@ void iceExpectSequentialIncrementalMatchesFullPass<TCandidate>({
     tileMapByRegion: tileMapByRegion,
   );
   for (final candidate in candidates) {
-    expect(
-      incremental(validator, candidate),
-      fullPass(candidate),
-    );
+    expect(incremental(validator, candidate), fullPass(candidate));
   }
 }
 

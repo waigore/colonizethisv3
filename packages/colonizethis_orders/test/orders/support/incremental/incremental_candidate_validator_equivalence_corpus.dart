@@ -7,58 +7,73 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 const _iceCorpusOw = 'oldWorld';
 
 List<Province> _iceCorpusProvinces() => const [
-      Province(id: '$_iceCorpusOw|P1', regionId: _iceCorpusOw, ownerId: 'p1'),
-      Province(id: '$_iceCorpusOw|P2', regionId: _iceCorpusOw, ownerId: 'p1'),
-      Province(id: '$_iceCorpusOw|P3', regionId: _iceCorpusOw, ownerId: 'p2'),
-      Province(id: '$_iceCorpusOw|P4', regionId: _iceCorpusOw, ownerId: 'minor1'),
-    ];
+  Province(id: '$_iceCorpusOw|P1', regionId: _iceCorpusOw, ownerId: 'p1'),
+  Province(id: '$_iceCorpusOw|P2', regionId: _iceCorpusOw, ownerId: 'p1'),
+  Province(id: '$_iceCorpusOw|P3', regionId: _iceCorpusOw, ownerId: 'p2'),
+  Province(id: '$_iceCorpusOw|P4', regionId: _iceCorpusOw, ownerId: 'minor1'),
+];
 
 Map<String, Map<String, String>> _iceCorpusVisibility() => const {
-      'p1': {
-        '$_iceCorpusOw|P1|0|0': 'fullyVisible',
-        '$_iceCorpusOw|P2|0|0': 'fogged',
-        '$_iceCorpusOw|P3|0|0': 'fogged',
-        '$_iceCorpusOw|P4|0|0': 'fogged',
-      },
-    };
+  'p1': {
+    '$_iceCorpusOw|P1|0|0': 'fullyVisible',
+    '$_iceCorpusOw|P2|0|0': 'fogged',
+    '$_iceCorpusOw|P3|0|0': 'fogged',
+    '$_iceCorpusOw|P4|0|0': 'fogged',
+  },
+};
 
 Map<String, Map<String, List<String>>> _iceCorpusTileKeys() => const {
-      _iceCorpusOw: {
-        '$_iceCorpusOw|P1': ['$_iceCorpusOw|P1|0|0'],
-        '$_iceCorpusOw|P2': ['$_iceCorpusOw|P2|0|0'],
-        '$_iceCorpusOw|P3': ['$_iceCorpusOw|P3|0|0'],
-        '$_iceCorpusOw|P4': ['$_iceCorpusOw|P4|0|0'],
-      },
-    };
+  _iceCorpusOw: {
+    '$_iceCorpusOw|P1': ['$_iceCorpusOw|P1|0|0'],
+    '$_iceCorpusOw|P2': ['$_iceCorpusOw|P2|0|0'],
+    '$_iceCorpusOw|P3': ['$_iceCorpusOw|P3|0|0'],
+    '$_iceCorpusOw|P4': ['$_iceCorpusOw|P4|0|0'],
+  },
+};
 
 List<TopologyNode> _iceCorpusTopologyNodes() => const [
-      TopologyNode(id: '$_iceCorpusOw|P1', regionId: _iceCorpusOw, type: TopologyNodeType.province),
-      TopologyNode(id: '$_iceCorpusOw|P2', regionId: _iceCorpusOw, type: TopologyNodeType.province),
-      TopologyNode(id: '$_iceCorpusOw|P3', regionId: _iceCorpusOw, type: TopologyNodeType.province),
-      TopologyNode(id: '$_iceCorpusOw|P4', regionId: _iceCorpusOw, type: TopologyNodeType.province),
-    ];
+  TopologyNode(
+    id: '$_iceCorpusOw|P1',
+    regionId: _iceCorpusOw,
+    type: TopologyNodeType.province,
+  ),
+  TopologyNode(
+    id: '$_iceCorpusOw|P2',
+    regionId: _iceCorpusOw,
+    type: TopologyNodeType.province,
+  ),
+  TopologyNode(
+    id: '$_iceCorpusOw|P3',
+    regionId: _iceCorpusOw,
+    type: TopologyNodeType.province,
+  ),
+  TopologyNode(
+    id: '$_iceCorpusOw|P4',
+    regionId: _iceCorpusOw,
+    type: TopologyNodeType.province,
+  ),
+];
 
 Game _iceCorpusGame({
   required String id,
   required RegionData oldWorld,
   List<Army> armies = const [],
-}) =>
-    Game(
-      id: id,
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: oldWorld,
-        newWorld: const RegionData(),
-        armies: armies,
-        tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
-        playerVisibilityByTile: _iceCorpusVisibility(),
-      ),
-      players: const [
-        Player(id: 'p1', displayName: 'P1', isHuman: true),
-        Player(id: 'p2', displayName: 'P2', isHuman: true),
-      ],
-      minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-    );
+}) => Game(
+  id: id,
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: oldWorld,
+    newWorld: const RegionData(),
+    armies: armies,
+    tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
+    playerVisibilityByTile: _iceCorpusVisibility(),
+  ),
+  players: const [
+    Player(id: 'p1', displayName: 'P1', isHuman: true),
+    Player(id: 'p2', displayName: 'P2', isHuman: true),
+  ],
+  minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+);
 
 Game moveCorpusGame() {
   return _iceCorpusGame(
@@ -99,10 +114,7 @@ Game moveCorpusGame() {
 }
 
 MapTopology moveCorpusTopology() {
-  return MapTopology(
-    nodes: _iceCorpusTopologyNodes(),
-    edges: const [],
-  );
+  return MapTopology(nodes: _iceCorpusTopologyNodes(), edges: const []);
 }
 
 Game armyCorpusGame() {

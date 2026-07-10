@@ -1,6 +1,5 @@
 // Shared remaining work handler fixtures (Refs #3949 wave 3).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/orders_application_context.dart';
 import 'package:colonizethis_orders/src/orders/work_handlers/work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

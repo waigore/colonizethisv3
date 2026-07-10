@@ -1,7 +1,6 @@
 // Compact order-engine validateTrade expectation shorthands (Refs #3949).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -30,23 +29,18 @@ const vetEmbassyOverture = [
 Game vetGameWith({
   required Player player,
   List<OvertureState> overtures = const [],
-}) =>
-    Game(
-      id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: [player],
-      overtureStates: overtures,
-    );
+}) => Game(
+  id: 'g',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: const RegionData(),
+    newWorld: const RegionData(),
+  ),
+  players: [player],
+  overtureStates: overtures,
+);
 
-Player vetGp1({
-  Stockpile? stockpile,
-  int treasury = 0,
-  bool isHuman = true,
-}) =>
+Player vetGp1({Stockpile? stockpile, int treasury = 0, bool isHuman = true}) =>
     Player(
       id: 'gp1',
       displayName: 'GP1',
@@ -64,5 +58,4 @@ OrderValidationResult vetAddTrade(
   Game game,
   OrderEngine engine,
   TradeOrder order,
-) =>
-    engine.addTradeOrderWithContext(game, vetTopology, 'gp1', order);
+) => engine.addTradeOrderWithContext(game, vetTopology, 'gp1', order);

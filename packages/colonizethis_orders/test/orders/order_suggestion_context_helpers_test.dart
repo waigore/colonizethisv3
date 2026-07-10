@@ -9,21 +9,21 @@ void main() {
   runLabeledScenarioGroup(
     'appendDiplomaticOrderForTrial',
     appendDiplomaticOrderForTrialScenarios(),
-    runOrderSuggestionContextHelpersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'OvertureStageChain.next',
     overtureStageChainNextScenarios(),
-    runOrderSuggestionContextHelpersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'OvertureStageChain.previous',
     overtureStageChainPreviousScenarios(),
-    runOrderSuggestionContextHelpersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'acceptance wrappers',
     orderSuggestionContextAcceptanceWrapperScenarios(),
-    runOrderSuggestionContextHelpersScenario,
+    runRunnableScenario,
   );
 }

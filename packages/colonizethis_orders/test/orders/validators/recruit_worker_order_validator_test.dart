@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'RecruitWorkerOrderValidator (#2692 S4)',
     recruitWorkerOrderValidatorScenarios(),
-    runRecruitWorkerOrderValidatorScenario,
+    runRunnableScenario,
   );
 }

@@ -69,9 +69,7 @@ class PurchaseLandTestFixture {
           techUnlocked: {kTechIdMerchantCompanies: true},
         ),
       ],
-      minorNations: const [
-        MinorNation(id: 'minor1', displayName: 'Minor 1'),
-      ],
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
       overtureStates: overtureStates ?? const [],
       diplomacyRelations: diplomacyRelations ?? const [],
     );

@@ -1,80 +1,215 @@
 // Table-driven application helpers / clearUnit / mineral eligibility scenarios
-// (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'application_helpers_run_rows.dart';
+import 'application_helpers_expectation_shorthand.dart';
 
-/// One row in [applicationHelpersScenarios].
-class ApplicationHelpersScenario implements RefsScenario {
-  const ApplicationHelpersScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
+void ahRunReturnsParsedCoordinatesForAValidTileKey() {
+  const tileKey = 'oldWorld|P1|12|7';
+  final parsed = parseTileKeyCoordinates(tileKey);
+  expect(parsed, isNotNull);
+  expect(parsed!.regionId, 'oldWorld');
+  expect(parsed.provinceLocalId, 'P1');
+  expect(parsed.x, 12);
+  expect(parsed.y, 7);
 }
 
-void runApplicationHelpersScenario(ApplicationHelpersScenario scenario) {
-  scenario.run();
+void ahRunReturnsNullForMalformedTileKey() {
+  for (final key in ['oldWorld|P1|12', 'oldWorld|P1|x|7']) {
+    expect(parseTileKeyCoordinates(key), isNull);
+  }
+}
+
+void ahRunClearsWorkStateAndRestoresOriginTileByDefault() {
+  ahExpectCancelWorkClearsState(
+    ahWorkingUnit(id: 'u1'),
+    expectedTile: 'oldWorld|P1|1|1',
+  );
+}
+
+void ahRunUsesExplicitRestoredTileOverride() {
+  ahExpectCancelWorkClearsState(
+    ahWorkingUnit(id: 'u2', originTileKey: null, assignedTileKey: null),
+    restoredTile: 'oldWorld|P1|0|0',
+    expectedTile: 'oldWorld|P1|0|0',
+  );
+}
+
+void ahRunReturnsGameUnchangedWhenUnitHasNoCurrentWork() {
+  final game = ahOwBuilderGame(
+    Unit(
+      id: 'u1',
+      type: kUnitTypeBuilder,
+      ownerId: 'gp1',
+      locationProvinceId: 'oldWorld|p1',
+      tileKey: 'oldWorld|p1|0|0',
+    ),
+  );
+  final result = clearUnitCurrentWork(game, 'u1');
+  expect(identical(result, game), isTrue);
+}
+
+void ahRunClearsCurrentWorkRestoresOriginTileAndSetsStatusIdle() {
+  const originTile = 'oldWorld|p1|0|0';
+  final game = ahOwBuilderGame(
+    Unit(
+      id: 'u1',
+      type: kUnitTypeBuilder,
+      ownerId: 'gp1',
+      locationProvinceId: 'oldWorld|p1',
+      tileKey: originTile,
+      originTileKey: originTile,
+      assignedTileKey: 'oldWorld|p1|1|0',
+      status: UnitStatus.working,
+      currentWork: CurrentWork(
+        workTarget: kWorkTargetBuildImprovement,
+        tileKey: 'oldWorld|p1|1|0',
+        totalTurns: 2,
+        remainingTurns: 1,
+      ),
+    ),
+  );
+  final result = clearUnitCurrentWork(game, 'u1');
+  final unit = result.worldState.oldWorld.units.single;
+  expect(unit.currentWork, isNull);
+  expect(unit.status, UnitStatus.idle);
+  expect(unit.tileKey, originTile);
+  expect(unit.originTileKey, isNull);
+  expect(unit.assignedTileKey, isNull);
+}
+
+void ahRunReturnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent() {
+  ahExpectMineralEligible(
+    resourceByTile: const {},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(terrain: TerrainType.mountain),
+    },
+    expected: true,
+  );
+}
+
+void ahRunReturnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'gold'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.plains,
+        resource: Resource.gold,
+      ),
+    },
+    expected: false,
+  );
+}
+
+void ahRunReturnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'wool'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.hills,
+        resource: Resource.wool,
+      ),
+    },
+    expected: false,
+  );
+}
+
+void ahRunReturnsTrueForIronOnHillsWithTileMapWhenNotProspected() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'iron'},
+    tileKey: ahMineralTileKey,
+    tileMapByRegion: {
+      'oldWorld': ahSingleTileMap(
+        terrain: TerrainType.hills,
+        resource: Resource.iron,
+      ),
+    },
+    expected: true,
+  );
+}
+
+void ahRunReturnsFalseWhenResourceIsAbsent() {
+  ahExpectMineralEligible(
+    resourceByTile: const {},
+    tileKey: ahMineralTileKey,
+    expected: false,
+  );
+}
+
+void ahRunReturnsFalseForNonMineralResource() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'grain'},
+    tileKey: ahMineralTileKey,
+    expected: false,
+  );
+}
+
+void ahRunReturnsTrueForMineralResource() {
+  ahExpectMineralEligible(
+    resourceByTile: const {ahMineralTileKey: 'coal'},
+    tileKey: ahMineralTileKey,
+    expected: true,
+  );
 }
 
 /// Canonical scenarios for helpers + clearUnitCurrentWork family tests.
-List<ApplicationHelpersScenario> applicationHelpersScenarios() => const [
+List<RunnableScenario> applicationHelpersScenarios() => const [
   // dart format off
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns parsed coordinates for a valid tile key',
     run: ahRunReturnsParsedCoordinatesForAValidTileKey,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns null for malformed tile key',
     run: ahRunReturnsNullForMalformedTileKey,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'clears work state and restores origin tile by default',
     run: ahRunClearsWorkStateAndRestoresOriginTileByDefault,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'uses explicit restored tile override',
     run: ahRunUsesExplicitRestoredTileOverride,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns game unchanged when unit has no currentWork',
     run: ahRunReturnsGameUnchangedWhenUnitHasNoCurrentWork,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'clears currentWork, restores origin tile, and sets status idle',
     run: ahRunClearsCurrentWorkRestoresOriginTileAndSetsStatusIdle,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns true for prospectable terrain even when no resource is present',
     run: ahRunReturnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns false for non-prospectable terrain even when mineral resource exists',
     run: ahRunReturnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns false for wool on hills when tile map shows prospectable terrain',
     run: ahRunReturnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns true for iron on hills with tile map when not prospected',
     run: ahRunReturnsTrueForIronOnHillsWithTileMapWhenNotProspected,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns false when resource is absent',
     run: ahRunReturnsFalseWhenResourceIsAbsent,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns false for non-mineral resource',
     run: ahRunReturnsFalseForNonMineralResource,
   ),
-  ApplicationHelpersScenario(
+  RunnableScenario(
     label: 'returns true for mineral resource',
     run: ahRunReturnsTrueForMineralResource,
   ),

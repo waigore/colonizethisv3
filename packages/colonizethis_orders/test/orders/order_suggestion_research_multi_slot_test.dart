@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestResearchOrders multi-slot',
     orderSuggestionResearchMultiSlotScenarios(),
-    runOrderSuggestionResearchMultiSlotScenario,
+    runRunnableScenario,
   );
 }

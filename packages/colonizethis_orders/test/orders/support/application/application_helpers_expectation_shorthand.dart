@@ -82,11 +82,7 @@ Game ahOwBuilderGame(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: '$ow|$provinceLocalId',
-            regionId: ow,
-            ownerId: playerId,
-          ),
+          Province(id: '$ow|$provinceLocalId', regionId: ow, ownerId: playerId),
         ],
         units: [unit],
       ),
