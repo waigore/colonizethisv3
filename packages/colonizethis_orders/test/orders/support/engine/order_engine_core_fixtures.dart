@@ -129,4 +129,17 @@ Game oecMilitaryOnP1Game() => Game(
   diplomacyRelations: const [],
 );
 
+Game oecEmptyUnitsP1Game() => Game(
+  id: 'g1',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(
+      provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
+      units: [],
+    ),
+    newWorld: const RegionData(),
+  ),
+  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+);
+
 OrderEngine oecProjectorEngine() => OrderEngine(projector: projectOrderEffects);

@@ -27,14 +27,12 @@ enum ButFluyteNoFleetVariant { nullTopology, nullCapital, isolatedSea }
 void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
   final shipEcon = ShipEconomyCatalog.byId['fluyte']!;
   final stockpile = butStockpileCovering(shipEcon.buildInputs);
-  final player = butShipBuildPlayer(
+  final player = butFluytePlayer(
     stockpile: stockpile,
     peasants: 1,
-    treasury: shipEcon.buildTreasuryCost + 10,
     capitalProvinceId: variant == ButFluyteNoFleetVariant.nullCapital
         ? null
         : ButIds.prov('P1'),
-    techUnlocked: {kTechIdSuperiorHullDesign: true},
   );
   final topology = switch (variant) {
     ButFluyteNoFleetVariant.nullTopology => null,
@@ -54,3 +52,31 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
     buildInputs: shipEcon.buildInputs,
   );
 }
+
+/// Ready-to-build fluyte player (superior hull unlocked).
+Player butFluytePlayer({
+  required Stockpile stockpile,
+  required int peasants,
+  String? capitalProvinceId,
+  String displayName = 'P1',
+  int? treasury,
+}) {
+  final cost = ShipEconomyCatalog.byId['fluyte']!.buildTreasuryCost;
+  return butShipBuildPlayer(
+    stockpile: stockpile,
+    peasants: peasants,
+    treasury: treasury ?? cost + 10,
+    capitalProvinceId: capitalProvinceId,
+    techUnlocked: {kTechIdSuperiorHullDesign: true},
+    displayName: displayName,
+  );
+}
+
+void butExpectNoUnitsTreasuryUnchanged(Game game, Orders orders) {
+  final next = butApply(game, orders);
+  expect(next.worldState.oldWorld.units, isEmpty);
+  expect(next.players.single.treasury, game.players.single.treasury);
+}
+
+void butExpectCivilianRejected(Game game) =>
+    butExpectNoUnitsTreasuryUnchanged(game, butOrdersFor(kUnitTypeBuilder));

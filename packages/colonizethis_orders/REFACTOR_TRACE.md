@@ -2335,6 +2335,16 @@ Preserved: description baseline, support-layout, prefer-scenario-tables, domain 
 
 test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 154: merge remaining mid-size run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oec-run-rows-merge | merge order_engine_core_run_rows into scenarios; oecEmptyUnitsP1Game densify | order_engine_core_run_rows.dart (deleted) | order_engine_core_scenarios.dart + fixtures | #3949 |
+| om-run-rows-merge | merge order_merge_run_rows; omDeclareWar / omRoadWork / omTradeOrder sugar | order_merge_run_rows.dart (deleted) | order_merge_scenarios.dart + shorthand | #3949 |
+| but-run-rows-merge | densify fluyte/civilian/merchant asserts; merge build_unit_training_run_rows | build_unit_training_run_rows.dart (deleted) | build_unit_training_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 154: **32475** (net +90 from post–slice 153 / 32,565). Remaining split run_rows families: order_suggestion_core, valid_work_tiles, work_order_application, work_completion. Lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
