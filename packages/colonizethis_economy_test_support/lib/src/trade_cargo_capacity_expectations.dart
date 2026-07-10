@@ -33,9 +33,10 @@ void runOverseasShippedTonnageExpectation(OverseasShippedTonnagePins pins) {
 OverseasShippedTonnageScenario overseasShippedTonnageScenario({
   required String label,
   required OverseasShippedTonnagePins pins,
-}) => OverseasShippedTonnageScenario(
+}) => (
   label: label,
   run: () => runOverseasShippedTonnageExpectation(pins),
+  refs: null,
 );
 
 void runTradeCargoCapacityEmptyTileMapsExpectation() {
@@ -52,11 +53,11 @@ void runTradeCargoCapacityEmptyTileMapsExpectation() {
 }
 
 TradeCargoCapacityForGreatPowerScenario
-tradeCargoCapacityEmptyTileMapsScenario({required String label}) =>
-    TradeCargoCapacityForGreatPowerScenario(
-      label: label,
-      run: runTradeCargoCapacityEmptyTileMapsExpectation,
-    );
+tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (
+  label: label,
+  run: runTradeCargoCapacityEmptyTileMapsExpectation,
+  refs: null,
+);
 
 Game _gameWithGp(String id) => minimalGpGame(playerId: id);
 
@@ -112,7 +113,7 @@ ExtractionByIdBypassScenario forecastOverseasTonnageScenario({
   required String label,
   required ForecastOverseasTonnagePins pins,
   String? refs,
-}) => ExtractionByIdBypassScenario(
+}) => (
   label: label,
   run: () => runForecastOverseasTonnageExpectation(pins),
   refs: refs,
@@ -144,7 +145,7 @@ ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({
   required String label,
   required TradeCargoCapacityExtractionPins pins,
   String? refs,
-}) => ExtractionByIdBypassScenario(
+}) => (
   label: label,
   run: () => runTradeCargoCapacityExtractionExpectation(pins),
   refs: refs,
@@ -165,7 +166,7 @@ void runComputeExtractionTotalsEmptyMapsExpectation() {
 ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({
   required String label,
   String? refs,
-}) => ExtractionByIdBypassScenario(
+}) => (
   label: label,
   run: runComputeExtractionTotalsEmptyMapsExpectation,
   refs: refs,

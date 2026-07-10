@@ -26,9 +26,10 @@ void runWorkMaterialAffordExpectation(WorkMaterialAffordPins pins) {
 ProjectedCostEngineWorkMaterialScenario workMaterialAffordScenario({
   required String label,
   required WorkMaterialAffordPins pins,
-}) => ProjectedCostEngineWorkMaterialScenario(
+}) => (
   label: label,
   run: () => runWorkMaterialAffordExpectation(pins),
+  refs: null,
 );
 
 /// Pins for work-material deduction rows.
@@ -52,9 +53,10 @@ void runWorkMaterialDeductExpectation(WorkMaterialDeductPins pins) {
 ProjectedCostEngineWorkMaterialScenario workMaterialDeductScenario({
   required String label,
   required WorkMaterialDeductPins pins,
-}) => ProjectedCostEngineWorkMaterialScenario(
+}) => (
   label: label,
   run: () => runWorkMaterialDeductExpectation(pins),
+  refs: null,
 );
 
 const _delegationPlayer = Player(id: 'p1', displayName: 'P', isHuman: true);
@@ -92,9 +94,10 @@ void runBuildAffordDelegationExpectation() {
 
 ProjectedCostEngineBuildScenario buildAffordDelegationScenario({
   required String label,
-}) => ProjectedCostEngineBuildScenario(
+}) => (
   label: label,
   run: runBuildAffordDelegationExpectation,
+  refs: null,
 );
 
 const _applyDeductionPlayer = Player(
@@ -145,7 +148,8 @@ void runBuildApplyDeductionDelegationExpectation() {
 
 ProjectedCostEngineBuildScenario buildApplyDeductionDelegationScenario({
   required String label,
-}) => ProjectedCostEngineBuildScenario(
+}) => (
   label: label,
   run: runBuildApplyDeductionDelegationExpectation,
+  refs: null,
 );

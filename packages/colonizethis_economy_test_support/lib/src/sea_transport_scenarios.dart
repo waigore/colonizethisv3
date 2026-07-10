@@ -3,23 +3,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'scenario_runner.dart';
 import 'sea_transport_expectations.dart';
 
-/// One row in [cargoHoldsForHomeFleetScenarios].
-class CargoHoldsForHomeFleetScenario implements RefsScenario {
-  const CargoHoldsForHomeFleetScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [cargoHoldsForHomeFleetScenarios] (Refs #3939 slice 64).
+typedef CargoHoldsForHomeFleetScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runCargoHoldsForHomeFleetScenario(
   CargoHoldsForHomeFleetScenario scenario,
@@ -104,20 +95,12 @@ List<CargoHoldsForHomeFleetScenario> cargoHoldsForHomeFleetScenarios() => [
   ),
 ];
 
-/// One row in [allocateOverseasToStockpileScenarios].
-class AllocateOverseasToStockpileScenario implements RefsScenario {
-  const AllocateOverseasToStockpileScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [allocateOverseasToStockpileScenarios] (Refs #3939 slice 64).
+typedef AllocateOverseasToStockpileScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runAllocateOverseasToStockpileScenario(
   AllocateOverseasToStockpileScenario scenario,

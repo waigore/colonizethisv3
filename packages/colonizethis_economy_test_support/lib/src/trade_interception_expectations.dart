@@ -157,7 +157,7 @@ ApplyTradeInterceptionScenario applyTradeInterceptionScenario({
   required String label,
   required ApplyTradeInterceptionTarget target,
   String? refs,
-}) => ApplyTradeInterceptionScenario(
+}) => (
   label: label,
   run: () => runApplyTradeInterceptionExpectation(target),
   refs: refs,
@@ -250,7 +250,7 @@ TradeInterceptionScanScenario tradeInterceptionScanScenario({
   required String label,
   required TradeInterceptionScanTarget target,
   String? refs,
-}) => TradeInterceptionScanScenario(
+}) => (
   label: label,
   run: () => runTradeInterceptionScanExpectation(target),
   refs: refs,

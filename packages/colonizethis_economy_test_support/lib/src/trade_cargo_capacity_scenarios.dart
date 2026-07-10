@@ -2,23 +2,14 @@
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 
-import 'scenario_runner.dart';
 import 'trade_cargo_capacity_expectations.dart';
 
-/// One row in [overseasShippedTonnageScenarios].
-class OverseasShippedTonnageScenario implements RefsScenario {
-  const OverseasShippedTonnageScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [overseasShippedTonnageScenarios] (Refs #3939 slice 64).
+typedef OverseasShippedTonnageScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runOverseasShippedTonnageScenario(
   OverseasShippedTonnageScenario scenario,
@@ -47,20 +38,12 @@ List<OverseasShippedTonnageScenario> overseasShippedTonnageScenarios() => [
   ),
 ];
 
-/// One row in [tradeCargoCapacityForGreatPowerScenarios].
-class TradeCargoCapacityForGreatPowerScenario implements RefsScenario {
-  const TradeCargoCapacityForGreatPowerScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [tradeCargoCapacityForGreatPowerScenarios] (Refs #3939 slice 64).
+typedef TradeCargoCapacityForGreatPowerScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runTradeCargoCapacityForGreatPowerScenario(
   TradeCargoCapacityForGreatPowerScenario scenario,
@@ -76,20 +59,12 @@ tradeCargoCapacityForGreatPowerScenarios() => [
   ),
 ];
 
-/// One row in [extractionByIdBypassScenarios].
-class ExtractionByIdBypassScenario implements RefsScenario {
-  const ExtractionByIdBypassScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [extractionByIdBypassScenarios] (Refs #3939 slice 64).
+typedef ExtractionByIdBypassScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runExtractionByIdBypassScenario(ExtractionByIdBypassScenario scenario) {
   scenario.run();

@@ -1,22 +1,13 @@
 // Table-driven trade-interception scenarios (Refs #3939 phase 3).
 
-import 'scenario_runner.dart';
 import 'trade_interception_expectations.dart';
 
-/// One row in [applyTradeInterceptionScenarios].
-class ApplyTradeInterceptionScenario implements RefsScenario {
-  const ApplyTradeInterceptionScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [applyTradeInterceptionScenarios] (Refs #3939 slice 64).
+typedef ApplyTradeInterceptionScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runApplyTradeInterceptionScenario(
   ApplyTradeInterceptionScenario scenario,
@@ -67,20 +58,12 @@ List<ApplyTradeInterceptionScenario> applyTradeInterceptionScenarios() => [
   ),
 ];
 
-/// One row in [tradeInterceptionScanScenarios].
-class TradeInterceptionScanScenario implements RefsScenario {
-  const TradeInterceptionScanScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [tradeInterceptionScanScenarios] (Refs #3939 slice 64).
+typedef TradeInterceptionScanScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runTradeInterceptionScanScenario(TradeInterceptionScanScenario scenario) {
   scenario.run();

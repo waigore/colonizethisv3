@@ -4,22 +4,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'core_economy_test_support.dart';
 import 'economy_extraction_expectations.dart';
-import 'scenario_runner.dart';
 
-/// One row in [applyExtractionToStockpileScenarios].
-class ApplyExtractionToStockpileScenario implements RefsScenario {
-  const ApplyExtractionToStockpileScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [applyExtractionToStockpileScenarios] (Refs #3939 slice 64).
+typedef ApplyExtractionToStockpileScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runApplyExtractionToStockpileScenario(
   ApplyExtractionToStockpileScenario scenario,
@@ -68,20 +59,12 @@ applyExtractionToStockpileScenarios() => [
   ),
 ];
 
-/// One row in [applyExtractionForPlayersScenarios].
-class ApplyExtractionForPlayersScenario implements RefsScenario {
-  const ApplyExtractionForPlayersScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [applyExtractionForPlayersScenarios] (Refs #3939 slice 64).
+typedef ApplyExtractionForPlayersScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runApplyExtractionForPlayersScenario(
   ApplyExtractionForPlayersScenario scenario,

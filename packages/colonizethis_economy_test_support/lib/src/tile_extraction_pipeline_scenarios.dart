@@ -1,22 +1,13 @@
 // Table-driven tile extraction pipeline scenarios (Refs #3939 phase 3).
 
-import 'scenario_runner.dart';
 import 'tile_extraction_pipeline_expectations.dart';
 
-/// One row in [resolveTileKeyResourceContextScenarios].
-class ResolveTileKeyResourceContextScenario implements RefsScenario {
-  const ResolveTileKeyResourceContextScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [resolveTileKeyResourceContextScenarios] (Refs #3939 slice 64).
+typedef ResolveTileKeyResourceContextScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runResolveTileKeyResourceContextScenario(
   ResolveTileKeyResourceContextScenario scenario,
@@ -41,20 +32,12 @@ resolveTileKeyResourceContextScenarios() => [
   ),
 ];
 
-/// One row in [resolveTileKeyExtractionContextScenarios].
-class ResolveTileKeyExtractionContextScenario implements RefsScenario {
-  const ResolveTileKeyExtractionContextScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [resolveTileKeyExtractionContextScenarios] (Refs #3939 slice 64).
+typedef ResolveTileKeyExtractionContextScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runResolveTileKeyExtractionContextScenario(
   ResolveTileKeyExtractionContextScenario scenario,

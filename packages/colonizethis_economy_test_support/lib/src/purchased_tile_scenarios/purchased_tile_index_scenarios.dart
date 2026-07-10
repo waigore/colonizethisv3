@@ -70,20 +70,13 @@ purchasedTileAttributionSemanticsScenarios() => [
   ),
 ];
 
-/// One row in [purchasedTileIndexFromGameScenarios].
-class PurchasedTileIndexFromGameScenario {
-  const PurchasedTileIndexFromGameScenario({
-    required this.label,
-    required this.buildGame,
-    required this.verify,
-    this.refs,
-  });
-
-  final String label;
-  final Game Function() buildGame;
-  final void Function(PurchasedTileIndex index) verify;
-  final String? refs;
-}
+/// One row in [purchasedTileIndexFromGameScenarios] (Refs #3939 slice 64).
+typedef PurchasedTileIndexFromGameScenario = ({
+  String label,
+  Game Function() buildGame,
+  void Function(PurchasedTileIndex index) verify,
+  String? refs,
+});
 
 /// Compact expect-wired row (Refs #3939 slice 59).
 PurchasedTileIndexFromGameScenario purchasedTileIndexRow({
@@ -91,7 +84,7 @@ PurchasedTileIndexFromGameScenario purchasedTileIndexRow({
   required Game Function() buildGame,
   required PurchasedTileIndexExpectation expect,
   String? refs,
-}) => PurchasedTileIndexFromGameScenario(
+}) => (
   label: label,
   buildGame: buildGame,
   verify: (index) => assertPurchasedTileIndexExpectation(

@@ -33,7 +33,7 @@ ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({
   Stockpile? initialStockpile,
   required Map<String, int> extracted,
   required StockpileQuantityPins expectedQuantities,
-}) => ApplyExtractionToStockpileScenario(
+}) => (
   label: label,
   run: () => runApplyExtractionToStockpileExpectation(
     initialStockpile: initialStockpile,
@@ -41,6 +41,7 @@ ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({
     extracted: extracted,
     expectedQuantities: expectedQuantities,
   ),
+  refs: null,
 );
 
 /// One player's expected stockpile commodity quantity after [applyExtractionForPlayers].
@@ -75,7 +76,7 @@ ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({
   required Map<String, Map<String, int>> extractedByPlayerId,
   List<PlayerStockpilePin>? stockpilePins,
   bool expectUnchangedPlayers = false,
-}) => ApplyExtractionForPlayersScenario(
+}) => (
   label: label,
   run: () => runApplyExtractionForPlayersExpectation(
     game: game,
@@ -83,4 +84,5 @@ ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({
     stockpilePins: stockpilePins,
     expectUnchangedPlayers: expectUnchangedPlayers,
   ),
+  refs: null,
 );

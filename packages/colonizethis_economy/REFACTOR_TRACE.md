@@ -1131,6 +1131,15 @@ test_support LOC: **15,766** (net −97 vs slice 61 / 15,863). Economy `test/` *
 
 test_support LOC: **15,647** (net −119 vs slice 62 / 15,766). Economy `test/` **1,349** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 64+.
 
+## Phase 3 — Slice 64 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| remaining-class-typedef | Convert remaining RefsScenario / row classes (sea-transport, extraction, cargo, interception, projected-cost, tile-pipeline, contribution, game-lookup, purchased-tile-index) to typedefs | matching `*_scenarios.dart` / `*_expectations.dart` | #3939 |
+| labelOf-runners | Wire `labelOf: (s) => s.label` on thin runners that lost `LabeledScenario` | `sea_transport_test.dart`, `game_lookup_helpers_test.dart`, `economy_extraction_test.dart`, `trade_interception*_test.dart`, `projected_cost_engine_test.dart`, `trade_cargo_capacity_test.dart`, `tile_extraction_pipeline_test.dart` | #3939 |
+
+test_support LOC: **15,506** (net −141 vs slice 63 / 15,647). Economy `test/` **1,368** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 65+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

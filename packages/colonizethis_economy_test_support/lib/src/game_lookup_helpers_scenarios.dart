@@ -5,24 +5,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 import 'game_lookup_helpers_expectations.dart';
-import 'scenario_runner.dart';
 
-/// One row in [buildProvinceIndexScenarios].
-class BuildProvinceIndexScenario implements RefsScenario {
-  const BuildProvinceIndexScenario({
-    required this.label,
-    required this.gameBuilder,
-    required this.expect,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final Game Function() gameBuilder;
-  final BuildProvinceIndexExpectation expect;
-  @override
-  final String? refs;
-}
+/// One row in [buildProvinceIndexScenarios] (Refs #3939 slice 64).
+typedef BuildProvinceIndexScenario = ({
+  String label,
+  Game Function() gameBuilder,
+  BuildProvinceIndexExpectation expect,
+  String? refs,
+});
 
 void runBuildProvinceIndexScenario(BuildProvinceIndexScenario scenario) {
   assertBuildProvinceIndexExpectation(
@@ -33,7 +23,7 @@ void runBuildProvinceIndexScenario(BuildProvinceIndexScenario scenario) {
 
 /// Canonical scenarios for [buildProvinceIndex].
 List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
-  BuildProvinceIndexScenario(
+  (
     label: 'indexes provinces across both regions by prefixed id',
     gameBuilder: () => TestFixtures.minimalGame(
       oldWorld: const RegionData(
@@ -55,7 +45,7 @@ List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
     ),
     refs: '#3939',
   ),
-  BuildProvinceIndexScenario(
+  (
     label: 'empty world produces an empty index',
     gameBuilder: TestFixtures.minimalGame,
     expect: const BuildProvinceIndexExpectation(isEmpty: true),
@@ -63,22 +53,13 @@ List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
   ),
 ];
 
-/// One row in [collectPortTileKeysScenarios].
-class CollectPortTileKeysScenario implements RefsScenario {
-  const CollectPortTileKeysScenario({
-    required this.label,
-    required this.gameBuilder,
-    required this.expect,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final Game Function() gameBuilder;
-  final CollectPortTileKeysExpectation expect;
-  @override
-  final String? refs;
-}
+/// One row in [collectPortTileKeysScenarios] (Refs #3939 slice 64).
+typedef CollectPortTileKeysScenario = ({
+  String label,
+  Game Function() gameBuilder,
+  CollectPortTileKeysExpectation expect,
+  String? refs,
+});
 
 void runCollectPortTileKeysScenario(CollectPortTileKeysScenario scenario) {
   assertCollectPortTileKeysExpectation(
@@ -89,7 +70,7 @@ void runCollectPortTileKeysScenario(CollectPortTileKeysScenario scenario) {
 
 /// Canonical scenarios for [collectPortTileKeys].
 List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
-  CollectPortTileKeysScenario(
+  (
     label: 'collects the seaboard port tile keys as a set',
     gameBuilder: () => TestFixtures.minimalGame(
       portsByProvinceSeaboard: const {
@@ -102,7 +83,7 @@ List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
     ),
     refs: '#3939',
   ),
-  CollectPortTileKeysScenario(
+  (
     label: 'deduplicates seaboards that map to the same tile key',
     gameBuilder: () => TestFixtures.minimalGame(
       portsByProvinceSeaboard: const {
@@ -115,7 +96,7 @@ List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
     ),
     refs: '#3939',
   ),
-  CollectPortTileKeysScenario(
+  (
     label: 'no ports produces an empty set',
     gameBuilder: TestFixtures.minimalGame,
     expect: const CollectPortTileKeysExpectation(isEmpty: true),
@@ -123,22 +104,13 @@ List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
   ),
 ];
 
-/// One row in [capitalFactionLookupScenarios].
-class CapitalFactionLookupScenario implements RefsScenario {
-  const CapitalFactionLookupScenario({
-    required this.label,
-    required this.gameBuilder,
-    required this.expect,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final Game Function() gameBuilder;
-  final CapitalFactionLookupExpectation expect;
-  @override
-  final String? refs;
-}
+/// One row in [capitalFactionLookupScenarios] (Refs #3939 slice 64).
+typedef CapitalFactionLookupScenario = ({
+  String label,
+  Game Function() gameBuilder,
+  CapitalFactionLookupExpectation expect,
+  String? refs,
+});
 
 void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
   assertCapitalFactionLookupExpectation(
@@ -150,7 +122,7 @@ void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
 /// Canonical scenarios for [capitalProvinceIdForFaction] /
 /// [capitalRegionIdForFaction].
 List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [
-  CapitalFactionLookupScenario(
+  (
     label: 'resolves Great Power capital province and region ids',
     gameBuilder: () => TestFixtures.minimalGame(
       players: const [
@@ -175,7 +147,7 @@ List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [
     ),
     refs: '#3939',
   ),
-  CapitalFactionLookupScenario(
+  (
     label: 'resolves minor and tribe capital ids',
     gameBuilder: () => TestFixtures.minimalGame(
       minorNations: const [
@@ -213,7 +185,7 @@ List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [
     ),
     refs: '#3939',
   ),
-  CapitalFactionLookupScenario(
+  (
     label: 'unknown faction id returns null capital ids',
     gameBuilder: TestFixtures.minimalGame,
     expect: const CapitalFactionLookupExpectation(

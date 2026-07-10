@@ -69,7 +69,7 @@ ResolveTileKeyResourceContextScenario resolveTileKeyResourceContextScenario({
   required String label,
   required ResolveTileKeyResourceContextTarget target,
   String? refs,
-}) => ResolveTileKeyResourceContextScenario(
+}) => (
   label: label,
   run: () => runResolveTileKeyResourceContextExpectation(target),
   refs: refs,
@@ -136,7 +136,7 @@ resolveTileKeyExtractionContextScenario({
   required String label,
   required ResolveTileKeyExtractionContextTarget target,
   String? refs,
-}) => ResolveTileKeyExtractionContextScenario(
+}) => (
   label: label,
   run: () => runResolveTileKeyExtractionContextExpectation(target),
   refs: refs,

@@ -1,22 +1,13 @@
 // Table-driven projected cost engine scenarios (Refs #3939 phase 3 slice 35).
 
 import 'projected_cost_engine_expectations.dart';
-import 'scenario_runner.dart';
 
-/// One row in [projectedCostEngineWorkMaterialScenarios].
-class ProjectedCostEngineWorkMaterialScenario implements RefsScenario {
-  const ProjectedCostEngineWorkMaterialScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [projectedCostEngineWorkMaterialScenarios] (Refs #3939 slice 64).
+typedef ProjectedCostEngineWorkMaterialScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runProjectedCostEngineWorkMaterialScenario(
   ProjectedCostEngineWorkMaterialScenario scenario,
@@ -45,20 +36,12 @@ projectedCostEngineWorkMaterialScenarios() => [
   ),
 ];
 
-/// One row in [projectedCostEngineBuildScenarios].
-class ProjectedCostEngineBuildScenario implements RefsScenario {
-  const ProjectedCostEngineBuildScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row in [projectedCostEngineBuildScenarios] (Refs #3939 slice 64).
+typedef ProjectedCostEngineBuildScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runProjectedCostEngineBuildScenario(
   ProjectedCostEngineBuildScenario scenario,

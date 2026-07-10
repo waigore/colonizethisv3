@@ -129,7 +129,7 @@ TileExtractionContributionScenario tileExtractionContributionScenario({
   required TileExtractionContributionPin pin,
   TileContributionConnectedPin? connectedPins,
   TileMapResult? grainTileMap,
-}) => TileExtractionContributionScenario(
+}) => (
   label: label,
   run: () {
     final tileMap = grainTileMap ?? singleTileMap(Resource.grain);
@@ -143,4 +143,5 @@ TileExtractionContributionScenario tileExtractionContributionScenario({
         runTileContributionDisconnectedPin(grainTileMap: tileMap);
     }
   },
+  refs: null,
 );
