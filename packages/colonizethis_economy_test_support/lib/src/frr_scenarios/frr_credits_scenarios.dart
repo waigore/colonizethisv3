@@ -110,6 +110,26 @@ FrrCreditsScenario frrEmptyCreditsRow({
   refs: refs,
 );
 
+/// D5 credits row defaults other-buy deal + k1/gpA index (Refs #3939 slice 65).
+FrrCreditsScenario frrD5CreditsRow({
+  required String label,
+  required FrrCreditsExpectation expect,
+  FilledDeal? filledDeal,
+  List<FilledDeal>? filledDeals,
+  PurchasedTileIndex? purchasedTileIndex,
+  int? constantRelation,
+  num Function(String, String)? relationScoreFor,
+  String? refs,
+}) => frrCreditsRow(
+  label: label,
+  filledDeals: filledDeals ?? [filledDeal ?? frrD5OtherBuyDeal()],
+  purchasedTileIndex: purchasedTileIndex ?? frrD5IdxK1GpA(),
+  constantRelation: constantRelation,
+  relationScoreFor: relationScoreFor,
+  expect: expect,
+  refs: refs,
+);
+
 /// Defensive / skip branches from `first_right_credits_test.dart`.
 List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   frrEmptyCreditsRow(
@@ -278,12 +298,10 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
   ),
 ];
 
-/// D5 credits AC2–AC5 rows (Refs #2992 D5, #3939 slice 57 / 61).
+/// D5 credits AC2–AC5 rows (Refs #2992 D5, #3939 slice 57 / 61 / 65).
 List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
-  frrCreditsRow(
+  frrD5CreditsRow(
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
-    filledDeals: [frrD5OtherBuyDeal()],
-    purchasedTileIndex: frrD5IdxK1GpA(),
     relationScoreFor: frrRelationTable(const {
       kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 75},
     }),
@@ -298,12 +316,11 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     ),
     refs: '#2992 D5 AC2',
   ),
-  frrCreditsRow(
+  frrD5CreditsRow(
     label:
         'credits helper produces rate kFirstRightMaxProfitRate (1.0) and '
         'treasury == quantity * pricePerUnit (full share)',
-    filledDeals: [frrD5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
-    purchasedTileIndex: frrD5IdxK1GpA(),
+    filledDeal: frrD5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0),
     constantRelation: 100,
     expect: frrCreditedDealExpect(
       profitRateCloseTo: kFirstRightMaxProfitRate,
@@ -312,12 +329,10 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     ),
     refs: '#2992 D5 AC3',
   ),
-  frrCreditsRow(
+  frrD5CreditsRow(
     label:
         'credits helper records audit row but transfers 0 treasury (Deal '
         'Book can still surface the no-credit case)',
-    filledDeals: [frrD5OtherBuyDeal()],
-    purchasedTileIndex: frrD5IdxK1GpA(),
     constantRelation: 0,
     expect: frrCreditedDealExpect(
       profitIsZero: true,
@@ -326,12 +341,11 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     ),
     refs: '#2992 D5 AC4',
   ),
-  frrCreditsRow(
+  frrD5CreditsRow(
     label:
         'negative — buyer == owning GP (D2 FRR-match path) excluded from '
         'D4 aggregation: no double-credit when gpA wins the offer itself',
-    filledDeals: [frrD5FrrMatchDeal()],
-    purchasedTileIndex: frrD5IdxK1GpA(),
+    filledDeal: frrD5FrrMatchDeal(),
     constantRelation: 100,
     expect: frrTreasuryCloseTo(
       const {},
@@ -341,7 +355,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     ),
     refs: '#2992 D5 AC4',
   ),
-  frrCreditsRow(
+  frrD5CreditsRow(
     label:
         'k1 (gpA, relation 100) + k2 (gpB, relation 50) → gpA 60.0, gpB '
         '20.0; neither GP is credited for the other GP\'s purchased tile',
@@ -374,7 +388,7 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     ),
     refs: '#2992 D5 AC5',
   ),
-  frrCreditsRow(
+  frrD5CreditsRow(
     label:
         'same owning GP across two minors aggregates per source relation '
         'independently (k1@M1 relation 100 + k3@M2 relation 25 → gpA 45.0)',

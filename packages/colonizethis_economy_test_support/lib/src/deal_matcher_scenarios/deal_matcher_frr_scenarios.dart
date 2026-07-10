@@ -190,12 +190,9 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         'negative — owning GP does NOT bid: purchased-tile offer falls '
         'back to standard tier matching (not FRR-flagged)',
     bidPriorityByBuyer: const {kFrrIssueAcD5GpB: 1},
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealsLength: 1,
-      nonFrrFilledDeal: FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpB,
-        isFirstRightOfRefusalMatch: false,
-      ),
+      nonFrrFilledDeal: matcherFilled(buyer: kFrrIssueAcD5GpB, isFrr: false),
     ),
   ),
 ];

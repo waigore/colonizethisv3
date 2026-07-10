@@ -275,6 +275,25 @@ MarketActivity matcherActivity({int bid = 0, int offer = 0, int filled = 0}) =>
       filledQuantity: filled,
     );
 
+/// Compact [FilledDealExpectation] (Refs #3939 slice 65).
+FilledDealExpectation matcherFilled({
+  String? buyer,
+  String? seller,
+  String? commodity,
+  int? quantity,
+  double? pricePerUnit,
+  bool? isFtpMatch,
+  bool? isFrr,
+}) => FilledDealExpectation(
+  buyerFactionId: buyer,
+  sellerFactionId: seller,
+  commodityId: commodity,
+  quantity: quantity,
+  pricePerUnit: pricePerUnit,
+  isFtpMatch: isFtpMatch,
+  isFirstRightOfRefusalMatch: isFrr,
+);
+
 /// FRR + residual non-FRR fill expect (Refs #3939 slice 61).
 DealMatchExpectation frrSplitExpect({
   required String frrBuyer,
@@ -287,14 +306,8 @@ DealMatchExpectation frrSplitExpect({
   bool unfilledOffersEmpty = false,
 }) => DealMatchExpectation(
   filledDealsLength: filledDealsLength,
-  frrFilledDeal: FilledDealExpectation(
-    buyerFactionId: frrBuyer,
-    quantity: frrQty,
-  ),
-  nonFrrFilledDeal: FilledDealExpectation(
-    buyerFactionId: otherBuyer,
-    quantity: otherQty,
-  ),
+  frrFilledDeal: matcherFilled(buyer: frrBuyer, quantity: frrQty),
+  nonFrrFilledDeal: matcherFilled(buyer: otherBuyer, quantity: otherQty),
   unfilledBidsByFactionId: unfilledBidsByFactionId,
   unfilledBidsPinsByFactionId: unfilledBidsPinsByFactionId,
   unfilledOffersEmpty: unfilledOffersEmpty,
@@ -311,10 +324,10 @@ DealMatchExpectation frrOwnerFillExpect({
   bool isFtpMatch = false,
 }) => DealMatchExpectation(
   filledDealsLength: 1,
-  frrFilledDeal: FilledDealExpectation(
-    buyerFactionId: ownerBuyer,
+  frrFilledDeal: matcherFilled(
+    buyer: ownerBuyer,
     quantity: fillQty,
-    isFirstRightOfRefusalMatch: true,
+    isFrr: true,
     isFtpMatch: isFtpMatch,
   ),
   unfilledBidsByFactionId: matcherUnfilledBid(
@@ -336,11 +349,7 @@ DealMatchExpectation frrOwnerFillsExpect({
   filledDealsLength: quantities.length,
   filledDealExpectations: [
     for (final q in quantities)
-      FilledDealExpectation(
-        buyerFactionId: ownerBuyer,
-        quantity: q,
-        isFirstRightOfRefusalMatch: true,
-      ),
+      matcherFilled(buyer: ownerBuyer, quantity: q, isFrr: true),
   ],
   unfilledBidsByFactionId: unfilledBidsByFactionId,
   unfilledOffersEmpty: unfilledOffersEmpty,
@@ -385,10 +394,7 @@ DealMatchExpectation matcherFirstBuyerExpect(
   Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
 }) => DealMatchExpectation(
   filledDealsLength: filledDealsLength,
-  firstFilledDeal: FilledDealExpectation(
-    buyerFactionId: buyer,
-    quantity: quantity,
-  ),
+  firstFilledDeal: matcherFilled(buyer: buyer, quantity: quantity),
   unfilledBidsByFactionId: unfilledBidsByFactionId,
 );
 
@@ -491,12 +497,9 @@ DealMatcherScenario frrNoEffectRow({
     tradeCapacityByFactionId: const {'gpA': 100, 'gpB': 100},
     purchasedTileIndex: purchasedTileIndex,
   ),
-  expect: const DealMatchExpectation(
+  expect: DealMatchExpectation(
     filledDealsLength: 1,
-    firstFilledDeal: FilledDealExpectation(
-      buyerFactionId: 'gpB',
-      isFirstRightOfRefusalMatch: false,
-    ),
+    firstFilledDeal: matcherFilled(buyer: 'gpB', isFrr: false),
   ),
   refs: refs,
 );

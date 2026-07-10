@@ -1140,6 +1140,16 @@ test_support LOC: **15,647** (net −119 vs slice 62 / 15,766). Economy `test/` 
 
 test_support LOC: **15,506** (net −141 vs slice 63 / 15,647). Economy `test/` **1,368** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 65+.
 
+## Phase 3 — Slice 65 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| matcher-filled | `matcherFilled` short alias; densify FTP/priority/FRR/owner-fill helpers | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3115, #3939 |
+| interception-apply-scan | Shared `_apply` / `_scan` / `_expectUnchanged` for trade-interception pins | `trade_interception_expectations.dart` | #3470, #3939 |
+| frr-d5-credits-row | `frrD5CreditsRow` defaults other-buy deal + k1/gpA index for D5 AC2–AC5 | `frr_credits_scenarios.dart` | #2992 D5, #3939 |
+
+test_support LOC: **15,494** (net −12 vs slice 64 / 15,506). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 66+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

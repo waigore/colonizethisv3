@@ -12,10 +12,10 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'buyerLow': 1, 'buyerFtp': 2},
     ftpSeller: 'sellerFtp',
     ftpBuyer: 'buyerFtp',
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealExpectations: [
-        FilledDealExpectation(buyerFactionId: 'buyerLow', isFtpMatch: false),
-        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
+        matcherFilled(buyer: 'buyerLow', isFtpMatch: false),
+        matcherFilled(buyer: 'buyerFtp', isFtpMatch: true),
       ],
     ),
   ),
@@ -27,8 +27,8 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpSeller: 'sellerA',
     ftpBuyer: 'buyerFtp',
     expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
+      filledDealExpectations: [
+        matcherFilled(buyer: 'buyerFtp', isFtpMatch: true),
       ],
       unfilledBidsByFactionId: matcherUnfilledBid(
         'buyerOther',
@@ -46,12 +46,8 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpSeller: 'gpA',
     ftpBuyer: 'gpB',
     expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          sellerFactionId: 'gpA',
-          buyerFactionId: 'gpB',
-          isFtpMatch: true,
-        ),
+      filledDealExpectations: [
+        matcherFilled(seller: 'gpA', buyer: 'gpB', isFtpMatch: true),
       ],
       unfilledBidsByFactionId: matcherUnfilledBid(
         'gpC',
@@ -68,11 +64,8 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'buyerFtp': 2, 'buyerOther': 1},
     ftpSeller: 'sellerFtp',
     ftpBuyer: 'buyerFtp',
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'buyerOther',
-        isFtpMatch: false,
-      ),
+    expect: DealMatchExpectation(
+      firstFilledDeal: matcherFilled(buyer: 'buyerOther', isFtpMatch: false),
     ),
   ),
   matcherFtpTimberRow(
@@ -83,8 +76,8 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'alpha': 1},
     ftpSeller: 'alpha',
     ftpBuyer: 'zeta',
-    expect: const DealMatchExpectation(
-      filledDealExpectations: [FilledDealExpectation(isFtpMatch: true)],
+    expect: DealMatchExpectation(
+      filledDealExpectations: [matcherFilled(isFtpMatch: true)],
     ),
   ),
 ];
@@ -119,7 +112,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
       tradeCapacityByFactionId: {'b': 100},
     ),
     expect: DealMatchExpectation(
-      filledDealExpectations: const [FilledDealExpectation(quantity: 4)],
+      filledDealExpectations: [matcherFilled(quantity: 4)],
       unfilledOffersEmpty: true,
       unfilledBidsByFactionId: matcherUnfilledBid(
         'b',
@@ -148,12 +141,9 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
       lockRecoverySellerPriorityIds: const {'gp1', 'gp4'},
       treasuryByFactionId: const {'gp1': 100, 'gp4': -50},
     ),
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        sellerFactionId: 'gp4',
-        quantity: 3,
-      ),
+      firstFilledDeal: matcherFilled(seller: 'gp4', quantity: 3),
     ),
     refs: '#2924',
   ),
@@ -287,10 +277,10 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpHigh': 90, 'gpLow': 10},
       },
     ),
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealExpectations: [
-        FilledDealExpectation(buyerFactionId: 'gpLow'),
-        FilledDealExpectation(buyerFactionId: 'gpHigh'),
+        matcherFilled(buyer: 'gpLow'),
+        matcherFilled(buyer: 'gpHigh'),
       ],
     ),
     refs: '#3753',
