@@ -1,51 +1,50 @@
 // Table-driven boycott / revokeBoycott validator scenarios (Refs #3949 wave 3).
 
 import '../../scenario_runner.dart';
-import 'boycott_validator_expectations.dart';
+import 'boycott_validator_run_rows.dart';
 
 /// One row in boycott validator scenario tables.
 class BoycottValidatorScenario implements RefsScenario {
   const BoycottValidatorScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final BoycottValidatorTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runBoycottValidatorScenario(BoycottValidatorScenario scenario) {
-  runBoycottValidatorExpectation(scenario.target);
-}
+void runBoycottValidatorScenario(BoycottValidatorScenario scenario) =>
+    scenario.run();
 
 List<BoycottValidatorScenario> boycottSubValidatorScenarios() => const [
       BoycottValidatorScenario(
         label: 'accepts when issuer holds a colony and target GP is at peace',
-        target: BoycottValidatorTarget.boycottAcceptsColonyHolderAtPeace,
+        run: bctRunBoycottAcceptsColonyHolderAtPeace,
         refs: '#3753 R6',
       ),
       BoycottValidatorScenario(
         label: 'rejects when the issuer holds no colony',
-        target: BoycottValidatorTarget.boycottRejectsNoColony,
+        run: bctRunBoycottRejectsNoColony,
         refs: '#3753 R6',
       ),
       BoycottValidatorScenario(
         label: 'rejects when at war with the target GP',
-        target: BoycottValidatorTarget.boycottRejectsAtWar,
+        run: bctRunBoycottRejectsAtWar,
         refs: '#3753 R6',
       ),
       BoycottValidatorScenario(
         label: 'rejects a duplicate boycott for the same pair',
-        target: BoycottValidatorTarget.boycottRejectsDuplicate,
+        run: bctRunBoycottRejectsDuplicate,
         refs: '#3753 R6',
       ),
       BoycottValidatorScenario(
         label: 'rejects a non-Great-Power target',
-        target: BoycottValidatorTarget.boycottRejectsNonGpTarget,
+        run: bctRunBoycottRejectsNonGpTarget,
         refs: '#3753 R6',
       ),
     ];
@@ -53,12 +52,12 @@ List<BoycottValidatorScenario> boycottSubValidatorScenarios() => const [
 List<BoycottValidatorScenario> revokeBoycottSubValidatorScenarios() => const [
       BoycottValidatorScenario(
         label: 'accepts when an active boycott exists for the pair',
-        target: BoycottValidatorTarget.revokeAcceptsActiveBoycott,
+        run: bctRunRevokeAcceptsActiveBoycott,
         refs: '#3753 R6',
       ),
       BoycottValidatorScenario(
         label: 'rejects when no active boycott exists for the pair',
-        target: BoycottValidatorTarget.revokeRejectsNoActiveBoycott,
+        run: bctRunRevokeRejectsNoActiveBoycott,
         refs: '#3753 R6',
       ),
     ];
@@ -67,7 +66,7 @@ List<BoycottValidatorScenario> diplomaticOrderValidatorBoycottScenarios() =>
     const [
       BoycottValidatorScenario(
         label: 'accepts a valid boycott order through the parent validator',
-        target: BoycottValidatorTarget.parentValidatorAcceptsValidBoycott,
+        run: bctRunParentValidatorAcceptsValidBoycott,
         refs: '#3753 R6',
       ),
     ];

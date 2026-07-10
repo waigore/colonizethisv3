@@ -1,49 +1,45 @@
 // Table-driven faction-membership diplomatic sub-validator scenarios (Refs #3949 wave 3).
 
 import '../../scenario_runner.dart';
-import 'diplomatic_sub_validators_faction_membership_expectations.dart';
+import 'diplomatic_sub_validators_faction_membership_run_rows.dart';
 
 /// One row in faction-membership diplomatic sub-validator scenario tables.
 class DiplomaticSubValidatorsFactionMembershipScenario implements RefsScenario {
   const DiplomaticSubValidatorsFactionMembershipScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final DiplomaticSubValidatorsFactionMembershipTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runDiplomaticSubValidatorsFactionMembershipScenario(
   DiplomaticSubValidatorsFactionMembershipScenario scenario,
-) {
-  runDiplomaticSubValidatorsFactionMembershipExpectation(scenario.target);
-}
+) =>
+    scenario.run();
 
 List<DiplomaticSubValidatorsFactionMembershipScenario>
 allianceSubValidatorFactionMembershipScenarios() => const [
       DiplomaticSubValidatorsFactionMembershipScenario(
         label: 'accepts known GP target identically with and without snapshot',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .allianceAcceptsKnownGpIdenticallyWithAndWithoutSnapshot,
+        run: dsfmRunAllianceAcceptsKnownGpIdenticallyWithAndWithoutSnapshot,
         refs: '#2394',
       ),
       DiplomaticSubValidatorsFactionMembershipScenario(
         label:
             'rejects non-GP target identically when snapshot has no GP membership',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .allianceRejectsNonGpTargetIdenticallyWithSnapshot,
+        run: dsfmRunAllianceRejectsNonGpTargetIdenticallyWithSnapshot,
         refs: '#2394',
       ),
       DiplomaticSubValidatorsFactionMembershipScenario(
         label:
             'snapshot is consulted on active path: rejects target listed only in Game.players',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .allianceSnapshotRejectsTargetListedOnlyInGamePlayers,
+        run: dsfmRunAllianceSnapshotRejectsTargetListedOnlyInGamePlayers,
         refs: '#2394',
       ),
     ];
@@ -52,15 +48,13 @@ List<DiplomaticSubValidatorsFactionMembershipScenario>
 establishOvertureSubValidatorFactionMembershipScenarios() => const [
       DiplomaticSubValidatorsFactionMembershipScenario(
         label: 'accepts Trade Consulate toward Minor identically with snapshot',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .establishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot,
+        run: dsfmRunEstablishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot,
         refs: '#2394',
       ),
       DiplomaticSubValidatorsFactionMembershipScenario(
         label:
             'snapshot is consulted: rejects overture toward target absent from snapshot',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .establishOvertureSnapshotRejectsTargetAbsentFromSnapshot,
+        run: dsfmRunEstablishOvertureSnapshotRejectsTargetAbsentFromSnapshot,
         refs: '#2394',
       ),
     ];
@@ -70,14 +64,12 @@ diplomaticOrderValidatorFactionMembershipScenarios() => const [
       DiplomaticSubValidatorsFactionMembershipScenario(
         label:
             'accepts equivalent classification with snapshot snapshot present',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .parentValidatorAcceptsEquivalentClassificationWithSnapshot,
+        run: dsfmRunParentValidatorAcceptsEquivalentClassificationWithSnapshot,
         refs: '#2394',
       ),
       DiplomaticSubValidatorsFactionMembershipScenario(
         label: 'snapshot is consulted on active path: rejects unknown target id',
-        target: DiplomaticSubValidatorsFactionMembershipTarget
-            .parentValidatorSnapshotRejectsUnknownTargetId,
+        run: dsfmRunParentValidatorSnapshotRejectsUnknownTargetId,
         refs: '#2394',
       ),
     ];

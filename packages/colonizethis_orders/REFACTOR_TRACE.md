@@ -2157,6 +2157,20 @@ test/ LOC after slice 141: **36,904** (net +30 from post–slice 140; run-row te
 
 test/ LOC after slice 142: **36,865** (net −39 from post–slice 141). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 143: diplomatic validator scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| bct-dispatch-collapse | drop `BoycottValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `boycott_validator_expectations.dart` (deleted) | `boycott_validator_run_rows.dart` + thin `boycott_validator_scenarios.dart` | #3949 |
+| bal-dispatch-collapse | drop `BreakAllianceValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `break_alliance_validator_expectations.dart` (deleted) | `break_alliance_validator_run_rows.dart` + thin `break_alliance_validator_scenarios.dart` | #3949 |
+| jee-dispatch-collapse | drop `JoinEmpireOvertureValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `join_empire_overture_validator_expectations.dart` (deleted) | `join_empire_overture_validator_run_rows.dart` + thin `join_empire_overture_validator_scenarios.dart` | #3949 |
+| eosv-dispatch-collapse | drop `EstablishOvertureSubValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `establish_overture_sub_validator_expectations.dart` (deleted) | `establish_overture_sub_validator_run_rows.dart` + thin `establish_overture_sub_validator_scenarios.dart` | #3949 |
+| dsfm-dispatch-collapse | drop `DiplomaticSubValidatorsFactionMembershipTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_faction_membership_expectations.dart` (deleted) | `diplomatic_sub_validators_faction_membership_run_rows.dart` + thin `diplomatic_sub_validators_faction_membership_scenarios.dart` | #3949 |
+| dsr-dispatch-collapse | drop `DiplomaticSubValidatorsRelationsTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_relations_expectations.dart` (deleted) | `diplomatic_sub_validators_relations_run_rows.dart` + thin `diplomatic_sub_validators_relations_scenarios.dart` | #3949 |
+| dsa-dispatch-collapse | drop `DiplomaticSubValidatorsAidTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_aid_expectations.dart` (deleted) | `diplomatic_sub_validators_aid_run_rows.dart` + thin `diplomatic_sub_validators_aid_scenarios.dart` | #3949 |
+
+test/ LOC after slice 143: see PR. Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families outside diplomatic validators.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

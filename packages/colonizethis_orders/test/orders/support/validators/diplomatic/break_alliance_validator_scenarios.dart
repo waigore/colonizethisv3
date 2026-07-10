@@ -1,47 +1,46 @@
 // Table-driven breakAlliance validator scenarios (Refs #3949 wave 3).
 
 import '../../scenario_runner.dart';
-import 'break_alliance_validator_expectations.dart';
+import 'break_alliance_validator_run_rows.dart';
 
 /// One row in breakAlliance validator scenario tables.
 class BreakAllianceValidatorScenario implements RefsScenario {
   const BreakAllianceValidatorScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final BreakAllianceValidatorTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runBreakAllianceValidatorScenario(BreakAllianceValidatorScenario scenario) {
-  runBreakAllianceValidatorExpectation(scenario.target);
-}
+void runBreakAllianceValidatorScenario(BreakAllianceValidatorScenario scenario) =>
+    scenario.run();
 
 List<BreakAllianceValidatorScenario> breakAllianceSubValidatorScenarios() =>
     const [
       BreakAllianceValidatorScenario(
         label: 'accepts when a formal alliance exists with the GP target',
-        target: BreakAllianceValidatorTarget.acceptsFormalAllianceWithGpTarget,
+        run: balRunAcceptsFormalAllianceWithGpTarget,
         refs: '#3753 R11',
       ),
       BreakAllianceValidatorScenario(
         label: 'rejects while at war (war invariant cleared the alliance)',
-        target: BreakAllianceValidatorTarget.rejectsWhileAtWar,
+        run: balRunRejectsWhileAtWar,
         refs: '#3753 R11',
       ),
       BreakAllianceValidatorScenario(
         label: 'rejects when no formal alliance exists with the target',
-        target: BreakAllianceValidatorTarget.rejectsNoFormalAlliance,
+        run: balRunRejectsNoFormalAlliance,
         refs: '#3753 R11',
       ),
       BreakAllianceValidatorScenario(
         label: 'rejects a non-Great-Power target',
-        target: BreakAllianceValidatorTarget.rejectsNonGpTarget,
+        run: balRunRejectsNonGpTarget,
         refs: '#3753 R11',
       ),
     ];
@@ -50,8 +49,7 @@ List<BreakAllianceValidatorScenario>
 diplomaticOrderValidatorBreakAllianceScenarios() => const [
       BreakAllianceValidatorScenario(
         label: 'accepts a valid breakAlliance order through the parent validator',
-        target:
-            BreakAllianceValidatorTarget.parentValidatorAcceptsValidBreakAlliance,
+        run: balRunParentValidatorAcceptsValidBreakAlliance,
         refs: '#3753 R11',
       ),
     ];

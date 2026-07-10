@@ -1,39 +1,38 @@
 // Table-driven relation-based diplomatic sub-validator scenarios (Refs #3949 wave 3).
 
 import '../../scenario_runner.dart';
-import 'diplomatic_sub_validators_relations_expectations.dart';
+import 'diplomatic_sub_validators_relations_run_rows.dart';
 
 /// One row in relation-based diplomatic sub-validator scenario tables.
 class DiplomaticSubValidatorsRelationsScenario implements RefsScenario {
   const DiplomaticSubValidatorsRelationsScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final DiplomaticSubValidatorsRelationsTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runDiplomaticSubValidatorsRelationsScenario(
   DiplomaticSubValidatorsRelationsScenario scenario,
-) {
-  runDiplomaticSubValidatorsRelationsExpectation(scenario.target);
-}
+) =>
+    scenario.run();
 
 List<DiplomaticSubValidatorsRelationsScenario> declareWarSubValidatorScenarios() =>
     const [
       DiplomaticSubValidatorsRelationsScenario(
         label: 'accepts when at peace and leaves treasury unchanged',
-        target: DiplomaticSubValidatorsRelationsTarget.declareWarAcceptsAtPeace,
+        run: dsrRunDeclareWarAcceptsAtPeace,
         refs: '#2391 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'rejects when already at war and preserves treasury',
-        target: DiplomaticSubValidatorsRelationsTarget.declareWarRejectsAlreadyAtWar,
+        run: dsrRunDeclareWarRejectsAlreadyAtWar,
         refs: '#2391 AC10',
       ),
     ];
@@ -42,12 +41,12 @@ List<DiplomaticSubValidatorsRelationsScenario> offerPeaceSubValidatorScenarios()
     const [
       DiplomaticSubValidatorsRelationsScenario(
         label: 'accepts when at war and leaves treasury unchanged',
-        target: DiplomaticSubValidatorsRelationsTarget.offerPeaceAcceptsAtWar,
+        run: dsrRunOfferPeaceAcceptsAtWar,
         refs: '#2391 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'rejects when not at war',
-        target: DiplomaticSubValidatorsRelationsTarget.offerPeaceRejectsNotAtWar,
+        run: dsrRunOfferPeaceRejectsNotAtWar,
         refs: '#2391 AC10',
       ),
     ];
@@ -56,23 +55,22 @@ List<DiplomaticSubValidatorsRelationsScenario> allianceSubValidatorScenarios() =
     const [
       DiplomaticSubValidatorsRelationsScenario(
         label: 'rejects when target is not a Great Power',
-        target: DiplomaticSubValidatorsRelationsTarget.allianceRejectsNonGpTarget,
+        run: dsrRunAllianceRejectsNonGpTarget,
         refs: '#2391 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'rejects when at war with the target Great Power',
-        target: DiplomaticSubValidatorsRelationsTarget.allianceRejectsAtWarWithTarget,
+        run: dsrRunAllianceRejectsAtWarWithTarget,
         refs: '#2391 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'accepts when target is a Great Power and at peace',
-        target: DiplomaticSubValidatorsRelationsTarget.allianceAcceptsGpAtPeace,
+        run: dsrRunAllianceAcceptsGpAtPeace,
         refs: '#2391 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'rejects a duplicate alliance when a formal alliance already exists',
-        target:
-            DiplomaticSubValidatorsRelationsTarget.allianceRejectsDuplicateFormalAlliance,
+        run: dsrRunAllianceRejectsDuplicateFormalAlliance,
         refs: '#2391 AC10',
       ),
     ];
@@ -81,32 +79,32 @@ List<DiplomaticSubValidatorsRelationsScenario>
 postBreakBilateralCooldownScenarios() => const [
       DiplomaticSubValidatorsRelationsScenario(
         label: 'blocks alliance toward the cooled-down GP',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownBlocksAlliance,
+        run: dsrRunCooldownBlocksAlliance,
         refs: '#3811 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'blocks establishOverture toward the cooled-down GP',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownBlocksEstablishOverture,
+        run: dsrRunCooldownBlocksEstablishOverture,
         refs: '#3811 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'blocks establishFtp toward the cooled-down GP',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownBlocksEstablishFtp,
+        run: dsrRunCooldownBlocksEstablishFtp,
         refs: '#3811 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'blocks grantAid toward the cooled-down GP',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownBlocksGrantAid,
+        run: dsrRunCooldownBlocksGrantAid,
         refs: '#3811 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'blocks setSubsidy toward the cooled-down GP',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownBlocksSetSubsidy,
+        run: dsrRunCooldownBlocksSetSubsidy,
         refs: '#3811 AC10',
       ),
       DiplomaticSubValidatorsRelationsScenario(
         label: 'declareWar remains allowed during cooldown',
-        target: DiplomaticSubValidatorsRelationsTarget.cooldownDeclareWarRemainsAllowed,
+        run: dsrRunCooldownDeclareWarRemainsAllowed,
         refs: '#3811 AC10',
       ),
     ];
