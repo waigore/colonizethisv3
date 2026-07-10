@@ -1,54 +1,53 @@
 // Table-driven ArmyMoveValidator armiesById scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'army_move_validator_armies_by_id_expectations.dart';
+import 'army_move_validator_armies_by_id_run_rows.dart';
 
 /// One row in [armyMoveValidatorArmiesByIdScenarios].
 class ArmyMoveValidatorArmiesByIdScenario implements RefsScenario {
   const ArmyMoveValidatorArmiesByIdScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final ArmyMoveValidatorArmiesByIdTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runArmyMoveValidatorArmiesByIdScenario(
   ArmyMoveValidatorArmiesByIdScenario scenario,
-) {
-  runArmyMoveValidatorArmiesByIdExpectation(scenario.target);
-}
+) =>
+    scenario.run();
 
 List<ArmyMoveValidatorArmiesByIdScenario> armyMoveValidatorArmiesByIdScenarios() =>
     const [
       ArmyMoveValidatorArmiesByIdScenario(
         label: 'accepted result is identical with and without supplied armiesById',
-        target: ArmyMoveValidatorArmiesByIdTarget.acceptedIdenticalWithAndWithout,
+        run: amvabiRunAcceptedIdenticalWithAndWithout,
         refs: '#2394',
       ),
       ArmyMoveValidatorArmiesByIdScenario(
         label: 'rejected result is identical with and without supplied armiesById',
-        target: ArmyMoveValidatorArmiesByIdTarget.rejectedIdenticalWithAndWithout,
+        run: amvabiRunRejectedIdenticalWithAndWithout,
         refs: '#2394',
       ),
       ArmyMoveValidatorArmiesByIdScenario(
         label: 'armiesById missing the target army id is rejected as Invalid army move',
-        target: ArmyMoveValidatorArmiesByIdTarget.missingArmyIdRejected,
+        run: amvabiRunMissingArmyIdRejected,
         refs: '#2394',
       ),
       ArmyMoveValidatorArmiesByIdScenario(
         label: 'IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)',
-        target: ArmyMoveValidatorArmiesByIdTarget.incrementalMatchesDirectValidate,
+        run: amvabiRunIncrementalMatchesDirectValidate,
         refs: '#2394',
       ),
       ArmyMoveValidatorArmiesByIdScenario(
         label: 'factionMembership path matches legacy GP declare-war guard (Refs #2394)',
-        target: ArmyMoveValidatorArmiesByIdTarget.factionMembershipDeclareWarGuard,
+        run: amvabiRunFactionMembershipDeclareWarGuard,
         refs: '#2394',
       ),
     ];

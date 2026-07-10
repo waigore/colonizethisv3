@@ -2185,6 +2185,20 @@ test/ LOC after slice 143: **36,755** (net −110 from post–slice 142). Remain
 
 test/ LOC after slice 144: **36,671** (net −84 from post–slice 143). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~69 expectations modules).
 
+## Wave 3 — Slice 145: validator scenario dispatch collapse (prechecks / cost / recruit / armiesById)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wotp-dispatch-collapse | drop `WorkOrderTargetPrecheckTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_target_prechecks_expectations.dart` (deleted) | `work_order_target_prechecks_run_rows.dart` + thin `work_order_target_prechecks_scenarios.dart` | #3949 |
+| wotpec-dispatch-collapse | drop `WorkOrderTargetPrechecksExplorerConsulateTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_target_prechecks_explorer_consulate_expectations.dart` (deleted) | `work_order_target_prechecks_explorer_consulate_run_rows.dart` + thin `work_order_target_prechecks_explorer_consulate_scenarios.dart` | #3949 |
+| wocc-dispatch-collapse | drop `WorkOrderCostCalculatorTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_cost_calculator_expectations.dart` (deleted) | `work_order_cost_calculator_run_rows.dart` + thin `work_order_cost_calculator_scenarios.dart` | #3949 |
+| woccfb-dispatch-collapse | drop `WorkOrderCostCalculatorFeedstockBootstrapTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_cost_calculator_feedstock_bootstrap_expectations.dart` (deleted) | `work_order_cost_calculator_feedstock_bootstrap_run_rows.dart` + thin `work_order_cost_calculator_feedstock_bootstrap_scenarios.dart` | #3949 |
+| utmt-dispatch-collapse | drop `UpgradeTownMinorTribeTarget` enum + switch; scenario rows hold `run` tear-offs | `upgrade_town_minor_tribe_expectations.dart` (deleted) | `upgrade_town_minor_tribe_run_rows.dart` + thin `upgrade_town_minor_tribe_scenarios.dart` | #3949 |
+| rwov-dispatch-collapse | drop `RecruitWorkerOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `recruit_worker_order_validator_expectations.dart` (deleted) | `recruit_worker_order_validator_run_rows.dart` + thin `recruit_worker_order_validator_scenarios.dart` | #3949 |
+| amvabi-dispatch-collapse | drop `ArmyMoveValidatorArmiesByIdTarget` enum + switch; scenario rows hold `run` tear-offs | `army_move_validator_armies_by_id_expectations.dart` (deleted) | `army_move_validator_armies_by_id_run_rows.dart` + thin `army_move_validator_armies_by_id_scenarios.dart` | #3949 |
+
+test/ LOC after slice 145: see PR (`find … wc -l`). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~62 expectations modules).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
