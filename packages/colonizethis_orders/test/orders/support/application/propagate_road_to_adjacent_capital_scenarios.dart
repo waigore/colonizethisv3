@@ -1,19 +1,19 @@
 // Table-driven propagate-road-to-adjacent-capital scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'propagate_road_to_adjacent_capital_expectations.dart';
+import 'propagate_road_to_adjacent_capital_run_rows.dart';
 
 /// One row in [propagateRoadToAdjacentCapitalScenarios].
 class PropagateRoadToAdjacentCapitalScenario implements RefsScenario {
   const PropagateRoadToAdjacentCapitalScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final PropagateRoadToAdjacentCapitalTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,7 +21,7 @@ class PropagateRoadToAdjacentCapitalScenario implements RefsScenario {
 void runPropagateRoadToAdjacentCapitalScenario(
   PropagateRoadToAdjacentCapitalScenario scenario,
 ) {
-  runPropagateRoadToAdjacentCapitalExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Canonical scenarios for propagate_road_to_adjacent_capital family tests.
@@ -29,21 +29,18 @@ List<PropagateRoadToAdjacentCapitalScenario>
     propagateRoadToAdjacentCapitalScenarios() => const [
           PropagateRoadToAdjacentCapitalScenario(
             label: 'returns unchanged when player is null',
-            target: PropagateRoadToAdjacentCapitalTarget.unchangedWhenPlayerNull,
+            run: pracRunUnchangedWhenPlayerNull,
           ),
           PropagateRoadToAdjacentCapitalScenario(
             label: 'returns unchanged when tile key is malformed',
-            target:
-                PropagateRoadToAdjacentCapitalTarget.unchangedWhenTileKeyMalformed,
+            run: pracRunUnchangedWhenTileKeyMalformed,
           ),
           PropagateRoadToAdjacentCapitalScenario(
             label: 'propagates road level to adjacent capital tile when higher',
-            target: PropagateRoadToAdjacentCapitalTarget
-                .propagatesToAdjacentCapitalWhenHigher,
+            run: pracRunPropagatesToAdjacentCapitalWhenHigher,
           ),
           PropagateRoadToAdjacentCapitalScenario(
             label: 'propagates road level to adjacent port tile when higher',
-            target:
-                PropagateRoadToAdjacentCapitalTarget.propagatesToAdjacentPortWhenHigher,
+            run: pracRunPropagatesToAdjacentPortWhenHigher,
           ),
         ];

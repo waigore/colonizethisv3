@@ -1,19 +1,19 @@
 // Table-driven build_rail work-rules scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'build_rail_work_rules_expectations.dart';
+import 'build_rail_work_rules_run_rows.dart';
 
 /// One row in [rejectionReasonForBuildRailOrderScenarios].
 class RejectionReasonForBuildRailOrderScenario implements RefsScenario {
   const RejectionReasonForBuildRailOrderScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final RejectionReasonForBuildRailOrderTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,26 +21,26 @@ class RejectionReasonForBuildRailOrderScenario implements RefsScenario {
 void runRejectionReasonForBuildRailOrderScenario(
   RejectionReasonForBuildRailOrderScenario scenario,
 ) {
-  runRejectionReasonForBuildRailOrderExpectation(scenario.target);
+  scenario.run();
 }
 
 /// One row in [terrainTypeForTileKeyScenarios].
 class TerrainTypeForTileKeyScenario implements RefsScenario {
   const TerrainTypeForTileKeyScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final TerrainTypeForTileKeyTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runTerrainTypeForTileKeyScenario(TerrainTypeForTileKeyScenario scenario) {
-  runTerrainTypeForTileKeyExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Canonical scenarios for rejectionReasonForBuildRailOrder family tests.
@@ -48,55 +48,51 @@ List<RejectionReasonForBuildRailOrderScenario>
     rejectionReasonForBuildRailOrderScenarios() => const [
           RejectionReasonForBuildRailOrderScenario(
             label: 'rejects when road level is neither 1 nor 2 (too high)',
-            target: RejectionReasonForBuildRailOrderTarget.rejectsWhenRoadLevelTooHigh,
+            run: brwrRunRejectsWhenRoadLevelTooHigh,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'rejects when road level is 3 (intermediate, not 1 or 2)',
-            target:
-                RejectionReasonForBuildRailOrderTarget.rejectsWhenRoadLevelIntermediate,
+            run: brwrRunRejectsWhenRoadLevelIntermediate,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'rejects when road level is 0',
-            target: RejectionReasonForBuildRailOrderTarget.rejectsWhenRoadLevelZero,
+            run: brwrRunRejectsWhenRoadLevelZero,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'rejects when terrain is null',
-            target: RejectionReasonForBuildRailOrderTarget.rejectsWhenTerrainNull,
+            run: brwrRunRejectsWhenTerrainNull,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'plains: rejects without rail tech',
-            target: RejectionReasonForBuildRailOrderTarget.plainsRejectsWithoutRailTech,
+            run: brwrRunPlainsRejectsWithoutRailTech,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'plains: allows with Early Steam',
-            target: RejectionReasonForBuildRailOrderTarget.plainsAllowsWithEarlySteam,
+            run: brwrRunPlainsAllowsWithEarlySteam,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'hills: rejects without Later Steam or Dynamite',
-            target: RejectionReasonForBuildRailOrderTarget
-                .hillsRejectsWithoutLaterSteamOrDynamite,
+            run: brwrRunHillsRejectsWithoutLaterSteamOrDynamite,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'hills: allows with Later Steam',
-            target: RejectionReasonForBuildRailOrderTarget.hillsAllowsWithLaterSteam,
+            run: brwrRunHillsAllowsWithLaterSteam,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'mountain: rejects without Dynamite',
-            target:
-                RejectionReasonForBuildRailOrderTarget.mountainRejectsWithoutDynamite,
+            run: brwrRunMountainRejectsWithoutDynamite,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'hills: allows with Dynamite only',
-            target: RejectionReasonForBuildRailOrderTarget.hillsAllowsWithDynamiteOnly,
+            run: brwrRunHillsAllowsWithDynamiteOnly,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'plains: allows with Later Steam only',
-            target:
-                RejectionReasonForBuildRailOrderTarget.plainsAllowsWithLaterSteamOnly,
+            run: brwrRunPlainsAllowsWithLaterSteamOnly,
           ),
           RejectionReasonForBuildRailOrderScenario(
             label: 'mountain: allows with Dynamite',
-            target: RejectionReasonForBuildRailOrderTarget.mountainAllowsWithDynamite,
+            run: brwrRunMountainAllowsWithDynamite,
           ),
         ];
 
@@ -104,22 +100,22 @@ List<RejectionReasonForBuildRailOrderScenario>
 List<TerrainTypeForTileKeyScenario> terrainTypeForTileKeyScenarios() => const [
       TerrainTypeForTileKeyScenario(
         label: 'returns null for malformed tile key',
-        target: TerrainTypeForTileKeyTarget.malformedTileKey,
+        run: ttftkRunMalformedTileKey,
       ),
       TerrainTypeForTileKeyScenario(
         label: 'returns null when region map is missing',
-        target: TerrainTypeForTileKeyTarget.missingRegionMap,
+        run: ttftkRunMissingRegionMap,
       ),
       TerrainTypeForTileKeyScenario(
         label: 'returns null when x or y are not integers',
-        target: TerrainTypeForTileKeyTarget.nonIntegerCoordinates,
+        run: ttftkRunNonIntegerCoordinates,
       ),
       TerrainTypeForTileKeyScenario(
         label: 'returns null when coordinates are out of bounds',
-        target: TerrainTypeForTileKeyTarget.outOfBoundsCoordinates,
+        run: ttftkRunOutOfBoundsCoordinates,
       ),
       TerrainTypeForTileKeyScenario(
         label: 'returns terrain from tile map',
-        target: TerrainTypeForTileKeyTarget.returnsTerrainFromTileMap,
+        run: ttftkRunReturnsTerrainFromTileMap,
       ),
     ];

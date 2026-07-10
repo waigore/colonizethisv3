@@ -1,19 +1,19 @@
 // Table-driven work-order duration preview scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'work_order_duration_preview_expectations.dart';
+import 'work_order_duration_preview_run_rows.dart';
 
 /// One row in [workOrderDurationPreviewScenarios].
 class WorkOrderDurationPreviewScenario implements RefsScenario {
   const WorkOrderDurationPreviewScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final WorkOrderDurationPreviewTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,7 +21,7 @@ class WorkOrderDurationPreviewScenario implements RefsScenario {
 void runWorkOrderDurationPreviewScenario(
   WorkOrderDurationPreviewScenario scenario,
 ) {
-  runWorkOrderDurationPreviewExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Canonical scenarios for work_order_duration_preview family tests.
@@ -29,24 +29,22 @@ List<WorkOrderDurationPreviewScenario> workOrderDurationPreviewScenarios() =>
     const [
       WorkOrderDurationPreviewScenario(
         label: 'returns scaled explore turns from province size',
-        target: WorkOrderDurationPreviewTarget.scaledExploreTurnsFromProvinceSize,
+        run: wodpRunScaledExploreTurnsFromProvinceSize,
       ),
       WorkOrderDurationPreviewScenario(
         label: 'returns fort-level scaled turns for build_fort',
-        target: WorkOrderDurationPreviewTarget.fortLevelScaledTurnsForBuildFort,
+        run: wodpRunFortLevelScaledTurnsForBuildFort,
       ),
       WorkOrderDurationPreviewScenario(
         label: 'returns one turn for counter_spy',
-        target: WorkOrderDurationPreviewTarget.oneTurnForCounterSpy,
+        run: wodpRunOneTurnForCounterSpy,
       ),
       WorkOrderDurationPreviewScenario(
         label: 'returns improvement-level scaled turns for build_improvement',
-        target: WorkOrderDurationPreviewTarget
-            .improvementLevelScaledTurnsForBuildImprovement,
+        run: wodpRunImprovementLevelScaledTurnsForBuildImprovement,
       ),
       WorkOrderDurationPreviewScenario(
         label: 'returns minimum one turn for prospect and purchase_land',
-        target:
-            WorkOrderDurationPreviewTarget.minimumOneTurnForProspectAndPurchaseLand,
+        run: wodpRunMinimumOneTurnForProspectAndPurchaseLand,
       ),
     ];

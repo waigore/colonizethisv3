@@ -2213,6 +2213,19 @@ test/ LOC after slice 145: **36,586** (net −85 from post–slice 144). Remaini
 
 test/ LOC after slice 146: **36,481** (net −105 from post–slice 145). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~55 expectations modules).
 
+## Wave 3 — Slice 147: remaining application scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wodp-dispatch-collapse | drop `WorkOrderDurationPreviewTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_duration_preview_expectations.dart` (deleted) | `work_order_duration_preview_run_rows.dart` + thin `work_order_duration_preview_scenarios.dart` | #3949 |
+| prac-dispatch-collapse | drop `PropagateRoadToAdjacentCapitalTarget` enum + switch; scenario rows hold `run` tear-offs | `propagate_road_to_adjacent_capital_expectations.dart` (deleted) | `propagate_road_to_adjacent_capital_run_rows.dart` + thin `propagate_road_to_adjacent_capital_scenarios.dart` | #3949 |
+| rbpi-dispatch-collapse | drop `RunBuildPhaseIndexMapsTarget` enum + switch; scenario rows hold `run` tear-offs | `run_build_phase_index_maps_expectations.dart` (deleted) | `run_build_phase_index_maps_run_rows.dart` + thin `run_build_phase_index_maps_scenarios.dart` | #3949 |
+| but-dispatch-collapse | drop `BuildUnitTrainingTarget` enum + switch; scenario rows hold `run` tear-offs | `build_unit_training_expectations.dart` (deleted) | `build_unit_training_run_rows.dart` + thin `build_unit_training_scenarios.dart` | #3949 |
+| amr-dispatch-collapse | drop `AppendMilitaryRegimentArmiesByIdTarget` enum + switch; scenario rows hold `run` tear-offs | `append_military_regiment_armies_by_id_expectations.dart` (deleted) | `append_military_regiment_armies_by_id_run_rows.dart` + thin `append_military_regiment_armies_by_id_scenarios.dart` | #3949 |
+| brwr-dispatch-collapse | drop `RejectionReasonForBuildRailOrderTarget` / `TerrainTypeForTileKeyTarget` enums + switches; scenario rows hold `run` tear-offs | `build_rail_work_rules_expectations.dart` (deleted) | `build_rail_work_rules_run_rows.dart` + thin `build_rail_work_rules_scenarios.dart` | #3949 |
+
+test/ LOC after slice 147: **36,417** (net −64 from post–slice 146). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~49 expectations modules — engine, suggestion, merge, diplomatic, debug).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
