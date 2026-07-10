@@ -65,10 +65,10 @@ abstract class AppLocalizations {
   /// Pause menu option label to resume the game.
   String get game_pauseMenu_resume;
 
-  /// Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired).
+  /// Pause menu option label to save the current game.
   String get game_pauseMenu_saveGame;
 
-  /// Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired).
+  /// Pause menu option label to load a saved game.
   String get game_pauseMenu_loadGame;
 
   /// Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired).
@@ -79,6 +79,39 @@ abstract class AppLocalizations {
 
   /// Tooltip for the pause menu button in the in-game UI.
   String get game_pauseMenu_tooltip;
+
+  /// Title of the named save dialog (DLG70001).
+  String get saveGameName_title;
+
+  /// Confirm button on the named save dialog.
+  String get saveGameName_save;
+
+  /// Error when sanitizeGameId rejects the typed save name.
+  String get saveGameName_invalidName;
+
+  /// Overwrite confirmation body when sanitized gameId collides.
+  String get saveGameName_overwriteConfirm;
+
+  /// Confirm overwrite button on the named save dialog.
+  String get saveGameName_overwrite;
+
+  /// SnackBar message after a successful named save.
+  String get saveGameName_gameSaved;
+
+  /// Title of the load-game list dialog (DLG80001).
+  String get loadGameList_title;
+
+  /// Empty-state copy when listLoadableSaves returns no rows.
+  String get loadGameList_empty;
+
+  /// Optional turn subtitle under a load-list row.
+  String loadGameList_turnSubtitle(int turn);
+
+  /// Discard confirmation when loading from an active pause session.
+  String get loadGameList_discardConfirm;
+
+  /// Confirm load button after discard confirmation.
+  String get loadGameList_load;
 
   /// Title used for the main game screen shell.
   String get game_screenTitle;

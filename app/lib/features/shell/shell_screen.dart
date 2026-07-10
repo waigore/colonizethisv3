@@ -11,6 +11,7 @@ import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
+import '../../providers/production_allocation_provider.dart';
 import '../../widgets/main_menu.dart';
 
 /// App shell. Shows CtMainMenu per SPEC/ui/main-menu.md. Phase 1: wired to resolve and persist.
@@ -36,26 +37,21 @@ class ShellScreen extends ConsumerWidget {
       resumeGameVisible: resumeAvailable,
       onResumeGame: () {
         final service = ref.read(gameServiceProvider);
-        final game = service.loadAutoSaveGame();
-        if (game != null && context.mounted) {
+        final session = service.loadAutoSaveSession();
+        if (session != null && context.mounted) {
           ref.read(observeSessionProvider.notifier).reset();
-          ref.read(currentGameProvider.notifier).setGame(game);
+          ref.read(currentGameProvider.notifier).setGame(session.game);
+          ref
+              .read(currentOrdersProvider.notifier)
+              .replaceAll(session.draftOrders);
+          ref
+              .read(productionDesiredOutputProvider.notifier)
+              .replaceAll(session.productionDesiredOutputByRecipe);
           bus.emit(const NavigateToRouteEvent(Routes.game));
         }
       },
-      onLoadGame: () async {
-        final service = ref.read(gameServiceProvider);
-        final ids = service.listGameIds();
-        if (ids.isEmpty || !context.mounted) return;
-        final game = service.loadGame(ids.first);
-        if (game != null && context.mounted) {
-          ref.read(observeSessionProvider.notifier).reset();
-          ref.read(currentGameProvider.notifier).setGame(game);
-          if (context.mounted) {
-            bus.emit(const NavigateToRouteEvent(Routes.game));
-          }
-        }
-      },
+      onLoadGame: () =>
+          bus.emit(const OpenDialogEvent(loadGameListDialogId)),
       onSettings: () {},
       onQuit: () {
         SystemNavigator.pop();

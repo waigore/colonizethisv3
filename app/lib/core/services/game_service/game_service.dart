@@ -61,20 +61,54 @@ class GameService {
   /// Loads game by id. Returns null if not found or required map data is missing/invalid.
   Game? loadGame(String gameId) => _gameServiceLoadGame(this, gameId);
 
+  /// Loads game plus mid-turn draft envelope fields.
+  GameSaveSession? loadGameSession(String gameId) =>
+      _gameServiceLoadGameSession(this, gameId);
+
   /// Returns map data for [gameId] from cache or storage.
   GameMapData? getMapData(String gameId) => _gameServiceGetMapData(this, gameId);
 
-  /// Saves game to storage.
+  /// Saves game to storage (empty mid-turn drafts unless [saveGameSession] is used).
   void saveGame(Game game) => _gameServiceSaveGame(this, game);
+
+  /// Saves a named (or same-id) slot from the live [sessionGame], writing Hive
+  /// key / embedded [Game.id] as [saveGameId], including mid-turn drafts.
+  /// When [mirrorAutoSave] is true, also mirrors drafts into the auto-save slot
+  /// using the live session id inside the auto-save JSON.
+  void saveGameSession({
+    required Game sessionGame,
+    required String saveGameId,
+    Orders draftOrders = const Orders(),
+    Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
+    String? displayName,
+    bool mirrorAutoSave = true,
+  }) =>
+      _gameServiceSaveGameSession(
+        this,
+        sessionGame: sessionGame,
+        saveGameId: saveGameId,
+        draftOrders: draftOrders,
+        productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+        displayName: displayName,
+        mirrorAutoSave: mirrorAutoSave,
+      );
 
   /// Lists all saved game ids.
   List<String> listGameIds() => _gameServiceListGameIds(this);
+
+  /// Manual saves plus optional auto-save row for the load dialog.
+  List<LoadableSaveEntry> listLoadableSaves() =>
+      _gameServiceListLoadableSaves(this);
 
   /// Whether the Hive auto-save slot is playable.
   bool hasValidAutoSave() => _gameServiceHasValidAutoSave(this);
 
   /// Loads the auto-save slot into memory cache under [Game.id].
   Game? loadAutoSaveGame() => _gameServiceLoadAutoSaveGame(this);
+
+  /// Loads auto-save with mid-turn draft fields.
+  GameSaveSession? loadAutoSaveSession() =>
+      _gameServiceLoadAutoSaveSession(this);
 
   /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
   /// or a pending result: [TurnResolutionPendingOvertures], [TurnResolutionPendingIntervention],

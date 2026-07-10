@@ -66,6 +66,8 @@ extension _GameTopBarLayout on GameTopBar {
     return <Widget>[
       _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
       const SizedBox(width: GameTopBar.leadingGap),
+      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
+      SizedBox(width: GameTopBar.trailingGap),
       Expanded(
         child: Align(
           alignment: Alignment.centerRight,
