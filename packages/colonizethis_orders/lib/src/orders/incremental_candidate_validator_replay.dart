@@ -28,6 +28,31 @@ import 'unit_type_helpers.dart';
 
 extension IncrementalCandidateValidatorPrefixReplay
     on IncrementalCandidateValidator {
+  bool _acceptProjectedResourcePrefix<TOrder, V>({
+    required List<TOrder> existingOrders,
+    required bool? prefixReplaySucceeded,
+    required ProjectedResourceLedgers? cachedLedgers,
+    required void Function(bool value) setPrefixReplaySucceeded,
+    required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
+    required V Function() createPrefixValidator,
+    required ProjectedResourceLedgers Function(V validator) readLedgers,
+    required V Function(ProjectedResourceLedgers snap) createCandidateValidator,
+    required TOrder candidate,
+    required OrderValidationResult Function(V validator, TOrder order) validate,
+  }) =>
+      acceptProjectedResourcePrefixCandidate(
+        prefixReplaySucceeded: prefixReplaySucceeded,
+        cachedLedgers: cachedLedgers,
+        setPrefixReplaySucceeded: setPrefixReplaySucceeded,
+        setCachedLedgers: setCachedLedgers,
+        existingOrders: existingOrders,
+        createPrefixValidator: createPrefixValidator,
+        validate: validate,
+        readLedgers: readLedgers,
+        createCandidateValidator: createCandidateValidator,
+        candidate: candidate,
+      );
+
   /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
   /// worker orders in [basePrefix] (Refs #2692 S7,
   /// SPEC/program/order-suggestions.md § Recruit worker orders).
@@ -42,7 +67,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final existing =
         basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
         const <RecruitWorkerOrder>[];
-    return acceptProjectedResourcePrefixCandidate(
+    return _acceptProjectedResourcePrefix(
       prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
       cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
       setPrefixReplaySucceeded: (v) {
@@ -81,7 +106,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    return acceptProjectedResourcePrefixCandidate(
+    return _acceptProjectedResourcePrefix(
       prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
       cachedLedgers: cache.postBuildPrefixEconomy,
       setPrefixReplaySucceeded: (v) {

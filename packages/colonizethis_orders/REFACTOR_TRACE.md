@@ -2061,6 +2061,16 @@ No scenario semantics changed; CI `repo.domain_package_test_file_size` gate gree
 
 test/ LOC after slice 132: **37,208** (net −34 from post–slice 131). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 133: ICE family expectation DRY + recruit/build prefix helper
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-family-helper | extract `iceExpectFamilyOnCorpus` + `iceExpectBuildOnCorpus` / `iceExpectWorkOnCorpus` / `iceExpectDiplomaticOnCorpus`; route corpus move/army/naval helpers through shared wrapper | `incremental_candidate_validator_equivalence_expectation_shorthand.dart`, `incremental_candidate_validator_equivalence_expectations.dart` | same | #3949 |
+| ice-fullpass-dry | consolidate context-order `fullPass*` helpers via `_fullPassContextOrderAccepted` | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+| lib-prefix-replay | extract `_acceptProjectedResourcePrefix` for recruit-worker / build incremental probes | `incremental_candidate_validator_replay.dart` | same | #3949 |
+
+test/ LOC after slice 133: see PR. Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

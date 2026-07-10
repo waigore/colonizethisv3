@@ -15,6 +15,26 @@ bool _fullPassAddOrderAccepted(
   return add(engine).isAccepted;
 }
 
+bool _fullPassContextOrderAccepted<TOrder>(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  TOrder candidate,
+  OrderValidationResult Function(
+    OrderEngine engine,
+    Game game,
+    MapTopology topology,
+    String playerId,
+    TOrder candidate,
+  )
+  add,
+) =>
+    _fullPassAddOrderAccepted(
+      basePrefix,
+      (engine) => add(engine, game, topology, playerId, candidate),
+    );
+
 bool fullPassMoveAccepted(
   Game game,
   MapTopology topology,
@@ -22,10 +42,14 @@ bool fullPassMoveAccepted(
   Orders basePrefix,
   MoveOrder candidate,
 ) =>
-    _fullPassAddOrderAccepted(
+    _fullPassContextOrderAccepted(
+      game,
+      topology,
+      playerId,
       basePrefix,
-      (engine) =>
-          engine.addMoveOrderWithContext(game, topology, playerId, candidate),
+      candidate,
+      (engine, g, t, pid, order) =>
+          engine.addMoveOrderWithContext(g, t, pid, order),
     );
 
 bool fullPassArmyMoveAccepted(
@@ -53,10 +77,14 @@ bool fullPassBuildAccepted(
   Orders basePrefix,
   BuildUnitOrder candidate,
 ) =>
-    _fullPassAddOrderAccepted(
+    _fullPassContextOrderAccepted(
+      game,
+      topology,
+      playerId,
       basePrefix,
-      (engine) =>
-          engine.addBuildOrderWithContext(game, topology, playerId, candidate),
+      candidate,
+      (engine, g, t, pid, order) =>
+          engine.addBuildOrderWithContext(g, t, pid, order),
     );
 
 bool fullPassWorkAccepted(
@@ -85,14 +113,14 @@ bool fullPassDiplomaticAccepted(
   Orders basePrefix,
   DiplomaticOrder candidate,
 ) =>
-    _fullPassAddOrderAccepted(
+    _fullPassContextOrderAccepted(
+      game,
+      topology,
+      playerId,
       basePrefix,
-      (engine) => engine.addDiplomaticOrderWithContext(
-        game,
-        topology,
-        playerId,
-        candidate,
-      ),
+      candidate,
+      (engine, g, t, pid, order) =>
+          engine.addDiplomaticOrderWithContext(g, t, pid, order),
     );
 
 bool fullPassNavalMoveAccepted(
@@ -102,10 +130,14 @@ bool fullPassNavalMoveAccepted(
   Orders basePrefix,
   NavalMoveOrder candidate,
 ) =>
-    _fullPassAddOrderAccepted(
+    _fullPassContextOrderAccepted(
+      game,
+      topology,
+      playerId,
       basePrefix,
-      (engine) =>
-          engine.addNavalMoveOrderWithContext(game, topology, playerId, candidate),
+      candidate,
+      (engine, g, t, pid, order) =>
+          engine.addNavalMoveOrderWithContext(g, t, pid, order),
     );
 
 bool fullPassNavalMissionAccepted(
@@ -115,14 +147,14 @@ bool fullPassNavalMissionAccepted(
   Orders basePrefix,
   NavalMissionOrder candidate,
 ) =>
-    _fullPassAddOrderAccepted(
+    _fullPassContextOrderAccepted(
+      game,
+      topology,
+      playerId,
       basePrefix,
-      (engine) => engine.addNavalMissionOrderWithContext(
-        game,
-        topology,
-        playerId,
-        candidate,
-      ),
+      candidate,
+      (engine, g, t, pid, order) =>
+          engine.addNavalMissionOrderWithContext(g, t, pid, order),
     );
 
 IncrementalCandidateValidator _iceValidatorFor({
