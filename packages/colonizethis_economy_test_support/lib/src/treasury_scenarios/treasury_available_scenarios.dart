@@ -19,89 +19,20 @@ typedef TreasuryAvailableScenario = ({
   TreasuryAvailableExpectation? extra,
 });
 
+// dart format off
 final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
-  treasuryAvailableRow(
-    label: "returns the player's raw treasury for known players",
-    treasury: 250,
-    expected: 250,
-    refs: '#3093',
-  ),
-  treasuryAvailableRow(
-    label: 'clamps negative treasury to 0 (defensive guard)',
-    treasury: -10,
-    expected: 0,
-    refs: null,
-  ),
-  treasuryAvailableRow(
-    label: 'returns 0 when playerId does not resolve to a player',
-    treasury: 100,
-    playerId: 'gp_ghost',
-    expected: 0,
-    refs: null,
-  ),
-  treasuryAvailableRow(
-    label:
-        'default projectedNonBidTreasuryDelta == 0 preserves the legacy '
-        '"raw treasury" contract for callers without a projection',
-    treasury: 175,
-    expected: 175,
-    refs: '#3093',
-    extra: TreasuryAvailableExpectation(omitProjectedDeltaAlias: true),
-  ),
-  treasuryAvailableRow(
-    label:
-        'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit '
-        'from raw treasury (positive AC #1)',
-    treasury: 100,
-    projectedNonBidTreasuryDelta: -40,
-    expected: 60,
-    refs: '#3093',
-  ),
-  treasuryAvailableRow(
-    label:
-        'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury '
-        '(conservative — net non-bid income never raises the budget)',
-    treasury: 100,
-    projectedNonBidTreasuryDelta: 50,
-    expected: 100,
-    refs: '#3093',
-  ),
-  treasuryAvailableRow(
-    label: 'projected deficit equal to treasury clamps the budget at exactly 0',
-    treasury: 80,
-    projectedNonBidTreasuryDelta: -80,
-    expected: 0,
-    refs: null,
-  ),
-  treasuryAvailableRow(
-    label:
-        'projected deficit larger than treasury still clamps at 0 (not negative)',
-    treasury: 50,
-    projectedNonBidTreasuryDelta: -120,
-    expected: 0,
-    refs: null,
-  ),
-  treasuryAvailableRow(
-    label: 'projectedNonBidTreasuryDelta is ignored when treasury is already 0',
-    treasury: 0,
-    projectedNonBidTreasuryDelta: 25,
-    expected: 0,
-    refs: null,
-    extra: const TreasuryAvailableExpectation(
-      ignoredProjectedDeltaWhenTreasuryZero: -25,
-    ),
-  ),
-  treasuryAvailableRow(
-    label:
-        'unknown playerId returns 0 even when a non-zero '
-        'projectedNonBidTreasuryDelta is supplied',
-    treasury: 100,
-    playerId: 'gp_ghost',
-    projectedNonBidTreasuryDelta: -30,
-    expected: 0,
-    refs: null,
-  ),
+  treasuryAvailableRow(label: "returns the player's raw treasury for known players", treasury: 250, expected: 250, refs: '#3093'),
+  treasuryAvailableRow(label: 'clamps negative treasury to 0 (defensive guard)', treasury: -10, expected: 0, refs: null),
+  treasuryAvailableRow(label: 'returns 0 when playerId does not resolve to a player', treasury: 100, playerId: 'gp_ghost', expected: 0, refs: null),
+  treasuryAvailableRow(label: 'default projectedNonBidTreasuryDelta == 0 preserves the legacy "raw treasury" contract for callers without a projection', treasury: 175, expected: 175, refs: '#3093', extra: TreasuryAvailableExpectation(omitProjectedDeltaAlias: true)),
+  treasuryAvailableRow(label: 'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit from raw treasury (positive AC #1)', treasury: 100, projectedNonBidTreasuryDelta: -40, expected: 60, refs: '#3093'),
+  treasuryAvailableRow(label: 'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury (conservative — net non-bid income never raises the budget)', treasury: 100, projectedNonBidTreasuryDelta: 50, expected: 100, refs: '#3093'),
+  treasuryAvailableRow(label: 'projected deficit equal to treasury clamps the budget at exactly 0', treasury: 80, projectedNonBidTreasuryDelta: -80, expected: 0, refs: null),
+  treasuryAvailableRow(label: 'projected deficit larger than treasury still clamps at 0 (not negative)', treasury: 50, projectedNonBidTreasuryDelta: -120, expected: 0, refs: null),
+  treasuryAvailableRow(label: 'projectedNonBidTreasuryDelta is ignored when treasury is already 0', treasury: 0, projectedNonBidTreasuryDelta: 25, expected: 0, refs: null, extra: const TreasuryAvailableExpectation(ignoredProjectedDeltaWhenTreasuryZero: -25)),
+  treasuryAvailableRow(label: 'unknown playerId returns 0 even when a non-zero projectedNonBidTreasuryDelta is supplied', treasury: 100, playerId: 'gp_ghost', projectedNonBidTreasuryDelta: -30, expected: 0, refs: null),
 ];
+// dart format on
 
 void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
@@ -169,70 +100,42 @@ TreasuryUiCompositionScenario treasuryUiCompositionRow({
   refs: refs,
 );
 
+// dart format off
 List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(
   data.ResourceRules rules,
 ) => [
   treasuryUiCompositionRow(
-    label:
-        'treasury 100, market price timber 30, no staged bids → headroom for '
-        'fresh row equals raw treasury (allows up to qty 3)',
+    label: 'treasury 100, market price timber 30, no staged bids → headroom for fresh row equals raw treasury (allows up to qty 3)',
     prices: const {'timber': 30},
-    expect: const TreasuryUiCompositionExpectation(
-      commodityPrices: {'timber': 30},
-      maxAffordableQty: (commodityId: 'timber', qty: 3),
-    ),
+    expect: const TreasuryUiCompositionExpectation(commodityPrices: {'timber': 30}, maxAffordableQty: (commodityId: 'timber', qty: 3)),
   ),
   treasuryUiCompositionRow(
-    label:
-        'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid '
-        'for iron (price 80) is refused (headroom 10 < 80)',
+    label: 'treasury 100, staged Bid timber qty 3 (spend 90) → adding a fresh bid for iron (price 80) is refused (headroom 10 < 80)',
     prices: const {'timber': 30, 'iron': 80},
     stagedBids: [bidOrder('timber', 3)],
-    expect: const TreasuryUiCompositionExpectation(
-      commodityPrices: {'iron': 80},
-      headroom: 10,
-      headroomLessThanCommodity: 'iron',
-    ),
+    expect: const TreasuryUiCompositionExpectation(commodityPrices: {'iron': 80}, headroom: 10, headroomLessThanCommodity: 'iron'),
   ),
   treasuryUiCompositionRow(
-    label:
-        'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → '
-        'next increment would make spend 120 (> 100), so the UI must silent-no-op',
+    label: 'treasury 100, staged Bid timber qty 3 (spend 90), incrementing timber → next increment would make spend 120 (> 100), so the UI must silent-no-op',
     prices: const {'timber': 30},
     stagedBids: [bidOrder('timber', 3)],
-    expect: const TreasuryUiCompositionExpectation(
-      commodityPrices: {'timber': 30},
-      spendIncrementExceedsBudget: (commodityId: 'timber', delta: 1),
-    ),
+    expect: const TreasuryUiCompositionExpectation(commodityPrices: {'timber': 30}, spendIncrementExceedsBudget: (commodityId: 'timber', delta: 1)),
   ),
   treasuryUiCompositionRow(
-    label:
-        'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
-        'no staged bids), market price timber 30 → budget = 60, default qty '
-        '1 fits and headroom permits up to qty 2 (spend 60)',
+    label: 'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with no staged bids), market price timber 30 → budget = 60, default qty 1 fits and headroom permits up to qty 2 (spend 60)',
     prices: const {'timber': 30},
     projectedNonBidTreasuryDelta: -40,
-    expect: const TreasuryUiCompositionExpectation(
-      budget: 60,
-      commodityPrices: {'timber': 30},
-      maxAffordableQty: (commodityId: 'timber', qty: 2),
-    ),
+    expect: const TreasuryUiCompositionExpectation(budget: 60, commodityPrices: {'timber': 30}, maxAffordableQty: (commodityId: 'timber', qty: 2)),
   ),
   treasuryUiCompositionRow(
-    label:
-        'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
-        'so no bid (even default qty 1) can be staged on any priced '
-        'commodity (silent no-op gate)',
+    label: 'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 so no bid (even default qty 1) can be staged on any priced commodity (silent no-op gate)',
     treasury: 50,
     prices: const {'timber': 30},
     projectedNonBidTreasuryDelta: -60,
-    expect: const TreasuryUiCompositionExpectation(
-      budget: 0,
-      commodityPrices: {'timber': 30},
-      budgetLessThanCommodity: 'timber',
-    ),
+    expect: const TreasuryUiCompositionExpectation(budget: 0, commodityPrices: {'timber': 30}, budgetLessThanCommodity: 'timber'),
   ),
 ];
+// dart format on
 
 void runTreasuryUiCompositionScenario(
   TreasuryUiCompositionScenario scenario,

@@ -1170,6 +1170,22 @@ test_support LOC: **15,564** (net −18 vs pre-slice 15,582 / −30 vs slice 65 
 
 test_support LOC: **15,460** (net −25 vs post-merge working tree 15,485 / −104 vs slice 66 documented 15,564). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 68+.
 
+## Phase 3 — Slice 68 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-format-off | `// dart format off` densifies treasury pure-helper / available / sellable / bid-spend scenario tables | `treasury_scenarios/treasury_*_scenarios.dart` | #3093, #3115, #3123, #3939 |
+
+test_support LOC: **14,974** (net −486 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 69+.
+
+## Phase 3 — Slice 69 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-suggester-format-off | `// dart format off` densifies FRR credits + TradeOrderSuggester scenario tables | `frr_credits_scenarios.dart`, `trade_order_suggester_scenarios.dart` | #2992, #2989, #3123, #3753, #3939 |
+
+test_support LOC: **14,629** (net −345 vs slice 68 / 14,974; −831 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 70+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.
