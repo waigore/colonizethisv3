@@ -176,11 +176,49 @@ void main() {
       );
     });
 
-    test('plains returns null for other resources and no resource', () {
+    test('plains selects plantation variants for NW resources', () {
       expect(
         terrainVariantTileKey(
           terrain: TerrainType.plains,
           resourceId: 'sugarCane',
+        ),
+        'tile_plains_sugar_cane',
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'tobacco',
+        ),
+        'tile_plains_tobacco',
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'cotton',
+        ),
+        'tile_plains_cotton',
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'spices',
+        ),
+        'tile_plains_spices',
+      );
+    });
+
+    test('plains returns null for other resources and no resource', () {
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'furs',
+        ),
+        isNull,
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'diamonds',
         ),
         isNull,
       );
@@ -190,6 +228,13 @@ void main() {
     test('desert never selects plains variants', () {
       expect(
         terrainVariantTileKey(terrain: TerrainType.desert, resourceId: 'grain'),
+        isNull,
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.desert,
+          resourceId: 'sugarCane',
+        ),
         isNull,
       );
       expect(
@@ -231,9 +276,28 @@ void main() {
       );
     });
 
-    test('returns null for plains without mapped resource', () {
+    test('returns plantation variant keys for NW plains resources', () {
       expect(
         landInteriorPlainsVariantTileKey(landPlains(resourceId: 'sugarCane')),
+        'tile_plains_sugar_cane',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'tobacco')),
+        'tile_plains_tobacco',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'cotton')),
+        'tile_plains_cotton',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'spices')),
+        'tile_plains_spices',
+      );
+    });
+
+    test('returns null for plains without mapped resource', () {
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'furs')),
         isNull,
       );
       expect(landInteriorPlainsVariantTileKey(landPlains()), isNull);
@@ -439,6 +503,13 @@ void main() {
         expect(cache.getStandaloneTileByKey('tile_plains_grain'), isNotNull);
         expect(cache.getStandaloneTileByKey('tile_plains_meat'), isNotNull);
         expect(cache.getStandaloneTileByKey('tile_plains_horses'), isNotNull);
+        expect(
+          cache.getStandaloneTileByKey('tile_plains_sugar_cane'),
+          isNotNull,
+        );
+        expect(cache.getStandaloneTileByKey('tile_plains_tobacco'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_cotton'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_spices'), isNotNull);
       },
     );
   });

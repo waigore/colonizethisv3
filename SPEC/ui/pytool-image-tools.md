@@ -14,6 +14,23 @@
 
 ## Scripts
 
+### recolour_plains_plantation_tiles.py
+
+**Purpose:** From one approved PixelLab plantation base PNG, write the four New World plains plantation overlays (`tile_plains_sugar_cane`, `tile_plains_tobacco`, `tile_plains_cotton`, `tile_plains_spices`) by recolouring only yellow-green field/crop highlight pixels. Authority: [layered-terrain-rendering.md](layered-terrain-rendering.md) § Plains resource variants (Refs #3961).
+
+**Dependencies:** Pillow (see `pytool/requirements.txt`).
+
+**Usage:**
+
+```bash
+python pytool/recolour_plains_plantation_tiles.py
+python pytool/recolour_plains_plantation_tiles.py --base pytool/assets/terrain/tile_plains_plantation_base.png --out-dir app/assets/images/terrain
+```
+
+**Behaviour:** Requires 64×64 RGBA base; asserts output alpha silhouettes match the base; mid-tone field colours are fixed in the script and SPEC.
+
+---
+
 ### button_contrast_wood_pil.py
 
 **Purpose:** Apply higher border/center contrast and randomised wood grain to a button PNG. Reads an image file and writes a new PNG. Tuned for the main-menu colonial wood palette (reddish-brown frame, warm inner wood, gold accents).

@@ -87,9 +87,9 @@ Province-name overlays on the main app map render a decorative capital icon for 
 
 Within the Flame map render pipeline, **tile stack** (first paint group) is built bottom → top as:
 
-1. **Sea and land terrain base** (Wang coast/interior, desert transitions, bare L1 plains interior upper-base, etc.). **Does not** include full-cell **L1 interior plains resource decals** (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`); those are step 3 so they stack above transport.
+1. **Sea and land terrain base** (Wang coast/interior, desert transitions, bare L1 plains interior upper-base, etc.). **Does not** include full-cell **L1 interior plains resource decals** (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`, `tile_plains_sugar_cane`, `tile_plains_tobacco`, `tile_plains_cotton`, `tile_plains_spices`); those are step 3 so they stack above transport.
 2. **Road/rail transport sprites** when the base-layer mode includes roads and `roadLevel > 0` on **land** only: cardinal mask bits (**N=1, E=2, S=4, W=8**) from neighboring **land** cells with `roadLevel > 0`; road family for levels 1/2, rail family for level 4. Transport sits **above** bare land/plains interior base passes and **below** L1 plains resource-linked decals and L2 feature terrain overlays so corridor art reads on open terrain while resource pasture art and feature art remain on top.
-3. **L1 interior plains resource-linked terrain decals** — full-cell standalone `tile_plains_grain` / `tile_plains_meat` / `tile_plains_horses` from `landInteriorPlainsVariantTileKey` / `terrainVariantTileKey`, **excluding** plains↔desert Wang transition cells (same gating as the land-base pass). Painted **after** step 2 and **before** step 4.
+3. **L1 interior plains resource-linked terrain decals** — full-cell standalone `tile_plains_grain` / `tile_plains_meat` / `tile_plains_horses` / `tile_plains_sugar_cane` / `tile_plains_tobacco` / `tile_plains_cotton` / `tile_plains_spices` from `landInteriorPlainsVariantTileKey` / `terrainVariantTileKey`, **excluding** plains↔desert Wang transition cells (same gating as the land-base pass). Painted **after** step 2 and **before** step 4.
 4. **L2 feature terrain overlays** (forest/mountains/hills/swamp standalone tiles where applicable).
 
 Then **base overlays** (second group), still bottom → top:
@@ -387,14 +387,18 @@ Hover, selection, and overlay behavior:
 
 The map widget renders terrain using **Wang tilesets** for seamless terrain transitions. Each tileset is a 4×4 grid (16 tiles) that covers all corner combinations for transitions between two terrain types.
 
-For L1 **interior** plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id. Assets `tile_plains_grain`, `tile_plains_meat`, and `tile_plains_horses` use **transparent regions** around the drawn resource detail; the renderer **must** draw the **canonical interior plains** base (same `sea_plains` upper-base tile as non-resource interior plains) **before** compositing the variant PNG so transparency shows grass, not the blank canvas.
+For L1 **interior** plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id. Assets `tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`, `tile_plains_sugar_cane`, `tile_plains_tobacco`, `tile_plains_cotton`, and `tile_plains_spices` use **transparent regions** around the drawn resource detail; the renderer **must** draw the **canonical interior plains** base (same `sea_plains` upper-base tile as non-resource interior plains) **before** compositing the variant PNG so transparency shows grass, not the blank canvas.
 
 Variant keys:
 - `tile_plains_grain` for `resourceId = grain`
 - `tile_plains_meat` for `resourceId = meat`
 - `tile_plains_horses` for `resourceId = horses`
+- `tile_plains_sugar_cane` for `resourceId = sugarCane`
+- `tile_plains_tobacco` for `resourceId = tobacco`
+- `tile_plains_cotton` for `resourceId = cotton`
+- `tile_plains_spices` for `resourceId = spices`
 
-These variants apply only to plains cells (not desert) and do not alter desert rendering rules.
+Plantation overlays share one PixelLab base + PIL field recolour pipeline; see [layered-terrain-rendering.md](layered-terrain-rendering.md) § Plains resource variants. These variants apply only to plains cells (not desert) and do not alter desert rendering rules.
 
 ### Runtime configuration (Flutter app)
 
@@ -461,7 +465,7 @@ When rendering in **player-constrained visibility mode**:
 
 If a tileset fails to load, the widget falls back to solid color rendering using `RegionMapViewData.terrainColors` for backward compatibility.
 
-Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_meat.png`, `tile_plains_horses.png`) are fail-fast assets: missing/decode failures in terrain asset initialization are treated as errors, not best-effort skips.
+Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_meat.png`, `tile_plains_horses.png`, `tile_plains_sugar_cane.png`, `tile_plains_tobacco.png`, `tile_plains_cotton.png`, `tile_plains_spices.png`) are fail-fast assets: missing/decode failures in terrain asset initialization are treated as errors, not best-effort skips.
 
 ---
 
@@ -471,7 +475,11 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** a tile with `terrainType = plains` and `resourceId = grain`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_grain` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = meat`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_meat` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = horses`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_horses` for that tile.
-- **Given** an **interior** plains tile with `resourceId` in `{grain, meat, horses}`, **when** the map renders the L1 terrain layer, **then** it draws the canonical interior plains base and composites the selected `tile_plains_*` on top so pixels transparent in the PNG show the same plains base as neighboring non-resource plains (no spurious solid black from an undrawn background).
+- **Given** a tile with `terrainType = plains` and `resourceId = sugarCane`, **when** the map renders the terrain layer, **then** the System selects plains terrain variant `tile_plains_sugar_cane` for that tile.
+- **Given** a tile with `terrainType = plains` and `resourceId = tobacco`, **when** the map renders the terrain layer, **then** the System selects plains terrain variant `tile_plains_tobacco` for that tile.
+- **Given** a tile with `terrainType = plains` and `resourceId = cotton`, **when** the map renders the terrain layer, **then** the System selects plains terrain variant `tile_plains_cotton` for that tile.
+- **Given** a tile with `terrainType = plains` and `resourceId = spices`, **when** the map renders the terrain layer, **then** the System selects plains terrain variant `tile_plains_spices` for that tile.
+- **Given** an **interior** plains tile with `resourceId` in `{grain, meat, horses, sugarCane, tobacco, cotton, spices}`, **when** the map renders the L1 terrain layer, **then** it draws the canonical interior plains base and composites the selected `tile_plains_*` on top so pixels transparent in the PNG show the same plains base as neighboring non-resource plains (no spurious solid black from an undrawn background).
 - **Given** a tile with `terrainType = desert` and any `resourceId`, **when** the map renders the terrain layer, **then** it does not select a plains terrain variant.
 - **Given** terrain asset initialization and one required plains variant PNG is missing or fails decode, **when** map terrain assets are loaded, **then** initialization fails with an error instead of silently skipping that asset.
 - **Given** only a change to `map_terrain_tilesets.json` (paths, `tile_px`, and/or `map_cell_size_px`) plus matching atlas/JSON assets declared in `pubspec.yaml`, **when** the app runs, **then** the map uses the new files and cell size without Dart code edits (same loader contract).
