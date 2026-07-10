@@ -626,6 +626,10 @@ void main() {
           'assets/images/terrain/tile_plains_grain.png',
           'assets/images/terrain/tile_plains_meat.png',
           'assets/images/terrain/tile_plains_horses.png',
+          'assets/images/terrain/tile_plains_sugar_cane.png',
+          'assets/images/terrain/tile_plains_tobacco.png',
+          'assets/images/terrain/tile_plains_cotton.png',
+          'assets/images/terrain/tile_plains_spices.png',
           'assets/images/terrain/tile_hardwood_forest.png',
           'assets/images/terrain/tile_hardwood_forest_timber.png',
           'assets/images/terrain/tile_scrub_forest.png',
@@ -723,6 +727,22 @@ void main() {
           terrainVariantTileKey(
             terrain: TerrainType.plains,
             resourceId: 'horses',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'sugarCane',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'tobacco',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'cotton',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'spices',
           )!,
           // Forest: non-timber should keep canonical default.
           featureOverlayTileKey(

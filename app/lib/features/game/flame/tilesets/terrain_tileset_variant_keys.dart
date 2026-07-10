@@ -14,6 +14,14 @@ String? terrainVariantTileKey({
           return _tilePlainsMeat;
         case 'horses':
           return _tilePlainsHorses;
+        case 'sugarCane':
+          return _tilePlainsSugarCane;
+        case 'tobacco':
+          return _tilePlainsTobacco;
+        case 'cotton':
+          return _tilePlainsCotton;
+        case 'spices':
+          return _tilePlainsSpices;
         default:
           return null;
       }
