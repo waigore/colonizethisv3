@@ -35,42 +35,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/yarn_test_fixtures.dart';
 import 'package:jenny/jenny.dart';
-
-class _InlineYarnAssetBundle extends Fake implements AssetBundle {
-  _InlineYarnAssetBundle(this._text);
-
-  final String _text;
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.value(_text);
-  }
-}
-
-class _MissingNodeAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.value('title: not_the_intro\n---\nIrrelevant.\n===\n');
-  }
-}
-
-const String _kIntroYarn = '''
-title: game_start_intro
----
-The age of imperialism draweth nigh.
--> I shall.
-===
-''';
-
-const String _kTraceYarn = '''
-title: trace_story
----
-First line.
--> Continue
--> Stop
-===
-''';
 
 Future<void> _pumpUntilSettled(WidgetTester tester) async {
   for (var i = 0; i < 12; i++) {
@@ -137,7 +104,7 @@ void main() {
       'and notifies onStateChanged at each boundary',
       () async {
         final project = YarnProject();
-        project.parse(_kTraceYarn);
+        project.parse(kYarnTraceStory);
         final view = CtDialogueView();
         final transitions = <(String, String)>[];
         view.onStateChanged = (line, choice) {
@@ -183,7 +150,7 @@ void main() {
       'advanceLine and selectOption are idempotent (second call is a no-op)',
       () async {
         final project = YarnProject();
-        project.parse(_kTraceYarn);
+        project.parse(kYarnTraceStory);
         final view = CtDialogueView();
         final runner = DialogueRunner(
           yarnProject: project,
@@ -214,7 +181,7 @@ void main() {
 
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _InlineYarnAssetBundle(_kIntroYarn),
+            bundle: YarnInlineAssetBundle(kYarnGameStartIntroShort),
             onDismissed: () => dismissedCount++,
             childKey: childKey,
           ),
@@ -250,7 +217,7 @@ void main() {
 
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _MissingNodeAssetBundle(),
+            bundle: YarnMissingNodeAssetBundle(),
             onDismissed: () => dismissedCount++,
           ),
         );
@@ -277,7 +244,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _InlineYarnAssetBundle(_kIntroYarn),
+            bundle: YarnInlineAssetBundle(kYarnGameStartIntroShort),
             onDismissed: () {},
           ),
         );
@@ -299,7 +266,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _MissingNodeAssetBundle(),
+            bundle: YarnMissingNodeAssetBundle(),
             onDismissed: () {},
           ),
         );
@@ -324,7 +291,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _InlineYarnAssetBundle(_kIntroYarn),
+            bundle: YarnInlineAssetBundle(kYarnGameStartIntroShort),
             onDismissed: () {},
           ),
         );
@@ -355,7 +322,7 @@ void main() {
 
         await tester.pumpWidget(
           _wrapIntroOverlay(
-            bundle: _MissingNodeAssetBundle(),
+            bundle: YarnMissingNodeAssetBundle(),
             onDismissed: () {},
           ),
         );

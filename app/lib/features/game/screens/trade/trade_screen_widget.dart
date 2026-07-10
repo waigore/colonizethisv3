@@ -152,15 +152,10 @@ class TradeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return CtGameFeatureScreenShell(
       game: game,
-      topBar: const CtTopBar(
+      topBar: GameFeatureScreenTopBar.build(
         key: topBarKey,
         title: topBarTitle,
-        backButtonLabel: topBarBackLabel,
-        icon: StrictAssetIcon(
-          assetPath: topBarIconAsset,
-          width: 18,
-          height: 18,
-        ),
+        iconAsset: topBarIconAsset,
       ),
       bodyBuilder: (context, shellRef, displayGame) {
         final shell = shellRef.read(shellPlayerContextProvider);
