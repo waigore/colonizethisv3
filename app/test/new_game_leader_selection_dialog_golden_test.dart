@@ -21,9 +21,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'support/golden_capture_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -33,10 +33,6 @@ void main() {
     required Size surfaceSize,
     required Key boundaryKey,
   }) async {
-    addTearDown(tester.view.reset);
-    tester.view.physicalSize = surfaceSize;
-    tester.view.devicePixelRatio = 1.0;
-
     final base = GameSetupConfig.defaultConfig;
     final naming = defaultNamingConfig;
     final initial = <String, String>{};
@@ -47,29 +43,21 @@ void main() {
       }
     }
 
-    await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppThemes.editorialMonocle,
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: Scaffold(
-          body: RepaintBoundary(
-            key: boundaryKey,
-            child: NewGameLeaderSelectionDialog(
-              baseConfig: base,
-              naming: naming,
-              initialLeaderByGpId: initial,
-              blessedProfileNames: const [],
-              onCancel: () {},
-              onConfirmed: (_, _, _, _, _, _, _) {},
-            ),
-          ),
-        ),
+    await pumpGoldenHost(
+      tester,
+      boundaryKey: boundaryKey,
+      physicalSize: surfaceSize,
+      center: false,
+      includeLocalizations: true,
+      child: NewGameLeaderSelectionDialog(
+        baseConfig: base,
+        naming: naming,
+        initialLeaderByGpId: initial,
+        blessedProfileNames: const [],
+        onCancel: () {},
+        onConfirmed: (_, _, _, _, _, _, _) {},
       ),
     );
-    await tester.pumpAndSettle();
   }
 
   testWidgets(
