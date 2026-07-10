@@ -19,12 +19,11 @@ class OrderEngineValidateDiplomaticScenario implements RefsScenario {
 
 void runOrderEngineValidateDiplomaticScenario(
   OrderEngineValidateDiplomaticScenario scenario,
-) =>
-    scenario.run();
+) => scenario.run();
 
 List<OrderEngineValidateDiplomaticScenario>
-    orderEngineValidateDiplomaticScenarios() => const [
-          // dart format off
+orderEngineValidateDiplomaticScenarios() => const [
+  // dart format off
           OrderEngineValidateDiplomaticScenario(
             label: 'declareWar rejected when already at war',
             run: vedRunDeclareWarRejectedWhenAlreadyAtWar,
@@ -94,4 +93,4 @@ List<OrderEngineValidateDiplomaticScenario>
             run: vedRunDeclareWarThenGrantAidTowardSameTargetRejected,
           ),
           // dart format on
-        ];
+];

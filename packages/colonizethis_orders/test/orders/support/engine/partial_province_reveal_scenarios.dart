@@ -24,36 +24,35 @@ void runPartialProvinceRevealScenario(PartialProvinceRevealScenario scenario) {
 
 /// Scenarios for partiallyRevealedPrefixedProvinceIdsForPlayer.
 List<PartialProvinceRevealScenario>
-    partialProvinceRevealPrefixedIdsScenarios() => const [
-          PartialProvinceRevealScenario(
-            label:
-                'includes prefixed province id when land tiles mix unknown and known',
-            target: PartialProvinceRevealTarget
-                .includesPrefixedProvinceWhenLandTilesMixVisibility,
-          ),
-          PartialProvinceRevealScenario(
-            label: 'excludes unprefixed province keys and uniform visibility',
-            target: PartialProvinceRevealTarget
-                .excludesUnprefixedKeysAndUniformVisibility,
-          ),
-          PartialProvinceRevealScenario(
-            label:
-                'partial reveal ids resolve via provincesById to same set as allProvinces filter',
-            target: PartialProvinceRevealTarget
-                .partialRevealIdsResolveViaProvincesById,
-          ),
-        ];
+partialProvinceRevealPrefixedIdsScenarios() => const [
+  PartialProvinceRevealScenario(
+    label:
+        'includes prefixed province id when land tiles mix unknown and known',
+    target: PartialProvinceRevealTarget
+        .includesPrefixedProvinceWhenLandTilesMixVisibility,
+  ),
+  PartialProvinceRevealScenario(
+    label: 'excludes unprefixed province keys and uniform visibility',
+    target:
+        PartialProvinceRevealTarget.excludesUnprefixedKeysAndUniformVisibility,
+  ),
+  PartialProvinceRevealScenario(
+    label:
+        'partial reveal ids resolve via provincesById to same set as allProvinces filter',
+    target: PartialProvinceRevealTarget.partialRevealIdsResolveViaProvincesById,
+  ),
+];
 
 /// Scenarios for sortedProvincesForPartialRevealPrefixedIds.
 List<PartialProvinceRevealScenario>
-    sortedProvincesForPartialRevealScenarios() => const [
-          PartialProvinceRevealScenario(
-            label: 'returns empty list without scanning when id set is empty',
-            target: PartialProvinceRevealTarget
-                .returnsEmptyWithoutScanningWhenIdSetEmpty,
-          ),
-          PartialProvinceRevealScenario(
-            label: 'returns matching provinces sorted by id',
-            target: PartialProvinceRevealTarget.returnsMatchingProvincesSortedById,
-          ),
-        ];
+sortedProvincesForPartialRevealScenarios() => const [
+  PartialProvinceRevealScenario(
+    label: 'returns empty list without scanning when id set is empty',
+    target:
+        PartialProvinceRevealTarget.returnsEmptyWithoutScanningWhenIdSetEmpty,
+  ),
+  PartialProvinceRevealScenario(
+    label: 'returns matching provinces sorted by id',
+    target: PartialProvinceRevealTarget.returnsMatchingProvincesSortedById,
+  ),
+];

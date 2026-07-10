@@ -2226,6 +2226,23 @@ test/ LOC after slice 146: **36,481** (net −105 from post–slice 145). Remain
 
 test/ LOC after slice 147: **36,417** (net −64 from post–slice 146). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~49 expectations modules — engine, suggestion, merge, diplomatic, debug).
 
+## Wave 3 — Slice 148: engine / merge / debug / misc scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dcw-dispatch-collapse | drop `DebugConsoleWorkersTarget` enum + switch; scenario rows hold `run` tear-offs | `debug_console_workers_expectations.dart` (deleted) | `debug_console_workers_run_rows.dart` + thin `debug_console_workers_scenarios.dart` | #3949 |
+| dcsi-dispatch-collapse | drop `DebugConsoleSupportedIdsTarget` enum + switch; scenario rows hold `run` tear-offs | `debug_console_supported_ids_expectations.dart` (deleted) | `debug_console_supported_ids_run_rows.dart` + thin `debug_console_supported_ids_scenarios.dart` | #3949 |
+| oevpp-dispatch-collapse | drop `OrderEngineValidationPhasePlanTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validation_phase_plan_expectations.dart` (deleted) | `order_engine_validation_phase_plan_run_rows.dart` + thin `order_engine_validation_phase_plan_scenarios.dart` | #3949 |
+| oevi-dispatch-collapse | drop `OrderEngineValidatorInjectionTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validator_injection_expectations.dart` (deleted) | `order_engine_validator_injection_run_rows.dart` + thin `order_engine_validator_injection_scenarios.dart` | #3949 |
+| orc-dispatch-collapse | drop `OrderResolutionContextTarget` enum + switch; scenario rows hold `run` tear-offs | `order_resolution_context_expectations.dart` (deleted) | `order_resolution_context_run_rows.dart` + thin `order_resolution_context_scenarios.dart` | #3949 |
+| om-dispatch-collapse | drop `OrderMergeTarget` enum + switch; scenario rows hold `run` tear-offs | `order_merge_expectations.dart` (deleted) | `order_merge_run_rows.dart` + thin `order_merge_scenarios.dart` | #3949 |
+| oecmxw-dispatch-collapse | drop `OrderEngineCivilianMoveXorWorkTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_civilian_move_xor_work_expectations.dart` (deleted) | `order_engine_civilian_move_xor_work_run_rows.dart` + thin `order_engine_civilian_move_xor_work_scenarios.dart` | #3949 |
+| oeps-dispatch-collapse | drop `OrderEffectsProjectorSeamTarget` enum + switch; scenario rows hold `run` tear-offs | `order_effects_projector_seam_expectations.dart` (deleted) | `order_effects_projector_seam_run_rows.dart` + thin `order_effects_projector_seam_scenarios.dart` | #3949 |
+| owc-dispatch-collapse | drop `OrderWorkConstantsTarget` enum + switch; scenario rows hold `run` tear-offs | `order_work_constants_expectations.dart` (deleted) | `order_work_constants_run_rows.dart` + thin `order_work_constants_scenarios.dart` | #3949 |
+| ecgp-dispatch-collapse | drop `ExplorerConsulateGatePredicateTarget` enum + switch; scenario rows hold `run` tear-offs | `explorer_consulate_gate_predicate_expectations.dart` (deleted) | `explorer_consulate_gate_predicate_run_rows.dart` + thin `explorer_consulate_gate_predicate_scenarios.dart` | #3949 |
+
+test/ LOC after slice 148: **36,261** (net −156 from post–slice 147). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~39 expectations modules — suggestion, diplomatic panel, partial_province_reveal, per_player cache, engine move/context).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

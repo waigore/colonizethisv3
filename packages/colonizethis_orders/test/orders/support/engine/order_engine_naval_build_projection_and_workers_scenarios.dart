@@ -4,7 +4,8 @@ import '../scenario_runner.dart';
 import 'order_engine_naval_build_projection_and_workers_expectations.dart';
 
 /// One row in [orderEngineNavalBuildProjectionAndWorkersScenarios].
-class OrderEngineNavalBuildProjectionAndWorkersScenario implements RefsScenario {
+class OrderEngineNavalBuildProjectionAndWorkersScenario
+    implements RefsScenario {
   const OrderEngineNavalBuildProjectionAndWorkersScenario({
     required this.label,
     required this.target,
@@ -28,16 +29,15 @@ void runOrderEngineNavalBuildProjectionAndWorkersScenario(
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_naval_build_projection_and_workers_test.dart` descriptions.
 List<OrderEngineNavalBuildProjectionAndWorkersScenario>
-    orderEngineNavalBuildProjectionAndWorkersScenarios() => const [
-          OrderEngineNavalBuildProjectionAndWorkersScenario(
-            label:
-                'projectedEffects returns treasuryDelta when orders affect treasury',
-            target: OrderEngineNavalBuildProjectionAndWorkersTarget
-                .projectedEffectsTreasuryDelta,
-          ),
-          OrderEngineNavalBuildProjectionAndWorkersScenario(
-            label: 'rejects naval build when peasants are zero',
-            target: OrderEngineNavalBuildProjectionAndWorkersTarget
-                .rejectsNavalBuildWhenPeasantsZero,
-          ),
-        ];
+orderEngineNavalBuildProjectionAndWorkersScenarios() => const [
+  OrderEngineNavalBuildProjectionAndWorkersScenario(
+    label: 'projectedEffects returns treasuryDelta when orders affect treasury',
+    target: OrderEngineNavalBuildProjectionAndWorkersTarget
+        .projectedEffectsTreasuryDelta,
+  ),
+  OrderEngineNavalBuildProjectionAndWorkersScenario(
+    label: 'rejects naval build when peasants are zero',
+    target: OrderEngineNavalBuildProjectionAndWorkersTarget
+        .rejectsNavalBuildWhenPeasantsZero,
+  ),
+];

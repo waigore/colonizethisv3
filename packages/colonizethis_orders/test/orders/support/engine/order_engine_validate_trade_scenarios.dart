@@ -19,12 +19,11 @@ class OrderEngineValidateTradeScenario implements RefsScenario {
 
 void runOrderEngineValidateTradeScenario(
   OrderEngineValidateTradeScenario scenario,
-) =>
-    scenario.run();
+) => scenario.run();
 
-List<OrderEngineValidateTradeScenario> orderEngineValidateTradeScenarios() =>
-    const [
-      // dart format off
+List<OrderEngineValidateTradeScenario>
+orderEngineValidateTradeScenarios() => const [
+  // dart format off
       OrderEngineValidateTradeScenario(
         label: 'accepts a valid offer when stockpile covers quantity',
         run: vetRunAcceptsValidOfferWhenStockpileCoversQuantity,
@@ -46,4 +45,4 @@ List<OrderEngineValidateTradeScenario> orderEngineValidateTradeScenarios() =>
         run: vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy,
       ),
       // dart format on
-    ];
+];

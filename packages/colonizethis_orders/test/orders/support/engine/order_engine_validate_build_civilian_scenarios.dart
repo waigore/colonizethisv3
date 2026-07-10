@@ -19,12 +19,11 @@ class OrderEngineValidateBuildCivilianScenario implements RefsScenario {
 
 void runOrderEngineValidateBuildCivilianScenario(
   OrderEngineValidateBuildCivilianScenario scenario,
-) =>
-    scenario.run();
+) => scenario.run();
 
 List<OrderEngineValidateBuildCivilianScenario>
-    orderEngineValidateBuildCivilianScenarios() => const [
-          // dart format off
+orderEngineValidateBuildCivilianScenarios() => const [
+  // dart format off
           OrderEngineValidateBuildCivilianScenario(
             label: 'rejects unknown unit type',
             run: vbcRunRejectsUnknownUnitType,
@@ -58,4 +57,4 @@ List<OrderEngineValidateBuildCivilianScenario>
             run: vbcRunAcceptsBuildWhenSpawnProvinceIdForeignFallsBackToCapital,
           ),
           // dart format on
-        ];
+];

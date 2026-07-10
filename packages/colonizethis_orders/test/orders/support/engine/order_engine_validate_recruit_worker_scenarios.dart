@@ -19,12 +19,11 @@ class OrderEngineValidateRecruitWorkerScenario implements RefsScenario {
 
 void runOrderEngineValidateRecruitWorkerScenario(
   OrderEngineValidateRecruitWorkerScenario scenario,
-) =>
-    scenario.run();
+) => scenario.run();
 
 List<OrderEngineValidateRecruitWorkerScenario>
-    orderEngineValidateRecruitWorkerScenarios() => const [
-          // dart format off
+orderEngineValidateRecruitWorkerScenarios() => const [
+  // dart format off
           OrderEngineValidateRecruitWorkerScenario(
             label: 'accepts a single peasant recruit when fabric is available',
             run: vrwRunAcceptsSinglePeasantRecruitWhenFabricAvailable,
@@ -42,4 +41,4 @@ List<OrderEngineValidateRecruitWorkerScenario>
             run: vrwRunCivilianBuildAcceptedAfterRecruitConsumesOnlyPeasant,
           ),
           // dart format on
-        ];
+];
