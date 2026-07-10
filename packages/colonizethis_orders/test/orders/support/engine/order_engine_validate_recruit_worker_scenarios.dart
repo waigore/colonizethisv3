@@ -104,21 +104,9 @@ void vrwRunCivilianBuildAcceptedAfterRecruitConsumesOnlyPeasant() {
 
 List<RunnableScenario> orderEngineValidateRecruitWorkerScenarios() => const [
   // dart format off
-          RunnableScenario(
-            label: 'accepts a single peasant recruit when fabric is available',
-            run: vrwRunAcceptsSinglePeasantRecruitWhenFabricAvailable,
-          ),
-          RunnableScenario(
-            label: 'rejects apprentice train when required tech is locked',
-            run: vrwRunRejectsApprenticeTrainWhenRequiredTechLocked,
-          ),
-          RunnableScenario(
-            label: 'recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers',
-            run: vrwRunRecruitConsumesLastPeasantBeforeMilitaryBuild,
-          ),
-          RunnableScenario(
-            label: 'civilian build (no peasant consume) is accepted after recruit consumes the only peasant',
-            run: vrwRunCivilianBuildAcceptedAfterRecruitConsumesOnlyPeasant,
-          ),
+          rs('accepts a single peasant recruit when fabric is available', vrwRunAcceptsSinglePeasantRecruitWhenFabricAvailable),
+          rs('rejects apprentice train when required tech is locked', vrwRunRejectsApprenticeTrainWhenRequiredTechLocked),
+          rs('recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers', vrwRunRecruitConsumesLastPeasantBeforeMilitaryBuild),
+          rs('civilian build (no peasant consume) is accepted after recruit consumes the only peasant', vrwRunCivilianBuildAcceptedAfterRecruitConsumesOnlyPeasant),
           // dart format on
 ];

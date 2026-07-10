@@ -75,21 +75,7 @@ void ospobpRunOwnProvinceBudgetExemptionDeterministic() {
 /// Scenarios for suggestWorkOrders own-province prospect budget exemption.
 List<RunnableScenario>
 suggestWorkOrdersOwnProvinceProspectBudgetScenarios() => const [
-  RunnableScenario(
-    label:
-        'co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget',
-    run: ospobpRunCoLocatedFeedstockReceivesProspectAfterBudgetDrain,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label:
-        'no feedstock prospect when the co-located tile is already prospected (negative control)',
-    run: ospobpRunNoFeedstockProspectWhenAlreadyProspected,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label: 'own-province budget exemption is deterministic across runs',
-    run: ospobpRunOwnProvinceBudgetExemptionDeterministic,
-    refs: '#2847',
-  ),
+  rs('co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget', ospobpRunCoLocatedFeedstockReceivesProspectAfterBudgetDrain, '#2847'),
+  rs('no feedstock prospect when the co-located tile is already prospected (negative control)', ospobpRunNoFeedstockProspectWhenAlreadyProspected, '#2847'),
+  rs('own-province budget exemption is deterministic across runs', ospobpRunOwnProvinceBudgetExemptionDeterministic, '#2847'),
 ];

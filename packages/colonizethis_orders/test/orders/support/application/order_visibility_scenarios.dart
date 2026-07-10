@@ -247,89 +247,37 @@ void ovRunWorkBuildRoadTargetTileKey() {
 
 /// Scenarios for provinceHasAtLeastVisibility.
 List<RunnableScenario> provinceHasAtLeastVisibilityScenarios() => const [
-  RunnableScenario(
-    label: 'false when no tile has 4-part key for region/province',
-    run: ovRunProvinceHasAtLeastVisibilityNoTileKey,
-  ),
-  RunnableScenario(
-    label: 'true when a tile in province has at least min visibility',
-    run: ovRunProvinceHasAtLeastVisibilityTileMeetsMin,
-  ),
-  RunnableScenario(
-    label: 'ignores tile keys with wrong number of parts',
-    run: ovRunProvinceHasAtLeastVisibilityIgnoresBadKeyParts,
-  ),
-  RunnableScenario(
-    label: 'provinceHasAtLeastVisibility returns false when parts.length != 4',
-    run: ovRunProvinceHasAtLeastVisibilityWrongPartCount,
-  ),
+  rs('false when no tile has 4-part key for region/province', ovRunProvinceHasAtLeastVisibilityNoTileKey),
+  rs('true when a tile in province has at least min visibility', ovRunProvinceHasAtLeastVisibilityTileMeetsMin),
+  rs('ignores tile keys with wrong number of parts', ovRunProvinceHasAtLeastVisibilityIgnoresBadKeyParts),
+  rs('provinceHasAtLeastVisibility returns false when parts.length != 4', ovRunProvinceHasAtLeastVisibilityWrongPartCount),
 ];
 
 /// Scenarios for tileHasAtLeastVisibility.
 List<RunnableScenario> tileHasAtLeastVisibilityScenarios() => const [
-  RunnableScenario(
-    label: 'true when tile has at least min level',
-    run: ovRunTileHasAtLeastVisibilityTrue,
-  ),
-  RunnableScenario(
-    label: 'false when tile unknown',
-    run: ovRunTileHasAtLeastVisibilityUnknown,
-  ),
+  rs('true when tile has at least min level', ovRunTileHasAtLeastVisibilityTrue),
+  rs('false when tile unknown', ovRunTileHasAtLeastVisibilityUnknown),
 ];
 
 /// Scenarios for moveSourceVisibilityOk.
 List<RunnableScenario> moveSourceVisibilityOkScenarios() => const [
-  RunnableScenario(
-    label: 'true when province has at least fogged',
-    run: ovRunMoveSourceVisibilityOkFogged,
-  ),
+  rs('true when province has at least fogged', ovRunMoveSourceVisibilityOkFogged),
 ];
 
 /// Scenarios for moveDestVisibilityOk.
 List<RunnableScenario> moveDestVisibilityOkScenarios() => const [
-  RunnableScenario(
-    label: 'true when province has at least fogged',
-    run: ovRunMoveDestVisibilityOkFogged,
-  ),
+  rs('true when province has at least fogged', ovRunMoveDestVisibilityOkFogged),
 ];
 
 /// Scenarios for workOrderVisibilityOk.
 List<RunnableScenario> workOrderVisibilityOkScenarios() => const [
-  RunnableScenario(
-    label: 'explore requires partial reveal (known + unknown land tiles)',
-    run: ovRunWorkExplorePartialReveal,
-  ),
-  RunnableScenario(
-    label: 'explore rejects province with no unknown land tile',
-    run: ovRunWorkExploreRejectsNoUnknownLand,
-  ),
-  RunnableScenario(
-    label: 'explore rejects when worldState omitted',
-    run: ovRunWorkExploreRejectsWithoutWorldState,
-  ),
-  RunnableScenario(
-    label: 'prospect requires at least fogged',
-    run: ovRunWorkProspectRequiresFogged,
-  ),
-  RunnableScenario(
-    label: 'build_improvement allows owned province',
-    run: ovRunWorkBuildImprovementOwnedProvince,
-  ),
-  RunnableScenario(
-    label: 'unknown workTarget returns false',
-    run: ovRunWorkUnknownTargetReturnsFalse,
-  ),
-  RunnableScenario(
-    label: 'counter_spy allows owned province without fogged',
-    run: ovRunWorkCounterSpyOwnedWithoutFogged,
-  ),
-  RunnableScenario(
-    label: 'build_fort with fogged visibility on owned province',
-    run: ovRunWorkBuildFortFoggedOwned,
-  ),
-  RunnableScenario(
-    label:
-        'build_road with targetTileKey uses tile key for region and province',
-    run: ovRunWorkBuildRoadTargetTileKey,
-  ),
+  rs('explore requires partial reveal (known + unknown land tiles)', ovRunWorkExplorePartialReveal),
+  rs('explore rejects province with no unknown land tile', ovRunWorkExploreRejectsNoUnknownLand),
+  rs('explore rejects when worldState omitted', ovRunWorkExploreRejectsWithoutWorldState),
+  rs('prospect requires at least fogged', ovRunWorkProspectRequiresFogged),
+  rs('build_improvement allows owned province', ovRunWorkBuildImprovementOwnedProvince),
+  rs('unknown workTarget returns false', ovRunWorkUnknownTargetReturnsFalse),
+  rs('counter_spy allows owned province without fogged', ovRunWorkCounterSpyOwnedWithoutFogged),
+  rs('build_fort with fogged visibility on owned province', ovRunWorkBuildFortFoggedOwned),
+  rs('build_road with targetTileKey uses tile key for region and province', ovRunWorkBuildRoadTargetTileKey),
 ];

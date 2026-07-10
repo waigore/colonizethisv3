@@ -101,16 +101,7 @@ void ewhRunReturnsFalseNoTileKeys() {
 
 /// Canonical scenarios for explore_work_handler family tests.
 List<RunnableScenario> exploreWorkHandlerScenarios() => const [
-  RunnableScenario(
-    label: 'supports only explore target',
-    run: ewhRunSupportsOnlyExplore,
-  ),
-  RunnableScenario(
-    label: 'assigns explore currentWork when province has discoverable tiles',
-    run: ewhRunAssignsExploreCurrentWork,
-  ),
-  RunnableScenario(
-    label: 'returns false when province has no tile keys in world state',
-    run: ewhRunReturnsFalseNoTileKeys,
-  ),
+  rs('supports only explore target', ewhRunSupportsOnlyExplore),
+  rs('assigns explore currentWork when province has discoverable tiles', ewhRunAssignsExploreCurrentWork),
+  rs('returns false when province has no tile keys in world state', ewhRunReturnsFalseNoTileKeys),
 ];

@@ -179,30 +179,13 @@ void pprRunReturnsMatchingProvincesSortedById() {
 
 /// Scenarios for partiallyRevealedPrefixedProvinceIdsForPlayer.
 List<RunnableScenario> partialProvinceRevealPrefixedIdsScenarios() => const [
-  RunnableScenario(
-    label:
-        'includes prefixed province id when land tiles mix unknown and known',
-    run: pprRunIncludesPrefixedProvinceWhenLandTilesMixVisibility,
-  ),
-  RunnableScenario(
-    label: 'excludes unprefixed province keys and uniform visibility',
-    run: pprRunExcludesUnprefixedKeysAndUniformVisibility,
-  ),
-  RunnableScenario(
-    label:
-        'partial reveal ids resolve via provincesById to same set as allProvinces filter',
-    run: pprRunPartialRevealIdsResolveViaProvincesById,
-  ),
+  rs('includes prefixed province id when land tiles mix unknown and known', pprRunIncludesPrefixedProvinceWhenLandTilesMixVisibility),
+  rs('excludes unprefixed province keys and uniform visibility', pprRunExcludesUnprefixedKeysAndUniformVisibility),
+  rs('partial reveal ids resolve via provincesById to same set as allProvinces filter', pprRunPartialRevealIdsResolveViaProvincesById),
 ];
 
 /// Scenarios for sortedProvincesForPartialRevealPrefixedIds.
 List<RunnableScenario> sortedProvincesForPartialRevealScenarios() => const [
-  RunnableScenario(
-    label: 'returns empty list without scanning when id set is empty',
-    run: pprRunReturnsEmptyWithoutScanningWhenIdSetEmpty,
-  ),
-  RunnableScenario(
-    label: 'returns matching provinces sorted by id',
-    run: pprRunReturnsMatchingProvincesSortedById,
-  ),
+  rs('returns empty list without scanning when id set is empty', pprRunReturnsEmptyWithoutScanningWhenIdSetEmpty),
+  rs('returns matching provinces sorted by id', pprRunReturnsMatchingProvincesSortedById),
 ];

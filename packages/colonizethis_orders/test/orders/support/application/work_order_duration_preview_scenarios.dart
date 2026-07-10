@@ -156,24 +156,9 @@ void wodpRunMinimumOneTurnForProspectAndPurchaseLand() {
 
 /// Canonical scenarios for work_order_duration_preview family tests.
 List<RunnableScenario> workOrderDurationPreviewScenarios() => const [
-  RunnableScenario(
-    label: 'returns scaled explore turns from province size',
-    run: wodpRunScaledExploreTurnsFromProvinceSize,
-  ),
-  RunnableScenario(
-    label: 'returns fort-level scaled turns for build_fort',
-    run: wodpRunFortLevelScaledTurnsForBuildFort,
-  ),
-  RunnableScenario(
-    label: 'returns one turn for counter_spy',
-    run: wodpRunOneTurnForCounterSpy,
-  ),
-  RunnableScenario(
-    label: 'returns improvement-level scaled turns for build_improvement',
-    run: wodpRunImprovementLevelScaledTurnsForBuildImprovement,
-  ),
-  RunnableScenario(
-    label: 'returns minimum one turn for prospect and purchase_land',
-    run: wodpRunMinimumOneTurnForProspectAndPurchaseLand,
-  ),
+  rs('returns scaled explore turns from province size', wodpRunScaledExploreTurnsFromProvinceSize),
+  rs('returns fort-level scaled turns for build_fort', wodpRunFortLevelScaledTurnsForBuildFort),
+  rs('returns one turn for counter_spy', wodpRunOneTurnForCounterSpy),
+  rs('returns improvement-level scaled turns for build_improvement', wodpRunImprovementLevelScaledTurnsForBuildImprovement),
+  rs('returns minimum one turn for prospect and purchase_land', wodpRunMinimumOneTurnForProspectAndPurchaseLand),
 ];

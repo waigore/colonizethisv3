@@ -31,9 +31,5 @@ void osfnwpRunSellerNwDeactivatesGate() {
 
 List<RunnableScenario>
 orderSuggestionFeedstockNewWorldProjectionScenarios() => const [
-  RunnableScenario(
-    label:
-        'seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393)',
-    run: osfnwpRunSellerNwDeactivatesGate,
-  ),
+  rs('seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393)', osfnwpRunSellerNwDeactivatesGate),
 ];

@@ -161,57 +161,18 @@ void ahRunReturnsTrueForMineralResource() {
 /// Canonical scenarios for helpers + clearUnitCurrentWork family tests.
 List<RunnableScenario> applicationHelpersScenarios() => const [
   // dart format off
-  RunnableScenario(
-    label: 'returns parsed coordinates for a valid tile key',
-    run: ahRunReturnsParsedCoordinatesForAValidTileKey,
-  ),
-  RunnableScenario(
-    label: 'returns null for malformed tile key',
-    run: ahRunReturnsNullForMalformedTileKey,
-  ),
-  RunnableScenario(
-    label: 'clears work state and restores origin tile by default',
-    run: ahRunClearsWorkStateAndRestoresOriginTileByDefault,
-  ),
-  RunnableScenario(
-    label: 'uses explicit restored tile override',
-    run: ahRunUsesExplicitRestoredTileOverride,
-  ),
-  RunnableScenario(
-    label: 'returns game unchanged when unit has no currentWork',
-    run: ahRunReturnsGameUnchangedWhenUnitHasNoCurrentWork,
-  ),
-  RunnableScenario(
-    label: 'clears currentWork, restores origin tile, and sets status idle',
-    run: ahRunClearsCurrentWorkRestoresOriginTileAndSetsStatusIdle,
-  ),
-  RunnableScenario(
-    label: 'returns true for prospectable terrain even when no resource is present',
-    run: ahRunReturnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent,
-  ),
-  RunnableScenario(
-    label: 'returns false for non-prospectable terrain even when mineral resource exists',
-    run: ahRunReturnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists,
-  ),
-  RunnableScenario(
-    label: 'returns false for wool on hills when tile map shows prospectable terrain',
-    run: ahRunReturnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain,
-  ),
-  RunnableScenario(
-    label: 'returns true for iron on hills with tile map when not prospected',
-    run: ahRunReturnsTrueForIronOnHillsWithTileMapWhenNotProspected,
-  ),
-  RunnableScenario(
-    label: 'returns false when resource is absent',
-    run: ahRunReturnsFalseWhenResourceIsAbsent,
-  ),
-  RunnableScenario(
-    label: 'returns false for non-mineral resource',
-    run: ahRunReturnsFalseForNonMineralResource,
-  ),
-  RunnableScenario(
-    label: 'returns true for mineral resource',
-    run: ahRunReturnsTrueForMineralResource,
-  ),
+  rs('returns parsed coordinates for a valid tile key', ahRunReturnsParsedCoordinatesForAValidTileKey),
+  rs('returns null for malformed tile key', ahRunReturnsNullForMalformedTileKey),
+  rs('clears work state and restores origin tile by default', ahRunClearsWorkStateAndRestoresOriginTileByDefault),
+  rs('uses explicit restored tile override', ahRunUsesExplicitRestoredTileOverride),
+  rs('returns game unchanged when unit has no currentWork', ahRunReturnsGameUnchangedWhenUnitHasNoCurrentWork),
+  rs('clears currentWork, restores origin tile, and sets status idle', ahRunClearsCurrentWorkRestoresOriginTileAndSetsStatusIdle),
+  rs('returns true for prospectable terrain even when no resource is present', ahRunReturnsTrueForProspectableTerrainEvenWhenNoResourceIsPresent),
+  rs('returns false for non-prospectable terrain even when mineral resource exists', ahRunReturnsFalseForNonProspectableTerrainEvenWhenMineralResourceExists),
+  rs('returns false for wool on hills when tile map shows prospectable terrain', ahRunReturnsFalseForWoolOnHillsWhenTileMapShowsProspectableTerrain),
+  rs('returns true for iron on hills with tile map when not prospected', ahRunReturnsTrueForIronOnHillsWithTileMapWhenNotProspected),
+  rs('returns false when resource is absent', ahRunReturnsFalseWhenResourceIsAbsent),
+  rs('returns false for non-mineral resource', ahRunReturnsFalseForNonMineralResource),
+  rs('returns true for mineral resource', ahRunReturnsTrueForMineralResource),
   // dart format on
 ];

@@ -162,32 +162,9 @@ void amvabiRunFactionMembershipDeclareWarGuard() {
 }
 
 List<RunnableScenario> armyMoveValidatorArmiesByIdScenarios() => const [
-  RunnableScenario(
-    label: 'accepted result is identical with and without supplied armiesById',
-    run: amvabiRunAcceptedIdenticalWithAndWithout,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'rejected result is identical with and without supplied armiesById',
-    run: amvabiRunRejectedIdenticalWithAndWithout,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'armiesById missing the target army id is rejected as Invalid army move',
-    run: amvabiRunMissingArmyIdRejected,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)',
-    run: amvabiRunIncrementalMatchesDirectValidate,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'factionMembership path matches legacy GP declare-war guard (Refs #2394)',
-    run: amvabiRunFactionMembershipDeclareWarGuard,
-    refs: '#2394',
-  ),
+  rs('accepted result is identical with and without supplied armiesById', amvabiRunAcceptedIdenticalWithAndWithout, '#2394'),
+  rs('rejected result is identical with and without supplied armiesById', amvabiRunRejectedIdenticalWithAndWithout, '#2394'),
+  rs('armiesById missing the target army id is rejected as Invalid army move', amvabiRunMissingArmyIdRejected, '#2394'),
+  rs('IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)', amvabiRunIncrementalMatchesDirectValidate, '#2394'),
+  rs('factionMembership path matches legacy GP declare-war guard (Refs #2394)', amvabiRunFactionMembershipDeclareWarGuard, '#2394'),
 ];

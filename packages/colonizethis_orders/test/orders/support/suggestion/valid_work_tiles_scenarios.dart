@@ -91,8 +91,7 @@ void vwtRunBuildImprovementReturnsOnlyControlledTilesWithResources() {
   );
 }
 
-void
-vwtRunBuildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected() =>
+void vwtRunBuildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected() =>
     vwtExpectMineralProspectGate();
 
 void vwtRunBuildImprovementIncludesPurchasedTilesWithResources() {
@@ -138,8 +137,7 @@ void vwtRunBuildImprovementExcludesSeaZoneTiles() {
   );
 }
 
-void
-vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {
+void vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected() {
   final grass = vwtTk('p1', 0, 0);
   final iron = vwtTk('p1', 1, 0);
   vwtExpectProspectVisExcludesAll(
@@ -156,8 +154,7 @@ vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlread
   );
 }
 
-void
-vwtRunGetvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile() {
+void vwtRunGetvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile() {
   final iron = vwtTk('p1', 0, 0);
   expect(
     vwtVisKeys(
@@ -174,8 +171,7 @@ vwtRunGetvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile() {
   );
 }
 
-void
-vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility() {
+void vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility() {
   final wool = vwtTk('p1', 0, 0);
   vwtExpectProspectVisExcludesAll(
     owTribeProspectGame(
@@ -189,8 +185,7 @@ vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTile
   );
 }
 
-void
-vwtRunGetvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces() {
+void vwtRunGetvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces() {
   final fx = owTribeExploreMultiProvinceFixture();
   vwtExpectExploreVisMembership(
     fx.game,
@@ -199,8 +194,7 @@ vwtRunGetvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedPr
   );
 }
 
-void
-vwtRunGetvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture() =>
+void vwtRunGetvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture() =>
     vwtExpectExploreLatencyUnder1s();
 
 void vwtRunSuggestmoveordersExcludesMovesToOtherGreatPowerProvinces() =>
@@ -218,8 +212,7 @@ void vwtRunSuggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit() {
   vwtExpectBuildExcludesReservedTile(vwtTk('p1', 0, 0), vwtTk('p1', 1, 0));
 }
 
-void
-vwtRunSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut() {
+void vwtRunSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut() {
   final fx = NwPartialRevealHomeTarget(
     homeLocalId: 'home',
     targetLocalId: 'tribe1',
@@ -234,8 +227,7 @@ vwtRunSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEn
   );
 }
 
-void
-vwtRunSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation() {
+void vwtRunSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation() {
   final fx = NwPartialRevealHomeTarget(
     homeLocalId: 'home',
     targetLocalId: 'gp2p',
@@ -256,8 +248,7 @@ vwtRunSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntr
   );
 }
 
-void
-vwtRunSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile() {
+void vwtRunSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile() {
   final fx = NwPartialRevealHomeTarget.tribeGrainIron();
   vwtExpectPartialRevealSuggestions(
     fx: fx,
@@ -268,8 +259,7 @@ vwtRunSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhe
   );
 }
 
-void
-vwtRunSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral() {
+void vwtRunSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral() {
   final fx = NwPartialRevealHomeTarget.tribeGrainIron(prospectedIron: true);
   vwtExpectPartialRevealSuggestions(
     fx: fx,
@@ -279,8 +269,7 @@ vwtRunSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligi
   );
 }
 
-void
-vwtRunSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy() {
+void vwtRunSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy() {
   final fx = NwPartialRevealHomeTarget.minorPurchase();
   vwtExpectPartialRevealSuggestions(
     fx: fx,
@@ -294,8 +283,7 @@ vwtRunSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribe
   );
 }
 
-void
-vwtRunSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail() {
+void vwtRunSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail() {
   final fx = NwPartialRevealHomeTarget.minorPurchase();
   vwtExpectPartialRevealSuggestions(
     fx: fx,
@@ -308,28 +296,51 @@ vwtRunSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrD
 
 List<RunnableScenario> validWorkTilesScenarios() => [
   // dart format off
-  RunnableScenario(label: 'returns empty for unknown unit id', run: vwtRunReturnsEmptyForUnknownUnitId),
-  RunnableScenario(label: 'returns empty when workTarget not allowed for unit type', run: vwtRunReturnsEmptyWhenWorkTargetNotAllowedForUnitType),
-  RunnableScenario(label: 'returns empty for unknown unit id with visibility', run: vwtRunReturnsEmptyForUnknownUnitIdWithVisibility),
-  RunnableScenario(label: 'returns empty when workTarget not allowed for unit type with visibility', run: vwtRunReturnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility),
-  RunnableScenario(label: 'filters by visibility before order engine validation', run: vwtRunFiltersByVisibilityBeforeOrderEngineValidation),
-  RunnableScenario(label: 'build_improvement returns only controlled tiles with resources', run: vwtRunBuildImprovementReturnsOnlyControlledTilesWithResources),
-  RunnableScenario(label: 'build_improvement excludes owned mineral tile until prospected; includes after prospected', run: vwtRunBuildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected),
-  RunnableScenario(label: 'build_improvement includes purchased tiles with resources', run: vwtRunBuildImprovementIncludesPurchasedTilesWithResources),
-  RunnableScenario(label: 'build_improvement excludes sea zone tiles', run: vwtRunBuildImprovementExcludesSeaZoneTiles),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility prospect excludes non-mineral and already prospected', run: vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility prospect includes eligible tile', run: vwtRunGetvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility prospect excludes wool on hills when tile map marks hills (terrain-only eligibility must not apply)', run: vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility explore only scans partially revealed provinces', run: vwtRunGetvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility explore remains under one second on large map fixture', run: vwtRunGetvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture),
-  RunnableScenario(label: 'suggestMoveOrders excludes moves to other Great Power provinces', run: vwtRunSuggestmoveordersExcludesMovesToOtherGreatPowerProvinces),
-  RunnableScenario(label: 'suggestWorkOrders sorts by targetTileKey when unitId and target match', run: vwtRunSuggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch),
-  RunnableScenario(label: 'suggestWorkOrders excludes targets from existing work orders for same unit', run: vwtRunSuggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit),
-  RunnableScenario(label: 'suggestWorkOrders explore includes partially revealed province when first sorted entry tile is unknown but later tile is fogged', run: vwtRunSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut),
-  RunnableScenario(label: 'suggestWorkOrders explore excludes partially revealed province when no bundled entry tile passes move validation', run: vwtRunSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation),
-  RunnableScenario(label: 'suggestWorkOrders prospect includes mineral tile in partially revealed province when first sorted entry tile is unknown', run: vwtRunSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile),
-  RunnableScenario(label: 'suggestWorkOrders prospect excludes partially revealed province when only non-eligible or already prospected mineral tiles remain', run: vwtRunSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral),
-  RunnableScenario(label: 'suggestWorkOrders purchase_land includes target in partially revealed minor or tribe province when embassy and diplomacy gates pass', run: vwtRunSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy),
-  RunnableScenario(label: 'suggestWorkOrders purchase_land excludes partially revealed target when embassy or diplomacy preconditions fail', run: vwtRunSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail),
+  rs('returns empty for unknown unit id', vwtRunReturnsEmptyForUnknownUnitId),
+
+  rs('returns empty when workTarget not allowed for unit type', vwtRunReturnsEmptyWhenWorkTargetNotAllowedForUnitType),
+
+  rs('returns empty for unknown unit id with visibility', vwtRunReturnsEmptyForUnknownUnitIdWithVisibility),
+
+  rs('returns empty when workTarget not allowed for unit type with visibility', vwtRunReturnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility),
+
+  rs('filters by visibility before order engine validation', vwtRunFiltersByVisibilityBeforeOrderEngineValidation),
+
+  rs('build_improvement returns only controlled tiles with resources', vwtRunBuildImprovementReturnsOnlyControlledTilesWithResources),
+
+  rs('build_improvement excludes owned mineral tile until prospected; includes after prospected', vwtRunBuildImprovementExcludesOwnedMineralTileUntilProspectedIncludesAfterProspected),
+
+  rs('build_improvement includes purchased tiles with resources', vwtRunBuildImprovementIncludesPurchasedTilesWithResources),
+
+  rs('build_improvement excludes sea zone tiles', vwtRunBuildImprovementExcludesSeaZoneTiles),
+
+  rs('getValidWorkOrderTileKeysWithVisibility prospect excludes non-mineral and already prospected', vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesNonMineralAndAlreadyProspected),
+
+  rs('getValidWorkOrderTileKeysWithVisibility prospect includes eligible tile', vwtRunGetvalidworkordertilekeyswithvisibilityProspectIncludesEligibleTile),
+
+  rs('getValidWorkOrderTileKeysWithVisibility prospect excludes wool on hills when tile map marks hills (terrain-only eligibility must not apply)', vwtRunGetvalidworkordertilekeyswithvisibilityProspectExcludesWoolOnHillsWhenTileMapMarksHillsTerrainOnlyEligibility),
+
+  rs('getValidWorkOrderTileKeysWithVisibility explore only scans partially revealed provinces', vwtRunGetvalidworkordertilekeyswithvisibilityExploreOnlyScansPartiallyRevealedProvinces),
+
+  rs('getValidWorkOrderTileKeysWithVisibility explore remains under one second on large map fixture', vwtRunGetvalidworkordertilekeyswithvisibilityExploreRemainsUnderOneSecondOnLargeMapFixture),
+
+  rs('suggestMoveOrders excludes moves to other Great Power provinces', vwtRunSuggestmoveordersExcludesMovesToOtherGreatPowerProvinces),
+
+  rs('suggestWorkOrders sorts by targetTileKey when unitId and target match', vwtRunSuggestworkordersSortsByTargetTileKeyWhenUnitIdAndTargetMatch),
+
+  rs('suggestWorkOrders excludes targets from existing work orders for same unit', vwtRunSuggestworkordersExcludesTargetsFromExistingWorkOrdersForSameUnit),
+
+  rs('suggestWorkOrders explore includes partially revealed province when first sorted entry tile is unknown but later tile is fogged', vwtRunSuggestworkordersExploreIncludesPartiallyRevealedProvinceWhenFirstSortedEntryTileIsUnknownBut),
+
+  rs('suggestWorkOrders explore excludes partially revealed province when no bundled entry tile passes move validation', vwtRunSuggestworkordersExploreExcludesPartiallyRevealedProvinceWhenNoBundledEntryTilePassesMoveValidation),
+
+  rs('suggestWorkOrders prospect includes mineral tile in partially revealed province when first sorted entry tile is unknown', vwtRunSuggestworkordersProspectIncludesMineralTileInPartiallyRevealedProvinceWhenFirstSortedEntryTile),
+
+  rs('suggestWorkOrders prospect excludes partially revealed province when only non-eligible or already prospected mineral tiles remain', vwtRunSuggestworkordersProspectExcludesPartiallyRevealedProvinceWhenOnlyNonEligibleOrAlreadyProspectedMineral),
+
+  rs('suggestWorkOrders purchase_land includes target in partially revealed minor or tribe province when embassy and diplomacy gates pass', vwtRunSuggestworkordersPurchaseLandIncludesTargetInPartiallyRevealedMinorOrTribeProvinceWhenEmbassy),
+
+  rs('suggestWorkOrders purchase_land excludes partially revealed target when embassy or diplomacy preconditions fail', vwtRunSuggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail),
+
   // dart format on
 ];

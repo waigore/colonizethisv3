@@ -33,14 +33,6 @@ void orcRunFromViewAliasesProvincesById() {
 
 /// Canonical scenarios for order_resolution_context family tests.
 List<RunnableScenario> orderResolutionContextScenarios() => const [
-  RunnableScenario(
-    label:
-        'buildOrderResolutionContext reuses view and cached units (Refs #2836)',
-    run: orcRunBuildContextReusesViewAndCachedUnits,
-    refs: '#2836',
-  ),
-  RunnableScenario(
-    label: 'orderResolutionContextFromView aliases provincesById',
-    run: orcRunFromViewAliasesProvincesById,
-  ),
+  rs('buildOrderResolutionContext reuses view and cached units (Refs #2836)', orcRunBuildContextReusesViewAndCachedUnits, '#2836'),
+  rs('orderResolutionContextFromView aliases provincesById', orcRunFromViewAliasesProvincesById),
 ];

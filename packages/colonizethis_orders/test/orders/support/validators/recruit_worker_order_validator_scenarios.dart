@@ -212,55 +212,14 @@ void rwovRunSequentialApprenticeTrainsDrainPeasants() {
 
 /// Canonical scenarios for RecruitWorkerOrderValidator (#2692 S4).
 List<RunnableScenario> recruitWorkerOrderValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts peasant recruit and deducts 2 fabric, adds peasant',
-    run: rwovRunAcceptsPeasantRecruit,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'rejects peasant recruit when fabric is insufficient',
-    run: rwovRunRejectsPeasantInsufficientFabric,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label:
-        'accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices',
-    run: rwovRunAcceptsApprenticeTrain,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'rejects apprentice train when required tech is locked',
-    run: rwovRunRejectsApprenticeTechLocked,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'rejects apprentice train when no peasant is available',
-    run: rwovRunRejectsApprenticeNoPeasant,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'rejects apprentice train when treasury is insufficient',
-    run: rwovRunRejectsApprenticeInsufficientTreasury,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'accepts journeyman train and applies 500 ducat + 5 paper cost',
-    run: rwovRunAcceptsJourneymanTrain,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'accepts master train and applies 1000 ducat + 10 paper cost',
-    run: rwovRunAcceptsMasterTrain,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'short-circuits to "Previous invalid" when previousRejected is true',
-    run: rwovRunShortCircuitsPreviousRejected,
-    refs: '#2692 S4',
-  ),
-  RunnableScenario(
-    label: 'sequential apprentice trains drain peasants in submission order',
-    run: rwovRunSequentialApprenticeTrainsDrainPeasants,
-    refs: '#2692 S4',
-  ),
+  rs('accepts peasant recruit and deducts 2 fabric, adds peasant', rwovRunAcceptsPeasantRecruit, '#2692 S4'),
+  rs('rejects peasant recruit when fabric is insufficient', rwovRunRejectsPeasantInsufficientFabric, '#2692 S4'),
+  rs('accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices', rwovRunAcceptsApprenticeTrain, '#2692 S4'),
+  rs('rejects apprentice train when required tech is locked', rwovRunRejectsApprenticeTechLocked, '#2692 S4'),
+  rs('rejects apprentice train when no peasant is available', rwovRunRejectsApprenticeNoPeasant, '#2692 S4'),
+  rs('rejects apprentice train when treasury is insufficient', rwovRunRejectsApprenticeInsufficientTreasury, '#2692 S4'),
+  rs('accepts journeyman train and applies 500 ducat + 5 paper cost', rwovRunAcceptsJourneymanTrain, '#2692 S4'),
+  rs('accepts master train and applies 1000 ducat + 10 paper cost', rwovRunAcceptsMasterTrain, '#2692 S4'),
+  rs('short-circuits to "Previous invalid" when previousRejected is true', rwovRunShortCircuitsPreviousRejected, '#2692 S4'),
+  rs('sequential apprentice trains drain peasants in submission order', rwovRunSequentialApprenticeTrainsDrainPeasants, '#2692 S4'),
 ];

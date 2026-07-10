@@ -67,12 +67,6 @@ void cptRunKeepsExactPendingTileKeyForExplore() {
 
 /// Canonical scenarios for civilian_projected_tile family tests.
 List<RunnableScenario> civilianProjectedTileScenarios() => const [
-  RunnableScenario(
-    label: 'prefers pending work-order target tile key',
-    run: cptRunPrefersPendingWorkOrderTargetTileKey,
-  ),
-  RunnableScenario(
-    label: 'keeps exact pending tile key for explore projection',
-    run: cptRunKeepsExactPendingTileKeyForExplore,
-  ),
+  rs('prefers pending work-order target tile key', cptRunPrefersPendingWorkOrderTargetTileKey),
+  rs('keeps exact pending tile key for explore projection', cptRunKeepsExactPendingTileKeyForExplore),
 ];

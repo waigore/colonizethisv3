@@ -87,28 +87,12 @@ void osblragRunHumanNoWaiverValidationPath() {
 
 List<RunnableScenario>
 orderSuggestionBuildLockRecoveryAffordabilityGuardScenarios() => const [
-  RunnableScenario(
-    label:
-        'positive control: a broke GP with riches CAN train the cheapest '
-        'regiment (proves the negative guard is non-vacuous)',
-    run: osblragRunPositiveControlRichesFundRegiment,
-  ),
-  RunnableScenario(
-    label:
-        'affordability regression guard: AI GP at treasury 0 with no riches '
-        'gets zero regiment build candidates (no AI bypass)',
-    run: osblragRunAiNoBypass,
-  ),
-  RunnableScenario(
-    label:
-        'human-player guard: human at treasury 0 with no riches gets zero '
-        'regiment suggestions (no human waiver)',
-    run: osblragRunHumanNoWaiverSuggestions,
-  ),
-  RunnableScenario(
-    label:
-        'human-player guard: the build-validation path rejects a human regiment '
-        'build at treasury 0 (UI submission path, no waiver)',
-    run: osblragRunHumanNoWaiverValidationPath,
-  ),
+  rs('positive control: a broke GP with riches CAN train the cheapest '
+        'regiment (proves the negative guard is non-vacuous)', osblragRunPositiveControlRichesFundRegiment),
+  rs('affordability regression guard: AI GP at treasury 0 with no riches '
+        'gets zero regiment build candidates (no AI bypass)', osblragRunAiNoBypass),
+  rs('human-player guard: human at treasury 0 with no riches gets zero '
+        'regiment suggestions (no human waiver)', osblragRunHumanNoWaiverSuggestions),
+  rs('human-player guard: the build-validation path rejects a human regiment '
+        'build at treasury 0 (UI submission path, no waiver)', osblragRunHumanNoWaiverValidationPath),
 ];

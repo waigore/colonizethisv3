@@ -76,18 +76,7 @@ void oswtplRunPlayerOwnedProvinceIdsMatchesDefaultPath() {
 
 List<RunnableScenario>
 orderSuggestionWorkTilePrefilterPurchaseLandScenarios() => const [
-  RunnableScenario(
-    label:
-        'includes resource tiles in minor-owned provinces, excludes GP-owned',
-    run: oswtplRunIncludesMinorExcludesGpOwned,
-  ),
-  RunnableScenario(
-    label: 'includes resource tiles in tribe-owned provinces',
-    run: oswtplRunIncludesTribeOwnedProvinces,
-  ),
-  RunnableScenario(
-    label:
-        'playerOwnedProvinceIds yields same candidates as internal scan (build_road)',
-    run: oswtplRunPlayerOwnedProvinceIdsMatchesDefaultPath,
-  ),
+  rs('includes resource tiles in minor-owned provinces, excludes GP-owned', oswtplRunIncludesMinorExcludesGpOwned),
+  rs('includes resource tiles in tribe-owned provinces', oswtplRunIncludesTribeOwnedProvinces),
+  rs('playerOwnedProvinceIds yields same candidates as internal scan (build_road)', oswtplRunPlayerOwnedProvinceIdsMatchesDefaultPath),
 ];

@@ -93,44 +93,14 @@ void _expectWrongPlayerTripsAssertion<T>(
 
 List<RunnableScenario>
 orderSuggestionSharedValidatorNegativeMismatchScenarios() => const [
-  RunnableScenario(
-    label:
-        'suggestMoveOrders trips assertion when validator is for a different player',
-    run: ossvnRunSuggestMoveOrdersWrongPlayer,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'suggestArmyMoveOrders trips assertion when validator is for a different player',
-    run: ossvnRunSuggestArmyMoveOrdersWrongPlayer,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'suggestWorkOrders trips assertion when validator is for a different player',
-    run: ossvnRunSuggestWorkOrdersWrongPlayer,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'suggestBuildOrders trips assertion when validator is for a different player',
-    run: ossvnRunSuggestBuildOrdersWrongPlayer,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'IncrementalCandidateValidator.forPlayer trips assertion when supplied view is for a different player',
-    run: ossvnRunForPlayerForeignView,
-    refs: '#2394',
-  ),
+  rs('suggestMoveOrders trips assertion when validator is for a different player', ossvnRunSuggestMoveOrdersWrongPlayer, '#2394'),
+  rs('suggestArmyMoveOrders trips assertion when validator is for a different player', ossvnRunSuggestArmyMoveOrdersWrongPlayer, '#2394'),
+  rs('suggestWorkOrders trips assertion when validator is for a different player', ossvnRunSuggestWorkOrdersWrongPlayer, '#2394'),
+  rs('suggestBuildOrders trips assertion when validator is for a different player', ossvnRunSuggestBuildOrdersWrongPlayer, '#2394'),
+  rs('IncrementalCandidateValidator.forPlayer trips assertion when supplied view is for a different player', ossvnRunForPlayerForeignView, '#2394'),
 ];
 
 List<RunnableScenario>
 orderSuggestionSharedValidatorNegativeSmokeScenarios() => const [
-  RunnableScenario(
-    label:
-        'orders generated under the new shared-validator code path are unchanged against a known fixture',
-    run: ossvnRunSimpleHeuristicsSmokeFixture,
-    refs: '#2394',
-  ),
+  rs('orders generated under the new shared-validator code path are unchanged against a known fixture', ossvnRunSimpleHeuristicsSmokeFixture, '#2394'),
 ];

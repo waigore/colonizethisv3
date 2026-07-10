@@ -65,20 +65,7 @@ void osaitRunDefaultImplReturnsValidatorCleanOutputForWiredContext() {
 }
 
 List<RunnableScenario> orderSuggestionApiImplTradeScenarios() => const [
-  RunnableScenario(
-    label:
-        'no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids',
-    run: osaitRunNoEmbassyBidTypeCapZeroOffersFromStockpileNoBids,
-    refs: '#2989 A6',
-  ),
-  RunnableScenario(
-    label: 'contextOverride passes through to the pure suggester',
-    run: osaitRunContextOverridePassesThroughToPureSuggester,
-    refs: '#2989 A6',
-  ),
-  RunnableScenario(
-    label: 'default impl returns validator-clean output for the wired context',
-    run: osaitRunDefaultImplReturnsValidatorCleanOutputForWiredContext,
-    refs: '#2989 A6',
-  ),
+  rs('no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids', osaitRunNoEmbassyBidTypeCapZeroOffersFromStockpileNoBids, '#2989 A6'),
+  rs('contextOverride passes through to the pure suggester', osaitRunContextOverridePassesThroughToPureSuggester, '#2989 A6'),
+  rs('default impl returns validator-clean output for the wired context', osaitRunDefaultImplReturnsValidatorCleanOutputForWiredContext, '#2989 A6'),
 ];

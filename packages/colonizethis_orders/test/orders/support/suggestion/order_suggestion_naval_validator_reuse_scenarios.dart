@@ -48,10 +48,5 @@ void osnvrRunMoveAndMissionReuseOneValidator() {
 }
 
 List<RunnableScenario> orderSuggestionNavalValidatorReuseScenarios() => const [
-  RunnableScenario(
-    label:
-        'suggestNavalMoveOrders and suggestNavalMissionOrders reuse one validator',
-    run: osnvrRunMoveAndMissionReuseOneValidator,
-    refs: '#2394',
-  ),
+  rs('suggestNavalMoveOrders and suggestNavalMissionOrders reuse one validator', osnvrRunMoveAndMissionReuseOneValidator, '#2394'),
 ];

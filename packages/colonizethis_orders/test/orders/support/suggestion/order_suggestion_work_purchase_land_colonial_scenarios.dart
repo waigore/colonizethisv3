@@ -99,22 +99,7 @@ void oswplcRunNoEmbassyOmitsPurchaseLand() {
 
 List<RunnableScenario>
 orderSuggestionWorkPurchaseLandColonialScenarios() => const [
-  RunnableScenario(
-    label:
-        'embassy-stage NW tribe: suggestWorkOrders surfaces purchase_land for Merchant',
-    run: oswplcRunEmbassySurfacesPurchaseLand,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label:
-        'embassy-stage NW tribe: suggestWorkOrders is deterministic for repeated calls',
-    run: oswplcRunDeterministicAcrossRepeatedCalls,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label:
-        'no embassy with NW tribe: suggestWorkOrders omits purchase_land for Merchant',
-    run: oswplcRunNoEmbassyOmitsPurchaseLand,
-    refs: '#2509',
-  ),
+  rs('embassy-stage NW tribe: suggestWorkOrders surfaces purchase_land for Merchant', oswplcRunEmbassySurfacesPurchaseLand, '#2509'),
+  rs('embassy-stage NW tribe: suggestWorkOrders is deterministic for repeated calls', oswplcRunDeterministicAcrossRepeatedCalls, '#2509'),
+  rs('no embassy with NW tribe: suggestWorkOrders omits purchase_land for Merchant', oswplcRunNoEmbassyOmitsPurchaseLand, '#2509'),
 ];

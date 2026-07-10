@@ -148,31 +148,11 @@ void woccfbRunDoesNotWaiveLumberWhenCastIronAffordable() {
 
 List<RunnableScenario>
 workOrderCostCalculatorFeedstockBootstrapScenarios() => const [
-  RunnableScenario(
-    label:
-        'omits castIron for unimproved feedstock tile when gate active and '
-        'stockpile has lumber only',
-    run: woccfbRunOmitsCastIronLumberOnly,
-  ),
-  RunnableScenario(
-    label:
-        'keeps full cost when castIron is already affordable (negative control)',
-    run: woccfbRunKeepsFullCostWhenCastIronAffordable,
-  ),
-  RunnableScenario(
-    label:
-        'keeps full cost on non-feedstock tile while gate active (negative control)',
-    run: woccfbRunKeepsFullCostNonFeedstock,
-  ),
-  RunnableScenario(
-    label:
-        'omits lumber and castIron for unimproved feedstock tile when gate active '
-        'and stockpile has neither input (Refs #2847 lumber bootstrap)',
-    run: woccfbRunOmitsLumberAndCastIronNeitherInput,
-  ),
-  RunnableScenario(
-    label:
-        'does not waive lumber when castIron is already affordable (negative control)',
-    run: woccfbRunDoesNotWaiveLumberWhenCastIronAffordable,
-  ),
+  rs('omits castIron for unimproved feedstock tile when gate active and '
+        'stockpile has lumber only', woccfbRunOmitsCastIronLumberOnly),
+  rs('keeps full cost when castIron is already affordable (negative control)', woccfbRunKeepsFullCostWhenCastIronAffordable),
+  rs('keeps full cost on non-feedstock tile while gate active (negative control)', woccfbRunKeepsFullCostNonFeedstock),
+  rs('omits lumber and castIron for unimproved feedstock tile when gate active '
+        'and stockpile has neither input (Refs #2847 lumber bootstrap)', woccfbRunOmitsLumberAndCastIronNeitherInput),
+  rs('does not waive lumber when castIron is already affordable (negative control)', woccfbRunDoesNotWaiveLumberWhenCastIronAffordable),
 ];

@@ -9,13 +9,11 @@ import '../scenario_runner.dart';
 import 'work_application_fixtures.dart';
 import 'work_completion_expectation_shorthand.dart';
 
-void
-wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
+void wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork() {
   wccExpectBuildImprovementCompletesToLevel(1);
 }
 
-void
-wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
+void wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
   final next = wccApply(
     workAppOwnedGame(
       turnNumber: 2,
@@ -28,8 +26,7 @@ wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile() {
   expect(next.lastHumanResearchCategoryCompletionTurn, 2);
 }
 
-void
-wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
+void wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint() {
   const aiId = 'ai1';
   final next = wccApply(
     workAppOwnedGame(
@@ -149,8 +146,7 @@ void wccRunBuildRoadCompletionIncreasesRoadLevel() {
   wccExpectRoadLevel(next, WorkAppIds.tileKey, 1);
 }
 
-void
-wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
+void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade() {
   const capital = WorkAppIds.originTileKey;
   final next = wccApply(
     wccRoadPropagateGame(
@@ -160,12 +156,7 @@ wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrad
       players: [
         workAppPlayer(
           capitalProvinceId: WorkAppIds.provinceId,
-          capitalTile: const CapitalTile(
-            regionId: WorkAppIds.ow,
-            provinceId: WorkAppIds.provinceId,
-            x: 1,
-            y: 0,
-          ),
+          capitalTile: workAppCapitalTile(x: 1),
         ),
       ],
     ),
@@ -175,8 +166,7 @@ wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrad
   wccExpectRoadLevel(next, capital, 2);
 }
 
-void
-wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
+void wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt() {
   const port = WorkAppIds.originTileKey;
   final next = wccApply(
     wccRoadPropagateGame(
@@ -201,16 +191,8 @@ void wccRunBuildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea() {
     wccEngineerCompletionGame(workTarget: kWorkTargetBuildPort),
     topology: const MapTopology(
       nodes: [
-        TopologyNode(
-          id: 'P1',
-          regionId: WorkAppIds.ow,
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'sea1',
-          regionId: WorkAppIds.ow,
-          type: TopologyNodeType.seaZone,
-        ),
+        TopologyNode(id: 'P1', regionId: WorkAppIds.ow, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: WorkAppIds.ow, type: TopologyNodeType.seaZone),
       ],
       edges: [TopologyEdge(id1: 'P1', id2: 'sea1')],
     ),
@@ -243,12 +225,10 @@ void wccRunBuildRailCompletionSetsRoadLevelTo4WhenValid() =>
 void wccRunRoutesKWorkTargetBuildRailThroughHandlerMapEntry() =>
     wccExpectRailDispatch(1, 4);
 
-void
-wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies() =>
+void wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies() =>
     wccExpectRailDispatch(0, 0, players: [workAppPlayer()]);
 
-void
-wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord() {
+void wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord() {
   final province = Province(
     id: WorkAppIds.provinceId,
     regionId: WorkAppIds.ow,
@@ -267,8 +247,7 @@ wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkConte
   );
 }
 
-void
-wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord() {
+void wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord() {
   final (state, unit, cw) = wccDispatchTargetSetup(
     unitType: kUnitTypeExplorer,
     workTarget: kWorkTargetExplore,
@@ -291,87 +270,25 @@ wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompl
 /// Labels match former suite descriptions (single-line `label:` for CI).
 List<RunnableScenario> workCompletionScenarios() => [
   // dart format off
-  RunnableScenario(
-    label: 'build_improvement completion increases improvement level and clears currentWork',
-    run: wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork,
-  ),
-  RunnableScenario(
-    label: 'build_improvement completion sets envy mirror hint for human on extraction tile',
-    run: wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile,
-  ),
-  RunnableScenario(
-    label: 'build_improvement completion adds envy evidence when AI mirrors human gathering hint',
-    run: wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint,
-  ),
-  RunnableScenario(
-    label: 'build_improvement completion raises stored level from 3 to 4 (global max)',
-    run: wccRunBuildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax,
-  ),
-  RunnableScenario(
-    label: 'build_improvement completion does not re-apply extraction tech cap (#1291)',
-    run: wccRunBuildImprovementCompletionDoesNotReApplyExtractionTechCap1291,
-    refs: '#1291',
-  ),
-  RunnableScenario(
-    label: 'work cancelled when province containing target tile is conquered (#376)',
-    run: wccRunWorkCancelledWhenProvinceContainingTargetTileIsConquered376,
-    refs: '#376',
-  ),
-  RunnableScenario(
-    label: 'multi-turn work decrements remainingTurns and completes only when zero',
-    run: wccRunMultiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero,
-  ),
-  RunnableScenario(
-    label: 'explore completion sets visibility and clears currentWork',
-    run: wccRunExploreCompletionSetsVisibilityAndClearsCurrentWork,
-  ),
-  RunnableScenario(
-    label: 'explore completion reveals every tile in canonical full-id bucket',
-    run: wccRunExploreCompletionRevealsEveryTileInCanonicalFullIdBucket,
-  ),
-  RunnableScenario(
-    label: 'build_road completion increases road level',
-    run: wccRunBuildRoadCompletionIncreasesRoadLevel,
-  ),
-  RunnableScenario(
-    label: 'build_road completion propagates transport level to adjacent capital tile (no downgrade)',
-    run: wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade,
-  ),
-  RunnableScenario(
-    label: 'build_road completion propagates transport level to adjacent port tile and upgrades it',
-    run: wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt,
-  ),
-  RunnableScenario(
-    label: 'build_port completion sets port and road level 4 when topology has sea',
-    run: wccRunBuildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea,
-  ),
-  RunnableScenario(
-    label: 'build_fort completion increases province fortLevel',
-    run: wccRunBuildFortCompletionIncreasesProvinceFortLevel,
-  ),
-  RunnableScenario(
-    label: 'build_rail completion leaves road when tile has no road',
-    run: wccRunBuildRailCompletionLeavesRoadWhenTileHasNoRoad,
-  ),
-  RunnableScenario(
-    label: 'build_rail completion sets road level to 4 when valid',
-    run: wccRunBuildRailCompletionSetsRoadLevelTo4WhenValid,
-  ),
-  RunnableScenario(
-    label: 'routes kWorkTargetBuildRail through handler map entry',
-    run: wccRunRoutesKWorkTargetBuildRailThroughHandlerMapEntry,
-  ),
-  RunnableScenario(
-    label: 'build_rail completion no-ops when rejectionReasonForBuildRailOrder applies',
-    run: wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies,
-  ),
-  RunnableScenario(
-    label: 'upgrade_town threads getProvinces/replaceProvinces through the CompletedWorkContext record',
-    run: wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord,
-  ),
-  RunnableScenario(
-    label: 'explore invokes the applyExploreCompletion closure with the unit region via the CompletedWorkContext record',
-    run: wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord,
-  ),
+  rs('build_improvement completion increases improvement level and clears currentWork', wccRunBuildImprovementCompletionIncreasesImprovementLevelAndClearsCurrentWork),
+  rs('build_improvement completion sets envy mirror hint for human on extraction tile', wccRunBuildImprovementCompletionSetsEnvyMirrorHintForHumanOnExtractionTile),
+  rs('build_improvement completion adds envy evidence when AI mirrors human gathering hint', wccRunBuildImprovementCompletionAddsEnvyEvidenceWhenAiMirrorsHumanGatheringHint),
+  rs('build_improvement completion raises stored level from 3 to 4 (global max)', wccRunBuildImprovementCompletionRaisesStoredLevelFrom3To4GlobalMax),
+  rs('build_improvement completion does not re-apply extraction tech cap (#1291)', wccRunBuildImprovementCompletionDoesNotReApplyExtractionTechCap1291, '#1291'),
+  rs('work cancelled when province containing target tile is conquered (#376)', wccRunWorkCancelledWhenProvinceContainingTargetTileIsConquered376, '#376'),
+  rs('multi-turn work decrements remainingTurns and completes only when zero', wccRunMultiTurnWorkDecrementsRemainingTurnsAndCompletesOnlyWhenZero),
+  rs('explore completion sets visibility and clears currentWork', wccRunExploreCompletionSetsVisibilityAndClearsCurrentWork),
+  rs('explore completion reveals every tile in canonical full-id bucket', wccRunExploreCompletionRevealsEveryTileInCanonicalFullIdBucket),
+  rs('build_road completion increases road level', wccRunBuildRoadCompletionIncreasesRoadLevel),
+  rs('build_road completion propagates transport level to adjacent capital tile (no downgrade)', wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentCapitalTileNoDowngrade),
+  rs('build_road completion propagates transport level to adjacent port tile and upgrades it', wccRunBuildRoadCompletionPropagatesTransportLevelToAdjacentPortTileAndUpgradesIt),
+  rs('build_port completion sets port and road level 4 when topology has sea', wccRunBuildPortCompletionSetsPortAndRoadLevel4WhenTopologyHasSea),
+  rs('build_fort completion increases province fortLevel', wccRunBuildFortCompletionIncreasesProvinceFortLevel),
+  rs('build_rail completion leaves road when tile has no road', wccRunBuildRailCompletionLeavesRoadWhenTileHasNoRoad),
+  rs('build_rail completion sets road level to 4 when valid', wccRunBuildRailCompletionSetsRoadLevelTo4WhenValid),
+  rs('routes kWorkTargetBuildRail through handler map entry', wccRunRoutesKWorkTargetBuildRailThroughHandlerMapEntry),
+  rs('build_rail completion no-ops when rejectionReasonForBuildRailOrder applies', wccRunBuildRailCompletionNoOpsWhenRejectionReasonForBuildRailOrderApplies),
+  rs('upgrade_town threads getProvinces/replaceProvinces through the CompletedWorkContext record', wccRunUpgradeTownThreadsGetProvincesReplaceProvincesThroughTheCompletedWorkContextRecord),
+  rs('explore invokes the applyExploreCompletion closure with the unit region via the CompletedWorkContext record', wccRunExploreInvokesTheApplyExploreCompletionClosureWithTheUnitRegionViaTheCompletedWorkContextRecord),
   // dart format on
 ];

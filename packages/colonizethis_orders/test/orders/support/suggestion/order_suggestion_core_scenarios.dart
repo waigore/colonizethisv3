@@ -20,8 +20,7 @@ void oscRunSuggestMoveOrdersOnlyReturnsMovesThatPassValidation() {
 void oscRunSuggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility() =>
     oscExpectMoveThrowsUnknownVisibility();
 
-void
-oscRunMoveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians() =>
+void oscRunMoveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians() =>
     oscExpectCivilianTileKeyDerivedMove();
 
 void oscRunNoExploreSuggestionWhenProvinceUnknown() {
@@ -53,8 +52,7 @@ void oscRunSuggestWorkOrdersExploreTargetUsesKWorkTargetExplore() {
   );
 }
 
-void
-oscRunSuggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope() {
+void oscRunSuggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope() {
   final game = oscPartialRevealExploreCacheGame();
   final topology = oscEmptyTopology();
   final explore = oscWorkWithTarget(
@@ -98,8 +96,7 @@ void oscRunProspectSuggestionWhenProvinceFoggedAndTilesInProvince() {
   );
 }
 
-void
-oscRunPlayerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder() {
+void oscRunPlayerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder() {
   final game = oscGame(
     worldState: oscExplorerProvinceGame(
       extraProvinceLocals: ['p2'],
@@ -121,8 +118,7 @@ oscRunPlayerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder() {
   expect(fromView.map((p) => p.id).toList(), fromAll.map((p) => p.id).toList());
 }
 
-void
-oscRunGetValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder() {
+void oscRunGetValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder() {
   final setup = OscDualBuilderGrainTiles();
   final validB2 = getValidWorkOrderTileKeysWithVisibility(
     game: setup.game(),
@@ -161,8 +157,7 @@ void oscRunWorkSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile() {
   }
 }
 
-void
-oscRunSuggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes() {
+void oscRunSuggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes() {
   final noRes = OscIds.tile('p1', 0, 0);
   final withRes = OscIds.tile('p1', 1, 0);
   oscExpectBuildImprovementFirstTile(
@@ -176,8 +171,7 @@ oscRunSuggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourc
   );
 }
 
-void
-oscRunSuggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile() {
+void oscRunSuggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile() {
   final tileP1 = OscIds.tile('p1', 0, 0);
   final tileP2 = OscIds.tile('p2', 0, 0);
   oscExpectBuildImprovementFirstTile(
@@ -193,8 +187,7 @@ oscRunSuggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuil
   );
 }
 
-void
-oscRunSuggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder() {
+void oscRunSuggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder() {
   final setup = OscDualBuilderGrainTiles();
   oscExpectBuildImprovementFirstTile(
     game: setup.game(),
@@ -276,33 +269,54 @@ void oscRunSuggestNavalMoveOrdersReturnsList() {
 void oscRunCounterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles() =>
     oscExpectCounterSpySuggested();
 
-void
-oscRunPurchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile() =>
+void oscRunPurchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile() =>
     oscExpectPurchaseLandSuggested();
 
 List<RunnableScenario> orderSuggestionCoreScenarios() => [
   // dart format off
-  RunnableScenario(label: 'suggestMoveOrders only returns moves that pass validation', run: oscRunSuggestMoveOrdersOnlyReturnsMovesThatPassValidation),
-  RunnableScenario(label: 'suggestMoveOrders throws when source province has unknown visibility', run: oscRunSuggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility),
-  RunnableScenario(label: 'move suggestions use unit locationProvinceId (tileKey-derived for civilians)', run: oscRunMoveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians),
-  RunnableScenario(label: 'no explore suggestion when province unknown', run: oscRunNoExploreSuggestionWhenProvinceUnknown),
-  RunnableScenario(label: 'suggestWorkOrders explore target uses kWorkTargetExplore', run: oscRunSuggestWorkOrdersExploreTargetUsesKWorkTargetExplore),
-  RunnableScenario(label: 'suggestWorkOrders explore aligns with partially revealed province cache scope', run: oscRunSuggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope),
-  RunnableScenario(label: 'no prospect suggestion when province not at least fogged', run: oscRunNoProspectSuggestionWhenProvinceNotAtLeastFogged),
-  RunnableScenario(label: 'prospect suggestion when province fogged and tiles in province', run: oscRunProspectSuggestionWhenProvinceFoggedAndTilesInProvince),
-  RunnableScenario(label: 'PlayerView.provincesById matches allProvinces for prospect iteration order', run: oscRunPlayerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder),
-  RunnableScenario(label: 'getValidWorkOrderTileKeysWithVisibility excludes tile reserved by another unit pending order', run: oscRunGetValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder),
-  RunnableScenario(label: 'work suggestions for worker use unit id; targets may be any valid tile', run: oscRunWorkSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile),
-  RunnableScenario(label: 'suggestWorkOrders includes build_improvement when first province tile has no resource but a later tile does', run: oscRunSuggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes),
-  RunnableScenario(label: 'suggestWorkOrders includes build_improvement on another owned province when the builder’s province has no valid resource tile', run: oscRunSuggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile),
-  RunnableScenario(label: 'suggestWorkOrders second Builder skips tile reserved by another Builder pending work order', run: oscRunSuggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder),
-  RunnableScenario(label: 'suggestNavalMissionOrders returns list', run: oscRunSuggestNavalMissionOrdersReturnsList),
-  RunnableScenario(label: 'suggestBuildOrders returns list', run: oscRunSuggestBuildOrdersReturnsList),
-  RunnableScenario(label: 'suggestBuildOrders returns ship when affordable', run: oscRunSuggestBuildOrdersReturnsShipWhenAffordable),
-  RunnableScenario(label: 'suggestBuildOrders can return both regiment and ship when both affordable', run: oscRunSuggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable),
-  RunnableScenario(label: 'suggestResearchOrders returns list', run: oscRunSuggestResearchOrdersReturnsList),
-  RunnableScenario(label: 'suggestNavalMoveOrders returns list', run: oscRunSuggestNavalMoveOrdersReturnsList),
-  RunnableScenario(label: 'counter_spy work suggested for Spy in owned province with tiles', run: oscRunCounterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles),
-  RunnableScenario(label: 'purchase_land work suggested for Merchant when minor province has resource tile', run: oscRunPurchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile),
+  rs('suggestMoveOrders only returns moves that pass validation', oscRunSuggestMoveOrdersOnlyReturnsMovesThatPassValidation),
+
+  rs('suggestMoveOrders throws when source province has unknown visibility', oscRunSuggestMoveOrdersThrowsWhenSourceProvinceHasUnknownVisibility),
+
+  rs('move suggestions use unit locationProvinceId (tileKey-derived for civilians)', oscRunMoveSuggestionsUseUnitLocationProvinceIdTileKeyDerivedForCivilians),
+
+  rs('no explore suggestion when province unknown', oscRunNoExploreSuggestionWhenProvinceUnknown),
+
+  rs('suggestWorkOrders explore target uses kWorkTargetExplore', oscRunSuggestWorkOrdersExploreTargetUsesKWorkTargetExplore),
+
+  rs('suggestWorkOrders explore aligns with partially revealed province cache scope', oscRunSuggestWorkOrdersExploreAlignsWithPartiallyRevealedProvinceCacheScope),
+
+  rs('no prospect suggestion when province not at least fogged', oscRunNoProspectSuggestionWhenProvinceNotAtLeastFogged),
+
+  rs('prospect suggestion when province fogged and tiles in province', oscRunProspectSuggestionWhenProvinceFoggedAndTilesInProvince),
+
+  rs('PlayerView.provincesById matches allProvinces for prospect iteration order', oscRunPlayerViewProvincesByIdMatchesAllProvincesForProspectIterationOrder),
+
+  rs('getValidWorkOrderTileKeysWithVisibility excludes tile reserved by another unit pending order', oscRunGetValidWorkOrderTileKeysWithVisibilityExcludesTileReservedByAnotherUnitPendingOrder),
+
+  rs('work suggestions for worker use unit id; targets may be any valid tile', oscRunWorkSuggestionsForWorkerUseUnitIdTargetsMayBeAnyValidTile),
+
+  rs('suggestWorkOrders includes build_improvement when first province tile has no resource but a later tile does', oscRunSuggestWorkOrdersIncludesBuildImprovementWhenFirstProvinceTileHasNoResourceButALaterTileDoes),
+
+  rs('suggestWorkOrders includes build_improvement on another owned province when the builder’s province has no valid resource tile', oscRunSuggestWorkOrdersIncludesBuildImprovementOnAnotherOwnedProvinceWhenTheBuilderSProvinceHasNoValidResourceTile),
+
+  rs('suggestWorkOrders second Builder skips tile reserved by another Builder pending work order', oscRunSuggestWorkOrdersSecondBuilderSkipsTileReservedByAnotherBuilderPendingWorkOrder),
+
+  rs('suggestNavalMissionOrders returns list', oscRunSuggestNavalMissionOrdersReturnsList),
+
+  rs('suggestBuildOrders returns list', oscRunSuggestBuildOrdersReturnsList),
+
+  rs('suggestBuildOrders returns ship when affordable', oscRunSuggestBuildOrdersReturnsShipWhenAffordable),
+
+  rs('suggestBuildOrders can return both regiment and ship when both affordable', oscRunSuggestBuildOrdersCanReturnBothRegimentAndShipWhenBothAffordable),
+
+  rs('suggestResearchOrders returns list', oscRunSuggestResearchOrdersReturnsList),
+
+  rs('suggestNavalMoveOrders returns list', oscRunSuggestNavalMoveOrdersReturnsList),
+
+  rs('counter_spy work suggested for Spy in owned province with tiles', oscRunCounterSpyWorkSuggestedForSpyInOwnedProvinceWithTiles),
+
+  rs('purchase_land work suggested for Merchant when minor province has resource tile', oscRunPurchaseLandWorkSuggestedForMerchantWhenMinorProvinceHasResourceTile),
+
   // dart format on
 ];

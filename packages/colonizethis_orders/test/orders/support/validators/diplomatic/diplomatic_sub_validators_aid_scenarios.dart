@@ -260,75 +260,22 @@ void dsaRunSetSubsidyAcceptsWithEmbassyEvenWhenTreasuryLow() {
 }
 
 List<RunnableScenario> grantAidSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'rejects non-positive amount',
-    run: dsaRunGrantAidRejectsNonPositiveAmount,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects when amount is below the step',
-    run: dsaRunGrantAidRejectsAmountBelowStep,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects amount that is not a multiple of the step',
-    run: dsaRunGrantAidRejectsAmountNotMultipleOfStep,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects without embassy',
-    run: dsaRunGrantAidRejectsWithoutEmbassy,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects when treasury below amount and preserves treasury',
-    run: dsaRunGrantAidRejectsTreasuryBelowAmount,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'accepts and debits treasury by the amount',
-    run: dsaRunGrantAidAcceptsAndDebitsTreasury,
-    refs: '#2391 AC10',
-  ),
+  rs('rejects non-positive amount', dsaRunGrantAidRejectsNonPositiveAmount, '#2391 AC10'),
+  rs('rejects when amount is below the step', dsaRunGrantAidRejectsAmountBelowStep, '#2391 AC10'),
+  rs('rejects amount that is not a multiple of the step', dsaRunGrantAidRejectsAmountNotMultipleOfStep, '#2391 AC10'),
+  rs('rejects without embassy', dsaRunGrantAidRejectsWithoutEmbassy, '#2391 AC10'),
+  rs('rejects when treasury below amount and preserves treasury', dsaRunGrantAidRejectsTreasuryBelowAmount, '#2391 AC10'),
+  rs('accepts and debits treasury by the amount', dsaRunGrantAidAcceptsAndDebitsTreasury, '#2391 AC10'),
 ];
 
 List<RunnableScenario> setSubsidySubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'rejects a zero percent',
-    run: dsaRunSetSubsidyRejectsZeroPercent,
-    refs: '#3753 R3',
-  ),
-  RunnableScenario(
-    label: 'rejects a percent not a multiple of the step',
-    run: dsaRunSetSubsidyRejectsPercentNotMultipleOfStep,
-    refs: '#3753 R3',
-  ),
-  RunnableScenario(
-    label: 'rejects a percent above the maximum',
-    run: dsaRunSetSubsidyRejectsPercentAboveMaximum,
-    refs: '#3753 R3',
-  ),
-  RunnableScenario(
-    label: 'rejects without any overture',
-    run: dsaRunSetSubsidyRejectsWithoutOverture,
-    refs: '#3753 R3',
-  ),
-  RunnableScenario(
-    label: 'rejects with a Trade Consulate only (Refs #3753 R2)',
-    run: dsaRunSetSubsidyRejectsTradeConsulateOnly,
-    refs: '#3753 R2',
-  ),
-  RunnableScenario(
-    label: 'accepts with an embassy and leaves treasury unchanged',
-    run: dsaRunSetSubsidyAcceptsWithEmbassyLeavesTreasuryUnchanged,
-    refs: '#3753 R3',
-  ),
-  RunnableScenario(
-    label:
-        'accepts with an embassy even when treasury is low (no upfront cost)',
-    run: dsaRunSetSubsidyAcceptsWithEmbassyEvenWhenTreasuryLow,
-    refs: '#3753 R3',
-  ),
+  rs('rejects a zero percent', dsaRunSetSubsidyRejectsZeroPercent, '#3753 R3'),
+  rs('rejects a percent not a multiple of the step', dsaRunSetSubsidyRejectsPercentNotMultipleOfStep, '#3753 R3'),
+  rs('rejects a percent above the maximum', dsaRunSetSubsidyRejectsPercentAboveMaximum, '#3753 R3'),
+  rs('rejects without any overture', dsaRunSetSubsidyRejectsWithoutOverture, '#3753 R3'),
+  rs('rejects with a Trade Consulate only (Refs #3753 R2)', dsaRunSetSubsidyRejectsTradeConsulateOnly, '#3753 R2'),
+  rs('accepts with an embassy and leaves treasury unchanged', dsaRunSetSubsidyAcceptsWithEmbassyLeavesTreasuryUnchanged, '#3753 R3'),
+  rs('accepts with an embassy even when treasury is low (no upfront cost)', dsaRunSetSubsidyAcceptsWithEmbassyEvenWhenTreasuryLow, '#3753 R3'),
 ];
 
 /// All grantAid / setSubsidy sub-validator scenarios (union of behavior families).

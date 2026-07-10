@@ -245,101 +245,30 @@ void novRunValidateNavalMissionAcceptNonBlockadeMissionWhenFleetAtSea() {
 /// Canonical scenarios for `validateNavalMove` family tests.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] (single-line `label:` for CI).
 List<RunnableScenario> navalMoveValidatorScenarios() => [
-  RunnableScenario(
-    label: 'validateNavalMove rejects when previousRejected',
-    run: novRunValidateNavalMoveRejectsWhenPreviousRejected,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove rejects when fleet not found',
-    run: novRunValidateNavalMoveRejectsWhenFleetNotFound,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove rejects when fleet not owned by player',
-    run: novRunValidateNavalMoveRejectsWhenFleetNotOwnedByPlayer,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove rejects when home fleet',
-    run: novRunValidateNavalMoveRejectsWhenHomeFleet,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove accept move to adjacent sea zone when at sea',
-    run: novRunValidateNavalMoveAcceptMoveToAdjacentSeaZoneWhenAtSea,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove reject move to non-adjacent sea zone',
-    run: novRunValidateNavalMoveRejectMoveToNonAdjacentSeaZone,
-  ),
-  RunnableScenario(
-    label:
-        'validateNavalMove dock reject when sea zone not adjacent to province',
-    run: novRunValidateNavalMoveDockRejectWhenSeaZoneNotAdjacentToProvince,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove accept undock from port to adjacent sea zone',
-    run: novRunValidateNavalMoveAcceptUndockFromPortToAdjacentSeaZone,
-  ),
-  RunnableScenario(
-    label:
-        'validateNavalMove at sea rejects province id as destinationSeaZoneId',
-    run: novRunValidateNavalMoveAtSeaRejectsProvinceIdAsDestinationSeaZoneId,
-  ),
-  RunnableScenario(
-    label:
-        'validateNavalMove in-port accepts any sea with direct P–S edge to port',
-    run: novRunValidateNavalMoveInPortAcceptsAnySeaWithDirectPsEdgeToPort,
-  ),
-  RunnableScenario(
-    label:
-        'validateNavalMove in-port rejects sea only reachable via S–S from port sea',
-    run: novRunValidateNavalMoveInPortRejectsSeaOnlyReachableViaSsFromPortSea,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove reject when in port but inPortAtProvinceId null',
-    run: novRunValidateNavalMoveRejectWhenInPortButInPortAtProvinceIdNull,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove dock accept when at sea adjacent owned province',
-    run: novRunValidateNavalMoveDockAcceptWhenAtSeaAdjacentOwnedProvince,
-  ),
-  RunnableScenario(
-    label:
-        'validateNavalMove dock accept when port province id is local (unprefixed)',
-    run: novRunValidateNavalMoveDockAcceptWhenPortProvinceIdIsLocalUnprefixed,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove dock reject when fleet in port',
-    run: novRunValidateNavalMoveDockRejectWhenFleetInPort,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove dock reject when port province not owned',
-    run: novRunValidateNavalMoveDockRejectWhenPortProvinceNotOwned,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMove dock reject when port province not found',
-    run: novRunValidateNavalMoveDockRejectWhenPortProvinceNotFound,
-  ),
+  rs('validateNavalMove rejects when previousRejected', novRunValidateNavalMoveRejectsWhenPreviousRejected),
+  rs('validateNavalMove rejects when fleet not found', novRunValidateNavalMoveRejectsWhenFleetNotFound),
+  rs('validateNavalMove rejects when fleet not owned by player', novRunValidateNavalMoveRejectsWhenFleetNotOwnedByPlayer),
+  rs('validateNavalMove rejects when home fleet', novRunValidateNavalMoveRejectsWhenHomeFleet),
+  rs('validateNavalMove accept move to adjacent sea zone when at sea', novRunValidateNavalMoveAcceptMoveToAdjacentSeaZoneWhenAtSea),
+  rs('validateNavalMove reject move to non-adjacent sea zone', novRunValidateNavalMoveRejectMoveToNonAdjacentSeaZone),
+  rs('validateNavalMove dock reject when sea zone not adjacent to province', novRunValidateNavalMoveDockRejectWhenSeaZoneNotAdjacentToProvince),
+  rs('validateNavalMove accept undock from port to adjacent sea zone', novRunValidateNavalMoveAcceptUndockFromPortToAdjacentSeaZone),
+  rs('validateNavalMove at sea rejects province id as destinationSeaZoneId', novRunValidateNavalMoveAtSeaRejectsProvinceIdAsDestinationSeaZoneId),
+  rs('validateNavalMove in-port accepts any sea with direct P–S edge to port', novRunValidateNavalMoveInPortAcceptsAnySeaWithDirectPsEdgeToPort),
+  rs('validateNavalMove in-port rejects sea only reachable via S–S from port sea', novRunValidateNavalMoveInPortRejectsSeaOnlyReachableViaSsFromPortSea),
+  rs('validateNavalMove reject when in port but inPortAtProvinceId null', novRunValidateNavalMoveRejectWhenInPortButInPortAtProvinceIdNull),
+  rs('validateNavalMove dock accept when at sea adjacent owned province', novRunValidateNavalMoveDockAcceptWhenAtSeaAdjacentOwnedProvince),
+  rs('validateNavalMove dock accept when port province id is local (unprefixed)', novRunValidateNavalMoveDockAcceptWhenPortProvinceIdIsLocalUnprefixed),
+  rs('validateNavalMove dock reject when fleet in port', novRunValidateNavalMoveDockRejectWhenFleetInPort),
+  rs('validateNavalMove dock reject when port province not owned', novRunValidateNavalMoveDockRejectWhenPortProvinceNotOwned),
+  rs('validateNavalMove dock reject when port province not found', novRunValidateNavalMoveDockRejectWhenPortProvinceNotFound),
 ];
 
 /// Canonical scenarios for `validateNavalMission` family tests.
 List<RunnableScenario> navalMissionValidatorScenarios() => [
-  RunnableScenario(
-    label: 'validateNavalMission rejects when previousRejected',
-    run: novRunValidateNavalMissionRejectsWhenPreviousRejected,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMission blockade requires target province',
-    run: novRunValidateNavalMissionBlockadeRequiresTargetProvince,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMission blockade reject when target not prefixed',
-    run: novRunValidateNavalMissionBlockadeRejectWhenTargetNotPrefixed,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMission blockade reject when blockading own province',
-    run: novRunValidateNavalMissionBlockadeRejectWhenBlockadingOwnProvince,
-  ),
-  RunnableScenario(
-    label: 'validateNavalMission accept non-blockade mission when fleet at sea',
-    run: novRunValidateNavalMissionAcceptNonBlockadeMissionWhenFleetAtSea,
-  ),
+  rs('validateNavalMission rejects when previousRejected', novRunValidateNavalMissionRejectsWhenPreviousRejected),
+  rs('validateNavalMission blockade requires target province', novRunValidateNavalMissionBlockadeRequiresTargetProvince),
+  rs('validateNavalMission blockade reject when target not prefixed', novRunValidateNavalMissionBlockadeRejectWhenTargetNotPrefixed),
+  rs('validateNavalMission blockade reject when blockading own province', novRunValidateNavalMissionBlockadeRejectWhenBlockadingOwnProvince),
+  rs('validateNavalMission accept non-blockade mission when fleet at sea', novRunValidateNavalMissionAcceptNonBlockadeMissionWhenFleetAtSea),
 ];

@@ -136,23 +136,8 @@ void oswlRunPendingTargetsPreserveDuplicateCheckAndLogOrdering() {
 }
 
 List<RunnableScenario> orderSuggestionWorkLoggingScenarios() => const [
-  RunnableScenario(
-    label: 'emits suggest_work summaries for Explorer/Builder/Spy/Merchant',
-    run: oswlRunEmitsSummariesForCivilianTypes,
-  ),
-  RunnableScenario(
-    label:
-        'suggestWorkOrders logger lines never emit unbounded full list payload',
-    run: oswlRunLoggerLinesNeverEmitUnboundedFullListPayload,
-    refs: '#2133',
-  ),
-  RunnableScenario(
-    label:
-        'explorer multiple prospect tiles emit one suggest_work with includedCount',
-    run: oswlRunMultipleProspectTilesEmitIncludedCount,
-  ),
-  RunnableScenario(
-    label: 'explorer pending targets preserve duplicate check and log ordering',
-    run: oswlRunPendingTargetsPreserveDuplicateCheckAndLogOrdering,
-  ),
+  rs('emits suggest_work summaries for Explorer/Builder/Spy/Merchant', oswlRunEmitsSummariesForCivilianTypes),
+  rs('suggestWorkOrders logger lines never emit unbounded full list payload', oswlRunLoggerLinesNeverEmitUnboundedFullListPayload, '#2133'),
+  rs('explorer multiple prospect tiles emit one suggest_work with includedCount', oswlRunMultipleProspectTilesEmitIncludedCount),
+  rs('explorer pending targets preserve duplicate check and log ordering', oswlRunPendingTargetsPreserveDuplicateCheckAndLogOrdering),
 ];

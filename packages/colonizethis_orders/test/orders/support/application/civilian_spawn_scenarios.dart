@@ -7,8 +7,7 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 import 'civilian_spawn_expectation_shorthand.dart';
 
-void
-cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince() {
+void cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince() {
   final game = cspExplorerGame(
     capitalProvinceId: cspCapitalProvinceId,
     otherOwnedProvinceId: 'oldWorld|P2',
@@ -143,21 +142,9 @@ void cspRunNewWorldSpawnAddsUnitToNewWorld() {
 /// Canonical scenarios for civilian / New World spawn family tests.
 List<RunnableScenario> civilianSpawnScenarios() => const [
   // dart format off
-  RunnableScenario(
-    label: 'civilian spawn uses capitalTile key even when spawnProvinceId is different owned province',
-    run: cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince,
-  ),
-  RunnableScenario(
-    label: 'civilian build with empty spawnProvinceId uses capital tile and province',
-    run: cspRunCivilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince,
-  ),
-  RunnableScenario(
-    label: 'civilian build with missing capital tile throws explicit error',
-    run: cspRunCivilianBuildWithMissingCapitalTileThrowsExplicitError,
-  ),
-  RunnableScenario(
-    label: 'New World spawn adds unit to newWorld',
-    run: cspRunNewWorldSpawnAddsUnitToNewWorld,
-  ),
+  rs('civilian spawn uses capitalTile key even when spawnProvinceId is different owned province', cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince),
+  rs('civilian build with empty spawnProvinceId uses capital tile and province', cspRunCivilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince),
+  rs('civilian build with missing capital tile throws explicit error', cspRunCivilianBuildWithMissingCapitalTileThrowsExplicitError),
+  rs('New World spawn adds unit to newWorld', cspRunNewWorldSpawnAddsUnitToNewWorld),
   // dart format on
 ];

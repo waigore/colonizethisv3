@@ -96,36 +96,15 @@ void balRunParentValidatorAcceptsValidBreakAlliance() {
 /// One row in breakAlliance validator scenario tables.
 
 List<RunnableScenario> breakAllianceSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts when a formal alliance exists with the GP target',
-    run: balRunAcceptsFormalAllianceWithGpTarget,
-    refs: '#3753 R11',
-  ),
-  RunnableScenario(
-    label: 'rejects while at war (war invariant cleared the alliance)',
-    run: balRunRejectsWhileAtWar,
-    refs: '#3753 R11',
-  ),
-  RunnableScenario(
-    label: 'rejects when no formal alliance exists with the target',
-    run: balRunRejectsNoFormalAlliance,
-    refs: '#3753 R11',
-  ),
-  RunnableScenario(
-    label: 'rejects a non-Great-Power target',
-    run: balRunRejectsNonGpTarget,
-    refs: '#3753 R11',
-  ),
+  rs('accepts when a formal alliance exists with the GP target', balRunAcceptsFormalAllianceWithGpTarget, '#3753 R11'),
+  rs('rejects while at war (war invariant cleared the alliance)', balRunRejectsWhileAtWar, '#3753 R11'),
+  rs('rejects when no formal alliance exists with the target', balRunRejectsNoFormalAlliance, '#3753 R11'),
+  rs('rejects a non-Great-Power target', balRunRejectsNonGpTarget, '#3753 R11'),
 ];
 
 List<RunnableScenario> diplomaticOrderValidatorBreakAllianceScenarios() =>
     const [
-      RunnableScenario(
-        label:
-            'accepts a valid breakAlliance order through the parent validator',
-        run: balRunParentValidatorAcceptsValidBreakAlliance,
-        refs: '#3753 R11',
-      ),
+      rs('accepts a valid breakAlliance order through the parent validator', balRunParentValidatorAcceptsValidBreakAlliance, '#3753 R11'),
     ];
 
 /// All breakAlliance validator scenarios (union of behavior-family tables).

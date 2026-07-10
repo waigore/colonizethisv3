@@ -235,11 +235,8 @@ Game wccExploreWorkingGame({
   playerVisibilityByTile: playerVisibilityByTile,
 );
 
-void wccExpectFullyVisible(Game next, String tileKey) => wccExpectVisibility(
-  next,
-  tileKey,
-  VisibilityLevel.fullyVisible.name,
-);
+void wccExpectFullyVisible(Game next, String tileKey) =>
+    wccExpectVisibility(next, tileKey, VisibilityLevel.fullyVisible.name);
 
 void wccExpectRailApply(int roadLevel, int expected) {
   final next = wccApply(

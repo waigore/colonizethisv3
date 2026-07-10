@@ -69,30 +69,9 @@ void oepsRunDoesNotInvokeProjectorWhenNoTradeOrderStaged() {
 
 /// Canonical scenarios for order_effects_projector_seam family tests.
 List<RunnableScenario> orderEffectsProjectorSeamScenarios() => const [
-  RunnableScenario(
-    label: 'uses the injected projector output',
-    run: oepsRunUsesInjectedProjectorOutput,
-    refs: '#3290 C2',
-  ),
-  RunnableScenario(
-    label: 'throws StateError when no projector was injected',
-    run: oepsRunThrowsWhenNoProjectorInjected,
-    refs: '#3290 C2',
-  ),
-  RunnableScenario(
-    label:
-        'throws StateError when a trade order is validated without a projector',
-    run: oepsRunThrowsWhenTradeOrderValidatedWithoutProjector,
-    refs: '#3290 C2',
-  ),
-  RunnableScenario(
-    label: 'uses the injected projector and accepts a valid offer',
-    run: oepsRunUsesInjectedProjectorAndAcceptsValidOffer,
-    refs: '#3290 C2',
-  ),
-  RunnableScenario(
-    label: 'does not invoke the projector when no trade order is staged',
-    run: oepsRunDoesNotInvokeProjectorWhenNoTradeOrderStaged,
-    refs: '#3290 C2',
-  ),
+  rs('uses the injected projector output', oepsRunUsesInjectedProjectorOutput, '#3290 C2'),
+  rs('throws StateError when no projector was injected', oepsRunThrowsWhenNoProjectorInjected, '#3290 C2'),
+  rs('throws StateError when a trade order is validated without a projector', oepsRunThrowsWhenTradeOrderValidatedWithoutProjector, '#3290 C2'),
+  rs('uses the injected projector and accepts a valid offer', oepsRunUsesInjectedProjectorAndAcceptsValidOffer, '#3290 C2'),
+  rs('does not invoke the projector when no trade order is staged', oepsRunDoesNotInvokeProjectorWhenNoTradeOrderStaged, '#3290 C2'),
 ];

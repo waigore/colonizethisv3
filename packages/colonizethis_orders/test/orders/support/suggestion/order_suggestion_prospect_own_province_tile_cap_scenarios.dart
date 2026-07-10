@@ -29,9 +29,5 @@ void ospoptcRunFeedstockPastProbeCap() {
 
 List<RunnableScenario>
 orderSuggestionProspectOwnProvinceTileCapScenarios() => const [
-  RunnableScenario(
-    label:
-        'co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province',
-    run: ospoptcRunFeedstockPastProbeCap,
-  ),
+  rs('co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province', ospoptcRunFeedstockPastProbeCap),
 ];

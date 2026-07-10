@@ -75,15 +75,6 @@ void osdwirRunDeterministicAcrossRepeatedCalls() {
 
 List<RunnableScenario>
 orderSuggestionDeclareWarInterventionRiskScenarios() => const [
-  RunnableScenario(
-    label: 'tribe stays in candidates when other GPs hold embassies on it',
-    run: osdwirRunTribeStaysInCandidates,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label:
-        'tribe candidate is deterministic across repeated suggestDeclareWarOrders calls',
-    run: osdwirRunDeterministicAcrossRepeatedCalls,
-    refs: '#2509',
-  ),
+  rs('tribe stays in candidates when other GPs hold embassies on it', osdwirRunTribeStaysInCandidates, '#2509'),
+  rs('tribe candidate is deterministic across repeated suggestDeclareWarOrders calls', osdwirRunDeterministicAcrossRepeatedCalls, '#2509'),
 ];

@@ -196,76 +196,25 @@ void ttftkRunReturnsTerrainFromTileMap() {
 
 /// Canonical scenarios for rejectionReasonForBuildRailOrder family tests.
 List<RunnableScenario> rejectionReasonForBuildRailOrderScenarios() => const [
-  RunnableScenario(
-    label: 'rejects when road level is neither 1 nor 2 (too high)',
-    run: brwrRunRejectsWhenRoadLevelTooHigh,
-  ),
-  RunnableScenario(
-    label: 'rejects when road level is 3 (intermediate, not 1 or 2)',
-    run: brwrRunRejectsWhenRoadLevelIntermediate,
-  ),
-  RunnableScenario(
-    label: 'rejects when road level is 0',
-    run: brwrRunRejectsWhenRoadLevelZero,
-  ),
-  RunnableScenario(
-    label: 'rejects when terrain is null',
-    run: brwrRunRejectsWhenTerrainNull,
-  ),
-  RunnableScenario(
-    label: 'plains: rejects without rail tech',
-    run: brwrRunPlainsRejectsWithoutRailTech,
-  ),
-  RunnableScenario(
-    label: 'plains: allows with Early Steam',
-    run: brwrRunPlainsAllowsWithEarlySteam,
-  ),
-  RunnableScenario(
-    label: 'hills: rejects without Later Steam or Dynamite',
-    run: brwrRunHillsRejectsWithoutLaterSteamOrDynamite,
-  ),
-  RunnableScenario(
-    label: 'hills: allows with Later Steam',
-    run: brwrRunHillsAllowsWithLaterSteam,
-  ),
-  RunnableScenario(
-    label: 'mountain: rejects without Dynamite',
-    run: brwrRunMountainRejectsWithoutDynamite,
-  ),
-  RunnableScenario(
-    label: 'hills: allows with Dynamite only',
-    run: brwrRunHillsAllowsWithDynamiteOnly,
-  ),
-  RunnableScenario(
-    label: 'plains: allows with Later Steam only',
-    run: brwrRunPlainsAllowsWithLaterSteamOnly,
-  ),
-  RunnableScenario(
-    label: 'mountain: allows with Dynamite',
-    run: brwrRunMountainAllowsWithDynamite,
-  ),
+  rs('rejects when road level is neither 1 nor 2 (too high)', brwrRunRejectsWhenRoadLevelTooHigh),
+  rs('rejects when road level is 3 (intermediate, not 1 or 2)', brwrRunRejectsWhenRoadLevelIntermediate),
+  rs('rejects when road level is 0', brwrRunRejectsWhenRoadLevelZero),
+  rs('rejects when terrain is null', brwrRunRejectsWhenTerrainNull),
+  rs('plains: rejects without rail tech', brwrRunPlainsRejectsWithoutRailTech),
+  rs('plains: allows with Early Steam', brwrRunPlainsAllowsWithEarlySteam),
+  rs('hills: rejects without Later Steam or Dynamite', brwrRunHillsRejectsWithoutLaterSteamOrDynamite),
+  rs('hills: allows with Later Steam', brwrRunHillsAllowsWithLaterSteam),
+  rs('mountain: rejects without Dynamite', brwrRunMountainRejectsWithoutDynamite),
+  rs('hills: allows with Dynamite only', brwrRunHillsAllowsWithDynamiteOnly),
+  rs('plains: allows with Later Steam only', brwrRunPlainsAllowsWithLaterSteamOnly),
+  rs('mountain: allows with Dynamite', brwrRunMountainAllowsWithDynamite),
 ];
 
 /// Canonical scenarios for terrainTypeForTileKey family tests.
 List<RunnableScenario> terrainTypeForTileKeyScenarios() => const [
-  RunnableScenario(
-    label: 'returns null for malformed tile key',
-    run: ttftkRunMalformedTileKey,
-  ),
-  RunnableScenario(
-    label: 'returns null when region map is missing',
-    run: ttftkRunMissingRegionMap,
-  ),
-  RunnableScenario(
-    label: 'returns null when x or y are not integers',
-    run: ttftkRunNonIntegerCoordinates,
-  ),
-  RunnableScenario(
-    label: 'returns null when coordinates are out of bounds',
-    run: ttftkRunOutOfBoundsCoordinates,
-  ),
-  RunnableScenario(
-    label: 'returns terrain from tile map',
-    run: ttftkRunReturnsTerrainFromTileMap,
-  ),
+  rs('returns null for malformed tile key', ttftkRunMalformedTileKey),
+  rs('returns null when region map is missing', ttftkRunMissingRegionMap),
+  rs('returns null when x or y are not integers', ttftkRunNonIntegerCoordinates),
+  rs('returns null when coordinates are out of bounds', ttftkRunOutOfBoundsCoordinates),
+  rs('returns terrain from tile map', ttftkRunReturnsTerrainFromTileMap),
 ];

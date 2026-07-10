@@ -79,19 +79,7 @@ void osdvrRunRebindsPassValidatorAfterEachTarget() {
 
 List<RunnableScenario>
 orderSuggestionDiplomaticValidatorReuseScenarios() => const [
-  RunnableScenario(
-    label: 'builds one pass-level validator across multiple diplomatic targets',
-    run: osdvrRunOnePassLevelValidatorAcrossTargets,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'skips pass-level build when sharedCandidateValidator is supplied',
-    run: osdvrRunSkipsPassLevelBuildWhenSharedSupplied,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'rebinds pass validator to workingOrders after each target',
-    run: osdvrRunRebindsPassValidatorAfterEachTarget,
-    refs: '#2394',
-  ),
+  rs('builds one pass-level validator across multiple diplomatic targets', osdvrRunOnePassLevelValidatorAcrossTargets, '#2394'),
+  rs('skips pass-level build when sharedCandidateValidator is supplied', osdvrRunSkipsPassLevelBuildWhenSharedSupplied, '#2394'),
+  rs('rebinds pass validator to workingOrders after each target', osdvrRunRebindsPassValidatorAfterEachTarget, '#2394'),
 ];

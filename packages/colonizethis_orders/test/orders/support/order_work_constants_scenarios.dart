@@ -71,23 +71,8 @@ void owcRunMovedOutOfNeutralCore() {
 }
 
 List<RunnableScenario> orderWorkConstantsScenarios() => const [
-  RunnableScenario(
-    label:
-        'work-target / mineral / prospect constants are defined in the orders domain file',
-    run: owcRunDefinedInOrdersDomain,
-  ),
-  RunnableScenario(
-    label:
-        'lib/src/constants.dart re-exports the same order constants (back-compat)',
-    run: owcRunCoreReexportsBackCompat,
-  ),
-  RunnableScenario(
-    label: 'public colonizethis_logic barrel still exposes the order constants',
-    run: owcRunBarrelStillExposes,
-  ),
-  RunnableScenario(
-    label:
-        'definitions moved out of the neutral core file into the orders domain',
-    run: owcRunMovedOutOfNeutralCore,
-  ),
+  rs('work-target / mineral / prospect constants are defined in the orders domain file', owcRunDefinedInOrdersDomain),
+  rs('lib/src/constants.dart re-exports the same order constants (back-compat)', owcRunCoreReexportsBackCompat),
+  rs('public colonizethis_logic barrel still exposes the order constants', owcRunBarrelStillExposes),
+  rs('definitions moved out of the neutral core file into the orders domain', owcRunMovedOutOfNeutralCore),
 ];

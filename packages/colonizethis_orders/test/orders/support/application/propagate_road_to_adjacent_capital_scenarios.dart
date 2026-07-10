@@ -80,20 +80,8 @@ void pracRunPropagatesToAdjacentPortWhenHigher() {
 
 /// Canonical scenarios for propagate_road_to_adjacent_capital family tests.
 List<RunnableScenario> propagateRoadToAdjacentCapitalScenarios() => const [
-  RunnableScenario(
-    label: 'returns unchanged when player is null',
-    run: pracRunUnchangedWhenPlayerNull,
-  ),
-  RunnableScenario(
-    label: 'returns unchanged when tile key is malformed',
-    run: pracRunUnchangedWhenTileKeyMalformed,
-  ),
-  RunnableScenario(
-    label: 'propagates road level to adjacent capital tile when higher',
-    run: pracRunPropagatesToAdjacentCapitalWhenHigher,
-  ),
-  RunnableScenario(
-    label: 'propagates road level to adjacent port tile when higher',
-    run: pracRunPropagatesToAdjacentPortWhenHigher,
-  ),
+  rs('returns unchanged when player is null', pracRunUnchangedWhenPlayerNull),
+  rs('returns unchanged when tile key is malformed', pracRunUnchangedWhenTileKeyMalformed),
+  rs('propagates road level to adjacent capital tile when higher', pracRunPropagatesToAdjacentCapitalWhenHigher),
+  rs('propagates road level to adjacent port tile when higher', pracRunPropagatesToAdjacentPortWhenHigher),
 ];

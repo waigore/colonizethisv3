@@ -10,48 +10,17 @@ import 'order_engine_naval_build_validation_expectation_shorthand.dart';
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_naval_build_validation_test.dart` descriptions.
 List<RunnableScenario> orderEngineNavalBuildValidationScenarios() => [
-  RunnableScenario(
-    label: 'move order accepted for own province across regions',
-    run: () => nvExpectCrossRegionMove(
-      unitType: kUnitTypeBuilder,
-      nwOwnerId: 'p1',
-      expectedStatus: OrderValidationStatus.accepted,
-    ),
+  rs('move order accepted for own province across regions', () => nvExpectCrossRegionMove(unitType: kUnitTypeBuilder, nwOwnerId: 'p1', expectedStatus: OrderValidationStatus.accepted)),
+  rs(
+    'move order rejected when destination is foreign province across regions',
+    () => nvExpectCrossRegionMove(unitType: 'musketeers', nwOwnerId: 'p2', expectedStatus: OrderValidationStatus.rejected),
   ),
-  RunnableScenario(
-    label:
-        'move order rejected when destination is foreign province across regions',
-    run: () => nvExpectCrossRegionMove(
-      unitType: 'musketeers',
-      nwOwnerId: 'p2',
-      expectedStatus: OrderValidationStatus.rejected,
-    ),
+  rs('work order rejected for invalid target for unit type', nvExpectInvalidWorkTargetRejected),
+  rs('initial orders copy: getter returns equal but distinct lists', nvExpectInitialOrdersCopyDistinct),
+  rs('naval move order rejected when fleet not found', nvExpectNavalMoveFleetNotFoundRejected),
+  rs(
+    'blockade order rejected when not at war with province owner',
+    () => nvExpectBlockadeMission(relationState: RelationState.atPeace, expectedStatus: OrderValidationStatus.rejected, reasonContains: 'at war'),
   ),
-  RunnableScenario(
-    label: 'work order rejected for invalid target for unit type',
-    run: nvExpectInvalidWorkTargetRejected,
-  ),
-  RunnableScenario(
-    label: 'initial orders copy: getter returns equal but distinct lists',
-    run: nvExpectInitialOrdersCopyDistinct,
-  ),
-  RunnableScenario(
-    label: 'naval move order rejected when fleet not found',
-    run: nvExpectNavalMoveFleetNotFoundRejected,
-  ),
-  RunnableScenario(
-    label: 'blockade order rejected when not at war with province owner',
-    run: () => nvExpectBlockadeMission(
-      relationState: RelationState.atPeace,
-      expectedStatus: OrderValidationStatus.rejected,
-      reasonContains: 'at war',
-    ),
-  ),
-  RunnableScenario(
-    label: 'blockade order accepted when at war with province owner',
-    run: () => nvExpectBlockadeMission(
-      relationState: RelationState.atWar,
-      expectedStatus: OrderValidationStatus.accepted,
-    ),
-  ),
+  rs('blockade order accepted when at war with province owner', () => nvExpectBlockadeMission(relationState: RelationState.atWar, expectedStatus: OrderValidationStatus.accepted)),
 ];

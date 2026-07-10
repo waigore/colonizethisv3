@@ -139,52 +139,20 @@ void bctRunParentValidatorAcceptsValidBoycott() {
 /// One row in boycott validator scenario tables.
 
 List<RunnableScenario> boycottSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts when issuer holds a colony and target GP is at peace',
-    run: bctRunBoycottAcceptsColonyHolderAtPeace,
-    refs: '#3753 R6',
-  ),
-  RunnableScenario(
-    label: 'rejects when the issuer holds no colony',
-    run: bctRunBoycottRejectsNoColony,
-    refs: '#3753 R6',
-  ),
-  RunnableScenario(
-    label: 'rejects when at war with the target GP',
-    run: bctRunBoycottRejectsAtWar,
-    refs: '#3753 R6',
-  ),
-  RunnableScenario(
-    label: 'rejects a duplicate boycott for the same pair',
-    run: bctRunBoycottRejectsDuplicate,
-    refs: '#3753 R6',
-  ),
-  RunnableScenario(
-    label: 'rejects a non-Great-Power target',
-    run: bctRunBoycottRejectsNonGpTarget,
-    refs: '#3753 R6',
-  ),
+  rs('accepts when issuer holds a colony and target GP is at peace', bctRunBoycottAcceptsColonyHolderAtPeace, '#3753 R6'),
+  rs('rejects when the issuer holds no colony', bctRunBoycottRejectsNoColony, '#3753 R6'),
+  rs('rejects when at war with the target GP', bctRunBoycottRejectsAtWar, '#3753 R6'),
+  rs('rejects a duplicate boycott for the same pair', bctRunBoycottRejectsDuplicate, '#3753 R6'),
+  rs('rejects a non-Great-Power target', bctRunBoycottRejectsNonGpTarget, '#3753 R6'),
 ];
 
 List<RunnableScenario> revokeBoycottSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts when an active boycott exists for the pair',
-    run: bctRunRevokeAcceptsActiveBoycott,
-    refs: '#3753 R6',
-  ),
-  RunnableScenario(
-    label: 'rejects when no active boycott exists for the pair',
-    run: bctRunRevokeRejectsNoActiveBoycott,
-    refs: '#3753 R6',
-  ),
+  rs('accepts when an active boycott exists for the pair', bctRunRevokeAcceptsActiveBoycott, '#3753 R6'),
+  rs('rejects when no active boycott exists for the pair', bctRunRevokeRejectsNoActiveBoycott, '#3753 R6'),
 ];
 
 List<RunnableScenario> diplomaticOrderValidatorBoycottScenarios() => const [
-  RunnableScenario(
-    label: 'accepts a valid boycott order through the parent validator',
-    run: bctRunParentValidatorAcceptsValidBoycott,
-    refs: '#3753 R6',
-  ),
+  rs('accepts a valid boycott order through the parent validator', bctRunParentValidatorAcceptsValidBoycott, '#3753 R6'),
 ];
 
 /// All boycott validator scenarios (union of behavior-family tables).

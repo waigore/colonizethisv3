@@ -39,17 +39,9 @@ void savrRunOneValidatorPerAiPlayerBatch() {
 }
 
 List<RunnableScenario> simpleAiValidatorReuseHeuristicScenarios() => const [
-  RunnableScenario(
-    label: 'builds one incremental validator per player heuristic pass',
-    run: savrRunOneValidatorPerHeuristicPass,
-    refs: '#2394',
-  ),
+  rs('builds one incremental validator per player heuristic pass', savrRunOneValidatorPerHeuristicPass, '#2394'),
 ];
 
 List<RunnableScenario> simpleAiValidatorReuseBatchScenarios() => const [
-  RunnableScenario(
-    label: 'builds one incremental validator per AI player in batch path',
-    run: savrRunOneValidatorPerAiPlayerBatch,
-    refs: '#2394',
-  ),
+  rs('builds one incremental validator per AI player in batch path', savrRunOneValidatorPerAiPlayerBatch, '#2394'),
 ];

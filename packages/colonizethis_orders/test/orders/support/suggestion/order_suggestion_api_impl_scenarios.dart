@@ -186,54 +186,15 @@ void osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable() {
 }
 
 List<RunnableScenario> orderSuggestionApiImplScenarios() => const [
-  RunnableScenario(
-    label: 'suggestMoveOrders returns list',
-    run: osaiRunSuggestMoveOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label: 'suggestWorkOrders returns list',
-    run: osaiRunSuggestWorkOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label: 'suggestBuildOrders returns list',
-    run: osaiRunSuggestBuildOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label:
-        'suggestBuildOrders includes ship types when player can afford a ship',
-    run: osaiRunSuggestBuildOrdersIncludesShipWhenAffordable,
-  ),
-  RunnableScenario(
-    label: 'suggestResearchOrders returns list',
-    run: osaiRunSuggestResearchOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label: 'suggestNavalMoveOrders returns list',
-    run: osaiRunSuggestNavalMoveOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label: 'suggestNavalMissionOrders returns list',
-    run: osaiRunSuggestNavalMissionOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label:
-        'suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)',
-    run: osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'suggestDiplomaticOrders returns list',
-    run: osaiRunSuggestDiplomaticOrdersReturnsList,
-  ),
-  RunnableScenario(
-    label: 'suggestRecruitWorkerOrders returns list (#2692 S7)',
-    run: osaiRunSuggestRecruitWorkerOrdersReturnsList,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label:
-        'suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)',
-    run: osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable,
-    refs: '#2692 S7',
-  ),
+  rs('suggestMoveOrders returns list', osaiRunSuggestMoveOrdersReturnsList),
+  rs('suggestWorkOrders returns list', osaiRunSuggestWorkOrdersReturnsList),
+  rs('suggestBuildOrders returns list', osaiRunSuggestBuildOrdersReturnsList),
+  rs('suggestBuildOrders includes ship types when player can afford a ship', osaiRunSuggestBuildOrdersIncludesShipWhenAffordable),
+  rs('suggestResearchOrders returns list', osaiRunSuggestResearchOrdersReturnsList),
+  rs('suggestNavalMoveOrders returns list', osaiRunSuggestNavalMoveOrdersReturnsList),
+  rs('suggestNavalMissionOrders returns list', osaiRunSuggestNavalMissionOrdersReturnsList),
+  rs('suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)', osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById, '#2394'),
+  rs('suggestDiplomaticOrders returns list', osaiRunSuggestDiplomaticOrdersReturnsList),
+  rs('suggestRecruitWorkerOrders returns list (#2692 S7)', osaiRunSuggestRecruitWorkerOrdersReturnsList, '#2692 S7'),
+  rs('suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)', osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable, '#2692 S7'),
 ];

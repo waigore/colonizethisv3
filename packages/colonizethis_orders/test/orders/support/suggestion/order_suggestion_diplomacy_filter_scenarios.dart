@@ -77,35 +77,14 @@ void osdfRunFilterKeepsMoveToAtWarFaction() {
 
 List<RunnableScenario> getProvinceOwnerMapProvinceOwnerCacheScenarios() =>
     const [
-      RunnableScenario(
-        label: 'matches the projection-derived owner map across both regions',
-        run: osdfRunMatchesProjectionDerivedOwnerMapAcrossBothRegions,
-      ),
-      RunnableScenario(
-        label: 'excludes unowned (null-owner) provinces',
-        run: osdfRunExcludesUnownedNullOwnerProvinces,
-      ),
-      RunnableScenario(
-        label: 'excludes empty-string owner provinces (isNotEmpty parity)',
-        run: osdfRunExcludesEmptyStringOwnerProvinces,
-      ),
+      rs('matches the projection-derived owner map across both regions', osdfRunMatchesProjectionDerivedOwnerMapAcrossBothRegions),
+      rs('excludes unowned (null-owner) provinces', osdfRunExcludesUnownedNullOwnerProvinces),
+      rs('excludes empty-string owner provinces (isNotEmpty parity)', osdfRunExcludesEmptyStringOwnerProvinces),
     ];
 
 List<RunnableScenario> filterMoveOrdersByDiplomacyScenarios() => const [
-  RunnableScenario(
-    label: 'getProvinceOwnerMap returns owner by full province id',
-    run: osdfRunReturnsOwnerByFullProvinceId,
-  ),
-  RunnableScenario(
-    label: 'getProvinceOwnerMap includes newWorld provinces',
-    run: osdfRunIncludesNewWorldProvinces,
-  ),
-  RunnableScenario(
-    label: 'filterMoveOrdersByDiplomacy does not drop civilian moves at peace',
-    run: osdfRunFilterDoesNotDropCivilianMovesAtPeace,
-  ),
-  RunnableScenario(
-    label: 'filterMoveOrdersByDiplomacy keeps move to at-war faction',
-    run: osdfRunFilterKeepsMoveToAtWarFaction,
-  ),
+  rs('getProvinceOwnerMap returns owner by full province id', osdfRunReturnsOwnerByFullProvinceId),
+  rs('getProvinceOwnerMap includes newWorld provinces', osdfRunIncludesNewWorldProvinces),
+  rs('filterMoveOrdersByDiplomacy does not drop civilian moves at peace', osdfRunFilterDoesNotDropCivilianMovesAtPeace),
+  rs('filterMoveOrdersByDiplomacy keeps move to at-war faction', osdfRunFilterKeepsMoveToAtWarFaction),
 ];

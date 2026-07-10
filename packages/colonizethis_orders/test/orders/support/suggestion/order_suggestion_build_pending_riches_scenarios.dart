@@ -57,15 +57,6 @@ void osbprRunIncrementalProbeMatchesFullPass() {
 /// Scenarios for suggestBuildOrders pending riches treasury (Refs #2509).
 List<RunnableScenario>
 suggestBuildOrdersPendingRichesTreasuryScenarios() => const [
-  RunnableScenario(
-    label:
-        'accepts peasant_levies when treasury is zero but stockpile has spices',
-    run: osbprRunAcceptsPeasantLeviesWithRichesStockpile,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label: 'incremental build probe matches full-pass when riches fund build',
-    run: osbprRunIncrementalProbeMatchesFullPass,
-    refs: '#2509',
-  ),
+  rs('accepts peasant_levies when treasury is zero but stockpile has spices', osbprRunAcceptsPeasantLeviesWithRichesStockpile, '#2509'),
+  rs('incremental build probe matches full-pass when riches fund build', osbprRunIncrementalProbeMatchesFullPass, '#2509'),
 ];

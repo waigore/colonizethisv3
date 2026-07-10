@@ -41,10 +41,5 @@ void osdwcdRunExcludesSeaReachableTribeWithoutNwVisibility() {
 
 List<RunnableScenario>
 orderSuggestionDeclareWarColonialDiscoveryScenarios() => const [
-  RunnableScenario(
-    label:
-        'suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)',
-    run: osdwcdRunExcludesSeaReachableTribeWithoutNwVisibility,
-    refs: '#3620',
-  ),
+  rs('suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)', osdwcdRunExcludesSeaReachableTribeWithoutNwVisibility, '#3620'),
 ];

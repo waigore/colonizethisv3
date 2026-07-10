@@ -28,9 +28,5 @@ void osmeudwRunNoMoveWhenDraftWorkExists() {
 
 List<RunnableScenario>
 orderSuggestionMoveExcludesUnitWithDraftWorkScenarios() => const [
-  RunnableScenario(
-    label:
-        'suggestMoveOrders emits no MoveOrder for a unit that already has a draft WorkOrder',
-    run: osmeudwRunNoMoveWhenDraftWorkExists,
-  ),
+  rs('suggestMoveOrders emits no MoveOrder for a unit that already has a draft WorkOrder', osmeudwRunNoMoveWhenDraftWorkExists),
 ];

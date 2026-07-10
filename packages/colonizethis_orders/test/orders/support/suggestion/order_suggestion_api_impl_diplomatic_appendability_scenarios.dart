@@ -138,17 +138,7 @@ void osaidaRunRemovingPendingRestoresSuggestions() {
 
 List<RunnableScenario>
 orderSuggestionApiImplDiplomaticAppendabilityScenarios() => const [
-  RunnableScenario(
-    label: 'does not suggest toward target already in draft diplomatic orders',
-    run: osaidaRunExcludesTargetAlreadyInDraft,
-  ),
-  RunnableScenario(
-    label: 'suggestDiplomaticOrders: cumulative list appendable and validates',
-    run: osaidaRunCumulativeListAppendableAndValidates,
-  ),
-  RunnableScenario(
-    label:
-        'removing pending diplomatic order restores suggestions for that target',
-    run: osaidaRunRemovingPendingRestoresSuggestions,
-  ),
+  rs('does not suggest toward target already in draft diplomatic orders', osaidaRunExcludesTargetAlreadyInDraft),
+  rs('suggestDiplomaticOrders: cumulative list appendable and validates', osaidaRunCumulativeListAppendableAndValidates),
+  rs('removing pending diplomatic order restores suggestions for that target', osaidaRunRemovingPendingRestoresSuggestions),
 ];

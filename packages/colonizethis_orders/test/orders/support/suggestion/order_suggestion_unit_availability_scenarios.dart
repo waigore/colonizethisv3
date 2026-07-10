@@ -162,21 +162,7 @@ void osuaRunMultiTargetMatchesSharedValidator() {
 
 /// Scenarios for getAvailableWorkTargetsForUnit.
 List<RunnableScenario> getAvailableWorkTargetsForUnitScenarios() => const [
-  RunnableScenario(
-    label: 'pending draft work short-circuits with zero engine probes',
-    run: osuaRunPendingDraftShortCircuits,
-    refs: '#2133',
-  ),
-  RunnableScenario(
-    label:
-        'pending draft: zero probes even with high-reveal world (issue #2133 scale)',
-    run: osuaRunPendingDraftZeroProbesScale,
-    refs: '#2133',
-  ),
-  RunnableScenario(
-    label:
-        'multi-target availability matches shared-validator tile keys per target',
-    run: osuaRunMultiTargetMatchesSharedValidator,
-    refs: '#2133',
-  ),
+  rs('pending draft work short-circuits with zero engine probes', osuaRunPendingDraftShortCircuits, '#2133'),
+  rs('pending draft: zero probes even with high-reveal world (issue #2133 scale)', osuaRunPendingDraftZeroProbesScale, '#2133'),
+  rs('multi-target availability matches shared-validator tile keys per target', osuaRunMultiTargetMatchesSharedValidator, '#2133'),
 ];

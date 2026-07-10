@@ -60,12 +60,6 @@ void oecmxwRunMergedDraftMoveThenWork() {
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_civilian_move_xor_work_test.dart` descriptions.
 List<RunnableScenario> orderEngineCivilianMoveXorWorkScenarios() => const [
-  RunnableScenario(
-    label: 'rejects work when same civilian already has a move order',
-    run: oecmxwRunRejectsWorkWhenMoveExists,
-  ),
-  RunnableScenario(
-    label: 'merged draft with move then work rejects work (move remains valid)',
-    run: oecmxwRunMergedDraftMoveThenWork,
-  ),
+  rs('rejects work when same civilian already has a move order', oecmxwRunRejectsWorkWhenMoveExists),
+  rs('merged draft with move then work rejects work (move remains valid)', oecmxwRunMergedDraftMoveThenWork),
 ];

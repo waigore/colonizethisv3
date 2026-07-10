@@ -275,40 +275,12 @@ void wspRunRejectedCandidatesLogEngineRejectedReason() {
 
 /// Canonical scenarios for work_suggestion_pipeline family tests.
 List<RunnableScenario> workSuggestionPipelineScenarios() => const [
-  RunnableScenario(
-    label: 'duplicate pending target short-circuits without adding suggestions',
-    run: wspRunDuplicatePendingShortCircuits,
-  ),
-  RunnableScenario(
-    label:
-        'first accepted candidate stops iteration when includeAllAccepted is false',
-    run: wspRunFirstAcceptedStopsIteration,
-  ),
-  RunnableScenario(
-    label: 'includeAllAccepted collects multiple rows and logs includedCount',
-    run: wspRunIncludeAllAcceptedCollectsMultiple,
-  ),
-  RunnableScenario(
-    label: 'no candidates logs noCandidateReason',
-    run: wspRunNoCandidatesLogsReason,
-  ),
-  RunnableScenario(
-    label:
-        'resolveNoCandidateReason overrides noCandidateReason when nothing yielded',
-    run: wspRunResolveNoCandidateOverrides,
-  ),
-  RunnableScenario(
-    label:
-        'maxProbeAttempts override allows more than default cap of accepted rows',
-    run: wspRunMaxProbeAttemptsOverride,
-  ),
-  RunnableScenario(
-    label:
-        'default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows',
-    run: wspRunDefaultCapKMaxWorkProbeAttempts,
-  ),
-  RunnableScenario(
-    label: 'rejected candidates log engineRejectedReason',
-    run: wspRunRejectedCandidatesLogEngineRejectedReason,
-  ),
+  rs('duplicate pending target short-circuits without adding suggestions', wspRunDuplicatePendingShortCircuits),
+  rs('first accepted candidate stops iteration when includeAllAccepted is false', wspRunFirstAcceptedStopsIteration),
+  rs('includeAllAccepted collects multiple rows and logs includedCount', wspRunIncludeAllAcceptedCollectsMultiple),
+  rs('no candidates logs noCandidateReason', wspRunNoCandidatesLogsReason),
+  rs('resolveNoCandidateReason overrides noCandidateReason when nothing yielded', wspRunResolveNoCandidateOverrides),
+  rs('maxProbeAttempts override allows more than default cap of accepted rows', wspRunMaxProbeAttemptsOverride),
+  rs('default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows', wspRunDefaultCapKMaxWorkProbeAttempts),
+  rs('rejected candidates log engineRejectedReason', wspRunRejectedCandidatesLogEngineRejectedReason),
 ];

@@ -91,16 +91,7 @@ void plwhRunUnchangedTreasuryNoResource() {
 
 /// Canonical scenarios for purchase_land_work_handler family tests.
 List<RunnableScenario> purchaseLandWorkHandlerScenarios() => const [
-  RunnableScenario(
-    label: 'supports only purchase_land target',
-    run: plwhRunSupportsOnlyPurchaseLand,
-  ),
-  RunnableScenario(
-    label: 'tryApply assigns currentWork without treasury deduction',
-    run: plwhRunTryApplyWithoutTreasuryDeduction,
-  ),
-  RunnableScenario(
-    label: 'returns unchanged treasury when tile has no resource entry',
-    run: plwhRunUnchangedTreasuryNoResource,
-  ),
+  rs('supports only purchase_land target', plwhRunSupportsOnlyPurchaseLand),
+  rs('tryApply assigns currentWork without treasury deduction', plwhRunTryApplyWithoutTreasuryDeduction),
+  rs('returns unchanged treasury when tile has no resource entry', plwhRunUnchangedTreasuryNoResource),
 ];

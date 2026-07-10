@@ -40,9 +40,5 @@ void wotpecRunRejectsExploreWithoutConsulate() {
 
 List<RunnableScenario>
 workOrderTargetPrechecksExplorerConsulateScenarios() => const [
-  RunnableScenario(
-    label:
-        'precheckExplorerConsulateInMinorTribe rejects explore without Consulate',
-    run: wotpecRunRejectsExploreWithoutConsulate,
-  ),
+  rs('precheckExplorerConsulateInMinorTribe rejects explore without Consulate', wotpecRunRejectsExploreWithoutConsulate),
 ];

@@ -104,46 +104,22 @@ void ospcRunOwnedProvinceIdsFromView() {
 
 /// Scenarios for indexExistingTargetsByEntityId.
 List<RunnableScenario> indexExistingTargetsByEntityIdScenarios() => const [
-  RunnableScenario(
-    label: 'indexExistingTargetsByEntityId skips empty targets when requested',
-    run: ospcRunIndexSkipsEmptyTargets,
-    refs: '#3500',
-  ),
+  rs('indexExistingTargetsByEntityId skips empty targets when requested', ospcRunIndexSkipsEmptyTargets, '#3500'),
 ];
 
 /// Scenarios for emitAcceptedCandidates.
 List<RunnableScenario> emitAcceptedCandidatesScenarios() => const [
-  RunnableScenario(
-    label: 'emitAcceptedCandidates collects accepted in iteration order',
-    run: ospcRunEmitCollectsInOrder,
-    refs: '#3500',
-  ),
-  RunnableScenario(
-    label: 'emitAcceptedCandidates skips candidates already targeted',
-    run: ospcRunEmitSkipsAlreadyTargeted,
-    refs: '#3500',
-  ),
-  RunnableScenario(
-    label: 'emitAcceptedCandidates probes every candidate without dedup args',
-    run: ospcRunEmitProbesWithoutDedupArgs,
-    refs: '#3500',
-  ),
+  rs('emitAcceptedCandidates collects accepted in iteration order', ospcRunEmitCollectsInOrder, '#3500'),
+  rs('emitAcceptedCandidates skips candidates already targeted', ospcRunEmitSkipsAlreadyTargeted, '#3500'),
+  rs('emitAcceptedCandidates probes every candidate without dedup args', ospcRunEmitProbesWithoutDedupArgs, '#3500'),
 ];
 
 /// Scenarios for runCappedSuggestionProbeLoop.
 List<RunnableScenario> runCappedSuggestionProbeLoopScenarios() => const [
-  RunnableScenario(
-    label: 'runCappedSuggestionProbeLoop respects acceptance and probe caps',
-    run: ospcRunCappedProbeLoopRespectsCaps,
-    refs: '#3500',
-  ),
+  rs('runCappedSuggestionProbeLoop respects acceptance and probe caps', ospcRunCappedProbeLoopRespectsCaps, '#3500'),
 ];
 
 /// Scenarios for ownedProvinceIdsFromView.
 List<RunnableScenario> ownedProvinceIdsFromViewScenarios() => const [
-  RunnableScenario(
-    label: 'ownedProvinceIdsFromView returns full province ids for owner',
-    run: ospcRunOwnedProvinceIdsFromView,
-    refs: '#3500',
-  ),
+  rs('ownedProvinceIdsFromView returns full province ids for owner', ospcRunOwnedProvinceIdsFromView, '#3500'),
 ];

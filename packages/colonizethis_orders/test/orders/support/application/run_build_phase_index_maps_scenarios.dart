@@ -39,14 +39,6 @@ void rbpiRunNavalSingleHomeFleet() {
 }
 
 List<RunnableScenario> runBuildPhaseIndexMapsScenarios() => const [
-  RunnableScenario(
-    label:
-        'consecutive military recruits build one home army with all regiments',
-    run: rbpiRunMilitarySingleHomeArmy,
-  ),
-  RunnableScenario(
-    label:
-        'consecutive ship recruits add ships to a single home fleet (cache reuse)',
-    run: rbpiRunNavalSingleHomeFleet,
-  ),
+  rs('consecutive military recruits build one home army with all regiments', rbpiRunMilitarySingleHomeArmy),
+  rs('consecutive ship recruits add ships to a single home fleet (cache reuse)', rbpiRunNavalSingleHomeFleet),
 ];

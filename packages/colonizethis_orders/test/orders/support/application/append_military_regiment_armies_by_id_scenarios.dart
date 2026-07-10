@@ -167,34 +167,10 @@ void amrRunFallsBackWhenPartialMap() {
 
 /// Canonical scenarios for append_military_regiment_armies_by_id family tests.
 List<RunnableScenario> appendMilitaryRegimentArmiesByIdScenarios() => const [
-  RunnableScenario(
-    label: 'create-new-army path matches with and without armiesById',
-    run: amrRunCreateNewArmyPathEquivalence,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'append-existing-army path matches with and without armiesById',
-    run: amrRunAppendExistingArmyPathEquivalence,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'mutates armiesById in place when appending to an existing army',
-    run: amrRunMutatesArmiesByIdWhenAppending,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'mutates armiesById in place when creating a new army',
-    run: amrRunMutatesArmiesByIdWhenCreating,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'multiple recruits with shared map match repeated scan-path runs',
-    run: amrRunMultipleRecruitsWithSharedMap,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'falls back to single-pass scan when armiesById lacks the entry',
-    run: amrRunFallsBackWhenPartialMap,
-    refs: '#2394',
-  ),
+  rs('create-new-army path matches with and without armiesById', amrRunCreateNewArmyPathEquivalence, '#2394'),
+  rs('append-existing-army path matches with and without armiesById', amrRunAppendExistingArmyPathEquivalence, '#2394'),
+  rs('mutates armiesById in place when appending to an existing army', amrRunMutatesArmiesByIdWhenAppending, '#2394'),
+  rs('mutates armiesById in place when creating a new army', amrRunMutatesArmiesByIdWhenCreating, '#2394'),
+  rs('multiple recruits with shared map match repeated scan-path runs', amrRunMultipleRecruitsWithSharedMap, '#2394'),
+  rs('falls back to single-pass scan when armiesById lacks the entry', amrRunFallsBackWhenPartialMap, '#2394'),
 ];

@@ -40,12 +40,6 @@ void bovRunCivilianBuildRejectedNoCapitalTile() {
 
 /// Canonical scenarios for BuildOrderValidator.
 List<RunnableScenario> buildOrderValidatorScenarios() => [
-  RunnableScenario(
-    label: 'validate returns rejected when previousRejected is true',
-    run: bovRunValidateRejectedWhenPreviousRejected,
-  ),
-  RunnableScenario(
-    label: 'civilian build is rejected when capital tile cannot be resolved',
-    run: bovRunCivilianBuildRejectedNoCapitalTile,
-  ),
+  rs('validate returns rejected when previousRejected is true', bovRunValidateRejectedWhenPreviousRejected),
+  rs('civilian build is rejected when capital tile cannot be resolved', bovRunCivilianBuildRejectedNoCapitalTile),
 ];

@@ -26,6 +26,11 @@ class RunnableScenario implements RefsScenario {
   final String? refs;
 }
 
+/// Compact [RunnableScenario] constructor for densified scenario tables
+/// (Refs #3949 wave 3 slice 156).
+RunnableScenario rs(String label, void Function() run, [String? refs]) =>
+    RunnableScenario(label: label, run: run, refs: refs);
+
 /// Invokes [RunnableScenario.run] (canonical runner for shared rows).
 void runRunnableScenario(RunnableScenario scenario) => scenario.run();
 

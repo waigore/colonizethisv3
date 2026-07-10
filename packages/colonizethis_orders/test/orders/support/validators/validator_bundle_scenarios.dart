@@ -26,9 +26,5 @@ void vbRunCreateOrderValidatorsReturnsWiredValidators() {
 
 /// Canonical scenarios for validator_bundle family tests.
 List<RunnableScenario> validatorBundleScenarios() => [
-  RunnableScenario(
-    label: 'createOrderValidators returns wired validators (Refs #2391 AC6)',
-    run: vbRunCreateOrderValidatorsReturnsWiredValidators,
-    refs: '#2391 AC6',
-  ),
+  rs('createOrderValidators returns wired validators (Refs #2391 AC6)', vbRunCreateOrderValidatorsReturnsWiredValidators, '#2391 AC6'),
 ];

@@ -98,37 +98,13 @@ void vbcRunAcceptsBuildWhenSpawnProvinceIdForeignFallsBackToCapital() {
 
 List<RunnableScenario> orderEngineValidateBuildCivilianScenarios() => const [
   // dart format off
-          RunnableScenario(
-            label: 'rejects unknown unit type',
-            run: vbcRunRejectsUnknownUnitType,
-          ),
-          RunnableScenario(
-            label: 'rejects Builder when treasury too low',
-            run: vbcRunRejectsBuilderWhenTreasuryTooLow,
-          ),
-          RunnableScenario(
-            label: 'rejects Builder when paper insufficient',
-            run: vbcRunRejectsBuilderWhenPaperInsufficient,
-          ),
-          RunnableScenario(
-            label: 'rejects Merchant when merchant_companies not unlocked',
-            run: vbcRunRejectsMerchantWhenMerchantCompaniesNotUnlocked,
-          ),
-          RunnableScenario(
-            label: 'accepts Builder when treasury and paper sufficient',
-            run: vbcRunAcceptsBuilderWhenTreasuryAndPaperSufficient,
-          ),
-          RunnableScenario(
-            label: 'accepts Merchant when tech and resources ok',
-            run: vbcRunAcceptsMerchantWhenTechAndResourcesOk,
-          ),
-          RunnableScenario(
-            label: 'accepts build when spawnProvinceId is empty (falls back to capital)',
-            run: vbcRunAcceptsBuildWhenSpawnProvinceIdEmptyFallsBackToCapital,
-          ),
-          RunnableScenario(
-            label: 'accepts build when spawnProvinceId is foreign (falls back to capital)',
-            run: vbcRunAcceptsBuildWhenSpawnProvinceIdForeignFallsBackToCapital,
-          ),
+          rs('rejects unknown unit type', vbcRunRejectsUnknownUnitType),
+          rs('rejects Builder when treasury too low', vbcRunRejectsBuilderWhenTreasuryTooLow),
+          rs('rejects Builder when paper insufficient', vbcRunRejectsBuilderWhenPaperInsufficient),
+          rs('rejects Merchant when merchant_companies not unlocked', vbcRunRejectsMerchantWhenMerchantCompaniesNotUnlocked),
+          rs('accepts Builder when treasury and paper sufficient', vbcRunAcceptsBuilderWhenTreasuryAndPaperSufficient),
+          rs('accepts Merchant when tech and resources ok', vbcRunAcceptsMerchantWhenTechAndResourcesOk),
+          rs('accepts build when spawnProvinceId is empty (falls back to capital)', vbcRunAcceptsBuildWhenSpawnProvinceIdEmptyFallsBackToCapital),
+          rs('accepts build when spawnProvinceId is foreign (falls back to capital)', vbcRunAcceptsBuildWhenSpawnProvinceIdForeignFallsBackToCapital),
           // dart format on
 ];

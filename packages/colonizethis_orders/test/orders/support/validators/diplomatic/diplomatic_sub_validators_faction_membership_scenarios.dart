@@ -84,8 +84,7 @@ void dsfmRunAllianceSnapshotRejectsTargetListedOnlyInGamePlayers() {
   expect(r.result.reason, contains('Great Power'));
 }
 
-void
-dsfmRunEstablishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot() {
+void dsfmRunEstablishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot() {
   final game = gpMinorGame(overtureStage: OvertureStage.none);
   final membership = DiplomacyFactionMembership.from(game);
   const order = DiplomaticOrder(
@@ -180,53 +179,21 @@ void dsfmRunParentValidatorSnapshotRejectsUnknownTargetId() {
 
 List<RunnableScenario>
 allianceSubValidatorFactionMembershipScenarios() => const [
-  RunnableScenario(
-    label: 'accepts known GP target identically with and without snapshot',
-    run: dsfmRunAllianceAcceptsKnownGpIdenticallyWithAndWithoutSnapshot,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'rejects non-GP target identically when snapshot has no GP membership',
-    run: dsfmRunAllianceRejectsNonGpTargetIdenticallyWithSnapshot,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'snapshot is consulted on active path: rejects target listed only in Game.players',
-    run: dsfmRunAllianceSnapshotRejectsTargetListedOnlyInGamePlayers,
-    refs: '#2394',
-  ),
+  rs('accepts known GP target identically with and without snapshot', dsfmRunAllianceAcceptsKnownGpIdenticallyWithAndWithoutSnapshot, '#2394'),
+  rs('rejects non-GP target identically when snapshot has no GP membership', dsfmRunAllianceRejectsNonGpTargetIdenticallyWithSnapshot, '#2394'),
+  rs('snapshot is consulted on active path: rejects target listed only in Game.players', dsfmRunAllianceSnapshotRejectsTargetListedOnlyInGamePlayers, '#2394'),
 ];
 
 List<RunnableScenario>
 establishOvertureSubValidatorFactionMembershipScenarios() => const [
-  RunnableScenario(
-    label: 'accepts Trade Consulate toward Minor identically with snapshot',
-    run:
-        dsfmRunEstablishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'snapshot is consulted: rejects overture toward target absent from snapshot',
-    run: dsfmRunEstablishOvertureSnapshotRejectsTargetAbsentFromSnapshot,
-    refs: '#2394',
-  ),
+  rs('accepts Trade Consulate toward Minor identically with snapshot', dsfmRunEstablishOvertureAcceptsTradeConsulateTowardMinorIdenticallyWithSnapshot, '#2394'),
+  rs('snapshot is consulted: rejects overture toward target absent from snapshot', dsfmRunEstablishOvertureSnapshotRejectsTargetAbsentFromSnapshot, '#2394'),
 ];
 
 List<RunnableScenario>
 diplomaticOrderValidatorFactionMembershipScenarios() => const [
-  RunnableScenario(
-    label: 'accepts equivalent classification with snapshot snapshot present',
-    run: dsfmRunParentValidatorAcceptsEquivalentClassificationWithSnapshot,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'snapshot is consulted on active path: rejects unknown target id',
-    run: dsfmRunParentValidatorSnapshotRejectsUnknownTargetId,
-    refs: '#2394',
-  ),
+  rs('accepts equivalent classification with snapshot snapshot present', dsfmRunParentValidatorAcceptsEquivalentClassificationWithSnapshot, '#2394'),
+  rs('snapshot is consulted on active path: rejects unknown target id', dsfmRunParentValidatorSnapshotRejectsUnknownTargetId, '#2394'),
 ];
 
 /// All faction-membership diplomatic sub-validator scenarios (union of families).

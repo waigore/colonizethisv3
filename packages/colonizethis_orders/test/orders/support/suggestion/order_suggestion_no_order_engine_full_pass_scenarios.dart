@@ -43,14 +43,6 @@ void osnoefpRunOrderEngineAddWithContextInvokesFullValidation() {
 
 List<RunnableScenario>
 orderSuggestionNoOrderEngineFullPassScenarios() => const [
-  RunnableScenario(
-    label: 'suggestBuildOrders does not invoke validatePlayerOrdersWithContext',
-    run: osnoefpRunSuggestBuildOrdersSkipsFullPass,
-    refs: '#2237 AC2',
-  ),
-  RunnableScenario(
-    label: 'OrderEngine add-with-context still invokes full validation',
-    run: osnoefpRunOrderEngineAddWithContextInvokesFullValidation,
-    refs: '#2237',
-  ),
+  rs('suggestBuildOrders does not invoke validatePlayerOrdersWithContext', osnoefpRunSuggestBuildOrdersSkipsFullPass, '#2237 AC2'),
+  rs('OrderEngine add-with-context still invokes full validation', osnoefpRunOrderEngineAddWithContextInvokesFullValidation, '#2237'),
 ];

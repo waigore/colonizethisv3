@@ -26,20 +26,8 @@ void dcsiRunSortedListsNonEmptyWhenCatalogsHaveEntries() {
 }
 
 List<RunnableScenario> debugConsoleSupportedIdsScenarios() => const [
-  RunnableScenario(
-    label: 'sorted commodity ids match lexicographic sort of id set',
-    run: dcsiRunSortedCommodityIdsMatchLexicographicSort,
-  ),
-  RunnableScenario(
-    label: 'sorted regiment type ids match lexicographic sort of id set',
-    run: dcsiRunSortedRegimentTypeIdsMatchLexicographicSort,
-  ),
-  RunnableScenario(
-    label: 'sorted ship type ids match lexicographic sort of id set',
-    run: dcsiRunSortedShipTypeIdsMatchLexicographicSort,
-  ),
-  RunnableScenario(
-    label: 'sorted lists are non-empty when catalogs have entries',
-    run: dcsiRunSortedListsNonEmptyWhenCatalogsHaveEntries,
-  ),
+  rs('sorted commodity ids match lexicographic sort of id set', dcsiRunSortedCommodityIdsMatchLexicographicSort),
+  rs('sorted regiment type ids match lexicographic sort of id set', dcsiRunSortedRegimentTypeIdsMatchLexicographicSort),
+  rs('sorted ship type ids match lexicographic sort of id set', dcsiRunSortedShipTypeIdsMatchLexicographicSort),
+  rs('sorted lists are non-empty when catalogs have entries', dcsiRunSortedListsNonEmptyWhenCatalogsHaveEntries),
 ];

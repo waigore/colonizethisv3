@@ -135,48 +135,12 @@ void osbcsRunNoCandidatesWhenPaperBelowMinimum() {
 /// Scenarios for suggestBuildOrders civilian enumeration (Refs #3793).
 List<RunnableScenario>
 suggestBuildOrdersCivilianEnumerationScenarios() => const [
-  RunnableScenario(
-    label:
-        'AC1: includes affordable civilian candidates when includeCivilianBuilds is true',
-    run: osbcsRunIncludesAffordableWhenFlagTrue,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC1: emitted civilian candidates are deterministically sorted by unitType',
-    run: osbcsRunDeterministicallySortedByUnitType,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call',
-    run: osbcsRunDefaultOmitsCivilianCandidates,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC5: Merchant excluded when merchant_companies is not unlocked',
-    run: osbcsRunMerchantExcludedWithoutTech,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC5: Merchant included when merchant_companies is unlocked and affordable',
-    run: osbcsRunMerchantIncludedWhenUnlocked,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC9: identical inputs produce identical civilian enumeration',
-    run: osbcsRunIdenticalInputsIdenticalEnumeration,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC12: no civilian candidates when treasury is zero',
-    run: osbcsRunNoCandidatesWhenTreasuryZero,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC12: no civilian candidates when paper is below the minimum cost',
-    run: osbcsRunNoCandidatesWhenPaperBelowMinimum,
-    refs: '#3793',
-  ),
+  rs('AC1: includes affordable civilian candidates when includeCivilianBuilds is true', osbcsRunIncludesAffordableWhenFlagTrue, '#3793'),
+  rs('AC1: emitted civilian candidates are deterministically sorted by unitType', osbcsRunDeterministicallySortedByUnitType, '#3793'),
+  rs('AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call', osbcsRunDefaultOmitsCivilianCandidates, '#3793'),
+  rs('AC5: Merchant excluded when merchant_companies is not unlocked', osbcsRunMerchantExcludedWithoutTech, '#3793'),
+  rs('AC5: Merchant included when merchant_companies is unlocked and affordable', osbcsRunMerchantIncludedWhenUnlocked, '#3793'),
+  rs('AC9: identical inputs produce identical civilian enumeration', osbcsRunIdenticalInputsIdenticalEnumeration, '#3793'),
+  rs('AC12: no civilian candidates when treasury is zero', osbcsRunNoCandidatesWhenTreasuryZero, '#3793'),
+  rs('AC12: no civilian candidates when paper is below the minimum cost', osbcsRunNoCandidatesWhenPaperBelowMinimum, '#3793'),
 ];

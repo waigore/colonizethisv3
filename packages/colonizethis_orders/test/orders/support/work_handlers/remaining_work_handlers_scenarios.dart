@@ -197,40 +197,13 @@ void rwhRunSingletonNoCrossSupport() {
 
 /// Canonical scenarios for remaining_work_handlers family tests.
 List<RunnableScenario> remainingWorkHandlersScenarios() => const [
-  RunnableScenario(
-    label: 'supports only counter_spy',
-    run: rwhRunSupportsOnlyCounterSpy,
-  ),
-  RunnableScenario(
-    label: 'tryApply assigns counter_spy work for spy unit',
-    run: rwhRunTryApplyCounterSpy,
-  ),
-  RunnableScenario(
-    label: 'supports only prospect',
-    run: rwhRunSupportsOnlyProspect,
-  ),
-  RunnableScenario(
-    label: 'tryApply returns false for non-mineral tile',
-    run: rwhRunTryApplyProspectNonMineral,
-  ),
-  RunnableScenario(
-    label: 'returns false when unit already has currentWork',
-    run: rwhRunStandardWorkOrderAlreadyWorking,
-  ),
-  RunnableScenario(
-    label: 'skips fort level 2 when Mine Engineering not unlocked',
-    run: rwhRunSkipFortMissingTech,
-  ),
-  RunnableScenario(
-    label: 'each standard build handler supports only its target',
-    run: rwhRunStandardBuildSupportsOnlyTarget,
-  ),
-  RunnableScenario(
-    label: 'maps every standard and simple work target to a handler',
-    run: rwhRunRegistryMapsAllTargets,
-  ),
-  RunnableScenario(
-    label: 'singleton handlers do not cross-support other simple targets',
-    run: rwhRunSingletonNoCrossSupport,
-  ),
+  rs('supports only counter_spy', rwhRunSupportsOnlyCounterSpy),
+  rs('tryApply assigns counter_spy work for spy unit', rwhRunTryApplyCounterSpy),
+  rs('supports only prospect', rwhRunSupportsOnlyProspect),
+  rs('tryApply returns false for non-mineral tile', rwhRunTryApplyProspectNonMineral),
+  rs('returns false when unit already has currentWork', rwhRunStandardWorkOrderAlreadyWorking),
+  rs('skips fort level 2 when Mine Engineering not unlocked', rwhRunSkipFortMissingTech),
+  rs('each standard build handler supports only its target', rwhRunStandardBuildSupportsOnlyTarget),
+  rs('maps every standard and simple work target to a handler', rwhRunRegistryMapsAllTargets),
+  rs('singleton handlers do not cross-support other simple targets', rwhRunSingletonNoCrossSupport),
 ];

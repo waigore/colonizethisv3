@@ -75,29 +75,10 @@ void olRunNoLibOrdersSourceConsumesLogicLog() {
 
 /// Canonical scenarios for orders_logging family tests.
 List<RunnableScenario> ordersLoggingScenarios() => const [
-  RunnableScenario(
-    label: 'ordersLog is a CtLogger with the distinct `orders` prefix',
-    run: olRunOrdersLogIsCtLogger,
-  ),
-  RunnableScenario(
-    label: 'ordersLog is the single shared instance for the orders domain',
-    run: olRunOrdersLogIsSharedInstance,
-  ),
-  RunnableScenario(
-    label: 'ordersApplicationLog is an alias of the shared ordersLog',
-    run: olRunOrdersApplicationLogAlias,
-  ),
-  RunnableScenario(
-    label: 'orderSuggestionLog is rooted under the `orders` domain prefix',
-    run: olRunOrderSuggestionLogPrefix,
-  ),
-  RunnableScenario(
-    label: 'ordersLog emits messages with the `orders:` prefix',
-    run: olRunOrdersLogEmitsPrefixedMessages,
-  ),
-  RunnableScenario(
-    label: 'no lib/src/orders source consumes the core logicLog',
-    run: olRunNoLibOrdersSourceConsumesLogicLog,
-    refs: '#3290 C2',
-  ),
+  rs('ordersLog is a CtLogger with the distinct `orders` prefix', olRunOrdersLogIsCtLogger),
+  rs('ordersLog is the single shared instance for the orders domain', olRunOrdersLogIsSharedInstance),
+  rs('ordersApplicationLog is an alias of the shared ordersLog', olRunOrdersApplicationLogAlias),
+  rs('orderSuggestionLog is rooted under the `orders` domain prefix', olRunOrderSuggestionLogPrefix),
+  rs('ordersLog emits messages with the `orders:` prefix', olRunOrdersLogEmitsPrefixedMessages),
+  rs('no lib/src/orders source consumes the core logicLog', olRunNoLibOrdersSourceConsumesLogicLog, '#3290 C2'),
 ];

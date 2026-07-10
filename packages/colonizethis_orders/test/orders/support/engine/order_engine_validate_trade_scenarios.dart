@@ -105,25 +105,10 @@ void vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy() {
 
 List<RunnableScenario> orderEngineValidateTradeScenarios() => const [
   // dart format off
-      RunnableScenario(
-        label: 'accepts a valid offer when stockpile covers quantity',
-        run: vetRunAcceptsValidOfferWhenStockpileCoversQuantity,
-      ),
-      RunnableScenario(
-        label: 'rejects mutual exclusion when bid and offer share a commodity',
-        run: vetRunRejectsMutualExclusionWhenBidAndOfferShareACommodity,
-      ),
-      RunnableScenario(
-        label: 'rejects offer exceeding available stockpile',
-        run: vetRunRejectsOfferExceedingAvailableStockpile,
-      ),
-      RunnableScenario(
-        label: 'accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)',
-        run: vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy,
-      ),
-      RunnableScenario(
-        label: 'rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)',
-        run: vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy,
-      ),
+      rs('accepts a valid offer when stockpile covers quantity', vetRunAcceptsValidOfferWhenStockpileCoversQuantity),
+      rs('rejects mutual exclusion when bid and offer share a commodity', vetRunRejectsMutualExclusionWhenBidAndOfferShareACommodity),
+      rs('rejects offer exceeding available stockpile', vetRunRejectsOfferExceedingAvailableStockpile),
+      rs('accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)', vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy),
+      rs('rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)', vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy),
       // dart format on
 ];

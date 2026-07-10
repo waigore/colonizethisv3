@@ -91,16 +91,7 @@ void osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets() {
 }
 
 List<RunnableScenario> orderSuggestionDiplomaticPassScenarios() => const [
-  RunnableScenario(
-    label: 'isIndependentDiplomaticCandidate flags economic and boycott types',
-    run: osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes,
-  ),
-  RunnableScenario(
-    label: 'playerOverturesByTargetIdForPlayer keeps first row per target',
-    run: osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget,
-  ),
-  RunnableScenario(
-    label: 'acceptDeclareWarCandidatesForTargets skips self and at-war targets',
-    run: osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets,
-  ),
+  rs('isIndependentDiplomaticCandidate flags economic and boycott types', osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes),
+  rs('playerOverturesByTargetIdForPlayer keeps first row per target', osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget),
+  rs('acceptDeclareWarCandidatesForTargets skips self and at-war targets', osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets),
 ];

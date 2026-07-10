@@ -170,24 +170,8 @@ void osrmsRunDoesNotReSuggestTechAlreadyAssignedByPendingOrder() {
 }
 
 List<RunnableScenario> orderSuggestionResearchMultiSlotScenarios() => const [
-  RunnableScenario(
-    label: 'fills every empty slot with a distinct researchable tech',
-    run: osrmsRunFillsEveryEmptySlotWithDistinctResearchableTech,
-    refs: '#3472',
-  ),
-  RunnableScenario(
-    label: 're-emits in-progress research so the resolver preserves progress',
-    run: osrmsRunReEmitsInProgressResearch,
-    refs: '#3472',
-  ),
-  RunnableScenario(
-    label: 'returns no suggestions when there are zero research slots',
-    run: osrmsRunReturnsNoSuggestionsWhenZeroResearchSlots,
-    refs: '#3472',
-  ),
-  RunnableScenario(
-    label: 'does not re-suggest a tech already assigned by a pending order',
-    run: osrmsRunDoesNotReSuggestTechAlreadyAssignedByPendingOrder,
-    refs: '#3472',
-  ),
+  rs('fills every empty slot with a distinct researchable tech', osrmsRunFillsEveryEmptySlotWithDistinctResearchableTech, '#3472'),
+  rs('re-emits in-progress research so the resolver preserves progress', osrmsRunReEmitsInProgressResearch, '#3472'),
+  rs('returns no suggestions when there are zero research slots', osrmsRunReturnsNoSuggestionsWhenZeroResearchSlots, '#3472'),
+  rs('does not re-suggest a tech already assigned by a pending order', osrmsRunDoesNotReSuggestTechAlreadyAssignedByPendingOrder, '#3472'),
 ];

@@ -174,42 +174,11 @@ void osaidRunReturnsAllianceCandidateWhenAtPeace() {
 }
 
 List<RunnableScenario> orderSuggestionApiImplDiplomaticScenarios() => const [
-  RunnableScenario(
-    label:
-        'returns alliance (single diplo per target) for other GP when at peace and not allied',
-    run: osaidRunReturnsAllianceSingleDiploPerTarget,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'returns declareWar toward GP when at peace and already allied',
-    run: osaidRunReturnsDeclareWarWhenAllied,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'returns breakAlliance toward GP when a formal alliance exists at peace',
-    run: osaidRunReturnsBreakAllianceWhenFormalAllianceExists,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'does not return alliance toward a GP when a formal alliance exists',
-    run: osaidRunDoesNotReturnAllianceWhenFormalAllianceExists,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'does not return breakAlliance when relation level is allied but no formal alliance',
-    run: osaidRunDoesNotReturnBreakAllianceWithoutFormalAlliance,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'returns offerPeace when at war with another GP',
-    run: osaidRunReturnsOfferPeaceWhenAtWar,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'returns alliance candidate when at peace and not allied',
-    run: osaidRunReturnsAllianceCandidateWhenAtPeace,
-    refs: '#3949',
-  ),
+  rs('returns alliance (single diplo per target) for other GP when at peace and not allied', osaidRunReturnsAllianceSingleDiploPerTarget, '#3949'),
+  rs('returns declareWar toward GP when at peace and already allied', osaidRunReturnsDeclareWarWhenAllied, '#3949'),
+  rs('returns breakAlliance toward GP when a formal alliance exists at peace', osaidRunReturnsBreakAllianceWhenFormalAllianceExists, '#3949'),
+  rs('does not return alliance toward a GP when a formal alliance exists', osaidRunDoesNotReturnAllianceWhenFormalAllianceExists, '#3949'),
+  rs('does not return breakAlliance when relation level is allied but no formal alliance', osaidRunDoesNotReturnBreakAllianceWithoutFormalAlliance, '#3949'),
+  rs('returns offerPeace when at war with another GP', osaidRunReturnsOfferPeaceWhenAtWar, '#3949'),
+  rs('returns alliance candidate when at peace and not allied', osaidRunReturnsAllianceCandidateWhenAtPeace, '#3949'),
 ];

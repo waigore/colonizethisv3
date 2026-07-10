@@ -25,14 +25,6 @@ void oeviRunValidateBuildsSixValidatorBundles() {
 
 /// Canonical scenarios for order_engine_validator_injection family tests.
 List<RunnableScenario> orderEngineValidatorInjectionScenarios() => const [
-  RunnableScenario(
-    label: 'OrderEngine validator factory allows injected validators',
-    run: oeviRunFactoryAllowsInjectedValidators,
-  ),
-  RunnableScenario(
-    label:
-        'validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4)',
-    run: oeviRunValidateBuildsSixValidatorBundles,
-    refs: '#2391 AC7',
-  ),
+  rs('OrderEngine validator factory allows injected validators', oeviRunFactoryAllowsInjectedValidators),
+  rs('validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4)', oeviRunValidateBuildsSixValidatorBundles, '#2391 AC7'),
 ];

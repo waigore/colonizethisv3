@@ -150,64 +150,22 @@ void domRunRemoveTradeOrderForPlayerNoOpMissingCommodity() {
 
 /// Scenarios for removePendingWorkOrderAt.
 List<RunnableScenario> removePendingWorkOrderAtScenarios() => const [
-  RunnableScenario(
-    label: 'removes order at index',
-    run: domRunRemovePendingWorkOrderAtRemovesAtIndex,
-  ),
-  RunnableScenario(
-    label: 'returns orders unchanged when index invalid',
-    run: domRunRemovePendingWorkOrderAtInvalidIndexNoOp,
-  ),
+  rs('removes order at index', domRunRemovePendingWorkOrderAtRemovesAtIndex),
+  rs('returns orders unchanged when index invalid', domRunRemovePendingWorkOrderAtInvalidIndexNoOp),
 ];
 
 /// Scenarios for trade-order draft helpers (Refs #2993 E5b).
 List<RunnableScenario> draftOrdersTradeMutationScenarios() => const [
-  RunnableScenario(
-    label: 'tradeOrderForPlayerCommodity returns null on empty orders',
-    run: domRunTradeOrderForPlayerCommodityEmpty,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label: 'tradeOrderForPlayerCommodity returns the matching staged order',
-    run: domRunTradeOrderForPlayerCommodityMatching,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label: 'applyTradeOrderForPlayer adds when no prior order exists',
-    run: domRunApplyTradeOrderForPlayerAdds,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label:
-        'applyTradeOrderForPlayer replaces a prior order for the same '
-        'commodity (mutual exclusion: bid -> offer cannot coexist)',
-    run: domRunApplyTradeOrderForPlayerReplacesMutualExclusion,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label:
-        'applyTradeOrderForPlayer scopes per-player (other players\' '
-        'orders are not affected)',
-    run: domRunApplyTradeOrderForPlayerScopesPerPlayer,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label: 'removeTradeOrderForPlayer deletes the matching staged order',
-    run: domRunRemoveTradeOrderForPlayerDeletes,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label:
-        'removeTradeOrderForPlayer is a no-op (returns same instance) when '
-        'the player has no staged orders',
-    run: domRunRemoveTradeOrderForPlayerNoOpEmpty,
-    refs: '#2993 E5b',
-  ),
-  RunnableScenario(
-    label:
-        'removeTradeOrderForPlayer is a no-op (returns same instance) when '
-        'the commodity is not present in the staged list',
-    run: domRunRemoveTradeOrderForPlayerNoOpMissingCommodity,
-    refs: '#2993 E5b',
-  ),
+  rs('tradeOrderForPlayerCommodity returns null on empty orders', domRunTradeOrderForPlayerCommodityEmpty, '#2993 E5b'),
+  rs('tradeOrderForPlayerCommodity returns the matching staged order', domRunTradeOrderForPlayerCommodityMatching, '#2993 E5b'),
+  rs('applyTradeOrderForPlayer adds when no prior order exists', domRunApplyTradeOrderForPlayerAdds, '#2993 E5b'),
+  rs('applyTradeOrderForPlayer replaces a prior order for the same '
+        'commodity (mutual exclusion: bid -> offer cannot coexist)', domRunApplyTradeOrderForPlayerReplacesMutualExclusion, '#2993 E5b'),
+  rs('applyTradeOrderForPlayer scopes per-player (other players\' '
+        'orders are not affected)', domRunApplyTradeOrderForPlayerScopesPerPlayer, '#2993 E5b'),
+  rs('removeTradeOrderForPlayer deletes the matching staged order', domRunRemoveTradeOrderForPlayerDeletes, '#2993 E5b'),
+  rs('removeTradeOrderForPlayer is a no-op (returns same instance) when '
+        'the player has no staged orders', domRunRemoveTradeOrderForPlayerNoOpEmpty, '#2993 E5b'),
+  rs('removeTradeOrderForPlayer is a no-op (returns same instance) when '
+        'the commodity is not present in the staged list', domRunRemoveTradeOrderForPlayerNoOpMissingCommodity, '#2993 E5b'),
 ];

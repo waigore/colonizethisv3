@@ -79,20 +79,8 @@ void oswttwRunDefaultPathUsesProvinceOwnerCache() {
 
 List<RunnableScenario>
 orderSuggestionWorkTilePrefilterTownWorkScenarios() => const [
-  RunnableScenario(
-    label:
-        'upgrade_town includes town tiles only in owned provinces with a town',
-    run: oswttwRunUpgradeTownOwnedOnly,
-  ),
-  RunnableScenario(
-    label:
-        'build_fort matches upgrade_town town-tile prefilter for shared owned set',
-    run: oswttwRunBuildFortMatchesUpgradeTown,
-  ),
-  RunnableScenario(
-    label:
-        'default path derives owned provinces from ProvinceOwnerCache '
-        '(Phase 6b)',
-    run: oswttwRunDefaultPathUsesProvinceOwnerCache,
-  ),
+  rs('upgrade_town includes town tiles only in owned provinces with a town', oswttwRunUpgradeTownOwnedOnly),
+  rs('build_fort matches upgrade_town town-tile prefilter for shared owned set', oswttwRunBuildFortMatchesUpgradeTown),
+  rs('default path derives owned provinces from ProvinceOwnerCache '
+        '(Phase 6b)', oswttwRunDefaultPathUsesProvinceOwnerCache),
 ];

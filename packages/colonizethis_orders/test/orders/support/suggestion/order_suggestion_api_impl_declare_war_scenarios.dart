@@ -56,9 +56,5 @@ void osaidwRunDeclareWarWhenOvertureWouldWinInDiplomaticPass() {
 }
 
 List<RunnableScenario> orderSuggestionApiImplDeclareWarScenarios() => const [
-  RunnableScenario(
-    label:
-        'returns declareWar toward minor when establishOverture would win in suggestDiplomaticOrders',
-    run: osaidwRunDeclareWarWhenOvertureWouldWinInDiplomaticPass,
-  ),
+  rs('returns declareWar toward minor when establishOverture would win in suggestDiplomaticOrders', osaidwRunDeclareWarWhenOvertureWouldWinInDiplomaticPass),
 ];

@@ -281,34 +281,11 @@ void _expectForBasePrefixMatchesFreshForPlayer() {
 
 List<RunnableScenario>
 orderSuggestionSharedValidatorEquivalenceScenarios() => const [
-  RunnableScenario(
-    label: 'suggestMoveOrders matches default path',
-    run: ossveRunSuggestMoveOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestArmyMoveOrders matches default path',
-    run: ossveRunSuggestArmyMoveOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestWorkOrders matches default path',
-    run: ossveRunSuggestWorkOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestBuildOrders matches default path',
-    run: ossveRunSuggestBuildOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestDiplomaticOrders is deterministic across repeated calls',
-    run: ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls,
-  ),
-  RunnableScenario(
-    label:
-        'shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)',
-    run: ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'forBasePrefix matches fresh forPlayer for same basePrefix',
-    run: ossveRunForBasePrefixMatchesFreshForPlayer,
-  ),
+  rs('suggestMoveOrders matches default path', ossveRunSuggestMoveOrdersMatchesDefaultPath),
+  rs('suggestArmyMoveOrders matches default path', ossveRunSuggestArmyMoveOrdersMatchesDefaultPath),
+  rs('suggestWorkOrders matches default path', ossveRunSuggestWorkOrdersMatchesDefaultPath),
+  rs('suggestBuildOrders matches default path', ossveRunSuggestBuildOrdersMatchesDefaultPath),
+  rs('suggestDiplomaticOrders is deterministic across repeated calls', ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls),
+  rs('shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)', ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault, '#2394'),
+  rs('forBasePrefix matches fresh forPlayer for same basePrefix', ossveRunForBasePrefixMatchesFreshForPlayer),
 ];

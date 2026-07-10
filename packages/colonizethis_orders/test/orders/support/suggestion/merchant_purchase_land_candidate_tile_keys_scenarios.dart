@@ -93,20 +93,8 @@ void mplRunExcludesDevExclusiveReserved() {
 /// Canonical scenarios for merchant_purchase_land_candidate_tile_keys family tests.
 List<RunnableScenario> merchantPurchaseLandCandidateTileKeysScenarios() =>
     const [
-      RunnableScenario(
-        label: 'lists NW tribe tiles before Old World minor tiles',
-        run: mplRunListsNwBeforeOw,
-      ),
-      RunnableScenario(
-        label: 'matches province scan membership (deterministic NW-first sort)',
-        run: mplRunMatchesProvinceScanMembership,
-      ),
-      RunnableScenario(
-        label: 'matches projection union over non-player owners (slice 14)',
-        run: mplRunMatchesProjectionUnion,
-      ),
-      RunnableScenario(
-        label: 'excludes dev-exclusive reserved tiles like legacy path',
-        run: mplRunExcludesDevExclusiveReserved,
-      ),
+      rs('lists NW tribe tiles before Old World minor tiles', mplRunListsNwBeforeOw),
+      rs('matches province scan membership (deterministic NW-first sort)', mplRunMatchesProvinceScanMembership),
+      rs('matches projection union over non-player owners (slice 14)', mplRunMatchesProjectionUnion),
+      rs('excludes dev-exclusive reserved tiles like legacy path', mplRunExcludesDevExclusiveReserved),
     ];

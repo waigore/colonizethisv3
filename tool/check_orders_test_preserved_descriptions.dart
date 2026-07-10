@@ -9,13 +9,19 @@ import 'check_economy_test_preserved_descriptions.dart';
 ///
 /// Ensures every single-line `test('…')` / `testWidgets('…')` description
 /// committed in [ordersDescriptionBaselineRelativePath] still appears in the
-/// orders test tree (including scenario `label:` strings under
-/// `test/orders/support/`) after wave-3 runner consolidation.
+/// orders test tree (including scenario `label:` strings and compact `rs('…')`
+/// rows under `test/orders/support/`) after wave-3 runner consolidation.
 const ordersDescriptionBaselineRelativePath =
     'packages/colonizethis_orders/test/DESCRIPTION_BASELINE.txt';
 
 const _ordersTestDir = 'packages/colonizethis_orders/test';
 const _ordersSupportDir = 'packages/colonizethis_orders/test/orders/support';
+
+/// Captures densified `rs('…', …)` / `rs("…", …)` scenario rows (Refs #3949
+/// slice 156).
+final RegExp ordersCompactRsLabelPattern = RegExp(
+  r"""\brs\(\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""",
+);
 
 void main() {
   exit(runCheckOrdersTestPreservedDescriptions(Directory.current.path));
@@ -72,12 +78,10 @@ int runCheckOrdersTestPreservedDescriptions(
     }
   }
 
-  final presentDescriptions = collectEconomyTestDescriptions(
+  final presentDescriptions = collectOrdersTestDescriptions(
     sourcesByPath: sourcesByPath,
     scenarioSourcesByPath: scenarioSourcesByPath,
   );
-  // Also collect direct test()/testWidgets() already handled; scenario labels
-  // from non-*_scenarios.dart support modules use the same label pattern.
   final missing = <String>[];
   for (final description in baselineDescriptions) {
     if (!presentDescriptions.contains(description)) {
@@ -101,15 +105,29 @@ int runCheckOrdersTestPreservedDescriptions(
 }
 
 /// Collects single-line `test`/`testWidgets` descriptions under orders tests
-/// (exported for unit tests of this gate).
+/// plus scenario `label:` and compact `rs('…')` pins (exported for unit tests).
 Set<String> collectOrdersTestDescriptions({
   required Map<String, String> sourcesByPath,
   Map<String, String> scenarioSourcesByPath = const {},
-}) =>
-    collectEconomyTestDescriptions(
-      sourcesByPath: sourcesByPath,
-      scenarioSourcesByPath: scenarioSourcesByPath,
-    );
+}) {
+  final descriptions = collectEconomyTestDescriptions(
+    sourcesByPath: sourcesByPath,
+    scenarioSourcesByPath: scenarioSourcesByPath,
+  );
+  final scenarioPaths = scenarioSourcesByPath.keys.toList()..sort();
+  for (final path in scenarioPaths) {
+    final source = scenarioSourcesByPath[path]!
+        .split('\n')
+        .map((line) => economyTestDescriptionIsCommentLine(line) ? '' : line)
+        .join('\n');
+    for (final match in ordersCompactRsLabelPattern.allMatches(source)) {
+      final description = match.group(1) ?? match.group(2);
+      if (description == null || description.isEmpty) continue;
+      descriptions.add(description);
+    }
+  }
+  return descriptions;
+}
 
 /// Pattern reused from economy for scenario `label:` pins.
 RegExp get ordersScenarioLabelPattern => economyScenarioLabelPattern;

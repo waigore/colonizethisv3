@@ -213,56 +213,16 @@ void osrwRunEmptyPlayerReturnsEmptyList() {
 
 List<RunnableScenario>
 orderSuggestionRecruitWorkerInclusionScenarios() => const [
-  RunnableScenario(
-    label:
-        'returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows',
-    run: osrwRunReturnsPeasantAndApprenticeWhenSupported,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label: 'omits trained tiers when their required techs are locked',
-    run: osrwRunOmitsTrainedTiersWhenTechsLocked,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label: 'omits peasant recruit when fabric is insufficient',
-    run: osrwRunOmitsPeasantWhenFabricInsufficient,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label: 'omits apprentice recruit when treasury is below 200 ducats',
-    run: osrwRunOmitsApprenticeWhenTreasuryBelow200,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label: 'omits apprentice recruit when peasant pool is empty',
-    run: osrwRunOmitsApprenticeWhenPeasantPoolEmpty,
-    refs: '#2692 S7',
-  ),
+  rs('returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows', osrwRunReturnsPeasantAndApprenticeWhenSupported, '#2692 S7'),
+  rs('omits trained tiers when their required techs are locked', osrwRunOmitsTrainedTiersWhenTechsLocked, '#2692 S7'),
+  rs('omits peasant recruit when fabric is insufficient', osrwRunOmitsPeasantWhenFabricInsufficient, '#2692 S7'),
+  rs('omits apprentice recruit when treasury is below 200 ducats', osrwRunOmitsApprenticeWhenTreasuryBelow200, '#2692 S7'),
+  rs('omits apprentice recruit when peasant pool is empty', osrwRunOmitsApprenticeWhenPeasantPoolEmpty, '#2692 S7'),
 ];
 
 List<RunnableScenario> orderSuggestionRecruitWorkerParityScenarios() => const [
-  RunnableScenario(
-    label:
-        'returns all four tiers when all techs unlocked and resources support every cost row',
-    run: osrwRunReturnsAllFourTiersWhenFullyUnlocked,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label:
-        'peasant reservation: pending apprentice recruit drains the only peasant so a candidate apprentice is excluded but candidate peasant remains',
-    run: osrwRunPeasantReservationExcludesApprenticeCandidate,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label:
-        'engine round-trip parity: accept/reject decision matches addRecruitWorkerOrderWithContext for every WorkerTier in a partial tech / peasant / treasury fixture',
-    run: osrwRunEngineRoundTripParityPartialFixture,
-    refs: '#2692 S7',
-  ),
-  RunnableScenario(
-    label: 'empty stockpile + zero treasury + zero peasants -> empty list',
-    run: osrwRunEmptyPlayerReturnsEmptyList,
-    refs: '#2692 S7',
-  ),
+  rs('returns all four tiers when all techs unlocked and resources support every cost row', osrwRunReturnsAllFourTiersWhenFullyUnlocked, '#2692 S7'),
+  rs('peasant reservation: pending apprentice recruit drains the only peasant so a candidate apprentice is excluded but candidate peasant remains', osrwRunPeasantReservationExcludesApprenticeCandidate, '#2692 S7'),
+  rs('engine round-trip parity: accept/reject decision matches addRecruitWorkerOrderWithContext for every WorkerTier in a partial tech / peasant / treasury fixture', osrwRunEngineRoundTripParityPartialFixture, '#2692 S7'),
+  rs('empty stockpile + zero treasury + zero peasants -> empty list', osrwRunEmptyPlayerReturnsEmptyList, '#2692 S7'),
 ];

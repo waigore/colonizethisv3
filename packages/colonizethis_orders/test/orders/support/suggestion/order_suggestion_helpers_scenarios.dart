@@ -128,29 +128,9 @@ void oshRunKeepsMoveWhenDraftDeclaresWar() {
 
 /// Scenarios for filterArmyMoveOrdersByDiplomacy.
 List<RunnableScenario> filterArmyMoveOrdersByDiplomacyScenarios() => const [
-  RunnableScenario(
-    label: 'drops move into minor-owned province when relation row is absent',
-    run: oshRunDropsMoveWhenRelationAbsent,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'keeps move into minor province when at war (relation row present)',
-    run: oshRunKeepsMoveWhenAtWar,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'drops move into minor province when explicitly at peace',
-    run: oshRunDropsMoveWhenAtPeace,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'keeps reordering-only move within own provinces',
-    run: oshRunKeepsReorderWithinOwnProvinces,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'keeps move into minor at peace when draft orders declare war',
-    run: oshRunKeepsMoveWhenDraftDeclaresWar,
-    refs: '#2394',
-  ),
+  rs('drops move into minor-owned province when relation row is absent', oshRunDropsMoveWhenRelationAbsent, '#2394'),
+  rs('keeps move into minor province when at war (relation row present)', oshRunKeepsMoveWhenAtWar, '#2394'),
+  rs('drops move into minor province when explicitly at peace', oshRunDropsMoveWhenAtPeace, '#2394'),
+  rs('keeps reordering-only move within own provinces', oshRunKeepsReorderWithinOwnProvinces, '#2394'),
+  rs('keeps move into minor at peace when draft orders declare war', oshRunKeepsMoveWhenDraftDeclaresWar, '#2394'),
 ];

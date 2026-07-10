@@ -280,53 +280,15 @@ void oemwcRunWorkProspectRejectedWhenAlreadyProspected() {
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_move_and_work_context_part*_test.dart` descriptions.
 List<RunnableScenario> orderEngineMoveAndWorkContextScenarios() => const [
-  RunnableScenario(
-    label: 'move order rejected when destination province unknown',
-    run: oemwcRunMoveRejectedWhenDestinationProvinceUnknown,
-  ),
-  RunnableScenario(
-    label: 'work order explore rejected when province unknown',
-    run: oemwcRunWorkExploreRejectedWhenProvinceUnknown,
-  ),
-  RunnableScenario(
-    label: 'work order explore rejected on foreign GP tile for explorer',
-    run: oemwcRunWorkExploreRejectedOnForeignGpTile,
-  ),
-  RunnableScenario(
-    label: 'work order prospect rejected when province not fogged or better',
-    run: oemwcRunWorkProspectRejectedWhenProvinceNotFogged,
-  ),
-  RunnableScenario(
-    label: 'work order prospect rejected when tile is not mineral-eligible',
-    run: oemwcRunWorkProspectRejectedWhenNotMineralEligible,
-  ),
-  RunnableScenario(
-    label:
-        'work order prospect accepted when mineral-eligible and visibility ok',
-    run: oemwcRunWorkProspectAcceptedWhenMineralEligible,
-  ),
-  RunnableScenario(
-    label:
-        'work order prospect rejected in Tribe province without a consulate (Refs #3753 R4)',
-    run: oemwcRunWorkProspectRejectedWithoutConsulate,
-    refs: '#3753',
-  ),
-  RunnableScenario(
-    label: 'work order prospect rejected on foreign GP tile for explorer',
-    run: oemwcRunWorkProspectRejectedOnForeignGpTile,
-  ),
-  RunnableScenario(
-    label:
-        'move order rejected when destination not adjacent and not own province',
-    run: oemwcRunMoveRejectedWhenNotAdjacentNotOwn,
-  ),
-  RunnableScenario(
-    label:
-        'civilian move order accepted when destination not adjacent but own province',
-    run: oemwcRunCivilianMoveAcceptedWhenNotAdjacentOwnProvince,
-  ),
-  RunnableScenario(
-    label: 'work order prospect rejected when tile already prospected',
-    run: oemwcRunWorkProspectRejectedWhenAlreadyProspected,
-  ),
+  rs('move order rejected when destination province unknown', oemwcRunMoveRejectedWhenDestinationProvinceUnknown),
+  rs('work order explore rejected when province unknown', oemwcRunWorkExploreRejectedWhenProvinceUnknown),
+  rs('work order explore rejected on foreign GP tile for explorer', oemwcRunWorkExploreRejectedOnForeignGpTile),
+  rs('work order prospect rejected when province not fogged or better', oemwcRunWorkProspectRejectedWhenProvinceNotFogged),
+  rs('work order prospect rejected when tile is not mineral-eligible', oemwcRunWorkProspectRejectedWhenNotMineralEligible),
+  rs('work order prospect accepted when mineral-eligible and visibility ok', oemwcRunWorkProspectAcceptedWhenMineralEligible),
+  rs('work order prospect rejected in Tribe province without a consulate (Refs #3753 R4)', oemwcRunWorkProspectRejectedWithoutConsulate, '#3753'),
+  rs('work order prospect rejected on foreign GP tile for explorer', oemwcRunWorkProspectRejectedOnForeignGpTile),
+  rs('move order rejected when destination not adjacent and not own province', oemwcRunMoveRejectedWhenNotAdjacentNotOwn),
+  rs('civilian move order accepted when destination not adjacent but own province', oemwcRunCivilianMoveAcceptedWhenNotAdjacentOwnProvince),
+  rs('work order prospect rejected when tile already prospected', oemwcRunWorkProspectRejectedWhenAlreadyProspected),
 ];

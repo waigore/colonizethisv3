@@ -200,65 +200,19 @@ void dpeRunInvalidDeclareWarOfferPeaceStillEnumerated() {
 }
 
 List<RunnableScenario> diplomaticPanelActionCandidatesScenarios() => const [
-  RunnableScenario(
-    label: 'GP row includes alliance, FTP, and four overture stages',
-    run: dpacRunGpRowIncludesAllianceFtpOvertureStages,
-  ),
-  RunnableScenario(
-    label:
-        'AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only',
-    run: dpacRunFormalAllianceSwapsAllianceForBreakAllianceOnly,
-  ),
-  RunnableScenario(
-    label: 'Minor row omits alliance and FTP',
-    run: dpacRunMinorRowOmitsAllianceFtp,
-  ),
-  RunnableScenario(
-    label: 'GP row includes boycott + revoke boycott (Refs #3753 S14)',
-    run: dpacRunGpRowIncludesBoycottRevokeBoycott,
-    refs: '#3753 S14',
-  ),
-  RunnableScenario(
-    label: 'Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)',
-    run: dpacRunMinorTribeRowOmitsBoycottRevokeBoycott,
-    refs: '#3753 S14',
-  ),
+  rs('GP row includes alliance, FTP, and four overture stages', dpacRunGpRowIncludesAllianceFtpOvertureStages),
+  rs('AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only', dpacRunFormalAllianceSwapsAllianceForBreakAllianceOnly),
+  rs('Minor row omits alliance and FTP', dpacRunMinorRowOmitsAllianceFtp),
+  rs('GP row includes boycott + revoke boycott (Refs #3753 S14)', dpacRunGpRowIncludesBoycottRevokeBoycott, '#3753 S14'),
+  rs('Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)', dpacRunMinorTribeRowOmitsBoycottRevokeBoycott, '#3753 S14'),
 ];
 
 List<RunnableScenario> diplomaticPanelEnumerateScenarios() => const [
-  RunnableScenario(
-    label:
-        'AC-6: minor at none shows all overture stages; only consulate enabled',
-    run: dpeRunMinorAtNoneShowsOvertureStagesConsulateEnabled,
-  ),
-  RunnableScenario(
-    label: 'S14: boycott disabled when human holds no colony',
-    run: dpeRunBoycottDisabledWhenNoColony,
-    refs: '#3753 S14',
-  ),
-  RunnableScenario(
-    label: 'S14: boycott enabled when human holds a colony at peace',
-    run: dpeRunBoycottEnabledWhenColonyAtPeace,
-    refs: '#3753 S14',
-  ),
-  RunnableScenario(
-    label: 'S14: revoke enabled (and boycott disabled) with active boycott',
-    run: dpeRunRevokeEnabledWithActiveBoycott,
-    refs: '#3753 S14',
-  ),
-  RunnableScenario(
-    label: 'S14: revoke disabled when no active boycott exists',
-    run: dpeRunRevokeDisabledWhenNoActiveBoycott,
-    refs: '#3753 S14',
-  ),
-  RunnableScenario(
-    label:
-        'post-break cooldown disables alliance with deterministic reason (#3811)',
-    run: dpeRunPostBreakCooldownDisablesAlliance,
-    refs: '#3811',
-  ),
-  RunnableScenario(
-    label: 'AC-10: invalid declare war / offer peace still enumerated',
-    run: dpeRunInvalidDeclareWarOfferPeaceStillEnumerated,
-  ),
+  rs('AC-6: minor at none shows all overture stages; only consulate enabled', dpeRunMinorAtNoneShowsOvertureStagesConsulateEnabled),
+  rs('S14: boycott disabled when human holds no colony', dpeRunBoycottDisabledWhenNoColony, '#3753 S14'),
+  rs('S14: boycott enabled when human holds a colony at peace', dpeRunBoycottEnabledWhenColonyAtPeace, '#3753 S14'),
+  rs('S14: revoke enabled (and boycott disabled) with active boycott', dpeRunRevokeEnabledWithActiveBoycott, '#3753 S14'),
+  rs('S14: revoke disabled when no active boycott exists', dpeRunRevokeDisabledWhenNoActiveBoycott, '#3753 S14'),
+  rs('post-break cooldown disables alliance with deterministic reason (#3811)', dpeRunPostBreakCooldownDisablesAlliance, '#3811'),
+  rs('AC-10: invalid declare war / offer peace still enumerated', dpeRunInvalidDeclareWarOfferPeaceStillEnumerated),
 ];

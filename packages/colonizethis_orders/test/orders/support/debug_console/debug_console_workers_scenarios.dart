@@ -17,8 +17,5 @@ void dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted() {
 }
 
 List<RunnableScenario> debugConsoleWorkersScenarios() => const [
-  RunnableScenario(
-    label: 'debug worker tier ids are canonical and lexicographically sorted',
-    run: dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted,
-  ),
+  rs('debug worker tier ids are canonical and lexicographically sorted', dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted),
 ];

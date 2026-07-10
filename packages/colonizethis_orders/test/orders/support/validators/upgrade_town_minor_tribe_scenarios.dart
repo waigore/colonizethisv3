@@ -49,12 +49,6 @@ void utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe() {
 
 /// Canonical scenarios for upgrade_town_minor_tribe family tests.
 List<RunnableScenario> upgradeTownMinorTribeScenarios() => const [
-  RunnableScenario(
-    label: 'prefilter includes minor town tile when embassy and peace',
-    run: utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace,
-  ),
-  RunnableScenario(
-    label: 'precheck rejects upgrade_town when at war with tribe',
-    run: utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe,
-  ),
+  rs('prefilter includes minor town tile when embassy and peace', utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace),
+  rs('precheck rejects upgrade_town when at war with tribe', utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe),
 ];

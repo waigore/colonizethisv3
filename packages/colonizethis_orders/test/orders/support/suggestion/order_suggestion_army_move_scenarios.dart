@@ -140,35 +140,13 @@ void osamRunCachedOwnedSetMatchesDefaultAllProvincesScan() {
 }
 
 List<RunnableScenario> orderSuggestionArmyMoveScenarios() => const [
-  RunnableScenario(
-    label: 'includes cross-region player-owned province as destination',
-    run: osamRunIncludesCrossRegionOwnedDestination,
-  ),
-  RunnableScenario(
-    label:
-        'armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache matches legacy allProvinces scan',
-    run: osamRunPlayerViewOwnedCacheMatchesLegacyScan,
-  ),
-  RunnableScenario(
-    label:
-        'fallback owned-province scan derives its set from ProvinceOwnerCache (Phase 6b)',
-    run: osamRunFallbackOwnedScanFromProvinceOwnerCache,
-  ),
-  RunnableScenario(
-    label:
-        'fallback yields no owned destinations when ProvinceOwnerCache has none for the player (Phase 6b negative)',
-    run: osamRunFallbackNoOwnedWhenCacheEmptyForPlayer,
-  ),
-  RunnableScenario(
-    label:
-        'still proposes alternate destination when draft has prior army move',
-    run: osamRunStillProposesAlternateWhenDraftHasPriorMove,
-  ),
+  rs('includes cross-region player-owned province as destination', osamRunIncludesCrossRegionOwnedDestination),
+  rs('armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache matches legacy allProvinces scan', osamRunPlayerViewOwnedCacheMatchesLegacyScan),
+  rs('fallback owned-province scan derives its set from ProvinceOwnerCache (Phase 6b)', osamRunFallbackOwnedScanFromProvinceOwnerCache),
+  rs('fallback yields no owned destinations when ProvinceOwnerCache has none for the player (Phase 6b negative)', osamRunFallbackNoOwnedWhenCacheEmptyForPlayer),
+  rs('still proposes alternate destination when draft has prior army move', osamRunStillProposesAlternateWhenDraftHasPriorMove),
 ];
 
 List<RunnableScenario> orderSuggestionArmyMoveDestIdsScenarios() => const [
-  RunnableScenario(
-    label: 'cached player-owned set matches default allProvinces scan',
-    run: osamRunCachedOwnedSetMatchesDefaultAllProvincesScan,
-  ),
+  rs('cached player-owned set matches default allProvinces scan', osamRunCachedOwnedSetMatchesDefaultAllProvincesScan),
 ];

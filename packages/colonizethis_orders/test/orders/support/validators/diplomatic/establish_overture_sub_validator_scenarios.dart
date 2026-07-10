@@ -156,44 +156,12 @@ void eosvRunJoinEmpireRejectsRelationsBelowFriendly() {
 }
 
 List<RunnableScenario> establishOvertureSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'rejects when stage is missing',
-    run: eosvRunRejectsWhenStageMissing,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'trade consulate debits treasury on accept',
-    run: eosvRunTradeConsulateDebitsTreasuryOnAccept,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'trade consulate rejects without diplomatic_expertise',
-    run: eosvRunTradeConsulateRejectsWithoutDiplomaticExpertise,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'trade consulate rejects when treasury too low (no debit)',
-    run: eosvRunTradeConsulateRejectsTreasuryTooLow,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'embassy requires existing trade consulate',
-    run: eosvRunEmbassyRequiresExistingTradeConsulate,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'embassy accepts and debits treasury when consulate exists',
-    run: eosvRunEmbassyAcceptsAndDebitsWhenConsulateExists,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'nap requires existing embassy and does not debit treasury',
-    run: eosvRunNapRequiresExistingEmbassyNoDebit,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'joinEmpire rejects when relations below friendly threshold',
-    run: eosvRunJoinEmpireRejectsRelationsBelowFriendly,
-    refs: '#2391 AC10',
-  ),
+  rs('rejects when stage is missing', eosvRunRejectsWhenStageMissing, '#2391 AC10'),
+  rs('trade consulate debits treasury on accept', eosvRunTradeConsulateDebitsTreasuryOnAccept, '#2391 AC10'),
+  rs('trade consulate rejects without diplomatic_expertise', eosvRunTradeConsulateRejectsWithoutDiplomaticExpertise, '#2391 AC10'),
+  rs('trade consulate rejects when treasury too low (no debit)', eosvRunTradeConsulateRejectsTreasuryTooLow, '#2391 AC10'),
+  rs('embassy requires existing trade consulate', eosvRunEmbassyRequiresExistingTradeConsulate, '#2391 AC10'),
+  rs('embassy accepts and debits treasury when consulate exists', eosvRunEmbassyAcceptsAndDebitsWhenConsulateExists, '#2391 AC10'),
+  rs('nap requires existing embassy and does not debit treasury', eosvRunNapRequiresExistingEmbassyNoDebit, '#2391 AC10'),
+  rs('joinEmpire rejects when relations below friendly threshold', eosvRunJoinEmpireRejectsRelationsBelowFriendly, '#2391 AC10'),
 ];

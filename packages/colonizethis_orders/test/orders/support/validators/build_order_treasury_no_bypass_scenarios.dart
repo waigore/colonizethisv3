@@ -66,31 +66,9 @@ void botnbRunPlayerAgnosticZeroTreasury() {
 
 /// Canonical scenarios for build-order treasury no-bypass guard.
 List<RunnableScenario> buildOrderTreasuryNoBypassScenarios() => [
-  RunnableScenario(
-    label: 'peasant_levies is the cheapest, tech-free regiment (fixture pin)',
-    run: botnbRunCheapestRegimentFixturePin,
-    refs: '#2924',
-  ),
-  RunnableScenario(
-    label: 'AI player below cheapest regiment treasury is rejected (no bypass)',
-    run: botnbRunAiBelowTreasuryRejected,
-    refs: '#2924',
-  ),
-  RunnableScenario(
-    label:
-        'AI player at exactly the cheapest treasury is accepted (treasury gate is the sole blocker)',
-    run: botnbRunAiAtTreasuryAccepted,
-    refs: '#2924',
-  ),
-  RunnableScenario(
-    label: 'human player at zero treasury is rejected (no human waiver)',
-    run: botnbRunHumanZeroTreasuryRejected,
-    refs: '#2924',
-  ),
-  RunnableScenario(
-    label:
-        'affordability gate is player-agnostic at zero treasury (human and AI both rejected)',
-    run: botnbRunPlayerAgnosticZeroTreasury,
-    refs: '#2924',
-  ),
+  rs('peasant_levies is the cheapest, tech-free regiment (fixture pin)', botnbRunCheapestRegimentFixturePin, '#2924'),
+  rs('AI player below cheapest regiment treasury is rejected (no bypass)', botnbRunAiBelowTreasuryRejected, '#2924'),
+  rs('AI player at exactly the cheapest treasury is accepted (treasury gate is the sole blocker)', botnbRunAiAtTreasuryAccepted, '#2924'),
+  rs('human player at zero treasury is rejected (no human waiver)', botnbRunHumanZeroTreasuryRejected, '#2924'),
+  rs('affordability gate is player-agnostic at zero treasury (human and AI both rejected)', botnbRunPlayerAgnosticZeroTreasury, '#2924'),
 ];

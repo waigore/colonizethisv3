@@ -2356,6 +2356,17 @@ test/ LOC after slice 154: **32475** (net +90 from post–slice 153 / 32,565). R
 
 test/ LOC after slice 155: **32251** (net −224 from post–slice 154 / 32,475). **All `*_run_rows.dart` eliminated.** Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 156: densify scenario tables via compact `rs` rows (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| rs-helper | add shared `rs(label, run, [refs])` for densified scenario tables | `support/scenario_runner.dart` | same | #3949 |
+| rs-collapse | collapse 746 multi-line `RunnableScenario(` rows → single-line `rs(...)` across 108 scenario modules | `test/orders/support/**/*_scenarios.dart` | same | #3949 |
+| rs-baseline-gate | teach preserved-description gate to collect `rs('…')` first-arg pins | `tool/check_orders_test_preserved_descriptions.dart` | same + unit test | #3949 |
+| wcc-capital-tile | add `workAppCapitalTile` + densify port topology / capital propagate bodies | `work_application_fixtures.dart`, `work_completion_scenarios.dart` | same | #3949 |
+
+test/ LOC after slice 156: **29602** (net −2,649 from post–slice 155 / 32,251). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

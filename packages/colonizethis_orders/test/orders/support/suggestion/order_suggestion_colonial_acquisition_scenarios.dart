@@ -126,19 +126,7 @@ void oscaRunDeterministicAcrossRepeatedCalls() {
 }
 
 List<RunnableScenario> orderSuggestionColonialAcquisitionScenarios() => const [
-  RunnableScenario(
-    label: 'embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire',
-    run: oscaRunJoinEmpireCandidateEmitted,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label: 'embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar',
-    run: oscaRunDeclareWarCandidateEmitted,
-    refs: '#2509',
-  ),
-  RunnableScenario(
-    label: 'candidate set is deterministic across repeated suggestion calls',
-    run: oscaRunDeterministicAcrossRepeatedCalls,
-    refs: '#2509',
-  ),
+  rs('embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire', oscaRunJoinEmpireCandidateEmitted, '#2509'),
+  rs('embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar', oscaRunDeclareWarCandidateEmitted, '#2509'),
+  rs('candidate set is deterministic across repeated suggestion calls', oscaRunDeterministicAcrossRepeatedCalls, '#2509'),
 ];

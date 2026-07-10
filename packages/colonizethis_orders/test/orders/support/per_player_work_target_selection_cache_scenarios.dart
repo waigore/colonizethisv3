@@ -247,50 +247,14 @@ void ppwtscRunRefreshReusesSharedCandidateValidator() {
 
 /// Canonical scenarios for PerPlayerWorkTargetSelectionCache family tests.
 List<RunnableScenario> perPlayerWorkTargetSelectionCacheScenarios() => const [
-  RunnableScenario(
-    label: 'default strategies refresh runs all population paths',
-    run: ppwtscRunDefaultStrategiesRefreshAllPaths,
-  ),
-  RunnableScenario(
-    label: 'sorted returns deterministic ordering',
-    run: ppwtscRunSortedDeterministicOrdering,
-  ),
-  RunnableScenario(
-    label: 'contains returns false for missing membership',
-    run: ppwtscRunContainsMissingMembership,
-  ),
-  RunnableScenario(
-    label: 'refresh replaces target membership on turn-boundary style update',
-    run: ppwtscRunRefreshReplacesOnTurnBoundary,
-  ),
-  RunnableScenario(
-    label: 'refresh keeps cache isolated per player',
-    run: ppwtscRunRefreshIsolatedPerPlayer,
-  ),
-  RunnableScenario(
-    label: 'refresh stores and reads prospect membership',
-    run: ppwtscRunRefreshProspectMembership,
-  ),
-  RunnableScenario(
-    label:
-        'refresh injects one shared incremental validator for all strategies',
-    run: ppwtscRunRefreshSharedIncrementalValidator,
-  ),
-  RunnableScenario(
-    label:
-        'refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394)',
-    run: ppwtscRunRefreshReusesPlayerOwnedProvinceIds,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'refresh built validator reuses snapshot playerView (Refs #2394)',
-    run: ppwtscRunRefreshValidatorReusesPlayerView,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)',
-    run: ppwtscRunRefreshReusesSharedCandidateValidator,
-    refs: '#2394',
-  ),
+  rs('default strategies refresh runs all population paths', ppwtscRunDefaultStrategiesRefreshAllPaths),
+  rs('sorted returns deterministic ordering', ppwtscRunSortedDeterministicOrdering),
+  rs('contains returns false for missing membership', ppwtscRunContainsMissingMembership),
+  rs('refresh replaces target membership on turn-boundary style update', ppwtscRunRefreshReplacesOnTurnBoundary),
+  rs('refresh keeps cache isolated per player', ppwtscRunRefreshIsolatedPerPlayer),
+  rs('refresh stores and reads prospect membership', ppwtscRunRefreshProspectMembership),
+  rs('refresh injects one shared incremental validator for all strategies', ppwtscRunRefreshSharedIncrementalValidator),
+  rs('refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394)', ppwtscRunRefreshReusesPlayerOwnedProvinceIds, '#2394'),
+  rs('refresh built validator reuses snapshot playerView (Refs #2394)', ppwtscRunRefreshValidatorReusesPlayerView, '#2394'),
+  rs('refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)', ppwtscRunRefreshReusesSharedCandidateValidator, '#2394'),
 ];

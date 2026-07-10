@@ -241,81 +241,32 @@ void oschRunDiplomaticAcceptedWithValidatorMatches() {
 
 /// Scenarios for appendDiplomaticOrderForTrial.
 List<RunnableScenario> appendDiplomaticOrderForTrialScenarios() => const [
-  RunnableScenario(
-    label: 'appends order for existing player list',
-    run: oschRunAppendDiplomaticOrderForTrialExisting,
-  ),
-  RunnableScenario(
-    label: 'creates new player list when absent',
-    run: oschRunAppendDiplomaticOrderForTrialAbsent,
-  ),
+  rs('appends order for existing player list', oschRunAppendDiplomaticOrderForTrialExisting),
+  rs('creates new player list when absent', oschRunAppendDiplomaticOrderForTrialAbsent),
 ];
 
 /// Scenarios for OvertureStageChain.next.
 List<RunnableScenario> overtureStageChainNextScenarios() => const [
-  RunnableScenario(
-    label: 'follows expected progression',
-    run: oschRunOvertureNextProgression,
-  ),
-  RunnableScenario(
-    label: 'returns null when already at final stage',
-    run: oschRunOvertureNextFinalNull,
-  ),
+  rs('follows expected progression', oschRunOvertureNextProgression),
+  rs('returns null when already at final stage', oschRunOvertureNextFinalNull),
 ];
 
 /// Scenarios for OvertureStageChain.previous.
 List<RunnableScenario> overtureStageChainPreviousScenarios() => const [
-  RunnableScenario(
-    label: 'next is left inverse of previous for every non-terminal stage',
-    run: oschRunOverturePreviousLeftInverse,
-  ),
-  RunnableScenario(
-    label: 'previous then next restores stage for every stage past none',
-    run: oschRunOverturePreviousThenNext,
-  ),
-  RunnableScenario(
-    label: 'reverses next for progression chain',
-    run: oschRunOverturePreviousReversesNext,
-  ),
-  RunnableScenario(
-    label: 'none maps to itself',
-    run: oschRunOverturePreviousNoneSelf,
-  ),
-  RunnableScenario(
-    label: 'joinEmpire previous is nap',
-    run: oschRunOverturePreviousJoinEmpireNap,
-  ),
+  rs('next is left inverse of previous for every non-terminal stage', oschRunOverturePreviousLeftInverse),
+  rs('previous then next restores stage for every stage past none', oschRunOverturePreviousThenNext),
+  rs('reverses next for progression chain', oschRunOverturePreviousReversesNext),
+  rs('none maps to itself', oschRunOverturePreviousNoneSelf),
+  rs('joinEmpire previous is nap', oschRunOverturePreviousJoinEmpireNap),
 ];
 
 /// Scenarios for acceptance wrapper helpers.
 List<RunnableScenario>
 orderSuggestionContextAcceptanceWrapperScenarios() => const [
-  RunnableScenario(
-    label: 'isNavalMoveOrderAccepted returns a boolean result',
-    run: oschRunNavalMoveAcceptedBoolean,
-  ),
-  RunnableScenario(
-    label: 'isNavalMissionOrderAccepted returns a boolean result',
-    run: oschRunNavalMissionAcceptedBoolean,
-  ),
-  RunnableScenario(
-    label: 'isDiplomaticOrderAccepted returns a boolean result',
-    run: oschRunDiplomaticAcceptedBoolean,
-  ),
-  RunnableScenario(
-    label:
-        'isDiplomaticOrderAccepted matches default path when view/units shared',
-    run: oschRunDiplomaticAcceptedMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label:
-        'stateless accept helpers reuse sharedCandidateValidator without rebuild',
-    run: oschRunStatelessAcceptHelpersReuseValidator,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'isDiplomaticOrderAcceptedWithValidator matches isDiplomaticOrderAccepted',
-    run: oschRunDiplomaticAcceptedWithValidatorMatches,
-  ),
+  rs('isNavalMoveOrderAccepted returns a boolean result', oschRunNavalMoveAcceptedBoolean),
+  rs('isNavalMissionOrderAccepted returns a boolean result', oschRunNavalMissionAcceptedBoolean),
+  rs('isDiplomaticOrderAccepted returns a boolean result', oschRunDiplomaticAcceptedBoolean),
+  rs('isDiplomaticOrderAccepted matches default path when view/units shared', oschRunDiplomaticAcceptedMatchesDefaultPath),
+  rs('stateless accept helpers reuse sharedCandidateValidator without rebuild', oschRunStatelessAcceptHelpersReuseValidator, '#2394'),
+  rs('isDiplomaticOrderAcceptedWithValidator matches isDiplomaticOrderAccepted', oschRunDiplomaticAcceptedWithValidatorMatches),
 ];

@@ -81,17 +81,7 @@ void woccRunBuildFortUsesProvinceFortLevel() {
 
 /// Canonical scenarios for WorkOrderCostCalculator.
 List<RunnableScenario> workOrderCostCalculatorScenarios() => const [
-  RunnableScenario(
-    label: 'calculateCost returns null for counter_spy, purchase_land',
-    run: woccRunNullCostForCounterSpyAndPurchaseLand,
-  ),
-  RunnableScenario(
-    label: 'calculateCost returns cost map for build_improvement',
-    run: woccRunBuildImprovementCostMap,
-  ),
-  RunnableScenario(
-    label:
-        'calculateCost for build_fort uses province fortLevel when not overridden',
-    run: woccRunBuildFortUsesProvinceFortLevel,
-  ),
+  rs('calculateCost returns null for counter_spy, purchase_land', woccRunNullCostForCounterSpyAndPurchaseLand),
+  rs('calculateCost returns cost map for build_improvement', woccRunBuildImprovementCostMap),
+  rs('calculateCost for build_fort uses province fortLevel when not overridden', woccRunBuildFortUsesProvinceFortLevel),
 ];

@@ -16,8 +16,5 @@ void osamhRunKeepsAtMostOneArmyMovePerArmyId() {
 }
 
 List<RunnableScenario> orderSuggestionArmyMoveHeuristicsScenarios() => const [
-  RunnableScenario(
-    label: 'keeps at most one army move per army id',
-    run: osamhRunKeepsAtMostOneArmyMovePerArmyId,
-  ),
+  rs('keeps at most one army move per army id', osamhRunKeepsAtMostOneArmyMovePerArmyId),
 ];

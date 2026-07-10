@@ -270,61 +270,18 @@ void oecRunMoveRejectedWhenSourceProvinceUnknown() {
 }
 
 List<RunnableScenario> orderEngineCoreScenarios() => [
-  RunnableScenario(
-    label: 'add order and validate',
-    run: oecRunAddOrderAndValidate,
-  ),
-  RunnableScenario(
-    label: 'removeMoveOrder removes order at index',
-    run: oecRunRemoveMoveOrderAtIndex,
-  ),
-  RunnableScenario(
-    label: 'removeBuildOrder removes order at index',
-    run: oecRunRemoveBuildOrderAtIndex,
-  ),
-  RunnableScenario(
-    label: 'addWorkOrderWithContext returns rejected when order invalid',
-    run: oecRunAddWorkOrderWithContextRejected,
-  ),
-  RunnableScenario(
-    label: 'first invalid order plus subsequent rejected',
-    run: oecRunFirstInvalidPlusSubsequentRejected,
-  ),
-  RunnableScenario(
-    label: 'projected effects returns worker count',
-    run: oecRunProjectedEffectsWorkerCount,
-  ),
-  RunnableScenario(
-    label: 'projectedEffects returns unitLocations when engine has move order',
-    run: oecRunProjectedEffectsUnitLocations,
-  ),
-  RunnableScenario(
-    label: 'projectedEffects does not mutate passed-in game',
-    run: oecRunProjectedEffectsNoGameMutation,
-  ),
-  RunnableScenario(
-    label: 'addMoveOrderWithContext uses world-state validation',
-    run: oecRunAddMoveOrderWithContextValidation,
-  ),
-  RunnableScenario(
-    label: 'civilian cannot move into other GP territory',
-    run: oecRunCivilianCannotMoveIntoGpTerritory,
-  ),
-  RunnableScenario(
-    label: 'military cannot move into other GP province without war',
-    run: oecRunMilitaryCannotMoveIntoGpWithoutWar,
-    refs: '#943',
-  ),
-  RunnableScenario(
-    label: 'military may move into other GP province with same-turn declareWar',
-    run: oecRunMilitaryMayMoveIntoGpWithDeclareWar,
-  ),
-  RunnableScenario(
-    label: 'explorer may move into tribal province',
-    run: oecRunExplorerMayMoveIntoTribalProvince,
-  ),
-  RunnableScenario(
-    label: 'move order rejected when source province unknown',
-    run: oecRunMoveRejectedWhenSourceProvinceUnknown,
-  ),
+  rs('add order and validate', oecRunAddOrderAndValidate),
+  rs('removeMoveOrder removes order at index', oecRunRemoveMoveOrderAtIndex),
+  rs('removeBuildOrder removes order at index', oecRunRemoveBuildOrderAtIndex),
+  rs('addWorkOrderWithContext returns rejected when order invalid', oecRunAddWorkOrderWithContextRejected),
+  rs('first invalid order plus subsequent rejected', oecRunFirstInvalidPlusSubsequentRejected),
+  rs('projected effects returns worker count', oecRunProjectedEffectsWorkerCount),
+  rs('projectedEffects returns unitLocations when engine has move order', oecRunProjectedEffectsUnitLocations),
+  rs('projectedEffects does not mutate passed-in game', oecRunProjectedEffectsNoGameMutation),
+  rs('addMoveOrderWithContext uses world-state validation', oecRunAddMoveOrderWithContextValidation),
+  rs('civilian cannot move into other GP territory', oecRunCivilianCannotMoveIntoGpTerritory),
+  rs('military cannot move into other GP province without war', oecRunMilitaryCannotMoveIntoGpWithoutWar, '#943'),
+  rs('military may move into other GP province with same-turn declareWar', oecRunMilitaryMayMoveIntoGpWithDeclareWar),
+  rs('explorer may move into tribal province', oecRunExplorerMayMoveIntoTribalProvince),
+  rs('move order rejected when source province unknown', oecRunMoveRejectedWhenSourceProvinceUnknown),
 ];

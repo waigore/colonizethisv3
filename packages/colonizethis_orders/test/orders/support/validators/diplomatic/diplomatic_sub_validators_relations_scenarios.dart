@@ -255,85 +255,29 @@ void dsrRunCooldownDeclareWarRemainsAllowed() {
 }
 
 List<RunnableScenario> declareWarSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts when at peace and leaves treasury unchanged',
-    run: dsrRunDeclareWarAcceptsAtPeace,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects when already at war and preserves treasury',
-    run: dsrRunDeclareWarRejectsAlreadyAtWar,
-    refs: '#2391 AC10',
-  ),
+  rs('accepts when at peace and leaves treasury unchanged', dsrRunDeclareWarAcceptsAtPeace, '#2391 AC10'),
+  rs('rejects when already at war and preserves treasury', dsrRunDeclareWarRejectsAlreadyAtWar, '#2391 AC10'),
 ];
 
 List<RunnableScenario> offerPeaceSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'accepts when at war and leaves treasury unchanged',
-    run: dsrRunOfferPeaceAcceptsAtWar,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects when not at war',
-    run: dsrRunOfferPeaceRejectsNotAtWar,
-    refs: '#2391 AC10',
-  ),
+  rs('accepts when at war and leaves treasury unchanged', dsrRunOfferPeaceAcceptsAtWar, '#2391 AC10'),
+  rs('rejects when not at war', dsrRunOfferPeaceRejectsNotAtWar, '#2391 AC10'),
 ];
 
 List<RunnableScenario> allianceSubValidatorScenarios() => const [
-  RunnableScenario(
-    label: 'rejects when target is not a Great Power',
-    run: dsrRunAllianceRejectsNonGpTarget,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects when at war with the target Great Power',
-    run: dsrRunAllianceRejectsAtWarWithTarget,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'accepts when target is a Great Power and at peace',
-    run: dsrRunAllianceAcceptsGpAtPeace,
-    refs: '#2391 AC10',
-  ),
-  RunnableScenario(
-    label: 'rejects a duplicate alliance when a formal alliance already exists',
-    run: dsrRunAllianceRejectsDuplicateFormalAlliance,
-    refs: '#2391 AC10',
-  ),
+  rs('rejects when target is not a Great Power', dsrRunAllianceRejectsNonGpTarget, '#2391 AC10'),
+  rs('rejects when at war with the target Great Power', dsrRunAllianceRejectsAtWarWithTarget, '#2391 AC10'),
+  rs('accepts when target is a Great Power and at peace', dsrRunAllianceAcceptsGpAtPeace, '#2391 AC10'),
+  rs('rejects a duplicate alliance when a formal alliance already exists', dsrRunAllianceRejectsDuplicateFormalAlliance, '#2391 AC10'),
 ];
 
 List<RunnableScenario> postBreakBilateralCooldownScenarios() => const [
-  RunnableScenario(
-    label: 'blocks alliance toward the cooled-down GP',
-    run: dsrRunCooldownBlocksAlliance,
-    refs: '#3811 AC10',
-  ),
-  RunnableScenario(
-    label: 'blocks establishOverture toward the cooled-down GP',
-    run: dsrRunCooldownBlocksEstablishOverture,
-    refs: '#3811 AC10',
-  ),
-  RunnableScenario(
-    label: 'blocks establishFtp toward the cooled-down GP',
-    run: dsrRunCooldownBlocksEstablishFtp,
-    refs: '#3811 AC10',
-  ),
-  RunnableScenario(
-    label: 'blocks grantAid toward the cooled-down GP',
-    run: dsrRunCooldownBlocksGrantAid,
-    refs: '#3811 AC10',
-  ),
-  RunnableScenario(
-    label: 'blocks setSubsidy toward the cooled-down GP',
-    run: dsrRunCooldownBlocksSetSubsidy,
-    refs: '#3811 AC10',
-  ),
-  RunnableScenario(
-    label: 'declareWar remains allowed during cooldown',
-    run: dsrRunCooldownDeclareWarRemainsAllowed,
-    refs: '#3811 AC10',
-  ),
+  rs('blocks alliance toward the cooled-down GP', dsrRunCooldownBlocksAlliance, '#3811 AC10'),
+  rs('blocks establishOverture toward the cooled-down GP', dsrRunCooldownBlocksEstablishOverture, '#3811 AC10'),
+  rs('blocks establishFtp toward the cooled-down GP', dsrRunCooldownBlocksEstablishFtp, '#3811 AC10'),
+  rs('blocks grantAid toward the cooled-down GP', dsrRunCooldownBlocksGrantAid, '#3811 AC10'),
+  rs('blocks setSubsidy toward the cooled-down GP', dsrRunCooldownBlocksSetSubsidy, '#3811 AC10'),
+  rs('declareWar remains allowed during cooldown', dsrRunCooldownDeclareWarRemainsAllowed, '#3811 AC10'),
 ];
 
 /// All relation-based diplomatic sub-validator scenarios (union of families).

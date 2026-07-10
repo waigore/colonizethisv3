@@ -185,73 +185,22 @@ void vedRunDeclareWarThenGrantAidTowardSameTargetRejected() {
 
 List<RunnableScenario> orderEngineValidateDiplomaticScenarios() => const [
   // dart format off
-          RunnableScenario(
-            label: 'declareWar rejected when already at war',
-            run: vedRunDeclareWarRejectedWhenAlreadyAtWar,
-          ),
-          RunnableScenario(
-            label: 'offerPeace rejected when not at war',
-            run: vedRunOfferPeaceRejectedWhenNotAtWar,
-          ),
-          RunnableScenario(
-            label: 'establishOverture rejected when target is at war with GP',
-            run: vedRunEstablishOvertureRejectedWhenTargetIsAtWarWithGp,
-          ),
-          RunnableScenario(
-            label: 'establishOverture trade consulate rejected without diplomatic_expertise',
-            run: vedRunEstablishOvertureTradeConsulateRejectedWithoutDiplomaticExpertise,
-          ),
-          RunnableScenario(
-            label: 'establishOverture consulate rejected when treasury too low',
-            run: vedRunEstablishOvertureConsulateRejectedWhenTreasuryTooLow,
-          ),
-          RunnableScenario(
-            label: 'establishOverture embassy requires existing consulate',
-            run: vedRunEstablishOvertureEmbassyRequiresExistingConsulate,
-          ),
-          RunnableScenario(
-            label: 'establishOverture second order for same faction in same turn rejected',
-            run: vedRunEstablishOvertureSecondOrderForSameFactionInSameTurnRejected,
-          ),
-          RunnableScenario(
-            label: 'second diplomatic order to same target different type is rejected',
-            run: vedRunSecondDiplomaticOrderToSameTargetDifferentTypeIsRejected,
-          ),
-          RunnableScenario(
-            label: 'grantAid requires embassy and sufficient treasury',
-            run: vedRunGrantAidRequiresEmbassyAndSufficientTreasury,
-          ),
-          RunnableScenario(
-            label: 'grantAid rejects amounts not a multiple of £1000',
-            run: vedRunGrantAidRejectsAmountsNotAMultipleOf1000,
-          ),
-          RunnableScenario(
-            label: 'grantAid then setSubsidy toward same target both accepted',
-            run: vedRunGrantAidThenSetSubsidyTowardSameTargetBothAccepted,
-          ),
-          RunnableScenario(
-            label: 'setSubsidy requires an embassy (Refs #3753 R2)',
-            run: vedRunSetSubsidyRequiresAnEmbassyRefs3753R2,
-          ),
-          RunnableScenario(
-            label: 'setSubsidy with an embassy is accepted regardless of treasury (no upfront cost, Refs #3753 R3)',
-            run: vedRunSetSubsidyWithEmbassyAcceptedRegardlessOfTreasuryRefs3753R3,
-          ),
-          RunnableScenario(
-            label: 'setSubsidy with an embassy and a valid percent is accepted',
-            run: vedRunSetSubsidyWithEmbassyAndValidPercentAccepted,
-          ),
-          RunnableScenario(
-            label: 'setSubsidy rejects a percent outside 5-20 in steps of 5',
-            run: vedRunSetSubsidyRejectsPercentOutside520InStepsOf5,
-          ),
-          RunnableScenario(
-            label: 'second grantAid toward same target rejected',
-            run: vedRunSecondGrantAidTowardSameTargetRejected,
-          ),
-          RunnableScenario(
-            label: 'declareWar then grantAid toward same target rejected',
-            run: vedRunDeclareWarThenGrantAidTowardSameTargetRejected,
-          ),
+          rs('declareWar rejected when already at war', vedRunDeclareWarRejectedWhenAlreadyAtWar),
+          rs('offerPeace rejected when not at war', vedRunOfferPeaceRejectedWhenNotAtWar),
+          rs('establishOverture rejected when target is at war with GP', vedRunEstablishOvertureRejectedWhenTargetIsAtWarWithGp),
+          rs('establishOverture trade consulate rejected without diplomatic_expertise', vedRunEstablishOvertureTradeConsulateRejectedWithoutDiplomaticExpertise),
+          rs('establishOverture consulate rejected when treasury too low', vedRunEstablishOvertureConsulateRejectedWhenTreasuryTooLow),
+          rs('establishOverture embassy requires existing consulate', vedRunEstablishOvertureEmbassyRequiresExistingConsulate),
+          rs('establishOverture second order for same faction in same turn rejected', vedRunEstablishOvertureSecondOrderForSameFactionInSameTurnRejected),
+          rs('second diplomatic order to same target different type is rejected', vedRunSecondDiplomaticOrderToSameTargetDifferentTypeIsRejected),
+          rs('grantAid requires embassy and sufficient treasury', vedRunGrantAidRequiresEmbassyAndSufficientTreasury),
+          rs('grantAid rejects amounts not a multiple of £1000', vedRunGrantAidRejectsAmountsNotAMultipleOf1000),
+          rs('grantAid then setSubsidy toward same target both accepted', vedRunGrantAidThenSetSubsidyTowardSameTargetBothAccepted),
+          rs('setSubsidy requires an embassy (Refs #3753 R2)', vedRunSetSubsidyRequiresAnEmbassyRefs3753R2),
+          rs('setSubsidy with an embassy is accepted regardless of treasury (no upfront cost, Refs #3753 R3)', vedRunSetSubsidyWithEmbassyAcceptedRegardlessOfTreasuryRefs3753R3),
+          rs('setSubsidy with an embassy and a valid percent is accepted', vedRunSetSubsidyWithEmbassyAndValidPercentAccepted),
+          rs('setSubsidy rejects a percent outside 5-20 in steps of 5', vedRunSetSubsidyRejectsPercentOutside520InStepsOf5),
+          rs('second grantAid toward same target rejected', vedRunSecondGrantAidTowardSameTargetRejected),
+          rs('declareWar then grantAid toward same target rejected', vedRunDeclareWarThenGrantAidTowardSameTargetRejected),
           // dart format on
 ];

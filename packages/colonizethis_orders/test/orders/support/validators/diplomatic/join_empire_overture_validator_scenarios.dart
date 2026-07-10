@@ -106,24 +106,8 @@ void jeeRunRejectsGpWithoutEmpireBuilding() {
 }
 
 List<RunnableScenario> joinEmpireOvertureValidatorScenarios() => const [
-  RunnableScenario(
-    label:
-        'rejects when current stage is not NAP and preserves treasury (negative)',
-    run: jeeRunRejectsWhenNotNap,
-  ),
-  RunnableScenario(
-    label:
-        'rejects when score below friendly threshold and preserves treasury (negative)',
-    run: jeeRunRejectsWhenScoreBelowFriendly,
-  ),
-  RunnableScenario(
-    label:
-        'accepts minor target with funds at or above scaled cost and preserves treasury (positive)',
-    run: jeeRunAcceptsMinorWithFunds,
-  ),
-  RunnableScenario(
-    label:
-        'rejects join empire toward GP without Empire Building tech (negative)',
-    run: jeeRunRejectsGpWithoutEmpireBuilding,
-  ),
+  rs('rejects when current stage is not NAP and preserves treasury (negative)', jeeRunRejectsWhenNotNap),
+  rs('rejects when score below friendly threshold and preserves treasury (negative)', jeeRunRejectsWhenScoreBelowFriendly),
+  rs('accepts minor target with funds at or above scaled cost and preserves treasury (positive)', jeeRunAcceptsMinorWithFunds),
+  rs('rejects join empire toward GP without Empire Building tech (negative)', jeeRunRejectsGpWithoutEmpireBuilding),
 ];

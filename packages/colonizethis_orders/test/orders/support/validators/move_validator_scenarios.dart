@@ -272,67 +272,18 @@ void mvRunArmyMoveIntoMinorTribeProvinceWithoutWar() {
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `move_validator_part*_test.dart` descriptions (single-line `label:` for CI).
 List<RunnableScenario> moveValidatorScenarios() => [
-  RunnableScenario(
-    label: 'civilian cannot move into other GP territory',
-    run: mvRunCivilianCannotMoveIntoOtherGpTerritory,
-  ),
-  RunnableScenario(
-    label: 'military regiment MoveOrder is rejected; use army move',
-    run: mvRunMilitaryRegimentMoveOrderRejectedUseArmyMove,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military cannot move into other GP province without war',
-    run: mvRunArmyMoveIntoOtherGpProvinceWithoutWar,
-  ),
-  RunnableScenario(
-    label: 'civilian worker cannot move into Minor/Tribe territory',
-    run: mvRunCivilianWorkerCannotMoveIntoMinorTribeTerritory,
-  ),
-  RunnableScenario(
-    label: 'Explorer may move onto Minor province tile (cross-region style)',
-    run: mvRunExplorerMayMoveOntoMinorProvinceTile,
-  ),
-  RunnableScenario(
-    label:
-        'Spy may move onto other Great Power province tile without declare war',
-    run: mvRunSpyMayMoveOntoOtherGreatPowerProvinceTileWithoutDeclareWar,
-  ),
-  RunnableScenario(
-    label: 'explorer can move cross-region into tribe-owned province',
-    run: mvRunExplorerCanMoveCrossRegionIntoTribeOwnedProvince,
-  ),
-  RunnableScenario(
-    label: 'builder cross-region into tribe-owned province is still invalid',
-    run: mvRunBuilderCrossRegionIntoTribeOwnedProvinceStillInvalid,
-  ),
-  RunnableScenario(
-    label: 'short-circuits when previous order rejected',
-    run: mvRunShortCircuitsWhenPreviousOrderRejected,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military cannot move into Minor province without war',
-    run: mvRunArmyMoveIntoMinorProvinceWithoutWar,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military may move into other GP province with same-turn declareWar',
-    run: mvRunArmyMoveIntoOtherGpProvinceWithSameTurnDeclareWar,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military may move into Minor province with same-turn declareWar',
-    run: mvRunArmyMoveIntoMinorProvinceWithSameTurnDeclareWar,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military may move into Tribe province with same-turn declareWar',
-    run: mvRunArmyMoveIntoTribeProvinceWithSameTurnDeclareWar,
-  ),
-  RunnableScenario(
-    label:
-        'ArmyMoveValidator military cannot move into Minor/Tribe province without war',
-    run: mvRunArmyMoveIntoMinorTribeProvinceWithoutWar,
-  ),
+  rs('civilian cannot move into other GP territory', mvRunCivilianCannotMoveIntoOtherGpTerritory),
+  rs('military regiment MoveOrder is rejected; use army move', mvRunMilitaryRegimentMoveOrderRejectedUseArmyMove),
+  rs('ArmyMoveValidator military cannot move into other GP province without war', mvRunArmyMoveIntoOtherGpProvinceWithoutWar),
+  rs('civilian worker cannot move into Minor/Tribe territory', mvRunCivilianWorkerCannotMoveIntoMinorTribeTerritory),
+  rs('Explorer may move onto Minor province tile (cross-region style)', mvRunExplorerMayMoveOntoMinorProvinceTile),
+  rs('Spy may move onto other Great Power province tile without declare war', mvRunSpyMayMoveOntoOtherGreatPowerProvinceTileWithoutDeclareWar),
+  rs('explorer can move cross-region into tribe-owned province', mvRunExplorerCanMoveCrossRegionIntoTribeOwnedProvince),
+  rs('builder cross-region into tribe-owned province is still invalid', mvRunBuilderCrossRegionIntoTribeOwnedProvinceStillInvalid),
+  rs('short-circuits when previous order rejected', mvRunShortCircuitsWhenPreviousOrderRejected),
+  rs('ArmyMoveValidator military cannot move into Minor province without war', mvRunArmyMoveIntoMinorProvinceWithoutWar),
+  rs('ArmyMoveValidator military may move into other GP province with same-turn declareWar', mvRunArmyMoveIntoOtherGpProvinceWithSameTurnDeclareWar),
+  rs('ArmyMoveValidator military may move into Minor province with same-turn declareWar', mvRunArmyMoveIntoMinorProvinceWithSameTurnDeclareWar),
+  rs('ArmyMoveValidator military may move into Tribe province with same-turn declareWar', mvRunArmyMoveIntoTribeProvinceWithSameTurnDeclareWar),
+  rs('ArmyMoveValidator military cannot move into Minor/Tribe province without war', mvRunArmyMoveIntoMinorTribeProvinceWithoutWar),
 ];

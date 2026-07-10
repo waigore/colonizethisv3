@@ -127,24 +127,8 @@ void osampRunSharedCandidateValidatorMatchesDefaultAndSkipsForPlayerRebuild() {
 }
 
 List<RunnableScenario> orderSuggestionArmyMovePickerScenarios() => const [
-  RunnableScenario(
-    label: 'cached player-owned set matches default destination picker path',
-    run: osampRunCachedPlayerOwnedMatchesDefaultDestinationPickerPath,
-  ),
-  RunnableScenario(
-    label:
-        'shared playerView and unitsById matches default armyMovePickerDestinations',
-    run: osampRunSharedPlayerViewMatchesDefaultArmyMovePickerDestinations,
-  ),
-  RunnableScenario(
-    label:
-        'shared factionMembership matches default armyMovePickerDestinations',
-    run:
-        osampRunSharedFactionMembershipMatchesDefaultArmyMovePickerDestinations,
-  ),
-  RunnableScenario(
-    label:
-        'sharedCandidateValidator matches default and skips forPlayer rebuild',
-    run: osampRunSharedCandidateValidatorMatchesDefaultAndSkipsForPlayerRebuild,
-  ),
+  rs('cached player-owned set matches default destination picker path', osampRunCachedPlayerOwnedMatchesDefaultDestinationPickerPath),
+  rs('shared playerView and unitsById matches default armyMovePickerDestinations', osampRunSharedPlayerViewMatchesDefaultArmyMovePickerDestinations),
+  rs('shared factionMembership matches default armyMovePickerDestinations', osampRunSharedFactionMembershipMatchesDefaultArmyMovePickerDestinations),
+  rs('sharedCandidateValidator matches default and skips forPlayer rebuild', osampRunSharedCandidateValidatorMatchesDefaultAndSkipsForPlayerRebuild),
 ];

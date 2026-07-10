@@ -230,43 +230,13 @@ void wotpRunDevExclusiveTileConflict() {
 
 /// Canonical scenarios for work-order target prechecks.
 List<RunnableScenario> workOrderTargetPrechecksScenarios() => const [
-  RunnableScenario(
-    label: 'registers expected work targets',
-    run: wotpRunRegistersExpectedTargets,
-  ),
-  RunnableScenario(
-    label: 'runWorkOrderTargetPrecheck returns null for unregistered target',
-    run: wotpRunUnregisteredTargetReturnsNull,
-  ),
-  RunnableScenario(
-    label: 'precheckUpgradeTown rejects without National Bureaucracy',
-    run: wotpRunUpgradeTownRejectsNoNationalBureaucracy,
-  ),
-  RunnableScenario(
-    label: 'precheckUpgradeTown rejects when town development is already 4',
-    run: wotpRunUpgradeTownRejectsMaxDevelopment,
-  ),
-  RunnableScenario(
-    label:
-        'kWorkTargetsSkippingDefaultForeignProvinceCheck lists dedicated targets',
-    run: wotpRunSkippingDefaultForeignCheckSet,
-  ),
-  RunnableScenario(
-    label:
-        'precheckPurchaseLand matches with or without DiplomacyFactionMembership (Refs #2394)',
-    run: wotpRunPurchaseLandFactionMembershipParity,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'precheckBuildImprovement rejects unprospected mineral tile',
-    run: wotpRunBuildImprovementRejectsUnprospectedMineral,
-  ),
-  RunnableScenario(
-    label: 'precheckDefaultForeignProvince rejects builder in foreign province',
-    run: wotpRunDefaultForeignProvinceRejectsBuilder,
-  ),
-  RunnableScenario(
-    label: 'precheckDevExclusiveTileConflict rejects duplicate dev work tile',
-    run: wotpRunDevExclusiveTileConflict,
-  ),
+  rs('registers expected work targets', wotpRunRegistersExpectedTargets),
+  rs('runWorkOrderTargetPrecheck returns null for unregistered target', wotpRunUnregisteredTargetReturnsNull),
+  rs('precheckUpgradeTown rejects without National Bureaucracy', wotpRunUpgradeTownRejectsNoNationalBureaucracy),
+  rs('precheckUpgradeTown rejects when town development is already 4', wotpRunUpgradeTownRejectsMaxDevelopment),
+  rs('kWorkTargetsSkippingDefaultForeignProvinceCheck lists dedicated targets', wotpRunSkippingDefaultForeignCheckSet),
+  rs('precheckPurchaseLand matches with or without DiplomacyFactionMembership (Refs #2394)', wotpRunPurchaseLandFactionMembershipParity, '#2394'),
+  rs('precheckBuildImprovement rejects unprospected mineral tile', wotpRunBuildImprovementRejectsUnprospectedMineral),
+  rs('precheckDefaultForeignProvince rejects builder in foreign province', wotpRunDefaultForeignProvinceRejectsBuilder),
+  rs('precheckDevExclusiveTileConflict rejects duplicate dev work tile', wotpRunDevExclusiveTileConflict),
 ];

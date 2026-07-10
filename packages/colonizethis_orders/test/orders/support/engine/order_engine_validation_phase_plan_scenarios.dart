@@ -50,20 +50,7 @@ void oevppRunMoveArmyMoveShareInitialBundleResourcePhasesRefreshTradeReuses() {
 
 /// Canonical scenarios for order_engine_validation_phase_plan family tests.
 List<RunnableScenario> orderEngineValidationPhasePlanScenarios() => const [
-  RunnableScenario(
-    label: 'declares the canonical per-category phase order',
-    run: oevppRunDeclaresCanonicalPerCategoryPhaseOrder,
-    refs: '#3543 AC2',
-  ),
-  RunnableScenario(
-    label: 'phase names are unique (no category runs twice)',
-    run: oevppRunPhaseNamesAreUnique,
-    refs: '#3543 AC2',
-  ),
-  RunnableScenario(
-    label:
-        'move + army-move share the initial bundle; resource/diplomatic/naval phases refresh; trade reuses the advanced bundle',
-    run: oevppRunMoveArmyMoveShareInitialBundleResourcePhasesRefreshTradeReuses,
-    refs: '#2391 AC7',
-  ),
+  rs('declares the canonical per-category phase order', oevppRunDeclaresCanonicalPerCategoryPhaseOrder, '#3543 AC2'),
+  rs('phase names are unique (no category runs twice)', oevppRunPhaseNamesAreUnique, '#3543 AC2'),
+  rs('move + army-move share the initial bundle; resource/diplomatic/naval phases refresh; trade reuses the advanced bundle', oevppRunMoveArmyMoveShareInitialBundleResourcePhasesRefreshTradeReuses, '#2391 AC7'),
 ];

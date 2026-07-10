@@ -42,8 +42,7 @@ void wppRunAcceptedApprenticeTrainConsumesPeasantPaperAndTreasury() {
   );
 }
 
-void
-wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
+void wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
   const paper = 5;
   const peasants = 3;
   const treasury = 100;
@@ -65,8 +64,7 @@ wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeductio
   );
 }
 
-void
-wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage() {
+void wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage() {
   const paper = 8;
   const peasants = 2;
   const treasury = 700;
@@ -95,8 +93,7 @@ wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage()
   );
 }
 
-void
-wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail() {
+void wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail() {
   const paper = 12;
   const peasants = 1;
   const treasury = 1200;
@@ -125,8 +122,7 @@ wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3Mas
   );
 }
 
-void
-wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage() {
+void wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage() {
   const paper = 12;
   const peasants = 1;
   const treasury = 1200;
@@ -153,8 +149,7 @@ wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage
   );
 }
 
-void
-wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics() {
+void wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics() {
   wppExpectSequentialTiers(
     stock: {CommodityCatalog.fabric.id: 2, CommodityCatalog.paper.id: 2},
     peasants: 0,
@@ -178,8 +173,7 @@ wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSub
   );
 }
 
-void
-wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior() {
+void wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior() {
   wppExpectSequentialTiers(
     stock: {CommodityCatalog.fabric.id: 4, CommodityCatalog.paper.id: 4},
     peasants: 1,
@@ -253,50 +247,14 @@ void wppRunPerPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin() {
 /// Labels match former suite descriptions (joined to single-line `label:` for CI).
 List<RunnableScenario> workerPoolPhaseScenarios() => const [
   // dart format off
-  RunnableScenario(
-    label: 'accepted recruit peasant order adds 1 peasant and deducts fabric',
-    run: wppRunAcceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'accepted apprentice train consumes peasant, paper, and treasury',
-    run: wppRunAcceptedApprenticeTrainConsumesPeasantPaperAndTreasury,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'recruit that fails affordability checks does not mutate the player (no partial deduction)',
-    run: wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage)',
-    run: wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail)',
-    run: wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'master recruit with required tech locked is silently skipped (#2692 S9 tech-gate coverage)',
-    run: wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'later recruit order observes the running state of earlier accepted order in the same submission list (#2692 S9 ordering semantics)',
-    run: wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'middle order silently skips when peasants are exhausted; later orders still resolve against the running state (#2692 S9; AC #4 resolver behavior)',
-    run: wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior,
-    refs: '#2692',
-  ),
-  RunnableScenario(
-    label: 'per-player order lists apply in isolation (#2692 S9 multi-player pin)',
-    run: wppRunPerPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin,
-    refs: '#2692',
-  ),
+  rs('accepted recruit peasant order adds 1 peasant and deducts fabric', wppRunAcceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric, '#2692'),
+  rs('accepted apprentice train consumes peasant, paper, and treasury', wppRunAcceptedApprenticeTrainConsumesPeasantPaperAndTreasury, '#2692'),
+  rs('recruit that fails affordability checks does not mutate the player (no partial deduction)', wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction, '#2692'),
+  rs('accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage)', wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage, '#2692'),
+  rs('accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail)', wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail, '#2692'),
+  rs('master recruit with required tech locked is silently skipped (#2692 S9 tech-gate coverage)', wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage, '#2692'),
+  rs('later recruit order observes the running state of earlier accepted order in the same submission list (#2692 S9 ordering semantics)', wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics, '#2692'),
+  rs('middle order silently skips when peasants are exhausted; later orders still resolve against the running state (#2692 S9; AC #4 resolver behavior)', wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior, '#2692'),
+  rs('per-player order lists apply in isolation (#2692 S9 multi-player pin)', wppRunPerPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin, '#2692'),
   // dart format on
 ];

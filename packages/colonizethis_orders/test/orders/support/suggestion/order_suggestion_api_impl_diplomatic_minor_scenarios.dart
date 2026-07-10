@@ -64,26 +64,8 @@ void osaidmRunJoinEmpireOvertureSuggestsDeclareWar() {
 
 List<RunnableScenario>
 orderSuggestionApiImplDiplomaticMinorScenarios() => const [
-  RunnableScenario(
-    label: 'does not suggest diplomatic orders for completely unknown factions',
-    run: osaidmRunDoesNotSuggestForCompletelyUnknownFactions,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'returns establishOverture for minor when treasury suffices',
-    run: osaidmRunReturnsEstablishOvertureWhenTreasurySuffices,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise',
-    run: osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'toward minor at peace with join-empire overture suggests declareWar (primary before economic)',
-    run: osaidmRunJoinEmpireOvertureSuggestsDeclareWar,
-    refs: '#3949',
-  ),
+  rs('does not suggest diplomatic orders for completely unknown factions', osaidmRunDoesNotSuggestForCompletelyUnknownFactions, '#3949'),
+  rs('returns establishOverture for minor when treasury suffices', osaidmRunReturnsEstablishOvertureWhenTreasurySuffices, '#3949'),
+  rs('does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise', osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise, '#3949'),
+  rs('toward minor at peace with join-empire overture suggests declareWar (primary before economic)', osaidmRunJoinEmpireOvertureSuggestsDeclareWar, '#3949'),
 ];

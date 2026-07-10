@@ -18,8 +18,5 @@ void oscieRunListsSeaReachableNw() {
 }
 
 List<RunnableScenario> orderSuggestionColonialIntelExploreScenarios() => const [
-  RunnableScenario(
-    label: 'colonialIntelExploreProvinceIdsSorted lists sea-reachable NW',
-    run: oscieRunListsSeaReachableNw,
-  ),
+  rs('colonialIntelExploreProvinceIdsSorted lists sea-reachable NW', oscieRunListsSeaReachableNw),
 ];

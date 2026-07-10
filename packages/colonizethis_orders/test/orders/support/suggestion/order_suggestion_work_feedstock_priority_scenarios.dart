@@ -112,48 +112,15 @@ void oswfpRunCoAvailOrderingDeterministicRepeatedPasses() {
 /// Feedstock-extraction priority scenarios (Refs #2847 H8-extraction).
 List<RunnableScenario>
 orderSuggestionWorkFeedstockPriorityExtractionScenarios() => const [
-  RunnableScenario(
-    label:
-        'supplier gate active: the emitted build_improvement suggestion targets the unimproved iron feedstock tile, not the lex-first grain tile',
-    run: oswfpRunSupplierGateActiveIronNotLexFirstGrain,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label:
-        'supplier gate inactive (peer at quota): ordinary lexicographic ordering emits the grain tile (negative control)',
-    run: oswfpRunSupplierGateInactivePeerAtQuotaLexGrain,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label:
-        'supplier with lumber only: feedstock build_improvement is accepted under castIron waiver',
-    run: oswfpRunSupplierLumberOnlyCastIronWaiver,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label: 'suggestion ordering is deterministic across repeated passes',
-    run: oswfpRunSuggestionOrderingDeterministicRepeatedPasses,
-    refs: '#2847',
-  ),
+  rs('supplier gate active: the emitted build_improvement suggestion targets the unimproved iron feedstock tile, not the lex-first grain tile', oswfpRunSupplierGateActiveIronNotLexFirstGrain, '#2847'),
+  rs('supplier gate inactive (peer at quota): ordinary lexicographic ordering emits the grain tile (negative control)', oswfpRunSupplierGateInactivePeerAtQuotaLexGrain, '#2847'),
+  rs('supplier with lumber only: feedstock build_improvement is accepted under castIron waiver', oswfpRunSupplierLumberOnlyCastIronWaiver, '#2847'),
+  rs('suggestion ordering is deterministic across repeated passes', oswfpRunSuggestionOrderingDeterministicRepeatedPasses, '#2847'),
 ];
 
 /// Feedstock co-availability ordering scenarios (Refs #2847 H8-extraction).
 List<RunnableScenario> orderSuggestionWorkFeedstockCoAvailScenarios() => const [
-  RunnableScenario(
-    label:
-        'supplier holds timber but no iron: the emitted build_improvement suggestion targets the least-held iron tile, not the lex-first timber tile',
-    run: oswfpRunCoAvailSupplierHoldsTimberNotIronLeastHeldIron,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label:
-        'supplier holds equal feedstock (zero of each): lexicographic tie-break emits the timber tile (negative control)',
-    run: oswfpRunCoAvailEqualFeedstockLexTimberNegativeControl,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label: 'co-availability ordering is deterministic across repeated passes',
-    run: oswfpRunCoAvailOrderingDeterministicRepeatedPasses,
-    refs: '#2847',
-  ),
+  rs('supplier holds timber but no iron: the emitted build_improvement suggestion targets the least-held iron tile, not the lex-first timber tile', oswfpRunCoAvailSupplierHoldsTimberNotIronLeastHeldIron, '#2847'),
+  rs('supplier holds equal feedstock (zero of each): lexicographic tie-break emits the timber tile (negative control)', oswfpRunCoAvailEqualFeedstockLexTimberNegativeControl, '#2847'),
+  rs('co-availability ordering is deterministic across repeated passes', oswfpRunCoAvailOrderingDeterministicRepeatedPasses, '#2847'),
 ];

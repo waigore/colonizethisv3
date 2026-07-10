@@ -52,16 +52,6 @@ void osplppRunNoProspectWithoutFoggedVisibility() {
 /// Scenarios for suggestWorkOrders prospect location province priority.
 List<RunnableScenario>
 suggestWorkOrdersProspectLocationProvincePriorityScenarios() => const [
-  RunnableScenario(
-    label:
-        'co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile',
-    run: osplppRunCoLocatedExplorerReceivesProspectInLateSortedProvince,
-    refs: '#2847',
-  ),
-  RunnableScenario(
-    label:
-        'iron province without fogged visibility still yields no prospect (negative control)',
-    run: osplppRunNoProspectWithoutFoggedVisibility,
-    refs: '#2847',
-  ),
+  rs('co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile', osplppRunCoLocatedExplorerReceivesProspectInLateSortedProvince, '#2847'),
+  rs('iron province without fogged visibility still yields no prospect (negative control)', osplppRunNoProspectWithoutFoggedVisibility, '#2847'),
 ];

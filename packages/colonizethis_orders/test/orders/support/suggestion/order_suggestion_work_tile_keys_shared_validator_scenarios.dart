@@ -140,28 +140,13 @@ void oswtkRunSharedViewAndValidatorMatchesDefaultPath() {
 
 List<RunnableScenario>
 orderSuggestionWorkTileKeysSharedValidatorVisibilityScenarios() => const [
-  RunnableScenario(
-    label: 'sharedCandidateValidator matches default path for same inputs',
-    run: oswtkRunSharedCandidateValidatorMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'playerOwnedProvinceIds matches default path for same inputs',
-    run: oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'optional unitsById matches default path',
-    run: oswtkRunOptionalUnitsByIdMatchesDefaultPath,
-  ),
+  rs('sharedCandidateValidator matches default path for same inputs', oswtkRunSharedCandidateValidatorMatchesDefaultPath),
+  rs('playerOwnedProvinceIds matches default path for same inputs', oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath),
+  rs('optional unitsById matches default path', oswtkRunOptionalUnitsByIdMatchesDefaultPath),
 ];
 
 List<RunnableScenario>
 orderSuggestionWorkTileKeysSharedValidatorPlayerViewScenarios() => const [
-  RunnableScenario(
-    label: 'matches prior behavior for builder improvement tiles',
-    run: oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles,
-  ),
-  RunnableScenario(
-    label: 'shared view and validator matches default path',
-    run: oswtkRunSharedViewAndValidatorMatchesDefaultPath,
-  ),
+  rs('matches prior behavior for builder improvement tiles', oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles),
+  rs('shared view and validator matches default path', oswtkRunSharedViewAndValidatorMatchesDefaultPath),
 ];
