@@ -316,52 +316,63 @@ List<TopologyNode> _iceCorpusTopologyNodes() => const [
       TopologyNode(id: '$_iceCorpusOw|P4', regionId: _iceCorpusOw, type: TopologyNodeType.province),
     ];
 
-Game moveCorpusGame() {
-  return Game(
-    id: 'g_move_eq',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: _iceCorpusProvinces(),
-        units: [
-          Unit(
-            id: 'u_builder',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: '$_iceCorpusOw|P1',
-            tileKey: '$_iceCorpusOw|P1|0|0',
-          ),
-          Unit(
-            id: 'u_explorer',
-            type: kUnitTypeExplorer,
-            ownerId: 'p1',
-            locationProvinceId: '$_iceCorpusOw|P1',
-            tileKey: '$_iceCorpusOw|P1|0|0',
-          ),
-          Unit(
-            id: 'u_spy',
-            type: kUnitTypeSpy,
-            ownerId: 'p1',
-            locationProvinceId: '$_iceCorpusOw|P1',
-            tileKey: '$_iceCorpusOw|P1|0|0',
-          ),
-          Unit(
-            id: 'u_pikemen',
-            type: 'pikemen',
-            ownerId: 'p1',
-            locationProvinceId: '$_iceCorpusOw|P1',
-          ),
-        ],
+Game _iceCorpusGame({
+  required String id,
+  required RegionData oldWorld,
+  List<Army> armies = const [],
+}) =>
+    Game(
+      id: id,
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: oldWorld,
+        newWorld: const RegionData(),
+        armies: armies,
+        tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
+        playerVisibilityByTile: _iceCorpusVisibility(),
       ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
-      playerVisibilityByTile: _iceCorpusVisibility(),
+      players: const [
+        Player(id: 'p1', displayName: 'P1', isHuman: true),
+        Player(id: 'p2', displayName: 'P2', isHuman: true),
+      ],
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+    );
+
+Game moveCorpusGame() {
+  return _iceCorpusGame(
+    id: 'g_move_eq',
+    oldWorld: RegionData(
+      provinces: _iceCorpusProvinces(),
+      units: [
+        Unit(
+          id: 'u_builder',
+          type: kUnitTypeBuilder,
+          ownerId: 'p1',
+          locationProvinceId: '$_iceCorpusOw|P1',
+          tileKey: '$_iceCorpusOw|P1|0|0',
+        ),
+        Unit(
+          id: 'u_explorer',
+          type: kUnitTypeExplorer,
+          ownerId: 'p1',
+          locationProvinceId: '$_iceCorpusOw|P1',
+          tileKey: '$_iceCorpusOw|P1|0|0',
+        ),
+        Unit(
+          id: 'u_spy',
+          type: kUnitTypeSpy,
+          ownerId: 'p1',
+          locationProvinceId: '$_iceCorpusOw|P1',
+          tileKey: '$_iceCorpusOw|P1|0|0',
+        ),
+        Unit(
+          id: 'u_pikemen',
+          type: 'pikemen',
+          ownerId: 'p1',
+          locationProvinceId: '$_iceCorpusOw|P1',
+        ),
+      ],
     ),
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-      Player(id: 'p2', displayName: 'P2', isHuman: true),
-    ],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
   );
 }
 
@@ -381,32 +392,20 @@ Game armyCorpusGame() {
     regimentUnitIds: [regimentId],
     isHomeArmy: false,
   );
-  return Game(
+  return _iceCorpusGame(
     id: 'g_army_eq',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: _iceCorpusProvinces(),
-        units: [
-          Unit(
-            id: 'r1',
-            type: 'pikemen',
-            ownerId: 'p1',
-            locationProvinceId: '$_iceCorpusOw|P1',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [field('field_a', '$_iceCorpusOw|P1', 'r1')],
-      playerVisibilityByTile: _iceCorpusVisibility(),
-      tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
+    oldWorld: RegionData(
+      provinces: _iceCorpusProvinces(),
+      units: [
+        Unit(
+          id: 'r1',
+          type: 'pikemen',
+          ownerId: 'p1',
+          locationProvinceId: '$_iceCorpusOw|P1',
+        ),
+      ],
     ),
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-      Player(id: 'p2', displayName: 'P2', isHuman: true),
-    ],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-    diplomacyRelations: const [],
+    armies: [field('field_a', '$_iceCorpusOw|P1', 'r1')],
   );
 }
 

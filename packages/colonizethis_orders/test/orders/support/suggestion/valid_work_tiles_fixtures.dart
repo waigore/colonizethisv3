@@ -18,52 +18,6 @@ Province vwtProvince(String localId, String ownerId) => Province(
   ownerId: ownerId,
 );
 
-/// Explorer on p1 — build_improvement disallowed for unit type (visibility path).
-Game vwtExplorerDisallowedBuildGame() {
-  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
-  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  return ValidWorkTilesTestSupport.validWorkTilesGame(
-    oldWorld: RegionData(
-      provinces: [vwtOwnedProvince('p1')],
-      units: [
-        ValidWorkTilesTestSupport.explorerUnit(
-          locationProvinceId: provinceId,
-          tileKey: tile,
-        ),
-      ],
-    ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      provinceId: [tile],
-    }),
-  );
-}
-
-/// Colonist on p1 with adjacent p2 — visibility filter vs plain keys parity.
-Game vwtColonistVisibilityFilterGame() {
-  final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-  final p2 = ValidWorkTilesTestSupport.provinceId('p2');
-  final tileP1 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  final tileP2 = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
-  return ValidWorkTilesTestSupport.validWorkTilesGame(
-    oldWorld: RegionData(
-      provinces: [vwtOwnedProvince('p1')],
-      units: [
-        Unit(
-          id: 'u1',
-          type: 'Colonist',
-          ownerId: ValidWorkTilesTestSupport.playerId,
-          locationProvinceId: p1,
-          tileKey: tileP1,
-        ),
-      ],
-    ),
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      p1: [tileP1],
-      p2: [tileP2],
-    }),
-  );
-}
-
 /// NW home + adjacent target province with partial visibility (home full, t0
 /// unknown, t1 fogged). Used by suggest explore/prospect scenario bodies.
 class NwPartialRevealHomeTarget {
@@ -194,18 +148,25 @@ class NwPartialRevealHomeTarget {
   );
 
   static NwPartialRevealHomeTarget tribeGrainIron({bool prospectedIron = false}) {
-    final base = NwPartialRevealHomeTarget(
-      homeLocalId: 'home',
-      targetLocalId: 'tribe1',
-      targetOwnerId: 'tribe1',
+    final t0 = ValidWorkTilesTestSupport.tileKey(
+      'tribe1',
+      0,
+      0,
+      regionId: ValidWorkTilesTestSupport.nw,
+    );
+    final t1 = ValidWorkTilesTestSupport.tileKey(
+      'tribe1',
+      1,
+      0,
+      regionId: ValidWorkTilesTestSupport.nw,
     );
     return NwPartialRevealHomeTarget(
       homeLocalId: 'home',
       targetLocalId: 'tribe1',
       targetOwnerId: 'tribe1',
-      resourceByTileKey: {base.t0: 'grain', base.t1: 'iron'},
+      resourceByTileKey: {t0: 'grain', t1: 'iron'},
       playerProspectedTiles: prospectedIron
-          ? {ValidWorkTilesTestSupport.playerId: {base.t1}}
+          ? {ValidWorkTilesTestSupport.playerId: {t1}}
           : const {},
     );
   }
@@ -213,18 +174,17 @@ class NwPartialRevealHomeTarget {
   static NwPartialRevealHomeTarget minorPurchase({
     Map<String, String> resourceByTileKey = const {},
   }) {
-    final base = NwPartialRevealHomeTarget(
-      homeLocalId: 'own',
-      targetLocalId: 'm1',
-      targetOwnerId: 'minor1',
+    final t1 = ValidWorkTilesTestSupport.tileKey(
+      'm1',
+      1,
+      0,
+      regionId: ValidWorkTilesTestSupport.nw,
     );
     return NwPartialRevealHomeTarget(
       homeLocalId: 'own',
       targetLocalId: 'm1',
       targetOwnerId: 'minor1',
-      resourceByTileKey: resourceByTileKey.isEmpty
-          ? {base.t1: 'grain'}
-          : resourceByTileKey,
+      resourceByTileKey: resourceByTileKey.isEmpty ? {t1: 'grain'} : resourceByTileKey,
     );
   }
 
@@ -443,30 +403,26 @@ List<WorkOrder> suggestedWorkOrders({
 
 const _vwtTopology = ValidWorkTilesTestSupport.emptyTopology;
 
-Game _vwtSingleTileGame({Unit? explorerUnit}) {
+Game vwtSingleTileGame({bool withExplorer = false}) {
   final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
   final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
   return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
-    oldWorld: explorerUnit == null
-        ? null
-        : RegionData(
+    oldWorld: withExplorer
+        ? RegionData(
             provinces: [vwtOwnedProvince('p1')],
-            units: [explorerUnit],
-          ),
+            units: [
+              ValidWorkTilesTestSupport.explorerUnit(
+                locationProvinceId: provinceId,
+                tileKey: tile,
+              ),
+            ],
+          )
+        : null,
     tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
       provinceId: [tile],
     }),
   );
 }
-
-Game vwtSingleTileGame({bool withExplorer = false}) => _vwtSingleTileGame(
-      explorerUnit: withExplorer
-          ? ValidWorkTilesTestSupport.explorerUnit(
-              locationProvinceId: ValidWorkTilesTestSupport.provinceId('p1'),
-              tileKey: ValidWorkTilesTestSupport.tileKey('p1', 0, 0),
-            )
-          : null,
-    );
 
 Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
     getValidWorkOrderTileKeys(
@@ -485,9 +441,6 @@ Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
       unitId: unitId,
       workTarget: workTarget,
     );
-
-Set<String> vwtBuildVisKeys(Game game, {String unitId = 'u1'}) =>
-    vwtVisKeys(game, unitId, kWorkTargetBuildImprovement);
 
 /// Tribe-owned OW provinces with mixed visibility for explore visibility scans.
 ({Game game, String partialKnownTile, String fullTile, String unknownTile})

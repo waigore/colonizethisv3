@@ -2031,6 +2031,19 @@ test/ LOC after slice 128: **37,317** (net −22 from post–slice 127). Remaini
 
 test/ LOC after slice 129: **37,275** (net −42 from post–slice 128). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 130: vwt fixture dedup + ice corpus shell + prospect-vis inline
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-explorer-dedup | drop `vwtExplorerDisallowedBuildGame`; reuse `vwtSingleTileGame(withExplorer: true)` | `valid_work_tiles_fixtures.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vwt-colonist-inline | inline single-use `vwtColonistVisibilityFilterGame` at visibility-filter case | `valid_work_tiles_fixtures.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vwt-nw-factory-dedup | simplify `NwPartialRevealHomeTarget.tribeGrainIron` / `minorPurchase` (no double construction) | `valid_work_tiles_fixtures.dart` | same | #3949 |
+| vwt-single-tile-inline | merge `_vwtSingleTileGame` into `vwtSingleTileGame`; remove dead `vwtBuildVisKeys` | `valid_work_tiles_fixtures.dart` | same | #3949 |
+| vwt-prospect-vis-inline | fold `vwtProspectVisKeys` into `vwtExpectProspectVisExcludesAll`; use `vwtVisKeys` at include case | `valid_work_tiles_expectation_shorthand.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| ice-corpus-shell | extract `_iceCorpusGame` shared shell for move/army equivalence corpus games | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+
+test/ LOC after slice 130: **37,242** (net −33 from post–slice 129). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

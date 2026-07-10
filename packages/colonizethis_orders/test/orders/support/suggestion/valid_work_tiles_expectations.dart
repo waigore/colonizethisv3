@@ -58,13 +58,34 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         );
     case ValidWorkTilesTarget.returnsEmptyWhenWorkTargetNotAllowedForUnitTypeWithVisibility:
       vwtExpectKeysEmpty(
-          vwtExplorerDisallowedBuildGame(),
+          vwtSingleTileGame(withExplorer: true),
           'u1',
           kWorkTargetBuildImprovement,
           withVisibility: true,
         );
     case ValidWorkTilesTarget.filtersByVisibilityBeforeOrderEngineValidation:
-      final visGame = vwtColonistVisibilityFilterGame();
+      final p1 = ValidWorkTilesTestSupport.provinceId('p1');
+      final p2 = ValidWorkTilesTestSupport.provinceId('p2');
+      final tileP1 = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+      final tileP2 = ValidWorkTilesTestSupport.tileKey('p2', 0, 0);
+      final visGame = ValidWorkTilesTestSupport.validWorkTilesGame(
+        oldWorld: RegionData(
+          provinces: [vwtOwnedProvince('p1')],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'Colonist',
+              ownerId: ValidWorkTilesTestSupport.playerId,
+              locationProvinceId: p1,
+              tileKey: tileP1,
+            ),
+          ],
+        ),
+        tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+          p1: [tileP1],
+          p2: [tileP2],
+        }),
+      );
         final withVis = vwtVisKeys(visGame, 'u1', kWorkTargetBuildImprovement);
         final withoutVis = vwtPlainKeys(visGame, 'u1', kWorkTargetBuildImprovement);
         expect(withVis.length, withoutVis.length);
@@ -195,7 +216,7 @@ void runValidWorkTilesExpectation(ValidWorkTilesTarget target) {
         visibilityByTile: {ironTile: 'fogged'},
       );
       expect(
-        vwtProspectVisKeys(prospectGame),
+        vwtVisKeys(prospectGame, 'u1', kWorkTargetProspect),
         contains(ironTile),
       );
     case ValidWorkTilesTarget

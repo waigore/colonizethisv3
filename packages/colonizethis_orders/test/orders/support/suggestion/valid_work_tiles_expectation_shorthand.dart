@@ -57,24 +57,18 @@ void vwtExpectPartialRevealSuggestions({
   expect(orders, expectNonEmpty ? isNotEmpty : isEmpty);
 }
 
-Set<String> vwtProspectVisKeys(
-  Game game, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) =>
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: owSingleProvinceTopology('p1'),
-      unitId: 'u1',
-      workTarget: kWorkTargetProspect,
-      tileMapByRegion: tileMapByRegion,
-    );
-
 void vwtExpectProspectVisExcludesAll(
   Game game,
   Iterable<String> tiles, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final valid = vwtProspectVisKeys(game, tileMapByRegion: tileMapByRegion);
+  final valid = validWorkTilesWithVisibility(
+    game: game,
+    topology: owSingleProvinceTopology('p1'),
+    unitId: 'u1',
+    workTarget: kWorkTargetProspect,
+    tileMapByRegion: tileMapByRegion,
+  );
   for (final tile in tiles) {
     expect(valid.contains(tile), isFalse);
   }
