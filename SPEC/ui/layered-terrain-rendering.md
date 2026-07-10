@@ -39,9 +39,16 @@ The map renderer draws terrain in **three passes**:
   - `resourceId = grain` → `tile_plains_grain`
   - `resourceId = meat` → `tile_plains_meat`
   - `resourceId = horses` → `tile_plains_horses`
+  - `resourceId = sugarCane` → `tile_plains_sugar_cane`
+  - `resourceId = tobacco` → `tile_plains_tobacco`
+  - `resourceId = cotton` → `tile_plains_cotton`
+  - `resourceId = spices` → `tile_plains_spices`
   - **Draw order:** L1 **first** draws the **same canonical interior plains** Wang upper-base tile used for a non-resource interior plains cell (`sea_plains` atlas), **then** draws the selected `tile_plains_*` image with normal alpha blending (`srcOver`). Transparent pixels in the overlay must reveal that plains base—not the empty canvas (which would read as black).
   - Any other `resourceId` (or null) keeps a single draw of the canonical plains base tile (no overlay variant).
   - Desert never uses these plains variant keys.
+  - **Plantation pipeline (Refs #3961):** One shared 64×64 PixelLab Pixflux plantation base (`pytool/assets/terrain/tile_plains_plantation_base.png`; prompt below), then `pytool/recolour_plains_plantation_tiles.py` PIL-recolours only yellow-green field/crop highlight pixels into the four shipped overlays (buildings/soil/path/alpha unchanged).
+  - **Pixflux base prompt (verbatim):** `64x64 pixel art colonial plantation terrain overlay, rectangular crop fields with horizontal till rows filling most of the tile, two small wooden plantation buildings with dark peaked roofs at the back, sparse green grass patches at field edges, top-down slightly isometric colonial strategy game style matching farm terrain tiles like grain fields with cottages, limited earthy palette, clean silhouette, transparent background`
+  - **PIL field mid-tones:** sugar_cane `(124,179,66)`; tobacco `(128,108,42)`; cotton `(214,208,178)`; spices `(196,98,42)`.
 
 ### Layer 2+: Terrain Features (Overlay)
 
@@ -149,6 +156,10 @@ for each cell:
 | `tile_plains_grain` | Plains terrain variant for `resourceId = grain` |
 | `tile_plains_meat` | Plains terrain variant for `resourceId = meat` |
 | `tile_plains_horses` | Plains terrain variant for `resourceId = horses` |
+| `tile_plains_sugar_cane` | Plains plantation variant for `resourceId = sugarCane` |
+| `tile_plains_tobacco` | Plains plantation variant for `resourceId = tobacco` |
+| `tile_plains_cotton` | Plains plantation variant for `resourceId = cotton` |
+| `tile_plains_spices` | Plains plantation variant for `resourceId = spices` |
 
 ---
 
@@ -218,14 +229,19 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a plains tile with `resourceId = grain`, when rendering L1, then the renderer selects `tile_plains_grain` for that tile.
 - Given a plains tile with `resourceId = meat`, when rendering L1, then the renderer selects `tile_plains_meat` for that tile.
 - Given a plains tile with `resourceId = horses`, when rendering L1, then the renderer selects `tile_plains_horses` for that tile.
-- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses}`, when rendering L1, then the renderer draws the canonical interior plains base, then the corresponding `tile_plains_*` overlay so transparent overlay pixels show plains grass (not an empty/black canvas).
-- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses}` and player-constrained **fogged** visibility, when rendering L1 completes, then fog attenuation for that cell matches other interior plains land-base tiles (no unintended double-darkening from separate base vs overlay passes).
-- Given a plains tile with `resourceId` not in `{grain, meat, horses}` (or null), when rendering L1, then the renderer keeps the canonical plains base tile.
+- Given a plains tile with `resourceId = sugarCane`, when rendering L1, then the System selects `tile_plains_sugar_cane` for that tile.
+- Given a plains tile with `resourceId = tobacco`, when rendering L1, then the System selects `tile_plains_tobacco` for that tile.
+- Given a plains tile with `resourceId = cotton`, when rendering L1, then the System selects `tile_plains_cotton` for that tile.
+- Given a plains tile with `resourceId = spices`, when rendering L1, then the System selects `tile_plains_spices` for that tile.
+- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses, sugarCane, tobacco, cotton, spices}`, when rendering L1, then the renderer draws the canonical interior plains base, then the corresponding `tile_plains_*` overlay so transparent overlay pixels show plains grass (not an empty/black canvas).
+- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses, sugarCane, tobacco, cotton, spices}` and player-constrained **fogged** visibility, when rendering L1 completes, then fog attenuation for that cell matches other interior plains land-base tiles (no unintended double-darkening from separate base vs overlay passes).
+- Given a plains tile with `resourceId` not in `{grain, meat, horses, sugarCane, tobacco, cotton, spices}` (or null), when rendering L1, then the renderer keeps the canonical plains base tile.
 - Given a desert tile with any `resourceId`, when rendering L1, then the renderer does not select any plains resource variant tile key.
+- Given the four shipped plantation PNGs, when compared, then building/layout alpha silhouettes match the shared plantation base and each resource’s field-highlight mid-tone matches the PIL table above.
 - Given a hardwood forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_hardwoodForestTimber`; otherwise for hardwood forest it selects `tile_hardwoodForest`.
 - Given a scrub forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_scrubForestTimber`; otherwise for scrub forest it selects `tile_scrubForest`.
 - Given a hills tile where `improvementLevel > 0` and the `resourceId` is a mineral resource, when rendering L2+, then the renderer selects `tile_hills_mine`; otherwise if `resourceId = wool`, then it selects `tile_hills_wool`; otherwise it selects `tile_hills`.
-- Given terrain asset loading and any required plains variant PNG (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`) is missing or fails decode, when map terrain assets initialize, then initialization fails fast with an error instead of silently skipping that variant.
+- Given terrain asset loading and any required plains variant PNG (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`, `tile_plains_sugar_cane`, `tile_plains_tobacco`, `tile_plains_cotton`, `tile_plains_spices`) is missing or fails decode, when map terrain assets initialize, then initialization fails fast with an error instead of silently skipping that variant.
 - Given fog-of-war visibility, when rendering, then appropriate darkening is applied to obscured cells.
 
 ---
