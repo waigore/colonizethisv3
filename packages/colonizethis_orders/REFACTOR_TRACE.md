@@ -2044,6 +2044,14 @@ test/ LOC after slice 129: **37,275** (net −42 from post–slice 128). Remaini
 
 test/ LOC after slice 130: **37,242** (net −33 from post–slice 129). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 131 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| domain-test-file-size | split six support modules that exceeded `repo.domain_package_test_file_size` (400 physical lines) after slice 129 merges | `valid_work_tiles_*`, `order_suggestion_core_expectations`, `work_order_application_expectations`, `order_engine_validate_work_fixtures`, `incremental_candidate_validator_equivalence_test_helpers` | `*_tail.dart`, `*_constants.dart`, `*_corpus.dart`, `*_minor.dart` thin dispatchers | #3949 |
+
+No scenario semantics changed; CI `repo.domain_package_test_file_size` gate green.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
