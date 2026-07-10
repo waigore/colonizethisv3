@@ -2275,6 +2275,26 @@ test/ LOC after slice 149: **36,156** (net −105 from post–slice 148). Remain
 
 test/ LOC after slice 150: **36,002** (net −154 from post–slice 149). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~34 expectations modules — suggestion families).
 
+## Wave 3 — Slice 151: suggestion scenario dispatch collapse (batch B)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osh-dispatch-collapse | drop `OrderSuggestionHelpersTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_helpers_expectations.dart` (deleted) | `order_suggestion_helpers_run_rows.dart` + thin scenarios | #3949 |
+| osdwir-dispatch-collapse | drop declare-war-intervention-risk enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_declare_war_intervention_risk_expectations.dart` (deleted) | `order_suggestion_declare_war_intervention_risk_run_rows.dart` + thin scenarios | #3949 |
+| osplpp-dispatch-collapse | drop prospect-location-province-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_location_province_priority_expectations.dart` (deleted) | `order_suggestion_prospect_location_province_priority_run_rows.dart` + thin scenarios | #3949 |
+| osrd-dispatch-collapse | drop research-diversify enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_research_diversify_expectations.dart` (deleted) | `order_suggestion_research_diversify_run_rows.dart` + thin scenarios | #3949 |
+| ospobp-dispatch-collapse | drop prospect-own-province-budget-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_own_province_budget_priority_expectations.dart` (deleted) | `order_suggestion_prospect_own_province_budget_priority_run_rows.dart` + thin scenarios | #3949 |
+| osait-dispatch-collapse | drop api-impl-trade enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_trade_expectations.dart` (deleted) | `order_suggestion_api_impl_trade_run_rows.dart` + thin scenarios | #3949 |
+| osaidm-dispatch-collapse | drop api-impl-diplomatic-minor enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_minor_expectations.dart` (deleted) | `order_suggestion_api_impl_diplomatic_minor_run_rows.dart` + thin scenarios | #3949 |
+| osdp-dispatch-collapse | drop diplomatic-pass enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_pass_expectations.dart` (deleted) | `order_suggestion_diplomatic_pass_run_rows.dart` + thin scenarios | #3949 |
+| osdvr-dispatch-collapse | drop diplomatic-validator-reuse enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_validator_reuse_expectations.dart` (deleted) | `order_suggestion_diplomatic_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osua-dispatch-collapse | drop unit-availability enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_unit_availability_expectations.dart` (deleted) | `order_suggestion_unit_availability_run_rows.dart` + thin scenarios | #3949 |
+| osca-dispatch-collapse | drop colonial-acquisition enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_colonial_acquisition_expectations.dart` (deleted) | `order_suggestion_colonial_acquisition_run_rows.dart` + thin scenarios | #3949 |
+| oswplc-dispatch-collapse | drop work-purchase-land-colonial enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_purchase_land_colonial_expectations.dart` (deleted) | `order_suggestion_work_purchase_land_colonial_run_rows.dart` + thin scenarios | #3949 |
+| osdf-dispatch-collapse | drop diplomacy-filter enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomacy_filter_expectations.dart` (deleted) | `order_suggestion_diplomacy_filter_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 151: **35,721** (net −281 from post–slice 150). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~21 expectations modules — suggestion families).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

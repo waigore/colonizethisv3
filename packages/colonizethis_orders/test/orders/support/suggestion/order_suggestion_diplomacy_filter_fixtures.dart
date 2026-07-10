@@ -48,9 +48,7 @@ Game orderSuggestionDiplomacyFilterEmptyStringOwnerGame() {
       ),
       newWorld: const RegionData(),
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-    ],
+    players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
   );
 }
 

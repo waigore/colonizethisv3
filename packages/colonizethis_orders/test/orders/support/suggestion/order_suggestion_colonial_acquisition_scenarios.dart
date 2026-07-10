@@ -1,19 +1,19 @@
 // Table-driven colonial acquisition suggestion scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_colonial_acquisition_expectations.dart';
+import 'order_suggestion_colonial_acquisition_run_rows.dart';
 
 /// One row in [orderSuggestionColonialAcquisitionScenarios].
 class OrderSuggestionColonialAcquisitionScenario implements RefsScenario {
   const OrderSuggestionColonialAcquisitionScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionColonialAcquisitionTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,27 +21,24 @@ class OrderSuggestionColonialAcquisitionScenario implements RefsScenario {
 void runOrderSuggestionColonialAcquisitionScenario(
   OrderSuggestionColonialAcquisitionScenario scenario,
 ) {
-  runOrderSuggestionColonialAcquisitionExpectation(scenario.target);
+  scenario.run();
 }
 
 List<OrderSuggestionColonialAcquisitionScenario>
-    orderSuggestionColonialAcquisitionScenarios() => const [
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .joinEmpireCandidateEmitted,
-            refs: '#2509',
-          ),
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .declareWarCandidateEmitted,
-            refs: '#2509',
-          ),
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'candidate set is deterministic across repeated suggestion calls',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .deterministicAcrossRepeatedCalls,
-            refs: '#2509',
-          ),
-        ];
+orderSuggestionColonialAcquisitionScenarios() => const [
+  OrderSuggestionColonialAcquisitionScenario(
+    label: 'embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire',
+    run: oscaRunJoinEmpireCandidateEmitted,
+    refs: '#2509',
+  ),
+  OrderSuggestionColonialAcquisitionScenario(
+    label: 'embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar',
+    run: oscaRunDeclareWarCandidateEmitted,
+    refs: '#2509',
+  ),
+  OrderSuggestionColonialAcquisitionScenario(
+    label: 'candidate set is deterministic across repeated suggestion calls',
+    run: oscaRunDeterministicAcrossRepeatedCalls,
+    refs: '#2509',
+  ),
+];

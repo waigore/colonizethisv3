@@ -47,11 +47,7 @@ Game colonialAcquisitionEmbassyScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(
         provinces: [
-          Province(
-            id: 'oldWorld|home',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
       ),
       newWorld: const RegionData(
@@ -76,12 +72,7 @@ Game colonialAcquisitionEmbassyScenarioGame() {
       },
     ),
     players: const [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: 10000,
-      ),
+      Player(id: 'gp1', displayName: 'GP1', isHuman: false, treasury: 10000),
     ],
     tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
     diplomacyRelations: const [
@@ -93,11 +84,7 @@ Game colonialAcquisitionEmbassyScenarioGame() {
       ),
     ],
     overtureStates: const [
-      OvertureState(
-        gpId: 'gp1',
-        targetId: 'tribe1',
-        stage: OvertureStage.nap,
-      ),
+      OvertureState(gpId: 'gp1', targetId: 'tribe1', stage: OvertureStage.nap),
     ],
   );
 }

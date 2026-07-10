@@ -29,11 +29,7 @@ Game orderSuggestionProspectLocationProvincePriorityGame({
 
   final fillerProvinces = <Province>[
     for (var i = 0; i < 6; i++)
-      Province(
-        id: 'oldWorld|aaa$i',
-        regionId: ow,
-        ownerId: 'minor1',
-      ),
+      Province(id: 'oldWorld|aaa$i', regionId: ow, ownerId: 'minor1'),
   ];
   final ironProvince = Province(
     id: ironProvinceId,
@@ -70,16 +66,12 @@ Game orderSuggestionProspectLocationProvincePriorityGame({
   return Game(
     id: 'g',
     worldState: world,
-    players: const [
-      Player(id: playerId, displayName: 'GP', isHuman: false),
-    ],
+    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
     minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
   );
 }
 
-MapTopology orderSuggestionProspectLocationProvincePriorityTopology(
-  Game game,
-) {
+MapTopology orderSuggestionProspectLocationProvincePriorityTopology(Game game) {
   const ow = orderSuggestionProspectLocationProvincePriorityRegionId;
   return MapTopology(
     nodes: [

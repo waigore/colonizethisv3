@@ -1,19 +1,19 @@
 // Table-driven diplomatic-pass suggestion scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_diplomatic_pass_expectations.dart';
+import 'order_suggestion_diplomatic_pass_run_rows.dart';
 
 /// One row in diplomatic-pass suggestion scenario tables.
 class OrderSuggestionDiplomaticPassScenario implements RefsScenario {
   const OrderSuggestionDiplomaticPassScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionDiplomaticPassTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,24 +21,21 @@ class OrderSuggestionDiplomaticPassScenario implements RefsScenario {
 void runOrderSuggestionDiplomaticPassScenario(
   OrderSuggestionDiplomaticPassScenario scenario,
 ) {
-  runOrderSuggestionDiplomaticPassExpectation(scenario.target);
+  scenario.run();
 }
 
-List<OrderSuggestionDiplomaticPassScenario> orderSuggestionDiplomaticPassScenarios() =>
-    const [
-      OrderSuggestionDiplomaticPassScenario(
-        label: 'isIndependentDiplomaticCandidate flags economic and boycott types',
-        target: OrderSuggestionDiplomaticPassTarget
-            .isIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes,
-      ),
-      OrderSuggestionDiplomaticPassScenario(
-        label: 'playerOverturesByTargetIdForPlayer keeps first row per target',
-        target: OrderSuggestionDiplomaticPassTarget
-            .playerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget,
-      ),
-      OrderSuggestionDiplomaticPassScenario(
-        label: 'acceptDeclareWarCandidatesForTargets skips self and at-war targets',
-        target: OrderSuggestionDiplomaticPassTarget
-            .acceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets,
-      ),
-    ];
+List<OrderSuggestionDiplomaticPassScenario>
+orderSuggestionDiplomaticPassScenarios() => const [
+  OrderSuggestionDiplomaticPassScenario(
+    label: 'isIndependentDiplomaticCandidate flags economic and boycott types',
+    run: osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes,
+  ),
+  OrderSuggestionDiplomaticPassScenario(
+    label: 'playerOverturesByTargetIdForPlayer keeps first row per target',
+    run: osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget,
+  ),
+  OrderSuggestionDiplomaticPassScenario(
+    label: 'acceptDeclareWarCandidatesForTargets skips self and at-war targets',
+    run: osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets,
+  ),
+];
