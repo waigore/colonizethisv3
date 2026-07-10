@@ -2117,6 +2117,16 @@ test/ LOC after slice 137: **37,188** (net −56 from post–slice 136). Remaini
 
 test/ LOC after slice 138: **37,138** (net −50 from post–slice 137). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 139: scenario dispatch collapse (validateWork / naval-build / work-completion)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-dispatch-collapse | drop `OrderEngineValidateWorkTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_work_expectations.dart` (deleted) | `order_engine_validate_work_scenarios.dart` | #3949 |
+| nv-dispatch-collapse | drop `OrderEngineNavalBuildValidationTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_naval_build_validation_expectations.dart` (deleted) | `order_engine_naval_build_validation_scenarios.dart` | #3949 |
+| wcc-dispatch-collapse | drop `WorkCompletionTarget` enum + switch; extract `wccRun*` tear-offs | `work_completion_expectations.dart` (deleted) | `work_completion_run_rows.dart` + thin `work_completion_scenarios.dart` | #3949 |
+
+test/ LOC after slice 139: **36,914** (net −224 from post–slice 138). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

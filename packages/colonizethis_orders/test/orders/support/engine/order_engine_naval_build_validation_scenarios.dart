@@ -1,19 +1,22 @@
 // Table-driven OrderEngine naval/build validation scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 import '../scenario_runner.dart';
-import 'order_engine_naval_build_validation_expectations.dart';
+import 'order_engine_naval_build_validation_expectation_shorthand.dart';
 
 /// One row in [orderEngineNavalBuildValidationScenarios].
 class OrderEngineNavalBuildValidationScenario implements RefsScenario {
   const OrderEngineNavalBuildValidationScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderEngineNavalBuildValidationTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,45 +24,55 @@ class OrderEngineNavalBuildValidationScenario implements RefsScenario {
 void runOrderEngineNavalBuildValidationScenario(
   OrderEngineNavalBuildValidationScenario scenario,
 ) {
-  runOrderEngineNavalBuildValidationExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Canonical scenarios for OrderEngine naval/build validation family tests.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_naval_build_validation_test.dart` descriptions.
 List<OrderEngineNavalBuildValidationScenario>
-    orderEngineNavalBuildValidationScenarios() => const [
+    orderEngineNavalBuildValidationScenarios() => [
           OrderEngineNavalBuildValidationScenario(
             label: 'move order accepted for own province across regions',
-            target: OrderEngineNavalBuildValidationTarget
-                .moveAcceptedOwnProvinceAcrossRegions,
+            run: () => nvExpectCrossRegionMove(
+              unitType: kUnitTypeBuilder,
+              nwOwnerId: 'p1',
+              expectedStatus: OrderValidationStatus.accepted,
+            ),
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'move order rejected when destination is foreign province across regions',
-            target: OrderEngineNavalBuildValidationTarget
-                .moveRejectedForeignProvinceAcrossRegions,
+            run: () => nvExpectCrossRegionMove(
+              unitType: 'musketeers',
+              nwOwnerId: 'p2',
+              expectedStatus: OrderValidationStatus.rejected,
+            ),
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'work order rejected for invalid target for unit type',
-            target: OrderEngineNavalBuildValidationTarget
-                .workRejectedInvalidTargetForUnitType,
+            run: nvExpectInvalidWorkTargetRejected,
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'initial orders copy: getter returns equal but distinct lists',
-            target:
-                OrderEngineNavalBuildValidationTarget.initialOrdersCopyDistinctLists,
+            run: nvExpectInitialOrdersCopyDistinct,
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'naval move order rejected when fleet not found',
-            target:
-                OrderEngineNavalBuildValidationTarget.navalMoveRejectedFleetNotFound,
+            run: nvExpectNavalMoveFleetNotFoundRejected,
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'blockade order rejected when not at war with province owner',
-            target: OrderEngineNavalBuildValidationTarget.blockadeRejectedNotAtWar,
+            run: () => nvExpectBlockadeMission(
+              relationState: RelationState.atPeace,
+              expectedStatus: OrderValidationStatus.rejected,
+              reasonContains: 'at war',
+            ),
           ),
           OrderEngineNavalBuildValidationScenario(
             label: 'blockade order accepted when at war with province owner',
-            target: OrderEngineNavalBuildValidationTarget.blockadeAcceptedAtWar,
+            run: () => nvExpectBlockadeMission(
+              relationState: RelationState.atWar,
+              expectedStatus: OrderValidationStatus.accepted,
+            ),
           ),
         ];
