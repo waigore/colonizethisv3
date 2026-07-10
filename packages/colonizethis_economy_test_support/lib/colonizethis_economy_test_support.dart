@@ -1,3 +1,4 @@
+// dart format off
 /// Shared world-market test fixtures for `colonizethis_economy` and its
 /// sibling test suites (`colonizethis_orders`, `colonizethis_logic`,
 /// `colonizethis_diplomacy`).
@@ -59,3 +60,4 @@ export 'src/trade_order_suggester_expectations.dart';
 export 'src/trade_order_suggester_scenarios.dart';
 export 'src/trade_order_suggester_test_support.dart';
 export 'src/validator_scenarios/validator_scenarios.dart';
+// dart format on

@@ -1,22 +1,19 @@
+// dart format off
 /// Shared fixtures for [PurchasedTileIndex] unit tests (Refs #3856, #3939).
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../purchased_tile_fixture_support.dart';
 
-export '../purchased_tile_fixture_support.dart'
-    show purchasedTileFixtureGame, minorPurchasedTileGame;
+export '../purchased_tile_fixture_support.dart' show purchasedTileFixtureGame, minorPurchasedTileGame;
 
 /// Canonical minor-owned purchased-tile scenario used by AC-D1-2 and AC-D1-7.
-Game minorOwnedPurchasedTileIndexGame() =>
-    minorPurchasedTileGame(minorDisplayName: 'Minor 1');
+Game minorOwnedPurchasedTileIndexGame() => minorPurchasedTileGame(minorDisplayName: 'Minor 1');
 
 /// Tribe-owned purchased tile in `oldWorld|T1` purchased by `gpA`.
-Game tribeOwnedPurchasedTileIndexGame() =>
-    tribePurchasedTileGame(tribeDisplayName: 'Tribe 1');
+Game tribeOwnedPurchasedTileIndexGame() => tribePurchasedTileGame(tribeDisplayName: 'Tribe 1');
 
 /// Purchased tile whose containing province is now GP-owned (post-conquest).
-Game gpOwnedProvinceExcludesPurchasedTileGame() =>
-    gpProvincePurchasedTileGame(ownerGpId: 'gpB');
+Game gpOwnedProvinceExcludesPurchasedTileGame() => gpProvincePurchasedTileGame(ownerGpId: 'gpB');
 
 /// Purchased tile in an unowned province.
 Game unownedProvincePurchasedTileGame() {
@@ -37,14 +34,9 @@ Game unownedProvincePurchasedTileGame() {
 /// Orphan purchased tile key with no tile-map entry.
 Game unmappedTileKeyPurchasedTileGame() {
   const ow = 'oldWorld';
-  const provinceId = '$ow|M1';
   const realTileKey = '$ow|M1|0|0';
   const orphanTileKey = '$ow|M1|9|9';
-  return minorPurchasedTileGame(
-    tileKey: realTileKey,
-    minorDisplayName: 'Minor 1',
-    purchasedTilesByTileKey: const {orphanTileKey: 'gpA'},
-  );
+  return minorPurchasedTileGame(tileKey: realTileKey, minorDisplayName: 'Minor 1', purchasedTilesByTileKey: const {orphanTileKey: 'gpA'});
 }
 
 /// Mixed minor + tribe purchases across old and new world.
@@ -81,8 +73,6 @@ Game mixedMinorTribePurchasedTileGame() {
 /// Minor-owned tile with empty owningGpId in purchasedTilesByTileKey.
 Game emptyOwningGpPurchasedTileGame() {
   const tileKey = 'oldWorld|M1|0|0';
-  return minorPurchasedTileGame(
-    minorDisplayName: 'Minor 1',
-    purchasedTilesByTileKey: const {tileKey: ''},
-  );
+  return minorPurchasedTileGame(minorDisplayName: 'Minor 1', purchasedTilesByTileKey: const {tileKey: ''});
 }
+// dart format on

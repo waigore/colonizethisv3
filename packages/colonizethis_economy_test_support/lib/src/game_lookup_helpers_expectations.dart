@@ -1,3 +1,4 @@
+// dart format off
 // Compact game lookup helper assertions (Refs #3939 phase 3 slice 32).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -6,21 +7,14 @@ import 'package:colonizethis_test/test.dart';
 
 /// Data-driven expectations for [buildProvinceIndex] rows.
 class BuildProvinceIndexExpectation {
-  const BuildProvinceIndexExpectation({
-    this.expectedKeys,
-    this.regionByProvinceId = const {},
-    this.isEmpty = false,
-  });
+  const BuildProvinceIndexExpectation({this.expectedKeys, this.regionByProvinceId = const {}, this.isEmpty = false});
 
   final Set<String>? expectedKeys;
   final Map<String, String> regionByProvinceId;
   final bool isEmpty;
 }
 
-void assertBuildProvinceIndexExpectation(
-  Map<String, Province> index,
-  BuildProvinceIndexExpectation expectation,
-) {
+void assertBuildProvinceIndexExpectation(Map<String, Province> index, BuildProvinceIndexExpectation expectation) {
   if (expectation.isEmpty) {
     expect(index, isEmpty);
     return;
@@ -41,10 +35,7 @@ class CollectPortTileKeysExpectation {
   final bool isEmpty;
 }
 
-void assertCollectPortTileKeysExpectation(
-  Set<String> portTileKeys,
-  CollectPortTileKeysExpectation expectation,
-) {
+void assertCollectPortTileKeysExpectation(Set<String> portTileKeys, CollectPortTileKeysExpectation expectation) {
   if (expectation.isEmpty) {
     expect(portTileKeys, isEmpty);
     return;
@@ -54,11 +45,7 @@ void assertCollectPortTileKeysExpectation(
 
 /// One faction capital lookup pin for [capitalProvinceIdForFaction] /
 /// [capitalRegionIdForFaction].
-typedef CapitalFactionLookupPin = ({
-  String factionId,
-  String? provinceId,
-  String? regionId,
-});
+typedef CapitalFactionLookupPin = ({String factionId, String? provinceId, String? regionId});
 
 /// Data-driven expectations for capital faction lookup rows.
 class CapitalFactionLookupExpectation {
@@ -67,12 +54,10 @@ class CapitalFactionLookupExpectation {
   final List<CapitalFactionLookupPin> pins;
 }
 
-void assertCapitalFactionLookupExpectation(
-  Game game,
-  CapitalFactionLookupExpectation expectation,
-) {
+void assertCapitalFactionLookupExpectation(Game game, CapitalFactionLookupExpectation expectation) {
   for (final pin in expectation.pins) {
     expect(capitalProvinceIdForFaction(game, pin.factionId), pin.provinceId);
     expect(capitalRegionIdForFaction(game, pin.factionId), pin.regionId);
   }
 }
+// dart format on

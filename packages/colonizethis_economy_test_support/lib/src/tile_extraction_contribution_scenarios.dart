@@ -1,3 +1,4 @@
+// dart format off
 // Table-driven `computeTileExtractionContributionForPlayer` scenarios (Refs #3939).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -37,3 +38,4 @@ List<TileExtractionContributionScenario> tileExtractionContributionScenarios({
     grainTileMap: grainTileMap,
   ),
 ];
+// dart format on
