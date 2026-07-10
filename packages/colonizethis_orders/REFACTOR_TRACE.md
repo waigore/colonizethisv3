@@ -2107,6 +2107,16 @@ test/ LOC after slice 136: **37,244** (net −46 from post–slice 135). Remaini
 
 test/ LOC after slice 137: **37,188** (net −56 from post–slice 136). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 138: ICE row-runner flattening + recruit/build prefix helper collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-row-flatten | inline `iceExpectMoveOnCorpus` / `Army` / `NavalMove` / `NavalMission` into row runners; keep build/work/diplomatic corpus helpers for scenario closures | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | same | #3949 |
+| nv-cross-region-inline | drop `nvExpectCrossRegionMoveAccepted` / `Rejected` one-liners; call `nvExpectCrossRegionMove` at dispatcher sites | `order_engine_naval_build_validation_expectation_shorthand.dart` | `order_engine_naval_build_validation_expectations.dart` | #3949 |
+| lib-prefix-player | collapse `_acceptProjectedResourcePrefix` + `_acceptProjectedResourcePrefixForPlayer` into `_acceptPlayerProjectedResourceOrder` | `incremental_candidate_validator_replay.dart` | same | #3949 |
+
+test/ LOC after slice 138: **37,138** (net −50 from post–slice 137). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

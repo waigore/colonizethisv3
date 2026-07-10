@@ -28,40 +28,7 @@ import 'unit_type_helpers.dart';
 
 extension IncrementalCandidateValidatorPrefixReplay
     on IncrementalCandidateValidator {
-  bool _acceptProjectedResourcePrefix<TOrder, V>({
-    required List<TOrder> existingOrders,
-    required bool? prefixReplaySucceeded,
-    required ProjectedResourceLedgers? cachedLedgers,
-    required void Function(bool value) setPrefixReplaySucceeded,
-    required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
-    required V Function() createPrefixValidator,
-    required ProjectedResourceLedgers Function(V validator) readLedgers,
-    required V Function(ProjectedResourceLedgers snap) createCandidateValidator,
-    required TOrder candidate,
-    required OrderValidationResult Function(V validator, TOrder order) validate,
-  }) =>
-      acceptProjectedResourcePrefixCandidate(
-        prefixReplaySucceeded: prefixReplaySucceeded,
-        cachedLedgers: cachedLedgers,
-        setPrefixReplaySucceeded: setPrefixReplaySucceeded,
-        setCachedLedgers: setCachedLedgers,
-        existingOrders: existingOrders,
-        createPrefixValidator: createPrefixValidator,
-        validate: validate,
-        readLedgers: readLedgers,
-        createCandidateValidator: createCandidateValidator,
-        candidate: candidate,
-      );
-
-  /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
-  /// worker orders in [basePrefix] (Refs #2692 S7,
-  /// SPEC/program/order-suggestions.md § Recruit worker orders).
-  ///
-  /// Mirrors the order-engine recruit worker phase: existing recruit orders
-  /// in [basePrefix] are replayed in submission order against the player's
-  /// snapshot worker pool / stockpile / treasury so the candidate sees the
-  /// post-prefix peasant reservation ledger.
-  bool _acceptProjectedResourcePrefixForPlayer<TOrder, V>({
+  bool _acceptPlayerProjectedResourceOrder<TOrder, V>({
     required Player player,
     required List<TOrder> existingOrders,
     required bool? prefixReplaySucceeded,
@@ -73,7 +40,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     required OrderValidationResult Function(V validator, TOrder order) validate,
     required TOrder candidate,
   }) =>
-      _acceptProjectedResourcePrefix(
+      acceptProjectedResourcePrefixCandidate(
         prefixReplaySucceeded: prefixReplaySucceeded,
         cachedLedgers: cachedLedgers,
         setPrefixReplaySucceeded: setPrefixReplaySucceeded,
@@ -88,13 +55,21 @@ extension IncrementalCandidateValidatorPrefixReplay
         candidate: candidate,
       );
 
+  /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
+  /// worker orders in [basePrefix] (Refs #2692 S7,
+  /// SPEC/program/order-suggestions.md § Recruit worker orders).
+  ///
+  /// Mirrors the order-engine recruit worker phase: existing recruit orders
+  /// in [basePrefix] are replayed in submission order against the player's
+  /// snapshot worker pool / stockpile / treasury so the candidate sees the
+  /// post-prefix peasant reservation ledger.
   bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
     final player = _player();
     if (player == null) return false;
     final existing =
         basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
         const <RecruitWorkerOrder>[];
-    return _acceptProjectedResourcePrefixForPlayer(
+    return _acceptPlayerProjectedResourceOrder(
       player: player,
       existingOrders: existing,
       prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
@@ -128,7 +103,7 @@ extension IncrementalCandidateValidatorPrefixReplay
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    return _acceptProjectedResourcePrefixForPlayer(
+    return _acceptPlayerProjectedResourceOrder(
       player: player,
       existingOrders: builds,
       prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,

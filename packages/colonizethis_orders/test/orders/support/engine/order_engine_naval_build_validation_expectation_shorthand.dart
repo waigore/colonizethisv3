@@ -77,20 +77,6 @@ void nvExpectCrossRegionMove({
   expect(results.single.status, expectedStatus);
 }
 
-void nvExpectCrossRegionMoveAccepted() =>
-    nvExpectCrossRegionMove(
-      unitType: kUnitTypeBuilder,
-      nwOwnerId: _nvP1,
-      expectedStatus: OrderValidationStatus.accepted,
-    );
-
-void nvExpectCrossRegionMoveRejected() =>
-    nvExpectCrossRegionMove(
-      unitType: 'musketeers',
-      nwOwnerId: _nvP2,
-      expectedStatus: OrderValidationStatus.rejected,
-    );
-
 void nvExpectInvalidWorkTargetRejected() {
   const tileKey = 'oldWorld|P1|0|0';
   final engine = OrderEngine()

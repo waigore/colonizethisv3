@@ -21,10 +21,18 @@ void runOrderEngineNavalBuildValidationExpectation(
 ) {
   switch (target) {
     case OrderEngineNavalBuildValidationTarget.moveAcceptedOwnProvinceAcrossRegions:
-      nvExpectCrossRegionMoveAccepted();
+      nvExpectCrossRegionMove(
+        unitType: kUnitTypeBuilder,
+        nwOwnerId: 'p1',
+        expectedStatus: OrderValidationStatus.accepted,
+      );
     case OrderEngineNavalBuildValidationTarget
         .moveRejectedForeignProvinceAcrossRegions:
-      nvExpectCrossRegionMoveRejected();
+      nvExpectCrossRegionMove(
+        unitType: 'musketeers',
+        nwOwnerId: 'p2',
+        expectedStatus: OrderValidationStatus.rejected,
+      );
     case OrderEngineNavalBuildValidationTarget.workRejectedInvalidTargetForUnitType:
       nvExpectInvalidWorkTargetRejected();
     case OrderEngineNavalBuildValidationTarget.initialOrdersCopyDistinctLists:

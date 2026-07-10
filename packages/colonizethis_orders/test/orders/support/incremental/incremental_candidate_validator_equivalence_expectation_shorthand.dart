@@ -84,54 +84,6 @@ void iceExpectFamilyOnCorpus({
   );
 }
 
-void iceExpectMoveOnCorpus({
-  required MoveOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = moveCorpusGame();
-  final topology = moveCorpusTopology();
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Move',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isMoveAccepted(candidate),
-  );
-}
-
-void iceExpectArmyMoveOnCorpus({
-  required ArmyMoveOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = armyCorpusGame();
-  final topology = armyCorpusTopology();
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Army move',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassArmyMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isArmyMoveAccepted(candidate),
-  );
-}
-
 void iceExpectBuildOnCorpus({
   required BuildUnitOrder candidate,
   required String label,
@@ -207,67 +159,32 @@ void iceExpectDiplomaticOnCorpus({
   );
 }
 
-void iceExpectNavalMoveOnCorpus({
-  required NavalMoveOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = navalCorpusGame();
-  final topology = navalCorpusTopology();
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Naval move',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassNavalMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isNavalMoveAccepted(candidate),
-  );
-}
-
-void iceExpectNavalMissionOnCorpus({
-  required NavalMissionOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = navalCorpusGame();
-  final topology = navalCorpusTopology();
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Naval mission',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassNavalMissionAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isNavalMissionAccepted(candidate),
-  );
-}
-
 void iceRunMoveRow({
   required String unitId,
   required String destLocal,
   required String label,
   Orders basePrefix = const Orders(),
 }) {
-  iceExpectMoveOnCorpus(
-    candidate: MoveOrder(
-      unitId: unitId,
-      destinationTileKey: destLocal.isEmpty ? '' : iceTile(destLocal),
-    ),
+  final game = moveCorpusGame();
+  final topology = moveCorpusTopology();
+  final candidate = MoveOrder(
+    unitId: unitId,
+    destinationTileKey: destLocal.isEmpty ? '' : iceTile(destLocal),
+  );
+  iceExpectFamilyOnCorpus(
+    game: game,
+    topology: topology,
+    family: 'Move',
     label: label,
     basePrefix: basePrefix,
+    fullPass: () => fullPassMoveAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: (validator) => validator.isMoveAccepted(candidate),
   );
 }
 
@@ -277,13 +194,26 @@ void iceRunArmyMoveRow({
   required String label,
   Orders basePrefix = const Orders(),
 }) {
-  iceExpectArmyMoveOnCorpus(
-    candidate: ArmyMoveOrder(
-      armyId: armyId,
-      destinationProvinceId: IceIds.prov(destLocal),
-    ),
+  final game = armyCorpusGame();
+  final topology = armyCorpusTopology();
+  final candidate = ArmyMoveOrder(
+    armyId: armyId,
+    destinationProvinceId: IceIds.prov(destLocal),
+  );
+  iceExpectFamilyOnCorpus(
+    game: game,
+    topology: topology,
+    family: 'Army move',
     label: label,
     basePrefix: basePrefix,
+    fullPass: () => fullPassArmyMoveAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      basePrefix,
+      candidate,
+    ),
+    incremental: (validator) => validator.isArmyMoveAccepted(candidate),
   );
 }
 
@@ -292,12 +222,25 @@ void iceRunNavalMoveRow({
   required String destSeaZoneId,
   required String label,
 }) {
-  iceExpectNavalMoveOnCorpus(
-    candidate: NavalMoveOrder(
-      fleetId: fleetId,
-      destinationSeaZoneId: destSeaZoneId,
-    ),
+  final game = navalCorpusGame();
+  final topology = navalCorpusTopology();
+  final candidate = NavalMoveOrder(
+    fleetId: fleetId,
+    destinationSeaZoneId: destSeaZoneId,
+  );
+  iceExpectFamilyOnCorpus(
+    game: game,
+    topology: topology,
+    family: 'Naval move',
     label: label,
+    fullPass: () => fullPassNavalMoveAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      const Orders(),
+      candidate,
+    ),
+    incremental: (validator) => validator.isNavalMoveAccepted(candidate),
   );
 }
 
@@ -306,11 +249,24 @@ void iceRunNavalMissionRow({
   required String mission,
   required String label,
 }) {
-  iceExpectNavalMissionOnCorpus(
-    candidate: NavalMissionOrder(
-      fleetId: fleetId,
-      mission: mission,
-    ),
+  final game = navalCorpusGame();
+  final topology = navalCorpusTopology();
+  final candidate = NavalMissionOrder(
+    fleetId: fleetId,
+    mission: mission,
+  );
+  iceExpectFamilyOnCorpus(
+    game: game,
+    topology: topology,
+    family: 'Naval mission',
     label: label,
+    fullPass: () => fullPassNavalMissionAccepted(
+      game,
+      topology,
+      IceIds.playerId,
+      const Orders(),
+      candidate,
+    ),
+    incremental: (validator) => validator.isNavalMissionAccepted(candidate),
   );
 }
