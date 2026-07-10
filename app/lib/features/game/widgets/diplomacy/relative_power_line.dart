@@ -3,9 +3,9 @@
 // SPEC/ui/diplomacy-panel.md § Relative power line.
 
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../config/editorial_monocle_palette.dart';
-import '../../../../l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'diplomacy_panel_rows.dart';
 
 /// Localized tier word for a [PowerComparisonTier] per

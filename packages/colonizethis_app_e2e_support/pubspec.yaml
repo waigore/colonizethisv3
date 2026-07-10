@@ -11,6 +11,10 @@ environment:
 dependencies:
   colonizethis_app:
     path: ../../app
+  colonizethis_app_l10n:
+    path: ../colonizethis_app_l10n
+  colonizethis_app_fixtures:
+    path: ../colonizethis_app_fixtures
   colonizethis_data:
   colonizethis_logic:
   colonizethis_map:

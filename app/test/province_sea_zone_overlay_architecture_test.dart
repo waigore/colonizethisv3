@@ -30,18 +30,29 @@ import 'package:flutter_test/flutter_test.dart';
 const String _overlayRelativePath =
     'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
-const String _overlaySectionsRelativePath =
-    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections.dart';
+const List<String> _overlaySectionsPartRelativePaths = <String>[
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_chrome.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_political.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_economic_labels.dart',
+];
 
 const String _overlayEconomicSectionRelativePath =
     'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_economic_section.dart';
 
-const String _overlayUnitSectionsRelativePath =
-    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_unit_sections.dart';
+const String _overlayMilitarySectionRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_military_section.dart';
+
+const String _overlayCivilianNavalSectionsRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+
+const String _overlayCloseButtonRelativePath =
+    'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_close_button.dart';
 
 const List<String> _overlayEconomicUnitPartRelativePaths = <String>[
   _overlayEconomicSectionRelativePath,
-  _overlayUnitSectionsRelativePath,
+  _overlayMilitarySectionRelativePath,
+  _overlayCivilianNavalSectionsRelativePath,
+  _overlayCloseButtonRelativePath,
 ];
 
 const String _ctRegionMapRelativePath = 'lib/widgets/ct_region_map.dart';
@@ -147,28 +158,28 @@ void main() {
       // and re-introduce the forbidden import there. The structural pin guards
       // against that regression shape by asserting the same property on the
       // current part-file paths.
-      test(
-        '$_overlaySectionsRelativePath contains no import of ct_region_map.dart',
-        () {
-          final code = _stripDartComments(
-            _readAppSource(_overlaySectionsRelativePath),
-          );
-          final matches = _ctRegionMapImportPattern
-              .allMatches(code)
-              .map((m) => m.group(0)?.trim())
-              .toList(growable: false);
-          expect(
-            matches,
-            isEmpty,
-            reason:
-                '$_overlaySectionsRelativePath must not import '
-                '`ct_region_map.dart`. Even if this file is converted from a '
-                'part-of fragment into a stand-alone library, the SPEC '
-                'no-cross-import contract remains in force (Refs #2865 S1). '
-                'Forbidden import lines found: $matches.',
-          );
-        },
-      );
+      for (final partPath in _overlaySectionsPartRelativePaths) {
+        test(
+          '$partPath contains no import of ct_region_map.dart',
+          () {
+            final code = _stripDartComments(_readAppSource(partPath));
+            final matches = _ctRegionMapImportPattern
+                .allMatches(code)
+                .map((m) => m.group(0)?.trim())
+                .toList(growable: false);
+            expect(
+              matches,
+              isEmpty,
+              reason:
+                  '$partPath must not import '
+                  '`ct_region_map.dart`. Even if this file is converted from a '
+                  'part-of fragment into a stand-alone library, the SPEC '
+                  'no-cross-import contract remains in force (Refs #2865 S1). '
+                  'Forbidden import lines found: $matches.',
+            );
+          },
+        );
+      }
 
       for (final partPath in _overlayEconomicUnitPartRelativePaths) {
         test(
@@ -220,28 +231,28 @@ void main() {
       },
     );
 
-    test(
-      '$_overlaySectionsRelativePath contains no import of '
-      'map_province_panel_provider.dart',
-      () {
-        final code = _stripDartComments(
-          _readAppSource(_overlaySectionsRelativePath),
-        );
-        final matches = _mapProvincePanelProviderImportPattern
-            .allMatches(code)
-            .map((m) => m.group(0)?.trim())
-            .toList(growable: false);
-        expect(
-          matches,
-          isEmpty,
-          reason:
-              '$_overlaySectionsRelativePath must not import '
-              '`map_province_panel_provider.dart`. The provider belongs to '
-              'panel hosts only (Refs #2865 S1). Forbidden import lines '
-              'found: $matches.',
-        );
-      },
-    );
+    for (final partPath in _overlaySectionsPartRelativePaths) {
+      test(
+        '$partPath contains no import of '
+        'map_province_panel_provider.dart',
+        () {
+          final code = _stripDartComments(_readAppSource(partPath));
+          final matches = _mapProvincePanelProviderImportPattern
+              .allMatches(code)
+              .map((m) => m.group(0)?.trim())
+              .toList(growable: false);
+          expect(
+            matches,
+            isEmpty,
+            reason:
+                '$partPath must not import '
+                '`map_province_panel_provider.dart`. The provider belongs to '
+                'panel hosts only (Refs #2865 S1). Forbidden import lines '
+                'found: $matches.',
+          );
+        },
+      );
+    }
 
     for (final partPath in _overlayEconomicUnitPartRelativePaths) {
       test(

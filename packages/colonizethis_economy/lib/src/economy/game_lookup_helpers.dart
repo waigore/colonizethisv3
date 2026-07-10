@@ -27,3 +27,29 @@ Map<String, Province> buildProvinceIndex(Game game) => <String, Province>{
 /// extraction passes to detect port tiles and port town tiles.
 Set<String> collectPortTileKeys(Game game) =>
     game.worldState.portsByProvinceSeaboard.values.toSet();
+
+/// Capital province id for a Great Power, minor nation, or tribe [factionId].
+String? capitalProvinceIdForFaction(Game game, String factionId) {
+  final player = game.playerById(factionId);
+  if (player != null) return player.capitalProvinceId;
+  for (final minor in game.minorNations) {
+    if (minor.id == factionId) return minor.capitalProvinceId;
+  }
+  for (final tribe in game.tribes) {
+    if (tribe.id == factionId) return tribe.capitalProvinceId;
+  }
+  return null;
+}
+
+/// Capital region id for a Great Power, minor nation, or tribe [factionId].
+String? capitalRegionIdForFaction(Game game, String factionId) {
+  final player = game.playerById(factionId);
+  if (player != null) return player.capitalTile?.regionId;
+  for (final minor in game.minorNations) {
+    if (minor.id == factionId) return minor.capitalTile?.regionId;
+  }
+  for (final tribe in game.tribes) {
+    if (tribe.id == factionId) return tribe.capitalTile?.regionId;
+  }
+  return null;
+}

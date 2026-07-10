@@ -2,7 +2,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_de
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_panel.dart'
     show CtPanel;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
         demoHumanPlayerViewForOverlay,

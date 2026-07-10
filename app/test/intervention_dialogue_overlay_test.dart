@@ -7,25 +7,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FailingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.error(StateError('missing intervention yarn'));
-  }
-}
-
-class _StringAssetBundle extends Fake implements AssetBundle {
-  _StringAssetBundle(this._assets);
-
-  final Map<String, String> _assets;
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    final text = _assets[key];
-    if (text == null) throw Exception('missing asset: $key');
-    return text;
-  }
-}
+import 'support/yarn_test_fixtures.dart';
 
 // Mirrors the production `{$var}` interpolation syntax (issue #3463): the
 // situation node interpolates the faction names so the test fails if Dart
@@ -100,7 +82,7 @@ void main() {
             game: game,
             prompts: prompts,
             skipIntroForTest: true,
-            assetBundle: _FailingAssetBundle(),
+            assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
             onDecisions: (d) => captured = d,
             child: const SizedBox.expand(),
           ),
@@ -161,7 +143,7 @@ void main() {
             game: game,
             prompts: prompts,
             skipIntroForTest: true,
-            assetBundle: _StringAssetBundle({
+            assetBundle: YarnStringAssetBundle({
               kDialogueInterventionAsset: _kInterventionYarnWithVars,
             }),
             onDecisions: (_) {},

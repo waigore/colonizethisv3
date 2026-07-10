@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Shared, token-resolved gradient palette for the dark editorial-monocle
 /// theme.

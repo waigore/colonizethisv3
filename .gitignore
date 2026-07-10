@@ -38,7 +38,7 @@ coverage_merged/
 app/coverage_report/
 
 # Flutter localization: all `flutter gen-l10n` output (see app/l10n.yaml `output-dir`; Refs #2074).
-app/lib/l10n/gen/
+packages/colonizethis_app_l10n/lib/l10n/gen/
 
 # IDE
 .idea/

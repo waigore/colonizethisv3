@@ -13,9 +13,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/l10n/app_localizations_en.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
 import 'support/province_overlay_test_harness.dart';
 

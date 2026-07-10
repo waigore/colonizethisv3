@@ -20,25 +20,17 @@
 // criteria (AC-15); SPEC/ui/diplomacy-detail-screen.md § Acceptance Criteria
 // (relative-power golden).
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/diplomacy_panel_test_support.dart';
+import 'support/golden_capture_harness.dart';
 import 'support/widget_test_assets.dart';
-
-/// `pumpAndSettle` can hang on the detail surface (animated chrome keeps the
-/// ticker busy); bounded pumps flush layout and the deferred build instead.
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 /// Themed host that mounts [child] under `AppThemes.editorialMonocle` with the
 /// app localization delegates so the relative-power line resolves real copy
@@ -50,26 +42,17 @@ Widget _lineHost({
   required Key boundaryKey,
   required double width,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: const Color(0xFF101014),
-      body: Center(
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: ColoredBox(
-            color: const Color(0xFF101014),
-            child: SizedBox(
-              width: width,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: child,
-              ),
-            ),
-          ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    includeLocalizations: true,
+    scaffoldBackgroundColor: const Color(0xFF101014),
+    child: ColoredBox(
+      color: const Color(0xFF101014),
+      child: SizedBox(
+        width: width,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: child,
         ),
       ),
     ),
@@ -136,8 +119,7 @@ void main() {
     testWidgets('AC-15 golden: relative-power tier ${c.slug} (pct=${c.pct})', (
       WidgetTester tester,
     ) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(420, 220));
+    await configureGoldenSurface(tester, size: const Size(420, 220));
       final boundaryKey = ValueKey<String>('relative_power_${c.slug}');
 
       await tester.pumpWidget(
@@ -147,7 +129,7 @@ void main() {
           width: 360,
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       expect(find.byType(RelativePowerLine), findsOneWidget);
       expect(find.textContaining(c.tier, findRichText: true), findsOneWidget);
@@ -167,8 +149,7 @@ void main() {
   testWidgets('AC-15 golden: relative-power line wraps without ellipsis (narrow)', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(320, 200));
+        await configureGoldenSurface(tester, size: const Size(320, 200));
     const boundaryKey = ValueKey<String>('relative_power_narrow_wrap');
 
     await tester.pumpWidget(
@@ -178,7 +159,7 @@ void main() {
         width: 130,
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(tester.takeException(), isNull);
     final Text text = tester.widget<Text>(
@@ -204,33 +185,28 @@ void main() {
   testWidgets('GAME30002 golden: detail screen CURRENT RELATION shows relative-power line', (
     WidgetTester tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(600, 900));
+    await configureGoldenSurface(tester, size: const Size(600, 900));
     const boundaryKey = ValueKey<String>('diplomacy_detail_relative_power');
 
     final Game game = _detailGame();
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: RepaintBoundary(
-            key: boundaryKey,
-            child: DiplomacyDetailScreen(
-              game: game,
-              humanPlayerId: 'gp1',
-              factionId: 'gp2',
-              factionDisplayName: 'Castile',
-              kind: FactionKind.greatPower,
-              relation: getRelation(game, 'gp1', 'gp2'),
-            ),
-          ),
+      wrapGoldenBoundary(
+        boundaryKey: boundaryKey,
+        center: false,
+        useScaffold: false,
+        includeLocalizations: true,
+        wrapInProviderScope: true,
+        child: DiplomacyDetailScreen(
+          game: game,
+          humanPlayerId: 'gp1',
+          factionId: 'gp2',
+          factionDisplayName: 'Castile',
+          kind: FactionKind.greatPower,
+          relation: getRelation(game, 'gp1', 'gp2'),
         ),
       ),
     );
-    await _pumpBuilt(tester);
+    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('CURRENT RELATION'), findsOneWidget);
     expect(find.byType(RelativePowerLine), findsOneWidget);

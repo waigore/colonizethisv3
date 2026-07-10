@@ -94,10 +94,10 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 
 - `CtFullScreenDialogueShell` ([`components/ct-full-screen-dialogue-shell.md`](components/ct-full-screen-dialogue-shell.md)) — canonical scrim + centered `CtDialogShell` scaffold reused by every blocking dialogue overlay; pins the `EditorialMonoclePalette.dialogScrim` token so individual overlays do not redeclare it (Refs #2914 S2 / S9).
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
-- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — ornamental separator between the intro line and the call-row list (issue #2867 R24 dark chrome).
+- `CtBrassDivider` (`packages/colonizethis_app_ui_chrome/lib/widgets/ct_brass_divider.dart`) — ornamental separator between the intro line and the call-row list (issue #2867 R24 dark chrome).
 - `CtToggleSwitch` (`app/lib/widgets/ct_toggle_switch.dart`) — per-row Join (`--success` glow) and Refuse (`--danger` glow) two-state toggles (issue #2867 R24).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Submit button (no Material buttons in dialogue chrome).
-- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) tokens: `dialogScrim` (Material scrim color), `accent` (title + faction-name color), `muted` (intro + prompt color), `success` (active Join glow / label), `danger` (active Refuse glow / label).
+- `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) tokens: `dialogScrim` (Material scrim color), `accent` (title + faction-name color), `muted` (intro + prompt color), `success` (active Join glow / label), `danger` (active Refuse glow / label).
 - Localized strings via `appL10n(context)`: `game_callToArms_title`, `game_callToArms_intro`, `game_callToArms_prompt(defender, aggressor)`, `game_callToArms_join`, `game_callToArms_refuse`, and `game_callToArms_submit`.
 
 ---

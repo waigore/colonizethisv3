@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

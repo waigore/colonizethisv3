@@ -31,7 +31,6 @@
 
 import 'package:colonizethis_app/config/app_constants.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -39,124 +38,85 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
-
-/// Builds a synthetic Game with one human player so the Market tab
-/// renders without depending on the in-game shell. Mirrors the
-/// lightweight Game factory in `trade_screen_market_tab_commodity_table_test.dart`.
-Game _buildGame({
-  Map<CommodityId, int>? prices,
-}) {
-  return Game(
-    id: 'test_trade_screen_market_tab_row_icons',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: 'gp_h', displayName: 'England', isHuman: true, treasury: 500),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: WorldMarketState(
-      prices: prices ?? const <CommodityId, int>{},
-      lastTurnActivity: const <CommodityId, MarketActivity>{},
-    ),
-  );
-}
-
-Future<void> _pumpTradeScreen(
-  WidgetTester tester, {
-  required Game game,
-}) async {
-  final Player player = game.players.first;
-  await pumpAppShell(
-    tester,
-    overrides: [
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    ],
-    child: TradeScreen(game: game, player: player),
-  );
-}
+import 'support/trade_screen_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('TradeScreen Market tab row icons (Refs #3093)', () {
-    testWidgets(
-      'every tradeable row mounts a 20 dp ResourceIcon keyed '
-      'marketRowResourceIconKey under the marketCommodityListKey',
-      (tester) async {
-        await _pumpTradeScreen(tester, game: _buildGame());
+    testWidgets('every tradeable row mounts a 20 dp ResourceIcon keyed '
+        'marketRowResourceIconKey under the marketCommodityListKey', (
+      tester,
+    ) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(id: 'test_trade_screen_market_tab_row_icons'),
+      );
 
-        final list = find.byKey(TradeScreen.marketCommodityListKey);
-        expect(list, findsOneWidget);
+      final list = find.byKey(TradeScreen.marketCommodityListKey);
+      expect(list, findsOneWidget);
 
-        final List<Commodity> tradeable = <Commodity>[
-          for (final Commodity c in CommodityCatalog.all)
-            if (c.category != CommodityCategory.riches && c.id != 'spices') c,
-        ];
+      final List<Commodity> tradeable = <Commodity>[
+        for (final Commodity c in CommodityCatalog.all)
+          if (c.category != CommodityCategory.riches && c.id != 'spices') c,
+      ];
+      expect(
+        tradeable.length,
+        22,
+        reason:
+            'SPEC/game/world-market.md §Tradeable commodities — '
+            'must be 22 rows; if this drifts, the row-icons slice '
+            'pin must also be updated.',
+      );
+
+      for (final Commodity c in tradeable) {
+        final iconFinder = find.descendant(
+          of: list,
+          matching: find.byKey(TradeScreen.marketRowResourceIconKey(c.id)),
+        );
         expect(
-          tradeable.length,
-          22,
+          iconFinder,
+          findsOneWidget,
           reason:
-              'SPEC/game/world-market.md §Tradeable commodities — '
-              'must be 22 rows; if this drifts, the row-icons slice '
-              'pin must also be updated.',
+              'tradeable commodity `${c.id}` must mount its '
+              'ResourceIcon keyed '
+              'tradeScreenMarketRow:${c.id}:resourceIcon.',
         );
 
-        for (final Commodity c in tradeable) {
-          final iconFinder = find.descendant(
-            of: list,
-            matching: find.byKey(TradeScreen.marketRowResourceIconKey(c.id)),
-          );
-          expect(
-            iconFinder,
-            findsOneWidget,
-            reason:
-                'tradeable commodity `${c.id}` must mount its '
-                'ResourceIcon keyed '
-                'tradeScreenMarketRow:${c.id}:resourceIcon.',
-          );
-
-          // The keyed widget must be a ResourceIcon (not just any
-          // widget under the key) so screen-reader and analyzer tooling
-          // can rely on the type contract.
-          final ResourceIcon icon = tester.widget<ResourceIcon>(iconFinder);
-          expect(
-            icon.commodityId,
-            c.id,
-            reason:
-                'ResourceIcon on the row for `${c.id}` must carry the '
-                'matching commodityId so the asset paint matches the '
-                'row label.',
-          );
-          expect(
-            icon.size,
-            TradeScreen.marketRowResourceIconSize,
-            reason:
-                'ResourceIcon on the Trade row must paint at 20 dp '
-                '(TradeScreen.marketRowResourceIconSize) — matches the '
-                'Production panel `CtResourceCell.leadingIconSize`.',
-          );
-        }
-      },
-    );
+        // The keyed widget must be a ResourceIcon (not just any
+        // widget under the key) so screen-reader and analyzer tooling
+        // can rely on the type contract.
+        final ResourceIcon icon = tester.widget<ResourceIcon>(iconFinder);
+        expect(
+          icon.commodityId,
+          c.id,
+          reason:
+              'ResourceIcon on the row for `${c.id}` must carry the '
+              'matching commodityId so the asset paint matches the '
+              'row label.',
+        );
+        expect(
+          icon.size,
+          TradeScreen.marketRowResourceIconSize,
+          reason:
+              'ResourceIcon on the Trade row must paint at 20 dp '
+              '(TradeScreen.marketRowResourceIconSize) — matches the '
+              'Production panel `CtResourceCell.leadingIconSize`.',
+        );
+      }
+    });
 
     testWidgets(
       'every tradeable row mounts a 14 dp treasury-coin StrictAssetIcon '
       'keyed marketRowPriceCoinIconKey under the marketCommodityListKey',
       (tester) async {
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
           // Mix priced (timber=30) and unpriced (no entry) commodities
           // to prove the coin glyph mounts in both cases — it is a
           // visual currency cue, not a price-availability flag.
-          game: _buildGame(
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_row_icons',
             prices: const <CommodityId, int>{'timber': 30},
           ),
         );
@@ -185,8 +145,9 @@ void main() {
                 'em-dash fallback.',
           );
 
-          final StrictAssetIcon coin =
-              tester.widget<StrictAssetIcon>(coinFinder);
+          final StrictAssetIcon coin = tester.widget<StrictAssetIcon>(
+            coinFinder,
+          );
           expect(
             coin.assetPath,
             '${kAppIconAssetPrefix}ui_icon_treasury_coin.png',
@@ -206,9 +167,10 @@ void main() {
       'left of the commodity name and the coin paints to the left of '
       'the integer price text',
       (tester) async {
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
-          game: _buildGame(
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_row_icons',
             prices: const <CommodityId, int>{'timber': 30},
           ),
         );
@@ -249,38 +211,38 @@ void main() {
       },
     );
 
-    testWidgets(
-      'row icon keys never leak into rows for excluded commodities '
-      '(negative AC: no ResourceIcon / coin keys for gold, silver, '
-      'gems, diamonds, spices)',
-      (tester) async {
-        await _pumpTradeScreen(tester, game: _buildGame());
+    testWidgets('row icon keys never leak into rows for excluded commodities '
+        '(negative AC: no ResourceIcon / coin keys for gold, silver, '
+        'gems, diamonds, spices)', (tester) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(id: 'test_trade_screen_market_tab_row_icons'),
+      );
 
-        for (final CommodityId excluded in <CommodityId>[
-          CommodityCatalog.gold.id,
-          CommodityCatalog.silver.id,
-          CommodityCatalog.gems.id,
-          CommodityCatalog.diamonds.id,
-          CommodityCatalog.spices.id,
-        ]) {
-          expect(
-            find.byKey(TradeScreen.marketRowResourceIconKey(excluded)),
-            findsNothing,
-            reason:
-                'SPEC/game/world-market.md §Tradeable commodities — '
-                '`$excluded` is not tradeable and must not mount its '
-                'row ResourceIcon.',
-          );
-          expect(
-            find.byKey(TradeScreen.marketRowPriceCoinIconKey(excluded)),
-            findsNothing,
-            reason:
-                'SPEC/game/world-market.md §Tradeable commodities — '
-                '`$excluded` is not tradeable and must not mount its '
-                'row treasury-coin glyph.',
-          );
-        }
-      },
-    );
+      for (final CommodityId excluded in <CommodityId>[
+        CommodityCatalog.gold.id,
+        CommodityCatalog.silver.id,
+        CommodityCatalog.gems.id,
+        CommodityCatalog.diamonds.id,
+        CommodityCatalog.spices.id,
+      ]) {
+        expect(
+          find.byKey(TradeScreen.marketRowResourceIconKey(excluded)),
+          findsNothing,
+          reason:
+              'SPEC/game/world-market.md §Tradeable commodities — '
+              '`$excluded` is not tradeable and must not mount its '
+              'row ResourceIcon.',
+        );
+        expect(
+          find.byKey(TradeScreen.marketRowPriceCoinIconKey(excluded)),
+          findsNothing,
+          reason:
+              'SPEC/game/world-market.md §Tradeable commodities — '
+              '`$excluded` is not tradeable and must not mount its '
+              'row treasury-coin glyph.',
+        );
+      }
+    });
   });
 }

@@ -1,12 +1,13 @@
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/config/ct_e2e_turn_snapshot_refresh.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_turn_snapshot_refresh.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/core/services/turn_resolution/turn_resolution_result_applier.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -36,24 +37,22 @@ void main() {
     // Lightweight fixture (Refs #3656): the refresh hook only reads the game
     // for the CT_E2E-off no-op guard; no generated map/topology data is needed.
     final game = buildPanelTestGame();
-    final service = GameService(gamesBox, GameSaveAdapter());
 
     refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(
       game: game,
       draftOrders: const Orders(),
-      gameService: service,
+      combinedTopology: const MapTopology(),
     );
     expect(ctE2eNavalPanelSnapshot, isNull);
   });
 
   test('refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled no-ops without current game', () {
     expect(kCtE2EEnabled, isFalse);
-    final service = GameService(gamesBox, GameSaveAdapter());
 
     refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(
       game: null,
       draftOrders: const Orders(),
-      gameService: service,
+      combinedTopology: const MapTopology(),
     );
     expect(ctE2eNavalPanelSnapshot, isNull);
   });

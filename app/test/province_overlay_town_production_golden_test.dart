@@ -11,48 +11,13 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_overlay_demo_data.dart'
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
+import 'support/golden_capture_harness.dart';
 import 'support/province_overlay_test_harness.dart';
-
-Widget _townProductionGoldenOverlay({
-  required Game game,
-  required String displayId,
-  required Key boundaryKey,
-  required Map<String, int> townProductionBonusByCommodity,
-}) {
-  final humanPlayerId = game.players.first.id;
-  final playerView = buildPlayerView(game, const MapTopology(), humanPlayerId);
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: Center(
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: SizedBox(
-            width: 460,
-            height: 900,
-            child: ProvinceSeaZoneDetailOverlay(
-              game: game,
-              region: demoRegionForOverlay,
-              displayId: displayId,
-              selectedTileKey: null,
-              humanPlayerId: humanPlayerId,
-              playerView: playerView,
-              draftOrders: const Orders(),
-              townProductionBonusByCommodity: townProductionBonusByCommodity,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -61,10 +26,12 @@ void main() {
     'golden: Economic Town production row shows ResourceIcon and quantity '
     '(Refs #3872 AC#14)',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      addTearDown(tester.view.reset);
-      await tester.binding.setSurfaceSize(const Size(600, 1000));
-      tester.view.devicePixelRatio = 1.0;
+      await configureGoldenSurface(tester, size: const Size(600, 1000));
+      configureGoldenView(
+        tester,
+        physicalSize: const Size(600, 1000),
+        devicePixelRatio: 1.0,
+      );
 
       const boundaryKey = ValueKey<String>(
         'province_overlay_town_production_golden',
@@ -81,15 +48,30 @@ void main() {
         CommodityCatalog.fabric.id: 1,
       };
 
+      final humanPlayerId = game.players.first.id;
+      final playerView =
+          buildPlayerView(game, const MapTopology(), humanPlayerId);
+
       await tester.pumpWidget(
-        _townProductionGoldenOverlay(
-          game: game,
-          displayId: provinceId,
+        wrapGoldenBoundary(
           boundaryKey: boundaryKey,
-          townProductionBonusByCommodity: bonusByCommodity,
+          child: SizedBox(
+            width: 460,
+            height: 900,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: demoRegionForOverlay,
+              displayId: provinceId,
+              selectedTileKey: null,
+              humanPlayerId: humanPlayerId,
+              playerView: playerView,
+              draftOrders: const Orders(),
+              townProductionBonusByCommodity: bonusByCommodity,
+            ),
+          ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpForGolden(tester);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Town production'), findsOneWidget);

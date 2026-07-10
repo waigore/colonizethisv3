@@ -139,13 +139,13 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - `CtFullScreenDialogueShell` ([`components/ct-full-screen-dialogue-shell.md`](components/ct-full-screen-dialogue-shell.md)) — canonical scrim + centered `CtDialogShell` scaffold reused by every blocking dialogue overlay; pins the `EditorialMonoclePalette.dialogScrim` token so individual overlays do not redeclare it (Refs #2914 S2 / S9).
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
-- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — phase 2 title → intro separator (#2867 R21).
+- `CtBrassDivider` (`packages/colonizethis_app_ui_chrome/lib/widgets/ct_brass_divider.dart`) — phase 2 title → intro separator (#2867 R21).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue, option, and Submit buttons (no Material buttons in dialogue chrome). Accept and Reject affordances are `CtToggleSwitch` per #2867 R22.
 - `CtToggleSwitch` (`app/lib/widgets/ct_toggle_switch.dart`) — phase 2 per-offer Accept / Reject controls (#2867 R22). The Accept toggle is constructed with `onGlowColor: EditorialMonoclePalette.success`; the Reject toggle is constructed with `onGlowColor: EditorialMonoclePalette.danger` so the canonical on-state knob halo paints the corresponding semantic palette token (resolved by the catalog `onGlowColor` override; see `SPEC/ui/pixel-art-ui-catalog.md` § `CtToggleSwitch`).
 - `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — phase-1 loading and transient placeholder.
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns line / choice state during phase 1.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
-- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — `accent` (title + offerer name), `muted` (intro + stage label + colon separator) phase-2 colors per the dark editorial-monocle palette.
+- `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — `accent` (title + offerer name), `muted` (intro + stage label + colon separator) phase-2 colors per the dark editorial-monocle palette.
 - Localized strings via `appL10n(context)`: `game_overture_loadError`, `game_intervention_continue`, `game_overture_title`, `game_overture_intro`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` (shared Submit label). The `game_overture_offerLine(offerer, stage)` template is **no longer** consumed by phase 2 — the offer row paints `offerer` and `stage` as two distinct `Text` widgets so they can carry different colors per #2867 R22.
 
 ---

@@ -18,7 +18,7 @@ void main() {
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 class Clean extends StatelessWidget {
   const Clean({super.key});
@@ -433,7 +433,7 @@ const accentConst = const Color(0xFFCC0000);
 
     test(
       'allowlists app/lib/widgets/ canvas-compositing files '
-      '(ct_main_menu_collage.dart, main_menu.dart, main_menu_buttons.dart)',
+      '(main_menu.dart, main_menu_buttons.dart)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_editorial_monocle_colors_widgets_compositing_',
@@ -443,17 +443,6 @@ const accentConst = const Color(0xFFCC0000);
         File('${temp.path}/app/lib/features/.keep.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('// keep\n');
-
-        // ct_main_menu_collage.dart — saveLayer alpha multiplier; the
-        // const Color(0xFFFFFFFF) literal is a compositing argument.
-        File('${temp.path}/app/lib/widgets/ct_main_menu_collage.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
-import 'package:flutter/material.dart';
-
-final layerPaint = Paint()
-  ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.8);
-''');
 
         // main_menu.dart — hover ColorFilter.mode darken composite; the
         // Colors.black literal is a blend operand, not a theme reference.
@@ -534,7 +523,7 @@ const sample = TextStyle(color: Colors.black54);
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 class Clean extends StatelessWidget {
   const Clean({super.key});
@@ -681,8 +670,6 @@ class Clean extends StatelessWidget {
       'extended scope)',
       () {
         const compositing = <String>[
-          'app/lib/widgets/ct_main_menu_collage.dart',
-          'app/lib/widgets/ct_main_menu_collage_painter.dart',
           'app/lib/widgets/main_menu.dart',
           'app/lib/widgets/main_menu_buttons.dart',
         ];

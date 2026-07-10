@@ -22,10 +22,11 @@ void main() {
     });
 
     test('propagates load failures instead of swallowing them', () {
-      final String themesSrc = File('lib/config/themes.dart').readAsStringSync();
-      expect(themesSrc, contains('rethrow'));
+      final String preloadSrc =
+          File('lib/config/themes_font_preload.dart').readAsStringSync();
+      expect(preloadSrc, contains('rethrow'));
       expect(
-        themesSrc,
+        preloadSrc,
         isNot(contains('// Intentionally swallowed')),
       );
     });

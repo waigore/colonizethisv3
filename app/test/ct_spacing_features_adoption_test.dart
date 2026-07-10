@@ -395,7 +395,9 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_panel.dart',
-  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_badges.dart',
+  // diplomacy_panel_chrome_badges.dart split: section header keeps CtSpacing;
+  // relation/alliance badge chips use fixed 5×1 px padding (out of token set).
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_section_header.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_standing.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/panels/fleet_expansion_tile.dart',

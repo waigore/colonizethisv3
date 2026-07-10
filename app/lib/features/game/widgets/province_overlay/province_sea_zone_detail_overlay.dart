@@ -19,7 +19,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
@@ -31,7 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
@@ -42,14 +42,21 @@ import 'province_overlay_unit_partition.dart';
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
 /// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
 
-part 'province_sea_zone_detail_overlay_sections.dart';
+part 'province_sea_zone_detail_overlay_sections_chrome.dart';
+part 'province_sea_zone_detail_overlay_sections_political.dart';
+part 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 part 'province_sea_zone_detail_overlay_chrome.dart';
 part 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 part 'province_sea_zone_detail_overlay_tile_section.dart';
+part 'province_sea_zone_detail_overlay_tile_section_revealed.dart';
 part 'province_sea_zone_detail_overlay_province_content.dart';
+part 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
+part 'province_sea_zone_detail_overlay_province_content_intel.dart';
 part 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 part 'province_sea_zone_detail_overlay_economic_section.dart';
-part 'province_sea_zone_detail_overlay_unit_sections.dart';
+part 'province_sea_zone_detail_overlay_military_section.dart';
+part 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+part 'province_sea_zone_detail_overlay_close_button.dart';
 part 'province_sea_zone_detail_overlay_designation.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {

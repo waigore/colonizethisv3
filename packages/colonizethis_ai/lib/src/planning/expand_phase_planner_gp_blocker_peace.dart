@@ -115,7 +115,7 @@ String? stalledStrongerGpBlockerPeaceTarget({
   final provinceOwner = pivot.provinceOwner;
   final gpBlockerFocus = pivot.gpBlockerFocus;
   if (gpBlockerFocus) {
-    final anyMinorOwnsOw = _anyMinorOwnsOldWorldProvince(game);
+    final anyMinorOwnsOw = anyMinorOwnsOldWorldProvince(game);
     if (!anyMinorOwnsOw) {
       return null;
     }

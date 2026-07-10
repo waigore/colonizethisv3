@@ -59,14 +59,16 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show InterventionPrompt;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/yarn_test_fixtures.dart';
 
 import 'support/min_viewport_harness.dart';
 
@@ -87,13 +89,6 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// `intervention_dialogue_overlay_dark_chrome_test.dart` so the
 /// narrow-pin reuses the same deterministic fast-path through
 /// `_buildScrimmedShell`.
-class _FailingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.error(StateError('missing intervention yarn'));
-  }
-}
-
 /// Minimal `Game` fixture mirroring the dark-chrome test fixture so
 /// the per-prompt name-resolution path (aggressor / defender /
 /// intervening) can resolve `gp1` / `gp2` / `minor1` to display names
@@ -182,7 +177,7 @@ void main() {
           game: _kFixtureGame,
           prompts: _kFixturePrompts,
           skipIntroForTest: true,
-          assetBundle: _FailingAssetBundle(),
+          assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
           onDecisions: (_) {},
           child: const SizedBox.expand(),
         );

@@ -63,19 +63,17 @@ import 'work_suggestion_pipeline.dart';
     target: kWorkTargetExplore,
     targetTileKey: targetTileKey,
   );
-  if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, probe)) {
-    final bundled = validateCivilianBundledWorkMoveLeg(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      unit: unit,
-      order: probe,
-      resolution: resolution,
-      diplomaticOrders: diplomatic,
-    );
-    if (!bundled.isAccepted) {
-      return (chosen: null, lastReason: bundled.reason ?? 'no_single_hop');
-    }
+  final moveLegReason = bundledWorkMoveLegRejectionReason(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    unit: unit,
+    probe: probe,
+    resolution: resolution,
+    diplomatic: diplomatic,
+  );
+  if (moveLegReason != null) {
+    return (chosen: null, lastReason: moveLegReason);
   }
   final candidate = WorkOrder(
     unitId: unit.id,
@@ -219,36 +217,22 @@ void addExplorerWorkSuggestionsForUnit({
   var lastReason = 'no_valid_tile';
   final sortedTiles = List<String>.from(tilesInProvince)..sort();
   final accepted = <String>[];
-  final needsProvinceMoveLeg =
-      sortedTiles.isNotEmpty &&
-      civilianBundledWorkNeedsProvinceMoveLeg(
-        game,
-        unit,
-        WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetProspect,
-          targetTileKey: sortedTiles.first,
-        ),
-      );
-  if (needsProvinceMoveLeg) {
-    final bundled = validateCivilianBundledWorkMoveLeg(
+  if (sortedTiles.isNotEmpty) {
+    final moveLegReason = bundledWorkMoveLegRejectionReason(
       game: game,
       topology: topology,
       playerId: playerId,
       unit: unit,
-      order: WorkOrder(
+      probe: WorkOrder(
         unitId: unit.id,
         target: kWorkTargetProspect,
         targetTileKey: sortedTiles.first,
       ),
       resolution: resolution,
-      diplomaticOrders: diplomaticOrders,
+      diplomatic: diplomaticOrders,
     );
-    if (!bundled.isAccepted) {
-      return (
-        tiles: const <String>[],
-        lastReason: bundled.reason ?? 'no_single_hop',
-      );
+    if (moveLegReason != null) {
+      return (tiles: const <String>[], lastReason: moveLegReason);
     }
   }
   // Own-province prospect probes are exempt from the shared per-pass budget

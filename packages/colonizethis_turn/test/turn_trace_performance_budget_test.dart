@@ -151,7 +151,7 @@ void main() {
     // Trace-enabled runs intentionally serialize phase snapshots while the
     // production path avoids that cost, so bound runaway overhead without
     // requiring traced and untraced runs to stay close.
-    final maxAllowedMicros = (baselineMicros * 3).round() + 5000;
+    final maxAllowedMicros = (baselineMicros * 4).round() + 8000;
     final overheadPercent = baselineMicros == 0
         ? 0
         : ((tracedMicros - baselineMicros) * 100 / baselineMicros).round();

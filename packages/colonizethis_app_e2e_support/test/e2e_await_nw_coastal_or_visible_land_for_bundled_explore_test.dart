@@ -23,9 +23,9 @@
 /// Refs GitHub #2336 AC1 / AC2 / Bottleneck 4.
 library;
 
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show MapTopology, TopologyEdge, TopologyNode, TopologyNodeType;
 import 'package:colonizethis_models/colonizethis_models.dart';

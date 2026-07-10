@@ -75,129 +75,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _blockerGpId = 'gp2';
+const String _nationId = kOrchestratorGp1NationId;
+const String _blockerGpId = kOrchestratorBlockerGpId;
 
-// Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) and
-// inside the stalled 1–9 band so `isBelowObserverConquestQuota` and
-// `isStalledOldWorldExpansion` are both true and
-// `observerGoalPhaseFor` routes to EXPAND. Sized at 7 (the observer
-// default start) to mirror the seed-42 gp3/gp4 narrative the GP-only
-// blocker priority was originally tuned for (PR #2577).
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-// Past-quota OW set (>= `kObserverConquestMinOwProvincesPerGp` = 10)
-// and above the stalled 1–9 band so both
-// `isBelowObserverConquestQuota` and `isStalledOldWorldExpansion`
-// return false. Combined with an empty `ColonialSummary` it routes
-// `observerGoalPhaseFor` into DEVELOP, where every declare-war
-// candidate score collapses (verified in `observer_goal_phase_test.dart`
-// group `DEVELOP suppresses declareWar`).
-const List<String> _gp1OwProvincesDevelop = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-  'oldWorld|gp1_11',
-];
-
-// gp2 owns exactly the invadable provinces, so
-// `primaryInvadableOldWorldGpBlocker` resolves to `_blockerGpId` and
-// `isOldWorldGpOnlyInvadableFrontier` returns true. Province count of
-// 4 is deliberately outside the mutual-plateau 8–9 OW band so
-// `isMutualBelowQuotaPlateauPeer(ownOw=7, partnerOw=4)` is false and
-// the helper does not bail on the plateau-peer skip (which is the
-// branch the diplomatic_candidate_scoring_suppression_part2_test.dart
-// `mutual plateau within one OW on GP-only` case pins separately).
-const List<String> _blockerOwProvinces = <String>[
-  'oldWorld|gp2_inv_0',
-  'oldWorld|gp2_inv_1',
-  'oldWorld|gp2_inv_2',
-  'oldWorld|gp2_inv_3',
-];
-
-Game _scenarioGame({required List<String> gp1OwProvinces}) {
-  return Game(
-    id: 'g-2509-expand-gp-only-blocker',
-    worldState: WorldState(
-      // Turn 60 sits past `kDeclareWarEarlyAntiDogpileMaxTurn` = 50,
-      // so the early-turn anti-dogpile gate inside
-      // `stalledGpBlockerDeclareWarTarget` (which only fires when the
-      // blocker is below quota AND the frontier is *not* GP-only) is
-      // moot for this fixture, and the forced GP-only blocker declare
-      // is exercised without turn-window confounders.
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in gp1OwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          for (final id in _blockerOwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _blockerGpId),
-        ],
-      ),
-      newWorld: const RegionData(),
-      // Non-empty Home Armies for both gp1 and gp2 keep
-      // `regimentCountForPlayer` > 0 for the attacker (required by
-      // `stalledGpBlockerDeclareWarTarget`) and for the blocker
-      // (required for the mutual-plateau branch the helper guards
-      // against, though it does not fire here per the fixture sizing
-      // above). The same home-army guard is used in the sibling
-      // EXPAND minor declare-war pin
-      // (`domain_planner_orchestrator_expand_minor_declare_war_test.dart`)
-      // and the two-GP peace pin
-      // (`domain_planner_orchestrator_expand_two_gp_peace_test.dart`).
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: gp1OwProvinces.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_blockerGpId),
-          ownerId: _blockerGpId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _blockerOwProvinces.first,
-          regimentUnitIds: const ['u_gp2'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-      Player(id: _blockerGpId, displayName: 'GP2', isHuman: false),
-    ],
-    // No minor nations: `hasUninvadedOldWorldMinor` returns false, no
-    // minor declare-war target is available, and every minor-first
-    // forced declare path in `runDiplomacyPlannerWithResult` falls
-    // through to the GP-only blocker branch this test pins.
-    minorNations: const [],
-    tribes: const [],
-  );
-}
+// Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
+// Past-quota DEVELOP set: kGp1OwProvincesDevelop (Refs #3941).
 
 // Empty suggestion API: no diplomatic candidates are surfaced. The
 // forced GP-only blocker short-circuit appends the `declareWar`
@@ -304,7 +188,10 @@ void main() {
     test(
       'emits forced declareWar toward GP-only invadable frontier blocker in EXPAND',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+        final game = buildOrchestratorExpandGpOnlyBlockerScenarioGame(
+          id: 'g-2509-expand-gp-only-blocker',
+          gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();
@@ -352,7 +239,10 @@ void main() {
     test(
       'suppresses GP blocker declareWar at quota in DEVELOP',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesDevelop);
+        final game = buildOrchestratorExpandGpOnlyBlockerScenarioGame(
+          id: 'g-2509-expand-gp-only-blocker',
+          gp1OwProvinces: kGp1OwProvincesDevelop,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _developSnapshot();
@@ -402,7 +292,10 @@ void main() {
     test(
       'emits identical diplomatic orders for identical EXPAND inputs',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+        final game = buildOrchestratorExpandGpOnlyBlockerScenarioGame(
+          id: 'g-2509-expand-gp-only-blocker',
+          gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _expandSnapshot();

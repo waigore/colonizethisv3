@@ -1,73 +1,16 @@
-import 'package:colonizethis_orders/src/orders/orders_application_helpers.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+// Consolidated orders_application helpers / clearUnit / mineral eligibility
+// runners (Refs #3949 wave 3).
+//
+// Merges former helpers, helpers_mineral_eligible, and clear_unit_current_work
+// suites into one ≤400-line family runner with scenarios in support/.
+
 import 'package:colonizethis_test/test.dart';
 
+import 'support/application/application_helpers_scenarios.dart';
+import 'support/scenario_runner.dart';
+
 void main() {
-  group('parseTileKeyCoordinates', () {
-    test('returns parsed coordinates for a valid tile key', () {
-      final parsed = parseTileKeyCoordinates('oldWorld|P1|12|7');
-      expect(parsed, isNotNull);
-      expect(parsed!.regionId, 'oldWorld');
-      expect(parsed.provinceLocalId, 'P1');
-      expect(parsed.x, 12);
-      expect(parsed.y, 7);
-    });
-
-    test('returns null for malformed tile key', () {
-      expect(parseTileKeyCoordinates('oldWorld|P1|12'), isNull);
-      expect(parseTileKeyCoordinates('oldWorld|P1|x|7'), isNull);
-    });
-  });
-
-  group('cancelUnitWork', () {
-    test('clears work state and restores origin tile by default', () {
-      final unit = Unit(
-        id: 'u1',
-        type: 'worker',
-        ownerId: 'p1',
-        locationProvinceId: 'oldWorld|P1',
-        tileKey: 'oldWorld|P1|2|2',
-        originTileKey: 'oldWorld|P1|1|1',
-        assignedTileKey: 'oldWorld|P1|3|3',
-        status: UnitStatus.working,
-        currentWork: const CurrentWork(
-          workTarget: kWorkTargetBuildRoad,
-          tileKey: 'oldWorld|P1|3|3',
-          remainingTurns: 2,
-          totalTurns: 3,
-        ),
-      );
-
-      final cancelled = cancelUnitWork(unit);
-
-      expect(cancelled.status, UnitStatus.idle);
-      expect(cancelled.tileKey, 'oldWorld|P1|1|1');
-      expect(cancelled.currentWork, isNull);
-      expect(cancelled.originTileKey, isNull);
-      expect(cancelled.assignedTileKey, isNull);
-    });
-
-    test('uses explicit restored tile override', () {
-      final unit = Unit(
-        id: 'u2',
-        type: 'worker',
-        ownerId: 'p1',
-        locationProvinceId: 'oldWorld|P1',
-        tileKey: 'oldWorld|P1|2|2',
-        status: UnitStatus.working,
-        currentWork: const CurrentWork(
-          workTarget: kWorkTargetBuildRoad,
-          tileKey: 'oldWorld|P1|3|3',
-          remainingTurns: 2,
-          totalTurns: 3,
-        ),
-      );
-
-      final cancelled = cancelUnitWork(unit, restoredTile: 'oldWorld|P1|0|0');
-
-      expect(cancelled.tileKey, 'oldWorld|P1|0|0');
-      expect(cancelled.currentWork, isNull);
-    });
+  group('orders_application helpers', () {
+    runLabeledScenarios(applicationHelpersScenarios(), runRunnableScenario);
   });
 }

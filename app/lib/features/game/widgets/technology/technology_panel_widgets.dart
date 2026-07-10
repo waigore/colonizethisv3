@@ -1,13 +1,14 @@
 library;
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/themes.dart';
-import '../../../../l10n/l10n.dart';
 import 'research_slot_preview.dart';
 import 'tech_ui_helpers.dart';
 import '../../../../widgets/ct_gap.dart';

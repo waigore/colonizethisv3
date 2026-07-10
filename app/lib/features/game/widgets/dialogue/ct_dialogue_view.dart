@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
+part 'ct_dialogue_view_collapsible.dart';
+part 'ct_dialogue_view_jenny.dart';
+
 /// Flutter/Jenny dialogue view that drives UI via callbacks and completers.
 /// SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.
 class CtDialogueView extends DialogueView {
@@ -86,96 +89,18 @@ class CtDialogueView extends DialogueView {
   }
 
   @override
-  FutureOr<void> onNodeStart(Node node) {
-    _collapsibleLines.clear();
-    _collapsibleLabels.clear();
-    final entries = node.toList(growable: false);
-    for (var i = 0; i + 1 < entries.length; i++) {
-      final entry = entries[i];
-      final next = entries[i + 1];
-      if (entry is DialogueLine &&
-          next is DialogueChoice &&
-          next.options.length == 1) {
-        // Evaluating the sole option here mirrors what the runner does before
-        // delivering the choice (DialogueChoice.processInDialogueRunner), so
-        // this introduces no failure mode the node would not already hit.
-        final option = next.options.first;
-        option.evaluate();
-        _collapsibleLines.add(entry);
-        _collapsibleLabels.add(option.text);
-      }
-    }
-  }
+  FutureOr<void> onNodeStart(Node node) => handleNodeStart(node);
 
   @override
-  FutureOr<bool> onLineStart(DialogueLine line) {
-    _log.d('line start "${line.text}"');
-    _currentLine = line;
-    _contextLine = line;
-    _currentChoice = null;
-    _pendingSingleOptionLabel = _collapsedLabelFor(line);
-    _lineCompleter = Completer<void>();
-    onStateChanged?.call(_currentLine, _currentChoice);
-    return _lineCompleter!.future.then((_) {
-      _currentLine = null;
-      onStateChanged?.call(null, _currentChoice);
-      return true;
-    });
-  }
+  FutureOr<bool> onLineStart(DialogueLine line) => handleLineStart(line);
 
   @override
-  FutureOr<int?> onChoiceStart(DialogueChoice choice) {
-    _log.d('choice start ${choice.options.length} options');
-    if (_autoSelectSingleOption && choice.options.length == 1) {
-      // Collapsed line+option: the player already confirmed via the combined
-      // button, so select the sole option without rendering a second step.
-      _autoSelectSingleOption = false;
-      _pendingSingleOptionLabel = null;
-      _currentLine = null;
-      _currentChoice = null;
-      _contextLine = null;
-      onStateChanged?.call(null, null);
-      return 0;
-    }
-    _autoSelectSingleOption = false;
-    _pendingSingleOptionLabel = null;
-    _currentLine = null;
-    _currentChoice = choice;
-    _choiceCompleter = Completer<int?>();
-    onStateChanged?.call(_currentLine, _currentChoice);
-    return _choiceCompleter!.future.then((index) {
-      _currentChoice = null;
-      _contextLine = null;
-      onStateChanged?.call(null, null);
-      return index;
-    });
-  }
+  FutureOr<int?> onChoiceStart(DialogueChoice choice) =>
+      handleChoiceStart(choice);
 
   @override
-  FutureOr<void> onDialogueFinish() {
-    _log.d('dialogue finish');
-    _currentLine = null;
-    _currentChoice = null;
-    _contextLine = null;
-    _pendingSingleOptionLabel = null;
-    _autoSelectSingleOption = false;
-    _lineCompleter = null;
-    _choiceCompleter = null;
-    onStateChanged?.call(null, null);
-  }
-
-  /// Returns the evaluated single-option label for [line] when it is
-  /// immediately followed by a single-option choice in the current node
-  /// (identity match against [_collapsibleLines]); otherwise `null`.
-  String? _collapsedLabelFor(DialogueLine line) {
-    for (var i = 0; i < _collapsibleLines.length; i++) {
-      if (identical(_collapsibleLines[i], line)) return _collapsibleLabels[i];
-    }
-    return null;
-  }
+  FutureOr<void> onDialogueFinish() => handleDialogueFinish();
 
   @override
-  void onDialogueStart() {
-    _log.d('dialogue start');
-  }
+  void onDialogueStart() => handleDialogueStart();
 }

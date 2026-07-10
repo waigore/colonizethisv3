@@ -1,7 +1,7 @@
 // Covers GameScreen turn / overture branches when map view is suppressed (Flame overlay).
 import 'dart:async';
 
-import 'package:colonizethis_app/config/ct_debug_console.dart';
+import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';

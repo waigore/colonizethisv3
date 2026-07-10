@@ -18,6 +18,7 @@ import 'region_map_viewport_snapshot.dart'
         kRegionMapZoomMultiplierMin;
 
 part 'ct_region_map_game_camera.dart';
+part 'ct_region_map_game_lifecycle.dart';
 part 'ct_region_map_game_props.dart';
 part 'ct_region_map_game_viewport.dart';
 
@@ -103,55 +104,13 @@ class CtRegionMapGame extends FlameGame with TapDetector {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _mapComponent = CtRegionMapComponent(
-      region: region,
-      cellSize: cellSizePx,
-      showPoliticalOverlay: showPoliticalOverlay,
-      showProvinceOverlay: showProvinceOverlay,
-      showProvinceOwnershipTint: showProvinceOwnershipTint,
-      showProvinceNamesLayer: showProvinceNamesLayer,
-      visibilityMode: visibilityMode,
-      baseLayerDisplayMode: baseLayerDisplayMode,
-      onProvinceSelected: onProvinceSelected,
-      onMapTileTappedForDetail: onMapTileTappedForDetail,
-      onProvinceHovered: onProvinceHovered,
-      onTileHovered: onTileHovered,
-      onCivilianTileTapped: onCivilianTileTapped,
-      onFleetMarkerTapped: onFleetMarkerTapped,
-      onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
-      selectedTileKey: selectedTileKey,
-      selectedCivilianTileKey: selectedCivilianTileKey,
-      secondaryHighlightTileKey: secondaryHighlightTileKey,
-      onTileTapped: (tileKey) {
-        if (onTileSelected != null && validTileKeys != null) {
-          if (tileKey != null &&
-              validTileKeys!.isNotEmpty &&
-              validTileKeys!.contains(tileKey)) {
-            onTileSelected!.call(tileKey);
-          }
-        }
-      },
-      validTileKeys: validTileKeys,
-      onTownIconTapped: onTownIconTapped,
-      playerViewForResources: playerViewForResources,
-    )..position = Vector2.zero();
-    await world.add(_mapComponent);
-    _mapLoaded = true;
-
-    if (size != Vector2.zero()) {
-      _syncCameraZoomFromMultiplier();
-    } else {
-      _emitViewportSnapshot();
-    }
+    await onLoadRegionMapBody();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    if (_mapLoaded) {
-      final z = camera.viewfinder.zoom;
-      _mapComponent.cameraZoom = z.isFinite && z > 0 ? z : 1.0;
-    }
+    updateRegionMapGame(dt);
   }
 
   /// Update map configuration without recreating the game.
@@ -243,19 +202,9 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     super.onGameResize(size);
 
     final previousSize = _lastCanvasSize;
-    _lastCanvasSize = size.clone();
-    _handleGameResize(size, previousSize);
+    handleRegionMapGameResize(size, previousSize);
   }
 
   @override
-  void onTapUp(TapUpInfo info) {
-    final z = camera.viewfinder.zoom;
-    if (z <= 0 || !z.isFinite) return;
-    final widgetPos = info.eventPosition.widget;
-    final halfView = size / 2;
-    final world = camera.viewfinder.position + (widgetPos - halfView) / z;
-    _mapComponent.handleTapAtWorld(world);
-    onRegionViewChanged?.call();
-    _emitViewportSnapshot();
-  }
+  void onTapUp(TapUpInfo info) => handleRegionMapTapUp(info);
 }

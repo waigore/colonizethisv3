@@ -16,48 +16,8 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 import 'order_effects_projector.dart';
 import 'order_resolution_context.dart';
+import 'order_validation_result_append.dart';
 import 'order_validator_factory.dart';
-
-/// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
-/// Returns the new rejected flag (true if any result was rejected).
-bool _appendValidationResults<T>(
-  List<OrderValidationResult> results,
-  List<T> orders,
-  bool rejected,
-  OrderValidationResult Function(T order, bool previousRejected) validate,
-) {
-  var r = rejected;
-  for (final o in orders) {
-    final res = validate(o, r);
-    results.add(res);
-    if (!res.isAccepted) r = true;
-  }
-  return r;
-}
-
-/// Like [_appendValidationResults] for validators that also return updated state (e.g. treasury).
-/// Appends each result to [results], propagates [rejected], and returns (rejected, finalState).
-({bool rejected, S state}) _appendValidationResultsWithState<T, S>(
-  List<OrderValidationResult> results,
-  List<T> orders,
-  bool rejected,
-  S initialState,
-  ({OrderValidationResult result, S state}) Function(
-    T order,
-    bool previousRejected,
-  )
-  validate,
-) {
-  var r = rejected;
-  var s = initialState;
-  for (final o in orders) {
-    final res = validate(o, r);
-    results.add(res.result);
-    if (!res.result.isAccepted) r = true;
-    s = res.state;
-  }
-  return (rejected: r, state: s);
-}
 
 /// Canonical, declarative per-category validation phase plan: the phase [name]
 /// plus whether the validator bundle is rebuilt **before** the phase runs.
@@ -104,7 +64,7 @@ void _runResourceLedgerPhase<T>(
   void Function(OrderValidators v, OrderValidationRunState state)
   carryForwardLedgers,
 ) {
-  state.rejected = _appendValidationResults(
+  state.rejected = appendValidationResults(
     state.results,
     orders,
     state.rejected,
@@ -300,7 +260,7 @@ void _runMovePhase(
   // [MoveValidator.validate] call reuses it directly so probes do not
   // rebuild equivalent `view` / `unitsById` maps (Refs #2836 AC 3;
   // SPEC/program/logic-validator-units-params.md).
-  state.rejected = _appendValidationResults(
+  state.rejected = appendValidationResults(
     state.results,
     moves,
     state.rejected,
@@ -329,7 +289,7 @@ void _runArmyMovePhase(
   Map<String, Army> armiesById,
   DiplomacyFactionMembership factionMembership,
 ) {
-  state.rejected = _appendValidationResults(
+  state.rejected = appendValidationResults(
     state.results,
     armyMoves,
     state.rejected,
@@ -353,7 +313,7 @@ void _runDiplomaticPhase(
   List<DiplomaticOrder> diplomatic,
 ) {
   final afterDiplomatic =
-      _appendValidationResultsWithState<DiplomaticOrder, int>(
+      appendValidationResultsWithState<DiplomaticOrder, int>(
         state.results,
         diplomatic,
         state.rejected,
@@ -373,13 +333,13 @@ void _runNavalPhase(
   List<NavalMoveOrder> navals,
   List<NavalMissionOrder> missions,
 ) {
-  state.rejected = _appendValidationResults(
+  state.rejected = appendValidationResults(
     state.results,
     navals,
     state.rejected,
     (o, prev) => v.navalValidator.validateNavalMove(o, previousRejected: prev),
   );
-  state.rejected = _appendValidationResults(
+  state.rejected = appendValidationResults(
     state.results,
     missions,
     state.rejected,

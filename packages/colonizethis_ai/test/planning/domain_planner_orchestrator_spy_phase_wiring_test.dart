@@ -9,57 +9,17 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _ow = 'oldWorld';
-const String _ownProvince = '$_ow|p1';
-const String _spyUnitId = 's1';
-const String _counterSpyTile = '$_ownProvince|0|0';
-
-Game _scenarioGame() => Game(
-  id: 'g-3834-spy-phase-wiring',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 30),
-    oldWorld: RegionData(
-      provinces: const [
-        Province(id: _ownProvince, regionId: _ow, ownerId: _nationId),
-      ],
-      units: [
-        Unit(
-          id: _spyUnitId,
-          type: kUnitTypeSpy,
-          ownerId: _nationId,
-          locationProvinceId: _ownProvince,
-          tileKey: _counterSpyTile,
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {
-      _nationId: {_counterSpyTile: 'fullyVisible'},
-    },
-    tileKeysByRegionAndProvince: const {
-      _ow: {_ownProvince: [_counterSpyTile]},
-    },
-  ),
-  players: const [
-    Player(
-      id: _nationId,
-      displayName: 'GP1',
-      isHuman: false,
-      leaderKey: 'victoria',
-      capitalProvinceId: _ownProvince,
-    ),
-  ],
-);
+const String _nationId = kOrchestratorGp1NationId;
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _spyWorkApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
   work: [
     WorkOrder(
-      unitId: _spyUnitId,
+      unitId: kOrchestratorSpyUnitId,
       target: kWorkTargetCounterSpy,
-      targetTileKey: _counterSpyTile,
+      targetTileKey: kOrchestratorSpyCounterSpyTile,
     ),
   ],
   build: [],
@@ -82,13 +42,15 @@ const AIConfig _aiConfig = AIConfig(
 
 WorkOrder _emittedSpyWork(Orders orders) {
   final work = orders.workOrdersByPlayerId[_nationId] ?? const <WorkOrder>[];
-  final spyWork = work.where((w) => w.unitId == _spyUnitId).toList();
+  final spyWork = work.where((w) => w.unitId == kOrchestratorSpyUnitId).toList();
   expect(spyWork, hasLength(1));
   return spyWork.single;
 }
 
 Orders _runWithPhase(PhasePlanOutcome phasePlan) {
-  final game = _scenarioGame();
+  final game = buildOrchestratorSpyPhaseWiringScenarioGame(
+    id: 'g-3834-spy-phase-wiring',
+  );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = AIWorldSnapshot.fromPlayerView(view);
@@ -114,7 +76,7 @@ void main() {
         _runWithPhase(PhasePlanOutcome.defaultDevelop),
       );
       expect(spyWork.target, kWorkTargetCounterSpy);
-      expect(spyWork.targetTileKey, _counterSpyTile);
+      expect(spyWork.targetTileKey, kOrchestratorSpyCounterSpyTile);
     });
 
     test('determinism: same DEVELOP plan yields same Spy work order', () {

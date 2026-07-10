@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Pixel-art friendly tab strip (non-Material). Labels in a row; selected index
 /// shows content in an [IndexedStack]. Use for overlays/panels where Material

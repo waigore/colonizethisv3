@@ -46,109 +46,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
-// Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
-// `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
-// `observerGoalPhaseFor`. Mirrors the EXPAND negative-control shape used in
-// `domain_planner_orchestrator_colonial_tribe_declare_war_test.dart`.
-const List<String> _gp1OwProvincesBelowQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-];
-
-// At-quota OW set (>= `kObserverConquestMinOwProvincesPerGp` = 10) so the GP
-// passes the EXPAND gate and enters COLONIAL when colonial acquisition
-// targets are visible. Used by the negative-control test.
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
-
-Game _scenarioGame({required List<String> gp1OwProvinces}) {
-  return Game(
-    id: 'g-2509-expand-nw-overture-suppress',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in gp1OwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army for gp1 keeps `regimentCountForPlayer` > 0 and
-      // avoids the zero-regiment stalemate peace paths firing as unrelated
-      // diplomatic orders (mirrors the guard used in
-      // `domain_planner_orchestrator_colonial_two_gp_peace_test.dart`).
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: gp1OwProvinces.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-    // Peace + embassy is the precondition for `establishOverture(joinEmpire)`
-    // to be a structurally valid candidate. The fake API returns the
-    // candidate unconditionally; the orchestrator's scoring + selection
-    // path is what enforces the EXPAND suppression vs COLONIAL emission
-    // contract this file pins.
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 60,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: _nationId,
-        targetId: _tribeId,
-        stage: OvertureStage.embassy,
-      ),
-    ],
-  );
-}
+// Uses kGp1OwProvincesBelowQuota / kGp1OwProvincesAtQuota from
+// domain_planner_orchestrator_test_support.dart (Refs #3941).
 
 // Fake API provides one `establishOverture(tribe1, joinEmpire)` candidate.
 // The fake's `suggestDeclareWarOrders` filters by `type == declareWar` so
@@ -262,7 +167,25 @@ List<String> _overtureTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND-phase NW establishOverture suppression', () {
     test('EXPAND drops establishOverture toward NW tribe colonial target', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-expand-nw-overture-suppress',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        diplomacyRelations: const <DiplomacyRelation>[
+          DiplomacyRelation(
+            factionId1: kOrchestratorGp1NationId,
+            factionId2: kOrchestratorTribeId,
+            state: RelationState.atPeace,
+            score: 60,
+          ),
+        ],
+        overtureStates: const <OvertureState>[
+          OvertureState(
+            gpId: kOrchestratorGp1NationId,
+            targetId: kOrchestratorTribeId,
+            stage: OvertureStage.embassy,
+          ),
+        ],
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();
@@ -307,7 +230,25 @@ void main() {
     test(
       'COLONIAL allows establishOverture toward the same NW tribe candidate',
       () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+        final game = buildOrchestratorGp1TribeNwScenarioGame(
+          id: 'g-2509-expand-nw-overture-suppress',
+          gp1OwProvinces: kGp1OwProvincesAtQuota,
+          diplomacyRelations: const <DiplomacyRelation>[
+            DiplomacyRelation(
+              factionId1: kOrchestratorGp1NationId,
+              factionId2: kOrchestratorTribeId,
+              state: RelationState.atPeace,
+              score: 60,
+            ),
+          ],
+          overtureStates: const <OvertureState>[
+            OvertureState(
+              gpId: kOrchestratorGp1NationId,
+              targetId: kOrchestratorTribeId,
+              stage: OvertureStage.embassy,
+            ),
+          ],
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         final snapshot = _colonialSnapshot();
@@ -352,7 +293,25 @@ void main() {
     );
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      final game = buildOrchestratorGp1TribeNwScenarioGame(
+        id: 'g-2509-expand-nw-overture-suppress',
+        gp1OwProvinces: kGp1OwProvincesBelowQuota,
+        diplomacyRelations: const <DiplomacyRelation>[
+          DiplomacyRelation(
+            factionId1: kOrchestratorGp1NationId,
+            factionId2: kOrchestratorTribeId,
+            state: RelationState.atPeace,
+            score: 60,
+          ),
+        ],
+        overtureStates: const <OvertureState>[
+          OvertureState(
+            gpId: kOrchestratorGp1NationId,
+            targetId: kOrchestratorTribeId,
+            stage: OvertureStage.embassy,
+          ),
+        ],
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandSnapshot();

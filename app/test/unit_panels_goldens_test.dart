@@ -16,7 +16,7 @@
 // so loading the committed seed-42 fixtures keeps the baselines byte-identical
 // while dropping the ~7-11s `getDebugInitGameResult()` map generation per file.
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
@@ -27,10 +27,10 @@ import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/game_fixture.dart';
+import 'support/golden_capture_harness.dart';
 import 'support/map_view_fixture.dart';
 
 /// Canonical golden host viewport for the unit panels (wide enough for the
@@ -65,20 +65,11 @@ void _expectEditorialMonocleDarkChrome(WidgetTester tester) {
 }
 
 Widget _host({required Key boundaryKey, required Widget child}) {
-  return ProviderScope(
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        body: Center(
-          child: RepaintBoundary(
-            key: boundaryKey,
-            child: ConstrainedBox(constraints: _panelConstraints, child: child),
-          ),
-        ),
-      ),
-    ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    wrapInProviderScope: true,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: ConstrainedBox(constraints: _panelConstraints, child: child),
   );
 }
 
@@ -96,25 +87,14 @@ final BoxConstraints _mobilePanelConstraints = unitsPanelSheetConstraints(
 );
 
 Widget _mobileHost({required Key boundaryKey, required Widget child}) {
-  return ProviderScope(
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        // The narrow sheet anchors to the bottom of the viewport; align so the
-        // golden shows the panel filling its `50%` height cap from the bottom.
-        body: Align(
-          alignment: Alignment.bottomCenter,
-          child: RepaintBoundary(
-            key: boundaryKey,
-            child: ConstrainedBox(
-              constraints: _mobilePanelConstraints,
-              child: child,
-            ),
-          ),
-        ),
-      ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    alignment: Alignment.bottomCenter,
+    wrapInProviderScope: true,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: ConstrainedBox(
+      constraints: _mobilePanelConstraints,
+      child: child,
     ),
   );
 }
@@ -133,10 +113,9 @@ void main() {
   });
 
   Future<void> pumpHost(WidgetTester tester, Widget panel, Key key) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(_hostViewport);
+    await configureGoldenSurface(tester, size: _hostViewport);
     await tester.pumpWidget(_host(boundaryKey: key, child: panel));
-    await tester.pumpAndSettle();
+    await pumpForGolden(tester);
   }
 
   Future<void> pumpMobileHost(
@@ -144,10 +123,9 @@ void main() {
     Widget panel,
     Key key,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(_mobileViewport);
+    await configureGoldenSurface(tester, size: _mobileViewport);
     await tester.pumpWidget(_mobileHost(boundaryKey: key, child: panel));
-    await tester.pumpAndSettle();
+    await pumpForGolden(tester);
   }
 
   testWidgets('golden: UNIT10001 Civilian Units panel chrome (Refs #3514)', (

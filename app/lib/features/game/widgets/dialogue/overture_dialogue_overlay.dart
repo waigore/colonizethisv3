@@ -1,15 +1,15 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../../l10n/l10n.dart';
-import '../../../../../widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';
 import '../../../../../widgets/ct_nine_patch_button.dart';
@@ -20,6 +20,8 @@ import 'ct_dialogue_view.dart';
 
 part 'overture_dialogue_overlay_flow.dart';
 part 'overture_dialogue_overlay_offer_row.dart';
+part 'overture_dialogue_overlay_phase_two.dart';
+part 'overture_dialogue_overlay_build.dart';
 
 /// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
 /// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
@@ -88,198 +90,10 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
     }
   }
 
-  /// True when every pending overture row has a non-null decision; gates the
-  /// phase-2 Submit `CtNinePatchButton` per #2867 R23 (`SPEC/ui/overture-dialogue-overlay.md`
-  /// § Acceptance Criteria — non-null decision required).
-  bool get _allDecided {
-    for (final bool? value in _accepted) {
-      if (value == null) return false;
-    }
-    return true;
-  }
-
-  String _offererDisplayName(String offererGpId) {
-    for (final p in widget.game.players) {
-      if (p.id == offererGpId) return p.displayName;
-    }
-    return offererGpId;
-  }
-
-  static String _stageLabel(AppLocalizations l10n, OvertureStage stage) {
-    switch (stage) {
-      case OvertureStage.tradeConsulate:
-        return l10n.turnNews_stage_tradeConsulate;
-      case OvertureStage.embassy:
-        return l10n.turnNews_stage_embassy;
-      case OvertureStage.nap:
-        return l10n.turnNews_stage_nap;
-      case OvertureStage.joinEmpire:
-        return l10n.turnNews_stage_joinEmpire;
-      case OvertureStage.none:
-        return l10n.province_fleetMission_none;
-    }
-  }
-
-  void _submit() {
-    final decisions = <OvertureDecision>[];
-    for (var i = 0; i < widget.pendingOvertures.length; i++) {
-      final offer = widget.pendingOvertures[i];
-      decisions.add(
-        OvertureDecision(
-          offererGpId: offer.offererGpId,
-          targetFactionId: offer.targetFactionId,
-          stage: offer.stage,
-          accepted: _accepted[i] ?? true,
-        ),
-      );
-    }
-    widget.onDecisions(decisions);
-  }
-
-  /// Degraded error-state submit: the Yarn intro failed to load, so the
-  /// per-offer Accept/Reject UI is never shown. Emit a deterministic
-  /// `accepted == true` decision per offer so the host can still resume
-  /// turn resolution (`SPEC/ui/overture-dialogue-overlay.md` § AC error
-  /// variant). This bypasses the R23 non-null gate by design — the player
-  /// has no interactive choice in this variant.
-  void _submitErrorFallback() {
-    final decisions = <OvertureDecision>[];
-    for (final OvertureOffer offer in widget.pendingOvertures) {
-      decisions.add(
-        OvertureDecision(
-          offererGpId: offer.offererGpId,
-          targetFactionId: offer.targetFactionId,
-          stage: offer.stage,
-          accepted: true,
-        ),
-      );
-    }
-    widget.onDecisions(decisions);
+  void _updateOvertureDecision(int index, bool? next) {
+    setState(() => _accepted[index] = next);
   }
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    if (overtureLoadError != null) {
-      return CtFullScreenDialogueShell(
-        backdrop: widget.child,
-        padding: const EdgeInsets.all(CtSpacing.l),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.game_overture_loadError('$overtureLoadError')),
-            const SizedBox(height: CtSpacing.l),
-            CtNinePatchButton(
-              onPressed: _submitErrorFallback,
-              child: Text(l10n.game_intervention_continue),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (!overtureIntroDone) {
-      final view = overtureView;
-      return CtFullScreenDialogueShell(
-        backdrop: widget.child,
-        body: view == null
-            ? const CtLoadingIndicator()
-            : CtDialogueLineChoiceBody(
-                view: view,
-                continueLabel: l10n.game_intervention_continue,
-                lineTextStyle: Theme.of(context).textTheme.bodyLarge,
-                loading: const CtLoadingIndicator(),
-              ),
-      );
-    }
-
-    // Phase 2: list of offers with Accept/Reject + Submit
-    final offers = widget.pendingOvertures;
-    final ThemeData theme = Theme.of(context);
-    final TextStyle titleStyle = _phaseTwoTitleStyle(theme);
-    final TextStyle introStyle = _phaseTwoIntroStyle(theme);
-    return CtFullScreenDialogueShell(
-      backdrop: widget.child,
-      maxHeight: 500,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.game_overture_title,
-            key: const ValueKey<String>('overtureTitle'),
-            style: titleStyle,
-          ),
-          const SizedBox(height: _titleToDividerGap),
-          const CtBrassDivider(key: ValueKey<String>('overtureBrassDivider')),
-          const SizedBox(height: _dividerToIntroGap),
-          Text(
-            l10n.game_overture_intro,
-            key: const ValueKey<String>('overtureIntro'),
-            style: introStyle,
-          ),
-          const SizedBox(height: CtSpacing.l),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: offers.length,
-            itemBuilder: (context, i) {
-              final offer = offers[i];
-              final bool? decision = _accepted[i];
-              return _OvertureOfferRow(
-                rowIndex: i,
-                offerer: _offererDisplayName(offer.offererGpId),
-                stageLabel: _stageLabel(l10n, offer.stage),
-                acceptLabel: l10n.game_overture_accept,
-                rejectLabel: l10n.game_overture_reject,
-                decision: decision,
-                onDecisionChanged: (bool? next) {
-                  setState(() => _accepted[i] = next);
-                },
-              );
-            },
-          ),
-          const SizedBox(height: CtSpacing.m),
-          Align(
-            alignment: Alignment.centerRight,
-            child: CtNinePatchButton(
-              key: const ValueKey<String>('overtureSubmitButton'),
-              enabled: _allDecided,
-              onPressed: _allDecided ? _submit : null,
-              child: Text(l10n.game_callToArms_submit),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Phase-2 title style per #2867 R2 / R21: `--accent` color and a 0.05em
-  /// letter-spacing computed from the resolved title `fontSize` so the
-  /// canonical letter-spacing scales with theme overrides.
-  TextStyle _phaseTwoTitleStyle(ThemeData theme) {
-    final TextStyle base =
-        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
-    final double fontSize = base.fontSize ?? 16;
-    return base.copyWith(
-      color: EditorialMonoclePalette.accent,
-      letterSpacing: fontSize * _titleLetterSpacingEm,
-    );
-  }
-
-  /// Phase-2 intro style per #2867 R5 / R21: italic body text in `--muted`.
-  TextStyle _phaseTwoIntroStyle(ThemeData theme) =>
-      (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-        color: EditorialMonoclePalette.muted,
-        fontStyle: FontStyle.italic,
-      );
-
-  /// Canonical title letter-spacing factor per #2867 R2 (0.05em).
-  static const double _titleLetterSpacingEm = 0.05;
-
-  /// Vertical gap between phase-2 title and the [CtBrassDivider].
-  static const double _titleToDividerGap = 8;
-
-  /// Vertical gap between the [CtBrassDivider] and the intro line.
-  static const double _dividerToIntroGap = 8;
+  Widget build(BuildContext context) => buildOvertureDialogueOverlay(context);
 }

@@ -65,114 +65,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _minorId = 'minor1';
-const String _owProvincePrefix = 'oldWorld|gp1_';
-const String _owMinorProvince = 'oldWorld|minor1_p0';
-const String _owFieldArmyHome = 'oldWorld|gp1_0';
-const String _nwTribeProvince = 'newWorld|tribe1_nw0';
-const String _fieldArmyId = 'field_a';
-
-// 9 OW provinces matches `kObserverColonialLiteNearQuotaOw`; turn 120 vs an
-// earlier turn flips the COLONIAL-lite / EXPAND decision in
-// `isObserverColonialLitePhase`. The COLONIAL negative control raises OW to 10
-// (quota met) and reuses the same fixture otherwise.
-List<String> _gpOwProvincesAt(int count) => <String>[
-  for (var i = 0; i < count; i++) '$_owProvincePrefix$i',
-];
-
-/// Builds a GP scenario with:
-///   - `gpOwProvinceCount` GP-owned OW provinces (9 → near-quota; 10 → quota).
-///   - One OW minor-owned invadable province (`_owMinorProvince`) the GP is
-///     already at war with — gives the stalled multi-army fallback a positive
-///     OW candidate so the COLONIAL-lite suppression's effect (drop NW) is
-///     observable as a phase contract, not a "nothing selected" side effect.
-///   - One tribe-owned NW province (`_nwTribeProvince`) that the GP is at war
-///     with — satisfies both
-///     [globalNewWorldHasNonGpOwnership] (COLONIAL-lite precondition) and the
-///     `filterArmyMoveOrdersByDiplomacy` at-war passthrough so the NW invasion
-///     candidate reaches the conquest planner's scoring path.
-///   - One field army stationed in the GP's home OW province so the fake API
-///     can submit cross-region army-move candidates with consistent army id.
-Game _scenarioGame({
-  required int turnNumber,
-  required int gpOwProvinceCount,
-}) {
-  final gpOwProvinces = _gpOwProvincesAt(gpOwProvinceCount);
-  return Game(
-    id: 'g-2509-colonial-lite-invasion-army-move-suppression',
-    worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in gpOwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _owMinorProvince,
-            regionId: 'oldWorld',
-            ownerId: _minorId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _nwTribeProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owFieldArmyHome,
-          regimentUnitIds: const ['u_home'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: _fieldArmyId,
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owFieldArmyHome,
-          regimentUnitIds: const ['u_field'],
-          isHomeArmy: false,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [MinorNation(id: _minorId, displayName: 'M1')],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atWar,
-        score: -20,
-      ),
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -20,
-      ),
-    ],
-  );
-}
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _minorId = kOrchestratorMinorId;
+const String _owMinorProvince = kOrchestratorColonialLiteInvasionOwMinorProvince;
+const String _owFieldArmyHome = kOrchestratorOwHomeProvince;
+const String _nwTribeProvince = kOrchestratorTribeNwProvince;
+const String _fieldArmyId = kOrchestratorColonialLiteInvasionFieldArmyId;
 
 /// Fake suggestion API surfacing the two phase-distinguishing army-move
 /// candidates: one OW invadable minor (must survive in COLONIAL-lite) and one
@@ -260,7 +161,8 @@ void main() {
         // Turn 120 + OW=9 + tribe-owned NW = COLONIAL-lite per
         // `isObserverColonialLitePhase`. The conquest planner is in stalled
         // expansion (below quota), so the multi-army fallback path runs.
-        final game = _scenarioGame(
+        final game = buildOrchestratorColonialLiteInvasionArmyMoveScenarioGame(
+          id: 'g-2509-colonial-lite-invasion-army-move-suppression',
           turnNumber: kObserverColonialLiteMinTurn,
           gpOwProvinceCount: kObserverColonialLiteNearQuotaOw,
         );
@@ -342,7 +244,8 @@ void main() {
         // observer quota → phase becomes COLONIAL. COLONIAL is the only
         // phase where shouldSuppressNewWorldDeclareWarInvasionAndPurchase
         // returns false; the NW invasion army move must survive.
-        final game = _scenarioGame(
+        final game = buildOrchestratorColonialLiteInvasionArmyMoveScenarioGame(
+          id: 'g-2509-colonial-lite-invasion-army-move-suppression',
           turnNumber: kObserverColonialLiteMinTurn,
           gpOwProvinceCount: kObserverConquestMinOwProvincesPerGp,
         );
@@ -401,7 +304,8 @@ void main() {
         // globalNewWorldHasNonGpOwnership(game); a flaky path here would
         // mask the suppression contract by intermittently mis-tagging the
         // phase.
-        final game = _scenarioGame(
+        final game = buildOrchestratorColonialLiteInvasionArmyMoveScenarioGame(
+          id: 'g-2509-colonial-lite-invasion-army-move-suppression',
           turnNumber: kObserverColonialLiteMinTurn,
           gpOwProvinceCount: kObserverColonialLiteNearQuotaOw,
         );

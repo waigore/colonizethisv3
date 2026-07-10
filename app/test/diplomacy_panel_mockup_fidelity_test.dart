@@ -22,12 +22,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
+
+import 'support/diplomacy_panel_test_support.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -152,11 +154,6 @@ Widget _panelHost(Game game) {
   );
 }
 
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
 /// The chip [Container] painted by `_DiplomacyModeButton` is the immediate
 /// [Container] ancestor of the chip label.
 BoxDecoration _chipDecoration(WidgetTester tester, String label) {
@@ -183,7 +180,7 @@ void main() {
     ) async {
       await bindSurface(tester);
       await tester.pumpWidget(_panelHost(_emptyStateGame()));
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // "Great Powers only" is inactive by default (default mode is `all`).
       final BoxDecoration deco = _chipDecoration(tester, 'Great Powers only');
@@ -202,7 +199,7 @@ void main() {
     ) async {
       await bindSurface(tester);
       await tester.pumpWidget(_panelHost(_emptyStateGame()));
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // "All" is the active mode by default.
       final BoxDecoration deco = _chipDecoration(tester, 'All');
@@ -223,7 +220,7 @@ void main() {
     ) async {
       await bindSurface(tester);
       await tester.pumpWidget(_panelHost(_subsidyGame()));
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       final Finder subsidyLine = find.textContaining('Outgoing subsidy');
       expect(subsidyLine, findsOneWidget);
@@ -255,7 +252,7 @@ void main() {
     Future<void> pumpRelation(WidgetTester tester, int score) async {
       await bindSurface(tester);
       await tester.pumpWidget(_panelHost(_gpRelationGame(score)));
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
     }
 
     testWidgets('relation word renders italic in its meter-step color', (
@@ -330,7 +327,7 @@ void main() {
     ) async {
       await bindSurface(tester);
       await tester.pumpWidget(_panelHost(_emptyStateGame()));
-      await _pumpBuilt(tester);
+      await pumpDiplomacyPanelBuilt(tester);
 
       // Default mode `all` renders Great Powers first, then Minor Nations.
       expect(

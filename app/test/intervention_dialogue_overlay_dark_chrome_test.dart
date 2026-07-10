@@ -16,9 +16,9 @@
 // asset bundle) therefore proves the chrome contract for every phase: the
 // scrim, title key + color, and brass divider key are produced by that
 // single helper.
-import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
-import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -26,14 +26,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'support/yarn_test_fixtures.dart';
 
-class _FailingAssetBundle extends Fake implements AssetBundle {
-  @override
-  Future<String> loadString(String key, {bool cache = true}) {
-    return Future.error(StateError('missing intervention yarn'));
-  }
-}
+import 'support/app_shell_harness.dart';
 
 const Game _kFixtureGame = Game(
   id: 'iv_dark_chrome',
@@ -72,7 +67,7 @@ Future<void> _pumpDegradedOverlay(
         game: _kFixtureGame,
         prompts: _kFixturePrompts,
         skipIntroForTest: true,
-        assetBundle: _FailingAssetBundle(),
+        assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
         onDecisions: (_) {},
         child: const Scaffold(body: Text('child')),
       ),
