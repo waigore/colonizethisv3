@@ -26,20 +26,23 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
     expect: const ValidatorExpectation(resultsEmpty: true),
   ),
   validatorRow(
-    label: 'single valid offer is accepted (stockpile covers, not riches, not '
+    label:
+        'single valid offer is accepted (stockpile covers, not riches, not '
         'mutually excluded)',
     context: validatorCtxWithStockpile({'timber': 50}),
     proposedOrders: [validatorOffer('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
   ),
   validatorRow(
-    label: 'single valid bid is accepted (within cargo, distinct-bid cap, not '
+    label:
+        'single valid bid is accepted (within cargo, distinct-bid cap, not '
         'riches, not mutually excluded)',
     proposedOrders: [validatorBid('timber', 10)],
     expect: const ValidatorExpectation(singleAccepted: true),
   ),
   validatorRow(
-    label: 'second bid on same commodity does not consume a new cap slot '
+    label:
+        'second bid on same commodity does not consume a new cap slot '
         '(rule 4 counts distinct commodities)',
     context: validatorCtx(bidTypeCap: 3),
     proposedOrders: [
@@ -60,10 +63,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
     expect: ValidatorExpectation(
       outcomes: [
         (accepted: true, reason: null),
-        (
-          accepted: false,
-          reason: TradeOrderRejectionReasons.invalidQuantity,
-        ),
+        (accepted: false, reason: TradeOrderRejectionReasons.invalidQuantity),
         (accepted: true, reason: null),
       ],
     ),
@@ -74,20 +74,16 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
     reason: TradeOrderRejectionReasons.invalidQuantity,
   ),
   validatorRejectRow(
-    label: 'invalidQuantity takes precedence over richesNotTradeable for a '
+    label:
+        'invalidQuantity takes precedence over richesNotTradeable for a '
         'zero-quantity riches order',
     order: validatorOffer('spices', 0),
     reason: TradeOrderRejectionReasons.invalidQuantity,
   ),
-  ...[
-    'spices',
-    'silver',
-    'gold',
-    'gems',
-    'diamonds',
-  ].map(
+  ...['spices', 'silver', 'gold', 'gems', 'diamonds'].map(
     (id) => validatorRejectRow(
-      label: 'riches offer $id is rejected with richesNotTradeable (offer side)',
+      label:
+          'riches offer $id is rejected with richesNotTradeable (offer side)',
       context: validatorCtx(availableStockpileByCommodityId: {id: 999}),
       order: validatorOffer(id, 5),
       reason: TradeOrderRejectionReasons.richesNotTradeable,
@@ -99,19 +95,18 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
     reason: TradeOrderRejectionReasons.richesNotTradeable,
   ),
   validatorRow(
-    label: 'commodity appearing as both bid and offer rejects both sides with '
+    label:
+        'commodity appearing as both bid and offer rejects both sides with '
         'mutualExclusion',
     context: validatorCtxWithStockpile({'timber': 50}),
-    proposedOrders: [
-      validatorBid('timber', 5),
-      validatorOffer('timber', 5),
-    ],
+    proposedOrders: [validatorBid('timber', 5), validatorOffer('timber', 5)],
     expect: const ValidatorExpectation(
       allSameReason: TradeOrderRejectionReasons.mutualExclusion,
     ),
   ),
   validatorRow(
-    label: 'bid-on-A + offer-on-B is allowed (mutual exclusion is per-commodity, '
+    label:
+        'bid-on-A + offer-on-B is allowed (mutual exclusion is per-commodity, '
         'not per-player)',
     context: validatorCtxWithStockpile({'iron': 50}),
     proposedOrders: [validatorBid('timber', 5), validatorOffer('iron', 5)],
@@ -119,10 +114,7 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
   ),
   validatorRow(
     label: 'mutually excluded commodity does not consume a bid-type cap slot',
-    context: validatorCtxWithStockpile(
-      {'timber': 50},
-      bidTypeCap: 3,
-    ),
+    context: validatorCtxWithStockpile({'timber': 50}, bidTypeCap: 3),
     proposedOrders: [
       validatorBid('timber', 5),
       validatorOffer('timber', 5),
@@ -132,14 +124,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
     ],
     expect: ValidatorExpectation(
       outcomes: [
-        (
-          accepted: false,
-          reason: TradeOrderRejectionReasons.mutualExclusion,
-        ),
-        (
-          accepted: false,
-          reason: TradeOrderRejectionReasons.mutualExclusion,
-        ),
+        (accepted: false, reason: TradeOrderRejectionReasons.mutualExclusion),
+        (accepted: false, reason: TradeOrderRejectionReasons.mutualExclusion),
         (accepted: true, reason: null),
         (accepted: true, reason: null),
         (accepted: true, reason: null),

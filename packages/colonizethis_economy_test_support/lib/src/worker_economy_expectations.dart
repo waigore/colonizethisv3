@@ -1,6 +1,5 @@
 // Compact worker labour primitive assertions (Refs #3939 phase 3 slice 33).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -8,10 +7,7 @@ import 'package:colonizethis_test/test.dart';
 import 'worker_economy_scenarios.dart';
 
 /// Pins for [effectiveLabourFromIdleCounts] rows.
-typedef IdleLabourPins = ({
-  WorkerIdleCounts idle,
-  int expected,
-});
+typedef IdleLabourPins = ({WorkerIdleCounts idle, int expected});
 
 void runIdleLabourExpectation(IdleLabourPins pins) {
   expect(effectiveLabourFromIdleCounts(pins.idle), pins.expected);
@@ -20,11 +16,7 @@ void runIdleLabourExpectation(IdleLabourPins pins) {
 WorkerEconomyScenario idleLabourScenario({
   required String label,
   required IdleLabourPins pins,
-}) =>
-    WorkerEconomyScenario(
-      label: label,
-      run: () => runIdleLabourExpectation(pins),
-    );
+}) => (label: label, run: () => runIdleLabourExpectation(pins), refs: null);
 
 /// Pins for [effectiveLabourForWorkers] rows.
 typedef EffectiveLabourPins = ({
@@ -47,7 +39,4 @@ WorkerEconomyScenario effectiveLabourScenario({
   required String label,
   required EffectiveLabourPins pins,
 }) =>
-    WorkerEconomyScenario(
-      label: label,
-      run: () => runEffectiveLabourExpectation(pins),
-    );
+    (label: label, run: () => runEffectiveLabourExpectation(pins), refs: null);

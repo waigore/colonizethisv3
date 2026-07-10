@@ -6,42 +6,37 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'lock_recovery_minor_bids_expectations.dart';
 import 'lock_recovery_minor_bids_test_support.dart';
 
-/// One row in [lockRecoveryMinorBidsScenarios].
-class LockRecoveryMinorBidsScenario {
-  const LockRecoveryMinorBidsScenario({
-    required this.label,
-    required this.game,
-    required this.verify,
-  });
+/// One row in [lockRecoveryMinorBidsScenarios] (Refs #3939 slice 63).
+typedef LockRecoveryMinorBidsScenario = ({
+  String label,
+  Game game,
+  void Function(Map<String, List<TradeOrder>> bids) verify,
+});
 
-  LockRecoveryMinorBidsScenario.expect({
-    required String label,
-    required Game game,
-    required LockRecoveryMinorBidsExpectation expect,
-  }) : this(
-          label: label,
-          game: game,
-          verify: (bids) => assertLockRecoveryMinorBidsExpectation(bids, expect),
-        );
-
-  final String label;
-  final Game game;
-  final void Function(Map<String, List<TradeOrder>> bids) verify;
-}
+/// Compact expect-wired row (Refs #3939 slice 59).
+LockRecoveryMinorBidsScenario lockRecoveryBidsRow({
+  required String label,
+  required Game game,
+  required LockRecoveryMinorBidsExpectation expect,
+}) => (
+  label: label,
+  game: game,
+  verify: (bids) => assertLockRecoveryMinorBidsExpectation(bids, expect),
+);
 
 /// Canonical scenarios for `computeLockRecoveryMinorAutoBids`.
 List<LockRecoveryMinorBidsScenario> lockRecoveryMinorBidsScenarios() => [
-  LockRecoveryMinorBidsScenario.expect(
+  lockRecoveryBidsRow(
     label: 'returns empty when no GP is broke',
     game: lockRecoveryGameWithTreasury(const {'gp1': 5000, 'gp2': 5000}),
     expect: const LockRecoveryMinorBidsExpectation(isEmpty: true),
   ),
-  LockRecoveryMinorBidsScenario.expect(
+  lockRecoveryBidsRow(
     label: 'returns empty when no minors exist',
     game: lockRecoveryGameWithoutMinors(gpTreasury: 100),
     expect: const LockRecoveryMinorBidsExpectation(isEmpty: true),
   ),
-  LockRecoveryMinorBidsScenario.expect(
+  lockRecoveryBidsRow(
     label: 'emits urgent grain bid per minor when a GP is broke',
     game: lockRecoveryGameWithTreasury(const {'gp1': 100, 'gp2': 5000}),
     expect: const LockRecoveryMinorBidsExpectation(

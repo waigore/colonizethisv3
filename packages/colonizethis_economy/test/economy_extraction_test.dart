@@ -6,11 +6,13 @@ void main() {
     'applyExtractionToStockpile',
     applyExtractionToStockpileScenarios(),
     runApplyExtractionToStockpileScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'applyExtractionForPlayers',
     applyExtractionForPlayersScenarios(),
     runApplyExtractionForPlayersScenario,
+    labelOf: (s) => s.label,
   );
 }

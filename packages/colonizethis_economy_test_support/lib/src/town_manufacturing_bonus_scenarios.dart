@@ -7,47 +7,19 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
-import 'scenario_runner.dart';
 import 'town_manufacturing_bonus_expectations.dart';
 
 /// One row in [townManufacturingBonusProvinceScenarios].
-class TownManufacturingBonusProvinceScenario {
-  const TownManufacturingBonusProvinceScenario({
-    required this.label,
-    required this.townDevelopmentLevel,
-    required this.townConnectedDeliveredRawByCommodity,
-    required this.verify,
-    this.techUnlocked,
-    this.refs,
-  });
+typedef TownManufacturingBonusProvinceScenario = ({
+  String label,
+  int townDevelopmentLevel,
+  Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
+  Map<String, bool>? techUnlocked,
+  void Function(Map<CommodityId, int> bonus) verify,
+  String? refs,
+});
 
-  TownManufacturingBonusProvinceScenario.expect({
-    required String label,
-    required int townDevelopmentLevel,
-    required Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
-    Map<String, bool>? techUnlocked,
-    required TownManufacturingBonusProvinceExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          townDevelopmentLevel: townDevelopmentLevel,
-          townConnectedDeliveredRawByCommodity:
-              townConnectedDeliveredRawByCommodity,
-          techUnlocked: techUnlocked,
-          refs: refs,
-          verify: (bonus) =>
-              assertTownManufacturingBonusProvinceExpectation(bonus, expect),
-        );
-
-  final String label;
-  final int townDevelopmentLevel;
-  final Map<CommodityId, int> townConnectedDeliveredRawByCommodity;
-  final Map<String, bool>? techUnlocked;
-  final void Function(Map<CommodityId, int> bonus) verify;
-  final String? refs;
-}
-
-/// Compact province-bonus row (Refs #3939 slice 47).
+/// Compact province-bonus row (Refs #3939 slice 47 / 57).
 TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   required String label,
   required int townDevelopmentLevel,
@@ -55,65 +27,63 @@ TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   required TownManufacturingBonusProvinceExpectation expect,
   Map<String, bool> techUnlocked = const {},
   String? refs = '#3872',
-}) =>
-    TownManufacturingBonusProvinceScenario.expect(
-      label: label,
-      townDevelopmentLevel: townDevelopmentLevel,
-      townConnectedDeliveredRawByCommodity:
-          townConnectedDeliveredRawByCommodity,
-      techUnlocked: techUnlocked,
-      expect: expect,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  townDevelopmentLevel: townDevelopmentLevel,
+  townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity,
+  techUnlocked: techUnlocked,
+  refs: refs,
+  verify: (bonus) => assertTownManufacturingBonusProvinceExpectation(
+    bonus,
+    expect,
+    townDevelopmentLevel: townDevelopmentLevel,
+    townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity,
+  ),
+);
 
 /// Canonical scenarios for [computeTownManufacturingBonusForProvince].
 List<TownManufacturingBonusProvinceScenario>
-    townManufacturingBonusProvinceScenarios() => [
+townManufacturingBonusProvinceScenarios() => [
   townBonusProvinceRow(
     label: 'floor(7/4)*1 = 1 lumber at level 2',
     townDevelopmentLevel: 2,
-    townConnectedDeliveredRawByCommodity: {CommodityCatalog.timber.id: 7},
+    townConnectedDeliveredRawByCommodity: {'timber': 7},
     expect: TownManufacturingBonusProvinceExpectation(
-      commodityAmounts: {CommodityCatalog.lumber.id: 1},
+      commodityAmounts: {'lumber': 1},
     ),
   ),
   townBonusProvinceRow(
     label: 'level 4 with 4 timber → 2 lumber (replacement multiplier)',
     townDevelopmentLevel: 4,
-    townConnectedDeliveredRawByCommodity: {CommodityCatalog.timber.id: 4},
+    townConnectedDeliveredRawByCommodity: {'timber': 4},
     expect: TownManufacturingBonusProvinceExpectation(
-      commodityAmounts: {CommodityCatalog.lumber.id: 2},
+      commodityAmounts: {'lumber': 2},
     ),
   ),
   townBonusProvinceRow(
     label: 'level 3 grants zero bonus',
     townDevelopmentLevel: 3,
-    townConnectedDeliveredRawByCommodity: {CommodityCatalog.timber.id: 8},
+    townConnectedDeliveredRawByCommodity: {'timber': 8},
     expect: const TownManufacturingBonusProvinceExpectation(isEmpty: true),
   ),
   townBonusProvinceRow(
     label: 'bronze limiting input min(8,2)=2 → floor(2/4)=0',
     townDevelopmentLevel: 2,
-    townConnectedDeliveredRawByCommodity: {
-      CommodityCatalog.copper.id: 8,
-      CommodityCatalog.tin.id: 2,
-    },
+    townConnectedDeliveredRawByCommodity: {'copper': 8, 'tin': 2},
     expect: TownManufacturingBonusProvinceExpectation(
-      absentCommodities: [CommodityCatalog.bronze.id],
+      absentCommodities: ['bronze'],
     ),
   ),
   townBonusProvinceRow(
     label: 'cotton fabric requires cotton_weaving tech',
     townDevelopmentLevel: 2,
-    townConnectedDeliveredRawByCommodity: {CommodityCatalog.cotton.id: 8},
+    townConnectedDeliveredRawByCommodity: {'cotton': 8},
     expect: TownManufacturingBonusProvinceExpectation(
-      absentCommodities: [CommodityCatalog.fabric.id],
+      absentCommodities: ['fabric'],
       techGated: (
         techUnlocked: {kTechIdCottonWeaving: true},
-        withTechCommodityAmounts: {CommodityCatalog.fabric.id: 2},
+        withTechCommodityAmounts: {'fabric': 2},
         withTechAbsentCommodities: <CommodityId>[],
-        townDevelopmentLevel: 2,
-        townConnectedDeliveredRawByCommodity: {CommodityCatalog.cotton.id: 8},
       ),
     ),
   ),
@@ -140,22 +110,13 @@ enum TownManufacturingBonusGamePin {
   previewEmpty,
 }
 
-/// One row in [townManufacturingBonusGameScenarios].
-class TownManufacturingBonusGameScenario implements RefsScenario {
-  const TownManufacturingBonusGameScenario({
-    required this.label,
-    required this.pin,
-    required this.expect,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final TownManufacturingBonusGamePin pin;
-  final TownManufacturingBonusGameExpectation expect;
-  @override
-  final String? refs;
-}
+/// One row in [townManufacturingBonusGameScenarios] (Refs #3939 slice 63).
+typedef TownManufacturingBonusGameScenario = ({
+  String label,
+  TownManufacturingBonusGamePin pin,
+  TownManufacturingBonusGameExpectation expect,
+  String? refs,
+});
 
 void runTownManufacturingBonusGameScenario(
   TownManufacturingBonusGameScenario scenario,
@@ -169,51 +130,32 @@ const _gpTownKey = '$_gpProvinceId|0|0';
 const _gpTimberTile = '$_gpProvinceId|1|0';
 
 TileMapResult _gpTimberTileMap() => TileMapResult(
-      width: 2,
-      height: 1,
-      grid: const [
-        ['p1', 'p1'],
-      ],
-      resourceGrid: const [
-        [null, Resource.timber],
-      ],
-      terrainGrid: const [
-        [null, TerrainType.hardwoodForest],
-      ],
-    );
+  width: 2,
+  height: 1,
+  grid: const [
+    ['p1', 'p1'],
+  ],
+  resourceGrid: const [
+    [null, Resource.timber],
+  ],
+  terrainGrid: const [
+    [null, TerrainType.hardwoodForest],
+  ],
+);
 
-Game _gpTownTimberGame() => TestFixtures.minimalGame(
-      players: [
-        spainPl1Player(
-          techUnlocked: {kTechIdCircularSaw: true},
-          capitalProvinceId: _gpProvinceId,
-          capitalTile: CapitalTile(
-            regionId: _ow,
-            provinceId: _gpProvinceId,
-            x: 0,
-            y: 0,
-          ),
-        ),
-      ],
-      capitalTileGrainBonusPerTurn: 0,
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _gpProvinceId,
-            regionId: _ow,
-            ownerId: 'pl1',
-            townDevelopmentLevel: 4,
-            townTileKey: _gpTownKey,
-          ),
-        ],
-      ),
-      tileKeysByRegionAndProvince: {
-        _ow: {
-          _gpProvinceId: [_gpTownKey, _gpTimberTile],
-        },
-      },
-      tileState: tileStateFromSpecs(const [TileImprovementSpec(_gpTimberTile, 4, 4), TileImprovementSpec(_gpTownKey, 0, 1)]),
-    );
+Game _gpTownTimberGame() => spainExtractorGame(
+  techUnlocked: {kTechIdCircularSaw: true},
+  oldWorld: RegionData(provinces: [owP1Province(townTileKey: _gpTownKey)]),
+  tileKeysByRegionAndProvince: {
+    _ow: {
+      _gpProvinceId: [_gpTownKey, _gpTimberTile],
+    },
+  },
+  tileState: tileStateFromSpecs(const [
+    TileImprovementSpec(_gpTimberTile, 4, 4),
+    TileImprovementSpec(_gpTownKey, 0, 1),
+  ]),
+);
 
 void runTownManufacturingBonusGamePin(
   TownManufacturingBonusGamePin pin,
@@ -235,50 +177,27 @@ void runTownManufacturingBonusGamePin(
       );
     case TownManufacturingBonusGamePin.minorDeliveredRaw:
       const tileKey = 'oldWorld|m1|0|0';
-      final game = TestFixtures.minimalGame(
+      final game = nonGpMinorM1Game(
         id: 'g_town_bonus_minor',
-        players: const [
-          Player(id: 'gpA', displayName: 'GP A', isHuman: true),
-        ],
-        oldWorld: const RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|m1',
-              regionId: 'oldWorld',
-              ownerId: 'm1',
-              townDevelopmentLevel: 4,
-              townTileKey: tileKey,
-            ),
-          ],
-        ),
+        townDev: 4,
+        townTileKey: tileKey,
+        tileSpecs: const [TileImprovementSpec(tileKey, 1, 1)],
+        players: const [Player(id: 'gpA', displayName: 'GP A', isHuman: true)],
         tileKeysByRegionAndProvince: {
           'oldWorld': {
             'oldWorld|m1': [tileKey],
           },
         },
-        minorNations: const [
-          MinorNation(
-            id: 'm1',
-            capitalProvinceId: 'oldWorld|m1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|m1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-        tileState: tileStateFromSpecs(const [TileImprovementSpec(tileKey, 1, 1)]),
       );
       final delivered = computeTownConnectedDeliveredRawByProvince(
         game: game,
         tileMapByRegion: {
-          'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
+          'oldWorld': singleTileMap(Resource.timber, province: 'm1'),
         },
         gpConnectivityByPlayerId: const {},
-        nonGpConnectivityByFactionId: const {
-          'm1': ConnectivityResult(connected: {tileKey}),
-        },
+        nonGpConnectivityByFactionId: connectivityByFaction({
+          'm1': {tileKey},
+        }),
         townConnectedByProvinceId: const {
           'oldWorld|m1': {tileKey},
         },
@@ -294,7 +213,7 @@ void runTownManufacturingBonusGamePin(
       final offers = townManufacturingBonusToAutoOffers(
         game: game,
         bonusByFactionId: {
-          'm1': {CommodityCatalog.lumber.id: 2},
+          'm1': {'lumber': 2},
         },
       );
       assertTownManufacturingBonusGameExpectation(
@@ -347,65 +266,62 @@ void runTownManufacturingBonusGamePin(
 }
 
 /// Canonical fixture-backed scenarios for game-level town manufacturing bonus.
-List<TownManufacturingBonusGameScenario> townManufacturingBonusGameScenarios() =>
-    [
-      TownManufacturingBonusGameScenario(
-        label: 'GP town-connected timber yields lumber bonus in bonusByFactionId',
-        pin: TownManufacturingBonusGamePin.gpTownTimberBonus,
-        expect: TownManufacturingBonusGameExpectation(
-          factionBonus: {
-            'pl1': {CommodityCatalog.lumber.id: 2},
-          },
-          deliveredRawGreaterThanZero: {
-            _gpProvinceId: CommodityCatalog.timber.id,
-          },
+List<TownManufacturingBonusGameScenario>
+townManufacturingBonusGameScenarios() => [
+  (
+    label: 'GP town-connected timber yields lumber bonus in bonusByFactionId',
+    pin: TownManufacturingBonusGamePin.gpTownTimberBonus,
+    expect: TownManufacturingBonusGameExpectation(
+      factionBonus: {
+        'pl1': {'lumber': 2},
+      },
+      deliveredRawGreaterThanZero: {_gpProvinceId: 'timber'},
+    ),
+    refs: '#3872',
+  ),
+  (
+    label: 'minor town-connected timber accumulates delivered raw extraction',
+    pin: TownManufacturingBonusGamePin.minorDeliveredRaw,
+    expect: TownManufacturingBonusGameExpectation(
+      deliveredRawGreaterThanZero: {'oldWorld|m1': 'timber'},
+    ),
+    refs: '#3872',
+  ),
+  (
+    label:
+        'townManufacturingBonusToAutoOffers emits priority-1 offers for minors',
+    pin: TownManufacturingBonusGamePin.autoOffersMinor,
+    expect: TownManufacturingBonusGameExpectation(
+      autoOffers: {
+        'm1': TownManufacturingAutoOfferExpectation(
+          commodityId: 'lumber',
+          type: TradeOrderType.offer,
+          priority: 1,
+          quantity: 2,
         ),
-        refs: '#3872',
+      },
+    ),
+    refs: '#3872',
+  ),
+  (
+    label:
+        'previewTownManufacturingBonusByProvince matches live bonusByProvinceId when connectivity resolves',
+    pin: TownManufacturingBonusGamePin.previewMatchesLive,
+    expect: TownManufacturingBonusGameExpectation(
+      previewMatchesLive: true,
+      previewProvinceMatchesFactionCommodity: (
+        provinceId: _gpProvinceId,
+        factionId: 'pl1',
+        commodityId: 'lumber',
       ),
-      TownManufacturingBonusGameScenario(
-        label: 'minor town-connected timber accumulates delivered raw extraction',
-        pin: TownManufacturingBonusGamePin.minorDeliveredRaw,
-        expect: TownManufacturingBonusGameExpectation(
-          deliveredRawGreaterThanZero: {
-            'oldWorld|m1': CommodityCatalog.timber.id,
-          },
-        ),
-        refs: '#3872',
-      ),
-      TownManufacturingBonusGameScenario(
-        label: 'townManufacturingBonusToAutoOffers emits priority-1 offers for minors',
-        pin: TownManufacturingBonusGamePin.autoOffersMinor,
-        expect: TownManufacturingBonusGameExpectation(
-          autoOffers: {
-            'm1': TownManufacturingAutoOfferExpectation(
-              commodityId: CommodityCatalog.lumber.id,
-              type: TradeOrderType.offer,
-              priority: 1,
-              quantity: 2,
-            ),
-          },
-        ),
-        refs: '#3872',
-      ),
-      TownManufacturingBonusGameScenario(
-        label: 'previewTownManufacturingBonusByProvince matches live bonusByProvinceId when connectivity resolves',
-        pin: TownManufacturingBonusGamePin.previewMatchesLive,
-        expect: TownManufacturingBonusGameExpectation(
-          previewMatchesLive: true,
-          previewProvinceMatchesFactionCommodity: (
-            provinceId: _gpProvinceId,
-            factionId: 'pl1',
-            commodityId: CommodityCatalog.lumber.id,
-          ),
-        ),
-        refs: '#3872',
-      ),
-      TownManufacturingBonusGameScenario(
-        label: 'previewTownManufacturingBonusByProvince returns empty without tile maps',
-        pin: TownManufacturingBonusGamePin.previewEmpty,
-        expect: const TownManufacturingBonusGameExpectation(
-          previewEmpty: true,
-        ),
-        refs: '#3872',
-      ),
-    ];
+    ),
+    refs: '#3872',
+  ),
+  (
+    label:
+        'previewTownManufacturingBonusByProvince returns empty without tile maps',
+    pin: TownManufacturingBonusGamePin.previewEmpty,
+    expect: const TownManufacturingBonusGameExpectation(previewEmpty: true),
+    refs: '#3872',
+  ),
+];

@@ -5,11 +5,13 @@ void main() {
     'resolveTileKeyResourceContext',
     resolveTileKeyResourceContextScenarios(),
     runResolveTileKeyResourceContextScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'resolveTileKeyExtractionContext',
     resolveTileKeyExtractionContextScenarios(),
     runResolveTileKeyExtractionContextScenario,
+    labelOf: (s) => s.label,
   );
 }

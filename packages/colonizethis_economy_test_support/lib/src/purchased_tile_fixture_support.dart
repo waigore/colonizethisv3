@@ -3,8 +3,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import 'extraction_fixture_support.dart';
-
 /// Canonical parameterized purchased-tile [Game] builder.
 Game purchasedTileFixtureGame({
   required List<Province> provinces,
@@ -67,7 +65,9 @@ Game minorPurchasedTileGame({
       ),
     ],
     tileKeysByRegionAndProvince: {
-      regionId: {provinceId: [tileKey]},
+      regionId: {
+        provinceId: [tileKey],
+      },
     },
     minorNations: [
       MinorNation(
@@ -82,8 +82,7 @@ Game minorPurchasedTileGame({
         ),
       ),
     ],
-    purchasedTilesByTileKey:
-        purchasedTilesByTileKey ?? {tileKey: owningGpId},
+    purchasedTilesByTileKey: purchasedTilesByTileKey ?? {tileKey: owningGpId},
     tileState: tileState,
     portsByProvinceSeaboard: portsByProvinceSeaboard,
   );
@@ -107,15 +106,11 @@ Game tribePurchasedTileGame({
   return purchasedTileFixtureGame(
     gameId: gameId,
     players: players,
-    provinces: [
-      Province(
-        id: provinceId,
-        regionId: regionId,
-        ownerId: tribeId,
-      ),
-    ],
+    provinces: [Province(id: provinceId, regionId: regionId, ownerId: tribeId)],
     tileKeysByRegionAndProvince: {
-      regionId: {provinceId: [tileKey]},
+      regionId: {
+        provinceId: [tileKey],
+      },
     },
     tribes: [
       Tribe(
@@ -154,14 +149,12 @@ Game gpProvincePurchasedTileGame({
     gameId: gameId,
     players: players,
     provinces: [
-      Province(
-        id: provinceId,
-        regionId: regionId,
-        ownerId: ownerGpId,
-      ),
+      Province(id: provinceId, regionId: regionId, ownerId: ownerGpId),
     ],
     tileKeysByRegionAndProvince: {
-      regionId: {provinceId: [tileKey]},
+      regionId: {
+        provinceId: [tileKey],
+      },
     },
     purchasedTilesByTileKey: {tileKey: owningGpId},
     tileState: tileState,
@@ -195,6 +188,5 @@ Game minorTileAutoOfferGame({
 }
 
 /// Improved + roaded tile state for riches-yield purchased-tile tests.
-TileMapState improvedRoadedTileState(String tileKey) => TileMapState()
-    .setImprovement(tileKey, 1)
-    .setRoadLevel(tileKey, 1);
+TileMapState improvedRoadedTileState(String tileKey) =>
+    TileMapState().setImprovement(tileKey, 1).setRoadLevel(tileKey, 1);

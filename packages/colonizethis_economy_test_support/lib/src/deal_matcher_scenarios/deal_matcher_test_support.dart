@@ -72,64 +72,64 @@ DealMatchInputs matcherInputs({
 }
 
 /// Single-seller / single-buyer commodity match with default timber @ 30.0.
+///
+/// Pass [buyerCapacity] `null` to omit the buyer cargo entry (treated as zero
+/// cargo by the matcher). Pass [treasuryBudgetByBuyerFactionId] to override the
+/// default ample test budget (Refs #3939 slice 59).
 DealMatchInputs matcherPairTrade({
   String seller = 'a',
   String buyer = 'b',
   String commodity = 'timber',
   int offerQty = 10,
   int bidQty = 5,
-  int buyerCapacity = 100,
+  int? buyerCapacity = 100,
   int offerPriority = 1,
   int bidPriority = 1,
   Map<CommodityId, double>? pricesByCommodityId,
   Set<String> boycottBlockedPairKeys = const {},
-}) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [matcherOffer(commodity, offerQty, priority: offerPriority)],
-      },
-      bidsByFactionId: {
-        buyer: [matcherBid(commodity, bidQty, priority: bidPriority)],
-      },
-      tradeCapacityByFactionId: {buyer: buyerCapacity},
-      pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
-      boycottBlockedPairKeys: boycottBlockedPairKeys,
-    );
-
-/// Single-buyer treasury-clamp preset for DealMatcher treasury suites (Refs #3939).
-DealMatchInputs matcherTreasuryClampInputs({
-  String seller = 'a',
-  String buyer = 'gp1',
-  String commodity = 'timber',
-  int offerQty = 10,
-  int bidQty = 10,
-  int buyerCapacity = 100,
-  int treasuryBudget = 100,
-  Map<CommodityId, double>? pricesByCommodityId,
+  int? treasuryBudget,
+  Map<String, int>? treasuryBudgetByBuyerFactionId,
   PurchasedTileIndex? purchasedTileIndex,
   String? originTileKey,
-}) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [
-          matcherOffer(
-            commodity,
-            offerQty,
-            originTileKey: originTileKey,
-          ),
-        ],
-      },
-      bidsByFactionId: {
-        buyer: [matcherBid(commodity, bidQty)],
-      },
-      tradeCapacityByFactionId: {buyer: buyerCapacity},
-      treasuryBudgetByBuyerFactionId: {buyer: treasuryBudget},
-      pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
-      purchasedTileIndex: purchasedTileIndex,
-    );
+}) => matcherInputs(
+  offersByFactionId: {
+    seller: [
+      matcherOffer(
+        commodity,
+        offerQty,
+        priority: offerPriority,
+        originTileKey: originTileKey,
+      ),
+    ],
+  },
+  bidsByFactionId: {
+    buyer: [matcherBid(commodity, bidQty, priority: bidPriority)],
+  },
+  tradeCapacityByFactionId: buyerCapacity == null
+      ? const {}
+      : {buyer: buyerCapacity},
+  treasuryBudgetByBuyerFactionId:
+      treasuryBudgetByBuyerFactionId ??
+      (treasuryBudget == null ? null : {buyer: treasuryBudget}),
+  pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
+  boycottBlockedPairKeys: boycottBlockedPairKeys,
+  purchasedTileIndex: purchasedTileIndex,
+);
 
 /// Canonical FRR purchased-tile key for matcher integration tests (#2992).
 const String kFrrMatcherTestTileKey = 'oldWorld|M1|0|0';
+
+PurchasedTileAttribution _frrMatcherAttr(
+  String tileKey, {
+  String owningGpId = 'gpA',
+  String sourceFactionId = 'M1',
+  String provinceId = 'oldWorld|M1',
+}) => PurchasedTileAttribution(
+  tileKey: tileKey,
+  owningGpId: owningGpId,
+  sourceFactionId: sourceFactionId,
+  provinceId: provinceId,
+);
 
 /// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
 PurchasedTileIndex frrMatcherTestIndex({
@@ -138,42 +138,16 @@ PurchasedTileIndex frrMatcherTestIndex({
   String sourceFactionId = 'M1',
   String provinceId = 'oldWorld|M1',
 }) => PurchasedTileIndex.forTesting([
-  PurchasedTileAttribution(
-    tileKey: tileKey,
+  _frrMatcherAttr(
+    tileKey,
     owningGpId: owningGpId,
     sourceFactionId: sourceFactionId,
     provinceId: provinceId,
   ),
 ]);
 
-/// Minor/Tribe seller with two GP buyers and optional relation map (Refs #3939 slice 41).
-DealMatchInputs sellPriorityMinorSellerInputs({
-  String seller = 'minorM',
-  String buyerA = 'gpHigh',
-  String buyerB = 'gpLow',
-  String commodity = 'timber',
-  int qty = 5,
-  int priority = 1,
-  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller =
-      const {},
-  List<TradeOrder>? extraOffers,
-}) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [
-          ...(extraOffers ?? [matcherOffer(commodity, qty, priority: priority)]),
-        ],
-      },
-      bidsByFactionId: {
-        buyerA: [matcherBid(commodity, qty, priority: priority)],
-        buyerB: [matcherBid(commodity, qty, priority: priority)],
-      },
-      tradeCapacityByFactionId: {buyerA: 100, buyerB: 100},
-      sellPriorityRelationByMinorTribeSeller:
-          sellPriorityRelationByMinorTribeSeller,
-    );
-
-/// Compact row builder for sell-priority relation tiebreaker suites (Refs #3939 slice 41).
+/// Compact row builder for sell-priority relation tiebreaker suites
+/// (Refs #3939 slice 41 / 58).
 DealMatcherScenario sellPriorityMinorSellerRow({
   required String label,
   required DealMatchExpectation expect,
@@ -187,67 +161,42 @@ DealMatcherScenario sellPriorityMinorSellerRow({
       const {},
   List<TradeOrder>? extraOffers,
   String? refs = '#3753',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: sellPriorityMinorSellerInputs(
-        seller: seller,
-        buyerA: buyerA,
-        buyerB: buyerB,
-        commodity: commodity,
-        qty: qty,
-        priority: priority,
-        sellPriorityRelationByMinorTribeSeller:
-            sellPriorityRelationByMinorTribeSeller,
-        extraOffers: extraOffers,
-      ),
-      expect: expect,
-      refs: refs,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: matcherInputs(
+    offersByFactionId: {
+      seller: [
+        ...(extraOffers ?? [matcherOffer(commodity, qty, priority: priority)]),
+      ],
+    },
+    bidsByFactionId: {
+      buyerA: [matcherBid(commodity, qty, priority: priority)],
+      buyerB: [matcherBid(commodity, qty, priority: priority)],
+    },
+    tradeCapacityByFactionId: {buyerA: 100, buyerB: 100},
+    sellPriorityRelationByMinorTribeSeller:
+        sellPriorityRelationByMinorTribeSeller,
+  ),
+  expect: expect,
+  refs: refs,
+);
 
-/// Two-buyer FRR routing inputs with owning GP at higher priority (Refs #3939 slice 41).
-DealMatchInputs frrTwoBuyerRivalInputs({
-  required Map<String, List<TradeOrder>> offersByFactionId,
-  String gpOwner = 'gpA',
-  String gpRival = 'gpB',
-  String commodity = 'timber',
-  int qty = 10,
-  int ownerBidPriority = 5,
-  int rivalBidPriority = 1,
-  PurchasedTileIndex? purchasedTileIndex,
-}) =>
-    matcherInputs(
-      offersByFactionId: offersByFactionId,
-      bidsByFactionId: {
-        gpOwner: [matcherBid(commodity, qty, priority: ownerBidPriority)],
-        gpRival: [matcherBid(commodity, qty, priority: rivalBidPriority)],
-      },
-      tradeCapacityByFactionId: {gpOwner: 100, gpRival: 100},
-      purchasedTileIndex: purchasedTileIndex,
-    );
-
-/// Two-tile [PurchasedTileIndex] owned by the same GP (Refs #3939 slice 42).
+/// Two-tile [PurchasedTileIndex] owned by the same GP (Refs #3939 slice 42 / 58).
 PurchasedTileIndex frrMatcherTestIndexDual({
   String tileKeyA = kFrrMatcherTestTileKey,
   String tileKeyB = 'oldWorld|M1|1|0',
   String owningGpId = 'gpA',
   String sourceFactionId = 'M1',
   String provinceId = 'oldWorld|M1',
-}) =>
-    PurchasedTileIndex.forTesting([
-      PurchasedTileAttribution(
-        tileKey: tileKeyA,
-        owningGpId: owningGpId,
-        sourceFactionId: sourceFactionId,
-        provinceId: provinceId,
-      ),
-      PurchasedTileAttribution(
-        tileKey: tileKeyB,
-        owningGpId: owningGpId,
-        sourceFactionId: sourceFactionId,
-        provinceId: provinceId,
-      ),
-    ]);
+}) => PurchasedTileIndex.forTesting([
+  for (final key in [tileKeyA, tileKeyB])
+    _frrMatcherAttr(
+      key,
+      owningGpId: owningGpId,
+      sourceFactionId: sourceFactionId,
+      provinceId: provinceId,
+    ),
+]);
 
 /// Standard M1 FRR offer inputs with optional rival buyers (Refs #3939 slice 42).
 DealMatchInputs frrM1OfferInputs({
@@ -257,28 +206,24 @@ DealMatchInputs frrM1OfferInputs({
   Map<String, List<TradeOrder>>? bidsByFactionId,
   Map<String, int>? tradeCapacityByFactionId,
   PurchasedTileIndex? purchasedTileIndex,
-}) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [
-          matcherOffer(
-            commodity,
-            offerQty,
-            originTileKey: kFrrMatcherTestTileKey,
-          ),
-        ],
+}) => matcherInputs(
+  offersByFactionId: {
+    seller: [
+      matcherOffer(commodity, offerQty, originTileKey: kFrrMatcherTestTileKey),
+    ],
+  },
+  bidsByFactionId:
+      bidsByFactionId ??
+      {
+        'gpA': [matcherBid(commodity, offerQty, priority: 5)],
+        'gpB': [matcherBid(commodity, offerQty, priority: 1)],
       },
-      bidsByFactionId: bidsByFactionId ??
-          {
-            'gpA': [matcherBid(commodity, offerQty, priority: 5)],
-            'gpB': [matcherBid(commodity, offerQty, priority: 1)],
-          },
-      tradeCapacityByFactionId:
-          tradeCapacityByFactionId ?? const {'gpA': 100, 'gpB': 100},
-      purchasedTileIndex: purchasedTileIndex ?? frrMatcherTestIndex(),
-    );
+  tradeCapacityByFactionId:
+      tradeCapacityByFactionId ?? const {'gpA': 100, 'gpB': 100},
+  purchasedTileIndex: purchasedTileIndex ?? frrMatcherTestIndex(),
+);
 
-/// Boycott-blocked or allowed tribe/GP trade row (Refs #3939 slice 42).
+/// Boycott-blocked or allowed tribe/GP trade row (Refs #3939 slice 42 / 58).
 DealMatcherScenario boycottTradeRow({
   required String label,
   required String seller,
@@ -288,22 +233,170 @@ DealMatcherScenario boycottTradeRow({
   int qty = 10,
   String commodity = 'timber',
   String? refs = '#3753',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          seller: [matcherOffer(commodity, qty, priority: 1)],
-        },
-        bidsByFactionId: {
-          buyer: [matcherBid(commodity, qty, priority: 1)],
-        },
-        tradeCapacityByFactionId: {buyer: 100},
-        boycottBlockedPairKeys: boycottBlockedPairKeys,
-      ),
-      expect: expect,
-      refs: refs,
+}) => matcherRow(
+  label: label,
+  inputs: matcherPairTrade(
+    seller: seller,
+    buyer: buyer,
+    commodity: commodity,
+    offerQty: qty,
+    bidQty: qty,
+    boycottBlockedPairKeys: boycottBlockedPairKeys,
+  ),
+  expect: expect,
+  refs: refs,
+);
+
+/// Compact single-faction unfilled bid map (Refs #3939 slice 60).
+Map<String, List<TradeOrder>> matcherUnfilledBid(
+  String faction,
+  String commodity,
+  int qty, {
+  int priority = 1,
+}) => {
+  faction: [matcherBid(commodity, qty, priority: priority)],
+};
+
+/// Compact single-faction unfilled offer map (Refs #3939 slice 60).
+Map<String, List<TradeOrder>> matcherUnfilledOffer(
+  String faction,
+  String commodity,
+  int qty, {
+  int priority = 1,
+}) => {
+  faction: [matcherOffer(commodity, qty, priority: priority)],
+};
+
+/// Compact [MarketActivity] pin (Refs #3939 slice 60).
+MarketActivity matcherActivity({int bid = 0, int offer = 0, int filled = 0}) =>
+    MarketActivity(
+      totalBidQuantity: bid,
+      totalOfferQuantity: offer,
+      filledQuantity: filled,
     );
+
+/// Compact [FilledDealExpectation] (Refs #3939 slice 65).
+FilledDealExpectation matcherFilled({
+  String? buyer,
+  String? seller,
+  String? commodity,
+  int? quantity,
+  double? pricePerUnit,
+  bool? isFtpMatch,
+  bool? isFrr,
+}) => FilledDealExpectation(
+  buyerFactionId: buyer,
+  sellerFactionId: seller,
+  commodityId: commodity,
+  quantity: quantity,
+  pricePerUnit: pricePerUnit,
+  isFtpMatch: isFtpMatch,
+  isFirstRightOfRefusalMatch: isFrr,
+);
+
+/// FRR + residual non-FRR fill expect (Refs #3939 slice 61).
+DealMatchExpectation frrSplitExpect({
+  required String frrBuyer,
+  required int frrQty,
+  required String otherBuyer,
+  required int otherQty,
+  int filledDealsLength = 2,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  Map<String, List<TradeOrder>>? unfilledBidsPinsByFactionId,
+  bool unfilledOffersEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsLength: filledDealsLength,
+  frrFilledDeal: matcherFilled(buyer: frrBuyer, quantity: frrQty),
+  nonFrrFilledDeal: matcherFilled(buyer: otherBuyer, quantity: otherQty),
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledBidsPinsByFactionId: unfilledBidsPinsByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+);
+
+/// Owning-GP FRR fill + rival unfilled bid (Refs #3939 slice 61).
+DealMatchExpectation frrOwnerFillExpect({
+  required String ownerBuyer,
+  required String rivalBuyer,
+  required int rivalUnfilledQty,
+  int? fillQty,
+  int rivalPriority = 1,
+  String commodity = 'timber',
+  bool isFtpMatch = false,
+}) => DealMatchExpectation(
+  filledDealsLength: 1,
+  frrFilledDeal: matcherFilled(
+    buyer: ownerBuyer,
+    quantity: fillQty,
+    isFrr: true,
+    isFtpMatch: isFtpMatch,
+  ),
+  unfilledBidsByFactionId: matcherUnfilledBid(
+    rivalBuyer,
+    commodity,
+    rivalUnfilledQty,
+    priority: rivalPriority,
+  ),
+);
+
+/// Multiple owning-GP FRR fills (Refs #3939 slice 62).
+DealMatchExpectation frrOwnerFillsExpect({
+  required String ownerBuyer,
+  required List<int> quantities,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  bool unfilledOffersEmpty = false,
+  bool unfilledBidsEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsLength: quantities.length,
+  filledDealExpectations: [
+    for (final q in quantities)
+      matcherFilled(buyer: ownerBuyer, quantity: q, isFrr: true),
+  ],
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+  unfilledBidsEmpty: unfilledBidsEmpty,
+);
+
+/// No-fill carry-forward expect (Refs #3939 slice 62).
+DealMatchExpectation matcherNoFillExpect({
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  Map<String, List<TradeOrder>>? unfilledOffersByFactionId,
+  bool unfilledOffersEmpty = false,
+  bool unfilledBidsEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsEmpty: true,
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledOffersByFactionId: unfilledOffersByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+  unfilledBidsEmpty: unfilledBidsEmpty,
+);
+
+/// Single treasury-insufficient activity note (Refs #3939 slice 62).
+Map<CommodityId, List<MarketActivityNote>> matcherTreasuryInsufficientNotes(
+  String factionId,
+  String commodityId,
+  int quantity,
+) => {
+  commodityId: [
+    MarketActivityNote(
+      kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+      factionId: factionId,
+      commodityId: commodityId,
+      quantity: quantity,
+    ),
+  ],
+};
+
+/// First filled buyer (+ optional unfilled rival) (Refs #3939 slice 61).
+DealMatchExpectation matcherFirstBuyerExpect(
+  String buyer, {
+  int? quantity,
+  int? filledDealsLength,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+}) => DealMatchExpectation(
+  filledDealsLength: filledDealsLength,
+  firstFilledDeal: matcherFilled(buyer: buyer, quantity: quantity),
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+);
 
 /// Offers-only or bids-only carry-forward row (Refs #3939 slice 42).
 DealMatcherScenario matcherUnilateralRow({
@@ -312,67 +405,48 @@ DealMatcherScenario matcherUnilateralRow({
   Map<String, List<TradeOrder>>? offersByFactionId,
   Map<String, List<TradeOrder>>? bidsByFactionId,
   Map<String, int> tradeCapacityByFactionId = const {},
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: offersByFactionId ?? const {},
-        bidsByFactionId: bidsByFactionId ?? const {},
-        tradeCapacityByFactionId: tradeCapacityByFactionId,
-      ),
-      expect: expect,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: matcherInputs(
+    offersByFactionId: offersByFactionId ?? const {},
+    bidsByFactionId: bidsByFactionId ?? const {},
+    tradeCapacityByFactionId: tradeCapacityByFactionId,
+  ),
+  expect: expect,
+);
 
-/// Seller `a` / buyer `b` timber (or [commodity]) fill row (Refs #3939 slice 50).
-DealMatcherScenario matcherAbPairRow({
+/// Single-pair fill row over [matcherPairTrade] (Refs #3939 slice 50 / 59).
+DealMatcherScenario matcherPairRow({
   required String label,
   required DealMatchExpectation expect,
+  String seller = 'a',
+  String buyer = 'b',
   String commodity = 'timber',
   int offerQty = 10,
   int bidQty = 5,
-  int buyerCapacity = 100,
+  int? buyerCapacity = 100,
   Map<CommodityId, double>? pricesByCommodityId,
+  Map<String, int>? treasuryBudgetByBuyerFactionId,
+  int? treasuryBudget,
+  bool deterministicRerun = false,
   String? refs,
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherPairTrade(
-        commodity: commodity,
-        offerQty: offerQty,
-        bidQty: bidQty,
-        buyerCapacity: buyerCapacity,
-        pricesByCommodityId: pricesByCommodityId,
-      ),
-      expect: expect,
-      refs: refs,
-    );
-
-/// Zero / omitted / negative buyer cargo suppresses fills (Refs #3939 slice 50).
-DealMatcherScenario matcherZeroCargoBuyerRow({
-  required String label,
-  required DealMatchExpectation expect,
-  int offerQty = 10,
-  int bidQty = 5,
-  int? buyerCapacity,
-  String commodity = 'timber',
-  String? refs,
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          'a': [matcherOffer(commodity, offerQty)],
-        },
-        bidsByFactionId: {
-          'b': [matcherBid(commodity, bidQty)],
-        },
-        tradeCapacityByFactionId: buyerCapacity == null
-            ? const {}
-            : {'b': buyerCapacity},
-      ),
-      expect: expect,
-      refs: refs,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: matcherPairTrade(
+    seller: seller,
+    buyer: buyer,
+    commodity: commodity,
+    offerQty: offerQty,
+    bidQty: bidQty,
+    buyerCapacity: buyerCapacity,
+    pricesByCommodityId: pricesByCommodityId,
+    treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId,
+    treasuryBudget: treasuryBudget,
+  ),
+  deterministicRerun: deterministicRerun,
+  expect: expect,
+  refs: refs,
+);
 
 /// Single-commodity FTP pair with per-seller/buyer priorities (Refs #3939 slice 53).
 DealMatcherScenario matcherFtpTimberRow({
@@ -385,80 +459,50 @@ DealMatcherScenario matcherFtpTimberRow({
   int qty = 10,
   String commodity = 'timber',
   String? refs,
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          for (final e in offerPriorityBySeller.entries)
-            e.key: [matcherOffer(commodity, qty, priority: e.value)],
-        },
-        bidsByFactionId: {
-          for (final e in bidPriorityByBuyer.entries)
-            e.key: [matcherBid(commodity, qty, priority: e.value)],
-        },
-        tradeCapacityByFactionId: {
-          for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
-        },
-        ftpPairKeys: {DealMatcher.pairKey(ftpSeller, ftpBuyer)},
-      ),
-      expect: expect,
-      refs: refs,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: matcherInputs(
+    offersByFactionId: {
+      for (final e in offerPriorityBySeller.entries)
+        e.key: [matcherOffer(commodity, qty, priority: e.value)],
+    },
+    bidsByFactionId: {
+      for (final e in bidPriorityByBuyer.entries)
+        e.key: [matcherBid(commodity, qty, priority: e.value)],
+    },
+    tradeCapacityByFactionId: {
+      for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
+    },
+    ftpPairKeys: {DealMatcher.pairKey(ftpSeller, ftpBuyer)},
+  ),
+  expect: expect,
+  refs: refs,
+);
 
-/// FRR disabled / unmatched origin → normal routing to rival (Refs #3939 slice 54).
+/// FRR disabled / unmatched origin → normal routing to rival
+/// (Refs #3939 slice 54 / 58).
 DealMatcherScenario frrNoEffectRow({
   required String label,
   required Map<String, List<TradeOrder>> offersByFactionId,
   PurchasedTileIndex? purchasedTileIndex,
   String? refs = '#2992',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: frrTwoBuyerRivalInputs(
-        offersByFactionId: offersByFactionId,
-        purchasedTileIndex: purchasedTileIndex,
-      ),
-      expect: const DealMatchExpectation(
-        filledDealsLength: 1,
-        firstFilledDeal: FilledDealExpectation(
-          buyerFactionId: 'gpB',
-          isFirstRightOfRefusalMatch: false,
-        ),
-      ),
-      refs: refs,
-    );
-
-/// Seller `a` / buyer `gp1` single-commodity row for treasury edges (Refs #3939 slice 54).
-DealMatcherScenario matcherAgp1Row({
-  required String label,
-  required DealMatchExpectation expect,
-  String commodity = 'timber',
-  int offerQty = 10,
-  int bidQty = 10,
-  int buyerCapacity = 100,
-  Map<String, int>? treasuryBudgetByBuyerFactionId,
-  Map<CommodityId, double>? pricesByCommodityId,
-  bool deterministicRerun = false,
-  String? refs = '#3115',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          'a': [matcherOffer(commodity, offerQty)],
-        },
-        bidsByFactionId: {
-          'gp1': [matcherBid(commodity, bidQty)],
-        },
-        tradeCapacityByFactionId: {'gp1': buyerCapacity},
-        treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId,
-        pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
-      ),
-      deterministicRerun: deterministicRerun,
-      expect: expect,
-      refs: refs,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: matcherInputs(
+    offersByFactionId: offersByFactionId,
+    bidsByFactionId: {
+      'gpA': [matcherBid('timber', 10, priority: 5)],
+      'gpB': [matcherBid('timber', 10, priority: 1)],
+    },
+    tradeCapacityByFactionId: const {'gpA': 100, 'gpB': 100},
+    purchasedTileIndex: purchasedTileIndex,
+  ),
+  expect: DealMatchExpectation(
+    filledDealsLength: 1,
+    firstFilledDeal: matcherFilled(buyer: 'gpB', isFrr: false),
+  ),
+  refs: refs,
+);
 
 /// M1 FRR offer + expect row (partial fill / cargo / activity) (Refs #3939 slice 56).
 DealMatcherScenario frrM1OfferExpectRow({
@@ -468,17 +512,16 @@ DealMatcherScenario frrM1OfferExpectRow({
   Map<String, List<TradeOrder>>? bidsByFactionId,
   Map<String, int>? tradeCapacityByFactionId,
   String? refs = '#2992',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: frrM1OfferInputs(
-        offerQty: offerQty,
-        bidsByFactionId: bidsByFactionId,
-        tradeCapacityByFactionId: tradeCapacityByFactionId,
-      ),
-      expect: expect,
-      refs: refs,
-    );
+}) => matcherRow(
+  label: label,
+  inputs: frrM1OfferInputs(
+    offerQty: offerQty,
+    bidsByFactionId: bidsByFactionId,
+    tradeCapacityByFactionId: tradeCapacityByFactionId,
+  ),
+  expect: expect,
+  refs: refs,
+);
 
 /// D5 AC1 purchased-tile M1 timber offer with per-buyer bid priorities
 /// (Refs #3939 slice 56).
@@ -489,31 +532,25 @@ DealMatcherScenario frrD5MatcherRow({
   int offerQty = 10,
   Set<String> ftpPairKeys = const {},
   String? refs = '#2992 D5 AC1',
-}) =>
-    DealMatcherScenario.expect(
-      label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          kFrrIssueAcD5MinorM1: [
-            matcherOffer(
-              'timber',
-              offerQty,
-              originTileKey: kFrrIssueAcD5TileK1,
-            ),
-          ],
-        },
-        bidsByFactionId: {
-          for (final e in bidPriorityByBuyer.entries)
-            e.key: [matcherBid('timber', offerQty, priority: e.value)],
-        },
-        tradeCapacityByFactionId: {
-          for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
-        },
-        pricesByCommodityId: const {'timber': 20.0},
-        ftpPairKeys: ftpPairKeys,
-        purchasedTileIndex: frrD5IdxK1GpA(),
-      ),
-      expect: expect,
-      refs: refs,
-    );
-
+}) => matcherRow(
+  label: label,
+  inputs: matcherInputs(
+    offersByFactionId: {
+      kFrrIssueAcD5MinorM1: [
+        matcherOffer('timber', offerQty, originTileKey: kFrrIssueAcD5TileK1),
+      ],
+    },
+    bidsByFactionId: {
+      for (final e in bidPriorityByBuyer.entries)
+        e.key: [matcherBid('timber', offerQty, priority: e.value)],
+    },
+    tradeCapacityByFactionId: {
+      for (final buyer in bidPriorityByBuyer.keys) buyer: 100,
+    },
+    pricesByCommodityId: const {'timber': 20.0},
+    ftpPairKeys: ftpPairKeys,
+    purchasedTileIndex: frrD5IdxK1GpA(),
+  ),
+  expect: expect,
+  refs: refs,
+);

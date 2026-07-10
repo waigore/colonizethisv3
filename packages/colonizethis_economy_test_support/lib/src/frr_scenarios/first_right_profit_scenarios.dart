@@ -1,47 +1,30 @@
 // Table-driven FirstRightProfit scenarios (Refs #3856, #3939 slices 14 / 45).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_test/test.dart';
 
 import 'frr_profit_expectations.dart';
 
 /// One row for [computeFirstRightProfitRate] scenario tables.
-class FirstRightProfitRateScenario {
-  const FirstRightProfitRateScenario({
-    required this.label,
-    required this.score,
-    required this.verify,
-    this.refs,
-  });
-
-  FirstRightProfitRateScenario.expect({
-    required String label,
-    required int score,
-    required FrrProfitRateExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          score: score,
-          verify: (result) => assertFrrProfitRateExpectation(result, expect),
-          refs: refs,
-        );
-
-  final String label;
-  final int score;
-  final void Function(double result) verify;
-  final String? refs;
-}
+typedef FirstRightProfitRateScenario = ({
+  String label,
+  int score,
+  void Function(double result) verify,
+  String? refs,
+});
 
 FirstRightProfitRateScenario frrProfitRateRow(
   String label,
   int score,
   double expected,
-) =>
-    FirstRightProfitRateScenario.expect(
-      label: label,
-      score: score,
-      expect: FrrProfitRateExpectation(expected: expected),
-    );
+) => (
+  label: label,
+  score: score,
+  refs: null,
+  verify: (result) => assertFrrProfitRateExpectation(
+    result,
+    FrrProfitRateExpectation(expected: expected),
+  ),
+);
 
 /// Canonical scenarios for [computeFirstRightProfitRate].
 List<FirstRightProfitRateScenario> firstRightProfitRateScenarios() => [
@@ -61,39 +44,14 @@ List<FirstRightProfitRateScenario> firstRightProfitRateScenarios() => [
 ];
 
 /// One row for [computeFirstRightProfit] scenario tables.
-class FirstRightProfitScenario {
-  const FirstRightProfitScenario({
-    required this.label,
-    required this.relationScore,
-    required this.filledQuantity,
-    required this.pricePerUnit,
-    required this.verify,
-    this.refs,
-  });
-
-  FirstRightProfitScenario.expect({
-    required String label,
-    required int relationScore,
-    required int filledQuantity,
-    required double pricePerUnit,
-    required FrrProfitExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          relationScore: relationScore,
-          filledQuantity: filledQuantity,
-          pricePerUnit: pricePerUnit,
-          verify: (result) => assertFrrProfitExpectation(result, expect),
-          refs: refs,
-        );
-
-  final String label;
-  final int relationScore;
-  final int filledQuantity;
-  final double pricePerUnit;
-  final void Function(FirstRightProfit result) verify;
-  final String? refs;
-}
+typedef FirstRightProfitScenario = ({
+  String label,
+  int relationScore,
+  int filledQuantity,
+  double pricePerUnit,
+  void Function(FirstRightProfit result) verify,
+  String? refs,
+});
 
 FirstRightProfitScenario frrProfitRow({
   required String label,
@@ -103,19 +61,22 @@ FirstRightProfitScenario frrProfitRow({
   bool expectZero = false,
   double? profitRate,
   double? profitTreasury,
-}) =>
-    FirstRightProfitScenario.expect(
-      label: label,
-      relationScore: relationScore,
-      filledQuantity: filledQuantity,
-      pricePerUnit: pricePerUnit,
-      expect: expectZero
-          ? const FrrProfitExpectation(expectZero: true)
-          : FrrProfitExpectation(
-              profitRate: profitRate,
-              profitTreasury: profitTreasury,
-            ),
-    );
+}) => (
+  label: label,
+  relationScore: relationScore,
+  filledQuantity: filledQuantity,
+  pricePerUnit: pricePerUnit,
+  refs: null,
+  verify: (result) => assertFrrProfitExpectation(
+    result,
+    expectZero
+        ? const FrrProfitExpectation(expectZero: true)
+        : FrrProfitExpectation(
+            profitRate: profitRate,
+            profitTreasury: profitTreasury,
+          ),
+  ),
+);
 
 /// Canonical scenarios for [computeFirstRightProfit].
 List<FirstRightProfitScenario> firstRightProfitScenarios() => [
@@ -181,39 +142,14 @@ List<FirstRightProfitScenario> firstRightProfitScenarios() => [
 ];
 
 /// One row for [computeEmbassyKickback] scenario tables.
-class EmbassyKickbackScenario {
-  const EmbassyKickbackScenario({
-    required this.label,
-    required this.relationScore,
-    required this.filledQuantity,
-    required this.pricePerUnit,
-    required this.verify,
-    this.refs,
-  });
-
-  EmbassyKickbackScenario.expect({
-    required String label,
-    required num relationScore,
-    required int filledQuantity,
-    required double pricePerUnit,
-    required EmbassyKickbackExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          relationScore: relationScore,
-          filledQuantity: filledQuantity,
-          pricePerUnit: pricePerUnit,
-          verify: (result) => assertEmbassyKickbackExpectation(result, expect),
-          refs: refs,
-        );
-
-  final String label;
-  final num relationScore;
-  final int filledQuantity;
-  final double pricePerUnit;
-  final void Function(double result) verify;
-  final String? refs;
-}
+typedef EmbassyKickbackScenario = ({
+  String label,
+  num relationScore,
+  int filledQuantity,
+  double pricePerUnit,
+  void Function(double result) verify,
+  String? refs,
+});
 
 EmbassyKickbackScenario embassyKickbackRow(
   String label,
@@ -221,14 +157,17 @@ EmbassyKickbackScenario embassyKickbackRow(
   int filledQuantity,
   double pricePerUnit,
   double expected,
-) =>
-    EmbassyKickbackScenario.expect(
-      label: label,
-      relationScore: relationScore,
-      filledQuantity: filledQuantity,
-      pricePerUnit: pricePerUnit,
-      expect: EmbassyKickbackExpectation(expected: expected),
-    );
+) => (
+  label: label,
+  relationScore: relationScore,
+  filledQuantity: filledQuantity,
+  pricePerUnit: pricePerUnit,
+  refs: null,
+  verify: (result) => assertEmbassyKickbackExpectation(
+    result,
+    EmbassyKickbackExpectation(expected: expected),
+  ),
+);
 
 /// Canonical scenarios for [computeEmbassyKickback].
 List<EmbassyKickbackScenario> embassyKickbackScenarios() => [

@@ -65,5 +65,6 @@ void main() {
     'computeTownManufacturingBonusForGame',
     townManufacturingBonusGameScenarios(),
     runTownManufacturingBonusGameScenario,
+    labelOf: (s) => s.label,
   );
 }

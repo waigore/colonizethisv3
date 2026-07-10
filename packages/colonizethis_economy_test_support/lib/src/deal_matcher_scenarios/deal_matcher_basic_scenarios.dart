@@ -9,45 +9,33 @@ import 'deal_matcher_test_support.dart';
 
 /// Empty-input and basic-fill scenarios from `world_market_deal_matcher_test.dart`.
 List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'no offers and no bids returns DealMatchResult.empty',
     inputs: matcherInputs(),
     expect: const DealMatchExpectation(resultEqualsEmpty: true),
   ),
   matcherUnilateralRow(
     label: 'offers only (no bids) carries every offer forward, no deals',
-    offersByFactionId: {
-      'a': [matcherOffer('timber', 5)],
-    },
+    offersByFactionId: matcherUnfilledOffer('a', 'timber', 5),
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledBidsEmpty: true,
-      unfilledOffersByFactionId: {
-        'a': [matcherOffer('timber', 5)],
-      },
-      activityByCommodityId: const {
-        'timber': MarketActivity(totalOfferQuantity: 5),
-      },
+      unfilledOffersByFactionId: matcherUnfilledOffer('a', 'timber', 5),
+      activityByCommodityId: {'timber': matcherActivity(offer: 5)},
     ),
   ),
   matcherUnilateralRow(
     label: 'bids only (no offers) carries every bid forward, no deals',
-    bidsByFactionId: {
-      'b': [matcherBid('timber', 5)],
-    },
+    bidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     tradeCapacityByFactionId: {'b': 100},
     expect: DealMatchExpectation(
       filledDealsEmpty: true,
       unfilledOffersEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5)],
-      },
-      activityByCommodityId: const {
-        'timber': MarketActivity(totalBidQuantity: 5),
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
+      activityByCommodityId: {'timber': matcherActivity(bid: 5)},
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'single offer 10 vs single bid 5 fills 5, offer carries 5 forward',
     expect: DealMatchExpectation(
       filledDealsLength: 1,
@@ -59,19 +47,13 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
         pricePerUnit: 30.0,
       ),
       unfilledBidsEmpty: true,
-      unfilledOffersByFactionId: {
-        'a': [matcherOffer('timber', 5)],
-      },
-      activityByCommodityId: const {
-        'timber': MarketActivity(
-          totalBidQuantity: 5,
-          totalOfferQuantity: 10,
-          filledQuantity: 5,
-        ),
+      unfilledOffersByFactionId: matcherUnfilledOffer('a', 'timber', 5),
+      activityByCommodityId: {
+        'timber': matcherActivity(bid: 5, offer: 10, filled: 5),
       },
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'missing price for commodity records pricePerUnit = 0.0',
     commodity: 'iron',
     offerQty: 5,
@@ -82,32 +64,28 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
       firstFilledDeal: FilledDealExpectation(pricePerUnit: 0.0),
     ),
   ),
-  matcherAbPairRow(
+  matcherPairRow(
     label: 'zero-quantity offer emits no deal and no carry-forward',
     offerQty: 0,
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledOffersEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
   ),
 ];
 
 /// Cargo-enforcement scenarios from `world_market_deal_matcher_test.dart`.
 List<DealMatcherScenario> dealMatcherCargoScenarios() => [
-  matcherZeroCargoBuyerRow(
+  matcherPairRow(
     label: 'buyer with no tradeCapacity entry treated as zero cargo',
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5)],
-      },
+    buyerCapacity: null,
+    expect: matcherNoFillExpect(
+      unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
   ),
-  DealMatcherScenario.expect(
-    label: 'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with '
+  matcherRow(
+    label:
+        'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with '
         'tradeCapacity 15 -> A fills 8, B partial 7, B carry 3',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -126,33 +104,25 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
     expect: DealMatchExpectation(
       filledDealsLength: 2,
       filledDealQuantityByCommodityId: const {'alpha': 8, 'beta': 7},
-      unfilledBidsByFactionId: {
-        'buyer': [matcherBid('beta', 3, priority: 2)],
-      },
-      activityByCommodityId: const {
-        'alpha': MarketActivity(
-          totalBidQuantity: 8,
-          totalOfferQuantity: 100,
-          filledQuantity: 8,
-        ),
-        'beta': MarketActivity(
-          totalBidQuantity: 10,
-          totalOfferQuantity: 100,
-          filledQuantity: 7,
-        ),
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'buyer',
+        'beta',
+        3,
+        priority: 2,
+      ),
+      activityByCommodityId: {
+        'alpha': matcherActivity(bid: 8, offer: 100, filled: 8),
+        'beta': matcherActivity(bid: 10, offer: 100, filled: 7),
       },
     ),
     refs: null,
   ),
-  matcherZeroCargoBuyerRow(
+  matcherPairRow(
     label: 'negative tradeCapacity is clamped to zero',
     offerQty: 5,
     buyerCapacity: -50,
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5)],
-      },
+    expect: matcherNoFillExpect(
+      unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
   ),
 ];
@@ -164,14 +134,19 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     seller: 'tribeT',
     buyer: 'gpB',
     boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
-      unfilledOffersByFactionId: {
-        'tribeT': [matcherOffer('timber', 10, priority: 1)],
-      },
-      unfilledBidsByFactionId: {
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
+    expect: matcherNoFillExpect(
+      unfilledOffersByFactionId: matcherUnfilledOffer(
+        'tribeT',
+        'timber',
+        10,
+        priority: 1,
+      ),
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpB',
+        'timber',
+        10,
+        priority: 1,
+      ),
     ),
   ),
   boycottTradeRow(
@@ -179,9 +154,9 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     seller: 'gpB',
     buyer: 'tribeT',
     boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    expect: const DealMatchExpectation(filledDealsEmpty: true),
+    expect: matcherNoFillExpect(),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'only the boycotted GP is blocked; other buyers still trade',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -201,9 +176,12 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
         buyerFactionId: 'gpD',
         quantity: 10,
       ),
-      unfilledBidsByFactionId: {
-        'gpB': [matcherBid('timber', 10, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpB',
+        'timber',
+        10,
+        priority: 1,
+      ),
     ),
     refs: '#3753',
   ),

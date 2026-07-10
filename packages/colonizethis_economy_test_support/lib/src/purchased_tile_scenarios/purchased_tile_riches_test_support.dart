@@ -51,9 +51,9 @@ Game multiGpPurchasedTileRichesGame() {
       MinorNation(id: 'M2', displayName: 'Minor 2'),
     ],
     purchasedTilesByTileKey: const {tileA: 'gpA', tileB: 'gpB'},
-    tileState: improvedRoadedTileState(tileA)
-        .setImprovement(tileB, 1)
-        .setRoadLevel(tileB, 1),
+    tileState: improvedRoadedTileState(
+      tileA,
+    ).setImprovement(tileB, 1).setRoadLevel(tileB, 1),
   );
 }
 

@@ -1,29 +1,22 @@
 // Table-driven worker labour primitive scenarios (Refs #3939 phase 3 slice 21).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'worker_economy_expectations.dart';
 
-/// One row in a worker-economy labour scenario table.
-class WorkerEconomyScenario {
-  const WorkerEconomyScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
+/// One row for `WorkerEconomyScenario` tables (Refs #3939 slice 63).
+typedef WorkerEconomyScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runWorkerEconomyScenario(WorkerEconomyScenario scenario) {
   scenario.run();
 }
 
-final _grainId = CommodityCatalog.grain.id;
-final _furHatsId = CommodityCatalog.furHats.id;
+final _grainId = 'grain';
+final _furHatsId = 'furHats';
 
 /// Canonical scenarios for [effectiveLabourFromIdleCounts].
 List<WorkerEconomyScenario> workerEconomyLabourFromIdleCountsScenarios() => [

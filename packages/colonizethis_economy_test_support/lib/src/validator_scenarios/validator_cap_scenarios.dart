@@ -18,15 +18,12 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     ),
   ),
   validatorRow(
-    label: 'bidTypeCap = 0 does NOT affect offers (offers are not capped by '
+    label:
+        'bidTypeCap = 0 does NOT affect offers (offers are not capped by '
         'rule 4)',
     context: validatorCtx(
       bidTypeCap: 0,
-      availableStockpileByCommodityId: {
-        'timber': 50,
-        'iron': 50,
-        'coal': 50,
-      },
+      availableStockpileByCommodityId: {'timber': 50, 'iron': 50, 'coal': 50},
     ),
     proposedOrders: [
       validatorOffer('timber', 5),
@@ -36,7 +33,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     expect: const ValidatorExpectation(allAccepted: true),
   ),
   validatorRow(
-    label: 'bidTypeCap = 3 accepts first 3 distinct bid commodities, rejects 4th',
+    label:
+        'bidTypeCap = 3 accepts first 3 distinct bid commodities, rejects 4th',
     context: validatorCtx(bidTypeCap: 3),
     proposedOrders: [
       validatorBid('timber', 5),
@@ -57,7 +55,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     ),
   ),
   validatorRow(
-    label: 'bidTypeCap = 6 accepts first 6 distinct bid commodities, rejects 7th',
+    label:
+        'bidTypeCap = 6 accepts first 6 distinct bid commodities, rejects 7th',
     context: validatorCtx(bidTypeCap: 6),
     proposedOrders: [
       validatorBid('timber', 5),
@@ -74,7 +73,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     ),
   ),
   validatorRow(
-    label: 'bidTypeCap submission order determines which commodities are admitted',
+    label:
+        'bidTypeCap submission order determines which commodities are admitted',
     context: validatorCtx(bidTypeCap: 2),
     proposedOrders: [
       validatorBid('a', 5, priority: 1),
@@ -107,7 +107,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     expect: const ValidatorExpectation(singleAccepted: true),
   ),
   validatorRow(
-    label: 'per-commodity cap is independent: two distinct bids each at capacity '
+    label:
+        'per-commodity cap is independent: two distinct bids each at capacity '
         'are both accepted (cross-commodity is the matcher\'s job)',
     context: validatorCtx(bidTypeCap: 2, tradeCargoCapacity: 10),
     proposedOrders: [validatorBid('timber', 10), validatorBid('iron', 10)],
@@ -120,7 +121,8 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     reason: TradeOrderRejectionReasons.offerExceedsStockpile,
   ),
   validatorRejectRow(
-    label: 'offer with no entry in availableStockpileByCommodityId is treated as '
+    label:
+        'offer with no entry in availableStockpileByCommodityId is treated as '
         'available = 0 and rejected for any positive quantity',
     context: validatorCtxWithStockpile(const {}),
     order: validatorOffer('timber', 1),
@@ -133,22 +135,18 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorCapScenarios() => [
     expect: const ValidatorExpectation(singleAccepted: true),
   ),
   validatorRow(
-    label: 'mutualExclusion takes precedence over bidTypeCapExceeded (rule 3 '
+    label:
+        'mutualExclusion takes precedence over bidTypeCapExceeded (rule 3 '
         'before rule 4)',
-    context: validatorCtxWithStockpile(
-      {'timber': 50},
-      bidTypeCap: 0,
-    ),
-    proposedOrders: [
-      validatorBid('timber', 5),
-      validatorOffer('timber', 5),
-    ],
+    context: validatorCtxWithStockpile({'timber': 50}, bidTypeCap: 0),
+    proposedOrders: [validatorBid('timber', 5), validatorOffer('timber', 5)],
     expect: const ValidatorExpectation(
       firstOrderReason: TradeOrderRejectionReasons.mutualExclusion,
     ),
   ),
   validatorRow(
-    label: 'richesNotTradeable takes precedence over mutualExclusion (rule 2 '
+    label:
+        'richesNotTradeable takes precedence over mutualExclusion (rule 2 '
         'before rule 3)',
     context: validatorCtxWithStockpile({'gold': 50}),
     proposedOrders: [validatorBid('gold', 5), validatorOffer('gold', 5)],

@@ -19,7 +19,9 @@ typedef CheckPreconditionsInOrderPins = ({
   List<String>? expectedEvaluated,
 });
 
-void runCheckPreconditionsInOrderExpectation(CheckPreconditionsInOrderPins pins) {
+void runCheckPreconditionsInOrderExpectation(
+  CheckPreconditionsInOrderPins pins,
+) {
   final evaluated = <String>[];
   final preconditions = <CostPrecondition>[
     for (final step in pins.steps)
@@ -43,9 +45,8 @@ CheckPreconditionsInOrderScenario checkPreconditionsInOrderScenario({
   required String label,
   required CheckPreconditionsInOrderPins pins,
   String? refs,
-}) =>
-    CheckPreconditionsInOrderScenario(
-      label: label,
-      run: () => runCheckPreconditionsInOrderExpectation(pins),
-      refs: refs,
-    );
+}) => (
+  label: label,
+  run: () => runCheckPreconditionsInOrderExpectation(pins),
+  refs: refs,
+);

@@ -2,15 +2,8 @@
 
 import 'commodity_totals_expectations.dart';
 
-class CommodityTotalsScenario {
-  const CommodityTotalsScenario({
-    required this.label,
-    required this.run,
-  });
-
-  final String label;
-  final void Function() run;
-}
+/// One row for commodity-totals helper tables (Refs #3939 slice 63).
+typedef CommodityTotalsScenario = ({String label, void Function() run});
 
 void runCommodityTotalsScenario(CommodityTotalsScenario scenario) {
   scenario.run();
@@ -39,11 +32,7 @@ List<CommodityTotalsScenario> addUnitsScenarios() => [
     label: 'preserves first-seen insertion order across keys',
     pins: (
       initial: <String, int>{},
-      steps: [
-        (key: 'b', delta: 1),
-        (key: 'a', delta: 1),
-        (key: 'b', delta: 1),
-      ],
+      steps: [(key: 'b', delta: 1), (key: 'a', delta: 1), (key: 'b', delta: 1)],
       expected: {'b': 2, 'a': 1},
       keyOrder: ['b', 'a'],
     ),
@@ -66,7 +55,7 @@ List<CommodityTotalsScenario> addUnitsScenarios() => [
 List<CommodityTotalsScenario> sumValuesScenarios() => [
   sumValuesScenario(
     label: 'returns 0 for an empty iterable',
-    pins: (cases: [(values: <int>[], expected: 0)],),
+    pins: (cases: [(values: <int>[], expected: 0)]),
   ),
   sumValuesScenario(
     label: 'sums positive and negative values',
@@ -81,10 +70,7 @@ List<CommodityTotalsScenario> sumValuesScenarios() => [
     label: 'matches the inline fold idiom it replaces',
     pins: (
       cases: [
-        (
-          values: [4, 8, 15, 16, 23, 42],
-          expected: 108,
-        ),
+        (values: [4, 8, 15, 16, 23, 42], expected: 108),
       ],
     ),
   ),
@@ -93,10 +79,7 @@ List<CommodityTotalsScenario> sumValuesScenarios() => [
 List<CommodityTotalsScenario> sumNestedValuesScenarios() => [
   sumNestedValuesScenario(
     label: 'returns 0 for no maps and for empty maps',
-    pins: (
-      maps: const [<String, int>{}, <String, int>{}],
-      expected: 0,
-    ),
+    pins: (maps: const [<String, int>{}, <String, int>{}], expected: 0),
   ),
   sumNestedValuesScenario(
     label: 'sums every value across nested maps',

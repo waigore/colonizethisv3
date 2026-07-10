@@ -35,10 +35,7 @@ void assertBuildProvinceIndexExpectation(
 
 /// Data-driven expectations for [collectPortTileKeys] rows.
 class CollectPortTileKeysExpectation {
-  const CollectPortTileKeysExpectation({
-    this.expected,
-    this.isEmpty = false,
-  });
+  const CollectPortTileKeysExpectation({this.expected, this.isEmpty = false});
 
   final Set<String>? expected;
   final bool isEmpty;
@@ -65,9 +62,7 @@ typedef CapitalFactionLookupPin = ({
 
 /// Data-driven expectations for capital faction lookup rows.
 class CapitalFactionLookupExpectation {
-  const CapitalFactionLookupExpectation({
-    required this.pins,
-  });
+  const CapitalFactionLookupExpectation({required this.pins});
 
   final List<CapitalFactionLookupPin> pins;
 }

@@ -50,8 +50,8 @@ void assertPlayerContextExpectation(PlayerContextExpectation expectation) {
   final Orders? stagedOrders = expectation.stagedBids.isNotEmpty
       ? humanOrdersWith(expectation.stagedBids)
       : (expectation.projectedTreasuryDelta != 0
-          ? humanOrdersWith(const <TradeOrder>[])
-          : null);
+            ? humanOrdersWith(const <TradeOrder>[])
+            : null);
 
   switch (expectation.target) {
     case PlayerContextScenarioTarget.snapshot:
@@ -101,21 +101,31 @@ void assertPlayerContextExpectation(PlayerContextExpectation expectation) {
         stagedOrders: stagedOrders,
         projectedTreasuryDelta: expectation.projectedTreasuryDelta,
       );
-      expect(validation.treasuryBudgetForBids, expectation.treasuryBudgetForBids);
-      expect(suggestion.treasuryBudgetForBids, expectation.treasuryBudgetForBids);
+      expect(
+        validation.treasuryBudgetForBids,
+        expectation.treasuryBudgetForBids,
+      );
+      expect(
+        suggestion.treasuryBudgetForBids,
+        expectation.treasuryBudgetForBids,
+      );
     case PlayerContextScenarioTarget.suggestion:
       final suggestion = tradeSuggestionContextFromGame(
         game,
         humanPlayerId,
-        availableStockpileByCommodityId: expectation.availableStockpileByCommodityId,
+        availableStockpileByCommodityId:
+            expectation.availableStockpileByCommodityId,
         stagedOrders: stagedOrders,
         projectedTreasuryDelta: expectation.projectedTreasuryDelta,
         commodityNeedByCommodityId:
-            expectation.commodityNeedByCommodityId ?? const <CommodityId, int>{},
+            expectation.commodityNeedByCommodityId ??
+            const <CommodityId, int>{},
         offerPriority:
-            expectation.offerPriority ?? TradeSuggestionContext.defaultOfferPriority,
+            expectation.offerPriority ??
+            TradeSuggestionContext.defaultOfferPriority,
         bidPriority:
-            expectation.bidPriority ?? TradeSuggestionContext.defaultBidPriority,
+            expectation.bidPriority ??
+            TradeSuggestionContext.defaultBidPriority,
       );
       if (expectation.availableStockpileByCommodityId.isNotEmpty) {
         expect(
