@@ -170,28 +170,23 @@ void main() {
     });
 
     testWidgets(
-      'AC Load Game: when noSaves, Load Game is disabled and has tooltip',
+      'AC Load Game: when noSaves, Load Game stays enabled',
       (WidgetTester tester) async {
+        var loadCalled = false;
         await tester.pumpWidget(
           buildMainMenu(
             state: MainMenuState.noSaves,
             onNewGame: () {},
-            onLoadGame: () {},
+            onLoadGame: () => loadCalled = true,
             onSettings: () {},
             onQuit: () {},
           ),
         );
         await tester.pumpAndSettle();
 
-        final tooltipFinder = find.ancestor(
-          of: find.text('Load Game'),
-          matching: find.byType(Tooltip),
-        );
-        expect(tooltipFinder, findsOneWidget);
-        expect(
-          tester.widget<Tooltip>(tooltipFinder).message,
-          'No saved games. Start a new game first.',
-        );
+        await tester.tap(find.text('Load Game'));
+        await tester.pumpAndSettle();
+        expect(loadCalled, isTrue);
       },
     );
 
@@ -337,27 +332,22 @@ void main() {
     testWidgets('Coverage: pixelArt noSaves uses pixel-art Load Game button', (
       WidgetTester tester,
     ) async {
+      var loadCalled = false;
       await tester.pumpWidget(
         buildMainMenu(
           variant: MainMenuVariant.pixelArt,
           state: MainMenuState.noSaves,
           onNewGame: () {},
-          onLoadGame: () {},
+          onLoadGame: () => loadCalled = true,
           onSettings: () {},
           onQuit: () {},
         ),
       );
       await tester.pumpAndSettle();
 
-      final tooltipFinder = find.ancestor(
-        of: find.text('Load Game'),
-        matching: find.byType(Tooltip),
-      );
-      expect(tooltipFinder, findsOneWidget);
-      expect(
-        tester.widget<Tooltip>(tooltipFinder).message,
-        'No saved games. Start a new game first.',
-      );
+      await tester.tap(find.text('Load Game'));
+      await tester.pumpAndSettle();
+      expect(loadCalled, isTrue);
     });
 
     testWidgets(

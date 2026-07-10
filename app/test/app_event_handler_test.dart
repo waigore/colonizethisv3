@@ -3,13 +3,16 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
+import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 
 void main() {
   suppressLogsForTests();
@@ -168,14 +171,21 @@ void main() {
         handler.bind();
 
         await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navKey,
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () =>
-                      bus.emit(const OpenPauseMenuPanelEvent()),
-                  child: const Text('open'),
+          ProviderScope(
+            overrides: [
+              turnResolutionBlockingProvider.overrideWith(
+                () => StateToggleNotifier(false),
+              ),
+            ],
+            child: MaterialApp(
+              navigatorKey: navKey,
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) => TextButton(
+                    onPressed: () =>
+                        bus.emit(const OpenPauseMenuPanelEvent()),
+                    child: const Text('open'),
+                  ),
                 ),
               ),
             ),

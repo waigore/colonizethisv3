@@ -69,6 +69,41 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_pauseMenu_tooltip => 'Pause menu';
 
   @override
+  String get saveGameName_title => 'Save Game';
+
+  @override
+  String get saveGameName_save => 'Save';
+
+  @override
+  String get saveGameName_invalidName => 'Enter a valid save name.';
+
+  @override
+  String get saveGameName_overwriteConfirm =>
+      'A save with this name already exists. Overwrite it?';
+
+  @override
+  String get saveGameName_overwrite => 'Overwrite';
+
+  @override
+  String get saveGameName_gameSaved => 'Game saved';
+
+  @override
+  String get loadGameList_title => 'Load Game';
+
+  @override
+  String get loadGameList_empty => 'No saved games.';
+
+  @override
+  String loadGameList_turnSubtitle(int turn) => 'Turn $turn';
+
+  @override
+  String get loadGameList_discardConfirm =>
+      'Unsaved progress will be lost. Load this save?';
+
+  @override
+  String get loadGameList_load => 'Load';
+
+  @override
   String get game_screenTitle => 'Game';
 
   @override

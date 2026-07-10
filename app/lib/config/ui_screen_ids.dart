@@ -59,6 +59,8 @@ abstract final class UiScreenIds {
   static const String transferToHomeFleetDialog = 'DLG40001';
   static const String turnNewsDialog = 'DLG50001';
   static const String nextTurnConfirmation = 'DLG60001';
+  static const String saveGameNameDialog = 'DLG70001';
+  static const String loadGameListDialog = 'DLG80001';
 
   // SYS — system / debug surfaces
   static const String debugLogViewer = 'SYS10001';

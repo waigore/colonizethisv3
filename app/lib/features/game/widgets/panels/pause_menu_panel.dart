@@ -1,23 +1,23 @@
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
+import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_gap.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/ui_screen_ids.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_spacing.dart';
 import '../chrome/ct_nine_patch_button.dart';
 
 /// Pause menu modal for [OpenPauseMenuPanelEvent]. Emits bus events only.
 ///
-/// SPEC: `SPEC/ui/pause-menu-panel.md` (5-button modal contract, issue
-/// #2867 § R1, R30). Visual structure: `CtDialogShell` frame, "Game Paused"
-/// title in `--accent`, `CtBrassDivider`, then five `CtNinePatchButton`
-/// rows in fixed order — Resume, Save Game (disabled), Load Game
-/// (disabled), Settings (disabled), Exit to Main Menu (danger variant).
-class PauseMenuPanel extends StatelessWidget {
+/// SPEC: `SPEC/ui/pause-menu-panel.md`. Save/Load open dialogs when not
+/// turn-resolution-blocking; Settings remains a disabled placeholder.
+class PauseMenuPanel extends ConsumerWidget {
   const PauseMenuPanel({super.key, required this.bus});
 
   static const screenId = UiScreenIds.pauseMenuPanel;
@@ -27,12 +27,12 @@ class PauseMenuPanel extends StatelessWidget {
     'pauseMenuPanel.resumeButton',
   );
 
-  /// Key for the Save Game action (disabled placeholder).
+  /// Key for the Save Game action.
   static const Key saveGameButtonKey = ValueKey<String>(
     'pauseMenuPanel.saveGameButton',
   );
 
-  /// Key for the Load Game action (disabled placeholder).
+  /// Key for the Load Game action.
   static const Key loadGameButtonKey = ValueKey<String>(
     'pauseMenuPanel.loadGameButton',
   );
@@ -67,10 +67,21 @@ class PauseMenuPanel extends StatelessWidget {
     bus.emit(const RequestExitToMainMenuFlowEvent());
   }
 
+  void _onSaveTap() {
+    bus.emit(const OpenDialogEvent(saveGameNameDialogId));
+  }
+
+  void _onLoadTap() {
+    bus.emit(
+      const OpenDialogEvent(loadGameListDialogId, {'fromPause': true}),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
+    final saveLoadEnabled = !ref.watch(turnResolutionBlockingProvider);
     return CtDialogShell(
       maxWidth: 360,
       maxHeight: 480,
@@ -92,7 +103,7 @@ class PauseMenuPanel extends StatelessWidget {
             child: CtBrassDivider(),
           ),
           CtGap.l,
-          ..._actionRows(l10n),
+          ..._actionRows(l10n, saveLoadEnabled: saveLoadEnabled),
         ],
       ),
     );
@@ -105,42 +116,46 @@ class PauseMenuPanel extends StatelessWidget {
         letterSpacing: 0.5,
       );
 
-  List<Widget> _actionRows(AppLocalizations l10n) => <Widget>[
-    CtNinePatchButton(
-      key: resumeButtonKey,
-      onPressed: _onResumeTap,
-      child: Text(l10n.game_pauseMenu_resume),
-    ),
-    CtGap.m,
-    CtNinePatchButton(
-      key: saveGameButtonKey,
-      onPressed: null,
-      enabled: false,
-      child: Text(l10n.game_pauseMenu_saveGame),
-    ),
-    CtGap.m,
-    CtNinePatchButton(
-      key: loadGameButtonKey,
-      onPressed: null,
-      enabled: false,
-      child: Text(l10n.game_pauseMenu_loadGame),
-    ),
-    CtGap.m,
-    CtNinePatchButton(
-      key: settingsButtonKey,
-      onPressed: null,
-      enabled: false,
-      child: Text(l10n.game_pauseMenu_settings),
-    ),
-    CtGap.m,
-    CtNinePatchButton(
-      key: exitToMainMenuButtonKey,
-      dangerVariant: true,
-      onPressed: _onExitToMainMenuTap,
-      child: Text(
-        l10n.game_pauseMenu_exitToMainMenu,
-        style: TextStyle(color: EditorialMonoclePalette.danger),
-      ),
-    ),
-  ];
+  List<Widget> _actionRows(
+    AppLocalizations l10n, {
+    required bool saveLoadEnabled,
+  }) =>
+      <Widget>[
+        CtNinePatchButton(
+          key: resumeButtonKey,
+          onPressed: _onResumeTap,
+          child: Text(l10n.game_pauseMenu_resume),
+        ),
+        CtGap.m,
+        CtNinePatchButton(
+          key: saveGameButtonKey,
+          onPressed: saveLoadEnabled ? _onSaveTap : null,
+          enabled: saveLoadEnabled,
+          child: Text(l10n.game_pauseMenu_saveGame),
+        ),
+        CtGap.m,
+        CtNinePatchButton(
+          key: loadGameButtonKey,
+          onPressed: saveLoadEnabled ? _onLoadTap : null,
+          enabled: saveLoadEnabled,
+          child: Text(l10n.game_pauseMenu_loadGame),
+        ),
+        CtGap.m,
+        CtNinePatchButton(
+          key: settingsButtonKey,
+          onPressed: null,
+          enabled: false,
+          child: Text(l10n.game_pauseMenu_settings),
+        ),
+        CtGap.m,
+        CtNinePatchButton(
+          key: exitToMainMenuButtonKey,
+          dangerVariant: true,
+          onPressed: _onExitToMainMenuTap,
+          child: Text(
+            l10n.game_pauseMenu_exitToMainMenu,
+            style: TextStyle(color: EditorialMonoclePalette.danger),
+          ),
+        ),
+      ];
 }
