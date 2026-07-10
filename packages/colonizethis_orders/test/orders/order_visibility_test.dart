@@ -9,26 +9,26 @@ void main() {
   runLabeledScenarioGroup(
     'provinceHasAtLeastVisibility',
     provinceHasAtLeastVisibilityScenarios(),
-    runOrderVisibilityScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'tileHasAtLeastVisibility',
     tileHasAtLeastVisibilityScenarios(),
-    runOrderVisibilityScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'moveSourceVisibilityOk',
     moveSourceVisibilityOkScenarios(),
-    runOrderVisibilityScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'moveDestVisibilityOk',
     moveDestVisibilityOkScenarios(),
-    runOrderVisibilityScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'workOrderVisibilityOk',
     workOrderVisibilityOkScenarios(),
-    runOrderVisibilityScenario,
+    runRunnableScenario,
   );
 }

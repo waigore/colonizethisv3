@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'projectedCivilianTileKey',
     civilianProjectedTileScenarios(),
-    runCivilianProjectedTileScenario,
+    runRunnableScenario,
   );
 }

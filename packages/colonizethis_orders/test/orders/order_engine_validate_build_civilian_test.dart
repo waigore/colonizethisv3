@@ -9,7 +9,7 @@ void main() {
   group('OrderEngine validateBuild (civilian)', () {
     runLabeledScenarios(
       orderEngineValidateBuildCivilianScenarios(),
-      runOrderEngineValidateBuildCivilianScenario,
+      runRunnableScenario,
     );
   });
 }

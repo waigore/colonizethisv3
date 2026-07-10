@@ -8,6 +8,6 @@ void main() {
   runLabeledScenarioGroup(
     'colonial acquisition suggestions (Refs #2509)',
     orderSuggestionColonialAcquisitionScenarios(),
-    runOrderSuggestionColonialAcquisitionScenario,
+    runRunnableScenario,
   );
 }

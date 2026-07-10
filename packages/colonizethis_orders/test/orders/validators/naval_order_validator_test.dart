@@ -13,12 +13,12 @@ void main() {
     runLabeledScenarioGroup(
       'validateNavalMove',
       navalMoveValidatorScenarios(),
-      runNavalOrderValidatorScenario,
+      runRunnableScenario,
     );
     runLabeledScenarioGroup(
       'validateNavalMission',
       navalMissionValidatorScenarios(),
-      runNavalOrderValidatorScenario,
+      runRunnableScenario,
     );
   });
 }

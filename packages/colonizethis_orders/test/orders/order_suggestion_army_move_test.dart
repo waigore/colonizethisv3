@@ -11,12 +11,12 @@ void main() {
   runLabeledScenarioGroup(
     'suggestArmyMoveOrders',
     orderSuggestionArmyMoveScenarios(),
-    runOrderSuggestionArmyMoveScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'armyMoveCandidateDestinationProvinceIds',
     orderSuggestionArmyMoveDestIdsScenarios(),
-    runOrderSuggestionArmyMoveScenario,
+    runRunnableScenario,
   );
 }

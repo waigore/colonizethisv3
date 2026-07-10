@@ -1,47 +1,144 @@
 // Table-driven colonial acquisition suggestion scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_colonial_acquisition_expectations.dart';
 
-/// One row in [orderSuggestionColonialAcquisitionScenarios].
-class OrderSuggestionColonialAcquisitionScenario implements RefsScenario {
-  const OrderSuggestionColonialAcquisitionScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
+import 'order_suggestion_colonial_acquisition_fixtures.dart';
 
-  @override
-  final String label;
-  final OrderSuggestionColonialAcquisitionTarget target;
-  @override
-  final String? refs;
+const _api = DefaultOrderSuggestionAPI();
+const _emptyOrders = Orders();
+
+void oscaRunJoinEmpireCandidateEmitted() {
+  final game = colonialAcquisitionEmbassyScenarioGame();
+  final view = colonialAcquisitionViewFor(game);
+  expect(
+    knownDiplomaticTargetFactionIds(
+      view: view,
+      game: game,
+      topology: colonialAcquisitionTopology,
+    ),
+    contains('tribe1'),
+  );
+  final orders = _api.suggestDiplomaticOrders(
+    view,
+    game,
+    colonialAcquisitionTopology,
+    _emptyOrders,
+  );
+  final joinEmpireForTribe = orders.where(
+    (o) =>
+        o.targetFactionId == 'tribe1' &&
+        o.type == DiplomaticOrderType.establishOverture &&
+        o.overtureStage == OvertureStage.joinEmpire,
+  );
+  expect(
+    joinEmpireForTribe,
+    isNotEmpty,
+    reason:
+        'AC: merged orders may include establishOverture (Join Empire) '
+        'when GP has embassy-stage overture and treasury covers cost',
+  );
 }
 
-void runOrderSuggestionColonialAcquisitionScenario(
-  OrderSuggestionColonialAcquisitionScenario scenario,
-) {
-  runOrderSuggestionColonialAcquisitionExpectation(scenario.target);
+void oscaRunDeclareWarCandidateEmitted() {
+  final game = colonialAcquisitionEmbassyScenarioGame();
+  final view = colonialAcquisitionViewFor(game);
+  final orders = _api.suggestDeclareWarOrders(
+    view,
+    game,
+    colonialAcquisitionTopology,
+    _emptyOrders,
+  );
+  final declareForTribe = orders.where(
+    (o) =>
+        o.targetFactionId == 'tribe1' &&
+        o.type == DiplomaticOrderType.declareWar,
+  );
+  expect(
+    declareForTribe,
+    isNotEmpty,
+    reason:
+        'AC: merged orders may include declareWar toward an at-peace '
+        'tribe in the known target set (colonial-support weights must '
+        'not gate emission); declare-war-only pass is independent of '
+        'the per-target single-diplo cap in suggestDiplomaticOrders',
+  );
 }
 
-List<OrderSuggestionColonialAcquisitionScenario>
-    orderSuggestionColonialAcquisitionScenarios() => const [
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .joinEmpireCandidateEmitted,
-            refs: '#2509',
-          ),
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .declareWarCandidateEmitted,
-            refs: '#2509',
-          ),
-          OrderSuggestionColonialAcquisitionScenario(
-            label: 'candidate set is deterministic across repeated suggestion calls',
-            target: OrderSuggestionColonialAcquisitionTarget
-                .deterministicAcrossRepeatedCalls,
-            refs: '#2509',
-          ),
-        ];
+void oscaRunDeterministicAcrossRepeatedCalls() {
+  final game = colonialAcquisitionEmbassyScenarioGame();
+  final view = colonialAcquisitionViewFor(game);
+
+  List<String> overtureKeys() => _api
+      .suggestDiplomaticOrders(
+        view,
+        game,
+        colonialAcquisitionTopology,
+        _emptyOrders,
+      )
+      .map(colonialAcquisitionOrderKey)
+      .toList();
+  List<String> declareKeys() => _api
+      .suggestDeclareWarOrders(
+        view,
+        game,
+        colonialAcquisitionTopology,
+        _emptyOrders,
+      )
+      .map(colonialAcquisitionOrderKey)
+      .toList();
+
+  final overtureFirst = overtureKeys();
+  final overtureSecond = overtureKeys();
+  final declareFirst = declareKeys();
+  final declareSecond = declareKeys();
+
+  expect(
+    overtureSecond,
+    equals(overtureFirst),
+    reason:
+        'AC: deterministic for fixed seed (suggestDiplomaticOrders '
+        'returns the same candidate set every pass)',
+  );
+  expect(
+    declareSecond,
+    equals(declareFirst),
+    reason:
+        'AC: deterministic for fixed seed (suggestDeclareWarOrders '
+        'returns the same candidate set every pass)',
+  );
+  expect(
+    overtureFirst,
+    contains('establishOverture:tribe1:joinEmpire'),
+    reason:
+        'deterministic Join Empire candidate must appear in the '
+        'overture-pass suggestions',
+  );
+  expect(
+    declareFirst,
+    contains('declareWar:tribe1:'),
+    reason:
+        'deterministic declare-war candidate must appear in the '
+        'declare-war-only pass suggestions',
+  );
+}
+
+List<RunnableScenario> orderSuggestionColonialAcquisitionScenarios() => const [
+  RunnableScenario(
+    label: 'embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire',
+    run: oscaRunJoinEmpireCandidateEmitted,
+    refs: '#2509',
+  ),
+  RunnableScenario(
+    label: 'embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar',
+    run: oscaRunDeclareWarCandidateEmitted,
+    refs: '#2509',
+  ),
+  RunnableScenario(
+    label: 'candidate set is deterministic across repeated suggestion calls',
+    run: oscaRunDeterministicAcrossRepeatedCalls,
+    refs: '#2509',
+  ),
+];

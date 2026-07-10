@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'getAvailableWorkTargetsForUnit (Refs #2133)',
     getAvailableWorkTargetsForUnitScenarios(),
-    runOrderSuggestionUnitAvailabilityScenario,
+    runRunnableScenario,
   );
 }

@@ -1,63 +1,314 @@
 // Table-driven WorkSuggestionPipeline scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/work_suggestion_pipeline.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'work_suggestion_pipeline_expectations.dart';
+import 'work_suggestion_pipeline_fixtures.dart';
 
-/// One row in [workSuggestionPipelineScenarios].
-class WorkSuggestionPipelineScenario implements LabeledScenario {
-  const WorkSuggestionPipelineScenario({
-    required this.label,
-    required this.target,
+void wspRunDuplicatePendingShortCircuits() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{
+      unit.id: {kWorkTargetBuildImprovement},
+    };
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () => [
+        WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'ow|p1|0|0',
+        ),
+      ],
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'no_valid_tile',
+    );
+
+    expect(suggestions, isEmpty);
+    final lines = wspSuggestWorkLines(events);
+    expect(lines, isNotEmpty);
+    expect(lines.first, contains('reason=duplicate_pending'));
   });
-
-  @override
-  final String label;
-  final WorkSuggestionPipelineTarget target;
 }
 
-void runWorkSuggestionPipelineScenario(WorkSuggestionPipelineScenario scenario) {
-  runWorkSuggestionPipelineExpectation(scenario.target);
+void wspRunFirstAcceptedStopsIteration() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () sync* {
+        yield WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'a',
+        );
+        yield WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'b',
+        );
+      },
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'no_valid_tile',
+    );
+
+    expect(suggestions, hasLength(1));
+    expect(suggestions.single.targetTileKey, 'a');
+    expect(existing[unit.id], contains(kWorkTargetBuildImprovement));
+  });
+}
+
+void wspRunIncludeAllAcceptedCollectsMultiple() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () sync* {
+        yield WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'a',
+        );
+        yield WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'b',
+        );
+      },
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'no_valid_tile',
+      includeAllAccepted: true,
+    );
+
+    expect(suggestions, hasLength(2));
+    final lines = wspSuggestWorkLines(events);
+    expect(lines.last, contains('includedCount=2'));
+  });
+}
+
+void wspRunNoCandidatesLogsReason() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () => const <WorkOrder>[],
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'custom_empty',
+    );
+
+    expect(suggestions, isEmpty);
+    final lines = wspSuggestWorkLines(events);
+    expect(lines.single, contains('reason=custom_empty'));
+  });
+}
+
+void wspRunResolveNoCandidateOverrides() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+    var probeLast = 'fallback';
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () sync* {
+        probeLast = 'after_probe';
+      },
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'ignored_when_resolver',
+      resolveNoCandidateReason: () => probeLast,
+    );
+
+    expect(suggestions, isEmpty);
+    final lines = wspSuggestWorkLines(events);
+    expect(lines.single, contains('reason=after_probe'));
+  });
+}
+
+void wspRunMaxProbeAttemptsOverride() {
+  withWspLogCapture((events) {
+    final unit = wspExplorerUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetProspect,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () sync* {
+        for (var i = 0; i < 6; i++) {
+          yield WorkOrder(
+            unitId: unit.id,
+            target: kWorkTargetProspect,
+            targetTileKey: 'ow|p1|$i|0',
+          );
+        }
+      },
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'no_valid_tile',
+      includeAllAccepted: true,
+      maxProbeAttempts: 6,
+    );
+
+    expect(suggestions, hasLength(6));
+    final lines = wspSuggestWorkLines(events);
+    expect(lines.last, contains('includedCount=6'));
+  });
+}
+
+void wspRunDefaultCapKMaxWorkProbeAttempts() {
+  withWspLogCapture((events) {
+    final unit = wspExplorerUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetProspect,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () sync* {
+        for (var i = 0; i < 6; i++) {
+          yield WorkOrder(
+            unitId: unit.id,
+            target: kWorkTargetProspect,
+            targetTileKey: 'ow|p1|$i|0',
+          );
+        }
+      },
+      candidateAcceptor: (_) => true,
+      noCandidateReason: 'no_valid_tile',
+      includeAllAccepted: true,
+    );
+
+    expect(
+      suggestions,
+      hasLength(kMaxWorkProbeAttemptsPerUnitPerTarget),
+      reason:
+          'default cap should match SPEC § Throughput bounds '
+          'kMaxWorkProbeAttemptsPerUnitPerTarget',
+    );
+  });
+}
+
+void wspRunRejectedCandidatesLogEngineRejectedReason() {
+  withWspLogCapture((events) {
+    final unit = wspBuilderUnit();
+    final suggestions = <WorkOrder>[];
+    final existing = <String, Set<String>>{};
+
+    WorkSuggestionPipeline.run(
+      unit: unit,
+      unitType: unit.type,
+      unitRegionId: 'ow',
+      atProvinceId: 'ow|p1',
+      workTarget: kWorkTargetBuildImprovement,
+      existingTargetsByUnit: existing,
+      suggestions: suggestions,
+      candidatesProvider: () => [
+        WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: 'a',
+        ),
+      ],
+      candidateAcceptor: (_) => false,
+      noCandidateReason: 'no_valid_tile',
+      engineRejectedReason: 'rejected_by_test',
+    );
+
+    expect(suggestions, isEmpty);
+    final lines = wspSuggestWorkLines(events);
+    expect(lines.single, contains('reason=rejected_by_test'));
+  });
 }
 
 /// Canonical scenarios for work_suggestion_pipeline family tests.
-List<WorkSuggestionPipelineScenario> workSuggestionPipelineScenarios() =>
-    const [
-      WorkSuggestionPipelineScenario(
-        label:
-            'duplicate pending target short-circuits without adding suggestions',
-        target: WorkSuggestionPipelineTarget.duplicatePendingShortCircuits,
-      ),
-      WorkSuggestionPipelineScenario(
-        label:
-            'first accepted candidate stops iteration when includeAllAccepted is false',
-        target: WorkSuggestionPipelineTarget.firstAcceptedStopsIteration,
-      ),
-      WorkSuggestionPipelineScenario(
-        label: 'includeAllAccepted collects multiple rows and logs includedCount',
-        target: WorkSuggestionPipelineTarget.includeAllAcceptedCollectsMultiple,
-      ),
-      WorkSuggestionPipelineScenario(
-        label: 'no candidates logs noCandidateReason',
-        target: WorkSuggestionPipelineTarget.noCandidatesLogsReason,
-      ),
-      WorkSuggestionPipelineScenario(
-        label:
-            'resolveNoCandidateReason overrides noCandidateReason when nothing yielded',
-        target: WorkSuggestionPipelineTarget.resolveNoCandidateOverrides,
-      ),
-      WorkSuggestionPipelineScenario(
-        label:
-            'maxProbeAttempts override allows more than default cap of accepted rows',
-        target: WorkSuggestionPipelineTarget.maxProbeAttemptsOverride,
-      ),
-      WorkSuggestionPipelineScenario(
-        label:
-            'default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows',
-        target: WorkSuggestionPipelineTarget.defaultCapKMaxWorkProbeAttempts,
-      ),
-      WorkSuggestionPipelineScenario(
-        label: 'rejected candidates log engineRejectedReason',
-        target:
-            WorkSuggestionPipelineTarget.rejectedCandidatesLogEngineRejectedReason,
-      ),
-    ];
+List<RunnableScenario> workSuggestionPipelineScenarios() => const [
+  RunnableScenario(
+    label: 'duplicate pending target short-circuits without adding suggestions',
+    run: wspRunDuplicatePendingShortCircuits,
+  ),
+  RunnableScenario(
+    label:
+        'first accepted candidate stops iteration when includeAllAccepted is false',
+    run: wspRunFirstAcceptedStopsIteration,
+  ),
+  RunnableScenario(
+    label: 'includeAllAccepted collects multiple rows and logs includedCount',
+    run: wspRunIncludeAllAcceptedCollectsMultiple,
+  ),
+  RunnableScenario(
+    label: 'no candidates logs noCandidateReason',
+    run: wspRunNoCandidatesLogsReason,
+  ),
+  RunnableScenario(
+    label:
+        'resolveNoCandidateReason overrides noCandidateReason when nothing yielded',
+    run: wspRunResolveNoCandidateOverrides,
+  ),
+  RunnableScenario(
+    label:
+        'maxProbeAttempts override allows more than default cap of accepted rows',
+    run: wspRunMaxProbeAttemptsOverride,
+  ),
+  RunnableScenario(
+    label:
+        'default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows',
+    run: wspRunDefaultCapKMaxWorkProbeAttempts,
+  ),
+  RunnableScenario(
+    label: 'rejected candidates log engineRejectedReason',
+    run: wspRunRejectedCandidatesLogEngineRejectedReason,
+  ),
+];

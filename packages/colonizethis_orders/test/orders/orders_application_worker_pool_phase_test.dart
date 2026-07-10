@@ -10,9 +10,6 @@ import 'support/scenario_runner.dart';
 
 void main() {
   group('applyBuildAndWorkOrders worker pool sub-phase', () {
-    runLabeledScenarios(
-      workerPoolPhaseScenarios(),
-      runWorkerPoolPhaseScenario,
-    );
+    runLabeledScenarios(workerPoolPhaseScenarios(), runRunnableScenario);
   });
 }

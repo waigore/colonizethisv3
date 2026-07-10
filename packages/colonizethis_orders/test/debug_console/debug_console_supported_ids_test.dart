@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'debug console supported id lists',
     debugConsoleSupportedIdsScenarios(),
-    runDebugConsoleSupportedIdsScenario,
+    runRunnableScenario,
   );
 }

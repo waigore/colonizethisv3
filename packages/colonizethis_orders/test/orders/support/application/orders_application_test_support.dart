@@ -61,8 +61,7 @@ abstract final class OrdersApplicationTestSupport {
         oldWorld: RegionData(provinces: provinces, units: units),
         newWorld: const RegionData(),
         resourceByTileKey: resourceByTileKey ?? const {},
-        tileKeysByRegionAndProvince:
-            tileKeysByRegionAndProvince ?? const {},
+        tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
       ),
       players: players ?? const [defaultPlayer],
       minorNations: minorNations ?? const [],

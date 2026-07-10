@@ -1,43 +1,98 @@
 // Table-driven town-work prefilter scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/src/orders/work_tile_candidacy/work_tile_candidacy.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_work_tile_prefilter_town_work_expectations.dart';
+import 'order_suggestion_work_tile_prefilter_town_work_fixtures.dart';
 
-/// One row in [orderSuggestionWorkTilePrefilterTownWorkScenarios].
-class OrderSuggestionWorkTilePrefilterTownWorkScenario implements LabeledScenario {
-  const OrderSuggestionWorkTilePrefilterTownWorkScenario({
-    required this.label,
-    required this.target,
-  });
+void oswttwRunUpgradeTownOwnedOnly() {
+  const ownedTownTile = 'oldWorld|p1|0|0';
+  const otherTownTile = 'oldWorld|p2|0|0';
+  final game = workTilePrefilterOwnedTownGame(
+    ownedTownTile: ownedTownTile,
+    otherTownTile: otherTownTile,
+  );
 
-  @override
-  final String label;
-  final OrderSuggestionWorkTilePrefilterTownWorkTarget target;
+  final tiles = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: workTilePrefilterTownPlayerId,
+    workTarget: kWorkTargetUpgradeTown,
+    playerOwnedProvinceIds: {'$workTilePrefilterTownOldWorld|p1'},
+  );
+
+  expect(tiles, equals({ownedTownTile}));
+  expect(tiles, isNot(contains(otherTownTile)));
 }
 
-void runOrderSuggestionWorkTilePrefilterTownWorkScenario(
-  OrderSuggestionWorkTilePrefilterTownWorkScenario scenario,
-) {
-  runOrderSuggestionWorkTilePrefilterTownWorkExpectation(scenario.target);
+void oswttwRunBuildFortMatchesUpgradeTown() {
+  const townTile = 'oldWorld|p1|0|0';
+  final game = workTilePrefilterSingleTownGame(townTile: townTile);
+  const owned = {'$workTilePrefilterTownOldWorld|p1'};
+
+  final upgradeTiles = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: workTilePrefilterTownPlayerId,
+    workTarget: kWorkTargetUpgradeTown,
+    playerOwnedProvinceIds: owned,
+  );
+  final fortTiles = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: workTilePrefilterTownPlayerId,
+    workTarget: kWorkTargetBuildFort,
+    playerOwnedProvinceIds: owned,
+  );
+
+  expect(fortTiles, upgradeTiles);
+  expect(fortTiles, equals({townTile}));
 }
 
-List<OrderSuggestionWorkTilePrefilterTownWorkScenario>
-    orderSuggestionWorkTilePrefilterTownWorkScenarios() => const [
-          OrderSuggestionWorkTilePrefilterTownWorkScenario(
-            label:
-                'upgrade_town includes town tiles only in owned provinces with a town',
-            target: OrderSuggestionWorkTilePrefilterTownWorkTarget.upgradeTownOwnedOnly,
-          ),
-          OrderSuggestionWorkTilePrefilterTownWorkScenario(
-            label:
-                'build_fort matches upgrade_town town-tile prefilter for shared owned set',
-            target:
-                OrderSuggestionWorkTilePrefilterTownWorkTarget.buildFortMatchesUpgradeTown,
-          ),
-          OrderSuggestionWorkTilePrefilterTownWorkScenario(
-            label: 'default path derives owned provinces from ProvinceOwnerCache '
-                '(Phase 6b)',
-            target: OrderSuggestionWorkTilePrefilterTownWorkTarget
-                .defaultPathUsesProvinceOwnerCache,
-          ),
-        ];
+void oswttwRunDefaultPathUsesProvinceOwnerCache() {
+  const ownedTownTile = 'oldWorld|p1|0|0';
+  const otherTownTile = 'oldWorld|p2|0|0';
+  final game = workTilePrefilterCacheGame(
+    ownedTownTile: ownedTownTile,
+    otherTownTile: otherTownTile,
+  );
+  final cacheOwnedIds = <String>{
+    for (final p in ProvinceOwnerCache.of(
+      game.worldState,
+    ).provincesOwnedBy(workTilePrefilterTownPlayerId))
+      p.id,
+  };
+  final fallback = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: workTilePrefilterTownPlayerId,
+    workTarget: kWorkTargetUpgradeTown,
+  );
+  final suppliedFromCache = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: workTilePrefilterTownPlayerId,
+    workTarget: kWorkTargetUpgradeTown,
+    playerOwnedProvinceIds: cacheOwnedIds,
+  );
+  expect(fallback, suppliedFromCache);
+  expect(cacheOwnedIds, equals({'$workTilePrefilterTownOldWorld|p1'}));
+  expect(fallback, equals({ownedTownTile}));
+}
+
+List<RunnableScenario>
+orderSuggestionWorkTilePrefilterTownWorkScenarios() => const [
+  RunnableScenario(
+    label:
+        'upgrade_town includes town tiles only in owned provinces with a town',
+    run: oswttwRunUpgradeTownOwnedOnly,
+  ),
+  RunnableScenario(
+    label:
+        'build_fort matches upgrade_town town-tile prefilter for shared owned set',
+    run: oswttwRunBuildFortMatchesUpgradeTown,
+  ),
+  RunnableScenario(
+    label:
+        'default path derives owned provinces from ProvinceOwnerCache '
+        '(Phase 6b)',
+    run: oswttwRunDefaultPathUsesProvinceOwnerCache,
+  ),
+];

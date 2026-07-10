@@ -1,67 +1,111 @@
 // Table-driven diplomacy-filter suggestion scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_diplomacy_filter_expectations.dart';
 
-/// One row in diplomacy-filter scenario tables.
-class OrderSuggestionDiplomacyFilterScenario implements RefsScenario {
-  const OrderSuggestionDiplomacyFilterScenario({
-    required this.label,
-    required this.target,
-    this.refs,
+import 'order_suggestion_diplomacy_filter_fixtures.dart';
+
+void osdfRunMatchesProjectionDerivedOwnerMapAcrossBothRegions() {
+  final game = orderSuggestionDiplomacyFilterDualRegionGame();
+  final cache = ProvinceOwnerCache.of(game.worldState);
+  final expected = <String, String>{
+    for (final ownerId in cache.ownerIds)
+      for (final p in cache.provincesOwnedBy(ownerId)) p.id: ownerId,
+  };
+
+  final map = getProvinceOwnerMap(game);
+
+  expect(map, expected);
+  expect(map, {
+    'oldWorld|p1': 'gp1',
+    'newWorld|n1': 'gp1',
+    'oldWorld|p2': 'gp2',
   });
-
-  @override
-  final String label;
-  final OrderSuggestionDiplomacyFilterTarget target;
-  @override
-  final String? refs;
 }
 
-void runOrderSuggestionDiplomacyFilterScenario(
-  OrderSuggestionDiplomacyFilterScenario scenario,
-) {
-  runOrderSuggestionDiplomacyFilterExpectation(scenario.target);
+void osdfRunExcludesUnownedNullOwnerProvinces() {
+  final map = getProvinceOwnerMap(
+    orderSuggestionDiplomacyFilterDualRegionGame(),
+  );
+  expect(map.containsKey('oldWorld|p3'), isFalse);
 }
 
-List<OrderSuggestionDiplomacyFilterScenario>
-getProvinceOwnerMapProvinceOwnerCacheScenarios() => const [
-      OrderSuggestionDiplomacyFilterScenario(
+void osdfRunExcludesEmptyStringOwnerProvinces() {
+  final map = getProvinceOwnerMap(
+    orderSuggestionDiplomacyFilterEmptyStringOwnerGame(),
+  );
+  expect(map, {'oldWorld|p1': 'gp1'});
+  expect(map.containsKey('oldWorld|p2'), isFalse);
+}
+
+void osdfRunReturnsOwnerByFullProvinceId() {
+  final map = getProvinceOwnerMap(
+    orderSuggestionDiplomacyFilterOldWorldTwoGpGame(),
+  );
+  expect(map['oldWorld|p1'], 'gp1');
+  expect(map['oldWorld|p2'], 'gp2');
+}
+
+void osdfRunIncludesNewWorldProvinces() {
+  final map = getProvinceOwnerMap(
+    orderSuggestionDiplomacyFilterNewWorldTwoGpGame(),
+  );
+  expect(map['newWorld|n1'], 'gp1');
+  expect(map['newWorld|n2'], 'gp2');
+}
+
+void osdfRunFilterDoesNotDropCivilianMovesAtPeace() {
+  final game = orderSuggestionDiplomacyFilterPeacefulTwoGpGame();
+  final orders = [
+    MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
+  ];
+  final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
+  expect(filtered, orders);
+}
+
+void osdfRunFilterKeepsMoveToAtWarFaction() {
+  final game = orderSuggestionDiplomacyFilterAtWarTwoGpGame();
+  final orders = [
+    MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
+  ];
+  final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
+  expect(filtered.length, 1);
+  expect(filtered.first.destinationTileKey, 'oldWorld|p2|0|0');
+}
+
+List<RunnableScenario> getProvinceOwnerMapProvinceOwnerCacheScenarios() =>
+    const [
+      RunnableScenario(
         label: 'matches the projection-derived owner map across both regions',
-        target: OrderSuggestionDiplomacyFilterTarget
-            .matchesProjectionDerivedOwnerMapAcrossBothRegions,
+        run: osdfRunMatchesProjectionDerivedOwnerMapAcrossBothRegions,
       ),
-      OrderSuggestionDiplomacyFilterScenario(
+      RunnableScenario(
         label: 'excludes unowned (null-owner) provinces',
-        target:
-            OrderSuggestionDiplomacyFilterTarget.excludesUnownedNullOwnerProvinces,
+        run: osdfRunExcludesUnownedNullOwnerProvinces,
       ),
-      OrderSuggestionDiplomacyFilterScenario(
+      RunnableScenario(
         label: 'excludes empty-string owner provinces (isNotEmpty parity)',
-        target: OrderSuggestionDiplomacyFilterTarget
-            .excludesEmptyStringOwnerProvinces,
+        run: osdfRunExcludesEmptyStringOwnerProvinces,
       ),
     ];
 
-List<OrderSuggestionDiplomacyFilterScenario>
-filterMoveOrdersByDiplomacyScenarios() => const [
-      OrderSuggestionDiplomacyFilterScenario(
-        label: 'getProvinceOwnerMap returns owner by full province id',
-        target:
-            OrderSuggestionDiplomacyFilterTarget.returnsOwnerByFullProvinceId,
-      ),
-      OrderSuggestionDiplomacyFilterScenario(
-        label: 'getProvinceOwnerMap includes newWorld provinces',
-        target: OrderSuggestionDiplomacyFilterTarget.includesNewWorldProvinces,
-      ),
-      OrderSuggestionDiplomacyFilterScenario(
-        label: 'filterMoveOrdersByDiplomacy does not drop civilian moves at peace',
-        target: OrderSuggestionDiplomacyFilterTarget
-            .filterDoesNotDropCivilianMovesAtPeace,
-      ),
-      OrderSuggestionDiplomacyFilterScenario(
-        label: 'filterMoveOrdersByDiplomacy keeps move to at-war faction',
-        target:
-            OrderSuggestionDiplomacyFilterTarget.filterKeepsMoveToAtWarFaction,
-      ),
-    ];
+List<RunnableScenario> filterMoveOrdersByDiplomacyScenarios() => const [
+  RunnableScenario(
+    label: 'getProvinceOwnerMap returns owner by full province id',
+    run: osdfRunReturnsOwnerByFullProvinceId,
+  ),
+  RunnableScenario(
+    label: 'getProvinceOwnerMap includes newWorld provinces',
+    run: osdfRunIncludesNewWorldProvinces,
+  ),
+  RunnableScenario(
+    label: 'filterMoveOrdersByDiplomacy does not drop civilian moves at peace',
+    run: osdfRunFilterDoesNotDropCivilianMovesAtPeace,
+  ),
+  RunnableScenario(
+    label: 'filterMoveOrdersByDiplomacy keeps move to at-war faction',
+    run: osdfRunFilterKeepsMoveToAtWarFaction,
+  ),
+];

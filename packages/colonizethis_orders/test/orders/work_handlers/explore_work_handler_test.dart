@@ -9,11 +9,11 @@ void main() {
   runLabeledScenarioGroup(
     'exploreWorkOrderHandler',
     exploreWorkHandlerScenarios().take(1),
-    runExploreWorkHandlerScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'tryApplyExploreWorkOrder',
     exploreWorkHandlerScenarios().skip(1),
-    runExploreWorkHandlerScenario,
+    runRunnableScenario,
   );
 }

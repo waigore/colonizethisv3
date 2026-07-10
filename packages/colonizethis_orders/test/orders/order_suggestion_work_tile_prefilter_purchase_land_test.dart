@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'rawCandidateTilesForWorkTarget (purchase_land)',
     orderSuggestionWorkTilePrefilterPurchaseLandScenarios(),
-    runOrderSuggestionWorkTilePrefilterPurchaseLandScenario,
+    runRunnableScenario,
   );
 }

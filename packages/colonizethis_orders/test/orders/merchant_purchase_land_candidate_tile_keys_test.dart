@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'merchantPurchaseLandCandidateTileKeys',
     merchantPurchaseLandCandidateTileKeysScenarios(),
-    runMerchantPurchaseLandCandidateTileKeysScenario,
+    runRunnableScenario,
   );
 }

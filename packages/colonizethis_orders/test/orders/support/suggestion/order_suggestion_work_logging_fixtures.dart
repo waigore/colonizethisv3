@@ -8,13 +8,14 @@ const _playerId = 'gp1';
 const _ow = 'oldWorld';
 
 Player osgwPlayer({int treasury = 5000}) => Player(
-      id: _playerId,
-      displayName: 'Human',
-      isHuman: true,
-      treasury: treasury,
-    );
+  id: _playerId,
+  displayName: 'Human',
+  isHuman: true,
+  treasury: treasury,
+);
 
-({Game game, MapTopology topology, PlayerView view}) osgwFourCivilianUnitsGame() {
+({Game game, MapTopology topology, PlayerView view})
+osgwFourCivilianUnitsGame() {
   final player = osgwPlayer();
   final p1 = Province(id: '$_ow|p1', regionId: _ow, ownerId: _playerId);
   final p2 = Province(id: '$_ow|p2', regionId: _ow, ownerId: _playerId);
@@ -144,20 +145,12 @@ Player osgwPlayer({int treasury = 5000}) => Player(
 }
 
 ({Game game, MapTopology topology, PlayerView view})
-    osgwTwoIronTilesFoggedGame() {
+osgwTwoIronTilesFoggedGame() {
   const provinceId = '$_ow|p1';
   const t0 = '$_ow|p1|0|0';
   const t1 = '$_ow|p1|1|0';
-  final player = Player(
-    id: _playerId,
-    displayName: 'GP',
-    isHuman: false,
-  );
-  final province = Province(
-    id: provinceId,
-    regionId: _ow,
-    ownerId: _playerId,
-  );
+  final player = Player(id: _playerId, displayName: 'GP', isHuman: false);
+  final province = Province(id: provinceId, regionId: _ow, ownerId: _playerId);
   final explorer = Unit(
     id: 'u_explorer',
     type: kUnitTypeExplorer,
@@ -201,15 +194,11 @@ Player osgwPlayer({int treasury = 5000}) => Player(
 }
 
 ({Game game, MapTopology topology, PlayerView view, Orders orders})
-    osgwExplorerPendingDuplicateGame() {
+osgwExplorerPendingDuplicateGame() {
   const provinceId = '$_ow|p1';
   const tile = '$_ow|p1|0|0';
   final player = osgwPlayer();
-  final province = Province(
-    id: provinceId,
-    regionId: _ow,
-    ownerId: _playerId,
-  );
+  final province = Province(id: provinceId, regionId: _ow, ownerId: _playerId);
   final explorer = Unit(
     id: 'u_explorer',
     type: kUnitTypeExplorer,

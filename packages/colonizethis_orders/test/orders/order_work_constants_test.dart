@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'order_work_constants ownership (Refs #3290)',
     orderWorkConstantsScenarios(),
-    runOrderWorkConstantsScenario,
+    runRunnableScenario,
   );
 }

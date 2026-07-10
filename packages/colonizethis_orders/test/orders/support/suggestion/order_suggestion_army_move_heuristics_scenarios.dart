@@ -1,34 +1,23 @@
 // Table-driven army-move heuristics suggestion scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_army_move_heuristics_expectations.dart';
 
-/// One row in [orderSuggestionArmyMoveHeuristicsScenarios].
-class OrderSuggestionArmyMoveHeuristicsScenario implements RefsScenario {
-  const OrderSuggestionArmyMoveHeuristicsScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
+import 'order_suggestion_army_move_heuristics_fixtures.dart';
 
-  @override
-  final String label;
-  final OrderSuggestionArmyMoveHeuristicsTarget target;
-  @override
-  final String? refs;
+void osamhRunKeepsAtMostOneArmyMovePerArmyId() {
+  final orders = armyMoveHeuristicsOrders();
+  final list = orders.armyMoveOrdersByPlayerId[armyMoveHeuristicsGp] ?? [];
+  final perArmy = <String, int>{};
+  for (final o in list) {
+    perArmy[o.armyId] = (perArmy[o.armyId] ?? 0) + 1;
+  }
+  expect(perArmy.values.every((c) => c <= 1), isTrue);
 }
 
-void runOrderSuggestionArmyMoveHeuristicsScenario(
-  OrderSuggestionArmyMoveHeuristicsScenario scenario,
-) {
-  runOrderSuggestionArmyMoveHeuristicsExpectation(scenario.target);
-}
-
-List<OrderSuggestionArmyMoveHeuristicsScenario>
-    orderSuggestionArmyMoveHeuristicsScenarios() => const [
-          OrderSuggestionArmyMoveHeuristicsScenario(
-            label: 'keeps at most one army move per army id',
-            target: OrderSuggestionArmyMoveHeuristicsTarget
-                .keepsAtMostOneArmyMovePerArmyId,
-          ),
-        ];
+List<RunnableScenario> orderSuggestionArmyMoveHeuristicsScenarios() => const [
+  RunnableScenario(
+    label: 'keeps at most one army move per army id',
+    run: osamhRunKeepsAtMostOneArmyMovePerArmyId,
+  ),
+];

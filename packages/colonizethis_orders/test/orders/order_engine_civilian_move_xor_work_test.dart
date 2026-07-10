@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'civilian MoveOrder xor WorkOrder',
     orderEngineCivilianMoveXorWorkScenarios(),
-    runOrderEngineCivilianMoveXorWorkScenario,
+    runRunnableScenario,
   );
 }

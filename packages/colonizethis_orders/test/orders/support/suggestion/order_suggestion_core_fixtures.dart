@@ -70,9 +70,7 @@ Unit oscBuilder({
 }
 
 Stockpile oscLumberCastIronStockpile({int amount = 10}) {
-  return Stockpile(
-    quantities: {'lumber': amount, 'castIron': amount},
-  );
+  return Stockpile(quantities: {'lumber': amount, 'castIron': amount});
 }
 
 Player oscBuilderPlayer({int lumberCastIron = 10, int treasury = 500}) {
@@ -121,8 +119,7 @@ WorldState oscWorld({
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
     oldWorld: oldWorld ?? const RegionData(),
     newWorld: newWorld,
-    tileKeysByRegionAndProvince:
-        tileKeysByRegionAndProvince ?? const {},
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
     playerVisibilityByTile: playerVisibilityByTile ?? const {},
     resourceByTileKey: resourceByTileKey ?? const {},
     tileState: tileState ?? const TileMapState(),
@@ -156,9 +153,7 @@ Map<String, Map<String, List<String>>> oscTilesByProvince(
   Map<String, List<String>> byLocal,
 ) {
   return {
-    OscIds.ow: {
-      for (final e in byLocal.entries) OscIds.prov(e.key): e.value,
-    },
+    OscIds.ow: {for (final e in byLocal.entries) OscIds.prov(e.key): e.value},
   };
 }
 

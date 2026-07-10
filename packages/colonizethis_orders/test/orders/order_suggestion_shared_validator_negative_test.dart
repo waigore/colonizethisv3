@@ -9,12 +9,12 @@ void main() {
   runLabeledScenarioGroup(
     'shared validator playerId mismatch is rejected',
     orderSuggestionSharedValidatorNegativeMismatchScenarios(),
-    runOrderSuggestionSharedValidatorNegativeScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'generateOrdersWithSimpleHeuristics still produces the same orders',
     orderSuggestionSharedValidatorNegativeSmokeScenarios(),
-    runOrderSuggestionSharedValidatorNegativeScenario,
+    runRunnableScenario,
   );
 }

@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'previewTotalTurnsForPendingWorkOrder',
     workOrderDurationPreviewScenarios(),
-    runWorkOrderDurationPreviewScenario,
+    runRunnableScenario,
   );
 }

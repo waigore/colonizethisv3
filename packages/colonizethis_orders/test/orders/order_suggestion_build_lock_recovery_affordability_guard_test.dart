@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestBuildOrders lock-recovery affordability guard (Refs #2924)',
     orderSuggestionBuildLockRecoveryAffordabilityGuardScenarios(),
-    runOrderSuggestionBuildLockRecoveryAffordabilityGuardScenario,
+    runRunnableScenario,
   );
 }

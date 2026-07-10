@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'DefaultOrderSuggestionAPI',
     orderSuggestionApiImplScenarios(),
-    runOrderSuggestionApiImplScenario,
+    runRunnableScenario,
   );
 }

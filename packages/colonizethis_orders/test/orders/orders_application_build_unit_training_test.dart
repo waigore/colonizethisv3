@@ -10,9 +10,6 @@ import 'support/scenario_runner.dart';
 
 void main() {
   group('applyBuildAndWorkOrders build-unit training', () {
-    runLabeledScenarios(
-      buildUnitTrainingScenarios(),
-      runBuildUnitTrainingScenario,
-    );
+    runLabeledScenarios(buildUnitTrainingScenarios(), runRunnableScenario);
   });
 }

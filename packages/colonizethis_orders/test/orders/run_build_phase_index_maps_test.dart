@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'runBuildPhase O(1) maps end-to-end (Refs #2394)',
     runBuildPhaseIndexMapsScenarios(),
-    runRunBuildPhaseIndexMapsScenario,
+    runRunnableScenario,
   );
 }

@@ -7,6 +7,6 @@ import 'support/scenario_runner.dart';
 
 void main() {
   group('applyBuildAndWorkOrders civilian and New World spawn', () {
-    runLabeledScenarios(civilianSpawnScenarios(), runCivilianSpawnScenario);
+    runLabeledScenarios(civilianSpawnScenarios(), runRunnableScenario);
   });
 }

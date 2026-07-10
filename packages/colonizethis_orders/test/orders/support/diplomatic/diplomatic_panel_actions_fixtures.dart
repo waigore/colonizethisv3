@@ -1,6 +1,5 @@
 // Shared diplomatic panel action fixtures (Refs #3949 wave 3).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -9,17 +8,18 @@ import 'diplomatic_orders_test_fixtures.dart';
 const diplomaticPanelActionsTopology = emptyTopology;
 
 Game diplomaticPanelActionsBaseGame() => gpMinorGame(
-      gameId: 'g',
-      turnNumber: 1,
-      treasury: 5000,
-      gp1DisplayName: 'A',
-      minorDisplayName: 'Bavaria',
-      includeSecondGp: true,
-      includeProvinces: true,
-      overtureStates: const [],
-    );
+  gameId: 'g',
+  turnNumber: 1,
+  treasury: 5000,
+  gp1DisplayName: 'A',
+  minorDisplayName: 'Bavaria',
+  includeSecondGp: true,
+  includeProvinces: true,
+  overtureStates: const [],
+);
 
-Game diplomaticPanelActionsAlliedGame() => diplomaticPanelActionsBaseGame().copyWith(
+Game diplomaticPanelActionsAlliedGame() =>
+    diplomaticPanelActionsBaseGame().copyWith(
       diplomacyRelations: const [
         DiplomacyRelation(
           factionId1: 'gp1',
@@ -27,11 +27,7 @@ Game diplomaticPanelActionsAlliedGame() => diplomaticPanelActionsBaseGame().copy
           score: 90,
           formalAlliance: true,
         ),
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'minor1',
-          score: 50,
-        ),
+        DiplomacyRelation(factionId1: 'gp1', factionId2: 'minor1', score: 50),
       ],
     );
 

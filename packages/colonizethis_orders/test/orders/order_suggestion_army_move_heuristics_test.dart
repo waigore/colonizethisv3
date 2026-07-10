@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'generateOrdersWithSimpleHeuristics army moves',
     orderSuggestionArmyMoveHeuristicsScenarios(),
-    runOrderSuggestionArmyMoveHeuristicsScenario,
+    runRunnableScenario,
   );
 }

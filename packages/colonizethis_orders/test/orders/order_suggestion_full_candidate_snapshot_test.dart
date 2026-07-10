@@ -10,6 +10,6 @@ void main() {
 
   runLabeledScenarios(
     orderSuggestionFullCandidateSnapshotScenarios(),
-    runOrderSuggestionFullCandidateSnapshotScenario,
+    runRunnableScenario,
   );
 }

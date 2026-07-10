@@ -5,7 +5,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'move_validator_fixtures.dart';
 import 'move_validator_test_support.dart';
 
 const mvMinor1 = MinorNation(id: 'minor1', displayName: 'Minor');
@@ -24,8 +23,16 @@ const mvTribe1Capital = Tribe(
 
 MapTopology mvOwNwProvinceTopology() => const MapTopology(
   nodes: [
-    TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-    TopologyNode(id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
+    TopologyNode(
+      id: 'P1',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'P2',
+      regionId: 'newWorld',
+      type: TopologyNodeType.province,
+    ),
   ],
   edges: [],
 );

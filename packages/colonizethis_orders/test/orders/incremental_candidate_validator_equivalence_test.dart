@@ -11,7 +11,7 @@ void main() {
   group('IncrementalCandidateValidator equivalence (Refs #2237)', () {
     runLabeledScenarios(
       incrementalCandidateValidatorEquivalenceScenarios(),
-      runIncrementalEquivalenceScenario,
+      runRunnableScenario,
     );
   });
 }

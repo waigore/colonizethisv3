@@ -33,7 +33,11 @@ Game workTilePrefilterOwnedTownGame({
       newWorld: const RegionData(),
     ),
     players: const [
-      Player(id: workTilePrefilterTownPlayerId, displayName: 'GP', isHuman: true),
+      Player(
+        id: workTilePrefilterTownPlayerId,
+        displayName: 'GP',
+        isHuman: true,
+      ),
       Player(id: 'gp2', displayName: 'GP2', isHuman: false),
     ],
   );
@@ -58,7 +62,11 @@ Game workTilePrefilterSingleTownGame({required String townTile}) {
       newWorld: const RegionData(),
     ),
     players: const [
-      Player(id: workTilePrefilterTownPlayerId, displayName: 'GP', isHuman: true),
+      Player(
+        id: workTilePrefilterTownPlayerId,
+        displayName: 'GP',
+        isHuman: true,
+      ),
     ],
   );
 }
@@ -91,7 +99,11 @@ Game workTilePrefilterCacheGame({
       newWorld: const RegionData(),
     ),
     players: const [
-      Player(id: workTilePrefilterTownPlayerId, displayName: 'GP', isHuman: true),
+      Player(
+        id: workTilePrefilterTownPlayerId,
+        displayName: 'GP',
+        isHuman: true,
+      ),
       Player(id: 'gp2', displayName: 'GP2', isHuman: false),
     ],
   );

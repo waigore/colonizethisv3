@@ -8,11 +8,7 @@ PlayerView orderVisibilityView0({
   Map<String, Province> provincesById = const {},
 }) {
   const playerId = 'gp1';
-  const player = Player(
-    id: playerId,
-    displayName: 'P',
-    isHuman: false,
-  );
+  const player = Player(id: playerId, displayName: 'P', isHuman: false);
   return PlayerView(
     playerId: playerId,
     player: player,

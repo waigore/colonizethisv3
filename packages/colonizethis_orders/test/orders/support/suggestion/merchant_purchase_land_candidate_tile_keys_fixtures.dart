@@ -47,8 +47,12 @@ Game mplNwFirstGame() {
     newWorld: RegionData(provinces: [provinces.last], units: const []),
     tribes: const [Tribe(id: tribe, displayName: 'T')],
     tileKeysByRegionAndProvince: {
-      ow: {pMinor: [tkMinor]},
-      nw: {pTribe: [tkTribe]},
+      ow: {
+        pMinor: [tkMinor],
+      },
+      nw: {
+        pTribe: [tkTribe],
+      },
     },
     resourceByTileKey: {tkMinor: 'grain', tkTribe: 'iron'},
   );
@@ -101,9 +105,7 @@ Game mplProjectionParityGame() {
     Province(id: pPlayer, regionId: ow, ownerId: gp),
     Province(id: pMinor, regionId: ow, ownerId: minor),
   ];
-  final newProvinces = [
-    Province(id: pTribe, regionId: nw, ownerId: tribe),
-  ];
+  final newProvinces = [Province(id: pTribe, regionId: nw, ownerId: tribe)];
   const tkPlayer = '$pPlayer|0|0';
   const tkMinor = '$pMinor|0|0';
   const tkTribe = '$pTribe|1|1';
@@ -114,8 +116,13 @@ Game mplProjectionParityGame() {
     newWorld: RegionData(provinces: newProvinces, units: const []),
     tribes: const [Tribe(id: tribe, displayName: 'T')],
     tileKeysByRegionAndProvince: {
-      ow: {pPlayer: [tkPlayer], pMinor: [tkMinor]},
-      nw: {pTribe: [tkTribe]},
+      ow: {
+        pPlayer: [tkPlayer],
+        pMinor: [tkMinor],
+      },
+      nw: {
+        pTribe: [tkTribe],
+      },
     },
     resourceByTileKey: {tkPlayer: 'grain', tkMinor: 'grain', tkTribe: 'iron'},
   );
@@ -130,9 +137,7 @@ Game mplDevExclusiveReservedGame() {
   const gp = 'gp1';
   const minor = 'minor1';
   const pMinor = '$ow|p_minor';
-  final provinces = [
-    Province(id: pMinor, regionId: ow, ownerId: minor),
-  ];
+  final provinces = [Province(id: pMinor, regionId: ow, ownerId: minor)];
   const tk0 = '$pMinor|0|0';
   const tk1 = '$pMinor|0|1';
   return TestFixtures.minimalGame(
@@ -140,7 +145,9 @@ Game mplDevExclusiveReservedGame() {
     players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
     oldWorld: RegionData(provinces: provinces, units: const []),
     tileKeysByRegionAndProvince: {
-      ow: {pMinor: [tk0, tk1]},
+      ow: {
+        pMinor: [tk0, tk1],
+      },
     },
     resourceByTileKey: {tk0: 'grain', tk1: 'grain'},
   );

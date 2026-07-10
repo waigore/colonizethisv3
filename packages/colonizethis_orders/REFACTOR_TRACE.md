@@ -2021,6 +2021,320 @@ test/ LOC after slice 127: **37,339** (net −174 from post–slice 126). Remain
 
 test/ LOC after slice 128: **37,317** (net −22 from post–slice 127). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 129: collapse split support parts + purchase-land/partial-reveal wrapper inline
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| support-part-merge | merge `work_order_application_expectations` / `order_suggestion_core_expectations` / incremental equivalence helpers / shorthand / fixture `*_part*` files into parent barrels; delete 13 part files | `*_part*.dart` (deleted) | parent support modules | #3949 |
+| vw-purchase-inline | drop `vwRunPurchaseLand` / `vwPurchaseLandGame`; inline purchase-land validate at `vwExpectPurchaseLand*` call sites | `order_engine_validate_work_expectation_shorthand.dart` | same | #3949 |
+| vwt-partial-reveal-inline | fold `vwtPartialRevealSuggestions` into `vwtExpectPartialRevealSuggestions` | `valid_work_tiles_expectation_shorthand.dart` | same | #3949 |
+
+test/ LOC after slice 129: **37,275** (net −42 from post–slice 128). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 130: vwt fixture dedup + ice corpus shell + prospect-vis inline
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-explorer-dedup | drop `vwtExplorerDisallowedBuildGame`; reuse `vwtSingleTileGame(withExplorer: true)` | `valid_work_tiles_fixtures.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vwt-colonist-inline | inline single-use `vwtColonistVisibilityFilterGame` at visibility-filter case | `valid_work_tiles_fixtures.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| vwt-nw-factory-dedup | simplify `NwPartialRevealHomeTarget.tribeGrainIron` / `minorPurchase` (no double construction) | `valid_work_tiles_fixtures.dart` | same | #3949 |
+| vwt-single-tile-inline | merge `_vwtSingleTileGame` into `vwtSingleTileGame`; remove dead `vwtBuildVisKeys` | `valid_work_tiles_fixtures.dart` | same | #3949 |
+| vwt-prospect-vis-inline | fold `vwtProspectVisKeys` into `vwtExpectProspectVisExcludesAll`; use `vwtVisKeys` at include case | `valid_work_tiles_expectation_shorthand.dart` | `valid_work_tiles_expectations.dart` | #3949 |
+| ice-corpus-shell | extract `_iceCorpusGame` shared shell for move/army equivalence corpus games | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+
+test/ LOC after slice 130: **37,242** (net −33 from post–slice 129). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 131 (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| domain-test-file-size | split six support modules that exceeded `repo.domain_package_test_file_size` (400 physical lines) after slice 129 merges | `valid_work_tiles_*`, `order_suggestion_core_expectations`, `work_order_application_expectations`, `order_engine_validate_work_fixtures`, `incremental_candidate_validator_equivalence_test_helpers` | `*_tail.dart`, `*_constants.dart`, `*_corpus.dart`, `*_minor.dart` thin dispatchers | #3949 |
+
+No scenario semantics changed; CI `repo.domain_package_test_file_size` gate green.
+
+## Wave 3 — Slice 132: incremental equivalence DRY + projected prefix candidate helper
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-wrapper-inline | drop `expectMoveEquivalent` / `expectArmyMoveEquivalent` / `expectBuildEquivalent` / `expectWorkEquivalent` / `expectDiplomaticEquivalent` / naval equivalents; call `expectCandidateFamilyEquivalent` at corpus sites | `incremental_candidate_validator_equivalence_test_helpers.dart`, `incremental_candidate_validator_equivalence_naval_helpers.dart` (deleted) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart`, `incremental_candidate_validator_equivalence_expectations.dart`, `incremental_candidate_validator_equivalence_corpus.dart` | #3949 |
+| lib-prefix-candidate | extract `acceptProjectedResourcePrefixCandidate`; fold recruit-worker / build incremental probes | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` | #3949 |
+
+test/ LOC after slice 132: **37,208** (net −34 from post–slice 131). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 133: ICE family expectation DRY + recruit/build prefix helper
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-family-helper | extract `iceExpectFamilyOnCorpus` + `iceExpectBuildOnCorpus` / `iceExpectWorkOnCorpus` / `iceExpectDiplomaticOnCorpus`; route corpus move/army/naval helpers through shared wrapper | `incremental_candidate_validator_equivalence_expectation_shorthand.dart`, `incremental_candidate_validator_equivalence_expectations.dart` | same | #3949 |
+| ice-fullpass-dry | consolidate context-order `fullPass*` helpers via `_fullPassContextOrderAccepted` | `incremental_candidate_validator_equivalence_test_helpers.dart` | same | #3949 |
+| lib-prefix-replay | extract `_acceptProjectedResourcePrefix` for recruit-worker / build incremental probes | `incremental_candidate_validator_replay.dart` | same | #3949 |
+
+test/ LOC after slice 133: see PR. Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 134: player-ledgers prefix replay DRY + ICE sequential probe helpers
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| lib-player-ledgers | extract `projectedResourceLedgersFromPlayer` / `copiedProjectedResourceLedgers` + `_acceptProjectedResourcePrefixForPlayer`; fold recruit/build incremental probes | `incremental_candidate_validator_replay.dart` | `projected_economy_prefix_replay.dart` | #3949 |
+| ice-sequential-probes | extract `iceExpectSequentialIncrementalMatchesFullPass` + `iceExpectPrefetchedArmyMoveEquivalence`; compact build/diplomatic sequential and prefetched army cases | `incremental_candidate_validator_equivalence_expectations.dart` | `incremental_candidate_validator_equivalence_test_helpers.dart` | #3949 |
+
+test/ LOC after slice 134: **37,318** (net +20 from post–slice 133; lib/player-ledgers helper overhead — expectations switch bodies thinner). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 135: ICE scenario dispatch collapse + build projection prefix replay
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-dispatch-runs | drop `IncrementalEquivalenceTarget` enum + switch dispatcher; scenario rows hold `run` tear-offs | `incremental_candidate_validator_equivalence_expectations.dart` (deleted) | `incremental_candidate_validator_equivalence_runs.dart` + `incremental_candidate_validator_equivalence_scenarios.dart` | #3949 |
+| lib-bundled-move-leg | promote `_bundledWorkMoveLegRejectionReason` to `bundledWorkMoveLegRejectionReason` | `order_suggestion_work_explorer.dart` | `bundled_civilian_work_order.dart` | #3949 |
+| lib-build-projection-replay | route `_projectEconomyAfterAcceptedBuildOrders` through `ensureProjectedResourcePrefixReplay` | `incremental_candidate_validator_replay.dart` | same + `projected_economy_prefix_replay.dart` | #3949 |
+
+test/ LOC after slice 135: **37,290** (net −28 from post–slice 134). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 136: ICE row runners + delete runs module
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-row-runners | add `iceRunMoveRow` / `iceRunArmyMoveRow` / `iceRunNavalMoveRow` / `iceRunNavalMissionRow`; inline scenario closures; delete `incremental_candidate_validator_equivalence_runs.dart` | `incremental_candidate_validator_equivalence_runs.dart` (deleted) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` + `incremental_candidate_validator_equivalence_scenarios.dart` | #3949 |
+
+test/ LOC after slice 136: **37,244** (net −46 from post–slice 135). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 137: naval/build validation + validateWork fort/rail shorthand
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| nv-shorthand-extract | extract naval/build validation fixtures + `nvExpect*` helpers; thin dispatcher switch | `order_engine_naval_build_validation_expectations.dart` | `order_engine_naval_build_validation_expectation_shorthand.dart` + thin dispatcher | #3949 |
+| vw-fort-rail-shorthand | add `vwExpectFortBuildRejected` / `vwExpectRailBuildOutcome` / `vwExpectUpgradeTownOutcome`; compact fort/rail/upgrade-town switch cases | `order_engine_validate_work_expectations.dart` | `order_engine_validate_work_expectation_shorthand.dart` | #3949 |
+
+test/ LOC after slice 137: **37,188** (net −56 from post–slice 136). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 138: ICE row-runner flattening + recruit/build prefix helper collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-row-flatten | inline `iceExpectMoveOnCorpus` / `Army` / `NavalMove` / `NavalMission` into row runners; keep build/work/diplomatic corpus helpers for scenario closures | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | same | #3949 |
+| nv-cross-region-inline | drop `nvExpectCrossRegionMoveAccepted` / `Rejected` one-liners; call `nvExpectCrossRegionMove` at dispatcher sites | `order_engine_naval_build_validation_expectation_shorthand.dart` | `order_engine_naval_build_validation_expectations.dart` | #3949 |
+| lib-prefix-player | collapse `_acceptProjectedResourcePrefix` + `_acceptProjectedResourcePrefixForPlayer` into `_acceptPlayerProjectedResourceOrder` | `incremental_candidate_validator_replay.dart` | same | #3949 |
+
+test/ LOC after slice 138: **37,138** (net −50 from post–slice 137). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 139: scenario dispatch collapse (validateWork / naval-build / work-completion)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vw-dispatch-collapse | drop `OrderEngineValidateWorkTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_work_expectations.dart` (deleted) | `order_engine_validate_work_scenarios.dart` | #3949 |
+| nv-dispatch-collapse | drop `OrderEngineNavalBuildValidationTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_naval_build_validation_expectations.dart` (deleted) | `order_engine_naval_build_validation_scenarios.dart` | #3949 |
+| wcc-dispatch-collapse | drop `WorkCompletionTarget` enum + switch; extract `wccRun*` tear-offs | `work_completion_expectations.dart` (deleted) | `work_completion_run_rows.dart` + thin `work_completion_scenarios.dart` | #3949 |
+
+test/ LOC after slice 139: **36,914** (net −224 from post–slice 138). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 140: application / valid-work-tiles / core scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-dispatch-collapse | drop `WorkOrderApplicationTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_application_expectations.dart` + `_tail.dart` (deleted) | `work_order_application_run_rows.dart` + `_tail.dart` + thin `work_order_application_scenarios.dart` | #3949 |
+| vwt-dispatch-collapse | drop `ValidWorkTilesTarget` enum + switch; scenario rows hold `run` tear-offs | `valid_work_tiles_expectations.dart` + `_tail.dart` (deleted) | `valid_work_tiles_run_rows.dart` + `_tail.dart` + thin `valid_work_tiles_scenarios.dart` | #3949 |
+| osc-dispatch-collapse | drop `OrderSuggestionCoreTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_core_expectations.dart` + `_tail.dart` (deleted) | `order_suggestion_core_run_rows.dart` + `_tail.dart` + thin `order_suggestion_core_scenarios.dart` | #3949 |
+
+test/ LOC after slice 140: **36,874** (net −40 from post–slice 139). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 141: move / naval validator scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-dispatch-collapse | drop `MoveValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `move_validator_expectations.dart` (deleted) | `move_validator_run_rows.dart` + thin `move_validator_scenarios.dart` | #3949 |
+| nov-dispatch-collapse | drop `NavalOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `naval_order_validator_expectations.dart` (deleted) | `naval_order_validator_run_rows.dart` + thin `naval_order_validator_scenarios.dart` | #3949 |
+
+test/ LOC after slice 141: **36,904** (net +30 from post–slice 140; run-row tear-off overhead). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 142: build-validator / treasury-no-bypass / validator-bundle / engine-core dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| bov-dispatch-collapse | drop `BuildOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `build_order_validator_expectations.dart` (deleted) | `build_order_validator_run_rows.dart` + thin `build_order_validator_scenarios.dart` | #3949 |
+| botnb-dispatch-collapse | drop `BuildOrderTreasuryNoBypassTarget` enum + switch; scenario rows hold `run` tear-offs | `build_order_treasury_no_bypass_expectations.dart` (deleted) | `build_order_treasury_no_bypass_run_rows.dart` + thin `build_order_treasury_no_bypass_scenarios.dart` | #3949 |
+| vb-dispatch-collapse | drop `ValidatorBundleTarget` enum + switch; scenario rows hold `run` tear-offs | `validator_bundle_expectations.dart` (deleted) | `validator_bundle_run_rows.dart` + thin `validator_bundle_scenarios.dart` | #3949 |
+| oec-dispatch-collapse | drop `OrderEngineCoreTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_core_expectations.dart` (deleted) | `order_engine_core_run_rows.dart` + thin `order_engine_core_scenarios.dart` | #3949 |
+
+test/ LOC after slice 142: **36,865** (net −39 from post–slice 141). Remaining: further support-table compaction toward ≤26,400.
+
+## Wave 3 — Slice 143: diplomatic validator scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| bct-dispatch-collapse | drop `BoycottValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `boycott_validator_expectations.dart` (deleted) | `boycott_validator_run_rows.dart` + thin `boycott_validator_scenarios.dart` | #3949 |
+| bal-dispatch-collapse | drop `BreakAllianceValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `break_alliance_validator_expectations.dart` (deleted) | `break_alliance_validator_run_rows.dart` + thin `break_alliance_validator_scenarios.dart` | #3949 |
+| jee-dispatch-collapse | drop `JoinEmpireOvertureValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `join_empire_overture_validator_expectations.dart` (deleted) | `join_empire_overture_validator_run_rows.dart` + thin `join_empire_overture_validator_scenarios.dart` | #3949 |
+| eosv-dispatch-collapse | drop `EstablishOvertureSubValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `establish_overture_sub_validator_expectations.dart` (deleted) | `establish_overture_sub_validator_run_rows.dart` + thin `establish_overture_sub_validator_scenarios.dart` | #3949 |
+| dsfm-dispatch-collapse | drop `DiplomaticSubValidatorsFactionMembershipTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_faction_membership_expectations.dart` (deleted) | `diplomatic_sub_validators_faction_membership_run_rows.dart` + thin `diplomatic_sub_validators_faction_membership_scenarios.dart` | #3949 |
+| dsr-dispatch-collapse | drop `DiplomaticSubValidatorsRelationsTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_relations_expectations.dart` (deleted) | `diplomatic_sub_validators_relations_run_rows.dart` + thin `diplomatic_sub_validators_relations_scenarios.dart` | #3949 |
+| dsa-dispatch-collapse | drop `DiplomaticSubValidatorsAidTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_aid_expectations.dart` (deleted) | `diplomatic_sub_validators_aid_run_rows.dart` + thin `diplomatic_sub_validators_aid_scenarios.dart` | #3949 |
+
+test/ LOC after slice 143: **36,755** (net −110 from post–slice 142). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families outside diplomatic validators.
+
+## Wave 3 — Slice 144: work-handler + engine validate scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ewh-dispatch-collapse | drop `ExploreWorkHandlerTarget` enum + switch; scenario rows hold `run` tear-offs | `explore_work_handler_expectations.dart` (deleted) | `explore_work_handler_run_rows.dart` + thin `explore_work_handler_scenarios.dart` | #3949 |
+| plwh-dispatch-collapse | drop `PurchaseLandWorkHandlerTarget` enum + switch; scenario rows hold `run` tear-offs | `purchase_land_work_handler_expectations.dart` (deleted) | `purchase_land_work_handler_run_rows.dart` + thin `purchase_land_work_handler_scenarios.dart` | #3949 |
+| rwh-dispatch-collapse | drop `RemainingWorkHandlersTarget` enum + switch; scenario rows hold `run` tear-offs | `remaining_work_handlers_expectations.dart` (deleted) | `remaining_work_handlers_run_rows.dart` + thin `remaining_work_handlers_scenarios.dart` | #3949 |
+| vet-dispatch-collapse | drop `OrderEngineValidateTradeTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_trade_expectations.dart` (deleted) | `order_engine_validate_trade_run_rows.dart` + thin `order_engine_validate_trade_scenarios.dart` | #3949 |
+| vrw-dispatch-collapse | drop `OrderEngineValidateRecruitWorkerTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_recruit_worker_expectations.dart` (deleted) | `order_engine_validate_recruit_worker_run_rows.dart` + thin `order_engine_validate_recruit_worker_scenarios.dart` | #3949 |
+| ved-dispatch-collapse | drop `OrderEngineValidateDiplomaticTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_diplomatic_expectations.dart` (deleted) | `order_engine_validate_diplomatic_run_rows.dart` + thin `order_engine_validate_diplomatic_scenarios.dart` | #3949 |
+| vbc-dispatch-collapse | drop `OrderEngineValidateBuildCivilianTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_build_civilian_expectations.dart` (deleted) | `order_engine_validate_build_civilian_run_rows.dart` + thin `order_engine_validate_build_civilian_scenarios.dart` | #3949 |
+
+test/ LOC after slice 144: **36,671** (net −84 from post–slice 143). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~69 expectations modules).
+
+## Wave 3 — Slice 145: validator scenario dispatch collapse (prechecks / cost / recruit / armiesById)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wotp-dispatch-collapse | drop `WorkOrderTargetPrecheckTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_target_prechecks_expectations.dart` (deleted) | `work_order_target_prechecks_run_rows.dart` + thin `work_order_target_prechecks_scenarios.dart` | #3949 |
+| wotpec-dispatch-collapse | drop `WorkOrderTargetPrechecksExplorerConsulateTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_target_prechecks_explorer_consulate_expectations.dart` (deleted) | `work_order_target_prechecks_explorer_consulate_run_rows.dart` + thin `work_order_target_prechecks_explorer_consulate_scenarios.dart` | #3949 |
+| wocc-dispatch-collapse | drop `WorkOrderCostCalculatorTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_cost_calculator_expectations.dart` (deleted) | `work_order_cost_calculator_run_rows.dart` + thin `work_order_cost_calculator_scenarios.dart` | #3949 |
+| woccfb-dispatch-collapse | drop `WorkOrderCostCalculatorFeedstockBootstrapTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_cost_calculator_feedstock_bootstrap_expectations.dart` (deleted) | `work_order_cost_calculator_feedstock_bootstrap_run_rows.dart` + thin `work_order_cost_calculator_feedstock_bootstrap_scenarios.dart` | #3949 |
+| utmt-dispatch-collapse | drop `UpgradeTownMinorTribeTarget` enum + switch; scenario rows hold `run` tear-offs | `upgrade_town_minor_tribe_expectations.dart` (deleted) | `upgrade_town_minor_tribe_run_rows.dart` + thin `upgrade_town_minor_tribe_scenarios.dart` | #3949 |
+| rwov-dispatch-collapse | drop `RecruitWorkerOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `recruit_worker_order_validator_expectations.dart` (deleted) | `recruit_worker_order_validator_run_rows.dart` + thin `recruit_worker_order_validator_scenarios.dart` | #3949 |
+| amvabi-dispatch-collapse | drop `ArmyMoveValidatorArmiesByIdTarget` enum + switch; scenario rows hold `run` tear-offs | `army_move_validator_armies_by_id_expectations.dart` (deleted) | `army_move_validator_armies_by_id_run_rows.dart` + thin `army_move_validator_armies_by_id_scenarios.dart` | #3949 |
+
+test/ LOC after slice 145: **36,586** (net −85 from post–slice 144). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~62 expectations modules).
+
+## Wave 3 — Slice 146: application scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ah-dispatch-collapse | drop `ApplicationHelpersTarget` enum + switch; scenario rows hold `run` tear-offs | `application_helpers_expectations.dart` (deleted) | `application_helpers_run_rows.dart` + thin `application_helpers_scenarios.dart` | #3949 |
+| csp-dispatch-collapse | drop `CivilianSpawnTarget` enum + switch; scenario rows hold `run` tear-offs | `civilian_spawn_expectations.dart` (deleted) | `civilian_spawn_run_rows.dart` + thin `civilian_spawn_scenarios.dart` | #3949 |
+| dom-dispatch-collapse | drop `DraftOrdersMutationsTarget` enum + switch; scenario rows hold `run` tear-offs | `draft_orders_mutations_expectations.dart` (deleted) | `draft_orders_mutations_run_rows.dart` + thin `draft_orders_mutations_scenarios.dart` | #3949 |
+| ov-dispatch-collapse | drop `OrderVisibilityTarget` enum + switch; scenario rows hold `run` tear-offs | `order_visibility_expectations.dart` (deleted) | `order_visibility_run_rows.dart` + thin `order_visibility_scenarios.dart` | #3949 |
+| ol-dispatch-collapse | drop `OrdersLoggingTarget` enum + switch; scenario rows hold `run` tear-offs | `orders_logging_expectations.dart` (deleted) | `orders_logging_run_rows.dart` + thin `orders_logging_scenarios.dart` | #3949 |
+| wpp-dispatch-collapse | drop `WorkerPoolPhaseTarget` enum + switch; scenario rows hold `run` tear-offs | `worker_pool_phase_expectations.dart` (deleted) | `worker_pool_phase_run_rows.dart` + thin `worker_pool_phase_scenarios.dart` | #3949 |
+| cpt-dispatch-collapse | drop `CivilianProjectedTileTarget` enum + switch; scenario rows hold `run` tear-offs | `civilian_projected_tile_expectations.dart` (deleted) | `civilian_projected_tile_run_rows.dart` + thin `civilian_projected_tile_scenarios.dart` | #3949 |
+
+test/ LOC after slice 146: **36,481** (net −105 from post–slice 145). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~55 expectations modules).
+
+## Wave 3 — Slice 147: remaining application scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wodp-dispatch-collapse | drop `WorkOrderDurationPreviewTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_duration_preview_expectations.dart` (deleted) | `work_order_duration_preview_run_rows.dart` + thin `work_order_duration_preview_scenarios.dart` | #3949 |
+| prac-dispatch-collapse | drop `PropagateRoadToAdjacentCapitalTarget` enum + switch; scenario rows hold `run` tear-offs | `propagate_road_to_adjacent_capital_expectations.dart` (deleted) | `propagate_road_to_adjacent_capital_run_rows.dart` + thin `propagate_road_to_adjacent_capital_scenarios.dart` | #3949 |
+| rbpi-dispatch-collapse | drop `RunBuildPhaseIndexMapsTarget` enum + switch; scenario rows hold `run` tear-offs | `run_build_phase_index_maps_expectations.dart` (deleted) | `run_build_phase_index_maps_run_rows.dart` + thin `run_build_phase_index_maps_scenarios.dart` | #3949 |
+| but-dispatch-collapse | drop `BuildUnitTrainingTarget` enum + switch; scenario rows hold `run` tear-offs | `build_unit_training_expectations.dart` (deleted) | `build_unit_training_run_rows.dart` + thin `build_unit_training_scenarios.dart` | #3949 |
+| amr-dispatch-collapse | drop `AppendMilitaryRegimentArmiesByIdTarget` enum + switch; scenario rows hold `run` tear-offs | `append_military_regiment_armies_by_id_expectations.dart` (deleted) | `append_military_regiment_armies_by_id_run_rows.dart` + thin `append_military_regiment_armies_by_id_scenarios.dart` | #3949 |
+| brwr-dispatch-collapse | drop `RejectionReasonForBuildRailOrderTarget` / `TerrainTypeForTileKeyTarget` enums + switches; scenario rows hold `run` tear-offs | `build_rail_work_rules_expectations.dart` (deleted) | `build_rail_work_rules_run_rows.dart` + thin `build_rail_work_rules_scenarios.dart` | #3949 |
+
+test/ LOC after slice 147: **36,417** (net −64 from post–slice 146). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~49 expectations modules — engine, suggestion, merge, diplomatic, debug).
+
+## Wave 3 — Slice 148: engine / merge / debug / misc scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| dcw-dispatch-collapse | drop `DebugConsoleWorkersTarget` enum + switch; scenario rows hold `run` tear-offs | `debug_console_workers_expectations.dart` (deleted) | `debug_console_workers_run_rows.dart` + thin `debug_console_workers_scenarios.dart` | #3949 |
+| dcsi-dispatch-collapse | drop `DebugConsoleSupportedIdsTarget` enum + switch; scenario rows hold `run` tear-offs | `debug_console_supported_ids_expectations.dart` (deleted) | `debug_console_supported_ids_run_rows.dart` + thin `debug_console_supported_ids_scenarios.dart` | #3949 |
+| oevpp-dispatch-collapse | drop `OrderEngineValidationPhasePlanTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validation_phase_plan_expectations.dart` (deleted) | `order_engine_validation_phase_plan_run_rows.dart` + thin `order_engine_validation_phase_plan_scenarios.dart` | #3949 |
+| oevi-dispatch-collapse | drop `OrderEngineValidatorInjectionTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validator_injection_expectations.dart` (deleted) | `order_engine_validator_injection_run_rows.dart` + thin `order_engine_validator_injection_scenarios.dart` | #3949 |
+| orc-dispatch-collapse | drop `OrderResolutionContextTarget` enum + switch; scenario rows hold `run` tear-offs | `order_resolution_context_expectations.dart` (deleted) | `order_resolution_context_run_rows.dart` + thin `order_resolution_context_scenarios.dart` | #3949 |
+| om-dispatch-collapse | drop `OrderMergeTarget` enum + switch; scenario rows hold `run` tear-offs | `order_merge_expectations.dart` (deleted) | `order_merge_run_rows.dart` + thin `order_merge_scenarios.dart` | #3949 |
+| oecmxw-dispatch-collapse | drop `OrderEngineCivilianMoveXorWorkTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_civilian_move_xor_work_expectations.dart` (deleted) | `order_engine_civilian_move_xor_work_run_rows.dart` + thin `order_engine_civilian_move_xor_work_scenarios.dart` | #3949 |
+| oeps-dispatch-collapse | drop `OrderEffectsProjectorSeamTarget` enum + switch; scenario rows hold `run` tear-offs | `order_effects_projector_seam_expectations.dart` (deleted) | `order_effects_projector_seam_run_rows.dart` + thin `order_effects_projector_seam_scenarios.dart` | #3949 |
+| owc-dispatch-collapse | drop `OrderWorkConstantsTarget` enum + switch; scenario rows hold `run` tear-offs | `order_work_constants_expectations.dart` (deleted) | `order_work_constants_run_rows.dart` + thin `order_work_constants_scenarios.dart` | #3949 |
+| ecgp-dispatch-collapse | drop `ExplorerConsulateGatePredicateTarget` enum + switch; scenario rows hold `run` tear-offs | `explorer_consulate_gate_predicate_expectations.dart` (deleted) | `explorer_consulate_gate_predicate_run_rows.dart` + thin `explorer_consulate_gate_predicate_scenarios.dart` | #3949 |
+
+test/ LOC after slice 148: **36,261** (net −156 from post–slice 147). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~39 expectations modules — suggestion, diplomatic panel, partial_province_reveal, per_player cache, engine move/context).
+
+## Wave 3 — Slice 149: engine / cache / diplomatic scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oemwc-dispatch-collapse | drop `OrderEngineMoveAndWorkContextTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_move_and_work_context_expectations.dart` (deleted) | `order_engine_move_and_work_context_run_rows.dart` + thin `order_engine_move_and_work_context_scenarios.dart` | #3949 |
+| oenbpa-dispatch-collapse | drop `OrderEngineNavalBuildProjectionAndWorkersTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_naval_build_projection_and_workers_expectations.dart` (deleted) | `order_engine_naval_build_projection_and_workers_run_rows.dart` + thin `order_engine_naval_build_projection_and_workers_scenarios.dart` | #3949 |
+| ppr-dispatch-collapse | drop `PartialProvinceRevealTarget` enum + switch; scenario rows hold `run` tear-offs | `partial_province_reveal_expectations.dart` (deleted) | `partial_province_reveal_run_rows.dart` + thin `partial_province_reveal_scenarios.dart` | #3949 |
+| ppwtsc-dispatch-collapse | drop `PerPlayerWorkTargetSelectionCacheTarget` enum + switch; scenario rows hold `run` tear-offs | `per_player_work_target_selection_cache_expectations.dart` (deleted) | `per_player_work_target_selection_cache_run_rows.dart` + thin `per_player_work_target_selection_cache_scenarios.dart` | #3949 |
+| dpac-dispatch-collapse | drop `DiplomaticPanelActionCandidatesTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_panel_actions_expectations.dart` (deleted) | `diplomatic_panel_actions_run_rows.dart` + thin `diplomatic_panel_actions_scenarios.dart` | #3949 |
+| dpe-dispatch-collapse | drop `DiplomaticPanelEnumerateTarget` enum + switch; scenario rows hold `run` tear-offs | same (deleted) | same | #3949 |
+
+test/ LOC after slice 149: **36,156** (net −105 from post–slice 148). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~33 expectations modules — suggestion families only).
+
+## Wave 3 — Slice 150: suggestion scenario dispatch collapse (batch A)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osamh-dispatch-collapse | drop `OrderSuggestionArmyMoveHeuristicsTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_heuristics_expectations.dart` (deleted) | `order_suggestion_army_move_heuristics_run_rows.dart` + thin scenarios | #3949 |
+| oscie-dispatch-collapse | drop colonial-intel-explore enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_colonial_intel_explore_expectations.dart` (deleted) | `order_suggestion_colonial_intel_explore_run_rows.dart` + thin scenarios | #3949 |
+| osmeudw-dispatch-collapse | drop move-excludes-draft-work enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_move_excludes_unit_with_draft_work_expectations.dart` (deleted) | `order_suggestion_move_excludes_unit_with_draft_work_run_rows.dart` + thin scenarios | #3949 |
+| osfnwp-dispatch-collapse | drop feedstock-new-world-projection enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_feedstock_new_world_projection_expectations.dart` (deleted) | `order_suggestion_feedstock_new_world_projection_run_rows.dart` + thin scenarios | #3949 |
+| ospoptc-dispatch-collapse | drop prospect-own-province-tile-cap enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_own_province_tile_cap_expectations.dart` (deleted) | `order_suggestion_prospect_own_province_tile_cap_run_rows.dart` + thin scenarios | #3949 |
+| savr-dispatch-collapse | drop `SimpleAiValidatorReuseTarget` enum + switch; scenario rows hold `run` tear-offs | `simple_ai_validator_reuse_expectations.dart` (deleted) | `simple_ai_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osdwcd-dispatch-collapse | drop declare-war-colonial-discovery enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_declare_war_colonial_discovery_expectations.dart` (deleted) | `order_suggestion_declare_war_colonial_discovery_run_rows.dart` + thin scenarios | #3949 |
+| osnoefp-dispatch-collapse | drop no-order-engine-full-pass enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_no_order_engine_full_pass_expectations.dart` (deleted) | `order_suggestion_no_order_engine_full_pass_run_rows.dart` + thin scenarios | #3949 |
+| osnvr-dispatch-collapse | drop naval-validator-reuse enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_naval_validator_reuse_expectations.dart` (deleted) | `order_suggestion_naval_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osfcs-dispatch-collapse | drop full-candidate-snapshot enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_full_candidate_snapshot_expectations.dart` (deleted) | `order_suggestion_full_candidate_snapshot_run_rows.dart` + thin scenarios | #3949 |
+| osaidw-dispatch-collapse | drop api-impl-declare-war enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_declare_war_expectations.dart` (deleted) | `order_suggestion_api_impl_declare_war_run_rows.dart` + thin scenarios | #3949 |
+| osbpr-dispatch-collapse | drop build-pending-riches enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_pending_riches_expectations.dart` (deleted) | `order_suggestion_build_pending_riches_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 150: **36,002** (net −154 from post–slice 149). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~34 expectations modules — suggestion families).
+
+## Wave 3 — Slice 151: suggestion scenario dispatch collapse (batch B)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osh-dispatch-collapse | drop `OrderSuggestionHelpersTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_helpers_expectations.dart` (deleted) | `order_suggestion_helpers_run_rows.dart` + thin scenarios | #3949 |
+| osdwir-dispatch-collapse | drop declare-war-intervention-risk enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_declare_war_intervention_risk_expectations.dart` (deleted) | `order_suggestion_declare_war_intervention_risk_run_rows.dart` + thin scenarios | #3949 |
+| osplpp-dispatch-collapse | drop prospect-location-province-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_location_province_priority_expectations.dart` (deleted) | `order_suggestion_prospect_location_province_priority_run_rows.dart` + thin scenarios | #3949 |
+| osrd-dispatch-collapse | drop research-diversify enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_research_diversify_expectations.dart` (deleted) | `order_suggestion_research_diversify_run_rows.dart` + thin scenarios | #3949 |
+| ospobp-dispatch-collapse | drop prospect-own-province-budget-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_own_province_budget_priority_expectations.dart` (deleted) | `order_suggestion_prospect_own_province_budget_priority_run_rows.dart` + thin scenarios | #3949 |
+| osait-dispatch-collapse | drop api-impl-trade enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_trade_expectations.dart` (deleted) | `order_suggestion_api_impl_trade_run_rows.dart` + thin scenarios | #3949 |
+| osaidm-dispatch-collapse | drop api-impl-diplomatic-minor enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_minor_expectations.dart` (deleted) | `order_suggestion_api_impl_diplomatic_minor_run_rows.dart` + thin scenarios | #3949 |
+| osdp-dispatch-collapse | drop diplomatic-pass enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_pass_expectations.dart` (deleted) | `order_suggestion_diplomatic_pass_run_rows.dart` + thin scenarios | #3949 |
+| osdvr-dispatch-collapse | drop diplomatic-validator-reuse enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_validator_reuse_expectations.dart` (deleted) | `order_suggestion_diplomatic_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osua-dispatch-collapse | drop unit-availability enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_unit_availability_expectations.dart` (deleted) | `order_suggestion_unit_availability_run_rows.dart` + thin scenarios | #3949 |
+| osca-dispatch-collapse | drop colonial-acquisition enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_colonial_acquisition_expectations.dart` (deleted) | `order_suggestion_colonial_acquisition_run_rows.dart` + thin scenarios | #3949 |
+| oswplc-dispatch-collapse | drop work-purchase-land-colonial enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_purchase_land_colonial_expectations.dart` (deleted) | `order_suggestion_work_purchase_land_colonial_run_rows.dart` + thin scenarios | #3949 |
+| osdf-dispatch-collapse | drop diplomacy-filter enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomacy_filter_expectations.dart` (deleted) | `order_suggestion_diplomacy_filter_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 151: **35,721** (net −281 from post–slice 150). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~21 expectations modules — suggestion families).
+
+## Wave 3 — Slice 152: suggestion scenario dispatch collapse (batch C — final)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mpl-dispatch-collapse | drop merchant-purchase-land-candidate-tile-keys enum + switch; scenario rows hold `run` tear-offs | `merchant_purchase_land_candidate_tile_keys_expectations.dart` (deleted) | `merchant_purchase_land_candidate_tile_keys_run_rows.dart` + thin scenarios | #3949 |
+| osaida-dispatch-collapse | drop api-impl-diplomatic-appendability enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_appendability_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osaid-dispatch-collapse | drop api-impl-diplomatic enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osai-dispatch-collapse | drop api-impl enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osam-dispatch-collapse | drop army-move enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osamp-dispatch-collapse | drop army-move-picker enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_picker_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osbcs-dispatch-collapse | drop build-civilian-suggestion enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_civilian_suggestion_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osblrag-dispatch-collapse | drop build-lock-recovery-affordability-guard enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_lock_recovery_affordability_guard_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osch-dispatch-collapse | drop context-helpers enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_context_helpers_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osdb-dispatch-collapse | drop diplomatic-boycott enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_boycott_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ospc-dispatch-collapse | drop pass-context enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_pass_context_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osrw-dispatch-collapse | drop recruit-worker enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_recruit_worker_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osrms-dispatch-collapse | drop research-multi-slot enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_research_multi_slot_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ossve-dispatch-collapse | drop shared-validator-equivalence enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_shared_validator_equivalence_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ossvn-dispatch-collapse | drop shared-validator-negative enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_shared_validator_negative_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswfp-dispatch-collapse | drop work-feedstock-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_feedstock_priority_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswl-dispatch-collapse | drop work-logging enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_logging_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswtk-dispatch-collapse | drop work-tile-keys-shared-validator enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_keys_shared_validator_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswtpl-dispatch-collapse | drop work-tile-prefilter-purchase-land enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_prefilter_purchase_land_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswttw-dispatch-collapse | drop work-tile-prefilter-town-work enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_prefilter_town_work_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| wsp-dispatch-collapse | drop work-suggestion-pipeline enum + switch; wrap each tear-off in `withWspLogCapture` | `work_suggestion_pipeline_expectations.dart` (deleted) | `work_suggestion_pipeline_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 152: **35,374** (net −347 from post–slice 151). Remaining: further support-table compaction toward ≤26,400; **enum+switch expectation dispatchers fully eliminated**; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 153: merge run_rows into scenarios + shared RunnableScenario
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| run-rows-merge | merge 98 `*_run_rows.dart` into sibling `*_scenarios.dart` (≤400 lines; preserve multi-line imports) | `test/orders/support/**/*_run_rows.dart` (deleted except 7 large/tail families) | matching `*_scenarios.dart` | #3949 |
+| runnable-scenario | add shared `RunnableScenario` / `runRunnableScenario`; delete per-family scenario classes + runners | 108 family scenario modules + `*_test.dart` runners | `support/scenario_runner.dart` | #3949 |
+| unused-import-sweep | `dart fix` unused imports after merge/class collapse | merged scenario modules | same | #3949 |
+
+Preserved: description baseline, support-layout, prefer-scenario-tables, domain test file-size ≤400. Remaining large split families still use `*_run_rows.dart` (+ tails): `order_suggestion_core`, `valid_work_tiles`, `work_order_application`, `build_unit_training`, `work_completion`, `order_engine_core`, `order_merge`.
+
+test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

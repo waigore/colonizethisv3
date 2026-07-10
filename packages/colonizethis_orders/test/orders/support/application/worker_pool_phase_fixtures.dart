@@ -20,10 +20,7 @@ const wppJourneymanTech = {
   kTechIdCigarProduction: true,
 };
 
-const wppMasterTech = {
-  kTechIdMasterArtisans: true,
-  kTechIdHatProduction: true,
-};
+const wppMasterTech = {kTechIdMasterArtisans: true, kTechIdHatProduction: true};
 
 Game wppEmptyWorldGame({required List<Player> players}) {
   return Game(
@@ -57,10 +54,7 @@ Player wppPlayer({
   );
 }
 
-Orders wppRecruitOrders(
-  String playerId,
-  List<WorkerTier> tiers,
-) {
+Orders wppRecruitOrders(String playerId, List<WorkerTier> tiers) {
   return Orders(
     recruitWorkerOrdersByPlayerId: {
       playerId: tiers
@@ -70,7 +64,8 @@ Orders wppRecruitOrders(
   );
 }
 
-Game wppApply(Game game, Orders orders) => applyBuildAndWorkOrders(game, orders);
+Game wppApply(Game game, Orders orders) =>
+    applyBuildAndWorkOrders(game, orders);
 
 Player wppPlayerAfter(Game game, Orders orders, String playerId) =>
     wppApply(game, orders).players.firstWhere((p) => p.id == playerId);

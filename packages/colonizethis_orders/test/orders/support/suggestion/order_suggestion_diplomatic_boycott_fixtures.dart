@@ -3,8 +3,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const orderSuggestionDiplomaticBoycottEmptyTopology =
-    MapTopology(nodes: [], edges: []);
+const orderSuggestionDiplomaticBoycottEmptyTopology = MapTopology(
+  nodes: [],
+  edges: [],
+);
 
 Game orderSuggestionDiplomaticBoycottTwoGpGame({
   bool holdsColony = true,

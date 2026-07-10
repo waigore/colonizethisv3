@@ -9,11 +9,11 @@ void main() {
   runLabeledScenarioGroup(
     'rejectionReasonForBuildRailOrder',
     rejectionReasonForBuildRailOrderScenarios(),
-    runRejectionReasonForBuildRailOrderScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'terrainTypeForTileKey',
     terrainTypeForTileKeyScenarios(),
-    runTerrainTypeForTileKeyScenario,
+    runRunnableScenario,
   );
 }

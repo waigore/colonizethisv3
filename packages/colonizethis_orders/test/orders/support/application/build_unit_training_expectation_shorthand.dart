@@ -8,11 +8,7 @@ import 'package:colonizethis_test/test.dart';
 import 'build_unit_training_fixtures.dart';
 import 'orders_application_military_ship_skip_test_support.dart';
 
-Game butApply(
-  Game game,
-  Orders orders, {
-  MapTopology? topology,
-}) =>
+Game butApply(Game game, Orders orders, {MapTopology? topology}) =>
     applyBuildAndWorkOrders(game, orders, topology: topology);
 
 void butExpectNoOwUnitsAfter(
@@ -35,8 +31,9 @@ void butExpectFluyteSpentNoFleet(ButFluyteNoFleetVariant variant) {
     stockpile: stockpile,
     peasants: 1,
     treasury: shipEcon.buildTreasuryCost + 10,
-    capitalProvinceId:
-        variant == ButFluyteNoFleetVariant.nullCapital ? null : ButIds.prov('P1'),
+    capitalProvinceId: variant == ButFluyteNoFleetVariant.nullCapital
+        ? null
+        : ButIds.prov('P1'),
     techUnlocked: {kTechIdSuperiorHullDesign: true},
   );
   final topology = switch (variant) {

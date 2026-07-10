@@ -12,6 +12,6 @@ void main() {
     'suggestWorkOrders own-province prospect reaches feedstock tile past '
     'per-target probe cap (Refs #2847)',
     orderSuggestionProspectOwnProvinceTileCapScenarios(),
-    runOrderSuggestionProspectOwnProvinceTileCapScenario,
+    runRunnableScenario,
   );
 }

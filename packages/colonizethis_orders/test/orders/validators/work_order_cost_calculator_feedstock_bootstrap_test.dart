@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'WorkOrderCostCalculator feedstock bootstrap castIron waiver',
     workOrderCostCalculatorFeedstockBootstrapScenarios(),
-    runWorkOrderCostCalculatorFeedstockBootstrapScenario,
+    runRunnableScenario,
   );
 }

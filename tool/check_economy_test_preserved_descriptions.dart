@@ -126,8 +126,13 @@ Set<String> collectEconomyTestDescriptions({
 
   final scenarioPaths = scenarioSourcesByPath.keys.toList()..sort();
   for (final path in scenarioPaths) {
-    final source = scenarioSourcesByPath[path]!;
-    // Full-file scan so dart-format `label:\n  '…'` still matches (Refs #3939).
+    // Match against the full file so `dart format` may place the string on the
+    // line after `label:` without dropping the pin (Refs #3939 / #3949).
+    // Drop full-line comments first so `// label: '…'` is not counted.
+    final source = scenarioSourcesByPath[path]!
+        .split('\n')
+        .map((line) => economyTestDescriptionIsCommentLine(line) ? '' : line)
+        .join('\n');
     for (final match in economyScenarioLabelPattern.allMatches(source)) {
       final description = match.group(1) ?? match.group(2);
       if (description == null || description.isEmpty) continue;

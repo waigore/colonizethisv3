@@ -9,7 +9,7 @@ void main() {
   group('OrderEngine validation pass — TradeOrder (#2989 A8)', () {
     runLabeledScenarios(
       orderEngineValidateTradeScenarios(),
-      runOrderEngineValidateTradeScenario,
+      runRunnableScenario,
     );
   });
 }

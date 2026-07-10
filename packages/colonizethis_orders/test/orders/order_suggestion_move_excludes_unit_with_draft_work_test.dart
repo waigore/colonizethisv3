@@ -4,7 +4,6 @@
 // suggestions must not include the same civilian unitId as an existing draft
 // WorkOrder (move/work XOR via order engine validation).
 
-import 'package:colonizethis_test/test.dart';
 
 import 'support/scenario_runner.dart';
 import 'support/suggestion/order_suggestion_move_excludes_unit_with_draft_work_scenarios.dart';
@@ -12,6 +11,6 @@ import 'support/suggestion/order_suggestion_move_excludes_unit_with_draft_work_s
 void main() {
   runLabeledScenarios(
     orderSuggestionMoveExcludesUnitWithDraftWorkScenarios(),
-    runOrderSuggestionMoveExcludesUnitWithDraftWorkScenario,
+    runRunnableScenario,
   );
 }

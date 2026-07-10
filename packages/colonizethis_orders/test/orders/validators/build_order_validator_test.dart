@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'BuildOrderValidator',
     buildOrderValidatorScenarios(),
-    runBuildOrderValidatorScenario,
+    runRunnableScenario,
   );
 }

@@ -36,9 +36,7 @@ MapTopology novSeaProvinceAdjacent({String provinceLocalId = 'P1'}) =>
       edges: [TopologyEdge(id1: 'sea1', id2: provinceLocalId)],
     );
 
-MapTopology novTwoSeasOneProvince({
-  required List<TopologyEdge> edges,
-}) =>
+MapTopology novTwoSeasOneProvince({required List<TopologyEdge> edges}) =>
     navalOrderValidatorTestTopology(
       nodes: [
         navalOrderValidatorTestSeaNode('sea1'),
@@ -83,32 +81,31 @@ NavalOrderValidator novValidatorAtSea({
   List<Fleet>? fleets,
   List<Province>? oldWorldProvinces,
   List<Player>? players,
-}) =>
-    navalOrderValidatorForTest(
-      game: navalOrderValidatorTestGame(
-        fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
-        oldWorldProvinces: oldWorldProvinces ?? const [],
-        players: players ??
-            const [
-              Player(
-                id: kNavalOrderValidatorTestPlayerId,
-                displayName: 'P1',
-                isHuman: true,
-              ),
-            ],
-      ),
-      topology: topology,
-    );
+}) => navalOrderValidatorForTest(
+  game: navalOrderValidatorTestGame(
+    fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
+    oldWorldProvinces: oldWorldProvinces ?? const [],
+    players:
+        players ??
+        const [
+          Player(
+            id: kNavalOrderValidatorTestPlayerId,
+            displayName: 'P1',
+            isHuman: true,
+          ),
+        ],
+  ),
+  topology: topology,
+);
 
 NavalOrderValidator novValidatorInPort({
   required MapTopology topology,
   List<Fleet>? fleets,
   String portLocalId = 'P1',
-}) =>
-    navalOrderValidatorForTest(
-      game: navalOrderValidatorTestGame(
-        oldWorldProvinces: novOwnedP1Provinces(),
-        fleets: fleets ?? [navalOrderValidatorTestFleetInPort()],
-      ),
-      topology: topology,
-    );
+}) => navalOrderValidatorForTest(
+  game: navalOrderValidatorTestGame(
+    oldWorldProvinces: novOwnedP1Provinces(),
+    fleets: fleets ?? [navalOrderValidatorTestFleetInPort()],
+  ),
+  topology: topology,
+);

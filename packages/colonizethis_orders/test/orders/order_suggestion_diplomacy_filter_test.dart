@@ -9,11 +9,11 @@ void main() {
   runLabeledScenarioGroup(
     'getProvinceOwnerMap reads ProvinceOwnerCache (slice 6)',
     getProvinceOwnerMapProvinceOwnerCacheScenarios(),
-    runOrderSuggestionDiplomacyFilterScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'filterMoveOrdersByDiplomacy and getProvinceOwnerMap',
     filterMoveOrdersByDiplomacyScenarios(),
-    runOrderSuggestionDiplomacyFilterScenario,
+    runRunnableScenario,
   );
 }

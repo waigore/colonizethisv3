@@ -1,45 +1,163 @@
 // Table-driven civilian / New World spawn scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'civilian_spawn_expectations.dart';
+import 'civilian_spawn_expectation_shorthand.dart';
 
-/// One row in [civilianSpawnScenarios].
-class CivilianSpawnScenario implements RefsScenario {
-  const CivilianSpawnScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final CivilianSpawnTarget target;
-  @override
-  final String? refs;
+void
+cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince() {
+  final game = cspExplorerGame(
+    capitalProvinceId: cspCapitalProvinceId,
+    otherOwnedProvinceId: 'oldWorld|P2',
+    capitalTile: const CapitalTile(
+      regionId: cspOw,
+      provinceId: cspCapitalProvinceId,
+      x: 0,
+      y: 1,
+    ),
+  );
+  final next = applyBuildAndWorkOrders(
+    game,
+    cspBuildOrders(
+      kUnitTypeExplorer,
+      isMilitary:
+          buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
+          BuildUnitCategory.military,
+      spawnProvinceId: 'oldWorld|P2',
+    ),
+  );
+  expect(next.worldState.oldWorld.units.length, 1);
+  expect(next.worldState.oldWorld.units.single.tileKey, cspCapitalTileKey);
+  expect(
+    next.worldState.oldWorld.units.single.locationProvinceId,
+    cspCapitalProvinceId,
+  );
 }
 
-void runCivilianSpawnScenario(CivilianSpawnScenario scenario) {
-  runCivilianSpawnExpectation(scenario.target);
+void cspRunCivilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince() {
+  final game = cspExplorerGame(
+    capitalProvinceId: cspCapitalProvinceId,
+    capitalTile: const CapitalTile(
+      regionId: cspOw,
+      provinceId: cspCapitalProvinceId,
+      x: 0,
+      y: 1,
+    ),
+    peasants: 0,
+  );
+  final next = applyBuildAndWorkOrders(
+    game,
+    cspBuildOrders(
+      kUnitTypeExplorer,
+      isMilitary:
+          buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
+          BuildUnitCategory.military,
+      spawnProvinceId: '',
+    ),
+  );
+  expect(next.worldState.oldWorld.units.length, 1);
+  expect(next.worldState.oldWorld.units.single.tileKey, cspCapitalTileKey);
+  expect(
+    next.worldState.oldWorld.units.single.locationProvinceId,
+    cspCapitalProvinceId,
+  );
+}
+
+void cspRunCivilianBuildWithMissingCapitalTileThrowsExplicitError() {
+  final game = cspExplorerGame(
+    capitalProvinceId: cspCapitalProvinceId,
+    tileKeysByProvince: {
+      cspCapitalProvinceId: ['oldWorld|P1|0|0'],
+    },
+    peasants: 0,
+  );
+  final orders = cspBuildOrders(
+    kUnitTypeExplorer,
+    isMilitary: false,
+    spawnProvinceId: cspCapitalProvinceId,
+  );
+  expect(
+    () => applyBuildAndWorkOrders(game, orders),
+    throwsA(
+      isA<StateError>().having(
+        (e) => e.message,
+        'message',
+        contains('No capital tile to spawn civilian unit'),
+      ),
+    ),
+  );
+}
+
+void cspRunNewWorldSpawnAddsUnitToNewWorld() {
+  const provinceId = 'newWorld|N1';
+  const unitType = 'peasant_levies';
+  const nw = 'newWorld';
+  final econ = RegimentEconomyCatalog.byId[unitType]!;
+  final baseGame = Game(
+    id: 'g',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+      oldWorld: const RegionData(),
+      newWorld: RegionData(
+        provinces: [Province(id: provinceId, regionId: nw, ownerId: 'p1')],
+        units: [],
+      ),
+    ),
+    players: [
+      Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: provinceId,
+        stockpile: const Stockpile(),
+        workerPool: const WorkerPool(peasants: 1),
+        treasury: 500,
+      ),
+    ],
+  );
+  final game = baseGame.copyWith(
+    players: [
+      baseGame.players.single.copyWith(
+        stockpile: cspStockpileCovering(econ.buildInputs),
+        treasury: econ.buildTreasuryCost + 10,
+      ),
+    ],
+  );
+  final next = applyBuildAndWorkOrders(
+    game,
+    cspBuildOrders(
+      unitType,
+      isMilitary:
+          buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
+      spawnProvinceId: provinceId,
+    ),
+  );
+  expect(next.worldState.oldWorld.units, isEmpty);
+  expect(next.worldState.newWorld.units.length, 1);
+  expect(next.worldState.newWorld.units.single.locationProvinceId, provinceId);
 }
 
 /// Canonical scenarios for civilian / New World spawn family tests.
-List<CivilianSpawnScenario> civilianSpawnScenarios() => const [
+List<RunnableScenario> civilianSpawnScenarios() => const [
   // dart format off
-  CivilianSpawnScenario(
+  RunnableScenario(
     label: 'civilian spawn uses capitalTile key even when spawnProvinceId is different owned province',
-    target: CivilianSpawnTarget.civilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince,
+    run: cspRunCivilianSpawnUsesCapitalTileKeyEvenWhenSpawnProvinceIdIsDifferentOwnedProvince,
   ),
-  CivilianSpawnScenario(
+  RunnableScenario(
     label: 'civilian build with empty spawnProvinceId uses capital tile and province',
-    target: CivilianSpawnTarget.civilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince,
+    run: cspRunCivilianBuildWithEmptySpawnProvinceIdUsesCapitalTileAndProvince,
   ),
-  CivilianSpawnScenario(
+  RunnableScenario(
     label: 'civilian build with missing capital tile throws explicit error',
-    target: CivilianSpawnTarget.civilianBuildWithMissingCapitalTileThrowsExplicitError,
+    run: cspRunCivilianBuildWithMissingCapitalTileThrowsExplicitError,
   ),
-  CivilianSpawnScenario(
+  RunnableScenario(
     label: 'New World spawn adds unit to newWorld',
-    target: CivilianSpawnTarget.newWorldSpawnAddsUnitToNewWorld,
+    run: cspRunNewWorldSpawnAddsUnitToNewWorld,
   ),
   // dart format on
 ];

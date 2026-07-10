@@ -1,102 +1,83 @@
 // Table-driven applyBuildAndWorkOrders build-unit / training scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'build_unit_training_expectations.dart';
-
-/// One row in [buildUnitTrainingScenarios].
-class BuildUnitTrainingScenario implements RefsScenario {
-  const BuildUnitTrainingScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final BuildUnitTrainingTarget target;
-  @override
-  final String? refs;
-}
-
-void runBuildUnitTrainingScenario(BuildUnitTrainingScenario scenario) {
-  runBuildUnitTrainingExpectation(scenario.target);
-}
+import 'build_unit_training_run_rows.dart';
 
 /// Canonical scenarios for military ship-skip + training-cost family tests.
 /// Labels match former suite descriptions (single-line `label:` for CI).
-List<BuildUnitTrainingScenario> buildUnitTrainingScenarios() => const [
+List<RunnableScenario> buildUnitTrainingScenarios() => const [
   // dart format off
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips build when unitType unknown in RegimentEconomyCatalog',
-    target: BuildUnitTrainingTarget.skipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog,
+    run: butRunSkipsBuildWhenUnitTypeUnknownInRegimentEconomyCatalog,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips military build when zero peasants',
-    target: BuildUnitTrainingTarget.skipsMilitaryBuildWhenZeroPeasants,
+    run: butRunSkipsMilitaryBuildWhenZeroPeasants,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips military build when tech not unlocked',
-    target: BuildUnitTrainingTarget.skipsMilitaryBuildWhenTechNotUnlocked,
+    run: butRunSkipsMilitaryBuildWhenTechNotUnlocked,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'skips ship build when tech not unlocked',
-    target: BuildUnitTrainingTarget.skipsShipBuildWhenTechNotUnlocked,
+    run: butRunSkipsShipBuildWhenTechNotUnlocked,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with topology null does not add fleet',
-    target: BuildUnitTrainingTarget.shipBuildWithTopologyNullDoesNotAddFleet,
+    run: butRunShipBuildWithTopologyNullDoesNotAddFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with capitalProvinceId null does not add fleet',
-    target: BuildUnitTrainingTarget.shipBuildWithCapitalProvinceIdNullDoesNotAddFleet,
+    run: butRunShipBuildWithCapitalProvinceIdNullDoesNotAddFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build with capital not adjacent to sea does not add ship',
-    target: BuildUnitTrainingTarget.shipBuildWithCapitalNotAdjacentToSeaDoesNotAddShip,
+    run: butRunShipBuildWithCapitalNotAdjacentToSeaDoesNotAddShip,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects build when treasury is insufficient',
-    target: BuildUnitTrainingTarget.rejectsBuildWhenTreasuryIsInsufficient,
+    run: butRunRejectsBuildWhenTreasuryIsInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects build when materials are insufficient',
-    target: BuildUnitTrainingTarget.rejectsBuildWhenMaterialsAreInsufficient,
+    run: butRunRejectsBuildWhenMaterialsAreInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'applies treasury, stockpile and worker costs when valid',
-    target: BuildUnitTrainingTarget.appliesTreasuryStockpileAndWorkerCostsWhenValid,
+    run: butRunAppliesTreasuryStockpileAndWorkerCostsWhenValid,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'returns game unchanged when no build or work orders',
-    target: BuildUnitTrainingTarget.returnsGameUnchangedWhenNoBuildOrWorkOrders,
+    run: butRunReturnsGameUnchangedWhenNoBuildOrWorkOrders,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'ship build adds ship to fleet when topology and capital with sea',
-    target: BuildUnitTrainingTarget.shipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea,
+    run: butRunShipBuildAddsShipToFleetWhenTopologyAndCapitalWithSea,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects naval build when peasants are zero',
-    target: BuildUnitTrainingTarget.rejectsNavalBuildWhenPeasantsAreZero,
+    run: butRunRejectsNavalBuildWhenPeasantsAreZero,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'second naval build adds ship to existing home fleet',
-    target: BuildUnitTrainingTarget.secondNavalBuildAddsShipToExistingHomeFleet,
+    run: butRunSecondNavalBuildAddsShipToExistingHomeFleet,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects civilian build when treasury insufficient',
-    target: BuildUnitTrainingTarget.rejectsCivilianBuildWhenTreasuryInsufficient,
+    run: butRunRejectsCivilianBuildWhenTreasuryInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'rejects civilian build when paper insufficient',
-    target: BuildUnitTrainingTarget.rejectsCivilianBuildWhenPaperInsufficient,
+    run: butRunRejectsCivilianBuildWhenPaperInsufficient,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'applies treasury and paper cost when civilian build valid',
-    target: BuildUnitTrainingTarget.appliesTreasuryAndPaperCostWhenCivilianBuildValid,
+    run: butRunAppliesTreasuryAndPaperCostWhenCivilianBuildValid,
   ),
-  BuildUnitTrainingScenario(
+  RunnableScenario(
     label: 'Merchant requires merchant_companies tech',
-    target: BuildUnitTrainingTarget.merchantRequiresMerchantCompaniesTech,
+    run: butRunMerchantRequiresMerchantCompaniesTech,
   ),
   // dart format on
 ];

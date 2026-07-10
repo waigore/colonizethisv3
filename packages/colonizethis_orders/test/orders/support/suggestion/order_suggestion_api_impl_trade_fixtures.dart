@@ -19,64 +19,55 @@ final tradeApiImplBaseTopology = MapTopology(
 );
 
 Game tradeApiImplGameWithStockpile(Stockpile stockpile) => Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(
-          phase: TurnPhase.orders,
-          turnNumber: 1,
-        ),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: '$tradeApiImplOw|p1',
-              regionId: tradeApiImplOw,
-              ownerId: tradeApiImplPlayerId,
-            ),
-          ],
-        ),
-        newWorld: const RegionData(),
-      ),
-      players: [
-        Player(
-          id: tradeApiImplPlayerId,
-          displayName: 'A',
-          isHuman: false,
-          capitalProvinceId: '$tradeApiImplOw|p1',
-          stockpile: stockpile,
+  id: 'g1',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$tradeApiImplOw|p1',
+          regionId: tradeApiImplOw,
+          ownerId: tradeApiImplPlayerId,
         ),
       ],
-    );
+    ),
+    newWorld: const RegionData(),
+  ),
+  players: [
+    Player(
+      id: tradeApiImplPlayerId,
+      displayName: 'A',
+      isHuman: false,
+      capitalProvinceId: '$tradeApiImplOw|p1',
+      stockpile: stockpile,
+    ),
+  ],
+);
 
 Game tradeApiImplGameWithoutStockpile() => Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(
-          phase: TurnPhase.orders,
-          turnNumber: 1,
-        ),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: '$tradeApiImplOw|p1',
-              regionId: tradeApiImplOw,
-              ownerId: tradeApiImplPlayerId,
-            ),
-          ],
-        ),
-        newWorld: const RegionData(),
-      ),
-      players: const [
-        Player(
-          id: tradeApiImplPlayerId,
-          displayName: 'A',
-          isHuman: false,
-          capitalProvinceId: 'oldWorld|p1',
+  id: 'g1',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$tradeApiImplOw|p1',
+          regionId: tradeApiImplOw,
+          ownerId: tradeApiImplPlayerId,
         ),
       ],
-    );
+    ),
+    newWorld: const RegionData(),
+  ),
+  players: const [
+    Player(
+      id: tradeApiImplPlayerId,
+      displayName: 'A',
+      isHuman: false,
+      capitalProvinceId: 'oldWorld|p1',
+    ),
+  ],
+);
 
-PlayerView tradeApiImplViewFor(Game game) => buildPlayerView(
-      game,
-      tradeApiImplBaseTopology,
-      tradeApiImplPlayerId,
-    );
+PlayerView tradeApiImplViewFor(Game game) =>
+    buildPlayerView(game, tradeApiImplBaseTopology, tradeApiImplPlayerId);
