@@ -1,6 +1,5 @@
 // Compact valid-work-tiles expectation shorthands (Refs #3949 slice 20).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -42,9 +41,10 @@ void vwtExpectPartialRevealSuggestions({
   String? provinceId,
   String? tileKey,
 }) {
-  var orders = suggestedWorkOrders(game: game, topology: fx.topology())
-      .where((o) => o.target == workTarget)
-      .toList();
+  var orders = suggestedWorkOrders(
+    game: game,
+    topology: fx.topology(),
+  ).where((o) => o.target == workTarget).toList();
   if (provinceId != null) {
     orders = orders
         .where((o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provinceId)

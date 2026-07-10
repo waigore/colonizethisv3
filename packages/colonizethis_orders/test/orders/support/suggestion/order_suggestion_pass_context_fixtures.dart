@@ -10,35 +10,35 @@ const orderSuggestionPassContextGp1Id = 'gp1';
 const orderSuggestionPassContextGp2Id = 'gp2';
 
 Game orderSuggestionPassContextOwnedProvincesGame() => Game(
-      id: 'g-owned',
-      worldState: WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'p1',
-              regionId: kOldWorldRegionId,
-              ownerId: orderSuggestionPassContextGp1Id,
-            ),
-            Province(
-              id: 'p2',
-              regionId: kOldWorldRegionId,
-              ownerId: orderSuggestionPassContextGp2Id,
-            ),
-          ],
+  id: 'g-owned',
+  worldState: WorldState(
+    turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: 'p1',
+          regionId: kOldWorldRegionId,
+          ownerId: orderSuggestionPassContextGp1Id,
         ),
-        newWorld: const RegionData(),
-      ),
-      players: const [
-        Player(
-          id: orderSuggestionPassContextGp1Id,
-          displayName: 'P1',
-          isHuman: true,
-        ),
-        Player(
-          id: orderSuggestionPassContextGp2Id,
-          displayName: 'P2',
-          isHuman: true,
+        Province(
+          id: 'p2',
+          regionId: kOldWorldRegionId,
+          ownerId: orderSuggestionPassContextGp2Id,
         ),
       ],
-    );
+    ),
+    newWorld: const RegionData(),
+  ),
+  players: const [
+    Player(
+      id: orderSuggestionPassContextGp1Id,
+      displayName: 'P1',
+      isHuman: true,
+    ),
+    Player(
+      id: orderSuggestionPassContextGp2Id,
+      displayName: 'P2',
+      isHuman: true,
+    ),
+  ],
+);

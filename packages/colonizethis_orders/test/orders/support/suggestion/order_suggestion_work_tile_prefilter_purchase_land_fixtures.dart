@@ -44,9 +44,7 @@ Game workTilePrefilterMinorGpGame({
     id: 'g1',
     worldState: world,
     players: [player],
-    minorNations: const [
-      MinorNation(id: 'minor1', displayName: 'Minor 1'),
-    ],
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
   );
 }
 
@@ -119,8 +117,6 @@ Game workTilePrefilterBuildRoadGame({
     id: 'g1',
     worldState: world,
     players: [player],
-    minorNations: const [
-      MinorNation(id: 'minor1', displayName: 'Minor 1'),
-    ],
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
   );
 }

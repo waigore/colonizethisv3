@@ -1,62 +1,44 @@
-// Compact shared-validator equivalence assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for order_suggestion_shared_validator_equivalence (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'order_suggestion_shared_validator_test_helpers.dart';
 
-/// Pins for [orderSuggestionSharedValidatorEquivalenceScenarios] rows.
-enum OrderSuggestionSharedValidatorEquivalenceTarget {
-  suggestMoveOrdersMatchesDefaultPath,
-  suggestArmyMoveOrdersMatchesDefaultPath,
-  suggestWorkOrdersMatchesDefaultPath,
-  suggestBuildOrdersMatchesDefaultPath,
-  suggestDiplomaticOrdersDeterministicAcrossRepeatedCalls,
-  sharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault,
-  forBasePrefixMatchesFreshForPlayer,
+void ossveRunSuggestMoveOrdersMatchesDefaultPath() {
+  _expectSuggestFamilyMatchesDefault(suggestMoveOrders);
 }
 
-void runOrderSuggestionSharedValidatorEquivalenceExpectation(
-  OrderSuggestionSharedValidatorEquivalenceTarget target,
-) {
-  switch (target) {
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .suggestMoveOrdersMatchesDefaultPath:
-      _expectSuggestFamilyMatchesDefault(suggestMoveOrders);
+void ossveRunSuggestArmyMoveOrdersMatchesDefaultPath() {
+  _expectSuggestFamilyMatchesDefault(suggestArmyMoveOrders);
+}
 
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .suggestArmyMoveOrdersMatchesDefaultPath:
-      _expectSuggestFamilyMatchesDefault(suggestArmyMoveOrders);
+void ossveRunSuggestWorkOrdersMatchesDefaultPath() {
+  _expectSuggestFamilyMatchesDefault(suggestWorkOrders);
+}
 
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .suggestWorkOrdersMatchesDefaultPath:
-      _expectSuggestFamilyMatchesDefault(suggestWorkOrders);
+void ossveRunSuggestBuildOrdersMatchesDefaultPath() {
+  _expectSuggestFamilyMatchesDefault(suggestBuildOrders);
+}
 
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .suggestBuildOrdersMatchesDefaultPath:
-      _expectSuggestFamilyMatchesDefault(suggestBuildOrders);
+void ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls() {
+  final game = buildGame();
+  final topology = buildTopology();
+  final view = buildPlayerView(game, topology, gp);
+  const orders = Orders();
 
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .suggestDiplomaticOrdersDeterministicAcrossRepeatedCalls:
-      final game = buildGame();
-      final topology = buildTopology();
-      final view = buildPlayerView(game, topology, gp);
-      const orders = Orders();
+  final first = suggestDiplomaticOrders(view, game, topology, orders);
+  final second = suggestDiplomaticOrders(view, game, topology, orders);
+  expect(second, equals(first));
+}
 
-      final first = suggestDiplomaticOrders(view, game, topology, orders);
-      final second = suggestDiplomaticOrders(view, game, topology, orders);
-      expect(second, equals(first));
+void ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault() {
+  _expectExternalViewUnitsByIdMatchesForPlayerDefault();
+}
 
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .sharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault:
-      _expectExternalViewUnitsByIdMatchesForPlayerDefault();
-
-    case OrderSuggestionSharedValidatorEquivalenceTarget
-        .forBasePrefixMatchesFreshForPlayer:
-      _expectForBasePrefixMatchesFreshForPlayer();
-  }
+void ossveRunForBasePrefixMatchesFreshForPlayer() {
+  _expectForBasePrefixMatchesFreshForPlayer();
 }
 
 void _expectSuggestFamilyMatchesDefault<T>(
@@ -66,7 +48,8 @@ void _expectSuggestFamilyMatchesDefault<T>(
     MapTopology topology,
     Orders orders, {
     IncrementalCandidateValidator? sharedCandidateValidator,
-  }) suggest,
+  })
+  suggest,
 ) {
   final game = buildGame();
   final topology = buildTopology();
@@ -109,7 +92,11 @@ void _expectExternalViewUnitsByIdMatchesForPlayerDefault() {
     topology: topology,
     playerId: gp,
     basePrefix: orders,
-    resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
   );
 
   expect(
@@ -252,7 +239,11 @@ void _expectForBasePrefixMatchesFreshForPlayer() {
     topology: topology,
     playerId: gp,
     basePrefix: orders,
-    resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
   );
   final rebound = initial.forBasePrefix(orders);
   final fresh = IncrementalCandidateValidator.forPlayer(
@@ -260,7 +251,11 @@ void _expectForBasePrefixMatchesFreshForPlayer() {
     topology: topology,
     playerId: gp,
     basePrefix: orders,
-    resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
   );
 
   expect(

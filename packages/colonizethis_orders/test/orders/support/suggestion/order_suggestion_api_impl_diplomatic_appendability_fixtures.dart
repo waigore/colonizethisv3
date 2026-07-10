@@ -3,8 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const diplomaticAppendabilityEmptyTopology =
-    MapTopology(nodes: [], edges: []);
+const diplomaticAppendabilityEmptyTopology = MapTopology(nodes: [], edges: []);
 
 Game diplomaticAppendabilityTwoGpNeutralGame() {
   return Game(

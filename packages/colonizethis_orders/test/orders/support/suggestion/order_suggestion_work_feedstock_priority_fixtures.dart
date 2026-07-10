@@ -219,8 +219,6 @@ List<WorkOrder> feedstockPriorityBuildImprovementSuggestions(Game game) {
   final view = buildPlayerView(game, topology, feedstockPrioritySupplierId);
   final suggestions = suggestWorkOrders(view, game, topology, const Orders());
   return suggestions
-      .where(
-        (o) => o.unitId == 'b1' && o.target == kWorkTargetBuildImprovement,
-      )
+      .where((o) => o.unitId == 'b1' && o.target == kWorkTargetBuildImprovement)
       .toList();
 }

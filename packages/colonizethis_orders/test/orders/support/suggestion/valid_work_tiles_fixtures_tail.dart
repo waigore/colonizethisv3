@@ -98,8 +98,16 @@ owTribeExploreMultiProvinceFixture() {
   final partialProvince = ValidWorkTilesTestSupport.provinceId(partialLocal);
   final fullProvince = ValidWorkTilesTestSupport.provinceId(fullLocal);
   final unknownProvince = ValidWorkTilesTestSupport.provinceId(unknownLocal);
-  final partialKnownTile = ValidWorkTilesTestSupport.tileKey(partialLocal, 0, 0);
-  final partialUnknownTile = ValidWorkTilesTestSupport.tileKey(partialLocal, 1, 0);
+  final partialKnownTile = ValidWorkTilesTestSupport.tileKey(
+    partialLocal,
+    0,
+    0,
+  );
+  final partialUnknownTile = ValidWorkTilesTestSupport.tileKey(
+    partialLocal,
+    1,
+    0,
+  );
   final fullTile = ValidWorkTilesTestSupport.tileKey(fullLocal, 0, 0);
   final unknownTile = ValidWorkTilesTestSupport.tileKey(unknownLocal, 0, 0);
   final explorer = ValidWorkTilesTestSupport.explorerUnit(
@@ -191,11 +199,10 @@ Game owTribeExploreLatencyGame({
     // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
     overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
     oldWorld: RegionData(provinces: provinces, units: [explorer]),
-    tileKeysByRegionAndProvince:
-        ValidWorkTilesTestSupport.tileKeysByProvince(byProvince),
-    playerVisibilityByTile: {
-      ValidWorkTilesTestSupport.playerId: visibility,
-    },
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+      byProvince,
+    ),
+    playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
   );
 }
 
@@ -216,9 +223,7 @@ owGpAdjacentMoveFixture({
     regionId: ValidWorkTilesTestSupport.ow,
     ownerId: otherGpId,
   );
-  final unit = ValidWorkTilesTestSupport.builderUnit(
-    locationProvinceId: p1.id,
-  );
+  final unit = ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1.id);
   final game = Game(
     id: 'g1',
     worldState: WorldState(

@@ -1,76 +1,79 @@
 // Table-driven DefaultOrderSuggestionAPI suggestion scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_api_impl_expectations.dart';
+import 'order_suggestion_api_impl_run_rows.dart';
 
 /// One row in [orderSuggestionApiImplScenarios].
 class OrderSuggestionApiImplScenario implements RefsScenario {
   const OrderSuggestionApiImplScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionApiImplTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runOrderSuggestionApiImplScenario(OrderSuggestionApiImplScenario scenario) {
-  runOrderSuggestionApiImplExpectation(scenario.target);
+void runOrderSuggestionApiImplScenario(
+  OrderSuggestionApiImplScenario scenario,
+) {
+  scenario.run();
 }
 
-List<OrderSuggestionApiImplScenario> orderSuggestionApiImplScenarios() => const [
-      OrderSuggestionApiImplScenario(
-        label: 'suggestMoveOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestMoveOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestWorkOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestWorkOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestBuildOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestBuildOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestBuildOrders includes ship types when player can afford a ship',
-        target:
-            OrderSuggestionApiImplTarget.suggestBuildOrdersIncludesShipWhenAffordable,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestResearchOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestResearchOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestNavalMoveOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestNavalMoveOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestNavalMissionOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestNavalMissionOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)',
-        target:
-            OrderSuggestionApiImplTarget.navalOrdersMatchWhenCallerSuppliesUnitsById,
-        refs: '#2394',
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestDiplomaticOrders returns list',
-        target: OrderSuggestionApiImplTarget.suggestDiplomaticOrdersReturnsList,
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestRecruitWorkerOrders returns list (#2692 S7)',
-        target: OrderSuggestionApiImplTarget.suggestRecruitWorkerOrdersReturnsList,
-        refs: '#2692 S7',
-      ),
-      OrderSuggestionApiImplScenario(
-        label: 'suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)',
-        target: OrderSuggestionApiImplTarget
-            .suggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable,
-        refs: '#2692 S7',
-      ),
-    ];
+List<OrderSuggestionApiImplScenario>
+orderSuggestionApiImplScenarios() => const [
+  OrderSuggestionApiImplScenario(
+    label: 'suggestMoveOrders returns list',
+    run: osaiRunSuggestMoveOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestWorkOrders returns list',
+    run: osaiRunSuggestWorkOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestBuildOrders returns list',
+    run: osaiRunSuggestBuildOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label:
+        'suggestBuildOrders includes ship types when player can afford a ship',
+    run: osaiRunSuggestBuildOrdersIncludesShipWhenAffordable,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestResearchOrders returns list',
+    run: osaiRunSuggestResearchOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestNavalMoveOrders returns list',
+    run: osaiRunSuggestNavalMoveOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestNavalMissionOrders returns list',
+    run: osaiRunSuggestNavalMissionOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label:
+        'suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)',
+    run: osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById,
+    refs: '#2394',
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestDiplomaticOrders returns list',
+    run: osaiRunSuggestDiplomaticOrdersReturnsList,
+  ),
+  OrderSuggestionApiImplScenario(
+    label: 'suggestRecruitWorkerOrders returns list (#2692 S7)',
+    run: osaiRunSuggestRecruitWorkerOrdersReturnsList,
+    refs: '#2692 S7',
+  ),
+  OrderSuggestionApiImplScenario(
+    label:
+        'suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)',
+    run: osaiRunSuggestRecruitWorkerOrdersIncludesPeasantWhenFabricAffordable,
+    refs: '#2692 S7',
+  ),
+];

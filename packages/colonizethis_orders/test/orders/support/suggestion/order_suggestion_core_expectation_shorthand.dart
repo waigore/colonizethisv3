@@ -1,6 +1,5 @@
 // Compact order_suggestion_core expectation shorthands (Refs #3949).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -11,15 +10,13 @@ List<MoveOrder> oscSuggestMoves(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) =>
-    suggestMoveOrders(oscView(game, topology), game, topology, orders);
+]) => suggestMoveOrders(oscView(game, topology), game, topology, orders);
 
 List<WorkOrder> oscSuggestWork(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) =>
-    suggestWorkOrders(oscView(game, topology), game, topology, orders);
+]) => suggestWorkOrders(oscView(game, topology), game, topology, orders);
 
 void oscExpectWorkTargetSuggestions({
   required Game game,
@@ -58,14 +55,12 @@ List<BuildUnitOrder> oscSuggestBuild(
   Game game,
   MapTopology topology, [
   Orders orders = const Orders(),
-]) =>
-    suggestBuildOrders(oscView(game, topology), game, topology, orders);
+]) => suggestBuildOrders(oscView(game, topology), game, topology, orders);
 
 Iterable<WorkOrder> oscWorkWithTarget(
   List<WorkOrder> suggestions,
   String target,
-) =>
-    suggestions.where((o) => o.target == target);
+) => suggestions.where((o) => o.target == target);
 
 Game oscExplorerProvinceGame({
   String provinceLocal = 'p1',
@@ -91,10 +86,12 @@ Game oscExplorerProvinceGame({
         provinces: provinces,
         units: [oscExplorer(provinceLocal: provinceLocal)],
       ),
-      playerVisibilityByTile:
-          visibilityByTile != null ? oscVisibility(visibilityByTile) : null,
-      tileKeysByRegionAndProvince:
-          tilesByLocal != null ? oscTilesByProvince(tilesByLocal) : null,
+      playerVisibilityByTile: visibilityByTile != null
+          ? oscVisibility(visibilityByTile)
+          : null,
+      tileKeysByRegionAndProvince: tilesByLocal != null
+          ? oscTilesByProvince(tilesByLocal)
+          : null,
     ),
   );
 }

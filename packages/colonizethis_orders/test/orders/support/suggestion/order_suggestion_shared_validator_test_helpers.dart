@@ -87,9 +87,7 @@ Game buildGame() {
           '$ow|p2|0|0': 'fogged',
         },
       },
-      resourceByTileKey: const {
-        '$ow|p1|0|0': 'wood',
-      },
+      resourceByTileKey: const {'$ow|p1|0|0': 'wood'},
     ),
     players: const [
       Player(

@@ -5,9 +5,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 List<String> wspSuggestWorkLines(List<LogEvent> events) => [
-      for (final e in events)
-        if (e.message.contains('suggest_work')) e.message,
-    ];
+  for (final e in events)
+    if (e.message.contains('suggest_work')) e.message,
+];
 
 void withWspLogCapture(void Function(List<LogEvent> events) body) {
   final capturedEvents = <LogEvent>[];
@@ -23,19 +23,19 @@ void withWspLogCapture(void Function(List<LogEvent> events) body) {
 }
 
 Unit wspBuilderUnit({String unitId = 'u1'}) => Unit(
-      id: unitId,
-      type: kUnitTypeBuilder,
-      ownerId: 'gp1',
-      locationProvinceId: 'ow|p1',
-      tileKey: 'ow|p1|0|0',
-      status: UnitStatus.idle,
-    );
+  id: unitId,
+  type: kUnitTypeBuilder,
+  ownerId: 'gp1',
+  locationProvinceId: 'ow|p1',
+  tileKey: 'ow|p1|0|0',
+  status: UnitStatus.idle,
+);
 
 Unit wspExplorerUnit({String unitId = 'u1'}) => Unit(
-      id: unitId,
-      type: kUnitTypeExplorer,
-      ownerId: 'gp1',
-      locationProvinceId: 'ow|p1',
-      tileKey: 'ow|p1|0|0',
-      status: UnitStatus.idle,
-    );
+  id: unitId,
+  type: kUnitTypeExplorer,
+  ownerId: 'gp1',
+  locationProvinceId: 'ow|p1',
+  tileKey: 'ow|p1|0|0',
+  status: UnitStatus.idle,
+);

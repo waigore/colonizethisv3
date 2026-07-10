@@ -1,6 +1,5 @@
 // Shared fixtures for valid-work-tiles / suggest-work scenarios (Refs #3949).
 
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -149,7 +148,9 @@ class NwPartialRevealHomeTarget {
     overtureStates: overtureStates ?? const [],
   );
 
-  static NwPartialRevealHomeTarget tribeGrainIron({bool prospectedIron = false}) {
+  static NwPartialRevealHomeTarget tribeGrainIron({
+    bool prospectedIron = false,
+  }) {
     final t0 = ValidWorkTilesTestSupport.tileKey(
       'tribe1',
       0,
@@ -168,7 +169,9 @@ class NwPartialRevealHomeTarget {
       targetOwnerId: 'tribe1',
       resourceByTileKey: {t0: 'grain', t1: 'iron'},
       playerProspectedTiles: prospectedIron
-          ? {ValidWorkTilesTestSupport.playerId: {t1}}
+          ? {
+              ValidWorkTilesTestSupport.playerId: {t1},
+            }
           : const {},
     );
   }
@@ -186,15 +189,17 @@ class NwPartialRevealHomeTarget {
       homeLocalId: 'own',
       targetLocalId: 'm1',
       targetOwnerId: 'minor1',
-      resourceByTileKey: resourceByTileKey.isEmpty ? {t1: 'grain'} : resourceByTileKey,
+      resourceByTileKey: resourceByTileKey.isEmpty
+          ? {t1: 'grain'}
+          : resourceByTileKey,
     );
   }
 
   Game tribeConsulateGame(String id) => game(
-        id: id,
-        tribes: const [ValidWorkTilesTestSupport.defaultTribe],
-        overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
-      );
+    id: id,
+    tribes: const [ValidWorkTilesTestSupport.defaultTribe],
+    overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
+  );
 
   Game minorPurchaseGame(String id, {List<OvertureState>? overtureStates}) =>
       game(
@@ -252,12 +257,8 @@ Game owBuilderVisibilityGame({
       resourceByTileKey: resourceByTileKey,
       purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
       playerProspectedTiles: playerProspectedTiles ?? const {},
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: visibility,
-      },
-      tileState: TileMapState(
-        improvementByTile: improvementByTile ?? const {},
-      ),
+      playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
+      tileState: TileMapState(improvementByTile: improvementByTile ?? const {}),
     ),
     players: [
       ValidWorkTilesTestSupport.playerWithBuildStockpile(),
@@ -301,9 +302,9 @@ Game owTribeProspectGame({
       },
       resourceByTileKey: resourceByTileKey,
       playerProspectedTiles: playerProspectedTiles ?? const {},
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-        provinceId: tileKeys,
-      }),
+      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+        {provinceId: tileKeys},
+      ),
     ),
     players: const [ValidWorkTilesTestSupport.defaultPlayer],
     tribes: const [ValidWorkTilesTestSupport.defaultTribe],
@@ -334,8 +335,8 @@ Game owGrainBuildSuggestGame({
     locationProvinceId: p1,
     tileKey: tile0,
   );
-  final visibility = visibilityOverride ??
-      {for (final t in tileKeys) t: 'fullyVisible'};
+  final visibility =
+      visibilityOverride ?? {for (final t in tileKeys) t: 'fullyVisible'};
   return Game(
     id: 'g1',
     worldState: WorldState(
@@ -351,12 +352,10 @@ Game owGrainBuildSuggestGame({
         units: [builder],
       ),
       newWorld: const RegionData(),
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: visibility,
-      },
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-        p1: tileKeys,
-      }),
+      playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
+      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+        {p1: tileKeys},
+      ),
       resourceByTileKey: {for (final t in tileKeys) t: 'grain'},
       tileState: TileMapState(
         improvementByTile: {for (final t in tileKeys) t: 0},

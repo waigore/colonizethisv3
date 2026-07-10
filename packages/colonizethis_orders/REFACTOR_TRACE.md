@@ -2295,6 +2295,34 @@ test/ LOC after slice 150: **36,002** (net −154 from post–slice 149). Remain
 
 test/ LOC after slice 151: **35,721** (net −281 from post–slice 150). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~21 expectations modules — suggestion families).
 
+## Wave 3 — Slice 152: suggestion scenario dispatch collapse (batch C — final)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mpl-dispatch-collapse | drop merchant-purchase-land-candidate-tile-keys enum + switch; scenario rows hold `run` tear-offs | `merchant_purchase_land_candidate_tile_keys_expectations.dart` (deleted) | `merchant_purchase_land_candidate_tile_keys_run_rows.dart` + thin scenarios | #3949 |
+| osaida-dispatch-collapse | drop api-impl-diplomatic-appendability enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_appendability_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osaid-dispatch-collapse | drop api-impl-diplomatic enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_diplomatic_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osai-dispatch-collapse | drop api-impl enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osam-dispatch-collapse | drop army-move enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osamp-dispatch-collapse | drop army-move-picker enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_picker_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osbcs-dispatch-collapse | drop build-civilian-suggestion enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_civilian_suggestion_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osblrag-dispatch-collapse | drop build-lock-recovery-affordability-guard enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_lock_recovery_affordability_guard_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osch-dispatch-collapse | drop context-helpers enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_context_helpers_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osdb-dispatch-collapse | drop diplomatic-boycott enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_diplomatic_boycott_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ospc-dispatch-collapse | drop pass-context enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_pass_context_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osrw-dispatch-collapse | drop recruit-worker enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_recruit_worker_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| osrms-dispatch-collapse | drop research-multi-slot enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_research_multi_slot_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ossve-dispatch-collapse | drop shared-validator-equivalence enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_shared_validator_equivalence_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| ossvn-dispatch-collapse | drop shared-validator-negative enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_shared_validator_negative_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswfp-dispatch-collapse | drop work-feedstock-priority enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_feedstock_priority_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswl-dispatch-collapse | drop work-logging enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_logging_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswtk-dispatch-collapse | drop work-tile-keys-shared-validator enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_keys_shared_validator_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswtpl-dispatch-collapse | drop work-tile-prefilter-purchase-land enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_prefilter_purchase_land_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| oswttw-dispatch-collapse | drop work-tile-prefilter-town-work enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_work_tile_prefilter_town_work_expectations.dart` (deleted) | `…_run_rows.dart` + thin scenarios | #3949 |
+| wsp-dispatch-collapse | drop work-suggestion-pipeline enum + switch; wrap each tear-off in `withWspLogCapture` | `work_suggestion_pipeline_expectations.dart` (deleted) | `work_suggestion_pipeline_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 152: **35,374** (net −347 from post–slice 151). Remaining: further support-table compaction toward ≤26,400; **enum+switch expectation dispatchers fully eliminated**; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

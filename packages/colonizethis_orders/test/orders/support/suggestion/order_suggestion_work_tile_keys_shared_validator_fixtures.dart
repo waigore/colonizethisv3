@@ -8,8 +8,10 @@ const workTileKeysSharedValidatorPlayerId = 'gp1';
 const workTileKeysSharedValidatorOw = 'oldWorld';
 const workTileKeysSharedValidatorTileA = 'oldWorld|p1|0|0';
 const workTileKeysSharedValidatorTileB = 'oldWorld|p1|1|0';
-const workTileKeysSharedValidatorEmptyTopology =
-    MapTopology(nodes: [], edges: []);
+const workTileKeysSharedValidatorEmptyTopology = MapTopology(
+  nodes: [],
+  edges: [],
+);
 
 /// Builder-improvement corpus shared by
 /// [orderSuggestionWorkTileKeysSharedValidatorScenarios].

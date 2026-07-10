@@ -1,19 +1,20 @@
 // Table-driven shared-validator equivalence scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_shared_validator_equivalence_expectations.dart';
+import 'order_suggestion_shared_validator_equivalence_run_rows.dart';
 
 /// One row in [orderSuggestionSharedValidatorEquivalenceScenarios].
-class OrderSuggestionSharedValidatorEquivalenceScenario implements RefsScenario {
+class OrderSuggestionSharedValidatorEquivalenceScenario
+    implements RefsScenario {
   const OrderSuggestionSharedValidatorEquivalenceScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionSharedValidatorEquivalenceTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,45 +22,39 @@ class OrderSuggestionSharedValidatorEquivalenceScenario implements RefsScenario 
 void runOrderSuggestionSharedValidatorEquivalenceScenario(
   OrderSuggestionSharedValidatorEquivalenceScenario scenario,
 ) {
-  runOrderSuggestionSharedValidatorEquivalenceExpectation(scenario.target);
+  scenario.run();
 }
 
 List<OrderSuggestionSharedValidatorEquivalenceScenario>
-    orderSuggestionSharedValidatorEquivalenceScenarios() => const [
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'suggestMoveOrders matches default path',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .suggestMoveOrdersMatchesDefaultPath,
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'suggestArmyMoveOrders matches default path',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .suggestArmyMoveOrdersMatchesDefaultPath,
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'suggestWorkOrders matches default path',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .suggestWorkOrdersMatchesDefaultPath,
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'suggestBuildOrders matches default path',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .suggestBuildOrdersMatchesDefaultPath,
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'suggestDiplomaticOrders is deterministic across repeated calls',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .suggestDiplomaticOrdersDeterministicAcrossRepeatedCalls,
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .sharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault,
-            refs: '#2394',
-          ),
-          OrderSuggestionSharedValidatorEquivalenceScenario(
-            label: 'forBasePrefix matches fresh forPlayer for same basePrefix',
-            target: OrderSuggestionSharedValidatorEquivalenceTarget
-                .forBasePrefixMatchesFreshForPlayer,
-          ),
-        ];
+orderSuggestionSharedValidatorEquivalenceScenarios() => const [
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'suggestMoveOrders matches default path',
+    run: ossveRunSuggestMoveOrdersMatchesDefaultPath,
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'suggestArmyMoveOrders matches default path',
+    run: ossveRunSuggestArmyMoveOrdersMatchesDefaultPath,
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'suggestWorkOrders matches default path',
+    run: ossveRunSuggestWorkOrdersMatchesDefaultPath,
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'suggestBuildOrders matches default path',
+    run: ossveRunSuggestBuildOrdersMatchesDefaultPath,
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'suggestDiplomaticOrders is deterministic across repeated calls',
+    run: ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls,
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label:
+        'shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)',
+    run: ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault,
+    refs: '#2394',
+  ),
+  OrderSuggestionSharedValidatorEquivalenceScenario(
+    label: 'forBasePrefix matches fresh forPlayer for same basePrefix',
+    run: ossveRunForBasePrefixMatchesFreshForPlayer,
+  ),
+];
