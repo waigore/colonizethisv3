@@ -29,6 +29,10 @@ void main() {
     'tile_plains_grain',
     'tile_plains_meat',
     'tile_plains_horses',
+    'tile_plains_sugar_cane',
+    'tile_plains_tobacco',
+    'tile_plains_cotton',
+    'tile_plains_spices',
   ];
 
   group('L1 plains resource variants (Refs #1600)', () {
