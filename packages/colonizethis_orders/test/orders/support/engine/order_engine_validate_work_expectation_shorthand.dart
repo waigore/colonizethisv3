@@ -228,3 +228,65 @@ void vwExpectBuildImprovementOutcome({
     onRejected?.call(result);
   }
 }
+
+void vwExpectFortBuildRejected({
+  required int fortLevel,
+  required Stockpile stockpile,
+  Map<String, bool>? techUnlocked,
+  required String reasonContains,
+}) {
+  vwExpectRejected(
+    vwValidateOwWorkTarget(
+      game: fortWorkGame(
+        fortLevel: fortLevel,
+        stockpile: stockpile,
+        techUnlocked: techUnlocked,
+      ),
+      unitId: 'eng1',
+      target: kWorkTargetBuildFort,
+    ),
+    reasonContains: reasonContains,
+  );
+}
+
+void vwExpectRailBuildOutcome({
+  required TileMapState tileState,
+  Map<String, bool>? techUnlocked,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required bool accepted,
+  String? reasonContains,
+}) {
+  final result = vwValidateOwWorkTarget(
+    game: gameWithRailUnit(
+      tileState: tileState,
+      techUnlocked: techUnlocked,
+    ),
+    unitId: 'rail1',
+    target: kWorkTargetBuildRail,
+    tileMapByRegion: tileMapByRegion,
+  );
+  if (accepted) {
+    vwExpectAccepted(result);
+  } else {
+    vwExpectRejected(result, reasonContains: reasonContains);
+  }
+}
+
+void vwExpectUpgradeTownOutcome({
+  required bool accepted,
+  required Map<String, bool> techUnlocked,
+}) {
+  final result = vwValidateSingleWork(
+    game: upgradeTownWorkGame(techUnlocked: techUnlocked),
+    order: const WorkOrder(
+      unitId: 'b1',
+      target: kWorkTargetUpgradeTown,
+      targetTileKey: ValidateWorkOw.tileKey,
+    ),
+  );
+  if (accepted) {
+    vwExpectAccepted(result);
+  } else {
+    vwExpectRejected(result, reasonContains: 'National Bureaucracy');
+  }
+}

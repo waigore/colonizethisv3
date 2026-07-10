@@ -2098,6 +2098,15 @@ test/ LOC after slice 135: **37,290** (net −28 from post–slice 134). Remaini
 
 test/ LOC after slice 136: **37,244** (net −46 from post–slice 135). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 137: naval/build validation + validateWork fort/rail shorthand
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| nv-shorthand-extract | extract naval/build validation fixtures + `nvExpect*` helpers; thin dispatcher switch | `order_engine_naval_build_validation_expectations.dart` | `order_engine_naval_build_validation_expectation_shorthand.dart` + thin dispatcher | #3949 |
+| vw-fort-rail-shorthand | add `vwExpectFortBuildRejected` / `vwExpectRailBuildOutcome` / `vwExpectUpgradeTownOutcome`; compact fort/rail/upgrade-town switch cases | `order_engine_validate_work_expectations.dart` | `order_engine_validate_work_expectation_shorthand.dart` | #3949 |
+
+test/ LOC after slice 137: **37,188** (net −56 from post–slice 136). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
