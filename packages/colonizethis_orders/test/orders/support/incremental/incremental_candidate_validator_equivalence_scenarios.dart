@@ -16,35 +16,14 @@ List<RunnableScenario> incrementalCandidateValidatorEquivalenceScenarios() => [
   rs('move: military regiment via MoveOrder (rejected)', () => iceRunMoveRow(unitId: 'u_pikemen', destLocal: 'P2', label: 'pikemen via MoveOrder')),
   rs('move: missing unit (rejected)', () => iceRunMoveRow(unitId: 'unknown_unit', destLocal: 'P2', label: 'unknown unit')),
   rs('move: empty destination tile (rejected)', () => iceRunMoveRow(unitId: 'u_builder', destLocal: '', label: 'empty destination')),
-  rs(
-    'move: rejected because basePrefix has work order for same unit (move XOR work cascade)',
-    () => iceRunMoveRow(unitId: 'u_explorer', destLocal: 'P2', label: 'move w/ existing work for same unit', basePrefix: iceExploreWorkPrefix('u_explorer', 'P2')),
-  ),
-  rs(
-    'move: with non-empty accepted basePrefix (accepted)',
-    () => iceRunMoveRow(unitId: 'u_builder', destLocal: 'P2', label: 'builder w/ prior explorer move in basePrefix', basePrefix: Orders(moveOrdersByPlayerId: { IceIds.playerId: [ MoveOrder(unitId: 'u_explorer', destinationTileKey: iceTile('P2')), ], })),
-  ),
+  rs('move: rejected because basePrefix has work order for same unit (move XOR work cascade)',() => iceRunMoveRow(unitId: 'u_explorer',destLocal: 'P2',label: 'move w/ existing work for same unit',basePrefix: iceExploreWorkPrefix('u_explorer','P2')),),
+  rs('move: with non-empty accepted basePrefix (accepted)',() => iceRunMoveRow(unitId: 'u_builder',destLocal: 'P2',label: 'builder w/ prior explorer move in basePrefix',basePrefix: Orders(moveOrdersByPlayerId: { IceIds.playerId: [MoveOrder(unitId: 'u_explorer',destinationTileKey: iceTile('P2')),],})),),
   rs('build: candidate remains equivalent to full-pass path', () => iceExpectBuildOnCorpus(candidate: iceBuildUnit('pikemen'), label: 'single build candidate')),
-  rs(
-    'build: successive candidate probes stay full-pass equivalent (#2394)',
-    () => iceExpectSequentialIncrementalMatchesFullPass(game: iceBuildCorpusGame(), topology: iceBuildCorpusTopology, playerId: IceIds.playerId, candidates: [ iceBuildUnit('pikemen'), iceBuildUnit('musketeers'), ], incremental: (validator, candidate) => validator.isBuildAccepted(candidate), fullPass: (candidate) => fullPassBuildAccepted(iceBuildCorpusGame(), iceBuildCorpusTopology, IceIds.playerId, const Orders(), candidate)),
-  ),
-  rs(
-    'work: non-empty basePrefix replay remains equivalent',
-    () => iceExpectWorkOnCorpus(game: moveCorpusGame(), topology: moveCorpusTopology(), candidate: WorkOrder(unitId: 'u_explorer', target: kWorkTargetExplore, targetTileKey: iceTile('P2')), label: 'duplicate work unit with basePrefix', basePrefix: iceExploreWorkPrefix('u_explorer', 'P2')),
-  ),
-  rs(
-    'diplomatic: non-empty basePrefix replay remains equivalent',
-    () => iceExpectDiplomaticOnCorpus(game: moveCorpusGame(), topology: moveCorpusTopology(), candidate: const DiplomaticOrder(type: DiplomaticOrderType.alliance, targetFactionId: 'p2'), label: 'same-target non-economic conflict', basePrefix: iceDeclareWarPrefix('p2')),
-  ),
-  rs(
-    'diplomatic: sequential probes on one validator stay equivalent (#2394)',
-    () => iceExpectSequentialIncrementalMatchesFullPass(game: moveCorpusGame(), topology: moveCorpusTopology(), playerId: IceIds.playerId, basePrefix: iceDeclareWarPrefix('p2'), candidates: const [ DiplomaticOrder(type: DiplomaticOrderType.alliance, targetFactionId: 'p2'), DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'p3'), DiplomaticOrder(type: DiplomaticOrderType.alliance, targetFactionId: 'p2'), ], incremental: (validator, candidate) => validator.isDiplomaticAccepted(candidate), fullPass: (candidate) => fullPassDiplomaticAccepted(moveCorpusGame(), moveCorpusTopology(), IceIds.playerId, iceDeclareWarPrefix('p2'), candidate)),
-  ),
-  rs(
-    'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
-    () => iceExpectPrefetchedArmyMoveEquivalence(candidate: const ArmyMoveOrder(armyId: 'field_a', destinationProvinceId: 'oldWorld|P4'), game: armyCorpusGame(), topology: armyCorpusTopology(), playerId: IceIds.playerId),
-  ),
+  rs('build: successive candidate probes stay full-pass equivalent (#2394)',() => iceExpectSequentialIncrementalMatchesFullPass(game: iceBuildCorpusGame(),topology: iceBuildCorpusTopology,playerId: IceIds.playerId,candidates: [iceBuildUnit('pikemen'),iceBuildUnit('musketeers'),],incremental: (validator,candidate) => validator.isBuildAccepted(candidate),fullPass: (candidate) => fullPassBuildAccepted(iceBuildCorpusGame(),iceBuildCorpusTopology,IceIds.playerId,const Orders(),candidate)),),
+  rs('work: non-empty basePrefix replay remains equivalent',() => iceExpectWorkOnCorpus(game: moveCorpusGame(),topology: moveCorpusTopology(),candidate: WorkOrder(unitId: 'u_explorer',target: kWorkTargetExplore,targetTileKey: iceTile('P2')),label: 'duplicate work unit with basePrefix',basePrefix: iceExploreWorkPrefix('u_explorer','P2')),),
+  rs('diplomatic: non-empty basePrefix replay remains equivalent',() => iceExpectDiplomaticOnCorpus(game: moveCorpusGame(),topology: moveCorpusTopology(),candidate: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'p2'),label: 'same-target non-economic conflict',basePrefix: iceDeclareWarPrefix('p2')),),
+  rs('diplomatic: sequential probes on one validator stay equivalent (#2394)',() => iceExpectSequentialIncrementalMatchesFullPass(game: moveCorpusGame(),topology: moveCorpusTopology(),playerId: IceIds.playerId,basePrefix: iceDeclareWarPrefix('p2'),candidates: const [DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'p2'),DiplomaticOrder(type: DiplomaticOrderType.declareWar,targetFactionId: 'p3'),DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'p2'),],incremental: (validator,candidate) => validator.isDiplomaticAccepted(candidate),fullPass: (candidate) => fullPassDiplomaticAccepted(moveCorpusGame(),moveCorpusTopology(),IceIds.playerId,iceDeclareWarPrefix('p2'),candidate)),),
+  rs('prefetched DiplomacyFactionMembership matches lazy membership (#2394)',() => iceExpectPrefetchedArmyMoveEquivalence(candidate: const ArmyMoveOrder(armyId: 'field_a',destinationProvinceId: 'oldWorld|P4'),game: armyCorpusGame(),topology: armyCorpusTopology(),playerId: IceIds.playerId),),
   rs('army move: into own adjacent province (accepted)', () => iceRunArmyMoveRow(armyId: 'field_a', destLocal: 'P2', label: 'own adjacent')),
   rs('army move: into other GP without war (rejected)', () => iceRunArmyMoveRow(armyId: 'field_a', destLocal: 'P3', label: 'GP no war')),
   rs('army move: into other GP with same-turn declare war (accepted)', () => iceRunArmyMoveRow(armyId: 'field_a', destLocal: 'P3', label: 'GP with declare war', basePrefix: iceDeclareWarPrefix('p2'))),

@@ -9,63 +9,11 @@ import 'order_suggestion_colonial_acquisition_fixtures.dart';
 
 const _api = DefaultOrderSuggestionAPI();
 const _emptyOrders = Orders();
+// dart format off
 
-void oscaRunJoinEmpireCandidateEmitted() {
-  final game = colonialAcquisitionEmbassyScenarioGame();
-  final view = colonialAcquisitionViewFor(game);
-  expect(
-    knownDiplomaticTargetFactionIds(
-      view: view,
-      game: game,
-      topology: colonialAcquisitionTopology,
-    ),
-    contains('tribe1'),
-  );
-  final orders = _api.suggestDiplomaticOrders(
-    view,
-    game,
-    colonialAcquisitionTopology,
-    _emptyOrders,
-  );
-  final joinEmpireForTribe = orders.where(
-    (o) =>
-        o.targetFactionId == 'tribe1' &&
-        o.type == DiplomaticOrderType.establishOverture &&
-        o.overtureStage == OvertureStage.joinEmpire,
-  );
-  expect(
-    joinEmpireForTribe,
-    isNotEmpty,
-    reason:
-        'AC: merged orders may include establishOverture (Join Empire) '
-        'when GP has embassy-stage overture and treasury covers cost',
-  );
-}
+void oscaRunJoinEmpireCandidateEmitted() {final game = colonialAcquisitionEmbassyScenarioGame(); final view = colonialAcquisitionViewFor(game); expect(knownDiplomaticTargetFactionIds(view: view,game: game,topology: colonialAcquisitionTopology,),contains('tribe1'),); final orders = _api.suggestDiplomaticOrders(view,game,colonialAcquisitionTopology,_emptyOrders,); final joinEmpireForTribe = orders.where((o) => o.targetFactionId == 'tribe1' && o.type == DiplomaticOrderType.establishOverture && o.overtureStage == OvertureStage.joinEmpire,); expect(joinEmpireForTribe,isNotEmpty,reason: 'AC: merged orders may include establishOverture (Join Empire) ' 'when GP has embassy-stage overture and treasury covers cost',);}
 
-void oscaRunDeclareWarCandidateEmitted() {
-  final game = colonialAcquisitionEmbassyScenarioGame();
-  final view = colonialAcquisitionViewFor(game);
-  final orders = _api.suggestDeclareWarOrders(
-    view,
-    game,
-    colonialAcquisitionTopology,
-    _emptyOrders,
-  );
-  final declareForTribe = orders.where(
-    (o) =>
-        o.targetFactionId == 'tribe1' &&
-        o.type == DiplomaticOrderType.declareWar,
-  );
-  expect(
-    declareForTribe,
-    isNotEmpty,
-    reason:
-        'AC: merged orders may include declareWar toward an at-peace '
-        'tribe in the known target set (colonial-support weights must '
-        'not gate emission); declare-war-only pass is independent of '
-        'the per-target single-diplo cap in suggestDiplomaticOrders',
-  );
-}
+void oscaRunDeclareWarCandidateEmitted() {final game = colonialAcquisitionEmbassyScenarioGame(); final view = colonialAcquisitionViewFor(game); final orders = _api.suggestDeclareWarOrders(view,game,colonialAcquisitionTopology,_emptyOrders,); final declareForTribe = orders.where((o) => o.targetFactionId == 'tribe1' && o.type == DiplomaticOrderType.declareWar,); expect(declareForTribe,isNotEmpty,reason: 'AC: merged orders may include declareWar toward an at-peace ' 'tribe in the known target set (colonial-support weights must ' 'not gate emission); declare-war-only pass is independent of ' 'the per-target single-diplo cap in suggestDiplomaticOrders',);}
 
 void oscaRunDeterministicAcrossRepeatedCalls() {
   final game = colonialAcquisitionEmbassyScenarioGame();
@@ -125,7 +73,7 @@ void oscaRunDeterministicAcrossRepeatedCalls() {
   );
 }
 
-List<RunnableScenario> orderSuggestionColonialAcquisitionScenarios() => const [
+List<RunnableScenario> orderSuggestionColonialAcquisitionScenarios() => [
   rs('embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire', oscaRunJoinEmpireCandidateEmitted, '#2509'),
   rs('embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar', oscaRunDeclareWarCandidateEmitted, '#2509'),
   rs('candidate set is deterministic across repeated suggestion calls', oscaRunDeterministicAcrossRepeatedCalls, '#2509'),

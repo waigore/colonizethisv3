@@ -6,57 +6,15 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'order_suggestion_build_pending_riches_fixtures.dart';
+// dart format off
 
-void osbprRunAcceptsPeasantLeviesWithRichesStockpile() {
-  final game = orderSuggestionBuildPendingRichesGame();
-  final view = buildPlayerView(
-    game,
-    orderSuggestionBuildPendingRichesTopology,
-    orderSuggestionBuildPendingRichesPlayerId,
-  );
+void osbprRunAcceptsPeasantLeviesWithRichesStockpile() {final game = orderSuggestionBuildPendingRichesGame(); final view = buildPlayerView(game,orderSuggestionBuildPendingRichesTopology,orderSuggestionBuildPendingRichesPlayerId,); final suggestions = suggestBuildOrders(view,game,orderSuggestionBuildPendingRichesTopology,const Orders(),); expect(suggestions.map((o) => o.unitType),contains('peasant_levies'));}
 
-  final suggestions = suggestBuildOrders(
-    view,
-    game,
-    orderSuggestionBuildPendingRichesTopology,
-    const Orders(),
-  );
-
-  expect(suggestions.map((o) => o.unitType), contains('peasant_levies'));
-}
-
-void osbprRunIncrementalProbeMatchesFullPass() {
-  final game = orderSuggestionBuildPendingRichesGame();
-  const basePrefix = Orders();
-  const candidate = BuildUnitOrder(
-    unitType: 'peasant_levies',
-    isMilitary: true,
-    spawnProvinceId: orderSuggestionBuildPendingRichesProvinceId,
-  );
-
-  final incremental = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: orderSuggestionBuildPendingRichesTopology,
-    playerId: orderSuggestionBuildPendingRichesPlayerId,
-    basePrefix: basePrefix,
-  );
-  final engine = OrderEngine(initialOrders: basePrefix);
-  final fullPass = engine
-      .addBuildOrderWithContext(
-        game,
-        orderSuggestionBuildPendingRichesTopology,
-        orderSuggestionBuildPendingRichesPlayerId,
-        candidate,
-      )
-      .isAccepted;
-
-  expect(incremental.isBuildAccepted(candidate), fullPass);
-  expect(incremental.isBuildAccepted(candidate), isTrue);
-}
+void osbprRunIncrementalProbeMatchesFullPass() {final game = orderSuggestionBuildPendingRichesGame(); const basePrefix = Orders(); const candidate = BuildUnitOrder(unitType: 'peasant_levies',isMilitary: true,spawnProvinceId: orderSuggestionBuildPendingRichesProvinceId,); final incremental = IncrementalCandidateValidator.forPlayer(game: game,topology: orderSuggestionBuildPendingRichesTopology,playerId: orderSuggestionBuildPendingRichesPlayerId,basePrefix: basePrefix,); final engine = OrderEngine(initialOrders: basePrefix); final fullPass = engine.addBuildOrderWithContext(game,orderSuggestionBuildPendingRichesTopology,orderSuggestionBuildPendingRichesPlayerId,candidate,).isAccepted; expect(incremental.isBuildAccepted(candidate),fullPass); expect(incremental.isBuildAccepted(candidate),isTrue);}
 
 /// Scenarios for suggestBuildOrders pending riches treasury (Refs #2509).
 List<RunnableScenario>
-suggestBuildOrdersPendingRichesTreasuryScenarios() => const [
+suggestBuildOrdersPendingRichesTreasuryScenarios() => [
   rs('accepts peasant_levies when treasury is zero but stockpile has spices', osbprRunAcceptsPeasantLeviesWithRichesStockpile, '#2509'),
   rs('incremental build probe matches full-pass when riches fund build', osbprRunIncrementalProbeMatchesFullPass, '#2509'),
 ];

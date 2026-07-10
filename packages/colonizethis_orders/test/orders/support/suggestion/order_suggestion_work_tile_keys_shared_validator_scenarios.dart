@@ -5,96 +5,15 @@ import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 import 'order_suggestion_work_tile_keys_shared_validator_fixtures.dart';
+// dart format off
 
-void oswtkRunSharedCandidateValidatorMatchesDefaultPath() {
-  final fixture = workTileKeysSharedValidatorFixture();
-  final baseline = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-  );
-  final shared = buildIncrementalCandidateValidator(
-    game: fixture.game,
-    topology: fixture.topology,
-    playerId: workTileKeysSharedValidatorPlayerId,
-    baseOrders: fixture.orders,
-  );
-  final withShared = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-    sharedCandidateValidator: shared,
-  );
-  expect(withShared, equals(baseline));
-}
+void oswtkRunSharedCandidateValidatorMatchesDefaultPath() {final fixture = workTileKeysSharedValidatorFixture(); final baseline = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,); final shared = buildIncrementalCandidateValidator(game: fixture.game,topology: fixture.topology,playerId: workTileKeysSharedValidatorPlayerId,baseOrders: fixture.orders,); final withShared = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,sharedCandidateValidator: shared,); expect(withShared,equals(baseline));}
 
-void oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath() {
-  final fixture = workTileKeysSharedValidatorFixture();
-  final baseline = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-  );
-  final withOwnedIds = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-    playerOwnedProvinceIds: fixture.ownedIds,
-  );
-  expect(withOwnedIds, equals(baseline));
-}
+void oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath() {final fixture = workTileKeysSharedValidatorFixture(); final baseline = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,); final withOwnedIds = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,playerOwnedProvinceIds: fixture.ownedIds,); expect(withOwnedIds,equals(baseline));}
 
-void oswtkRunOptionalUnitsByIdMatchesDefaultPath() {
-  final fixture = workTileKeysSharedValidatorFixture();
-  final baseline = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-  );
-  final withUnitsById = getValidWorkOrderTileKeysWithVisibility(
-    game: fixture.game,
-    topology: fixture.topology,
-    view: fixture.view,
-    unitId: 'b1',
-    workTarget: kWorkTargetBuildImprovement,
-    currentOrders: fixture.orders,
-    resolution: orderResolutionContextFromView(
-      fixture.view,
-      fixture.game,
-      unitsById: fixture.unitsById,
-    ),
-  );
-  expect(withUnitsById, equals(baseline));
-}
+void oswtkRunOptionalUnitsByIdMatchesDefaultPath() {final fixture = workTileKeysSharedValidatorFixture(); final baseline = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,); final withUnitsById = getValidWorkOrderTileKeysWithVisibility(game: fixture.game,topology: fixture.topology,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,resolution: orderResolutionContextFromView(fixture.view,fixture.game,unitsById: fixture.unitsById,),); expect(withUnitsById,equals(baseline));}
 
-void oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles() {
-  final fixture = workTileKeysSharedValidatorFixture();
-  final keys = getValidWorkOrderTileKeys(
-    fixture.game,
-    fixture.topology,
-    workTileKeysSharedValidatorPlayerId,
-    'b1',
-    kWorkTargetBuildImprovement,
-    fixture.orders,
-  );
-  expect(keys, contains(workTileKeysSharedValidatorTileA));
-  expect(keys, contains(workTileKeysSharedValidatorTileB));
-}
+void oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles() {final fixture = workTileKeysSharedValidatorFixture(); final keys = getValidWorkOrderTileKeys(fixture.game,fixture.topology,workTileKeysSharedValidatorPlayerId,'b1',kWorkTargetBuildImprovement,fixture.orders,); expect(keys,contains(workTileKeysSharedValidatorTileA)); expect(keys,contains(workTileKeysSharedValidatorTileB));}
 
 void oswtkRunSharedViewAndValidatorMatchesDefaultPath() {
   final fixture = workTileKeysSharedValidatorFixture();
@@ -139,14 +58,14 @@ void oswtkRunSharedViewAndValidatorMatchesDefaultPath() {
 }
 
 List<RunnableScenario>
-orderSuggestionWorkTileKeysSharedValidatorVisibilityScenarios() => const [
+orderSuggestionWorkTileKeysSharedValidatorVisibilityScenarios() => [
   rs('sharedCandidateValidator matches default path for same inputs', oswtkRunSharedCandidateValidatorMatchesDefaultPath),
   rs('playerOwnedProvinceIds matches default path for same inputs', oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath),
   rs('optional unitsById matches default path', oswtkRunOptionalUnitsByIdMatchesDefaultPath),
 ];
 
 List<RunnableScenario>
-orderSuggestionWorkTileKeysSharedValidatorPlayerViewScenarios() => const [
+orderSuggestionWorkTileKeysSharedValidatorPlayerViewScenarios() => [
   rs('matches prior behavior for builder improvement tiles', oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles),
   rs('shared view and validator matches default path', oswtkRunSharedViewAndValidatorMatchesDefaultPath),
 ];

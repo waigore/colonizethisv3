@@ -3,19 +3,10 @@
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
+// dart format off
 
-void dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted() {
-  expect(
-    debugConsoleSupportedWorkerTierIdsSorted,
-    orderedEquals(<String>['apprentices', 'journeymen', 'masters', 'peasants']),
-  );
-  expect(debugConsoleSupportedWorkerTierIds, hasLength(4));
-  expect(debugConsoleSupportedWorkerTierIds, contains('peasants'));
-  expect(debugConsoleSupportedWorkerTierIds, contains('apprentices'));
-  expect(debugConsoleSupportedWorkerTierIds, contains('journeymen'));
-  expect(debugConsoleSupportedWorkerTierIds, contains('masters'));
-}
+void dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted() {expect(debugConsoleSupportedWorkerTierIdsSorted,orderedEquals(<String>['apprentices','journeymen','masters','peasants']),); expect(debugConsoleSupportedWorkerTierIds,hasLength(4)); expect(debugConsoleSupportedWorkerTierIds,contains('peasants')); expect(debugConsoleSupportedWorkerTierIds,contains('apprentices')); expect(debugConsoleSupportedWorkerTierIds,contains('journeymen')); expect(debugConsoleSupportedWorkerTierIds,contains('masters'));}
 
-List<RunnableScenario> debugConsoleWorkersScenarios() => const [
+List<RunnableScenario> debugConsoleWorkersScenarios() => [
   rs('debug worker tier ids are canonical and lexicographically sorted', dcwRunWorkerTierIdsCanonicalAndLexicographicallySorted),
 ];

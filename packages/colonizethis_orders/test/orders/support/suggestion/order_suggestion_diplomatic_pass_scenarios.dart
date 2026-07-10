@@ -9,33 +9,11 @@ import '../scenario_runner.dart';
 
 import '../diplomatic/diplomatic_orders_test_fixtures.dart';
 import 'order_suggestion_diplomatic_pass_fixtures.dart';
+// dart format off
 
-void osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes() {
-  expect(
-    isIndependentDiplomaticCandidate(DiplomaticOrderType.grantAid),
-    isTrue,
-  );
-  expect(
-    isIndependentDiplomaticCandidate(DiplomaticOrderType.setSubsidy),
-    isTrue,
-  );
-  expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.boycott), isTrue);
-  expect(
-    isIndependentDiplomaticCandidate(DiplomaticOrderType.alliance),
-    isFalse,
-  );
-  expect(
-    isIndependentDiplomaticCandidate(DiplomaticOrderType.declareWar),
-    isFalse,
-  );
-}
+void osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes() {expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.grantAid),isTrue,); expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.setSubsidy),isTrue,); expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.boycott),isTrue); expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.alliance),isFalse,); expect(isIndependentDiplomaticCandidate(DiplomaticOrderType.declareWar),isFalse,);}
 
-void osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget() {
-  final game = orderSuggestionDiplomaticPassDuplicateOvertureGame();
-  final map = playerOverturesByTargetIdForPlayer(game, 'gp1');
-  expect(map.keys, ['minor1']);
-  expect(map['minor1']!.stage, OvertureStage.tradeConsulate);
-}
+void osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget() {final game = orderSuggestionDiplomaticPassDuplicateOvertureGame(); final map = playerOverturesByTargetIdForPlayer(game,'gp1'); expect(map.keys,['minor1']); expect(map['minor1']!.stage,OvertureStage.tradeConsulate);}
 
 void osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets() {
   final atPeaceGame = gpMinorGame(
@@ -90,7 +68,7 @@ void osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets() {
   expect(suggestions, isEmpty);
 }
 
-List<RunnableScenario> orderSuggestionDiplomaticPassScenarios() => const [
+List<RunnableScenario> orderSuggestionDiplomaticPassScenarios() => [
   rs('isIndependentDiplomaticCandidate flags economic and boycott types', osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes),
   rs('playerOverturesByTargetIdForPlayer keeps first row per target', osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget),
   rs('acceptDeclareWarCandidatesForTargets skips self and at-war targets', osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets),

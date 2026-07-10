@@ -6,43 +6,14 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'order_suggestion_no_order_engine_full_pass_fixtures.dart';
+// dart format off
 
-void osnoefpRunSuggestBuildOrdersSkipsFullPass() {
-  setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(true);
-  final fixture = noefpBuildSuggestionGame();
-  suggestBuildOrders(
-    fixture.view,
-    fixture.game,
-    fixture.topology,
-    const Orders(),
-  );
-  expect(
-    orderEngineValidatePlayerOrdersWithContextInvocationCountForTests,
-    0,
-    reason:
-        'Build suggestions must use incremental candidate validation, not '
-        'OrderEngine full-pass per candidate (Refs #2237 AC2).',
-  );
-}
+void osnoefpRunSuggestBuildOrdersSkipsFullPass() {setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(true); final fixture = noefpBuildSuggestionGame(); suggestBuildOrders(fixture.view,fixture.game,fixture.topology,const Orders(),); expect(orderEngineValidatePlayerOrdersWithContextInvocationCountForTests,0,reason: 'Build suggestions must use incremental candidate validation, not ' 'OrderEngine full-pass per candidate (Refs #2237 AC2).',);}
 
-void osnoefpRunOrderEngineAddWithContextInvokesFullValidation() {
-  setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(true);
-  final fixture = noefpAddWithContextGame();
-  final engine = OrderEngine();
-  engine.addMoveOrderWithContext(
-    fixture.game,
-    fixture.topology,
-    'gp1',
-    const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
-  );
-  expect(
-    orderEngineValidatePlayerOrdersWithContextInvocationCountForTests,
-    greaterThan(0),
-  );
-}
+void osnoefpRunOrderEngineAddWithContextInvokesFullValidation() {setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(true); final fixture = noefpAddWithContextGame(); final engine = OrderEngine(); engine.addMoveOrderWithContext(fixture.game,fixture.topology,'gp1',const MoveOrder(unitId: 'u1',destinationTileKey: 'oldWorld|P2|0|0'),); expect(orderEngineValidatePlayerOrdersWithContextInvocationCountForTests,greaterThan(0),);}
 
 List<RunnableScenario>
-orderSuggestionNoOrderEngineFullPassScenarios() => const [
+orderSuggestionNoOrderEngineFullPassScenarios() => [
   rs('suggestBuildOrders does not invoke validatePlayerOrdersWithContext', osnoefpRunSuggestBuildOrdersSkipsFullPass, '#2237 AC2'),
   rs('OrderEngine add-with-context still invokes full validation', osnoefpRunOrderEngineAddWithContextInvokesFullValidation, '#2237'),
 ];

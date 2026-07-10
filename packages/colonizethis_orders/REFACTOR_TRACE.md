@@ -2367,6 +2367,17 @@ test/ LOC after slice 155: **32251** (net −224 from post–slice 154 / 32,475)
 
 test/ LOC after slice 156: **29602** (net −2,649 from post–slice 155 / 32,251). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 157: densify scenario run helpers + drop invalid const lists (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| run-helper-densify | collapse multi-line `void *Run*` / family helper bodies to single-line under `// dart format off` across scenario modules | `test/orders/support/**/*_scenarios.dart` (~99 files) | same | #3949 |
+| rs-row-collapse | finish collapsing remaining multi-line `rs(...)` table rows to single-line | `order_engine_validate_work_scenarios.dart` + 6 others | same | #3949 |
+| const-rs-fix | remove invalid `=> const [` wrappers around `rs(...)` tear-off tables (preexisting analyzer errors) | 95 `*_scenarios.dart` | same | #3949 |
+| unused-import-sweep | `dart fix` unnecessary imports after densify | touched scenario/fixture modules | same | #3949 |
+
+test/ LOC after slice 157: **20512** (net −9,090 from post–slice 156 / 29,602). **≥20% LOC target ≤26,400 met.** Remaining: lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred; optional further fixture/shorthand compaction.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

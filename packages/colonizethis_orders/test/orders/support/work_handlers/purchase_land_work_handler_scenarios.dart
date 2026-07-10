@@ -11,12 +11,9 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'purchase_land_work_handler_fixtures.dart';
+// dart format off
 
-void plwhRunSupportsOnlyPurchaseLand() {
-  final handler = purchaseLandWorkOrderHandler;
-  expect(handler.supports(kWorkTargetPurchaseLand), isTrue);
-  expect(handler.supports(kWorkTargetExplore), isFalse);
-}
+void plwhRunSupportsOnlyPurchaseLand() {final handler = purchaseLandWorkOrderHandler; expect(handler.supports(kWorkTargetPurchaseLand),isTrue); expect(handler.supports(kWorkTargetExplore),isFalse);}
 
 void plwhRunTryApplyWithoutTreasuryDeduction() {
   final game = purchaseLandTryApplyGame();
@@ -67,30 +64,10 @@ void plwhRunTryApplyWithoutTreasuryDeduction() {
   expect(updatedMerchant.currentWork?.remainingTurns, 1);
 }
 
-void plwhRunUnchangedTreasuryNoResource() {
-  final game = TestFixtures.minimalGame(players: const []);
-  final unit = Unit(
-    id: 'u1',
-    type: kUnitTypeMerchant,
-    ownerId: 'p1',
-    locationProvinceId: 'oldWorld|P1',
-    tileKey: 'oldWorld|P1|0|0',
-  );
-  final out = applyPurchaseLandCompletion(
-    state: purchaseLandMinimalBuildState(game),
-    player: const Player(id: 'p1', displayName: 'P1', isHuman: true),
-    unit: unit,
-    targetTileKey: 'oldWorld|P1|0|0',
-    treasury: 100,
-    purchasedTilesByTileKey: const {},
-    provinceById: (_) => null,
-  );
-  expect(out.treasury, 100);
-  expect(out.purchasedTilesByTileKey, isEmpty);
-}
+void plwhRunUnchangedTreasuryNoResource() {final game = TestFixtures.minimalGame(players: const []); final unit = Unit(id: 'u1',type: kUnitTypeMerchant,ownerId: 'p1',locationProvinceId: 'oldWorld|P1',tileKey: 'oldWorld|P1|0|0',); final out = applyPurchaseLandCompletion(state: purchaseLandMinimalBuildState(game),player: const Player(id: 'p1',displayName: 'P1',isHuman: true),unit: unit,targetTileKey: 'oldWorld|P1|0|0',treasury: 100,purchasedTilesByTileKey: const {},provinceById: (_) => null,); expect(out.treasury,100); expect(out.purchasedTilesByTileKey,isEmpty);}
 
 /// Canonical scenarios for purchase_land_work_handler family tests.
-List<RunnableScenario> purchaseLandWorkHandlerScenarios() => const [
+List<RunnableScenario> purchaseLandWorkHandlerScenarios() => [
   rs('supports only purchase_land target', plwhRunSupportsOnlyPurchaseLand),
   rs('tryApply assigns currentWork without treasury deduction', plwhRunTryApplyWithoutTreasuryDeduction),
   rs('returns unchanged treasury when tile has no resource entry', plwhRunUnchangedTreasuryNoResource),

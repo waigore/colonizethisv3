@@ -5,18 +5,10 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'order_suggestion_colonial_intel_explore_fixtures.dart';
+// dart format off
 
-void oscieRunListsSeaReachableNw() {
-  final fixture = colonialIntelSeaReachableNwFixture();
-  expect(
-    colonialIntelExploreProvinceIdsSorted(
-      view: fixture.view,
-      topology: fixture.topology,
-    ),
-    ['newWorld|colony'],
-  );
-}
+void oscieRunListsSeaReachableNw() {final fixture = colonialIntelSeaReachableNwFixture(); expect(colonialIntelExploreProvinceIdsSorted(view: fixture.view,topology: fixture.topology,),['newWorld|colony'],);}
 
-List<RunnableScenario> orderSuggestionColonialIntelExploreScenarios() => const [
+List<RunnableScenario> orderSuggestionColonialIntelExploreScenarios() => [
   rs('colonialIntelExploreProvinceIdsSorted lists sea-reachable NW', oscieRunListsSeaReachableNw),
 ];

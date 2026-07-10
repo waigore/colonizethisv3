@@ -7,119 +7,38 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../scenario_runner.dart';
 import 'order_suggestion_pass_context_fixtures.dart';
+// dart format off
 
-void ospcRunIndexSkipsEmptyTargets() {
-  final indexed = indexExistingTargetsByEntityId(
-    const [
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: ''),
-    ],
-    (o) => o.fleetId,
-    (o) => o.destinationSeaZoneId ?? '',
-    skipEmptyTargets: true,
-  );
-  expect(indexed['f1'], {'seaA'});
-}
+void ospcRunIndexSkipsEmptyTargets() {final indexed = indexExistingTargetsByEntityId(const [NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaA'),NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: ''),],(o) => o.fleetId,(o) => o.destinationSeaZoneId ?? '',skipEmptyTargets: true,); expect(indexed['f1'],{'seaA'});}
 
-void ospcRunEmitCollectsInOrder() {
-  final into = <NavalMoveOrder>[];
-  emitAcceptedCandidates<NavalMoveOrder>(
-    candidates: const [
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaB'),
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaC'),
-    ],
-    accept: (o) => o.destinationSeaZoneId != 'seaC',
-    into: into,
-  );
-  expect(
-    into.map((o) => o.destinationSeaZoneId).toList(),
-    ['seaB', 'seaA'],
-    reason: 'preserves candidate order and performs no sorting',
-  );
-}
+void ospcRunEmitCollectsInOrder() {final into = <NavalMoveOrder>[]; emitAcceptedCandidates<NavalMoveOrder>(candidates: const [NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaB'),NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaA'),NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaC'),],accept: (o) => o.destinationSeaZoneId != 'seaC',into: into,); expect(into.map((o) => o.destinationSeaZoneId).toList(),['seaB','seaA'],reason: 'preserves candidate order and performs no sorting',);}
 
-void ospcRunEmitSkipsAlreadyTargeted() {
-  final into = <NavalMoveOrder>[];
-  emitAcceptedCandidates<NavalMoveOrder>(
-    candidates: const [
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaB'),
-      NavalMoveOrder(fleetId: 'f2', destinationSeaZoneId: 'seaA'),
-    ],
-    accept: (_) => true,
-    into: into,
-    existingByEntity: {
-      'f1': {'seaA'},
-    },
-    entityId: (o) => o.fleetId,
-    dedupKey: (o) => o.destinationSeaZoneId ?? '',
-  );
-  expect(into.map((o) => '${o.fleetId}:${o.destinationSeaZoneId}').toList(), [
-    'f1:seaB',
-    'f2:seaA',
-  ]);
-}
+void ospcRunEmitSkipsAlreadyTargeted() {final into = <NavalMoveOrder>[]; emitAcceptedCandidates<NavalMoveOrder>(candidates: const [NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaA'),NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaB'),NavalMoveOrder(fleetId: 'f2',destinationSeaZoneId: 'seaA'),],accept: (_) => true,into: into,existingByEntity: {'f1': {'seaA'},},entityId: (o) => o.fleetId,dedupKey: (o) => o.destinationSeaZoneId ?? '',); expect(into.map((o) => '${o.fleetId}:${o.destinationSeaZoneId}').toList(),['f1:seaB','f2:seaA',]);}
 
-void ospcRunEmitProbesWithoutDedupArgs() {
-  final into = <NavalMoveOrder>[];
-  emitAcceptedCandidates<NavalMoveOrder>(
-    candidates: const [
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
-      NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'seaA'),
-    ],
-    accept: (_) => true,
-    into: into,
-    existingByEntity: {
-      'f1': {'seaA'},
-    },
-  );
-  expect(into.length, 2);
-}
+void ospcRunEmitProbesWithoutDedupArgs() {final into = <NavalMoveOrder>[]; emitAcceptedCandidates<NavalMoveOrder>(candidates: const [NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaA'),NavalMoveOrder(fleetId: 'f1',destinationSeaZoneId: 'seaA'),],accept: (_) => true,into: into,existingByEntity: {'f1': {'seaA'},},); expect(into.length,2);}
 
-void ospcRunCappedProbeLoopRespectsCaps() {
-  final accepted = <int>[];
-  final probes = List.generate(10, (i) => i);
-  runCappedSuggestionProbeLoop<int>(
-    candidates: probes,
-    shouldSkip: (n) => n.isEven,
-    probe: (n) => n % 3 == 1,
-    onAccepted: accepted.add,
-    maxAccepted: 2,
-    maxProbes: 4,
-  );
-  expect(accepted, [1, 7]);
-}
+void ospcRunCappedProbeLoopRespectsCaps() {final accepted = <int>[]; final probes = List.generate(10,(i) => i); runCappedSuggestionProbeLoop<int>(candidates: probes,shouldSkip: (n) => n.isEven,probe: (n) => n % 3 == 1,onAccepted: accepted.add,maxAccepted: 2,maxProbes: 4,); expect(accepted,[1,7]);}
 
-void ospcRunOwnedProvinceIdsFromView() {
-  final view = buildPlayerView(
-    orderSuggestionPassContextOwnedProvincesGame(),
-    orderSuggestionPassContextTopology,
-    orderSuggestionPassContextGp1Id,
-  );
-  expect(ownedProvinceIdsFromView(view, orderSuggestionPassContextGp1Id), {
-    ProvinceId.full(kOldWorldRegionId, 'p1'),
-  });
-}
+void ospcRunOwnedProvinceIdsFromView() {final view = buildPlayerView(orderSuggestionPassContextOwnedProvincesGame(),orderSuggestionPassContextTopology,orderSuggestionPassContextGp1Id,); expect(ownedProvinceIdsFromView(view,orderSuggestionPassContextGp1Id),{ProvinceId.full(kOldWorldRegionId,'p1'),});}
 
 /// Scenarios for indexExistingTargetsByEntityId.
-List<RunnableScenario> indexExistingTargetsByEntityIdScenarios() => const [
+List<RunnableScenario> indexExistingTargetsByEntityIdScenarios() => [
   rs('indexExistingTargetsByEntityId skips empty targets when requested', ospcRunIndexSkipsEmptyTargets, '#3500'),
 ];
 
 /// Scenarios for emitAcceptedCandidates.
-List<RunnableScenario> emitAcceptedCandidatesScenarios() => const [
+List<RunnableScenario> emitAcceptedCandidatesScenarios() => [
   rs('emitAcceptedCandidates collects accepted in iteration order', ospcRunEmitCollectsInOrder, '#3500'),
   rs('emitAcceptedCandidates skips candidates already targeted', ospcRunEmitSkipsAlreadyTargeted, '#3500'),
   rs('emitAcceptedCandidates probes every candidate without dedup args', ospcRunEmitProbesWithoutDedupArgs, '#3500'),
 ];
 
 /// Scenarios for runCappedSuggestionProbeLoop.
-List<RunnableScenario> runCappedSuggestionProbeLoopScenarios() => const [
+List<RunnableScenario> runCappedSuggestionProbeLoopScenarios() => [
   rs('runCappedSuggestionProbeLoop respects acceptance and probe caps', ospcRunCappedProbeLoopRespectsCaps, '#3500'),
 ];
 
 /// Scenarios for ownedProvinceIdsFromView.
-List<RunnableScenario> ownedProvinceIdsFromViewScenarios() => const [
+List<RunnableScenario> ownedProvinceIdsFromViewScenarios() => [
   rs('ownedProvinceIdsFromView returns full province ids for owner', ospcRunOwnedProvinceIdsFromView, '#3500'),
 ];

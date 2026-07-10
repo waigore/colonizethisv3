@@ -8,10 +8,7 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
-void ewhRunSupportsOnlyExplore() {
-  expect(exploreWorkOrderHandler.supports(kWorkTargetExplore), isTrue);
-  expect(exploreWorkOrderHandler.supports(kWorkTargetPurchaseLand), isFalse);
-}
+void ewhRunSupportsOnlyExplore() {expect(exploreWorkOrderHandler.supports(kWorkTargetExplore),isTrue); expect(exploreWorkOrderHandler.supports(kWorkTargetPurchaseLand),isFalse);}
 
 void ewhRunAssignsExploreCurrentWork() {
   const ow = 'oldWorld';
@@ -100,7 +97,7 @@ void ewhRunReturnsFalseNoTileKeys() {
 }
 
 /// Canonical scenarios for explore_work_handler family tests.
-List<RunnableScenario> exploreWorkHandlerScenarios() => const [
+List<RunnableScenario> exploreWorkHandlerScenarios() => [
   rs('supports only explore target', ewhRunSupportsOnlyExplore),
   rs('assigns explore currentWork when province has discoverable tiles', ewhRunAssignsExploreCurrentWork),
   rs('returns false when province has no tile keys in world state', ewhRunReturnsFalseNoTileKeys),

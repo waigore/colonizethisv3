@@ -1,6 +1,5 @@
 // Table-driven relation-based diplomatic sub-validator scenarios (Refs #3949 wave 3).
 
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/alliance_validator.dart';
@@ -25,253 +24,54 @@ Game _cooldownGame() => twoGpGame(
     ),
   ],
 );
+// dart format off
 
-void dsrRunDeclareWarAcceptsAtPeace() {
-  final v = declareWarSubValidator(
-    diplomaticSubValidatorContext(
-      twoGpGame(state: RelationState.atPeace),
-      'gp1',
-    ),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 1234,
-  );
-  expect(r.result.status, OrderValidationStatus.accepted);
-  expect(r.treasury, 1234);
-}
+void dsrRunDeclareWarAcceptsAtPeace() {final v = declareWarSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atPeace),'gp1',),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.declareWar,targetFactionId: 'gp2',),treasury: 1234,); expect(r.result.status,OrderValidationStatus.accepted); expect(r.treasury,1234);}
 
-void dsrRunDeclareWarRejectsAlreadyAtWar() {
-  final v = declareWarSubValidator(
-    diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 999,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, contains('Already at war'));
-  expect(r.treasury, 999);
-}
+void dsrRunDeclareWarRejectsAlreadyAtWar() {final v = declareWarSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.declareWar,targetFactionId: 'gp2',),treasury: 999,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,contains('Already at war')); expect(r.treasury,999);}
 
-void dsrRunOfferPeaceAcceptsAtWar() {
-  final v = offerPeaceSubValidator(
-    diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.offerPeace,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 0,
-  );
-  expect(r.result.status, OrderValidationStatus.accepted);
-  expect(r.treasury, 0);
-}
+void dsrRunOfferPeaceAcceptsAtWar() {final v = offerPeaceSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.offerPeace,targetFactionId: 'gp2',),treasury: 0,); expect(r.result.status,OrderValidationStatus.accepted); expect(r.treasury,0);}
 
-void dsrRunOfferPeaceRejectsNotAtWar() {
-  final v = offerPeaceSubValidator(
-    diplomaticSubValidatorContext(
-      twoGpGame(state: RelationState.atPeace),
-      'gp1',
-    ),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.offerPeace,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 100,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, contains('not at war'));
-  expect(r.treasury, 100);
-}
+void dsrRunOfferPeaceRejectsNotAtWar() {final v = offerPeaceSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atPeace),'gp1',),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.offerPeace,targetFactionId: 'gp2',),treasury: 100,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,contains('not at war')); expect(r.treasury,100);}
 
-void dsrRunAllianceRejectsNonGpTarget() {
-  final v = allianceSubValidator(
-    diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'minor1',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, contains('must be a Great Power'));
-  expect(r.treasury, 5000);
-}
+void dsrRunAllianceRejectsNonGpTarget() {final v = allianceSubValidator(diplomaticSubValidatorContext(gpMinorGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'minor1',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,contains('must be a Great Power')); expect(r.treasury,5000);}
 
-void dsrRunAllianceRejectsAtWarWithTarget() {
-  final v = allianceSubValidator(
-    diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, contains('Cannot form alliance while at war'));
-}
+void dsrRunAllianceRejectsAtWarWithTarget() {final v = allianceSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atWar),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,contains('Cannot form alliance while at war'));}
 
-void dsrRunAllianceAcceptsGpAtPeace() {
-  final v = allianceSubValidator(
-    diplomaticSubValidatorContext(
-      twoGpGame(state: RelationState.atPeace),
-      'gp1',
-    ),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.accepted);
-  expect(r.treasury, 5000);
-}
+void dsrRunAllianceAcceptsGpAtPeace() {final v = allianceSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atPeace),'gp1',),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.accepted); expect(r.treasury,5000);}
 
-void dsrRunAllianceRejectsDuplicateFormalAlliance() {
-  final v = allianceSubValidator(
-    diplomaticSubValidatorContext(
-      twoGpGame(state: RelationState.atPeace, formalAlliance: true),
-      'gp1',
-    ),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, contains('Already in a formal alliance'));
-  expect(r.treasury, 5000);
-}
+void dsrRunAllianceRejectsDuplicateFormalAlliance() {final v = allianceSubValidator(diplomaticSubValidatorContext(twoGpGame(state: RelationState.atPeace,formalAlliance: true),'gp1',),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,contains('Already in a formal alliance')); expect(r.treasury,5000);}
 
-void dsrRunCooldownBlocksAlliance() {
-  final v = allianceSubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.alliance,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, kAllianceBreakCooldownRejectionReason);
-}
+void dsrRunCooldownBlocksAlliance() {final v = allianceSubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,kAllianceBreakCooldownRejectionReason);}
 
-void dsrRunCooldownBlocksEstablishOverture() {
-  final v = establishOvertureSubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: 'gp2',
-      overtureStage: OvertureStage.tradeConsulate,
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, kAllianceBreakCooldownRejectionReason);
-}
+void dsrRunCooldownBlocksEstablishOverture() {final v = establishOvertureSubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.establishOverture,targetFactionId: 'gp2',overtureStage: OvertureStage.tradeConsulate,),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,kAllianceBreakCooldownRejectionReason);}
 
-void dsrRunCooldownBlocksEstablishFtp() {
-  final v = establishFtpSubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.establishFtp,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, kAllianceBreakCooldownRejectionReason);
-}
+void dsrRunCooldownBlocksEstablishFtp() {final v = establishFtpSubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.establishFtp,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,kAllianceBreakCooldownRejectionReason);}
 
-void dsrRunCooldownBlocksGrantAid() {
-  final v = grantAidSubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.grantAid,
-      targetFactionId: 'gp2',
-      amount: grantAidAmountStep,
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, kAllianceBreakCooldownRejectionReason);
-}
+void dsrRunCooldownBlocksGrantAid() {final v = grantAidSubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.grantAid,targetFactionId: 'gp2',amount: grantAidAmountStep,),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,kAllianceBreakCooldownRejectionReason);}
 
-void dsrRunCooldownBlocksSetSubsidy() {
-  final v = setSubsidySubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.setSubsidy,
-      targetFactionId: 'gp2',
-      amount: 10,
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.rejected);
-  expect(r.result.reason, kAllianceBreakCooldownRejectionReason);
-}
+void dsrRunCooldownBlocksSetSubsidy() {final v = setSubsidySubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.setSubsidy,targetFactionId: 'gp2',amount: 10,),treasury: 5000,); expect(r.result.status,OrderValidationStatus.rejected); expect(r.result.reason,kAllianceBreakCooldownRejectionReason);}
 
-void dsrRunCooldownDeclareWarRemainsAllowed() {
-  final v = declareWarSubValidator(
-    diplomaticSubValidatorContext(_cooldownGame(), 'gp1'),
-  );
-  final r = v.validate(
-    order: const DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: 'gp2',
-    ),
-    treasury: 5000,
-  );
-  expect(r.result.status, OrderValidationStatus.accepted);
-}
+void dsrRunCooldownDeclareWarRemainsAllowed() {final v = declareWarSubValidator(diplomaticSubValidatorContext(_cooldownGame(),'gp1'),); final r = v.validate(order: const DiplomaticOrder(type: DiplomaticOrderType.declareWar,targetFactionId: 'gp2',),treasury: 5000,); expect(r.result.status,OrderValidationStatus.accepted);}
 
-List<RunnableScenario> declareWarSubValidatorScenarios() => const [
+List<RunnableScenario> declareWarSubValidatorScenarios() => [
   rs('accepts when at peace and leaves treasury unchanged', dsrRunDeclareWarAcceptsAtPeace, '#2391 AC10'),
   rs('rejects when already at war and preserves treasury', dsrRunDeclareWarRejectsAlreadyAtWar, '#2391 AC10'),
 ];
 
-List<RunnableScenario> offerPeaceSubValidatorScenarios() => const [
+List<RunnableScenario> offerPeaceSubValidatorScenarios() => [
   rs('accepts when at war and leaves treasury unchanged', dsrRunOfferPeaceAcceptsAtWar, '#2391 AC10'),
   rs('rejects when not at war', dsrRunOfferPeaceRejectsNotAtWar, '#2391 AC10'),
 ];
 
-List<RunnableScenario> allianceSubValidatorScenarios() => const [
+List<RunnableScenario> allianceSubValidatorScenarios() => [
   rs('rejects when target is not a Great Power', dsrRunAllianceRejectsNonGpTarget, '#2391 AC10'),
   rs('rejects when at war with the target Great Power', dsrRunAllianceRejectsAtWarWithTarget, '#2391 AC10'),
   rs('accepts when target is a Great Power and at peace', dsrRunAllianceAcceptsGpAtPeace, '#2391 AC10'),
   rs('rejects a duplicate alliance when a formal alliance already exists', dsrRunAllianceRejectsDuplicateFormalAlliance, '#2391 AC10'),
 ];
 
-List<RunnableScenario> postBreakBilateralCooldownScenarios() => const [
+List<RunnableScenario> postBreakBilateralCooldownScenarios() => [
   rs('blocks alliance toward the cooled-down GP', dsrRunCooldownBlocksAlliance, '#3811 AC10'),
   rs('blocks establishOverture toward the cooled-down GP', dsrRunCooldownBlocksEstablishOverture, '#3811 AC10'),
   rs('blocks establishFtp toward the cooled-down GP', dsrRunCooldownBlocksEstablishFtp, '#3811 AC10'),
