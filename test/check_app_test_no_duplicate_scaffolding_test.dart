@@ -45,6 +45,22 @@ Future<void> _pumpFooScreenAtSize(WidgetTester tester, Size size) async {
 }
 ''';
 
+const _kConsolidatedTradeHost = '''
+import 'support/trade_screen_test_support.dart';
+
+void main() {
+  testWidgets('renders trade', (tester) async {
+    await pumpTradeScreen(tester, game: buildTradeTestGame());
+  });
+}
+''';
+
+const _kReintroducedTradeHosts = '''
+Game _buildGame() => throw UnimplementedError();
+
+Future<void> _pumpTradeScreen(WidgetTester tester) async {}
+''';
+
 void _writeGovernedFile(Directory temp, String name, String contents) {
   File('${temp.path}/app/test/$name')
     ..createSync(recursive: true)
@@ -73,7 +89,10 @@ void main() {
     expect(code, 0);
     expect(
       logs.join('\n'),
-      contains('no duplicated min-viewport or widgetbook use-case scaffolding found'),
+      contains(
+        'no duplicated min-viewport, widgetbook use-case, or trade-screen '
+        'host scaffolding found',
+      ),
     );
   });
 
@@ -182,10 +201,7 @@ Future<void> pumpAtMinViewport(WidgetTester tester, Size size) async {
       'check_app_test_no_dup_scaffolding_widgetbook_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(
-      temp,
-      'widgetbook_foo_stories_test.dart',
-      '''
+    _writeGovernedFile(temp, 'widgetbook_foo_stories_test.dart', '''
 import 'package:widgetbook/widgetbook.dart';
 
 WidgetbookUseCase _useCase(
@@ -195,8 +211,7 @@ WidgetbookUseCase _useCase(
 }) {
   throw UnimplementedError();
 }
-''',
-    );
+''');
 
     final logs = <String>[];
     final code = runCheckAppTestNoDuplicateScaffolding(
@@ -209,6 +224,57 @@ WidgetbookUseCase _useCase(
     expect(
       logs.join('\n'),
       contains('function "_useCase" duplicates widgetbook_test_harness.dart'),
+    );
+  });
+
+  test('passes when a trade-screen test uses the shared trade host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_trade_pass_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'trade_screen_foo_test.dart',
+      _kConsolidatedTradeHost,
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
+
+  test('fails when private trade-screen hosts are reintroduced', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_trade_fail_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'trade_screen_foo_test.dart',
+      _kReintroducedTradeHosts,
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    final joined = logs.join('\n');
+    expect(
+      joined,
+      contains(
+        'trade_screen_foo_test.dart:1: function "_buildGame" duplicates '
+        'trade_screen_test_support.dart',
+      ),
+    );
+    expect(
+      joined,
+      contains(
+        'trade_screen_foo_test.dart:3: function "_pumpTradeScreen" duplicates '
+        'trade_screen_test_support.dart',
+      ),
     );
   });
 }
