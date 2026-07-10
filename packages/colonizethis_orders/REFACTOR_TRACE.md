@@ -2378,6 +2378,15 @@ test/ LOC after slice 156: **29602** (net −2,649 from post–slice 155 / 32,25
 
 test/ LOC after slice 157: **20512** (net −9,090 from post–slice 156 / 29,602). **≥20% LOC target ≤26,400 met.** Remaining: lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred; optional further fixture/shorthand compaction.
 
+## Wave 3 — Slice 158: opportunistic precheck DRY (item 7) (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| precheck-resource-mineral | extract `_resourceOrMineralRejection` for purchase_land + build_improvement | `work_order_target_prechecks.dart` | same | #3949 |
+| precheck-embassy-access | extract `_rejectIfUncontrolledWithoutEmbassyWork` for build_improvement + default foreign | `work_order_target_prechecks.dart` | same | #3949 |
+
+Feedstock / army-move: remaining cross-file duplication insufficient after slices 99–100; no further extraction this slice (issue: do not chase LOC).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

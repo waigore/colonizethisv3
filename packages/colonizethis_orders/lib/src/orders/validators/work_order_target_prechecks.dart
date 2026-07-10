@@ -83,6 +83,54 @@ OrderValidationResult? _rejectAtWarOrWithoutEmbassy(
   return null;
 }
 
+/// Shared empty-resource + mineral-prospected gate for purchase_land /
+/// build_improvement (Refs #3949 item 7).
+({String? resourceId, OrderValidationResult? rejection})
+_resourceOrMineralRejection(
+  WorkOrderTargetPrecheckContext ctx,
+  String tileKey, {
+  required String emptyResourceMessage,
+}) {
+  final resourceId = ctx.game.worldState.resourceAtTile(tileKey);
+  if (resourceId == null || resourceId.isEmpty) {
+    return (
+      resourceId: null,
+      rejection: OrderValidationResult.rejected(emptyResourceMessage),
+    );
+  }
+  final mineralRejection = rejectIfMineralTileNotProspected(
+    game: ctx.game,
+    playerId: ctx.playerId,
+    tileKey: tileKey,
+    resourceId: resourceId,
+  );
+  if (mineralRejection != null) {
+    return (resourceId: null, rejection: mineralRejection);
+  }
+  return (resourceId: resourceId, rejection: null);
+}
+
+/// Shared controlled-or-embassy civilian access gate (Refs #3949 item 7).
+OrderValidationResult? _rejectIfUncontrolledWithoutEmbassyWork(
+  WorkOrderTargetPrecheckContext ctx,
+  String tileKey, {
+  required String unitType,
+  required String? provinceOwnerId,
+  required String message,
+}) {
+  final controlled = isTileControlledByPlayer(
+    ctx.game,
+    ctx.playerId,
+    tileKey,
+  );
+  final embassyWork = ctx.civilianEmbassyWorkAllowed(
+    unitType,
+    provinceOwnerId,
+  );
+  if (controlled || embassyWork) return null;
+  return OrderValidationResult.rejected(message);
+}
+
 OrderValidationResult? precheckUpgradeTown(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder order,
@@ -186,17 +234,16 @@ OrderValidationResult? precheckPurchaseLand(
   if (embassyRejection != null) {
     return embassyRejection;
   }
-  final resourceId = ctx.game.worldState.resourceAtTile(o.targetTileKey);
-  if (resourceId == null || resourceId.isEmpty) {
+  final resourceGate = _resourceOrMineralRejection(
+    ctx,
+    o.targetTileKey,
+    emptyResourceMessage: 'Tile has no resource',
+  );
+  if (resourceGate.rejection != null) return resourceGate.rejection;
+  final resourceId = resourceGate.resourceId;
+  if (resourceId == null) {
     return OrderValidationResult.rejected('Tile has no resource');
   }
-  final mineralRejection = rejectIfMineralTileNotProspected(
-    game: ctx.game,
-    playerId: ctx.playerId,
-    tileKey: o.targetTileKey,
-    resourceId: resourceId,
-  );
-  if (mineralRejection != null) return mineralRejection;
   final cost = purchaseLandCost(resourceId);
   if (ctx.treasury < cost) {
     return OrderValidationResult.rejected(
@@ -221,30 +268,27 @@ OrderValidationResult? precheckBuildImprovement(
   String? ownerId,
   String unitType,
 ) {
-  final controlled = isTileControlledByPlayer(
-    ctx.game,
-    ctx.playerId,
+  final accessRejection = _rejectIfUncontrolledWithoutEmbassyWork(
+    ctx,
     o.targetTileKey,
+    unitType: unitType,
+    provinceOwnerId: ownerId,
+    message: 'Cannot build improvement in foreign or uncontrolled province',
   );
-  final embassyWork = ctx.civilianEmbassyWorkAllowed(unitType, ownerId);
-  if (!controlled && !embassyWork) {
-    return OrderValidationResult.rejected(
-      'Cannot build improvement in foreign or uncontrolled province',
-    );
-  }
-  final resourceId = ctx.game.worldState.resourceAtTile(o.targetTileKey);
-  if (resourceId == null || resourceId.isEmpty) {
+  if (accessRejection != null) return accessRejection;
+  final resourceGate = _resourceOrMineralRejection(
+    ctx,
+    o.targetTileKey,
+    emptyResourceMessage:
+        'Tile has no resource; build_improvement requires a resource on the tile',
+  );
+  if (resourceGate.rejection != null) return resourceGate.rejection;
+  final resourceId = resourceGate.resourceId;
+  if (resourceId == null) {
     return OrderValidationResult.rejected(
       'Tile has no resource; build_improvement requires a resource on the tile',
     );
   }
-  final mineralRejection = rejectIfMineralTileNotProspected(
-    game: ctx.game,
-    playerId: ctx.playerId,
-    tileKey: o.targetTileKey,
-    resourceId: resourceId,
-  );
-  if (mineralRejection != null) return mineralRejection;
   final currentLevel = ctx.game.worldState.improvementLevelAtTile(
     o.targetTileKey,
   );
@@ -307,16 +351,13 @@ OrderValidationResult? precheckDefaultForeignProvince(
       kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(order.target)) {
     return null;
   }
-  final controlled = isTileControlledByPlayer(
-    ctx.game,
-    ctx.playerId,
+  return _rejectIfUncontrolledWithoutEmbassyWork(
+    ctx,
     order.targetTileKey,
+    unitType: unitType,
+    provinceOwnerId: provinceOwnerId,
+    message: 'Cannot work in foreign province',
   );
-  final embassyWork = ctx.civilianEmbassyWorkAllowed(unitType, provinceOwnerId);
-  if (controlled || embassyWork) {
-    return null;
-  }
-  return OrderValidationResult.rejected('Cannot work in foreign province');
 }
 
 OrderValidationResult? precheckDevExclusiveTileConflict(
