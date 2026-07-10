@@ -35,6 +35,10 @@ const String _tileSwamp = 'tile_swamp';
 const String _tilePlainsGrain = 'tile_plains_grain';
 const String _tilePlainsMeat = 'tile_plains_meat';
 const String _tilePlainsHorses = 'tile_plains_horses';
+const String _tilePlainsSugarCane = 'tile_plains_sugar_cane';
+const String _tilePlainsTobacco = 'tile_plains_tobacco';
+const String _tilePlainsCotton = 'tile_plains_cotton';
+const String _tilePlainsSpices = 'tile_plains_spices';
 
 /// Cache for loaded tilesets.
 /// Loads L0/L1 Wang tilesets (sea_plains, sea_desert, plains_desert)
@@ -83,6 +87,10 @@ class TerrainTilesetCache {
         loadStandaloneTileRequired(_tilePlainsGrain, 'plains_grain'),
         loadStandaloneTileRequired(_tilePlainsMeat, 'plains_meat'),
         loadStandaloneTileRequired(_tilePlainsHorses, 'plains_horses'),
+        loadStandaloneTileRequired(_tilePlainsSugarCane, 'plains_sugar_cane'),
+        loadStandaloneTileRequired(_tilePlainsTobacco, 'plains_tobacco'),
+        loadStandaloneTileRequired(_tilePlainsCotton, 'plains_cotton'),
+        loadStandaloneTileRequired(_tilePlainsSpices, 'plains_spices'),
       ]);
 
       for (final item in const <(String tileId, String assetStem)>[
