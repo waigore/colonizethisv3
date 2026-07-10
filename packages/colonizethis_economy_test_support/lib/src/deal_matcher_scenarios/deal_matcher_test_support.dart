@@ -247,21 +247,21 @@ DealMatcherScenario boycottTradeRow({
   refs: refs,
 );
 
-/// Compact single-faction unfilled bid map (Refs #3939 slice 60).
+/// Compact single-faction unfilled bid map (Refs #3939 slice 60 / 67).
 Map<String, List<TradeOrder>> matcherUnfilledBid(
   String faction,
-  String commodity,
   int qty, {
+  String commodity = 'timber',
   int priority = 1,
 }) => {
   faction: [matcherBid(commodity, qty, priority: priority)],
 };
 
-/// Compact single-faction unfilled offer map (Refs #3939 slice 60).
+/// Compact single-faction unfilled offer map (Refs #3939 slice 60 / 67).
 Map<String, List<TradeOrder>> matcherUnfilledOffer(
   String faction,
-  String commodity,
   int qty, {
+  String commodity = 'timber',
   int priority = 1,
 }) => {
   faction: [matcherOffer(commodity, qty, priority: priority)],
@@ -332,8 +332,8 @@ DealMatchExpectation frrOwnerFillExpect({
   ),
   unfilledBidsByFactionId: matcherUnfilledBid(
     rivalBuyer,
-    commodity,
     rivalUnfilledQty,
+    commodity: commodity,
     priority: rivalPriority,
   ),
 );
@@ -397,6 +397,86 @@ DealMatchExpectation matcherFirstBuyerExpect(
   firstFilledDeal: matcherFilled(buyer: buyer, quantity: quantity),
   unfilledBidsByFactionId: unfilledBidsByFactionId,
 );
+
+/// Single fill + optional carry-forward (Refs #3939 slice 67).
+DealMatchExpectation matcherSingleFillExpect({
+  String? buyer,
+  String? seller,
+  String? commodity,
+  int? quantity,
+  double? pricePerUnit,
+  bool? isFrr,
+  bool? isFtpMatch,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  Map<String, List<TradeOrder>>? unfilledOffersByFactionId,
+  bool unfilledBidsEmpty = false,
+  bool unfilledOffersEmpty = false,
+  Map<CommodityId, MarketActivity>? activityByCommodityId,
+  List<String>? activityNotesEmptyForCommodities,
+}) => DealMatchExpectation(
+  filledDealsLength: 1,
+  firstFilledDeal: matcherFilled(
+    buyer: buyer,
+    seller: seller,
+    commodity: commodity,
+    quantity: quantity,
+    pricePerUnit: pricePerUnit,
+    isFrr: isFrr,
+    isFtpMatch: isFtpMatch,
+  ),
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledOffersByFactionId: unfilledOffersByFactionId,
+  unfilledBidsEmpty: unfilledBidsEmpty,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+  activityByCommodityId: activityByCommodityId,
+  activityNotesEmptyForCommodities: activityNotesEmptyForCommodities,
+);
+
+/// Multi-origin M1 FRR offers for one owning GP (Refs #3939 slice 67).
+DealMatcherScenario frrOwnerOffersRow({
+  required String label,
+  required DealMatchExpectation expect,
+  Map<String, int>? offerQtysByOrigin,
+  int? singleOfferQty,
+  int ownerBidQty = 10,
+  List<(int qty, int priority)>? ownerBids,
+  PurchasedTileIndex? purchasedTileIndex,
+  String seller = 'M1',
+  String owner = 'gpA',
+  String commodity = 'timber',
+  int ownerCapacity = 100,
+  String? refs = '#2992',
+}) {
+  final offers = offerQtysByOrigin == null
+      ? [
+          matcherOffer(
+            commodity,
+            singleOfferQty ?? 10,
+            originTileKey: kFrrMatcherTestTileKey,
+          ),
+        ]
+      : [
+          for (final e in offerQtysByOrigin.entries)
+            matcherOffer(commodity, e.value, originTileKey: e.key),
+        ];
+  final bids = ownerBids == null
+      ? [matcherBid(commodity, ownerBidQty, priority: 1)]
+      : [
+          for (final b in ownerBids)
+            matcherBid(commodity, b.$1, priority: b.$2),
+        ];
+  return matcherRow(
+    label: label,
+    inputs: matcherInputs(
+      offersByFactionId: {seller: offers},
+      bidsByFactionId: {owner: bids},
+      tradeCapacityByFactionId: {owner: ownerCapacity},
+      purchasedTileIndex: purchasedTileIndex ?? frrMatcherTestIndex(),
+    ),
+    expect: expect,
+    refs: refs,
+  );
+}
 
 /// Offers-only or bids-only carry-forward row (Refs #3939 slice 42).
 DealMatcherScenario matcherUnilateralRow({

@@ -27,12 +27,7 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       frrQty: 4,
       otherBuyer: 'gpB',
       otherQty: 6,
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'gpB',
-        'timber',
-        4,
-        priority: 1,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('gpB', 4),
       unfilledOffersEmpty: true,
     ),
   ),
@@ -49,12 +44,7 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       frrQty: 3,
       otherBuyer: 'gpB',
       otherQty: 7,
-      unfilledBidsPinsByFactionId: matcherUnfilledBid(
-        'gpA',
-        'timber',
-        7,
-        priority: 1,
-      ),
+      unfilledBidsPinsByFactionId: matcherUnfilledBid('gpA', 7),
     ),
   ),
   frrNoEffectRow(
@@ -84,59 +74,28 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
-  matcherRow(
+  frrOwnerOffersRow(
     label:
         'multiple purchased tiles owned by the same GP each route through FRR',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [
-          matcherOffer('timber', 5, originTileKey: kFrrMatcherTestTileKey),
-          matcherOffer('timber', 5, originTileKey: 'oldWorld|M1|1|0'),
-        ],
-      },
-      bidsByFactionId: {
-        'gpA': [matcherBid('timber', 10, priority: 1)],
-      },
-      tradeCapacityByFactionId: {'gpA': 100},
-      purchasedTileIndex: frrMatcherTestIndexDual(),
-    ),
+    offerQtysByOrigin: const {kFrrMatcherTestTileKey: 5, 'oldWorld|M1|1|0': 5},
+    purchasedTileIndex: frrMatcherTestIndexDual(),
     expect: frrOwnerFillsExpect(
       ownerBuyer: 'gpA',
       quantities: const [5, 5],
       unfilledOffersEmpty: true,
       unfilledBidsEmpty: true,
     ),
-    refs: '#2992',
   ),
-  matcherRow(
+  frrOwnerOffersRow(
     label:
         'FRR pass respects multiple bids from the owning GP in submission order',
-    inputs: matcherInputs(
-      offersByFactionId: {
-        'M1': [
-          matcherOffer('timber', 10, originTileKey: kFrrMatcherTestTileKey),
-        ],
-      },
-      bidsByFactionId: {
-        'gpA': [
-          matcherBid('timber', 4, priority: 1),
-          matcherBid('timber', 8, priority: 5),
-        ],
-      },
-      tradeCapacityByFactionId: {'gpA': 100},
-      purchasedTileIndex: frrMatcherTestIndex(),
-    ),
+    singleOfferQty: 10,
+    ownerBids: const [(4, 1), (8, 5)],
     expect: frrOwnerFillsExpect(
       ownerBuyer: 'gpA',
       quantities: const [4, 6],
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'gpA',
-        'timber',
-        2,
-        priority: 5,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('gpA', 2, priority: 5),
     ),
-    refs: '#2992',
   ),
 ];
 

@@ -1160,6 +1160,16 @@ test_support LOC: **15,494** (net −12 vs slice 64 / 15,506). Economy `test/` *
 
 test_support LOC: **15,564** (net −18 vs pre-slice 15,582 / −30 vs slice 65 documented 15,494 after format drift). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 67+.
 
+## Phase 3 — Slice 67 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| unfilled-timber-default | `matcherUnfilledBid` / `matcherUnfilledOffer` take qty positionally; commodity defaults to timber | `deal_matcher_test_support.dart`, DealMatcher scenario modules | #3939 |
+| matcher-single-fill | `matcherSingleFillExpect` finishes `matcherFilled` migration for basic/treasury/boycott rows | `deal_matcher_*_scenarios.dart` | #3115, #3939 |
+| frr-owner-offers-row | `frrOwnerOffersRow` densifies multi-tile / multi-bid owning-GP FRR matcher rows | `deal_matcher_frr_scenarios.dart`, `deal_matcher_test_support.dart` | #2992, #3939 |
+
+test_support LOC: **15,460** (net −25 vs post-merge working tree 15,485 / −104 vs slice 66 documented 15,564). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 68+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

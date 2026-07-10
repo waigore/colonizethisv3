@@ -30,12 +30,7 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
       filledDealExpectations: [
         matcherFilled(buyer: 'buyerFtp', isFtpMatch: true),
       ],
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'buyerOther',
-        'timber',
-        5,
-        priority: 1,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('buyerOther', 5),
     ),
   ),
   matcherFtpTimberRow(
@@ -49,12 +44,7 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
       filledDealExpectations: [
         matcherFilled(seller: 'gpA', buyer: 'gpB', isFtpMatch: true),
       ],
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'gpC',
-        'timber',
-        10,
-        priority: 1,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('gpC', 10),
     ),
     refs: '#2989',
   ),
@@ -114,12 +104,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
     expect: DealMatchExpectation(
       filledDealExpectations: [matcherFilled(quantity: 4)],
       unfilledOffersEmpty: true,
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'b',
-        'timber',
-        5,
-        priority: 3,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('b', 5, priority: 3),
     ),
   ),
 ];
@@ -168,7 +153,7 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
         'timber': matcherActivity(bid: 7, offer: 10, filled: 7),
       },
       unfilledBidsEmpty: true,
-      unfilledOffersByFactionId: matcherUnfilledOffer('a', 'timber', 3),
+      unfilledOffersByFactionId: matcherUnfilledOffer('a', 3),
     ),
   ),
   matcherRow(
@@ -201,12 +186,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
       'gpHigh',
       quantity: 5,
       filledDealsLength: 1,
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'gpLow',
-        'timber',
-        5,
-        priority: 1,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('gpLow', 5),
     ),
   ),
   sellPriorityMinorSellerRow(
@@ -226,12 +206,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     },
     expect: matcherFirstBuyerExpect(
       'gpLow',
-      unfilledBidsByFactionId: matcherUnfilledBid(
-        'gpHigh',
-        'timber',
-        5,
-        priority: 1,
-      ),
+      unfilledBidsByFactionId: matcherUnfilledBid('gpHigh', 5),
     ),
   ),
   sellPriorityMinorSellerRow(

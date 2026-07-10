@@ -16,14 +16,11 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   matcherRow(
     label: 'truncates a single oversized bid to floor(treasury / price)',
     inputs: matcherPairTrade(buyer: 'gp1', bidQty: 10, treasuryBudget: 100),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gp1',
-        quantity: 3,
-        pricePerUnit: 30.0,
-      ),
-      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 7),
+    expect: matcherSingleFillExpect(
+      buyer: 'gp1',
+      quantity: 3,
+      pricePerUnit: 30.0,
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 7),
     ),
     refs: '#3115',
   ),
@@ -41,13 +38,10 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       treasuryBudgetByBuyerFactionId: const {'gp1': 100},
       pricesByCommodityId: const {'alpha': 20.0, 'beta': 20.0},
     ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        commodityId: 'alpha',
-        quantity: 5,
-      ),
-      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'beta', 5),
+    expect: matcherSingleFillExpect(
+      commodity: 'alpha',
+      quantity: 5,
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 5, commodity: 'beta'),
     ),
     refs: '#3115',
   ),
@@ -57,7 +51,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     bidQty: 10,
     treasuryBudgetByBuyerFactionId: const {'gp1': -50},
     expect: matcherNoFillExpect(
-      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 10),
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 10),
     ),
   ),
   matcherRow(
@@ -71,13 +65,10 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
       originTileKey: kFrrMatcherTestTileKey,
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 3,
-        isFirstRightOfRefusalMatch: true,
-      ),
+    expect: matcherSingleFillExpect(
+      buyer: 'gpA',
+      quantity: 3,
+      isFrr: true,
       unfilledBidsByFactionId: {
         'gpA': [matcherBid('timber', 10).copyWith(quantity: 7)],
       },
@@ -127,10 +118,10 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     bidQty: 5,
     treasuryBudgetByBuyerFactionId: const {'gp1': 0},
     pricesByCommodityId: const <CommodityId, double>{},
-    expect: const DealMatchExpectation(
-      filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(pricePerUnit: 0.0, quantity: 5),
-      activityNotesEmptyForCommodities: ['iron'],
+    expect: matcherSingleFillExpect(
+      pricePerUnit: 0.0,
+      quantity: 5,
+      activityNotesEmptyForCommodities: const ['iron'],
     ),
   ),
   matcherPairRow(
@@ -140,7 +131,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     bidQty: 5,
     treasuryBudgetByBuyerFactionId: const <String, int>{},
     expect: matcherNoFillExpect(
-      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 5),
+      unfilledBidsByFactionId: matcherUnfilledBid('gp1', 5),
     ),
   ),
   matcherPairRow(
@@ -168,9 +159,9 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     bidQty: 10,
     buyerCapacity: 4,
     treasuryBudgetByBuyerFactionId: const {'gp1': 10_000},
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(quantity: 4),
-      activityNotesEmptyForCommodities: ['timber'],
+    expect: matcherSingleFillExpect(
+      quantity: 4,
+      activityNotesEmptyForCommodities: const ['timber'],
     ),
   ),
 ];
