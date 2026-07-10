@@ -8,25 +8,19 @@ import 'support/scenario_runner.dart';
 import 'support/suggestion/order_suggestion_work_feedstock_priority_scenarios.dart';
 
 void main() {
-  group(
-    'suggestWorkOrders feedstock-extraction build_improvement priority '
-    '(Refs #2847 H8-extraction)',
-    () {
-      runLabeledScenarios(
-        orderSuggestionWorkFeedstockPriorityExtractionScenarios(),
-        runOrderSuggestionWorkFeedstockPriorityScenario,
-      );
-    },
-  );
+  group('suggestWorkOrders feedstock-extraction build_improvement priority '
+      '(Refs #2847 H8-extraction)', () {
+    runLabeledScenarios(
+      orderSuggestionWorkFeedstockPriorityExtractionScenarios(),
+      runRunnableScenario,
+    );
+  });
 
-  group(
-    'suggestWorkOrders feedstock co-availability ordering '
-    '(Refs #2847 H8-extraction feedstock co-availability)',
-    () {
-      runLabeledScenarios(
-        orderSuggestionWorkFeedstockCoAvailScenarios(),
-        runOrderSuggestionWorkFeedstockPriorityScenario,
-      );
-    },
-  );
+  group('suggestWorkOrders feedstock co-availability ordering '
+      '(Refs #2847 H8-extraction feedstock co-availability)', () {
+    runLabeledScenarios(
+      orderSuggestionWorkFeedstockCoAvailScenarios(),
+      runRunnableScenario,
+    );
+  });
 }

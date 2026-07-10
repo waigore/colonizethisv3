@@ -5,7 +5,6 @@
 /// produces the same `OrderValidationResult` as the legacy single-pass scan.
 library;
 
-import 'package:colonizethis_test/test.dart';
 
 import '../support/scenario_runner.dart';
 import '../support/validators/army_move_validator_armies_by_id_scenarios.dart';
@@ -14,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'ArmyMoveValidator armiesById equivalence',
     armyMoveValidatorArmiesByIdScenarios(),
-    runArmyMoveValidatorArmiesByIdScenario,
+    runRunnableScenario,
   );
 }

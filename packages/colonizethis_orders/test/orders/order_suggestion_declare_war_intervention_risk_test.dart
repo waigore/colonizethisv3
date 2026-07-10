@@ -29,6 +29,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDeclareWarOrders intervention-risk',
     orderSuggestionDeclareWarInterventionRiskScenarios(),
-    runOrderSuggestionDeclareWarInterventionRiskScenario,
+    runRunnableScenario,
   );
 }

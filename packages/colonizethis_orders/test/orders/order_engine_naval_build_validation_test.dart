@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'OrderEngine',
     orderEngineNavalBuildValidationScenarios(),
-    runOrderEngineNavalBuildValidationScenario,
+    runRunnableScenario,
   );
 }

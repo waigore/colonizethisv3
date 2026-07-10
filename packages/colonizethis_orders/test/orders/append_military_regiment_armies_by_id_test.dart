@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'appendMilitaryRegimentToArmy armiesById equivalence (Refs #2394)',
     appendMilitaryRegimentArmiesByIdScenarios(),
-    runAppendMilitaryRegimentArmiesByIdScenario,
+    runRunnableScenario,
   );
 }

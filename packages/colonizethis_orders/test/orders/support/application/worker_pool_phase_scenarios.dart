@@ -1,74 +1,301 @@
 // Table-driven applyBuildAndWorkOrders worker-pool phase scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import '../scenario_runner.dart';
-import 'worker_pool_phase_expectations.dart';
+import 'worker_pool_phase_expectation_shorthand.dart';
+import 'worker_pool_phase_fixtures.dart';
 
-/// One row in [workerPoolPhaseScenarios].
-class WorkerPoolPhaseScenario implements RefsScenario {
-  const WorkerPoolPhaseScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final WorkerPoolPhaseTarget target;
-  @override
-  final String? refs;
+void wppRunAcceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric() {
+  const fabric = 3;
+  final p = wppAfter(
+    wppPlayer(stockpile: wppStock({CommodityCatalog.fabric.id: fabric})),
+    [WorkerTier.peasant],
+  );
+  wppExpect(
+    p,
+    peasants: 1,
+    stock: {CommodityCatalog.fabric.id: fabric - 2},
+    treasury: 0,
+  );
 }
 
-void runWorkerPoolPhaseScenario(WorkerPoolPhaseScenario scenario) {
-  runWorkerPoolPhaseExpectation(scenario.target);
+void wppRunAcceptedApprenticeTrainConsumesPeasantPaperAndTreasury() {
+  const paper = 5;
+  const peasants = 3;
+  const treasury = 500;
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: wppApprenticeTech,
+    ),
+    [WorkerTier.apprentice],
+  );
+  wppExpect(
+    p,
+    peasants: 2,
+    apprentices: 1,
+    stock: {CommodityCatalog.paper.id: 3},
+    treasury: 300,
+  );
+}
+
+void
+wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction() {
+  const paper = 5;
+  const peasants = 3;
+  const treasury = 100;
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: wppApprenticeTech,
+    ),
+    [WorkerTier.apprentice],
+  );
+  wppExpect(
+    p,
+    peasants: peasants,
+    apprentices: 0,
+    stock: {CommodityCatalog.paper.id: paper},
+    treasury: treasury,
+  );
+}
+
+void
+wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage() {
+  const paper = 8;
+  const peasants = 2;
+  const treasury = 700;
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: wppJourneymanTech,
+    ),
+    [WorkerTier.journeyman],
+  );
+  wppExpect(
+    p,
+    peasants: 1,
+    journeymen: 1,
+    stock: {CommodityCatalog.paper.id: 3},
+    treasury: 200,
+    peasantsReason: 'one peasant consumed',
+    journeymenReason: 'one journeyman added',
+    stockReasons: {
+      CommodityCatalog.paper.id:
+          '5 paper deducted per SPEC § Recruiting cost table',
+    },
+    treasuryReason: '500 ducats deducted per SPEC § Recruiting cost table',
+  );
+}
+
+void
+wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail() {
+  const paper = 12;
+  const peasants = 1;
+  const treasury = 1200;
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: wppMasterTech,
+    ),
+    [WorkerTier.master],
+  );
+  wppExpect(
+    p,
+    peasants: 0,
+    masters: 1,
+    stock: {CommodityCatalog.paper.id: 2},
+    treasury: 200,
+    peasantsReason: 'one peasant consumed',
+    mastersReason: 'one master added',
+    stockReasons: {
+      CommodityCatalog.paper.id:
+          '10 paper deducted per SPEC § Recruiting cost table',
+    },
+    treasuryReason: '1000 ducats deducted per SPEC § Recruiting cost table',
+  );
+}
+
+void
+wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage() {
+  const paper = 12;
+  const peasants = 1;
+  const treasury = 1200;
+  const techUnlocked = {kTechIdMasterArtisans: true};
+  final p = wppAfter(
+    wppPlayer(
+      stockpile: wppStock({CommodityCatalog.paper.id: paper}),
+      workerPool: WorkerPool(peasants: peasants),
+      treasury: treasury,
+      techUnlocked: techUnlocked,
+    ),
+    [WorkerTier.master],
+  );
+  wppExpect(
+    p,
+    peasants: peasants,
+    masters: 0,
+    stock: {CommodityCatalog.paper.id: paper},
+    treasury: treasury,
+    peasantsReason: 'peasant not consumed',
+    mastersReason: 'master not added',
+    stockReasons: {CommodityCatalog.paper.id: 'no paper deducted'},
+    treasuryReason: 'no treasury deducted',
+  );
+}
+
+void
+wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics() {
+  wppExpectSequentialTiers(
+    stock: {CommodityCatalog.fabric.id: 2, CommodityCatalog.paper.id: 2},
+    peasants: 0,
+    treasury: 200,
+    tiers: [WorkerTier.peasant, WorkerTier.apprentice],
+    expectedPeasants: 0,
+    expectedApprentices: 1,
+    expectedStock: {
+      CommodityCatalog.fabric.id: 0,
+      CommodityCatalog.paper.id: 0,
+    },
+    expectedTreasury: 0,
+    peasantsReason:
+        'recruited peasant immediately consumed by the apprentice train',
+    apprenticesReason: 'one apprentice added',
+    stockReasons: {
+      CommodityCatalog.fabric.id: 'peasant recruit consumed 2 fabric',
+      CommodityCatalog.paper.id: 'apprentice train consumed 2 paper',
+    },
+    treasuryReason: 'apprentice train consumed 200 ducats',
+  );
+}
+
+void
+wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior() {
+  wppExpectSequentialTiers(
+    stock: {CommodityCatalog.fabric.id: 4, CommodityCatalog.paper.id: 4},
+    peasants: 1,
+    treasury: 400,
+    tiers: [WorkerTier.apprentice, WorkerTier.apprentice, WorkerTier.peasant],
+    expectedPeasants: 1,
+    expectedApprentices: 1,
+    expectedStock: {
+      CommodityCatalog.paper.id: 2,
+      CommodityCatalog.fabric.id: 2,
+    },
+    expectedTreasury: 200,
+    peasantsReason:
+        'apprentice consumed initial peasant; peasant recruit added 1',
+    apprenticesReason: 'only the first apprentice train fired; second skipped',
+    stockReasons: {
+      CommodityCatalog.paper.id:
+          'one apprentice consumed 2 paper; second order did not',
+      CommodityCatalog.fabric.id:
+          'trailing peasant recruit still consumed 2 fabric',
+    },
+    treasuryReason: 'only one apprentice train deducted treasury',
+  );
+}
+
+void wppRunPerPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin() {
+  final apprenticePlayer = wppPlayer(
+    stockpile: wppStock({CommodityCatalog.paper.id: 4}),
+    workerPool: const WorkerPool(peasants: 2),
+    treasury: 300,
+    techUnlocked: wppApprenticeTech,
+  );
+  final game = wppEmptyWorldGame(
+    players: [
+      apprenticePlayer,
+      wppPlayer(
+        id: WppIds.player2,
+        displayName: 'B',
+        isHuman: false,
+        stockpile: wppStock({CommodityCatalog.paper.id: 4}),
+        workerPool: const WorkerPool(peasants: 2),
+        treasury: 300,
+        techUnlocked: wppApprenticeTech,
+      ),
+    ],
+  );
+  final orders = Orders(
+    recruitWorkerOrdersByPlayerId: {
+      WppIds.player1: const [
+        RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+      ],
+      WppIds.player2: const [
+        RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+      ],
+    },
+  );
+  final result = wppApply(game, orders);
+  for (final playerId in [WppIds.player1, WppIds.player2]) {
+    final p = result.players.firstWhere((p) => p.id == playerId);
+    wppExpect(
+      p,
+      peasants: 1,
+      apprentices: 1,
+      stock: {CommodityCatalog.paper.id: 2},
+      treasury: 100,
+    );
+  }
 }
 
 /// Canonical scenarios for worker-pool S4 + S9 family tests.
 /// Labels match former suite descriptions (joined to single-line `label:` for CI).
-List<WorkerPoolPhaseScenario> workerPoolPhaseScenarios() => const [
+List<RunnableScenario> workerPoolPhaseScenarios() => const [
   // dart format off
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'accepted recruit peasant order adds 1 peasant and deducts fabric',
-    target: WorkerPoolPhaseTarget.acceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric,
+    run: wppRunAcceptedRecruitPeasantOrderAdds1PeasantAndDeductsFabric,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'accepted apprentice train consumes peasant, paper, and treasury',
-    target: WorkerPoolPhaseTarget.acceptedApprenticeTrainConsumesPeasantPaperAndTreasury,
+    run: wppRunAcceptedApprenticeTrainConsumesPeasantPaperAndTreasury,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'recruit that fails affordability checks does not mutate the player (no partial deduction)',
-    target: WorkerPoolPhaseTarget.recruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction,
+    run: wppRunRecruitThatFailsAffordabilityChecksDoesNotMutateThePlayerNoPartialDeduction,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage)',
-    target: WorkerPoolPhaseTarget.acceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage,
+    run: wppRunAcceptedJourneymanTrainConsumesPeasantPaperAndTreasury2692S9TierCoverage,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail)',
-    target: WorkerPoolPhaseTarget.acceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail,
+    run: wppRunAcceptedMasterTrainConsumesPeasantPaperAndTreasury2692S9TierCoverageAc3MasterTail,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'master recruit with required tech locked is silently skipped (#2692 S9 tech-gate coverage)',
-    target: WorkerPoolPhaseTarget.masterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage,
+    run: wppRunMasterRecruitWithRequiredTechLockedIsSilentlySkipped2692S9TechGateCoverage,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'later recruit order observes the running state of earlier accepted order in the same submission list (#2692 S9 ordering semantics)',
-    target: WorkerPoolPhaseTarget.laterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics,
+    run: wppRunLaterRecruitOrderObservesTheRunningStateOfEarlierAcceptedOrderInTheSameSubmissionList2692S9OrderingSemantics,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'middle order silently skips when peasants are exhausted; later orders still resolve against the running state (#2692 S9; AC #4 resolver behavior)',
-    target: WorkerPoolPhaseTarget.middleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior,
+    run: wppRunMiddleOrderSilentlySkipsWhenPeasantsAreExhaustedLaterOrdersStillResolveAgainstTheRunningState2692S9Ac4ResolverBehavior,
     refs: '#2692',
   ),
-  WorkerPoolPhaseScenario(
+  RunnableScenario(
     label: 'per-player order lists apply in isolation (#2692 S9 multi-player pin)',
-    target: WorkerPoolPhaseTarget.perPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin,
+    run: wppRunPerPlayerOrderListsApplyInIsolation2692S9MultiPlayerPin,
     refs: '#2692',
   ),
   // dart format on

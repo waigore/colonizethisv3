@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'PerPlayerWorkTargetSelectionCache',
     perPlayerWorkTargetSelectionCacheScenarios(),
-    runPerPlayerWorkTargetSelectionCacheScenario,
+    runRunnableScenario,
   );
 }

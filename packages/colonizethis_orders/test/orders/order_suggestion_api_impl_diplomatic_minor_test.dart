@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDiplomaticOrders (minor nations / overtures)',
     orderSuggestionApiImplDiplomaticMinorScenarios(),
-    runOrderSuggestionApiImplDiplomaticMinorScenario,
+    runRunnableScenario,
   );
 }

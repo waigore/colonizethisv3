@@ -11,7 +11,7 @@ void main() {
   group('orderValidationPhasePlan (Refs #3543 AC2)', () {
     runLabeledScenarios(
       orderEngineValidationPhasePlanScenarios(),
-      runOrderEngineValidationPhasePlanScenario,
+      runRunnableScenario,
     );
   });
 }

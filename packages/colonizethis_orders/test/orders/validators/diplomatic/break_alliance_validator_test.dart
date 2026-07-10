@@ -10,11 +10,11 @@ void main() {
   runLabeledScenarioGroup(
     'breakAllianceSubValidator',
     breakAllianceSubValidatorScenarios(),
-    runBreakAllianceValidatorScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'DiplomaticOrderValidator breakAlliance dispatch',
     diplomaticOrderValidatorBreakAllianceScenarios(),
-    runBreakAllianceValidatorScenario,
+    runRunnableScenario,
   );
 }

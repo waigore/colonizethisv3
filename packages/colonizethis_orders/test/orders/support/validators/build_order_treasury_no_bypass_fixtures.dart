@@ -13,41 +13,37 @@ const buildOrderTreasuryNoBypassProvinceId = 'oldWorld|p1';
 Game buildOrderTreasuryNoBypassGame({
   required int treasury,
   required bool isHuman,
-}) =>
-    TestFixtures.minimalGame(
-      players: [
-        Player(
-          id: 'gp1',
-          displayName: 'P',
-          isHuman: isHuman,
-          capitalProvinceId: buildOrderTreasuryNoBypassProvinceId,
-          treasury: treasury,
-          stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 1}),
-          workerPool: const WorkerPool(peasants: 1),
-        ),
-      ],
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: buildOrderTreasuryNoBypassProvinceId,
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
-        ],
+}) => TestFixtures.minimalGame(
+  players: [
+    Player(
+      id: 'gp1',
+      displayName: 'P',
+      isHuman: isHuman,
+      capitalProvinceId: buildOrderTreasuryNoBypassProvinceId,
+      treasury: treasury,
+      stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 1}),
+      workerPool: const WorkerPool(peasants: 1),
+    ),
+  ],
+  oldWorld: const RegionData(
+    provinces: [
+      Province(
+        id: buildOrderTreasuryNoBypassProvinceId,
+        regionId: 'oldWorld',
+        ownerId: 'gp1',
       ),
-    );
+    ],
+  ),
+);
 
 BuildUnitOrder buildOrderTreasuryNoBypassRegimentOrder() => BuildUnitOrder(
-      unitType: buildOrderTreasuryNoBypassCheapest.id,
-      isMilitary: true,
-      spawnProvinceId: buildOrderTreasuryNoBypassProvinceId,
-    );
+  unitType: buildOrderTreasuryNoBypassCheapest.id,
+  isMilitary: true,
+  spawnProvinceId: buildOrderTreasuryNoBypassProvinceId,
+);
 
 OrderValidationResult validateBuildOrderTreasuryNoBypassRegiment(Game game) =>
-    BuildOrderValidator(
-      game: game,
-      player: game.players.first,
-    ).validate(
+    BuildOrderValidator(game: game, player: game.players.first).validate(
       buildOrderTreasuryNoBypassRegimentOrder(),
       previousRejected: false,
     );

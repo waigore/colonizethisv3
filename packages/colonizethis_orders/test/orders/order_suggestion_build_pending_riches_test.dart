@@ -11,6 +11,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestBuildOrders pending riches treasury',
     suggestBuildOrdersPendingRichesTreasuryScenarios(),
-    runOrderSuggestionBuildPendingRichesScenario,
+    runRunnableScenario,
   );
 }

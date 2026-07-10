@@ -7,21 +7,25 @@ const amrPlayerId = 'p1';
 const amrCapProvinceId = 'oldWorld|P1';
 
 Player amrBuildPlayer() => Player(
-      id: amrPlayerId,
-      displayName: 'P1',
-      isHuman: true,
-      capitalProvinceId: amrCapProvinceId,
-      stockpile: const Stockpile(),
-      workerPool: const WorkerPool(peasants: 10),
-      treasury: 10000,
-    );
+  id: amrPlayerId,
+  displayName: 'P1',
+  isHuman: true,
+  capitalProvinceId: amrCapProvinceId,
+  stockpile: const Stockpile(),
+  workerPool: const WorkerPool(peasants: 10),
+  treasury: 10000,
+);
 
 Game amrEmptyArmyGame() {
   final world = WorldState(
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
     oldWorld: const RegionData(
       provinces: [
-        Province(id: amrCapProvinceId, regionId: 'oldWorld', ownerId: amrPlayerId),
+        Province(
+          id: amrCapProvinceId,
+          regionId: 'oldWorld',
+          ownerId: amrPlayerId,
+        ),
       ],
       units: [],
     ),
@@ -43,7 +47,11 @@ Game amrGameWithExistingHomeArmy() {
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
     oldWorld: const RegionData(
       provinces: [
-        Province(id: amrCapProvinceId, regionId: 'oldWorld', ownerId: amrPlayerId),
+        Province(
+          id: amrCapProvinceId,
+          regionId: 'oldWorld',
+          ownerId: amrPlayerId,
+        ),
       ],
       units: [],
     ),

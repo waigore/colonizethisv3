@@ -154,71 +154,71 @@ Army armyMoveFieldArmy(Game game) =>
     game.worldState.armies.firstWhere((a) => a.id == 'field_a');
 
 Game armyMoveDestIdsGame() => Game(
-      id: 'g_army_dest_ids',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: armyMoveCap,
-              regionId: 'oldWorld',
-              ownerId: armyMoveGp,
-              townTileKey: 'oldWorld|cap|0|0',
-            ),
-            Province(id: armyMoveP1, regionId: 'oldWorld', ownerId: armyMoveGp),
-            Province(id: armyMoveP2, regionId: 'oldWorld', ownerId: armyMoveGp),
-          ],
-          units: const [],
+  id: 'g_army_dest_ids',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: armyMoveCap,
+          regionId: 'oldWorld',
+          ownerId: armyMoveGp,
+          townTileKey: 'oldWorld|cap|0|0',
         ),
-        newWorld: RegionData(
-          provinces: [
-            Province(id: armyMoveNw, regionId: 'newWorld', ownerId: armyMoveGp),
-          ],
-        ),
-        armies: [
-          Army(
-            id: 'field_a',
-            ownerId: armyMoveGp,
-            regionId: 'oldWorld',
-            stationedProvinceId: armyMoveP1,
-            regimentUnitIds: const [],
-            isHomeArmy: false,
-          ),
-        ],
-        tileKeysByRegionAndProvince: const {},
-      ),
-      players: [
-        Player(
-          id: armyMoveGp,
-          displayName: 'T',
-          isHuman: true,
-          capitalProvinceId: armyMoveCap,
-        ),
+        Province(id: armyMoveP1, regionId: 'oldWorld', ownerId: armyMoveGp),
+        Province(id: armyMoveP2, regionId: 'oldWorld', ownerId: armyMoveGp),
       ],
-    );
+      units: const [],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(id: armyMoveNw, regionId: 'newWorld', ownerId: armyMoveGp),
+      ],
+    ),
+    armies: [
+      Army(
+        id: 'field_a',
+        ownerId: armyMoveGp,
+        regionId: 'oldWorld',
+        stationedProvinceId: armyMoveP1,
+        regimentUnitIds: const [],
+        isHomeArmy: false,
+      ),
+    ],
+    tileKeysByRegionAndProvince: const {},
+  ),
+  players: [
+    Player(
+      id: armyMoveGp,
+      displayName: 'T',
+      isHuman: true,
+      capitalProvinceId: armyMoveCap,
+    ),
+  ],
+);
 
 MapTopology armyMoveDestIdsTopology() => MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'oldWorld|cap',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'oldWorld|p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'oldWorld|p2',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'newWorld|col',
-          regionId: 'newWorld',
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
-    );
+  nodes: const [
+    TopologyNode(
+      id: 'oldWorld|cap',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'oldWorld|p1',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'oldWorld|p2',
+      regionId: 'oldWorld',
+      type: TopologyNodeType.province,
+    ),
+    TopologyNode(
+      id: 'newWorld|col',
+      regionId: 'newWorld',
+      type: TopologyNodeType.province,
+    ),
+  ],
+  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
+);

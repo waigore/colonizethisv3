@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'WorkOrderCostCalculator',
     workOrderCostCalculatorScenarios(),
-    runWorkOrderCostCalculatorScenario,
+    runRunnableScenario,
   );
 }

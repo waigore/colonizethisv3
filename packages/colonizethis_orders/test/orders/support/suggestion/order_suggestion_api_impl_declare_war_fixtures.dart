@@ -15,11 +15,7 @@ Game apiImplDeclareWarMinorScenarioGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: 'oldWorld|m1',
-            regionId: 'oldWorld',
-            ownerId: 'minor1',
-          ),
+          Province(id: 'oldWorld|m1', regionId: 'oldWorld', ownerId: 'minor1'),
         ],
       ),
       newWorld: const RegionData(),

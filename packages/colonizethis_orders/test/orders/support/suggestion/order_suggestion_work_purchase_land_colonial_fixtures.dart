@@ -63,9 +63,7 @@ Game purchaseLandColonialScenarioGame({bool withEmbassy = true}) {
           ],
         },
       },
-      resourceByTileKey: const {
-        purchaseLandColonialColonyTileKey: 'grain',
-      },
+      resourceByTileKey: const {purchaseLandColonialColonyTileKey: 'grain'},
     ),
     players: const [
       Player(
@@ -98,8 +96,11 @@ Game purchaseLandColonialScenarioGame({bool withEmbassy = true}) {
   );
 }
 
-PlayerView purchaseLandColonialViewFor(Game game) =>
-    buildPlayerView(game, colonialAcquisitionTopology, purchaseLandColonialGpId);
+PlayerView purchaseLandColonialViewFor(Game game) => buildPlayerView(
+  game,
+  colonialAcquisitionTopology,
+  purchaseLandColonialGpId,
+);
 
 String purchaseLandColonialWorkOrderKey(WorkOrder o) =>
     '${o.unitId}:${o.target}:${o.targetTileKey}';

@@ -1,45 +1,45 @@
 // Table-driven debug console supported-id scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/debug_console_api.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'debug_console_supported_ids_expectations.dart';
 
-class DebugConsoleSupportedIdsScenario implements RefsScenario {
-  const DebugConsoleSupportedIdsScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final DebugConsoleSupportedIdsTarget target;
-  @override
-  final String? refs;
+void dcsiRunSortedCommodityIdsMatchLexicographicSort() {
+  final unsorted = debugConsoleSupportedCommodityIds.toList()..sort();
+  expect(debugConsoleSupportedCommodityIdsSorted, unsorted);
 }
 
-void runDebugConsoleSupportedIdsScenario(DebugConsoleSupportedIdsScenario scenario) {
-  runDebugConsoleSupportedIdsExpectation(scenario.target);
+void dcsiRunSortedRegimentTypeIdsMatchLexicographicSort() {
+  final unsorted = debugConsoleSupportedRegimentTypeIds.toList()..sort();
+  expect(debugConsoleSupportedRegimentTypeIdsSorted, unsorted);
 }
 
-List<DebugConsoleSupportedIdsScenario> debugConsoleSupportedIdsScenarios() =>
-    const [
-      DebugConsoleSupportedIdsScenario(
-        label: 'sorted commodity ids match lexicographic sort of id set',
-        target: DebugConsoleSupportedIdsTarget
-            .sortedCommodityIdsMatchLexicographicSort,
-      ),
-      DebugConsoleSupportedIdsScenario(
-        label: 'sorted regiment type ids match lexicographic sort of id set',
-        target: DebugConsoleSupportedIdsTarget
-            .sortedRegimentTypeIdsMatchLexicographicSort,
-      ),
-      DebugConsoleSupportedIdsScenario(
-        label: 'sorted ship type ids match lexicographic sort of id set',
-        target: DebugConsoleSupportedIdsTarget.sortedShipTypeIdsMatchLexicographicSort,
-      ),
-      DebugConsoleSupportedIdsScenario(
-        label: 'sorted lists are non-empty when catalogs have entries',
-        target: DebugConsoleSupportedIdsTarget
-            .sortedListsNonEmptyWhenCatalogsHaveEntries,
-      ),
-    ];
+void dcsiRunSortedShipTypeIdsMatchLexicographicSort() {
+  final unsorted = debugConsoleSupportedShipTypeIds.toList()..sort();
+  expect(debugConsoleSupportedShipTypeIdsSorted, unsorted);
+}
+
+void dcsiRunSortedListsNonEmptyWhenCatalogsHaveEntries() {
+  expect(debugConsoleSupportedCommodityIdsSorted, isNotEmpty);
+  expect(debugConsoleSupportedRegimentTypeIdsSorted, isNotEmpty);
+  expect(debugConsoleSupportedShipTypeIdsSorted, isNotEmpty);
+}
+
+List<RunnableScenario> debugConsoleSupportedIdsScenarios() => const [
+  RunnableScenario(
+    label: 'sorted commodity ids match lexicographic sort of id set',
+    run: dcsiRunSortedCommodityIdsMatchLexicographicSort,
+  ),
+  RunnableScenario(
+    label: 'sorted regiment type ids match lexicographic sort of id set',
+    run: dcsiRunSortedRegimentTypeIdsMatchLexicographicSort,
+  ),
+  RunnableScenario(
+    label: 'sorted ship type ids match lexicographic sort of id set',
+    run: dcsiRunSortedShipTypeIdsMatchLexicographicSort,
+  ),
+  RunnableScenario(
+    label: 'sorted lists are non-empty when catalogs have entries',
+    run: dcsiRunSortedListsNonEmptyWhenCatalogsHaveEntries,
+  ),
+];

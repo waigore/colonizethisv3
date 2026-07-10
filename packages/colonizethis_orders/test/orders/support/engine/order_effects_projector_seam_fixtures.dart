@@ -18,23 +18,23 @@ final oepsTopology = MapTopology(
 );
 
 Game oepsGameWithPlayer(Player player) => Game(
-      id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: '$oepsRegionId|P1',
-              regionId: oepsRegionId,
-              ownerId: player.id,
-            ),
-          ],
-          units: const [],
+  id: 'g',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$oepsRegionId|P1',
+          regionId: oepsRegionId,
+          ownerId: player.id,
         ),
-        newWorld: const RegionData(),
-      ),
-      players: [player],
-    );
+      ],
+      units: const [],
+    ),
+    newWorld: const RegionData(),
+  ),
+  players: [player],
+);
 
 int oepsFakeProjectorInvocations = 0;
 

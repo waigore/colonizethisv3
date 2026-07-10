@@ -10,6 +10,6 @@ import 'support/scenario_runner.dart';
 
 void main() {
   group('applyBuildAndWorkOrders work completion', () {
-    runLabeledScenarios(workCompletionScenarios(), runWorkCompletionScenario);
+    runLabeledScenarios(workCompletionScenarios(), runRunnableScenario);
   });
 }

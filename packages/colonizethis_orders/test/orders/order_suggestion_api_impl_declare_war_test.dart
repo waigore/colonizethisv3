@@ -5,6 +5,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDeclareWarOrders',
     orderSuggestionApiImplDeclareWarScenarios(),
-    runOrderSuggestionApiImplDeclareWarScenario,
+    runRunnableScenario,
   );
 }

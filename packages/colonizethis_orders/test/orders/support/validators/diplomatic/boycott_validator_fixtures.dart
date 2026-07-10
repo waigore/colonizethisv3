@@ -3,7 +3,6 @@
 // Refs #3753 R6. SPEC/program/orders.md § Diplomatic orders;
 // SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 Game boycottValidatorColonyHolderGame({

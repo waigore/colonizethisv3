@@ -18,6 +18,22 @@ typedef ProjectedResourceLedgers = ({
   WorkerPool workers,
 });
 
+/// Economy + worker-pool snapshot from a player's turn-start state.
+ProjectedResourceLedgers projectedResourceLedgersFromPlayer(Player player) => (
+      stockpile: player.stockpile,
+      treasury: player.treasury,
+      workers: player.workerPool,
+    );
+
+/// Immutable stockpile copy for candidate probes after prefix replay.
+ProjectedResourceLedgers copiedProjectedResourceLedgers(
+  ProjectedResourceLedgers ledgers,
+) => (
+      stockpile: Stockpile(quantities: ledgers.stockpile.copyQuantities()),
+      treasury: ledgers.treasury,
+      workers: ledgers.workers,
+    );
+
 /// Ensures [existingOrders] replay onto a projected validator once.
 ///
 /// Returns cached/fresh [ProjectedResourceLedgers] when every prefix order is
@@ -67,4 +83,35 @@ bool validateProjectedCandidateAfterPrefixReplay<TCandidate, V>({
   if (snap == null) return false;
   final candidateValidator = createCandidateValidator(snap);
   return validate(candidateValidator, candidate).isAccepted;
+}
+
+/// Prefix replay + candidate probe for recruit-worker / build incremental paths.
+bool acceptProjectedResourcePrefixCandidate<TOrder, V>({
+  required bool? prefixReplaySucceeded,
+  required ProjectedResourceLedgers? cachedLedgers,
+  required void Function(bool value) setPrefixReplaySucceeded,
+  required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
+  required List<TOrder> existingOrders,
+  required V Function() createPrefixValidator,
+  required OrderValidationResult Function(V validator, TOrder order) validate,
+  required ProjectedResourceLedgers Function(V validator) readLedgers,
+  required V Function(ProjectedResourceLedgers snap) createCandidateValidator,
+  required TOrder candidate,
+}) {
+  final snap = ensureProjectedResourcePrefixReplay<TOrder, V>(
+    prefixReplaySucceeded: prefixReplaySucceeded,
+    cachedLedgers: cachedLedgers,
+    setPrefixReplaySucceeded: setPrefixReplaySucceeded,
+    setCachedLedgers: setCachedLedgers,
+    existingOrders: existingOrders,
+    createPrefixValidator: createPrefixValidator,
+    validate: validate,
+    readLedgers: readLedgers,
+  );
+  return validateProjectedCandidateAfterPrefixReplay(
+    snap: snap,
+    createCandidateValidator: createCandidateValidator,
+    candidate: candidate,
+    validate: validate,
+  );
 }

@@ -12,6 +12,6 @@ void main() {
   runLabeledScenarioGroup(
     'WorkSuggestionPipeline',
     workSuggestionPipelineScenarios(),
-    runWorkSuggestionPipelineScenario,
+    runRunnableScenario,
   );
 }

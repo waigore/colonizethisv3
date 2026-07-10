@@ -1,46 +1,182 @@
 // Table-driven order suggestion unit availability scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'order_suggestion_unit_availability_expectations.dart';
 
-/// One row in order suggestion unit availability scenario tables.
-class OrderSuggestionUnitAvailabilityScenario implements RefsScenario {
-  const OrderSuggestionUnitAvailabilityScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
+import 'order_suggestion_unit_availability_fixtures.dart';
 
-  @override
-  final String label;
-  final OrderSuggestionUnitAvailabilityTarget target;
-  @override
-  final String? refs;
+void osuaRunPendingDraftShortCircuits() {
+  setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(true);
+  addTearDown(
+    () => setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(false),
+  );
+
+  final game = orderSuggestionUnitAvailabilityPendingDraftGame();
+  const topology = orderSuggestionUnitAvailabilityPendingDraftTopology;
+  final orders = orderSuggestionUnitAvailabilityPendingDraftOrders();
+  final view = buildPlayerView(
+    game,
+    topology,
+    orderSuggestionUnitAvailabilityPlayerId,
+  );
+
+  final availability = getAvailableWorkTargetsForUnit(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: orders,
+    unitId: orderSuggestionUnitAvailabilityExplorerId,
+  );
+  expect(availability.assignable, isFalse);
+  expect(availability.blockedReason, 'pending_draft_work_order');
+  expect(availability.validTileKeysByTarget, isEmpty);
+  expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+
+  expect(
+    getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: view,
+      unitId: orderSuggestionUnitAvailabilityExplorerId,
+      workTarget: kWorkTargetExplore,
+      currentOrders: orders,
+    ),
+    isEmpty,
+  );
+  expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
 }
 
-void runOrderSuggestionUnitAvailabilityScenario(
-  OrderSuggestionUnitAvailabilityScenario scenario,
-) {
-  runOrderSuggestionUnitAvailabilityExpectation(scenario.target);
+void osuaRunPendingDraftZeroProbesScale() {
+  setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(true);
+  addTearDown(
+    () => setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(false),
+  );
+
+  final game = orderSuggestionUnitAvailabilityScaleGame();
+  const topology = orderSuggestionUnitAvailabilityEmptyTopology;
+  final orders = orderSuggestionUnitAvailabilityScaleOrders();
+  final view = buildPlayerView(
+    game,
+    topology,
+    orderSuggestionUnitAvailabilityPlayerId,
+  );
+
+  expect(20, greaterThanOrEqualTo(20));
+  expect(
+    game
+        .worldState
+        .playerVisibilityByTile[orderSuggestionUnitAvailabilityPlayerId]!
+        .values
+        .where((v) => v != 'unknown')
+        .length,
+    greaterThanOrEqualTo(100),
+  );
+
+  getAvailableWorkTargetsForUnit(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: orders,
+    unitId: orderSuggestionUnitAvailabilityExplorerId,
+  );
+  expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+
+  getValidWorkOrderTileKeysWithVisibility(
+    game: game,
+    topology: topology,
+    view: view,
+    unitId: orderSuggestionUnitAvailabilityExplorerId,
+    workTarget: kWorkTargetExplore,
+    currentOrders: orders,
+  );
+  expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+
+  getValidWorkOrderTileKeysWithVisibility(
+    game: game,
+    topology: topology,
+    view: view,
+    unitId: orderSuggestionUnitAvailabilityExplorerId,
+    workTarget: kWorkTargetProspect,
+    currentOrders: orders,
+  );
+  expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+}
+
+void osuaRunMultiTargetMatchesSharedValidator() {
+  final game = orderSuggestionUnitAvailabilityMultiTargetGame();
+  const topology = orderSuggestionUnitAvailabilityEmptyTopology;
+  const orders = Orders();
+  final view = buildPlayerView(
+    game,
+    topology,
+    orderSuggestionUnitAvailabilityPlayerId,
+  );
+  final ownedIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == orderSuggestionUnitAvailabilityPlayerId) e.key,
+  };
+  final unitsById = {for (final u in view.ownUnits) u.id: u};
+  final shared = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: orderSuggestionUnitAvailabilityPlayerId,
+    baseOrders: orders,
+    resolution: orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    ),
+    factionMembership: DiplomacyFactionMembership.from(game),
+  );
+
+  final availability = getAvailableWorkTargetsForUnit(
+    view: view,
+    game: game,
+    topology: topology,
+    currentOrders: orders,
+    unitId: 'b1',
+  );
+
+  expect(availability.assignable, isTrue);
+  for (final target in availability.availableWorkTargetIdsSorted()) {
+    expect(
+      availability.validTileKeysByTarget[target],
+      equals(
+        getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: view,
+          unitId: 'b1',
+          workTarget: target,
+          currentOrders: orders,
+          sharedCandidateValidator: shared,
+          playerOwnedProvinceIds: ownedIds,
+        ),
+      ),
+    );
+  }
 }
 
 /// Scenarios for getAvailableWorkTargetsForUnit.
-List<OrderSuggestionUnitAvailabilityScenario>
-    getAvailableWorkTargetsForUnitScenarios() => const [
-          OrderSuggestionUnitAvailabilityScenario(
-            label: 'pending draft work short-circuits with zero engine probes',
-            target: OrderSuggestionUnitAvailabilityTarget.pendingDraftShortCircuits,
-            refs: '#2133',
-          ),
-          OrderSuggestionUnitAvailabilityScenario(
-            label: 'pending draft: zero probes even with high-reveal world (issue #2133 scale)',
-            target: OrderSuggestionUnitAvailabilityTarget.pendingDraftZeroProbesScale,
-            refs: '#2133',
-          ),
-          OrderSuggestionUnitAvailabilityScenario(
-            label: 'multi-target availability matches shared-validator tile keys per target',
-            target:
-                OrderSuggestionUnitAvailabilityTarget.multiTargetMatchesSharedValidator,
-            refs: '#2133',
-          ),
-        ];
+List<RunnableScenario> getAvailableWorkTargetsForUnitScenarios() => const [
+  RunnableScenario(
+    label: 'pending draft work short-circuits with zero engine probes',
+    run: osuaRunPendingDraftShortCircuits,
+    refs: '#2133',
+  ),
+  RunnableScenario(
+    label:
+        'pending draft: zero probes even with high-reveal world (issue #2133 scale)',
+    run: osuaRunPendingDraftZeroProbesScale,
+    refs: '#2133',
+  ),
+  RunnableScenario(
+    label:
+        'multi-target availability matches shared-validator tile keys per target',
+    run: osuaRunMultiTargetMatchesSharedValidator,
+    refs: '#2133',
+  ),
+];

@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'armyMovePickerDestinations',
     orderSuggestionArmyMovePickerScenarios(),
-    runOrderSuggestionArmyMovePickerScenario,
+    runRunnableScenario,
   );
 }

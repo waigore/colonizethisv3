@@ -9,21 +9,21 @@ void main() {
   runLabeledScenarioGroup(
     'indexExistingTargetsByEntityId',
     indexExistingTargetsByEntityIdScenarios(),
-    runOrderSuggestionPassContextScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'emitAcceptedCandidates',
     emitAcceptedCandidatesScenarios(),
-    runOrderSuggestionPassContextScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'runCappedSuggestionProbeLoop',
     runCappedSuggestionProbeLoopScenarios(),
-    runOrderSuggestionPassContextScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'ownedProvinceIdsFromView',
     ownedProvinceIdsFromViewScenarios(),
-    runOrderSuggestionPassContextScenario,
+    runRunnableScenario,
   );
 }

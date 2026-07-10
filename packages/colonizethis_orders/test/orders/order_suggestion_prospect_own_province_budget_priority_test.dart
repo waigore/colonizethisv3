@@ -12,6 +12,6 @@ void main() {
     'suggestWorkOrders exempts own-province prospect from the shared probe '
     'budget (Refs #2847 H8-extraction gp1 residual)',
     suggestWorkOrdersOwnProvinceProspectBudgetScenarios(),
-    runOrderSuggestionProspectOwnProvinceBudgetPriorityScenario,
+    runRunnableScenario,
   );
 }

@@ -22,7 +22,8 @@ Game butOwGame({
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
-        provinces: provinces ??
+        provinces:
+            provinces ??
             [
               Province(
                 id: provinceId,

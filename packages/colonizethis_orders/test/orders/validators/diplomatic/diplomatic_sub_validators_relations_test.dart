@@ -10,21 +10,21 @@ void main() {
   runLabeledScenarioGroup(
     'declareWarSubValidator',
     declareWarSubValidatorScenarios(),
-    runDiplomaticSubValidatorsRelationsScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'offerPeaceSubValidator',
     offerPeaceSubValidatorScenarios(),
-    runDiplomaticSubValidatorsRelationsScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'allianceSubValidator',
     allianceSubValidatorScenarios(),
-    runDiplomaticSubValidatorsRelationsScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'post-break bilateral cooldown (Refs #3811 AC10)',
     postBreakBilateralCooldownScenarios(),
-    runDiplomaticSubValidatorsRelationsScenario,
+    runRunnableScenario,
   );
 }

@@ -2,7 +2,6 @@
 //
 // Migrated from imperative `test()` bodies to table-driven scenarios in support/.
 
-import 'package:colonizethis_test/test.dart';
 
 import 'support/engine/order_engine_validator_injection_scenarios.dart';
 import 'support/scenario_runner.dart';
@@ -10,6 +9,6 @@ import 'support/scenario_runner.dart';
 void main() {
   runLabeledScenarios(
     orderEngineValidatorInjectionScenarios(),
-    runOrderEngineValidatorInjectionScenario,
+    runRunnableScenario,
   );
 }

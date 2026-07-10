@@ -76,9 +76,7 @@ const moveExcludesDraftWorkTopology = MapTopology(
       type: TopologyNodeType.province,
     ),
   ],
-  edges: [
-    TopologyEdge(id1: 'P1', id2: 'P2'),
-  ],
+  edges: [TopologyEdge(id1: 'P1', id2: 'P2')],
 );
 
 Orders moveExcludesDraftWorkOrders() {

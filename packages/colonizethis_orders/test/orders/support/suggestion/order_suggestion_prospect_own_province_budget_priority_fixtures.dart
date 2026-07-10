@@ -7,7 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 const orderSuggestionProspectOwnProvinceBudgetPriorityPlayerId = 'gp1';
-const orderSuggestionProspectOwnProvinceBudgetPriorityRegionId = kRegionOldWorld;
+const orderSuggestionProspectOwnProvinceBudgetPriorityRegionId =
+    kRegionOldWorld;
 
 const orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId =
     'oldWorld|aaa_drain';
@@ -34,8 +35,7 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
   const ow = orderSuggestionProspectOwnProvinceBudgetPriorityRegionId;
   const drainProvinceId =
       orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId;
-  const drainTiles =
-      orderSuggestionProspectOwnProvinceBudgetPriorityDrainTiles;
+  const drainTiles = orderSuggestionProspectOwnProvinceBudgetPriorityDrainTiles;
   const feedstockProvinceId =
       orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProvinceId;
   const feedstockTileKey =
@@ -69,9 +69,7 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
 
   for (var i = 0; i < drainerCount; i++) {
     final provId = 'oldWorld|d${i.toString().padLeft(2, '0')}';
-    drainerProvinces.add(
-      Province(id: provId, regionId: ow, ownerId: playerId),
-    );
+    drainerProvinces.add(Province(id: provId, regionId: ow, ownerId: playerId));
     units.add(
       Unit(
         id: 'drain_${i.toString().padLeft(2, '0')}',
@@ -99,18 +97,12 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
   tileKeysByRegion[drainProvinceId] = List<String>.from(drainTiles);
   tileKeysByRegion[feedstockProvinceId] = const [feedstockTileKey];
 
-  final prospected = <String>{
-    if (feedstockAlreadyProspected) feedstockTileKey,
-  };
+  final prospected = <String>{if (feedstockAlreadyProspected) feedstockTileKey};
 
   final world = WorldState(
     turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
     oldWorld: RegionData(
-      provinces: [
-        ...drainerProvinces,
-        drainProvince,
-        feedstockProvince,
-      ],
+      provinces: [...drainerProvinces, drainProvince, feedstockProvince],
       units: units,
     ),
     newWorld: const RegionData(),
@@ -122,9 +114,7 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
   return Game(
     id: 'g',
     worldState: world,
-    players: const [
-      Player(id: playerId, displayName: 'GP', isHuman: false),
-    ],
+    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
   );
 }
 
@@ -145,14 +135,14 @@ MapTopology orderSuggestionProspectOwnProvinceBudgetPriorityTopology(
   );
 }
 
-List<WorkOrder> orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProspects(
+List<WorkOrder>
+orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProspects(
   List<WorkOrder> suggestions,
-) =>
-    suggestions
-        .where(
-          (o) =>
-              o.unitId ==
-                  orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId &&
-              o.target == kWorkTargetProspect,
-        )
-        .toList();
+) => suggestions
+    .where(
+      (o) =>
+          o.unitId ==
+              orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId &&
+          o.target == kWorkTargetProspect,
+    )
+    .toList();

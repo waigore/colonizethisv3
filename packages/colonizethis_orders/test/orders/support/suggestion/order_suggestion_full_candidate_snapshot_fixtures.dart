@@ -5,7 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 const fullCandidateSnapshotPlayerId = 'gp1';
 const fullCandidateSnapshotRegionId = 'oldWorld';
-const fullCandidateSnapshotHomeProvince = '$fullCandidateSnapshotRegionId|p_home';
+const fullCandidateSnapshotHomeProvince =
+    '$fullCandidateSnapshotRegionId|p_home';
 const fullCandidateSnapshotTargetProvince =
     '$fullCandidateSnapshotRegionId|p_target';
 const fullCandidateSnapshotHomeVisible =
@@ -30,7 +31,11 @@ Game fullCandidateSnapshotGame() {
   return Game(
     id: 'g_suggest_work_snapshot',
     players: const [
-      Player(id: fullCandidateSnapshotPlayerId, displayName: 'Human', isHuman: true),
+      Player(
+        id: fullCandidateSnapshotPlayerId,
+        displayName: 'Human',
+        isHuman: true,
+      ),
     ],
     tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
     overtureStates: const [

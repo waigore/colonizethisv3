@@ -9,36 +9,36 @@ void main() {
   runLabeledScenarioGroup(
     'SimpleWorkOrderHandler counter_spy',
     remainingWorkHandlersScenarios().take(2),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'SimpleWorkOrderHandler prospect',
     remainingWorkHandlersScenarios().skip(2).take(2),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'applyStandardWorkOrder',
     remainingWorkHandlersScenarios().skip(4).take(1),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'shouldSkipBuildFortForMissingTech',
     remainingWorkHandlersScenarios().skip(5).take(1),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'StandardBuildWorkOrderHandler',
     remainingWorkHandlersScenarios().skip(6).take(1),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'workOrderHandlersByTarget',
     remainingWorkHandlersScenarios().skip(7).take(1),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'SimpleWorkOrderHandler',
     remainingWorkHandlersScenarios().skip(8),
-    runRemainingWorkHandlersScenario,
+    runRunnableScenario,
   );
 }

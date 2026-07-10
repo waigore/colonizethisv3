@@ -9,6 +9,6 @@ import 'support/suggestion/order_suggestion_feedstock_new_world_projection_scena
 void main() {
   runLabeledScenarios(
     orderSuggestionFeedstockNewWorldProjectionScenarios(),
-    runOrderSuggestionFeedstockNewWorldProjectionScenario,
+    runRunnableScenario,
   );
 }

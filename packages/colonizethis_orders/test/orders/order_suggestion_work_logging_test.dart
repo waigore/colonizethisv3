@@ -12,6 +12,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestWorkOrders structured logging',
     orderSuggestionWorkLoggingScenarios(),
-    runOrderSuggestionWorkLoggingScenario,
+    runRunnableScenario,
   );
 }

@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'filterArmyMoveOrdersByDiplomacy',
     filterArmyMoveOrdersByDiplomacyScenarios(),
-    runOrderSuggestionHelpersScenario,
+    runRunnableScenario,
   );
 }

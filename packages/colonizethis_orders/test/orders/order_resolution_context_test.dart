@@ -6,8 +6,5 @@ import 'support/scenario_runner.dart';
 import 'support/engine/order_resolution_context_scenarios.dart';
 
 void main() {
-  runLabeledScenarios(
-    orderResolutionContextScenarios(),
-    runOrderResolutionContextScenario,
-  );
+  runLabeledScenarios(orderResolutionContextScenarios(), runRunnableScenario);
 }

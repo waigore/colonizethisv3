@@ -35,12 +35,8 @@ Game utmtMinorTownEmbassyPeaceGame() {
         '$utmtOw|p2': [minorTown],
       },
     },
-    players: const [
-      Player(id: utmtGpId, displayName: 'GP', isHuman: true),
-    ],
-    minorNations: const [
-      MinorNation(id: minorId, displayName: 'Minor'),
-    ],
+    players: const [Player(id: utmtGpId, displayName: 'GP', isHuman: true)],
+    minorNations: const [MinorNation(id: minorId, displayName: 'Minor')],
     overtureStates: const [
       OvertureState(
         gpId: utmtGpId,

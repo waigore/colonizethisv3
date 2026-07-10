@@ -27,20 +27,20 @@ Game recruitWorkerInclusionPeasantAndApprenticeGame() =>
     );
 
 Game recruitWorkerInclusionTechLockedGame() => recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {
-            CommodityCatalog.fabric.id: 10,
-            CommodityCatalog.paper.id: 50,
-          },
-        ),
-        workerPool: const WorkerPool(peasants: 5),
-        treasury: 5000,
-      ),
-    );
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(
+      quantities: {
+        CommodityCatalog.fabric.id: 10,
+        CommodityCatalog.paper.id: 50,
+      },
+    ),
+    workerPool: const WorkerPool(peasants: 5),
+    treasury: 5000,
+  ),
+);
 
 Game recruitWorkerInclusionInsufficientFabricGame() =>
     recruitWorkerTestGameWith(
@@ -48,91 +48,83 @@ Game recruitWorkerInclusionInsufficientFabricGame() =>
         id: 'p1',
         displayName: 'P',
         isHuman: true,
-        stockpile: Stockpile(
-          quantities: {CommodityCatalog.fabric.id: 1},
-        ),
+        stockpile: Stockpile(quantities: {CommodityCatalog.fabric.id: 1}),
       ),
     );
 
 Game recruitWorkerInclusionLowTreasuryGame() => recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {CommodityCatalog.paper.id: 5},
-        ),
-        workerPool: const WorkerPool(peasants: 1),
-        treasury: 100,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      ),
-    );
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 5}),
+    workerPool: const WorkerPool(peasants: 1),
+    treasury: 100,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+    },
+  ),
+);
 
-Game recruitWorkerInclusionEmptyPeasantPoolGame() =>
-    recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {CommodityCatalog.paper.id: 5},
-        ),
-        workerPool: const WorkerPool(),
-        treasury: 500,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      ),
-    );
+Game recruitWorkerInclusionEmptyPeasantPoolGame() => recruitWorkerTestGameWith(
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(quantities: {CommodityCatalog.paper.id: 5}),
+    workerPool: const WorkerPool(),
+    treasury: 500,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+    },
+  ),
+);
 
 Game recruitWorkerParityAllTiersGame() => recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {
-            CommodityCatalog.fabric.id: 4,
-            CommodityCatalog.paper.id: 50,
-          },
-        ),
-        workerPool: const WorkerPool(peasants: 3),
-        treasury: 5000,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-          kTechIdTrainedJourneymen: true,
-          kTechIdCigarProduction: true,
-          kTechIdMasterArtisans: true,
-          kTechIdHatProduction: true,
-        },
-      ),
-    );
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(
+      quantities: {
+        CommodityCatalog.fabric.id: 4,
+        CommodityCatalog.paper.id: 50,
+      },
+    ),
+    workerPool: const WorkerPool(peasants: 3),
+    treasury: 5000,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+      kTechIdTrainedJourneymen: true,
+      kTechIdCigarProduction: true,
+      kTechIdMasterArtisans: true,
+      kTechIdHatProduction: true,
+    },
+  ),
+);
 
-Game recruitWorkerParityPeasantReservationGame() =>
-    recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {
-            CommodityCatalog.fabric.id: 4,
-            CommodityCatalog.paper.id: 50,
-          },
-        ),
-        workerPool: const WorkerPool(peasants: 1),
-        treasury: 5000,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      ),
-    );
+Game recruitWorkerParityPeasantReservationGame() => recruitWorkerTestGameWith(
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(
+      quantities: {
+        CommodityCatalog.fabric.id: 4,
+        CommodityCatalog.paper.id: 50,
+      },
+    ),
+    workerPool: const WorkerPool(peasants: 1),
+    treasury: 5000,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+    },
+  ),
+);
 
 const recruitWorkerParityPeasantReservationOrders = Orders(
   recruitWorkerOrdersByPlayerId: {
@@ -140,35 +132,30 @@ const recruitWorkerParityPeasantReservationOrders = Orders(
   },
 );
 
-Game recruitWorkerParityPartialTechFixtureGame() =>
-    recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-        stockpile: Stockpile(
-          quantities: {
-            CommodityCatalog.fabric.id: 4,
-            CommodityCatalog.paper.id: 50,
-          },
-        ),
-        workerPool: const WorkerPool(peasants: 1),
-        treasury: 250,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-          kTechIdTrainedJourneymen: true,
-          kTechIdCigarProduction: true,
-          kTechIdMasterArtisans: true,
-          kTechIdHatProduction: true,
-        },
-      ),
-    );
+Game recruitWorkerParityPartialTechFixtureGame() => recruitWorkerTestGameWith(
+  player: Player(
+    id: 'p1',
+    displayName: 'P',
+    isHuman: true,
+    stockpile: Stockpile(
+      quantities: {
+        CommodityCatalog.fabric.id: 4,
+        CommodityCatalog.paper.id: 50,
+      },
+    ),
+    workerPool: const WorkerPool(peasants: 1),
+    treasury: 250,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+      kTechIdTrainedJourneymen: true,
+      kTechIdCigarProduction: true,
+      kTechIdMasterArtisans: true,
+      kTechIdHatProduction: true,
+    },
+  ),
+);
 
 Game recruitWorkerParityEmptyPlayerGame() => recruitWorkerTestGameWith(
-      player: Player(
-        id: 'p1',
-        displayName: 'P',
-        isHuman: true,
-      ),
-    );
+  player: Player(id: 'p1', displayName: 'P', isHuman: true),
+);

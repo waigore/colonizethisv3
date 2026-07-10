@@ -9,11 +9,11 @@ void main() {
   runLabeledScenarioGroup(
     'PurchaseLandWorkOrderHandler',
     purchaseLandWorkHandlerScenarios().take(2),
-    runPurchaseLandWorkHandlerScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'applyPurchaseLandCompletion',
     purchaseLandWorkHandlerScenarios().skip(2),
-    runPurchaseLandWorkHandlerScenario,
+    runRunnableScenario,
   );
 }

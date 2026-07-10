@@ -7,6 +7,6 @@ void main() {
   runLabeledScenarioGroup(
     'workOrderTargetPrechecks explorer consulate',
     workOrderTargetPrechecksExplorerConsulateScenarios(),
-    runWorkOrderTargetPrechecksExplorerConsulateScenario,
+    runRunnableScenario,
   );
 }

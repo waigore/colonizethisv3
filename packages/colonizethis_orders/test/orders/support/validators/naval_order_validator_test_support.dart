@@ -104,8 +104,4 @@ NavalOrderValidator navalOrderValidatorForTest({
   required Game game,
   required MapTopology topology,
   String playerId = kNavalOrderValidatorTestPlayerId,
-}) => NavalOrderValidator(
-  game: game,
-  topology: topology,
-  playerId: playerId,
-);
+}) => NavalOrderValidator(game: game, topology: topology, playerId: playerId);

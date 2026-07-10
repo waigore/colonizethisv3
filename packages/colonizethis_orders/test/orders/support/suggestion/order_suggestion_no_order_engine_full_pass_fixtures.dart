@@ -7,7 +7,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 const _playerId = 'gp1';
 const _ow = 'oldWorld';
 
-({Game game, MapTopology topology, PlayerView view}) noefpBuildSuggestionGame() {
+({Game game, MapTopology topology, PlayerView view})
+noefpBuildSuggestionGame() {
   final player = Player(
     id: _playerId,
     displayName: 'GP',
@@ -73,16 +74,8 @@ const _ow = 'oldWorld';
   );
   const topology = MapTopology(
     nodes: [
-      TopologyNode(
-        id: 'P1',
-        regionId: _ow,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'P2',
-        regionId: _ow,
-        type: TopologyNodeType.province,
-      ),
+      TopologyNode(id: 'P1', regionId: _ow, type: TopologyNodeType.province),
+      TopologyNode(id: 'P2', regionId: _ow, type: TopologyNodeType.province),
     ],
     edges: [TopologyEdge(id1: 'P1', id2: 'P2')],
   );

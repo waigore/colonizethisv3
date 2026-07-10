@@ -13,20 +13,16 @@ const diplomaticApiImplTwoGpPlayers = [
 
 Game diplomaticApiImplGame({
   required List<DiplomacyRelation> diplomacyRelations,
-}) =>
-    Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: diplomaticApiImplTwoGpPlayers,
-      diplomacyRelations: diplomacyRelations,
-    );
+}) => Game(
+  id: 'g1',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: const RegionData(),
+    newWorld: const RegionData(),
+  ),
+  players: diplomaticApiImplTwoGpPlayers,
+  diplomacyRelations: diplomacyRelations,
+);
 
-PlayerView diplomaticApiImplViewFor(Game game) => buildPlayerView(
-      game,
-      diplomaticApiImplTopology,
-      'gp1',
-    );
+PlayerView diplomaticApiImplViewFor(Game game) =>
+    buildPlayerView(game, diplomaticApiImplTopology, 'gp1');

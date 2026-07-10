@@ -7,12 +7,12 @@ void main() {
   runLabeledScenarioGroup(
     'suggestRecruitWorkerOrders (#2692 S7) — per-tier inclusion',
     orderSuggestionRecruitWorkerInclusionScenarios(),
-    runOrderSuggestionRecruitWorkerScenario,
+    runRunnableScenario,
   );
 
   runLabeledScenarioGroup(
     'suggestRecruitWorkerOrders (#2692 S7) — parity and ordering',
     orderSuggestionRecruitWorkerParityScenarios(),
-    runOrderSuggestionRecruitWorkerScenario,
+    runRunnableScenario,
   );
 }

@@ -1,61 +1,200 @@
 // Table-driven appendMilitaryRegimentToArmy armiesById scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
-import 'append_military_regiment_armies_by_id_expectations.dart';
 
-/// One row in [appendMilitaryRegimentArmiesByIdScenarios].
-class AppendMilitaryRegimentArmiesByIdScenario implements RefsScenario {
-  const AppendMilitaryRegimentArmiesByIdScenario({
-    required this.label,
-    required this.target,
-    this.refs,
-  });
+import 'append_military_regiment_armies_by_id_fixtures.dart';
 
-  @override
-  final String label;
-  final AppendMilitaryRegimentArmiesByIdTarget target;
-  @override
-  final String? refs;
+void amrRunCreateNewArmyPathEquivalence() {
+  final game = amrEmptyArmyGame();
+  final viaMap = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+    armiesById: armiesByIdForWorld(game.worldState),
+  );
+  final viaScan = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+  );
+
+  expect(viaMap.worldState.armies.length, viaScan.worldState.armies.length);
+  expect(
+    viaMap.worldState.armies.single.id,
+    viaScan.worldState.armies.single.id,
+  );
+  expect(
+    viaMap.worldState.armies.single.regimentUnitIds,
+    viaScan.worldState.armies.single.regimentUnitIds,
+  );
+  expect(
+    viaMap.worldState.armies.single.isHomeArmy,
+    viaScan.worldState.armies.single.isHomeArmy,
+  );
 }
 
-void runAppendMilitaryRegimentArmiesByIdScenario(
-  AppendMilitaryRegimentArmiesByIdScenario scenario,
-) {
-  runAppendMilitaryRegimentArmiesByIdExpectation(scenario.target);
+void amrRunAppendExistingArmyPathEquivalence() {
+  final game = amrGameWithExistingHomeArmy();
+  final viaMap = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+    armiesById: armiesByIdForWorld(game.worldState),
+  );
+  final viaScan = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+  );
+
+  expect(viaMap.worldState.armies.length, 1);
+  expect(viaScan.worldState.armies.length, 1);
+  expect(
+    viaMap.worldState.armies.single.regimentUnitIds,
+    viaScan.worldState.armies.single.regimentUnitIds,
+  );
+  expect(viaMap.worldState.armies.single.regimentUnitIds, [
+    'u_existing',
+    'u_new',
+  ]);
+}
+
+void amrRunMutatesArmiesByIdWhenAppending() {
+  final game = amrGameWithExistingHomeArmy();
+  final armiesById = armiesByIdForWorld(game.worldState);
+  final homeArmyId = homeArmyIdFor(amrPlayerId);
+  expect(armiesById[homeArmyId]!.regimentUnitIds, ['u_existing']);
+
+  final next = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+    armiesById: armiesById,
+  );
+
+  expect(armiesById[homeArmyId]!.regimentUnitIds, ['u_existing', 'u_new']);
+  expect(next.worldState.armies.single.regimentUnitIds, [
+    'u_existing',
+    'u_new',
+  ]);
+}
+
+void amrRunMutatesArmiesByIdWhenCreating() {
+  final game = amrEmptyArmyGame();
+  final armiesById = armiesByIdForWorld(game.worldState);
+  expect(armiesById, isEmpty);
+
+  final next = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+    armiesById: armiesById,
+  );
+
+  final homeArmyId = homeArmyIdFor(amrPlayerId);
+  expect(armiesById.containsKey(homeArmyId), isTrue);
+  expect(armiesById[homeArmyId]!.regimentUnitIds, ['u_new']);
+  expect(next.worldState.armies.single.id, homeArmyId);
+}
+
+void amrRunMultipleRecruitsWithSharedMap() {
+  final start = amrEmptyArmyGame();
+
+  var mapGame = start;
+  final armiesById = armiesByIdForWorld(start.worldState);
+  for (final id in const ['u_a', 'u_b', 'u_c']) {
+    mapGame = appendMilitaryRegimentToArmy(
+      mapGame,
+      start.players.single,
+      amrCapProvinceId,
+      id,
+      armiesById: armiesById,
+    );
+  }
+
+  var scanGame = start;
+  for (final id in const ['u_a', 'u_b', 'u_c']) {
+    scanGame = appendMilitaryRegimentToArmy(
+      scanGame,
+      start.players.single,
+      amrCapProvinceId,
+      id,
+    );
+  }
+
+  expect(
+    mapGame.worldState.armies.single.regimentUnitIds,
+    scanGame.worldState.armies.single.regimentUnitIds,
+  );
+  expect(mapGame.worldState.armies.single.regimentUnitIds, [
+    'u_a',
+    'u_b',
+    'u_c',
+  ]);
+}
+
+void amrRunFallsBackWhenPartialMap() {
+  final game = amrGameWithExistingHomeArmy();
+  final partialMap = <String, Army>{};
+
+  final next = appendMilitaryRegimentToArmy(
+    game,
+    game.players.single,
+    amrCapProvinceId,
+    'u_new',
+    armiesById: partialMap,
+  );
+
+  expect(next.worldState.armies.length, 1);
+  expect(next.worldState.armies.single.regimentUnitIds, [
+    'u_existing',
+    'u_new',
+  ]);
+  expect(partialMap[homeArmyIdFor(amrPlayerId)]!.regimentUnitIds, [
+    'u_existing',
+    'u_new',
+  ]);
 }
 
 /// Canonical scenarios for append_military_regiment_armies_by_id family tests.
-List<AppendMilitaryRegimentArmiesByIdScenario>
-    appendMilitaryRegimentArmiesByIdScenarios() => const [
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'create-new-army path matches with and without armiesById',
-            target: AppendMilitaryRegimentArmiesByIdTarget.createNewArmyPathEquivalence,
-            refs: '#2394',
-          ),
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'append-existing-army path matches with and without armiesById',
-            target:
-                AppendMilitaryRegimentArmiesByIdTarget.appendExistingArmyPathEquivalence,
-            refs: '#2394',
-          ),
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'mutates armiesById in place when appending to an existing army',
-            target: AppendMilitaryRegimentArmiesByIdTarget.mutatesArmiesByIdWhenAppending,
-            refs: '#2394',
-          ),
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'mutates armiesById in place when creating a new army',
-            target: AppendMilitaryRegimentArmiesByIdTarget.mutatesArmiesByIdWhenCreating,
-            refs: '#2394',
-          ),
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'multiple recruits with shared map match repeated scan-path runs',
-            target: AppendMilitaryRegimentArmiesByIdTarget.multipleRecruitsWithSharedMap,
-            refs: '#2394',
-          ),
-          AppendMilitaryRegimentArmiesByIdScenario(
-            label: 'falls back to single-pass scan when armiesById lacks the entry',
-            target: AppendMilitaryRegimentArmiesByIdTarget.fallsBackWhenPartialMap,
-            refs: '#2394',
-          ),
-        ];
+List<RunnableScenario> appendMilitaryRegimentArmiesByIdScenarios() => const [
+  RunnableScenario(
+    label: 'create-new-army path matches with and without armiesById',
+    run: amrRunCreateNewArmyPathEquivalence,
+    refs: '#2394',
+  ),
+  RunnableScenario(
+    label: 'append-existing-army path matches with and without armiesById',
+    run: amrRunAppendExistingArmyPathEquivalence,
+    refs: '#2394',
+  ),
+  RunnableScenario(
+    label: 'mutates armiesById in place when appending to an existing army',
+    run: amrRunMutatesArmiesByIdWhenAppending,
+    refs: '#2394',
+  ),
+  RunnableScenario(
+    label: 'mutates armiesById in place when creating a new army',
+    run: amrRunMutatesArmiesByIdWhenCreating,
+    refs: '#2394',
+  ),
+  RunnableScenario(
+    label: 'multiple recruits with shared map match repeated scan-path runs',
+    run: amrRunMultipleRecruitsWithSharedMap,
+    refs: '#2394',
+  ),
+  RunnableScenario(
+    label: 'falls back to single-pass scan when armiesById lacks the entry',
+    run: amrRunFallsBackWhenPartialMap,
+    refs: '#2394',
+  ),
+];

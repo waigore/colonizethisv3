@@ -7,13 +7,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'naval_order_validator_test_support.dart';
-import 'naval_order_validator_fixtures.dart';
 
 NavalOrderValidator novValidator({
   required Game game,
   required MapTopology topology,
-}) =>
-    navalOrderValidatorForTest(game: game, topology: topology);
+}) => navalOrderValidatorForTest(game: game, topology: topology);
 
 void novExpectNavalMove({
   required NavalOrderValidator validator,
@@ -24,7 +22,10 @@ void novExpectNavalMove({
   Matcher? reasonContains,
   bool reasonIsNull = false,
 }) {
-  final result = validator.validateNavalMove(order, previousRejected: previousRejected);
+  final result = validator.validateNavalMove(
+    order,
+    previousRejected: previousRejected,
+  );
   expect(result.status, status);
   if (reasonExact != null) {
     expect(result.reason, reasonExact);
@@ -46,7 +47,10 @@ void novExpectNavalMission({
   Matcher? reasonContains,
   bool reasonIsNull = false,
 }) {
-  final result = validator.validateNavalMission(order, previousRejected: previousRejected);
+  final result = validator.validateNavalMission(
+    order,
+    previousRejected: previousRejected,
+  );
   expect(result.status, status);
   if (reasonExact != null) {
     expect(result.reason, reasonExact);
@@ -77,7 +81,8 @@ void novExpectAtSeaMove({
     validator: novValidator(
       game: navalOrderValidatorTestGame(
         fleets: fleets ?? [navalOrderValidatorTestFleetAtSea(fleetId: fleetId)],
-        players: players ??
+        players:
+            players ??
             const [
               Player(
                 id: kNavalOrderValidatorTestPlayerId,
@@ -108,10 +113,9 @@ void novExpectInPortMove({
   novExpectNavalMove(
     validator: novValidator(
       game: navalOrderValidatorTestGame(
-        oldWorldProvinces: [
-          navalOrderValidatorTestOwnedProvince('P1'),
-        ],
-        fleets: fleets ?? [navalOrderValidatorTestFleetInPort(fleetId: fleetId)],
+        oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+        fleets:
+            fleets ?? [navalOrderValidatorTestFleetInPort(fleetId: fleetId)],
       ),
       topology: topology,
     ),
@@ -137,10 +141,12 @@ void novExpectDockMove({
   novExpectNavalMove(
     validator: novValidator(
       game: navalOrderValidatorTestGame(
-        oldWorldProvinces: oldWorldProvinces ??
+        oldWorldProvinces:
+            oldWorldProvinces ??
             [navalOrderValidatorTestOwnedProvince(portLocalId)],
         fleets: fleets ?? [navalOrderValidatorTestFleetAtSea(fleetId: fleetId)],
-        players: players ??
+        players:
+            players ??
             const [
               Player(
                 id: kNavalOrderValidatorTestPlayerId,
@@ -173,11 +179,10 @@ MapTopology _novSingleSeaTopology() => navalOrderValidatorTestTopology(
 NavalOrderValidator novAtSeaMissionValidator({
   List<Province> oldWorldProvinces = const [],
   List<Fleet>? fleets,
-}) =>
-    novValidator(
-      game: navalOrderValidatorTestGame(
-        oldWorldProvinces: oldWorldProvinces,
-        fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
-      ),
-      topology: _novSingleSeaTopology(),
-    );
+}) => novValidator(
+  game: navalOrderValidatorTestGame(
+    oldWorldProvinces: oldWorldProvinces,
+    fleets: fleets ?? [navalOrderValidatorTestFleetAtSea()],
+  ),
+  topology: _novSingleSeaTopology(),
+);

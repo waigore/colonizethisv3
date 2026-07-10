@@ -8,6 +8,6 @@ import 'support/engine/order_effects_projector_seam_scenarios.dart';
 void main() {
   runLabeledScenarios(
     orderEffectsProjectorSeamScenarios(),
-    runOrderEffectsProjectorSeamScenario,
+    runRunnableScenario,
   );
 }

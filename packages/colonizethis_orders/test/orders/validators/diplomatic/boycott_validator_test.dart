@@ -11,16 +11,16 @@ void main() {
   runLabeledScenarioGroup(
     'boycottSubValidator',
     boycottSubValidatorScenarios(),
-    runBoycottValidatorScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'revokeBoycottSubValidator',
     revokeBoycottSubValidatorScenarios(),
-    runBoycottValidatorScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'DiplomaticOrderValidator boycott dispatch',
     diplomaticOrderValidatorBoycottScenarios(),
-    runBoycottValidatorScenario,
+    runRunnableScenario,
   );
 }

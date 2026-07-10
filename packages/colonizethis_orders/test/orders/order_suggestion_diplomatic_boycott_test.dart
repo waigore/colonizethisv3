@@ -13,6 +13,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDiplomaticOrders boycott candidate',
     suggestDiplomaticOrdersBoycottCandidateScenarios(),
-    runOrderSuggestionDiplomaticBoycottScenario,
+    runRunnableScenario,
   );
 }

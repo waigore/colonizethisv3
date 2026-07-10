@@ -10,6 +10,6 @@ void main() {
   runLabeledScenarioGroup(
     'OrderEngine',
     orderEngineMoveAndWorkContextScenarios(),
-    runOrderEngineMoveAndWorkContextScenario,
+    runRunnableScenario,
   );
 }

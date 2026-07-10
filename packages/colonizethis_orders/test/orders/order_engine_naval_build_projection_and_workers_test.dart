@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'OrderEngine',
     orderEngineNavalBuildProjectionAndWorkersScenarios(),
-    runOrderEngineNavalBuildProjectionAndWorkersScenario,
+    runRunnableScenario,
   );
 }

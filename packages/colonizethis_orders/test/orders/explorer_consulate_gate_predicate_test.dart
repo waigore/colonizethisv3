@@ -11,6 +11,6 @@ void main() {
   runLabeledScenarioGroup(
     'explorerConsulateGateBlocksMinorTribeProvince',
     explorerConsulateGatePredicateScenarios(),
-    runExplorerConsulateGatePredicateScenario,
+    runRunnableScenario,
   );
 }

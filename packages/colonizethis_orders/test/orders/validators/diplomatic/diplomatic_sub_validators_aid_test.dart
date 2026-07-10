@@ -10,11 +10,11 @@ void main() {
   runLabeledScenarioGroup(
     'grantAidSubValidator',
     grantAidSubValidatorScenarios(),
-    runDiplomaticSubValidatorsAidScenario,
+    runRunnableScenario,
   );
   runLabeledScenarioGroup(
     'setSubsidySubValidator (percent model, Refs #3753 R3)',
     setSubsidySubValidatorScenarios(),
-    runDiplomaticSubValidatorsAidScenario,
+    runRunnableScenario,
   );
 }

@@ -9,6 +9,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestDiplomaticOrders validator reuse (Refs #2394)',
     orderSuggestionDiplomaticValidatorReuseScenarios(),
-    runOrderSuggestionDiplomaticValidatorReuseScenario,
+    runRunnableScenario,
   );
 }

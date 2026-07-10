@@ -20,8 +20,16 @@ Game amvArmiesByIdSampleGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
         provinces: [
-          Province(id: '$amvArmiesByIdOw|P1', regionId: amvArmiesByIdOw, ownerId: 'p1'),
-          Province(id: '$amvArmiesByIdOw|P2', regionId: amvArmiesByIdOw, ownerId: 'p1'),
+          Province(
+            id: '$amvArmiesByIdOw|P1',
+            regionId: amvArmiesByIdOw,
+            ownerId: 'p1',
+          ),
+          Province(
+            id: '$amvArmiesByIdOw|P2',
+            regionId: amvArmiesByIdOw,
+            ownerId: 'p1',
+          ),
         ],
         units: [
           Unit(
@@ -33,9 +41,7 @@ Game amvArmiesByIdSampleGame() {
         ],
       ),
       newWorld: const RegionData(),
-      armies: [
-        moveValidatorTestFieldArmy(amvArmiesByIdOw, 'p1', 'P1', 'u1'),
-      ],
+      armies: [moveValidatorTestFieldArmy(amvArmiesByIdOw, 'p1', 'P1', 'u1')],
       playerVisibilityByTile: const {
         'p1': {
           'oldWorld|P1|0|0': 'fullyVisible',
@@ -54,8 +60,16 @@ Game amvArmiesByIdTwoGpPeaceGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
         provinces: [
-          Province(id: '$amvArmiesByIdOw|P1', regionId: amvArmiesByIdOw, ownerId: 'p1'),
-          Province(id: '$amvArmiesByIdOw|P2', regionId: amvArmiesByIdOw, ownerId: 'p2'),
+          Province(
+            id: '$amvArmiesByIdOw|P1',
+            regionId: amvArmiesByIdOw,
+            ownerId: 'p1',
+          ),
+          Province(
+            id: '$amvArmiesByIdOw|P2',
+            regionId: amvArmiesByIdOw,
+            ownerId: 'p2',
+          ),
         ],
         units: [
           Unit(
@@ -67,9 +81,7 @@ Game amvArmiesByIdTwoGpPeaceGame() {
         ],
       ),
       newWorld: const RegionData(),
-      armies: [
-        moveValidatorTestFieldArmy(amvArmiesByIdOw, 'p1', 'P1', 'u1'),
-      ],
+      armies: [moveValidatorTestFieldArmy(amvArmiesByIdOw, 'p1', 'P1', 'u1')],
       playerVisibilityByTile: const {
         'p1': {
           'oldWorld|P1|0|0': 'fullyVisible',
@@ -85,5 +97,5 @@ Game amvArmiesByIdTwoGpPeaceGame() {
 }
 
 Map<String, Army> amvArmiesByIdFromGame(Game game) => {
-      for (final a in game.worldState.armies) a.id: a,
-    };
+  for (final a in game.worldState.armies) a.id: a,
+};

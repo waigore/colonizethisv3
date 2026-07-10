@@ -104,9 +104,7 @@ Game orderSuggestionUnitAvailabilityScaleGame() {
 
   for (var p = 0; p < partialProvinceCount; p++) {
     final provinceId = '$ow|partial$p';
-    provinces.add(
-      Province(id: provinceId, regionId: ow, ownerId: tribeId),
-    );
+    provinces.add(Province(id: provinceId, regionId: ow, ownerId: tribeId));
     final tiles = <String>[];
     for (var t = 0; t < tilesPerPartialProvince; t++) {
       final tileKey = '$ow|partial$p|$t|0';
@@ -118,9 +116,7 @@ Game orderSuggestionUnitAvailabilityScaleGame() {
 
   for (var p = 0; p < extraProvinceCount; p++) {
     final provinceId = '$ow|dense$p';
-    provinces.add(
-      Province(id: provinceId, regionId: ow, ownerId: tribeId),
-    );
+    provinces.add(Province(id: provinceId, regionId: ow, ownerId: tribeId));
     final tiles = <String>[];
     for (var t = 0; t < tilesPerDenseProvince; t++) {
       final tileKey = '$ow|dense$p|$t|0';

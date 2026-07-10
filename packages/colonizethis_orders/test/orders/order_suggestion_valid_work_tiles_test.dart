@@ -10,9 +10,6 @@ import 'support/suggestion/valid_work_tiles_scenarios.dart';
 
 void main() {
   group('getValidWorkOrderTileKeys', () {
-    runLabeledScenarios(
-      validWorkTilesScenarios(),
-      runValidWorkTilesScenario,
-    );
+    runLabeledScenarios(validWorkTilesScenarios(), runRunnableScenario);
   });
 }

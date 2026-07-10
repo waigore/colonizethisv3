@@ -7,18 +7,16 @@ import 'order_suggestion_colonial_acquisition_fixtures.dart';
 
 /// gp1 has first contact with tribe1 via tile visibility into its NW colony;
 /// gp2 and gp3 hold embassy overtures on tribe1 (intervention-risk penalty).
-Game interventionRiskDeclareWarScenarioGame({String gameId = 'g-intervention-risk'}) {
+Game interventionRiskDeclareWarScenarioGame({
+  String gameId = 'g-intervention-risk',
+}) {
   return Game(
     id: gameId,
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(
         provinces: [
-          Province(
-            id: 'oldWorld|home',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
       ),
       newWorld: const RegionData(

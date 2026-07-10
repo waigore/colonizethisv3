@@ -15,6 +15,6 @@ void main() {
   runLabeledScenarioGroup(
     'suggestResearchOrders category diversification',
     orderSuggestionResearchDiversifyScenarios(),
-    runOrderSuggestionResearchDiversifyScenario,
+    runRunnableScenario,
   );
 }
