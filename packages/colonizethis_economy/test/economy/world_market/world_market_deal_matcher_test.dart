@@ -33,79 +33,94 @@ void main() {
     'DealMatcher.matchDeals — empty inputs',
     dealMatcherEmptyAndBasicScenarios().take(3),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — basic fills',
     dealMatcherEmptyAndBasicScenarios().skip(3),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — cargo enforcement',
     dealMatcherCargoScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — priority and FTP precedence',
     dealMatcherPriorityAndFtpScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — multi-commodity',
     dealMatcherMultiCommodityScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — lock-recovery seller priority (Refs #2924 F12)',
     dealMatcherLockRecoveryScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — activity bookkeeping',
     dealMatcherActivityScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — treasury clamp (Refs #3115)',
     dealMatcherTreasuryScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — #3753 R7.3 sell-priority relation',
     dealMatcherSellPriorityScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — #3753 R6 boycott exclusion',
     dealMatcherBoycottScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — First Right of Refusal (#2992 D2)',
     dealMatcherFirstRightScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'DealMatcher.matchDeals — FRR activity bookkeeping (#2992 D2)',
     dealMatcherFrrActivityScenarios(),
     runDealMatcherScenario,
+    labelOf: (s) => s.label,
   );
 
-  group('AC #1 — owning-GP bid wins above priority tiers AND FTP (#2992 D5)', () {
-    for (final scenario in frrIssueAcD5MatcherScenarios()) {
-      test(scenario.label, () => runDealMatcherScenario(scenario));
-    }
-  });
+  group(
+    'AC #1 — owning-GP bid wins above priority tiers AND FTP (#2992 D5)',
+    () {
+      for (final scenario in frrIssueAcD5MatcherScenarios()) {
+        test(scenario.label, () => runDealMatcherScenario(scenario));
+      }
+    },
+  );
 
   group('PurchasedTileIndex.forTesting (#2992 D2 test helper)', () {
     test('first attribution per tileKey wins on duplicates', () {

@@ -1,6 +1,5 @@
 // Table-driven per-phase consumption helper scenarios (Refs #3856, #3939 slice 7).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'consumption_phases_expectations.dart';
@@ -77,10 +76,7 @@ List<ConsumptionPhaseScenario> consumeNavyFoodScenarios() => [
 List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
   workerFoodScenario(
     label: 'feeds trained tiers (2 food) and peasants (1 food)',
-    stockpile: const Stockpile().applyDelta(
-      CommodityCatalog.grain.id,
-      100,
-    ),
+    stockpile: const Stockpile().applyDelta('grain', 100),
     workers: const WorkerPool(
       masters: 1,
       journeymen: 1,
@@ -97,7 +93,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
   ),
   workerFoodScenario(
     label: 'priority Masters→...→Peasants: masters fed before peasants',
-    stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 2),
+    stockpile: const Stockpile().applyDelta('grain', 2),
     workers: const WorkerPool(masters: 1, peasants: 5),
     expectation: const WorkerFoodConsumptionExpectation(
       fedMasters: 1,
@@ -107,9 +103,7 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
   ),
   workerFoodScenario(
     label: 'grain consumed before meat',
-    stockpile: const Stockpile()
-        .applyDelta(CommodityCatalog.grain.id, 2)
-        .applyDelta(CommodityCatalog.meat.id, 10),
+    stockpile: const Stockpile().applyDelta('grain', 2).applyDelta('meat', 10),
     workers: const WorkerPool(apprentices: 2),
     expectation: const WorkerFoodConsumptionExpectation(
       fedApprentices: 2,
@@ -132,28 +126,19 @@ List<ConsumptionPhaseScenario> consumeWorkerFoodScenarios() => [
 List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
   workerLuxuryScenario(
     label: 'assigns one luxury per food-fed worker when supply suffices',
-    stockpile: const Stockpile().applyDelta(
-      CommodityCatalog.refinedSugar.id,
-      5,
-    ),
+    stockpile: const Stockpile().applyDelta('refinedSugar', 5),
     foodFedCount: 3,
     pins: (withLuxury: 3, sugarRemaining: 2),
   ),
   workerLuxuryScenario(
     label: 'luxury strike: short supply caps count and deducts what exists',
-    stockpile: const Stockpile().applyDelta(
-      CommodityCatalog.refinedSugar.id,
-      1,
-    ),
+    stockpile: const Stockpile().applyDelta('refinedSugar', 1),
     foodFedCount: 3,
     pins: (withLuxury: 1, sugarRemaining: 0),
   ),
   workerLuxuryScenario(
     label: 'no food-fed workers deducts nothing',
-    stockpile: const Stockpile().applyDelta(
-      CommodityCatalog.refinedSugar.id,
-      5,
-    ),
+    stockpile: const Stockpile().applyDelta('refinedSugar', 5),
     foodFedCount: 0,
     pins: (withLuxury: 0, sugarRemaining: 5),
   ),
@@ -169,15 +154,13 @@ List<ConsumptionPhaseScenario> assignWorkerLuxuryScenarios() => [
 List<ConsumptionPhaseScenario> consumeFoodUnitsScenarios() => [
   foodUnitsScenario(
     label: 'grain then meat, returns consumed amount',
-    stockpile: const Stockpile()
-        .applyDelta(CommodityCatalog.grain.id, 3)
-        .applyDelta(CommodityCatalog.meat.id, 5),
+    stockpile: const Stockpile().applyDelta('grain', 3).applyDelta('meat', 5),
     required: 6,
     pins: (consumed: 6, grainRemaining: 0, meatRemaining: 2),
   ),
   foodUnitsScenario(
     label: 'caps consumed at available when demand exceeds supply',
-    stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 2),
+    stockpile: const Stockpile().applyDelta('grain', 2),
     required: 9,
     pins: (consumed: 2, grainRemaining: 0, meatRemaining: null),
   ),

@@ -5,11 +5,13 @@ void main() {
     'cargoHoldsForHomeFleet',
     cargoHoldsForHomeFleetScenarios(),
     runCargoHoldsForHomeFleetScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'SeaTransport allocateOverseasToStockpile',
     allocateOverseasToStockpileScenarios(),
     runAllocateOverseasToStockpileScenario,
+    labelOf: (s) => s.label,
   );
 }

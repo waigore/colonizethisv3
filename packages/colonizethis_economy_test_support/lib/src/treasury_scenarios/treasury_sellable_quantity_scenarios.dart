@@ -37,45 +37,41 @@ typedef OfferCapByCommodityIdScenario = ({
 
 /// Canonical scenarios for [offerCapByCommodityId].
 List<OfferCapByCommodityIdScenario> offerCapByCommodityIdScenarios() => [
-      offerCapRow(
-        label: 'returns empty map for unknown player',
-        playerId: 'gp_ghost',
-        expected: const {},
-        expectedLength: 0,
-      ),
-      offerCapRow(
-        label: 'returns each non-riches stockpile quantity as the offer cap',
-        stockpile: const {'timber': 10, 'iron': 7, 'fabric': 3},
-        expected: const {'timber': 10, 'iron': 7, 'fabric': 3},
-        expectedLength: 3,
-      ),
-      offerCapRow(
-        label:
-            'excludes riches commodities (gold, silver, gems, diamonds, spices)',
-        stockpile: const {
-          'timber': 10,
-          'gold': 5,
-          'silver': 4,
-          'gems': 3,
-          'diamonds': 2,
-          'spices': 1,
-        },
-        expected: const {'timber': 10},
-        absentKeys: const {'gold', 'silver', 'gems', 'diamonds', 'spices'},
-      ),
-      offerCapRow(
-        label: 'skips commodities with non-positive stockpile',
-        expected: const {'timber': 10},
-        absentKeys: const {'iron'},
-      ),
-    ];
+  offerCapRow(
+    label: 'returns empty map for unknown player',
+    playerId: 'gp_ghost',
+    expected: const {},
+    expectedLength: 0,
+  ),
+  offerCapRow(
+    label: 'returns each non-riches stockpile quantity as the offer cap',
+    stockpile: const {'timber': 10, 'iron': 7, 'fabric': 3},
+    expected: const {'timber': 10, 'iron': 7, 'fabric': 3},
+    expectedLength: 3,
+  ),
+  offerCapRow(
+    label: 'excludes riches commodities (gold, silver, gems, diamonds, spices)',
+    stockpile: const {
+      'timber': 10,
+      'gold': 5,
+      'silver': 4,
+      'gems': 3,
+      'diamonds': 2,
+      'spices': 1,
+    },
+    expected: const {'timber': 10},
+    absentKeys: const {'gold', 'silver', 'gems', 'diamonds', 'spices'},
+  ),
+  offerCapRow(
+    label: 'skips commodities with non-positive stockpile',
+    expected: const {'timber': 10},
+    absentKeys: const {'iron'},
+  ),
+];
 
 void verifyOfferCapScenario(OfferCapByCommodityIdScenario scenario) {
   final game = buildStockpilePlayerGame(stockpile: scenario.stockpile);
-  final cap = offerCapByCommodityId(
-    game: game,
-    playerId: scenario.playerId,
-  );
+  final cap = offerCapByCommodityId(game: game, playerId: scenario.playerId);
   assertCommodityQuantityMap(
     cap,
     expected: scenario.expected,
@@ -94,7 +90,8 @@ typedef StagedOfferQuantitiesScenario = ({
 });
 
 /// Canonical scenarios for [stagedOfferQuantitiesByCommodityId].
-List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios() {
+List<StagedOfferQuantitiesScenario>
+stagedOfferQuantitiesByCommodityIdScenarios() {
   return [
     stagedOfferQtyRow(
       label: 'returns empty map when no trade orders are staged',
@@ -102,33 +99,27 @@ List<StagedOfferQuantitiesScenario> stagedOfferQuantitiesByCommodityIdScenarios(
     ),
     stagedOfferQtyRow(
       label: 'sums quantities per commodity for offer-typed orders',
-      orders: [
-        offerOrder('timber', 5),
-        offerOrder('iron', 3),
-      ],
+      orders: [offerOrder('timber', 5), offerOrder('iron', 3)],
       expected: const {'timber': 5, 'iron': 3},
     ),
     stagedOfferQtyRow(
       label: 'excludes bid-typed orders',
-      orders: [
-        bidOrder('timber', 4),
-        offerOrder('iron', 3),
-      ],
+      orders: [bidOrder('timber', 4), offerOrder('iron', 3)],
       expected: const {'iron': 3},
       absentKeys: const {'timber'},
     ),
     stagedOfferQtyRow(
       label: 'excludes non-positive quantities',
-      orders: [
-        offerOrder('timber', 0),
-      ],
+      orders: [offerOrder('timber', 0)],
       expected: const {},
       absentKeys: const {'timber'},
     ),
   ];
 }
 
-void verifyStagedOfferQuantitiesScenario(StagedOfferQuantitiesScenario scenario) {
+void verifyStagedOfferQuantitiesScenario(
+  StagedOfferQuantitiesScenario scenario,
+) {
   final staged = stagedOfferQuantitiesByCommodityId(
     orders: humanOrdersWith(scenario.orders),
     playerId: humanPlayerId,
@@ -161,16 +152,15 @@ OfferCapByCommodityIdScenario offerCapRow({
   Set<CommodityId> absentKeys = const {},
   int? expectedLength,
   String? refs = '#3093',
-}) =>
-    (
-      label: label,
-      stockpile: stockpile,
-      playerId: playerId,
-      expected: expected,
-      absentKeys: absentKeys,
-      expectedLength: expectedLength,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  stockpile: stockpile,
+  playerId: playerId,
+  expected: expected,
+  absentKeys: absentKeys,
+  expectedLength: expectedLength,
+  refs: refs,
+);
 
 /// Compact row builder for [stagedOfferQuantitiesByCommodityIdScenarios]
 /// (Refs #3939 slice 47).
@@ -180,14 +170,13 @@ StagedOfferQuantitiesScenario stagedOfferQtyRow({
   List<TradeOrder> orders = const <TradeOrder>[],
   Set<CommodityId> absentKeys = const {},
   String? refs = '#3093',
-}) =>
-    (
-      label: label,
-      orders: orders,
-      expected: expected,
-      absentKeys: absentKeys,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  orders: orders,
+  expected: expected,
+  absentKeys: absentKeys,
+  refs: refs,
+);
 
 /// Compact row builder for [sellableHeadroomByCommodityIdScenarios] (Refs #3939 slice 40).
 SellableHeadroomScenario sellableHeadroomRow({
@@ -199,18 +188,17 @@ SellableHeadroomScenario sellableHeadroomRow({
   bool useEmptyProductionMap = false,
   Set<CommodityId> absentKeys = const {},
   String? refs = '#3093',
-}) =>
-    (
-      label: label,
-      stockpile: stockpile,
-      orders: orders,
-      productionInputConsumptionByCommodityId:
-          productionInputConsumptionByCommodityId,
-      useEmptyProductionMap: useEmptyProductionMap,
-      expected: expected,
-      absentKeys: absentKeys,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  stockpile: stockpile,
+  orders: orders,
+  productionInputConsumptionByCommodityId:
+      productionInputConsumptionByCommodityId,
+  useEmptyProductionMap: useEmptyProductionMap,
+  expected: expected,
+  absentKeys: absentKeys,
+  refs: refs,
+);
 
 /// Canonical scenarios for [sellableHeadroomByCommodityId].
 List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
@@ -221,13 +209,15 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       expected: const {'timber': 10, 'iron': 7},
     ),
     sellableHeadroomRow(
-      label: 'subtracts staged offer quantity from the cap to produce the '
+      label:
+          'subtracts staged offer quantity from the cap to produce the '
           '`(N)` display headroom (default: industry allocation = 0)',
       orders: [offerOrder('timber', 2)],
       expected: const {'timber': 8},
     ),
     sellableHeadroomRow(
-      label: 'industry-allocation reservation: stockpile 10 timber, '
+      label:
+          'industry-allocation reservation: stockpile 10 timber, '
           'production consumes 2 timber, staged offer 2 → sellable 6 '
           '(canonical AC for Refs #3093 sellable definition)',
       orders: [offerOrder('timber', 2)],
@@ -235,33 +225,38 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
       expected: const {'timber': 6},
     ),
     sellableHeadroomRow(
-      label: 'industry-allocation reservation: when consumption equals '
+      label:
+          'industry-allocation reservation: when consumption equals '
           'stockpile, cap is 0 → key omitted (Offer chip disabled)',
       productionInputConsumptionByCommodityId: const {'timber': 10},
       expected: const {},
       absentKeys: const {'timber'},
     ),
     sellableHeadroomRow(
-      label: 'industry-allocation reservation: negative consumption entries '
+      label:
+          'industry-allocation reservation: negative consumption entries '
           'are clamped at 0 (defensive — caller cannot inflate the cap)',
       productionInputConsumptionByCommodityId: const {'timber': -100},
       expected: const {'timber': 10},
     ),
     sellableHeadroomRow(
-      label: 'industry-allocation reservation: empty map matches null '
+      label:
+          'industry-allocation reservation: empty map matches null '
           '(both fall back to raw stockpile)',
       useEmptyProductionMap: true,
       expected: const {'timber': 10},
     ),
     sellableHeadroomRow(
-      label: 'industry-allocation reservation: consumption on one commodity '
+      label:
+          'industry-allocation reservation: consumption on one commodity '
           'does not affect another commodity\'s cap',
       stockpile: const {'timber': 10, 'iron': 7},
       productionInputConsumptionByCommodityId: const {'timber': 4},
       expected: const {'timber': 6, 'iron': 7},
     ),
     sellableHeadroomRow(
-      label: 'clamps headroom at 0 (drops the commodity) when staged offer '
+      label:
+          'clamps headroom at 0 (drops the commodity) when staged offer '
           'reaches or exceeds the cap',
       stockpile: const {'timber': 5},
       orders: [offerOrder('timber', 5)],
@@ -284,7 +279,9 @@ List<SellableHeadroomScenario> sellableHeadroomByCommodityIdScenarios() {
 }
 
 /// Runs [sellableHeadroomByCommodityId] for one [SellableHeadroomScenario].
-Map<CommodityId, int> runSellableHeadroomScenario(SellableHeadroomScenario scenario) {
+Map<CommodityId, int> runSellableHeadroomScenario(
+  SellableHeadroomScenario scenario,
+) {
   final game = buildStockpilePlayerGame(stockpile: scenario.stockpile);
   final orders = humanOrdersWith(scenario.orders);
   if (scenario.useEmptyProductionMap) {

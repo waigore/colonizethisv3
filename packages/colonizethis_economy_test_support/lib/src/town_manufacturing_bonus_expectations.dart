@@ -1,10 +1,8 @@
 // Compact town manufacturing bonus assertions (Refs #3939 phase 3 slice 16).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Data-driven expectations for province-level town manufacturing bonus rows.
 class TownManufacturingBonusProvinceExpectation {
@@ -19,21 +17,23 @@ class TownManufacturingBonusProvinceExpectation {
   final Map<CommodityId, int> commodityAmounts;
   final List<CommodityId> absentCommodities;
 
-  /// When set, re-runs [computeTownManufacturingBonusForProvince] with [techUnlocked]
-  /// and asserts [withTechCommodityAmounts] / [withTechAbsentCommodities].
+  /// When set, re-runs [computeTownManufacturingBonusForProvince] with
+  /// [techUnlocked] using the parent row's level/delivered inputs
+  /// (Refs #3939 slice 60).
   final ({
     Map<String, bool> techUnlocked,
     Map<CommodityId, int> withTechCommodityAmounts,
     List<CommodityId> withTechAbsentCommodities,
-    int townDevelopmentLevel,
-    Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
-  })? techGated;
+  })?
+  techGated;
 }
 
 void assertTownManufacturingBonusProvinceExpectation(
   Map<CommodityId, int> bonus,
-  TownManufacturingBonusProvinceExpectation expectation,
-) {
+  TownManufacturingBonusProvinceExpectation expectation, {
+  int? townDevelopmentLevel,
+  Map<CommodityId, int>? townConnectedDeliveredRawByCommodity,
+}) {
   if (expectation.isEmpty) {
     expect(bonus, isEmpty);
   }
@@ -46,9 +46,9 @@ void assertTownManufacturingBonusProvinceExpectation(
   final techGated = expectation.techGated;
   if (techGated != null) {
     final withTech = computeTownManufacturingBonusForProvince(
-      townDevelopmentLevel: techGated.townDevelopmentLevel,
+      townDevelopmentLevel: townDevelopmentLevel!,
       townConnectedDeliveredRawByCommodity:
-          techGated.townConnectedDeliveredRawByCommodity,
+          townConnectedDeliveredRawByCommodity!,
       techUnlocked: techGated.techUnlocked,
     );
     for (final commodity in techGated.withTechAbsentCommodities) {
@@ -91,11 +91,8 @@ class TownManufacturingBonusGameExpectation {
   final Map<String, TownManufacturingAutoOfferExpectation>? autoOffers;
   final bool previewMatchesLive;
   final bool previewEmpty;
-  final ({
-    String provinceId,
-    String factionId,
-    CommodityId commodityId,
-  })? previewProvinceMatchesFactionCommodity;
+  final ({String provinceId, String factionId, CommodityId commodityId})?
+  previewProvinceMatchesFactionCommodity;
 }
 
 void assertTownManufacturingBonusGameExpectation({
@@ -118,10 +115,7 @@ void assertTownManufacturingBonusGameExpectation({
   }
   if (expectation.deliveredRawGreaterThanZero != null) {
     for (final entry in expectation.deliveredRawGreaterThanZero!.entries) {
-      expect(
-        deliveredRawByProvince![entry.key]?[entry.value],
-        greaterThan(0),
-      );
+      expect(deliveredRawByProvince![entry.key]?[entry.value], greaterThan(0));
     }
   }
   if (expectation.autoOffers != null) {

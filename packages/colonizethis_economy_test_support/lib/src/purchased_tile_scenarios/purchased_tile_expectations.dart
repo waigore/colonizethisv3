@@ -85,7 +85,10 @@ void assertPurchasedTileIndexExpectation(
       expect(attr!.owningGpId, expectation.singleAttribution!.owningGpId);
     }
     if (expectation.singleAttribution!.sourceFactionId != null) {
-      expect(attr!.sourceFactionId, expectation.singleAttribution!.sourceFactionId);
+      expect(
+        attr!.sourceFactionId,
+        expectation.singleAttribution!.sourceFactionId,
+      );
     }
     if (expectation.singleAttribution!.provinceId != null) {
       expect(attr!.provinceId, expectation.singleAttribution!.provinceId);
@@ -123,7 +126,9 @@ void assertPurchasedTileIndexExpectation(
     if (expectation.deterministicRerunTileKey != null) {
       expect(
         first.attributionForTileKey(expectation.deterministicRerunTileKey!),
-        equals(second.attributionForTileKey(expectation.deterministicRerunTileKey!)),
+        equals(
+          second.attributionForTileKey(expectation.deterministicRerunTileKey!),
+        ),
       );
     }
   }
@@ -232,7 +237,10 @@ void assertPurchasedTileRichesExpectation(
     }
   }
   if (expectation.treasuryCreditByGpId != null) {
-    expect(result.treasuryCreditByGpId, equals(expectation.treasuryCreditByGpId));
+    expect(
+      result.treasuryCreditByGpId,
+      equals(expectation.treasuryCreditByGpId),
+    );
   }
   if (expectation.treasuryCreditCloseTo != null) {
     for (final entry in expectation.treasuryCreditCloseTo!.entries) {

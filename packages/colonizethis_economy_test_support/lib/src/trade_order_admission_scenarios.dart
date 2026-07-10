@@ -15,7 +15,8 @@ typedef CommoditiesWithBidAndOfferScenario = ({
 });
 
 /// Canonical scenarios for [commoditiesWithBidAndOffer] (rule 3).
-List<CommoditiesWithBidAndOfferScenario> commoditiesWithBidAndOfferScenarios() => [
+List<CommoditiesWithBidAndOfferScenario>
+commoditiesWithBidAndOfferScenarios() => [
   (
     label: 'returns commodities appearing as both bid and offer',
     proposedOrders: [
@@ -29,19 +30,13 @@ List<CommoditiesWithBidAndOfferScenario> commoditiesWithBidAndOfferScenarios() =
   ),
   (
     label: 'returns const empty set when no offer side exists',
-    proposedOrders: [
-      testBid('timber', 5),
-      testBid('iron', 5),
-    ],
+    proposedOrders: [testBid('timber', 5), testBid('iron', 5)],
     expected: {},
     refs: '#3615',
   ),
   (
     label: 'returns const empty set when no bid side exists',
-    proposedOrders: [
-      testOffer('timber', 5),
-      testOffer('iron', 5),
-    ],
+    proposedOrders: [testOffer('timber', 5), testOffer('iron', 5)],
     expected: {},
     refs: '#3615',
   ),
@@ -121,10 +116,7 @@ List<AdmittedBidCommodityIdsScenario> admittedBidCommodityIdsScenarios() => [
   ),
   (
     label: 'ignores offers entirely',
-    proposedOrders: [
-      testOffer('timber', 5),
-      testBid('iron', 5),
-    ],
+    proposedOrders: [testOffer('timber', 5), testBid('iron', 5)],
     bidTypeCap: 6,
     mutuallyExcludedCommodityIds: {},
     expected: {'iron'},
@@ -133,7 +125,9 @@ List<AdmittedBidCommodityIdsScenario> admittedBidCommodityIdsScenarios() => [
 ];
 
 /// Verifies admitted-bid scenario expectations including timber exclusion pin.
-void verifyAdmittedBidCommodityIdsScenario(AdmittedBidCommodityIdsScenario scenario) {
+void verifyAdmittedBidCommodityIdsScenario(
+  AdmittedBidCommodityIdsScenario scenario,
+) {
   final admitted = admittedBidCommodityIdsInSubmissionOrder(
     proposedOrders: scenario.proposedOrders,
     bidTypeCap: scenario.bidTypeCap,

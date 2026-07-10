@@ -1,15 +1,14 @@
 // Compact per-phase consumption assertions (Refs #3939 phase 3 slice 33).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'consumption_scenarios.dart';
 
-final _grainId = CommodityCatalog.grain.id;
-final _meatId = CommodityCatalog.meat.id;
-final _sugarId = CommodityCatalog.refinedSugar.id;
+final _grainId = 'grain';
+final _meatId = 'meat';
+final _sugarId = 'refinedSugar';
 
 /// Pins for military/navy food consumption rows.
 typedef FoodConsumptionPins = ({
@@ -43,16 +42,16 @@ ConsumptionScenario militaryFoodScenario({
   Map<String, int>? regimentCountsById,
   int? militaryUnits,
   required FoodConsumptionPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runMilitaryFoodConsumption(
-        stockpileGrain: stockpileGrain,
-        regimentCountsById: regimentCountsById,
-        militaryUnits: militaryUnits,
-        pins: pins,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runMilitaryFoodConsumption(
+    stockpileGrain: stockpileGrain,
+    regimentCountsById: regimentCountsById,
+    militaryUnits: militaryUnits,
+    pins: pins,
+  ),
+  refs: null,
+);
 
 void runNavyFoodConsumption({
   required int stockpileGrain,
@@ -89,16 +88,16 @@ ConsumptionScenario navyFoodScenario({
   Map<String, int>? shipCountsById,
   FoodConsumptionPins? pins,
   bool expectUnknownShipThrows = false,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runNavyFoodConsumption(
-        stockpileGrain: stockpileGrain,
-        shipCountsById: shipCountsById,
-        pins: pins,
-        expectUnknownShipThrows: expectUnknownShipThrows,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runNavyFoodConsumption(
+    stockpileGrain: stockpileGrain,
+    shipCountsById: shipCountsById,
+    pins: pins,
+    expectUnknownShipThrows: expectUnknownShipThrows,
+  ),
+  refs: null,
+);
 
 /// Data-driven expectations for [consumeWorkerFood] rows.
 class WorkerFoodConsumptionExpectation {
@@ -150,21 +149,18 @@ ConsumptionScenario workerFoodScenario({
   required Stockpile stockpile,
   required WorkerPool workers,
   required WorkerFoodConsumptionExpectation expectation,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runWorkerFoodConsumption(
-        stockpile: stockpile,
-        workers: workers,
-        expectation: expectation,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runWorkerFoodConsumption(
+    stockpile: stockpile,
+    workers: workers,
+    expectation: expectation,
+  ),
+  refs: null,
+);
 
 /// Pins for [assignWorkerLuxury] rows.
-typedef WorkerLuxuryPins = ({
-  int withLuxury,
-  int sugarRemaining,
-});
+typedef WorkerLuxuryPins = ({int withLuxury, int sugarRemaining});
 
 void runWorkerLuxuryAssignment({
   required Stockpile stockpile,
@@ -185,15 +181,15 @@ ConsumptionScenario workerLuxuryScenario({
   required Stockpile stockpile,
   required int foodFedCount,
   required WorkerLuxuryPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runWorkerLuxuryAssignment(
-        stockpile: stockpile,
-        foodFedCount: foodFedCount,
-        pins: pins,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runWorkerLuxuryAssignment(
+    stockpile: stockpile,
+    foodFedCount: foodFedCount,
+    pins: pins,
+  ),
+  refs: null,
+);
 
 /// Pins for [consumeFoodUnits] rows.
 typedef FoodUnitsPins = ({
@@ -223,12 +219,12 @@ ConsumptionScenario foodUnitsScenario({
   required Stockpile stockpile,
   required int required,
   required FoodUnitsPins pins,
-}) =>
-    ConsumptionScenario(
-      label: label,
-      run: () => runFoodUnitsConsumption(
-        stockpile: stockpile,
-        requiredUnits: required,
-        pins: pins,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runFoodUnitsConsumption(
+    stockpile: stockpile,
+    requiredUnits: required,
+    pins: pins,
+  ),
+  refs: null,
+);

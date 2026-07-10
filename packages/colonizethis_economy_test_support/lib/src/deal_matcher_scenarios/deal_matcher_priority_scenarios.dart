@@ -1,7 +1,5 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
@@ -14,10 +12,10 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'buyerLow': 1, 'buyerFtp': 2},
     ftpSeller: 'sellerFtp',
     ftpBuyer: 'buyerFtp',
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealExpectations: [
-        FilledDealExpectation(buyerFactionId: 'buyerLow', isFtpMatch: false),
-        FilledDealExpectation(buyerFactionId: 'buyerFtp', isFtpMatch: true),
+        matcherFilled(buyer: 'buyerLow', isFtpMatch: false),
+        matcherFilled(buyer: 'buyerFtp', isFtpMatch: true),
       ],
     ),
   ),
@@ -29,15 +27,15 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpSeller: 'sellerA',
     ftpBuyer: 'buyerFtp',
     expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          buyerFactionId: 'buyerFtp',
-          isFtpMatch: true,
-        ),
+      filledDealExpectations: [
+        matcherFilled(buyer: 'buyerFtp', isFtpMatch: true),
       ],
-      unfilledBidsByFactionId: {
-        'buyerOther': [matcherBid('timber', 5, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'buyerOther',
+        'timber',
+        5,
+        priority: 1,
+      ),
     ),
   ),
   matcherFtpTimberRow(
@@ -48,16 +46,15 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     ftpSeller: 'gpA',
     ftpBuyer: 'gpB',
     expect: DealMatchExpectation(
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          sellerFactionId: 'gpA',
-          buyerFactionId: 'gpB',
-          isFtpMatch: true,
-        ),
+      filledDealExpectations: [
+        matcherFilled(seller: 'gpA', buyer: 'gpB', isFtpMatch: true),
       ],
-      unfilledBidsByFactionId: {
-        'gpC': [matcherBid('timber', 10, priority: 1)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpC',
+        'timber',
+        10,
+        priority: 1,
+      ),
     ),
     refs: '#2989',
   ),
@@ -67,11 +64,8 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'buyerFtp': 2, 'buyerOther': 1},
     ftpSeller: 'sellerFtp',
     ftpBuyer: 'buyerFtp',
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(
-        buyerFactionId: 'buyerOther',
-        isFtpMatch: false,
-      ),
+    expect: DealMatchExpectation(
+      firstFilledDeal: matcherFilled(buyer: 'buyerOther', isFtpMatch: false),
     ),
   ),
   matcherFtpTimberRow(
@@ -82,17 +76,15 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     bidPriorityByBuyer: const {'alpha': 1},
     ftpSeller: 'alpha',
     ftpBuyer: 'zeta',
-    expect: const DealMatchExpectation(
-      filledDealExpectations: [
-        FilledDealExpectation(isFtpMatch: true),
-      ],
+    expect: DealMatchExpectation(
+      filledDealExpectations: [matcherFilled(isFtpMatch: true)],
     ),
   ),
 ];
 
 /// Multi-commodity and carry-forward from priority test file.
 List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'commodities are iterated in alphabetical order (deterministic)',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -108,7 +100,7 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
       filledDealCommodityIds: ['alpha', 'zeta'],
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'partial fills produce carry-forward orders with copyWith semantics',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -120,18 +112,21 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
       tradeCapacityByFactionId: {'b': 100},
     ),
     expect: DealMatchExpectation(
-      filledDealExpectations: const [FilledDealExpectation(quantity: 4)],
+      filledDealExpectations: [matcherFilled(quantity: 4)],
       unfilledOffersEmpty: true,
-      unfilledBidsByFactionId: {
-        'b': [matcherBid('timber', 5, priority: 3)],
-      },
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'b',
+        'timber',
+        5,
+        priority: 3,
+      ),
     ),
   ),
 ];
 
 /// Lock-recovery seller priority (Refs #2924 F12).
 List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'fills lock-recovery seller before earlier-id affluent seller',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -146,12 +141,9 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
       lockRecoverySellerPriorityIds: const {'gp1', 'gp4'},
       treasuryByFactionId: const {'gp1': 100, 'gp4': -50},
     ),
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealsLength: 1,
-      firstFilledDeal: FilledDealExpectation(
-        sellerFactionId: 'gp4',
-        quantity: 3,
-      ),
+      firstFilledDeal: matcherFilled(seller: 'gp4', quantity: 3),
     ),
     refs: '#2924',
   ),
@@ -159,7 +151,7 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
 
 /// Activity bookkeeping from priority test file.
 List<DealMatcherScenario> dealMatcherActivityScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'activity totals reflect input quantities, not just fills',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -172,20 +164,14 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
       tradeCapacityByFactionId: {'b': 100, 'c': 100},
     ),
     expect: DealMatchExpectation(
-      activityByCommodityId: const {
-        'timber': MarketActivity(
-          totalBidQuantity: 7,
-          totalOfferQuantity: 10,
-          filledQuantity: 7,
-        ),
+      activityByCommodityId: {
+        'timber': matcherActivity(bid: 7, offer: 10, filled: 7),
       },
       unfilledBidsEmpty: true,
-      unfilledOffersByFactionId: {
-        'a': [matcherOffer('timber', 3)],
-      },
+      unfilledOffersByFactionId: matcherUnfilledOffer('a', 'timber', 3),
     ),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'priceChangePercent stays 0.0 (composed separately by phase handler)',
     inputs: matcherInputs(
@@ -211,15 +197,16 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpHigh': 80, 'gpLow': 40},
     },
-    expect: DealMatchExpectation(
+    expect: matcherFirstBuyerExpect(
+      'gpHigh',
+      quantity: 5,
       filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpHigh',
-        quantity: 5,
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpLow',
+        'timber',
+        5,
+        priority: 1,
       ),
-      unfilledBidsByFactionId: {
-        'gpLow': [matcherBid('timber', 5, priority: 1)],
-      },
     ),
   ),
   sellPriorityMinorSellerRow(
@@ -230,20 +217,21 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'aBuyer': 30, 'zBuyer': 90},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'zBuyer'),
-    ),
+    expect: matcherFirstBuyerExpect('zBuyer'),
   ),
   sellPriorityMinorSellerRow(
     label: 'consulate-less buyer falls back behind consulate-holding buyer',
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpLow': 40},
     },
-    expect: DealMatchExpectation(
-      firstFilledDeal: const FilledDealExpectation(buyerFactionId: 'gpLow'),
-      unfilledBidsByFactionId: {
-        'gpHigh': [matcherBid('timber', 5, priority: 1)],
-      },
+    expect: matcherFirstBuyerExpect(
+      'gpLow',
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpHigh',
+        'timber',
+        5,
+        priority: 1,
+      ),
     ),
   ),
   sellPriorityMinorSellerRow(
@@ -253,9 +241,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpA': 55, 'gpB': 55},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
   sellPriorityMinorSellerRow(
     label: 'seller absent from map keeps legacy ordering (no reorder)',
@@ -265,19 +251,15 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpA': 1, 'gpZ': 99},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
   sellPriorityMinorSellerRow(
     label: 'empty relation map preserves legacy ordering for minor seller',
     buyerA: 'gpA',
     buyerB: 'gpZ',
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label: 'priority tier remains absolute over relation tiebreaker',
     inputs: matcherInputs(
       offersByFactionId: {
@@ -295,10 +277,10 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
         'minorM': {'gpHigh': 90, 'gpLow': 10},
       },
     ),
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealExpectations: [
-        FilledDealExpectation(buyerFactionId: 'gpLow'),
-        FilledDealExpectation(buyerFactionId: 'gpHigh'),
+        matcherFilled(buyer: 'gpLow'),
+        matcherFilled(buyer: 'gpHigh'),
       ],
     ),
     refs: '#3753',

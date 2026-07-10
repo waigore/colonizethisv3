@@ -117,26 +117,8 @@ void main() {
     }
   });
 
-  group('AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full)', () {
-    for (final scenario in frrIssueAcD5CreditsAc2Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #3 — relation 100 credits exactly 100% of sale value', () {
-    for (final scenario in frrIssueAcD5CreditsAc3Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #4 — relation 0 credits 0 treasury (no overseas profit)', () {
-    for (final scenario in frrIssueAcD5CreditsAc4Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #5 — multi-GP attribution, no cross-credit', () {
-    for (final scenario in frrIssueAcD5CreditsAc5Scenarios()) {
+  group('computeFirstRightCredits D5 AC2–AC5 (#2992)', () {
+    for (final scenario in frrIssueAcD5CreditsScenarios()) {
       test(scenario.label, () => runFrrCreditsScenario(scenario));
     }
   });

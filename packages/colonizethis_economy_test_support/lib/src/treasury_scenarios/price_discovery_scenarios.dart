@@ -1,7 +1,6 @@
 // Table-driven PriceDiscovery scenarios (Refs #3856).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'price_discovery_expectations.dart';
@@ -31,7 +30,8 @@ const List<PriceDiscoveryNextPriceScenario> priceDiscoveryNextPriceScenarios = [
     refs: null,
   ),
   (
-    label: 'bid 20 / offer 10 / oldPrice 100 / base 100 -> ~116.6666 (under cap)',
+    label:
+        'bid 20 / offer 10 / oldPrice 100 / base 100 -> ~116.6666 (under cap)',
     oldPrice: 100.0,
     basePrice: 100,
     newBidQuantity: 20,
@@ -125,8 +125,8 @@ typedef PriceDiscoveryMarketActivityScenario = ({
 });
 
 /// Canonical scenarios for [PriceDiscovery.computeMarketActivity].
-List<PriceDiscoveryMarketActivityScenario> priceDiscoveryMarketActivityScenarios() =>
-    [
+List<PriceDiscoveryMarketActivityScenario>
+priceDiscoveryMarketActivityScenarios() => [
   (
     label: 'records new totals and computes priceChangePercent',
     oldPrice: 100.0,
@@ -173,15 +173,15 @@ List<PriceDiscoveryMarketActivityScenario> priceDiscoveryMarketActivityScenarios
     newBidQuantity: 0,
     newOfferQuantity: 0,
     filledQuantity: 0,
-    expect: const PriceDiscoveryMarketActivityExpectation(
-      equalsEmpty: true,
-    ),
+    expect: const PriceDiscoveryMarketActivityExpectation(equalsEmpty: true),
     refs: null,
   ),
 ];
 
 /// Runs a [PriceDiscovery.computeNextPrice] scenario row.
-void runPriceDiscoveryNextPriceScenario(PriceDiscoveryNextPriceScenario scenario) {
+void runPriceDiscoveryNextPriceScenario(
+  PriceDiscoveryNextPriceScenario scenario,
+) {
   final price = PriceDiscovery.computeNextPrice((
     oldPrice: scenario.oldPrice,
     basePrice: scenario.basePrice,

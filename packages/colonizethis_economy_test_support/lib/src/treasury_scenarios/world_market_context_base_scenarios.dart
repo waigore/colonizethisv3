@@ -48,9 +48,7 @@ List<WorldMarketContextBaseScenario> worldMarketContextBaseScenarios() => [
     bidTypeCap: 0,
     tradeCargoCapacity: 0,
     availableStockpileByCommodityId: null,
-    expect: const WorldMarketContextBaseExpectation(
-      stockpileEmpty: true,
-    ),
+    expect: const WorldMarketContextBaseExpectation(stockpileEmpty: true),
     refs: '#3396',
   ),
 ];
@@ -64,7 +62,8 @@ TestWorldMarketContextBase buildWorldMarketContextBaseScenario(
       playerId: scenario.playerId,
       bidTypeCap: scenario.bidTypeCap,
       tradeCargoCapacity: scenario.tradeCargoCapacity,
-      availableStockpileByCommodityId: scenario.availableStockpileByCommodityId!,
+      availableStockpileByCommodityId:
+          scenario.availableStockpileByCommodityId!,
     );
   }
   return TestWorldMarketContextBase(

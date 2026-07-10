@@ -12,14 +12,13 @@ TradeSuggestionContext suggesterCtx({
   Map<String, int> commodityNeedByCommodityId = const {},
   WorldMarketState worldMarketState = const WorldMarketState(),
   ResourceRules? resourceRules,
-}) =>
-    TradeSuggestionContext(
-      playerId: playerId,
-      bidTypeCap: bidTypeCap,
-      tradeCargoCapacity: tradeCargoCapacity,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      availableStockpileByCommodityId: availableStockpileByCommodityId,
-      commodityNeedByCommodityId: commodityNeedByCommodityId,
-      worldMarketState: worldMarketState,
-      resourceRules: resourceRules,
-    );
+}) => TradeSuggestionContext(
+  playerId: playerId,
+  bidTypeCap: bidTypeCap,
+  tradeCargoCapacity: tradeCargoCapacity,
+  treasuryBudgetForBids: treasuryBudgetForBids,
+  availableStockpileByCommodityId: availableStockpileByCommodityId,
+  commodityNeedByCommodityId: commodityNeedByCommodityId,
+  worldMarketState: worldMarketState,
+  resourceRules: resourceRules,
+);

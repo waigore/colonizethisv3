@@ -23,17 +23,16 @@ PurchasedTileAttribution frrD5Attr(
   String owningGpId,
   String sourceFactionId, [
   String provinceId = kFrrIssueAcD5ProvinceM1,
-]) =>
-    attr(
-      tileKey: tileKey,
-      owningGpId: owningGpId,
-      sourceFactionId: sourceFactionId,
-      provinceId: provinceId,
-    );
+]) => attr(
+  tileKey: tileKey,
+  owningGpId: owningGpId,
+  sourceFactionId: sourceFactionId,
+  provinceId: provinceId,
+);
 
 PurchasedTileIndex frrD5IdxK1GpA() => idx([
-      frrD5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
-    ]);
+  frrD5Attr(kFrrIssueAcD5TileK1, kFrrIssueAcD5GpA, kFrrIssueAcD5MinorM1),
+]);
 
 FilledDeal frrD5OtherBuyDeal({
   String seller = kFrrIssueAcD5MinorM1,
@@ -41,20 +40,19 @@ FilledDeal frrD5OtherBuyDeal({
   int quantity = 10,
   double pricePerUnit = 20.0,
   String sellerOriginTileKey = kFrrIssueAcD5TileK1,
-}) =>
-    deal(
-      seller: seller,
-      buyer: buyer,
-      quantity: quantity,
-      pricePerUnit: pricePerUnit,
-      sellerOriginTileKey: sellerOriginTileKey,
-    );
+}) => deal(
+  seller: seller,
+  buyer: buyer,
+  quantity: quantity,
+  pricePerUnit: pricePerUnit,
+  sellerOriginTileKey: sellerOriginTileKey,
+);
 
 FilledDeal frrD5FrrMatchDeal() => deal(
-      seller: kFrrIssueAcD5MinorM1,
-      buyer: kFrrIssueAcD5GpA,
-      quantity: 10,
-      pricePerUnit: 20.0,
-      sellerOriginTileKey: kFrrIssueAcD5TileK1,
-      isFirstRightOfRefusalMatch: true,
-    );
+  seller: kFrrIssueAcD5MinorM1,
+  buyer: kFrrIssueAcD5GpA,
+  quantity: 10,
+  pricePerUnit: 20.0,
+  sellerOriginTileKey: kFrrIssueAcD5TileK1,
+  isFirstRightOfRefusalMatch: true,
+);

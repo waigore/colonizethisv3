@@ -1,7 +1,6 @@
 // FRR DealMatcher scenarios (Refs #3836, #3939).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../frr_scenarios/frr_d5_test_support.dart';
 import 'deal_matcher_expectations.dart';
@@ -23,19 +22,17 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       'gpA': [matcherBid('timber', 4, priority: 5)],
       'gpB': [matcherBid('timber', 10, priority: 1)],
     },
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 4,
+    expect: frrSplitExpect(
+      frrBuyer: 'gpA',
+      frrQty: 4,
+      otherBuyer: 'gpB',
+      otherQty: 6,
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpB',
+        'timber',
+        4,
+        priority: 1,
       ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 6,
-      ),
-      unfilledBidsByFactionId: {
-        'gpB': [matcherBid('timber', 4, priority: 1)],
-      },
       unfilledOffersEmpty: true,
     ),
   ),
@@ -47,23 +44,22 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       'gpB': [matcherBid('timber', 10, priority: 1)],
     },
     tradeCapacityByFactionId: const {'gpA': 3, 'gpB': 100},
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 3,
+    expect: frrSplitExpect(
+      frrBuyer: 'gpA',
+      frrQty: 3,
+      otherBuyer: 'gpB',
+      otherQty: 7,
+      unfilledBidsPinsByFactionId: matcherUnfilledBid(
+        'gpA',
+        'timber',
+        7,
+        priority: 1,
       ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 7,
-      ),
-      unfilledBidsPinsByFactionId: {
-        'gpA': [matcherBid('timber', 7, priority: 1)],
-      },
     ),
   ),
   frrNoEffectRow(
-    label: 'offer without originTileKey is unaffected by FRR even when index '
+    label:
+        'offer without originTileKey is unaffected by FRR even when index '
         'has matching attributions',
     offersByFactionId: {
       'sellerX': [matcherOffer('timber', 10)],
@@ -71,12 +67,11 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
     purchasedTileIndex: frrMatcherTestIndex(),
   ),
   frrNoEffectRow(
-    label: 'offer with originTileKey not present in index falls back to normal '
+    label:
+        'offer with originTileKey not present in index falls back to normal '
         'matching (no FRR)',
     offersByFactionId: {
-      'M2': [
-        matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3'),
-      ],
+      'M2': [matcherOffer('timber', 10, originTileKey: 'oldWorld|M2|7|3')],
     },
     purchasedTileIndex: frrMatcherTestIndex(),
   ),
@@ -89,7 +84,7 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
 ];
 
 List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'multiple purchased tiles owned by the same GP each route through FRR',
     inputs: matcherInputs(
@@ -105,26 +100,15 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100},
       purchasedTileIndex: frrMatcherTestIndexDual(),
     ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 2,
-      filledDealExpectations: [
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 5,
-          isFirstRightOfRefusalMatch: true,
-        ),
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 5,
-          isFirstRightOfRefusalMatch: true,
-        ),
-      ],
+    expect: frrOwnerFillsExpect(
+      ownerBuyer: 'gpA',
+      quantities: const [5, 5],
       unfilledOffersEmpty: true,
       unfilledBidsEmpty: true,
     ),
     refs: '#2992',
   ),
-  DealMatcherScenario.expect(
+  matcherRow(
     label:
         'FRR pass respects multiple bids from the owning GP in submission order',
     inputs: matcherInputs(
@@ -142,23 +126,15 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 4,
-          isFirstRightOfRefusalMatch: true,
-        ),
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 6,
-          isFirstRightOfRefusalMatch: true,
-        ),
-      ],
-      unfilledBidsByFactionId: {
-        'gpA': [matcherBid('timber', 2, priority: 5)],
-      },
+    expect: frrOwnerFillsExpect(
+      ownerBuyer: 'gpA',
+      quantities: const [4, 6],
+      unfilledBidsByFactionId: matcherUnfilledBid(
+        'gpA',
+        'timber',
+        2,
+        priority: 5,
+      ),
     ),
     refs: '#2992',
   ),
@@ -173,13 +149,9 @@ List<DealMatcherScenario> dealMatcherFrrActivityScenarios() => [
       'gpA': [matcherBid('timber', 6, priority: 5)],
       'gpB': [matcherBid('timber', 6, priority: 1)],
     },
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       activityByCommodityId: {
-        'timber': MarketActivity(
-          totalBidQuantity: 12,
-          totalOfferQuantity: 10,
-          filledQuantity: 10,
-        ),
+        'timber': matcherActivity(bid: 12, offer: 10, filled: 10),
       },
     ),
   ),
@@ -190,21 +162,12 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
     label:
         'rival priority-1 bid loses to owning-GP priority-5 bid; rival '
         'priority-1 bid carries forward intact',
-    bidPriorityByBuyer: const {
-      kFrrIssueAcD5GpA: 5,
-      kFrrIssueAcD5GpB: 1,
-    },
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpA,
-        quantity: 10,
-        isFirstRightOfRefusalMatch: true,
-        isFtpMatch: false,
-      ),
-      unfilledBidsByFactionId: {
-        kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
-      },
+    bidPriorityByBuyer: const {kFrrIssueAcD5GpA: 5, kFrrIssueAcD5GpB: 1},
+    expect: frrOwnerFillExpect(
+      ownerBuyer: kFrrIssueAcD5GpA,
+      fillQty: 10,
+      rivalBuyer: kFrrIssueAcD5GpB,
+      rivalUnfilledQty: 10,
     ),
   ),
   frrD5MatcherRow(
@@ -212,23 +175,14 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         'FTP-paired rival bid at same priority loses to owning GP; FTP '
         'partner bid carries forward (FRR overrides FTP)',
     offerQty: 6,
-    bidPriorityByBuyer: const {
-      kFrrIssueAcD5GpA: 1,
-      kFrrIssueAcD5GpFtp: 1,
-    },
+    bidPriorityByBuyer: const {kFrrIssueAcD5GpA: 1, kFrrIssueAcD5GpFtp: 1},
     ftpPairKeys: {
       DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
     },
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpA,
-        isFirstRightOfRefusalMatch: true,
-        isFtpMatch: false,
-      ),
-      unfilledBidsByFactionId: {
-        kFrrIssueAcD5GpFtp: [matcherBid('timber', 6, priority: 1)],
-      },
+    expect: frrOwnerFillExpect(
+      ownerBuyer: kFrrIssueAcD5GpA,
+      rivalBuyer: kFrrIssueAcD5GpFtp,
+      rivalUnfilledQty: 6,
     ),
   ),
   frrD5MatcherRow(
@@ -236,12 +190,9 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         'negative — owning GP does NOT bid: purchased-tile offer falls '
         'back to standard tier matching (not FRR-flagged)',
     bidPriorityByBuyer: const {kFrrIssueAcD5GpB: 1},
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealsLength: 1,
-      nonFrrFilledDeal: FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpB,
-        isFirstRightOfRefusalMatch: false,
-      ),
+      nonFrrFilledDeal: matcherFilled(buyer: kFrrIssueAcD5GpB, isFrr: false),
     ),
   ),
 ];

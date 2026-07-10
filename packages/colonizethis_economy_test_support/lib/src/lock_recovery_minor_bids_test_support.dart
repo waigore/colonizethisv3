@@ -34,7 +34,8 @@ Game lockRecoveryGameWithTreasury(
           treasury: entry.value,
         ),
     ],
-    minorNations: minorNations ??
+    minorNations:
+        minorNations ??
         const [
           MinorNation(id: 'minor1', displayName: 'M1'),
           MinorNation(id: 'minor2', displayName: 'M2'),

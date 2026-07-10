@@ -30,19 +30,13 @@ void runAddUnitsExpectation(AddUnitsPins pins) {
 CommodityTotalsScenario addUnitsScenario({
   required String label,
   required AddUnitsPins pins,
-}) =>
-    CommodityTotalsScenario(
-      label: label,
-      run: () => runAddUnitsExpectation(pins),
-    );
+}) => (label: label, run: () => runAddUnitsExpectation(pins));
 
 /// One [sumValues] assertion case.
 typedef SumValuesCase = ({List<int> values, int expected});
 
 /// Pins for [sumValues] rows.
-typedef SumValuesPins = ({
-  List<SumValuesCase> cases,
-});
+typedef SumValuesPins = ({List<SumValuesCase> cases});
 
 void runSumValuesExpectation(SumValuesPins pins) {
   for (final caseRow in pins.cases) {
@@ -53,17 +47,10 @@ void runSumValuesExpectation(SumValuesPins pins) {
 CommodityTotalsScenario sumValuesScenario({
   required String label,
   required SumValuesPins pins,
-}) =>
-    CommodityTotalsScenario(
-      label: label,
-      run: () => runSumValuesExpectation(pins),
-    );
+}) => (label: label, run: () => runSumValuesExpectation(pins));
 
 /// Pins for [sumNestedValues] rows.
-typedef SumNestedValuesPins = ({
-  List<Map<String, int>> maps,
-  int expected,
-});
+typedef SumNestedValuesPins = ({List<Map<String, int>> maps, int expected});
 
 void runSumNestedValuesExpectation(SumNestedValuesPins pins) {
   expect(sumNestedValues(pins.maps), pins.expected);
@@ -72,8 +59,4 @@ void runSumNestedValuesExpectation(SumNestedValuesPins pins) {
 CommodityTotalsScenario sumNestedValuesScenario({
   required String label,
   required SumNestedValuesPins pins,
-}) =>
-    CommodityTotalsScenario(
-      label: label,
-      run: () => runSumNestedValuesExpectation(pins),
-    );
+}) => (label: label, run: () => runSumNestedValuesExpectation(pins));

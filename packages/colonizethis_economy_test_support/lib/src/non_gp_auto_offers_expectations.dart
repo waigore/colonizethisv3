@@ -1,6 +1,5 @@
 // Compact non-GP auto-offer result assertions (Refs #3939 phase 3 slice 12).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -58,6 +57,41 @@ class NonGpAutoOffersExpectation {
   final void Function(Map<String, List<TradeOrder>> result)? custom;
 }
 
+/// Compact `m1` offer-list pin (Refs #3939 slice 62).
+NonGpAutoOffersExpectation nonGpM1OffersExpect({
+  int? length,
+  List<CommodityId>? commodityIds,
+  List<String>? originTileKeys,
+  CommodityId? singleCommodityId,
+  String? singleOriginTileKey,
+  bool standardPriorityOneOffers = false,
+  CommodityId? excludeCommodity,
+  Set<String>? factionKeys = const {'m1'},
+}) => NonGpAutoOffersExpectation(
+  factionKeys: factionKeys,
+  offersByFaction: {
+    'm1': FactionAutoOffersExpectation(
+      length: length,
+      commodityIds: commodityIds,
+      originTileKeys: originTileKeys,
+      singleCommodityId: singleCommodityId,
+      singleOriginTileKey: singleOriginTileKey,
+      standardPriorityOneOffers: standardPriorityOneOffers,
+      excludeCommodity: excludeCommodity,
+    ),
+  },
+);
+
+/// Dual-faction offer pins (Refs #3939 slice 62).
+NonGpAutoOffersExpectation nonGpDualFactionOffersExpect({
+  required FactionAutoOffersExpectation m1,
+  required FactionAutoOffersExpectation t1,
+  Iterable<String>? factionKeysUnordered = const ['m1', 't1'],
+}) => NonGpAutoOffersExpectation(
+  factionKeysUnordered: factionKeysUnordered,
+  offersByFaction: {'m1': m1, 't1': t1},
+);
+
 void _assertStandardPriorityOneOffer(TradeOrder order) {
   expect(order.type, equals(TradeOrderType.offer));
   expect(order.priority, equals(1));
@@ -91,14 +125,23 @@ void _assertFactionAutoOffersExpectation(
     );
   }
   if (factionExpectation.singleCommodityId != null) {
-    expect(orders!.first.commodityId, equals(factionExpectation.singleCommodityId));
+    expect(
+      orders!.first.commodityId,
+      equals(factionExpectation.singleCommodityId),
+    );
   }
   if (factionExpectation.singleOriginTileKey != null) {
-    expect(orders!.first.originTileKey, equals(factionExpectation.singleOriginTileKey));
+    expect(
+      orders!.first.originTileKey,
+      equals(factionExpectation.singleOriginTileKey),
+    );
   }
   if (factionExpectation.excludeCommodity != null) {
     for (final order in orders!) {
-      expect(order.commodityId, isNot(equals(factionExpectation.excludeCommodity)));
+      expect(
+        order.commodityId,
+        isNot(equals(factionExpectation.excludeCommodity)),
+      );
     }
   }
 }
@@ -115,7 +158,10 @@ void assertNonGpAutoOffersExpectation(
     expect(result.keys, equals(expectation.factionKeys));
   }
   if (expectation.factionKeysUnordered != null) {
-    expect(result.keys, unorderedEquals(expectation.factionKeysUnordered!.toList()));
+    expect(
+      result.keys,
+      unorderedEquals(expectation.factionKeysUnordered!.toList()),
+    );
   }
   if (expectation.offersByFaction != null) {
     for (final entry in expectation.offersByFaction!.entries) {

@@ -11,19 +11,14 @@ import 'tile_extraction_pipeline_scenarios.dart';
 const _resourceContextProvinceId = 'oldWorld|p1';
 
 TileMapResult _tileMapForResourceContext() {
-  return tileMapAllInProvinceForNonGpExtractionTest(
-    provinceId: _resourceContextProvinceId,
-    width: 2,
-    height: 1,
-    resources: [
-      [Resource.grain, Resource.iron],
-    ],
-  );
+  return nonGpProvMap(_resourceContextProvinceId, 2, 1, [
+    [Resource.grain, Resource.iron],
+  ]);
 }
 
 Map<String, TileMapResult> _resourceContextTileMapByRegion() => {
-      'oldWorld': _tileMapForResourceContext(),
-    };
+  'oldWorld': _tileMapForResourceContext(),
+};
 
 /// Pins for [resolveTileKeyResourceContext] rows.
 enum ResolveTileKeyResourceContextTarget {
@@ -43,7 +38,7 @@ void runResolveTileKeyResourceContextExpectation(
         tileMapByRegion: tileMapByRegion,
       );
       expect(ctx, isNotNull);
-      expect(ctx!.commodityId, CommodityCatalog.grain.id);
+      expect(ctx!.commodityId, 'grain');
       expect(ctx.provinceId, _resourceContextProvinceId);
       expect(ctx.resource, Resource.grain);
     case ResolveTileKeyResourceContextTarget.ironCommodityMapping:
@@ -52,7 +47,7 @@ void runResolveTileKeyResourceContextExpectation(
         tileMapByRegion: tileMapByRegion,
       );
       expect(ctx!.commodityId, Resource.iron.name);
-      expect(ctx.commodityId, CommodityCatalog.iron.id);
+      expect(ctx.commodityId, 'iron');
     case ResolveTileKeyResourceContextTarget.invalidKeys:
       for (final tileKey in [
         'bad-key',
@@ -74,32 +69,23 @@ ResolveTileKeyResourceContextScenario resolveTileKeyResourceContextScenario({
   required String label,
   required ResolveTileKeyResourceContextTarget target,
   String? refs,
-}) =>
-    ResolveTileKeyResourceContextScenario(
-      label: label,
-      run: () => runResolveTileKeyResourceContextExpectation(target),
-      refs: refs,
-    );
+}) => (
+  label: label,
+  run: () => runResolveTileKeyResourceContextExpectation(target),
+  refs: refs,
+);
 
 const _extractionContextProvinceId = 'oldWorld|p1';
 
 ({Map<String, TileMapResult> tileMapByRegion, Province province})
-    _extractionContextFixtures() {
+_extractionContextFixtures() {
   final province = capitalProvinceForNonGpExtractionTest(
     provinceId: _extractionContextProvinceId,
   );
-  final tileMap = tileMapAllInProvinceForNonGpExtractionTest(
-    provinceId: _extractionContextProvinceId,
-    width: 1,
-    height: 1,
-    resources: [
-      [Resource.grain],
-    ],
-  );
-  return (
-    tileMapByRegion: {'oldWorld': tileMap},
-    province: province,
-  );
+  final tileMap = nonGpProvMap(_extractionContextProvinceId, 1, 1, [
+    [Resource.grain],
+  ]);
+  return (tileMapByRegion: {'oldWorld': tileMap}, province: province);
 }
 
 /// Pins for [resolveTileKeyExtractionContext] rows.
@@ -124,7 +110,7 @@ void runResolveTileKeyExtractionContextExpectation(
       );
       expect(ctx, isNotNull);
       expect(ctx!.province.id, _extractionContextProvinceId);
-      expect(ctx.commodityId, CommodityCatalog.grain.id);
+      expect(ctx.commodityId, 'grain');
     case ResolveTileKeyExtractionContextTarget.fallbackGame:
       final game = gameForNonGpExtractionTest(provinces: [fixtures.province]);
       final ctx = resolveTileKeyExtractionContext(
@@ -145,13 +131,13 @@ void runResolveTileKeyExtractionContextExpectation(
   }
 }
 
-ResolveTileKeyExtractionContextScenario resolveTileKeyExtractionContextScenario({
+ResolveTileKeyExtractionContextScenario
+resolveTileKeyExtractionContextScenario({
   required String label,
   required ResolveTileKeyExtractionContextTarget target,
   String? refs,
-}) =>
-    ResolveTileKeyExtractionContextScenario(
-      label: label,
-      run: () => runResolveTileKeyExtractionContextExpectation(target),
-      refs: refs,
-    );
+}) => (
+  label: label,
+  run: () => runResolveTileKeyExtractionContextExpectation(target),
+  refs: refs,
+);

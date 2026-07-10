@@ -55,7 +55,8 @@ Game tradeInterceptionGame({
   List<Player>? players,
   RelationState defaultRelation = RelationState.atPeace,
 }) {
-  final resolvedPlayers = players ??
+  final resolvedPlayers =
+      players ??
       const [
         Player(id: 'p1', displayName: 'A', isHuman: true),
         Player(id: 'p2', displayName: 'B', isHuman: true),
@@ -164,14 +165,13 @@ Game minimalEconomyGame({
   int turnNumber = 0,
   List<Player>? players,
   List<Fleet>? fleets,
-}) =>
-    TestFixtures.minimalGame(
-      id: id,
-      turnNumber: turnNumber,
-      players: players ??
-          const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
-      fleets: fleets ?? const [],
-    );
+}) => TestFixtures.minimalGame(
+  id: id,
+  turnNumber: turnNumber,
+  players:
+      players ?? const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
+  fleets: fleets ?? const [],
+);
 
 /// Two-player game skeleton for extraction application tests.
 Game minimalTwoPlayerGame({
@@ -186,7 +186,8 @@ Game minimalTwoPlayerGame({
       oldWorld: const RegionData(),
       newWorld: const RegionData(),
     ),
-    players: players ??
+    players:
+        players ??
         const [
           Player(id: 'p1', displayName: 'A', isHuman: true),
           Player(id: 'p2', displayName: 'B', isHuman: false),

@@ -5,17 +5,20 @@ void main() {
     'buildProvinceIndex',
     buildProvinceIndexScenarios(),
     runBuildProvinceIndexScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'collectPortTileKeys',
     collectPortTileKeysScenarios(),
     runCollectPortTileKeysScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'capitalFactionLookup',
     capitalFactionLookupScenarios(),
     runCapitalFactionLookupScenario,
+    labelOf: (s) => s.label,
   );
 }

@@ -44,7 +44,8 @@ Game buildTreasuryBidBudgetGame({
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
-    worldMarketState: worldMarketState ??
+    worldMarketState:
+        worldMarketState ??
         WorldMarketState(
           prices: resolvedPrices,
           carryForwardBidsByFactionId: carryForwardBids == null
@@ -80,16 +81,15 @@ Game carryForwardBidGame(
   int treasury = 10000,
   String gameId = 'g_bid_spend',
   String playerDisplayName = 'GP1',
-}) =>
-    buildTreasuryBidBudgetGame(
-      treasury: treasury,
-      prices: prices,
-      playerId: playerId,
-      gameId: gameId,
-      playerDisplayName: playerDisplayName,
-      isHuman: false,
-      carryForwardBids: bids,
-    );
+}) => buildTreasuryBidBudgetGame(
+  treasury: treasury,
+  prices: prices,
+  playerId: playerId,
+  gameId: gameId,
+  playerDisplayName: playerDisplayName,
+  isHuman: false,
+  carryForwardBids: bids,
+);
 
 /// Compact row builder for [stagedBidSpendScenarios] (Refs #3939 phase 3 slice 39).
 ({
@@ -100,7 +100,8 @@ Game carryForwardBidGame(
   int Function(data.ResourceRules rules)? expectedSpendFn,
   String playerId,
   String? refs,
-}) stagedBidSpendRow({
+})
+stagedBidSpendRow({
   required String label,
   required List<TradeOrder> orders,
   Map<CommodityId, int>? prices,
@@ -108,16 +109,15 @@ Game carryForwardBidGame(
   int Function(data.ResourceRules rules)? expectedSpendFn,
   String playerId = humanPlayerId,
   String? refs = '#3093',
-}) =>
-    (
-      label: label,
-      orders: orders,
-      prices: prices,
-      expectedSpend: expectedSpend,
-      expectedSpendFn: expectedSpendFn,
-      playerId: playerId,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  orders: orders,
+  prices: prices,
+  expectedSpend: expectedSpend,
+  expectedSpendFn: expectedSpendFn,
+  playerId: playerId,
+  refs: refs,
+);
 
 /// Compact row builder for [treasuryAvailableForBidsScenarios] (Refs #3939 slice 39).
 ({
@@ -128,7 +128,8 @@ Game carryForwardBidGame(
   int expected,
   String? refs,
   TreasuryAvailableExpectation? extra,
-}) treasuryAvailableRow({
+})
+treasuryAvailableRow({
   required String label,
   required int treasury,
   required int expected,
@@ -136,16 +137,15 @@ Game carryForwardBidGame(
   String playerId = humanPlayerId,
   String? refs,
   TreasuryAvailableExpectation? extra,
-}) =>
-    (
-      label: label,
-      treasury: treasury,
-      playerId: playerId,
-      projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
-      expected: expected,
-      refs: refs,
-      extra: extra,
-    );
+}) => (
+  label: label,
+  treasury: treasury,
+  playerId: playerId,
+  projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta,
+  expected: expected,
+  refs: refs,
+  extra: extra,
+);
 
 /// Compact row builder for [capBidQuantityForBudgetsScenarios] (Refs #3939 slice 40).
 ({
@@ -156,7 +156,8 @@ Game carryForwardBidGame(
   int? unitPrice,
   int expected,
   String? refs,
-}) capBidQtyRow({
+})
+capBidQtyRow({
   required String label,
   required int expected,
   int bidQuantity = 10,
@@ -164,16 +165,15 @@ Game carryForwardBidGame(
   int remainingTreasuryBudget = 100,
   int? unitPrice = 30,
   String? refs,
-}) =>
-    (
-      label: label,
-      bidQuantity: bidQuantity,
-      remainingCargoBudget: remainingCargoBudget,
-      remainingTreasuryBudget: remainingTreasuryBudget,
-      unitPrice: unitPrice,
-      expected: expected,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  bidQuantity: bidQuantity,
+  remainingCargoBudget: remainingCargoBudget,
+  remainingTreasuryBudget: remainingTreasuryBudget,
+  unitPrice: unitPrice,
+  expected: expected,
+  refs: refs,
+);
 
 /// Compact row builder for [maxAffordableBidQuantityScenarios] (Refs #3939 slice 40).
 ({
@@ -183,22 +183,22 @@ Game carryForwardBidGame(
   int remainingTreasuryBudget,
   int expected,
   String? refs,
-}) maxAffordableBidQtyRow({
+})
+maxAffordableBidQtyRow({
   required String label,
   required int expected,
   int bidRemaining = 10,
   double pricePerUnit = 30.0,
   int remainingTreasuryBudget = 90,
   String? refs,
-}) =>
-    (
-      label: label,
-      bidRemaining: bidRemaining,
-      pricePerUnit: pricePerUnit,
-      remainingTreasuryBudget: remainingTreasuryBudget,
-      expected: expected,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  bidRemaining: bidRemaining,
+  pricePerUnit: pricePerUnit,
+  remainingTreasuryBudget: remainingTreasuryBudget,
+  expected: expected,
+  refs: refs,
+);
 
 /// Compact row builder for [decrementTreasuryForFillScenarios] (Refs #3939 slice 40).
 ({
@@ -209,7 +209,8 @@ Game carryForwardBidGame(
   int initialTreasury,
   int expectedTreasury,
   String? refs,
-}) decrementTreasuryFillRow({
+})
+decrementTreasuryFillRow({
   required String label,
   required int matchQty,
   required double pricePerUnit,
@@ -217,16 +218,15 @@ Game carryForwardBidGame(
   String buyerFactionId = 'gp1',
   int initialTreasury = 100,
   String? refs,
-}) =>
-    (
-      label: label,
-      buyerFactionId: buyerFactionId,
-      matchQty: matchQty,
-      pricePerUnit: pricePerUnit,
-      initialTreasury: initialTreasury,
-      expectedTreasury: expectedTreasury,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  buyerFactionId: buyerFactionId,
+  matchQty: matchQty,
+  pricePerUnit: pricePerUnit,
+  initialTreasury: initialTreasury,
+  expectedTreasury: expectedTreasury,
+  refs: refs,
+);
 
 /// Compact row builder for [effectiveMarketPriceScenarios] (Refs #3939 slice 42).
 ({
@@ -237,7 +237,8 @@ Game carryForwardBidGame(
   bool useCatalogDefault,
   bool expectNull,
   String? refs,
-}) effectiveMarketPriceRow({
+})
+effectiveMarketPriceRow({
   required String label,
   required String commodityId,
   Map<CommodityId, int> prices = const {},
@@ -245,16 +246,15 @@ Game carryForwardBidGame(
   bool useCatalogDefault = false,
   bool expectNull = false,
   String? refs,
-}) =>
-    (
-      label: label,
-      commodityId: commodityId,
-      prices: prices,
-      expected: expected,
-      useCatalogDefault: useCatalogDefault,
-      expectNull: expectNull,
-      refs: refs,
-    );
+}) => (
+  label: label,
+  commodityId: commodityId,
+  prices: prices,
+  expected: expected,
+  useCatalogDefault: useCatalogDefault,
+  expectNull: expectNull,
+  refs: refs,
+);
 
 /// Riches commodity row with stored prices but null effective price (Refs #3939 slice 42).
 ({
@@ -265,16 +265,16 @@ Game carryForwardBidGame(
   bool useCatalogDefault,
   bool expectNull,
   String? refs,
-}) effectiveMarketPriceRichesRow({
+})
+effectiveMarketPriceRichesRow({
   required String label,
   required String commodityId,
   required Map<CommodityId, int> prices,
   String? refs,
-}) =>
-    effectiveMarketPriceRow(
-      label: label,
-      commodityId: commodityId,
-      prices: prices,
-      expectNull: true,
-      refs: refs,
-    );
+}) => effectiveMarketPriceRow(
+  label: label,
+  commodityId: commodityId,
+  prices: prices,
+  expectNull: true,
+  refs: refs,
+);

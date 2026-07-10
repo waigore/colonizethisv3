@@ -1,22 +1,13 @@
 // Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35).
 
 import 'cost_check_expectations.dart';
-import 'scenario_runner.dart';
 
-/// One row in [checkPreconditionsInOrderScenarios].
-class CheckPreconditionsInOrderScenario implements RefsScenario {
-  const CheckPreconditionsInOrderScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  @override
-  final String label;
-  final void Function() run;
-  @override
-  final String? refs;
-}
+/// One row for `CheckPreconditionsInOrderScenario` tables (Refs #3939 slice 63).
+typedef CheckPreconditionsInOrderScenario = ({
+  String label,
+  void Function() run,
+  String? refs,
+});
 
 void runCheckPreconditionsInOrderScenario(
   CheckPreconditionsInOrderScenario scenario,
@@ -80,11 +71,7 @@ List<CheckPreconditionsInOrderScenario> checkPreconditionsInOrderScenarios() =>
       ),
       checkPreconditionsInOrderScenario(
         label: 'empty precondition list passes (returns null)',
-        pins: (
-          steps: [],
-          expectedReason: null,
-          expectedEvaluated: null,
-        ),
+        pins: (steps: [], expectedReason: null, expectedEvaluated: null),
         refs: '#3517',
       ),
     ];

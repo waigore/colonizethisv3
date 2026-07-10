@@ -1,6 +1,5 @@
 // Compact DealMatcher result assertions (Refs #3939 phase 3 slice 10+).
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -48,7 +47,10 @@ void _assertFilledDealExpectation(
     expect(deal.isFtpMatch, expectation.isFtpMatch);
   }
   if (expectation.isFirstRightOfRefusalMatch != null) {
-    expect(deal.isFirstRightOfRefusalMatch, expectation.isFirstRightOfRefusalMatch);
+    expect(
+      deal.isFirstRightOfRefusalMatch,
+      expectation.isFirstRightOfRefusalMatch,
+    );
   }
 }
 
@@ -155,10 +157,7 @@ void assertDealMatchExpectation(
     );
   }
   if (expectation.unfilledBidsByFactionId != null) {
-    expect(
-      result.unfilledBidsByFactionId,
-      expectation.unfilledBidsByFactionId,
-    );
+    expect(result.unfilledBidsByFactionId, expectation.unfilledBidsByFactionId);
   }
   if (expectation.unfilledBidsPinsByFactionId != null) {
     for (final MapEntry(:key, :value)
@@ -175,9 +174,7 @@ void assertDealMatchExpectation(
   if (expectation.filledDealQuantityByCommodityId != null) {
     for (final MapEntry(:key, :value)
         in expectation.filledDealQuantityByCommodityId!.entries) {
-      final deal = result.filledDeals.firstWhere(
-        (d) => d.commodityId == key,
-      );
+      final deal = result.filledDeals.firstWhere((d) => d.commodityId == key);
       expect(deal.quantity, value);
     }
   }

@@ -16,7 +16,8 @@ void runApplyExtractionToStockpileExpectation({
   required Map<String, int> extracted,
   required StockpileQuantityPins expectedQuantities,
 }) {
-  final stockpile = initialStockpile ??
+  final stockpile =
+      initialStockpile ??
       (initialDeltas == null
           ? const Stockpile()
           : stockpileWithDeltas(initialDeltas));
@@ -32,16 +33,16 @@ ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({
   Stockpile? initialStockpile,
   required Map<String, int> extracted,
   required StockpileQuantityPins expectedQuantities,
-}) =>
-    ApplyExtractionToStockpileScenario(
-      label: label,
-      run: () => runApplyExtractionToStockpileExpectation(
-        initialStockpile: initialStockpile,
-        initialDeltas: initialDeltas,
-        extracted: extracted,
-        expectedQuantities: expectedQuantities,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runApplyExtractionToStockpileExpectation(
+    initialStockpile: initialStockpile,
+    initialDeltas: initialDeltas,
+    extracted: extracted,
+    expectedQuantities: expectedQuantities,
+  ),
+  refs: null,
+);
 
 /// One player's expected stockpile commodity quantity after [applyExtractionForPlayers].
 typedef PlayerStockpilePin = ({
@@ -75,13 +76,13 @@ ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({
   required Map<String, Map<String, int>> extractedByPlayerId,
   List<PlayerStockpilePin>? stockpilePins,
   bool expectUnchangedPlayers = false,
-}) =>
-    ApplyExtractionForPlayersScenario(
-      label: label,
-      run: () => runApplyExtractionForPlayersExpectation(
-        game: game,
-        extractedByPlayerId: extractedByPlayerId,
-        stockpilePins: stockpilePins,
-        expectUnchangedPlayers: expectUnchangedPlayers,
-      ),
-    );
+}) => (
+  label: label,
+  run: () => runApplyExtractionForPlayersExpectation(
+    game: game,
+    extractedByPlayerId: extractedByPlayerId,
+    stockpilePins: stockpilePins,
+    expectUnchangedPlayers: expectUnchangedPlayers,
+  ),
+  refs: null,
+);
