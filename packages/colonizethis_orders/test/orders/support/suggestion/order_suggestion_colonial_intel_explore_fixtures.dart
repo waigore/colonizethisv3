@@ -35,18 +35,14 @@ const colonialIntelSeaReachableTopology = MapTopology(
 );
 
 ({Game game, MapTopology topology, PlayerView view})
-    colonialIntelSeaReachableNwFixture() {
+colonialIntelSeaReachableNwFixture() {
   final game = Game(
     id: 'g1',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(
         provinces: [
-          Province(
-            id: 'oldWorld|home',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
       ),
       newWorld: const RegionData(
@@ -62,15 +58,9 @@ const colonialIntelSeaReachableTopology = MapTopology(
         'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
       },
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-    ],
+    players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
     tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
   );
   final view = buildPlayerView(game, colonialIntelSeaReachableTopology, 'gp1');
-  return (
-    game: game,
-    topology: colonialIntelSeaReachableTopology,
-    view: view,
-  );
+  return (game: game, topology: colonialIntelSeaReachableTopology, view: view);
 }

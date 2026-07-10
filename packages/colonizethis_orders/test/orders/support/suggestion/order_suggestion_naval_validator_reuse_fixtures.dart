@@ -23,9 +23,7 @@ Game navalValidatorReuseScenarioGame() {
         ),
       ],
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-    ],
+    players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
   );
 }
 

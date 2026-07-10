@@ -14,11 +14,7 @@ Game colonialDiscoveryNoNwVisibilityGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(
         provinces: [
-          Province(
-            id: 'oldWorld|home',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
+          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
       ),
       newWorld: const RegionData(
@@ -42,9 +38,7 @@ Game colonialDiscoveryNoNwVisibilityGame() {
         },
       },
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-    ],
+    players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
     tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
   );
 }

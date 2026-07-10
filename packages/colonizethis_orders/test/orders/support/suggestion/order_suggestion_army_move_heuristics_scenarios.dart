@@ -1,19 +1,19 @@
 // Table-driven army-move heuristics suggestion scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_army_move_heuristics_expectations.dart';
+import 'order_suggestion_army_move_heuristics_run_rows.dart';
 
 /// One row in [orderSuggestionArmyMoveHeuristicsScenarios].
 class OrderSuggestionArmyMoveHeuristicsScenario implements RefsScenario {
   const OrderSuggestionArmyMoveHeuristicsScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionArmyMoveHeuristicsTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,14 +21,13 @@ class OrderSuggestionArmyMoveHeuristicsScenario implements RefsScenario {
 void runOrderSuggestionArmyMoveHeuristicsScenario(
   OrderSuggestionArmyMoveHeuristicsScenario scenario,
 ) {
-  runOrderSuggestionArmyMoveHeuristicsExpectation(scenario.target);
+  scenario.run();
 }
 
 List<OrderSuggestionArmyMoveHeuristicsScenario>
-    orderSuggestionArmyMoveHeuristicsScenarios() => const [
-          OrderSuggestionArmyMoveHeuristicsScenario(
-            label: 'keeps at most one army move per army id',
-            target: OrderSuggestionArmyMoveHeuristicsTarget
-                .keepsAtMostOneArmyMovePerArmyId,
-          ),
-        ];
+orderSuggestionArmyMoveHeuristicsScenarios() => const [
+  OrderSuggestionArmyMoveHeuristicsScenario(
+    label: 'keeps at most one army move per army id',
+    run: osamhRunKeepsAtMostOneArmyMovePerArmyId,
+  ),
+];

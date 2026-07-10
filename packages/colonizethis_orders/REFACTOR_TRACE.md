@@ -2256,6 +2256,25 @@ test/ LOC after slice 148: **36,261** (net −156 from post–slice 147). Remain
 
 test/ LOC after slice 149: **36,156** (net −105 from post–slice 148). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~33 expectations modules — suggestion families only).
 
+## Wave 3 — Slice 150: suggestion scenario dispatch collapse (batch A)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| osamh-dispatch-collapse | drop `OrderSuggestionArmyMoveHeuristicsTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_army_move_heuristics_expectations.dart` (deleted) | `order_suggestion_army_move_heuristics_run_rows.dart` + thin scenarios | #3949 |
+| oscie-dispatch-collapse | drop colonial-intel-explore enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_colonial_intel_explore_expectations.dart` (deleted) | `order_suggestion_colonial_intel_explore_run_rows.dart` + thin scenarios | #3949 |
+| osmeudw-dispatch-collapse | drop move-excludes-draft-work enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_move_excludes_unit_with_draft_work_expectations.dart` (deleted) | `order_suggestion_move_excludes_unit_with_draft_work_run_rows.dart` + thin scenarios | #3949 |
+| osfnwp-dispatch-collapse | drop feedstock-new-world-projection enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_feedstock_new_world_projection_expectations.dart` (deleted) | `order_suggestion_feedstock_new_world_projection_run_rows.dart` + thin scenarios | #3949 |
+| ospoptc-dispatch-collapse | drop prospect-own-province-tile-cap enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_prospect_own_province_tile_cap_expectations.dart` (deleted) | `order_suggestion_prospect_own_province_tile_cap_run_rows.dart` + thin scenarios | #3949 |
+| savr-dispatch-collapse | drop `SimpleAiValidatorReuseTarget` enum + switch; scenario rows hold `run` tear-offs | `simple_ai_validator_reuse_expectations.dart` (deleted) | `simple_ai_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osdwcd-dispatch-collapse | drop declare-war-colonial-discovery enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_declare_war_colonial_discovery_expectations.dart` (deleted) | `order_suggestion_declare_war_colonial_discovery_run_rows.dart` + thin scenarios | #3949 |
+| osnoefp-dispatch-collapse | drop no-order-engine-full-pass enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_no_order_engine_full_pass_expectations.dart` (deleted) | `order_suggestion_no_order_engine_full_pass_run_rows.dart` + thin scenarios | #3949 |
+| osnvr-dispatch-collapse | drop naval-validator-reuse enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_naval_validator_reuse_expectations.dart` (deleted) | `order_suggestion_naval_validator_reuse_run_rows.dart` + thin scenarios | #3949 |
+| osfcs-dispatch-collapse | drop full-candidate-snapshot enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_full_candidate_snapshot_expectations.dart` (deleted) | `order_suggestion_full_candidate_snapshot_run_rows.dart` + thin scenarios | #3949 |
+| osaidw-dispatch-collapse | drop api-impl-declare-war enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_api_impl_declare_war_expectations.dart` (deleted) | `order_suggestion_api_impl_declare_war_run_rows.dart` + thin scenarios | #3949 |
+| osbpr-dispatch-collapse | drop build-pending-riches enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_build_pending_riches_expectations.dart` (deleted) | `order_suggestion_build_pending_riches_run_rows.dart` + thin scenarios | #3949 |
+
+test/ LOC after slice 150: **36,002** (net −154 from post–slice 149). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~34 expectations modules — suggestion families).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

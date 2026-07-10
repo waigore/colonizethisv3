@@ -1,20 +1,20 @@
 // Table-driven colonial discovery declare-war scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_suggestion_declare_war_colonial_discovery_expectations.dart';
+import 'order_suggestion_declare_war_colonial_discovery_run_rows.dart';
 
 /// One row in [orderSuggestionDeclareWarColonialDiscoveryScenarios].
 class OrderSuggestionDeclareWarColonialDiscoveryScenario
     implements RefsScenario {
   const OrderSuggestionDeclareWarColonialDiscoveryScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderSuggestionDeclareWarColonialDiscoveryTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -22,15 +22,15 @@ class OrderSuggestionDeclareWarColonialDiscoveryScenario
 void runOrderSuggestionDeclareWarColonialDiscoveryScenario(
   OrderSuggestionDeclareWarColonialDiscoveryScenario scenario,
 ) {
-  runOrderSuggestionDeclareWarColonialDiscoveryExpectation(scenario.target);
+  scenario.run();
 }
 
 List<OrderSuggestionDeclareWarColonialDiscoveryScenario>
-    orderSuggestionDeclareWarColonialDiscoveryScenarios() => const [
-          OrderSuggestionDeclareWarColonialDiscoveryScenario(
-            label: 'suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)',
-            target: OrderSuggestionDeclareWarColonialDiscoveryTarget
-                .excludesSeaReachableTribeWithoutNwVisibility,
-            refs: '#3620',
-          ),
-        ];
+orderSuggestionDeclareWarColonialDiscoveryScenarios() => const [
+  OrderSuggestionDeclareWarColonialDiscoveryScenario(
+    label:
+        'suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)',
+    run: osdwcdRunExcludesSeaReachableTribeWithoutNwVisibility,
+    refs: '#3620',
+  ),
+];
