@@ -180,3 +180,190 @@ void waaExpectFortSkipAtLevel(int fortLevel) {
   expect(next.worldState.oldWorld.provinces.single.fortLevel, fortLevel);
   expect(waaSingleUnit(next).currentWork, isNull);
 }
+
+void waaExpectPurchaseSuccess() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  final game = workAppSingleGpPurchaseLandGame(
+    overtureStates: const [
+      OvertureState(
+        gpId: 'p1',
+        targetId: 'minor1',
+        stage: OvertureStage.embassy,
+        sinceTurn: 0,
+      ),
+    ],
+  );
+  final next = waaApply(game, workAppPurchaseLandOrders());
+  waaExpectPurchased(next, ownerId: 'p1');
+  expect(
+    next.playerById('p1')!.treasury,
+    game.playerById('p1')!.treasury - cost,
+  );
+  final u = waaSingleUnit(next);
+  expect(u.tileKey, WorkAppIds.tileKeyMinor);
+  expect(u.status, UnitStatus.idle);
+  expect(u.currentWork, isNull);
+  expect(u.originTileKey, isNull);
+  expect(u.assignedTileKey, isNull);
+}
+
+void waaExpectDualPurchaseFirstWins() {
+  const cost = WorkAppIds.purchaseLandGrainCost;
+  final game = workAppPurchaseLandGame(
+    units: [
+      workAppPurchaseLandMerchant(),
+      workAppPurchaseLandMerchant(id: 'merchant2', ownerId: 'p2'),
+    ],
+    players: [
+      workAppPlayer(
+        treasury: cost + 100,
+        capitalProvinceId: WorkAppIds.provinceId,
+      ),
+      workAppPlayer(
+        id: 'p2',
+        displayName: 'P2',
+        isHuman: false,
+        treasury: cost + 100,
+        capitalProvinceId: WorkAppIds.provinceId,
+      ),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: 'p1',
+        targetId: 'minor1',
+        stage: OvertureStage.embassy,
+        sinceTurn: 0,
+      ),
+      OvertureState(
+        gpId: 'p2',
+        targetId: 'minor1',
+        stage: OvertureStage.embassy,
+        sinceTurn: 0,
+      ),
+    ],
+  );
+  final next = waaApply(
+    game,
+    Orders(
+      workOrdersByPlayerId: {
+        'p1': [
+          const WorkOrder(
+            unitId: 'merchant1',
+            target: kWorkTargetPurchaseLand,
+            targetTileKey: WorkAppIds.tileKeyMinor,
+          ),
+        ],
+        'p2': [
+          const WorkOrder(
+            unitId: 'merchant2',
+            target: kWorkTargetPurchaseLand,
+            targetTileKey: WorkAppIds.tileKeyMinor,
+          ),
+        ],
+      },
+    ),
+  );
+  waaExpectPurchased(next, ownerId: 'p1');
+  expect(
+    next.playerById('p1')!.treasury,
+    game.playerById('p1')!.treasury - cost,
+  );
+  expect(next.playerById('p2')!.treasury, game.playerById('p2')!.treasury);
+}
+
+void waaExpectBuildImprovementCompletes() {
+  final next = waaApply(
+    workAppOwnedGame(
+      units: [workAppUnit(type: kUnitTypeBuilder)],
+      resourceByTileKey: {WorkAppIds.tileKey: 'grain'},
+      players: [
+        workAppPlayer(
+          stockpile: OrdersApplicationTestSupport.stockpileCovering(
+            workOrderCostBuildImprovement(0),
+          ),
+        ),
+      ],
+    ),
+    workAppSingleWorkOrder(target: kWorkTargetBuildImprovement),
+  );
+  expect(
+    next.worldState.tileState.improvementLevel(WorkAppIds.tileKey),
+    1,
+  );
+  waaExpectUnitIdle(next);
+}
+
+void waaExpectCounterSpyTiming({
+  required Game game,
+  String unitId = 'spy1',
+}) {
+  final next = waaApply(
+    game,
+    workAppSingleWorkOrder(unitId: unitId, target: kWorkTargetCounterSpy),
+  );
+  waaExpectCurrentWorkTiming(
+    next,
+    unitId: unitId,
+    workTarget: kWorkTargetCounterSpy,
+    totalTurns: 0,
+    remainingTurns: 1,
+  );
+}
+
+void waaExpectExploreFormulaTotalTurns2() {
+  const small = '${WorkAppIds.ow}|P1';
+  const large = '${WorkAppIds.ow}|P2';
+  const s1 = '${WorkAppIds.ow}|P1|0|0';
+  const s2 = '${WorkAppIds.ow}|P1|1|0';
+  const l1 = '${WorkAppIds.ow}|P2|0|0';
+  const l2 = '${WorkAppIds.ow}|P2|1|0';
+  const l3 = '${WorkAppIds.ow}|P2|2|0';
+  const l4 = '${WorkAppIds.ow}|P2|3|0';
+  waaExpectExploreWork(
+    waaApply(
+      workAppOwnedGame(
+        units: [
+          workAppUnit(
+            type: kUnitTypeExplorer,
+            locationProvinceId: small,
+            tileKey: s1,
+          ),
+        ],
+        provinces: const [
+          Province(id: small, regionId: WorkAppIds.ow, ownerId: 'p1'),
+          Province(id: large, regionId: WorkAppIds.ow, ownerId: 'p1'),
+        ],
+        tileKeysByRegionAndProvince: const {
+          WorkAppIds.ow: {
+            small: [s1, s2],
+            large: [l1, l2, l3, l4],
+          },
+        },
+      ),
+      workAppSingleWorkOrder(
+        target: kWorkTargetExplore,
+        targetTileKey: s1,
+      ),
+    ),
+    totalTurns: 2,
+    remainingTurns: 1,
+  );
+}
+
+void waaExpectPortCompletesWhenAffordable() {
+  final cost = workOrderMaterialCost(kWorkTargetBuildPort);
+  expect(cost, isNotNull);
+  waaExpectUnitIdle(
+    waaApply(
+      workAppOwnedGame(
+        units: [workAppUnit(type: kUnitTypeEngineer)],
+        players: [
+          workAppPlayer(
+            stockpile: OrdersApplicationTestSupport.stockpileCovering(cost!),
+          ),
+        ],
+      ),
+      workAppSingleWorkOrder(target: kWorkTargetBuildPort),
+    ),
+  );
+}

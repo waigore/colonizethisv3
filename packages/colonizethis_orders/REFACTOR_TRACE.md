@@ -2345,6 +2345,17 @@ test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Rema
 
 test/ LOC after slice 154: **32475** (net +90 from post–slice 153 / 32,565). Remaining split run_rows families: order_suggestion_core, valid_work_tiles, work_order_application, work_completion. Lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 155: merge final run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wcc-run-rows-merge | densify rail/explore/dispatch helpers; merge work_completion_run_rows | work_completion_run_rows.dart (deleted) | work_completion_scenarios.dart + shorthand | #3949 |
+| vwt-run-rows-merge | densify explore/build/move helpers; merge valid_work_tiles run_rows (+tail) | valid_work_tiles_run_rows*.dart (deleted) | valid_work_tiles_scenarios.dart + shorthand | #3949 |
+| waa-run-rows-merge | densify purchase/explore/port helpers; merge work_order_application run_rows (+tail) | work_order_application_run_rows*.dart (deleted) | work_order_application_scenarios.dart + shorthand | #3949 |
+| osc-run-rows-merge | densify move/build/spy/purchase helpers; merge order_suggestion_core run_rows (+tail) | order_suggestion_core_run_rows*.dart (deleted) | order_suggestion_core_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 155: **32251** (net −224 from post–slice 154 / 32,475). **All `*_run_rows.dart` eliminated.** Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
