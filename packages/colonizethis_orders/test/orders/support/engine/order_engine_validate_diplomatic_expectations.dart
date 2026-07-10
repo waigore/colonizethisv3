@@ -3,11 +3,8 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-import 'order_engine_validate_diplomatic_test_support.dart';
-part 'order_engine_validate_diplomatic_expectations_part1.dart';
-part 'order_engine_validate_diplomatic_expectations_part2.dart';
-
+import '../diplomatic/diplomatic_orders_test_fixtures.dart';
+import 'order_engine_validate_diplomatic_expectation_shorthand.dart';
 
 enum OrderEngineValidateDiplomaticTarget {
   declarewarRejectedWhenAlreadyAtWar,
@@ -34,55 +31,175 @@ void runOrderEngineValidateDiplomaticExpectation(
 ) {
   switch (target) {
     case OrderEngineValidateDiplomaticTarget.declarewarRejectedWhenAlreadyAtWar:
-      _declarewarRejectedWhenAlreadyAtWar();
+        vedExpectRejected(
+          vedGpMinor(relationState: RelationState.atWar),
+          vedDeclareWarMinor,
+          reasonContains: 'Already at war',
+        );
     case OrderEngineValidateDiplomaticTarget.offerpeaceRejectedWhenNotAtWar:
-      _offerpeaceRejectedWhenNotAtWar();
+        vedExpectRejected(
+          vedGpMinor(),
+          vedOfferPeaceMinor,
+          reasonContains: 'not at war',
+        );
     case OrderEngineValidateDiplomaticTarget
         .establishovertureRejectedWhenTargetIsAtWarWithGP:
-      _establishovertureRejectedWhenTargetIsAtWarWithGP();
+        vedExpectRejected(
+          vedGpMinor(
+            relationState: RelationState.atWar,
+            treasury: overtureConsulateCost + 100,
+          ),
+          vedEstablishOverture(OvertureStage.tradeConsulate),
+          reasonContains: 'at war',
+        );
     case OrderEngineValidateDiplomaticTarget
         .establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise:
-      _establishovertureTradeConsulateRejectedWithoutDiplomaticExpertise();
+        vedExpectRejected(
+          vedGpMinor(
+            treasury: overtureConsulateCost + 100,
+            techUnlocked: const {},
+          ),
+          vedEstablishOverture(OvertureStage.tradeConsulate),
+          reasonContains: 'Diplomatic Expertise',
+        );
     case OrderEngineValidateDiplomaticTarget
         .establishovertureConsulateRejectedWhenTreasuryTooLow:
-      _establishovertureConsulateRejectedWhenTreasuryTooLow();
+        vedExpectRejected(
+          vedGpMinor(treasury: overtureConsulateCost - 1),
+          vedEstablishOverture(OvertureStage.tradeConsulate),
+          reasonContains: 'Insufficient treasury',
+        );
     case OrderEngineValidateDiplomaticTarget
         .establishovertureEmbassyRequiresExistingConsulate:
-      _establishovertureEmbassyRequiresExistingConsulate();
+        vedExpectRejected(
+          vedGpMinor(treasury: overtureEmbassyCost + 1000),
+          vedEstablishOverture(OvertureStage.embassy),
+          reasonContains: 'requires existing Trade Consulate',
+        );
     case OrderEngineValidateDiplomaticTarget
         .establishovertureSecondOrderForSameFactionInSameTurnRejected:
-      _establishovertureSecondOrderForSameFactionInSameTurnRejected();
+        final order = vedEstablishOverture(OvertureStage.tradeConsulate);
+        vedExpectSecondOrderRejected(
+          vedGpMinor(treasury: overtureConsulateCost * 3),
+          order,
+          order,
+          reasonContains: 'Already have a diplomatic order for this faction this turn',
+        );
     case OrderEngineValidateDiplomaticTarget
         .secondDiplomaticOrderToSameTargetDifferentTypeIsRejected:
-      _secondDiplomaticOrderToSameTargetDifferentTypeIsRejected();
+        vedExpectSecondOrderRejected(
+          Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: const RegionData(),
+              newWorld: const RegionData(),
+            ),
+            players: const [
+              Player(id: 'gp1', displayName: 'A', isHuman: false),
+              Player(id: 'gp2', displayName: 'B', isHuman: false),
+            ],
+            diplomacyRelations: const [
+              DiplomacyRelation(
+                factionId1: 'gp1',
+                factionId2: 'gp2',
+                state: RelationState.atPeace,
+                level: RelationLevel.neutral,
+              ),
+            ],
+          ),
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'gp2',
+          ),
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.alliance,
+            targetFactionId: 'gp2',
+          ),
+          reasonContains: 'Already have a diplomatic order for this faction this turn',
+        );
     case OrderEngineValidateDiplomaticTarget
         .grantaidRequiresEmbassyAndSufficientTreasury:
-      _grantaidRequiresEmbassyAndSufficientTreasury();
+        vedExpectRejected(
+          vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+          vedGrantAid(1000),
+          reasonContains: 'Embassy required',
+        );
+        vedExpectRejected(
+          vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 500),
+          vedGrantAid(1000),
+          reasonContains: 'Insufficient treasury',
+        );
     case OrderEngineValidateDiplomaticTarget
         .grantaidRejectsAmountsNotAMultipleOf1000:
-      _grantaidRejectsAmountsNotAMultipleOf1000();
+        vedExpectRejected(
+          vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+          vedGrantAid(1500),
+          reasonContains: 'multiple',
+        );
     case OrderEngineValidateDiplomaticTarget
         .grantaidThenSetSubsidyTowardSameTargetBothAccepted:
-      _grantaidThenSetSubsidyTowardSameTargetBothAccepted();
+        final game = vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000);
+        final engine = OrderEngine();
+        vedExpectAccepted(game, vedGrantAid(1000), engine: engine);
+        vedExpectAccepted(game, vedSetSubsidy(10), engine: engine);
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyRequiresAnEmbassyRefs3753R2:
-      _setsubsidyRequiresAnEmbassyRefs3753R2();
+        vedExpectRejected(
+          vedGpMinor(treasury: 5000),
+          vedSetSubsidy(10),
+          reasonContains: 'Embassy required',
+        );
+        vedExpectRejected(
+          vedGpMinor(overtureStage: OvertureStage.tradeConsulate, treasury: 5000),
+          vedSetSubsidy(10),
+          reasonContains: 'Embassy required',
+        );
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3:
-      _setsubsidyWithAnEmbassyIsAcceptedRegardlessOfTreasuryNoUpfrontCostRefs3753R3();
+        vedExpectAccepted(
+          vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 10),
+          vedSetSubsidy(20),
+        );
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyWithAnEmbassyAndAValidPercentIsAccepted:
-      _setsubsidyWithAnEmbassyAndAValidPercentIsAccepted();
+        vedExpectAccepted(
+          vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+          vedSetSubsidy(5),
+        );
     case OrderEngineValidateDiplomaticTarget
         .setsubsidyRejectsAPercentOutside520InStepsOf5:
-      _setsubsidyRejectsAPercentOutside520InStepsOf5();
+        vedExpectRejected(
+          vedGpMinor(overtureStage: OvertureStage.embassy, treasury: 5000),
+          vedSetSubsidy(7),
+          reasonContains: 'steps of',
+        );
     case OrderEngineValidateDiplomaticTarget
         .secondGrantAidTowardSameTargetRejected:
-      _secondGrantAidTowardSameTargetRejected();
+        {
+          final game = vedGpMinor(
+            overtureStage: OvertureStage.embassy,
+            treasury: 5000,
+          );
+          final engine = OrderEngine();
+          vedSubmit(game, vedGrantAid(1000), engine: engine);
+          final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
+          expect(grant.status, OrderValidationStatus.rejected);
+        }
     case OrderEngineValidateDiplomaticTarget
         .declarewarThenGrantAidTowardSameTargetRejected:
-      _declarewarThenGrantAidTowardSameTargetRejected();
+        {
+          final game = vedGpMinor(
+            overtureStage: OvertureStage.embassy,
+            treasury: 5000,
+          );
+          final engine = OrderEngine();
+          vedSubmit(game, vedDeclareWarMinor, engine: engine);
+          final grant = vedSubmit(game, vedGrantAid(1000), engine: engine);
+          expect(grant.status, OrderValidationStatus.rejected);
+        }
   }
 }
-
-

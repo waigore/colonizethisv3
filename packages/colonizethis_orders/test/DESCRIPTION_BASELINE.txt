@@ -1,18 +1,26 @@
 AC-10: invalid declare war / offer peace still enumerated
 AC-6: minor at none shows all overture stages; only consulate enabled
+AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only
+AC1: emitted civilian candidates are deterministically sorted by unitType
+AC1: includes affordable civilian candidates when includeCivilianBuilds is true
+AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call
 AC12: no civilian candidates when paper is below the minimum cost
 AC12: no civilian candidates when treasury is zero
 AC5: Merchant excluded when merchant_companies is not unlocked
+AC5: Merchant included when merchant_companies is unlocked and affordable
 AC9: identical inputs produce identical civilian enumeration
 acceptDeclareWarCandidatesForTargets skips self and at-war targets
 accepted apprentice train consumes peasant, paper, and treasury
 accepted journeyman train consumes peasant, paper, and treasury (#2692 S9 tier coverage)
 accepted master train consumes peasant, paper, and treasury (#2692 S9 tier coverage; AC #3 master tail)
 accepted recruit peasant order adds 1 peasant and deducts fabric
+accepted result is identical with and without supplied armiesById
 accepts a single peasant recruit when fabric is available
 accepts a valid boycott order through the parent validator
+accepts a valid breakAlliance order through the parent validator
 accepts a valid offer when stockpile covers quantity
 accepts and debits treasury by the amount
+accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices
 accepts build_rail on plains with Early Steam and road 1
 accepts Builder when treasury and paper sufficient
 accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)
@@ -33,12 +41,14 @@ accepts when at peace and leaves treasury unchanged
 accepts when at war and leaves treasury unchanged
 accepts when issuer holds a colony and target GP is at peace
 accepts when target is a Great Power and at peace
+accepts minor target with funds at or above scaled cost and preserves treasury (positive)
 accepts with an embassy and leaves treasury unchanged
 accepts with an embassy even when treasury is low (no upfront cost)
 add order and validate
 addMoveOrderWithContext uses world-state validation
 addWorkOrderWithContext returns rejected when order invalid
 append-existing-army path matches with and without armiesById
+armiesById missing the target army id is rejected as Invalid army move
 appends order for existing player list
 applies treasury and paper cost when civilian build valid
 applies treasury, stockpile and worker costs when valid
@@ -48,6 +58,7 @@ army move: into other GP with same-turn declare war (accepted)
 army move: into other GP without war (rejected)
 army move: into own adjacent province (accepted)
 army move: missing army (rejected)
+armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache matches legacy allProvinces scan
 assigns explore currentWork when province has discoverable tiles
 blockade order accepted when at war with province owner
 blockade order rejected when not at war with province owner
@@ -84,6 +95,9 @@ build_road completion propagates transport level to adjacent capital tile (no do
 build_road completion propagates transport level to adjacent port tile and upgrades it
 build_road with targetTileKey uses tile key for region and province
 builder cross-region into tribe-owned province is still invalid
+builds one pass-level validator across multiple diplomatic targets
+builds one incremental validator per AI player in batch path
+builds one incremental validator per player heuristic pass
 cached player-owned set matches default allProvinces scan
 cached player-owned set matches default destination picker path
 calculateCost for build_fort uses province fortLevel when not overridden
@@ -99,6 +113,10 @@ civilian worker cannot move into Minor/Tribe territory
 clears currentWork, restores origin tile, and sets status idle
 clears work state and restores origin tile by default
 co-availability ordering is deterministic across repeated passes
+candidate set is deterministic across repeated suggestion calls
+co-located Explorer in late-sorted province still receives a prospect suggestion for its iron tile
+co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province
+co-located feedstock Explorer still receives its iron prospect after earlier units drain the shared probe budget
 colonialIntelExploreProvinceIdsSorted lists sea-reachable NW
 contains returns false for missing membership
 contextOverride passes through to the pure suggester
@@ -113,11 +131,12 @@ declares the canonical per-category phase order
 declareWar rejected when already at war
 declareWar remains allowed during cooldown
 declareWar then grantAid toward same target rejected
+default impl returns validator-clean output for the wired context
 default strategies refresh runs all population paths
 diplomatic merge drops AI order duplicating human (type,target)
 diplomatic: non-empty basePrefix replay remains equivalent
 diplomatic: sequential probes on one validator stay equivalent (#2394)
-does not block when a Consulate is held
+boycott coexists with the single non-economic candidate for the same GP
 does not block when an Embassy (above Consulate) is held
 does not emit a boycott toward a Minor/Tribe target
 does not emit a boycott when at war with the target GP
@@ -127,14 +146,25 @@ does not gate a Great Power-owned province
 does not gate the player own province or a null owner
 does not invoke the projector when no trade order is staged
 does not re-suggest a tech already assigned by a pending order
+does not return alliance toward a GP when a formal alliance exists
+does not return breakAlliance when relation level is allied but no formal alliance
+does not suggest diplomatic orders for completely unknown factions
+does not suggest toward target already in draft diplomatic orders
+does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise
 drops move into minor province when explicitly at peace
 drops move into minor-owned province when relation row is absent
 each standard build handler supports only its target
+definitions moved out of the neutral core file into the orders domain
 embassy accepts and debits treasury when consulate exists
 embassy requires existing trade consulate
+embassy-stage tribe: suggestDeclareWarOrders surfaces declareWar
+embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire
+embassy-stage NW tribe: suggestWorkOrders is deterministic for repeated calls
+embassy-stage NW tribe: suggestWorkOrders surfaces purchase_land for Merchant
 emitAcceptedCandidates collects accepted in iteration order
 emitAcceptedCandidates probes every candidate without dedup args
 emitAcceptedCandidates skips candidates already targeted
+emits a boycott toward another GP at peace when the issuer holds a colony
 emits suggest_work summaries for Explorer/Builder/Spy/Merchant
 Engineer build_road work order sets currentWork
 establishOverture consulate rejected when treasury too low
@@ -154,16 +184,21 @@ explore requires partial reveal (known + unknown land tiles)
 explore work order sets currentWork when province has tiles
 explorer can move cross-region into tribe-owned province
 explorer may move into tribal province
+explorer multiple prospect tiles emit one suggest_work with includedCount
+explorer pending targets preserve duplicate check and log ordering
 Explorer may move onto Minor province tile (cross-region style)
 falls back to single-pass scan when armiesById lacks the entry
 false when no tile has 4-part key for region/province
 false when tile unknown
+factionMembership path matches legacy GP declare-war guard (Refs #2394)
 fills every empty slot with a distinct researchable tech
 filterMoveOrdersByDiplomacy does not drop civilian moves at peace
 filterMoveOrdersByDiplomacy keeps move to at-war faction
 filters by visibility before order engine validation
 first invalid order plus subsequent rejected
 follows expected progression
+fallback owned-province scan derives its set from ProvinceOwnerCache (Phase 6b)
+fallback yields no owned destinations when ProvinceOwnerCache has none for the player (Phase 6b negative)
 forBasePrefix matches fresh forPlayer for same basePrefix
 getProvinceOwnerMap includes newWorld provinces
 getProvinceOwnerMap returns owner by full province id
@@ -181,14 +216,18 @@ ignores tile keys with wrong number of parts
 includes cross-region player-owned province as destination
 includes resource tiles in tribe-owned provinces
 incremental build probe matches full-pass when riches fund build
+IncrementalCandidateValidator.isArmyMoveAccepted matches ArmyMoveValidator.validate (Refs #2394 incremental hot path)
+IncrementalCandidateValidator.forPlayer trips assertion when supplied view is for a different player
 indexExistingTargetsByEntityId skips empty targets when requested
 initial orders copy: getter returns equal but distinct lists
 isDiplomaticOrderAccepted returns a boolean result
 isIndependentDiplomaticCandidate flags economic and boycott types
 isNavalMissionOrderAccepted returns a boolean result
 isNavalMoveOrderAccepted returns a boolean result
+iron province without fogged visibility still yields no prospect (negative control)
 joinEmpire previous is nap
 joinEmpire rejects when relations below friendly threshold
+lib/src/constants.dart re-exports the same order constants (back-compat)
 keeps AI move orders when human has none for unit
 keeps at most one army move per army id
 keeps exact pending tile key for explore projection
@@ -212,6 +251,7 @@ merge research orders: human wins when both have orders
 merge uses stable player ordering
 merge work orders: human for unit A, AI for unit B
 merged draft with move then work rejects work (move remains valid)
+multi-target availability matches shared-validator tile keys per target
 merges AI trade orders when human has none (Refs #2924)
 merges diplomatic orders with human precedence per (type,target)
 middle order silently skips when peasants are exhausted; later orders still resolve against the running state (#2692 S9; AC #4 resolver behavior)
@@ -222,6 +262,7 @@ Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)
 mountain: allows with Dynamite
 mountain: rejects without Dynamite
 move order accepted for own province across regions
+move order rejected when destination is foreign province across regions
 move order rejected when destination province unknown
 move order rejected when source province unknown
 move: builder onto other GP province (rejected)
@@ -249,8 +290,11 @@ naval move: in-port fleet undock to adjacent sea zone (accepted)
 naval move: missing fleet (rejected)
 New World spawn adds unit to newWorld
 next is left inverse of previous for every non-terminal stage
+no embassy ⇒ bidTypeCap = 0; suggester emits offers only from current stockpile (riches excluded) and no bids
+no embassy with NW tribe: suggestWorkOrders omits purchase_land for Merchant
 no candidates logs noCandidateReason
 no explore suggestion when province unknown
+no feedstock prospect when the co-located tile is already prospected (negative control)
 no lib/src/orders source consumes the core logicLog
 no prospect suggestion when province not at least fogged
 none maps to itself
@@ -258,8 +302,10 @@ offerPeace rejected when not at war
 optional unitsById matches default path
 OrderEngine add-with-context still invokes full validation
 OrderEngine validator factory allows injected validators
+validatePlayerOrdersWithContext builds six validator bundles (shared move+army, then fresh per later category; #2391 AC7, #2692 S4)
 orderResolutionContextFromView aliases provincesById
 ordersApplicationLog is an alias of the shared ordersLog
+orders generated under the new shared-validator code path are unchanged against a known fixture
 ordersLog emits messages with the `orders:` prefix
 ordersLog is a CtLogger with the distinct `orders` prefix
 ordersLog is the single shared instance for the orders domain
@@ -267,7 +313,9 @@ orderSuggestionLog is rooted under the `orders` domain prefix
 own-province budget exemption is deterministic across runs
 ownedProvinceIdsFromView returns full province ids for owner
 pending draft work short-circuits with zero engine probes
+pending draft: zero probes even with high-reveal world (issue #2133 scale)
 per-player order lists apply in isolation (#2692 S9 multi-player pin)
+peasant reservation: pending apprentice recruit drains the only peasant so a candidate apprentice is excluded but candidate peasant remains
 phase names are unique (no category runs twice)
 plains: allows with Early Steam
 plains: allows with Later Steam only
@@ -275,6 +323,7 @@ plains: rejects without rail tech
 playerOverturesByTargetIdForPlayer keeps first row per target
 playerOwnedProvinceIds matches default path for same inputs
 post-break cooldown disables alliance with deterministic reason (#3811)
+precheckExplorerConsulateInMinorTribe rejects explore without Consulate
 precheck rejects upgrade_town when at war with tribe
 precheckBuildImprovement rejects unprospected mineral tile
 precheckDefaultForeignProvince rejects builder in foreign province
@@ -293,14 +342,18 @@ propagates road level to adjacent port tile when higher
 prospect on non-mineral-eligible terrain does not add tile
 prospect requires at least fogged
 prospect suggestion when province fogged and tiles in province
+public colonizethis_logic barrel still exposes the order constants
 provinceHasAtLeastVisibility returns false when parts.length != 4
 re-emits in-progress research so the resolver preserves progress
+rebinds pass validator to workingOrders after each target
 recruit consumes last peasant before military build, so subsequent regiment build is rejected with Insufficient workers
 recruit that fails affordability checks does not mutate the player (no partial deduction)
 refresh keeps cache isolated per player
 refresh replaces target membership on turn-boundary style update
 refresh stores and reads prospect membership
 registers expected work targets
+rejected result is identical with and without supplied armiesById
+removing pending diplomatic order restores suggestions for that target
 rejected candidates log engineRejectedReason
 rejects a duplicate alliance when a formal alliance already exists
 rejects a duplicate boycott for the same pair
@@ -342,11 +395,13 @@ rejects purchase_land when tile already owned by same player
 rejects purchase_land when tile has no resource
 rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)
 rejects second pending work order for same unit in one turn
+rejects join empire toward GP without Empire Building tech (negative)
 rejects unknown unit type
 rejects upgrade_town without National Bureaucracy
 rejects when already at war and preserves treasury
 rejects when amount is below the step
 rejects when at war with the target GP
+rejects when current stage is not NAP and preserves treasury (negative)
 rejects when at war with the target Great Power
 rejects when no active boycott exists for the pair
 rejects when no formal alliance exists with the target
@@ -354,6 +409,7 @@ rejects when not at war
 rejects when road level is 0
 rejects when road level is 3 (intermediate, not 1 or 2)
 rejects when road level is neither 1 nor 2 (too high)
+rejects when score below friendly threshold and preserves treasury (negative)
 rejects when stage is missing
 rejects when target is not a Great Power
 rejects when terrain is null
@@ -368,8 +424,15 @@ removeBuildOrder removes order at index
 removeMoveOrder removes order at index
 removes order at index
 removeTradeOrderForPlayer deletes the matching staged order
+empty stockpile + zero treasury + zero peasants -> empty list
+engine round-trip parity: accept/reject decision matches addRecruitWorkerOrderWithContext for every WorkerTier in a partial tech / peasant / treasury fixture
+returns alliance (single diplo per target) for other GP when at peace and not allied
 returns alliance candidate when at peace and not allied
+returns all four tiers when all techs unlocked and resources support every cost row
+returns peasant and apprentice when fabric, treasury, paper, and apprentice tech support both rows
+returns breakAlliance toward GP when a formal alliance exists at peace
 returns declareWar toward GP when at peace and already allied
+returns declareWar toward minor when establishOverture would win in suggestDiplomaticOrders
 returns empty for unknown unit id
 returns empty for unknown unit id with visibility
 returns empty list without scanning when id set is empty
@@ -396,6 +459,14 @@ returns null when coordinates are out of bounds
 returns null when region map is missing
 returns null when x or y are not integers
 returns offerPeace when at war with another GP
+omits apprentice recruit when peasant pool is empty
+omits apprentice recruit when treasury is below 200 ducats
+omits peasant recruit when fabric is insufficient
+omits trained tiers when their required techs are locked
+omits apprentice recruit when peasant pool is empty
+omits apprentice recruit when treasury is below 200 ducats
+omits peasant recruit when fabric is insufficient
+omits trained tiers when their required techs are locked
 returns one turn for counter_spy
 returns orders unchanged when index invalid
 returns parsed coordinates for a valid tile key
@@ -422,17 +493,24 @@ sequential apprentice trains drain peasants in submission order
 setSubsidy rejects a percent outside 5-20 in steps of 5
 setSubsidy requires an embassy (Refs #3753 R2)
 setSubsidy with an embassy and a valid percent is accepted
+shared factionMembership matches default armyMovePickerDestinations
+shared playerView and unitsById matches default armyMovePickerDestinations
+shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)
 shared view and validator matches default path
+sharedCandidateValidator matches default and skips forPlayer rebuild
 sharedCandidateValidator matches default path for same inputs
 ship build with capital not adjacent to sea does not add ship
 ship build with capitalProvinceId null does not add fleet
 ship build with topology null does not add fleet
 short-circuits when previous order rejected
+short-circuits to "Previous invalid" when previousRejected is true
 singleton handlers do not cross-support other simple targets
+still proposes alternate destination when draft has prior army move
 skips build when unitType unknown in RegimentEconomyCatalog
 skips fort level 2 when Mine Engineering not unlocked
 skips military build when tech not unlocked
 skips military build when zero peasants
+skips pass-level build when sharedCandidateValidator is supplied
 skips ship build when tech not unlocked
 slot 1 takes the highest-weight unrepresented bucket (AC9)
 snapshot is consulted on active path: rejects unknown target id
@@ -442,29 +520,47 @@ sorted regiment type ids match lexicographic sort of id set
 sorted returns deterministic ordering
 sorted ship type ids match lexicographic sort of id set
 suggestArmyMoveOrders matches default path
+suggestArmyMoveOrders trips assertion when validator is for a different player
 suggestBuildOrders does not invoke validatePlayerOrdersWithContext
 suggestBuildOrders matches default path
 suggestBuildOrders returns list
+suggestBuildOrders includes ship types when player can afford a ship
 suggestBuildOrders returns ship when affordable
+suggestBuildOrders trips assertion when validator is for a different player
 suggestDiplomaticOrders is deterministic across repeated calls
+suggestDiplomaticOrders: cumulative list appendable and validates
 suggestDiplomaticOrders returns list
+suggestDeclareWarOrders excludes sea-reachable tribe without NW tile visibility (#3620 first-contact gate)
 suggestion ordering is deterministic across repeated passes
+seller owning a New World province deactivates the feedstock gate (projection-backed new-world count, Refs #3393)
 suggestMoveOrders excludes moves to other Great Power provinces
+suggestMoveOrders emits no MoveOrder for a unit that already has a draft WorkOrder
 suggestMoveOrders matches default path
 suggestMoveOrders only returns moves that pass validation
 suggestMoveOrders returns list
+suggestMoveOrders trips assertion when validator is for a different player
 suggestNavalMissionOrders returns list
 suggestNavalMoveOrders returns list
+suggestNavalMoveOrders and suggestNavalMissionOrders match when caller supplies unitsById (Refs #2394)
+suggestNavalMoveOrders and suggestNavalMissionOrders reuse one validator
 suggestRecruitWorkerOrders returns list (#2692 S7)
+suggestRecruitWorkerOrders includes peasant when fabric is affordable (#2692 S7)
 suggestResearchOrders returns list
 suggestWorkOrders explore target uses kWorkTargetExplore
+suggestWorkOrders full-candidate snapshot remains stable (Refs #2133 AC8)
+suggestWorkOrders logger lines never emit unbounded full list payload
 suggestWorkOrders matches default path
 suggestWorkOrders returns list
+suggestWorkOrders trips assertion when validator is for a different player
 supports only counter_spy
 supports only explore target
 supports only prospect
 supports only purchase_land target
 throws StateError when no projector was injected
+throws StateError when a trade order is validated without a projector
+toward minor at peace with join-empire overture suggests declareWar (primary before economic)
+tribe candidate is deterministic across repeated suggestDeclareWarOrders calls
+tribe stays in candidates when other GPs hold embassies on it
 trade consulate debits treasury on accept
 trade consulate rejects when treasury too low (no debit)
 trade consulate rejects without diplomatic_expertise
@@ -505,4 +601,5 @@ work order prospect rejected when province not fogged or better
 work order prospect rejected when tile already prospected
 work order prospect rejected when tile is not mineral-eligible
 work order rejected for invalid target for unit type
+work-target / mineral / prospect constants are defined in the orders domain file
 work: non-empty basePrefix replay remains equivalent

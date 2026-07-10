@@ -61,7 +61,7 @@ void main() {
 
     test('default gate uses explicit allowlist (baseline allow-all off)', () {
       expect(ordersPreferScenarioTablesBaselineAllowAll, isFalse);
-      expect(ordersPreferScenarioTablesAllowlist, isNotEmpty);
+      expect(ordersPreferScenarioTablesAllowlist, isA<Set<String>>());
       expect(
         ordersScenarioTableRunnerViolationReason(
           'packages/colonizethis_orders/test/orders/brand_new_imperative_test.dart',

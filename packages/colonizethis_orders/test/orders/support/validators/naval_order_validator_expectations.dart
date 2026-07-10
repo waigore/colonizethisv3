@@ -2,16 +2,14 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
+import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'naval_order_validator_test_support.dart';
+import 'naval_order_validator_fixtures.dart';
+import 'naval_order_validator_expectation_shorthand.dart';
 
 /// Pins for [navalOrderValidatorScenarios] rows.
-part 'naval_order_validator_expectations_move.dart';
-part 'naval_order_validator_expectations_move_b.dart';
-part 'naval_order_validator_expectations_mission.dart';
-
 enum NavalOrderValidatorTarget {
   moveRejectsWhenPreviousRejected,
   moveRejectsWhenFleetNotFound,
@@ -40,50 +38,192 @@ enum NavalOrderValidatorTarget {
 void runNavalOrderValidatorExpectation(NavalOrderValidatorTarget target) {
   switch (target) {
     case NavalOrderValidatorTarget.moveRejectsWhenPreviousRejected:
-      _navalmoveRejectsWhenPreviousRejected();
+        novExpectAtSeaMove(
+          topology: novTwoAdjacentSeas(),
+          destSea: 'sea2',
+          previousRejected: true,
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Previous invalid',
+        );
     case NavalOrderValidatorTarget.moveRejectsWhenFleetNotFound:
-      _navalmoveRejectsWhenFleetNotFound();
+        novExpectAtSeaMove(
+          topology: novSingleSea(),
+          destSea: 'sea1',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Fleet not found',
+          fleets: const [],
+        );
     case NavalOrderValidatorTarget.moveRejectsWhenFleetNotOwnedByPlayer:
-      _navalmoveRejectsWhenFleetNotOwnedByPlayer();
+        novExpectAtSeaMove(
+          topology: novSingleSea(),
+          destSea: 'sea1',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+          fleets: [navalOrderValidatorTestFleetAtSea(ownerId: 'p2')],
+          players: novTwoHumanPlayers,
+        );
     case NavalOrderValidatorTarget.moveRejectsWhenHomeFleet:
-      _navalmoveRejectsWhenHomeFleet();
+        novExpectAtSeaMove(
+          topology: novTwoAdjacentSeas(),
+          destSea: 'sea2',
+          fleetId: 'fleet_p1',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+          fleets: [navalOrderValidatorTestFleetAtSea(fleetId: 'fleet_p1')],
+        );
     case NavalOrderValidatorTarget.moveAcceptAdjacentSeaZoneWhenAtSea:
-      _navalmoveAcceptAdjacentSeaZoneWhenAtSea();
+        novExpectAtSeaMove(
+          topology: novTwoAdjacentSeas(),
+          destSea: 'sea2',
+          status: OrderValidationStatus.accepted,
+          reasonIsNull: true,
+        );
     case NavalOrderValidatorTarget.moveRejectNonAdjacentSeaZone:
-      _navalmoveRejectNonAdjacentSeaZone();
+        novExpectAtSeaMove(
+          topology: novThreeSeasLinear(),
+          destSea: 'sea3',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+        );
     case NavalOrderValidatorTarget.moveDockRejectWhenSeaZoneNotAdjacentToProvince:
-      _navalmoveDockRejectWhenSeaZoneNotAdjacentToProvince();
+        novExpectDockMove(
+          topology: novTwoSeasProvinceDockMismatch(),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+        );
     case NavalOrderValidatorTarget.moveAcceptUndockFromPortToAdjacentSeaZone:
-      _navalmoveAcceptUndockFromPortToAdjacentSeaZone();
+        novExpectInPortMove(
+          topology: novSeaProvinceAdjacent(),
+          destSea: 'sea1',
+          status: OrderValidationStatus.accepted,
+          reasonIsNull: true,
+        );
     case NavalOrderValidatorTarget.moveAtSeaRejectsProvinceIdAsDestinationSeaZoneId:
-      _navalmoveAtSeaRejectsProvinceIdAsDestinationSeaZoneId();
+        novExpectAtSeaMove(
+          topology: novSeaProvinceAdjacent(),
+          destSea: 'P1',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+        );
     case NavalOrderValidatorTarget.moveInPortAcceptsAnySeaWithDirectPsEdgeToPort:
-      _navalmoveInPortAcceptsAnySeaWithDirectPsEdgeToPort();
+        final validator = novValidatorInPort(topology: novPortDualSea());
+        novExpectNavalMove(
+          validator: validator,
+          order: novSeaMove('f1', 'sea2'),
+          status: OrderValidationStatus.accepted,
+        );
     case NavalOrderValidatorTarget.moveInPortRejectsSeaOnlyReachableViaSsFromPortSea:
-      _navalmoveInPortRejectsSeaOnlyReachableViaSsFromPortSea();
+        final validator = novValidatorInPort(topology: novPortSeaChain());
+        novExpectNavalMove(
+          validator: validator,
+          order: novSeaMove('f1', 'sea2'),
+          status: OrderValidationStatus.rejected,
+        );
+        novExpectNavalMove(
+          validator: validator,
+          order: novSeaMove('f1', 'sea1'),
+          status: OrderValidationStatus.accepted,
+        );
     case NavalOrderValidatorTarget.moveRejectWhenInPortButInPortAtProvinceIdNull:
-      _navalmoveRejectWhenInPortButInPortAtProvinceIdNull();
+        novExpectInPortMove(
+          topology: novSingleSea(),
+          destSea: 'sea1',
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Invalid naval move',
+          fleets: [navalOrderValidatorTestFleetBrokenInPort()],
+        );
     case NavalOrderValidatorTarget.moveDockAcceptWhenAtSeaAdjacentOwnedProvince:
-      _navalmoveDockAcceptWhenAtSeaAdjacentOwnedProvince();
+        novExpectDockMove(
+          topology: novSeaProvinceAdjacent(),
+          status: OrderValidationStatus.accepted,
+          reasonIsNull: true,
+        );
     case NavalOrderValidatorTarget.moveDockAcceptWhenPortProvinceIdIsLocalUnprefixed:
-      _navalmoveDockAcceptWhenPortProvinceIdIsLocalUnprefixed();
+        novExpectDockMove(
+          topology: novSeaProvinceAdjacent(),
+          status: OrderValidationStatus.accepted,
+          reasonIsNull: true,
+          order: NavalMoveOrder(fleetId: 'f1', destinationPortProvinceId: 'P1'),
+        );
     case NavalOrderValidatorTarget.moveDockRejectWhenFleetInPort:
-      _navalmoveDockRejectWhenFleetInPort();
+        novExpectDockMove(
+          topology: novSeaProvinceAdjacent(),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Dock only allowed when fleet is at sea',
+          fleets: [navalOrderValidatorTestFleetInPort()],
+        );
     case NavalOrderValidatorTarget.moveDockRejectWhenPortProvinceNotOwned:
-      _navalmoveDockRejectWhenPortProvinceNotOwned();
+        novExpectDockMove(
+          topology: novSeaProvinceAdjacent(),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Can only dock at own province',
+          oldWorldProvinces: [
+            navalOrderValidatorTestOwnedProvince('P1', ownerId: 'p2'),
+          ],
+          players: novTwoHumanPlayers,
+        );
     case NavalOrderValidatorTarget.moveDockRejectWhenPortProvinceNotFound:
-      _navalmoveDockRejectWhenPortProvinceNotFound();
+        novExpectDockMove(
+          topology: novSingleSea(),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Port province not found',
+          order: NavalMoveOrder(
+            fleetId: 'f1',
+            destinationPortProvinceId: ProvinceId.full(
+              kNavalOrderValidatorTestRegionId,
+              'Nonexistent',
+            ),
+          ),
+        );
     case NavalOrderValidatorTarget.missionRejectsWhenPreviousRejected:
-      _navalmissionRejectsWhenPreviousRejected();
+        novExpectNavalMission(
+          validator: novAtSeaMissionValidator(),
+          order: const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
+          previousRejected: true,
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Previous invalid',
+        );
     case NavalOrderValidatorTarget.missionBlockadeRequiresTargetProvince:
-      _navalmissionBlockadeRequiresTargetProvince();
+        novExpectNavalMission(
+          validator: novAtSeaMissionValidator(),
+          order: NavalMissionOrder(
+            fleetId: 'f1',
+            mission: FleetMission.blockade.name,
+            targetProvinceId: null,
+          ),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Blockade requires a target province',
+        );
     case NavalOrderValidatorTarget.missionBlockadeRejectWhenTargetNotPrefixed:
-      _navalmissionBlockadeRejectWhenTargetNotPrefixed();
+        novExpectNavalMission(
+          validator: novAtSeaMissionValidator(),
+          order: NavalMissionOrder(
+            fleetId: 'f1',
+            mission: FleetMission.blockade.name,
+            targetProvinceId: 'P2',
+          ),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Blockade requires a target province',
+        );
     case NavalOrderValidatorTarget.missionBlockadeRejectWhenBlockadingOwnProvince:
-      _navalmissionBlockadeRejectWhenBlockadingOwnProvince();
+        novExpectNavalMission(
+          validator: novAtSeaMissionValidator(
+            oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],
+          ),
+          order: NavalMissionOrder(
+            fleetId: 'f1',
+            mission: FleetMission.blockade.name,
+            targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P1'),
+          ),
+          status: OrderValidationStatus.rejected,
+          reasonExact: 'Cannot blockade own province',
+        );
     case NavalOrderValidatorTarget.missionAcceptNonBlockadeMissionWhenFleetAtSea:
-      _navalmissionAcceptNonBlockadeMissionWhenFleetAtSea();
+        novExpectNavalMission(
+          validator: novAtSeaMissionValidator(),
+          order: const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
+          status: OrderValidationStatus.accepted,
+          reasonIsNull: true,
+        );
   }
 }
-
-

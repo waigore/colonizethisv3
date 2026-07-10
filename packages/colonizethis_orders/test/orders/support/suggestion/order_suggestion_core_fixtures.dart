@@ -258,3 +258,45 @@ MapTopology oscSeaTopology(List<String> seaZones, {List<TopologyEdge>? edges}) {
     edges: edges ?? const [],
   );
 }
+
+/// Partial + fully known tribe provinces for explore cache-scope scenarios.
+Game oscPartialRevealExploreCacheGame() {
+  final partialProvince = OscIds.prov('p_partial');
+  final fullyKnownProvince = OscIds.prov('p_known');
+  final partialKnownTile = OscIds.tile('p_partial', 0, 0);
+  final partialUnknownTile = OscIds.tile('p_partial', 1, 0);
+  final knownTile = OscIds.tile('p_known', 0, 0);
+  return oscGame(
+    id: 'g-cache-scope',
+    worldState: oscWorld(
+      oldWorld: RegionData(
+        provinces: [
+          oscProvince('p_partial', ownerId: 'tribe1'),
+          oscProvince('p_known', ownerId: 'tribe1'),
+        ],
+        units: [
+          oscExplorer(provinceLocal: 'p_partial', tileKey: partialKnownTile),
+        ],
+      ),
+      playerVisibilityByTile: oscVisibility({
+        partialKnownTile: 'fogged',
+        partialUnknownTile: 'unknown',
+        knownTile: 'fullyVisible',
+      }),
+      tileKeysByRegionAndProvince: {
+        OscIds.ow: {
+          partialProvince: [partialKnownTile, partialUnknownTile],
+          fullyKnownProvince: [knownTile],
+        },
+      },
+    ),
+    tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+    overtureStates: const [
+      OvertureState(
+        gpId: OscIds.playerId,
+        targetId: 'tribe1',
+        stage: OvertureStage.tradeConsulate,
+      ),
+    ],
+  );
+}

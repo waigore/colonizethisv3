@@ -119,4 +119,3 @@ List<ValidWorkTilesScenario> validWorkTilesScenarios() => const [
         target: ValidWorkTilesTarget.suggestworkordersPurchaseLandExcludesPartiallyRevealedTargetWhenEmbassyOrDiplomacyPreconditionsFail,
       ),
     ];
-

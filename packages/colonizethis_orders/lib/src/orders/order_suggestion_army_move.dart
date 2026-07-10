@@ -12,6 +12,31 @@ import 'order_visibility.dart';
 const int _kMaxArmyMoveSuggestionsPerArmy = 12;
 const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
 
+/// Owned full province ids for army-move candidate enumeration.
+///
+/// Prefers an explicit [playerOwnedFullProvinceIds] when the caller already
+/// scanned the world or view once per pass; falls back to [view] when supplied
+/// (picker with [OrderResolutionContext]); otherwise uses [ProvinceOwnerCache].
+Set<String> armyMovePlayerOwnedProvinceIds({
+  required Game game,
+  required String playerId,
+  Set<String>? playerOwnedFullProvinceIds,
+  PlayerView? view,
+}) {
+  if (playerOwnedFullProvinceIds != null) {
+    return playerOwnedFullProvinceIds;
+  }
+  if (view != null) {
+    return ownedProvinceIdsFromView(view, playerId);
+  }
+  return {
+    for (final p in ProvinceOwnerCache.of(
+      game.worldState,
+    ).provincesOwnedBy(playerId))
+      toFullProvinceId(p.regionId, p.id),
+  };
+}
+
 /// Destination province ids for army moves (Military Units picker parity): adjacent
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
@@ -152,16 +177,12 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
               provinceById: sharedCandidateValidator.view.provincesById,
             )
           : null);
-  final ownedProvinceIds =
-      playerOwnedFullProvinceIds ??
-      (effectiveResolution != null
-          ? ownedProvinceIdsFromView(effectiveResolution.view, playerId)
-          : <String>{
-              for (final p in ProvinceOwnerCache.of(
-                game.worldState,
-              ).provincesOwnedBy(playerId))
-                toFullProvinceId(p.regionId, p.id),
-            });
+  final ownedProvinceIds = armyMovePlayerOwnedProvinceIds(
+    game: game,
+    playerId: playerId,
+    playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
+    view: effectiveResolution?.view,
+  );
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
@@ -291,7 +312,11 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
     (m) => m.destinationProvinceId,
   );
 
-  final playerOwnedFullProvinceIds = ownedProvinceIdsFromView(view, playerId);
+  final playerOwnedFullProvinceIds = armyMovePlayerOwnedProvinceIds(
+    game: game,
+    playerId: playerId,
+    view: view,
+  );
 
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;

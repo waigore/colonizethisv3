@@ -1,6 +1,7 @@
 // Shared fixtures for work-order application / completion scenarios (Refs #3949).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'orders_application_test_support.dart';
@@ -190,6 +191,45 @@ Unit workAppWorkingUnit({
     assignedTileKey: assignedTileKey,
   );
 }
+
+Unit workAppPurchaseLandMerchant({
+  String id = 'merchant1',
+  String ownerId = 'p1',
+}) =>
+    workAppUnit(
+      id: id,
+      type: kUnitTypeMerchant,
+      ownerId: ownerId,
+      locationProvinceId: WorkAppIds.minorProvinceId,
+      tileKey: WorkAppIds.tileKeyMinor,
+    );
+
+Game workAppSingleGpPurchaseLandGame({
+  List<OvertureState> overtureStates = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  int treasuryExtra = 100,
+}) =>
+    workAppPurchaseLandGame(
+      units: [workAppPurchaseLandMerchant()],
+      players: [
+        workAppPlayer(
+          treasury: WorkAppIds.purchaseLandGrainCost + treasuryExtra,
+        ),
+      ],
+      overtureStates: overtureStates,
+      diplomacyRelations: diplomacyRelations,
+    );
+
+Orders workAppPurchaseLandOrders({
+  String unitId = 'merchant1',
+  String playerId = 'p1',
+}) =>
+    workAppSingleWorkOrder(
+      unitId: unitId,
+      playerId: playerId,
+      target: kWorkTargetPurchaseLand,
+      targetTileKey: WorkAppIds.tileKeyMinor,
+    );
 
 /// Home + minor province purchase-land setup (merchant on minor tile).
 Game workAppPurchaseLandGame({
