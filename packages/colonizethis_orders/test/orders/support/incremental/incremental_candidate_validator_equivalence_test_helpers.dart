@@ -6,3 +6,4 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 part 'incremental_candidate_validator_equivalence_test_helpers_part1.dart';
+part 'incremental_candidate_validator_equivalence_test_helpers_part2.dart';
