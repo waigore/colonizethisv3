@@ -62,6 +62,44 @@ class SuggesterExpectation {
   custom;
 }
 
+/// Single-offer pin sugar (Refs #3939 slice 62).
+SuggesterExpectation suggesterSingleOfferExpect(
+  String commodityId,
+  int quantity, {
+  bool pinDefaults = false,
+  bool bidsEmpty = false,
+  int? offersLength = 1,
+}) => SuggesterExpectation(
+  offersLength: offersLength,
+  bidsEmpty: bidsEmpty ? true : null,
+  singleOffer: (
+    commodityId: commodityId,
+    quantity: quantity,
+    type: pinDefaults ? TradeOrderType.offer : null,
+    priority: pinDefaults ? TradeSuggestionContext.defaultOfferPriority : null,
+    isFtp: pinDefaults ? false : null,
+  ),
+);
+
+/// Single-bid pin sugar (Refs #3939 slice 62).
+SuggesterExpectation suggesterSingleBidExpect(
+  String commodityId,
+  int quantity, {
+  bool pinDefaults = false,
+  bool offersEmpty = false,
+  int? bidsLength = 1,
+}) => SuggesterExpectation(
+  bidsLength: bidsLength,
+  offersEmpty: offersEmpty ? true : null,
+  singleBid: (
+    commodityId: commodityId,
+    quantity: quantity,
+    type: pinDefaults ? TradeOrderType.bid : null,
+    priority: pinDefaults ? TradeSuggestionContext.defaultBidPriority : null,
+    isFtp: pinDefaults ? false : null,
+  ),
+);
+
 void assertSuggesterExpectation(
   TradeSuggestionContext context,
   TradeSuggestionResult result,

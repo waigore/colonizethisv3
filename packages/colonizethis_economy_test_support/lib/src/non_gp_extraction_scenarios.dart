@@ -1,4 +1,4 @@
-// Table-driven non-GP extraction scenarios (Refs #3836, #3939 slice 46 / 58).
+// Table-driven non-GP extraction scenarios (Refs #3836, #3939 slice 46 / 58 / 62).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -9,37 +9,43 @@ import 'extraction_fixture_support.dart';
 import 'non_gp_extraction_expectations.dart';
 
 /// One row for `computeNonGreatPowerExtraction` scenario tables.
-class NonGpExtractionScenario {
-  const NonGpExtractionScenario({
-    required this.label,
-    required this.game,
-    required this.tileMapByRegion,
-    required this.connectivityByFactionId,
-    required this.verify,
-    this.refs,
-  });
+typedef NonGpExtractionScenario = ({
+  String label,
+  Game game,
+  Map<String, TileMapResult> tileMapByRegion,
+  Map<String, ConnectivityResult> connectivityByFactionId,
+  void Function(Map<String, Map<CommodityId, int>> result) verify,
+  String? refs,
+});
 
-  final String label;
-  final Game game;
-  final Map<String, TileMapResult> tileMapByRegion;
-  final Map<String, ConnectivityResult> connectivityByFactionId;
-  final void Function(Map<String, Map<CommodityId, int>> result) verify;
-  final String? refs;
-}
-
-NonGpExtractionScenario _nonGpRow({
+NonGpExtractionScenario nonGpExtractionRow({
   required String label,
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, ConnectivityResult> connectivityByFactionId,
   required NonGpExtractionExpectation expect,
   String? refs,
-}) => NonGpExtractionScenario(
+}) => (
   label: label,
   game: game,
   tileMapByRegion: tileMapByRegion,
   connectivityByFactionId: connectivityByFactionId,
   verify: (result) => assertNonGpExtractionExpectation(result, expect),
+  refs: refs,
+);
+
+NonGpExtractionScenario nonGpEmptyExtractionRow({
+  required String label,
+  Game? game,
+  Map<String, TileMapResult> tileMapByRegion = const {},
+  Map<String, ConnectivityResult> connectivityByFactionId = const {},
+  String? refs = '#2991',
+}) => nonGpExtractionRow(
+  label: label,
+  game: game ?? nonGpEmptyGame(),
+  tileMapByRegion: tileMapByRegion,
+  connectivityByFactionId: connectivityByFactionId,
+  expect: const NonGpExtractionExpectation(empty: true),
   refs: refs,
 );
 
@@ -64,7 +70,7 @@ NonGpExtractionScenario nonGpMinorRow({
   int height = 2,
   int capitalTileGrainBonusPerTurn = 0,
   String? refs,
-}) => _nonGpRow(
+}) => nonGpExtractionRow(
   label: label,
   game: nonGpMinorM1Game(
     tileSpecs: tileSpecs,
@@ -89,11 +95,9 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       [null, null],
     ],
     connected: {'oldWorld|m1|1|0'},
-    expect: const NonGpExtractionExpectation(
-      factionTotals: {
-        'm1': {'grain': 1},
-      },
-    ),
+    expect: nonGpTotalsExpect({
+      'm1': {'grain': 1},
+    }),
     refs: '#2991',
   ),
   nonGpMinorRow(
@@ -107,14 +111,12 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       [null, null],
     ],
     connected: {'oldWorld|m1|1|0'},
-    expect: const NonGpExtractionExpectation(
-      factionTotals: {
-        'm1': {'grain': 1},
-      },
-    ),
+    expect: nonGpTotalsExpect({
+      'm1': {'grain': 1},
+    }),
     refs: '#2991',
   ),
-  _nonGpRow(
+  nonGpExtractionRow(
     label:
         'mineral resources on non-GP tiles are unconditionally excluded '
         '(SPEC AC: tribes/minors never prospect)',
@@ -133,8 +135,8 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     connectivityByFactionId: connectivityByFaction({
       't1': {'newWorld|t1|1|0', 'newWorld|t1|1|1'},
     }),
-    expect: const NonGpExtractionExpectation(
-      factionTotals: {
+    expect: nonGpTotalsExpect(
+      {
         't1': {'grain': 1},
       },
       excludesCommodity: ('t1', 'iron'),
@@ -166,8 +168,8 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       [Resource.timber],
     ],
     connected: {'oldWorld|m1|0|0'},
-    expect: const NonGpExtractionExpectation(
-      factionTotals: {
+    expect: nonGpTotalsExpect(
+      {
         'm1': {'timber': 1},
       },
       factionCommodityKeyCount: ('m1', 1),
@@ -183,27 +185,19 @@ List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
 ];
 
 List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
-  _nonGpRow(
+  nonGpEmptyExtractionRow(
     label:
         'empty minors and tribes lists yield an empty result and skip lookups',
-    game: nonGpEmptyGame(),
-    tileMapByRegion: const <String, TileMapResult>{},
-    connectivityByFactionId: const <String, ConnectivityResult>{},
-    expect: const NonGpExtractionExpectation(empty: true),
-    refs: '#2991',
   ),
-  _nonGpRow(
+  nonGpEmptyExtractionRow(
     label:
         'empty tileMapByRegion short-circuits even when minors/tribes present',
     game: nonGpMinorM1Game(),
-    tileMapByRegion: const <String, TileMapResult>{},
     connectivityByFactionId: connectivityByFaction({
       'm1': {'oldWorld|m1|1|0'},
     }),
-    expect: const NonGpExtractionExpectation(empty: true),
-    refs: '#2991',
   ),
-  _nonGpRow(
+  nonGpEmptyExtractionRow(
     label:
         'minor without capitalProvinceId or capitalTile is skipped silently '
         '(no throw, no entry in output)',
@@ -223,10 +217,8 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       'm1': {'oldWorld|m1|0|0'},
       'm2': {'oldWorld|m2|0|0'},
     }),
-    expect: const NonGpExtractionExpectation(empty: true),
-    refs: '#2991',
   ),
-  _nonGpRow(
+  nonGpEmptyExtractionRow(
     label:
         'minor with capital but no connectivity entry in the input is skipped',
     game: nonGpMinorM1Game(
@@ -237,9 +229,6 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
         [Resource.grain],
       ]),
     },
-    connectivityByFactionId: const <String, ConnectivityResult>{},
-    expect: const NonGpExtractionExpectation(empty: true),
-    refs: '#2991',
   ),
   nonGpMinorRow(
     label:
@@ -259,19 +248,19 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
 List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
   final dual = nonGpMinorTribeTimberFursFixture();
   return [
-    _nonGpRow(
+    nonGpExtractionRow(
       label:
           'minor and tribe in the same Game both produce per-faction totals '
           'keyed by their ids',
       game: dual.game,
       tileMapByRegion: dual.tileMapByRegion,
       connectivityByFactionId: dual.connectivityByFactionId,
-      expect: const NonGpExtractionExpectation(
-        factionKeysUnordered: ['m1', 't1'],
-        factionTotals: {
+      expect: nonGpTotalsExpect(
+        {
           'm1': {'timber': 1},
           't1': {'furs': 1},
         },
+        factionKeysUnordered: ['m1', 't1'],
       ),
       refs: '#2991',
     ),
@@ -290,11 +279,9 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
         [Resource.grain, Resource.grain, Resource.timber],
       ],
       connected: {'oldWorld|m1|0|0', 'oldWorld|m1|1|0', 'oldWorld|m1|2|0'},
-      expect: const NonGpExtractionExpectation(
-        factionTotals: {
-          'm1': {'grain': 2, 'timber': 1},
-        },
-      ),
+      expect: nonGpTotalsExpect({
+        'm1': {'grain': 2, 'timber': 1},
+      }),
       refs: '#2991',
     ),
     nonGpMinorRow(
@@ -308,11 +295,9 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
         [null, Resource.timber],
       ],
       connected: {'oldWorld|m1|1|0'},
-      expect: const NonGpExtractionExpectation(
-        factionTotals: {
-          'm1': {'timber': 1},
-        },
-      ),
+      expect: nonGpTotalsExpect({
+        'm1': {'timber': 1},
+      }),
       refs: '#2991 #3870',
     ),
   ];

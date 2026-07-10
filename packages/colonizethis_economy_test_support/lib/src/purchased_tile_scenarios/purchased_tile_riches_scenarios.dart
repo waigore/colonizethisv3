@@ -10,28 +10,19 @@ import 'purchased_tile_expectations.dart';
 import 'purchased_tile_riches_test_support.dart';
 
 /// One row in [purchasedTileRichesScenarios].
-class PurchasedTileRichesScenario {
-  const PurchasedTileRichesScenario({
-    required this.label,
-    required this.buildGame,
-    required this.tileMaps,
-    required this.verify,
-    this.richesCashMultiplier,
-    this.refs,
-  });
-
-  final String label;
-  final Game Function() buildGame;
-  final Map<String, TileMapResult> Function() tileMaps;
-  final double? richesCashMultiplier;
-  final void Function(
+typedef PurchasedTileRichesScenario = ({
+  String label,
+  Game Function() buildGame,
+  Map<String, TileMapResult> Function() tileMaps,
+  double? richesCashMultiplier,
+  void Function(
     PurchasedTileRichesResult result,
     PurchasedTileIndex index,
     Game game,
   )
-  verify;
-  final String? refs;
-}
+  verify,
+  String? refs,
+});
 
 /// Compact purchased-tile riches row (Refs #3939 slice 48 / 59).
 PurchasedTileRichesScenario purchasedTileRichesRow({
@@ -57,7 +48,7 @@ PurchasedTileRichesScenario purchasedTileRichesRow({
       );
   final Map<String, TileMapResult> Function() resolvedMaps =
       tileMaps ?? () => tileMapByRegionForResource(resolvedResource);
-  return PurchasedTileRichesScenario(
+  return (
     label: label,
     buildGame: resolvedBuild,
     tileMaps: resolvedMaps,

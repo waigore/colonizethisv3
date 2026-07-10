@@ -57,6 +57,41 @@ class NonGpAutoOffersExpectation {
   final void Function(Map<String, List<TradeOrder>> result)? custom;
 }
 
+/// Compact `m1` offer-list pin (Refs #3939 slice 62).
+NonGpAutoOffersExpectation nonGpM1OffersExpect({
+  int? length,
+  List<CommodityId>? commodityIds,
+  List<String>? originTileKeys,
+  CommodityId? singleCommodityId,
+  String? singleOriginTileKey,
+  bool standardPriorityOneOffers = false,
+  CommodityId? excludeCommodity,
+  Set<String>? factionKeys = const {'m1'},
+}) => NonGpAutoOffersExpectation(
+  factionKeys: factionKeys,
+  offersByFaction: {
+    'm1': FactionAutoOffersExpectation(
+      length: length,
+      commodityIds: commodityIds,
+      originTileKeys: originTileKeys,
+      singleCommodityId: singleCommodityId,
+      singleOriginTileKey: singleOriginTileKey,
+      standardPriorityOneOffers: standardPriorityOneOffers,
+      excludeCommodity: excludeCommodity,
+    ),
+  },
+);
+
+/// Dual-faction offer pins (Refs #3939 slice 62).
+NonGpAutoOffersExpectation nonGpDualFactionOffersExpect({
+  required FactionAutoOffersExpectation m1,
+  required FactionAutoOffersExpectation t1,
+  Iterable<String>? factionKeysUnordered = const ['m1', 't1'],
+}) => NonGpAutoOffersExpectation(
+  factionKeysUnordered: factionKeysUnordered,
+  offersByFaction: {'m1': m1, 't1': t1},
+);
+
 void _assertStandardPriorityOneOffer(TradeOrder order) {
   expect(order.type, equals(TradeOrderType.offer));
   expect(order.priority, equals(1));

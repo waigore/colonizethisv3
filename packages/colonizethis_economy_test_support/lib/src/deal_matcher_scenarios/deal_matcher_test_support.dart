@@ -325,6 +325,58 @@ DealMatchExpectation frrOwnerFillExpect({
   ),
 );
 
+/// Multiple owning-GP FRR fills (Refs #3939 slice 62).
+DealMatchExpectation frrOwnerFillsExpect({
+  required String ownerBuyer,
+  required List<int> quantities,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  bool unfilledOffersEmpty = false,
+  bool unfilledBidsEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsLength: quantities.length,
+  filledDealExpectations: [
+    for (final q in quantities)
+      FilledDealExpectation(
+        buyerFactionId: ownerBuyer,
+        quantity: q,
+        isFirstRightOfRefusalMatch: true,
+      ),
+  ],
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+  unfilledBidsEmpty: unfilledBidsEmpty,
+);
+
+/// No-fill carry-forward expect (Refs #3939 slice 62).
+DealMatchExpectation matcherNoFillExpect({
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  Map<String, List<TradeOrder>>? unfilledOffersByFactionId,
+  bool unfilledOffersEmpty = false,
+  bool unfilledBidsEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsEmpty: true,
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledOffersByFactionId: unfilledOffersByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+  unfilledBidsEmpty: unfilledBidsEmpty,
+);
+
+/// Single treasury-insufficient activity note (Refs #3939 slice 62).
+Map<CommodityId, List<MarketActivityNote>> matcherTreasuryInsufficientNotes(
+  String factionId,
+  String commodityId,
+  int quantity,
+) => {
+  commodityId: [
+    MarketActivityNote(
+      kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+      factionId: factionId,
+      commodityId: commodityId,
+      quantity: quantity,
+    ),
+  ],
+};
+
 /// First filled buyer (+ optional unfilled rival) (Refs #3939 slice 61).
 DealMatchExpectation matcherFirstBuyerExpect(
   String buyer, {

@@ -100,20 +100,9 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100},
       purchasedTileIndex: frrMatcherTestIndexDual(),
     ),
-    expect: const DealMatchExpectation(
-      filledDealsLength: 2,
-      filledDealExpectations: [
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 5,
-          isFirstRightOfRefusalMatch: true,
-        ),
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 5,
-          isFirstRightOfRefusalMatch: true,
-        ),
-      ],
+    expect: frrOwnerFillsExpect(
+      ownerBuyer: 'gpA',
+      quantities: const [5, 5],
       unfilledOffersEmpty: true,
       unfilledBidsEmpty: true,
     ),
@@ -137,20 +126,9 @@ List<DealMatcherScenario> dealMatcherFirstRightMultiBidScenarios() => [
       tradeCapacityByFactionId: {'gpA': 100},
       purchasedTileIndex: frrMatcherTestIndex(),
     ),
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      filledDealExpectations: const [
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 4,
-          isFirstRightOfRefusalMatch: true,
-        ),
-        FilledDealExpectation(
-          buyerFactionId: 'gpA',
-          quantity: 6,
-          isFirstRightOfRefusalMatch: true,
-        ),
-      ],
+    expect: frrOwnerFillsExpect(
+      ownerBuyer: 'gpA',
+      quantities: const [4, 6],
       unfilledBidsByFactionId: matcherUnfilledBid(
         'gpA',
         'timber',

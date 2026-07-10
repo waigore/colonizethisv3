@@ -14,29 +14,16 @@ import 'frr_credits_test_support.dart';
 import 'frr_d5_test_support.dart';
 
 /// One row for `computeFirstRightCredits` scenario tables.
-class FrrCreditsScenario {
-  const FrrCreditsScenario({
-    required this.label,
-    required this.filledDeals,
-    required this.purchasedTileIndex,
-    required this.relationScoreFor,
-    required this.verify,
-    this.embassyGpRelationsFor,
-    this.deterministicRerunFirstKey,
-    this.refs,
-  });
-
-  final List<FilledDeal> filledDeals;
-  final PurchasedTileIndex? purchasedTileIndex;
-  final num Function(String owningGpId, String sourceFactionId)
-  relationScoreFor;
-  final Map<String, num> Function(String sourceFactionId)?
-  embassyGpRelationsFor;
-  final String label;
-  final void Function(FirstRightCreditsResult result) verify;
-  final String? deterministicRerunFirstKey;
-  final String? refs;
-}
+typedef FrrCreditsScenario = ({
+  String label,
+  List<FilledDeal> filledDeals,
+  PurchasedTileIndex? purchasedTileIndex,
+  num Function(String owningGpId, String sourceFactionId) relationScoreFor,
+  Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor,
+  void Function(FirstRightCreditsResult result) verify,
+  String? deterministicRerunFirstKey,
+  String? refs,
+});
 
 void runFrrCreditsScenario(FrrCreditsScenario scenario) {
   FirstRightCreditsResult run() => computeFirstRightCredits(
@@ -87,7 +74,7 @@ FrrCreditsScenario frrCreditsRow({
       (constantRelation != null
           ? frrConstantRelation(constantRelation)
           : frrAlwaysZeroRelation);
-  return FrrCreditsScenario(
+  return (
     label: label,
     filledDeals: filledDeals ?? [dealOn('k1', buyer: 'gpB')],
     purchasedTileIndex: nullPurchasedTileIndex

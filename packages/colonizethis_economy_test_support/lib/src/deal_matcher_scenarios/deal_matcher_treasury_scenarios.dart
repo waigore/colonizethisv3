@@ -56,8 +56,7 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
     buyer: 'gp1',
     bidQty: 10,
     treasuryBudgetByBuyerFactionId: const {'gp1': -50},
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 10),
     ),
   ),
@@ -93,17 +92,12 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
         'truncated bid (full bid quantity carried in note)',
     inputs: matcherPairTrade(buyer: 'gp1', bidQty: 10, treasuryBudget: 100),
-    expect: const DealMatchExpectation(
-      activityNotesByCommodityId: {
-        'timber': [
-          MarketActivityNote(
-            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
-            factionId: 'gp1',
-            commodityId: 'timber',
-            quantity: 10,
-          ),
-        ],
-      },
+    expect: DealMatchExpectation(
+      activityNotesByCommodityId: matcherTreasuryInsufficientNotes(
+        'gp1',
+        'timber',
+        10,
+      ),
     ),
     refs: '#3115',
   ),
@@ -145,8 +139,7 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     offerQty: 5,
     bidQty: 5,
     treasuryBudgetByBuyerFactionId: const <String, int>{},
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledBidsByFactionId: matcherUnfilledBid('gp1', 'timber', 5),
     ),
   ),
@@ -158,18 +151,13 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     offerQty: 1,
     bidQty: 1,
     treasuryBudgetByBuyerFactionId: const {'gp1': 10},
-    expect: const DealMatchExpectation(
+    expect: DealMatchExpectation(
       filledDealsEmpty: true,
-      activityNotesByCommodityId: {
-        'timber': [
-          MarketActivityNote(
-            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
-            factionId: 'gp1',
-            commodityId: 'timber',
-            quantity: 1,
-          ),
-        ],
-      },
+      activityNotesByCommodityId: matcherTreasuryInsufficientNotes(
+        'gp1',
+        'timber',
+        1,
+      ),
     ),
   ),
   matcherPairRow(

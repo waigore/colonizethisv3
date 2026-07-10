@@ -1,4 +1,4 @@
-// Table-driven non-GP auto-offer scenarios (Refs #3856, #3939 slice 47 / 58).
+// Table-driven non-GP auto-offer scenarios (Refs #3856, #3939 slice 47 / 58 / 62).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -30,7 +30,7 @@ class NonGpAutoOffersScenario implements RefsScenario {
   final String? refs;
 }
 
-NonGpAutoOffersScenario _autoOfferRow({
+NonGpAutoOffersScenario nonGpAutoOfferRow({
   required String label,
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -44,6 +44,21 @@ NonGpAutoOffersScenario _autoOfferRow({
   connectivityByFactionId: connectivityByFactionId,
   verify: (result) =>
       assertNonGpAutoOffersExpectation(result, expect, game: game),
+  refs: refs,
+);
+
+NonGpAutoOffersScenario nonGpEmptyAutoOfferRow({
+  required String label,
+  Game? game,
+  Map<String, TileMapResult> tileMapByRegion = const {},
+  Map<String, ConnectivityResult> connectivityByFactionId = const {},
+  String? refs = '#2991 C4',
+}) => nonGpAutoOfferRow(
+  label: label,
+  game: game ?? nonGpEmptyGame(),
+  tileMapByRegion: tileMapByRegion,
+  connectivityByFactionId: connectivityByFactionId,
+  expect: const NonGpAutoOffersExpectation(empty: true),
   refs: refs,
 );
 
@@ -65,7 +80,7 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
   List<TileImprovementSpec>? tileSpecs,
   bool emptyConnectivity = false,
   String? refs = '#2991 C4',
-}) => _autoOfferRow(
+}) => nonGpAutoOfferRow(
   label: label,
   game: nonGpMinorM1Game(tileSpecs: tileSpecs ?? const []),
   tileMapByRegion: {
@@ -90,7 +105,7 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
   required Resource resource,
   String tileKey = 'oldWorld|m1|0|0',
   String? refs = '#2991 C6',
-}) => _autoOfferRow(
+}) => nonGpAutoOfferRow(
   label: label,
   game: minorTileAutoOfferGame(
     tileKey: tileKey,
@@ -110,27 +125,19 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
 List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
   ..._nonGpAutoOffersEmptyScenarios(),
   ..._nonGpAutoOffersOfferScenarios(),
-  ..._nonGpAutoOffersPurchasedTileScenarios(),
+  ...nonGpAutoOffersPurchasedTileScenarios(),
 ];
 
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
-  _autoOfferRow(
+  nonGpEmptyAutoOfferRow(
     label: 'empty when no minors and no tribes are configured',
-    game: nonGpEmptyGame(),
-    tileMapByRegion: const {},
-    connectivityByFactionId: const {},
-    expect: const NonGpAutoOffersExpectation(empty: true),
-    refs: '#2991 C4',
   ),
-  _autoOfferRow(
+  nonGpEmptyAutoOfferRow(
     label: 'empty when tileMapByRegion is empty',
     game: nonGpMinorM1Game(),
-    tileMapByRegion: const {},
     connectivityByFactionId: connectivityByFaction({
       'm1': {'oldWorld|m1|0|0'},
     }),
-    expect: const NonGpAutoOffersExpectation(empty: true),
-    refs: '#2991 C4',
   ),
   nonGpAutoOfferMinorRow(
     label:
@@ -156,35 +163,27 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
         [Resource.timber, Resource.grain],
       ],
       connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-      expect: const NonGpAutoOffersExpectation(
-        factionKeys: {'m1'},
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 2,
-            standardPriorityOneOffers: true,
-            commodityIds: ['timber', 'grain'],
-            originTileKeys: ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
-          ),
-        },
+      expect: nonGpM1OffersExpect(
+        length: 2,
+        standardPriorityOneOffers: true,
+        commodityIds: ['timber', 'grain'],
+        originTileKeys: ['oldWorld|m1|0|0', 'oldWorld|m1|1|0'],
       ),
     ),
-    _autoOfferRow(
+    nonGpAutoOfferRow(
       label: 'aggregates minor and tribe offers in the same result map',
       game: dual.game,
       tileMapByRegion: dual.tileMapByRegion,
       connectivityByFactionId: dual.connectivityByFactionId,
-      expect: const NonGpAutoOffersExpectation(
-        factionKeysUnordered: ['m1', 't1'],
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 1,
-            singleCommodityId: 'timber',
-          ),
-          't1': FactionAutoOffersExpectation(
-            length: 1,
-            singleCommodityId: 'furs',
-          ),
-        },
+      expect: nonGpDualFactionOffersExpect(
+        m1: const FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'timber',
+        ),
+        t1: const FactionAutoOffersExpectation(
+          length: 1,
+          singleCommodityId: 'furs',
+        ),
       ),
       refs: '#2991 C4',
     ),
@@ -197,16 +196,11 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
         [Resource.spices, Resource.grain],
       ],
       connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-      expect: const NonGpAutoOffersExpectation(
-        factionKeys: {'m1'},
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 1,
-            singleCommodityId: 'grain',
-            singleOriginTileKey: 'oldWorld|m1|1|0',
-            excludeCommodity: 'spices',
-          ),
-        },
+      expect: nonGpM1OffersExpect(
+        length: 1,
+        singleCommodityId: 'grain',
+        singleOriginTileKey: 'oldWorld|m1|1|0',
+        excludeCommodity: 'spices',
       ),
     ),
     nonGpAutoOfferMinorRow(
@@ -218,20 +212,17 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
         [Resource.iron, Resource.grain],
       ],
       connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
-      expect: const NonGpAutoOffersExpectation(
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 1,
-            singleCommodityId: 'grain',
-          ),
-        },
+      expect: nonGpM1OffersExpect(
+        length: 1,
+        singleCommodityId: 'grain',
+        factionKeys: null,
       ),
     ),
   ];
 }
 
 /// Purchased-tile parity scenarios (Refs #2991 C6, #3939).
-List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
+List<NonGpAutoOffersScenario> nonGpAutoOffersPurchasedTileScenarios() {
   const purchasedTileKey = 'oldWorld|m1|0|0';
   const unpurchasedTileKey = 'oldWorld|m1|1|0';
 
@@ -242,19 +233,14 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
           'keyed under the minor with originTileKey equal to the purchased '
           'tile key',
       resource: Resource.timber,
-      expect: const NonGpAutoOffersExpectation(
-        factionKeys: {'m1'},
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 1,
-            standardPriorityOneOffers: true,
-            singleCommodityId: 'timber',
-            singleOriginTileKey: purchasedTileKey,
-          ),
-        },
+      expect: nonGpM1OffersExpect(
+        length: 1,
+        standardPriorityOneOffers: true,
+        singleCommodityId: 'timber',
+        singleOriginTileKey: purchasedTileKey,
       ),
     ),
-    _autoOfferRow(
+    nonGpAutoOfferRow(
       label:
           'purchased non-riches tile parity with unpurchased tile — both tiles '
           'emit auto-offers with identical quantity and priority; only '
@@ -267,15 +253,12 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
       connectivityByFactionId: connectivityByFaction({
         'm1': {purchasedTileKey, unpurchasedTileKey},
       }),
-      expect: const NonGpAutoOffersExpectation(
-        offersByFaction: {
-          'm1': FactionAutoOffersExpectation(
-            length: 2,
-            standardPriorityOneOffers: true,
-            commodityIds: ['timber', 'timber'],
-            originTileKeys: [purchasedTileKey, unpurchasedTileKey],
-          ),
-        },
+      expect: nonGpM1OffersExpect(
+        length: 2,
+        standardPriorityOneOffers: true,
+        commodityIds: ['timber', 'timber'],
+        originTileKeys: [purchasedTileKey, unpurchasedTileKey],
+        factionKeys: null,
       ),
       refs: '#2991 C6',
     ),
@@ -312,7 +295,3 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
     ),
   ];
 }
-
-/// Back-compat alias for purchased-tile C6 rows (Refs #3939).
-List<NonGpAutoOffersScenario> nonGpAutoOffersPurchasedTileScenarios() =>
-    _nonGpAutoOffersPurchasedTileScenarios();

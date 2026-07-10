@@ -19,15 +19,6 @@ TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) =>
       ],
     );
 
-/// 1×1 [TileMapResult] keyed to [province] carrying [resource].
-///
-/// Thin alias of [singleTileMap] kept for SPEC/`economy-models` call sites
-/// (Refs #3939 slice 61).
-TileMapResult singleResourceTileMap(
-  Resource resource, {
-  String province = 'M1',
-}) => singleTileMap(resource, province: province);
-
 /// Builds a single-region `tileMapByRegion` map for [regionId] placing
 /// [resource] at coordinates `(0, 0)` of [province].
 Map<String, TileMapResult> tileMapByRegionForResource(
@@ -86,6 +77,22 @@ TileMapState tileStateFromSpecs(Iterable<TileImprovementSpec> specs) {
   return state;
 }
 
+/// Square tile map of size [width] × [height] where every cell belongs to the
+/// same prefixed [provinceId] and resources are read from [resources].
+TileMapResult nonGpProvMap(
+  String provinceId,
+  int width,
+  int height,
+  List<List<Resource?>> resources,
+) {
+  final localId = provinceId.split('|').last;
+  final grid = List<List<String>>.generate(
+    height,
+    (_) => List<String>.filled(width, localId),
+  );
+  return tileMapFromGrids(grid: grid, resourceGrid: resources);
+}
+
 /// Builds a [TileMapResult] from parallel [grid] and [resourceGrid] rows.
 TileMapResult tileMapFromGrids({
   required List<List<String>> grid,
@@ -96,22 +103,6 @@ TileMapResult tileMapFromGrids({
   grid: grid,
   resourceGrid: resourceGrid,
 );
-
-/// Square tile map of size [width] × [height] where every cell belongs to the
-/// same prefixed [provinceId] and resources are read from [resources].
-TileMapResult tileMapAllInProvinceForNonGpExtractionTest({
-  required String provinceId,
-  required int width,
-  required int height,
-  required List<List<Resource?>> resources,
-}) {
-  final localId = provinceId.split('|').last;
-  final grid = List<List<String>>.generate(
-    height,
-    (_) => List<String>.filled(width, localId),
-  );
-  return tileMapFromGrids(grid: grid, resourceGrid: resources);
-}
 
 /// `{playerId: ConnectivityResult(...)}` for the single-player extraction
 /// setup.
@@ -210,20 +201,6 @@ Game gameForNonGpExtractionTest({
     tribes: tribes,
   );
 }
-
-/// Province-filling [TileMapResult] for non-GP extraction/auto-offer rows
-/// (Refs #3939 slice 58).
-TileMapResult nonGpProvMap(
-  String provinceId,
-  int width,
-  int height,
-  List<List<Resource?>> resources,
-) => tileMapAllInProvinceForNonGpExtractionTest(
-  provinceId: provinceId,
-  width: width,
-  height: height,
-  resources: resources,
-);
 
 /// Empty non-GP [Game] (no provinces / minors / tribes) (Refs #3939 slice 58).
 Game nonGpEmptyGame() => gameForNonGpExtractionTest(provinces: const []);

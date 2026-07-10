@@ -67,8 +67,7 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
   matcherPairRow(
     label: 'zero-quantity offer emits no deal and no carry-forward',
     offerQty: 0,
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledOffersEmpty: true,
       unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
@@ -80,8 +79,7 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
   matcherPairRow(
     label: 'buyer with no tradeCapacity entry treated as zero cargo',
     buyerCapacity: null,
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
   ),
@@ -123,8 +121,7 @@ List<DealMatcherScenario> dealMatcherCargoScenarios() => [
     label: 'negative tradeCapacity is clamped to zero',
     offerQty: 5,
     buyerCapacity: -50,
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledBidsByFactionId: matcherUnfilledBid('b', 'timber', 5),
     ),
   ),
@@ -137,8 +134,7 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     seller: 'tribeT',
     buyer: 'gpB',
     boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    expect: DealMatchExpectation(
-      filledDealsEmpty: true,
+    expect: matcherNoFillExpect(
       unfilledOffersByFactionId: matcherUnfilledOffer(
         'tribeT',
         'timber',
@@ -158,7 +154,7 @@ List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
     seller: 'gpB',
     buyer: 'tribeT',
     boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')},
-    expect: const DealMatchExpectation(filledDealsEmpty: true),
+    expect: matcherNoFillExpect(),
   ),
   matcherRow(
     label: 'only the boycotted GP is blocked; other buyers still trade',

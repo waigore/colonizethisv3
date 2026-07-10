@@ -11,23 +11,14 @@ import 'scenario_runner.dart';
 import 'town_manufacturing_bonus_expectations.dart';
 
 /// One row in [townManufacturingBonusProvinceScenarios].
-class TownManufacturingBonusProvinceScenario {
-  const TownManufacturingBonusProvinceScenario({
-    required this.label,
-    required this.townDevelopmentLevel,
-    required this.townConnectedDeliveredRawByCommodity,
-    required this.verify,
-    this.techUnlocked,
-    this.refs,
-  });
-
-  final String label;
-  final int townDevelopmentLevel;
-  final Map<CommodityId, int> townConnectedDeliveredRawByCommodity;
-  final Map<String, bool>? techUnlocked;
-  final void Function(Map<CommodityId, int> bonus) verify;
-  final String? refs;
-}
+typedef TownManufacturingBonusProvinceScenario = ({
+  String label,
+  int townDevelopmentLevel,
+  Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
+  Map<String, bool>? techUnlocked,
+  void Function(Map<CommodityId, int> bonus) verify,
+  String? refs,
+});
 
 /// Compact province-bonus row (Refs #3939 slice 47 / 57).
 TownManufacturingBonusProvinceScenario townBonusProvinceRow({
@@ -37,7 +28,7 @@ TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   required TownManufacturingBonusProvinceExpectation expect,
   Map<String, bool> techUnlocked = const {},
   String? refs = '#3872',
-}) => TownManufacturingBonusProvinceScenario(
+}) => (
   label: label,
   townDevelopmentLevel: townDevelopmentLevel,
   townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity,

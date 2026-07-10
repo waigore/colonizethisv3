@@ -12,55 +12,30 @@ import 'resource_extractor_expectations.dart';
 
 /// One row for `computeExtraction` scenario tables on the standard single-player
 /// `resourceExtractorGame` setup.
-class ResourceExtractorScenario {
-  const ResourceExtractorScenario({
-    required this.label,
-    this.verify = _noopResourceExtractorVerify,
-    this.tileMap,
-    this.tileMapByRegion,
-    this.grid,
-    this.resourceGrid,
-    this.regionId = 'oldWorld',
-    this.tileSpecs = const [],
-    this.connected = const {},
-    this.pathTransportCap = const {},
-    this.townDevelopmentLevel = 4,
-    this.techUnlocked,
-    this.playerProspectedTiles,
-    this.techCap = 4,
-    this.techCapForPlayer,
-    this.useOverseasGame = false,
-    this.gameOverride,
-    this.connectivityByPlayer,
-    this.techCapComparisonPin,
-    this.blockadedOverseasPin,
-    this.expectLogMessageContains,
-    this.refs,
-  });
-
-  final String label;
-  final TileMapResult? tileMap;
-  final Map<String, TileMapResult>? tileMapByRegion;
-  final List<List<String>>? grid;
-  final List<List<Resource?>>? resourceGrid;
-  final String regionId;
-  final List<TileImprovementSpec> tileSpecs;
-  final Set<String> connected;
-  final Map<String, int> pathTransportCap;
-  final int townDevelopmentLevel;
-  final Map<String, bool>? techUnlocked;
-  final Map<String, Set<String>>? playerProspectedTiles;
-  final int techCap;
-  final int Function(String playerId)? techCapForPlayer;
-  final bool useOverseasGame;
-  final Game? gameOverride;
-  final Map<String, ConnectivityResult>? connectivityByPlayer;
-  final TechCapComparisonPin? techCapComparisonPin;
-  final BlockadedOverseasPin? blockadedOverseasPin;
-  final String? expectLogMessageContains;
-  final void Function(Map<String, ExtractionTotals> result) verify;
-  final String? refs;
-}
+typedef ResourceExtractorScenario = ({
+  String label,
+  TileMapResult? tileMap,
+  Map<String, TileMapResult>? tileMapByRegion,
+  List<List<String>>? grid,
+  List<List<Resource?>>? resourceGrid,
+  String regionId,
+  List<TileImprovementSpec> tileSpecs,
+  Set<String> connected,
+  Map<String, int> pathTransportCap,
+  int townDevelopmentLevel,
+  Map<String, bool>? techUnlocked,
+  Map<String, Set<String>>? playerProspectedTiles,
+  int techCap,
+  int Function(String playerId)? techCapForPlayer,
+  bool useOverseasGame,
+  Game? gameOverride,
+  Map<String, ConnectivityResult>? connectivityByPlayer,
+  TechCapComparisonPin? techCapComparisonPin,
+  BlockadedOverseasPin? blockadedOverseasPin,
+  String? expectLogMessageContains,
+  void Function(Map<String, ExtractionTotals> result) verify,
+  String? refs,
+});
 
 void _noopResourceExtractorVerify(Map<String, ExtractionTotals> _) {}
 
@@ -114,12 +89,13 @@ ResourceExtractorScenario extractionScenario({
         techCapPinExpected: techCapPinExpected,
       );
   final pinOnly = techCapComparisonPin != null || blockadedOverseasPin != null;
-  return ResourceExtractorScenario(
+  return (
     label: label,
     tileMap: tileMap,
     tileMapByRegion: tileMapByRegion,
     grid: grid,
     resourceGrid: resourceGrid,
+    regionId: 'oldWorld',
     tileSpecs: improvements,
     connected: connected,
     pathTransportCap: pathTransportCap,

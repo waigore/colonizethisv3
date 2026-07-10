@@ -22,6 +22,19 @@ class NonGpExtractionExpectation {
   final (String factionId, int count)? factionCommodityKeyCount;
 }
 
+/// Compact faction-totals pin (Refs #3939 slice 62).
+NonGpExtractionExpectation nonGpTotalsExpect(
+  Map<String, Map<CommodityId, int>> factionTotals, {
+  Iterable<String>? factionKeysUnordered,
+  (String factionId, CommodityId commodity)? excludesCommodity,
+  (String factionId, int count)? factionCommodityKeyCount,
+}) => NonGpExtractionExpectation(
+  factionTotals: factionTotals,
+  factionKeysUnordered: factionKeysUnordered,
+  excludesCommodity: excludesCommodity,
+  factionCommodityKeyCount: factionCommodityKeyCount,
+);
+
 void assertNonGpExtractionExpectation(
   Map<String, Map<CommodityId, int>> result,
   NonGpExtractionExpectation expectation,

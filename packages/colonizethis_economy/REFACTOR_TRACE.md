@@ -1105,6 +1105,20 @@ test_support LOC: **15,916** (net −44 vs slice 59 / 15,960). Economy `test/` *
 
 test_support LOC: **15,863** (net −53 vs slice 60 / 15,916). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 62+.
 
+## Phase 3 — Slice 62 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-typedef-expect | `NonGpExtractionScenario` typedef + `nonGpExtractionRow` / `nonGpEmptyExtractionRow` / `nonGpTotalsExpect` | `non_gp_extraction_*.dart` | #2991, #3939 |
+| non-gp-auto-offer-expect | `nonGpM1OffersExpect` / `nonGpDualFactionOffersExpect` / `nonGpEmptyAutoOfferRow` | `non_gp_auto_offers_*.dart` | #2991, #3939 |
+| frr-owner-fills | `frrOwnerFillsExpect` for multi-fill FRR matcher rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| suggester-single-expect | `suggesterSingleOfferExpect` / `suggesterSingleBidExpect`; drop unused `suggesterPin` | `trade_order_suggester_*.dart` | #2989, #3123, #3939 |
+| matcher-nofill-note | `matcherNoFillExpect` / `matcherTreasuryInsufficientNotes` | `deal_matcher_*_scenarios.dart` | #3115, #3753, #3939 |
+| scenario-class-typedef | Convert extractor / FRR credits / profit / kickback / suggester / town-province / purchased-riches scenario classes to typedefs | `*_scenarios.dart` | #3939 |
+| fixture-alias-collapse | Drop `singleResourceTileMap`; fold `tileMapAllInProvince…` into `nonGpProvMap` | `extraction_fixture_support.dart` | #3939 |
+
+test_support LOC: **15,766** (net −97 vs slice 61 / 15,863). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 63+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.
