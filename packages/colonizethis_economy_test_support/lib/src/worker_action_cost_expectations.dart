@@ -95,7 +95,7 @@ WorkerActionCostScenario applyRecruitWorkerCostScenario({
 
 void runApprenticeTechConsistencyExpectation() {
   const order = RecruitWorkerOrder(targetTier: WorkerTier.apprentice);
-  final stockpile = const Stockpile().applyDelta(CommodityCatalog.paper.id, 2);
+  final stockpile = const Stockpile().applyDelta('paper', 2);
   expect(
     canAffordRecruitWorker(
       _playerWithTech(_journeymanTech),

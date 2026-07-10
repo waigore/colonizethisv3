@@ -175,7 +175,7 @@ List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
     label: 'tribe-owned purchased tile producing spices credits the owning GP',
     buildGame: tribeOwnedPurchasedTileRichesGame,
     tileMaps: () => {
-      'oldWorld': singleResourceTileMap(Resource.spices, province: 'T1'),
+      'oldWorld': singleTileMap(Resource.spices, province: 'T1'),
     },
     expect: PurchasedTileRichesExpectation(
       creditsLength: 1,

@@ -1,6 +1,5 @@
 // Table-driven resolveProduction / effectiveLabourForWorkers scenarios (Refs #3856).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -40,22 +39,13 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
   resolveProductionScenario(
     label: 'consumes inputs and produces output per recipe',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 10,
-        CommodityCatalog.iron.id: 10,
-        CommodityCatalog.coal.id: 5,
-      },
+      stockpileDeltas: {'timber': 10, 'iron': 10, 'coal': 5},
       workers: coreWorkerPool(peasants: 20),
       idleLabour: WorkerIdleCounts(peasants: 20),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 20),
       ],
-      expectedQuantities: {
-        CommodityCatalog.castIron.id: 5,
-        CommodityCatalog.timber.id: 10,
-        CommodityCatalog.iron.id: 0,
-        CommodityCatalog.coal.id: 5,
-      },
+      expectedQuantities: {'castIron': 5, 'timber': 10, 'iron': 0, 'coal': 5},
       expectedWorkers: null,
     ),
   ),
@@ -63,66 +53,46 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
     label: 'iron-only castIron recipe ignores timber (Refs #3858)',
     refs: '#3858',
     pins: (
-      stockpileDeltas: {CommodityCatalog.iron.id: 4},
+      stockpileDeltas: {'iron': 4},
       workers: const WorkerPool(peasants: 10),
       idleLabour: WorkerIdleCounts(peasants: 10),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 10),
       ],
-      expectedQuantities: {
-        CommodityCatalog.castIron.id: 2,
-        CommodityCatalog.iron.id: 0,
-        CommodityCatalog.timber.id: 0,
-      },
+      expectedQuantities: {'castIron': 2, 'iron': 0, 'timber': 0},
       expectedWorkers: null,
     ),
   ),
   resolveProductionScenario(
     label: 'limits runs by available inputs',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 4,
-        CommodityCatalog.iron.id: 4,
-        CommodityCatalog.coal.id: 20,
-      },
+      stockpileDeltas: {'timber': 4, 'iron': 4, 'coal': 20},
       workers: const WorkerPool(peasants: 20),
       idleLabour: WorkerIdleCounts(peasants: 20),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 100),
       ],
-      expectedQuantities: {
-        CommodityCatalog.castIron.id: 2,
-        CommodityCatalog.iron.id: 0,
-        CommodityCatalog.timber.id: 4,
-      },
+      expectedQuantities: {'castIron': 2, 'iron': 0, 'timber': 4},
       expectedWorkers: null,
     ),
   ),
   resolveProductionScenario(
     label: 'limits runs by assigned labour (labourPerOutput)',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 100,
-        CommodityCatalog.iron.id: 100,
-        CommodityCatalog.coal.id: 50,
-      },
+      stockpileDeltas: {'timber': 100, 'iron': 100, 'coal': 50},
       workers: const WorkerPool(peasants: 10),
       idleLabour: WorkerIdleCounts(peasants: 10),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 7),
       ],
-      expectedQuantities: {CommodityCatalog.castIron.id: 3},
+      expectedQuantities: {'castIron': 3},
       expectedWorkers: null,
     ),
   ),
   resolveProductionScenario(
     label: 'worker pool is unchanged',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 10,
-        CommodityCatalog.iron.id: 10,
-        CommodityCatalog.coal.id: 5,
-      },
+      stockpileDeltas: {'timber': 10, 'iron': 10, 'coal': 5},
       workers: const WorkerPool(peasants: 3, apprentices: 2),
       idleLabour: WorkerIdleCounts(peasants: 3, apprentices: 2),
       assignments: const [
@@ -135,21 +105,14 @@ List<EconomyProductionScenario> _resolveProductionRecipeScenarios() => [
   resolveProductionScenario(
     label: 'multiple assignments apply in order',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 20,
-        CommodityCatalog.iron.id: 20,
-        CommodityCatalog.coal.id: 10,
-      },
+      stockpileDeltas: {'timber': 20, 'iron': 20, 'coal': 10},
       workers: const WorkerPool(peasants: 25),
       idleLabour: WorkerIdleCounts(peasants: 25),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 15),
         AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
       ],
-      expectedQuantities: {
-        CommodityCatalog.castIron.id: 7,
-        CommodityCatalog.lumber.id: 5,
-      },
+      expectedQuantities: {'castIron': 7, 'lumber': 5},
       expectedWorkers: null,
     ),
   ),
@@ -159,44 +122,37 @@ List<EconomyProductionScenario> _resolveProductionEdgeScenarios() => [
   resolveProductionScenario(
     label: 'unknown recipe id is ignored',
     pins: (
-      stockpileDeltas: {CommodityCatalog.grain.id: 10},
+      stockpileDeltas: {'grain': 10},
       workers: const WorkerPool(peasants: 5),
       idleLabour: WorkerIdleCounts(peasants: 5),
       assignments: const [
         AssignedRecipe(recipeId: 'unknown_recipe', assignedLabour: 100),
       ],
-      expectedQuantities: {CommodityCatalog.grain.id: 10},
+      expectedQuantities: {'grain': 10},
       expectedWorkers: null,
     ),
   ),
   resolveProductionScenario(
     label: 'zero assigned labour skips recipe',
     pins: (
-      stockpileDeltas: {
-        CommodityCatalog.timber.id: 10,
-        CommodityCatalog.iron.id: 10,
-        CommodityCatalog.coal.id: 5,
-      },
+      stockpileDeltas: {'timber': 10, 'iron': 10, 'coal': 5},
       workers: const WorkerPool(peasants: 5),
       idleLabour: WorkerIdleCounts(peasants: 5),
       assignments: const [
         AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 0),
       ],
-      expectedQuantities: {
-        CommodityCatalog.castIron.id: 0,
-        CommodityCatalog.timber.id: 10,
-      },
+      expectedQuantities: {'castIron': 0, 'timber': 10},
       expectedWorkers: null,
     ),
   ),
   resolveProductionScenario(
     label: 'empty assignments leave stockpile unchanged',
     pins: (
-      stockpileDeltas: {CommodityCatalog.grain.id: 5},
+      stockpileDeltas: {'grain': 5},
       workers: const WorkerPool(peasants: 5),
       idleLabour: WorkerIdleCounts(peasants: 5),
       assignments: const [],
-      expectedQuantities: {CommodityCatalog.grain.id: 5},
+      expectedQuantities: {'grain': 5},
       expectedWorkers: null,
     ),
   ),
@@ -207,7 +163,7 @@ List<EconomyProductionScenario> _effectiveLabourForWorkersScenarios() => [
     label: 'peasants contribute 1 labour each when fed',
     pins: (
       workers: const WorkerPool(peasants: 10),
-      stockpileDeltas: {CommodityCatalog.grain.id: 10},
+      stockpileDeltas: {'grain': 10},
       expectedLabour: 10,
     ),
   ),
@@ -220,10 +176,7 @@ List<EconomyProductionScenario> _effectiveLabourForWorkersScenarios() => [
         journeymen: 0,
         masters: 0,
       ),
-      stockpileDeltas: {
-        CommodityCatalog.grain.id: 8,
-        CommodityCatalog.refinedSugar.id: 1,
-      },
+      stockpileDeltas: {'grain': 8, 'refinedSugar': 1},
       expectedLabour: 6,
     ),
   ),
@@ -236,11 +189,7 @@ List<EconomyProductionScenario> _effectiveLabourForWorkersScenarios() => [
         journeymen: 1,
         masters: 0,
       ),
-      stockpileDeltas: {
-        CommodityCatalog.grain.id: 7,
-        CommodityCatalog.refinedSugar.id: 5,
-        CommodityCatalog.cigars.id: 5,
-      },
+      stockpileDeltas: {'grain': 7, 'refinedSugar': 5, 'cigars': 5},
       expectedLabour: 15,
     ),
   ),

@@ -1,7 +1,72 @@
-// Compact First Right credits result assertions (Refs #3939 phase 3 slice 12).
+// Compact First Right credits result assertions (Refs #3939 phase 3 slice 12 / 61).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
+
+/// Treasury-close-to pin helper (Refs #3939 slice 61).
+FrrCreditsExpectation frrTreasuryCloseTo(
+  Map<String, double> treasuryCreditCloseTo, {
+  double? totalProfitTreasury,
+  int? creditedDealsLength,
+  Iterable<String>? treasuryCreditKeysContainAll,
+  List<String>? treasuryCreditKeysExact,
+  bool creditedDealsEmpty = false,
+  bool treasuryCreditEmpty = false,
+  String? singleCreditedDealBuyer,
+}) => FrrCreditsExpectation(
+  treasuryCreditCloseTo: treasuryCreditCloseTo,
+  totalProfitTreasury: totalProfitTreasury,
+  creditedDealsLength: creditedDealsLength,
+  treasuryCreditKeysContainAll: treasuryCreditKeysContainAll,
+  treasuryCreditKeysExact: treasuryCreditKeysExact,
+  creditedDealsEmpty: creditedDealsEmpty,
+  treasuryCreditEmpty: treasuryCreditEmpty,
+  singleCreditedDealBuyer: singleCreditedDealBuyer,
+);
+
+/// Single credited-deal + treasury pin helper (Refs #3939 slice 61).
+FrrCreditsExpectation frrCreditedDealExpect({
+  Map<String, double>? treasuryCreditCloseTo,
+  required double totalProfitTreasury,
+  int creditedDealsLength = 1,
+  String? owningGpId,
+  String? sourceFactionId,
+  int? relationScore,
+  double? profitRateCloseTo,
+  double? profitTreasuryCloseTo,
+  bool profitIsZero = false,
+  Map<String, double>? treasuryCreditByGpId,
+}) => FrrCreditsExpectation(
+  creditedDealsLength: creditedDealsLength,
+  singleCreditedDealOwningGpId: owningGpId,
+  singleCreditedDealSourceFactionId: sourceFactionId,
+  singleCreditedDealRelationScore: relationScore,
+  singleCreditedDealProfitRateCloseTo: profitRateCloseTo,
+  singleCreditedDealProfitTreasuryCloseTo: profitTreasuryCloseTo,
+  singleCreditedDealProfitIsZero: profitIsZero,
+  treasuryCreditCloseTo: treasuryCreditCloseTo,
+  treasuryCreditByGpId: treasuryCreditByGpId,
+  totalProfitTreasury: totalProfitTreasury,
+);
+
+/// Embassy kickback pin helper (Refs #3939 slice 61).
+FrrCreditsExpectation frrKickbackExpect({
+  Map<String, double>? embassyKickbackCloseTo,
+  Map<String, double>? treasuryCreditCloseTo,
+  Iterable<String>? noEmbassyKickbackFor,
+  bool treasuryCreditEmpty = false,
+  bool embassyKickbackEmpty = false,
+  double? totalEmbassyKickback,
+  bool sameAsEmpty = false,
+}) => FrrCreditsExpectation(
+  embassyKickbackCloseTo: embassyKickbackCloseTo,
+  treasuryCreditCloseTo: treasuryCreditCloseTo,
+  noEmbassyKickbackFor: noEmbassyKickbackFor,
+  treasuryCreditEmpty: treasuryCreditEmpty,
+  embassyKickbackEmpty: embassyKickbackEmpty,
+  totalEmbassyKickback: totalEmbassyKickback,
+  sameAsEmpty: sameAsEmpty,
+);
 
 /// Data-driven expectations for [FirstRightCreditsResult] scenario rows.
 class FrrCreditsExpectation {

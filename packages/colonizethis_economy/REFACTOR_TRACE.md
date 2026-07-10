@@ -1093,6 +1093,18 @@ test_support LOC: **15,960** (net −402 vs slice 58 / 16,362; includes dart for
 
 test_support LOC: **15,916** (net −44 vs slice 59 / 15,960). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 61+.
 
+## Phase 3 — Slice 61 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-expect-helpers | `frrTreasuryCloseTo` / `frrCreditedDealExpect` / `frrKickbackExpect` compact D5 + aggregation + kickback pins | `frr_credits_expectations.dart`, `frr_credits_scenarios.dart` | #2992, #3753, #3939 |
+| matcher-expect-sugar | `frrSplitExpect` / `frrOwnerFillExpect` / `matcherFirstBuyerExpect` for FRR + sell-priority rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart`, `deal_matcher_priority_scenarios.dart` | #3115, #3939 |
+| carry-forward-row | Collapse `CarryForwardBidNotionalScenario` class to typedef + `carryForwardBidNotionalRow` | `treasury_bid_spend_scenarios.dart` | #3122, #3939 |
+| suggester-isempty | `isEmpty: true` implies empty offers+bids; drop redundant flags | `trade_order_suggester_expectations.dart`, `trade_order_suggester_scenarios.dart` | #3939 |
+| commodity-id-literals | Replace `CommodityCatalog.*.id` with string commodity ids; densify short maps | `economy_production_scenarios.dart`, consumption/extraction/town/validator suites | #3939 |
+
+test_support LOC: **15,863** (net −53 vs slice 60 / 15,916). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 62+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

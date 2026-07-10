@@ -131,23 +131,30 @@ List<StagedBidSpendScenario> stagedBidSpendScenarios(data.ResourceRules rules) {
   ];
 }
 
-class CarryForwardBidNotionalScenario {
-  const CarryForwardBidNotionalScenario({
-    required this.label,
-    required this.bids,
-    required this.prices,
-    required this.verify,
-    this.playerId = 'gp1',
-    this.refs,
-  });
+typedef CarryForwardBidNotionalScenario = ({
+  String label,
+  List<TradeOrder> bids,
+  Map<CommodityId, int> prices,
+  String playerId,
+  CarryForwardBidNotionalExpectation expect,
+  String? refs,
+});
 
-  final String label;
-  final List<TradeOrder> bids;
-  final Map<CommodityId, int> prices;
-  final String playerId;
-  final void Function(int notional, data.ResourceRules rules) verify;
-  final String? refs;
-}
+CarryForwardBidNotionalScenario carryForwardBidNotionalRow({
+  required String label,
+  required List<TradeOrder> bids,
+  required Map<CommodityId, int> prices,
+  required CarryForwardBidNotionalExpectation expect,
+  String playerId = 'gp1',
+  String? refs,
+}) => (
+  label: label,
+  bids: bids,
+  prices: prices,
+  playerId: playerId,
+  expect: expect,
+  refs: refs,
+);
 
 void runCarryForwardBidNotionalScenario(
   CarryForwardBidNotionalScenario scenario,
@@ -164,21 +171,21 @@ void runCarryForwardBidNotionalScenario(
     playerId: scenario.playerId,
     resourceRules: rules,
   );
-  scenario.verify(notional, rules);
+  assertCarryForwardBidNotionalExpectation(
+    notional: notional,
+    rules: rules,
+    expectation: scenario.expect,
+  );
 }
 
 List<CarryForwardBidNotionalScenario> carryForwardBidNotionalScenarios() => [
-  CarryForwardBidNotionalScenario(
+  carryForwardBidNotionalRow(
     label: 'falls back to catalog default price when world price is missing',
     bids: [testBid('timber', 4)],
     prices: const <CommodityId, int>{},
-    verify: (notional, rules) => assertCarryForwardBidNotionalExpectation(
-      notional: notional,
-      rules: rules,
-      expectation: const CarryForwardBidNotionalExpectation(
-        catalogCommodity: 'timber',
-        quantity: 4,
-      ),
+    expect: const CarryForwardBidNotionalExpectation(
+      catalogCommodity: 'timber',
+      quantity: 4,
     ),
     refs: '#3122',
   ),

@@ -43,7 +43,7 @@ void runResolveTileKeyResourceContextExpectation(
         tileMapByRegion: tileMapByRegion,
       );
       expect(ctx, isNotNull);
-      expect(ctx!.commodityId, CommodityCatalog.grain.id);
+      expect(ctx!.commodityId, 'grain');
       expect(ctx.provinceId, _resourceContextProvinceId);
       expect(ctx.resource, Resource.grain);
     case ResolveTileKeyResourceContextTarget.ironCommodityMapping:
@@ -52,7 +52,7 @@ void runResolveTileKeyResourceContextExpectation(
         tileMapByRegion: tileMapByRegion,
       );
       expect(ctx!.commodityId, Resource.iron.name);
-      expect(ctx.commodityId, CommodityCatalog.iron.id);
+      expect(ctx.commodityId, 'iron');
     case ResolveTileKeyResourceContextTarget.invalidKeys:
       for (final tileKey in [
         'bad-key',
@@ -120,7 +120,7 @@ void runResolveTileKeyExtractionContextExpectation(
       );
       expect(ctx, isNotNull);
       expect(ctx!.province.id, _extractionContextProvinceId);
-      expect(ctx.commodityId, CommodityCatalog.grain.id);
+      expect(ctx.commodityId, 'grain');
     case ResolveTileKeyExtractionContextTarget.fallbackGame:
       final game = gameForNonGpExtractionTest(provinces: [fixtures.province]);
       final ctx = resolveTileKeyExtractionContext(

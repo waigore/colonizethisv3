@@ -22,16 +22,11 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       'gpA': [matcherBid('timber', 4, priority: 5)],
       'gpB': [matcherBid('timber', 10, priority: 1)],
     },
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 4,
-      ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 6,
-      ),
+    expect: frrSplitExpect(
+      frrBuyer: 'gpA',
+      frrQty: 4,
+      otherBuyer: 'gpB',
+      otherQty: 6,
       unfilledBidsByFactionId: matcherUnfilledBid(
         'gpB',
         'timber',
@@ -49,19 +44,17 @@ List<DealMatcherScenario> dealMatcherFirstRightRoutingScenarios() => [
       'gpB': [matcherBid('timber', 10, priority: 1)],
     },
     tradeCapacityByFactionId: const {'gpA': 3, 'gpB': 100},
-    expect: DealMatchExpectation(
-      filledDealsLength: 2,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpA',
-        quantity: 3,
+    expect: frrSplitExpect(
+      frrBuyer: 'gpA',
+      frrQty: 3,
+      otherBuyer: 'gpB',
+      otherQty: 7,
+      unfilledBidsPinsByFactionId: matcherUnfilledBid(
+        'gpA',
+        'timber',
+        7,
+        priority: 1,
       ),
-      nonFrrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpB',
-        quantity: 7,
-      ),
-      unfilledBidsPinsByFactionId: {
-        'gpA': [matcherBid('timber', 7, priority: 1)],
-      },
     ),
   ),
   frrNoEffectRow(
@@ -192,17 +185,11 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
         'rival priority-1 bid loses to owning-GP priority-5 bid; rival '
         'priority-1 bid carries forward intact',
     bidPriorityByBuyer: const {kFrrIssueAcD5GpA: 5, kFrrIssueAcD5GpB: 1},
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpA,
-        quantity: 10,
-        isFirstRightOfRefusalMatch: true,
-        isFtpMatch: false,
-      ),
-      unfilledBidsByFactionId: {
-        kFrrIssueAcD5GpB: [matcherBid('timber', 10, priority: 1)],
-      },
+    expect: frrOwnerFillExpect(
+      ownerBuyer: kFrrIssueAcD5GpA,
+      fillQty: 10,
+      rivalBuyer: kFrrIssueAcD5GpB,
+      rivalUnfilledQty: 10,
     ),
   ),
   frrD5MatcherRow(
@@ -214,16 +201,10 @@ List<DealMatcherScenario> frrIssueAcD5MatcherScenarios() => [
     ftpPairKeys: {
       DealMatcher.pairKey(kFrrIssueAcD5MinorM1, kFrrIssueAcD5GpFtp),
     },
-    expect: DealMatchExpectation(
-      filledDealsLength: 1,
-      frrFilledDeal: const FilledDealExpectation(
-        buyerFactionId: kFrrIssueAcD5GpA,
-        isFirstRightOfRefusalMatch: true,
-        isFtpMatch: false,
-      ),
-      unfilledBidsByFactionId: {
-        kFrrIssueAcD5GpFtp: [matcherBid('timber', 6, priority: 1)],
-      },
+    expect: frrOwnerFillExpect(
+      ownerBuyer: kFrrIssueAcD5GpA,
+      rivalBuyer: kFrrIssueAcD5GpFtp,
+      rivalUnfilledQty: 6,
     ),
   ),
   frrD5MatcherRow(

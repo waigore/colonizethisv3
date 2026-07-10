@@ -98,9 +98,7 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
     roadLevel: 1,
     purchasedTilesByTileKey: {tileKey: 'gpA'},
   ),
-  tileMapByRegion: {
-    'oldWorld': singleResourceTileMap(resource, province: 'm1'),
-  },
+  tileMapByRegion: {'oldWorld': singleTileMap(resource, province: 'm1')},
   connectivityByFactionId: connectivityByFaction({
     'm1': {tileKey},
   }),

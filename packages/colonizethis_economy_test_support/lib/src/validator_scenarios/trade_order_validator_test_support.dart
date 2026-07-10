@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -44,9 +43,7 @@ TradeOrderValidationContext validatorCtxTimber({
 }) => validatorCtx(
   treasuryBudgetForBids: treasuryBudgetForBids,
   tradeCargoCapacity: tradeCargoCapacity,
-  worldMarketState: WorldMarketState(
-    prices: {CommodityCatalog.timber.id: timberPrice},
-  ),
+  worldMarketState: WorldMarketState(prices: {'timber': timberPrice}),
 );
 
 /// Shared timber/iron price preset for treasury-cap validator scenarios.
@@ -59,10 +56,7 @@ TradeOrderValidationContext validatorCtxTimberIron({
   treasuryBudgetForBids: treasuryBudgetForBids,
   tradeCargoCapacity: tradeCargoCapacity,
   worldMarketState: WorldMarketState(
-    prices: {
-      CommodityCatalog.timber.id: timberPrice,
-      CommodityCatalog.iron.id: ironPrice,
-    },
+    prices: {'timber': timberPrice, 'iron': ironPrice},
   ),
 );
 
@@ -114,7 +108,7 @@ TradeOrderValidatorScenario validatorTreasuryTimberBid({
     tradeCargoCapacity: tradeCargoCapacity,
     timberPrice: timberPrice,
   ),
-  proposedOrders: [validatorBid(CommodityCatalog.timber.id, bidQty)],
+  proposedOrders: [validatorBid('timber', bidQty)],
   expect: expect,
   refs: refs,
 );
@@ -182,7 +176,7 @@ TradeOrderValidatorScenario validatorManufacturedBudgetRejectRow({
 }) => validatorExpectRow(
   label: label,
   context: validatorCtxCatalogDefaults(treasuryBudgetForBids: 100),
-  proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
+  proposedOrders: [validatorBid('lumber', 10)],
   expect: const ValidatorExpectation(
     singleRejectedWithReason:
         TradeOrderRejectionReasons.bidExceedsTreasuryBudget,

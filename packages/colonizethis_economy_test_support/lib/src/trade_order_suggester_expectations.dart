@@ -69,6 +69,11 @@ void assertSuggesterExpectation(
 ) {
   if (expectation.isEmpty != null) {
     expect(result.isEmpty, expectation.isEmpty);
+    // `isEmpty: true` implies empty offers + bids (Refs #3939 slice 61).
+    if (expectation.isEmpty!) {
+      expect(result.offers, isEmpty);
+      expect(result.bids, isEmpty);
+    }
   }
   if (expectation.offersEmpty != null) {
     expect(result.offers, expectation.offersEmpty! ? isEmpty : isNotEmpty);

@@ -132,7 +132,7 @@ TileExtractionContributionScenario tileExtractionContributionScenario({
 }) => TileExtractionContributionScenario(
   label: label,
   run: () {
-    final tileMap = grainTileMap ?? singleResourceTileMap(Resource.grain);
+    final tileMap = grainTileMap ?? singleTileMap(Resource.grain);
     switch (pin) {
       case TileExtractionContributionPin.connectedGrainExcludesCapitalBonus:
         runTileContributionConnectedPin(

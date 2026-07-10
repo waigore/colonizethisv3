@@ -3,7 +3,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-
 /// Canonical parameterized purchased-tile [Game] builder.
 Game purchasedTileFixtureGame({
   required List<Province> provinces,

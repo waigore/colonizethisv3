@@ -207,12 +207,10 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpHigh': 80, 'gpLow': 40},
     },
-    expect: DealMatchExpectation(
+    expect: matcherFirstBuyerExpect(
+      'gpHigh',
+      quantity: 5,
       filledDealsLength: 1,
-      firstFilledDeal: const FilledDealExpectation(
-        buyerFactionId: 'gpHigh',
-        quantity: 5,
-      ),
       unfilledBidsByFactionId: matcherUnfilledBid(
         'gpLow',
         'timber',
@@ -229,17 +227,15 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'aBuyer': 30, 'zBuyer': 90},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'zBuyer'),
-    ),
+    expect: matcherFirstBuyerExpect('zBuyer'),
   ),
   sellPriorityMinorSellerRow(
     label: 'consulate-less buyer falls back behind consulate-holding buyer',
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpLow': 40},
     },
-    expect: DealMatchExpectation(
-      firstFilledDeal: const FilledDealExpectation(buyerFactionId: 'gpLow'),
+    expect: matcherFirstBuyerExpect(
+      'gpLow',
       unfilledBidsByFactionId: matcherUnfilledBid(
         'gpHigh',
         'timber',
@@ -255,9 +251,7 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpA': 55, 'gpB': 55},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
   sellPriorityMinorSellerRow(
     label: 'seller absent from map keeps legacy ordering (no reorder)',
@@ -267,17 +261,13 @@ List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [
     sellPriorityRelationByMinorTribeSeller: const {
       'minorM': {'gpA': 1, 'gpZ': 99},
     },
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
   sellPriorityMinorSellerRow(
     label: 'empty relation map preserves legacy ordering for minor seller',
     buyerA: 'gpA',
     buyerB: 'gpZ',
-    expect: const DealMatchExpectation(
-      firstFilledDeal: FilledDealExpectation(buyerFactionId: 'gpA'),
-    ),
+    expect: matcherFirstBuyerExpect('gpA'),
   ),
   matcherRow(
     label: 'priority tier remains absolute over relation tiebreaker',

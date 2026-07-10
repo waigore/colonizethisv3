@@ -1,6 +1,5 @@
 // Table-driven resolveConsumption scenarios (Refs #3856, #3939 slices 34 / 45).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'consumption_expectations.dart';
@@ -32,10 +31,7 @@ List<ConsumptionScenario> resolveConsumptionScenarios() => [
 List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   resolveConsumptionScenario(
     label: 'peasants consume 1 food each (grain or meat)',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 5,
-      CommodityCatalog.meat.id: 0,
-    },
+    stockpileDeltas: {'grain': 5, 'meat': 0},
     workers: const WorkerPool(peasants: 5),
     pins: ResolveConsumptionPins(
       workerPool: WorkerPool(peasants: 5),
@@ -46,12 +42,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ),
   resolveConsumptionScenario(
     label: 'trained tiers consume 2 food each',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 4,
-      CommodityCatalog.meat.id: 4,
-      CommodityCatalog.refinedSugar.id: 2,
-      CommodityCatalog.cigars.id: 1,
-    },
+    stockpileDeltas: {'grain': 4, 'meat': 4, 'refinedSugar': 2, 'cigars': 1},
     workers: const WorkerPool(
       peasants: 0,
       apprentices: 2,
@@ -70,11 +61,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ),
   resolveConsumptionScenario(
     label: 'food strike: masters fed before peasants when food is tight',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 2,
-      CommodityCatalog.meat.id: 0,
-      CommodityCatalog.furHats.id: 1,
-    },
+    stockpileDeltas: {'grain': 2, 'meat': 0, 'furHats': 1},
     workers: const WorkerPool(peasants: 5, masters: 1),
     pins: ResolveConsumptionPins(
       workerPool: WorkerPool(peasants: 5, masters: 1),
@@ -84,11 +71,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ),
   resolveConsumptionScenario(
     label: 'food strike: journeymen fed before apprentices and peasants',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 3,
-      CommodityCatalog.meat.id: 0,
-      CommodityCatalog.cigars.id: 1,
-    },
+    stockpileDeltas: {'grain': 3, 'meat': 0, 'cigars': 1},
     workers: const WorkerPool(
       peasants: 1,
       apprentices: 1,
@@ -126,11 +109,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ),
   resolveConsumptionScenario(
     label: 'grain used before meat when both available',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 2,
-      CommodityCatalog.meat.id: 10,
-      CommodityCatalog.refinedSugar.id: 2,
-    },
+    stockpileDeltas: {'grain': 2, 'meat': 10, 'refinedSugar': 2},
     workers: const WorkerPool(
       peasants: 0,
       apprentices: 2,
@@ -145,10 +124,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   ),
   resolveConsumptionScenario(
     label: 'zero workers and zero military leaves stockpile unchanged',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 5,
-      CommodityCatalog.meat.id: 5,
-    },
+    stockpileDeltas: {'grain': 5, 'meat': 5},
     workers: const WorkerPool(peasants: 0),
     pins: const ResolveConsumptionPins(
       grainRemaining: 5,
@@ -173,10 +149,7 @@ List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(
     label:
         'resolveConsumption wires military→navy→workers strike order and counts',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 8,
-      CommodityCatalog.meat.id: 0,
-    },
+    stockpileDeltas: {'grain': 8, 'meat': 0},
     workers: const WorkerPool(peasants: 5),
     militaryUnits: 2,
     shipCountsById: const {'carrack': 1},
@@ -193,11 +166,7 @@ List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(
     label:
         'luxury only for food-fed trained; no sugar deducted if apprentice on strike',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 1,
-      CommodityCatalog.meat.id: 0,
-      CommodityCatalog.refinedSugar.id: 5,
-    },
+    stockpileDeltas: {'grain': 1, 'meat': 0, 'refinedSugar': 5},
     workers: const WorkerPool(apprentices: 2, peasants: 0),
     pins: ResolveConsumptionPins(
       idleLabour: WorkerIdleCounts(apprentices: 0),
@@ -207,11 +176,11 @@ List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(
     label: 'trained workers consume tier luxuries when food-fed',
     stockpileDeltas: {
-      CommodityCatalog.grain.id: 10,
-      CommodityCatalog.meat.id: 10,
-      CommodityCatalog.refinedSugar.id: 2,
-      CommodityCatalog.cigars.id: 1,
-      CommodityCatalog.furHats.id: 1,
+      'grain': 10,
+      'meat': 10,
+      'refinedSugar': 2,
+      'cigars': 1,
+      'furHats': 1,
     },
     workers: const WorkerPool(
       peasants: 0,
@@ -229,11 +198,7 @@ List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(
     label:
         'luxury strike: food-fed but short luxury → idle capped, partial deduction',
-    stockpileDeltas: {
-      CommodityCatalog.grain.id: 10,
-      CommodityCatalog.meat.id: 10,
-      CommodityCatalog.refinedSugar.id: 1,
-    },
+    stockpileDeltas: {'grain': 10, 'meat': 10, 'refinedSugar': 1},
     workers: const WorkerPool(apprentices: 3, peasants: 0),
     pins: ResolveConsumptionPins(
       idleLabour: WorkerIdleCounts(apprentices: 1),

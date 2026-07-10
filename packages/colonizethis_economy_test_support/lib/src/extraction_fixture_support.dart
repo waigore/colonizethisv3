@@ -20,6 +20,9 @@ TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) =>
     );
 
 /// 1×1 [TileMapResult] keyed to [province] carrying [resource].
+///
+/// Thin alias of [singleTileMap] kept for SPEC/`economy-models` call sites
+/// (Refs #3939 slice 61).
 TileMapResult singleResourceTileMap(
   Resource resource, {
   String province = 'M1',
@@ -31,9 +34,7 @@ Map<String, TileMapResult> tileMapByRegionForResource(
   Resource resource, {
   String regionId = 'oldWorld',
   String province = 'M1',
-}) {
-  return {regionId: singleResourceTileMap(resource, province: province)};
-}
+}) => {regionId: singleTileMap(resource, province: province)};
 
 /// Connected tile with no matching province row (world-model defensive path).
 Game provinceMissingExtractorGame({required TileMapState tileState}) {

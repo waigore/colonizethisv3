@@ -275,6 +275,71 @@ MarketActivity matcherActivity({int bid = 0, int offer = 0, int filled = 0}) =>
       filledQuantity: filled,
     );
 
+/// FRR + residual non-FRR fill expect (Refs #3939 slice 61).
+DealMatchExpectation frrSplitExpect({
+  required String frrBuyer,
+  required int frrQty,
+  required String otherBuyer,
+  required int otherQty,
+  int filledDealsLength = 2,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+  Map<String, List<TradeOrder>>? unfilledBidsPinsByFactionId,
+  bool unfilledOffersEmpty = false,
+}) => DealMatchExpectation(
+  filledDealsLength: filledDealsLength,
+  frrFilledDeal: FilledDealExpectation(
+    buyerFactionId: frrBuyer,
+    quantity: frrQty,
+  ),
+  nonFrrFilledDeal: FilledDealExpectation(
+    buyerFactionId: otherBuyer,
+    quantity: otherQty,
+  ),
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+  unfilledBidsPinsByFactionId: unfilledBidsPinsByFactionId,
+  unfilledOffersEmpty: unfilledOffersEmpty,
+);
+
+/// Owning-GP FRR fill + rival unfilled bid (Refs #3939 slice 61).
+DealMatchExpectation frrOwnerFillExpect({
+  required String ownerBuyer,
+  required String rivalBuyer,
+  required int rivalUnfilledQty,
+  int? fillQty,
+  int rivalPriority = 1,
+  String commodity = 'timber',
+  bool isFtpMatch = false,
+}) => DealMatchExpectation(
+  filledDealsLength: 1,
+  frrFilledDeal: FilledDealExpectation(
+    buyerFactionId: ownerBuyer,
+    quantity: fillQty,
+    isFirstRightOfRefusalMatch: true,
+    isFtpMatch: isFtpMatch,
+  ),
+  unfilledBidsByFactionId: matcherUnfilledBid(
+    rivalBuyer,
+    commodity,
+    rivalUnfilledQty,
+    priority: rivalPriority,
+  ),
+);
+
+/// First filled buyer (+ optional unfilled rival) (Refs #3939 slice 61).
+DealMatchExpectation matcherFirstBuyerExpect(
+  String buyer, {
+  int? quantity,
+  int? filledDealsLength,
+  Map<String, List<TradeOrder>>? unfilledBidsByFactionId,
+}) => DealMatchExpectation(
+  filledDealsLength: filledDealsLength,
+  firstFilledDeal: FilledDealExpectation(
+    buyerFactionId: buyer,
+    quantity: quantity,
+  ),
+  unfilledBidsByFactionId: unfilledBidsByFactionId,
+);
+
 /// Offers-only or bids-only carry-forward row (Refs #3939 slice 42).
 DealMatcherScenario matcherUnilateralRow({
   required String label,

@@ -1,15 +1,14 @@
 // Compact per-phase consumption assertions (Refs #3939 phase 3 slice 33).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'consumption_scenarios.dart';
 
-final _grainId = CommodityCatalog.grain.id;
-final _meatId = CommodityCatalog.meat.id;
-final _sugarId = CommodityCatalog.refinedSugar.id;
+final _grainId = 'grain';
+final _meatId = 'meat';
+final _sugarId = 'refinedSugar';
 
 /// Pins for military/navy food consumption rows.
 typedef FoodConsumptionPins = ({

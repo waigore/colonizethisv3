@@ -81,11 +81,7 @@ tradeOrderSuggesterEmptyDefensiveScenarios() => [
   suggesterRow(
     label: 'empty context returns empty result',
     buildContext: suggesterCtx,
-    expect: const SuggesterExpectation(
-      isEmpty: true,
-      offersEmpty: true,
-      bidsEmpty: true,
-    ),
+    expect: const SuggesterExpectation(isEmpty: true),
   ),
   suggesterRow(
     label: 'negative tradeCargoCapacity returns empty result',

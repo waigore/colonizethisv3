@@ -1,6 +1,5 @@
 // Compact trade interception assertions (Refs #3939 phase 3 slice 37).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -39,24 +38,24 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
       expect(result.updatedFleets, game.worldState.fleets);
     case ApplyTradeInterceptionTarget.noEnemiesAtWar:
       final game = tradeInterceptionGame();
-      final delivered = {CommodityCatalog.grain.id: 10};
+      final delivered = {'grain': 10};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 42);
-      expect(result.reducedDelivered[CommodityCatalog.grain.id], 10);
+      expect(result.reducedDelivered['grain'], 10);
       expect(result.updatedFleets, game.worldState.fleets);
     case ApplyTradeInterceptionTarget.atWarNoInterceptor:
       final game = tradeInterceptionGame(defaultRelation: RelationState.atWar);
-      final delivered = {CommodityCatalog.grain.id: 12};
+      final delivered = {'grain': 12};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 7);
-      expect(result.reducedDelivered[CommodityCatalog.grain.id], 12);
+      expect(result.reducedDelivered['grain'], 12);
       expect(result.updatedFleets, game.worldState.fleets);
     case ApplyTradeInterceptionTarget.enemyPatrolReduces:
       final game = tradeInterceptionGame(
         defaultRelation: RelationState.atWar,
         fleets: [_patrolFleet()],
       );
-      final delivered = {CommodityCatalog.grain.id: 20};
+      final delivered = {'grain': 20};
       final result = applyTradeInterception(game, 'p1', delivered, seed: 12345);
-      final reduced = result.reducedDelivered[CommodityCatalog.grain.id];
+      final reduced = result.reducedDelivered['grain'];
       expect(reduced, isNotNull);
       expect(reduced!, lessThan(20));
       expect(reduced, greaterThan(0));
@@ -65,56 +64,49 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
         defaultRelation: RelationState.atWar,
         fleets: [_patrolFleet()],
       );
-      final delivered = {CommodityCatalog.grain.id: 20};
+      final delivered = {'grain': 20};
       final a = applyTradeInterception(game, 'p1', delivered, seed: 999);
       final b = applyTradeInterception(game, 'p1', delivered, seed: 999);
-      expect(
-        a.reducedDelivered[CommodityCatalog.grain.id],
-        b.reducedDelivered[CommodityCatalog.grain.id],
-      );
+      expect(a.reducedDelivered['grain'], b.reducedDelivered['grain']);
     case ApplyTradeInterceptionTarget.privateeringBaseline:
       final game = tradeInterceptionPrivateeringGame(
         enemyHasPrivateering: false,
       );
       final result = applyTradeInterception(game, 'p1', {
-        CommodityCatalog.grain.id: 100,
+        'grain': 100,
       }, seed: 42);
-      expect(result.reducedDelivered[CommodityCatalog.grain.id], 77);
+      expect(result.reducedDelivered['grain'], 77);
     case ApplyTradeInterceptionTarget.privateeringBoosted:
       final baseline = applyTradeInterception(
         tradeInterceptionPrivateeringGame(enemyHasPrivateering: false),
         'p1',
-        {CommodityCatalog.grain.id: 100},
+        {'grain': 100},
         seed: 42,
       );
       final boosted = applyTradeInterception(
         tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
-        {CommodityCatalog.grain.id: 100},
+        {'grain': 100},
         seed: 42,
       );
-      final keptBaseline =
-          baseline.reducedDelivered[CommodityCatalog.grain.id]!;
-      final keptBoosted = boosted.reducedDelivered[CommodityCatalog.grain.id]!;
+      final keptBaseline = baseline.reducedDelivered['grain']!;
+      final keptBoosted = boosted.reducedDelivered['grain']!;
       expect(keptBoosted, 74);
       expect(keptBoosted, lessThan(keptBaseline));
     case ApplyTradeInterceptionTarget.privateeringDeterministic:
       final a = applyTradeInterception(
         tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
-        {CommodityCatalog.grain.id: 100},
+        {'grain': 100},
         seed: 999,
       );
       final b = applyTradeInterception(
         tradeInterceptionPrivateeringGame(enemyHasPrivateering: true),
         'p1',
-        {CommodityCatalog.grain.id: 100},
+        {'grain': 100},
         seed: 999,
       );
-      expect(
-        a.reducedDelivered[CommodityCatalog.grain.id],
-        b.reducedDelivered[CommodityCatalog.grain.id],
-      );
+      expect(a.reducedDelivered['grain'], b.reducedDelivered['grain']);
     case ApplyTradeInterceptionTarget.shipRemovalLoop:
       final game = tradeInterceptionGame(
         defaultRelation: RelationState.atWar,
@@ -136,7 +128,7 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
           ),
         ],
       );
-      final delivered = {CommodityCatalog.grain.id: 30};
+      final delivered = {'grain': 30};
       var shipRemoved = false;
       for (var seed = 0; seed < 500 && !shipRemoved; seed++) {
         final result = applyTradeInterception(

@@ -194,9 +194,9 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
       'gpA': {'M1': 100, 'M2': 25},
       'gpB': {'M1': 50},
     }),
-    expect: const FrrCreditsExpectation(
-      treasuryCreditKeysContainAll: ['gpA', 'gpB'],
-      treasuryCreditCloseTo: {'gpA': 101.5, 'gpB': 10.0},
+    expect: frrTreasuryCloseTo(
+      const {'gpA': 101.5, 'gpB': 10.0},
+      treasuryCreditKeysContainAll: const ['gpA', 'gpB'],
       totalProfitTreasury: 111.5,
       creditedDealsLength: 3,
     ),
@@ -216,10 +216,10 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
       dealOn('k1', buyer: 'gpB', quantity: 6, pricePerUnit: 10.0),
     ],
     constantRelation: 100,
-    expect: const FrrCreditsExpectation(
+    expect: frrTreasuryCloseTo(
+      const {'gpA': 60.0},
       creditedDealsLength: 1,
       singleCreditedDealBuyer: 'gpB',
-      treasuryCreditCloseTo: {'gpA': 60.0},
       totalProfitTreasury: 60.0,
     ),
     refs: '#3753',
@@ -237,10 +237,10 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
       'gpA': {'M1': 100},
     }),
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
-    expect: const FrrCreditsExpectation(
-      treasuryCreditCloseTo: {'gpA': 200.0},
-      noEmbassyKickbackFor: ['gpA'],
-      embassyKickbackCloseTo: {'gpC': 10.0},
+    expect: frrKickbackExpect(
+      treasuryCreditCloseTo: const {'gpA': 200.0},
+      noEmbassyKickbackFor: const ['gpA'],
+      embassyKickbackCloseTo: const {'gpC': 10.0},
       totalEmbassyKickback: 10.0,
     ),
     refs: '#3753',
@@ -250,9 +250,9 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
     purchasedTileIndex: idx(const []),
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 50}),
-    expect: const FrrCreditsExpectation(
+    expect: frrKickbackExpect(
       treasuryCreditEmpty: true,
-      embassyKickbackCloseTo: {'gpC': 10.0},
+      embassyKickbackCloseTo: const {'gpC': 10.0},
     ),
     refs: '#3753',
   ),
@@ -263,10 +263,10 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     filledDeals: [dealOn('k1', buyer: 'gpA', quantity: 10, pricePerUnit: 20.0)],
     constantRelation: 100,
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 50}),
-    expect: const FrrCreditsExpectation(
+    expect: frrKickbackExpect(
       treasuryCreditEmpty: true,
-      noEmbassyKickbackFor: ['gpA'],
-      embassyKickbackCloseTo: {'gpC': 10.0},
+      noEmbassyKickbackFor: const ['gpA'],
+      embassyKickbackCloseTo: const {'gpC': 10.0},
     ),
     refs: '#3753',
   ),
@@ -274,10 +274,10 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     label: 'no embassy holders → no kickbacks (empty callback result)',
     constantRelation: 100,
     embassyGpRelationsFor: (_) => const {},
-    expect: const FrrCreditsExpectation(
+    expect: frrKickbackExpect(
       embassyKickbackEmpty: true,
       totalEmbassyKickback: 0.0,
-      treasuryCreditCloseTo: {'gpA': 200.0},
+      treasuryCreditCloseTo: const {'gpA': 200.0},
     ),
     refs: '#3753',
   ),
@@ -286,12 +286,12 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     filledDeals: [deal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0)],
     purchasedTileIndex: idx(const []),
     embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 0}),
-    expect: const FrrCreditsExpectation(sameAsEmpty: true),
+    expect: frrKickbackExpect(sameAsEmpty: true),
     refs: '#3753',
   ),
 ];
 
-/// D5 credits AC2–AC5 rows (Refs #2992 D5, #3939 slice 57).
+/// D5 credits AC2–AC5 rows (Refs #2992 D5, #3939 slice 57 / 61).
 List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
   frrCreditsRow(
     label: 'credits helper produces rate 0.75 + treasury 150.0 for gpA',
@@ -300,14 +300,13 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     relationScoreFor: frrRelationTable(const {
       kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 75},
     }),
-    expect: const FrrCreditsExpectation(
-      creditedDealsLength: 1,
-      singleCreditedDealOwningGpId: kFrrIssueAcD5GpA,
-      singleCreditedDealSourceFactionId: kFrrIssueAcD5MinorM1,
-      singleCreditedDealRelationScore: 75,
-      singleCreditedDealProfitRateCloseTo: 0.75,
-      singleCreditedDealProfitTreasuryCloseTo: 150.0,
-      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 150.0},
+    expect: frrCreditedDealExpect(
+      owningGpId: kFrrIssueAcD5GpA,
+      sourceFactionId: kFrrIssueAcD5MinorM1,
+      relationScore: 75,
+      profitRateCloseTo: 0.75,
+      profitTreasuryCloseTo: 150.0,
+      treasuryCreditCloseTo: const {kFrrIssueAcD5GpA: 150.0},
       totalProfitTreasury: 150.0,
     ),
     refs: '#2992 D5 AC2',
@@ -319,10 +318,9 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     filledDeals: [frrD5OtherBuyDeal(quantity: 5, pricePerUnit: 8.0)],
     purchasedTileIndex: frrD5IdxK1GpA(),
     constantRelation: 100,
-    expect: FrrCreditsExpectation(
-      creditedDealsLength: 1,
-      singleCreditedDealProfitRateCloseTo: kFirstRightMaxProfitRate,
-      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 40.0},
+    expect: frrCreditedDealExpect(
+      profitRateCloseTo: kFirstRightMaxProfitRate,
+      treasuryCreditCloseTo: const {kFrrIssueAcD5GpA: 40.0},
       totalProfitTreasury: 40.0,
     ),
     refs: '#2992 D5 AC3',
@@ -334,10 +332,9 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     filledDeals: [frrD5OtherBuyDeal()],
     purchasedTileIndex: frrD5IdxK1GpA(),
     constantRelation: 0,
-    expect: const FrrCreditsExpectation(
-      creditedDealsLength: 1,
-      singleCreditedDealProfitIsZero: true,
-      treasuryCreditByGpId: {kFrrIssueAcD5GpA: 0.0},
+    expect: frrCreditedDealExpect(
+      profitIsZero: true,
+      treasuryCreditByGpId: const {kFrrIssueAcD5GpA: 0.0},
       totalProfitTreasury: 0.0,
     ),
     refs: '#2992 D5 AC4',
@@ -349,7 +346,8 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     filledDeals: [frrD5FrrMatchDeal()],
     purchasedTileIndex: frrD5IdxK1GpA(),
     constantRelation: 100,
-    expect: const FrrCreditsExpectation(
+    expect: frrTreasuryCloseTo(
+      const {},
       creditedDealsEmpty: true,
       treasuryCreditEmpty: true,
       totalProfitTreasury: 0.0,
@@ -382,9 +380,9 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
       kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 100},
       kFrrIssueAcD5GpB: {kFrrIssueAcD5MinorM1: 50},
     }),
-    expect: const FrrCreditsExpectation(
-      treasuryCreditKeysContainAll: [kFrrIssueAcD5GpA, kFrrIssueAcD5GpB],
-      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 60.0, kFrrIssueAcD5GpB: 20.0},
+    expect: frrTreasuryCloseTo(
+      const {kFrrIssueAcD5GpA: 60.0, kFrrIssueAcD5GpB: 20.0},
+      treasuryCreditKeysContainAll: const [kFrrIssueAcD5GpA, kFrrIssueAcD5GpB],
       totalProfitTreasury: 80.0,
     ),
     refs: '#2992 D5 AC5',
@@ -420,10 +418,10 @@ List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
     relationScoreFor: frrRelationTable(const {
       kFrrIssueAcD5GpA: {kFrrIssueAcD5MinorM1: 100, kFrrIssueAcD5MinorM2: 25},
     }),
-    expect: const FrrCreditsExpectation(
+    expect: frrTreasuryCloseTo(
+      const {kFrrIssueAcD5GpA: 45.0},
       creditedDealsLength: 2,
-      treasuryCreditKeysExact: [kFrrIssueAcD5GpA],
-      treasuryCreditCloseTo: {kFrrIssueAcD5GpA: 45.0},
+      treasuryCreditKeysExact: const [kFrrIssueAcD5GpA],
       totalProfitTreasury: 45.0,
     ),
     refs: '#2992 D5 AC5',

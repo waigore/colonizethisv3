@@ -1,7 +1,6 @@
 // Compact resolveConsumption integration assertions (Refs #3939 phase 3
 // slices 34 / 45).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -9,11 +8,11 @@ import 'package:colonizethis_test/test.dart';
 import 'consumption_scenarios.dart';
 import 'core_economy_test_support.dart';
 
-final _grainId = CommodityCatalog.grain.id;
-final _meatId = CommodityCatalog.meat.id;
-final _sugarId = CommodityCatalog.refinedSugar.id;
-final _cigarsId = CommodityCatalog.cigars.id;
-final _furHatsId = CommodityCatalog.furHats.id;
+final _grainId = 'grain';
+final _meatId = 'meat';
+final _sugarId = 'refinedSugar';
+final _cigarsId = 'cigars';
+final _furHatsId = 'furHats';
 
 /// Pins for [resolveConsumption] integration rows.
 ///
