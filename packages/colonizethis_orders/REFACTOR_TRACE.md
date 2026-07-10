@@ -2137,6 +2137,15 @@ test/ LOC after slice 139: **36,914** (net −224 from post–slice 138). Remain
 
 test/ LOC after slice 140: **36,874** (net −40 from post–slice 139). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 141: move / naval validator scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-dispatch-collapse | drop `MoveValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `move_validator_expectations.dart` (deleted) | `move_validator_run_rows.dart` + thin `move_validator_scenarios.dart` | #3949 |
+| nov-dispatch-collapse | drop `NavalOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `naval_order_validator_expectations.dart` (deleted) | `naval_order_validator_run_rows.dart` + thin `naval_order_validator_scenarios.dart` | #3949 |
+
+test/ LOC after slice 141: **36,904** (net +30 from post–slice 140; run-row tear-off overhead). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
