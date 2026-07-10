@@ -20,6 +20,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/golden_capture_harness.dart';
 import 'package:intl/intl.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
@@ -33,7 +34,6 @@ import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_ba
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'support/panel_test_fixtures.dart';
 
@@ -86,30 +86,20 @@ Widget _goldenHost({
   required Widget child,
   Size? surfaceSize,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    locale: const Locale('en'),
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: Center(
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: surfaceSize == null
-              ? child
-              : SizedBox(width: surfaceSize.width, height: surfaceSize.height, child: child),
-        ),
-      ),
-    ),
+  return wrapGoldenBoundary(
+    boundaryKey: boundaryKey,
+    includeLocalizations: true,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: surfaceSize == null
+        ? child
+        : SizedBox(
+            width: surfaceSize.width,
+            height: surfaceSize.height,
+            child: child,
+          ),
   );
 }
 
-Future<void> _pumpBuilt(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
 
 void main() {
   suppressLogsForTests();
@@ -136,7 +126,7 @@ void main() {
           ),
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpForGolden(tester, settle: false);
 
       expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
       final topScore = greatPowerPowerScore(game, roster.first.id);
@@ -185,7 +175,7 @@ void main() {
           ),
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpForGolden(tester, settle: false);
 
       expect(find.byKey(kPlayersBarToggleButtonKey), findsNWidgets(2));
 
@@ -208,7 +198,7 @@ void main() {
           ),
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpForGolden(tester, settle: false);
 
       await expectLater(
         find.byKey(offBoundaryKey),
@@ -260,7 +250,7 @@ void main() {
           ),
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpForGolden(tester, settle: false);
 
       expect(find.byKey(kPlayersBarToggleButtonKey), findsOneWidget);
       expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
@@ -316,7 +306,7 @@ void main() {
           ),
         ),
       );
-      await _pumpBuilt(tester);
+      await pumpForGolden(tester, settle: false);
 
       expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
 
