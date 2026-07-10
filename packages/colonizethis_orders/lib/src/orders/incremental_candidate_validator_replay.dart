@@ -300,31 +300,42 @@ extension IncrementalCandidateValidatorProjection
     if (cached != null) {
       return cached;
     }
-    final buildValidator = createProjectedBuildValidator(
-      game: game,
-      player: player,
-      stockpile: player.stockpile,
-      treasury: player.treasury,
-      workerPool: player.workerPool,
-    );
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    for (final existing in builds) {
-      final result = buildValidator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) {
-        final fallback = (
-          stockpile: player.stockpile,
-          treasury: player.treasury,
-        );
-        cache.economyAfterBuildOrders = fallback;
-        return fallback;
-      }
-    }
-    final projected = (
-      stockpile: buildValidator.stockpile,
-      treasury: buildValidator.treasury,
+    bool? prefixReplaySucceeded;
+    ProjectedResourceLedgers? cachedLedgers;
+    final snap = ensureProjectedResourcePrefixReplay<BuildUnitOrder,
+        BuildOrderValidator>(
+      prefixReplaySucceeded: prefixReplaySucceeded,
+      cachedLedgers: cachedLedgers,
+      setPrefixReplaySucceeded: (value) => prefixReplaySucceeded = value,
+      setCachedLedgers: (ledgers) => cachedLedgers = ledgers,
+      existingOrders: builds,
+      createPrefixValidator: () => createProjectedBuildValidator(
+        game: game,
+        player: player,
+        stockpile: player.stockpile,
+        treasury: player.treasury,
+        workerPool: player.workerPool,
+      ),
+      validate: (validator, order) =>
+          validator.validate(order, previousRejected: false),
+      readLedgers: (validator) => (
+        stockpile: validator.stockpile,
+        treasury: validator.treasury,
+        workers: validator.workers,
+      ),
     );
+    if (snap == null) {
+      final fallback = (
+        stockpile: player.stockpile,
+        treasury: player.treasury,
+      );
+      cache.economyAfterBuildOrders = fallback;
+      return fallback;
+    }
+    final projected = (stockpile: snap.stockpile, treasury: snap.treasury);
     cache.economyAfterBuildOrders = projected;
     return projected;
   }

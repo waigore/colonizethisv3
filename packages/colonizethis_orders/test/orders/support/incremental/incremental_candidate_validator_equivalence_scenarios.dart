@@ -1,18 +1,18 @@
 // Table-driven IncrementalCandidateValidator equivalence scenarios (Refs #3949).
 
 import '../scenario_runner.dart';
-import 'incremental_candidate_validator_equivalence_expectations.dart';
+import 'incremental_candidate_validator_equivalence_runs.dart';
 
 class IncrementalEquivalenceScenario implements RefsScenario {
   const IncrementalEquivalenceScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final IncrementalEquivalenceTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -20,119 +20,119 @@ class IncrementalEquivalenceScenario implements RefsScenario {
 void runIncrementalEquivalenceScenario(
   IncrementalEquivalenceScenario scenario,
 ) {
-  runIncrementalEquivalenceExpectation(scenario.target);
+  scenario.run();
 }
 
 List<IncrementalEquivalenceScenario>
-incrementalCandidateValidatorEquivalenceScenarios() => const [
+incrementalCandidateValidatorEquivalenceScenarios() => [
   // dart format off
   IncrementalEquivalenceScenario(
     label: 'move: builder onto own province (accepted)',
-    target: IncrementalEquivalenceTarget.moveBuilderOwnProvince,
+    run: iceRunMoveBuilderOwnProvince,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: builder onto other GP province (rejected)',
-    target: IncrementalEquivalenceTarget.moveBuilderOtherGp,
+    run: iceRunMoveBuilderOtherGp,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: explorer onto Minor province (accepted)',
-    target: IncrementalEquivalenceTarget.moveExplorerMinor,
+    run: iceRunMoveExplorerMinor,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: spy onto other GP province (accepted)',
-    target: IncrementalEquivalenceTarget.moveSpyOtherGp,
+    run: iceRunMoveSpyOtherGp,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: military regiment via MoveOrder (rejected)',
-    target: IncrementalEquivalenceTarget.moveMilitaryRegiment,
+    run: iceRunMoveMilitaryRegiment,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: missing unit (rejected)',
-    target: IncrementalEquivalenceTarget.moveMissingUnit,
+    run: iceRunMoveMissingUnit,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: empty destination tile (rejected)',
-    target: IncrementalEquivalenceTarget.moveEmptyDestination,
+    run: iceRunMoveEmptyDestination,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: rejected because basePrefix has work order for same unit (move XOR work cascade)',
-    target: IncrementalEquivalenceTarget.moveXorWorkCascade,
+    run: iceRunMoveXorWorkCascade,
   ),
   IncrementalEquivalenceScenario(
     label: 'move: with non-empty accepted basePrefix (accepted)',
-    target: IncrementalEquivalenceTarget.moveNonEmptyBasePrefix,
+    run: iceRunMoveNonEmptyBasePrefix,
   ),
   IncrementalEquivalenceScenario(
     label: 'build: candidate remains equivalent to full-pass path',
-    target: IncrementalEquivalenceTarget.buildSingleCandidate,
+    run: iceRunBuildSingleCandidate,
   ),
   IncrementalEquivalenceScenario(
     label: 'build: successive candidate probes stay full-pass equivalent (#2394)',
-    target: IncrementalEquivalenceTarget.buildSuccessiveProbes,
+    run: iceRunBuildSuccessiveProbes,
   ),
   IncrementalEquivalenceScenario(
     label: 'work: non-empty basePrefix replay remains equivalent',
-    target: IncrementalEquivalenceTarget.workNonEmptyBasePrefix,
+    run: iceRunWorkNonEmptyBasePrefix,
   ),
   IncrementalEquivalenceScenario(
     label: 'diplomatic: non-empty basePrefix replay remains equivalent',
-    target: IncrementalEquivalenceTarget.diplomaticNonEmptyBasePrefix,
+    run: iceRunDiplomaticNonEmptyBasePrefix,
   ),
   IncrementalEquivalenceScenario(
     label: 'diplomatic: sequential probes on one validator stay equivalent (#2394)',
-    target: IncrementalEquivalenceTarget.diplomaticSequentialProbes,
+    run: iceRunDiplomaticSequentialProbes,
   ),
   IncrementalEquivalenceScenario(
     label: 'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
-    target: IncrementalEquivalenceTarget.prefetchedFactionMembership,
+    run: iceRunPrefetchedFactionMembership,
   ),
   IncrementalEquivalenceScenario(
     label: 'army move: into own adjacent province (accepted)',
-    target: IncrementalEquivalenceTarget.armyMoveOwnAdjacent,
+    run: iceRunArmyMoveOwnAdjacent,
   ),
   IncrementalEquivalenceScenario(
     label: 'army move: into other GP without war (rejected)',
-    target: IncrementalEquivalenceTarget.armyMoveGpNoWar,
+    run: iceRunArmyMoveGpNoWar,
   ),
   IncrementalEquivalenceScenario(
     label: 'army move: into other GP with same-turn declare war (accepted)',
-    target: IncrementalEquivalenceTarget.armyMoveGpDeclareWar,
+    run: iceRunArmyMoveGpDeclareWar,
   ),
   IncrementalEquivalenceScenario(
     label: 'army move: into Minor without war (rejected)',
-    target: IncrementalEquivalenceTarget.armyMoveMinorNoWar,
+    run: iceRunArmyMoveMinorNoWar,
   ),
   IncrementalEquivalenceScenario(
     label: 'army move: missing army (rejected)',
-    target: IncrementalEquivalenceTarget.armyMoveMissingArmy,
+    run: iceRunArmyMoveMissingArmy,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval move: at-sea fleet to adjacent sea zone (accepted)',
-    target: IncrementalEquivalenceTarget.navalMoveAdjacentSea,
+    run: iceRunNavalMoveAdjacentSea,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval move: at-sea fleet to non-adjacent sea zone (rejected)',
-    target: IncrementalEquivalenceTarget.navalMoveNonAdjacentSea,
+    run: iceRunNavalMoveNonAdjacentSea,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval move: in-port fleet undock to adjacent sea zone (accepted)',
-    target: IncrementalEquivalenceTarget.navalMoveUndock,
+    run: iceRunNavalMoveUndock,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval move: missing fleet (rejected)',
-    target: IncrementalEquivalenceTarget.navalMoveMissingFleet,
+    run: iceRunNavalMoveMissingFleet,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval mission: patrol owned fleet (accepted)',
-    target: IncrementalEquivalenceTarget.navalMissionPatrol,
+    run: iceRunNavalMissionPatrol,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval mission: blockade without target province (rejected)',
-    target: IncrementalEquivalenceTarget.navalMissionBlockadeNoTarget,
+    run: iceRunNavalMissionBlockadeNoTarget,
   ),
   IncrementalEquivalenceScenario(
     label: 'naval mission: missing fleet (rejected)',
-    target: IncrementalEquivalenceTarget.navalMissionMissingFleet,
+    run: iceRunNavalMissionMissingFleet,
   ),
   // dart format on
 ];

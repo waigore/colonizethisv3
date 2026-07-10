@@ -138,6 +138,33 @@ bool exploreProvinceStillUsefulFromAuthoritativeTiles(
   return false;
 }
 
+/// When [probe] needs a province move leg, validates the bundled move hop.
+/// Returns `null` when no leg is required or validation succeeds; otherwise
+/// the rejection reason for logging.
+String? bundledWorkMoveLegRejectionReason({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Unit unit,
+  required WorkOrder probe,
+  required OrderResolutionContext resolution,
+  required List<DiplomaticOrder> diplomatic,
+}) {
+  if (!civilianBundledWorkNeedsProvinceMoveLeg(game, unit, probe)) {
+    return null;
+  }
+  final bundled = validateCivilianBundledWorkMoveLeg(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    unit: unit,
+    order: probe,
+    resolution: resolution,
+    diplomaticOrders: diplomatic,
+  );
+  return bundled.isAccepted ? null : (bundled.reason ?? 'no_single_hop');
+}
+
 /// [resolution] threads the canonical [OrderResolutionContext]
 /// (`view` + `unitsById`) so the per-tile probe loop reuses one shared
 /// pass snapshot (Refs #2836 AC 3).

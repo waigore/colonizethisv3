@@ -2080,6 +2080,16 @@ test/ LOC after slice 133: see PR. Remaining: further support-table compaction t
 
 test/ LOC after slice 134: **37,318** (net +20 from post–slice 133; lib/player-ledgers helper overhead — expectations switch bodies thinner). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 135: ICE scenario dispatch collapse + build projection prefix replay
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ice-dispatch-runs | drop `IncrementalEquivalenceTarget` enum + switch dispatcher; scenario rows hold `run` tear-offs | `incremental_candidate_validator_equivalence_expectations.dart` (deleted) | `incremental_candidate_validator_equivalence_runs.dart` + `incremental_candidate_validator_equivalence_scenarios.dart` | #3949 |
+| lib-bundled-move-leg | promote `_bundledWorkMoveLegRejectionReason` to `bundledWorkMoveLegRejectionReason` | `order_suggestion_work_explorer.dart` | `bundled_civilian_work_order.dart` | #3949 |
+| lib-build-projection-replay | route `_projectEconomyAfterAcceptedBuildOrders` through `ensureProjectedResourcePrefixReplay` | `incremental_candidate_validator_replay.dart` | same + `projected_economy_prefix_replay.dart` | #3949 |
+
+test/ LOC after slice 135: **37,290** (net −28 from post–slice 134). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
