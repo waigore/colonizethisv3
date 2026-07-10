@@ -1,23 +1,12 @@
-// Compact OrderEngine naval/build projection + worker assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for naval/build projection + workers (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-/// Pins for [orderEngineNavalBuildProjectionAndWorkersScenarios] rows.
-enum OrderEngineNavalBuildProjectionAndWorkersTarget {
-  projectedEffectsTreasuryDelta,
-  rejectsNavalBuildWhenPeasantsZero,
-}
-
-void runOrderEngineNavalBuildProjectionAndWorkersExpectation(
-  OrderEngineNavalBuildProjectionAndWorkersTarget target,
-) {
-  switch (target) {
-    case OrderEngineNavalBuildProjectionAndWorkersTarget
-        .projectedEffectsTreasuryDelta:
-      const ow = 'oldWorld';
+void oenbpaRunProjectedEffectsTreasuryDelta() {
+const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
@@ -68,10 +57,10 @@ void runOrderEngineNavalBuildProjectionAndWorkersExpectation(
       final effects = engine.projectedEffects(game, topology, 'p1');
       expect(effects.workerCount, isNotNull);
       expect(effects.treasuryDelta, isNotNull);
+}
 
-    case OrderEngineNavalBuildProjectionAndWorkersTarget
-        .rejectsNavalBuildWhenPeasantsZero:
-      const ow = 'oldWorld';
+void oenbpaRunRejectsNavalBuildWhenPeasantsZero() {
+const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
           TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
@@ -118,5 +107,4 @@ void runOrderEngineNavalBuildProjectionAndWorkersExpectation(
       );
       expect(result.status, OrderValidationStatus.rejected);
       expect(result.reason, 'Insufficient workers');
-  }
 }

@@ -1,39 +1,14 @@
-// Compact diplomatic panel action assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for diplomatic panel actions (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'diplomatic_panel_actions_fixtures.dart';
 
-/// Pins for [diplomaticPanelActionCandidatesScenarios] rows.
-enum DiplomaticPanelActionCandidatesTarget {
-  gpRowIncludesAllianceFtpOvertureStages,
-  formalAllianceSwapsAllianceForBreakAllianceOnly,
-  minorRowOmitsAllianceFtp,
-  gpRowIncludesBoycottRevokeBoycott,
-  minorTribeRowOmitsBoycottRevokeBoycott,
-}
-
-/// Pins for [diplomaticPanelEnumerateScenarios] rows.
-enum DiplomaticPanelEnumerateTarget {
-  minorAtNoneShowsOvertureStagesConsulateEnabled,
-  boycottDisabledWhenNoColony,
-  boycottEnabledWhenColonyAtPeace,
-  revokeEnabledWithActiveBoycott,
-  revokeDisabledWhenNoActiveBoycott,
-  postBreakCooldownDisablesAlliance,
-  invalidDeclareWarOfferPeaceStillEnumerated,
-}
-
-void runDiplomaticPanelActionCandidatesExpectation(
-  DiplomaticPanelActionCandidatesTarget target,
-) {
-  switch (target) {
-    case DiplomaticPanelActionCandidatesTarget.gpRowIncludesAllianceFtpOvertureStages:
-      final candidates = diplomaticPanelActionCandidates(
+void dpacRunGpRowIncludesAllianceFtpOvertureStages() {
+final candidates = diplomaticPanelActionCandidates(
         game: diplomaticPanelActionsBaseGame(),
         playerId: 'gp1',
         targetId: 'gp2',
@@ -57,10 +32,10 @@ void runDiplomaticPanelActionCandidatesExpectation(
             .toSet(),
         equals(kDiplomaticPanelOvertureStages.toSet()),
       );
+}
 
-    case DiplomaticPanelActionCandidatesTarget
-        .formalAllianceSwapsAllianceForBreakAllianceOnly:
-      final candidates = diplomaticPanelActionCandidates(
+void dpacRunFormalAllianceSwapsAllianceForBreakAllianceOnly() {
+final candidates = diplomaticPanelActionCandidates(
         game: diplomaticPanelActionsAlliedGame(),
         playerId: 'gp1',
         targetId: 'gp2',
@@ -73,9 +48,10 @@ void runDiplomaticPanelActionCandidatesExpectation(
         candidates.map((o) => o.type),
         isNot(contains(DiplomaticOrderType.alliance)),
       );
+}
 
-    case DiplomaticPanelActionCandidatesTarget.minorRowOmitsAllianceFtp:
-      final candidates = diplomaticPanelActionCandidates(
+void dpacRunMinorRowOmitsAllianceFtp() {
+final candidates = diplomaticPanelActionCandidates(
         game: diplomaticPanelActionsBaseGame(),
         playerId: 'gp1',
         targetId: 'minor1',
@@ -88,9 +64,10 @@ void runDiplomaticPanelActionCandidatesExpectation(
         candidates.map((o) => o.type),
         isNot(contains(DiplomaticOrderType.establishFtp)),
       );
+}
 
-    case DiplomaticPanelActionCandidatesTarget.gpRowIncludesBoycottRevokeBoycott:
-      final candidates = diplomaticPanelActionCandidates(
+void dpacRunGpRowIncludesBoycottRevokeBoycott() {
+final candidates = diplomaticPanelActionCandidates(
         game: diplomaticPanelActionsBaseGame(),
         playerId: 'gp1',
         targetId: 'gp2',
@@ -102,9 +79,10 @@ void runDiplomaticPanelActionCandidatesExpectation(
           DiplomaticOrderType.revokeBoycott,
         }),
       );
+}
 
-    case DiplomaticPanelActionCandidatesTarget.minorTribeRowOmitsBoycottRevokeBoycott:
-      final candidates = diplomaticPanelActionCandidates(
+void dpacRunMinorTribeRowOmitsBoycottRevokeBoycott() {
+final candidates = diplomaticPanelActionCandidates(
         game: diplomaticPanelActionsBaseGame(),
         playerId: 'gp1',
         targetId: 'minor1',
@@ -117,15 +95,10 @@ void runDiplomaticPanelActionCandidatesExpectation(
         candidates.map((o) => o.type),
         isNot(contains(DiplomaticOrderType.revokeBoycott)),
       );
-  }
 }
 
-void runDiplomaticPanelEnumerateExpectation(
-  DiplomaticPanelEnumerateTarget target,
-) {
-  switch (target) {
-    case DiplomaticPanelEnumerateTarget.minorAtNoneShowsOvertureStagesConsulateEnabled:
-      final actions = enumerateDiplomaticPanelActionsForTarget(
+void dpeRunMinorAtNoneShowsOvertureStagesConsulateEnabled() {
+final actions = enumerateDiplomaticPanelActionsForTarget(
         game: diplomaticPanelActionsBaseGame(),
         topology: diplomaticPanelActionsTopology,
         playerId: 'gp1',
@@ -149,26 +122,29 @@ void runDiplomaticPanelEnumerateExpectation(
       expect(consulate.enabled, isTrue, reason: consulate.rejectionReason);
       expect(embassy.enabled, isFalse);
       expect(embassy.rejectionReason, isNotEmpty);
+}
 
-    case DiplomaticPanelEnumerateTarget.boycottDisabledWhenNoColony:
-      final boycott = diplomaticPanelActionOfType(
+void dpeRunBoycottDisabledWhenNoColony() {
+final boycott = diplomaticPanelActionOfType(
         diplomaticPanelActionsBaseGame(),
         'gp2',
         DiplomaticOrderType.boycott,
       );
       expect(boycott.enabled, isFalse);
       expect(boycott.rejectionReason, isNotEmpty);
+}
 
-    case DiplomaticPanelEnumerateTarget.boycottEnabledWhenColonyAtPeace:
-      final boycott = diplomaticPanelActionOfType(
+void dpeRunBoycottEnabledWhenColonyAtPeace() {
+final boycott = diplomaticPanelActionOfType(
         diplomaticPanelActionsColonyAtPeaceGame(),
         'gp2',
         DiplomaticOrderType.boycott,
       );
       expect(boycott.enabled, isTrue, reason: boycott.rejectionReason);
+}
 
-    case DiplomaticPanelEnumerateTarget.revokeEnabledWithActiveBoycott:
-      final game = diplomaticPanelActionsActiveBoycottGame();
+void dpeRunRevokeEnabledWithActiveBoycott() {
+final game = diplomaticPanelActionsActiveBoycottGame();
       final revoke = diplomaticPanelActionOfType(
         game,
         'gp2',
@@ -181,27 +157,30 @@ void runDiplomaticPanelEnumerateExpectation(
       );
       expect(revoke.enabled, isTrue, reason: revoke.rejectionReason);
       expect(boycott.enabled, isFalse);
+}
 
-    case DiplomaticPanelEnumerateTarget.revokeDisabledWhenNoActiveBoycott:
-      final revoke = diplomaticPanelActionOfType(
+void dpeRunRevokeDisabledWhenNoActiveBoycott() {
+final revoke = diplomaticPanelActionOfType(
         diplomaticPanelActionsBaseGame(),
         'gp2',
         DiplomaticOrderType.revokeBoycott,
       );
       expect(revoke.enabled, isFalse);
       expect(revoke.rejectionReason, isNotEmpty);
+}
 
-    case DiplomaticPanelEnumerateTarget.postBreakCooldownDisablesAlliance:
-      final alliance = diplomaticPanelActionOfType(
+void dpeRunPostBreakCooldownDisablesAlliance() {
+final alliance = diplomaticPanelActionOfType(
         diplomaticPanelActionsAllianceBreakCooldownGame(),
         'gp2',
         DiplomaticOrderType.alliance,
       );
       expect(alliance.enabled, isFalse);
       expect(alliance.rejectionReason, kAllianceBreakCooldownRejectionReason);
+}
 
-    case DiplomaticPanelEnumerateTarget.invalidDeclareWarOfferPeaceStillEnumerated:
-      final actions = enumerateDiplomaticPanelActionsForTarget(
+void dpeRunInvalidDeclareWarOfferPeaceStillEnumerated() {
+final actions = enumerateDiplomaticPanelActionsForTarget(
         game: diplomaticPanelActionsBaseGame(),
         topology: diplomaticPanelActionsTopology,
         playerId: 'gp1',
@@ -217,5 +196,4 @@ void runDiplomaticPanelEnumerateExpectation(
       expect(offerPeace.enabled, isFalse);
       expect(offerPeace.rejectionReason, isNotEmpty);
       expect(declareWar.enabled, isTrue, reason: declareWar.rejectionReason);
-  }
 }

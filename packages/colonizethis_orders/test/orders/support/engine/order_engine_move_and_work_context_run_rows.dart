@@ -1,35 +1,14 @@
-// Compact OrderEngine move/work-context assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for OrderEngine move/work-context (Refs #3949 wave 3).
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'order_engine_core_fixtures.dart';
 import 'order_engine_move_and_work_context_expectation_shorthand.dart';
 import 'order_engine_move_and_work_context_fixtures.dart';
 
-/// Pins for [orderEngineMoveAndWorkContextScenarios] rows.
-enum OrderEngineMoveAndWorkContextTarget {
-  moveRejectedWhenDestinationProvinceUnknown,
-  workExploreRejectedWhenProvinceUnknown,
-  workExploreRejectedOnForeignGpTile,
-  workProspectRejectedWhenProvinceNotFogged,
-  workProspectRejectedWhenNotMineralEligible,
-  workProspectAcceptedWhenMineralEligible,
-  workProspectRejectedWithoutConsulate,
-  workProspectRejectedOnForeignGpTile,
-  moveRejectedWhenNotAdjacentNotOwn,
-  civilianMoveAcceptedWhenNotAdjacentOwnProvince,
-  workProspectRejectedWhenAlreadyProspected,
-}
-
-void runOrderEngineMoveAndWorkContextExpectation(
-  OrderEngineMoveAndWorkContextTarget target,
-) {
-  switch (target) {
-    case OrderEngineMoveAndWorkContextTarget
-        .moveRejectedWhenDestinationProvinceUnknown:
-      final topology = oecTwoProvinceTopology();
+void oemwcRunMoveRejectedWhenDestinationProvinceUnknown() {
+final topology = oecTwoProvinceTopology();
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -62,10 +41,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'visible',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workExploreRejectedWhenProvinceUnknown:
-      oemwcExpectWork(
+void oemwcRunWorkExploreRejectedWhenProvinceUnknown() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(tileVisibility: 'unknown'),
         oecSingleProvinceTopology(),
         const WorkOrder(
@@ -76,9 +55,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'visible',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget.workExploreRejectedOnForeignGpTile:
-      const targetTileKey = 'oldWorld|P2|0|0';
+void oemwcRunWorkExploreRejectedOnForeignGpTile() {
+const targetTileKey = 'oldWorld|P2|0|0';
       const p2OtherLand = 'oldWorld|P2|1|0';
       final topology = oecTwoProvinceTopology();
       final game = Game(
@@ -131,10 +111,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'cannot occupy',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenProvinceNotFogged:
-      oemwcExpectWork(
+void oemwcRunWorkProspectRejectedWhenProvinceNotFogged() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(
           tileVisibility: 'unknown',
           provinceOwnerId: 'tribe1',
@@ -149,10 +129,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'visible',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenNotMineralEligible:
-      oemwcExpectWork(
+void oemwcRunWorkProspectRejectedWhenNotMineralEligible() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(
           tileVisibility: 'fogged',
           provinceOwnerId: 'tribe1',
@@ -168,10 +148,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'mineral-eligible',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workProspectAcceptedWhenMineralEligible:
-      oemwcExpectWork(
+void oemwcRunWorkProspectAcceptedWhenMineralEligible() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(
           tileVisibility: 'fogged',
           provinceOwnerId: 'tribe1',
@@ -186,10 +166,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         ),
         status: OrderValidationStatus.accepted,
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWithoutConsulate:
-      oemwcExpectWork(
+void oemwcRunWorkProspectRejectedWithoutConsulate() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(
           tileVisibility: 'fogged',
           provinceOwnerId: 'tribe1',
@@ -204,9 +184,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'Establish a consulate',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget.workProspectRejectedOnForeignGpTile:
-      const targetTileKey = 'oldWorld|P2|0|0';
+void oemwcRunWorkProspectRejectedOnForeignGpTile() {
+const targetTileKey = 'oldWorld|P2|0|0';
       final topology = oecTwoProvinceTopology();
       final game = Game(
         id: 'g1',
@@ -255,9 +236,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'cannot occupy',
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget.moveRejectedWhenNotAdjacentNotOwn:
-      oemwcExpectMove(
+void oemwcRunMoveRejectedWhenNotAdjacentNotOwn() {
+oemwcExpectMove(
         oemwcThreeProvinceUnitGame(
           unitType: 'musketeers',
           p3OwnerId: 'p2',
@@ -266,10 +248,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         MoveOrder(unitId: 'u1', destinationTileKey: '$oemwcOw|P3|0|0'),
         status: OrderValidationStatus.rejected,
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .civilianMoveAcceptedWhenNotAdjacentOwnProvince:
-      oemwcExpectMove(
+void oemwcRunCivilianMoveAcceptedWhenNotAdjacentOwnProvince() {
+oemwcExpectMove(
         oemwcThreeProvinceUnitGame(
           unitType: kUnitTypeBuilder,
           p3OwnerId: 'p1',
@@ -278,10 +260,10 @@ void runOrderEngineMoveAndWorkContextExpectation(
         MoveOrder(unitId: 'u1', destinationTileKey: '$oemwcOw|P3|0|0'),
         status: OrderValidationStatus.accepted,
       );
+}
 
-    case OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenAlreadyProspected:
-      oemwcExpectWork(
+void oemwcRunWorkProspectRejectedWhenAlreadyProspected() {
+oemwcExpectWork(
         oemwcExplorerProvinceGame(
           tileVisibility: 'fogged',
           provinceOwnerId: 'tribe1',
@@ -298,5 +280,4 @@ void runOrderEngineMoveAndWorkContextExpectation(
         status: OrderValidationStatus.rejected,
         reasonContains: 'already prospected',
       );
-  }
 }

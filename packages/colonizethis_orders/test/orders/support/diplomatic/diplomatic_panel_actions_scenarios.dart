@@ -1,18 +1,18 @@
 // Table-driven diplomatic panel action scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'diplomatic_panel_actions_expectations.dart';
+import 'diplomatic_panel_actions_run_rows.dart';
 
 class DiplomaticPanelActionCandidatesScenario implements RefsScenario {
   const DiplomaticPanelActionCandidatesScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final DiplomaticPanelActionCandidatesTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -20,13 +20,13 @@ class DiplomaticPanelActionCandidatesScenario implements RefsScenario {
 class DiplomaticPanelEnumerateScenario implements RefsScenario {
   const DiplomaticPanelEnumerateScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final DiplomaticPanelEnumerateTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -34,41 +34,37 @@ class DiplomaticPanelEnumerateScenario implements RefsScenario {
 void runDiplomaticPanelActionCandidatesScenario(
   DiplomaticPanelActionCandidatesScenario scenario,
 ) {
-  runDiplomaticPanelActionCandidatesExpectation(scenario.target);
+  scenario.run();
 }
 
 void runDiplomaticPanelEnumerateScenario(
   DiplomaticPanelEnumerateScenario scenario,
 ) {
-  runDiplomaticPanelEnumerateExpectation(scenario.target);
+  scenario.run();
 }
 
 List<DiplomaticPanelActionCandidatesScenario>
     diplomaticPanelActionCandidatesScenarios() => const [
           DiplomaticPanelActionCandidatesScenario(
             label: 'GP row includes alliance, FTP, and four overture stages',
-            target: DiplomaticPanelActionCandidatesTarget
-                .gpRowIncludesAllianceFtpOvertureStages,
+            run: dpacRunGpRowIncludesAllianceFtpOvertureStages,
           ),
           DiplomaticPanelActionCandidatesScenario(
             label: 'AC11/AC1: formal alliance (e.g. debug /set_diplomacy alliance) swaps alliance for breakAlliance only',
-            target: DiplomaticPanelActionCandidatesTarget
-                .formalAllianceSwapsAllianceForBreakAllianceOnly,
+            run: dpacRunFormalAllianceSwapsAllianceForBreakAllianceOnly,
           ),
           DiplomaticPanelActionCandidatesScenario(
             label: 'Minor row omits alliance and FTP',
-            target: DiplomaticPanelActionCandidatesTarget.minorRowOmitsAllianceFtp,
+            run: dpacRunMinorRowOmitsAllianceFtp,
           ),
           DiplomaticPanelActionCandidatesScenario(
             label: 'GP row includes boycott + revoke boycott (Refs #3753 S14)',
-            target: DiplomaticPanelActionCandidatesTarget
-                .gpRowIncludesBoycottRevokeBoycott,
+            run: dpacRunGpRowIncludesBoycottRevokeBoycott,
             refs: '#3753 S14',
           ),
           DiplomaticPanelActionCandidatesScenario(
             label: 'Minor/Tribe row omits boycott + revoke boycott (Refs #3753 S14)',
-            target: DiplomaticPanelActionCandidatesTarget
-                .minorTribeRowOmitsBoycottRevokeBoycott,
+            run: dpacRunMinorTribeRowOmitsBoycottRevokeBoycott,
             refs: '#3753 S14',
           ),
         ];
@@ -77,37 +73,35 @@ List<DiplomaticPanelEnumerateScenario> diplomaticPanelEnumerateScenarios() =>
     const [
       DiplomaticPanelEnumerateScenario(
         label: 'AC-6: minor at none shows all overture stages; only consulate enabled',
-        target: DiplomaticPanelEnumerateTarget
-            .minorAtNoneShowsOvertureStagesConsulateEnabled,
+        run: dpeRunMinorAtNoneShowsOvertureStagesConsulateEnabled,
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'S14: boycott disabled when human holds no colony',
-        target: DiplomaticPanelEnumerateTarget.boycottDisabledWhenNoColony,
+        run: dpeRunBoycottDisabledWhenNoColony,
         refs: '#3753 S14',
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'S14: boycott enabled when human holds a colony at peace',
-        target: DiplomaticPanelEnumerateTarget.boycottEnabledWhenColonyAtPeace,
+        run: dpeRunBoycottEnabledWhenColonyAtPeace,
         refs: '#3753 S14',
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'S14: revoke enabled (and boycott disabled) with active boycott',
-        target: DiplomaticPanelEnumerateTarget.revokeEnabledWithActiveBoycott,
+        run: dpeRunRevokeEnabledWithActiveBoycott,
         refs: '#3753 S14',
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'S14: revoke disabled when no active boycott exists',
-        target: DiplomaticPanelEnumerateTarget.revokeDisabledWhenNoActiveBoycott,
+        run: dpeRunRevokeDisabledWhenNoActiveBoycott,
         refs: '#3753 S14',
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'post-break cooldown disables alliance with deterministic reason (#3811)',
-        target: DiplomaticPanelEnumerateTarget.postBreakCooldownDisablesAlliance,
+        run: dpeRunPostBreakCooldownDisablesAlliance,
         refs: '#3811',
       ),
       DiplomaticPanelEnumerateScenario(
         label: 'AC-10: invalid declare war / offer peace still enumerated',
-        target: DiplomaticPanelEnumerateTarget
-            .invalidDeclareWarOfferPeaceStillEnumerated,
+        run: dpeRunInvalidDeclareWarOfferPeaceStillEnumerated,
       ),
     ];

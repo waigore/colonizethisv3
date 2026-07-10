@@ -1,19 +1,19 @@
 // Table-driven OrderEngine move/work-context scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_engine_move_and_work_context_expectations.dart';
+import 'order_engine_move_and_work_context_run_rows.dart';
 
 /// One row in [orderEngineMoveAndWorkContextScenarios].
 class OrderEngineMoveAndWorkContextScenario implements RefsScenario {
   const OrderEngineMoveAndWorkContextScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderEngineMoveAndWorkContextTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
@@ -21,7 +21,7 @@ class OrderEngineMoveAndWorkContextScenario implements RefsScenario {
 void runOrderEngineMoveAndWorkContextScenario(
   OrderEngineMoveAndWorkContextScenario scenario,
 ) {
-  runOrderEngineMoveAndWorkContextExpectation(scenario.target);
+  scenario.run();
 }
 
 /// Canonical scenarios for OrderEngine move/work-context family tests.
@@ -31,62 +31,51 @@ List<OrderEngineMoveAndWorkContextScenario>
 orderEngineMoveAndWorkContextScenarios() => const [
   OrderEngineMoveAndWorkContextScenario(
     label: 'move order rejected when destination province unknown',
-    target: OrderEngineMoveAndWorkContextTarget
-        .moveRejectedWhenDestinationProvinceUnknown,
+    run: oemwcRunMoveRejectedWhenDestinationProvinceUnknown,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order explore rejected when province unknown',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workExploreRejectedWhenProvinceUnknown,
+    run: oemwcRunWorkExploreRejectedWhenProvinceUnknown,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order explore rejected on foreign GP tile for explorer',
-    target:
-        OrderEngineMoveAndWorkContextTarget.workExploreRejectedOnForeignGpTile,
+    run: oemwcRunWorkExploreRejectedOnForeignGpTile,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order prospect rejected when province not fogged or better',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenProvinceNotFogged,
+    run: oemwcRunWorkProspectRejectedWhenProvinceNotFogged,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order prospect rejected when tile is not mineral-eligible',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenNotMineralEligible,
+    run: oemwcRunWorkProspectRejectedWhenNotMineralEligible,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label:
         'work order prospect accepted when mineral-eligible and visibility ok',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workProspectAcceptedWhenMineralEligible,
+    run: oemwcRunWorkProspectAcceptedWhenMineralEligible,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label:
         'work order prospect rejected in Tribe province without a consulate (Refs #3753 R4)',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWithoutConsulate,
+    run: oemwcRunWorkProspectRejectedWithoutConsulate,
     refs: '#3753',
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order prospect rejected on foreign GP tile for explorer',
-    target:
-        OrderEngineMoveAndWorkContextTarget.workProspectRejectedOnForeignGpTile,
+    run: oemwcRunWorkProspectRejectedOnForeignGpTile,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label:
         'move order rejected when destination not adjacent and not own province',
-    target:
-        OrderEngineMoveAndWorkContextTarget.moveRejectedWhenNotAdjacentNotOwn,
+    run: oemwcRunMoveRejectedWhenNotAdjacentNotOwn,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label:
         'civilian move order accepted when destination not adjacent but own province',
-    target: OrderEngineMoveAndWorkContextTarget
-        .civilianMoveAcceptedWhenNotAdjacentOwnProvince,
+    run: oemwcRunCivilianMoveAcceptedWhenNotAdjacentOwnProvince,
   ),
   OrderEngineMoveAndWorkContextScenario(
     label: 'work order prospect rejected when tile already prospected',
-    target: OrderEngineMoveAndWorkContextTarget
-        .workProspectRejectedWhenAlreadyProspected,
+    run: oemwcRunWorkProspectRejectedWhenAlreadyProspected,
   ),
 ];

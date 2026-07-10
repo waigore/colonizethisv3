@@ -2243,6 +2243,19 @@ test/ LOC after slice 147: **36,417** (net −64 from post–slice 146). Remaini
 
 test/ LOC after slice 148: **36,261** (net −156 from post–slice 147). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~39 expectations modules — suggestion, diplomatic panel, partial_province_reveal, per_player cache, engine move/context).
 
+## Wave 3 — Slice 149: engine / cache / diplomatic scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oemwc-dispatch-collapse | drop `OrderEngineMoveAndWorkContextTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_move_and_work_context_expectations.dart` (deleted) | `order_engine_move_and_work_context_run_rows.dart` + thin `order_engine_move_and_work_context_scenarios.dart` | #3949 |
+| oenbpa-dispatch-collapse | drop `OrderEngineNavalBuildProjectionAndWorkersTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_naval_build_projection_and_workers_expectations.dart` (deleted) | `order_engine_naval_build_projection_and_workers_run_rows.dart` + thin `order_engine_naval_build_projection_and_workers_scenarios.dart` | #3949 |
+| ppr-dispatch-collapse | drop `PartialProvinceRevealTarget` enum + switch; scenario rows hold `run` tear-offs | `partial_province_reveal_expectations.dart` (deleted) | `partial_province_reveal_run_rows.dart` + thin `partial_province_reveal_scenarios.dart` | #3949 |
+| ppwtsc-dispatch-collapse | drop `PerPlayerWorkTargetSelectionCacheTarget` enum + switch; scenario rows hold `run` tear-offs | `per_player_work_target_selection_cache_expectations.dart` (deleted) | `per_player_work_target_selection_cache_run_rows.dart` + thin `per_player_work_target_selection_cache_scenarios.dart` | #3949 |
+| dpac-dispatch-collapse | drop `DiplomaticPanelActionCandidatesTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_panel_actions_expectations.dart` (deleted) | `diplomatic_panel_actions_run_rows.dart` + thin `diplomatic_panel_actions_scenarios.dart` | #3949 |
+| dpe-dispatch-collapse | drop `DiplomaticPanelEnumerateTarget` enum + switch; scenario rows hold `run` tear-offs | same (deleted) | same | #3949 |
+
+test/ LOC after slice 149: **36,156** (net −105 from post–slice 148). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~33 expectations modules — suggestion families only).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

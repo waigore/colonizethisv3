@@ -1,4 +1,4 @@
-// Compact partial-province-reveal assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for partial-province-reveal (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -8,20 +8,8 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-/// Pins for [partialProvinceRevealPrefixedIdsScenarios] rows.
-enum PartialProvinceRevealTarget {
-  includesPrefixedProvinceWhenLandTilesMixVisibility,
-  excludesUnprefixedKeysAndUniformVisibility,
-  partialRevealIdsResolveViaProvincesById,
-  returnsEmptyWithoutScanningWhenIdSetEmpty,
-  returnsMatchingProvincesSortedById,
-}
-
-void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
-  switch (target) {
-    case PartialProvinceRevealTarget
-        .includesPrefixedProvinceWhenLandTilesMixVisibility:
-      const playerId = 'gp1';
+void pprRunIncludesPrefixedProvinceWhenLandTilesMixVisibility() {
+const playerId = 'gp1';
       const ow = 'oldWorld';
       final game = TestFixtures.minimalGame(
         id: 'g1',
@@ -50,9 +38,10 @@ void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
         view: view,
       );
       expect(ids, {'$ow|p1'});
+}
 
-    case PartialProvinceRevealTarget.excludesUnprefixedKeysAndUniformVisibility:
-      const playerId = 'gp1';
+void pprRunExcludesUnprefixedKeysAndUniformVisibility() {
+const playerId = 'gp1';
       const ow = 'oldWorld';
       final game = TestFixtures.minimalGame(
         id: 'g1',
@@ -82,9 +71,10 @@ void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
         view: view,
       );
       expect(ids, isEmpty);
+}
 
-    case PartialProvinceRevealTarget.partialRevealIdsResolveViaProvincesById:
-      const playerId = 'gp1';
+void pprRunPartialRevealIdsResolveViaProvincesById() {
+const playerId = 'gp1';
       const ow = 'oldWorld';
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
       final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId);
@@ -148,9 +138,10 @@ void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
       optimized.sort();
       expect(cache, isNotEmpty);
       expect(optimized, legacy);
+}
 
-    case PartialProvinceRevealTarget.returnsEmptyWithoutScanningWhenIdSetEmpty:
-      final game = TestFixtures.minimalGame(
+void pprRunReturnsEmptyWithoutScanningWhenIdSetEmpty() {
+final game = TestFixtures.minimalGame(
         id: 'g1',
         players: const [Player(id: 'p1', displayName: 'P', isHuman: true)],
         oldWorld: RegionData(
@@ -173,9 +164,10 @@ void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
         ),
         isEmpty,
       );
+}
 
-    case PartialProvinceRevealTarget.returnsMatchingProvincesSortedById:
-      const ow = 'oldWorld';
+void pprRunReturnsMatchingProvincesSortedById() {
+const ow = 'oldWorld';
       final game = TestFixtures.minimalGame(
         id: 'g1',
         players: const [Player(id: 'p1', displayName: 'P', isHuman: true)],
@@ -209,5 +201,4 @@ void runPartialProvinceRevealExpectation(PartialProvinceRevealTarget target) {
         partiallyRevealedPrefixedProvinceIds: {'$ow|z', '$ow|m'},
       );
       expect(sorted.map((p) => p.id).toList(), ['$ow|m', '$ow|z']);
-  }
 }

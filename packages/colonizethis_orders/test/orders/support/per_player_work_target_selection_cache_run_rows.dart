@@ -1,4 +1,4 @@
-// Compact per-player work target selection cache assertions (Refs #3949 wave 3).
+// Scenario run tear-offs for per-player work target selection cache (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -9,29 +9,10 @@ import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-
 import 'per_player_work_target_selection_cache_fixtures.dart';
 
-/// Pins for [perPlayerWorkTargetSelectionCacheScenarios] rows.
-enum PerPlayerWorkTargetSelectionCacheTarget {
-  defaultStrategiesRefreshAllPaths,
-  sortedDeterministicOrdering,
-  containsMissingMembership,
-  refreshReplacesOnTurnBoundary,
-  refreshIsolatedPerPlayer,
-  refreshProspectMembership,
-  refreshSharedIncrementalValidator,
-  refreshReusesPlayerOwnedProvinceIds,
-  refreshValidatorReusesPlayerView,
-  refreshReusesSharedCandidateValidator,
-}
-
-void runPerPlayerWorkTargetSelectionCacheExpectation(
-  PerPlayerWorkTargetSelectionCacheTarget target,
-) {
-  switch (target) {
-    case PerPlayerWorkTargetSelectionCacheTarget.defaultStrategiesRefreshAllPaths:
-      const playerId = 'gp1';
+void ppwtscRunDefaultStrategiesRefreshAllPaths() {
+const playerId = 'gp1';
       const ow = 'oldWorld';
       const p1 = '$ow|p1';
       const t0 = '$p1|0|0';
@@ -93,9 +74,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
       expect(cache.sorted(playerId, kWorkTargetExplore), isNotEmpty);
       cache.clear();
       expect(cache.get(playerId, kWorkTargetExplore), isEmpty);
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.sortedDeterministicOrdering:
-      final cache = PerPlayerWorkTargetSelectionCache(
+void ppwtscRunSortedDeterministicOrdering() {
+final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
           kWorkTargetExplore: (_) =>
               {'oldWorld|p1|2|0', 'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
@@ -106,9 +88,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         cache.sorted('gp1', kWorkTargetExplore),
         ['oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|2|0'],
       );
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.containsMissingMembership:
-      final cache = PerPlayerWorkTargetSelectionCache(
+void ppwtscRunContainsMissingMembership() {
+final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
           kWorkTargetBuildImprovement: (_) => {'oldWorld|p2|1|1'},
         },
@@ -118,9 +101,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         cache.contains('gp1', kWorkTargetBuildImprovement, 'oldWorld|p2|2|2'),
         isFalse,
       );
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshReplacesOnTurnBoundary:
-      var turnNumber = 1;
+void ppwtscRunRefreshReplacesOnTurnBoundary() {
+var turnNumber = 1;
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
           kWorkTargetExplore: (_) =>
@@ -137,9 +121,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         cache.contains('gp1', kWorkTargetExplore, 'oldWorld|p1|0|0'),
         isFalse,
       );
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshIsolatedPerPlayer:
-      final cache = PerPlayerWorkTargetSelectionCache(
+void ppwtscRunRefreshIsolatedPerPlayer() {
+final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
           kWorkTargetExplore: (snapshot) => {'${snapshot.playerId}|tile'},
         },
@@ -148,9 +133,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
       cache.refresh(ppwtscSnapshotForPlayer('gp2'));
       expect(cache.get('gp1', kWorkTargetExplore), {'gp1|tile'});
       expect(cache.get('gp2', kWorkTargetExplore), {'gp2|tile'});
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshProspectMembership:
-      final cache = PerPlayerWorkTargetSelectionCache(
+void ppwtscRunRefreshProspectMembership() {
+final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
           kWorkTargetProspect: (_) =>
               {'oldWorld|p3|4|2', 'oldWorld|p3|2|1'},
@@ -165,9 +151,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         cache.sorted('gp1', kWorkTargetProspect),
         ['oldWorld|p3|2|1', 'oldWorld|p3|4|2'],
       );
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshSharedIncrementalValidator:
-      Object? exploreValidator;
+void ppwtscRunRefreshSharedIncrementalValidator() {
+Object? exploreValidator;
       Object? prospectValidator;
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
@@ -184,9 +171,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
       cache.refresh(ppwtscSnapshotForPlayer('gp1'));
       expect(exploreValidator, isNotNull);
       expect(prospectValidator, same(exploreValidator));
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshReusesPlayerOwnedProvinceIds:
-      final base = ppwtscSnapshotForPlayer('gp1');
+void ppwtscRunRefreshReusesPlayerOwnedProvinceIds() {
+final base = ppwtscSnapshotForPlayer('gp1');
       final ownedIds = <String>{
         for (final e in base.playerView.provincesById.entries)
           if (e.value.ownerId == base.playerId) e.key,
@@ -212,9 +200,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         ),
       );
       expect(seenOwned, same(ownedIds));
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshValidatorReusesPlayerView:
-      final base = ppwtscSnapshotForPlayer('gp1');
+void ppwtscRunRefreshValidatorReusesPlayerView() {
+final base = ppwtscSnapshotForPlayer('gp1');
       Object? validatorView;
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
@@ -226,9 +215,10 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
       );
       cache.refresh(base);
       expect(validatorView, same(base.playerView));
+}
 
-    case PerPlayerWorkTargetSelectionCacheTarget.refreshReusesSharedCandidateValidator:
-      final base = ppwtscSnapshotForPlayer('gp1');
+void ppwtscRunRefreshReusesSharedCandidateValidator() {
+final base = ppwtscSnapshotForPlayer('gp1');
       final external = IncrementalCandidateValidator.forPlayer(
         game: base.game,
         topology: base.topology,
@@ -261,5 +251,4 @@ void runPerPlayerWorkTargetSelectionCacheExpectation(
         ),
       );
       expect(seen, same(external));
-  }
 }
