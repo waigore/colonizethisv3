@@ -2146,6 +2146,17 @@ test/ LOC after slice 140: **36,874** (net −40 from post–slice 139). Remaini
 
 test/ LOC after slice 141: **36,904** (net +30 from post–slice 140; run-row tear-off overhead). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 142: build-validator / treasury-no-bypass / validator-bundle / engine-core dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| bov-dispatch-collapse | drop `BuildOrderValidatorTarget` enum + switch; scenario rows hold `run` tear-offs | `build_order_validator_expectations.dart` (deleted) | `build_order_validator_run_rows.dart` + thin `build_order_validator_scenarios.dart` | #3949 |
+| botnb-dispatch-collapse | drop `BuildOrderTreasuryNoBypassTarget` enum + switch; scenario rows hold `run` tear-offs | `build_order_treasury_no_bypass_expectations.dart` (deleted) | `build_order_treasury_no_bypass_run_rows.dart` + thin `build_order_treasury_no_bypass_scenarios.dart` | #3949 |
+| vb-dispatch-collapse | drop `ValidatorBundleTarget` enum + switch; scenario rows hold `run` tear-offs | `validator_bundle_expectations.dart` (deleted) | `validator_bundle_run_rows.dart` + thin `validator_bundle_scenarios.dart` | #3949 |
+| oec-dispatch-collapse | drop `OrderEngineCoreTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_core_expectations.dart` (deleted) | `order_engine_core_run_rows.dart` + thin `order_engine_core_scenarios.dart` | #3949 |
+
+test/ LOC after slice 142: **36,865** (net −39 from post–slice 141). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

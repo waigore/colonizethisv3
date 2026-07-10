@@ -1,88 +1,87 @@
 // Table-driven OrderEngine core scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'order_engine_core_expectations.dart';
+import 'order_engine_core_run_rows.dart';
 
 /// One row in [orderEngineCoreScenarios].
 class OrderEngineCoreScenario implements RefsScenario {
   const OrderEngineCoreScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final OrderEngineCoreTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runOrderEngineCoreScenario(OrderEngineCoreScenario scenario) {
-  runOrderEngineCoreExpectation(scenario.target);
-}
+void runOrderEngineCoreScenario(OrderEngineCoreScenario scenario) =>
+    scenario.run();
 
 /// Canonical scenarios for OrderEngine core family tests.
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_core_part*_test.dart` descriptions (single-line `label:` for CI).
-List<OrderEngineCoreScenario> orderEngineCoreScenarios() => const [
+List<OrderEngineCoreScenario> orderEngineCoreScenarios() => [
       OrderEngineCoreScenario(
         label: 'add order and validate',
-        target: OrderEngineCoreTarget.addOrderAndValidate,
+        run: oecRunAddOrderAndValidate,
       ),
       OrderEngineCoreScenario(
         label: 'removeMoveOrder removes order at index',
-        target: OrderEngineCoreTarget.removeMoveOrderAtIndex,
+        run: oecRunRemoveMoveOrderAtIndex,
       ),
       OrderEngineCoreScenario(
         label: 'removeBuildOrder removes order at index',
-        target: OrderEngineCoreTarget.removeBuildOrderAtIndex,
+        run: oecRunRemoveBuildOrderAtIndex,
       ),
       OrderEngineCoreScenario(
         label: 'addWorkOrderWithContext returns rejected when order invalid',
-        target: OrderEngineCoreTarget.addWorkOrderWithContextRejected,
+        run: oecRunAddWorkOrderWithContextRejected,
       ),
       OrderEngineCoreScenario(
         label: 'first invalid order plus subsequent rejected',
-        target: OrderEngineCoreTarget.firstInvalidPlusSubsequentRejected,
+        run: oecRunFirstInvalidPlusSubsequentRejected,
       ),
       OrderEngineCoreScenario(
         label: 'projected effects returns worker count',
-        target: OrderEngineCoreTarget.projectedEffectsWorkerCount,
+        run: oecRunProjectedEffectsWorkerCount,
       ),
       OrderEngineCoreScenario(
         label:
             'projectedEffects returns unitLocations when engine has move order',
-        target: OrderEngineCoreTarget.projectedEffectsUnitLocations,
+        run: oecRunProjectedEffectsUnitLocations,
       ),
       OrderEngineCoreScenario(
         label: 'projectedEffects does not mutate passed-in game',
-        target: OrderEngineCoreTarget.projectedEffectsNoGameMutation,
+        run: oecRunProjectedEffectsNoGameMutation,
       ),
       OrderEngineCoreScenario(
         label: 'addMoveOrderWithContext uses world-state validation',
-        target: OrderEngineCoreTarget.addMoveOrderWithContextValidation,
+        run: oecRunAddMoveOrderWithContextValidation,
       ),
       OrderEngineCoreScenario(
         label: 'civilian cannot move into other GP territory',
-        target: OrderEngineCoreTarget.civilianCannotMoveIntoGpTerritory,
+        run: oecRunCivilianCannotMoveIntoGpTerritory,
       ),
       OrderEngineCoreScenario(
         label: 'military cannot move into other GP province without war',
-        target: OrderEngineCoreTarget.militaryCannotMoveIntoGpWithoutWar,
+        run: oecRunMilitaryCannotMoveIntoGpWithoutWar,
         refs: '#943',
       ),
       OrderEngineCoreScenario(
         label:
             'military may move into other GP province with same-turn declareWar',
-        target: OrderEngineCoreTarget.militaryMayMoveIntoGpWithDeclareWar,
+        run: oecRunMilitaryMayMoveIntoGpWithDeclareWar,
       ),
       OrderEngineCoreScenario(
         label: 'explorer may move into tribal province',
-        target: OrderEngineCoreTarget.explorerMayMoveIntoTribalProvince,
+        run: oecRunExplorerMayMoveIntoTribalProvince,
       ),
       OrderEngineCoreScenario(
         label: 'move order rejected when source province unknown',
-        target: OrderEngineCoreTarget.moveRejectedWhenSourceProvinceUnknown,
+        run: oecRunMoveRejectedWhenSourceProvinceUnknown,
       ),
     ];

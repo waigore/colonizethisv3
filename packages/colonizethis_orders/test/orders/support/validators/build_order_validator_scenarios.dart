@@ -1,35 +1,34 @@
 // Table-driven BuildOrderValidator scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'build_order_validator_expectations.dart';
+import 'build_order_validator_run_rows.dart';
 
 /// One row in [buildOrderValidatorScenarios].
 class BuildOrderValidatorScenario implements RefsScenario {
   const BuildOrderValidatorScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final BuildOrderValidatorTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runBuildOrderValidatorScenario(BuildOrderValidatorScenario scenario) {
-  runBuildOrderValidatorExpectation(scenario.target);
-}
+void runBuildOrderValidatorScenario(BuildOrderValidatorScenario scenario) =>
+    scenario.run();
 
 /// Canonical scenarios for BuildOrderValidator.
-List<BuildOrderValidatorScenario> buildOrderValidatorScenarios() => const [
+List<BuildOrderValidatorScenario> buildOrderValidatorScenarios() => [
       BuildOrderValidatorScenario(
         label: 'validate returns rejected when previousRejected is true',
-        target: BuildOrderValidatorTarget.validateRejectedWhenPreviousRejected,
+        run: bovRunValidateRejectedWhenPreviousRejected,
       ),
       BuildOrderValidatorScenario(
         label: 'civilian build is rejected when capital tile cannot be resolved',
-        target: BuildOrderValidatorTarget.civilianBuildRejectedNoCapitalTile,
+        run: bovRunCivilianBuildRejectedNoCapitalTile,
       ),
     ];
