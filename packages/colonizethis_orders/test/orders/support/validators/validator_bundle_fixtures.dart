@@ -1,7 +1,6 @@
 // Shared validator-bundle scenario fixtures (Refs #3949 wave 3).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_orders/src/orders/order_validators.dart';

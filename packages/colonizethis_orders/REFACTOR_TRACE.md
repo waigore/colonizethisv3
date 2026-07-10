@@ -2335,6 +2335,58 @@ Preserved: description baseline, support-layout, prefer-scenario-tables, domain 
 
 test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 154: merge remaining mid-size run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oec-run-rows-merge | merge order_engine_core_run_rows into scenarios; oecEmptyUnitsP1Game densify | order_engine_core_run_rows.dart (deleted) | order_engine_core_scenarios.dart + fixtures | #3949 |
+| om-run-rows-merge | merge order_merge_run_rows; omDeclareWar / omRoadWork / omTradeOrder sugar | order_merge_run_rows.dart (deleted) | order_merge_scenarios.dart + shorthand | #3949 |
+| but-run-rows-merge | densify fluyte/civilian/merchant asserts; merge build_unit_training_run_rows | build_unit_training_run_rows.dart (deleted) | build_unit_training_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 154: **32475** (net +90 from post–slice 153 / 32,565). Remaining split run_rows families: order_suggestion_core, valid_work_tiles, work_order_application, work_completion. Lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 155: merge final run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wcc-run-rows-merge | densify rail/explore/dispatch helpers; merge work_completion_run_rows | work_completion_run_rows.dart (deleted) | work_completion_scenarios.dart + shorthand | #3949 |
+| vwt-run-rows-merge | densify explore/build/move helpers; merge valid_work_tiles run_rows (+tail) | valid_work_tiles_run_rows*.dart (deleted) | valid_work_tiles_scenarios.dart + shorthand | #3949 |
+| waa-run-rows-merge | densify purchase/explore/port helpers; merge work_order_application run_rows (+tail) | work_order_application_run_rows*.dart (deleted) | work_order_application_scenarios.dart + shorthand | #3949 |
+| osc-run-rows-merge | densify move/build/spy/purchase helpers; merge order_suggestion_core run_rows (+tail) | order_suggestion_core_run_rows*.dart (deleted) | order_suggestion_core_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 155: **32251** (net −224 from post–slice 154 / 32,475). **All `*_run_rows.dart` eliminated.** Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 156: densify scenario tables via compact `rs` rows (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| rs-helper | add shared `rs(label, run, [refs])` for densified scenario tables | `support/scenario_runner.dart` | same | #3949 |
+| rs-collapse | collapse 746 multi-line `RunnableScenario(` rows → single-line `rs(...)` across 108 scenario modules | `test/orders/support/**/*_scenarios.dart` | same | #3949 |
+| rs-baseline-gate | teach preserved-description gate to collect `rs('…')` first-arg pins | `tool/check_orders_test_preserved_descriptions.dart` | same + unit test | #3949 |
+| wcc-capital-tile | add `workAppCapitalTile` + densify port topology / capital propagate bodies | `work_application_fixtures.dart`, `work_completion_scenarios.dart` | same | #3949 |
+
+test/ LOC after slice 156: **29602** (net −2,649 from post–slice 155 / 32,251). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 157: densify scenario run helpers + drop invalid const lists (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| run-helper-densify | collapse multi-line `void *Run*` / family helper bodies to single-line under `// dart format off` across scenario modules | `test/orders/support/**/*_scenarios.dart` (~99 files) | same | #3949 |
+| rs-row-collapse | finish collapsing remaining multi-line `rs(...)` table rows to single-line | `order_engine_validate_work_scenarios.dart` + 6 others | same | #3949 |
+| const-rs-fix | remove invalid `=> const [` wrappers around `rs(...)` tear-off tables (preexisting analyzer errors) | 95 `*_scenarios.dart` | same | #3949 |
+| unused-import-sweep | `dart fix` unnecessary imports after densify | touched scenario/fixture modules | same | #3949 |
+
+test/ LOC after slice 157: **20512** (net −9,090 from post–slice 156 / 29,602). **≥20% LOC target ≤26,400 met.** Remaining: lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred; optional further fixture/shorthand compaction.
+
+## Wave 3 — Slice 158: opportunistic precheck DRY (item 7) (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| precheck-resource-mineral | extract `_resourceOrMineralRejection` for purchase_land + build_improvement | `work_order_target_prechecks.dart` | same | #3949 |
+| precheck-embassy-access | extract `_rejectIfUncontrolledWithoutEmbassyWork` for build_improvement + default foreign | `work_order_target_prechecks.dart` | same | #3949 |
+
+Feedstock / army-move: remaining cross-file duplication insufficient after slices 99–100; no further extraction this slice (issue: do not chase LOC).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

@@ -6,41 +6,21 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 import 'order_suggestion_shared_validator_test_helpers.dart';
+// dart format off
 
-void ossveRunSuggestMoveOrdersMatchesDefaultPath() {
-  _expectSuggestFamilyMatchesDefault(suggestMoveOrders);
-}
+void ossveRunSuggestMoveOrdersMatchesDefaultPath() {_expectSuggestFamilyMatchesDefault(suggestMoveOrders);}
 
-void ossveRunSuggestArmyMoveOrdersMatchesDefaultPath() {
-  _expectSuggestFamilyMatchesDefault(suggestArmyMoveOrders);
-}
+void ossveRunSuggestArmyMoveOrdersMatchesDefaultPath() {_expectSuggestFamilyMatchesDefault(suggestArmyMoveOrders);}
 
-void ossveRunSuggestWorkOrdersMatchesDefaultPath() {
-  _expectSuggestFamilyMatchesDefault(suggestWorkOrders);
-}
+void ossveRunSuggestWorkOrdersMatchesDefaultPath() {_expectSuggestFamilyMatchesDefault(suggestWorkOrders);}
 
-void ossveRunSuggestBuildOrdersMatchesDefaultPath() {
-  _expectSuggestFamilyMatchesDefault(suggestBuildOrders);
-}
+void ossveRunSuggestBuildOrdersMatchesDefaultPath() {_expectSuggestFamilyMatchesDefault(suggestBuildOrders);}
 
-void ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls() {
-  final game = buildGame();
-  final topology = buildTopology();
-  final view = buildPlayerView(game, topology, gp);
-  const orders = Orders();
+void ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls() {final game = buildGame(); final topology = buildTopology(); final view = buildPlayerView(game,topology,gp); const orders = Orders(); final first = suggestDiplomaticOrders(view,game,topology,orders); final second = suggestDiplomaticOrders(view,game,topology,orders); expect(second,equals(first));}
 
-  final first = suggestDiplomaticOrders(view, game, topology, orders);
-  final second = suggestDiplomaticOrders(view, game, topology, orders);
-  expect(second, equals(first));
-}
+void ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault() {_expectExternalViewUnitsByIdMatchesForPlayerDefault();}
 
-void ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault() {
-  _expectExternalViewUnitsByIdMatchesForPlayerDefault();
-}
-
-void ossveRunForBasePrefixMatchesFreshForPlayer() {
-  _expectForBasePrefixMatchesFreshForPlayer();
-}
+void ossveRunForBasePrefixMatchesFreshForPlayer() {_expectForBasePrefixMatchesFreshForPlayer();}
 
 void _expectSuggestFamilyMatchesDefault<T>(
   List<T> Function(
@@ -280,35 +260,12 @@ void _expectForBasePrefixMatchesFreshForPlayer() {
 }
 
 List<RunnableScenario>
-orderSuggestionSharedValidatorEquivalenceScenarios() => const [
-  RunnableScenario(
-    label: 'suggestMoveOrders matches default path',
-    run: ossveRunSuggestMoveOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestArmyMoveOrders matches default path',
-    run: ossveRunSuggestArmyMoveOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestWorkOrders matches default path',
-    run: ossveRunSuggestWorkOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestBuildOrders matches default path',
-    run: ossveRunSuggestBuildOrdersMatchesDefaultPath,
-  ),
-  RunnableScenario(
-    label: 'suggestDiplomaticOrders is deterministic across repeated calls',
-    run: ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls,
-  ),
-  RunnableScenario(
-    label:
-        'shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)',
-    run: ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'forBasePrefix matches fresh forPlayer for same basePrefix',
-    run: ossveRunForBasePrefixMatchesFreshForPlayer,
-  ),
+orderSuggestionSharedValidatorEquivalenceScenarios() => [
+  rs('suggestMoveOrders matches default path', ossveRunSuggestMoveOrdersMatchesDefaultPath),
+  rs('suggestArmyMoveOrders matches default path', ossveRunSuggestArmyMoveOrdersMatchesDefaultPath),
+  rs('suggestWorkOrders matches default path', ossveRunSuggestWorkOrdersMatchesDefaultPath),
+  rs('suggestBuildOrders matches default path', ossveRunSuggestBuildOrdersMatchesDefaultPath),
+  rs('suggestDiplomaticOrders is deterministic across repeated calls', ossveRunSuggestDiplomaticOrdersDeterministicAcrossRepeatedCalls),
+  rs('shared validator built with externally provided view/unitsById produces identical suggestions to forPlayer default path (no internal rebuild)', ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault, '#2394'),
+  rs('forBasePrefix matches fresh forPlayer for same basePrefix', ossveRunForBasePrefixMatchesFreshForPlayer),
 ];

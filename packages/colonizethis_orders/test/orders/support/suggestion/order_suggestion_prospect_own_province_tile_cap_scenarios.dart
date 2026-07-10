@@ -6,32 +6,11 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'order_suggestion_prospect_own_province_tile_cap_fixtures.dart';
+// dart format off
 
-void ospoptcRunFeedstockPastProbeCap() {
-  final game = prospectOwnProvinceTileCapGame();
-  final topology = prospectOwnProvinceTileCapTopology(game);
-  final view = buildPlayerView(
-    game,
-    topology,
-    prospectOwnProvinceTileCapPlayerId,
-  );
-  final suggestions = suggestWorkOrders(view, game, topology, const Orders());
-  final feedstockProspects = suggestions
-      .where(
-        (o) =>
-            o.unitId == 'e1' &&
-            o.target == kWorkTargetProspect &&
-            o.targetTileKey == prospectOwnProvinceTileCapFeedstockTileKey,
-      )
-      .toList();
-  expect(feedstockProspects, isNotEmpty);
-}
+void ospoptcRunFeedstockPastProbeCap() {final game = prospectOwnProvinceTileCapGame(); final topology = prospectOwnProvinceTileCapTopology(game); final view = buildPlayerView(game,topology,prospectOwnProvinceTileCapPlayerId,); final suggestions = suggestWorkOrders(view,game,topology,const Orders()); final feedstockProspects = suggestions.where((o) => o.unitId == 'e1' && o.target == kWorkTargetProspect && o.targetTileKey == prospectOwnProvinceTileCapFeedstockTileKey,).toList(); expect(feedstockProspects,isNotEmpty);}
 
 List<RunnableScenario>
-orderSuggestionProspectOwnProvinceTileCapScenarios() => const [
-  RunnableScenario(
-    label:
-        'co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province',
-    run: ospoptcRunFeedstockPastProbeCap,
-  ),
+orderSuggestionProspectOwnProvinceTileCapScenarios() => [
+  rs('co-located Explorer still prospects feedstock iron when it sorts after four other accepted mineral tiles in the same province', ospoptcRunFeedstockPastProbeCap),
 ];

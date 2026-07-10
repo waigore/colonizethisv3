@@ -56,6 +56,18 @@ Province workAppOwnedProvince({
   );
 }
 
+/// Compact OW capital tile at ([x], [y]) for application fixtures (Refs #3949).
+CapitalTile workAppCapitalTile({
+  int x = 0,
+  int y = 0,
+  String provinceId = WorkAppIds.provinceId,
+}) => CapitalTile(
+  regionId: WorkAppIds.ow,
+  provinceId: provinceId,
+  x: x,
+  y: y,
+);
+
 Player workAppPlayer({
   String id = 'p1',
   bool isHuman = true,

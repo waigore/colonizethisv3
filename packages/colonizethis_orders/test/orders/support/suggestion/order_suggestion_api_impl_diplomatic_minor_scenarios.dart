@@ -16,74 +16,20 @@ List<DiplomaticOrder> _suggestFor(Game game) => _api.suggestDiplomaticOrders(
   diplomaticMinorApiImplTopology,
   _emptyOrders,
 );
+// dart format off
 
-void osaidmRunDoesNotSuggestForCompletelyUnknownFactions() {
-  final list = _suggestFor(diplomaticMinorApiImplUnknownFactionGame());
-  expect(list.any((o) => o.targetFactionId == 'minor1'), isFalse);
-}
+void osaidmRunDoesNotSuggestForCompletelyUnknownFactions() {final list = _suggestFor(diplomaticMinorApiImplUnknownFactionGame()); expect(list.any((o) => o.targetFactionId == 'minor1'),isFalse);}
 
-void osaidmRunReturnsEstablishOvertureWhenTreasurySuffices() {
-  final list = _suggestFor(diplomaticMinorApiImplEstablishOvertureGame());
-  final overture = list
-      .where((o) => o.type == DiplomaticOrderType.establishOverture)
-      .toList();
-  expect(overture.any((o) => o.targetFactionId == 'minor1'), isTrue);
-  expect(
-    overture.any(
-      (o) =>
-          o.targetFactionId == 'minor1' &&
-          o.overtureStage == OvertureStage.tradeConsulate,
-    ),
-    isTrue,
-  );
-}
+void osaidmRunReturnsEstablishOvertureWhenTreasurySuffices() {final list = _suggestFor(diplomaticMinorApiImplEstablishOvertureGame()); final overture = list.where((o) => o.type == DiplomaticOrderType.establishOverture).toList(); expect(overture.any((o) => o.targetFactionId == 'minor1'),isTrue); expect(overture.any((o) => o.targetFactionId == 'minor1' && o.overtureStage == OvertureStage.tradeConsulate,),isTrue,);}
 
-void osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise() {
-  final list = _suggestFor(diplomaticMinorApiImplNoDiplomaticExpertiseGame());
-  final overture = list
-      .where((o) => o.type == DiplomaticOrderType.establishOverture)
-      .where((o) => o.targetFactionId == 'minor1')
-      .toList();
-  expect(
-    overture.any(
-      (o) =>
-          o.overtureStage == OvertureStage.tradeConsulate ||
-          o.overtureStage == OvertureStage.embassy ||
-          o.overtureStage == OvertureStage.nap,
-    ),
-    isFalse,
-  );
-}
+void osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise() {final list = _suggestFor(diplomaticMinorApiImplNoDiplomaticExpertiseGame()); final overture = list.where((o) => o.type == DiplomaticOrderType.establishOverture).where((o) => o.targetFactionId == 'minor1').toList(); expect(overture.any((o) => o.overtureStage == OvertureStage.tradeConsulate || o.overtureStage == OvertureStage.embassy || o.overtureStage == OvertureStage.nap,),isFalse,);}
 
-void osaidmRunJoinEmpireOvertureSuggestsDeclareWar() {
-  final list = _suggestFor(diplomaticMinorApiImplJoinEmpireDeclareWarGame());
-  final toMinor1 = list.where((o) => o.targetFactionId == 'minor1').toList();
-  expect(toMinor1, hasLength(1));
-  expect(toMinor1.single.type, DiplomaticOrderType.declareWar);
-}
+void osaidmRunJoinEmpireOvertureSuggestsDeclareWar() {final list = _suggestFor(diplomaticMinorApiImplJoinEmpireDeclareWarGame()); final toMinor1 = list.where((o) => o.targetFactionId == 'minor1').toList(); expect(toMinor1,hasLength(1)); expect(toMinor1.single.type,DiplomaticOrderType.declareWar);}
 
 List<RunnableScenario>
-orderSuggestionApiImplDiplomaticMinorScenarios() => const [
-  RunnableScenario(
-    label: 'does not suggest diplomatic orders for completely unknown factions',
-    run: osaidmRunDoesNotSuggestForCompletelyUnknownFactions,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label: 'returns establishOverture for minor when treasury suffices',
-    run: osaidmRunReturnsEstablishOvertureWhenTreasurySuffices,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise',
-    run: osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise,
-    refs: '#3949',
-  ),
-  RunnableScenario(
-    label:
-        'toward minor at peace with join-empire overture suggests declareWar (primary before economic)',
-    run: osaidmRunJoinEmpireOvertureSuggestsDeclareWar,
-    refs: '#3949',
-  ),
+orderSuggestionApiImplDiplomaticMinorScenarios() => [
+  rs('does not suggest diplomatic orders for completely unknown factions', osaidmRunDoesNotSuggestForCompletelyUnknownFactions, '#3949'),
+  rs('returns establishOverture for minor when treasury suffices', osaidmRunReturnsEstablishOvertureWhenTreasurySuffices, '#3949'),
+  rs('does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise', osaidmRunDoesNotSuggestAdvancedOvertureWithoutDiplomaticExpertise, '#3949'),
+  rs('toward minor at peace with join-empire overture suggests declareWar (primary before economic)', osaidmRunJoinEmpireOvertureSuggestsDeclareWar, '#3949'),
 ];

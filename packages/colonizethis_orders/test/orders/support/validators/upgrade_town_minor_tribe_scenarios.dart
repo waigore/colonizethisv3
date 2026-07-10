@@ -8,53 +8,14 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 
 import 'upgrade_town_minor_tribe_fixtures.dart';
+// dart format off
 
-void utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace() {
-  const minorTown = '$utmtOw|p2|0|0';
-  final game = utmtMinorTownEmbassyPeaceGame();
-  final tiles = rawCandidateTilesForWorkTarget(
-    game: game,
-    playerId: utmtGpId,
-    workTarget: kWorkTargetUpgradeTown,
-    playerOwnedProvinceIds: {'$utmtOw|p1'},
-  );
-  expect(tiles, contains(minorTown));
-}
+void utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace() {const minorTown = '$utmtOw|p2|0|0'; final game = utmtMinorTownEmbassyPeaceGame(); final tiles = rawCandidateTilesForWorkTarget(game: game,playerId: utmtGpId,workTarget: kWorkTargetUpgradeTown,playerOwnedProvinceIds: {'$utmtOw|p1'},); expect(tiles,contains(minorTown));}
 
-void utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe() {
-  const tribeId = 'tribe1';
-  const townKey = '$utmtOw|p2|0|0';
-  final game = utmtWarTribeUpgradeGame();
-  final ctx = WorkOrderTargetPrecheckContext(
-    game: game,
-    player: game.players.single,
-    playerId: utmtGpId,
-    treasury: 1000,
-    civilianEmbassyWorkAllowed: (_, _) => false,
-    devExclusiveTiles: const {},
-  );
-  final result = precheckUpgradeTown(
-    ctx,
-    WorkOrder(
-      unitId: 'u1',
-      target: kWorkTargetUpgradeTown,
-      targetTileKey: townKey,
-    ),
-    '$utmtOw|p2',
-    tribeId,
-    kUnitTypeBuilder,
-  );
-  expect(result?.reason, contains('at war'));
-}
+void utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe() {const tribeId = 'tribe1'; const townKey = '$utmtOw|p2|0|0'; final game = utmtWarTribeUpgradeGame(); final ctx = WorkOrderTargetPrecheckContext(game: game,player: game.players.single,playerId: utmtGpId,treasury: 1000,civilianEmbassyWorkAllowed: (_,_) => false,devExclusiveTiles: const {},); final result = precheckUpgradeTown(ctx,WorkOrder(unitId: 'u1',target: kWorkTargetUpgradeTown,targetTileKey: townKey,),'$utmtOw|p2',tribeId,kUnitTypeBuilder,); expect(result?.reason,contains('at war'));}
 
 /// Canonical scenarios for upgrade_town_minor_tribe family tests.
-List<RunnableScenario> upgradeTownMinorTribeScenarios() => const [
-  RunnableScenario(
-    label: 'prefilter includes minor town tile when embassy and peace',
-    run: utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace,
-  ),
-  RunnableScenario(
-    label: 'precheck rejects upgrade_town when at war with tribe',
-    run: utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe,
-  ),
+List<RunnableScenario> upgradeTownMinorTribeScenarios() => [
+  rs('prefilter includes minor town tile when embassy and peace', utmtRunPrefilterIncludesMinorTownWhenEmbassyAndPeace),
+  rs('precheck rejects upgrade_town when at war with tribe', utmtRunPrecheckRejectsUpgradeTownWhenAtWarWithTribe),
 ];

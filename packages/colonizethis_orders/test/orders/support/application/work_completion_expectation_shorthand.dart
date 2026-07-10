@@ -214,3 +214,99 @@ void wccExpectBuildImprovementCompletesToLevel(
   expect(after.originTileKey, isNull);
   expect(after.assignedTileKey, isNull);
 }
+
+Game wccExploreWorkingGame({
+  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+}) => workAppOwnedGame(
+  units: [
+    workAppWorkingUnit(
+      type: kUnitTypeExplorer,
+      workTarget: kWorkTargetExplore,
+    ),
+  ],
+  tileKeysByRegionAndProvince:
+      tileKeysByRegionAndProvince ??
+      {
+        WorkAppIds.ow: {
+          WorkAppIds.provinceId: [WorkAppIds.tileKey],
+        },
+      },
+  playerVisibilityByTile: playerVisibilityByTile,
+);
+
+void wccExpectFullyVisible(Game next, String tileKey) =>
+    wccExpectVisibility(next, tileKey, VisibilityLevel.fullyVisible.name);
+
+void wccExpectRailApply(int roadLevel, int expected) {
+  final next = wccApply(
+    wccRailGame(roadLevel: roadLevel),
+    tileMapByRegion: {WorkAppIds.ow: workAppRailMap()},
+  );
+  wccExpectRoadLevel(next, WorkAppIds.tileKey, expected);
+}
+
+void wccExpectRailDispatch(
+  int roadLevel,
+  int expected, {
+  List<Player>? players,
+}) {
+  final (state, unit, cw) = wccDispatchRailSetup(
+    roadLevel: roadLevel,
+    players: players,
+  );
+  expect(
+    wccDispatchCompleted(state, unit, cw).work.tileState.roadLevel(
+      WorkAppIds.tileKey,
+    ),
+    expected,
+  );
+}
+
+Game wccRoadPropagateGame({
+  required int workTileRoad,
+  required int adjacentRoad,
+  required String adjacentTileKey,
+  List<Player>? players,
+  Map<String, String>? portsByProvinceSeaboard,
+}) => wccEngineerCompletionGame(
+  workTarget: kWorkTargetBuildRoad,
+  tileState: TileMapState()
+      .setRoadLevel(WorkAppIds.tileKey, workTileRoad)
+      .setRoadLevel(adjacentTileKey, adjacentRoad),
+  players: players,
+  portsByProvinceSeaboard: portsByProvinceSeaboard,
+);
+
+void wccExpectCancelledIdleAtOrigin(Game next) {
+  final u = wccSingleUnit(next);
+  expect(u.status, UnitStatus.idle);
+  expect(u.currentWork, isNull);
+  expect(u.tileKey, WorkAppIds.originTileKey);
+  expect(u.originTileKey, isNull);
+  expect(u.assignedTileKey, isNull);
+}
+
+(BuildWorkState, Unit, CurrentWork) wccDispatchTargetSetup({
+  required String unitType,
+  required String workTarget,
+  List<Province>? provinces,
+}) {
+  final unit = workAppUnit(type: unitType, status: UnitStatus.working);
+  final game = workAppOwnedGame(
+    turnNumber: 1,
+    units: [unit],
+    provinces: provinces ?? const [],
+  );
+  return wccDispatchWorkSetup(
+    unit: unit,
+    game: game,
+    cw: CurrentWork(
+      workTarget: workTarget,
+      tileKey: WorkAppIds.tileKey,
+      totalTurns: 1,
+      remainingTurns: 0,
+    ),
+    oldProvinces: provinces ?? const [],
+  );
+}

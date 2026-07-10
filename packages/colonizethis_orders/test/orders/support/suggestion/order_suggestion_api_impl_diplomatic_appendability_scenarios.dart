@@ -8,32 +8,9 @@ import 'order_suggestion_api_impl_diplomatic_appendability_fixtures.dart';
 
 const _api = DefaultOrderSuggestionAPI();
 const _gp1 = 'gp1';
+// dart format off
 
-void osaidaRunExcludesTargetAlreadyInDraft() {
-  final game = diplomaticAppendabilityTwoGpNeutralGame();
-  final view = buildPlayerView(
-    game,
-    diplomaticAppendabilityEmptyTopology,
-    _gp1,
-  );
-  final withPending = Orders(
-    diplomaticOrdersByPlayerId: {
-      _gp1: [
-        const DiplomaticOrder(
-          type: DiplomaticOrderType.alliance,
-          targetFactionId: 'gp2',
-        ),
-      ],
-    },
-  );
-  final list = _api.suggestDiplomaticOrders(
-    view,
-    game,
-    diplomaticAppendabilityEmptyTopology,
-    withPending,
-  );
-  expect(list.where((o) => o.targetFactionId == 'gp2'), isEmpty);
-}
+void osaidaRunExcludesTargetAlreadyInDraft() {final game = diplomaticAppendabilityTwoGpNeutralGame(); final view = buildPlayerView(game,diplomaticAppendabilityEmptyTopology,_gp1,); final withPending = Orders(diplomaticOrdersByPlayerId: {_gp1: [const DiplomaticOrder(type: DiplomaticOrderType.alliance,targetFactionId: 'gp2',),],},); final list = _api.suggestDiplomaticOrders(view,game,diplomaticAppendabilityEmptyTopology,withPending,); expect(list.where((o) => o.targetFactionId == 'gp2'),isEmpty);}
 
 void osaidaRunCumulativeListAppendableAndValidates() {
   final game = diplomaticAppendabilityTwoGpAlliedGame();
@@ -137,18 +114,8 @@ void osaidaRunRemovingPendingRestoresSuggestions() {
 }
 
 List<RunnableScenario>
-orderSuggestionApiImplDiplomaticAppendabilityScenarios() => const [
-  RunnableScenario(
-    label: 'does not suggest toward target already in draft diplomatic orders',
-    run: osaidaRunExcludesTargetAlreadyInDraft,
-  ),
-  RunnableScenario(
-    label: 'suggestDiplomaticOrders: cumulative list appendable and validates',
-    run: osaidaRunCumulativeListAppendableAndValidates,
-  ),
-  RunnableScenario(
-    label:
-        'removing pending diplomatic order restores suggestions for that target',
-    run: osaidaRunRemovingPendingRestoresSuggestions,
-  ),
+orderSuggestionApiImplDiplomaticAppendabilityScenarios() => [
+  rs('does not suggest toward target already in draft diplomatic orders', osaidaRunExcludesTargetAlreadyInDraft),
+  rs('suggestDiplomaticOrders: cumulative list appendable and validates', osaidaRunCumulativeListAppendableAndValidates),
+  rs('removing pending diplomatic order restores suggestions for that target', osaidaRunRemovingPendingRestoresSuggestions),
 ];

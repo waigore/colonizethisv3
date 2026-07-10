@@ -15,10 +15,10 @@ void main() {
         },
         scenarioSourcesByPath: {
           'packages/colonizethis_orders/test/orders/support/x.dart':
-              "final rows = [\n  (label: 'beta pin'),\n];\n",
+              "final rows = [\n  (label: 'beta pin'),\n  rs('gamma pin', () {}),\n];\n",
         },
       );
-      expect(descriptions, containsAll(['alpha pin', 'beta pin']));
+      expect(descriptions, containsAll(['alpha pin', 'beta pin', 'gamma pin']));
     });
   });
 

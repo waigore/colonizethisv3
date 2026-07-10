@@ -117,15 +117,7 @@ void osrdRunWeightZeroMatchesGreedyDefault() {
   );
 }
 
-List<RunnableScenario> orderSuggestionResearchDiversifyScenarios() => const [
-  RunnableScenario(
-    label: 'slot 1 takes the highest-weight unrepresented bucket (AC9)',
-    run: osrdRunSlot1TakesHighestWeightUnrepresentedBucket,
-    refs: '#3472 AC9',
-  ),
-  RunnableScenario(
-    label: 'weight 0 is identical to the greedy default (negative control)',
-    run: osrdRunWeightZeroMatchesGreedyDefault,
-    refs: '#3472',
-  ),
+List<RunnableScenario> orderSuggestionResearchDiversifyScenarios() => [
+  rs('slot 1 takes the highest-weight unrepresented bucket (AC9)', osrdRunSlot1TakesHighestWeightUnrepresentedBucket, '#3472 AC9'),
+  rs('weight 0 is identical to the greedy default (negative control)', osrdRunWeightZeroMatchesGreedyDefault, '#3472'),
 ];
