@@ -7,57 +7,15 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'support/trade_screen_test_support.dart';
 
 const Size _kMinViewport = Size(kMinViewportWidth, 640);
-
-Game _buildGame({
-  Map<CommodityId, int>? prices,
-}) {
-  return Game(
-    id: 'test_trade_screen_market_tab_price_column',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: 'gp_h', displayName: 'England', isHuman: true, treasury: 500),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: WorldMarketState(
-      prices: prices ?? const <CommodityId, int>{},
-      lastTurnActivity: const <CommodityId, MarketActivity>{},
-    ),
-  );
-}
-
-Future<void> _pumpTradeScreen(
-  WidgetTester tester, {
-  required Game game,
-  Size viewport = const Size(800, 900),
-}) async {
-  final Player player = game.players.first;
-  await pumpAppShell(
-    tester,
-    viewport: viewport,
-    overrides: [
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    ],
-    child: TradeScreen(game: game, player: player),
-  );
-}
 
 double _priceTextRight(
   WidgetTester tester,
@@ -107,25 +65,22 @@ void main() {
       'price right edges share a column across rows with different digit '
       'lengths',
       (tester) async {
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
-          game: _buildGame(
-            prices: const <CommodityId, int>{
-              'timber': 5,
-              'iron': 220,
-            },
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_price_column',
+            prices: const <CommodityId, int>{'timber': 5, 'iron': 220},
           ),
         );
 
-        final double timberPriceRight =
-            _priceTextRight(tester, 'timber', '5');
-        final double ironPriceRight =
-            _priceTextRight(tester, 'iron', '220');
+        final double timberPriceRight = _priceTextRight(tester, 'timber', '5');
+        final double ironPriceRight = _priceTextRight(tester, 'iron', '220');
 
         expect(
           timberPriceRight,
           closeTo(ironPriceRight, 1),
-          reason: 'Single-digit and three-digit prices must share the same '
+          reason:
+              'Single-digit and three-digit prices must share the same '
               'right edge (shared price column).',
         );
       },
@@ -134,16 +89,19 @@ void main() {
     testWidgets(
       'price right edge is flush with the row right padding boundary',
       (tester) async {
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
-          game: _buildGame(
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 30},
           ),
         );
 
         final double priceRight = _priceTextRight(tester, 'timber', '30');
         final double rowRight = tester
-            .getTopRight(find.byKey(TradeScreen.marketCommodityRowKey('timber')))
+            .getTopRight(
+              find.byKey(TradeScreen.marketCommodityRowKey('timber')),
+            )
             .dx;
 
         expect(
@@ -154,58 +112,59 @@ void main() {
       },
     );
 
-    testWidgets(
-      'coin paints immediately to the left of the price text',
-      (tester) async {
-        await _pumpTradeScreen(
-          tester,
-          game: _buildGame(
-            prices: const <CommodityId, int>{'timber': 30},
-          ),
-        );
+    testWidgets('coin paints immediately to the left of the price text', (
+      tester,
+    ) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_market_tab_price_column',
+          prices: const <CommodityId, int>{'timber': 30},
+        ),
+      );
 
-        final coinFinder = find.descendant(
-          of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
-          matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey('timber')),
-        );
-        final priceFinder = find.descendant(
-          of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
-          matching: find.text('30'),
-        );
+      final coinFinder = find.descendant(
+        of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
+        matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey('timber')),
+      );
+      final priceFinder = find.descendant(
+        of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
+        matching: find.text('30'),
+      );
 
-        final coinRect = tester.getRect(coinFinder);
-        final priceRect = tester.getRect(priceFinder);
+      final coinRect = tester.getRect(coinFinder);
+      final priceRect = tester.getRect(priceFinder);
 
-        expect(
-          coinRect.right,
-          lessThanOrEqualTo(priceRect.left),
-          reason: 'Treasury-coin glyph must remain immediately left of price.',
-        );
-      },
-    );
+      expect(
+        coinRect.right,
+        lessThanOrEqualTo(priceRect.left),
+        reason: 'Treasury-coin glyph must remain immediately left of price.',
+      );
+    });
 
     testWidgets(
       'rows with different name lengths still share the price column edge',
       (tester) async {
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
-          game: _buildGame(
-            prices: const <CommodityId, int>{
-              'timber': 30,
-              'refinedSugar': 70,
-            },
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_price_column',
+            prices: const <CommodityId, int>{'timber': 30, 'refinedSugar': 70},
           ),
         );
 
-        final double timberPriceRight =
-            _priceTextRight(tester, 'timber', '30');
-        final double sugarPriceRight =
-            _priceTextRight(tester, 'refinedSugar', '70');
+        final double timberPriceRight = _priceTextRight(tester, 'timber', '30');
+        final double sugarPriceRight = _priceTextRight(
+          tester,
+          'refinedSugar',
+          '70',
+        );
 
         expect(
           timberPriceRight,
           closeTo(sugarPriceRight, 1),
-          reason: 'Short and long commodity names must not stagger the price '
+          reason:
+              'Short and long commodity names must not stagger the price '
               'column.',
         );
       },
@@ -217,15 +176,15 @@ void main() {
       (tester) async {
         TradeScreen.marketPriceResourceRulesOverride = _emptyMarketPriceRules();
 
-        await _pumpTradeScreen(
+        await pumpTradeScreen(
           tester,
-          game: _buildGame(
+          game: buildTradeTestGame(
+            id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 5},
           ),
         );
 
-        final double integerPriceRight =
-            _priceTextRight(tester, 'timber', '5');
+        final double integerPriceRight = _priceTextRight(tester, 'timber', '5');
         final double emDashPriceRight = _priceTextRight(
           tester,
           'iron',
@@ -236,7 +195,8 @@ void main() {
         expect(
           emDashPriceRight,
           closeTo(integerPriceRight, 1),
-          reason: 'Em-dash fallback must right-align in the same column as '
+          reason:
+              'Em-dash fallback must right-align in the same column as '
               'integer prices.',
         );
 
@@ -252,33 +212,28 @@ void main() {
       },
     );
 
-    testWidgets(
-      'shared price column holds at kMinViewportWidth (320 dp)',
-      (tester) async {
-        await _pumpTradeScreen(
-          tester,
-          game: _buildGame(
-            prices: const <CommodityId, int>{
-              'grain': 50,
-              'timber': 5,
-            },
-          ),
-          viewport: _kMinViewport,
-        );
+    testWidgets('shared price column holds at kMinViewportWidth (320 dp)', (
+      tester,
+    ) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(
+          id: 'test_trade_screen_market_tab_price_column',
+          prices: const <CommodityId, int>{'grain': 50, 'timber': 5},
+        ),
+        viewport: _kMinViewport,
+      );
 
-        expect(tester.takeException(), isNull);
+      expect(tester.takeException(), isNull);
 
-        final double grainPriceRight =
-            _priceTextRight(tester, 'grain', '50');
-        final double timberPriceRight =
-            _priceTextRight(tester, 'timber', '5');
+      final double grainPriceRight = _priceTextRight(tester, 'grain', '50');
+      final double timberPriceRight = _priceTextRight(tester, 'timber', '5');
 
-        expect(
-          grainPriceRight,
-          closeTo(timberPriceRight, 1),
-          reason: '320 dp viewport must preserve the shared price column.',
-        );
-      },
-    );
+      expect(
+        grainPriceRight,
+        closeTo(timberPriceRight, 1),
+        reason: '320 dp viewport must preserve the shared price column.',
+      );
+    });
   });
 }

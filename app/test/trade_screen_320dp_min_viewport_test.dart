@@ -42,20 +42,15 @@
 // coverage to).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'support/trade_screen_test_support.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -70,66 +65,6 @@ const Size _kMinViewport = Size(kMinViewportWidth, 640);
 /// `unit_panels_320dp_min_viewport_test.dart`.
 const Size _kWideRegressionViewport = Size(1024, 768);
 
-/// Builds a [ShellPlayerContext] mirroring the global-observe branch
-/// surfaced by `shellPlayerContextProvider`. Mirrors the helper used by
-/// `trade_screen_scaffold_test.dart` so the observe pin exercises the
-/// same path the in-app observe session takes.
-ShellPlayerContext _globalObserveShellContext() {
-  return const ShellPlayerContext(
-    effectiveHumanPlayerId: null,
-    viewingPlayerId: null,
-    mapVisibilityMode: CtMapVisibilityMode.full,
-    playerView: null,
-    omniscientDetail: true,
-    // `showPlayerChrome: false` flips `shellPanelsNotDefined(ref)` to
-    // true so `TradeScreen.bodyBuilder` short-circuits to the
-    // `ObserveModeNotDefinedPanel` sentinel per SPEC/ui/observe-mode.md.
-    showPlayerChrome: false,
-    canMutateViaUi: false,
-    debugCommandTargetPlayerId: null,
-    inObservePhase: true,
-    // ignore: avoid_hardcoded_strings_in_widgets
-    observeBannerLabel: 'Observing: global',
-    treasuryNotDefined: true,
-    cargoNotDefined: true,
-  );
-}
-
-/// Pumps the [TradeScreen] at [size] under the running editorial-monocle
-/// theme. Sets the surface size (so the binding's render flex math sees
-/// the minimum viewport) and overrides MediaQuery so widget code that
-/// reads `MediaQuery.sizeOf(context).width` resolves to the same value
-/// — the pattern already used by every other `*_320dp_min_viewport_test.dart`
-/// file. Overrides `currentGameProvider` (and optionally
-/// `shellPlayerContextProvider` for the global-observe branch) so the
-/// shell renders without touching Hive / GameService.
-Future<void> _pumpTradeScreen(
-  WidgetTester tester, {
-  required Size size,
-  required Game game,
-  required Player player,
-  bool globalObserve = false,
-}) async {
-  // Single pump (the harness default) is enough: TradeScreen's chrome
-  // paints synchronously and the placeholder body is a single static
-  // `CtPanel`. We avoid `pumpAndSettle` because
-  // `CtGameFeatureScreenShell`'s bus listener attaches per the live
-  // `currentGameProvider` and we want the 320 dp overflow assertion to
-  // evaluate on the first frame.
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    overrides: [
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      if (globalObserve)
-        shellPlayerContextProvider.overrideWithValue(
-          _globalObserveShellContext(),
-        ),
-    ],
-    child: TradeScreen(game: game, player: player),
-  );
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -141,165 +76,151 @@ void main() {
     // (for the supplied `player`), the static `CommodityCatalog` for the market
     // table, and a default-empty `WorldMarketState` for the Deal Book — no
     // generated map/topology data — so the procedural map generator is avoided.
-    game = buildTradePanelTestGame();
+    game = buildTradeScaffoldTestGame();
     humanPlayer = game.players.firstWhere(
       (p) => p.isHuman,
       orElse: () => game.players.first,
     );
   });
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — TradeScreen (default) @ 320 dp '
-    '(Refs #2870 S10, #2993)',
-    () {
-      testWidgets(
-        'AC (positive) TradeScreen default @ 320×640: no RenderFlex '
+  group('SPEC/ui/mobile-adaptation.md § 7 — TradeScreen (default) @ 320 dp '
+      '(Refs #2870 S10, #2993)', () {
+    testWidgets('AC (positive) TradeScreen default @ 320×640: no RenderFlex '
         'overflow exception, dark CtTopBar (title `Trade`, back label '
-        '`Map`) + scaffold placeholder body both render',
-        (WidgetTester tester) async {
-          await _pumpTradeScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            player: humanPlayer,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: TradeScreen must not '
-                'emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The dark CtTopBar '
-                '(36 dp tall — back chevron + `Map` label + 18 × 18 px '
-                'trade icon + `Trade` title) above the two-tab body '
-                '(`CtPanel` hosting `CtTabStrip` with Market + Deal Book '
-                'placeholder bodies) must lay out within the 320 dp column.',
-          );
-
-          final topBarFinder = find.byKey(TradeScreen.topBarKey);
-          expect(topBarFinder, findsOneWidget);
-          final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-          expect(topBar.title, TradeScreen.topBarTitle);
-          expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
-
-          expect(
-            find.byKey(TradeScreen.tabsBodyKey),
-            findsOneWidget,
-            reason:
-                'Default (non-observe) path must mount the two-tab body '
-                'keyed `tradeScreenTabsBody` at 320 dp. '
-                'SPEC/ui/trade-screen.md § Body (current scaffold).',
-          );
-          expect(
-            find.byType(ObserveModeNotDefinedPanel),
-            findsNothing,
-            reason:
-                'Default path must NOT render the observe sentinel — '
-                'that is the global-observe variant covered by the '
-                'second group below.',
-          );
-        },
+        '`Map`) + scaffold placeholder body both render', (
+      WidgetTester tester,
+    ) async {
+      await pumpTradeScreenAtMinViewport(
+        tester,
+        size: _kMinViewport,
+        game: game,
+        player: humanPlayer,
       );
 
-      testWidgets(
-        'Negative control: TradeScreen default @ 1024×768 also pumps '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TradeScreen must not '
+            'emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The dark CtTopBar '
+            '(36 dp tall — back chevron + `Map` label + 18 × 18 px '
+            'trade icon + `Trade` title) above the two-tab body '
+            '(`CtPanel` hosting `CtTabStrip` with Market + Deal Book '
+            'placeholder bodies) must lay out within the 320 dp column.',
+      );
+
+      final topBarFinder = find.byKey(TradeScreen.topBarKey);
+      expect(topBarFinder, findsOneWidget);
+      final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
+      expect(topBar.title, TradeScreen.topBarTitle);
+      expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
+
+      expect(
+        find.byKey(TradeScreen.tabsBodyKey),
+        findsOneWidget,
+        reason:
+            'Default (non-observe) path must mount the two-tab body '
+            'keyed `tradeScreenTabsBody` at 320 dp. '
+            'SPEC/ui/trade-screen.md § Body (current scaffold).',
+      );
+      expect(
+        find.byType(ObserveModeNotDefinedPanel),
+        findsNothing,
+        reason:
+            'Default path must NOT render the observe sentinel — '
+            'that is the global-observe variant covered by the '
+            'second group below.',
+      );
+    });
+
+    testWidgets('Negative control: TradeScreen default @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
-        'contract — keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpTradeScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            player: humanPlayer,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-          expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
-        },
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await pumpTradeScreenAtMinViewport(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        player: humanPlayer,
       );
-    },
-  );
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — TradeScreen (global observe) @ '
-    '320 dp (Refs #2870 S10, #2993)',
-    () {
-      testWidgets(
-        'AC (positive) TradeScreen global-observe @ 320×640: no '
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+      expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TradeScreen (global observe) @ '
+      '320 dp (Refs #2870 S10, #2993)', () {
+    testWidgets('AC (positive) TradeScreen global-observe @ 320×640: no '
         'RenderFlex overflow exception, dark CtTopBar still paints, '
         'ObserveModeNotDefinedPanel sentinel renders, scaffold '
-        'placeholder body is absent',
-        (WidgetTester tester) async {
-          await _pumpTradeScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            player: humanPlayer,
-            globalObserve: true,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: TradeScreen global-'
-                'observe body must not emit a RenderFlex overflow '
-                'exception at kMinViewportWidth (320 dp). The dark '
-                'CtTopBar plus the `ObserveModeNotDefinedPanel(title: '
-                "'Trade')` sentinel must lay out within the 320 dp "
-                'column.',
-          );
-
-          expect(
-            find.byKey(TradeScreen.topBarKey),
-            findsOneWidget,
-            reason:
-                'Observe override only swaps the body (see SPEC/ui/'
-                'trade-screen.md § States and variants); the dark '
-                'CtTopBar must still paint so the AC for the chrome '
-                'is exercised at 320 dp under both variants.',
-          );
-
-          final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
-          expect(observePanelFinder, findsOneWidget);
-          final ObserveModeNotDefinedPanel observePanel = tester
-              .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
-          // SPEC/ui/trade-screen.md § States and variants requires the
-          // literal localized `Trade` title under the observe sentinel.
-          // ignore: avoid_hardcoded_strings_in_widgets
-          expect(observePanel.title, 'Trade');
-
-          expect(
-            find.byKey(TradeScreen.tabsBodyKey),
-            findsNothing,
-            reason:
-                'Global-observe path MUST NOT mount the tabs body — '
-                'SPEC/ui/trade-screen.md § States and variants reserves '
-                'the observe sentinel for that branch.',
-          );
-        },
+        'placeholder body is absent', (WidgetTester tester) async {
+      await pumpTradeScreenAtMinViewport(
+        tester,
+        size: _kMinViewport,
+        game: game,
+        player: humanPlayer,
+        globalObserve: true,
       );
 
-      testWidgets(
-        'Negative control: TradeScreen global-observe @ 1024×768 also '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TradeScreen global-'
+            'observe body must not emit a RenderFlex overflow '
+            'exception at kMinViewportWidth (320 dp). The dark '
+            'CtTopBar plus the `ObserveModeNotDefinedPanel(title: '
+            "'Trade')` sentinel must lay out within the 320 dp "
+            'column.',
+      );
+
+      expect(
+        find.byKey(TradeScreen.topBarKey),
+        findsOneWidget,
+        reason:
+            'Observe override only swaps the body (see SPEC/ui/'
+            'trade-screen.md § States and variants); the dark '
+            'CtTopBar must still paint so the AC for the chrome '
+            'is exercised at 320 dp under both variants.',
+      );
+
+      final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
+      expect(observePanelFinder, findsOneWidget);
+      final ObserveModeNotDefinedPanel observePanel = tester
+          .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
+      // SPEC/ui/trade-screen.md § States and variants requires the
+      // literal localized `Trade` title under the observe sentinel.
+      // ignore: avoid_hardcoded_strings_in_widgets
+      expect(observePanel.title, 'Trade');
+
+      expect(
+        find.byKey(TradeScreen.tabsBodyKey),
+        findsNothing,
+        reason:
+            'Global-observe path MUST NOT mount the tabs body — '
+            'SPEC/ui/trade-screen.md § States and variants reserves '
+            'the observe sentinel for that branch.',
+      );
+    });
+
+    testWidgets('Negative control: TradeScreen global-observe @ 1024×768 also '
         'pumps without exception (regression sentinel for the overflow '
-        'contract under the observe variant)',
-        (WidgetTester tester) async {
-          await _pumpTradeScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            player: humanPlayer,
-            globalObserve: true,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-          expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
-        },
+        'contract under the observe variant)', (WidgetTester tester) async {
+      await pumpTradeScreenAtMinViewport(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        player: humanPlayer,
+        globalObserve: true,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+      expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
+    });
+  });
 }
