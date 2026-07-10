@@ -77,8 +77,8 @@ The shell never renders an "afterVictory" subtitle by itself — that detail is 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | New Game (`onNewGame`) | Always | `OpenDialogEvent(newGameLeaderSelectionDialogId)` on `AppEventBus` | Opens leader-selection dialog per [`app-ui-wiring.md`](../program/app-ui-wiring.md); no `Navigator.pushNamed` from shell. |
-| Resume game (`onResumeGame`) | `resumeGameVisible == true` | `NavigateToRouteEvent(Routes.game)` after `loadAutoSaveGame()` | Resets `observeSessionProvider`; sets `currentGameProvider`. |
-| Load game (`onLoadGame`) | Menu enables when saves exist | `NavigateToRouteEvent(Routes.game)` when `listGameIds()` non-empty | Same observe-session + `currentGameProvider` sequence as resume; no-op when `ids.isEmpty`. |
+| Resume game (`onResumeGame`) | `resumeGameVisible == true` | `NavigateToRouteEvent(Routes.game)` after `loadAutoSaveSession()` | Resets `observeSessionProvider`; sets `currentGameProvider`; restores `currentOrdersProvider` and `productionDesiredOutputProvider` from the session draft envelope. |
+| Load game (`onLoadGame`) | Always enabled on the product path | `OpenDialogEvent(load_game_list)` | Opens [load-game-list-dialog.md](load-game-list-dialog.md); empty store shows empty list. |
 | Settings (`onSettings`) | Always (stub) | — | No-op today; reserved for Settings flow. |
 | Quit (`onQuit`) | Always | `SystemNavigator.pop()` | Exits app; no bus events. |
 

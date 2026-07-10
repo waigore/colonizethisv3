@@ -66,11 +66,11 @@
   },
   "game_pauseMenu_saveGame": "Save Game",
   "@game_pauseMenu_saveGame": {
-    "description": "Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to save the current game."
   },
   "game_pauseMenu_loadGame": "Load Game",
   "@game_pauseMenu_loadGame": {
-    "description": "Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to load a saved game."
   },
   "game_pauseMenu_settings": "Settings",
   "@game_pauseMenu_settings": {
@@ -83,6 +83,55 @@
   "game_pauseMenu_tooltip": "Pause menu",
   "@game_pauseMenu_tooltip": {
     "description": "Tooltip for the pause menu button in the in-game UI."
+  },
+  "saveGameName_title": "Save Game",
+  "@saveGameName_title": {
+    "description": "Title of the named save dialog (DLG70001)."
+  },
+  "saveGameName_save": "Save",
+  "@saveGameName_save": {
+    "description": "Confirm button on the named save dialog."
+  },
+  "saveGameName_invalidName": "Enter a valid save name.",
+  "@saveGameName_invalidName": {
+    "description": "Error when sanitizeGameId rejects the typed save name."
+  },
+  "saveGameName_overwriteConfirm": "A save with this name already exists. Overwrite it?",
+  "@saveGameName_overwriteConfirm": {
+    "description": "Overwrite confirmation body when sanitized gameId collides."
+  },
+  "saveGameName_overwrite": "Overwrite",
+  "@saveGameName_overwrite": {
+    "description": "Confirm overwrite button on the named save dialog."
+  },
+  "saveGameName_gameSaved": "Game saved",
+  "@saveGameName_gameSaved": {
+    "description": "SnackBar message after a successful named save."
+  },
+  "loadGameList_title": "Load Game",
+  "@loadGameList_title": {
+    "description": "Title of the load-game list dialog (DLG80001)."
+  },
+  "loadGameList_empty": "No saved games.",
+  "@loadGameList_empty": {
+    "description": "Empty-state copy when listLoadableSaves returns no rows."
+  },
+  "loadGameList_turnSubtitle": "Turn {turn}",
+  "@loadGameList_turnSubtitle": {
+    "description": "Optional turn subtitle under a load-list row.",
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameList_discardConfirm": "Unsaved progress will be lost. Load this save?",
+  "@loadGameList_discardConfirm": {
+    "description": "Discard confirmation when loading from an active pause session."
+  },
+  "loadGameList_load": "Load",
+  "@loadGameList_load": {
+    "description": "Confirm load button after discard confirmation."
   },
   "game_screenTitle": "Game",
   "@game_screenTitle": {

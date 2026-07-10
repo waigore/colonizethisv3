@@ -87,6 +87,14 @@ const String quickBattleResultDialogId = 'quick_battle_result';
 /// [OpenDialogEvent] id for [TurnNewsDialog]. SPEC/program/app-ui-wiring.md.
 const String turnNewsDialogId = 'turn_news';
 
+/// [OpenDialogEvent] id for the save-game name dialog (shell feature builder).
+/// SPEC/ui/save-game-name-dialog.md, SPEC/program/app-ui-wiring.md.
+const String saveGameNameDialogId = 'save_game_name';
+
+/// [OpenDialogEvent] id for the load-game list dialog (shell feature builder).
+/// SPEC/ui/load-game-list-dialog.md, SPEC/program/app-ui-wiring.md.
+const String loadGameListDialogId = 'load_game_list';
+
 final _logEvent = packageLogger('event');
 
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.

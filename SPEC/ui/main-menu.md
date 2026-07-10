@@ -14,7 +14,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `variant` | `plain` \| `pixelArt` | Both variants use the **Ct-* component catalog** (CtNinePatchButton, CtScreenShell). **plain:** theme scaffold color only (no background illustration, no compass rose, no fleur-de-lis, no brass divider, no scroll brackets — see the **Variant rendering** table below). **pixelArt:** dark editorial-monocle layout per mockup `SPEC/ui/mockups/SHEL10002-main-menu.html` (dark SVG collage, CtCompassRose emblem, fleur-de-lis-flanked title, CtBrassDivider, wood-panel `CtNinePatchButton`, scroll brackets, footer Quit chip). |
-| `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled when saves exist. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** Load Game disabled with explanatory tooltip/helper text. |
+| `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** legacy Widgetbook variant; Load Game stays **enabled** (empty load dialog) on the product path. |
 | `version` | string | Version text shown in footer (e.g. `v1.0.0`). The shell passes this through the shared debug-aware formatter so `CT_DEBUG_CONSOLE=true` renders `v1.0.0 (debug)`. |
 | `onNewGame` | callback | Invoked when user taps New Game. |
 | `resumeGameVisible` | bool | When true, show **Resume game** between New Game and Load Game. When false, omit the control entirely (not disabled). |
@@ -52,7 +52,7 @@ Resume game visibility:
 
 Load Game state:
 
-- Given the save store contains zero manual save slots, when the widget renders `CtMainMenu`, then the UI layer renders the **Load Game** control as disabled and attaches an explanatory tooltip or helper text indicating no saves are available.
+- Given the save store contains zero manual save slots, when the widget renders `CtMainMenu` on the product path (`state == default`), then the UI layer renders the **Load Game** control as **enabled** (tapping opens the empty load dialog).
 - Given the save store contains at least one manual save slot, when the widget renders `CtMainMenu`, then the UI layer renders the **Load Game** control as enabled.
 - Given the **Resume game** control's visibility is governed solely by the auto-save slot, when the presence of manual saves changes (added or removed), then the shell does not change `resumeGameVisible` in response (Resume game visibility remains independent of manual saves).
 
@@ -63,7 +63,7 @@ Navigation (widget exposes callbacks; shell performs routing):
 - Given `CtMainMenu` is rendered with `resumeGameVisible: true` and a non-null `onResumeGame`, when the user taps **Resume game**, then the widget invokes `onResumeGame`.
 - Given the shell has wired `onResumeGame`, when `onResumeGame` fires, then the shell loads the auto-save slot under the same entry conditions as a normal load and then navigates to [Empire overview](empire-overview.md).
 - Given the **Load Game** control is enabled and `CtMainMenu` is rendered with non-null `onLoadGame`, when the user taps **Load Game**, then the widget invokes `onLoadGame`.
-- Given the shell has wired `onLoadGame`, when `onLoadGame` fires, then the shell navigates to the Load list (UXD 03b) and, on a successful load selection, navigates to [Empire overview](empire-overview.md).
+- Given the shell has wired `onLoadGame`, when `onLoadGame` fires, then the shell emits `OpenDialogEvent(load_game_list)` ([load-game-list-dialog.md](load-game-list-dialog.md)) and, on a successful load selection, navigates to [Empire overview](empire-overview.md).
 - Given `CtMainMenu` is rendered with non-null `onSettings`, when the user taps **Settings**, then the widget invokes `onSettings` and the shell navigates to the Settings screen (UXD 03c).
 - Given `CtMainMenu` is rendered with non-null `onQuit`, when the user taps **Quit**, then the widget invokes `onQuit` and the shell exits the application.
 
@@ -187,9 +187,9 @@ For both variants the widget contract (`variant`, `state`, `version`, callbacks,
 
 | ID | Variant | Trigger | Render difference |
 |----|---------|---------|-------------------|
-| `SHEL10002` | `default` | `state == default` | No subtitle; Load enabled when saves exist. |
+| `SHEL10002` | `default` | `state == default` | No subtitle; Load enabled. |
 | `SHEL10002a` | `afterVictory` | `state == afterVictory` | Subtitle "Congratulations, you won your last game." |
-| `SHEL10002b` | `noSaves` | `state == noSaves` | Load disabled with helper/tooltip. |
+| `SHEL10002b` | `noSaves` | `state == noSaves` | Legacy catalog variant; Load remains enabled (empty dialog). |
 | — | `plain` / `pixelArt` | `variant` param | Per **Variant rendering** table: `pixelArt` adds dark SVG collage background, `CtCompassRose`, fleur-de-lis flanking, `CtBrassDivider`, wood-panel buttons, scroll brackets, and `--muted` Quit chip; `plain` renders the theme scaffold only with standard `CtNinePatchButton` controls. |
 
 ---

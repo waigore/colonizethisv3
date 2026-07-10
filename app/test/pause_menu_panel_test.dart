@@ -1,18 +1,28 @@
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Widget host(AppEventBus bus) {
-    return MaterialApp(
-      home: Scaffold(body: PauseMenuPanel(bus: bus)),
+  Widget host(AppEventBus bus, {bool blocking = false}) {
+    return ProviderScope(
+      overrides: [
+        turnResolutionBlockingProvider.overrideWith(
+          () => StateToggleNotifier(blocking),
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(body: PauseMenuPanel(bus: bus)),
+      ),
     );
   }
 
@@ -80,10 +90,13 @@ void main() {
 
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.byKey(PauseMenuPanel.brassDividerKey), findsOneWidget);
-      expect(find.descendant(
-        of: find.byKey(PauseMenuPanel.brassDividerKey),
-        matching: find.byType(CtBrassDivider),
-      ), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(PauseMenuPanel.brassDividerKey),
+          matching: find.byType(CtBrassDivider),
+        ),
+        findsOneWidget,
+      );
 
       final buttons = tester
           .widgetList<CtNinePatchButton>(find.byType(CtNinePatchButton))
@@ -103,7 +116,7 @@ void main() {
   );
 
   testWidgets(
-    'Save Game / Load Game / Settings render as disabled placeholders',
+    'When not blocking, Save/Load emit OpenDialogEvent; Settings stays disabled',
     (WidgetTester tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -114,35 +127,64 @@ void main() {
       await tester.pumpWidget(host(bus));
       await tester.pumpAndSettle();
 
+      final save = tester.widget<CtNinePatchButton>(
+        find.byKey(PauseMenuPanel.saveGameButtonKey),
+      );
+      final load = tester.widget<CtNinePatchButton>(
+        find.byKey(PauseMenuPanel.loadGameButtonKey),
+      );
+      final settings = tester.widget<CtNinePatchButton>(
+        find.byKey(PauseMenuPanel.settingsButtonKey),
+      );
+      expect(save.enabled, isTrue);
+      expect(load.enabled, isTrue);
+      expect(settings.enabled, isFalse);
+      expect(settings.onPressed, isNull);
+
+      await tester.tap(find.byKey(PauseMenuPanel.saveGameButtonKey));
+      await tester.pumpAndSettle();
+      expect(
+        events.whereType<OpenDialogEvent>().single.dialogId,
+        'save_game_name',
+      );
+
+      events.clear();
+      await tester.tap(find.byKey(PauseMenuPanel.loadGameButtonKey));
+      await tester.pumpAndSettle();
+      final loadEvent = events.whereType<OpenDialogEvent>().single;
+      expect(loadEvent.dialogId, 'load_game_list');
+      expect(loadEvent.params?['fromPause'], isTrue);
+    },
+  );
+
+  testWidgets(
+    'When turn-resolution blocking, Save/Load stay disabled',
+    (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <AppEvent>[];
+      final sub = bus.stream.listen(events.add);
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(host(bus, blocking: true));
+      await tester.pumpAndSettle();
+
       for (final key in const <Key>[
         PauseMenuPanel.saveGameButtonKey,
         PauseMenuPanel.loadGameButtonKey,
         PauseMenuPanel.settingsButtonKey,
       ]) {
         final widget = tester.widget<CtNinePatchButton>(find.byKey(key));
-        expect(
-          widget.enabled,
-          isFalse,
-          reason: '$key must render as disabled per SPEC',
-        );
-        expect(
-          widget.onPressed,
-          isNull,
-          reason: '$key must have null onPressed per SPEC',
-        );
+        expect(widget.enabled, isFalse);
+        expect(widget.onPressed, isNull);
       }
 
-      // Tapping disabled placeholders is a no-op on the bus.
       await tester.tap(
         find.byKey(PauseMenuPanel.saveGameButtonKey),
         warnIfMissed: false,
       );
       await tester.tap(
         find.byKey(PauseMenuPanel.loadGameButtonKey),
-        warnIfMissed: false,
-      );
-      await tester.tap(
-        find.byKey(PauseMenuPanel.settingsButtonKey),
         warnIfMissed: false,
       );
       await tester.pumpAndSettle();

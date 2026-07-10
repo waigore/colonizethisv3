@@ -62,6 +62,8 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
+| `DLG70001` | Save game name | [save-game-name-dialog.md](save-game-name-dialog.md) | `app/lib/features/shell/save_load/save_game_name_dialog.dart` | Save Game Name Dialog | active |
+| `DLG80001` | Load game list | [load-game-list-dialog.md](load-game-list-dialog.md) | `app/lib/features/shell/save_load/load_game_list_dialog.dart` | Load Game List Dialog | active |
 | `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
 | `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/overlays/victory_overlay.dart` | Victory | active |
 | `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |

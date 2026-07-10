@@ -53,6 +53,8 @@ const Map<String, String> _expectedConstants = {
   'transferToHomeFleetDialog': UiScreenIds.transferToHomeFleetDialog,
   'turnNewsDialog': UiScreenIds.turnNewsDialog,
   'nextTurnConfirmation': UiScreenIds.nextTurnConfirmation,
+  'saveGameNameDialog': UiScreenIds.saveGameNameDialog,
+  'loadGameListDialog': UiScreenIds.loadGameListDialog,
   'debugLogViewer': UiScreenIds.debugLogViewer,
   'debugConsolePanel': UiScreenIds.debugConsolePanel,
 };
