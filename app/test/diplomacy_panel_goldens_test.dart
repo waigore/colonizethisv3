@@ -39,31 +39,11 @@ import 'package:colonizethis_app/widgets/relation_meter.dart';
 
 import 'support/diplomacy_panel_test_support.dart';
 import 'support/golden_capture_harness.dart';
+import 'support/yarn_test_fixtures.dart';
 
 /// Minimal in-memory [AssetBundle] returning the supplied yarn text so the
 /// herald golden is deterministic and offline (mirrors
 /// `tribe_first_contact_overlay_test.dart`).
-class _StringAssetBundle extends Fake implements AssetBundle {
-  _StringAssetBundle(this._assets);
-
-  final Map<String, String> _assets;
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async {
-    final text = _assets[key];
-    if (text == null) throw Exception('missing asset: $key');
-    return text;
-  }
-}
-
-const _kHeraldYarn = '''
-title: tribe_first_contact
----
-Scouts return from the New World with word of a people hitherto unknown to thy crown. They name themselves {\$tribeName}, and hold their seat at {\$capitalName}.
--> Continue
-===
-''';
-
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
 /// AC-1 fixture: a solo human Great Power with no discovered factions and no
@@ -489,8 +469,8 @@ void main() {
         child: TribeFirstContactOverlay(
           tribeName: 'Powhatan',
           capitalName: 'Werowocomoco',
-          assetBundle: _StringAssetBundle({
-            kDialogueTribeFirstContactAsset: _kHeraldYarn,
+          assetBundle: YarnStringAssetBundle({
+            kDialogueTribeFirstContactAsset: kYarnTribeFirstContactHerald,
           }),
           onDismissed: () {},
           child: const ColoredBox(color: Color(0xFF101014)),

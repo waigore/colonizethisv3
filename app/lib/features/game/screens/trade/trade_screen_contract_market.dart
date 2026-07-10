@@ -10,8 +10,7 @@ abstract final class _TradeScreenMarketContract {
   /// Localized back-button label rendered immediately after the chevron on
   /// the dark-theme `CtTopBar`. SPEC requires the literal `"Map"` so the
   /// affordance reads `"← Map"`.
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String topBarBackLabel = 'Map';
+  static const String topBarBackLabel = GameFeatureScreenTopBar.backLabel;
 
   /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
   /// literal `"Trade"` (Cinzel display font is configured at the theme
