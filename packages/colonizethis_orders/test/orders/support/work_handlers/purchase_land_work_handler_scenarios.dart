@@ -1,42 +1,41 @@
 // Table-driven purchase-land work handler scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'purchase_land_work_handler_expectations.dart';
+import 'purchase_land_work_handler_run_rows.dart';
 
 /// One row in [purchaseLandWorkHandlerScenarios].
 class PurchaseLandWorkHandlerScenario implements RefsScenario {
   const PurchaseLandWorkHandlerScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final PurchaseLandWorkHandlerTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
 void runPurchaseLandWorkHandlerScenario(
   PurchaseLandWorkHandlerScenario scenario,
-) {
-  runPurchaseLandWorkHandlerExpectation(scenario.target);
-}
+) =>
+    scenario.run();
 
 /// Canonical scenarios for purchase_land_work_handler family tests.
 List<PurchaseLandWorkHandlerScenario> purchaseLandWorkHandlerScenarios() =>
     const [
       PurchaseLandWorkHandlerScenario(
         label: 'supports only purchase_land target',
-        target: PurchaseLandWorkHandlerTarget.supportsOnlyPurchaseLand,
+        run: plwhRunSupportsOnlyPurchaseLand,
       ),
       PurchaseLandWorkHandlerScenario(
         label: 'tryApply assigns currentWork without treasury deduction',
-        target: PurchaseLandWorkHandlerTarget.tryApplyWithoutTreasuryDeduction,
+        run: plwhRunTryApplyWithoutTreasuryDeduction,
       ),
       PurchaseLandWorkHandlerScenario(
         label: 'returns unchanged treasury when tile has no resource entry',
-        target: PurchaseLandWorkHandlerTarget.unchangedTreasuryNoResource,
+        run: plwhRunUnchangedTreasuryNoResource,
       ),
     ];

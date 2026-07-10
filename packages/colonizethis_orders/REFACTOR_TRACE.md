@@ -2169,7 +2169,21 @@ test/ LOC after slice 142: **36,865** (net −39 from post–slice 141). Remaini
 | dsr-dispatch-collapse | drop `DiplomaticSubValidatorsRelationsTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_relations_expectations.dart` (deleted) | `diplomatic_sub_validators_relations_run_rows.dart` + thin `diplomatic_sub_validators_relations_scenarios.dart` | #3949 |
 | dsa-dispatch-collapse | drop `DiplomaticSubValidatorsAidTarget` enum + switch; scenario rows hold `run` tear-offs | `diplomatic_sub_validators_aid_expectations.dart` (deleted) | `diplomatic_sub_validators_aid_run_rows.dart` + thin `diplomatic_sub_validators_aid_scenarios.dart` | #3949 |
 
-test/ LOC after slice 143: see PR. Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families outside diplomatic validators.
+test/ LOC after slice 143: **36,755** (net −110 from post–slice 142). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families outside diplomatic validators.
+
+## Wave 3 — Slice 144: work-handler + engine validate scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ewh-dispatch-collapse | drop `ExploreWorkHandlerTarget` enum + switch; scenario rows hold `run` tear-offs | `explore_work_handler_expectations.dart` (deleted) | `explore_work_handler_run_rows.dart` + thin `explore_work_handler_scenarios.dart` | #3949 |
+| plwh-dispatch-collapse | drop `PurchaseLandWorkHandlerTarget` enum + switch; scenario rows hold `run` tear-offs | `purchase_land_work_handler_expectations.dart` (deleted) | `purchase_land_work_handler_run_rows.dart` + thin `purchase_land_work_handler_scenarios.dart` | #3949 |
+| rwh-dispatch-collapse | drop `RemainingWorkHandlersTarget` enum + switch; scenario rows hold `run` tear-offs | `remaining_work_handlers_expectations.dart` (deleted) | `remaining_work_handlers_run_rows.dart` + thin `remaining_work_handlers_scenarios.dart` | #3949 |
+| vet-dispatch-collapse | drop `OrderEngineValidateTradeTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_trade_expectations.dart` (deleted) | `order_engine_validate_trade_run_rows.dart` + thin `order_engine_validate_trade_scenarios.dart` | #3949 |
+| vrw-dispatch-collapse | drop `OrderEngineValidateRecruitWorkerTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_recruit_worker_expectations.dart` (deleted) | `order_engine_validate_recruit_worker_run_rows.dart` + thin `order_engine_validate_recruit_worker_scenarios.dart` | #3949 |
+| ved-dispatch-collapse | drop `OrderEngineValidateDiplomaticTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_diplomatic_expectations.dart` (deleted) | `order_engine_validate_diplomatic_run_rows.dart` + thin `order_engine_validate_diplomatic_scenarios.dart` | #3949 |
+| vbc-dispatch-collapse | drop `OrderEngineValidateBuildCivilianTarget` enum + switch; scenario rows hold `run` tear-offs | `order_engine_validate_build_civilian_expectations.dart` (deleted) | `order_engine_validate_build_civilian_run_rows.dart` + thin `order_engine_validate_build_civilian_scenarios.dart` | #3949 |
+
+test/ LOC after slice 144: **36,671** (net −84 from post–slice 143). Remaining: further support-table compaction toward ≤26,400; remaining enum-dispatch families (~69 expectations modules).
 
 ## Wave 3 — documented exceptions (kickoff)
 

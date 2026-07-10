@@ -1,39 +1,38 @@
 // Table-driven explore work handler scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'explore_work_handler_expectations.dart';
+import 'explore_work_handler_run_rows.dart';
 
 /// One row in [exploreWorkHandlerScenarios].
 class ExploreWorkHandlerScenario implements RefsScenario {
   const ExploreWorkHandlerScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
 
   @override
   final String label;
-  final ExploreWorkHandlerTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runExploreWorkHandlerScenario(ExploreWorkHandlerScenario scenario) {
-  runExploreWorkHandlerExpectation(scenario.target);
-}
+void runExploreWorkHandlerScenario(ExploreWorkHandlerScenario scenario) =>
+    scenario.run();
 
 /// Canonical scenarios for explore_work_handler family tests.
 List<ExploreWorkHandlerScenario> exploreWorkHandlerScenarios() => const [
       ExploreWorkHandlerScenario(
         label: 'supports only explore target',
-        target: ExploreWorkHandlerTarget.supportsOnlyExplore,
+        run: ewhRunSupportsOnlyExplore,
       ),
       ExploreWorkHandlerScenario(
         label: 'assigns explore currentWork when province has discoverable tiles',
-        target: ExploreWorkHandlerTarget.assignsExploreCurrentWork,
+        run: ewhRunAssignsExploreCurrentWork,
       ),
       ExploreWorkHandlerScenario(
         label: 'returns false when province has no tile keys in world state',
-        target: ExploreWorkHandlerTarget.returnsFalseNoTileKeys,
+        run: ewhRunReturnsFalseNoTileKeys,
       ),
     ];
