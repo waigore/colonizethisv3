@@ -21,24 +21,6 @@ class TownManufacturingBonusProvinceScenario {
     this.refs,
   });
 
-  TownManufacturingBonusProvinceScenario.expect({
-    required String label,
-    required int townDevelopmentLevel,
-    required Map<CommodityId, int> townConnectedDeliveredRawByCommodity,
-    Map<String, bool>? techUnlocked,
-    required TownManufacturingBonusProvinceExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          townDevelopmentLevel: townDevelopmentLevel,
-          townConnectedDeliveredRawByCommodity:
-              townConnectedDeliveredRawByCommodity,
-          techUnlocked: techUnlocked,
-          refs: refs,
-          verify: (bonus) =>
-              assertTownManufacturingBonusProvinceExpectation(bonus, expect),
-        );
-
   final String label;
   final int townDevelopmentLevel;
   final Map<CommodityId, int> townConnectedDeliveredRawByCommodity;
@@ -47,7 +29,7 @@ class TownManufacturingBonusProvinceScenario {
   final String? refs;
 }
 
-/// Compact province-bonus row (Refs #3939 slice 47).
+/// Compact province-bonus row (Refs #3939 slice 47 / 57).
 TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   required String label,
   required int townDevelopmentLevel,
@@ -56,14 +38,15 @@ TownManufacturingBonusProvinceScenario townBonusProvinceRow({
   Map<String, bool> techUnlocked = const {},
   String? refs = '#3872',
 }) =>
-    TownManufacturingBonusProvinceScenario.expect(
+    TownManufacturingBonusProvinceScenario(
       label: label,
       townDevelopmentLevel: townDevelopmentLevel,
       townConnectedDeliveredRawByCommodity:
           townConnectedDeliveredRawByCommodity,
       techUnlocked: techUnlocked,
-      expect: expect,
       refs: refs,
+      verify: (bonus) =>
+          assertTownManufacturingBonusProvinceExpectation(bonus, expect),
     );
 
 /// Canonical scenarios for [computeTownManufacturingBonusForProvince].
@@ -240,7 +223,7 @@ void runTownManufacturingBonusGamePin(
         players: const [
           Player(id: 'gpA', displayName: 'GP A', isHuman: true),
         ],
-        oldWorld: const RegionData(
+        oldWorld: RegionData(
           provinces: [
             Province(
               id: 'oldWorld|m1',
@@ -256,18 +239,7 @@ void runTownManufacturingBonusGamePin(
             'oldWorld|m1': [tileKey],
           },
         },
-        minorNations: const [
-          MinorNation(
-            id: 'm1',
-            capitalProvinceId: 'oldWorld|m1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|m1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
+        minorNations: [testMinor()],
         tileState: tileStateFromSpecs(const [TileImprovementSpec(tileKey, 1, 1)]),
       );
       final delivered = computeTownConnectedDeliveredRawByProvince(
@@ -276,9 +248,9 @@ void runTownManufacturingBonusGamePin(
           'oldWorld': singleResourceTileMap(Resource.timber, province: 'm1'),
         },
         gpConnectivityByPlayerId: const {},
-        nonGpConnectivityByFactionId: const {
-          'm1': ConnectivityResult(connected: {tileKey}),
-        },
+        nonGpConnectivityByFactionId: connectivityByFaction({
+          'm1': {tileKey},
+        }),
         townConnectedByProvinceId: const {
           'oldWorld|m1': {tileKey},
         },

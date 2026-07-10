@@ -1047,6 +1047,19 @@ test_support LOC: **16,583** (unchanged — documentation / AC mapping slice). E
 
 test_support LOC: **16,560** (net −23 vs slice 54 — attribution DSL + FRR M1/D5 row builders). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 57+.
 
+## Phase 3 — Slice 57 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| spain-extractor-shell | `_spainExtractorGame` / `_owProvince` / `_topoNode` compact GP extraction games + blockaded fixture | `extraction_fixture_support.dart` | #3939 |
+| extractor-special-list | Fold one-shot overseas/town-rule/capital/blockade/missing factories into `resourceExtractorSpecialCaseScenarios` | `resource_extractor_scenarios.dart`, `resource_extractor_test.dart` | #3661, #3939 |
+| drop-expect-ctors | Remove `.expect` dual ctors for resource-extractor / non-GP / town-bonus / FRR credits / suggester (row builders assert directly) | `*_scenarios.dart` | #3939 |
+| frr-d5-merge | Merge D5 AC2–AC5 credit lists into `frrIssueAcD5CreditsScenarios` | `frr_credits_scenarios.dart`, `first_right_credits_test.dart` | #2992 D5, #3939 |
+| empty-result-slim | Delete `FrrCreditsExpectation.emptyResult()` fan-out; use `empty: true` | `frr_credits_expectations.dart` | #3939 |
+| matcher-pair-treasury | Extend `matcherPairTrade` with treasury/FRR knobs; thin `matcherTreasuryClampInputs` | `deal_matcher_test_support.dart` | #3115, #3939 |
+
+test_support LOC: **16,421** (net −139 vs slice 56 baseline 16,560). Economy `test/` **1,334** (down 58). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 58+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

@@ -246,6 +246,46 @@ Tribe testTribe({
   );
 }
 
+Province _owProvince(
+  String localId, {
+  int townDevelopmentLevel = 4,
+  String ownerId = 'pl1',
+  String? townTileKey,
+}) =>
+    Province(
+      id: 'oldWorld|$localId',
+      regionId: 'oldWorld',
+      ownerId: ownerId,
+      townDevelopmentLevel: townDevelopmentLevel,
+      townTileKey: townTileKey,
+    );
+
+/// Shared Spain/`pl1` extraction [Game] shell (Refs #3939 slice 57).
+Game _spainExtractorGame({
+  required TileMapState tileState,
+  required RegionData oldWorld,
+  RegionData? newWorld,
+  Map<String, bool>? techUnlocked,
+  Map<String, Set<String>>? playerProspectedTiles,
+  Map<String, String> portsByProvinceSeaboard = const {},
+  CapitalTile? capitalTile,
+}) =>
+    TestFixtures.minimalGame(
+      id: 'g1',
+      capitalTileGrainBonusPerTurn: 0,
+      oldWorld: oldWorld,
+      newWorld: newWorld,
+      tileState: tileState,
+      playerProspectedTiles: playerProspectedTiles,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+      players: [
+        spainPl1Player(
+          techUnlocked: techUnlocked,
+          capitalTile: capitalTile,
+        ),
+      ],
+    );
+
 /// Single-owned-province extraction setup: player `pl1` ("Spain") owns
 /// `oldWorld|p1` (capital tile at 0,0) at [townDevelopmentLevel].
 Game resourceExtractorGame({
@@ -256,22 +296,13 @@ Game resourceExtractorGame({
   String playerId = 'pl1',
 }) {
   assert(playerId == 'pl1', 'resourceExtractorGame uses spainPl1Player');
-  return TestFixtures.minimalGame(
-    id: 'g1',
-    capitalTileGrainBonusPerTurn: 0,
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: 'oldWorld|p1',
-          regionId: 'oldWorld',
-          ownerId: playerId,
-          townDevelopmentLevel: townDevelopmentLevel,
-        ),
-      ],
-    ),
+  return _spainExtractorGame(
     tileState: tileState,
+    oldWorld: RegionData(
+      provinces: [_owProvince('p1', townDevelopmentLevel: townDevelopmentLevel)],
+    ),
+    techUnlocked: techUnlocked,
     playerProspectedTiles: playerProspectedTiles,
-    players: [spainPl1Player(techUnlocked: techUnlocked)],
   );
 }
 
@@ -285,63 +316,46 @@ Game townRuleTwoProvinceExtractorGame({
   Map<String, String>? portsByProvinceSeaboard,
   String playerId = 'pl1',
 }) {
-  const regionId = 'oldWorld';
   assert(playerId == 'pl1', 'townRuleTwoProvinceExtractorGame uses spainPl1Player');
-  return TestFixtures.minimalGame(
-    id: 'g1',
-    capitalTileGrainBonusPerTurn: 0,
+  return _spainExtractorGame(
+    tileState: tileState,
     oldWorld: RegionData(
       provinces: [
-        Province(
-          id: '$regionId|p1',
-          regionId: regionId,
-          ownerId: playerId,
-          townTileKey: p1TownTileKey,
+        _owProvince(
+          'p1',
           townDevelopmentLevel: p1TownDevelopmentLevel,
+          townTileKey: p1TownTileKey,
         ),
-        Province(
-          id: '$regionId|p2',
-          regionId: regionId,
-          ownerId: playerId,
-          townTileKey: p2TownTileKey,
+        _owProvince(
+          'p2',
           townDevelopmentLevel: p2TownDevelopmentLevel,
+          townTileKey: p2TownTileKey,
         ),
       ],
     ),
-    tileState: tileState,
     portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
-    players: [spainPl1Player()],
   );
 }
 
 /// Single-player game with [oldWorld|p1] capital and an owned [newWorld|n1]
 /// province for overseas extraction scenarios.
-Game overseasResourceExtractorGame({
-  required TileMapState tileState,
-}) {
-  const playerId = 'pl1';
-  return TestFixtures.minimalGame(
-    id: 'g1',
-    capitalTileGrainBonusPerTurn: 0,
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: 'oldWorld|p1',
-          regionId: 'oldWorld',
-          ownerId: playerId,
-          townDevelopmentLevel: 4,
-        ),
-      ],
-    ),
-    newWorld: RegionData(
-      provinces: [
-        Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: playerId),
-      ],
-    ),
-    tileState: tileState,
-    players: [spainPl1Player()],
-  );
-}
+Game overseasResourceExtractorGame({required TileMapState tileState}) =>
+    _spainExtractorGame(
+      tileState: tileState,
+      oldWorld: RegionData(provinces: [_owProvince('p1')]),
+      newWorld: RegionData(
+        provinces: [
+          Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
+        ],
+      ),
+    );
+
+TopologyNode _topoNode(
+  String id,
+  String regionId,
+  TopologyNodeType type,
+) =>
+    TopologyNode(id: id, regionId: regionId, type: type);
 
 /// Dual-region blockaded-port extraction fixture (Refs #3939 phase 3 slice 23).
 ({
@@ -351,9 +365,7 @@ Game overseasResourceExtractorGame({
 }) blockadedOverseasExtractionFixture() {
   const ow = 'oldWorld';
   const nw = 'newWorld';
-  final tileMapOw = TileMapResult(
-    width: 2,
-    height: 2,
+  final tileMapOw = tileMapFromGrids(
     grid: const [
       ['p1', 'p1'],
       ['p1', 'p1'],
@@ -363,9 +375,7 @@ Game overseasResourceExtractorGame({
       [null, null],
     ],
   );
-  final tileMapNw = TileMapResult(
-    width: 2,
-    height: 2,
+  final tileMapNw = tileMapFromGrids(
     grid: const [
       ['n1', 'n1'],
       ['n1', 'n1'],
@@ -377,77 +387,40 @@ Game overseasResourceExtractorGame({
   );
   final topology = MapTopology(
     nodes: [
-      TopologyNode(
-        id: 'p1',
-        regionId: ow,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'n1',
-        regionId: nw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'sea1',
-        regionId: ow,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: 'sea2',
-        regionId: nw,
-        type: TopologyNodeType.seaZone,
-      ),
+      _topoNode('p1', ow, TopologyNodeType.province),
+      _topoNode('n1', nw, TopologyNodeType.province),
+      _topoNode('sea1', ow, TopologyNodeType.seaZone),
+      _topoNode('sea2', nw, TopologyNodeType.seaZone),
     ],
-    edges: [
+    edges: const [
       TopologyEdge(id1: 'p1', id2: 'sea1'),
       TopologyEdge(id1: 'n1', id2: 'sea2'),
       TopologyEdge(id1: 'sea1', id2: 'sea2'),
     ],
   );
-  final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
-  final tileState = tileStateFromSpecs([
-    const TileImprovementSpec('newWorld|n1|0|0', 1, 4),
-    const TileImprovementSpec('newWorld|n1|1|0', 1, 4),
-    owP1Imp(0, 4),
-  ]);
-  final ports = {
-    '$ow|p1|sea1': 'oldWorld|p1|0|0',
-    '$nw|n1|sea2': 'newWorld|n1|0|0',
-  };
-  final game = TestFixtures.minimalGame(
-    id: 'g1',
-    capitalTileGrainBonusPerTurn: 0,
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: '$ow|p1',
-          regionId: ow,
-          ownerId: 'pl1',
-          townDevelopmentLevel: 4,
-        ),
-      ],
-    ),
-    newWorld: RegionData(
-      provinces: [
-        Province(
-          id: '$nw|n1',
-          regionId: nw,
-          ownerId: 'pl1',
-          townDevelopmentLevel: 4,
-        ),
-      ],
-    ),
-    tileState: tileState,
-    portsByProvinceSeaboard: ports,
-    players: [
-      spainPl1Player(
-        capitalProvinceId: '$ow|p1',
-        capitalTile: cap,
-      ),
-    ],
-  );
   return (
-    game: game,
+    game: _spainExtractorGame(
+      tileState: tileStateFromSpecs([
+        const TileImprovementSpec('newWorld|n1|0|0', 1, 4),
+        const TileImprovementSpec('newWorld|n1|1|0', 1, 4),
+        owP1Imp(0, 4),
+      ]),
+      oldWorld: RegionData(provinces: [_owProvince('p1')]),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: '$nw|n1',
+            regionId: nw,
+            ownerId: 'pl1',
+            townDevelopmentLevel: 4,
+          ),
+        ],
+      ),
+      portsByProvinceSeaboard: {
+        '$ow|p1|sea1': kOwP1Tile00,
+        '$nw|n1|sea2': 'newWorld|n1|0|0',
+      },
+    ),
     tileMapByRegion: {ow: tileMapOw, nw: tileMapNw},
     topology: topology,
   );

@@ -16,19 +16,6 @@ class TradeOrderSuggesterScenario {
     this.refs,
   });
 
-  TradeOrderSuggesterScenario.expect({
-    required String label,
-    required TradeSuggestionContext Function() buildContext,
-    required SuggesterExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          buildContext: buildContext,
-          verify: (context, result) =>
-              assertSuggesterExpectation(context, result, expect),
-          refs: refs,
-        );
-
   final String label;
   final TradeSuggestionContext Function() buildContext;
   final void Function(
@@ -45,7 +32,7 @@ void runTradeOrderSuggesterScenario(TradeOrderSuggesterScenario scenario) {
   scenario.verify(context, TradeOrderSuggester.suggest(context));
 }
 
-/// Compact [TradeOrderSuggesterScenario.expect] builder (Refs #3939 slice 46).
+/// Compact TradeOrderSuggester row builder (Refs #3939 slice 46 / 57).
 TradeOrderSuggesterScenario suggesterRow({
   required String label,
   required SuggesterExpectation expect,
@@ -58,10 +45,9 @@ TradeOrderSuggesterScenario suggesterRow({
   WorldMarketState worldMarketState = const WorldMarketState(),
   String? refs,
 }) =>
-    TradeOrderSuggesterScenario.expect(
+    TradeOrderSuggesterScenario(
       label: label,
       refs: refs,
-      expect: expect,
       buildContext: buildContext ??
           () => suggesterCtx(
                 bidTypeCap: bidTypeCap,
@@ -72,6 +58,8 @@ TradeOrderSuggesterScenario suggesterRow({
                 commodityNeedByCommodityId: commodityNeedByCommodityId,
                 worldMarketState: worldMarketState,
               ),
+      verify: (context, result) =>
+          assertSuggesterExpectation(context, result, expect),
     );
 
 /// Compact [SuggesterOrderPin] for single-offer / single-bid expectations.

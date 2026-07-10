@@ -35,34 +35,6 @@ class FrrCreditsExpectation {
     this.custom,
   });
 
-  const FrrCreditsExpectation.emptyResult()
-      : empty = true,
-        sameAsEmpty = false,
-        creditedDealsEmpty = false,
-        creditedDealsLength = null,
-        treasuryCreditEmpty = false,
-        treasuryCreditByGpId = null,
-        treasuryCreditCloseTo = null,
-        treasuryCreditKeysContainAll = null,
-        embassyKickbackByGpId = null,
-        embassyKickbackCloseTo = null,
-        embassyKickbackEmpty = false,
-        noEmbassyKickbackFor = null,
-        noTreasuryCreditFor = null,
-        totalProfitTreasury = null,
-        totalEmbassyKickback = null,
-        singleCreditedDealBuyer = null,
-        singleCreditedDealOwningGpId = null,
-        singleCreditedDealSourceFactionId = null,
-        singleCreditedDealRelationScore = null,
-        singleCreditedDealProfitRateCloseTo = null,
-        singleCreditedDealProfitTreasuryCloseTo = null,
-        singleCreditedDealProfitIsZero = false,
-        treasuryCreditKeysExact = null,
-        treasuryCreditFirstKey = null,
-        deterministicRerun = false,
-        custom = null;
-
   final bool empty;
   final bool sameAsEmpty;
   final bool creditedDealsEmpty;

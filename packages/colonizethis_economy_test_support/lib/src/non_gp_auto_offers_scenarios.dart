@@ -21,23 +21,6 @@ class NonGpAutoOffersScenario implements RefsScenario {
     this.refs,
   });
 
-  NonGpAutoOffersScenario.expect({
-    required String label,
-    required Game game,
-    required Map<String, TileMapResult> tileMapByRegion,
-    required Map<String, ConnectivityResult> connectivityByFactionId,
-    required NonGpAutoOffersExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          connectivityByFactionId: connectivityByFactionId,
-          verify: (result) =>
-              assertNonGpAutoOffersExpectation(result, expect, game: game),
-          refs: refs,
-        );
-
   final String label;
   final Game game;
   final Map<String, TileMapResult> tileMapByRegion;
@@ -46,6 +29,24 @@ class NonGpAutoOffersScenario implements RefsScenario {
   @override
   final String? refs;
 }
+
+NonGpAutoOffersScenario _autoOfferRow({
+  required String label,
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, ConnectivityResult> connectivityByFactionId,
+  required NonGpAutoOffersExpectation expect,
+  String? refs,
+}) =>
+    NonGpAutoOffersScenario(
+      label: label,
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      connectivityByFactionId: connectivityByFactionId,
+      verify: (result) =>
+          assertNonGpAutoOffersExpectation(result, expect, game: game),
+      refs: refs,
+    );
 
 void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
   final result = computeNonGreatPowerAutoOffers(
@@ -56,7 +57,7 @@ void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
   scenario.verify(result);
 }
 
-/// Compact minor/OW auto-offer row (Refs #3939 slice 47).
+/// Compact minor/OW auto-offer row (Refs #3939 slice 47 / 57).
 NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
   required String label,
   required NonGpAutoOffersExpectation expect,
@@ -68,7 +69,7 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
 }) {
   final width = resources.first.length;
   final height = resources.length;
-  return NonGpAutoOffersScenario.expect(
+  return _autoOfferRow(
     label: label,
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -101,7 +102,7 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
   String tileKey = 'oldWorld|m1|0|0',
   String? refs = '#2991 C6',
 }) =>
-    NonGpAutoOffersScenario.expect(
+    _autoOfferRow(
       label: label,
       game: minorTileAutoOfferGame(
         tileKey: tileKey,
@@ -127,7 +128,7 @@ List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
     ];
 
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
-      NonGpAutoOffersScenario.expect(
+      _autoOfferRow(
         label: 'empty when no minors and no tribes are configured',
         game: gameForNonGpExtractionTest(provinces: const []),
         tileMapByRegion: const {},
@@ -135,7 +136,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
         expect: const NonGpAutoOffersExpectation(empty: true),
         refs: '#2991 C4',
       ),
-      NonGpAutoOffersScenario.expect(
+      _autoOfferRow(
         label: 'empty when tileMapByRegion is empty',
         game: gameForNonGpExtractionTest(
           provinces: [
@@ -187,7 +188,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
           },
         ),
       ),
-      NonGpAutoOffersScenario.expect(
+      _autoOfferRow(
         label: 'aggregates minor and tribe offers in the same result map',
         game: gameForNonGpExtractionTest(
           provinces: [
@@ -309,7 +310,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersPurchasedTileScenarios() {
         },
       ),
     ),
-    NonGpAutoOffersScenario.expect(
+    _autoOfferRow(
       label: 'purchased non-riches tile parity with unpurchased tile — both tiles '
           'emit auto-offers with identical quantity and priority; only '
           'originTileKey differs',

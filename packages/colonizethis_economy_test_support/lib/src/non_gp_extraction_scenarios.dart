@@ -19,22 +19,6 @@ class NonGpExtractionScenario {
     this.refs,
   });
 
-  NonGpExtractionScenario.expect({
-    required String label,
-    required Game game,
-    required Map<String, TileMapResult> tileMapByRegion,
-    required Map<String, ConnectivityResult> connectivityByFactionId,
-    required NonGpExtractionExpectation expect,
-    String? refs,
-  }) : this(
-          label: label,
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          connectivityByFactionId: connectivityByFactionId,
-          verify: (result) => assertNonGpExtractionExpectation(result, expect),
-          refs: refs,
-        );
-
   final String label;
   final Game game;
   final Map<String, TileMapResult> tileMapByRegion;
@@ -42,6 +26,23 @@ class NonGpExtractionScenario {
   final void Function(Map<String, Map<CommodityId, int>> result) verify;
   final String? refs;
 }
+
+NonGpExtractionScenario _nonGpRow({
+  required String label,
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, ConnectivityResult> connectivityByFactionId,
+  required NonGpExtractionExpectation expect,
+  String? refs,
+}) =>
+    NonGpExtractionScenario(
+      label: label,
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      connectivityByFactionId: connectivityByFactionId,
+      verify: (result) => assertNonGpExtractionExpectation(result, expect),
+      refs: refs,
+    );
 
 void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
   final result = computeNonGreatPowerExtraction(
@@ -66,7 +67,7 @@ TileMapResult _provMap(
       resources: resources,
     );
 
-/// Compact [NonGpExtractionScenario.expect] for minor `m1` OW cases.
+/// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57).
 NonGpExtractionScenario nonGpMinorRow({
   required String label,
   required NonGpExtractionExpectation expect,
@@ -80,7 +81,7 @@ NonGpExtractionScenario nonGpMinorRow({
   String? refs,
 }) {
   const provinceId = 'oldWorld|m1';
-  return NonGpExtractionScenario.expect(
+  return _nonGpRow(
     label: label,
     game: gameForNonGpExtractionTest(
       provinces: [
@@ -132,7 +133,7 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
         ),
         refs: '#2991',
       ),
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'mineral resources on non-GP tiles are unconditionally excluded '
             '(SPEC AC: tribes/minors never prospect)',
         game: gameForNonGpExtractionTest(
@@ -201,7 +202,7 @@ List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
     ];
 
 List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'empty minors and tribes lists yield an empty result and skip lookups',
         game: gameForNonGpExtractionTest(provinces: const []),
         tileMapByRegion: const <String, TileMapResult>{},
@@ -209,7 +210,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
         expect: const NonGpExtractionExpectation(empty: true),
         refs: '#2991',
       ),
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'empty tileMapByRegion short-circuits even when minors/tribes present',
         game: gameForNonGpExtractionTest(
           provinces: [
@@ -224,7 +225,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
         expect: const NonGpExtractionExpectation(empty: true),
         refs: '#2991',
       ),
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'minor without capitalProvinceId or capitalTile is skipped silently '
             '(no throw, no entry in output)',
         game: gameForNonGpExtractionTest(
@@ -246,7 +247,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
         expect: const NonGpExtractionExpectation(empty: true),
         refs: '#2991',
       ),
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'minor with capital but no connectivity entry in the input is skipped',
         game: gameForNonGpExtractionTest(
           provinces: [
@@ -280,7 +281,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
 
 List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
     [
-      NonGpExtractionScenario.expect(
+      _nonGpRow(
         label: 'minor and tribe in the same Game both produce per-faction totals '
             'keyed by their ids',
         game: gameForNonGpExtractionTest(

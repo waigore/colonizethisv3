@@ -83,20 +83,33 @@ DealMatchInputs matcherPairTrade({
   int bidPriority = 1,
   Map<CommodityId, double>? pricesByCommodityId,
   Set<String> boycottBlockedPairKeys = const {},
+  int? treasuryBudget,
+  PurchasedTileIndex? purchasedTileIndex,
+  String? originTileKey,
 }) =>
     matcherInputs(
       offersByFactionId: {
-        seller: [matcherOffer(commodity, offerQty, priority: offerPriority)],
+        seller: [
+          matcherOffer(
+            commodity,
+            offerQty,
+            priority: offerPriority,
+            originTileKey: originTileKey,
+          ),
+        ],
       },
       bidsByFactionId: {
         buyer: [matcherBid(commodity, bidQty, priority: bidPriority)],
       },
       tradeCapacityByFactionId: {buyer: buyerCapacity},
+      treasuryBudgetByBuyerFactionId:
+          treasuryBudget == null ? null : {buyer: treasuryBudget},
       pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
       boycottBlockedPairKeys: boycottBlockedPairKeys,
+      purchasedTileIndex: purchasedTileIndex,
     );
 
-/// Single-buyer treasury-clamp preset for DealMatcher treasury suites (Refs #3939).
+/// Single-buyer treasury-clamp preset (thin alias of [matcherPairTrade]).
 DealMatchInputs matcherTreasuryClampInputs({
   String seller = 'a',
   String buyer = 'gp1',
@@ -109,23 +122,17 @@ DealMatchInputs matcherTreasuryClampInputs({
   PurchasedTileIndex? purchasedTileIndex,
   String? originTileKey,
 }) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [
-          matcherOffer(
-            commodity,
-            offerQty,
-            originTileKey: originTileKey,
-          ),
-        ],
-      },
-      bidsByFactionId: {
-        buyer: [matcherBid(commodity, bidQty)],
-      },
-      tradeCapacityByFactionId: {buyer: buyerCapacity},
-      treasuryBudgetByBuyerFactionId: {buyer: treasuryBudget},
-      pricesByCommodityId: pricesByCommodityId ?? {commodity: 30.0},
+    matcherPairTrade(
+      seller: seller,
+      buyer: buyer,
+      commodity: commodity,
+      offerQty: offerQty,
+      bidQty: bidQty,
+      buyerCapacity: buyerCapacity,
+      treasuryBudget: treasuryBudget,
+      pricesByCommodityId: pricesByCommodityId,
       purchasedTileIndex: purchasedTileIndex,
+      originTileKey: originTileKey,
     );
 
 /// Canonical FRR purchased-tile key for matcher integration tests (#2992).
