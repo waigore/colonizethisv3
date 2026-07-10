@@ -2127,6 +2127,16 @@ test/ LOC after slice 138: **37,138** (net −50 from post–slice 137). Remaini
 
 test/ LOC after slice 139: **36,914** (net −224 from post–slice 138). Remaining: further support-table compaction toward ≤26,400.
 
+## Wave 3 — Slice 140: application / valid-work-tiles / core scenario dispatch collapse
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| waa-dispatch-collapse | drop `WorkOrderApplicationTarget` enum + switch; scenario rows hold `run` tear-offs | `work_order_application_expectations.dart` + `_tail.dart` (deleted) | `work_order_application_run_rows.dart` + `_tail.dart` + thin `work_order_application_scenarios.dart` | #3949 |
+| vwt-dispatch-collapse | drop `ValidWorkTilesTarget` enum + switch; scenario rows hold `run` tear-offs | `valid_work_tiles_expectations.dart` + `_tail.dart` (deleted) | `valid_work_tiles_run_rows.dart` + `_tail.dart` + thin `valid_work_tiles_scenarios.dart` | #3949 |
+| osc-dispatch-collapse | drop `OrderSuggestionCoreTarget` enum + switch; scenario rows hold `run` tear-offs | `order_suggestion_core_expectations.dart` + `_tail.dart` (deleted) | `order_suggestion_core_run_rows.dart` + `_tail.dart` + thin `order_suggestion_core_scenarios.dart` | #3949 |
+
+test/ LOC after slice 140: **36,874** (net −40 from post–slice 139). Remaining: further support-table compaction toward ≤26,400.
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |

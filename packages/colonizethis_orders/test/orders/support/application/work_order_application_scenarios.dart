@@ -1,158 +1,140 @@
-// Table-driven applyBuildAndWorkOrders work-order application scenarios (Refs #3949 wave 3).
+// Table-driven scenarios (Refs #3949 wave 3).
 
 import '../scenario_runner.dart';
-import 'work_order_application_expectations.dart';
+import 'work_order_application_run_rows.dart';
 
-/// One row in [workOrderApplicationScenarios].
 class WorkOrderApplicationScenario implements RefsScenario {
   const WorkOrderApplicationScenario({
     required this.label,
-    required this.target,
+    required this.run,
     this.refs,
   });
-
   @override
   final String label;
-  final WorkOrderApplicationTarget target;
+  final void Function() run;
   @override
   final String? refs;
 }
 
-void runWorkOrderApplicationScenario(WorkOrderApplicationScenario scenario) {
-  runWorkOrderApplicationExpectation(scenario.target);
-}
+void runWorkOrderApplicationScenario(WorkOrderApplicationScenario scenario) =>
+    scenario.run();
 
-/// Canonical scenarios for work-order application family tests.
-/// Labels match former part-file descriptions (single-line `label:` for CI).
-List<WorkOrderApplicationScenario> workOrderApplicationScenarios() => const [
+List<WorkOrderApplicationScenario> workOrderApplicationScenarios() => [
   WorkOrderApplicationScenario(
     label: 'prospect adds tile to playerProspectedTiles when terrain eligible',
-    target: WorkOrderApplicationTarget
-        .prospectAddsTilePlayerProspectedTilesWhenTerrainEligible,
+    run: waaRunProspectAddsTilePlayerProspectedTilesWhenTerrainEligible,
   ),
   WorkOrderApplicationScenario(
     label: 'prospect on non-mineral-eligible terrain does not add tile',
-    target: WorkOrderApplicationTarget
-        .prospectOnNonMineralEligibleTerrainDoesNotAddTile,
+    run: waaRunProspectOnNonMineralEligibleTerrainDoesNotAddTile,
   ),
   WorkOrderApplicationScenario(
     label: 'prospect adds tile when mineral resource present without tile map',
-    target: WorkOrderApplicationTarget
-        .prospectAddsTileWhenMineralResourcePresentWithoutTileMap,
+    run: waaRunProspectAddsTileWhenMineralResourcePresentWithoutTileMap,
   ),
   WorkOrderApplicationScenario(
     label:
         'prospect does not add tile when non-mineral resource present without tile map',
-    target: WorkOrderApplicationTarget
-        .prospectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap,
+    run:
+        waaRunProspectDoesNotAddTileWhenNonMineralResourcePresentWithoutTileMap,
   ),
   WorkOrderApplicationScenario(
     label:
         'build_improvement work order sets currentWork then completes when totalTurns=1',
-    target: WorkOrderApplicationTarget
-        .buildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1,
+    run:
+        waaRunBuildImprovementWorkOrderSetsCurrentWorkThenCompletesWhenTotalTurns1,
   ),
   WorkOrderApplicationScenario(
     label:
         'build_fort assigns currentWork.totalTurns from totalTurnsForWork (fort level)',
-    target: WorkOrderApplicationTarget
-        .buildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel,
+    run:
+        waaRunBuildFortAssignsCurrentWorkTotalTurnsFromTotalTurnsForWorkFortLevel,
   ),
   WorkOrderApplicationScenario(
     label: 'counter_spy work order sets currentWork for Spy unit',
-    target:
-        WorkOrderApplicationTarget.counterSpyWorkOrderSetsCurrentWorkForSpyUnit,
+    run: waaRunCounterSpyWorkOrderSetsCurrentWorkForSpyUnit,
   ),
   WorkOrderApplicationScenario(
     label:
         'purchase_land success: treasury deducted and tile recorded in purchasedTilesByTileKey',
-    target: WorkOrderApplicationTarget
-        .purchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey,
+    run:
+        waaRunPurchaseLandSuccessTreasuryDeductedTileRecordedPurchasedTilesByTileKey,
   ),
   WorkOrderApplicationScenario(
     label:
         'purchase_land rejected when no Embassy with province owner (Minor/Tribe)',
-    target: WorkOrderApplicationTarget
-        .purchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe,
+    run: waaRunPurchaseLandRejectedWhenNoEmbassyWithProvinceOwnerMinorTribe,
   ),
   WorkOrderApplicationScenario(
     label:
         'purchase_land rejected when at war with province owner (Minor/Tribe)',
-    target: WorkOrderApplicationTarget
-        .purchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe,
+    run: waaRunPurchaseLandRejectedWhenAtWarWithProvinceOwnerMinorTribe,
   ),
   WorkOrderApplicationScenario(
     label:
         'purchase_land same tile by two GPs: first wins, second does not deduct or overwrite',
-    target: WorkOrderApplicationTarget
-        .purchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite,
+    run:
+        waaRunPurchaseLandSameTileByTwoGPsFirstWinsSecondDoesNotDeductOverwrite,
   ),
   WorkOrderApplicationScenario(
     label: 'build_fort with sufficient materials deducts materials',
-    target: WorkOrderApplicationTarget
-        .buildFortWithSufficientMaterialsDeductsMaterials,
+    run: waaRunBuildFortWithSufficientMaterialsDeductsMaterials,
   ),
   WorkOrderApplicationScenario(
     label: 'build_fort to level 2 is skipped without Mine Engineering',
-    target:
-        WorkOrderApplicationTarget.buildFortLevel2SkippedWithoutMineEngineering,
+    run: waaRunBuildFortLevel2SkippedWithoutMineEngineering,
   ),
   WorkOrderApplicationScenario(
     label: 'build_fort to level 3 is skipped without Modern Forts',
-    target: WorkOrderApplicationTarget.buildFortLevel3SkippedWithoutModernForts,
+    run: waaRunBuildFortLevel3SkippedWithoutModernForts,
   ),
   WorkOrderApplicationScenario(
     label: 'upgrade_town completion increases province townDevelopmentLevel',
-    target: WorkOrderApplicationTarget
-        .upgradeTownCompletionIncreasesProvinceTownDevelopmentLevel,
+    run: waaRunUpgradeTownCompletionIncreasesProvinceTownDevelopmentLevel,
   ),
   WorkOrderApplicationScenario(
     label:
         'counter_spy processWork keeps ongoing assignment without killing in build/work',
-    target: WorkOrderApplicationTarget
-        .counterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork,
+    run:
+        waaRunCounterSpyProcessWorkKeepsOngoingAssignmentWithoutKillingBuildWork,
   ),
   WorkOrderApplicationScenario(
     label: 'unknown work target is skipped and unit stays idle',
-    target: WorkOrderApplicationTarget.unknownWorkTargetSkippedUnitStaysIdle,
+    run: waaRunUnknownWorkTargetSkippedUnitStaysIdle,
   ),
   WorkOrderApplicationScenario(
     label:
         'build_road with insufficient materials does not set currentWork or deduct stockpile',
-    target: WorkOrderApplicationTarget
-        .buildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile,
+    run:
+        waaRunBuildRoadWithInsufficientMaterialsDoesNotSetCurrentWorkDeductStockpile,
   ),
   WorkOrderApplicationScenario(
     label:
         'build_road with sufficient materials deducts materials and sets currentWork',
-    target: WorkOrderApplicationTarget
-        .buildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork,
+    run: waaRunBuildRoadWithSufficientMaterialsDeductsMaterialsSetsCurrentWork,
   ),
   WorkOrderApplicationScenario(
     label:
         'counter_spy work order sets currentWork for Spy unit on owned capital province',
-    target: WorkOrderApplicationTarget
-        .counterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince,
+    run:
+        waaRunCounterSpyWorkOrderSetsCurrentWorkForSpyUnitOnOwnedCapitalProvince,
   ),
   WorkOrderApplicationScenario(
     label: 'explore work order sets currentWork when province has tiles',
-    target: WorkOrderApplicationTarget
-        .exploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles,
+    run: waaRunExploreWorkOrderSetsCurrentWorkWhenProvinceHasTiles,
   ),
   WorkOrderApplicationScenario(
     label:
         'explore work order totalTurns uses region-scoped formula ceil(3 * tilesInP / maxTilesInRegion)',
-    target: WorkOrderApplicationTarget
-        .exploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion,
+    run:
+        waaRunExploreWorkOrderTotalTurnsUsesRegionScopedFormulaCeil3TilesInPMaxTilesInRegion,
   ),
   WorkOrderApplicationScenario(
     label: 'Engineer build_road work order sets currentWork',
-    target:
-        WorkOrderApplicationTarget.engineerBuildRoadWorkOrderSetsCurrentWork,
+    run: waaRunEngineerBuildRoadWorkOrderSetsCurrentWork,
   ),
   WorkOrderApplicationScenario(
     label: 'build_port work order sets currentWork when materials sufficient',
-    target: WorkOrderApplicationTarget
-        .buildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient,
+    run: waaRunBuildPortWorkOrderSetsCurrentWorkWhenMaterialsSufficient,
   ),
 ];
