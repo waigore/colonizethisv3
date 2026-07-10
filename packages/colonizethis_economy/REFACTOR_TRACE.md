@@ -1060,6 +1060,16 @@ test_support LOC: **16,560** (net −23 vs slice 54 — attribution DSL + FRR M1
 
 test_support LOC: **16,421** (net −139 vs slice 56 baseline 16,560). Economy `test/` **1,334** (down 58). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 58+.
 
+## Phase 3 — Slice 58 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-shells | `nonGpProvMap` / `nonGpEmptyGame` / `nonGpMinorM1Game` / `nonGpMinorAndTribeGame` / `nonGpTribeNwGame` shared shells | `extraction_fixture_support.dart`, `non_gp_*_scenarios.dart` | #2991, #3939 |
+| spain-extractor-public | Promote `spainExtractorGame` / `owP1Province`; optional grain bonus + townTileKey on `resourceExtractorGame` | `extraction_fixture_support.dart`, `resource_extractor_scenarios.dart`, `town_manufacturing_bonus_scenarios.dart` | #3939 |
+| matcher-thin-alias | Drop `matcherTreasuryClampInputs` / one-shot FRR+sell-priority input wrappers; boycott via `matcherPairTrade` | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: **16,362** (net −59 vs slice 57 / 16,421). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 59+.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.

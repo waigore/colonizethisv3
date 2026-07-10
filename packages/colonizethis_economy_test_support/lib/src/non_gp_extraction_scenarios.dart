@@ -1,4 +1,4 @@
-// Table-driven non-GP extraction scenarios (Refs #3836, #3939 slice 46).
+// Table-driven non-GP extraction scenarios (Refs #3836, #3939 slice 46 / 58).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -53,21 +53,7 @@ void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
   scenario.verify(result);
 }
 
-/// Compact province tile-map helper (Refs #3939 slice 46).
-TileMapResult _provMap(
-  String provinceId,
-  int width,
-  int height,
-  List<List<Resource?>> resources,
-) =>
-    tileMapAllInProvinceForNonGpExtractionTest(
-      provinceId: provinceId,
-      width: width,
-      height: height,
-      resources: resources,
-    );
-
-/// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57).
+/// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57 / 58).
 NonGpExtractionScenario nonGpMinorRow({
   required String label,
   required NonGpExtractionExpectation expect,
@@ -79,29 +65,21 @@ NonGpExtractionScenario nonGpMinorRow({
   int height = 2,
   int capitalTileGrainBonusPerTurn = 0,
   String? refs,
-}) {
-  const provinceId = 'oldWorld|m1';
-  return _nonGpRow(
-    label: label,
-    game: gameForNonGpExtractionTest(
-      provinces: [
-        capitalProvinceForNonGpExtractionTest(
-          provinceId: provinceId,
-          townDev: townDev,
-        ),
-      ],
-      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
-      minorNations: [testMinor()],
-      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
-    ),
-    tileMapByRegion: {
-      'oldWorld': _provMap(provinceId, width, height, resources),
-    },
-    connectivityByFactionId: connectivityByFaction({'m1': connected}),
-    expect: expect,
-    refs: refs,
-  );
-}
+}) =>
+    _nonGpRow(
+      label: label,
+      game: nonGpMinorM1Game(
+        tileSpecs: tileSpecs,
+        townDev: townDev,
+        capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+      ),
+      tileMapByRegion: {
+        'oldWorld': nonGpProvMap('oldWorld|m1', width, height, resources),
+      },
+      connectivityByFactionId: connectivityByFaction({'m1': connected}),
+      expect: expect,
+      refs: refs,
+    );
 
 /// SPEC-AC happy paths from `non_gp_extraction_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
@@ -136,21 +114,14 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
       _nonGpRow(
         label: 'mineral resources on non-GP tiles are unconditionally excluded '
             '(SPEC AC: tribes/minors never prospect)',
-        game: gameForNonGpExtractionTest(
-          provinces: const [],
-          newWorldProvinces: [
-            Province(
-              id: 'newWorld|t1',
-              regionId: 'newWorld',
-              ownerId: 't1',
-              townDevelopmentLevel: 1,
-            ),
+        game: nonGpTribeNwGame(
+          tileSpecs: const [
+            TileImprovementSpec('newWorld|t1|1|0', 4, 4),
+            TileImprovementSpec('newWorld|t1|1|1', 1, 1),
           ],
-          tileState: tileStateFromSpecs(const [TileImprovementSpec('newWorld|t1|1|0', 4, 4), TileImprovementSpec('newWorld|t1|1|1', 1, 1)]),
-          tribes: [testTribe()],
         ),
         tileMapByRegion: {
-          'newWorld': _provMap('newWorld|t1', 2, 2, [
+          'newWorld': nonGpProvMap('newWorld|t1', 2, 2, [
             [null, Resource.iron],
             [null, Resource.grain],
           ]),
@@ -204,7 +175,7 @@ List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [
 List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       _nonGpRow(
         label: 'empty minors and tribes lists yield an empty result and skip lookups',
-        game: gameForNonGpExtractionTest(provinces: const []),
+        game: nonGpEmptyGame(),
         tileMapByRegion: const <String, TileMapResult>{},
         connectivityByFactionId: const <String, ConnectivityResult>{},
         expect: const NonGpExtractionExpectation(empty: true),
@@ -212,12 +183,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       ),
       _nonGpRow(
         label: 'empty tileMapByRegion short-circuits even when minors/tribes present',
-        game: gameForNonGpExtractionTest(
-          provinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-          ],
-          minorNations: [testMinor()],
-        ),
+        game: nonGpMinorM1Game(),
         tileMapByRegion: const <String, TileMapResult>{},
         connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|1|0'},
@@ -236,7 +202,7 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
           ],
         ),
         tileMapByRegion: {
-          'oldWorld': _provMap('oldWorld|m2', 1, 1, const [
+          'oldWorld': nonGpProvMap('oldWorld|m2', 1, 1, const [
             [Resource.grain],
           ]),
         },
@@ -249,15 +215,11 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
       ),
       _nonGpRow(
         label: 'minor with capital but no connectivity entry in the input is skipped',
-        game: gameForNonGpExtractionTest(
-          provinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-          ],
-          tileState: tileStateFromSpecs(const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)]),
-          minorNations: [testMinor()],
+        game: nonGpMinorM1Game(
+          tileSpecs: const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1)],
         ),
         tileMapByRegion: {
-          'oldWorld': _provMap('oldWorld|m1', 1, 1, const [
+          'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
             [Resource.grain],
           ]),
         },
@@ -284,27 +246,17 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() =>
       _nonGpRow(
         label: 'minor and tribe in the same Game both produce per-faction totals '
             'keyed by their ids',
-        game: gameForNonGpExtractionTest(
-          provinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
+        game: nonGpMinorAndTribeGame(
+          tileSpecs: const [
+            TileImprovementSpec('oldWorld|m1|0|0', 1, 1),
+            TileImprovementSpec('newWorld|t1|0|0', 1, 1),
           ],
-          newWorldProvinces: [
-            Province(
-              id: 'newWorld|t1',
-              regionId: 'newWorld',
-              ownerId: 't1',
-              townDevelopmentLevel: 1,
-            ),
-          ],
-          tileState: tileStateFromSpecs(const [TileImprovementSpec('oldWorld|m1|0|0', 1, 1), TileImprovementSpec('newWorld|t1|0|0', 1, 1)]),
-          minorNations: [testMinor()],
-          tribes: [testTribe()],
         ),
         tileMapByRegion: {
-          'oldWorld': _provMap('oldWorld|m1', 1, 1, const [
+          'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
             [Resource.timber],
           ]),
-          'newWorld': _provMap('newWorld|t1', 1, 1, const [
+          'newWorld': nonGpProvMap('newWorld|t1', 1, 1, const [
             [Resource.furs],
           ]),
         },

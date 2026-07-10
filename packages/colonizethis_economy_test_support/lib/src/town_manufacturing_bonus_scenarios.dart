@@ -165,37 +165,20 @@ TileMapResult _gpTimberTileMap() => TileMapResult(
       ],
     );
 
-Game _gpTownTimberGame() => TestFixtures.minimalGame(
-      players: [
-        spainPl1Player(
-          techUnlocked: {kTechIdCircularSaw: true},
-          capitalProvinceId: _gpProvinceId,
-          capitalTile: CapitalTile(
-            regionId: _ow,
-            provinceId: _gpProvinceId,
-            x: 0,
-            y: 0,
-          ),
-        ),
-      ],
-      capitalTileGrainBonusPerTurn: 0,
+Game _gpTownTimberGame() => spainExtractorGame(
+      techUnlocked: {kTechIdCircularSaw: true},
       oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _gpProvinceId,
-            regionId: _ow,
-            ownerId: 'pl1',
-            townDevelopmentLevel: 4,
-            townTileKey: _gpTownKey,
-          ),
-        ],
+        provinces: [owP1Province(townTileKey: _gpTownKey)],
       ),
       tileKeysByRegionAndProvince: {
         _ow: {
           _gpProvinceId: [_gpTownKey, _gpTimberTile],
         },
       },
-      tileState: tileStateFromSpecs(const [TileImprovementSpec(_gpTimberTile, 4, 4), TileImprovementSpec(_gpTownKey, 0, 1)]),
+      tileState: tileStateFromSpecs(const [
+        TileImprovementSpec(_gpTimberTile, 4, 4),
+        TileImprovementSpec(_gpTownKey, 0, 1),
+      ]),
     );
 
 void runTownManufacturingBonusGamePin(
@@ -218,29 +201,27 @@ void runTownManufacturingBonusGamePin(
       );
     case TownManufacturingBonusGamePin.minorDeliveredRaw:
       const tileKey = 'oldWorld|m1|0|0';
-      final game = TestFixtures.minimalGame(
+      final game = gameForNonGpExtractionTest(
         id: 'g_town_bonus_minor',
+        provinces: [
+          capitalProvinceForNonGpExtractionTest(
+            provinceId: 'oldWorld|m1',
+            townDev: 4,
+            townTileKey: tileKey,
+          ),
+        ],
+        tileState: tileStateFromSpecs(const [
+          TileImprovementSpec(tileKey, 1, 1),
+        ]),
+        minorNations: [testMinor()],
         players: const [
           Player(id: 'gpA', displayName: 'GP A', isHuman: true),
         ],
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|m1',
-              regionId: 'oldWorld',
-              ownerId: 'm1',
-              townDevelopmentLevel: 4,
-              townTileKey: tileKey,
-            ),
-          ],
-        ),
         tileKeysByRegionAndProvince: {
           'oldWorld': {
             'oldWorld|m1': [tileKey],
           },
         },
-        minorNations: [testMinor()],
-        tileState: tileStateFromSpecs(const [TileImprovementSpec(tileKey, 1, 1)]),
       );
       final delivered = computeTownConnectedDeliveredRawByProvince(
         game: game,

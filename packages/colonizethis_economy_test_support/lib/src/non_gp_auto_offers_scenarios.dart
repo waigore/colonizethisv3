@@ -1,4 +1,4 @@
-// Table-driven non-GP auto-offer scenarios (Refs #3856, #3939 slice 47).
+// Table-driven non-GP auto-offer scenarios (Refs #3856, #3939 slice 47 / 58).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -57,7 +57,7 @@ void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
   scenario.verify(result);
 }
 
-/// Compact minor/OW auto-offer row (Refs #3939 slice 47 / 57).
+/// Compact minor/OW auto-offer row (Refs #3939 slice 47 / 57 / 58).
 NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
   required String label,
   required NonGpAutoOffersExpectation expect,
@@ -66,33 +66,24 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({
   List<TileImprovementSpec>? tileSpecs,
   bool emptyConnectivity = false,
   String? refs = '#2991 C4',
-}) {
-  final width = resources.first.length;
-  final height = resources.length;
-  return _autoOfferRow(
-    label: label,
-    game: gameForNonGpExtractionTest(
-      provinces: [
-        capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-      ],
-      tileState: tileSpecs == null ? null : tileStateFromSpecs(tileSpecs),
-      minorNations: [testMinor()],
-    ),
-    tileMapByRegion: {
-      'oldWorld': tileMapAllInProvinceForNonGpExtractionTest(
-        provinceId: 'oldWorld|m1',
-        width: width,
-        height: height,
-        resources: resources,
-      ),
-    },
-    connectivityByFactionId: emptyConnectivity
-        ? const {}
-        : connectivityByFaction({'m1': connected}),
-    expect: expect,
-    refs: refs,
-  );
-}
+}) =>
+    _autoOfferRow(
+      label: label,
+      game: nonGpMinorM1Game(tileSpecs: tileSpecs ?? const []),
+      tileMapByRegion: {
+        'oldWorld': nonGpProvMap(
+          'oldWorld|m1',
+          resources.first.length,
+          resources.length,
+          resources,
+        ),
+      },
+      connectivityByFactionId: emptyConnectivity
+          ? const {}
+          : connectivityByFaction({'m1': connected}),
+      expect: expect,
+      refs: refs,
+    );
 
 /// Compact purchased-tile C6 auto-offer row (Refs #3939 slice 47).
 NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({
@@ -130,7 +121,7 @@ List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
       _autoOfferRow(
         label: 'empty when no minors and no tribes are configured',
-        game: gameForNonGpExtractionTest(provinces: const []),
+        game: nonGpEmptyGame(),
         tileMapByRegion: const {},
         connectivityByFactionId: const {},
         expect: const NonGpAutoOffersExpectation(empty: true),
@@ -138,12 +129,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
       ),
       _autoOfferRow(
         label: 'empty when tileMapByRegion is empty',
-        game: gameForNonGpExtractionTest(
-          provinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-          ],
-          minorNations: [testMinor()],
-        ),
+        game: nonGpMinorM1Game(),
         tileMapByRegion: const {},
         connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|0|0'},
@@ -190,37 +176,19 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() => [
       ),
       _autoOfferRow(
         label: 'aggregates minor and tribe offers in the same result map',
-        game: gameForNonGpExtractionTest(
-          provinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'oldWorld|m1'),
-          ],
-          newWorldProvinces: [
-            capitalProvinceForNonGpExtractionTest(provinceId: 'newWorld|t1'),
-          ],
-          tileState: tileStateFromSpecs(tileImps(const [
+        game: nonGpMinorAndTribeGame(
+          tileSpecs: tileImps(const [
             'oldWorld|m1|0|0',
             'newWorld|t1|0|0',
-          ])),
-          minorNations: [testMinor()],
-          tribes: [testTribe()],
+          ]),
         ),
         tileMapByRegion: {
-          'oldWorld': tileMapAllInProvinceForNonGpExtractionTest(
-            provinceId: 'oldWorld|m1',
-            width: 1,
-            height: 1,
-            resources: const [
-              [Resource.timber],
-            ],
-          ),
-          'newWorld': tileMapAllInProvinceForNonGpExtractionTest(
-            provinceId: 'newWorld|t1',
-            width: 1,
-            height: 1,
-            resources: const [
-              [Resource.furs],
-            ],
-          ),
+          'oldWorld': nonGpProvMap('oldWorld|m1', 1, 1, const [
+            [Resource.timber],
+          ]),
+          'newWorld': nonGpProvMap('newWorld|t1', 1, 1, const [
+            [Resource.furs],
+          ]),
         },
         connectivityByFactionId: connectivityByFaction({
           'm1': {'oldWorld|m1|0|0'},

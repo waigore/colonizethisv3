@@ -173,6 +173,7 @@ Player spainPl1Player({
 Province capitalProvinceForNonGpExtractionTest({
   required String provinceId,
   int townDev = 1,
+  String? townTileKey,
 }) {
   final regionId = provinceId.split('|').first;
   final factionId = provinceId.split('|').last;
@@ -181,6 +182,7 @@ Province capitalProvinceForNonGpExtractionTest({
     regionId: regionId,
     ownerId: factionId,
     townDevelopmentLevel: townDev,
+    townTileKey: townTileKey,
   );
 }
 
@@ -192,21 +194,103 @@ Game gameForNonGpExtractionTest({
   List<Tribe> tribes = const [],
   int capitalTileGrainBonusPerTurn = 0,
   List<Province> newWorldProvinces = const [],
+  String id = 'g_test',
+  List<Player> players = const [],
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+      const {},
 }) {
   return Game(
-    id: 'g_test',
+    id: id,
     capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
     worldState: WorldState(
       turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: provinces),
       newWorld: RegionData(provinces: newWorldProvinces),
       tileState: tileState ?? TileMapState(),
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     ),
-    players: const [],
+    players: players,
     minorNations: minorNations,
     tribes: tribes,
   );
 }
+
+/// Province-filling [TileMapResult] for non-GP extraction/auto-offer rows
+/// (Refs #3939 slice 58).
+TileMapResult nonGpProvMap(
+  String provinceId,
+  int width,
+  int height,
+  List<List<Resource?>> resources,
+) =>
+    tileMapAllInProvinceForNonGpExtractionTest(
+      provinceId: provinceId,
+      width: width,
+      height: height,
+      resources: resources,
+    );
+
+/// Empty non-GP [Game] (no provinces / minors / tribes) (Refs #3939 slice 58).
+Game nonGpEmptyGame() => gameForNonGpExtractionTest(provinces: const []);
+
+/// Standard `m1` OW capital + [testMinor] shell (Refs #3939 slice 58).
+Game nonGpMinorM1Game({
+  List<TileImprovementSpec> tileSpecs = const [],
+  int townDev = 1,
+  int capitalTileGrainBonusPerTurn = 0,
+}) =>
+    gameForNonGpExtractionTest(
+      provinces: [
+        capitalProvinceForNonGpExtractionTest(
+          provinceId: 'oldWorld|m1',
+          townDev: townDev,
+        ),
+      ],
+      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+      minorNations: [testMinor()],
+      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+    );
+
+/// `m1` OW + `t1` NW dual-faction non-GP shell (Refs #3939 slice 58).
+Game nonGpMinorAndTribeGame({
+  List<TileImprovementSpec> tileSpecs = const [],
+  int minorTownDev = 1,
+  int tribeTownDev = 1,
+}) =>
+    gameForNonGpExtractionTest(
+      provinces: [
+        capitalProvinceForNonGpExtractionTest(
+          provinceId: 'oldWorld|m1',
+          townDev: minorTownDev,
+        ),
+      ],
+      newWorldProvinces: [
+        capitalProvinceForNonGpExtractionTest(
+          provinceId: 'newWorld|t1',
+          townDev: tribeTownDev,
+        ),
+      ],
+      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+      minorNations: [testMinor()],
+      tribes: [testTribe()],
+    );
+
+/// Tribe-only NW shell for mineral-exclusion rows (Refs #3939 slice 58).
+Game nonGpTribeNwGame({
+  List<TileImprovementSpec> tileSpecs = const [],
+  int townDev = 1,
+}) =>
+    gameForNonGpExtractionTest(
+      provinces: const [],
+      newWorldProvinces: [
+        capitalProvinceForNonGpExtractionTest(
+          provinceId: 'newWorld|t1',
+          townDev: townDev,
+        ),
+      ],
+      tileState: tileSpecs.isEmpty ? null : tileStateFromSpecs(tileSpecs),
+      tribes: [testTribe()],
+    );
 
 /// A standard one-tile minor nation in `oldWorld|m1` with capital at (0,0).
 MinorNation testMinor({
@@ -260,24 +344,39 @@ Province _owProvince(
       townTileKey: townTileKey,
     );
 
-/// Shared Spain/`pl1` extraction [Game] shell (Refs #3939 slice 57).
-Game _spainExtractorGame({
+/// Canonical `oldWorld|p1` province owned by Spain/`pl1` (Refs #3939 slice 58).
+Province owP1Province({
+  int townDevelopmentLevel = 4,
+  String? townTileKey,
+}) =>
+    _owProvince(
+      'p1',
+      townDevelopmentLevel: townDevelopmentLevel,
+      townTileKey: townTileKey,
+    );
+
+/// Shared Spain/`pl1` extraction [Game] shell (Refs #3939 slice 57 / 58).
+Game spainExtractorGame({
   required TileMapState tileState,
   required RegionData oldWorld,
   RegionData? newWorld,
   Map<String, bool>? techUnlocked,
   Map<String, Set<String>>? playerProspectedTiles,
   Map<String, String> portsByProvinceSeaboard = const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+      const {},
   CapitalTile? capitalTile,
+  int capitalTileGrainBonusPerTurn = 0,
 }) =>
     TestFixtures.minimalGame(
       id: 'g1',
-      capitalTileGrainBonusPerTurn: 0,
+      capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
       oldWorld: oldWorld,
       newWorld: newWorld,
       tileState: tileState,
       playerProspectedTiles: playerProspectedTiles,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
       players: [
         spainPl1Player(
           techUnlocked: techUnlocked,
@@ -294,15 +393,23 @@ Game resourceExtractorGame({
   Map<String, bool>? techUnlocked,
   Map<String, Set<String>>? playerProspectedTiles,
   String playerId = 'pl1',
+  String? townTileKey,
+  int capitalTileGrainBonusPerTurn = 0,
 }) {
   assert(playerId == 'pl1', 'resourceExtractorGame uses spainPl1Player');
-  return _spainExtractorGame(
+  return spainExtractorGame(
     tileState: tileState,
     oldWorld: RegionData(
-      provinces: [_owProvince('p1', townDevelopmentLevel: townDevelopmentLevel)],
+      provinces: [
+        owP1Province(
+          townDevelopmentLevel: townDevelopmentLevel,
+          townTileKey: townTileKey,
+        ),
+      ],
     ),
     techUnlocked: techUnlocked,
     playerProspectedTiles: playerProspectedTiles,
+    capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
   );
 }
 
@@ -317,7 +424,7 @@ Game townRuleTwoProvinceExtractorGame({
   String playerId = 'pl1',
 }) {
   assert(playerId == 'pl1', 'townRuleTwoProvinceExtractorGame uses spainPl1Player');
-  return _spainExtractorGame(
+  return spainExtractorGame(
     tileState: tileState,
     oldWorld: RegionData(
       provinces: [
@@ -340,9 +447,9 @@ Game townRuleTwoProvinceExtractorGame({
 /// Single-player game with [oldWorld|p1] capital and an owned [newWorld|n1]
 /// province for overseas extraction scenarios.
 Game overseasResourceExtractorGame({required TileMapState tileState}) =>
-    _spainExtractorGame(
+    spainExtractorGame(
       tileState: tileState,
-      oldWorld: RegionData(provinces: [_owProvince('p1')]),
+      oldWorld: RegionData(provinces: [owP1Province()]),
       newWorld: RegionData(
         provinces: [
           Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
@@ -399,13 +506,13 @@ TopologyNode _topoNode(
     ],
   );
   return (
-    game: _spainExtractorGame(
+    game: spainExtractorGame(
       tileState: tileStateFromSpecs([
         const TileImprovementSpec('newWorld|n1|0|0', 1, 4),
         const TileImprovementSpec('newWorld|n1|1|0', 1, 4),
         owP1Imp(0, 4),
       ]),
-      oldWorld: RegionData(provinces: [_owProvince('p1')]),
+      oldWorld: RegionData(provinces: [owP1Province()]),
       newWorld: RegionData(
         provinces: [
           Province(

@@ -15,7 +15,11 @@ List<DealMatcherScenario> dealMatcherTreasuryScenarios() => [
 List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   DealMatcherScenario.expect(
     label: 'truncates a single oversized bid to floor(treasury / price)',
-    inputs: matcherTreasuryClampInputs(),
+    inputs: matcherPairTrade(
+      buyer: 'gp1',
+      bidQty: 10,
+      treasuryBudget: 100,
+    ),
     expect: DealMatchExpectation(
       filledDealsLength: 1,
       firstFilledDeal: const FilledDealExpectation(
@@ -67,9 +71,10 @@ List<DealMatcherScenario> dealMatcherTreasuryClampScenarios() => [
   ),
   DealMatcherScenario.expect(
     label: 'FRR pre-pass respects treasury clamp',
-    inputs: matcherTreasuryClampInputs(
+    inputs: matcherPairTrade(
       seller: 'M1',
       buyer: 'gpA',
+      bidQty: 10,
       treasuryBudget: 60,
       pricesByCommodityId: const {'timber': 20.0},
       originTileKey: kFrrMatcherTestTileKey,
@@ -95,7 +100,11 @@ List<DealMatcherScenario> dealMatcherTreasuryEdgeCaseScenarios() => [
     label:
         'emits exactly one bidPartialFillTreasuryInsufficient note per '
         'truncated bid (full bid quantity carried in note)',
-    inputs: matcherTreasuryClampInputs(),
+    inputs: matcherPairTrade(
+      buyer: 'gp1',
+      bidQty: 10,
+      treasuryBudget: 100,
+    ),
     expect: const DealMatchExpectation(
       activityNotesByCommodityId: {
         'timber': [

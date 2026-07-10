@@ -7,8 +7,6 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:logger/logger.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
-
 import 'extraction_fixture_support.dart';
 import 'resource_extractor_expectations.dart';
 
@@ -442,19 +440,9 @@ List<ResourceExtractorScenario> resourceExtractorSpecialCaseScenarios({
         label: 'capital tile grain bonus is unconditional on connectivity',
         tileMapByRegion: const {},
         connected: const {},
-        gameOverride: TestFixtures.minimalGame(
-          id: 'g1',
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'pl1',
-                townDevelopmentLevel: 4,
-              ),
-            ],
-          ),
-          players: [spainPl1Player()],
+        gameOverride: resourceExtractorGame(
+          tileState: TileMapState(),
+          capitalTileGrainBonusPerTurn: 5,
         ),
         connectivityByPlayer: connectivityFor(const {}),
         expect: const ResourceExtractorExpectation(

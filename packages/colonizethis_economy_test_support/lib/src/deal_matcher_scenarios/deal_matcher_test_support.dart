@@ -109,34 +109,21 @@ DealMatchInputs matcherPairTrade({
       purchasedTileIndex: purchasedTileIndex,
     );
 
-/// Single-buyer treasury-clamp preset (thin alias of [matcherPairTrade]).
-DealMatchInputs matcherTreasuryClampInputs({
-  String seller = 'a',
-  String buyer = 'gp1',
-  String commodity = 'timber',
-  int offerQty = 10,
-  int bidQty = 10,
-  int buyerCapacity = 100,
-  int treasuryBudget = 100,
-  Map<CommodityId, double>? pricesByCommodityId,
-  PurchasedTileIndex? purchasedTileIndex,
-  String? originTileKey,
-}) =>
-    matcherPairTrade(
-      seller: seller,
-      buyer: buyer,
-      commodity: commodity,
-      offerQty: offerQty,
-      bidQty: bidQty,
-      buyerCapacity: buyerCapacity,
-      treasuryBudget: treasuryBudget,
-      pricesByCommodityId: pricesByCommodityId,
-      purchasedTileIndex: purchasedTileIndex,
-      originTileKey: originTileKey,
-    );
-
 /// Canonical FRR purchased-tile key for matcher integration tests (#2992).
 const String kFrrMatcherTestTileKey = 'oldWorld|M1|0|0';
+
+PurchasedTileAttribution _frrMatcherAttr(
+  String tileKey, {
+  String owningGpId = 'gpA',
+  String sourceFactionId = 'M1',
+  String provinceId = 'oldWorld|M1',
+}) =>
+    PurchasedTileAttribution(
+      tileKey: tileKey,
+      owningGpId: owningGpId,
+      sourceFactionId: sourceFactionId,
+      provinceId: provinceId,
+    );
 
 /// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
 PurchasedTileIndex frrMatcherTestIndex({
@@ -144,43 +131,18 @@ PurchasedTileIndex frrMatcherTestIndex({
   String owningGpId = 'gpA',
   String sourceFactionId = 'M1',
   String provinceId = 'oldWorld|M1',
-}) => PurchasedTileIndex.forTesting([
-  PurchasedTileAttribution(
-    tileKey: tileKey,
-    owningGpId: owningGpId,
-    sourceFactionId: sourceFactionId,
-    provinceId: provinceId,
-  ),
-]);
-
-/// Minor/Tribe seller with two GP buyers and optional relation map (Refs #3939 slice 41).
-DealMatchInputs sellPriorityMinorSellerInputs({
-  String seller = 'minorM',
-  String buyerA = 'gpHigh',
-  String buyerB = 'gpLow',
-  String commodity = 'timber',
-  int qty = 5,
-  int priority = 1,
-  Map<String, Map<String, num>> sellPriorityRelationByMinorTribeSeller =
-      const {},
-  List<TradeOrder>? extraOffers,
 }) =>
-    matcherInputs(
-      offersByFactionId: {
-        seller: [
-          ...(extraOffers ?? [matcherOffer(commodity, qty, priority: priority)]),
-        ],
-      },
-      bidsByFactionId: {
-        buyerA: [matcherBid(commodity, qty, priority: priority)],
-        buyerB: [matcherBid(commodity, qty, priority: priority)],
-      },
-      tradeCapacityByFactionId: {buyerA: 100, buyerB: 100},
-      sellPriorityRelationByMinorTribeSeller:
-          sellPriorityRelationByMinorTribeSeller,
-    );
+    PurchasedTileIndex.forTesting([
+      _frrMatcherAttr(
+        tileKey,
+        owningGpId: owningGpId,
+        sourceFactionId: sourceFactionId,
+        provinceId: provinceId,
+      ),
+    ]);
 
-/// Compact row builder for sell-priority relation tiebreaker suites (Refs #3939 slice 41).
+/// Compact row builder for sell-priority relation tiebreaker suites
+/// (Refs #3939 slice 41 / 58).
 DealMatcherScenario sellPriorityMinorSellerRow({
   required String label,
   required DealMatchExpectation expect,
@@ -197,43 +159,26 @@ DealMatcherScenario sellPriorityMinorSellerRow({
 }) =>
     DealMatcherScenario.expect(
       label: label,
-      inputs: sellPriorityMinorSellerInputs(
-        seller: seller,
-        buyerA: buyerA,
-        buyerB: buyerB,
-        commodity: commodity,
-        qty: qty,
-        priority: priority,
+      inputs: matcherInputs(
+        offersByFactionId: {
+          seller: [
+            ...(extraOffers ??
+                [matcherOffer(commodity, qty, priority: priority)]),
+          ],
+        },
+        bidsByFactionId: {
+          buyerA: [matcherBid(commodity, qty, priority: priority)],
+          buyerB: [matcherBid(commodity, qty, priority: priority)],
+        },
+        tradeCapacityByFactionId: {buyerA: 100, buyerB: 100},
         sellPriorityRelationByMinorTribeSeller:
             sellPriorityRelationByMinorTribeSeller,
-        extraOffers: extraOffers,
       ),
       expect: expect,
       refs: refs,
     );
 
-/// Two-buyer FRR routing inputs with owning GP at higher priority (Refs #3939 slice 41).
-DealMatchInputs frrTwoBuyerRivalInputs({
-  required Map<String, List<TradeOrder>> offersByFactionId,
-  String gpOwner = 'gpA',
-  String gpRival = 'gpB',
-  String commodity = 'timber',
-  int qty = 10,
-  int ownerBidPriority = 5,
-  int rivalBidPriority = 1,
-  PurchasedTileIndex? purchasedTileIndex,
-}) =>
-    matcherInputs(
-      offersByFactionId: offersByFactionId,
-      bidsByFactionId: {
-        gpOwner: [matcherBid(commodity, qty, priority: ownerBidPriority)],
-        gpRival: [matcherBid(commodity, qty, priority: rivalBidPriority)],
-      },
-      tradeCapacityByFactionId: {gpOwner: 100, gpRival: 100},
-      purchasedTileIndex: purchasedTileIndex,
-    );
-
-/// Two-tile [PurchasedTileIndex] owned by the same GP (Refs #3939 slice 42).
+/// Two-tile [PurchasedTileIndex] owned by the same GP (Refs #3939 slice 42 / 58).
 PurchasedTileIndex frrMatcherTestIndexDual({
   String tileKeyA = kFrrMatcherTestTileKey,
   String tileKeyB = 'oldWorld|M1|1|0',
@@ -242,18 +187,13 @@ PurchasedTileIndex frrMatcherTestIndexDual({
   String provinceId = 'oldWorld|M1',
 }) =>
     PurchasedTileIndex.forTesting([
-      PurchasedTileAttribution(
-        tileKey: tileKeyA,
-        owningGpId: owningGpId,
-        sourceFactionId: sourceFactionId,
-        provinceId: provinceId,
-      ),
-      PurchasedTileAttribution(
-        tileKey: tileKeyB,
-        owningGpId: owningGpId,
-        sourceFactionId: sourceFactionId,
-        provinceId: provinceId,
-      ),
+      for (final key in [tileKeyA, tileKeyB])
+        _frrMatcherAttr(
+          key,
+          owningGpId: owningGpId,
+          sourceFactionId: sourceFactionId,
+          provinceId: provinceId,
+        ),
     ]);
 
 /// Standard M1 FRR offer inputs with optional rival buyers (Refs #3939 slice 42).
@@ -285,7 +225,7 @@ DealMatchInputs frrM1OfferInputs({
       purchasedTileIndex: purchasedTileIndex ?? frrMatcherTestIndex(),
     );
 
-/// Boycott-blocked or allowed tribe/GP trade row (Refs #3939 slice 42).
+/// Boycott-blocked or allowed tribe/GP trade row (Refs #3939 slice 42 / 58).
 DealMatcherScenario boycottTradeRow({
   required String label,
   required String seller,
@@ -298,14 +238,12 @@ DealMatcherScenario boycottTradeRow({
 }) =>
     DealMatcherScenario.expect(
       label: label,
-      inputs: matcherInputs(
-        offersByFactionId: {
-          seller: [matcherOffer(commodity, qty, priority: 1)],
-        },
-        bidsByFactionId: {
-          buyer: [matcherBid(commodity, qty, priority: 1)],
-        },
-        tradeCapacityByFactionId: {buyer: 100},
+      inputs: matcherPairTrade(
+        seller: seller,
+        buyer: buyer,
+        commodity: commodity,
+        offerQty: qty,
+        bidQty: qty,
         boycottBlockedPairKeys: boycottBlockedPairKeys,
       ),
       expect: expect,
@@ -413,7 +351,8 @@ DealMatcherScenario matcherFtpTimberRow({
       refs: refs,
     );
 
-/// FRR disabled / unmatched origin → normal routing to rival (Refs #3939 slice 54).
+/// FRR disabled / unmatched origin → normal routing to rival
+/// (Refs #3939 slice 54 / 58).
 DealMatcherScenario frrNoEffectRow({
   required String label,
   required Map<String, List<TradeOrder>> offersByFactionId,
@@ -422,8 +361,13 @@ DealMatcherScenario frrNoEffectRow({
 }) =>
     DealMatcherScenario.expect(
       label: label,
-      inputs: frrTwoBuyerRivalInputs(
+      inputs: matcherInputs(
         offersByFactionId: offersByFactionId,
+        bidsByFactionId: {
+          'gpA': [matcherBid('timber', 10, priority: 5)],
+          'gpB': [matcherBid('timber', 10, priority: 1)],
+        },
+        tradeCapacityByFactionId: const {'gpA': 100, 'gpB': 100},
         purchasedTileIndex: purchasedTileIndex,
       ),
       expect: const DealMatchExpectation(
@@ -436,7 +380,8 @@ DealMatcherScenario frrNoEffectRow({
       refs: refs,
     );
 
-/// Seller `a` / buyer `gp1` single-commodity row for treasury edges (Refs #3939 slice 54).
+/// Seller `a` / buyer `gp1` single-commodity row for treasury edges
+/// (Refs #3939 slice 54 / 58).
 DealMatcherScenario matcherAgp1Row({
   required String label,
   required DealMatchExpectation expect,
