@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'game_world_mutations.dart';
+import 'military_list_helpers.dart';
 import 'naval.dart';
 
 /// Returns [game] unchanged if the fleet is missing or [shipInstanceIdsToNewFleet] is empty.
@@ -17,19 +18,19 @@ Game applyNavalSplitFleet({
   for (final f in game.worldState.fleets) {
     if (f.id == originalFleetId) {
       originalFleet = f;
-      break;
     }
   }
   if (originalFleet == null) return game;
   final orig = originalFleet;
 
   final idSet = shipInstanceIdsToNewFleet.toSet();
-  final shipsToNewFleet = orig.ships
-      .where((s) => idSet.contains(s.id))
-      .toList();
-  final remainingShips = orig.ships
-      .where((s) => !idSet.contains(s.id))
-      .toList();
+  final partitioned = partitionBySelectedIds(
+    items: orig.ships,
+    selectedIds: idSet,
+    idOf: (s) => s.id,
+  );
+  final shipsToNewFleet = partitioned.selected;
+  final remainingShips = partitioned.remaining;
 
   final allFleetIds = game.worldState.fleets
       .map((f) => int.tryParse(f.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
@@ -95,15 +96,13 @@ Game applyNavalTransferShipsBetweenFleets({
   }
 
   final transferIds = shipInstanceIdsToTransfer.toSet();
-  final shipsToTransfer = <ShipInstance>[];
-  final sourceRemaining = <ShipInstance>[];
-  for (final ship in sourceFleet.ships) {
-    if (transferIds.contains(ship.id)) {
-      shipsToTransfer.add(ship);
-    } else {
-      sourceRemaining.add(ship);
-    }
-  }
+  final partitioned = partitionBySelectedIds(
+    items: sourceFleet.ships,
+    selectedIds: transferIds,
+    idOf: (s) => s.id,
+  );
+  final shipsToTransfer = partitioned.selected;
+  final sourceRemaining = partitioned.remaining;
   if (shipsToTransfer.isEmpty) {
     return game;
   }

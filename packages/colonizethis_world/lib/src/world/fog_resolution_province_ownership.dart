@@ -49,8 +49,8 @@ applyProvinceOwnershipChangeVisibility(
     );
   }
 
-  final visMaps = game.worldState.playerVisibilityByTile.map(
-    (k, v) => MapEntry(k, Map<String, String>.from(v)),
+  final visMaps = mutableVisibilityByPlayerCopy(
+    game.worldState.playerVisibilityByTile,
   );
 
   final newVis = Map<String, String>.from(visMaps[newOwnerId] ?? {});

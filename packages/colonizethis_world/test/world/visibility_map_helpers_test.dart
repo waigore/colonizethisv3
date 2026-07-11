@@ -98,4 +98,24 @@ void main() {
       },
     );
   });
+  group('mutableVisibilityByPlayerCopy', () {
+    test('deep-copies outer and inner maps (positive)', () {
+      final original = <String, Map<String, String>>{
+        'a': {'t0': fogged},
+      };
+
+      final copy = mutableVisibilityByPlayerCopy(original);
+      copy['a']!['t0'] = fullyVisible;
+      copy['b'] = {'t1': fullyVisible};
+
+      expect(original['a'], {'t0': fogged});
+      expect(original.containsKey('b'), isFalse);
+      expect(identical(copy, original), isFalse);
+      expect(identical(copy['a'], original['a']), isFalse);
+    });
+
+    test('returns empty map for empty input (negative)', () {
+      expect(mutableVisibilityByPlayerCopy(const {}), isEmpty);
+    });
+  });
 }

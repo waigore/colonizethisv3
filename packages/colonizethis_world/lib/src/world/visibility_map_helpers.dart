@@ -11,6 +11,18 @@ library;
 
 import 'player_view.dart' show VisibilityLevel;
 
+/// Deep-mutable copy of a per-player tile-visibility map so callers can mutate
+/// inner maps in place without aliasing [visibilityByTile].
+///
+/// Used by ownership-transfer, spy-timer decay, and coastal/distant GP fog
+/// passes (Refs #3968).
+Map<String, Map<String, String>> mutableVisibilityByPlayerCopy(
+  Map<String, Map<String, String>> visibilityByTile,
+) => {
+  for (final entry in visibilityByTile.entries)
+    entry.key: Map<String, String>.from(entry.value),
+};
+
 /// Sets every key in [tileKeys] to [VisibilityLevel.fullyVisible] inside the
 /// single-player visibility map [playerVisibility] (mutated in place).
 void setTilesFullyVisible(

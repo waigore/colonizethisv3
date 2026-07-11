@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_traversal.dart';
 import 'topology_helpers.dart';
+import 'visibility_map_helpers.dart' show mutableVisibilityByPlayerCopy;
 
 /// Shared Great-Power visibility iteration helpers for coastal/distant fog
 /// passes (Refs #3968). Extracted from the former `fog_resolution.dart` part
@@ -11,12 +12,12 @@ import 'topology_helpers.dart';
 /// Returns a deep mutable copy of [visibility] (per-player tile visibility maps)
 /// so each Great-Power pass can mutate its own player's map in place without
 /// aliasing the caller's input.
+///
+/// Delegates to [mutableVisibilityByPlayerCopy] so ownership/spy/coastal paths
+/// share one copy idiom (Refs #3968).
 Map<String, Map<String, String>> mutableGpVisibilityCopy(
   Map<String, Map<String, String>> visibility,
-) => {
-  for (final entry in visibility.entries)
-    entry.key: Map<String, String>.from(entry.value),
-};
+) => mutableVisibilityByPlayerCopy(visibility);
 
 /// Invokes [action] with each Great-Power player's mutable visibility map from
 /// [result], skipping non-GP players and players without a visibility entry.
