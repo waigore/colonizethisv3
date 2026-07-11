@@ -6,6 +6,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 import 'valid_work_tiles_test_support.dart';
 
 export 'nw_partial_reveal_home_target.dart';
@@ -135,25 +137,21 @@ Game owBuilderVisibilityGame({
     for (final tiles in tileKeys.values)
       for (final t in tiles) t: 'fullyVisible',
   };
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: provinces, units: [unit]),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: seaZoneId == null
-          ? ValidWorkTilesTestSupport.tileKeysByProvince(tilesByProvince)
-          : {ValidWorkTilesTestSupport.ow: tileKeys},
-      resourceByTileKey: resourceByTileKey,
-      purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
-      playerProspectedTiles: playerProspectedTiles ?? const {},
-      playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
-      tileState: TileMapState(improvementByTile: improvementByTile ?? const {}),
-    ),
+  return ordersOwRegionGame(
+    turnNumber: 1,
     players: [
       ValidWorkTilesTestSupport.playerWithBuildStockpile(),
       ...?extraPlayers,
     ],
+    oldWorld: RegionData(provinces: provinces, units: [unit]),
+    tileKeysByRegionAndProvince: seaZoneId == null
+        ? ValidWorkTilesTestSupport.tileKeysByProvince(tilesByProvince)
+        : {ValidWorkTilesTestSupport.ow: tileKeys},
+    resourceByTileKey: resourceByTileKey,
+    purchasedTilesByTileKey: purchasedTilesByTileKey,
+    playerProspectedTiles: playerProspectedTiles,
+    playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
+    tileState: TileMapState(improvementByTile: improvementByTile ?? const {}),
     minorNations: minorNations ?? const [],
   );
 }
@@ -171,31 +169,27 @@ Game owTribeProspectGame({
     locationProvinceId: provinceId,
     tileKey: tileKeys.first,
   );
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: ValidWorkTilesTestSupport.ow,
-            ownerId: 'tribe1',
-          ),
-        ],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: visibilityByTile,
-      },
-      resourceByTileKey: resourceByTileKey,
-      playerProspectedTiles: playerProspectedTiles ?? const {},
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-        {provinceId: tileKeys},
-      ),
-    ),
+  return ordersOwRegionGame(
+    turnNumber: 1,
     players: const [ValidWorkTilesTestSupport.defaultPlayer],
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: provinceId,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: 'tribe1',
+        ),
+      ],
+      units: [unit],
+    ),
+    playerVisibilityByTile: {
+      ValidWorkTilesTestSupport.playerId: visibilityByTile,
+    },
+    resourceByTileKey: resourceByTileKey,
+    playerProspectedTiles: playerProspectedTiles,
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      provinceId: tileKeys,
+    }),
     tribes: const [ValidWorkTilesTestSupport.defaultTribe],
     // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
     overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
@@ -225,30 +219,26 @@ Game owGrainBuildSuggestGame({
   );
   final visibility =
       visibilityOverride ?? {for (final t in tileKeys) t: 'fullyVisible'};
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: p1,
-            regionId: ValidWorkTilesTestSupport.ow,
-            ownerId: ValidWorkTilesTestSupport.playerId,
-          ),
-        ],
-        units: [builder],
-      ),
-      newWorld: const RegionData(),
-      playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-        {p1: tileKeys},
-      ),
-      resourceByTileKey: {for (final t in tileKeys) t: 'grain'},
-      tileState: TileMapState(
-        improvementByTile: {for (final t in tileKeys) t: 0},
-      ),
-    ),
+  return ordersOwRegionGame(
+    turnNumber: 1,
     players: [ValidWorkTilesTestSupport.playerWithTreasury()],
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: p1,
+          regionId: ValidWorkTilesTestSupport.ow,
+          ownerId: ValidWorkTilesTestSupport.playerId,
+        ),
+      ],
+      units: [builder],
+    ),
+    playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      p1: tileKeys,
+    }),
+    resourceByTileKey: {for (final t in tileKeys) t: 'grain'},
+    tileState: TileMapState(
+      improvementByTile: {for (final t in tileKeys) t: 0},
+    ),
   );
 }

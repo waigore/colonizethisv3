@@ -7,6 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+import '../common/game_graphs.dart';
+
 abstract final class ValidWorkTilesTestSupport {
   ValidWorkTilesTestSupport._();
 
@@ -117,16 +119,13 @@ abstract final class ValidWorkTilesTestSupport {
     List<Tribe>? tribes,
     List<OvertureState>? overtureStates,
     Map<String, Map<String, String>>? playerVisibilityByTile,
-  }) => Game(
+  }) => ordersOwRegionGame(
     id: id,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: oldWorld,
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
-      playerVisibilityByTile: playerVisibilityByTile ?? const {},
-    ),
+    turnNumber: turnNumber,
     players: players ?? const [defaultPlayer],
+    oldWorld: oldWorld,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
+    playerVisibilityByTile: playerVisibilityByTile,
     tribes: tribes ?? const [],
     overtureStates: overtureStates ?? const [],
   );

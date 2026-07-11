@@ -1,15 +1,23 @@
-// Compact order-engine naval/build validation fixtures + shorthands (Refs #3949).
+// Compact order-engine naval/build validation fixtures + shorthands
+// (Refs #3949 / #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../common/game_graphs.dart';
+
 const _nvOw = 'oldWorld';
 const _nvNw = 'newWorld';
 const _nvP1 = 'p1';
 const _nvP2 = 'p2';
 String _nvTile(String region, String localProv) => '$region|$localProv|0|0';
+
+const _nvTwoPlayers = [
+  Player(id: _nvP1, displayName: 'P1', isHuman: true),
+  Player(id: _nvP2, displayName: 'P2', isHuman: true),
+];
 
 MapTopology _nvCrossRegionTopology() => const MapTopology(
   nodes: [
@@ -19,40 +27,32 @@ MapTopology _nvCrossRegionTopology() => const MapTopology(
   edges: [],
 );
 
-Game _nvCrossRegionGame({required String unitType, required String nwOwnerId}) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
-        units: [
-          Unit(
-            id: 'u1',
-            type: unitType,
-            ownerId: _nvP1,
-            locationProvinceId: '$_nvOw|P1',
-          ),
-        ],
+Game _nvCrossRegionGame({
+  required String unitType,
+  required String nwOwnerId,
+}) => ordersOwRegionGame(
+  players: _nvTwoPlayers,
+  oldWorld: RegionData(
+    provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
+    units: [
+      Unit(
+        id: 'u1',
+        type: unitType,
+        ownerId: _nvP1,
+        locationProvinceId: '$_nvOw|P1',
       ),
-      newWorld: RegionData(
-        provinces: [
-          Province(id: '$_nvNw|P2', regionId: _nvNw, ownerId: nwOwnerId),
-        ],
-      ),
-      playerVisibilityByTile: {
-        _nvP1: {
-          _nvTile(_nvOw, 'P1'): 'fullyVisible',
-          _nvTile(_nvNw, 'P2'): 'fullyVisible',
-        },
-      },
-    ),
-    players: const [
-      Player(id: _nvP1, displayName: 'P1', isHuman: true),
-      Player(id: _nvP2, displayName: 'P2', isHuman: true),
     ],
-  );
-}
+  ),
+  newWorld: RegionData(
+    provinces: [Province(id: '$_nvNw|P2', regionId: _nvNw, ownerId: nwOwnerId)],
+  ),
+  playerVisibilityByTile: {
+    _nvP1: {
+      _nvTile(_nvOw, 'P1'): 'fullyVisible',
+      _nvTile(_nvNw, 'P2'): 'fullyVisible',
+    },
+  },
+);
 
 void nvExpectCrossRegionMove({
   required String unitType,
@@ -80,30 +80,23 @@ void nvExpectInvalidWorkTargetRejected() {
       WorkOrder(unitId: 'u1', target: 'unknown_target', targetTileKey: tileKey),
     );
   final results = engine.validatePlayerOrdersWithContext(
-    Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(
-          provinces: [
-            Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
-          ],
-          units: [
-            Unit(
-              id: 'u1',
-              type: kUnitTypeBuilder,
-              ownerId: _nvP1,
-              locationProvinceId: '$_nvOw|P1',
-              tileKey: tileKey,
-            ),
-          ],
-        ),
-        newWorld: const RegionData(),
-        playerVisibilityByTile: {
-          _nvP1: {tileKey: 'fullyVisible'},
-        },
-      ),
+    ordersOwRegionGame(
       players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)],
+      oldWorld: RegionData(
+        provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
+        units: [
+          Unit(
+            id: 'u1',
+            type: kUnitTypeBuilder,
+            ownerId: _nvP1,
+            locationProvinceId: '$_nvOw|P1',
+            tileKey: tileKey,
+          ),
+        ],
+      ),
+      playerVisibilityByTile: {
+        _nvP1: {tileKey: 'fullyVisible'},
+      },
     ),
     const MapTopology(
       nodes: [
@@ -158,15 +151,9 @@ void nvExpectNavalMoveFleetNotFoundRejected() {
       ),
     );
   final results = engine.validatePlayerOrdersWithContext(
-    Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        fleets: const [],
-      ),
+    ordersOwRegionGame(
       players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)],
+      oldWorld: const RegionData(),
     ),
     MapTopology(
       nodes: const [
@@ -201,30 +188,22 @@ void nvExpectBlockadeMission({
 }) {
   final engine = OrderEngine();
   final result = engine.addNavalMissionOrderWithContext(
-    Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(
-          provinces: [
-            Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
-            Province(id: '$_nvOw|P2', regionId: _nvOw, ownerId: _nvP2),
-          ],
-        ),
-        newWorld: const RegionData(),
-        fleets: [
-          Fleet(
-            id: 'f1',
-            ownerId: _nvP1,
-            seaZoneId: 'sea1',
-            regionId: _nvOw,
-            shipTypeIds: const ['carrack'],
-          ),
+    ordersOwRegionGame(
+      players: _nvTwoPlayers,
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
+          Province(id: '$_nvOw|P2', regionId: _nvOw, ownerId: _nvP2),
         ],
       ),
-      players: const [
-        Player(id: _nvP1, displayName: 'P1', isHuman: true),
-        Player(id: _nvP2, displayName: 'P2', isHuman: true),
+      fleets: [
+        Fleet(
+          id: 'f1',
+          ownerId: _nvP1,
+          seaZoneId: 'sea1',
+          regionId: _nvOw,
+          shipTypeIds: const ['carrack'],
+        ),
       ],
       diplomacyRelations: [
         DiplomacyRelation(

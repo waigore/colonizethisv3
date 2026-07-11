@@ -235,6 +235,7 @@ Game ordersOwRegionGame({
   Map<String, Set<String>>? playerProspectedTiles,
   TileMapState? tileState,
   Map<String, String>? purchasedTilesByTileKey,
+  List<Fleet> fleets = const [],
 }) => TestFixtures.minimalGame(
   id: id,
   turnNumber: turnNumber,
@@ -242,6 +243,7 @@ Game ordersOwRegionGame({
   oldWorld: oldWorld,
   newWorld: newWorld,
   armies: armies,
+  fleets: fleets,
   tribes: tribes,
   minorNations: minorNations,
   overtureStates: overtureStates,

@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Canonical ids for order_suggestion_core expectation bodies.
 abstract final class OscIds {
@@ -134,16 +135,24 @@ Game oscGame({
   List<MinorNation>? minorNations,
   List<OvertureState>? overtureStates,
   String id = 'g1',
-}) {
-  return Game(
-    id: id,
-    worldState: worldState,
-    players: players ?? [oscPlayer()],
-    tribes: tribes ?? const [],
-    minorNations: minorNations ?? const [],
-    overtureStates: overtureStates ?? const [],
-  );
-}
+}) => TestFixtures.minimalGame(
+  id: id,
+  turnNumber: worldState.turnState.turnNumber,
+  players: players ?? [oscPlayer()],
+  oldWorld: worldState.oldWorld,
+  newWorld: worldState.newWorld,
+  tribes: tribes ?? const [],
+  minorNations: minorNations ?? const [],
+  overtureStates: overtureStates ?? const [],
+  playerVisibilityByTile: worldState.playerVisibilityByTile,
+  tileKeysByRegionAndProvince: worldState.tileKeysByRegionAndProvince,
+  resourceByTileKey: worldState.resourceByTileKey,
+  purchasedTilesByTileKey: worldState.purchasedTilesByTileKey,
+  portsByProvinceSeaboard: worldState.portsByProvinceSeaboard,
+  playerProspectedTiles: worldState.playerProspectedTiles,
+  tileState: worldState.tileState,
+  fleets: worldState.fleets,
+);
 
 PlayerView oscView(Game game, MapTopology topology) {
   return buildPlayerView(game, topology, OscIds.playerId);

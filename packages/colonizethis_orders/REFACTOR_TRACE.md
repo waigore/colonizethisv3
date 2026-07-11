@@ -2428,3 +2428,17 @@ Shorthand LOC: osc 370→145 (−61%), waa 369→218 (−41%), wcc 312→134 (�
 
 Raw `Game(` outside `common/`: **71** (ceiling 71). Support LOC after slice 3: **18083**. Remaining: drive ≤14,900 / test ≤16,400; further fixture migrations; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 4: suggestion/naval migrate + ICE densify (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| fleets-knob | extend `ordersOwRegionGame` with `fleets` | `common/game_graphs.dart` | same | #3971 |
+| migrate-vwt-prefilter | migrate valid-work-tiles + town/purchase prefilter + unit-availability Games onto shared builders | `valid_work_tiles_*.dart`, `*_prefilter_*_fixtures.dart`, `order_suggestion_unit_availability_fixtures.dart` | thin wrappers | #3971 |
+| osc-minimal | route `oscGame` through `TestFixtures.minimalGame` (preserves fleets) | `order_suggestion_core_fixtures.dart` | same | #3971 |
+| naval-migrate | migrate naval/build shorthand Games onto `ordersOwRegionGame` | `order_engine_naval_build_validation_expectation_shorthand.dart` | same | #3971 |
+| ice-densify | collapse ICE family/row helpers with `// dart format off` (269→102, −62%) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | same | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 71 → 56 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18100 → 17850 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17837**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
