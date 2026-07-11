@@ -1,4 +1,4 @@
-// Table-driven shared-validator equivalence scenarios (Refs #3949 wave 3).
+// Table-driven shared-validator equivalence scenarios (Refs #3949 wave 3 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -7,6 +7,14 @@ import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 import 'order_suggestion_shared_validator_test_helpers.dart';
 // dart format off
+
+typedef _SuggestFn<T> = List<T> Function(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders orders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+});
 
 void ossveRunSuggestMoveOrdersMatchesDefaultPath() {_expectSuggestFamilyMatchesDefault(suggestMoveOrders);}
 
@@ -22,36 +30,33 @@ void ossveRunSharedValidatorExternalViewUnitsByIdMatchesForPlayerDefault() {_exp
 
 void ossveRunForBasePrefixMatchesFreshForPlayer() {_expectForBasePrefixMatchesFreshForPlayer();}
 
-void _expectSuggestFamilyMatchesDefault<T>(
-  List<T> Function(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders orders, {
-    IncrementalCandidateValidator? sharedCandidateValidator,
-  })
-  suggest,
+void _expectSuggestEq<T>(
+  _SuggestFn<T> suggest,
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders orders,
+  IncrementalCandidateValidator a,
+  IncrementalCandidateValidator b,
 ) {
+  expect(
+    suggest(view, game, topology, orders, sharedCandidateValidator: a),
+    equals(suggest(view, game, topology, orders, sharedCandidateValidator: b)),
+  );
+}
+
+void _expectSuggestFamilyMatchesDefault<T>(_SuggestFn<T> suggest) {
   final game = buildGame();
   final topology = buildTopology();
   final view = buildPlayerView(game, topology, gp);
   const orders = Orders();
-
-  final defaultPath = suggest(view, game, topology, orders);
   final sharedValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: gp,
-    basePrefix: orders,
+    game: game, topology: topology, playerId: gp, basePrefix: orders,
   );
-  final sharedPath = suggest(
-    view,
-    game,
-    topology,
-    orders,
-    sharedCandidateValidator: sharedValidator,
+  expect(
+    suggest(view, game, topology, orders, sharedCandidateValidator: sharedValidator),
+    equals(suggest(view, game, topology, orders)),
   );
-  expect(sharedPath, equals(defaultPath));
 }
 
 void _expectExternalViewUnitsByIdMatchesForPlayerDefault() {
@@ -60,152 +65,20 @@ void _expectExternalViewUnitsByIdMatchesForPlayerDefault() {
   final view = buildPlayerView(game, topology, gp);
   final unitsById = unitsByIdFromWorld(game.worldState);
   const orders = Orders();
-
   final defaultValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: gp,
-    basePrefix: orders,
+    game: game, topology: topology, playerId: gp, basePrefix: orders,
   );
-
   final sharedValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: gp,
-    basePrefix: orders,
-    resolution: orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    ),
+    game: game, topology: topology, playerId: gp, basePrefix: orders,
+    resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
   );
-
-  expect(
-    suggestMoveOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestMoveOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestArmyMoveOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestArmyMoveOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestWorkOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestWorkOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestBuildOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestBuildOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestNavalMoveOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestNavalMoveOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestNavalMissionOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestNavalMissionOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
-  expect(
-    suggestDiplomaticOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: defaultValidator,
-    ),
-    equals(
-      suggestDiplomaticOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: sharedValidator,
-      ),
-    ),
-  );
+  _expectSuggestEq(suggestMoveOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestArmyMoveOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestWorkOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestBuildOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestNavalMoveOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestNavalMissionOrders, view, game, topology, orders, defaultValidator, sharedValidator);
+  _expectSuggestEq(suggestDiplomaticOrders, view, game, topology, orders, defaultValidator, sharedValidator);
 }
 
 void _expectForBasePrefixMatchesFreshForPlayer() {
@@ -214,49 +87,14 @@ void _expectForBasePrefixMatchesFreshForPlayer() {
   final view = buildPlayerView(game, topology, gp);
   final unitsById = unitsByIdFromWorld(game.worldState);
   const orders = Orders();
-
-  final initial = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: gp,
-    basePrefix: orders,
-    resolution: orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    ),
-  );
-  final rebound = initial.forBasePrefix(orders);
+  final resolution = orderResolutionContextFromView(view, game, unitsById: unitsById);
+  final rebound = IncrementalCandidateValidator.forPlayer(
+    game: game, topology: topology, playerId: gp, basePrefix: orders, resolution: resolution,
+  ).forBasePrefix(orders);
   final fresh = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: gp,
-    basePrefix: orders,
-    resolution: orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    ),
+    game: game, topology: topology, playerId: gp, basePrefix: orders, resolution: resolution,
   );
-
-  expect(
-    suggestMoveOrders(
-      view,
-      game,
-      topology,
-      orders,
-      sharedCandidateValidator: rebound,
-    ),
-    equals(
-      suggestMoveOrders(
-        view,
-        game,
-        topology,
-        orders,
-        sharedCandidateValidator: fresh,
-      ),
-    ),
-  );
+  _expectSuggestEq(suggestMoveOrders, view, game, topology, orders, rebound, fresh);
 }
 
 List<RunnableScenario>

@@ -2480,3 +2480,18 @@ Raw `Game(` outside `common/`: **5**. Support LOC after slice 6: **17134**. Rema
 
 Raw `Game(` outside `common/`: **0**. Support LOC after slice 7: **16937**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 8: densify fixtures/asserts + drop WorldState bridge (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ossve-assert-densify | collapse shared-validator pairwise suggest asserts via `_expectSuggestEq` | `order_suggestion_shared_validator_equivalence_scenarios.dart` | same | #3971 |
+| osgw-shared-builder | shared `_osgwOwGame` + densify work-logging builders | `order_suggestion_work_logging_fixtures.dart` | same | #3971 |
+| osua-densify | shared player/unit helpers + densify unit-availability fixtures | `order_suggestion_unit_availability_fixtures.dart` | same | #3971 |
+| nw-drop-worldstate | delete `NwPartialRevealHomeTarget.world()`; build `ordersOwRegionGame` directly | `nw_partial_reveal_home_target.dart` | same | #3971 |
+| ice-corpus-densify | densify ICE corpus units/topology/fleets under format-off | `incremental_candidate_validator_equivalence_corpus.dart` | same | #3971 |
+| vwt-shorthand-densify | densify valid-work-tiles expectation shorthand | `valid_work_tiles_expectation_shorthand.dart` | same | #3971 |
+| vw-multi-unit-fold | extend `vwSingleProvinceUnitGame` with `units`; fold exclusivity + densify foreign province | `order_engine_validate_work_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 16950 → 16475 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 8: **16451**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+

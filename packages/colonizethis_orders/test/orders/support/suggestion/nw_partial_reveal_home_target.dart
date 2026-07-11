@@ -57,51 +57,6 @@ class NwPartialRevealHomeTarget {
   final String t0;
   final String t1;
 
-  WorldState world({Unit? unit}) {
-    final actor =
-        unit ??
-        ValidWorkTilesTestSupport.explorerUnit(
-          id: unitId,
-          locationProvinceId: provHome,
-          tileKey: tileHome,
-        );
-    return WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [
-          Province(
-            id: provHome,
-            regionId: ValidWorkTilesTestSupport.nw,
-            ownerId: homeOwnerId,
-          ),
-          Province(
-            id: provTarget,
-            regionId: ValidWorkTilesTestSupport.nw,
-            ownerId: targetOwnerId,
-          ),
-        ],
-        units: [actor],
-      ),
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-        {
-          provHome: [tileHome],
-          provTarget: [t0, t1],
-        },
-        regionId: ValidWorkTilesTestSupport.nw,
-      ),
-      resourceByTileKey: resourceByTileKey,
-      playerProspectedTiles: playerProspectedTiles,
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: {
-          tileHome: 'fullyVisible',
-          t0: 'unknown',
-          t1: 'fogged',
-        },
-      },
-    );
-  }
-
   MapTopology topology() => MapTopology(
     nodes: [
       TopologyNode(
@@ -118,6 +73,7 @@ class NwPartialRevealHomeTarget {
     edges: [TopologyEdge(id1: homeLocalId, id2: targetLocalId)],
   );
 
+  // dart format off
   Game game({
     required String id,
     List<Player>? players,
@@ -126,47 +82,48 @@ class NwPartialRevealHomeTarget {
     List<OvertureState>? overtureStates,
     Unit? unit,
   }) {
-    final ws = world(unit: unit);
+    final actor = unit ?? ValidWorkTilesTestSupport.explorerUnit(
+      id: unitId, locationProvinceId: provHome, tileKey: tileHome,
+    );
     return ordersOwRegionGame(
       id: id,
       turnNumber: 1,
       players: players ?? const [ValidWorkTilesTestSupport.defaultPlayer],
-      oldWorld: ws.oldWorld,
-      newWorld: ws.newWorld,
+      oldWorld: const RegionData(),
+      newWorld: RegionData(
+        provinces: [
+          Province(id: provHome, regionId: ValidWorkTilesTestSupport.nw, ownerId: homeOwnerId),
+          Province(id: provTarget, regionId: ValidWorkTilesTestSupport.nw, ownerId: targetOwnerId),
+        ],
+        units: [actor],
+      ),
       tribes: tribes ?? const [],
       minorNations: minorNations ?? const [],
       overtureStates: overtureStates ?? const [],
-      tileKeysByRegionAndProvince: ws.tileKeysByRegionAndProvince,
-      resourceByTileKey: ws.resourceByTileKey,
-      playerProspectedTiles: ws.playerProspectedTiles,
-      playerVisibilityByTile: ws.playerVisibilityByTile,
+      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
+        {provHome: [tileHome], provTarget: [t0, t1]},
+        regionId: ValidWorkTilesTestSupport.nw,
+      ),
+      resourceByTileKey: resourceByTileKey,
+      playerProspectedTiles: playerProspectedTiles,
+      playerVisibilityByTile: {
+        ValidWorkTilesTestSupport.playerId: {
+          tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged',
+        },
+      },
     );
   }
 
-  static NwPartialRevealHomeTarget tribeGrainIron({
-    bool prospectedIron = false,
-  }) {
-    final t0 = ValidWorkTilesTestSupport.tileKey(
-      'tribe1',
-      0,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
-    final t1 = ValidWorkTilesTestSupport.tileKey(
-      'tribe1',
-      1,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
+  static NwPartialRevealHomeTarget tribeGrainIron({bool prospectedIron = false}) {
+    final t0 = ValidWorkTilesTestSupport.tileKey('tribe1', 0, 0, regionId: ValidWorkTilesTestSupport.nw);
+    final t1 = ValidWorkTilesTestSupport.tileKey('tribe1', 1, 0, regionId: ValidWorkTilesTestSupport.nw);
     return NwPartialRevealHomeTarget(
       homeLocalId: 'home',
       targetLocalId: 'tribe1',
       targetOwnerId: 'tribe1',
       resourceByTileKey: {t0: 'grain', t1: 'iron'},
       playerProspectedTiles: prospectedIron
-          ? {
-              ValidWorkTilesTestSupport.playerId: {t1},
-            }
+          ? {ValidWorkTilesTestSupport.playerId: {t1}}
           : const {},
     );
   }
@@ -174,21 +131,15 @@ class NwPartialRevealHomeTarget {
   static NwPartialRevealHomeTarget minorPurchase({
     Map<String, String> resourceByTileKey = const {},
   }) {
-    final t1 = ValidWorkTilesTestSupport.tileKey(
-      'm1',
-      1,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
+    final t1 = ValidWorkTilesTestSupport.tileKey('m1', 1, 0, regionId: ValidWorkTilesTestSupport.nw);
     return NwPartialRevealHomeTarget(
       homeLocalId: 'own',
       targetLocalId: 'm1',
       targetOwnerId: 'minor1',
-      resourceByTileKey: resourceByTileKey.isEmpty
-          ? {t1: 'grain'}
-          : resourceByTileKey,
+      resourceByTileKey: resourceByTileKey.isEmpty ? {t1: 'grain'} : resourceByTileKey,
     );
   }
+  // dart format on
 
   Game tribeConsulateGame(String id) => game(
     id: id,

@@ -27,6 +27,29 @@ const orderSuggestionUnitAvailabilityEmptyTopology = MapTopology(
   edges: [],
 );
 
+// dart format off
+Player _osuaPlayer({int treasury = 5000, Stockpile? stockpile}) => Player(
+  id: orderSuggestionUnitAvailabilityPlayerId,
+  displayName: stockpile == null ? 'Human' : 'GP',
+  isHuman: true,
+  treasury: treasury,
+  stockpile: stockpile ?? const Stockpile(),
+);
+
+Unit _osuaUnit({
+  required String id,
+  required String type,
+  required String provinceId,
+  required String tileKey,
+}) => Unit(
+  id: id,
+  type: type,
+  ownerId: orderSuggestionUnitAvailabilityPlayerId,
+  locationProvinceId: provinceId,
+  tileKey: tileKey,
+  status: UnitStatus.idle,
+);
+
 Game orderSuggestionUnitAvailabilityPendingDraftGame() {
   const playerId = orderSuggestionUnitAvailabilityPlayerId;
   const ow = orderSuggestionUnitAvailabilityOw;
@@ -34,30 +57,13 @@ Game orderSuggestionUnitAvailabilityPendingDraftGame() {
   final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
   return ordersOwRegionGame(
     turnNumber: 1,
-    players: const [
-      Player(id: playerId, displayName: 'Human', isHuman: true, treasury: 5000),
-    ],
+    players: [_osuaPlayer()],
     oldWorld: RegionData(
       provinces: [p1],
-      units: [
-        Unit(
-          id: explorerId,
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
-          locationProvinceId: p1.id,
-          tileKey: '$ow|p1|0|0',
-          status: UnitStatus.idle,
-        ),
-      ],
+      units: [_osuaUnit(id: explorerId, type: kUnitTypeExplorer, provinceId: p1.id, tileKey: '$ow|p1|0|0')],
     ),
-    playerVisibilityByTile: {
-      playerId: {'$ow|p1|0|0': 'fullyVisible'},
-    },
-    tileKeysByRegionAndProvince: {
-      ow: {
-        p1.id: ['$ow|p1|0|0'],
-      },
-    },
+    playerVisibilityByTile: {playerId: {'$ow|p1|0|0': 'fullyVisible'}},
+    tileKeysByRegionAndProvince: {ow: {p1.id: ['$ow|p1|0|0']}},
   );
 }
 
@@ -67,13 +73,7 @@ Orders orderSuggestionUnitAvailabilityPendingDraftOrders() {
   const explorerId = orderSuggestionUnitAvailabilityExplorerId;
   return Orders(
     workOrdersByPlayerId: {
-      playerId: [
-        WorkOrder(
-          unitId: explorerId,
-          target: kWorkTargetExplore,
-          targetTileKey: '$ow|p1|0|0',
-        ),
-      ],
+      playerId: [WorkOrder(unitId: explorerId, target: kWorkTargetExplore, targetTileKey: '$ow|p1|0|0')],
     },
   );
 }
@@ -121,21 +121,10 @@ Game orderSuggestionUnitAvailabilityScaleGame() {
   return ordersOwRegionGame(
     id: 'g-scale',
     turnNumber: 1,
-    players: const [
-      Player(id: playerId, displayName: 'Human', isHuman: true, treasury: 5000),
-    ],
+    players: [_osuaPlayer()],
     oldWorld: RegionData(
       provinces: provinces,
-      units: [
-        Unit(
-          id: explorerId,
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
-          locationProvinceId: startProvince,
-          tileKey: startTile,
-          status: UnitStatus.idle,
-        ),
-      ],
+      units: [_osuaUnit(id: explorerId, type: kUnitTypeExplorer, provinceId: startProvince, tileKey: startTile)],
     ),
     tileKeysByRegionAndProvince: {ow: byProvince},
     playerVisibilityByTile: {playerId: visibility},
@@ -149,13 +138,7 @@ Orders orderSuggestionUnitAvailabilityScaleOrders() {
   const startTile = '${orderSuggestionUnitAvailabilityOw}|partial0|0|0';
   return Orders(
     workOrdersByPlayerId: {
-      playerId: [
-        WorkOrder(
-          unitId: explorerId,
-          target: kWorkTargetExplore,
-          targetTileKey: startTile,
-        ),
-      ],
+      playerId: [WorkOrder(unitId: explorerId, target: kWorkTargetExplore, targetTileKey: startTile)],
     },
   );
 }
@@ -167,35 +150,15 @@ Game orderSuggestionUnitAvailabilityMultiTargetGame() {
   const tileB = 'oldWorld|p1|1|0';
   return ordersOwRegionGame(
     turnNumber: 1,
-    players: [
-      Player(
-        id: playerId,
-        displayName: 'GP',
-        isHuman: true,
-        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
-      ),
-    ],
+    players: [_osuaPlayer(stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}))],
     oldWorld: RegionData(
       provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
-      units: [
-        Unit(
-          id: 'b1',
-          type: kUnitTypeBuilder,
-          ownerId: playerId,
-          locationProvinceId: '$ow|p1',
-          tileKey: tileA,
-        ),
-      ],
+      units: [_osuaUnit(id: 'b1', type: kUnitTypeBuilder, provinceId: '$ow|p1', tileKey: tileA)],
     ),
-    playerVisibilityByTile: {
-      playerId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
-    },
-    tileKeysByRegionAndProvince: {
-      ow: {
-        '$ow|p1': [tileA, tileB],
-      },
-    },
+    playerVisibilityByTile: {playerId: {tileA: 'fullyVisible', tileB: 'fullyVisible'}},
+    tileKeysByRegionAndProvince: {ow: {'$ow|p1': [tileA, tileB]}},
     resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
     tileState: TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
   );
 }
+// dart format on

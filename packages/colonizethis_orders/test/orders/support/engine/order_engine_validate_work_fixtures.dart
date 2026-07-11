@@ -36,6 +36,7 @@ Game vwSingleProvinceUnitGame({
   String? townTileKey,
   int? townDevelopmentLevel,
   List<String>? extraTileKeys,
+  List<Unit>? units,
   int turnNumber = 0,
 }) {
   const ow = ValidateWorkOw.ow;
@@ -65,15 +66,16 @@ Game vwSingleProvinceUnitGame({
           townDevelopmentLevel: townDevelopmentLevel,
         ),
       ],
-      units: [
-        Unit(
-          id: unitId,
-          type: unitType,
-          ownerId: 'p1',
-          locationProvinceId: provinceId,
-          tileKey: tileKey,
-        ),
-      ],
+      units: units ??
+          [
+            Unit(
+              id: unitId,
+              type: unitType,
+              ownerId: 'p1',
+              locationProvinceId: provinceId,
+              tileKey: tileKey,
+            ),
+          ],
     ),
     resourceByTileKey: resourceByTileKey ?? const {},
     tileState: tileState,
@@ -170,9 +172,8 @@ Game gameWithRailUnit({
   techUnlocked: techUnlocked ?? const {kTechIdEarlySteamEngine: true},
 );
 
-Game buildImprovementForeignProvinceGame({
-  Map<String, String>? purchasedTilesByTileKey,
-}) {
+// dart format off
+Game buildImprovementForeignProvinceGame({Map<String, String>? purchasedTilesByTileKey}) {
   const ow = ValidateWorkOw.ow;
   const provinceId = ValidateWorkOw.provinceId;
   const tileKey = ValidateWorkOw.tileKey;
@@ -180,46 +181,20 @@ Game buildImprovementForeignProvinceGame({
   final foreignTileKey = '$foreignProvinceId|0|0';
   return ordersOwRegionGame(
     players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: Stockpile()
-            .applyDelta(CommodityCatalog.lumber.id, 2)
-            .applyDelta(CommodityCatalog.castIron.id, 2),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
+      Player(id: 'p1', displayName: 'P1', isHuman: true, capitalProvinceId: provinceId, stockpile: Stockpile().applyDelta(CommodityCatalog.lumber.id, 2).applyDelta(CommodityCatalog.castIron.id, 2), techUnlocked: const {kTechIdCircularSaw: true}),
       const Player(id: 'p2', displayName: 'P2', isHuman: false),
     ],
     oldWorld: RegionData(
-      provinces: [
-        Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-        Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-      ],
-      units: [
-        Unit(
-          id: 'builder1',
-          type: kUnitTypeBuilder,
-          ownerId: 'p1',
-          locationProvinceId: provinceId,
-          tileKey: tileKey,
-        ),
-      ],
+      provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1'), Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2')],
+      units: [Unit(id: 'builder1', type: kUnitTypeBuilder, ownerId: 'p1', locationProvinceId: provinceId, tileKey: tileKey)],
     ),
     resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
-    tileKeysByRegionAndProvince: {
-      ow: {
-        provinceId: [tileKey],
-        foreignProvinceId: [foreignTileKey],
-      },
-    },
-    playerVisibilityByTile: {
-      'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
-    },
+    tileKeysByRegionAndProvince: {ow: {provinceId: [tileKey], foreignProvinceId: [foreignTileKey]}},
+    playerVisibilityByTile: {'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'}},
     purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
   );
 }
+// dart format on
 
 String validateWorkForeignTileKey() => '${ValidateWorkOw.ow}|P2|0|0';
 
@@ -250,49 +225,29 @@ Game dualTilePendingWorkGame() {
 }
 
 Game builderEngineerSameTileExclusivityGame() {
-  const ow = ValidateWorkOw.ow;
   const provinceId = ValidateWorkOw.provinceId;
   const tileKey = ValidateWorkOw.tileKey;
-  return ordersOwRegionGame(
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: lumberCastIronStockpile(10),
+  return vwSingleProvinceUnitGame(
+    unitId: 'builder1',
+    unitType: kUnitTypeBuilder,
+    units: [
+      Unit(
+        id: 'builder1',
+        type: kUnitTypeBuilder,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+      ),
+      Unit(
+        id: 'engineer1',
+        type: kUnitTypeEngineer,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
       ),
     ],
-    oldWorld: RegionData(
-      provinces: const [
-        Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-      ],
-      units: [
-        Unit(
-          id: 'builder1',
-          type: kUnitTypeBuilder,
-          ownerId: 'p1',
-          locationProvinceId: provinceId,
-          tileKey: tileKey,
-        ),
-        Unit(
-          id: 'engineer1',
-          type: kUnitTypeEngineer,
-          ownerId: 'p1',
-          locationProvinceId: provinceId,
-          tileKey: tileKey,
-        ),
-      ],
-    ),
     resourceByTileKey: const {tileKey: 'grain'},
-    playerVisibilityByTile: const {
-      'p1': {tileKey: 'fullyVisible'},
-    },
-    tileKeysByRegionAndProvince: const {
-      ow: {
-        provinceId: [tileKey],
-      },
-    },
+    stockpile: lumberCastIronStockpile(10),
   );
 }
 
