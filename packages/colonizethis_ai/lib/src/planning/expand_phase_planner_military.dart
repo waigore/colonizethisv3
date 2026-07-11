@@ -32,10 +32,11 @@ final class ExpandMilitaryPlan extends PhaseDestinationResult {
   const ExpandMilitaryPlan({
     required List<String> priorityDestinationProvinceIdsSorted,
     required List<String> priorityTargetOwnerFactionIdsSorted,
-  })  : _priorityDestinationProvinceIdsSorted =
-            priorityDestinationProvinceIdsSorted,
-        _priorityTargetOwnerFactionIdsSorted =
-            priorityTargetOwnerFactionIdsSorted;
+  }) : super(
+         priorityProvinceIdsSorted: priorityDestinationProvinceIdsSorted,
+         priorityTargetOwnerFactionIdsSorted:
+             priorityTargetOwnerFactionIdsSorted,
+       );
 
   /// Reusable "no override" plan returned for non-EXPAND callers, GPs
   /// at quota, the empty-invadable guard, and the priority-arm
@@ -46,15 +47,12 @@ final class ExpandMilitaryPlan extends PhaseDestinationResult {
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
 
-  final List<String> _priorityDestinationProvinceIdsSorted;
-  final List<String> _priorityTargetOwnerFactionIdsSorted;
-
   /// Subset of [ConquestSummary.invadableProvinceIdsSorted] (OW only)
   /// whose owners match the priority-arm filter for this turn. Sorted
   /// ascending so identical inputs yield identical lists (Refs #2509
   /// Must-have #7). Empty for [defaultPlan].
   List<String> get priorityDestinationProvinceIdsSorted =>
-      _priorityDestinationProvinceIdsSorted;
+      priorityProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityDestinationProvinceIdsSorted]. Sorted ascending and
@@ -66,11 +64,7 @@ final class ExpandMilitaryPlan extends PhaseDestinationResult {
   ///   - Empty for [defaultPlan].
   @override
   List<String> get priorityTargetOwnerFactionIdsSorted =>
-      _priorityTargetOwnerFactionIdsSorted;
-
-  @override
-  List<String> get priorityProvinceIdsSorted =>
-      _priorityDestinationProvinceIdsSorted;
+      super.priorityTargetOwnerFactionIdsSorted;
 
   @override
   String toString() =>

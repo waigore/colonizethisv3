@@ -85,102 +85,9 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
-const String _minor1 = 'minor1';
-
-/// Game scaffold for COLONIAL-phase military tests. New World provinces,
-/// players, tribes, and minors are passed in so each test can shape
-/// ownership independently. Old World defaults to empty because the
-/// planner does not query OW state (the OW summary is read only for
-/// the outer quota gate, not the destination filter).
-Game _colonialGame({
-  int turnNumber = 130,
-  List<Province> newWorldProvinces = const [],
-  List<Province> oldWorldProvinces = const [],
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 9999),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false, treasury: 9999),
-    Player(id: _gp3, displayName: 'GP3', isHuman: false, treasury: 9999),
-  ],
-  List<Tribe> tribes = const [],
-  List<MinorNation> minorNations = const [],
-}) {
-  return Game(
-    id: 'g-2509-colonial-phase-planner-military-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: RegionData(provinces: newWorldProvinces),
-    ),
-    players: players,
-    tribes: tribes,
-    minorNations: minorNations,
-  );
-}
-
-/// Snapshot tuned for COLONIAL: own OW defaults to 10 (at quota — the
-/// EXPAND -> COLONIAL transition has fired). Tests shape `atWarWith`,
-/// `invadableNw`, `invadableOw`, and `oldWorldProvincesOwned` to
-/// exercise specific priority arms and the structural OW suppression.
-/// The planner does not re-check the phase so the values are still
-/// consistent with COLONIAL only so debugging traces stay coherent.
-AIWorldSnapshot _colonialSnapshot({
-  required List<String> atWarWith,
-  List<String> invadableNw = const [],
-  List<String> invadableOw = const [],
-  int oldWorldProvincesOwned = 10,
-  String playerId = _gp1,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: 31,
-      invadableProvinceIdsSorted: invadableOw,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
-const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: true,
-  boostTreasuryRecoveryCargo: true,
-);
-
-const String _nwProvTribeA = 'newWorld|tribe1_a';
-
-AIWorldSnapshot _lockRecoveryBelowQuotaSnapshot({
-  required List<String> invadableNw,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(atWarWith: [_tribe1]),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 9,
-      provincesToVictory: 31,
-      invadableProvinceIdsSorted: const [],
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: invadableNw,
-      newWorldProvincesOwned: 0,
-    ),
-    economy: const EconomySummary(treasury: 0),
-    relations: const {},
-  );
-}
+import '../support/colonial_phase_planner_test_support.dart';
 
 void main() {
   group('planColonialMilitary', () {
@@ -190,18 +97,18 @@ void main() {
       // (10). The planner short-circuits before reading invadable or
       // owner state so a mis-dispatched EXPAND-territory call cannot
       // leak NW destinations.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1],
         invadableNw: const ['newWorld|tribe1_a'],
         oldWorldProvincesOwned: 9,
       );
@@ -221,18 +128,18 @@ void main() {
       // player must not crash; the planner returns the default plan.
       // Matches the equivalent guard in `planExpandMilitary` and the
       // implicit `game.playerById` filter in `planColonialPeace`.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1],
         invadableNw: const ['newWorld|tribe1_a'],
         playerId: 'ghost-player',
       );
@@ -246,9 +153,9 @@ void main() {
       // No NW frontier means there is no province to filter; the
       // function must short-circuit before any priority-arm scan so
       // an empty constraint never leaks to the orchestrator.
-      final game = _colonialGame();
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1],
+      final game = buildColonialPhaseGame();
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1],
         invadableNw: const [],
       );
       expect(
@@ -264,17 +171,17 @@ void main() {
       // colonial target owns at least one invadable NW province. The
       // plan restricts conquest to exactly that province and lists
       // only the target as the priority owner.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
+      final snapshot = buildColonialPhaseSnapshot(
         atWarWith: const [],
         invadableNw: const ['newWorld|tribe1_a'],
       );
@@ -282,11 +189,11 @@ void main() {
         planColonialMilitary(
           game: game,
           snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe1,
+          colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
         ),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Priority 1: declared colonial target owns one NW invadable '
@@ -302,22 +209,22 @@ void main() {
       // regardless of the input order in
       // invadableNewWorldProvinceIdsSorted (defensive determinism
       // against future builder changes).
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|tribe1_b',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
+      final snapshot = buildColonialPhaseSnapshot(
         atWarWith: const [],
         invadableNw: const ['newWorld|tribe1_b', 'newWorld|tribe1_a'],
       );
@@ -325,14 +232,14 @@ void main() {
         planColonialMilitary(
           game: game,
           snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe1,
+          colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
         ),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>[
             'newWorld|tribe1_a',
             'newWorld|tribe1_b',
           ],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Priority 1 keeps ALL NW invadable provinces owned by the '
@@ -346,20 +253,20 @@ void main() {
       // invadable. Per the spec the orchestrator should fall back to
       // its existing free-choice behaviour, so the planner returns
       // the default plan rather than an empty constraint.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
         ],
       );
-      final snapshot = _colonialSnapshot(
+      final snapshot = buildColonialPhaseSnapshot(
         atWarWith: const [],
         invadableNw: const ['newWorld|tribe1_a'],
       );
@@ -367,7 +274,7 @@ void main() {
         planColonialMilitary(
           game: game,
           snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe2,
+          colonialDeclaredWarTargetFactionId: kColonialPhaseTribe2,
         ),
         same(ColonialMilitaryPlan.defaultPlan),
         reason:
@@ -385,25 +292,25 @@ void main() {
       // plan restricts to the union of those provinces and lists the
       // at-war owners sorted ascending. Tribes are first-class
       // colonial targets per issue #2509 § planColonialAcquisition.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1],
         invadableNw: const ['newWorld|tribe1_a'],
       );
       expect(
         planColonialMilitary(game: game, snapshot: snapshot),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Priority 2 (at-war fallback): no declare-war target + '
@@ -417,24 +324,24 @@ void main() {
       // At-war fallback covers any faction class (GP, minor, tribe).
       // Two at-war owners contribute provinces; the plan unions them
       // and lists both owners sorted ascending.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|minor1_a',
             regionId: 'newWorld',
-            ownerId: _minor1,
+            ownerId: kColonialPhaseMinor1,
           ),
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        minorNations: const [MinorNation(id: kColonialPhaseMinor1, displayName: 'M1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1, _minor1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1, kColonialPhaseMinor1],
         invadableNw: const ['newWorld|tribe1_a', 'newWorld|minor1_a'],
       );
       expect(
@@ -444,7 +351,7 @@ void main() {
             const <String>['newWorld|minor1_a', 'newWorld|tribe1_a'],
           ),
           priorityTargetOwnerFactionIdsSorted: List<String>.unmodifiable(
-            const <String>[_minor1, _tribe1],
+            const <String>[kColonialPhaseMinor1, kColonialPhaseTribe1],
           ),
         ),
         reason:
@@ -460,30 +367,30 @@ void main() {
       // must NOT appear in priorityTargetOwnerFactionIdsSorted. This
       // pins the "owner list mirrors actual destinations" contract so
       // a downstream orchestrator never sees a phantom target.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
         ],
       );
-      final snapshot = _colonialSnapshot(
+      final snapshot = buildColonialPhaseSnapshot(
         // tribe2 is at war but owns nothing in NW invadable, so should
         // be dropped from the owner list.
-        atWarWith: const [_tribe1, _tribe2],
+        atWarWith: const [kColonialPhaseTribe1, kColonialPhaseTribe2],
         invadableNw: const ['newWorld|tribe1_a'],
       );
       expect(
         planColonialMilitary(game: game, snapshot: snapshot),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Only at-war owners that actually contribute an NW '
@@ -497,22 +404,22 @@ void main() {
       // Priority 2 fails when no at-war faction owns an invadable NW
       // province. Both priority arms exhausted -> defaultPlan; the
       // orchestrator falls back to legacy free-choice conquest.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
         ],
       );
-      final snapshot = _colonialSnapshot(
+      final snapshot = buildColonialPhaseSnapshot(
         // tribe2 is at war but does NOT own the invadable province.
-        atWarWith: const [_tribe2],
+        atWarWith: const [kColonialPhaseTribe2],
         invadableNw: const ['newWorld|tribe1_a'],
       );
       expect(
@@ -533,37 +440,37 @@ void main() {
         // at-war faction owns invadable), but priority 1 (declared
         // colonial target) takes precedence and excludes the at-war
         // non-target from the owner list.
-        final game = _colonialGame(
+        final game = buildColonialPhaseGame(
           newWorldProvinces: const [
             Province(
               id: 'newWorld|tribe1_a',
               regionId: 'newWorld',
-              ownerId: _tribe1,
+              ownerId: kColonialPhaseTribe1,
             ),
             Province(
               id: 'newWorld|tribe2_a',
               regionId: 'newWorld',
-              ownerId: _tribe2,
+              ownerId: kColonialPhaseTribe2,
             ),
           ],
           tribes: const [
-            Tribe(id: _tribe1, displayName: 'T1'),
-            Tribe(id: _tribe2, displayName: 'T2'),
+            Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+            Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
           ],
         );
-        final snapshot = _colonialSnapshot(
-          atWarWith: const [_tribe1, _tribe2],
+        final snapshot = buildColonialPhaseSnapshot(
+          atWarWith: const [kColonialPhaseTribe1, kColonialPhaseTribe2],
           invadableNw: const ['newWorld|tribe1_a', 'newWorld|tribe2_a'],
         );
         expect(
           planColonialMilitary(
             game: game,
             snapshot: snapshot,
-            colonialDeclaredWarTargetFactionId: _tribe1,
+            colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
           ),
           const ColonialMilitaryPlan(
             priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-            priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+            priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
           ),
           reason:
               'Priority 1 (declared colonial target) wins over '
@@ -584,26 +491,26 @@ void main() {
       // NOT include the OW province. The planner only reads the NW
       // invadable list — OW suppression is structural, not
       // predicate-based.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         oldWorldProvinces: const [
           Province(
             id: 'oldWorld|minor1_a',
             regionId: 'oldWorld',
-            ownerId: _minor1,
+            ownerId: kColonialPhaseMinor1,
           ),
         ],
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        minorNations: const [MinorNation(id: kColonialPhaseMinor1, displayName: 'M1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1, _minor1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1, kColonialPhaseMinor1],
         invadableNw: const ['newWorld|tribe1_a'],
         // Even though the minor is at war AND owns an OW invadable
         // province in the conquest summary, the plan must not pick
@@ -614,7 +521,7 @@ void main() {
         planColonialMilitary(game: game, snapshot: snapshot),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'COLONIAL OW suppression: the planner only reads '
@@ -632,18 +539,18 @@ void main() {
       // target owns nothing in NW invadable. Combined with the
       // previous test this pins the structural OW suppression from
       // both sides.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         oldWorldProvinces: const [
           Province(
             id: 'oldWorld|minor1_a',
             regionId: 'oldWorld',
-            ownerId: _minor1,
+            ownerId: kColonialPhaseMinor1,
           ),
         ],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        minorNations: const [MinorNation(id: kColonialPhaseMinor1, displayName: 'M1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_minor1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseMinor1],
         invadableNw: const [],
         invadableOw: const ['oldWorld|minor1_a'],
       );
@@ -651,7 +558,7 @@ void main() {
         planColonialMilitary(
           game: game,
           snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _minor1,
+          colonialDeclaredWarTargetFactionId: kColonialPhaseMinor1,
         ),
         same(ColonialMilitaryPlan.defaultPlan),
         reason:
@@ -667,18 +574,18 @@ void main() {
       // from the world (orphan / mid-transition) is silently skipped
       // rather than crashing. Tests the `if (owner == null) continue`
       // branch in the at-war fallback arm.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1],
         // Include an unknown id that won't be in provinceOwner map.
         invadableNw: const ['newWorld|tribe1_a', 'newWorld|ghost'],
       );
@@ -686,7 +593,7 @@ void main() {
         planColonialMilitary(game: game, snapshot: snapshot),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Orphan NW invadable id with no owner is silently '
@@ -700,34 +607,34 @@ void main() {
       // Determinism pin (issue #2509 Must-have #7). Mixed-input
       // fixture exercises priority 1 with two destinations; the
       // same plan must come out twice in a row.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|tribe1_b',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_tribe1, _gp2],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseTribe1, kColonialPhaseGp2],
         invadableNw: const ['newWorld|tribe1_b', 'newWorld|tribe1_a'],
       );
       final first = planColonialMilitary(
         game: game,
         snapshot: snapshot,
-        colonialDeclaredWarTargetFactionId: _tribe1,
+        colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
       );
       final second = planColonialMilitary(
         game: game,
         snapshot: snapshot,
-        colonialDeclaredWarTargetFactionId: _tribe1,
+        colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
       );
       expect(second, first, reason: 'Same inputs -> same plan.');
     });
@@ -739,32 +646,32 @@ void main() {
       // faction). gp1's own province ownership is irrelevant to the
       // filter — what matters is whether the invadable list contains
       // provinces owned by the declared target / at-war factions.
-      final game = _colonialGame(
+      final game = buildColonialPhaseGame(
         newWorldProvinces: const [
           // gp3 owns this — at war but should be ignored because not
           // the declared target.
-          Province(id: 'newWorld|gp3_0', regionId: 'newWorld', ownerId: _gp3),
+          Province(id: 'newWorld|gp3_0', regionId: 'newWorld', ownerId: kColonialPhaseGp3),
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_gp3, _tribe1],
+      final snapshot = buildColonialPhaseSnapshot(
+        atWarWith: const [kColonialPhaseGp3, kColonialPhaseTribe1],
         invadableNw: const ['newWorld|gp3_0', 'newWorld|tribe1_a'],
       );
       expect(
         planColonialMilitary(
           game: game,
           snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe1,
+          colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
         ),
         const ColonialMilitaryPlan(
           priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Priority 1 restricts ONLY to the declared target. gp3 '
@@ -778,29 +685,29 @@ void main() {
       test(
         'treasury-recovery override emits NW destinations below quota',
         () {
-          final game = _colonialGame(
+          final game = buildColonialPhaseGame(
             newWorldProvinces: const [
               Province(
-                id: _nwProvTribeA,
+                id: kColonialPhaseNwProvTribeA,
                 regionId: 'newWorld',
-                ownerId: _tribe1,
+                ownerId: kColonialPhaseTribe1,
               ),
             ],
-            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+            tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
           );
-          final snapshot = _lockRecoveryBelowQuotaSnapshot(
-            invadableNw: const [_nwProvTribeA],
+          final snapshot = buildLockRecoveryBelowQuotaSnapshot(
+            invadableNw: const [kColonialPhaseNwProvTribeA],
           );
           expect(
             planColonialMilitary(
               game: game,
               snapshot: snapshot,
-              colonialDeclaredWarTargetFactionId: _tribe1,
-              expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
+              colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
+              expandEconomyPlan: kNwTreasuryRecoveryOverridePlan,
             ),
             ColonialMilitaryPlan(
-              priorityDestinationProvinceIdsSorted: const [_nwProvTribeA],
-              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+              priorityDestinationProvinceIdsSorted: const [kColonialPhaseNwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [kColonialPhaseTribe1],
             ),
             reason:
                 'EXPAND universal colonial dispatch must honour the '
@@ -814,19 +721,19 @@ void main() {
       test(
         'partial treasury with boostTreasuryRecoveryCargo keeps NW plan',
         () {
-          final game = _colonialGame(
+          final game = buildColonialPhaseGame(
             newWorldProvinces: const [
               Province(
-                id: _nwProvTribeA,
+                id: kColonialPhaseNwProvTribeA,
                 regionId: 'newWorld',
-                ownerId: _tribe1,
+                ownerId: kColonialPhaseTribe1,
               ),
             ],
-            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+            tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
           );
           final snapshot = AIWorldSnapshot(
-            playerId: _gp1,
-            threats: const ThreatSummary(atWarWith: [_tribe1]),
+            playerId: kColonialPhaseGp1,
+            threats: const ThreatSummary(atWarWith: [kColonialPhaseTribe1]),
             opportunities: const OpportunitySummary(),
             conquest: ConquestSummary(
               oldWorldProvincesOwned: 9,
@@ -834,7 +741,7 @@ void main() {
               invadableProvinceIdsSorted: const [],
             ),
             colonial: ColonialSummary(
-              invadableNewWorldProvinceIdsSorted: const [_nwProvTribeA],
+              invadableNewWorldProvinceIdsSorted: const [kColonialPhaseNwProvTribeA],
               newWorldProvincesOwned: 0,
             ),
             economy: const EconomySummary(treasury: 500),
@@ -844,15 +751,15 @@ void main() {
             planColonialMilitary(
               game: game,
               snapshot: snapshot,
-              colonialDeclaredWarTargetFactionId: _tribe1,
+              colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
               expandEconomyPlan: const ExpandEconomyPlan(
                 forceCheapestRegimentBuild: false,
                 boostTreasuryRecoveryCargo: true,
               ),
             ),
             ColonialMilitaryPlan(
-              priorityDestinationProvinceIdsSorted: const [_nwProvTribeA],
-              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+              priorityDestinationProvinceIdsSorted: const [kColonialPhaseNwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [kColonialPhaseTribe1],
             ),
             reason:
                 'Path E must stay armed after Path F credits treasury above '
@@ -864,19 +771,19 @@ void main() {
       test(
         'post-threshold treasury with forceCheapestRegimentBuild keeps NW plan',
         () {
-          final game = _colonialGame(
+          final game = buildColonialPhaseGame(
             newWorldProvinces: const [
               Province(
-                id: _nwProvTribeA,
+                id: kColonialPhaseNwProvTribeA,
                 regionId: 'newWorld',
-                ownerId: _tribe1,
+                ownerId: kColonialPhaseTribe1,
               ),
             ],
-            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+            tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
           );
           final snapshot = AIWorldSnapshot(
-            playerId: _gp1,
-            threats: const ThreatSummary(atWarWith: [_tribe1]),
+            playerId: kColonialPhaseGp1,
+            threats: const ThreatSummary(atWarWith: [kColonialPhaseTribe1]),
             opportunities: const OpportunitySummary(),
             conquest: ConquestSummary(
               oldWorldProvincesOwned: 9,
@@ -884,7 +791,7 @@ void main() {
               invadableProvinceIdsSorted: const [],
             ),
             colonial: ColonialSummary(
-              invadableNewWorldProvinceIdsSorted: const [_nwProvTribeA],
+              invadableNewWorldProvinceIdsSorted: const [kColonialPhaseNwProvTribeA],
               newWorldProvincesOwned: 0,
             ),
             economy: const EconomySummary(treasury: 2500),
@@ -894,15 +801,15 @@ void main() {
             planColonialMilitary(
               game: game,
               snapshot: snapshot,
-              colonialDeclaredWarTargetFactionId: _tribe1,
+              colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
               expandEconomyPlan: const ExpandEconomyPlan(
                 forceCheapestRegimentBuild: true,
                 boostTreasuryRecoveryCargo: false,
               ),
             ),
             ColonialMilitaryPlan(
-              priorityDestinationProvinceIdsSorted: const [_nwProvTribeA],
-              priorityTargetOwnerFactionIdsSorted: const [_tribe1],
+              priorityDestinationProvinceIdsSorted: const [kColonialPhaseNwProvTribeA],
+              priorityTargetOwnerFactionIdsSorted: const [kColonialPhaseTribe1],
             ),
             reason:
                 'Geographic peer-war lock Arm D must keep colonial military '
@@ -914,24 +821,24 @@ void main() {
       test(
         'below quota without override keeps defaultPlan regression guard',
         () {
-          final game = _colonialGame(
+          final game = buildColonialPhaseGame(
             newWorldProvinces: const [
               Province(
-                id: _nwProvTribeA,
+                id: kColonialPhaseNwProvTribeA,
                 regionId: 'newWorld',
-                ownerId: _tribe1,
+                ownerId: kColonialPhaseTribe1,
               ),
             ],
-            tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+            tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
           );
-          final snapshot = _lockRecoveryBelowQuotaSnapshot(
-            invadableNw: const [_nwProvTribeA],
+          final snapshot = buildLockRecoveryBelowQuotaSnapshot(
+            invadableNw: const [kColonialPhaseNwProvTribeA],
           );
           expect(
             planColonialMilitary(
               game: game,
               snapshot: snapshot,
-              colonialDeclaredWarTargetFactionId: _tribe1,
+              colonialDeclaredWarTargetFactionId: kColonialPhaseTribe1,
               expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
             ),
             same(ColonialMilitaryPlan.defaultPlan),
@@ -950,15 +857,15 @@ void main() {
       // without relying on object identity.
       const a = ColonialMilitaryPlan(
         priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-        priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+        priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
       );
       const b = ColonialMilitaryPlan(
         priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-        priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+        priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
       );
       const c = ColonialMilitaryPlan(
         priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe2_a'],
-        priorityTargetOwnerFactionIdsSorted: <String>[_tribe2],
+        priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe2],
       );
       expect(a, b);
       expect(a.hashCode, b.hashCode);

@@ -43,142 +43,13 @@
 //   7. Deterministic ordering — multi-peer results are sorted
 //      ascending by `factionId`.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
 const String _gpPartner = 'gp_partner';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
-
-/// Builds a minimal `Game` exposing the OW province distribution this
-/// decider's branches rely on:
-///
-///   * `gp_own` owns [ownProvinces] OW provinces.
-///   * `gp_partner` owns [partnerProvinces] OW provinces (always
-///     present when [partnerProvinces] > 0). Optional extra GP via
-///     [extraGpId] / [extraGpProvinces] for multi-GP-war shapes.
-///   * Optional minor `minorId` owns [minorProvinces] OW provinces
-///     so `hasUninvadedOldWorldMinor` and `minorsOnMap` can be
-///     toggled independently of the at-war set.
-///   * Diplomacy relations: `gp_own` is at war with `gp_partner`
-///     when [atWarWithPartner] is true; with the optional extra GP
-///     when [atWarWithExtraGp] is true; with the minor when
-///     [atWarWithMinor] is true.
-Game _peerGame({
-  required int ownProvinces,
-  required int partnerProvinces,
-  String? extraGpId,
-  int extraGpProvinces = 0,
-  String? minorId,
-  int minorProvinces = 0,
-  bool atWarWithPartner = true,
-  bool atWarWithExtraGp = true,
-  bool atWarWithMinor = false,
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (var i = 1; i <= partnerProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpPartner}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpPartner,
-      ),
-    if (extraGpId != null)
-      for (var i = 1; i <= extraGpProvinces; i++)
-        Province(
-          id: 'oldWorld|${extraGpId}_$i',
-          regionId: 'oldWorld',
-          ownerId: extraGpId,
-        ),
-    if (minorId != null)
-      for (var i = 1; i <= minorProvinces; i++)
-        Province(
-          id: 'oldWorld|${minorId}_$i',
-          regionId: 'oldWorld',
-          ownerId: minorId,
-        ),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    const Player(id: _gpPartner, displayName: 'GP_PARTNER', isHuman: false),
-    if (extraGpId != null)
-      Player(
-        id: extraGpId,
-        displayName: extraGpId.toUpperCase(),
-        isHuman: false,
-      ),
-  ];
-
-  final minorNations = <MinorNation>[
-    if (minorId != null) MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    if (atWarWithPartner)
-      const DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: _gpPartner,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    if (extraGpId != null && atWarWithExtraGp)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: extraGpId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    if (minorId != null && atWarWithMinor)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: minorId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-below-quota-peer-gp-peace-canonical-'
-        '${ownProvinces}_vs_$partnerProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    diplomacyRelations: relations,
-  );
-}
-
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void main() {
   group('belowQuotaPeerGpPeaceTargets — outer guards', () {
@@ -189,13 +60,13 @@ void main() {
       // peer-gap branches even when partner is below quota and a
       // minor still owns provinces (so a regression that flipped the
       // guard polarity would fire).
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 10,
         partnerProvinces: 7,
         minorId: _minor1,
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 10,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -218,8 +89,11 @@ void main() {
         // no minor owns any OW province. The combined "!minorsOnMap
         // && !mutualPlateau" guard must skip every peer, leaving
         // the result empty.
-        final game = _peerGame(ownProvinces: 6, partnerProvinces: 8);
-        final snapshot = _ownSnapshot(
+        final game = buildPeerExpandPeaceGame(
+          ownProvinces: 6,
+          partnerProvinces: 8,
+        );
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_gpPartner],
         );
@@ -238,14 +112,14 @@ void main() {
       // The decider filters non-GP factions via game.playerById. A
       // minor included in atWarWith must never be returned even
       // when other guards pass — peer-gap is a GP-only pivot.
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 7,
         minorId: _minor1,
         minorProvinces: 1,
         atWarWithMinor: true,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner, _minor1],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -272,13 +146,13 @@ void main() {
       // peaces below-quota peer GPs. The OW gap is within the
       // mutual-plateau peer-gap cap but the quota guard must trip
       // first.
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 8,
         partnerProvinces: 10,
         minorId: _minor1,
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 8,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -310,14 +184,14 @@ void main() {
         // must peace the partner unconditionally — even though the
         // gap=0 would also satisfy the standard peer-gap arm, the
         // carve-out documents an independent code path.
-        final game = _peerGame(
+        final game = buildPeerExpandPeaceGame(
           ownProvinces: 8,
           partnerProvinces: 8,
           minorId: _minor1,
           minorProvinces: 0,
           atWarWithMinor: true,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 8,
           atWarWith: const [_gpPartner],
           invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -343,13 +217,13 @@ void main() {
       // hasUninvadedOldWorldMinor is true. The canonical decider
       // must peace the partner so gp_own can pivot off the
       // distraction war and chase the minor frontier instead.
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 9,
         minorId: _minor1,
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -371,13 +245,13 @@ void main() {
         // keep the war open even though a minor pivot remains —
         // the cap protects the weaker peer from dumping below-quota
         // GP wars at arbitrary OW gaps.
-        final game = _peerGame(
+        final game = buildPeerExpandPeaceGame(
           ownProvinces: 5,
           partnerProvinces: 9,
           minorId: _minor1,
           minorProvinces: 1,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 5,
           atWarWith: const [_gpPartner],
           invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -406,14 +280,14 @@ void main() {
         // happens to belong to a non-minor so the GP-only frontier
         // arm would fire too, but the gap=1 standard arm must be
         // the path that produces the result here.
-        final game = _peerGame(
+        final game = buildPeerExpandPeaceGame(
           ownProvinces: 7,
           partnerProvinces: 8,
           minorId: _minor1,
           minorProvinces: 1,
           atWarWithMinor: true,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
           atWarWith: const [_gpPartner, _minor1],
           invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -435,14 +309,14 @@ void main() {
       // pivot is gone. This pins the asymmetric collapse: the
       // canonical decider must drop the partner even though the
       // gap would be within the with-minors cap.
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 8,
         minorId: _minor1,
         minorProvinces: 1,
         atWarWithMinor: true,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner, _minor1],
         invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -465,13 +339,13 @@ void main() {
         // partnerOw and not a mutual-plateau. The
         // stronger-self-symmetry guard must drop the partner;
         // only the weaker peer pivots off the distraction war.
-        final game = _peerGame(
+        final game = buildPeerExpandPeaceGame(
           ownProvinces: 9,
           partnerProvinces: 6,
           minorId: _minor1,
           minorProvinces: 1,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 9,
           atWarWith: const [_gpPartner],
           invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -494,13 +368,13 @@ void main() {
         // outside the 8 OW plateau band). The stronger-self guard
         // tests `ownOw > partnerOw` — at strict equality the
         // guard does not fire and the partner is peaced.
-        final game = _peerGame(
+        final game = buildPeerExpandPeaceGame(
           ownProvinces: 6,
           partnerProvinces: 6,
           minorId: _minor1,
           minorProvinces: 1,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_gpPartner],
           invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -553,7 +427,7 @@ void main() {
       // with gp_third lex-greater than gp_partner so a regression
       // that preserved threats.atWarWith order would still pass
       // accidentally; we want to assert sort order.
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 7,
         extraGpId: _gpThird,
@@ -563,7 +437,7 @@ void main() {
       );
       // Wire snapshot in reverse-sort order so the sort step has
       // to actually re-order the result.
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpThird, _gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -581,13 +455,13 @@ void main() {
 
   group('belowQuotaPeerGpPeaceTargets — determinism (Must-have #7)', () {
     test('returns identical lists for identical inputs across two calls', () {
-      final game = _peerGame(
+      final game = buildPeerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 7,
         minorId: _minor1,
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
@@ -609,5 +483,4 @@ void main() {
       );
     });
   });
-
 }

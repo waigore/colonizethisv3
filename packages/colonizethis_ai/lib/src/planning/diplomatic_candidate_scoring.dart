@@ -92,6 +92,7 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+
   final warDesireForTarget = memoizedWarDesire;
 
   return candidates.map((o) {
@@ -144,24 +145,26 @@ List<int> computeDiplomaticCandidateScores({
         break;
       case DiplomaticOrderType.declareWar:
         s = _scoreDeclareWarDiplomaticOrder(
-          order: o,
-          nationId: nationId,
-          game: game,
-          snapshot: snapshot,
-          agendaId: agendaId,
-          thresholds: thresholds,
-          maxRelationForDeclareWar: maxRelationForDeclareWar,
-          behindVictoryPace: behindVictoryPace,
-          suppressGpDeclareWar: suppressGpDeclareWar,
-          invadableOwners: invadableOwners,
-          provinceOwner: provinceOwner,
-          warCooldownTurns: warCooldownTurns,
-          currentTurn: currentTurn,
-          anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
-          primaryGoal: primaryGoal,
-          warDesireForTarget: warDesireForTarget,
+          _DeclareWarTargetContext.build(
+            order: o,
+            nationId: nationId,
+            game: game,
+            snapshot: snapshot,
+            agendaId: agendaId,
+            thresholds: thresholds,
+            maxRelationForDeclareWar: maxRelationForDeclareWar,
+            behindVictoryPace: behindVictoryPace,
+            suppressGpDeclareWar: suppressGpDeclareWar,
+            invadableOwners: invadableOwners,
+            provinceOwner: provinceOwner,
+            warCooldownTurns: warCooldownTurns,
+            currentTurn: currentTurn,
+            anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
+            primaryGoal: primaryGoal,
+            warDesireForTarget: warDesireForTarget,
+            phasePlan: phasePlan,
+          ),
           sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-          phasePlan: phasePlan,
         );
         break;
       case DiplomaticOrderType.establishOverture:

@@ -128,6 +128,112 @@ class PhasePlanOutcome {
     this.priorityWeights = PhasePriorityWeights.earlySprintDefault,
   });
 
+  /// EXPAND-regime factory: only EXPAND (+ optional NW-acquisition) slots.
+  const PhasePlanOutcome.expand({
+    String? expandDeclareWarTargetFactionId,
+    List<String> expandPeaceTargetFactionIdsSorted = const <String>[],
+    List<String> expandDistractionPeaceTargetFactionIdsSorted =
+        const <String>[],
+    ExpandEconomyPlan expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
+    ExpandMilitaryPlan expandMilitaryPlan = ExpandMilitaryPlan.defaultPlan,
+    bool expandGpOnlyInvadableFrontierActive = false,
+    String? expandPrimaryInvadableGpBlockerFactionId,
+    ColonialAcquisitionTarget? colonialAcquisitionTarget,
+    List<String> colonialPeaceTargetFactionIdsSorted = const <String>[],
+    ColonialMilitaryPlan colonialMilitaryPlan =
+        ColonialMilitaryPlan.defaultPlan,
+    ColonialNavalPlan colonialNavalPlan = ColonialNavalPlan.defaultPlan,
+    List<WorkOrder> colonialCivilianWorkOrders = const <WorkOrder>[],
+    PhasePriorityWeights priorityWeights =
+        PhasePriorityWeights.earlySprintDefault,
+  }) : this(
+         phase: ObserverGoalPhase.expand,
+         expandDeclareWarTargetFactionId: expandDeclareWarTargetFactionId,
+         expandPeaceTargetFactionIdsSorted: expandPeaceTargetFactionIdsSorted,
+         expandDistractionPeaceTargetFactionIdsSorted:
+             expandDistractionPeaceTargetFactionIdsSorted,
+         expandEconomyPlan: expandEconomyPlan,
+         expandMilitaryPlan: expandMilitaryPlan,
+         expandGpOnlyInvadableFrontierActive:
+             expandGpOnlyInvadableFrontierActive,
+         expandPrimaryInvadableGpBlockerFactionId:
+             expandPrimaryInvadableGpBlockerFactionId,
+         colonialAcquisitionTarget: colonialAcquisitionTarget,
+         colonialPeaceTargetFactionIdsSorted:
+             colonialPeaceTargetFactionIdsSorted,
+         colonialMilitaryPlan: colonialMilitaryPlan,
+         colonialNavalPlan: colonialNavalPlan,
+         colonialCivilianWorkOrders: colonialCivilianWorkOrders,
+         priorityWeights: priorityWeights,
+       );
+
+  /// COLONIAL-lite factory: EXPAND push slots + lite overtures/naval.
+  const PhasePlanOutcome.colonialLite({
+    String? expandDeclareWarTargetFactionId,
+    List<String> expandPeaceTargetFactionIdsSorted = const <String>[],
+    List<String> expandDistractionPeaceTargetFactionIdsSorted =
+        const <String>[],
+    ExpandEconomyPlan expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
+    ExpandMilitaryPlan expandMilitaryPlan = ExpandMilitaryPlan.defaultPlan,
+    bool expandGpOnlyInvadableFrontierActive = false,
+    String? expandPrimaryInvadableGpBlockerFactionId,
+    List<String> colonialLiteOverturesSorted = const <String>[],
+    ColonialLiteNavalPlan colonialLiteNavalPlan =
+        ColonialLiteNavalPlan.defaultPlan,
+    PhasePriorityWeights priorityWeights =
+        PhasePriorityWeights.earlySprintDefault,
+  }) : this(
+         phase: ObserverGoalPhase.colonialLite,
+         expandDeclareWarTargetFactionId: expandDeclareWarTargetFactionId,
+         expandPeaceTargetFactionIdsSorted: expandPeaceTargetFactionIdsSorted,
+         expandDistractionPeaceTargetFactionIdsSorted:
+             expandDistractionPeaceTargetFactionIdsSorted,
+         expandEconomyPlan: expandEconomyPlan,
+         expandMilitaryPlan: expandMilitaryPlan,
+         expandGpOnlyInvadableFrontierActive:
+             expandGpOnlyInvadableFrontierActive,
+         expandPrimaryInvadableGpBlockerFactionId:
+             expandPrimaryInvadableGpBlockerFactionId,
+         colonialLiteOverturesSorted: colonialLiteOverturesSorted,
+         colonialLiteNavalPlan: colonialLiteNavalPlan,
+         priorityWeights: priorityWeights,
+       );
+
+  /// Full COLONIAL factory: colonial acquisition / peace / military / naval /
+  /// civilian slots only.
+  const PhasePlanOutcome.colonial({
+    ColonialAcquisitionTarget? colonialAcquisitionTarget,
+    List<String> colonialPeaceTargetFactionIdsSorted = const <String>[],
+    ColonialMilitaryPlan colonialMilitaryPlan =
+        ColonialMilitaryPlan.defaultPlan,
+    ColonialNavalPlan colonialNavalPlan = ColonialNavalPlan.defaultPlan,
+    List<WorkOrder> colonialCivilianWorkOrders = const <WorkOrder>[],
+    PhasePriorityWeights priorityWeights =
+        PhasePriorityWeights.earlySprintDefault,
+  }) : this(
+         phase: ObserverGoalPhase.colonial,
+         colonialAcquisitionTarget: colonialAcquisitionTarget,
+         colonialPeaceTargetFactionIdsSorted:
+             colonialPeaceTargetFactionIdsSorted,
+         colonialMilitaryPlan: colonialMilitaryPlan,
+         colonialNavalPlan: colonialNavalPlan,
+         colonialCivilianWorkOrders: colonialCivilianWorkOrders,
+         priorityWeights: priorityWeights,
+       );
+
+  /// DEVELOP factory: develop peace + civilian work orders.
+  const PhasePlanOutcome.develop({
+    List<String> developPeaceTargetFactionIdsSorted = const <String>[],
+    List<WorkOrder> developCivilianWorkOrders = const <WorkOrder>[],
+    PhasePriorityWeights priorityWeights =
+        PhasePriorityWeights.earlySprintDefault,
+  }) : this(
+         phase: ObserverGoalPhase.develop,
+         developPeaceTargetFactionIdsSorted: developPeaceTargetFactionIdsSorted,
+         developCivilianWorkOrders: developCivilianWorkOrders,
+         priorityWeights: priorityWeights,
+       );
+
   /// Resolved phase from [observerGoalPhaseFor]. Drives the suppression
   /// matrix on every other field: callers can read all fields
   /// unconditionally but only the slots listed for the active phase
@@ -398,8 +504,7 @@ PhasePlanOutcome _expandOutcome({
           expandEconomyPlan: expandEconomyPlan,
         )
       : null;
-  return PhasePlanOutcome(
-    phase: ObserverGoalPhase.expand,
+  return PhasePlanOutcome.expand(
     expandDeclareWarTargetFactionId: declareWarTarget,
     expandPeaceTargetFactionIdsSorted: planExpandPeace(
       game: game,
@@ -423,8 +528,7 @@ PhasePlanOutcome _expandOutcome({
     colonialMilitaryPlan:
         colonial?.military ?? ColonialMilitaryPlan.defaultPlan,
     colonialNavalPlan: colonial?.naval ?? ColonialNavalPlan.defaultPlan,
-    colonialCivilianWorkOrders:
-        colonial?.civilian ?? const <WorkOrder>[],
+    colonialCivilianWorkOrders: colonial?.civilian ?? const <WorkOrder>[],
     priorityWeights: priorityWeights,
   );
 }
@@ -436,8 +540,7 @@ PhasePlanOutcome _colonialLiteOutcome({
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
   final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
   final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
-  return PhasePlanOutcome(
-    phase: ObserverGoalPhase.colonialLite,
+  return PhasePlanOutcome.colonialLite(
     expandDeclareWarTargetFactionId: declareWarTarget,
     expandPeaceTargetFactionIdsSorted: planExpandPeace(
       game: game,
@@ -477,7 +580,8 @@ PhasePlanOutcome _colonialLiteOutcome({
   ColonialMilitaryPlan military,
   ColonialNavalPlan naval,
   List<WorkOrder> civilian,
-}) _colonialPlannerBundle({
+})
+_colonialPlannerBundle({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? personalityId,
@@ -524,8 +628,7 @@ PhasePlanOutcome _colonialOutcome({
     personalityId: personalityId,
     expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
   );
-  return PhasePlanOutcome(
-    phase: ObserverGoalPhase.colonial,
+  return PhasePlanOutcome.colonial(
     colonialAcquisitionTarget: colonial.acquisition,
     colonialPeaceTargetFactionIdsSorted: colonial.peaceTargets,
     colonialMilitaryPlan: colonial.military,
@@ -543,8 +646,7 @@ PhasePlanOutcome _developOutcome({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  return PhasePlanOutcome(
-    phase: ObserverGoalPhase.develop,
+  return PhasePlanOutcome.develop(
     developPeaceTargetFactionIdsSorted: planDevelopPeace(
       game: game,
       snapshot: snapshot,

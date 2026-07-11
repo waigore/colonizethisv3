@@ -1156,6 +1156,13 @@ rules:
     runner: dart
     script: tool/check_ai_orchestrator_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_expand_peace_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand_phase_planner_*peace*_test.dart pins must import ownSnapshot / shared Game builders from expand_phase_peace_test_support.dart (no local _ownSnapshot / _criticalGame / _distractionGame / _zeroRegimentGame / _peerGame) (Refs #3967)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_peace_test_shared_fixtures.dart
+
   - rule_id: repo.ai_test_no_matrix_part_shards
     group: testing
     title: colonizethis_ai planning matrix suites must not keep *_partN_test.dart shards alongside a sibling *_support.dart (Refs #3941)
