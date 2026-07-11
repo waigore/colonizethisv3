@@ -33,13 +33,13 @@
 //     `supplementMutualStalledGreatPowerPeaceOrders` consumers
 //     resolve to the same boolean result until the now-completed S1 deletion.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _minorZeta = 'minor_zeta';
@@ -49,20 +49,20 @@ Game _pristineGame() {
     id: 'g-2509-needs-peace-pass-pristine',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOwn,
-          ),
-      ]),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [],
     ),
-    players: [
-      const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    ],
+    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
     minorNations: const [],
     tribes: const [],
     diplomacyRelations: const [],
@@ -74,19 +74,21 @@ Game _zeroRegimentAtWarGame() {
     id: 'g-2509-needs-peace-pass-zero-reg',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
           Province(
-            id: 'oldWorld|${_gpOwn}_$i',
+            id: 'oldWorld|minor_zeta_1',
             regionId: 'oldWorld',
-            ownerId: _gpOwn,
+            ownerId: _minorZeta,
           ),
-        Province(
-          id: 'oldWorld|minor_zeta_1',
-          regionId: 'oldWorld',
-          ownerId: _minorZeta,
-        ),
-      ]),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [
         Army(
@@ -99,9 +101,7 @@ Game _zeroRegimentAtWarGame() {
         ),
       ],
     ),
-    players: [
-      const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    ],
+    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
     minorNations: [
       const MinorNation(id: _minorZeta, displayName: 'minor_zeta'),
     ],
@@ -117,39 +117,17 @@ Game _zeroRegimentAtWarGame() {
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group('stalledOwExpansionNeedsPeacePass — canonical home', () {
     test('returns false when no decider fires (pristine state)', () {
       final game = _pristineGame();
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [],
         invadableProvinceIdsSorted: const [],
       );
       expect(
-        stalledOwExpansionNeedsPeacePass(
-          game: game,
-          snapshot: snapshot,
-        ),
+        stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
         isFalse,
         reason:
             'A pristine state with no at-war factions, no regiments, '
@@ -163,16 +141,13 @@ void main() {
       'returns true when stalledZeroRegimentAllFactionPeaceTargets fires',
       () {
         final game = _zeroRegimentAtWarGame();
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_minorZeta],
           invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
         );
         expect(
-          stalledOwExpansionNeedsPeacePass(
-            game: game,
-            snapshot: snapshot,
-          ),
+          stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
           isTrue,
           reason:
               'Zero-regiment survival decider fires on a below-quota GP '
@@ -184,7 +159,7 @@ void main() {
 
     test('Determinism (Must-have #7) — identical result on repeat', () {
       final game = _zeroRegimentAtWarGame();
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_minorZeta],
         invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
@@ -208,7 +183,7 @@ void main() {
 
     test('Stub delegation parity', () {
       final game = _zeroRegimentAtWarGame();
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_minorZeta],
         invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
@@ -218,10 +193,7 @@ void main() {
         snapshot: snapshot,
       );
       final stub = diplomacy_planner_peace_targets
-          .stalledOwExpansionNeedsPeacePass(
-        game: game,
-        snapshot: snapshot,
-      );
+          .stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot);
       expect(
         canonical,
         stub,

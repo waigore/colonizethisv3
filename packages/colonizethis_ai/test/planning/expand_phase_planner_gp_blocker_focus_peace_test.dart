@@ -13,12 +13,12 @@
 // `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
 // deletion.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp4';
 const String _gpBlocker = 'gp3';
@@ -61,25 +61,6 @@ Game _gpBlockerFocusGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  required List<String> invadableProvinceIdsSorted,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group('stalledGpBlockerFocusPeaceTargets — canonical outer guards', () {
     test('returns const [] when frontier is not GP-only', () {
@@ -102,7 +83,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -135,7 +117,8 @@ void main() {
         ],
         atWarFactionIds: const [_gpDistraction],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -175,7 +158,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
         extraGpIds: const {_gpBlocker},
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -211,7 +195,8 @@ void main() {
         atWarFactionIds: const [_gpDistraction],
         extraGpIds: const {_gpBlocker},
       );
-      final gpOnlySnapshot = _ownSnapshot(
+      final gpOnlySnapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -248,7 +233,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 12,
         atWarWith: const [_gpBlocker],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -259,42 +245,46 @@ void main() {
       );
     });
 
-    test('returns null when no OW minor remains on the map (GP-blocker focus)', () {
-      // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
-      // minorNations but owns no OW province → anyMinorOwnsOw is false.
-      final game = _gpBlockerFocusGame(
-        provinces: [
-          for (var i = 0; i < 7; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          for (var i = 0; i < 10; i++)
-            Province(
-              id: 'oldWorld|${_gpBlocker}_$i',
+    test(
+      'returns null when no OW minor remains on the map (GP-blocker focus)',
+      () {
+        // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
+        // minorNations but owns no OW province → anyMinorOwnsOw is false.
+        final game = _gpBlockerFocusGame(
+          provinces: [
+            for (var i = 0; i < 7; i++)
+              Province(
+                id: 'oldWorld|${_gpOwn}_$i',
+                regionId: 'oldWorld',
+                ownerId: _gpOwn,
+              ),
+            for (var i = 0; i < 10; i++)
+              Province(
+                id: 'oldWorld|${_gpBlocker}_$i',
+                regionId: 'oldWorld',
+                ownerId: _gpBlocker,
+              ),
+            const Province(
+              id: 'oldWorld|inv1',
               regionId: 'oldWorld',
               ownerId: _gpBlocker,
             ),
-          const Province(
-            id: 'oldWorld|inv1',
-            regionId: 'oldWorld',
-            ownerId: _gpBlocker,
-          ),
-        ],
-        atWarFactionIds: const [_gpBlocker],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-      );
-      final snapshot = _ownSnapshot(
-        oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-      );
-      expect(
-        stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
-        isNull,
-      );
-    });
+          ],
+          atWarFactionIds: const [_gpBlocker],
+          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        );
+        final snapshot = ownSnapshot(
+          playerId: _gpOwn,
+          oldWorldProvincesOwned: 7,
+          atWarWith: const [_gpBlocker],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        );
+        expect(
+          stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
+          isNull,
+        );
+      },
+    );
   });
 
   group('stalledStrongerGpBlockerPeaceTarget — fire path', () {
@@ -338,7 +328,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const [
@@ -391,13 +382,11 @@ void main() {
         atWarFactionIds: const [_gpBlocker],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const [
-          'oldWorld|inv1',
-          'oldWorld|inv2',
-        ],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1', 'oldWorld|inv2'],
       );
       expect(
         stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
@@ -430,7 +419,8 @@ void main() {
         ],
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -487,7 +477,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const [
@@ -532,7 +523,8 @@ void main() {
         ],
         atWarFactionIds: const [_gpBlocker, _gpDistraction],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker, _gpDistraction],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],
@@ -569,7 +561,8 @@ void main() {
         atWarFactionIds: const [_gpBlocker],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
+        playerId: _gpOwn,
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker],
         invadableProvinceIdsSorted: const ['oldWorld|inv1'],

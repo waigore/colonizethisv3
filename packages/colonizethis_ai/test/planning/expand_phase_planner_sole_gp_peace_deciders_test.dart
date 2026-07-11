@@ -45,11 +45,11 @@
 //      lead) are pinned so a regression to `>` cannot delay or skip
 //      the consolidate peace.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpPartner = 'gp_partner';
@@ -166,25 +166,6 @@ Game _ownVsPartnerGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group('unwinnableSoleGpFrontierPeaceTarget — sole-enemy guard', () {
     test('returns null when zero Great Powers are at war (only a minor)', () {
@@ -228,7 +209,7 @@ void main() {
           ),
         ],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 5,
         atWarWith: const [_minor1],
       );
@@ -254,7 +235,7 @@ void main() {
         extraGpId: _gpThird,
         extraGpProvinces: 12,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner, _gpThird],
       );
@@ -280,7 +261,7 @@ void main() {
           ownProvinces: kObserverConquestMinOwProvincesPerGp,
           partnerProvinces: kObserverConquestMinOwProvincesPerGp + 5,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
           atWarWith: const [_gpPartner],
         );
@@ -300,7 +281,7 @@ void main() {
       // the pivot guard short-circuits to false and the forced peace
       // shortcut must defer.
       final game = _ownVsPartnerGame(ownProvinces: 6, partnerProvinces: 12);
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -326,7 +307,7 @@ void main() {
         minorId: 'minor_pivot',
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
         atWarWith: const [_gpPartner],
       );
@@ -348,7 +329,7 @@ void main() {
         partnerProvinces: 10,
         extraInvadableMinorOwnerId: 'minor_frontier',
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 9,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
@@ -371,7 +352,7 @@ void main() {
         minorId: 'minor_pivot',
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 9,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -398,7 +379,7 @@ void main() {
           minorId: 'minor_pivot',
           minorProvinces: 1,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 9,
           atWarWith: const [_gpPartner],
           invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -424,7 +405,7 @@ void main() {
         minorId: 'minor_pivot',
         minorProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 9,
         atWarWith: const [_gpPartner],
         invadableProvinceIdsSorted: const ['oldWorld|${_gpPartner}_1'],
@@ -484,7 +465,7 @@ void main() {
           ),
         ],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
         atWarWith: const [_minor1],
       );
@@ -505,7 +486,7 @@ void main() {
         extraGpId: _gpThird,
         extraGpProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
         atWarWith: const [_gpPartner, _gpThird],
       );
@@ -528,7 +509,7 @@ void main() {
         ownProvinces: kObserverConquestConsolidateMinOwProvinces - 1,
         partnerProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces - 1,
         atWarWith: const [_gpPartner],
       );
@@ -553,7 +534,7 @@ void main() {
           ownProvinces: kObserverConquestConsolidateMinOwProvinces,
           partnerProvinces: 1,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
           atWarWith: const [_gpPartner],
         );
@@ -581,7 +562,7 @@ void main() {
               kObserverConquestConsolidateMinOwProvinces -
               (kConsolidateGainsSoleGpProvinceLead - 1),
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
           atWarWith: const [_gpPartner],
         );
@@ -605,7 +586,7 @@ void main() {
             kObserverConquestConsolidateMinOwProvinces -
             kConsolidateGainsSoleGpProvinceLead,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
         atWarWith: const [_gpPartner],
       );
@@ -626,7 +607,7 @@ void main() {
         ownProvinces: kObserverConquestConsolidateMinOwProvinces,
         partnerProvinces: 1,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestConsolidateMinOwProvinces,
         atWarWith: const [_gpPartner],
       );

@@ -18,12 +18,12 @@
 //      `ThreatSummary.atWarWith`, sorted ascending. Minors and Great
 //      Powers are dropped (their own peace deciders own those decisions).
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpRival = 'gp_rival';
@@ -113,27 +113,6 @@ Game _tribeDistractionGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-  List<String> adjacentOwnerFactionIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-      adjacentOwnerFactionIdsSorted: adjacentOwnerFactionIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group(
     'belowQuotaRegimentThinTribeDistractionPeaceTargets — outer guards',
@@ -147,7 +126,7 @@ void main() {
           },
           atWarTribes: const [_tribeOne, _tribeTwo],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
           atWarWith: const [_tribeOne, _tribeTwo],
           invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -173,7 +152,7 @@ void main() {
           },
           atWarTribes: const [_tribeOne, _tribeTwo],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
           atWarWith: const [_tribeOne, _tribeTwo],
           invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -201,7 +180,7 @@ void main() {
             },
             atWarTribes: const [_tribeOne, _tribeTwo],
           );
-          final snapshot = _ownSnapshot(
+          final snapshot = ownSnapshot(
             oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
             atWarWith: const [_tribeOne, _tribeTwo],
             invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -226,7 +205,7 @@ void main() {
           ownRegiments: 2,
           atWarTribes: const [_tribeOne, _tribeTwo],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
           atWarWith: const [_tribeOne, _tribeTwo],
           invadableProvinceIdsSorted: const [],
@@ -258,7 +237,7 @@ void main() {
         atWarTribes: const [_tribeThree, _tribeOne, _tribeTwo],
         atWarRivalGps: const [_gpRival],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
         atWarWith: const [
           _minorAlpha,
@@ -295,7 +274,7 @@ void main() {
         },
         atWarTribes: const [_tribeOne, _tribeTwo, _tribeThree],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
         atWarWith: const [_tribeOne, _tribeTwo, _tribeThree],
         invadableProvinceIdsSorted: const ['oldWorld|tribe1_a'],
@@ -329,7 +308,7 @@ void main() {
         },
         atWarTribes: const [_tribeOne, _tribeTwo],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
         atWarWith: const [_tribeOne, _tribeTwo],
         // tribe1_distant is deliberately absent from the invadable set.
@@ -357,7 +336,7 @@ void main() {
         },
         atWarTribes: const [_tribeTwo, _tribeOne],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
         atWarWith: const [_tribeTwo, _tribeOne],
         invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
