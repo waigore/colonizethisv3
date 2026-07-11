@@ -3,6 +3,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 /// Canonical ids for build-unit / training expectation bodies.
 abstract final class ButIds {
   static const playerId = 'p1';
@@ -16,29 +18,23 @@ Game butOwGame({
   List<Province>? provinces,
   List<Fleet>? fleets,
   String provinceId = 'oldWorld|P1',
-}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces:
-            provinces ??
-            [
-              Province(
-                id: provinceId,
-                regionId: ButIds.ow,
-                ownerId: ButIds.playerId,
-              ),
-            ],
-        units: [],
-      ),
-      newWorld: const RegionData(),
-      fleets: fleets ?? const [],
-    ),
-    players: players,
-  );
-}
+}) => ordersOwRegionGame(
+  id: 'g',
+  players: players,
+  oldWorld: RegionData(
+    provinces:
+        provinces ??
+        [
+          Province(
+            id: provinceId,
+            regionId: ButIds.ow,
+            ownerId: ButIds.playerId,
+          ),
+        ],
+    units: const [],
+  ),
+  fleets: fleets ?? const [],
+);
 
 Game butMilitaryBaseGame({required int peasants, required int treasury}) {
   return butOwGame(

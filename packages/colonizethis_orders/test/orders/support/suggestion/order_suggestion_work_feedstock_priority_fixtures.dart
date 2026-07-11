@@ -1,8 +1,10 @@
-// Feedstock-priority build_improvement suggestion fixtures (Refs #3949 wave 3).
+// Feedstock-priority build_improvement suggestion fixtures (Refs #3949 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 /// Refs #2847 § H8-extraction: feedstock-extraction priority for
 /// `build_improvement` candidates (SPEC/program/order-suggestions.md).
@@ -17,35 +19,67 @@ const feedstockPrioritySellerWoolTile = 'oldWorld|gp2-p0|0|0';
 const feedstockCoAvailTimberTile = 'oldWorld|gp1-s0|1|0';
 const feedstockCoAvailIronTile = 'oldWorld|gp1-s0|2|0';
 
+List<Province> _feedstockProvinces({
+  required int supplierOw,
+  required int sellerOw,
+}) => [
+  for (var i = 0; i < supplierOw; i++)
+    Province(
+      id: 'oldWorld|gp1-s$i',
+      regionId: kRegionOldWorld,
+      ownerId: feedstockPrioritySupplierId,
+    ),
+  for (var i = 0; i < sellerOw; i++)
+    Province(
+      id: 'oldWorld|gp2-p$i',
+      regionId: kRegionOldWorld,
+      ownerId: feedstockPrioritySellerId,
+    ),
+];
+
 /// Builds a two-player world that activates the supplier-side feedstock gate
 /// for [feedstockPrioritySupplierId] when [sellerOw] is below the conquest quota.
 Game feedstockPriorityGame({int sellerOw = 5, int supplierCastIron = 0}) {
   const supplierOw = kObserverConquestMinOwProvincesPerGp;
-  final provinces = <Province>[
-    for (var i = 0; i < supplierOw; i++)
-      Province(
-        id: 'oldWorld|gp1-s$i',
-        regionId: kRegionOldWorld,
-        ownerId: feedstockPrioritySupplierId,
+  return ordersOwRegionGame(
+    id: 'g',
+    turnNumber: 1,
+    players: [
+      Player(
+        id: feedstockPrioritySupplierId,
+        displayName: 'Supplier',
+        isHuman: false,
+        treasury: 100000,
+        stockpile: Stockpile(
+          quantities: {
+            'lumber': 10,
+            if (supplierCastIron > 0) 'castIron': supplierCastIron,
+          },
+        ),
       ),
-    for (var i = 0; i < sellerOw; i++)
-      Province(
-        id: 'oldWorld|gp2-p$i',
-        regionId: kRegionOldWorld,
-        ownerId: feedstockPrioritySellerId,
+      Player(
+        id: feedstockPrioritySellerId,
+        displayName: 'Seller',
+        isHuman: false,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        stockpile: const Stockpile(quantities: {'lumber': 1}),
       ),
-  ];
-  final builder = Unit(
-    id: 'b1',
-    type: kUnitTypeBuilder,
-    ownerId: feedstockPrioritySupplierId,
-    locationProvinceId: 'oldWorld|gp1-s0',
-    tileKey: feedstockPrioritySupplierGrainTile,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: provinces, units: [builder]),
-    newWorld: const RegionData(),
+    ],
+    oldWorld: RegionData(
+      provinces: _feedstockProvinces(
+        supplierOw: supplierOw,
+        sellerOw: sellerOw,
+      ),
+      units: [
+        Unit(
+          id: 'b1',
+          type: kUnitTypeBuilder,
+          ownerId: feedstockPrioritySupplierId,
+          locationProvinceId: 'oldWorld|gp1-s0',
+          tileKey: feedstockPrioritySupplierGrainTile,
+        ),
+      ],
+    ),
     playerVisibilityByTile: const {
       feedstockPrioritySupplierId: {
         feedstockPrioritySupplierGrainTile: 'fullyVisible',
@@ -81,31 +115,6 @@ Game feedstockPriorityGame({int sellerOw = 5, int supplierCastIron = 0}) {
       },
     ),
   );
-  return Game(
-    id: 'g',
-    worldState: world,
-    players: [
-      Player(
-        id: feedstockPrioritySupplierId,
-        displayName: 'Supplier',
-        isHuman: false,
-        treasury: 100000,
-        stockpile: Stockpile(
-          quantities: {
-            'lumber': 10,
-            if (supplierCastIron > 0) 'castIron': supplierCastIron,
-          },
-        ),
-      ),
-      Player(
-        id: feedstockPrioritySellerId,
-        displayName: 'Seller',
-        isHuman: false,
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: const Stockpile(quantities: {'lumber': 1}),
-      ),
-    ],
-  );
 }
 
 /// Two-player world whose supplier-side feedstock gate is active and that owns
@@ -116,31 +125,46 @@ Game feedstockCoAvailGame({
 }) {
   const supplierOw = kObserverConquestMinOwProvincesPerGp;
   const sellerOw = 5;
-  final provinces = <Province>[
-    for (var i = 0; i < supplierOw; i++)
-      Province(
-        id: 'oldWorld|gp1-s$i',
-        regionId: kRegionOldWorld,
-        ownerId: feedstockPrioritySupplierId,
+  return ordersOwRegionGame(
+    id: 'g',
+    turnNumber: 1,
+    players: [
+      Player(
+        id: feedstockPrioritySupplierId,
+        displayName: 'Supplier',
+        isHuman: false,
+        treasury: 100000,
+        stockpile: Stockpile(
+          quantities: {
+            'lumber': 10,
+            if (supplierTimberHeld > 0) 'timber': supplierTimberHeld,
+            if (supplierIronHeld > 0) 'iron': supplierIronHeld,
+          },
+        ),
       ),
-    for (var i = 0; i < sellerOw; i++)
-      Province(
-        id: 'oldWorld|gp2-p$i',
-        regionId: kRegionOldWorld,
-        ownerId: feedstockPrioritySellerId,
+      Player(
+        id: feedstockPrioritySellerId,
+        displayName: 'Seller',
+        isHuman: false,
+        treasury: cheapestRegimentBuildTreasuryCost(),
+        stockpile: const Stockpile(),
       ),
-  ];
-  final builder = Unit(
-    id: 'b1',
-    type: kUnitTypeBuilder,
-    ownerId: feedstockPrioritySupplierId,
-    locationProvinceId: 'oldWorld|gp1-s0',
-    tileKey: feedstockCoAvailTimberTile,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: provinces, units: [builder]),
-    newWorld: const RegionData(),
+    ],
+    oldWorld: RegionData(
+      provinces: _feedstockProvinces(
+        supplierOw: supplierOw,
+        sellerOw: sellerOw,
+      ),
+      units: [
+        Unit(
+          id: 'b1',
+          type: kUnitTypeBuilder,
+          ownerId: feedstockPrioritySupplierId,
+          locationProvinceId: 'oldWorld|gp1-s0',
+          tileKey: feedstockCoAvailTimberTile,
+        ),
+      ],
+    ),
     playerVisibilityByTile: const {
       feedstockPrioritySupplierId: {
         feedstockCoAvailTimberTile: 'fullyVisible',
@@ -171,32 +195,6 @@ Game feedstockCoAvailGame({
         feedstockPrioritySellerWoolTile: 0,
       },
     ),
-  );
-  return Game(
-    id: 'g',
-    worldState: world,
-    players: [
-      Player(
-        id: feedstockPrioritySupplierId,
-        displayName: 'Supplier',
-        isHuman: false,
-        treasury: 100000,
-        stockpile: Stockpile(
-          quantities: {
-            'lumber': 10,
-            if (supplierTimberHeld > 0) 'timber': supplierTimberHeld,
-            if (supplierIronHeld > 0) 'iron': supplierIronHeld,
-          },
-        ),
-      ),
-      Player(
-        id: feedstockPrioritySellerId,
-        displayName: 'Seller',
-        isHuman: false,
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: const Stockpile(),
-      ),
-    ],
   );
 }
 

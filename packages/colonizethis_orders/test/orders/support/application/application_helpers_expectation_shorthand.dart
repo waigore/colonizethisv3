@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../common/game_graphs.dart';
+
 TileMapResult ahSingleTileMap({
   required TerrainType terrain,
   Resource? resource,
@@ -75,22 +77,17 @@ Game ahOwBuilderGame(
   String playerId = 'gp1',
   String ow = 'oldWorld',
   String provinceLocalId = 'p1',
-}) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|$provinceLocalId', regionId: ow, ownerId: playerId),
-        ],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
-  );
-}
+}) => ordersOwRegionGame(
+  id: 'g1',
+  turnNumber: 1,
+  players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+  oldWorld: RegionData(
+    provinces: [
+      Province(id: '$ow|$provinceLocalId', regionId: ow, ownerId: playerId),
+    ],
+    units: [unit],
+  ),
+);
 
 void ahExpectMineralEligible({
   required Map<String, String> resourceByTile,

@@ -2,6 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 import 'valid_work_tiles_test_support.dart';
 
 /// NW home + adjacent target province with partial visibility (home full, t0
@@ -123,14 +125,23 @@ class NwPartialRevealHomeTarget {
     List<MinorNation>? minorNations,
     List<OvertureState>? overtureStates,
     Unit? unit,
-  }) => Game(
-    id: id,
-    worldState: world(unit: unit),
-    players: players ?? const [ValidWorkTilesTestSupport.defaultPlayer],
-    tribes: tribes ?? const [],
-    minorNations: minorNations ?? const [],
-    overtureStates: overtureStates ?? const [],
-  );
+  }) {
+    final ws = world(unit: unit);
+    return ordersOwRegionGame(
+      id: id,
+      turnNumber: 1,
+      players: players ?? const [ValidWorkTilesTestSupport.defaultPlayer],
+      oldWorld: ws.oldWorld,
+      newWorld: ws.newWorld,
+      tribes: tribes ?? const [],
+      minorNations: minorNations ?? const [],
+      overtureStates: overtureStates ?? const [],
+      tileKeysByRegionAndProvince: ws.tileKeysByRegionAndProvince,
+      resourceByTileKey: ws.resourceByTileKey,
+      playerProspectedTiles: ws.playerProspectedTiles,
+      playerVisibilityByTile: ws.playerVisibilityByTile,
+    );
+  }
 
   static NwPartialRevealHomeTarget tribeGrainIron({
     bool prospectedIron = false,

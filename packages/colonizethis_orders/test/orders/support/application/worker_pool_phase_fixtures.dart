@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Canonical ids for worker-pool phase expectation bodies.
 abstract final class WppIds {
@@ -22,17 +23,8 @@ const wppJourneymanTech = {
 
 const wppMasterTech = {kTechIdMasterArtisans: true, kTechIdHatProduction: true};
 
-Game wppEmptyWorldGame({required List<Player> players}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-  );
-}
+Game wppEmptyWorldGame({required List<Player> players}) =>
+    TestFixtures.minimalGame(id: 'g', turnNumber: 0, players: players);
 
 Player wppPlayer({
   String id = WppIds.player1,

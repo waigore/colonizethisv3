@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const oldWorldRegionId = 'oldWorld';
 
 final buildCivilianTopology = MapTopology(
@@ -31,13 +33,8 @@ Game buildCivilianValidationGame({
   if (paper > 0) {
     stockpile = stockpile.applyDelta(CommodityCatalog.paper.id, paper);
   }
-  return Game(
+  return ordersOwRegionGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(provinces: provinces, units: const []),
-      newWorld: const RegionData(),
-    ),
     players: [
       Player(
         id: 'p1',
@@ -56,6 +53,7 @@ Game buildCivilianValidationGame({
         techUnlocked: techUnlocked,
       ),
     ],
+    oldWorld: RegionData(provinces: provinces, units: const []),
   );
 }
 

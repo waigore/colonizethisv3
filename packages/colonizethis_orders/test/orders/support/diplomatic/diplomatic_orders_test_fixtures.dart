@@ -4,6 +4,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const emptyTopology = MapTopology(nodes: [], edges: []);
 
 /// Default GP treasury for order-engine diplomatic validation tests.
@@ -80,14 +82,11 @@ Game gpMinorGame({
         ),
       ];
 
-  return Game(
+  return ordersOwRegionGame(
     id: gameId,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: oldWorld,
-      newWorld: const RegionData(),
-    ),
+    turnNumber: turnNumber,
     players: players,
+    oldWorld: oldWorld,
     minorNations: [MinorNation(id: 'minor1', displayName: minorDisplayName)],
     diplomacyRelations: diplomacyRelations,
     overtureStates: resolvedOvertureStates,

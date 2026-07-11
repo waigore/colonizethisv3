@@ -2455,3 +2455,16 @@ Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17819**. Rem
 
 Raw `Game(` outside `common/`: **34**. Support LOC after slice 5: **17381**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 6: army-move / precheck / feedstock / app migrate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| migrate-army-move | migrate army-move picker / fixtures / heuristics onto `ordersOwRegionGame` | `order_suggestion_army_move_*_fixtures.dart` | thin wrappers | #3971 |
+| migrate-precheck-feedstock | migrate work-order prechecks + feedstock priority Games | `work_order_target_prechecks_fixtures.dart`, `order_suggestion_work_feedstock_priority_fixtures.dart` | thin wrappers | #3971 |
+| migrate-app-engine-naval | migrate app/engine/naval/diplomatic/context/research empty-region Games | application + engine + validators + diplomatic support | thin wrappers / `TestFixtures.minimalGame` | #3971 |
+| migrate-nw-declare-purchase | migrate NW partial-reveal, declare-war, purchase-land colonial Games | suggestion fixtures | thin wrappers | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 34 → 5 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17400 → 17150 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **5**. Support LOC after slice 6: **17134**. Remaining: drive ≤14,900 / test ≤16,400; migrate last WorldState-first prospect/feedstock Games; optional precheck/replay lib extracts.
+

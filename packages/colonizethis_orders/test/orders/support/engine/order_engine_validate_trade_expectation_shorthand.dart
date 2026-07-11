@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 const vetRegionId = 'oldWorld';
 
@@ -29,13 +30,9 @@ const vetEmbassyOverture = [
 Game vetGameWith({
   required Player player,
   List<OvertureState> overtures = const [],
-}) => Game(
+}) => TestFixtures.minimalGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
+  turnNumber: 0,
   players: [player],
   overtureStates: overtures,
 );
