@@ -70,28 +70,11 @@ void _fog_resolution_spy_clear_testTests() {
       const pid = '$ow|P1';
       const tileKey = '$ow|P1|0|0';
 
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [Province(id: pid, regionId: ow, ownerId: 'a')],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'a': {tileKey: 'fullyVisible'},
-            'b': {},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              pid: [tileKey],
-            },
-          },
-        ),
-        players: const [
-          Player(id: 'a', displayName: 'A', isHuman: true),
-          Player(id: 'b', displayName: 'B', isHuman: true),
-        ],
+      final game = ownershipTransferVisibilityGame(
+        provinceId: pid,
+        tileKey: tileKey,
+        formerOwnerId: 'a',
+        newOwnerId: 'b',
       );
 
       final out = applyProvinceOwnershipChangeVisibility(game, pid, 'a', 'b');
@@ -120,29 +103,19 @@ void _fog_resolution_spy_clear_testTests() {
           provinceLocalId: 'p1',
           seaZoneId: 's1',
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'gp1': {tileKeySea: 'fogged'},
+        final game = coastalSeaVisibilityGame(
+          provinces: const [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {tileKeySea: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'p1': ['oldWorld|p1|0|0'],
+              '$ow|s1': [tileKeySea],
             },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                'p1': ['oldWorld|p1|0|0'],
-                '$ow|s1': [tileKeySea],
-              },
-            },
-          ),
+          },
           players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
         );
         final inputVis = <String, Map<String, String>>{
@@ -165,28 +138,18 @@ void _fog_resolution_spy_clear_testTests() {
           provinceLocalId: 'p1',
           seaZoneId: 's1',
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'gp1': {tileKeySea: 'fogged'},
+        final game = coastalSeaVisibilityGame(
+          provinces: const [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {tileKeySea: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|s1': [tileKeySea],
             },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                '$ow|s1': [tileKeySea],
-              },
-            },
-          ),
+          },
           players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
         );
         final inputVis = <String, Map<String, String>>{
@@ -206,33 +169,23 @@ void _fog_resolution_spy_clear_testTests() {
         const tileKeyS1 = 'oldWorld|s1|1|0';
         const tileKeyS2 = 'oldWorld|s2|3|0';
         final topology = dualProvinceDualSeaTopology(regionId: ow);
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-                Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
-              'gp2': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+        final game = coastalSeaVisibilityGame(
+          provinces: const [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+          ],
+          playerVisibilityByTile: const {
+            'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+            'gp2': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'p1': ['oldWorld|p1|0|0'],
+              'p2': ['oldWorld|p2|2|0'],
+              '$ow|s1': [tileKeyS1],
+              '$ow|s2': [tileKeyS2],
             },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                'p1': ['oldWorld|p1|0|0'],
-                'p2': ['oldWorld|p2|2|0'],
-                '$ow|s1': [tileKeyS1],
-                '$ow|s2': [tileKeyS2],
-              },
-            },
-          ),
+          },
           players: const [
             Player(id: 'gp1', displayName: 'GP1', isHuman: true),
             Player(id: 'gp2', displayName: 'GP2', isHuman: false),
@@ -262,30 +215,23 @@ void _fog_resolution_spy_clear_testTests() {
       const tileKeyS1 = 'oldWorld|s1|1|0';
       const tileKeyS2 = 'oldWorld|s2|3|0';
       final topology = dualProvinceDualSeaTopology(regionId: ow);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              // Owned by a non-GP minor adjacent to s2: must not reveal s2 for gp1.
-              Province(id: '$ow|p2', regionId: ow, ownerId: 'm1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+      final game = coastalSeaVisibilityGame(
+        provinces: const [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          // Owned by a non-GP minor adjacent to s2: must not reveal s2 for gp1.
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'm1'),
+        ],
+        playerVisibilityByTile: const {
+          'gp1': {tileKeyS1: 'fogged', tileKeyS2: 'fogged'},
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            'p1': ['oldWorld|p1|0|0'],
+            'p2': ['oldWorld|p2|2|0'],
+            '$ow|s1': [tileKeyS1],
+            '$ow|s2': [tileKeyS2],
           },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              'p1': ['oldWorld|p1|0|0'],
-              'p2': ['oldWorld|p2|2|0'],
-              '$ow|s1': [tileKeyS1],
-              '$ow|s2': [tileKeyS2],
-            },
-          },
-        ),
+        },
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
 

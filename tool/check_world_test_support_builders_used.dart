@@ -8,10 +8,13 @@ import 'ct_repo_lint_scan_contract.dart';
 /// `world_test_support/` so they cannot rot unused (Refs #3968).
 const List<String> worldRequiredSupportBuilderNames = [
   'spyRevealFogGame',
+  'ownershipTransferVisibilityGame',
+  'coastalSeaVisibilityGame',
   'capitalLossGame',
   'gpCapitalReassignmentGame',
   'factionCapitalReassignmentGame',
   'ordersPhaseGame',
+  'topologyGraph',
 ];
 
 const String _worldTestPrefix = 'packages/colonizethis_world/test/';

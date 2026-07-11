@@ -41,6 +41,24 @@ WorldState _transferFactionWorldStateAssets(
   return updatedWorldState.copyWith(fleets: remainingFleets);
 }
 
+/// Shared transfer + finish hook for GP / non-GP terminal fall (Refs #3968).
+///
+/// Eligibility stays caller-specific; this only applies asset transfer then
+/// [finish] (remove faction, clear capital fields, logging, etc.).
+Game _applyTerminalFallTransfer({
+  required Game game,
+  required String factionId,
+  required String conquerorId,
+  required Game Function(Game transferred) finish,
+}) {
+  final nextWorldState = _transferFactionWorldStateAssets(
+    game.worldState,
+    fromFactionId: factionId,
+    toFactionId: conquerorId,
+  );
+  return finish(game.withWorldState(nextWorldState));
+}
+
 /// Terminal fall for **Minor Nations** and **Tribes** after combat resolution
 /// and capital reassignment. Parallel to [applyGreatPowerFall] but the
 /// eligibility check is **no owned provinces in the original capital region**
@@ -113,18 +131,19 @@ Game _applyTerminalFallForFaction({
   ).ownsAnyInRegion(factionId, originalRegionId);
   if (hasProvinceInOriginalRegion) return game;
 
-  final nextWorldState = _transferFactionWorldStateAssets(
-    game.worldState,
-    fromFactionId: factionId,
-    toFactionId: conquerorId,
+  return _applyTerminalFallTransfer(
+    game: game,
+    factionId: factionId,
+    conquerorId: conquerorId,
+    finish: (transferred) {
+      final next = removeFaction(transferred);
+      worldLog.i(
+        '$factionLabel $factionId fell after capital loss; '
+        'provinces and assets transferred to $conquerorId',
+      );
+      return next;
+    },
   );
-  var next = game.withWorldState(nextWorldState);
-  next = removeFaction(next);
-  worldLog.i(
-    '$factionLabel $factionId fell after capital loss; '
-    'provinces and assets transferred to $conquerorId',
-  );
-  return next;
 }
 
 Game applyGreatPowerFall(
@@ -162,19 +181,16 @@ Game applyGreatPowerFall(
     if (hasPortProvince) continue;
 
     final conquerorId = prevCapitalOwner;
-
-    final nextWorldState = _transferFactionWorldStateAssets(
-      game.worldState,
-      fromFactionId: playerId,
-      toFactionId: conquerorId,
+    game = _applyTerminalFallTransfer(
+      game: game,
+      factionId: playerId,
+      conquerorId: conquerorId,
+      finish: (transferred) => transferred.mapPlayers(
+        (p) => p.id == playerId
+            ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+            : p,
+      ),
     );
-    game = game
-        .withWorldState(nextWorldState)
-        .mapPlayers(
-          (p) => p.id == playerId
-              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-              : p,
-        );
   }
 
   return game;

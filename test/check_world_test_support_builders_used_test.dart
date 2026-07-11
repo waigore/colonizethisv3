@@ -57,10 +57,13 @@ void main() {
         File(p.join(worldTest.path, 'sample_test.dart')).writeAsStringSync(
           'void main() {\n'
           '  spyRevealFogGame();\n'
+          '  ownershipTransferVisibilityGame();\n'
+          '  coastalSeaVisibilityGame();\n'
           '  capitalLossGame();\n'
           '  gpCapitalReassignmentGame();\n'
           '  factionCapitalReassignmentGame();\n'
           '  ordersPhaseGame();\n'
+          '  topologyGraph();\n'
           '}\n',
         );
 
