@@ -2440,5 +2440,5 @@ Raw `Game(` outside `common/`: **71** (ceiling 71). Support LOC after slice 3: *
 | raw-game-ratchet | lower raw `Game(` ceiling 71 → 56 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
 | support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18100 → 17850 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
 
-Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17837**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17819**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
