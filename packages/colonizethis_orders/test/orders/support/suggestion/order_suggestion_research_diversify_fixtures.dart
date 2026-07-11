@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 
 const researchDiversifyPlayerId = 'gp1';
 const researchDiversifyTopology = MapTopology(nodes: [], edges: []);
@@ -22,15 +23,8 @@ String researchCategoryBucketOf(String category) {
   }
 }
 
-Game researchDiversifyGameFor(Player player) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: [player],
-);
+Game researchDiversifyGameFor(Player player) =>
+    TestFixtures.minimalGame(id: 'g1', turnNumber: 1, players: [player]);
 
 /// Greedy-sorted researchable pool from an empty unlocked state.
 List<TechDefinition> researchDiversifyGreedyPool() {

@@ -65,24 +65,6 @@ const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
   kWorkTargetUpgradeTown,
 };
 
-OrderValidationResult? _rejectAtWarOrWithoutEmbassy(
-  Game game,
-  String playerId,
-  String otherFactionId, {
-  required String atWarMessage,
-  required String embassyMessage,
-}) {
-  final rel = getRelation(game, playerId, otherFactionId);
-  if (rel?.atWar == true) {
-    return OrderValidationResult.rejected(atWarMessage);
-  }
-  final overture = getOverture(game, playerId, otherFactionId);
-  if (overture == null || !overture.hasEmbassy) {
-    return OrderValidationResult.rejected(embassyMessage);
-  }
-  return null;
-}
-
 /// Shared empty-resource + mineral-prospected gate for purchase_land /
 /// build_improvement (Refs #3949 item 7).
 ({String? resourceId, OrderValidationResult? rejection})
@@ -172,7 +154,7 @@ OrderValidationResult? precheckUpgradeTown(
         'upgrade_town target must be an owned or Minor/Tribe province town',
       );
     }
-    final embassyRejection = _rejectAtWarOrWithoutEmbassy(
+    final embassyRejection = rejectAtWarOrWithoutEmbassy(
       ctx.game,
       ctx.playerId,
       provinceOwnerId,
@@ -223,7 +205,7 @@ OrderValidationResult? precheckPurchaseLand(
       'purchase_land target must be a Minor or Tribe province',
     );
   }
-  final embassyRejection = _rejectAtWarOrWithoutEmbassy(
+  final embassyRejection = rejectAtWarOrWithoutEmbassy(
     ctx.game,
     ctx.playerId,
     ownerId,

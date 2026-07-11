@@ -1,4 +1,5 @@
-// Compact incremental equivalence expectation shorthands (Refs #3949).
+// Compact incremental equivalence expectation shorthands
+// (Refs #3949 / #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -84,186 +85,18 @@ void iceExpectFamilyOnCorpus({
   );
 }
 
-void iceExpectBuildOnCorpus({
-  required BuildUnitOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = iceBuildCorpusGame();
-  const topology = iceBuildCorpusTopology;
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Build',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassBuildAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isBuildAccepted(candidate),
-  );
-}
+// dart format off
+void iceExpectBuildOnCorpus({required BuildUnitOrder candidate, required String label, Orders basePrefix = const Orders()}) {final game = iceBuildCorpusGame(); const topology = iceBuildCorpusTopology; iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Build', label: label, basePrefix: basePrefix, fullPass: () => fullPassBuildAccepted(game, topology, IceIds.playerId, basePrefix, candidate), incremental: (validator) => validator.isBuildAccepted(candidate));}
 
-void iceExpectWorkOnCorpus({
-  required Game game,
-  required MapTopology topology,
-  required WorkOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Work',
-    label: label,
-    basePrefix: basePrefix,
-    tileMapByRegion: tileMapByRegion,
-    fullPass: () => fullPassWorkAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    ),
-    incremental: (validator) => validator.isWorkAccepted(candidate),
-  );
-}
+void iceExpectWorkOnCorpus({required Game game, required MapTopology topology, required WorkOrder candidate, required String label, Orders basePrefix = const Orders(), Map<String, TileMapResult>? tileMapByRegion}) {iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Work', label: label, basePrefix: basePrefix, tileMapByRegion: tileMapByRegion, fullPass: () => fullPassWorkAccepted(game, topology, IceIds.playerId, basePrefix, candidate, tileMapByRegion: tileMapByRegion), incremental: (validator) => validator.isWorkAccepted(candidate));}
 
-void iceExpectDiplomaticOnCorpus({
-  required Game game,
-  required MapTopology topology,
-  required DiplomaticOrder candidate,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Diplomatic',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassDiplomaticAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isDiplomaticAccepted(candidate),
-  );
-}
+void iceExpectDiplomaticOnCorpus({required Game game, required MapTopology topology, required DiplomaticOrder candidate, required String label, Orders basePrefix = const Orders()}) {iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Diplomatic', label: label, basePrefix: basePrefix, fullPass: () => fullPassDiplomaticAccepted(game, topology, IceIds.playerId, basePrefix, candidate), incremental: (validator) => validator.isDiplomaticAccepted(candidate));}
 
-void iceRunMoveRow({
-  required String unitId,
-  required String destLocal,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = moveCorpusGame();
-  final topology = moveCorpusTopology();
-  final candidate = MoveOrder(
-    unitId: unitId,
-    destinationTileKey: destLocal.isEmpty ? '' : iceTile(destLocal),
-  );
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Move',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isMoveAccepted(candidate),
-  );
-}
+void iceRunMoveRow({required String unitId, required String destLocal, required String label, Orders basePrefix = const Orders()}) {final game = moveCorpusGame(); final topology = moveCorpusTopology(); final candidate = MoveOrder(unitId: unitId, destinationTileKey: destLocal.isEmpty ? '' : iceTile(destLocal)); iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Move', label: label, basePrefix: basePrefix, fullPass: () => fullPassMoveAccepted(game, topology, IceIds.playerId, basePrefix, candidate), incremental: (validator) => validator.isMoveAccepted(candidate));}
 
-void iceRunArmyMoveRow({
-  required String armyId,
-  required String destLocal,
-  required String label,
-  Orders basePrefix = const Orders(),
-}) {
-  final game = armyCorpusGame();
-  final topology = armyCorpusTopology();
-  final candidate = ArmyMoveOrder(
-    armyId: armyId,
-    destinationProvinceId: IceIds.prov(destLocal),
-  );
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Army move',
-    label: label,
-    basePrefix: basePrefix,
-    fullPass: () => fullPassArmyMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      basePrefix,
-      candidate,
-    ),
-    incremental: (validator) => validator.isArmyMoveAccepted(candidate),
-  );
-}
+void iceRunArmyMoveRow({required String armyId, required String destLocal, required String label, Orders basePrefix = const Orders()}) {final game = armyCorpusGame(); final topology = armyCorpusTopology(); final candidate = ArmyMoveOrder(armyId: armyId, destinationProvinceId: IceIds.prov(destLocal)); iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Army move', label: label, basePrefix: basePrefix, fullPass: () => fullPassArmyMoveAccepted(game, topology, IceIds.playerId, basePrefix, candidate), incremental: (validator) => validator.isArmyMoveAccepted(candidate));}
 
-void iceRunNavalMoveRow({
-  required String fleetId,
-  required String destSeaZoneId,
-  required String label,
-}) {
-  final game = navalCorpusGame();
-  final topology = navalCorpusTopology();
-  final candidate = NavalMoveOrder(
-    fleetId: fleetId,
-    destinationSeaZoneId: destSeaZoneId,
-  );
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Naval move',
-    label: label,
-    fullPass: () => fullPassNavalMoveAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      const Orders(),
-      candidate,
-    ),
-    incremental: (validator) => validator.isNavalMoveAccepted(candidate),
-  );
-}
+void iceRunNavalMoveRow({required String fleetId, required String destSeaZoneId, required String label}) {final game = navalCorpusGame(); final topology = navalCorpusTopology(); final candidate = NavalMoveOrder(fleetId: fleetId, destinationSeaZoneId: destSeaZoneId); iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Naval move', label: label, fullPass: () => fullPassNavalMoveAccepted(game, topology, IceIds.playerId, const Orders(), candidate), incremental: (validator) => validator.isNavalMoveAccepted(candidate));}
 
-void iceRunNavalMissionRow({
-  required String fleetId,
-  required String mission,
-  required String label,
-}) {
-  final game = navalCorpusGame();
-  final topology = navalCorpusTopology();
-  final candidate = NavalMissionOrder(fleetId: fleetId, mission: mission);
-  iceExpectFamilyOnCorpus(
-    game: game,
-    topology: topology,
-    family: 'Naval mission',
-    label: label,
-    fullPass: () => fullPassNavalMissionAccepted(
-      game,
-      topology,
-      IceIds.playerId,
-      const Orders(),
-      candidate,
-    ),
-    incremental: (validator) => validator.isNavalMissionAccepted(candidate),
-  );
-}
+void iceRunNavalMissionRow({required String fleetId, required String mission, required String label}) {final game = navalCorpusGame(); final topology = navalCorpusTopology(); final candidate = NavalMissionOrder(fleetId: fleetId, mission: mission); iceExpectFamilyOnCorpus(game: game, topology: topology, family: 'Naval mission', label: label, fullPass: () => fullPassNavalMissionAccepted(game, topology, IceIds.playerId, const Orders(), candidate), incremental: (validator) => validator.isNavalMissionAccepted(candidate));}
+// dart format on

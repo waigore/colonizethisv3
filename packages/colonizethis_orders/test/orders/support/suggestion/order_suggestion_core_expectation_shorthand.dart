@@ -6,28 +6,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'order_suggestion_core_fixtures.dart';
 
-List<MoveOrder> oscSuggestMoves(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) => suggestMoveOrders(oscView(game, topology), game, topology, orders);
+// dart format off
+List<MoveOrder> oscSuggestMoves(Game game, MapTopology topology, [Orders orders = const Orders()]) =>
+    suggestMoveOrders(oscView(game, topology), game, topology, orders);
 
-List<WorkOrder> oscSuggestWork(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) => suggestWorkOrders(oscView(game, topology), game, topology, orders);
+List<WorkOrder> oscSuggestWork(Game game, MapTopology topology, [Orders orders = const Orders()]) =>
+    suggestWorkOrders(oscView(game, topology), game, topology, orders);
 
-List<BuildUnitOrder> oscSuggestBuild(
-  Game game,
-  MapTopology topology, [
-  Orders orders = const Orders(),
-]) => suggestBuildOrders(oscView(game, topology), game, topology, orders);
+List<BuildUnitOrder> oscSuggestBuild(Game game, MapTopology topology, [Orders orders = const Orders()]) =>
+    suggestBuildOrders(oscView(game, topology), game, topology, orders);
 
-Iterable<WorkOrder> oscWorkWithTarget(
-  List<WorkOrder> suggestions,
-  String target,
-) => suggestions.where((o) => o.target == target);
+Iterable<WorkOrder> oscWorkWithTarget(List<WorkOrder> suggestions, String target) => suggestions.where((o) => o.target == target);
 
 void oscExpectWorkTargetSuggestions({
   required Game game,
@@ -37,14 +26,9 @@ void oscExpectWorkTargetSuggestions({
   String? expectedTileKey,
   Orders orders = const Orders(),
 }) {
-  final ordersForTarget = oscWorkWithTarget(
-    oscSuggestWork(game, topology, orders),
-    target,
-  ).toList();
+  final ordersForTarget = oscWorkWithTarget(oscSuggestWork(game, topology, orders), target).toList();
   expect(ordersForTarget, expectNonEmpty ? isNotEmpty : isEmpty);
-  if (expectedTileKey != null && expectNonEmpty) {
-    expect(ordersForTarget.first.targetTileKey, expectedTileKey);
-  }
+  if (expectedTileKey != null && expectNonEmpty) expect(ordersForTarget.first.targetTileKey, expectedTileKey);
 }
 
 void oscExpectBuildImprovementFirstTile({
@@ -54,43 +38,27 @@ void oscExpectBuildImprovementFirstTile({
   Orders orders = const Orders(),
   String unitId = 'b2',
 }) {
-  final buildImp = oscWorkWithTarget(
-    oscSuggestWork(game, topology, orders),
-    kWorkTargetBuildImprovement,
-  ).where((o) => o.unitId == unitId).toList();
+  final buildImp = oscWorkWithTarget(oscSuggestWork(game, topology, orders), kWorkTargetBuildImprovement).where((o) => o.unitId == unitId).toList();
   expect(buildImp, isNotEmpty);
   expect(buildImp.first.targetTileKey, expectedTileKey);
 }
 
-void oscExpectSingleMove({
-  required Game game,
-  required MapTopology topology,
-  required String destTile,
-  String unitId = 'u1',
-}) {
+void oscExpectSingleMove({required Game game, required MapTopology topology, required String destTile, String unitId = 'u1'}) {
   final moves = oscSuggestMoves(game, topology);
   expect(moves.length, 1);
   expect(moves.first.unitId, unitId);
   expect(moves.first.destinationTileKey, destTile);
 }
 
-void oscExpectSuggestListType<T>(
-  List<T> Function(Game, MapTopology) suggest, {
-  required Game game,
-  required MapTopology topology,
-}) => expect(suggest(game, topology), isA<List<T>>());
+void oscExpectSuggestListType<T>(List<T> Function(Game, MapTopology) suggest, {required Game game, required MapTopology topology}) =>
+    expect(suggest(game, topology), isA<List<T>>());
 
 Stockpile oscShipStockpile({int lumber = 2, int fabric = 2, int castIron = 0}) {
-  var s = const Stockpile()
-      .applyDelta(CommodityCatalog.lumber.id, lumber)
-      .applyDelta(CommodityCatalog.fabric.id, fabric);
-  if (castIron > 0) {
-    s = s.applyDelta(CommodityCatalog.castIron.id, castIron);
-  }
+  var s = const Stockpile().applyDelta(CommodityCatalog.lumber.id, lumber).applyDelta(CommodityCatalog.fabric.id, fabric);
+  if (castIron > 0) s = s.applyDelta(CommodityCatalog.castIron.id, castIron);
   return s;
 }
 
-// dart format off
 Game oscExplorerProvinceGame({String provinceLocal = 'p1', String? ownerId = OscIds.playerId, Map<String, String>? visibilityByTile, Map<String, List<String>>? tilesByLocal, List<String>? extraProvinceLocals, List<String>? extraOwners}) {
   final provinces = [oscProvince(provinceLocal, ownerId: ownerId), for (var i = 0; i < (extraProvinceLocals?.length ?? 0); i++) oscProvince(extraProvinceLocals![i], ownerId: extraOwners != null && i < extraOwners.length ? extraOwners[i] : ownerId)];
   return oscGame(worldState: oscWorld(oldWorld: RegionData(provinces: provinces, units: [oscExplorer(provinceLocal: provinceLocal)]), playerVisibilityByTile: visibilityByTile != null ? oscVisibility(visibilityByTile) : null, tileKeysByRegionAndProvince: tilesByLocal != null ? oscTilesByProvince(tilesByLocal) : null));

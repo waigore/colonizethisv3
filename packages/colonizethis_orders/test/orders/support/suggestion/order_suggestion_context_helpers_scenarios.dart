@@ -42,45 +42,14 @@ void oschRunStatelessAcceptHelpersReuseValidator() {
   final sharedView = buildPlayerView(game, topology, 'gp1');
   final sharedUnits = unitsByIdFromWorld(game.worldState);
   resetIncrementalCandidateValidatorBuildCountForTests();
-  final sharedValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: 'gp1',
-    baseOrders: baseOrders,
-    resolution: orderResolutionContextFromView(
-      sharedView,
-      game,
-      unitsById: sharedUnits,
-    ),
-  );
+  final sharedValidator = buildIncrementalCandidateValidator(game: game, topology: topology, playerId: 'gp1', baseOrders: baseOrders, resolution: orderResolutionContextFromView(sharedView, game, unitsById: sharedUnits));
   expect(incrementalCandidateValidatorBuildCountForTests, 1);
-
   const candidate = oschAllianceCandidate;
   for (var i = 0; i < 5; i++) {
-    isDiplomaticOrderAccepted(
-      game,
-      topology,
-      'gp1',
-      baseOrders,
-      candidate,
-      sharedCandidateValidator: sharedValidator,
-    );
-    isMoveOrderAccepted(
-      game,
-      topology,
-      'gp1',
-      baseOrders,
-      const MoveOrder(unitId: 'u1', destinationTileKey: 't'),
-      sharedCandidateValidator: sharedValidator,
-    );
+    isDiplomaticOrderAccepted(game, topology, 'gp1', baseOrders, candidate, sharedCandidateValidator: sharedValidator);
+    isMoveOrderAccepted(game, topology, 'gp1', baseOrders, const MoveOrder(unitId: 'u1', destinationTileKey: 't'), sharedCandidateValidator: sharedValidator);
   }
-  expect(
-    incrementalCandidateValidatorBuildCountForTests,
-    1,
-    reason:
-        'shared validator path must not call buildIncrementalCandidateValidator '
-        'per probe (Refs #2394)',
-  );
+  expect(incrementalCandidateValidatorBuildCountForTests, 1, reason: 'shared validator path must not call buildIncrementalCandidateValidator per probe (Refs #2394)');
 }
 
 void oschRunDiplomaticAcceptedWithValidatorMatches() {final game = oschDiplomacyGame(); const topology = oschEmptyTopology; const candidate = oschAllianceCandidate; const baseOrders = Orders(); final sharedView = buildPlayerView(game,topology,'gp1'); final sharedUnits = unitsByIdFromWorld(game.worldState); final validator = buildIncrementalCandidateValidator(game: game,topology: topology,playerId: 'gp1',baseOrders: baseOrders,resolution: orderResolutionContextFromView(sharedView,game,unitsById: sharedUnits,),); expect(isDiplomaticOrderAcceptedWithValidator(validator,candidate),isDiplomaticOrderAccepted(game,topology,'gp1',baseOrders,candidate,resolution: orderResolutionContextFromView(sharedView,game,unitsById: sharedUnits,),),);}

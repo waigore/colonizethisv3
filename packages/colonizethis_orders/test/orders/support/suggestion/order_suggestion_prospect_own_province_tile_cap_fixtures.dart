@@ -1,8 +1,10 @@
-// Own-province prospect tile-cap fixtures (Refs #3949 wave 3).
+// Own-province prospect tile-cap fixtures (Refs #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const prospectOwnProvinceTileCapPlayerId = 'gp1';
 const prospectOwnProvinceTileCapOw = kRegionOldWorld;
@@ -17,17 +19,16 @@ Game prospectOwnProvinceTileCapGame() {
     'oldWorld|home|3|0',
     prospectOwnProvinceTileCapFeedstockTileKey,
   ];
-  final resourceByTile = <String, String>{
-    for (final tk in mineralTiles) tk: 'iron',
-  };
-  final unit = Unit(
-    id: 'e1',
-    type: kUnitTypeExplorer,
-    ownerId: prospectOwnProvinceTileCapPlayerId,
-    locationProvinceId: prospectOwnProvinceTileCapProvinceId,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+  return ordersOwRegionGame(
+    id: 'g',
+    turnNumber: 1,
+    players: const [
+      Player(
+        id: prospectOwnProvinceTileCapPlayerId,
+        displayName: 'GP',
+        isHuman: false,
+      ),
+    ],
     oldWorld: RegionData(
       provinces: [
         Province(
@@ -36,44 +37,31 @@ Game prospectOwnProvinceTileCapGame() {
           ownerId: prospectOwnProvinceTileCapPlayerId,
         ),
       ],
-      units: [unit],
+      units: [
+        Unit(
+          id: 'e1',
+          type: kUnitTypeExplorer,
+          ownerId: prospectOwnProvinceTileCapPlayerId,
+          locationProvinceId: prospectOwnProvinceTileCapProvinceId,
+        ),
+      ],
     ),
-    newWorld: const RegionData(),
     playerVisibilityByTile: {
       prospectOwnProvinceTileCapPlayerId: {
         for (final tk in mineralTiles) tk: 'fogged',
       },
     },
-    resourceByTileKey: resourceByTile,
+    resourceByTileKey: {for (final tk in mineralTiles) tk: 'iron'},
     tileKeysByRegionAndProvince: {
       prospectOwnProvinceTileCapOw: {
         prospectOwnProvinceTileCapProvinceId: mineralTiles,
       },
     },
   );
-  return Game(
-    id: 'g',
-    worldState: world,
-    players: const [
-      Player(
-        id: prospectOwnProvinceTileCapPlayerId,
-        displayName: 'GP',
-        isHuman: false,
-      ),
-    ],
-  );
 }
 
-MapTopology prospectOwnProvinceTileCapTopology(Game game) {
-  return MapTopology(
-    nodes: [
-      for (final p in game.worldState.oldWorld.provinces)
-        TopologyNode(
-          id: ProvinceId.localIdFrom(p.id),
-          regionId: prospectOwnProvinceTileCapOw,
-          type: TopologyNodeType.province,
-        ),
-    ],
-    edges: const [],
-  );
-}
+MapTopology prospectOwnProvinceTileCapTopology(Game game) =>
+    ordersProvinceTopology(
+      game.worldState.oldWorld.provinces,
+      regionId: prospectOwnProvinceTileCapOw,
+    );

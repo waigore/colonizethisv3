@@ -1,4 +1,4 @@
-// Shared fixtures for prospect location province priority scenarios (Refs #3949 wave 3).
+// Shared fixtures for prospect location province priority scenarios (Refs #3971).
 //
 // Refs #2847: prospect province sweep is capped at kMaxExploreProvinceProbesPerUnit
 // (4). On seed-scale maps the co-located feedstock province sorts after many
@@ -7,6 +7,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const orderSuggestionProspectLocationProvincePriorityPlayerId = 'gp1';
 const orderSuggestionProspectLocationProvincePriorityRegionId = kRegionOldWorld;
@@ -31,57 +33,43 @@ Game orderSuggestionProspectLocationProvincePriorityGame({
     for (var i = 0; i < 6; i++)
       Province(id: 'oldWorld|aaa$i', regionId: ow, ownerId: 'minor1'),
   ];
-  final ironProvince = Province(
-    id: ironProvinceId,
-    regionId: ow,
-    ownerId: playerId,
-  );
-  final unit = Unit(
-    id: orderSuggestionProspectLocationProvincePriorityExplorerUnitId,
-    type: kUnitTypeExplorer,
-    ownerId: playerId,
-    locationProvinceId: ironProvinceId,
-  );
-  final tileKeysByRegion = <String, Map<String, List<String>>>{
-    ow: {
-      for (final p in fillerProvinces) p.id: <String>[],
-      ironProvinceId: [ironTileKey],
-    },
-  };
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+  return ordersOwRegionGame(
+    id: 'g',
+    turnNumber: 1,
+    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
     oldWorld: RegionData(
-      provinces: [...fillerProvinces, ironProvince],
-      units: [unit],
+      provinces: [
+        ...fillerProvinces,
+        Province(id: ironProvinceId, regionId: ow, ownerId: playerId),
+      ],
+      units: [
+        Unit(
+          id: orderSuggestionProspectLocationProvincePriorityExplorerUnitId,
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: ironProvinceId,
+        ),
+      ],
     ),
-    newWorld: const RegionData(),
     playerVisibilityByTile: includeFoggedVisibility
         ? {
             playerId: {ironTileKey: 'fogged'},
           }
-        : const {},
+        : null,
     resourceByTileKey: const {ironTileKey: 'iron'},
-    tileKeysByRegionAndProvince: tileKeysByRegion,
-  );
-  return Game(
-    id: 'g',
-    worldState: world,
-    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+    tileKeysByRegionAndProvince: {
+      ow: {
+        for (final p in fillerProvinces) p.id: <String>[],
+        ironProvinceId: [ironTileKey],
+      },
+    },
   );
 }
 
-MapTopology orderSuggestionProspectLocationProvincePriorityTopology(Game game) {
-  const ow = orderSuggestionProspectLocationProvincePriorityRegionId;
-  return MapTopology(
-    nodes: [
-      for (final p in game.worldState.oldWorld.provinces)
-        TopologyNode(
-          id: ProvinceId.localIdFrom(p.id),
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-    ],
-    edges: const [],
-  );
-}
+MapTopology orderSuggestionProspectLocationProvincePriorityTopology(
+  Game game,
+) => ordersProvinceTopology(
+  game.worldState.oldWorld.provinces,
+  regionId: orderSuggestionProspectLocationProvincePriorityRegionId,
+);

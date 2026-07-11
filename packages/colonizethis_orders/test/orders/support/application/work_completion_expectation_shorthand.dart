@@ -9,55 +9,25 @@ import 'package:colonizethis_test/test.dart';
 import '../common/expectation_asserts.dart';
 import 'work_application_fixtures.dart';
 
-Unit wccBuilderImprovement({
-  String ownerId = 'p1',
-  int totalTurns = 1,
-  int remainingTurns = 1,
-  bool withOriginAssignment = true,
-}) => workAppWorkingUnit(
-  type: kUnitTypeBuilder,
-  workTarget: kWorkTargetBuildImprovement,
-  ownerId: ownerId,
-  totalTurns: totalTurns,
-  remainingTurns: remainingTurns,
-  originTileKey: withOriginAssignment ? WorkAppIds.originTileKey : null,
-  assignedTileKey: withOriginAssignment ? WorkAppIds.tileKey : null,
-);
+// dart format off
+Unit wccBuilderImprovement({String ownerId = 'p1', int totalTurns = 1, int remainingTurns = 1, bool withOriginAssignment = true}) =>
+    workAppWorkingUnit(type: kUnitTypeBuilder, workTarget: kWorkTargetBuildImprovement, ownerId: ownerId, totalTurns: totalTurns, remainingTurns: remainingTurns, originTileKey: withOriginAssignment ? WorkAppIds.originTileKey : null, assignedTileKey: withOriginAssignment ? WorkAppIds.tileKey : null);
 
-Game wccApply(
-  Game game, {
-  Map<String, TileMapResult>? tileMapByRegion,
-  MapTopology? topology,
-}) => applyBuildAndWorkOrders(
-  game,
-  workAppProcessWorkOrders(),
-  tileMapByRegion: tileMapByRegion,
-  topology: topology,
-);
+Game wccApply(Game game, {Map<String, TileMapResult>? tileMapByRegion, MapTopology? topology}) =>
+    applyBuildAndWorkOrders(game, workAppProcessWorkOrders(), tileMapByRegion: tileMapByRegion, topology: topology);
 
 Unit wccSingleUnit(Game game) => game.worldState.oldWorld.units.single;
 
-void wccExpectImprovement(
-  Game next,
-  int level, {
-  String tileKey = WorkAppIds.tileKey,
-}) => expect(next.worldState.tileState.improvementLevel(tileKey), level);
+void wccExpectImprovement(Game next, int level, {String tileKey = WorkAppIds.tileKey}) =>
+    expect(next.worldState.tileState.improvementLevel(tileKey), level);
 
-void wccExpectRoadLevel(Game next, String tileKey, int level) =>
-    expect(next.worldState.tileState.roadLevel(tileKey), level);
+void wccExpectRoadLevel(Game next, String tileKey, int level) => expect(next.worldState.tileState.roadLevel(tileKey), level);
 
-void wccExpectVisibility(
-  Game next,
-  String tileKey,
-  String level, {
-  String playerId = 'p1',
-}) => expect(next.worldState.playerVisibilityByTile[playerId]?[tileKey], level);
+void wccExpectVisibility(Game next, String tileKey, String level, {String playerId = 'p1'}) =>
+    expect(next.worldState.playerVisibilityByTile[playerId]?[tileKey], level);
 
-// dart format off
 Game wccRailGame({required int roadLevel, List<Player>? players, int turnNumber = 0, bool working = true}) {
-  final unit = working
-      ? workAppWorkingUnit(type: kUnitTypeRailBuilder, workTarget: kWorkTargetBuildRail)
-      : workAppUnit(type: kUnitTypeRailBuilder, status: UnitStatus.working);
+  final unit = working ? workAppWorkingUnit(type: kUnitTypeRailBuilder, workTarget: kWorkTargetBuildRail) : workAppUnit(type: kUnitTypeRailBuilder, status: UnitStatus.working);
   return workAppOwnedGame(turnNumber: turnNumber, units: [unit], tileState: TileMapState().setRoadLevel(WorkAppIds.tileKey, roadLevel), players: players ?? [workAppPlayer(techUnlocked: const {kTechIdEarlySteamEngine: true})]);
 }
 
