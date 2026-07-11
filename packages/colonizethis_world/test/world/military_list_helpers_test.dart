@@ -4,11 +4,7 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   group('partitionBySelectedIds', () {
     test('splits selected vs remaining by id (positive)', () {
-      final items = [
-        (id: 'a', v: 1),
-        (id: 'b', v: 2),
-        (id: 'c', v: 3),
-      ];
+      final items = [(id: 'a', v: 1), (id: 'b', v: 2), (id: 'c', v: 3)];
 
       final out = partitionBySelectedIds(
         items: items,
@@ -21,10 +17,7 @@ void main() {
     });
 
     test('all remaining when selection empty (negative)', () {
-      final items = [
-        (id: 'a', v: 1),
-        (id: 'b', v: 2),
-      ];
+      final items = [(id: 'a', v: 1), (id: 'b', v: 2)];
 
       final out = partitionBySelectedIds(
         items: items,
@@ -49,10 +42,7 @@ void main() {
 
   group('replaceById', () {
     test('replaces matching entry (positive)', () {
-      final items = [
-        (id: 'a', v: 1),
-        (id: 'b', v: 2),
-      ];
+      final items = [(id: 'a', v: 1), (id: 'b', v: 2)];
 
       final out = replaceById(
         items: items,
@@ -65,9 +55,7 @@ void main() {
     });
 
     test('returns copy unchanged when id missing (negative)', () {
-      final items = [
-        (id: 'a', v: 1),
-      ];
+      final items = [(id: 'a', v: 1)];
 
       final out = replaceById(
         items: items,

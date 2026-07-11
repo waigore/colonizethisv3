@@ -1,4 +1,12 @@
-part of 'capital_test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _capital_and_gp_fall_reassignment_unified_testTests();
+}
 
 void _capital_and_gp_fall_reassignment_unified_testTests() {
   group('unified faction reassignment core (#3544)', () {
@@ -6,11 +14,7 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
       final game = factionCapitalReassignmentGame(
         id: 'g-minor-and-tribe',
         oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|mcap',
-            regionId: 'oldWorld',
-            ownerId: 'p2',
-          ),
+          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
           Province(
             id: 'oldWorld|malt',
             regionId: 'oldWorld',
@@ -19,11 +23,7 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
           ),
         ],
         newWorldProvinces: const [
-          Province(
-            id: 'newWorld|tcap',
-            regionId: 'newWorld',
-            ownerId: 'p2',
-          ),
+          Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
           Province(
             id: 'newWorld|talt',
             regionId: 'newWorld',
@@ -50,7 +50,7 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       expect(result.minorNations.single.capitalProvinceId, 'oldWorld|malt');
@@ -61,11 +61,7 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
       final game = factionCapitalReassignmentGame(
         id: 'g-minor-owns',
         oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|mcap',
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-          ),
+          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'm1'),
         ],
         players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
         minorNations: [
@@ -79,7 +75,7 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       expect(result.minorNations.single.capitalProvinceId, 'oldWorld|mcap');
@@ -89,16 +85,8 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
       final game = factionCapitalReassignmentGame(
         id: 'g-tribe-throw',
         newWorldProvinces: const [
-          Province(
-            id: 'newWorld|tcap',
-            regionId: 'newWorld',
-            ownerId: 'p2',
-          ),
-          Province(
-            id: 'newWorld|talt',
-            regionId: 'newWorld',
-            ownerId: 't1',
-          ),
+          Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
+          Province(id: 'newWorld|talt', regionId: 'newWorld', ownerId: 't1'),
         ],
         players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
         tribes: [
@@ -111,7 +99,8 @@ void _capital_and_gp_fall_reassignment_unified_testTests() {
       );
 
       expect(
-        () => applyFactionCapitalReassignmentAfterCombat(game, _emptyTopology),
+        () =>
+            applyFactionCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
     });

@@ -16,11 +16,7 @@ void main() {
             ownerId: 'gp1',
             townTileKey: 'oldWorld|p1|0|0',
           ),
-          Province(
-            id: 'oldWorld|p2',
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-          ),
+          Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'm1'),
         ],
         players: const [Player(id: 'gp1', displayName: 'GP', isHuman: true)],
         minorNations: const [MinorNation(id: 'm1')],
@@ -69,11 +65,7 @@ void main() {
       final game = ordersPhaseGame(
         id: 'g3',
         oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
         players: const [Player(id: 'gp1', displayName: 'GP', isHuman: true)],
       );

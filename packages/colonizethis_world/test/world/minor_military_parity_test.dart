@@ -18,42 +18,42 @@ void main() {
     List<Tribe> tribes = const [
       Tribe(id: 't1', displayName: 'Tribe', effectiveMilitaryLevel: 3),
     ],
-  }) =>
-      TestFixtures.minimalGame(
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'GP',
-            isHuman: true,
-            militaryLevel: gpMilitaryLevel,
-          ),
-        ],
-        minorNations: minorNations,
-        tribes: tribes,
-        oldWorld: RegionData(
-          provinces: const [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
-          units: [
-            Unit(
-              id: 'u1',
-              type: minorUnitType,
-              ownerId: 'm1',
-              locationProvinceId: 'oldWorld|p1',
-            ),
-            Unit(
-              id: 'u2',
-              type: 'peasant_levies',
-              ownerId: 'gp1',
-              locationProvinceId: 'oldWorld|p1',
-            ),
-          ],
+  }) => TestFixtures.minimalGame(
+    players: [
+      Player(
+        id: 'gp1',
+        displayName: 'GP',
+        isHuman: true,
+        militaryLevel: gpMilitaryLevel,
+      ),
+    ],
+    minorNations: minorNations,
+    tribes: tribes,
+    oldWorld: RegionData(
+      provinces: const [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+      units: [
+        Unit(
+          id: 'u1',
+          type: minorUnitType,
+          ownerId: 'm1',
+          locationProvinceId: 'oldWorld|p1',
         ),
-      );
+        Unit(
+          id: 'u2',
+          type: 'peasant_levies',
+          ownerId: 'gp1',
+          locationProvinceId: 'oldWorld|p1',
+        ),
+      ],
+    ),
+  );
 
   test('sets minor effective level to max GP level and upgrades regiment', () {
     final result = applyMinorMilitaryParity(parityGame());
     expect(result.minorNations.single.effectiveMilitaryLevel, 2);
-    final minorUnit =
-        result.worldState.oldWorld.units.firstWhere((u) => u.id == 'u1');
+    final minorUnit = result.worldState.oldWorld.units.firstWhere(
+      (u) => u.id == 'u1',
+    );
     expect(minorUnit.type, 'calivermen');
   });
 
@@ -64,26 +64,25 @@ void main() {
 
   test('leaves non-minor units untouched', () {
     final result = applyMinorMilitaryParity(parityGame());
-    final gpUnit =
-        result.worldState.oldWorld.units.firstWhere((u) => u.id == 'u2');
+    final gpUnit = result.worldState.oldWorld.units.firstWhere(
+      (u) => u.id == 'u2',
+    );
     expect(gpUnit.type, 'peasant_levies');
   });
 
   test('does not upgrade a regiment already at or above the target era', () {
-    final result = applyMinorMilitaryParity(
-      parityGame(gpMilitaryLevel: 1),
+    final result = applyMinorMilitaryParity(parityGame(gpMilitaryLevel: 1));
+    final minorUnit = result.worldState.oldWorld.units.firstWhere(
+      (u) => u.id == 'u1',
     );
-    final minorUnit =
-        result.worldState.oldWorld.units.firstWhere((u) => u.id == 'u1');
     expect(minorUnit.type, 'peasant_levies');
   });
 
   test('keeps regiment unchanged when no catalog entry exists for the era', () {
-    final result = applyMinorMilitaryParity(
-      parityGame(gpMilitaryLevel: 99),
+    final result = applyMinorMilitaryParity(parityGame(gpMilitaryLevel: 99));
+    final minorUnit = result.worldState.oldWorld.units.firstWhere(
+      (u) => u.id == 'u1',
     );
-    final minorUnit =
-        result.worldState.oldWorld.units.firstWhere((u) => u.id == 'u1');
     expect(minorUnit.type, 'peasant_levies');
   });
 

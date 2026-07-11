@@ -1,7 +1,14 @@
-part of 'connectivity_resolver_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _connectivity_resolver_blockade_missions_testTests();
+}
 
 void _connectivity_resolver_blockade_missions_testTests() {
-group('ConnectivityResolver', () {
+  group('ConnectivityResolver', () {
     group('blockade', () {
       test(
         'computeBlockadedPortProvincesByPlayer ignores non-blockade missions',
@@ -102,5 +109,4 @@ group('ConnectivityResolver', () {
       );
     });
   });
-
 }

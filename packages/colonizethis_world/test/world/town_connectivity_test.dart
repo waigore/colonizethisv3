@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
@@ -61,45 +60,47 @@ void main() {
   });
 
   group('resolveTownConnectedTileKeysForProvince', () {
-    test('4-adjacent and road-path tiles within province are town-connected',
-        () {
-      const ow = 'oldWorld';
-      const provinceId = '$ow|p1';
-      const townKey = '$ow|p1|1|1';
-      const adjacentKey = '$ow|p1|0|1';
-      const pathKey = '$ow|p1|2|1';
-      final tileState = TileMapState()
-          .setRoadLevel(townKey, 1)
-          .setRoadLevel(adjacentKey, 1)
-          .setRoadLevel('$ow|p1|1|0', 1)
-          .setRoadLevel(pathKey, 1);
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        tileState: tileState,
-        tileKeysByRegionAndProvince: {
-          ow: {
-            provinceId: [adjacentKey, townKey, pathKey, '$ow|p1|2|0'],
+    test(
+      '4-adjacent and road-path tiles within province are town-connected',
+      () {
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const townKey = '$ow|p1|1|1';
+        const adjacentKey = '$ow|p1|0|1';
+        const pathKey = '$ow|p1|2|1';
+        final tileState = TileMapState()
+            .setRoadLevel(townKey, 1)
+            .setRoadLevel(adjacentKey, 1)
+            .setRoadLevel('$ow|p1|1|0', 1)
+            .setRoadLevel(pathKey, 1);
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          tileState: tileState,
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [adjacentKey, townKey, pathKey, '$ow|p1|2|0'],
+            },
           },
-        },
-      );
-      final map = tileMapFromGrid(const [
-        ['p1', 'p1', 'p1'],
-        ['p1', 'p1', 'p1'],
-      ]);
-      final connected = resolveTownConnectedTileKeysForProvince(
-        provinceId: provinceId,
-        townTileKey: townKey,
-        worldState: world,
-        tileMapByRegion: {ow: map},
-        portTileToProvinceSeaZone: const {},
-      );
-      expect(connected, contains(townKey));
-      expect(connected, contains(adjacentKey));
-      expect(connected, contains(pathKey));
-      expect(connected, isNot(contains('$ow|p1|2|0')));
-    });
+        );
+        final map = tileMapFromGrid(const [
+          ['p1', 'p1', 'p1'],
+          ['p1', 'p1', 'p1'],
+        ]);
+        final connected = resolveTownConnectedTileKeysForProvince(
+          provinceId: provinceId,
+          townTileKey: townKey,
+          worldState: world,
+          tileMapByRegion: {ow: map},
+          portTileToProvinceSeaZone: const {},
+        );
+        expect(connected, contains(townKey));
+        expect(connected, contains(adjacentKey));
+        expect(connected, contains(pathKey));
+        expect(connected, isNot(contains('$ow|p1|2|0')));
+      },
+    );
 
     test('returns empty when town tile key is null or unparseable', () {
       final world = TestFixtures.emptyWorldState();
@@ -215,7 +216,10 @@ void main() {
         game: game,
         tileMapByRegion: {ow: tileMap},
       );
-      expect(byProvince.keys, containsAll([gpProvince, minorProvince, tribeProvince]));
+      expect(
+        byProvince.keys,
+        containsAll([gpProvince, minorProvince, tribeProvince]),
+      );
       expect(byProvince[gpProvince], contains(gpTown));
       expect(byProvince[minorProvince], contains(minorTown));
       expect(byProvince[tribeProvince], contains(tribeTown));

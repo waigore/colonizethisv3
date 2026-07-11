@@ -49,7 +49,11 @@ void main() {
         isFalse,
       );
       expect(
-        dockOrderTargetsPlayerCapital(_gameWithCapital('oldWorld|p1'), 'zz', 'x|y'),
+        dockOrderTargetsPlayerCapital(
+          _gameWithCapital('oldWorld|p1'),
+          'zz',
+          'x|y',
+        ),
         isFalse,
       );
     });
@@ -61,7 +65,10 @@ void main() {
 
   group('regionAndLocalProvinceForFleetInPort', () {
     test('splits a prefixed in-port province id', () {
-      final rl = regionAndLocalProvinceForFleetInPort('oldWorld|p1', 'newWorld');
+      final rl = regionAndLocalProvinceForFleetInPort(
+        'oldWorld|p1',
+        'newWorld',
+      );
       expect(rl.regionId, 'oldWorld');
       expect(rl.localId, 'p1');
     });
@@ -84,9 +91,15 @@ void main() {
 
     test('isAdjacentSeaZone covers edge, same-zone, and non-edge', () {
       expect(isAdjacentSeaZone(topology, 'oldWorld|s1', 'newWorld|s2'), isTrue);
-      expect(isAdjacentSeaZone(topology, 'oldWorld|s1', 'oldWorld|s1'), isFalse);
+      expect(
+        isAdjacentSeaZone(topology, 'oldWorld|s1', 'oldWorld|s1'),
+        isFalse,
+      );
       expect(isAdjacentSeaZone(topology, 'oldWorld|s1', 'oldWorld|p1'), isTrue);
-      expect(isAdjacentSeaZone(topology, 'oldWorld|p1', 'newWorld|s2'), isFalse);
+      expect(
+        isAdjacentSeaZone(topology, 'oldWorld|p1', 'newWorld|s2'),
+        isFalse,
+      );
     });
 
     test('isAdjacentSeaSeaZone requires both endpoints to be sea zones', () {
@@ -121,10 +134,7 @@ void main() {
     final topology = _topology();
 
     test('resolves local and prefixed province ids', () {
-      expect(
-        provinceTopologyNodeId(topology, 'p1', 'oldWorld'),
-        'oldWorld|p1',
-      );
+      expect(provinceTopologyNodeId(topology, 'p1', 'oldWorld'), 'oldWorld|p1');
       expect(
         provinceTopologyNodeId(topology, 'oldWorld|p1', 'oldWorld'),
         'oldWorld|p1',
@@ -206,16 +216,16 @@ void main() {
         'oldWorld|s1',
       );
       expect(seaZoneIdForProvince(topology, 'oldWorld|p1'), 'oldWorld|s1');
-      expect(
-        seaZoneIdForProvince(topology, 'p1', regionId: 'zzz'),
-        isNull,
-      );
+      expect(seaZoneIdForProvince(topology, 'p1', regionId: 'zzz'), isNull);
     });
 
     test('provinceIdsAdjacentToSeaZone lists coastal provinces', () {
       expect(
-        provinceIdsAdjacentToSeaZone(topology, 'oldWorld|s1',
-            regionId: 'oldWorld'),
+        provinceIdsAdjacentToSeaZone(
+          topology,
+          'oldWorld|s1',
+          regionId: 'oldWorld',
+        ),
         contains('oldWorld|p1'),
       );
     });

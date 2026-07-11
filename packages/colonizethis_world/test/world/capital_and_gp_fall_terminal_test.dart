@@ -1,4 +1,12 @@
-part of 'capital_test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _capital_and_gp_fall_terminal_testTests();
+}
 
 void _capital_and_gp_fall_terminal_testTests() {
   group('applyFactionTerminalFall (Minor)', () {
@@ -11,8 +19,8 @@ void _capital_and_gp_fall_terminal_testTests() {
         newWorldProvinces: const [
           Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'm1'),
         ],
-        units: [_unit('u-m', 'm1', 'oldWorld|mcap')],
-        fleets: [_fleet('f-m', 'm1')],
+        units: [capitalTestUnit('u-m', 'm1', 'oldWorld|mcap')],
+        fleets: [capitalTestFleet('f-m', 'm1')],
         players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
         minorNations: const [MinorNation(id: 'm1')],
       );
@@ -138,8 +146,8 @@ void _capital_and_gp_fall_terminal_testTests() {
         newWorldProvinces: const [
           Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'p1'),
         ],
-        units: [_unit('u-p1', 'p1', 'oldWorld|cap')],
-        fleets: [_fleet('f-p1', 'p1')],
+        units: [capitalTestUnit('u-p1', 'p1', 'oldWorld|cap')],
+        fleets: [capitalTestFleet('f-p1', 'p1')],
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
           Player(id: 'p2', displayName: 'P2', isHuman: false),
@@ -207,95 +215,62 @@ void _capital_and_gp_fall_terminal_testTests() {
   });
 
   group('capital fall ProvinceOwnerCache migration (slice 11)', () {
-    test(
-      'faction terminal region check matches ownsAnyInRegion',
-      () {
-        final game = capitalLossGame(
-          id: 'g-slice11-minor',
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|mcap',
-              regionId: 'oldWorld',
-              ownerId: 'p2',
-            ),
-            Province(
-              id: 'oldWorld|m2',
-              regionId: 'oldWorld',
-              ownerId: 'm1',
-            ),
-          ],
-          players: const [
-            Player(id: 'p2', displayName: 'P2', isHuman: true),
-          ],
-          minorNations: const [MinorNation(id: 'm1')],
-        );
+    test('faction terminal region check matches ownsAnyInRegion', () {
+      final game = capitalLossGame(
+        id: 'g-slice11-minor',
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+          Province(id: 'oldWorld|m2', regionId: 'oldWorld', ownerId: 'm1'),
+        ],
+        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+        minorNations: const [MinorNation(id: 'm1')],
+      );
 
-        final cache = ProvinceOwnerCache.of(game.worldState);
-        final legacyAny = game.worldState.oldWorld.provinces.any(
-          (p) => p.ownerId == 'm1',
-        );
-        expect(
-          cache.ownsAnyInRegion('m1', kRegionOldWorld),
-          legacyAny,
-        );
-        expect(legacyAny, isTrue);
+      final cache = ProvinceOwnerCache.of(game.worldState);
+      final legacyAny = game.worldState.oldWorld.provinces.any(
+        (p) => p.ownerId == 'm1',
+      );
+      expect(cache.ownsAnyInRegion('m1', kRegionOldWorld), legacyAny);
+      expect(legacyAny, isTrue);
 
-        final held = applyFactionTerminalFall(
-          game,
-          previousCapitalByMinor: const {'m1': 'oldWorld|mcap'},
-          previousCapitalByTribe: const {},
-        );
-        expect(held.minorNations.single.id, 'm1');
-      },
-    );
+      final held = applyFactionTerminalFall(
+        game,
+        previousCapitalByMinor: const {'m1': 'oldWorld|mcap'},
+        previousCapitalByTribe: const {},
+      );
+      expect(held.minorNations.single.id, 'm1');
+    });
 
-    test(
-      'GP fall port check matches provincesOwnedBy port intersection',
-      () {
-        final game = capitalLossGame(
-          id: 'g-slice11-gp-port',
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|cap',
-              regionId: 'oldWorld',
-              ownerId: 'p2',
-            ),
-            Province(
-              id: 'oldWorld|port',
-              regionId: 'oldWorld',
-              ownerId: 'p1',
-            ),
-          ],
-          portsByProvinceSeaboard: const {
-            'oldWorld|port|north': 'oldWorld|port|0|0',
-          },
-          players: const [
-            Player(id: 'p1', displayName: 'P1', isHuman: true),
-            Player(id: 'p2', displayName: 'P2', isHuman: false),
-          ],
-        );
+    test('GP fall port check matches provincesOwnedBy port intersection', () {
+      final game = capitalLossGame(
+        id: 'g-slice11-gp-port',
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|cap', regionId: 'oldWorld', ownerId: 'p2'),
+          Province(id: 'oldWorld|port', regionId: 'oldWorld', ownerId: 'p1'),
+        ],
+        portsByProvinceSeaboard: const {
+          'oldWorld|port|north': 'oldWorld|port|0|0',
+        },
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
 
-        const playerId = 'p1';
-        final portsByProvince = <String>{'oldWorld|port'};
-        final legacyHasPort = allProvinces(game.worldState).any(
-          (p) => p.ownerId == playerId && portsByProvince.contains(p.id),
-        );
-        final cache = ProvinceOwnerCache.of(game.worldState);
-        final projectionHasPort = cache.provincesOwnedBy(playerId).any(
-          (p) => portsByProvince.contains(p.id),
-        );
-        expect(projectionHasPort, legacyHasPort);
-        expect(projectionHasPort, isTrue);
+      const playerId = 'p1';
+      final portsByProvince = <String>{'oldWorld|port'};
+      final legacyHasPort = allProvinces(
+        game.worldState,
+      ).any((p) => p.ownerId == playerId && portsByProvince.contains(p.id));
+      final cache = ProvinceOwnerCache.of(game.worldState);
+      final projectionHasPort = cache
+          .provincesOwnedBy(playerId)
+          .any((p) => portsByProvince.contains(p.id));
+      expect(projectionHasPort, legacyHasPort);
+      expect(projectionHasPort, isTrue);
 
-        final result = applyGreatPowerFall(
-          game,
-          const {'p1': 'oldWorld|cap'},
-        );
-        expect(
-          result.worldState.tryGetProvince('oldWorld|port')?.ownerId,
-          'p1',
-        );
-      },
-    );
+      final result = applyGreatPowerFall(game, const {'p1': 'oldWorld|cap'});
+      expect(result.worldState.tryGetProvince('oldWorld|port')?.ownerId, 'p1');
+    });
   });
 }

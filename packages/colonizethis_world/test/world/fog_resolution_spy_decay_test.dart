@@ -1,7 +1,17 @@
-part of 'fog_resolution_test.dart';
+import 'package:colonizethis_world/src/world/fog_resolution.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/src/world/fog_spy_reveal_decay.dart';
+
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _fog_resolution_spy_decay_testTests();
+}
 
 void _fog_resolution_spy_decay_testTests() {
-group('applySpyRevealTimerDecay', () {
+  group('applySpyRevealTimerDecay', () {
     test(
       'decrements timers for other-faction provinces when timer expires',
       () {
@@ -144,43 +154,34 @@ group('applySpyRevealTimerDecay', () {
       },
     );
 
-    test(
-      'fogs other-faction province when no Explorer/Spy remains',
-      () {
-        const ow = 'oldWorld';
-        const tileKeyP2 = 'oldWorld|P2|0|0';
+    test('fogs other-faction province when no Explorer/Spy remains', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'p1': {tileKeyP2: 'fullyVisible'},
-            },
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
           ),
-          players: const [
-            Player(id: 'p1', displayName: 'P1', isHuman: true),
-            Player(id: 'p2', displayName: 'P2', isHuman: false),
-          ],
-        );
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fullyVisible'},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
 
-        final nextVisibility = applyFogDecay(game);
+      final nextVisibility = applyFogDecay(game);
 
-        expect(
-          nextVisibility['p1']?[tileKeyP2],
-          VisibilityLevel.fogged.name,
-        );
-      },
-    );
+      expect(nextVisibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
+    });
 
     test('does not promote unknown tiles in other-faction province', () {
       const nw = 'newWorld';
@@ -242,45 +243,48 @@ group('applySpyRevealTimerDecay', () {
   });
 
   group('downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry', () {
-    test('Given fullyVisible tiles When timer expiry Then only those become fogged',
-        () {
-      final vis = <String, String>{
-        'ow|p1|0|0': VisibilityLevel.fullyVisible.name,
-        'ow|p1|0|1': VisibilityLevel.fogged.name,
-        'ow|p1|0|2': VisibilityLevel.unknown.name,
-      };
-      downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry(vis, [
-        'ow|p1|0|0',
-        'ow|p1|0|1',
-        'ow|p1|0|2',
-      ]);
-      expect(vis['ow|p1|0|0'], VisibilityLevel.fogged.name);
-      expect(vis['ow|p1|0|1'], VisibilityLevel.fogged.name);
-      expect(vis['ow|p1|0|2'], VisibilityLevel.unknown.name);
-    });
+    test(
+      'Given fullyVisible tiles When timer expiry Then only those become fogged',
+      () {
+        final vis = <String, String>{
+          'ow|p1|0|0': VisibilityLevel.fullyVisible.name,
+          'ow|p1|0|1': VisibilityLevel.fogged.name,
+          'ow|p1|0|2': VisibilityLevel.unknown.name,
+        };
+        downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry(vis, [
+          'ow|p1|0|0',
+          'ow|p1|0|1',
+          'ow|p1|0|2',
+        ]);
+        expect(vis['ow|p1|0|0'], VisibilityLevel.fogged.name);
+        expect(vis['ow|p1|0|1'], VisibilityLevel.fogged.name);
+        expect(vis['ow|p1|0|2'], VisibilityLevel.unknown.name);
+      },
+    );
   });
 
   group('nextSpyRevealTimersByProvinceAfterDecayStep', () {
-    test('Given own-province timer entry When decay step Then entry is ignored', () {
-      const playerId = 'england';
-      final vis = <String, String>{
-        'ow|p1|0|0': VisibilityLevel.fullyVisible.name,
-      };
-      final out = nextSpyRevealTimersByProvinceAfterDecayStep(
-        playerId: playerId,
-        byProvince: {'ow|p1': 1},
-        ownerByProvinceId: {'ow|p1': playerId},
-        playerVisibility: vis,
-        landTileKeysForProvince: (_) => ['ow|p1|0|0'],
-      );
-      expect(out, isEmpty);
-      expect(vis['ow|p1|0|0'], VisibilityLevel.fullyVisible.name);
-    });
-
     test(
-        'Given other-faction province with turns > 1 When decay step '
-        'Then timer decrements and visibility unchanged',
-        () {
+      'Given own-province timer entry When decay step Then entry is ignored',
+      () {
+        const playerId = 'england';
+        final vis = <String, String>{
+          'ow|p1|0|0': VisibilityLevel.fullyVisible.name,
+        };
+        final out = nextSpyRevealTimersByProvinceAfterDecayStep(
+          playerId: playerId,
+          byProvince: {'ow|p1': 1},
+          ownerByProvinceId: {'ow|p1': playerId},
+          playerVisibility: vis,
+          landTileKeysForProvince: (_) => ['ow|p1|0|0'],
+        );
+        expect(out, isEmpty);
+        expect(vis['ow|p1|0|0'], VisibilityLevel.fullyVisible.name);
+      },
+    );
+
+    test('Given other-faction province with turns > 1 When decay step '
+        'Then timer decrements and visibility unchanged', () {
       const playerId = 'england';
       final vis = <String, String>{
         'ow|p1|0|0': VisibilityLevel.fullyVisible.name,
@@ -296,10 +300,8 @@ group('applySpyRevealTimerDecay', () {
       expect(vis['ow|p1|0|0'], VisibilityLevel.fullyVisible.name);
     });
 
-    test(
-        'Given other-faction province with turns 1 When decay step '
-        'Then timer removed and fullyVisible tiles fogged',
-        () {
+    test('Given other-faction province with turns 1 When decay step '
+        'Then timer removed and fullyVisible tiles fogged', () {
       const playerId = 'england';
       final vis = <String, String>{
         'ow|p1|0|0': VisibilityLevel.fullyVisible.name,

@@ -14,6 +14,18 @@ CapitalTile capitalTileFor(String provinceId, {int x = 0, int y = 0}) =>
       y: y,
     );
 
+/// Grenadier unit fixture for capital / terminal-fall suites (Refs #3968).
+Unit capitalTestUnit(String id, String ownerId, String provinceId) => Unit(
+  id: id,
+  type: 'grenadiers',
+  ownerId: ownerId,
+  locationProvinceId: provinceId,
+);
+
+/// Fleet fixture for capital / terminal-fall suites (Refs #3968).
+Fleet capitalTestFleet(String id, String ownerId) =>
+    Fleet(id: id, ownerId: ownerId, seaZoneId: 's1', regionId: 'oldWorld');
+
 /// Orders-phase [Game] for capital / GP / faction terminal-fall scenarios.
 Game capitalLossGame({
   required String id,
@@ -116,9 +128,7 @@ Game minorCapitalLossGame({
     newWorldProvinces: newWorld,
     units: units,
     fleets: fleets,
-    players: [
-      Player(id: conquerorId, displayName: 'P2', isHuman: true),
-    ],
+    players: [Player(id: conquerorId, displayName: 'P2', isHuman: true)],
     minorNations: includeMinor ? [MinorNation(id: minorId)] : const [],
   );
 }

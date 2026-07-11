@@ -1,4 +1,13 @@
-part of 'province_lookup_test.dart';
+// ignore_for_file: deprecated_member_use
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_test/test.dart';
+
+void main() {
+  _province_traversal_region_access_testTests();
+}
 
 void _province_traversal_region_access_testTests() {
   group('forEachWorldRegion', () {
@@ -89,7 +98,7 @@ void _province_traversal_region_access_testTests() {
     });
   });
 
-group('WorldStateProvinceLookup.forEachRegion (Refs #2836 item 1)', () {
+  group('WorldStateProvinceLookup.forEachRegion (Refs #2836 item 1)', () {
     const pOld = Province(
       id: 'oldWorld|P1',
       regionId: kRegionOldWorld,
@@ -216,7 +225,7 @@ group('WorldStateProvinceLookup.forEachRegion (Refs #2836 item 1)', () {
     );
   });
 
-group('WorldState mapBothRegions', () {
+  group('WorldState mapBothRegions', () {
     test('invokes update for old then new with stable region ids', () {
       const p = Province(
         id: 'oldWorld|P1',
@@ -281,7 +290,7 @@ group('WorldState mapBothRegions', () {
     });
   });
 
-group(
+  group(
     'WorldStateProvinceLookup.regionDataForIdOrThrow (Refs #2836 item 1)',
     () {
       const pOld = Province(
@@ -387,5 +396,4 @@ group(
       });
     },
   );
-
 }

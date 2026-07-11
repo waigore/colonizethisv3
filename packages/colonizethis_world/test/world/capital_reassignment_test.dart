@@ -1,4 +1,13 @@
-part of 'capital_test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _capital_reassignment_testTests();
+}
 
 void _capital_reassignment_testTests() {
   group('evaluateCapitalReassignmentEligibility', () {
@@ -83,7 +92,10 @@ void _capital_reassignment_testTests() {
             .map((p) => p.id)
             .toList();
 
-        expect(eligibility.ownedProvinceIdsInRegion, ['oldWorld|P2', 'oldWorld|P1']);
+        expect(eligibility.ownedProvinceIdsInRegion, [
+          'oldWorld|P2',
+          'oldWorld|P1',
+        ]);
         expect(eligibility.ownedProvinceIdsInRegion, projectionIds);
         expect(eligibility.ownedProvinceIdsInRegion, legacyScanIds);
       },
@@ -118,19 +130,16 @@ void _capital_reassignment_testTests() {
   group('pickCapitalProvinceIdForReassignment', () {
     test('throws when no owned provinces are supplied', () {
       expect(
-        () => pickCapitalProvinceIdForReassignment(
-          const [],
-          kEmptyMapTopology,
-        ),
+        () => pickCapitalProvinceIdForReassignment(const [], kEmptyMapTopology),
         throwsA(isA<LogicValidationException>()),
       );
     });
 
     test('picks first by ascending id when none are sea-bound', () {
-      final picked = pickCapitalProvinceIdForReassignment(
-        const ['oldWorld|b', 'oldWorld|a'],
-        kEmptyMapTopology,
-      );
+      final picked = pickCapitalProvinceIdForReassignment(const [
+        'oldWorld|b',
+        'oldWorld|a',
+      ], kEmptyMapTopology);
       expect(picked, 'oldWorld|a');
     });
 
@@ -141,10 +150,10 @@ void _capital_reassignment_testTests() {
         seaZoneId: 's1',
       );
 
-      final picked = pickCapitalProvinceIdForReassignment(
-        const ['oldWorld|a', 'oldWorld|b'],
-        topology,
-      );
+      final picked = pickCapitalProvinceIdForReassignment(const [
+        'oldWorld|a',
+        'oldWorld|b',
+      ], topology);
       expect(picked, 'oldWorld|b');
     });
   });
@@ -162,7 +171,7 @@ void _capital_reassignment_testTests() {
         game: game,
         playerId: 'p1',
         provinceId: 'oldWorld|alt',
-        tile: _tile('oldWorld|alt'),
+        tile: capitalTileFor('oldWorld|alt'),
       );
 
       expect(
@@ -185,7 +194,7 @@ void _capital_reassignment_testTests() {
           game: game,
           playerId: 'p1',
           provinceId: 'oldWorld|alt',
-          tile: _tile('oldWorld|other'),
+          tile: capitalTileFor('oldWorld|other'),
         ),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
@@ -202,7 +211,7 @@ void _capital_reassignment_testTests() {
         game: game,
         minorId: 'm1',
         provinceId: 'oldWorld|malt',
-        tile: _tile('oldWorld|malt'),
+        tile: capitalTileFor('oldWorld|malt'),
       );
 
       expect(result.minorNations.single.capitalProvinceId, 'oldWorld|malt');
@@ -218,7 +227,7 @@ void _capital_reassignment_testTests() {
           game: game,
           minorId: 'm1',
           provinceId: 'oldWorld|malt',
-          tile: _tile('oldWorld|other'),
+          tile: capitalTileFor('oldWorld|other'),
         ),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
@@ -227,31 +236,27 @@ void _capital_reassignment_testTests() {
 
   group('setCapitalForTribeReassignment', () {
     test('updates the targeted tribe capital fields', () {
-      final game = TestFixtures.minimalGame(
-        tribes: const [Tribe(id: 't1')],
-      );
+      final game = TestFixtures.minimalGame(tribes: const [Tribe(id: 't1')]);
 
       final result = setCapitalForTribeReassignment(
         game: game,
         tribeId: 't1',
         provinceId: 'newWorld|talt',
-        tile: _tile('newWorld|talt'),
+        tile: capitalTileFor('newWorld|talt'),
       );
 
       expect(result.tribes.single.capitalProvinceId, 'newWorld|talt');
     });
 
     test('throws when tile province does not match', () {
-      final game = TestFixtures.minimalGame(
-        tribes: const [Tribe(id: 't1')],
-      );
+      final game = TestFixtures.minimalGame(tribes: const [Tribe(id: 't1')]);
 
       expect(
         () => setCapitalForTribeReassignment(
           game: game,
           tribeId: 't1',
           provinceId: 'newWorld|talt',
-          tile: _tile('newWorld|other'),
+          tile: capitalTileFor('newWorld|other'),
         ),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );

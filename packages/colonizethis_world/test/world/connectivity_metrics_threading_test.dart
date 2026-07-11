@@ -69,34 +69,31 @@ void main() {
       );
     });
 
-    test(
-      'leaves an unrelated metrics instance untouched when none is passed '
-      '(no module-level coupling)',
-      () {
-        final game = _singleProvinceGpGame();
-        // Constructed but deliberately NOT passed to the resolver. With the
-        // former module-level test hook this could capture counts via the
-        // global setter; with parameter threading it must stay at zero.
-        final detached = ConnectivityHotPathMetrics();
-        final topology = singleProvinceTopology(
-          regionId: 'oldWorld',
-          provinceLocalId: 'p1',
-        );
-        final tileMapByRegion = {
-          'oldWorld': uniformProvinceTileMap('p1', size: 3),
-        };
+    test('leaves an unrelated metrics instance untouched when none is passed '
+        '(no module-level coupling)', () {
+      final game = _singleProvinceGpGame();
+      // Constructed but deliberately NOT passed to the resolver. With the
+      // former module-level test hook this could capture counts via the
+      // global setter; with parameter threading it must stay at zero.
+      final detached = ConnectivityHotPathMetrics();
+      final topology = singleProvinceTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
+      );
+      final tileMapByRegion = {
+        'oldWorld': uniformProvinceTileMap('p1', size: 3),
+      };
 
-        resolveConnectivity(
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          topology: topology,
-        );
+      resolveConnectivity(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
 
-        expect(detached.townRuleWorklistDequeues, 0);
-        expect(detached.connectivityBottleneckDequeues, 0);
-        expect(detached.seaZoneBreadthFirstDequeues, 0);
-        expect(detached.connectivityBfsTotalDequeues, 0);
-      },
-    );
+      expect(detached.townRuleWorklistDequeues, 0);
+      expect(detached.connectivityBottleneckDequeues, 0);
+      expect(detached.seaZoneBreadthFirstDequeues, 0);
+      expect(detached.connectivityBfsTotalDequeues, 0);
+    });
   });
 }

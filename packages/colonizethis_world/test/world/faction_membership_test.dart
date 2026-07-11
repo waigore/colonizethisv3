@@ -41,10 +41,7 @@ void main() {
 
     test('uses the snapshot when provided', () {
       final membership = DiplomacyFactionMembership.from(game);
-      expect(
-        isMinorOrTribe(game, 'm1', factionMembership: membership),
-        isTrue,
-      );
+      expect(isMinorOrTribe(game, 'm1', factionMembership: membership), isTrue);
       expect(
         isMinorOrTribe(game, 'gp1', factionMembership: membership),
         isFalse,
@@ -60,14 +57,8 @@ void main() {
 
     test('uses the snapshot when provided', () {
       final membership = DiplomacyFactionMembership.from(game);
-      expect(
-        isGreatPower(game, 'gp1', factionMembership: membership),
-        isTrue,
-      );
-      expect(
-        isGreatPower(game, 'm1', factionMembership: membership),
-        isFalse,
-      );
+      expect(isGreatPower(game, 'gp1', factionMembership: membership), isTrue);
+      expect(isGreatPower(game, 'm1', factionMembership: membership), isFalse);
     });
   });
 }

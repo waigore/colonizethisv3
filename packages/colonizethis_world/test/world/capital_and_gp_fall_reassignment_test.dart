@@ -1,4 +1,12 @@
-part of 'capital_test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _capital_and_gp_fall_reassignment_testTests();
+}
 
 void _capital_and_gp_fall_reassignment_testTests() {
   group('applyCapitalReassignmentAfterCombat (Great Power)', () {
@@ -15,7 +23,10 @@ void _capital_and_gp_fall_reassignment_testTests() {
         ],
       );
 
-      final result = applyCapitalReassignmentAfterCombat(game, _emptyTopology);
+      final result = applyCapitalReassignmentAfterCombat(
+        game,
+        kEmptyMapTopology,
+      );
 
       final p1 = result.players.firstWhere((p) => p.id == 'p1');
       expect(p1.capitalProvinceId, 'oldWorld|alt');
@@ -32,7 +43,10 @@ void _capital_and_gp_fall_reassignment_testTests() {
         ],
       );
 
-      final result = applyCapitalReassignmentAfterCombat(game, _emptyTopology);
+      final result = applyCapitalReassignmentAfterCombat(
+        game,
+        kEmptyMapTopology,
+      );
 
       expect(result.players.single.id, 'p1');
     });
@@ -44,12 +58,12 @@ void _capital_and_gp_fall_reassignment_testTests() {
         ],
       );
 
-      final result = applyCapitalReassignmentAfterCombat(game, _emptyTopology);
-
-      expect(
-        result.players.single.capitalProvinceId,
-        'oldWorld|cap',
+      final result = applyCapitalReassignmentAfterCombat(
+        game,
+        kEmptyMapTopology,
       );
+
+      expect(result.players.single.capitalProvinceId, 'oldWorld|cap');
     });
 
     test('skips players without a capital', () {
@@ -58,7 +72,10 @@ void _capital_and_gp_fall_reassignment_testTests() {
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
 
-      final result = applyCapitalReassignmentAfterCombat(game, _emptyTopology);
+      final result = applyCapitalReassignmentAfterCombat(
+        game,
+        kEmptyMapTopology,
+      );
 
       expect(result.players.single.capitalProvinceId, isNull);
     });
@@ -72,7 +89,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
       );
 
       expect(
-        () => applyCapitalReassignmentAfterCombat(game, _emptyTopology),
+        () => applyCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
     });
@@ -91,7 +108,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
       );
 
       expect(
-        () => applyCapitalReassignmentAfterCombat(game, _emptyTopology),
+        () => applyCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
     });
@@ -122,7 +139,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       final m1 = result.minorNations.single;
@@ -148,7 +165,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       expect(result.minorNations.single.capitalProvinceId, isNull);
@@ -178,7 +195,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       expect(result.tribes.single.capitalProvinceId, 'newWorld|talt');
@@ -202,7 +219,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
 
       final result = applyFactionCapitalReassignmentAfterCombat(
         game,
-        _emptyTopology,
+        kEmptyMapTopology,
       );
 
       expect(result.tribes.single.capitalProvinceId, isNull);
@@ -227,7 +244,7 @@ void _capital_and_gp_fall_reassignment_testTests() {
 
       expect(
         () =>
-            applyFactionCapitalReassignmentAfterCombat(game, _emptyTopology),
+            applyFactionCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
         throwsA(isA<CapitalReassignmentFatalError>()),
       );
     });

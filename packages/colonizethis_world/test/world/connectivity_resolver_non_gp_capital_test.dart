@@ -1,13 +1,23 @@
-part of 'connectivity_resolver_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _connectivity_resolver_non_gp_capital_testTests();
+}
 
 void _connectivity_resolver_non_gp_capital_testTests() {
-group('resolveNonGreatPowerConnectivity', () {
+  group('resolveNonGreatPowerConnectivity', () {
     test('minor with null capitalTile gets empty ConnectivityResult', () {
       const ow = 'oldWorld';
       final tileMap = tileMapFromGrid([
         ['p1', 'p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
+      final topology = singleProvinceTopology(
+        regionId: ow,
+        provinceLocalId: 'p1',
+      );
       final game = ordersPhaseGame(
         oldWorldProvinces: [
           Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
@@ -36,7 +46,10 @@ group('resolveNonGreatPowerConnectivity', () {
       final tileMap = tileMapFromGrid([
         ['p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: nw, provinceLocalId: 'p1');
+      final topology = singleProvinceTopology(
+        regionId: nw,
+        provinceLocalId: 'p1',
+      );
       final game = ordersPhaseGame(
         newWorldProvinces: [
           Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
@@ -65,12 +78,7 @@ group('resolveNonGreatPowerConnectivity', () {
           ['p1', 'p2'],
         ]);
         final topology = inlandAndSeaboardProvincesTopology(regionId: ow);
-        final cap = CapitalTile(
-          regionId: ow,
-          provinceId: '$ow|p1',
-          x: 0,
-          y: 0,
-        );
+        final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
         // Road from capital tile through both provinces' tiles to the port.
         final tileState = TileMapState()
             .setRoadLevel('oldWorld|p1|0|0', 1)
@@ -160,13 +168,11 @@ group('resolveNonGreatPowerConnectivity', () {
         // shared Road and Town rules apply faction-agnostically).
         const ow = 'oldWorld';
         final tileMap = uniformProvinceTileMap('p1', size: 3);
-        final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
-        final cap = CapitalTile(
+        final topology = singleProvinceTopology(
           regionId: ow,
-          provinceId: '$ow|p1',
-          x: 1,
-          y: 1,
+          provinceLocalId: 'p1',
         );
+        final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
         final tileState = TileMapState()
             .setRoadLevel('oldWorld|p1|1|1', 1)
             .setRoadLevel('oldWorld|p1|0|1', 1)
@@ -277,5 +283,4 @@ group('resolveNonGreatPowerConnectivity', () {
       },
     );
   });
-
 }
