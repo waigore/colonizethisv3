@@ -142,23 +142,11 @@ extension IncrementalCandidateValidatorPrefixReplay
     if (prefix == null) {
       return false;
     }
-    final workValidator = createWorkOrderValidator(
-      game: game,
+    final workValidator = _workOrderValidatorForProbe(
       player: player,
-      playerId: playerId,
-      resolution: (
-        view: view,
-        unitsById: unitsById,
-        provinceById: view.provincesById,
-      ),
-      topology: topology,
-      diplomaticOrders: diplomaticOrders,
-      tileMapByRegion: tileMapByRegion,
-      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-      devExclusiveTiles: Set<String>.from(prefix.devExclusive),
       stockpile: Stockpile(quantities: prefix.stockpile.copyQuantities()),
       treasury: prefix.treasury,
-      factionMembership: factionMembershipSnapshot,
+      devExclusiveTiles: Set<String>.from(prefix.devExclusive),
       initialSeenUnitIds: prefix.seenUnitIds,
     );
     return workValidator
@@ -364,23 +352,11 @@ extension IncrementalCandidateValidatorProjection
       cache.postWorkPrefixState = proj;
       return proj;
     }
-    final workValidator = createWorkOrderValidator(
-      game: game,
+    final workValidator = _workOrderValidatorForProbe(
       player: player,
-      playerId: playerId,
-      resolution: (
-        view: view,
-        unitsById: unitsById,
-        provinceById: view.provincesById,
-      ),
-      topology: topology,
-      diplomaticOrders: diplomaticOrders,
-      tileMapByRegion: tileMapByRegion,
-      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-      devExclusiveTiles: baseDev,
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
-      factionMembership: factionMembershipSnapshot,
+      devExclusiveTiles: baseDev,
     );
     for (final existing in works) {
       final result = workValidator.validate(existing, previousRejected: false);
@@ -418,6 +394,36 @@ extension IncrementalCandidateValidatorProjection
     }
     cache.civilianDraftMoveUnitIds = ids;
     return ids;
+  }
+
+  /// Shared work-validator construction for prefix replay and candidate probes
+  /// (Refs #3971 — 2+ call sites in this library).
+  WorkOrderValidator _workOrderValidatorForProbe({
+    required Player player,
+    required Stockpile stockpile,
+    required int treasury,
+    required Set<String> devExclusiveTiles,
+    Set<String> initialSeenUnitIds = const <String>{},
+  }) {
+    return createWorkOrderValidator(
+      game: game,
+      player: player,
+      playerId: playerId,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
+      topology: topology,
+      diplomaticOrders: diplomaticOrders,
+      tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
+      devExclusiveTiles: devExclusiveTiles,
+      stockpile: stockpile,
+      treasury: treasury,
+      factionMembership: factionMembershipSnapshot,
+      initialSeenUnitIds: initialSeenUnitIds,
+    );
   }
 
   Set<String> _devExclusiveTiles() {

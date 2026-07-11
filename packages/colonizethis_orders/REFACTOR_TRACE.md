@@ -2539,3 +2539,13 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 10: **14852** (AC 
 
 Raw `Game(` outside `common/`: **0**. Support LOC after slice 11: **14373**. Package `test/` LOC: **16252** (AC ≤16,400 met). Remaining: optional precheck/replay lib extracts where 2+ reuse appears.
 
+## Wave 4 — Slice 12: precheck/replay lib extracts (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| peacetime-embassy-helper | extract `hasPeaceTimeEmbassy` + `rejectAtWarOrWithoutEmbassy` (2+ call sites) | prechecks private helper + candidacy + civilian embassy | `diplomatic_access_helpers.dart` | #3971 |
+| wire-precheck-candidacy | consume shared helpers from prechecks + town-tile candidacy | `work_order_target_prechecks.dart`, `work_tile_candidate_index.dart` | same | #3971 |
+| replay-work-validator | collapse duplicate `createWorkOrderValidator` in ICE prefix/probe | `incremental_candidate_validator_replay.dart` | `_workOrderValidatorForProbe` | #3971 |
+
+Behaviour unchanged (rejection messages + candidacy filters preserved). Remaining for #3971: none expected after this slice (LOC ACs + balanced lib extracts landed).
+
