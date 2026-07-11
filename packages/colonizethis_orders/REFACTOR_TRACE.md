@@ -2442,3 +2442,16 @@ Raw `Game(` outside `common/`: **71** (ceiling 71). Support LOC after slice 3: *
 
 Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17819**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 5: colonial/api-impl migrate + shorthand densify (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| colonial-graph | shared `colonialAcquisitionRegionGame` for embassy / intervention / discovery | declare-war + colonial acquisition fixtures | `order_suggestion_colonial_acquisition_fixtures.dart` | #3971 |
+| migrate-api-impl | migrate api-impl / trade / recruit-worker / diplomatic-minor / helpers / snapshot / draft-work Games | suggestion fixture modules | thin `ordersOwRegionGame` wrappers | #3971 |
+| migrate-app-ice-oemwc | migrate run-build / append-military / ICE corpus / oemwc Games | application + incremental + engine shorthand | thin wrappers | #3971 |
+| shorthand-densify | densify validate-work / naval-build / oemwc / osc fixtures with `// dart format off` | engine + suggestion shorthand/fixtures | same | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 56 → 34 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17850 → 17400 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **34**. Support LOC after slice 5: **17381**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+

@@ -15,7 +15,7 @@ const String ordersTestSupportRelativeDir =
 
 /// Ratchet ceiling for raw Game constructions outside `support/common/`.
 /// Lower as migrations land (Refs #3971).
-const int ordersTestSupportRawGameCeiling = 56;
+const int ordersTestSupportRawGameCeiling = 34;
 
 final RegExp _rawGameConstruction = RegExp(r'(?:return|=>)\s+Game\s*\(');
 

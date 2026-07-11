@@ -1,8 +1,11 @@
-// Embassy-stage colonial acquisition fixtures (Refs #2509, #3949 wave 3).
+// Embassy-stage colonial acquisition fixtures (Refs #2509, #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 /// Minimal four-node topology: gp1 home OW province ↔ OW sea ↔ NW sea ↔
 /// tribe1 colony NW province. Same shape as
@@ -38,56 +41,69 @@ const colonialAcquisitionTopology = MapTopology(
   ],
 );
 
+const _colonialOwHome = Province(
+  id: 'oldWorld|home',
+  regionId: 'oldWorld',
+  ownerId: 'gp1',
+);
+const _colonialNwColony = Province(
+  id: 'newWorld|colony',
+  regionId: 'newWorld',
+  ownerId: 'tribe1',
+);
+const _colonialTileKeys = {
+  'oldWorld': {
+    'oldWorld|home': ['oldWorld|home|0|0'],
+  },
+  'newWorld': {
+    'newWorld|colony': ['newWorld|colony|0|0'],
+  },
+};
+
+/// Shared OW-home + NW-colony graph for colonial acquisition / declare-war
+/// suggestion fixtures (Refs #3971).
+Game colonialAcquisitionRegionGame({
+  required String id,
+  required List<Player> players,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+  List<Tribe> tribes = const [Tribe(id: 'tribe1', displayName: 'T1')],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  List<OvertureState> overtureStates = const [],
+}) => ordersOwRegionGame(
+  id: id,
+  turnNumber: 1,
+  players: players,
+  oldWorld: const RegionData(provinces: [_colonialOwHome]),
+  newWorld: const RegionData(provinces: [_colonialNwColony]),
+  playerVisibilityByTile: playerVisibilityByTile,
+  tileKeysByRegionAndProvince: _colonialTileKeys,
+  tribes: tribes,
+  diplomacyRelations: diplomacyRelations,
+  overtureStates: overtureStates,
+);
+
 /// Embassy-stage colonial scenario: gp1 has NAP overture with tribe1, score at
 /// the friendly threshold, and treasury above Join Empire cost.
-Game colonialAcquisitionEmbassyScenarioGame() {
-  return Game(
-    id: 'g-2509-colonial-acquisition',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: 'newWorld|colony',
-            regionId: 'newWorld',
-            ownerId: 'tribe1',
-          ),
-        ],
-      ),
-      playerVisibilityByTile: const {
-        'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
-      },
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          'oldWorld|home': const ['oldWorld|home|0|0'],
-        },
-        'newWorld': {
-          'newWorld|colony': const ['newWorld|colony|0|0'],
-        },
-      },
+Game colonialAcquisitionEmbassyScenarioGame() => colonialAcquisitionRegionGame(
+  id: 'g-2509-colonial-acquisition',
+  players: const [
+    Player(id: 'gp1', displayName: 'GP1', isHuman: false, treasury: 10000),
+  ],
+  playerVisibilityByTile: const {
+    'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+  },
+  diplomacyRelations: const [
+    DiplomacyRelation(
+      factionId1: 'gp1',
+      factionId2: 'tribe1',
+      state: RelationState.atPeace,
+      score: relationScoreMinFriendly,
     ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false, treasury: 10000),
-    ],
-    tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'tribe1',
-        state: RelationState.atPeace,
-        score: relationScoreMinFriendly,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(gpId: 'gp1', targetId: 'tribe1', stage: OvertureStage.nap),
-    ],
-  );
-}
+  ],
+  overtureStates: const [
+    OvertureState(gpId: 'gp1', targetId: 'tribe1', stage: OvertureStage.nap),
+  ],
+);
 
 PlayerView colonialAcquisitionViewFor(Game game) =>
     buildPlayerView(game, colonialAcquisitionTopology, 'gp1');

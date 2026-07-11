@@ -27,32 +27,17 @@ MapTopology _nvCrossRegionTopology() => const MapTopology(
   edges: [],
 );
 
-Game _nvCrossRegionGame({
-  required String unitType,
-  required String nwOwnerId,
-}) => ordersOwRegionGame(
-  players: _nvTwoPlayers,
-  oldWorld: RegionData(
-    provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
-    units: [
-      Unit(
-        id: 'u1',
-        type: unitType,
-        ownerId: _nvP1,
-        locationProvinceId: '$_nvOw|P1',
+// dart format off
+Game _nvCrossRegionGame({required String unitType, required String nwOwnerId}) =>
+    ordersOwRegionGame(
+      players: _nvTwoPlayers,
+      oldWorld: RegionData(
+        provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
+        units: [Unit(id: 'u1', type: unitType, ownerId: _nvP1, locationProvinceId: '$_nvOw|P1')],
       ),
-    ],
-  ),
-  newWorld: RegionData(
-    provinces: [Province(id: '$_nvNw|P2', regionId: _nvNw, ownerId: nwOwnerId)],
-  ),
-  playerVisibilityByTile: {
-    _nvP1: {
-      _nvTile(_nvOw, 'P1'): 'fullyVisible',
-      _nvTile(_nvNw, 'P2'): 'fullyVisible',
-    },
-  },
-);
+      newWorld: RegionData(provinces: [Province(id: '$_nvNw|P2', regionId: _nvNw, ownerId: nwOwnerId)]),
+      playerVisibilityByTile: {_nvP1: {_nvTile(_nvOw, 'P1'): 'fullyVisible', _nvTile(_nvNw, 'P2'): 'fullyVisible'}},
+    );
 
 void nvExpectCrossRegionMove({
   required String unitType,
@@ -60,10 +45,7 @@ void nvExpectCrossRegionMove({
   required OrderValidationStatus expectedStatus,
 }) {
   final engine = OrderEngine()
-    ..addMoveOrder(
-      _nvP1,
-      MoveOrder(unitId: 'u1', destinationTileKey: _nvTile(_nvNw, 'P2')),
-    );
+    ..addMoveOrder(_nvP1, MoveOrder(unitId: 'u1', destinationTileKey: _nvTile(_nvNw, 'P2')));
   final results = engine.validatePlayerOrdersWithContext(
     _nvCrossRegionGame(unitType: unitType, nwOwnerId: nwOwnerId),
     _nvCrossRegionTopology(),
@@ -75,39 +57,17 @@ void nvExpectCrossRegionMove({
 void nvExpectInvalidWorkTargetRejected() {
   const tileKey = 'oldWorld|P1|0|0';
   final engine = OrderEngine()
-    ..addWorkOrder(
-      _nvP1,
-      WorkOrder(unitId: 'u1', target: 'unknown_target', targetTileKey: tileKey),
-    );
+    ..addWorkOrder(_nvP1, WorkOrder(unitId: 'u1', target: 'unknown_target', targetTileKey: tileKey));
   final results = engine.validatePlayerOrdersWithContext(
     ordersOwRegionGame(
       players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)],
       oldWorld: RegionData(
         provinces: [Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1)],
-        units: [
-          Unit(
-            id: 'u1',
-            type: kUnitTypeBuilder,
-            ownerId: _nvP1,
-            locationProvinceId: '$_nvOw|P1',
-            tileKey: tileKey,
-          ),
-        ],
+        units: [Unit(id: 'u1', type: kUnitTypeBuilder, ownerId: _nvP1, locationProvinceId: '$_nvOw|P1', tileKey: tileKey)],
       ),
-      playerVisibilityByTile: {
-        _nvP1: {tileKey: 'fullyVisible'},
-      },
+      playerVisibilityByTile: {_nvP1: {tileKey: 'fullyVisible'}},
     ),
-    const MapTopology(
-      nodes: [
-        TopologyNode(
-          id: 'P1',
-          regionId: _nvOw,
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: [],
-    ),
+    const MapTopology(nodes: [TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province)], edges: []),
     _nvP1,
   );
   expect(results.single.status, OrderValidationStatus.rejected);
@@ -116,62 +76,26 @@ void nvExpectInvalidWorkTargetRejected() {
 
 void nvExpectInitialOrdersCopyDistinct() {
   final engine = OrderEngine(
-    initialOrders: Orders(
-      moveOrdersByPlayerId: {
-        _nvP1: [
-          const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
-        ],
-      },
-    ),
+    initialOrders: Orders(moveOrdersByPlayerId: {_nvP1: [const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0')]}),
   );
   final orders1 = engine.orders;
   final orders2 = engine.orders;
   expect(orders1.moveOrdersByPlayerId[_nvP1]!.length, 1);
   expect(orders2.moveOrdersByPlayerId[_nvP1]!.length, 1);
-  expect(
-    identical(orders1.moveOrdersByPlayerId, orders2.moveOrdersByPlayerId),
-    isFalse,
-  );
-  expect(
-    identical(
-      orders1.moveOrdersByPlayerId[_nvP1],
-      orders2.moveOrdersByPlayerId[_nvP1],
-    ),
-    isFalse,
-  );
+  expect(identical(orders1.moveOrdersByPlayerId, orders2.moveOrdersByPlayerId), isFalse);
+  expect(identical(orders1.moveOrdersByPlayerId[_nvP1], orders2.moveOrdersByPlayerId[_nvP1]), isFalse);
 }
 
 void nvExpectNavalMoveFleetNotFoundRejected() {
   final engine = OrderEngine()
-    ..addNavalMoveOrder(
-      _nvP1,
-      const NavalMoveOrder(
-        fleetId: 'nonexistent_fleet',
-        destinationSeaZoneId: 'sea2',
-      ),
-    );
+    ..addNavalMoveOrder(_nvP1, const NavalMoveOrder(fleetId: 'nonexistent_fleet', destinationSeaZoneId: 'sea2'));
   final results = engine.validatePlayerOrdersWithContext(
-    ordersOwRegionGame(
-      players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)],
-      oldWorld: const RegionData(),
-    ),
+    ordersOwRegionGame(players: const [Player(id: _nvP1, displayName: 'P1', isHuman: true)], oldWorld: const RegionData()),
     MapTopology(
       nodes: const [
-        TopologyNode(
-          id: 'P1',
-          regionId: _nvOw,
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'sea1',
-          regionId: _nvOw,
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: 'sea2',
-          regionId: _nvOw,
-          type: TopologyNodeType.seaZone,
-        ),
+        TopologyNode(id: 'P1', regionId: _nvOw, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone),
+        TopologyNode(id: 'sea2', regionId: _nvOw, type: TopologyNodeType.seaZone),
       ],
       edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
     ),
@@ -186,52 +110,21 @@ void nvExpectBlockadeMission({
   required OrderValidationStatus expectedStatus,
   String? reasonContains,
 }) {
-  final engine = OrderEngine();
-  final result = engine.addNavalMissionOrderWithContext(
+  final result = OrderEngine().addNavalMissionOrderWithContext(
     ordersOwRegionGame(
       players: _nvTwoPlayers,
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
-          Province(id: '$_nvOw|P2', regionId: _nvOw, ownerId: _nvP2),
-        ],
-      ),
-      fleets: [
-        Fleet(
-          id: 'f1',
-          ownerId: _nvP1,
-          seaZoneId: 'sea1',
-          regionId: _nvOw,
-          shipTypeIds: const ['carrack'],
-        ),
-      ],
-      diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: _nvP1,
-          factionId2: _nvP2,
-          state: relationState,
-        ),
-      ],
+      oldWorld: RegionData(provinces: [
+        Province(id: '$_nvOw|P1', regionId: _nvOw, ownerId: _nvP1),
+        Province(id: '$_nvOw|P2', regionId: _nvOw, ownerId: _nvP2),
+      ]),
+      fleets: [Fleet(id: 'f1', ownerId: _nvP1, seaZoneId: 'sea1', regionId: _nvOw, shipTypeIds: const ['carrack'])],
+      diplomacyRelations: [DiplomacyRelation(factionId1: _nvP1, factionId2: _nvP2, state: relationState)],
     ),
-    const MapTopology(
-      nodes: [
-        TopologyNode(
-          id: 'sea1',
-          regionId: _nvOw,
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: [],
-    ),
+    const MapTopology(nodes: [TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone)], edges: []),
     _nvP1,
-    NavalMissionOrder(
-      fleetId: 'f1',
-      mission: FleetMission.blockade.name,
-      targetProvinceId: '$_nvOw|P2',
-    ),
+    NavalMissionOrder(fleetId: 'f1', mission: FleetMission.blockade.name, targetProvinceId: '$_nvOw|P2'),
   );
   expect(result.status, expectedStatus);
-  if (reasonContains != null) {
-    expect(result.reason, contains(reasonContains));
-  }
+  if (reasonContains != null) expect(result.reason, contains(reasonContains));
 }
+// dart format on

@@ -1,8 +1,11 @@
-// Shared DefaultOrderSuggestionAPI suggestion fixtures (Refs #3949 wave 3).
+// Shared DefaultOrderSuggestionAPI suggestion fixtures (Refs #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const apiImplPlayerId = 'gp1';
 const apiImplOw = 'oldWorld';
@@ -23,43 +26,39 @@ final apiImplBaseTopology = MapTopology(
   edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
 );
 
-Game apiImplDefaultGame() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: '$apiImplOw|p1',
-          regionId: apiImplOw,
-          ownerId: apiImplPlayerId,
-        ),
-        Province(id: '$apiImplOw|p2', regionId: apiImplOw, displayName: 'P2'),
-      ],
-      units: [
-        Unit(
-          id: 'u1',
-          type: 'inf',
-          ownerId: apiImplPlayerId,
-          locationProvinceId: '$apiImplOw|p1',
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {
-      apiImplPlayerId: {
-        'oldWorld|p1|0|0': 'fullyVisible',
-        'oldWorld|p2|0|0': 'fullyVisible',
-      },
-    },
-    tileKeysByRegionAndProvince: {
-      apiImplOw: {
-        '$apiImplOw|p1': ['oldWorld|p1|0|0'],
-        '$apiImplOw|p2': ['oldWorld|p2|0|0'],
-      },
-    },
-  ),
+Game apiImplDefaultGame() => ordersOwRegionGame(
+  turnNumber: 1,
   players: const [Player(id: apiImplPlayerId, displayName: 'A', isHuman: true)],
+  oldWorld: RegionData(
+    provinces: [
+      Province(
+        id: '$apiImplOw|p1',
+        regionId: apiImplOw,
+        ownerId: apiImplPlayerId,
+      ),
+      Province(id: '$apiImplOw|p2', regionId: apiImplOw, displayName: 'P2'),
+    ],
+    units: [
+      Unit(
+        id: 'u1',
+        type: 'inf',
+        ownerId: apiImplPlayerId,
+        locationProvinceId: '$apiImplOw|p1',
+      ),
+    ],
+  ),
+  playerVisibilityByTile: const {
+    apiImplPlayerId: {
+      'oldWorld|p1|0|0': 'fullyVisible',
+      'oldWorld|p2|0|0': 'fullyVisible',
+    },
+  },
+  tileKeysByRegionAndProvince: {
+    apiImplOw: {
+      '$apiImplOw|p1': ['oldWorld|p1|0|0'],
+      '$apiImplOw|p2': ['oldWorld|p2|0|0'],
+    },
+  },
 );
 
 final apiImplSingleProvinceTopology = MapTopology(
@@ -79,22 +78,8 @@ Game apiImplAffordableShipGame() {
   final stockpile = const Stockpile()
       .applyDelta(CommodityCatalog.lumber.id, 2)
       .applyDelta(CommodityCatalog.fabric.id, 2);
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: '$apiImplOw|p1',
-            regionId: apiImplOw,
-            ownerId: apiImplPlayerId,
-          ),
-        ],
-        units: [],
-      ),
-      newWorld: const RegionData(),
-    ),
+  return ordersOwRegionGame(
+    turnNumber: 1,
     players: [
       Player(
         id: apiImplPlayerId,
@@ -106,26 +91,23 @@ Game apiImplAffordableShipGame() {
         stockpile: stockpile,
       ),
     ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$apiImplOw|p1',
+          regionId: apiImplOw,
+          ownerId: apiImplPlayerId,
+        ),
+      ],
+      units: [],
+    ),
   );
 }
 
 Game apiImplFabricRecruitGame() {
   final stockpile = const Stockpile().applyDelta(CommodityCatalog.fabric.id, 4);
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: '$apiImplOw|p1',
-            regionId: apiImplOw,
-            ownerId: apiImplPlayerId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
+  return ordersOwRegionGame(
+    turnNumber: 1,
     players: [
       Player(
         id: apiImplPlayerId,
@@ -135,6 +117,15 @@ Game apiImplFabricRecruitGame() {
         stockpile: stockpile,
       ),
     ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: '$apiImplOw|p1',
+          regionId: apiImplOw,
+          ownerId: apiImplPlayerId,
+        ),
+      ],
+    ),
   );
 }
 

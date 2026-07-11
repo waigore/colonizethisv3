@@ -1,6 +1,9 @@
-// Shared fixtures for order suggestion helper scenarios (Refs #3949 wave 3).
+// Shared fixtures for order suggestion helper scenarios
+// (Refs #3949 wave 3 / #3971 wave 4).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const orderSuggestionHelpersOw = 'oldWorld';
 const orderSuggestionHelpersGpId = 'gp1';
@@ -8,33 +11,27 @@ const orderSuggestionHelpersMinorId = 'minor_doc';
 
 Game orderSuggestionHelpersGameWithMinorProvince({
   required List<DiplomacyRelation> diplomacyRelations,
-}) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          const Province(
-            id: '$orderSuggestionHelpersOw|P_gp',
-            regionId: orderSuggestionHelpersOw,
-            ownerId: orderSuggestionHelpersGpId,
-          ),
-          const Province(
-            id: '$orderSuggestionHelpersOw|P_minor',
-            regionId: orderSuggestionHelpersOw,
-            ownerId: orderSuggestionHelpersMinorId,
-          ),
-        ],
+}) => ordersOwRegionGame(
+  turnNumber: 1,
+  players: const [
+    Player(id: orderSuggestionHelpersGpId, displayName: 'GP1', isHuman: true),
+  ],
+  oldWorld: const RegionData(
+    provinces: [
+      Province(
+        id: '$orderSuggestionHelpersOw|P_gp',
+        regionId: orderSuggestionHelpersOw,
+        ownerId: orderSuggestionHelpersGpId,
       ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: orderSuggestionHelpersGpId, displayName: 'GP1', isHuman: true),
+      Province(
+        id: '$orderSuggestionHelpersOw|P_minor',
+        regionId: orderSuggestionHelpersOw,
+        ownerId: orderSuggestionHelpersMinorId,
+      ),
     ],
-    minorNations: const [
-      MinorNation(id: orderSuggestionHelpersMinorId, displayName: 'Minor Doc'),
-    ],
-    diplomacyRelations: diplomacyRelations,
-  );
-}
+  ),
+  minorNations: const [
+    MinorNation(id: orderSuggestionHelpersMinorId, displayName: 'Minor Doc'),
+  ],
+  diplomacyRelations: diplomacyRelations,
+);

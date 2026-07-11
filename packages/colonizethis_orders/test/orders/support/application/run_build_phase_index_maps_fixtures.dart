@@ -1,7 +1,10 @@
-// runBuildPhase O(1) index-map scenario fixtures (Refs #3949 wave 3).
+// runBuildPhase O(1) index-map scenario fixtures (Refs #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const runBuildPhasePlayerId = 'p1';
 const runBuildPhaseCapProvinceId = 'oldWorld|P1';
@@ -15,17 +18,19 @@ Game runBuildPhaseMilitaryGame({required int regimentCount}) {
       entry.value * regimentCount + 1,
     );
   }
-  final player = Player(
-    id: runBuildPhasePlayerId,
-    displayName: 'P1',
-    isHuman: true,
-    capitalProvinceId: runBuildPhaseCapProvinceId,
-    stockpile: stockpile,
-    workerPool: WorkerPool(peasants: regimentCount + 1),
-    treasury: econ.buildTreasuryCost * regimentCount + 100,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+  return ordersOwRegionGame(
+    id: 'g',
+    players: [
+      Player(
+        id: runBuildPhasePlayerId,
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: runBuildPhaseCapProvinceId,
+        stockpile: stockpile,
+        workerPool: WorkerPool(peasants: regimentCount + 1),
+        treasury: econ.buildTreasuryCost * regimentCount + 100,
+      ),
+    ],
     oldWorld: const RegionData(
       provinces: [
         Province(
@@ -36,25 +41,21 @@ Game runBuildPhaseMilitaryGame({required int regimentCount}) {
       ],
       units: [],
     ),
-    newWorld: const RegionData(),
   );
-  return Game(id: 'g', worldState: world, players: [player]);
 }
 
-Orders runBuildPhaseMilitaryOrders({required int regimentCount}) {
-  return Orders(
-    buildUnitOrdersByPlayerId: {
-      runBuildPhasePlayerId: [
-        for (var i = 0; i < regimentCount; i++)
-          const BuildUnitOrder(
-            unitType: 'peasant_levies',
-            isMilitary: true,
-            spawnProvinceId: runBuildPhaseCapProvinceId,
-          ),
-      ],
-    },
-  );
-}
+Orders runBuildPhaseMilitaryOrders({required int regimentCount}) => Orders(
+  buildUnitOrdersByPlayerId: {
+    runBuildPhasePlayerId: [
+      for (var i = 0; i < regimentCount; i++)
+        const BuildUnitOrder(
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          spawnProvinceId: runBuildPhaseCapProvinceId,
+        ),
+    ],
+  },
+);
 
 const runBuildPhaseNavalTopology = MapTopology(
   nodes: [
@@ -78,18 +79,20 @@ Game runBuildPhaseNavalGame({required int shipCount}) {
   for (final e in shipEcon.buildInputs.entries) {
     stockpile = stockpile.applyDelta(e.key, e.value * shipCount + 1);
   }
-  final player = Player(
-    id: runBuildPhasePlayerId,
-    displayName: 'P1',
-    isHuman: true,
-    capitalProvinceId: runBuildPhaseCapProvinceId,
-    stockpile: stockpile,
-    workerPool: WorkerPool(peasants: shipCount + 1),
-    treasury: shipEcon.buildTreasuryCost * shipCount + 100,
-    techUnlocked: const {kTechIdSuperiorHullDesign: true},
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+  return ordersOwRegionGame(
+    id: 'g',
+    players: [
+      Player(
+        id: runBuildPhasePlayerId,
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: runBuildPhaseCapProvinceId,
+        stockpile: stockpile,
+        workerPool: WorkerPool(peasants: shipCount + 1),
+        treasury: shipEcon.buildTreasuryCost * shipCount + 100,
+        techUnlocked: const {kTechIdSuperiorHullDesign: true},
+      ),
+    ],
     oldWorld: const RegionData(
       provinces: [
         Province(
@@ -100,22 +103,18 @@ Game runBuildPhaseNavalGame({required int shipCount}) {
       ],
       units: [],
     ),
-    newWorld: const RegionData(),
   );
-  return Game(id: 'g', worldState: world, players: [player]);
 }
 
-Orders runBuildPhaseNavalOrders({required int shipCount}) {
-  return Orders(
-    buildUnitOrdersByPlayerId: {
-      runBuildPhasePlayerId: [
-        for (var i = 0; i < shipCount; i++)
-          const BuildUnitOrder(
-            unitType: 'fluyte',
-            isMilitary: false,
-            spawnProvinceId: runBuildPhaseCapProvinceId,
-          ),
-      ],
-    },
-  );
-}
+Orders runBuildPhaseNavalOrders({required int shipCount}) => Orders(
+  buildUnitOrdersByPlayerId: {
+    runBuildPhasePlayerId: [
+      for (var i = 0; i < shipCount; i++)
+        const BuildUnitOrder(
+          unitType: 'fluyte',
+          isMilitary: false,
+          spawnProvinceId: runBuildPhaseCapProvinceId,
+        ),
+    ],
+  },
+);

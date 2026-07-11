@@ -1,7 +1,9 @@
-// Incremental equivalence corpus games (Refs #3949).
+// Incremental equivalence corpus games (Refs #3949 / #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const _iceCorpusOw = 'oldWorld';
 
@@ -57,20 +59,17 @@ Game _iceCorpusGame({
   required String id,
   required RegionData oldWorld,
   List<Army> armies = const [],
-}) => Game(
+}) => ordersOwRegionGame(
   id: id,
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: oldWorld,
-    newWorld: const RegionData(),
-    armies: armies,
-    tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
-    playerVisibilityByTile: _iceCorpusVisibility(),
-  ),
+  turnNumber: 1,
   players: const [
     Player(id: 'p1', displayName: 'P1', isHuman: true),
     Player(id: 'p2', displayName: 'P2', isHuman: true),
   ],
+  oldWorld: oldWorld,
+  armies: armies,
+  tileKeysByRegionAndProvince: _iceCorpusTileKeys(),
+  playerVisibilityByTile: _iceCorpusVisibility(),
   minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
 );
 
@@ -155,41 +154,38 @@ MapTopology armyCorpusTopology() {
 
 Game navalCorpusGame() {
   const ow = _iceCorpusOw;
-  return Game(
+  return ordersOwRegionGame(
     id: 'g_naval_eq',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|coastA', regionId: ow, ownerId: 'p1'),
-          Province(id: '$ow|coastB', regionId: ow, ownerId: 'p1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      fleets: [
-        Fleet(
-          id: 'fleet_atSea',
-          ownerId: 'p1',
-          regionId: ow,
-          seaZoneId: '$ow|sea1',
-          shipTypeIds: const ['carrack'],
-        ),
-        Fleet(
-          id: 'fleet_inPort',
-          ownerId: 'p1',
-          regionId: ow,
-          inPortAtProvinceId: '$ow|coastA',
-          shipTypeIds: const ['carrack'],
-        ),
-      ],
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          '$ow|coastA': ['$ow|coastA|0|0'],
-          '$ow|coastB': ['$ow|coastB|0|0'],
-        },
-      },
-    ),
+    turnNumber: 1,
     players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: '$ow|coastA', regionId: ow, ownerId: 'p1'),
+        Province(id: '$ow|coastB', regionId: ow, ownerId: 'p1'),
+      ],
+    ),
+    fleets: [
+      Fleet(
+        id: 'fleet_atSea',
+        ownerId: 'p1',
+        regionId: ow,
+        seaZoneId: '$ow|sea1',
+        shipTypeIds: const ['carrack'],
+      ),
+      Fleet(
+        id: 'fleet_inPort',
+        ownerId: 'p1',
+        regionId: ow,
+        inPortAtProvinceId: '$ow|coastA',
+        shipTypeIds: const ['carrack'],
+      ),
+    ],
+    tileKeysByRegionAndProvince: const {
+      ow: {
+        '$ow|coastA': ['$ow|coastA|0|0'],
+        '$ow|coastB': ['$ow|coastB|0|0'],
+      },
+    },
   );
 }
 
