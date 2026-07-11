@@ -13,6 +13,7 @@ import 'valid_work_tiles_test_support.dart';
 export 'nw_partial_reveal_home_target.dart';
 export 'valid_work_tiles_explore_fixtures.dart';
 
+// dart format off
 Province vwtOwnedProvince(String localId) => Province(
   id: ValidWorkTilesTestSupport.provinceId(localId),
   regionId: ValidWorkTilesTestSupport.ow,
@@ -35,11 +36,7 @@ Set<String> validWorkTilesWithVisibility({
   Orders currentOrders = const Orders(),
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final view = buildPlayerView(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-  );
+  final view = buildPlayerView(game, topology, ValidWorkTilesTestSupport.playerId);
   return getValidWorkOrderTileKeysWithVisibility(
     game: game,
     topology: topology,
@@ -56,11 +53,7 @@ List<WorkOrder> suggestedWorkOrders({
   required MapTopology topology,
   Orders currentOrders = const Orders(),
 }) {
-  final view = buildPlayerView(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-  );
+  final view = buildPlayerView(game, topology, ValidWorkTilesTestSupport.playerId);
   return suggestWorkOrders(view, game, topology, currentOrders);
 }
 
@@ -70,46 +63,20 @@ Game vwtSingleTileGame({bool withExplorer = false}) {
   return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
     oldWorld: withExplorer
         ? RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ValidWorkTilesTestSupport.ow,
-                ownerId: ValidWorkTilesTestSupport.playerId,
-              ),
-            ],
-            units: [
-              ValidWorkTilesTestSupport.explorerUnit(
-                locationProvinceId: provinceId,
-                tileKey: tile,
-              ),
-            ],
+            provinces: [Province(id: provinceId, regionId: ValidWorkTilesTestSupport.ow, ownerId: ValidWorkTilesTestSupport.playerId)],
+            units: [ValidWorkTilesTestSupport.explorerUnit(locationProvinceId: provinceId, tileKey: tile)],
           )
         : null,
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      provinceId: [tile],
-    }),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({provinceId: [tile]}),
   );
 }
 
 Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
-    getValidWorkOrderTileKeys(
-      game,
-      _vwtTopology,
-      ValidWorkTilesTestSupport.playerId,
-      unitId,
-      workTarget,
-      const Orders(),
-    );
+    getValidWorkOrderTileKeys(game, _vwtTopology, ValidWorkTilesTestSupport.playerId, unitId, workTarget, const Orders());
 
 Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: _vwtTopology,
-      unitId: unitId,
-      workTarget: workTarget,
-    );
+    validWorkTilesWithVisibility(game: game, topology: _vwtTopology, unitId: unitId, workTarget: workTarget);
 
-/// OW single-province builder game used by build_improvement visibility cases.
 Game owBuilderVisibilityGame({
   required List<Province> provinces,
   required Map<String, List<String>> tilesByProvince,
@@ -125,24 +92,13 @@ Game owBuilderVisibilityGame({
   List<String>? seaTiles,
 }) {
   final p1 = ValidWorkTilesTestSupport.provinceId(builderProvinceLocalId);
-  final unit = ValidWorkTilesTestSupport.builderUnit(
-    locationProvinceId: p1,
-    tileKey: builderTileKey,
-  );
+  final unit = ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1, tileKey: builderTileKey);
   final tileKeys = Map<String, List<String>>.from(tilesByProvince);
-  if (seaZoneId != null && seaTiles != null) {
-    tileKeys[seaZoneId] = seaTiles;
-  }
-  final visibility = <String, String>{
-    for (final tiles in tileKeys.values)
-      for (final t in tiles) t: 'fullyVisible',
-  };
+  if (seaZoneId != null && seaTiles != null) tileKeys[seaZoneId] = seaTiles;
+  final visibility = <String, String>{for (final tiles in tileKeys.values) for (final t in tiles) t: 'fullyVisible'};
   return ordersOwRegionGame(
     turnNumber: 1,
-    players: [
-      ValidWorkTilesTestSupport.playerWithBuildStockpile(),
-      ...?extraPlayers,
-    ],
+    players: [ValidWorkTilesTestSupport.playerWithBuildStockpile(), ...?extraPlayers],
     oldWorld: RegionData(provinces: provinces, units: [unit]),
     tileKeysByRegionAndProvince: seaZoneId == null
         ? ValidWorkTilesTestSupport.tileKeysByProvince(tilesByProvince)
@@ -156,7 +112,6 @@ Game owBuilderVisibilityGame({
   );
 }
 
-/// Tribe-owned OW province explorer setup for prospect tile-key cases.
 Game owTribeProspectGame({
   required String provinceLocalId,
   required List<String> tileKeys,
@@ -165,31 +120,18 @@ Game owTribeProspectGame({
   Map<String, Set<String>>? playerProspectedTiles,
 }) {
   final provinceId = ValidWorkTilesTestSupport.provinceId(provinceLocalId);
-  final unit = ValidWorkTilesTestSupport.explorerUnit(
-    locationProvinceId: provinceId,
-    tileKey: tileKeys.first,
-  );
+  final unit = ValidWorkTilesTestSupport.explorerUnit(locationProvinceId: provinceId, tileKey: tileKeys.first);
   return ordersOwRegionGame(
     turnNumber: 1,
     players: const [ValidWorkTilesTestSupport.defaultPlayer],
     oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: provinceId,
-          regionId: ValidWorkTilesTestSupport.ow,
-          ownerId: 'tribe1',
-        ),
-      ],
+      provinces: [Province(id: provinceId, regionId: ValidWorkTilesTestSupport.ow, ownerId: 'tribe1')],
       units: [unit],
     ),
-    playerVisibilityByTile: {
-      ValidWorkTilesTestSupport.playerId: visibilityByTile,
-    },
+    playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibilityByTile},
     resourceByTileKey: resourceByTileKey,
     playerProspectedTiles: playerProspectedTiles,
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      provinceId: tileKeys,
-    }),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({provinceId: tileKeys}),
     tribes: const [ValidWorkTilesTestSupport.defaultTribe],
     // Refs #3753 R4: a Consulate is required to prospect Tribe provinces.
     overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
@@ -197,48 +139,28 @@ Game owTribeProspectGame({
 }
 
 MapTopology owSingleProvinceTopology(String localId) => MapTopology(
-  nodes: [
-    TopologyNode(
-      id: localId,
-      regionId: ValidWorkTilesTestSupport.ow,
-      type: TopologyNodeType.province,
-    ),
-  ],
+  nodes: [TopologyNode(id: localId, regionId: ValidWorkTilesTestSupport.ow, type: TopologyNodeType.province)],
   edges: const [],
 );
 
-/// Grain tiles on owned province for suggestWorkOrders build_improvement cases.
 Game owGrainBuildSuggestGame({
   required List<String> tileKeys,
   Map<String, String>? visibilityOverride,
 }) {
   final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-  final builder = ValidWorkTilesTestSupport.builderUnit(
-    locationProvinceId: p1,
-    tileKey: tileKeys.first,
-  );
-  final visibility =
-      visibilityOverride ?? {for (final t in tileKeys) t: 'fullyVisible'};
+  final builder = ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1, tileKey: tileKeys.first);
+  final visibility = visibilityOverride ?? {for (final t in tileKeys) t: 'fullyVisible'};
   return ordersOwRegionGame(
     turnNumber: 1,
     players: [ValidWorkTilesTestSupport.playerWithTreasury()],
     oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: p1,
-          regionId: ValidWorkTilesTestSupport.ow,
-          ownerId: ValidWorkTilesTestSupport.playerId,
-        ),
-      ],
+      provinces: [Province(id: p1, regionId: ValidWorkTilesTestSupport.ow, ownerId: ValidWorkTilesTestSupport.playerId)],
       units: [builder],
     ),
     playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: visibility},
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      p1: tileKeys,
-    }),
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({p1: tileKeys}),
     resourceByTileKey: {for (final t in tileKeys) t: 'grain'},
-    tileState: TileMapState(
-      improvementByTile: {for (final t in tileKeys) t: 0},
-    ),
+    tileState: TileMapState(improvementByTile: {for (final t in tileKeys) t: 0}),
   );
 }
+// dart format on

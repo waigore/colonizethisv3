@@ -2495,3 +2495,17 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 7: **16937**. Rema
 
 Raw `Game(` outside `common/`: **0**. Support LOC after slice 8: **16451**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 9: densify training / recruit / army-move / VWT / ICE fixtures (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| but-densify | shared `_butPlayer` / sea topology + format-off densify | `build_unit_training_fixtures.dart` | same | #3971 |
+| recruit-densify | shared `_rwPlayer` + tech consts for recruit-worker Games | `order_suggestion_recruit_worker_fixtures.dart` | same | #3971 |
+| army-move-densify | densify army-move game/topology builders under format-off | `order_suggestion_army_move_fixtures.dart` | same | #3971 |
+| work-app-densify | densify work-application fixture helpers | `work_application_fixtures.dart` | same | #3971 |
+| vwt-densify | densify valid-work-tiles + explore + merchant purchase fixtures | `valid_work_tiles_*.dart`, `merchant_purchase_land_*_fixtures.dart` | same | #3971 |
+| ice-vw-densify | densify ICE helpers + validate-work fixtures | ICE helpers + `order_engine_validate_work_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 16475 → 15800 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 9: **15783**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+

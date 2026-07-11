@@ -14,7 +14,7 @@ const String ordersTestSupportRelativeDir =
 
 /// Ratchet ceiling (physical LOC via `find … | xargs cat | wc -l` equivalent).
 /// Wave-4 AC target: 14900. Lower this constant as slices land.
-const int ordersTestSupportLocCeiling = 16475;
+const int ordersTestSupportLocCeiling = 15800;
 
 /// Counts physical lines of all `*.dart` files under [supportDir].
 int countOrdersTestSupportPhysicalLoc(Directory supportDir) {

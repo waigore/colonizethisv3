@@ -1,4 +1,4 @@
-// Fixtures for merchant purchase-land candidate tile keys scenarios (Refs #3949 wave 3).
+// Fixtures for merchant purchase-land candidate tile keys scenarios (Refs #3949 / #3971).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
@@ -26,34 +26,20 @@ List<String> mplReferencePurchaseLandTileKeys({
   return out;
 }
 
+// dart format off
+const _mplGp = Player(id: 'gp1', displayName: 'GP', isHuman: true);
+
 Game mplNwFirstGame() {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  const gp = 'gp1';
-  const minor = 'minor1';
-  const tribe = 'tribe1';
-  const pMinor = '$ow|p_minor';
-  const pTribe = '$nw|p_tribe';
-  final provinces = [
-    Province(id: pMinor, regionId: ow, ownerId: minor),
-    Province(id: pTribe, regionId: nw, ownerId: tribe),
-  ];
-  const tkMinor = '$pMinor|0|0';
-  const tkTribe = '$pTribe|1|1';
+  const ow = 'oldWorld', nw = 'newWorld', minor = 'minor1', tribe = 'tribe1';
+  const pMinor = '$ow|p_minor', pTribe = '$nw|p_tribe';
+  const tkMinor = '$pMinor|0|0', tkTribe = '$pTribe|1|1';
   return TestFixtures.minimalGame(
     id: 'g-merchant-nw-first',
-    players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(provinces: [provinces.first], units: const []),
-    newWorld: RegionData(provinces: [provinces.last], units: const []),
+    players: const [_mplGp],
+    oldWorld: RegionData(provinces: [Province(id: pMinor, regionId: ow, ownerId: minor)], units: const []),
+    newWorld: RegionData(provinces: [Province(id: pTribe, regionId: nw, ownerId: tribe)], units: const []),
     tribes: const [Tribe(id: tribe, displayName: 'T')],
-    tileKeysByRegionAndProvince: {
-      ow: {
-        pMinor: [tkMinor],
-      },
-      nw: {
-        pTribe: [tkTribe],
-      },
-    },
+    tileKeysByRegionAndProvince: {ow: {pMinor: [tkMinor]}, nw: {pTribe: [tkTribe]}},
     resourceByTileKey: {tkMinor: 'grain', tkTribe: 'iron'},
   );
 }
@@ -62,68 +48,35 @@ const mplTkTribe = 'newWorld|p_tribe|1|1';
 const mplTkMinorNwFirst = 'oldWorld|p_minor|0|0';
 
 Game mplDeterministicSortGame() {
-  const ow = 'oldWorld';
-  const gp = 'gp1';
-  const minor = 'minor1';
-  const pPlayer = '$ow|p_owned';
-  const pMinor = '$ow|p_minor';
-  final provinces = [
-    Province(id: pPlayer, regionId: ow, ownerId: gp),
-    Province(id: pMinor, regionId: ow, ownerId: minor),
-  ];
-  const tkMinor0 = '$pMinor|0|0';
-  const tkMinor1 = '$pMinor|0|1';
-  const tkPlayer0 = '$pPlayer|0|0';
+  const ow = 'oldWorld', gp = 'gp1', minor = 'minor1';
+  const pPlayer = '$ow|p_owned', pMinor = '$ow|p_minor';
+  const tkMinor0 = '$pMinor|0|0', tkMinor1 = '$pMinor|0|1', tkPlayer0 = '$pPlayer|0|0';
   return TestFixtures.minimalGame(
     id: 'g-merchant-tile-index',
-    players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(provinces: provinces, units: const []),
-    tileKeysByRegionAndProvince: {
-      ow: {
-        pMinor: [tkMinor1, tkMinor0],
-        pPlayer: [tkPlayer0],
-      },
-    },
-    resourceByTileKey: {
-      tkMinor0: 'grain',
-      tkMinor1: 'iron',
-      tkPlayer0: 'grain',
-    },
+    players: const [_mplGp],
+    oldWorld: RegionData(
+      provinces: [Province(id: pPlayer, regionId: ow, ownerId: gp), Province(id: pMinor, regionId: ow, ownerId: minor)],
+      units: const [],
+    ),
+    tileKeysByRegionAndProvince: {ow: {pMinor: [tkMinor1, tkMinor0], pPlayer: [tkPlayer0]}},
+    resourceByTileKey: {tkMinor0: 'grain', tkMinor1: 'iron', tkPlayer0: 'grain'},
   );
 }
 
 Game mplProjectionParityGame() {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  const gp = 'gp1';
-  const minor = 'minor1';
-  const tribe = 'tribe1';
-  const pPlayer = '$ow|p_owned';
-  const pMinor = '$ow|p_minor';
-  const pTribe = '$nw|p_tribe';
-  final oldProvinces = [
-    Province(id: pPlayer, regionId: ow, ownerId: gp),
-    Province(id: pMinor, regionId: ow, ownerId: minor),
-  ];
-  final newProvinces = [Province(id: pTribe, regionId: nw, ownerId: tribe)];
-  const tkPlayer = '$pPlayer|0|0';
-  const tkMinor = '$pMinor|0|0';
-  const tkTribe = '$pTribe|1|1';
+  const ow = 'oldWorld', nw = 'newWorld', gp = 'gp1', minor = 'minor1', tribe = 'tribe1';
+  const pPlayer = '$ow|p_owned', pMinor = '$ow|p_minor', pTribe = '$nw|p_tribe';
+  const tkPlayer = '$pPlayer|0|0', tkMinor = '$pMinor|0|0', tkTribe = '$pTribe|1|1';
   return TestFixtures.minimalGame(
     id: 'g-merchant-projection-parity',
-    players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(provinces: oldProvinces, units: const []),
-    newWorld: RegionData(provinces: newProvinces, units: const []),
+    players: const [_mplGp],
+    oldWorld: RegionData(
+      provinces: [Province(id: pPlayer, regionId: ow, ownerId: gp), Province(id: pMinor, regionId: ow, ownerId: minor)],
+      units: const [],
+    ),
+    newWorld: RegionData(provinces: [Province(id: pTribe, regionId: nw, ownerId: tribe)], units: const []),
     tribes: const [Tribe(id: tribe, displayName: 'T')],
-    tileKeysByRegionAndProvince: {
-      ow: {
-        pPlayer: [tkPlayer],
-        pMinor: [tkMinor],
-      },
-      nw: {
-        pTribe: [tkTribe],
-      },
-    },
+    tileKeysByRegionAndProvince: {ow: {pPlayer: [tkPlayer], pMinor: [tkMinor]}, nw: {pTribe: [tkTribe]}},
     resourceByTileKey: {tkPlayer: 'grain', tkMinor: 'grain', tkTribe: 'iron'},
   );
 }
@@ -133,25 +86,17 @@ const mplTkMinorProjection = 'oldWorld|p_minor|0|0';
 const mplTkTribeProjection = 'newWorld|p_tribe|1|1';
 
 Game mplDevExclusiveReservedGame() {
-  const ow = 'oldWorld';
-  const gp = 'gp1';
-  const minor = 'minor1';
-  const pMinor = '$ow|p_minor';
-  final provinces = [Province(id: pMinor, regionId: ow, ownerId: minor)];
-  const tk0 = '$pMinor|0|0';
-  const tk1 = '$pMinor|0|1';
+  const ow = 'oldWorld', minor = 'minor1', pMinor = '$ow|p_minor';
+  const tk0 = '$pMinor|0|0', tk1 = '$pMinor|0|1';
   return TestFixtures.minimalGame(
     id: 'g-merchant-tile-index-reserved',
-    players: const [Player(id: gp, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(provinces: provinces, units: const []),
-    tileKeysByRegionAndProvince: {
-      ow: {
-        pMinor: [tk0, tk1],
-      },
-    },
+    players: const [_mplGp],
+    oldWorld: RegionData(provinces: [Province(id: pMinor, regionId: ow, ownerId: minor)], units: const []),
+    tileKeysByRegionAndProvince: {ow: {pMinor: [tk0, tk1]}},
     resourceByTileKey: {tk0: 'grain', tk1: 'grain'},
   );
 }
 
 const mplTk0DevExclusive = 'oldWorld|p_minor|0|0';
 const mplTk1DevExclusive = 'oldWorld|p_minor|0|1';
+// dart format on
