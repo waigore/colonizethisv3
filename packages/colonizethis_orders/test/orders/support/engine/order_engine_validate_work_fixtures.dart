@@ -1,7 +1,9 @@
-// Shared fixtures for OrderEngine validateWork scenarios (Refs #3949 wave 3).
+// Shared fixtures for OrderEngine validateWork scenarios (Refs #3949 wave 3 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 import 'order_engine_validate_work_constants.dart';
 
 export 'order_engine_validate_work_constants.dart';
@@ -41,39 +43,8 @@ Game vwSingleProvinceUnitGame({
   const tileKey = ValidateWorkOw.tileKey;
   final tileKeys = [tileKey, ...?extraTileKeys];
   final visibility = {for (final key in tileKeys) key: 'fullyVisible'};
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(
-        provinces: [
-          _vwProvince(
-            provinceId: provinceId,
-            ow: ow,
-            fortLevel: fortLevel,
-            townTileKey: townTileKey,
-            townDevelopmentLevel: townDevelopmentLevel,
-          ),
-        ],
-        units: [
-          Unit(
-            id: unitId,
-            type: unitType,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey ?? const {},
-      tileState: tileState,
-      tileKeysByRegionAndProvince: {
-        ow: {provinceId: tileKeys},
-      },
-      playerVisibilityByTile: {'p1': visibility},
-      playerProspectedTiles: playerProspectedTiles ?? const {},
-    ),
+  return ordersOwRegionGame(
+    turnNumber: turnNumber,
     players: [
       Player(
         id: 'p1',
@@ -84,6 +55,33 @@ Game vwSingleProvinceUnitGame({
         techUnlocked: techUnlocked ?? const {},
       ),
     ],
+    oldWorld: RegionData(
+      provinces: [
+        _vwProvince(
+          provinceId: provinceId,
+          ow: ow,
+          fortLevel: fortLevel,
+          townTileKey: townTileKey,
+          townDevelopmentLevel: townDevelopmentLevel,
+        ),
+      ],
+      units: [
+        Unit(
+          id: unitId,
+          type: unitType,
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+        ),
+      ],
+    ),
+    resourceByTileKey: resourceByTileKey ?? const {},
+    tileState: tileState,
+    tileKeysByRegionAndProvince: {
+      ow: {provinceId: tileKeys},
+    },
+    playerVisibilityByTile: {'p1': visibility},
+    playerProspectedTiles: playerProspectedTiles ?? const {},
   );
 }
 
@@ -180,39 +178,7 @@ Game buildImprovementForeignProvinceGame({
   const tileKey = ValidateWorkOw.tileKey;
   final foreignProvinceId = '$ow|P2';
   final foreignTileKey = '$foreignProvinceId|0|0';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-          Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
-      tileState: const TileMapState(),
-      tileKeysByRegionAndProvince: {
-        ow: {
-          provinceId: [tileKey],
-          foreignProvinceId: [foreignTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
-      },
-      purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
-    ),
+  return ordersOwRegionGame(
     players: [
       Player(
         id: 'p1',
@@ -226,6 +192,32 @@ Game buildImprovementForeignProvinceGame({
       ),
       const Player(id: 'p2', displayName: 'P2', isHuman: false),
     ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+        Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
+      ],
+      units: [
+        Unit(
+          id: 'builder1',
+          type: kUnitTypeBuilder,
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+        ),
+      ],
+    ),
+    resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
+    tileKeysByRegionAndProvince: {
+      ow: {
+        provinceId: [tileKey],
+        foreignProvinceId: [foreignTileKey],
+      },
+    },
+    playerVisibilityByTile: {
+      'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
+    },
+    purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
   );
 }
 
@@ -261,42 +253,7 @@ Game builderEngineerSameTileExclusivityGame() {
   const ow = ValidateWorkOw.ow;
   const provinceId = ValidateWorkOw.provinceId;
   const tileKey = ValidateWorkOw.tileKey;
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'builder1',
-            type: kUnitTypeBuilder,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-          Unit(
-            id: 'engineer1',
-            type: kUnitTypeEngineer,
-            ownerId: 'p1',
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {tileKey: 'grain'},
-      playerVisibilityByTile: const {
-        'p1': {tileKey: 'fullyVisible'},
-      },
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          provinceId: [tileKey],
-        },
-      },
-    ),
+  return ordersOwRegionGame(
     players: [
       Player(
         id: 'p1',
@@ -306,6 +263,36 @@ Game builderEngineerSameTileExclusivityGame() {
         stockpile: lumberCastIronStockpile(10),
       ),
     ],
+    oldWorld: RegionData(
+      provinces: const [
+        Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+      ],
+      units: [
+        Unit(
+          id: 'builder1',
+          type: kUnitTypeBuilder,
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+        ),
+        Unit(
+          id: 'engineer1',
+          type: kUnitTypeEngineer,
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+        ),
+      ],
+    ),
+    resourceByTileKey: const {tileKey: 'grain'},
+    playerVisibilityByTile: const {
+      'p1': {tileKey: 'fullyVisible'},
+    },
+    tileKeysByRegionAndProvince: const {
+      ow: {
+        provinceId: [tileKey],
+      },
+    },
   );
 }
 

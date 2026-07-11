@@ -1,9 +1,10 @@
-// Shared fixtures for work-order application / completion scenarios (Refs #3949).
+// Shared fixtures for work-order application / completion scenarios (Refs #3949 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
 import 'orders_application_test_support.dart';
 
 /// Canonical OW ids used across application expectation bodies.
@@ -108,27 +109,32 @@ Game workAppOwnedGame({
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, String>? portsByProvinceSeaboard,
 }) {
-  return Game(
+  final base = ordersOwRegionGame(
     id: 'g',
-    globalGameSeed: globalGameSeed,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(
-        provinces: provinces ?? [workAppOwnedProvince()],
-        units: units,
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey ?? const {},
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
-      tileState: tileState ?? const TileMapState(),
-      playerVisibilityByTile: playerVisibilityByTile ?? const {},
-      portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
-    ),
+    turnNumber: turnNumber,
     players: players ?? const [OrdersApplicationTestSupport.defaultPlayer],
+    oldWorld: RegionData(
+      provinces: provinces ?? [workAppOwnedProvince()],
+      units: units,
+    ),
+    resourceByTileKey: resourceByTileKey,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
+    tileState: tileState,
+    playerVisibilityByTile: playerVisibilityByTile,
+    portsByProvinceSeaboard: portsByProvinceSeaboard,
     minorNations: minorNations ?? const [],
     overtureStates: overtureStates ?? const [],
     diplomacyRelations: diplomacyRelations ?? const [],
-    aiControlByGpId: aiControlByGpId ?? const {},
+  );
+  if (globalGameSeed == null &&
+      (aiControlByGpId == null || aiControlByGpId.isEmpty) &&
+      lastHumanCompletedResearchCategory == null &&
+      lastHumanResearchCategoryCompletionTurn == null) {
+    return base;
+  }
+  return base.copyWith(
+    globalGameSeed: globalGameSeed,
+    aiControlByGpId: aiControlByGpId,
     lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
     lastHumanResearchCategoryCompletionTurn:
         lastHumanResearchCategoryCompletionTurn,

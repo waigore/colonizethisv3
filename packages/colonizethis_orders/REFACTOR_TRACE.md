@@ -2416,3 +2416,15 @@ Deferred: support LOC ≤14,900 / test ≤16,400; `valid_work_tiles_fixtures_tai
 
 Shorthand LOC: osc 370→145 (−61%), waa 369→218 (−41%), wcc 312→134 (−57%). Support LOC after slice 2: **18092** (from 18588). Remaining: drive ≤14,900 / test ≤16,400; lib explorer/precheck; raw `Game(` sprawl gate; further shorthand/fixture compaction.
 
+## Wave 4 — Slice 3: OW region graph + raw Game ratchet (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ow-region-graph | add `ordersOwRegionGame` shared OW/dual-region builder | — | `test/orders/support/common/game_graphs.dart` | #3971 |
+| migrate-engine-app-mv | migrate engine core / validate-work / work-app / move-validator Games onto `ordersOwRegionGame` | `order_engine_core_fixtures.dart`, `order_engine_validate_work_fixtures.dart`, `work_application_fixtures.dart`, `move_validator_fixtures.dart` | thin wrappers | #3971 |
+| raw-game-gate | ratchet raw `Game(` count outside `support/common/` | — | `tool/check_orders_test_support_raw_game.dart` + `repo.orders_test_support_raw_game` | #3971 |
+| explorer-doc | document remaining explore-only probe/ranking logic | `order_suggestion_work_explorer.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18150 → 18100 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **71** (ceiling 71). Support LOC after slice 3: **18083**. Remaining: drive ≤14,900 / test ≤16,400; further fixture migrations; optional precheck/replay lib extracts.
+

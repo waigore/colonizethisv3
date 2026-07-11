@@ -1,8 +1,10 @@
-// Shared OrderEngine core scenario fixtures (Refs #3949 wave 3).
+// Shared OrderEngine core scenario fixtures (Refs #3949 wave 3 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const oecOw = 'oldWorld';
 
@@ -29,117 +31,81 @@ const oecP1VisibleP2Fogged = {
   'p1': {'oldWorld|P1|0|0': 'fullyVisible', 'oldWorld|P2|0|0': 'fogged'},
 };
 
+const _oecP1 = Player(id: 'p1', displayName: 'P1', isHuman: true);
+const _oecP2 = Player(id: 'p2', displayName: 'P2', isHuman: true);
+
+Game _oecTwoProvinceGame({
+  required String unitType,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+  String p2OwnerId = 'p1',
+  List<Player>? players,
+  List<Tribe> tribes = const [],
+  List<Army> armies = const [],
+}) => ordersOwRegionGame(
+  players: players ??
+      (p2OwnerId == 'p2' ? const [_oecP1, _oecP2] : const [_oecP1]),
+  oldWorld: RegionData(
+    provinces: [
+      Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
+      Province(id: '$oecOw|P2', regionId: oecOw, ownerId: p2OwnerId),
+    ],
+    units: [
+      Unit(
+        id: 'u1',
+        type: unitType,
+        ownerId: 'p1',
+        locationProvinceId: '$oecOw|P1',
+      ),
+    ],
+  ),
+  armies: armies,
+  tribes: tribes,
+  playerVisibilityByTile: playerVisibilityByTile,
+);
+
 Game oecBuilderOnP1Game({
   Map<String, Map<String, String>>? playerVisibilityByTile,
   String p2OwnerId = 'p1',
-}) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [
-        Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        Province(id: '$oecOw|P2', regionId: oecOw, ownerId: p2OwnerId),
-      ],
-      units: [
-        Unit(
-          id: 'u1',
-          type: kUnitTypeBuilder,
-          ownerId: 'p1',
-          locationProvinceId: '$oecOw|P1',
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: playerVisibilityByTile ?? oecBothTilesVisible,
-  ),
-  players: p2OwnerId == 'p2'
-      ? const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: true),
-        ]
-      : const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  diplomacyRelations: const [],
+}) => _oecTwoProvinceGame(
+  unitType: kUnitTypeBuilder,
+  playerVisibilityByTile: playerVisibilityByTile ?? oecBothTilesVisible,
+  p2OwnerId: p2OwnerId,
 );
 
 Game oecExplorerOnP1Game({
   Map<String, Map<String, String>>? playerVisibilityByTile,
   String p2OwnerId = 'p1',
   List<Tribe> tribes = const [],
-}) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [
-        Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        Province(id: '$oecOw|P2', regionId: oecOw, ownerId: p2OwnerId),
-      ],
-      units: [
-        Unit(
-          id: 'u1',
-          type: kUnitTypeExplorer,
-          ownerId: 'p1',
-          locationProvinceId: '$oecOw|P1',
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: playerVisibilityByTile ?? const {},
-  ),
-  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+}) => _oecTwoProvinceGame(
+  unitType: kUnitTypeExplorer,
+  playerVisibilityByTile: playerVisibilityByTile ?? const {},
+  p2OwnerId: p2OwnerId,
+  players: const [_oecP1],
   tribes: tribes,
 );
 
-Game oecMilitaryOnP1Game() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [
-        Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1'),
-        Province(id: '$oecOw|P2', regionId: oecOw, ownerId: 'p2'),
-      ],
-      units: [
-        Unit(
-          id: 'u1',
-          type: 'pikemen',
-          ownerId: 'p1',
-          locationProvinceId: '$oecOw|P1',
-        ),
-      ],
+Game oecMilitaryOnP1Game() => _oecTwoProvinceGame(
+  unitType: 'pikemen',
+  p2OwnerId: 'p2',
+  playerVisibilityByTile: oecP1VisibleP2Fogged,
+  armies: [
+    Army(
+      id: fieldArmyIdFor('p1', '$oecOw|P1'),
+      ownerId: 'p1',
+      regionId: oecOw,
+      stationedProvinceId: '$oecOw|P1',
+      regimentUnitIds: const ['u1'],
+      isHomeArmy: false,
     ),
-    newWorld: const RegionData(),
-    armies: [
-      Army(
-        id: fieldArmyIdFor('p1', '$oecOw|P1'),
-        ownerId: 'p1',
-        regionId: oecOw,
-        stationedProvinceId: '$oecOw|P1',
-        regimentUnitIds: const ['u1'],
-        isHomeArmy: false,
-      ),
-    ],
-    playerVisibilityByTile: oecP1VisibleP2Fogged,
-  ),
-  players: const [
-    Player(id: 'p1', displayName: 'P1', isHuman: true),
-    Player(id: 'p2', displayName: 'P2', isHuman: true),
   ],
-  diplomacyRelations: const [],
 );
 
-Game oecEmptyUnitsP1Game() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
-      units: [],
-    ),
-    newWorld: const RegionData(),
+Game oecEmptyUnitsP1Game() => ordersOwRegionGame(
+  players: const [_oecP1],
+  oldWorld: RegionData(
+    provinces: [Province(id: '$oecOw|P1', regionId: oecOw, ownerId: 'p1')],
+    units: const [],
   ),
-  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
 );
 
 OrderEngine oecProjectorEngine() => OrderEngine(projector: projectOrderEffects);

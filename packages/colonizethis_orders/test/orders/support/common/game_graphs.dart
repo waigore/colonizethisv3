@@ -212,3 +212,45 @@ Game ordersDualRegionOwnerMapGame({
     ),
   );
 }
+
+/// Flexible OW (or dual-region) game routed through [TestFixtures.minimalGame].
+///
+/// Use for family fixtures that need custom province/unit/army/visibility
+/// knobs without re-stating `WorldState` / `TurnState` boilerplate (Refs #3971).
+Game ordersOwRegionGame({
+  String id = 'g1',
+  int turnNumber = 0,
+  required List<Player> players,
+  required RegionData oldWorld,
+  RegionData newWorld = const RegionData(),
+  List<Army> armies = const [],
+  List<Tribe> tribes = const [],
+  List<MinorNation> minorNations = const [],
+  List<OvertureState> overtureStates = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
+  Map<String, String>? resourceByTileKey,
+  Map<String, String>? portsByProvinceSeaboard,
+  Map<String, Set<String>>? playerProspectedTiles,
+  TileMapState? tileState,
+  Map<String, String>? purchasedTilesByTileKey,
+}) => TestFixtures.minimalGame(
+  id: id,
+  turnNumber: turnNumber,
+  players: players,
+  oldWorld: oldWorld,
+  newWorld: newWorld,
+  armies: armies,
+  tribes: tribes,
+  minorNations: minorNations,
+  overtureStates: overtureStates,
+  diplomacyRelations: diplomacyRelations,
+  playerVisibilityByTile: playerVisibilityByTile,
+  tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+  resourceByTileKey: resourceByTileKey,
+  portsByProvinceSeaboard: portsByProvinceSeaboard,
+  playerProspectedTiles: playerProspectedTiles,
+  tileState: tileState,
+  purchasedTilesByTileKey: purchasedTilesByTileKey,
+);

@@ -217,12 +217,26 @@ void vwExpectBuildImprovementOutcome({
     tileMapByRegion: tileMapByRegion,
     targetTileKey: targetTileKey,
   );
+  _vwExpectOutcome(
+    result,
+    accepted: accepted,
+    reasonContains: reasonContains,
+    onRejected: onRejected,
+  );
+}
+
+void _vwExpectOutcome(
+  OrderValidationResult result, {
+  required bool accepted,
+  String? reasonContains,
+  void Function(OrderValidationResult result)? onRejected,
+}) {
   if (accepted) {
     vwExpectAccepted(result);
-  } else {
-    vwExpectRejected(result, reasonContains: reasonContains);
-    onRejected?.call(result);
+    return;
   }
+  vwExpectRejected(result, reasonContains: reasonContains);
+  onRejected?.call(result);
 }
 
 void vwExpectFortBuildRejected({
@@ -252,34 +266,32 @@ void vwExpectRailBuildOutcome({
   required bool accepted,
   String? reasonContains,
 }) {
-  final result = vwValidateOwWorkTarget(
-    game: gameWithRailUnit(tileState: tileState, techUnlocked: techUnlocked),
-    unitId: 'rail1',
-    target: kWorkTargetBuildRail,
-    tileMapByRegion: tileMapByRegion,
+  _vwExpectOutcome(
+    vwValidateOwWorkTarget(
+      game: gameWithRailUnit(tileState: tileState, techUnlocked: techUnlocked),
+      unitId: 'rail1',
+      target: kWorkTargetBuildRail,
+      tileMapByRegion: tileMapByRegion,
+    ),
+    accepted: accepted,
+    reasonContains: reasonContains,
   );
-  if (accepted) {
-    vwExpectAccepted(result);
-  } else {
-    vwExpectRejected(result, reasonContains: reasonContains);
-  }
 }
 
 void vwExpectUpgradeTownOutcome({
   required bool accepted,
   required Map<String, bool> techUnlocked,
 }) {
-  final result = vwValidateSingleWork(
-    game: upgradeTownWorkGame(techUnlocked: techUnlocked),
-    order: const WorkOrder(
-      unitId: 'b1',
-      target: kWorkTargetUpgradeTown,
-      targetTileKey: ValidateWorkOw.tileKey,
+  _vwExpectOutcome(
+    vwValidateSingleWork(
+      game: upgradeTownWorkGame(techUnlocked: techUnlocked),
+      order: const WorkOrder(
+        unitId: 'b1',
+        target: kWorkTargetUpgradeTown,
+        targetTileKey: ValidateWorkOw.tileKey,
+      ),
     ),
+    accepted: accepted,
+    reasonContains: accepted ? null : 'National Bureaucracy',
   );
-  if (accepted) {
-    vwExpectAccepted(result);
-  } else {
-    vwExpectRejected(result, reasonContains: 'National Bureaucracy');
-  }
 }
