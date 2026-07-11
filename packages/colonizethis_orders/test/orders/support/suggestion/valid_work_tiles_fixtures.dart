@@ -1,10 +1,15 @@
-// Shared fixtures for valid-work-tiles / suggest-work scenarios (Refs #3949).
+// Shared fixtures for valid-work-tiles / suggest-work scenarios (Refs #3971).
+//
+// Wave-4: absorbed former `valid_work_tiles_fixtures_tail.dart`; NW partial-
+// reveal graph lives in `nw_partial_reveal_home_target.dart`.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'valid_work_tiles_test_support.dart';
 
-export 'valid_work_tiles_fixtures_tail.dart';
+export 'nw_partial_reveal_home_target.dart';
+export 'valid_work_tiles_explore_fixtures.dart';
 
 Province vwtOwnedProvince(String localId) => Province(
   id: ValidWorkTilesTestSupport.provinceId(localId),
@@ -18,203 +23,89 @@ Province vwtProvince(String localId, String ownerId) => Province(
   ownerId: ownerId,
 );
 
-/// NW home + adjacent target province with partial visibility (home full, t0
-/// unknown, t1 fogged). Used by suggest explore/prospect scenario bodies.
-class NwPartialRevealHomeTarget {
-  NwPartialRevealHomeTarget({
-    required this.homeLocalId,
-    required this.targetLocalId,
-    this.homeOwnerId = ValidWorkTilesTestSupport.playerId,
-    required this.targetOwnerId,
-    this.unitId = 'ex1',
-    this.resourceByTileKey = const {},
-    this.playerProspectedTiles = const {},
-  }) : provHome = ValidWorkTilesTestSupport.provinceId(
-         homeLocalId,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       provTarget = ValidWorkTilesTestSupport.provinceId(
-         targetLocalId,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       tileHome = ValidWorkTilesTestSupport.tileKey(
-         homeLocalId,
-         0,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       t0 = ValidWorkTilesTestSupport.tileKey(
-         targetLocalId,
-         0,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       t1 = ValidWorkTilesTestSupport.tileKey(
-         targetLocalId,
-         1,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       );
+const _vwtTopology = ValidWorkTilesTestSupport.emptyTopology;
 
-  final String homeLocalId;
-  final String targetLocalId;
-  final String homeOwnerId;
-  final String targetOwnerId;
-  final String unitId;
-  final Map<String, String> resourceByTileKey;
-  final Map<String, Set<String>> playerProspectedTiles;
-
-  final String provHome;
-  final String provTarget;
-  final String tileHome;
-  final String t0;
-  final String t1;
-
-  WorldState world({Unit? unit}) {
-    final actor =
-        unit ??
-        ValidWorkTilesTestSupport.explorerUnit(
-          id: unitId,
-          locationProvinceId: provHome,
-          tileKey: tileHome,
-        );
-    return WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [
-          Province(
-            id: provHome,
-            regionId: ValidWorkTilesTestSupport.nw,
-            ownerId: homeOwnerId,
-          ),
-          Province(
-            id: provTarget,
-            regionId: ValidWorkTilesTestSupport.nw,
-            ownerId: targetOwnerId,
-          ),
-        ],
-        units: [actor],
-      ),
-      tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
-        {
-          provHome: [tileHome],
-          provTarget: [t0, t1],
-        },
-        regionId: ValidWorkTilesTestSupport.nw,
-      ),
-      resourceByTileKey: resourceByTileKey,
-      playerProspectedTiles: playerProspectedTiles,
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: {
-          tileHome: 'fullyVisible',
-          t0: 'unknown',
-          t1: 'fogged',
-        },
-      },
-    );
-  }
-
-  MapTopology topology() => MapTopology(
-    nodes: [
-      TopologyNode(
-        id: homeLocalId,
-        regionId: ValidWorkTilesTestSupport.nw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: targetLocalId,
-        regionId: ValidWorkTilesTestSupport.nw,
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: [TopologyEdge(id1: homeLocalId, id2: targetLocalId)],
+Set<String> validWorkTilesWithVisibility({
+  required Game game,
+  required MapTopology topology,
+  required String unitId,
+  required String workTarget,
+  Orders currentOrders = const Orders(),
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final view = buildPlayerView(
+    game,
+    topology,
+    ValidWorkTilesTestSupport.playerId,
   );
-
-  Game game({
-    required String id,
-    List<Player>? players,
-    List<Tribe>? tribes,
-    List<MinorNation>? minorNations,
-    List<OvertureState>? overtureStates,
-    Unit? unit,
-  }) => Game(
-    id: id,
-    worldState: world(unit: unit),
-    players: players ?? const [ValidWorkTilesTestSupport.defaultPlayer],
-    tribes: tribes ?? const [],
-    minorNations: minorNations ?? const [],
-    overtureStates: overtureStates ?? const [],
+  return getValidWorkOrderTileKeysWithVisibility(
+    game: game,
+    topology: topology,
+    view: view,
+    unitId: unitId,
+    workTarget: workTarget,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
   );
-
-  static NwPartialRevealHomeTarget tribeGrainIron({
-    bool prospectedIron = false,
-  }) {
-    final t0 = ValidWorkTilesTestSupport.tileKey(
-      'tribe1',
-      0,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
-    final t1 = ValidWorkTilesTestSupport.tileKey(
-      'tribe1',
-      1,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
-    return NwPartialRevealHomeTarget(
-      homeLocalId: 'home',
-      targetLocalId: 'tribe1',
-      targetOwnerId: 'tribe1',
-      resourceByTileKey: {t0: 'grain', t1: 'iron'},
-      playerProspectedTiles: prospectedIron
-          ? {
-              ValidWorkTilesTestSupport.playerId: {t1},
-            }
-          : const {},
-    );
-  }
-
-  static NwPartialRevealHomeTarget minorPurchase({
-    Map<String, String> resourceByTileKey = const {},
-  }) {
-    final t1 = ValidWorkTilesTestSupport.tileKey(
-      'm1',
-      1,
-      0,
-      regionId: ValidWorkTilesTestSupport.nw,
-    );
-    return NwPartialRevealHomeTarget(
-      homeLocalId: 'own',
-      targetLocalId: 'm1',
-      targetOwnerId: 'minor1',
-      resourceByTileKey: resourceByTileKey.isEmpty
-          ? {t1: 'grain'}
-          : resourceByTileKey,
-    );
-  }
-
-  Game tribeConsulateGame(String id) => game(
-    id: id,
-    tribes: const [ValidWorkTilesTestSupport.defaultTribe],
-    overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
-  );
-
-  Game minorPurchaseGame(String id, {List<OvertureState>? overtureStates}) =>
-      game(
-        id: id,
-        players: [ValidWorkTilesTestSupport.playerWithTreasury()],
-        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-        overtureStates: overtureStates,
-        unit: Unit(
-          id: 'u1',
-          type: kUnitTypeMerchant,
-          ownerId: ValidWorkTilesTestSupport.playerId,
-          locationProvinceId: provHome,
-          tileKey: tileHome,
-        ),
-      );
 }
+
+List<WorkOrder> suggestedWorkOrders({
+  required Game game,
+  required MapTopology topology,
+  Orders currentOrders = const Orders(),
+}) {
+  final view = buildPlayerView(
+    game,
+    topology,
+    ValidWorkTilesTestSupport.playerId,
+  );
+  return suggestWorkOrders(view, game, topology, currentOrders);
+}
+
+Game vwtSingleTileGame({bool withExplorer = false}) {
+  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
+  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
+  return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
+    oldWorld: withExplorer
+        ? RegionData(
+            provinces: [
+              Province(
+                id: provinceId,
+                regionId: ValidWorkTilesTestSupport.ow,
+                ownerId: ValidWorkTilesTestSupport.playerId,
+              ),
+            ],
+            units: [
+              ValidWorkTilesTestSupport.explorerUnit(
+                locationProvinceId: provinceId,
+                tileKey: tile,
+              ),
+            ],
+          )
+        : null,
+    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
+      provinceId: [tile],
+    }),
+  );
+}
+
+Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
+    getValidWorkOrderTileKeys(
+      game,
+      _vwtTopology,
+      ValidWorkTilesTestSupport.playerId,
+      unitId,
+      workTarget,
+      const Orders(),
+    );
+
+Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
+    validWorkTilesWithVisibility(
+      game: game,
+      topology: _vwtTopology,
+      unitId: unitId,
+      workTarget: workTarget,
+    );
 
 /// OW single-province builder game used by build_improvement visibility cases.
 Game owBuilderVisibilityGame({
@@ -276,10 +167,9 @@ Game owTribeProspectGame({
   Map<String, Set<String>>? playerProspectedTiles,
 }) {
   final provinceId = ValidWorkTilesTestSupport.provinceId(provinceLocalId);
-  final startTile = tileKeys.first;
   final unit = ValidWorkTilesTestSupport.explorerUnit(
     locationProvinceId: provinceId,
-    tileKey: startTile,
+    tileKey: tileKeys.first,
   );
   return Game(
     id: 'g1',
@@ -329,10 +219,9 @@ Game owGrainBuildSuggestGame({
   Map<String, String>? visibilityOverride,
 }) {
   final p1 = ValidWorkTilesTestSupport.provinceId('p1');
-  final tile0 = tileKeys.first;
   final builder = ValidWorkTilesTestSupport.builderUnit(
     locationProvinceId: p1,
-    tileKey: tile0,
+    tileKey: tileKeys.first,
   );
   final visibility =
       visibilityOverride ?? {for (final t in tileKeys) t: 'fullyVisible'};

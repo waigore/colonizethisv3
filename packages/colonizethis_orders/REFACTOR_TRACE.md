@@ -2405,3 +2405,14 @@ Migrated builders (slice 1): `twoGpGame`, `dvrTwoGpPeaceGame`, `dvrThreeGpPeaceG
 
 Deferred: support LOC ≤14,900 / test ≤16,400; `valid_work_tiles_fixtures_tail.dart` elimination; expectation_shorthand shrink; lib explorer/precheck extractions; raw `Game(` sprawl gate.
 
+## Wave 4 — Slice 2: eliminate fixtures_tail + densify shorthand (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-tail-elim | remove `valid_work_tiles_fixtures_tail.dart`; split NW partial-reveal + explore fixtures | `valid_work_tiles_fixtures_tail.dart` (deleted) | `valid_work_tiles_fixtures.dart` + `nw_partial_reveal_home_target.dart` + `valid_work_tiles_explore_fixtures.dart` | #3971 |
+| shared-asserts | add shared idle / current-work / stockpile assert helpers | — | `test/orders/support/common/expectation_asserts.dart` | #3971 |
+| shorthand-densify | shrink ≥3 of 5 largest `*expectation_shorthand*` by ≥25% LOC | `order_suggestion_core` / `work_order_application` / `work_completion` shorthand | same (+ shared asserts) | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18600 → 18150 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Shorthand LOC: osc 370→145 (−61%), waa 369→218 (−41%), wcc 312→134 (−57%). Support LOC after slice 2: **18092** (from 18588). Remaining: drive ≤14,900 / test ≤16,400; lib explorer/precheck; raw `Game(` sprawl gate; further shorthand/fixture compaction.
+
