@@ -1170,6 +1170,13 @@ rules:
     runner: dart
     script: tool/check_ai_colonial_acquisition_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_economy_regiment_build_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai economy_planner_regiment_build*_test.dart / *_cases.dart pins must import shared Game factories from economy_planner_regiment_build_input_support.dart (no local _regimentRebuildProductionGame / _castIron*Game) (Refs #3972)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_economy_regiment_build_test_shared_fixtures.dart
+
   - rule_id: repo.ai_test_no_matrix_part_shards
     group: testing
     title: colonizethis_ai planning matrix suites must not keep *_partN_test.dart shards alongside a sibling *_support.dart (Refs #3941)
