@@ -1,18 +1,16 @@
-// Shared diplomatic-minor API impl suggestion fixtures (Refs #3949 wave 3).
+// Shared diplomatic-minor API impl suggestion fixtures (Refs #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../common/game_graphs.dart';
 
 const diplomaticMinorApiImplTopology = MapTopology(nodes: [], edges: []);
 
-Game diplomaticMinorApiImplUnknownFactionGame() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
+Game diplomaticMinorApiImplUnknownFactionGame() => TestFixtures.minimalGame(
   players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
   minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
 );
@@ -82,13 +80,7 @@ Game diplomaticMinorApiImplNoDiplomaticExpertiseGame() => Game(
   ],
 );
 
-Game diplomaticMinorApiImplJoinEmpireDeclareWarGame() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
+Game diplomaticMinorApiImplJoinEmpireDeclareWarGame() => ordersTwoGpEmptyGame(
   players: [
     const Player(
       id: 'gp1',

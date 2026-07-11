@@ -1,7 +1,10 @@
-// Fixtures for diplomatic boycott suggestion scenarios (Refs #3949 wave 3).
+// Fixtures for diplomatic boycott suggestion scenarios (Refs #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const orderSuggestionDiplomaticBoycottEmptyTopology = MapTopology(
   nodes: [],
@@ -15,26 +18,13 @@ Game orderSuggestionDiplomaticBoycottTwoGpGame({
   List<BoycottState> boycotts = const [],
   List<MinorNation> minors = const [],
 }) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
+  final game = ordersTwoGpEmptyGame(
+    players: ordersCommonTwoGpAb,
+    state: state,
+    level: level,
     minorNations: minors,
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: state,
-        level: level,
-      ),
-    ],
+  );
+  return game.copyWith(
     colonyStates: holdsColony
         ? const [
             ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),

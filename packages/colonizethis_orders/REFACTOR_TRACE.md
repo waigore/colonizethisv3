@@ -2392,3 +2392,16 @@ Feedstock / army-move: remaining cross-file duplication insufficient after slice
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
 | (none after slice 96) | — | All former imperative suites migrated; `ordersPreferScenarioTablesAllowlist` empty | #3949 |
+
+## Wave 4 — Slice 1: shared game-graph module + support LOC gate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| game-graphs | add parameterized `ordersTwoGpEmptyGame` / `ordersThreeGpEmptyGame` / `ordersTwoProvinceOwnedGame` / `ordersDualRegionOwnerMapGame` | — | `test/orders/support/common/game_graphs.dart` | #3971 |
+| migrate-two-gp | migrate ≥20 family-local empty/two-province Game builders onto shared graphs or `TestFixtures.minimalGame` | diplomatic/suggestion/validator fixture modules (see list below) | thin wrappers calling `common/game_graphs.dart` | #3971 |
+| support-loc-gate | ratchet physical-LOC ceiling for `test/orders/support/` | — | `tool/check_orders_test_support_loc.dart` + `repo.orders_test_support_loc` | #3971 |
+
+Migrated builders (slice 1): `twoGpGame`, `dvrTwoGpPeaceGame`, `dvrThreeGpPeaceGame`, `diplomaticAppendabilityTwoGpNeutralGame`, `diplomaticAppendabilityTwoGpAlliedGame`, `diplomaticApiImplGame`, `orderSuggestionDiplomaticBoycottTwoGpGame`, `breakAllianceValidatorTwoGpAllianceGame`, `boycottValidatorColonyHolderGame`, `orderSuggestionDiplomacyFilterDualRegionGame`, `orderSuggestionDiplomacyFilterEmptyStringOwnerGame`, `orderSuggestionDiplomacyFilterOldWorldTwoGpGame`, `orderSuggestionDiplomacyFilterNewWorldTwoGpGame`, `orderSuggestionDiplomacyFilterPeacefulTwoGpGame`, `orderSuggestionDiplomacyFilterAtWarTwoGpGame`, `orderSuggestionPassContextOwnedProvincesGame`, `diplomaticMinorApiImplUnknownFactionGame`, `diplomaticMinorApiImplJoinEmpireDeclareWarGame`, `navalValidatorReuseScenarioGame`, `amvArmiesByIdSampleGame`, `amvArmiesByIdTwoGpPeaceGame`, `simpleAiValidatorReuseTwoGpWarGame`.
+
+Deferred: support LOC ≤14,900 / test ≤16,400; `valid_work_tiles_fixtures_tail.dart` elimination; expectation_shorthand shrink; lib explorer/precheck extractions; raw `Game(` sprawl gate.
+
