@@ -1,93 +1,8 @@
-// Tail fixtures for valid-work-tiles scenarios (Refs #3949).
+// Explore / move-adjacency fixtures for valid-work-tiles (Refs #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'valid_work_tiles_test_support.dart';
-
-Set<String> validWorkTilesWithVisibility({
-  required Game game,
-  required MapTopology topology,
-  required String unitId,
-  required String workTarget,
-  Orders currentOrders = const Orders(),
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final view = buildPlayerView(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-  );
-  return getValidWorkOrderTileKeysWithVisibility(
-    game: game,
-    topology: topology,
-    view: view,
-    unitId: unitId,
-    workTarget: workTarget,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
-}
-
-List<WorkOrder> suggestedWorkOrders({
-  required Game game,
-  required MapTopology topology,
-  Orders currentOrders = const Orders(),
-}) {
-  final view = buildPlayerView(
-    game,
-    topology,
-    ValidWorkTilesTestSupport.playerId,
-  );
-  return suggestWorkOrders(view, game, topology, currentOrders);
-}
-
-const _vwtTopology = ValidWorkTilesTestSupport.emptyTopology;
-
-Game vwtSingleTileGame({bool withExplorer = false}) {
-  final provinceId = ValidWorkTilesTestSupport.provinceId('p1');
-  final tile = ValidWorkTilesTestSupport.tileKey('p1', 0, 0);
-  return ValidWorkTilesTestSupport.minimalValidWorkTilesGame(
-    oldWorld: withExplorer
-        ? RegionData(
-            provinces: [
-              Province(
-                id: provinceId,
-                regionId: ValidWorkTilesTestSupport.ow,
-                ownerId: ValidWorkTilesTestSupport.playerId,
-              ),
-            ],
-            units: [
-              ValidWorkTilesTestSupport.explorerUnit(
-                locationProvinceId: provinceId,
-                tileKey: tile,
-              ),
-            ],
-          )
-        : null,
-    tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince({
-      provinceId: [tile],
-    }),
-  );
-}
-
-Set<String> vwtPlainKeys(Game game, String unitId, String workTarget) =>
-    getValidWorkOrderTileKeys(
-      game,
-      _vwtTopology,
-      ValidWorkTilesTestSupport.playerId,
-      unitId,
-      workTarget,
-      const Orders(),
-    );
-
-Set<String> vwtVisKeys(Game game, String unitId, String workTarget) =>
-    validWorkTilesWithVisibility(
-      game: game,
-      topology: _vwtTopology,
-      unitId: unitId,
-      workTarget: workTarget,
-    );
 
 /// Tribe-owned OW provinces with mixed visibility for explore visibility scans.
 ({Game game, String partialKnownTile, String fullTile, String unknownTile})
@@ -169,7 +84,6 @@ Game owTribeExploreLatencyGame({
   final byProvince = <String, List<String>>{};
   final visibility = <String, String>{};
   final provinces = <Province>[];
-
   for (var p = 0; p < provinceCount; p++) {
     final provinceId = ValidWorkTilesTestSupport.provinceId('p$p');
     provinces.add(
@@ -187,18 +101,21 @@ Game owTribeExploreLatencyGame({
     }
     byProvince[provinceId] = tiles;
   }
-
   final startTile = ValidWorkTilesTestSupport.tileKey('p0', 0, 0);
-  final explorer = ValidWorkTilesTestSupport.explorerUnit(
-    locationProvinceId: ValidWorkTilesTestSupport.provinceId('p0'),
-    tileKey: startTile,
-  );
   return ValidWorkTilesTestSupport.validWorkTilesGame(
     id: 'g-latency',
     tribes: const [ValidWorkTilesTestSupport.defaultTribe],
     // Refs #3753 R4: a Consulate is required to explore Tribe provinces.
     overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
-    oldWorld: RegionData(provinces: provinces, units: [explorer]),
+    oldWorld: RegionData(
+      provinces: provinces,
+      units: [
+        ValidWorkTilesTestSupport.explorerUnit(
+          locationProvinceId: ValidWorkTilesTestSupport.provinceId('p0'),
+          tileKey: startTile,
+        ),
+      ],
+    ),
     tileKeysByRegionAndProvince: ValidWorkTilesTestSupport.tileKeysByProvince(
       byProvince,
     ),
@@ -223,12 +140,16 @@ owGpAdjacentMoveFixture({
     regionId: ValidWorkTilesTestSupport.ow,
     ownerId: otherGpId,
   );
-  final unit = ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1.id);
   final game = Game(
     id: 'g1',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: [p1, p2], units: [unit]),
+      oldWorld: RegionData(
+        provinces: [p1, p2],
+        units: [
+          ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1.id),
+        ],
+      ),
       newWorld: const RegionData(),
       playerVisibilityByTile: const {
         ValidWorkTilesTestSupport.playerId: {

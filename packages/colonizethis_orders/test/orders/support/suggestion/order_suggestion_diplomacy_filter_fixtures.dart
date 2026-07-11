@@ -1,157 +1,62 @@
-// Shared diplomacy-filter suggestion fixtures (Refs #3949 wave 3).
+// Shared diplomacy-filter suggestion fixtures (Refs #3949 wave 3, #3971 wave 4).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import '../common/game_graphs.dart';
 
 /// Dual-region game with two GPs and one unowned old-world province.
-Game orderSuggestionDiplomacyFilterDualRegionGame() {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(id: 'oldWorld|p1', regionId: ow, ownerId: 'gp1'),
-          Province(id: 'oldWorld|p2', regionId: ow, ownerId: 'gp2'),
-          Province(id: 'oldWorld|p3', regionId: ow),
-        ],
-        units: const [],
-      ),
-      newWorld: RegionData(
-        provinces: const [
-          Province(id: 'newWorld|n1', regionId: nw, ownerId: 'gp1'),
-        ],
-        units: const [],
-      ),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-  );
-}
+Game orderSuggestionDiplomacyFilterDualRegionGame() =>
+    ordersDualRegionOwnerMapGame();
 
 /// Old-world game with empty-string owner on one province.
 Game orderSuggestionDiplomacyFilterEmptyStringOwnerGame() {
   const ow = 'oldWorld';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(id: 'oldWorld|p1', regionId: ow, ownerId: 'gp1'),
-          Province(id: 'oldWorld|p2', regionId: ow, ownerId: ''),
-        ],
-        units: const [],
-      ),
-      newWorld: const RegionData(),
-    ),
+  return TestFixtures.minimalGame(
     players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+    oldWorld: RegionData(
+      provinces: const [
+        Province(id: 'oldWorld|p1', regionId: ow, ownerId: 'gp1'),
+        Province(id: 'oldWorld|p2', regionId: ow, ownerId: ''),
+      ],
+      units: const [],
+    ),
   );
 }
 
 /// Two-GP old-world game with unprefixed local province ids.
-Game orderSuggestionDiplomacyFilterOldWorldTwoGpGame() {
-  const ow = 'oldWorld';
-  final p1 = Province(id: 'p1', regionId: ow, ownerId: 'gp1');
-  final p2 = Province(id: 'p2', regionId: ow, ownerId: 'gp2');
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: [p1, p2], units: []),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-  );
-}
+Game orderSuggestionDiplomacyFilterOldWorldTwoGpGame() =>
+    ordersTwoProvinceOwnedGame(
+      prefixedIds: false,
+      players: ordersCommonTwoGpAb,
+    );
 
 /// Two-GP new-world game with prefixed province ids.
-Game orderSuggestionDiplomacyFilterNewWorldTwoGpGame() {
-  const nw = 'newWorld';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [
-          Province(id: 'newWorld|n1', regionId: nw, ownerId: 'gp1'),
-          Province(id: 'newWorld|n2', regionId: nw, ownerId: 'gp2'),
-        ],
-        units: [],
-      ),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-  );
-}
+Game orderSuggestionDiplomacyFilterNewWorldTwoGpGame() =>
+    ordersTwoProvinceOwnedGame(
+      regionId: 'newWorld',
+      p1Local: 'n1',
+      p2Local: 'n2',
+      inNewWorld: true,
+      players: ordersCommonTwoGpAb,
+    );
 
 /// Two-GP old-world game at peace for diplomacy filter probes.
-Game orderSuggestionDiplomacyFilterPeacefulTwoGpGame() {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'p1', regionId: ow, ownerId: 'gp1'),
-          Province(id: 'p2', regionId: ow, ownerId: 'gp2'),
-        ],
-        units: [],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: 50,
-        state: RelationState.atPeace,
-      ),
-    ],
-  );
-}
+Game orderSuggestionDiplomacyFilterPeacefulTwoGpGame() =>
+    ordersTwoProvinceOwnedGame(
+      prefixedIds: false,
+      players: ordersCommonTwoGpAb,
+      includeDefaultDiplomacy: true,
+      state: RelationState.atPeace,
+      score: 50,
+    );
 
 /// Two-GP old-world game at war for diplomacy filter probes.
-Game orderSuggestionDiplomacyFilterAtWarTwoGpGame() {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'p1', regionId: ow, ownerId: 'gp1'),
-          Province(id: 'p2', regionId: ow, ownerId: 'gp2'),
-        ],
-        units: [],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: 0,
-        state: RelationState.atWar,
-      ),
-    ],
-  );
-}
+Game orderSuggestionDiplomacyFilterAtWarTwoGpGame() =>
+    ordersTwoProvinceOwnedGame(
+      prefixedIds: false,
+      players: ordersCommonTwoGpAb,
+      includeDefaultDiplomacy: true,
+      state: RelationState.atWar,
+      score: 0,
+    );
