@@ -4,25 +4,32 @@ import 'package:path/path.dart' as p;
 
 /// SPEC: SPEC/program/repo-lint.md (Refs #3971).
 ///
-/// Physical-line ceiling for `packages/colonizethis_orders/test/orders/support/`
-/// so wave-4 fixture/shorthand dedup cannot regress. Final wave-4 target is
-/// ≤14,900; this gate ratchets from the post-slice-1 baseline so each PR can
-/// lower the constant without waiting for the full cut.
+/// Physical-line ceilings for `colonizethis_orders` test trees so wave-4
+/// fixture/shorthand densification cannot regress.
+///
+/// - Support: `test/orders/support/` (wave-4 AC ≤14,900)
+/// - Package: `test/` (wave-4 AC ≤16,400)
 
 const String ordersTestSupportRelativeDir =
     'packages/colonizethis_orders/test/orders/support';
 
-/// Ratchet ceiling (physical LOC via `find … | xargs cat | wc -l` equivalent).
-/// Wave-4 AC target: 14900. Lower this constant as slices land.
-const int ordersTestSupportLocCeiling = 14900;
+const String ordersTestPackageRelativeDir = 'packages/colonizethis_orders/test';
 
-/// Counts physical lines of all `*.dart` files under [supportDir].
-int countOrdersTestSupportPhysicalLoc(Directory supportDir) {
+/// Ratchet ceiling for support physical LOC (`find … | xargs cat | wc -l`).
+/// Wave-4 AC target: 14900. Lower this constant as slices land.
+const int ordersTestSupportLocCeiling = 14500;
+
+/// Ratchet ceiling for package `test/` physical LOC.
+/// Wave-4 AC target: 16400.
+const int ordersTestPackageLocCeiling = 16400;
+
+/// Counts physical lines of all `*.dart` files under [dir].
+int countOrdersTestSupportPhysicalLoc(Directory dir) {
   var total = 0;
-  if (!supportDir.existsSync()) {
+  if (!dir.existsSync()) {
     return 0;
   }
-  for (final entity in supportDir.listSync(recursive: true)) {
+  for (final entity in dir.listSync(recursive: true)) {
     if (entity is! File) {
       continue;
     }
@@ -34,11 +41,17 @@ int countOrdersTestSupportPhysicalLoc(Directory supportDir) {
   return total;
 }
 
+/// Alias for package-tree counting (same physical-line method).
+int countOrdersTestPackagePhysicalLoc(Directory testDir) =>
+    countOrdersTestSupportPhysicalLoc(testDir);
+
 int runCheckOrdersTestSupportLoc(
   String repoRoot, {
   void Function(String line)? info,
   void Function(String line)? err,
   int ceiling = ordersTestSupportLocCeiling,
+  int packageCeiling = ordersTestPackageLocCeiling,
+  bool checkPackage = true,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
@@ -52,18 +65,43 @@ int runCheckOrdersTestSupportLoc(
   }
 
   final loc = countOrdersTestSupportPhysicalLoc(supportDir);
-  if (loc <= ceiling) {
-    logI(
-      'check_orders_test_support_loc: support LOC $loc ≤ ceiling $ceiling '
-      '(wave-4 target ≤14900; Refs #3971).',
+  if (loc > ceiling) {
+    logE(
+      'check_orders_test_support_loc: support LOC $loc exceeds ceiling '
+      '$ceiling (wave-4 target ≤14900; Refs #3971).',
     );
+    return 1;
+  }
+  logI(
+    'check_orders_test_support_loc: support LOC $loc ≤ ceiling $ceiling '
+    '(wave-4 target ≤14900; Refs #3971).',
+  );
+
+  if (!checkPackage) {
     return 0;
   }
-  logE(
-    'check_orders_test_support_loc: support LOC $loc exceeds ceiling '
-    '$ceiling (wave-4 target ≤14900; Refs #3971).',
+
+  final testDir = Directory(p.join(repoRoot, ordersTestPackageRelativeDir));
+  if (!testDir.existsSync()) {
+    logE(
+      'check_orders_test_support_loc: missing $ordersTestPackageRelativeDir',
+    );
+    return 1;
+  }
+
+  final packageLoc = countOrdersTestPackagePhysicalLoc(testDir);
+  if (packageLoc > packageCeiling) {
+    logE(
+      'check_orders_test_support_loc: package test/ LOC $packageLoc exceeds '
+      'ceiling $packageCeiling (wave-4 target ≤16400; Refs #3971).',
+    );
+    return 1;
+  }
+  logI(
+    'check_orders_test_support_loc: package test/ LOC $packageLoc ≤ ceiling '
+    '$packageCeiling (wave-4 target ≤16400; Refs #3971).',
   );
-  return 1;
+  return 0;
 }
 
 void main() {

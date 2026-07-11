@@ -26,11 +26,11 @@ void main() {
   });
 
   group('runCheckOrdersTestSupportLoc', () {
-    test('passes on current repo tree under ratchet ceiling', () {
+    test('passes on current repo tree under ratchet ceilings', () {
       expect(runCheckOrdersTestSupportLoc('.'), 0);
     });
 
-    test('fails when measured LOC exceeds ceiling', () {
+    test('fails when measured support LOC exceeds ceiling', () {
       final temp = Directory.systemTemp.createTempSync('orders-support-loc-');
       try {
         final support = Directory(
@@ -51,11 +51,50 @@ void main() {
         final code = runCheckOrdersTestSupportLoc(
           temp.path,
           ceiling: 5,
+          checkPackage: false,
           info: (_) {},
           err: errors.add,
         );
         expect(code, 1);
         expect(errors.join('\n'), contains('exceeds ceiling'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails when measured package test LOC exceeds ceiling', () {
+      final temp = Directory.systemTemp.createTempSync('orders-test-loc-');
+      try {
+        final support = Directory(
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_orders',
+            'test',
+            'orders',
+            'support',
+          ),
+        )..createSync(recursive: true);
+        File(p.join(support.path, 'ok.dart')).writeAsStringSync('a\n');
+
+        final packageTest = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_orders', 'test'),
+        );
+        File(
+          p.join(packageTest.path, 'fat.dart'),
+        ).writeAsStringSync(List.generate(30, (i) => 'line$i').join('\n'));
+
+        final errors = <String>[];
+        final code = runCheckOrdersTestSupportLoc(
+          temp.path,
+          ceiling: 100,
+          packageCeiling: 5,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('package test/ LOC'));
+        expect(errors.join('\n'), contains('exceeds'));
       } finally {
         temp.deleteSync(recursive: true);
       }

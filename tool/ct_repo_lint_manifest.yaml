@@ -1123,7 +1123,7 @@ rules:
 
   - rule_id: repo.orders_test_support_loc
     group: testing
-    title: colonizethis_orders test/orders/support/ physical LOC must stay under wave-4 ratchet ceiling (Refs #3971)
+    title: colonizethis_orders test/orders/support/ and package test/ physical LOC must stay under wave-4 ratchet ceilings (Refs #3971)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_test_support_loc.dart

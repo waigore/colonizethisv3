@@ -7,32 +7,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../common/game_graphs.dart';
 
+// dart format off
 /// Minimal four-node topology: gp1 home OW province ↔ OW sea ↔ NW sea ↔
 /// tribe1 colony NW province. Same shape as
 /// `order_suggestion_declare_war_colonial_discovery_test.dart` and
 /// `order_suggestion_declare_war_intervention_risk_test.dart`.
 const colonialAcquisitionTopology = MapTopology(
   nodes: [
-    TopologyNode(
-      id: 'oldWorld|home',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|owSea',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|nwSea',
-      regionId: 'newWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|colony',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
+    TopologyNode(id: 'oldWorld|home', regionId: 'oldWorld', type: TopologyNodeType.province),
+    TopologyNode(id: 'oldWorld|owSea', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+    TopologyNode(id: 'newWorld|nwSea', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+    TopologyNode(id: 'newWorld|colony', regionId: 'newWorld', type: TopologyNodeType.province),
   ],
   edges: [
     TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
@@ -41,23 +26,11 @@ const colonialAcquisitionTopology = MapTopology(
   ],
 );
 
-const _colonialOwHome = Province(
-  id: 'oldWorld|home',
-  regionId: 'oldWorld',
-  ownerId: 'gp1',
-);
-const _colonialNwColony = Province(
-  id: 'newWorld|colony',
-  regionId: 'newWorld',
-  ownerId: 'tribe1',
-);
+const _colonialOwHome = Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1');
+const _colonialNwColony = Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 'tribe1');
 const _colonialTileKeys = {
-  'oldWorld': {
-    'oldWorld|home': ['oldWorld|home|0|0'],
-  },
-  'newWorld': {
-    'newWorld|colony': ['newWorld|colony|0|0'],
-  },
+  'oldWorld': {'oldWorld|home': ['oldWorld|home|0|0']},
+  'newWorld': {'newWorld|colony': ['newWorld|colony|0|0']},
 };
 
 /// Shared OW-home + NW-colony graph for colonial acquisition / declare-war
@@ -86,24 +59,12 @@ Game colonialAcquisitionRegionGame({
 /// the friendly threshold, and treasury above Join Empire cost.
 Game colonialAcquisitionEmbassyScenarioGame() => colonialAcquisitionRegionGame(
   id: 'g-2509-colonial-acquisition',
-  players: const [
-    Player(id: 'gp1', displayName: 'GP1', isHuman: false, treasury: 10000),
-  ],
-  playerVisibilityByTile: const {
-    'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
-  },
-  diplomacyRelations: const [
-    DiplomacyRelation(
-      factionId1: 'gp1',
-      factionId2: 'tribe1',
-      state: RelationState.atPeace,
-      score: relationScoreMinFriendly,
-    ),
-  ],
-  overtureStates: const [
-    OvertureState(gpId: 'gp1', targetId: 'tribe1', stage: OvertureStage.nap),
-  ],
+  players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false, treasury: 10000)],
+  playerVisibilityByTile: const {'gp1': {'oldWorld|home|0|0': 'fullyVisible'}},
+  diplomacyRelations: const [DiplomacyRelation(factionId1: 'gp1', factionId2: 'tribe1', state: RelationState.atPeace, score: relationScoreMinFriendly)],
+  overtureStates: const [OvertureState(gpId: 'gp1', targetId: 'tribe1', stage: OvertureStage.nap)],
 );
+// dart format on
 
 PlayerView colonialAcquisitionViewFor(Game game) =>
     buildPlayerView(game, colonialAcquisitionTopology, 'gp1');

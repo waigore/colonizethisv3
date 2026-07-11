@@ -9,89 +9,50 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../common/game_graphs.dart';
 
 const orderSuggestionProspectOwnProvinceBudgetPriorityPlayerId = 'gp1';
-const orderSuggestionProspectOwnProvinceBudgetPriorityRegionId =
-    kRegionOldWorld;
-
-const orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId =
-    'oldWorld|aaa_drain';
+const orderSuggestionProspectOwnProvinceBudgetPriorityRegionId = kRegionOldWorld;
+const orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId = 'oldWorld|aaa_drain';
 const orderSuggestionProspectOwnProvinceBudgetPriorityDrainTiles = <String>[
   'oldWorld|aaa_drain|0|0',
   'oldWorld|aaa_drain|1|0',
   'oldWorld|aaa_drain|2|0',
   'oldWorld|aaa_drain|3|0',
 ];
-
-const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProvinceId =
-    'oldWorld|zzz_feedstock';
-const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockTileKey =
-    'oldWorld|zzz_feedstock|0|0';
-const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId =
-    'e_feedstock';
-
+const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProvinceId = 'oldWorld|zzz_feedstock';
+const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockTileKey = 'oldWorld|zzz_feedstock|0|0';
+const orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId = 'e_feedstock';
 const orderSuggestionProspectOwnProvinceBudgetPriorityDrainerCount = 30;
 
-Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
-  bool feedstockAlreadyProspected = false,
-}) {
+// dart format off
+Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({bool feedstockAlreadyProspected = false}) {
   const playerId = orderSuggestionProspectOwnProvinceBudgetPriorityPlayerId;
   const ow = orderSuggestionProspectOwnProvinceBudgetPriorityRegionId;
-  const drainProvinceId =
-      orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId;
+  const drainProvinceId = orderSuggestionProspectOwnProvinceBudgetPriorityDrainProvinceId;
   const drainTiles = orderSuggestionProspectOwnProvinceBudgetPriorityDrainTiles;
-  const feedstockProvinceId =
-      orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProvinceId;
-  const feedstockTileKey =
-      orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockTileKey;
-  const feedstockUnitId =
-      orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId;
-  const drainerCount =
-      orderSuggestionProspectOwnProvinceBudgetPriorityDrainerCount;
+  const feedstockProvinceId = orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProvinceId;
+  const feedstockTileKey = orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockTileKey;
+  const feedstockUnitId = orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId;
+  const drainerCount = orderSuggestionProspectOwnProvinceBudgetPriorityDrainerCount;
 
-  final drainProvince = Province(
-    id: drainProvinceId,
-    regionId: ow,
-    ownerId: playerId,
-  );
-  final feedstockProvince = Province(
-    id: feedstockProvinceId,
-    regionId: ow,
-    ownerId: playerId,
-  );
+  Province ospProv(String id) => Province(id: id, regionId: ow, ownerId: playerId);
+  Unit ospExplorer(String id, String provId) => Unit(id: id, type: kUnitTypeExplorer, ownerId: playerId, locationProvinceId: provId);
 
+  final drainProvince = ospProv(drainProvinceId);
+  final feedstockProvince = ospProv(feedstockProvinceId);
   final drainerProvinces = <Province>[];
   final units = <Unit>[];
   final tileKeysByRegion = <String, List<String>>{};
-  final visibility = <String, String>{
-    for (final tk in drainTiles) tk: 'fogged',
-    feedstockTileKey: 'fogged',
-  };
-  final resourceByTile = <String, String>{
-    for (final tk in drainTiles) tk: 'iron',
-    feedstockTileKey: 'iron',
-  };
+  final visibility = <String, String>{for (final tk in drainTiles) tk: 'fogged', feedstockTileKey: 'fogged'};
+  final resourceByTile = <String, String>{for (final tk in drainTiles) tk: 'iron', feedstockTileKey: 'iron'};
 
   for (var i = 0; i < drainerCount; i++) {
-    final provId = 'oldWorld|d${i.toString().padLeft(2, '0')}';
-    drainerProvinces.add(Province(id: provId, regionId: ow, ownerId: playerId));
-    units.add(
-      Unit(
-        id: 'drain_${i.toString().padLeft(2, '0')}',
-        type: kUnitTypeExplorer,
-        ownerId: playerId,
-        locationProvinceId: provId,
-      ),
-    );
+    final pad = i.toString().padLeft(2, '0');
+    final provId = 'oldWorld|d$pad';
+    drainerProvinces.add(ospProv(provId));
+    units.add(ospExplorer('drain_$pad', provId));
     tileKeysByRegion[provId] = const <String>[];
   }
 
-  units.add(
-    Unit(
-      id: feedstockUnitId,
-      type: kUnitTypeExplorer,
-      ownerId: playerId,
-      locationProvinceId: feedstockProvinceId,
-    ),
-  );
+  units.add(ospExplorer(feedstockUnitId, feedstockProvinceId));
   tileKeysByRegion[drainProvinceId] = List<String>.from(drainTiles);
   tileKeysByRegion[feedstockProvinceId] = const [feedstockTileKey];
 
@@ -99,34 +60,18 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
     id: 'g',
     turnNumber: 1,
     players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
-    oldWorld: RegionData(
-      provinces: [...drainerProvinces, drainProvince, feedstockProvince],
-      units: units,
-    ),
+    oldWorld: RegionData(provinces: [...drainerProvinces, drainProvince, feedstockProvince], units: units),
     playerVisibilityByTile: {playerId: visibility},
-    playerProspectedTiles: {
-      playerId: {if (feedstockAlreadyProspected) feedstockTileKey},
-    },
+    playerProspectedTiles: {playerId: {if (feedstockAlreadyProspected) feedstockTileKey}},
     resourceByTileKey: resourceByTile,
     tileKeysByRegionAndProvince: {ow: tileKeysByRegion},
   );
 }
+// dart format on
 
-MapTopology orderSuggestionProspectOwnProvinceBudgetPriorityTopology(
-  Game game,
-) => ordersProvinceTopology(
-  game.worldState.oldWorld.provinces,
-  regionId: orderSuggestionProspectOwnProvinceBudgetPriorityRegionId,
-);
+MapTopology orderSuggestionProspectOwnProvinceBudgetPriorityTopology(Game game) =>
+    ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: orderSuggestionProspectOwnProvinceBudgetPriorityRegionId);
 
-List<WorkOrder>
-orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProspects(
-  List<WorkOrder> suggestions,
-) => suggestions
-    .where(
-      (o) =>
-          o.unitId ==
-              orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId &&
-          o.target == kWorkTargetProspect,
-    )
+List<WorkOrder> orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProspects(List<WorkOrder> suggestions) => suggestions
+    .where((o) => o.unitId == orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockUnitId && o.target == kWorkTargetProspect)
     .toList();

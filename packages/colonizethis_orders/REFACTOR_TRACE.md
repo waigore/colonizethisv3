@@ -2524,3 +2524,18 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 9: **15783**. Rema
 | support-loc-ratchet | lower `ordersTestSupportLocCeiling` 15800 → 14900 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
 
 Raw `Game(` outside `common/`: **0**. Support LOC after slice 10: **14852** (AC ≤14,900 met). Remaining: package `test/` ≤16,400; optional precheck/replay lib extracts.
+
+
+## Wave 4 — Slice 11: densify remaining fixtures/scenarios + package test LOC AC (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-tribe-extract | extract `mvNwTribeArmyGame` / densify move fixtures | `move_validator_*.dart` | same | #3971 |
+| prospect-budget-densify | format-off densify own-province prospect budget fixtures | `order_suggestion_prospect_own_province_budget_priority_fixtures.dart` | same | #3971 |
+| rbp-ah-densify | densify run-build-phase + application-helpers shorthand | `run_build_phase_index_maps_fixtures.dart`, `application_helpers_expectation_shorthand.dart` | same | #3971 |
+| research-ppwtsc-densify | densify multi-slot research + ppwtsc default-path scenarios | research multi-slot + ppwtsc scenarios | same | #3971 |
+| feedstock-colonial-densify | densify feedstock priority + colonial acquisition fixtures | feedstock + colonial fixtures | same | #3971 |
+| package-test-loc-gate | ratchet support ceiling 14900→14500; gate package `test/` ≤16400 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 11: **14373**. Package `test/` LOC: **16252** (AC ≤16,400 met). Remaining: optional precheck/replay lib extracts where 2+ reuse appears.
+
