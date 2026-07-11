@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -11,22 +10,16 @@ import '../world_test_support/world_test_support.dart';
 Game _singleProvinceGpGame() {
   const ow = 'oldWorld';
   final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
-  return Game(
+  return ordersPhaseGame(
     id: 'metrics-g1',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: '$ow|p1',
-            regionId: ow,
-            ownerId: 'pl1',
-            townTileKey: cap.toTileKey(),
-          ),
-        ],
+    oldWorldProvinces: [
+      Province(
+        id: '$ow|p1',
+        regionId: ow,
+        ownerId: 'pl1',
+        townTileKey: cap.toTileKey(),
       ),
-      newWorld: const RegionData(),
-    ),
+    ],
     players: [
       Player(
         id: 'pl1',

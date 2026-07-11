@@ -20,33 +20,8 @@ part 'capital_reassignment_part.dart';
 
 const _emptyTopology = kEmptyMapTopology;
 
-CapitalTile _tile(String provinceId, {int x = 1, int y = 2}) => CapitalTile(
-  regionId: ProvinceId.regionIdFrom(provinceId),
-  provinceId: provinceId,
-  x: x,
-  y: y,
-);
-
-Game _gpGame({
-  required List<Province> provinces,
-  String capitalProvinceId = 'oldWorld|cap',
-}) => Game(
-  id: 'g-gp-reassign',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: provinces),
-    newWorld: const RegionData(),
-  ),
-  players: [
-    Player(
-      id: 'p1',
-      displayName: 'P1',
-      isHuman: true,
-      capitalProvinceId: capitalProvinceId,
-      capitalTile: _tile(capitalProvinceId, x: 0, y: 0),
-    ),
-  ],
-);
+CapitalTile _tile(String provinceId, {int x = 1, int y = 2}) =>
+    capitalTileFor(provinceId, x: x, y: y);
 
 Unit _unit(String id, String ownerId, String provinceId) => Unit(
   id: id,

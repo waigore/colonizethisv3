@@ -8,29 +8,22 @@ group('ConnectivityResolver', () {
         () {
           const ow = 'oldWorld';
           final topology = blockadeTargetProvinceTopology(regionId: ow);
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                  Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-                ],
+          final game = ordersPhaseGame(
+            oldWorldProvinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            ],
+            fleets: [
+              Fleet(
+                id: 'fleet_p2',
+                ownerId: 'p2',
+                seaZoneId: 'sea1',
+                inPortAtProvinceId: null,
+                regionId: ow,
+                mission: FleetMission.patrol,
+                targetProvinceId: '$ow|p2',
               ),
-              newWorld: const RegionData(),
-              fleets: [
-                Fleet(
-                  id: 'fleet_p2',
-                  ownerId: 'p2',
-                  seaZoneId: 'sea1',
-                  inPortAtProvinceId: null,
-                  regionId: ow,
-                  mission: FleetMission.patrol,
-                  targetProvinceId: '$ow|p2',
-                ),
-              ],
-            ),
+            ],
             players: [
               Player(id: 'pl1', displayName: 'Spain', isHuman: true),
               Player(id: 'p2', displayName: 'France', isHuman: true),
@@ -57,42 +50,30 @@ group('ConnectivityResolver', () {
           const ow = 'oldWorld';
           const nw = 'newWorld';
           final topology = dualRegionBlockadeTargetsTopology();
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                  Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-                ],
+          final game = ordersPhaseGame(
+            oldWorldProvinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            ],
+            newWorldProvinces: [
+              Province(id: '$nw|n1', regionId: nw, ownerId: 'pl1'),
+            ],
+            fleets: [
+              blockadeFleet(
+                fleetId: 'fleet_p2',
+                ownerId: 'p2',
+                regionId: ow,
+                seaZoneId: 'sea1',
+                targetProvinceId: '$ow|p2',
               ),
-              newWorld: RegionData(
-                provinces: [
-                  Province(id: '$nw|n1', regionId: nw, ownerId: 'pl1'),
-                ],
+              blockadeFleet(
+                fleetId: 'fleet_p3',
+                ownerId: 'p3',
+                regionId: nw,
+                seaZoneId: 'sea2',
+                targetProvinceId: '$nw|n1',
               ),
-              fleets: [
-                Fleet(
-                  id: 'fleet_p2',
-                  ownerId: 'p2',
-                  seaZoneId: 'sea1',
-                  inPortAtProvinceId: null,
-                  regionId: ow,
-                  mission: FleetMission.blockade,
-                  targetProvinceId: '$ow|p2',
-                ),
-                Fleet(
-                  id: 'fleet_p3',
-                  ownerId: 'p3',
-                  seaZoneId: 'sea2',
-                  inPortAtProvinceId: null,
-                  regionId: nw,
-                  mission: FleetMission.blockade,
-                  targetProvinceId: '$nw|n1',
-                ),
-              ],
-            ),
+            ],
             players: [
               Player(id: 'pl1', displayName: 'Spain', isHuman: true),
               Player(id: 'p2', displayName: 'France', isHuman: true),

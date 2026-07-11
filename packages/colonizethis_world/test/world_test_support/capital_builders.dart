@@ -5,6 +5,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Keeps province/unit/fleet ownership knobs parameterized so capital_* part
 /// suites stop re-inlining identical `Game(` + `WorldState(` scaffolding.
 
+/// Capital tile at ([x], [y]) for [provinceId] (region derived from prefix).
+CapitalTile capitalTileFor(String provinceId, {int x = 0, int y = 0}) =>
+    CapitalTile(
+      regionId: ProvinceId.regionIdFrom(provinceId),
+      provinceId: provinceId,
+      x: x,
+      y: y,
+    );
+
 /// Orders-phase [Game] for capital / GP / faction terminal-fall scenarios.
 Game capitalLossGame({
   required String id,
@@ -26,6 +35,50 @@ Game capitalLossGame({
       fleets: fleets,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
     ),
+    players: players,
+    minorNations: minorNations,
+    tribes: tribes,
+  );
+}
+
+/// GP capital-reassignment scenario: player [playerId] with capital at
+/// [capitalProvinceId] and OW [provinces] (optionally NW provinces).
+Game gpCapitalReassignmentGame({
+  required List<Province> provinces,
+  String id = 'g-gp-reassign',
+  String playerId = 'p1',
+  String capitalProvinceId = 'oldWorld|cap',
+  List<Province> newWorldProvinces = const [],
+}) {
+  return capitalLossGame(
+    id: id,
+    oldWorldProvinces: provinces,
+    newWorldProvinces: newWorldProvinces,
+    players: [
+      Player(
+        id: playerId,
+        displayName: 'P1',
+        isHuman: true,
+        capitalProvinceId: capitalProvinceId,
+        capitalTile: capitalTileFor(capitalProvinceId),
+      ),
+    ],
+  );
+}
+
+/// Minor/tribe capital-reassignment scenario (orders-phase world + factions).
+Game factionCapitalReassignmentGame({
+  required String id,
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  List<Player> players = const [],
+  List<MinorNation> minorNations = const [],
+  List<Tribe> tribes = const [],
+}) {
+  return capitalLossGame(
+    id: id,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
     players: players,
     minorNations: minorNations,
     tribes: tribes,

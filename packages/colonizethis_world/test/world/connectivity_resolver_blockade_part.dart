@@ -104,29 +104,20 @@ group('ConnectivityResolver', () {
         () {
           const ow = 'oldWorld';
           final topology = blockadeTargetProvinceTopology(regionId: ow);
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                  Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-                ],
+          final game = ordersPhaseGame(
+            oldWorldProvinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            ],
+            fleets: [
+              blockadeFleet(
+                fleetId: 'fleet_p2',
+                ownerId: 'p2',
+                regionId: ow,
+                seaZoneId: 'sea1',
+                targetProvinceId: '$ow|p2',
               ),
-              newWorld: const RegionData(),
-              fleets: [
-                Fleet(
-                  id: 'fleet_p2',
-                  ownerId: 'p2',
-                  seaZoneId: 'sea1',
-                  inPortAtProvinceId: null,
-                  regionId: ow,
-                  mission: FleetMission.blockade,
-                  targetProvinceId: '$ow|p2',
-                ),
-              ],
-            ),
+            ],
             players: [
               Player(id: 'pl1', displayName: 'Spain', isHuman: true),
               Player(id: 'p2', displayName: 'France', isHuman: true),
