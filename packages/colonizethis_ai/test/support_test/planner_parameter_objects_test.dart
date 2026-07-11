@@ -83,5 +83,64 @@ void main() {
         reason: 'economy_planner.dart should sit under ~750 after labour split',
       );
     });
+
+    test('near-gate colonial/diplomacy/orchestrator files are topic-split', () {
+      final colonial = File(
+        p.join(planningDir.path, 'colonial_phase_planner.dart'),
+      ).readAsStringSync();
+      expect(colonial, contains("part 'colonial_phase_planner_naval.dart';"));
+      expect(colonial, contains("part 'colonial_phase_planner_lite.dart';"));
+      expect(colonial, contains("part 'colonial_phase_planner_civilian.dart';"));
+
+      for (final name in <String>[
+        'colonial_phase_planner_naval.dart',
+        'colonial_phase_planner_lite.dart',
+        'colonial_phase_planner_civilian.dart',
+        'diplomacy_planner.dart',
+        'diplomacy_planner_pass_helpers.dart',
+        'domain_planner_orchestrator_economy.dart',
+        'domain_planner_orchestrator_economy_build.dart',
+      ]) {
+        final file = File(p.join(planningDir.path, name));
+        expect(file.existsSync(), isTrue, reason: name);
+        expect(
+          file.readAsLinesSync().length,
+          lessThanOrEqualTo(750),
+          reason: '$name should sit under ~750 after Phase-5 near-gate splits',
+        );
+      }
+
+      final diplomacy = File(
+        p.join(planningDir.path, 'diplomacy_planner.dart'),
+      ).readAsStringSync();
+      expect(diplomacy, contains("part 'diplomacy_planner_pass_helpers.dart';"));
+      expect(
+        File(
+          p.join(planningDir.path, 'diplomacy_planner_pass_helpers.dart'),
+        ).readAsStringSync(),
+        contains("part of 'diplomacy_planner.dart';"),
+      );
+
+      final orchestrator = File(
+        p.join(planningDir.path, 'domain_planner_orchestrator.dart'),
+      ).readAsStringSync();
+      expect(
+        orchestrator,
+        contains("part 'domain_planner_orchestrator_economy_build.dart';"),
+      );
+    });
+
+    test('negative: colonial naval monolith must not reabsorb lite/civilian', () {
+      final naval = File(
+        p.join(planningDir.path, 'colonial_phase_planner_naval.dart'),
+      ).readAsStringSync();
+      expect(naval, isNot(contains('List<String> planColonialLiteOvertures')));
+      expect(naval, isNot(contains('List<WorkOrder> planColonialCivilian')));
+      expect(naval, isNot(contains('final class ColonialLiteNavalPlan')));
+      expect(
+        naval,
+        isNot(contains('ColonialLiteNavalPlan planColonialLiteNaval')),
+      );
+    });
   });
 }

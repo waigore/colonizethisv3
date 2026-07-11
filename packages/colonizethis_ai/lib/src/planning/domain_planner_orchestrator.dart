@@ -38,6 +38,7 @@ import 'research_planner.dart';
 import 'treasury_planner.dart';
 
 part 'domain_planner_orchestrator_economy.dart';
+part 'domain_planner_orchestrator_economy_build.dart';
 part 'domain_planner_orchestrator_military.dart';
 part 'domain_planner_orchestrator_diplomacy.dart';
 
