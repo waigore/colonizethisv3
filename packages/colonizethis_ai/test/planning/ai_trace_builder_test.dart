@@ -28,7 +28,7 @@ const _snapshot = AIWorldSnapshot(
 
 void main() {
   test('buildAiTraceSection exports conquest trace fields', () {
-    final section = buildAiTraceSection(
+    final section = buildAiTraceSection(AiTraceBuildInput(
       nationId: 'gp1',
       turn: 5,
       config: _config,
@@ -45,7 +45,7 @@ void main() {
       finalOrders: const [],
       declaredWarTargetFactionId: 'minor1',
       conquestArmyMoveCount: 1,
-    );
+    ));
 
     final aggregates = section.state['aggregates'] as Map<String, Object?>;
     final snap = aggregates['snapshot'] as Map<String, Object?>;
@@ -64,7 +64,7 @@ void main() {
       'state.observerGoalPhase records the phase string when provided',
       () {
         for (final phase in ObserverGoalPhase.values) {
-          final section = buildAiTraceSection(
+          final section = buildAiTraceSection(AiTraceBuildInput(
             nationId: 'gp1',
             turn: 5,
             config: _config,
@@ -80,7 +80,7 @@ void main() {
             ordersByDomain: const {},
             finalOrders: const [],
             observerGoalPhase: phase,
-          );
+          ));
           expect(section.state['observerGoalPhase'], phase.name);
         }
       },
@@ -89,7 +89,7 @@ void main() {
     test(
       'state.observerGoalPhase is omitted when builder argument is null',
       () {
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: _config,
@@ -104,7 +104,7 @@ void main() {
           orders: const Orders(),
           ordersByDomain: const {},
           finalOrders: const [],
-        );
+        ));
         expect(section.state.containsKey('observerGoalPhase'), isFalse);
         expect(section.state.containsKey('phasePlan'), isFalse);
         final thresholds = section.thresholds;
@@ -125,7 +125,7 @@ void main() {
           colonialPeaceTargetFactionIdsSorted: ['gp3'],
         );
 
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: _config,
@@ -142,7 +142,7 @@ void main() {
           finalOrders: const [],
           observerGoalPhase: ObserverGoalPhase.colonial,
           phasePlan: phasePlan,
-        );
+        ));
 
         final phasePlanJson =
             section.state['phasePlan'] as Map<String, Object?>;
@@ -166,7 +166,7 @@ void main() {
           expandPeaceTargetFactionIdsSorted: ['gp2', 'gp5'],
         );
 
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: _config,
@@ -183,7 +183,7 @@ void main() {
           finalOrders: const [],
           observerGoalPhase: ObserverGoalPhase.expand,
           phasePlan: phasePlan,
-        );
+        ));
 
         final phasePlanJson =
             section.state['phasePlan'] as Map<String, Object?>;
@@ -196,7 +196,7 @@ void main() {
     test(
       'state.phasePlan is omitted when default-plan PhasePlanOutcome has no provenance fields',
       () {
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: _config,
@@ -213,7 +213,7 @@ void main() {
           finalOrders: const [],
           observerGoalPhase: ObserverGoalPhase.expand,
           phasePlan: PhasePlanOutcome.defaultExpand,
-        );
+        ));
         // No provenance fields => map is empty => omitted from state.
         expect(section.state.containsKey('phasePlan'), isFalse);
       },
@@ -227,7 +227,7 @@ void main() {
           personalityId: 'darius',
           hiddenAgendaId: 'tech_thief',
         );
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: techThief,
@@ -242,7 +242,7 @@ void main() {
           orders: const Orders(),
           ordersByDomain: const {},
           finalOrders: const [],
-        );
+        ));
 
         final constants =
             section.thresholds['constants'] as Map<String, Object?>;
@@ -274,7 +274,7 @@ void main() {
           researchThreshold: 40,
         );
 
-        final section = buildAiTraceSection(
+        final section = buildAiTraceSection(AiTraceBuildInput(
           nationId: 'gp1',
           turn: 5,
           config: _config,
@@ -290,7 +290,7 @@ void main() {
           ordersByDomain: const {},
           finalOrders: const [],
           domainGateData: gates,
-        );
+        ));
 
         final domainGates =
             section.thresholds['domainGates'] as Map<String, Object?>;

@@ -104,14 +104,14 @@ void main() {
             _gp: [peasantBuild],
           },
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: 4000,
           currentOrders: currentOrders,
-        );
+        ));
         // Sum every bid notional against the effective price the planner uses.
         final totalNotional = _bids(orders).fold<int>(
           0,
@@ -160,13 +160,13 @@ void main() {
           },
           overtures: const [_embassyOverture],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: 4000,
-        );
+        ));
         final totalNotional = _bids(orders).fold<int>(
           0,
           (s, b) => s + b.quantity * (game.worldMarketState.prices[b.commodityId] ?? 0),
@@ -203,13 +203,13 @@ void main() {
           },
           overtures: const [_embassyOverture],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: 30,
-        );
+        ));
         final fabricBids = _bids(orders)
             .where((b) => b.commodityId == CommodityCatalog.fabric.id);
         expect(
@@ -274,14 +274,14 @@ void main() {
             'gp2': [pendingBuild],
           },
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game2,
           playerId: 'gp2',
           stockpile: game2.players[1].stockpile,
           productionAssignments: const [],
           treasury: affluentTreasury,
           currentOrders: currentOrders,
-        );
+        ));
         final grainBids = _bids(orders).where((b) => b.commodityId == grain);
         final grainOffers = orders.where(
           (o) =>
@@ -341,13 +341,13 @@ void main() {
             ),
           ],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp2',
           stockpile: Stockpile.empty,
           productionAssignments: const [],
           treasury: affluentTreasury,
-        );
+        ));
         final grainBid = _bids(orders).firstWhere(
           (b) => b.commodityId == grain,
         );
@@ -416,13 +416,13 @@ void main() {
           },
           overtures: const [_embassyOverture],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluentTreasury,
-        );
+        ));
         final castIronBids = _bids(orders)
             .where((b) => b.commodityId == castIron)
             .toList();
@@ -523,14 +523,14 @@ void main() {
             'gp2': [pendingBuild],
           },
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp2',
           stockpile: gp2Stockpile,
           productionAssignments: const [],
           treasury: affluentTreasury,
           currentOrders: currentOrders,
-        );
+        ));
         final grainBids = _bids(orders).where((b) => b.commodityId == grain);
         final grainOffers = orders.where(
           (o) => o.type == TradeOrderType.offer && o.commodityId == grain,
@@ -586,13 +586,13 @@ void main() {
           },
           overtures: const [_embassyOverture],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: 0,
-        );
+        ));
         expect(
           _bids(orders),
           isEmpty,
@@ -654,13 +654,13 @@ void main() {
           },
           overtures: const [_embassyOverture],
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 2000,
-        );
+        ));
         final bids = _bids(orders);
         expect(
           bids.length,
@@ -778,14 +778,14 @@ void main() {
             _gp: [peasantBuild],
           },
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: _gp,
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 4000,
           currentOrders: currentOrders,
-        );
+        ));
         final bids = _bids(orders);
         final totalBidNotional = bids.fold<int>(
           0,
@@ -827,20 +827,20 @@ void main() {
         },
         overtures: const [_embassyOverture],
       );
-      final a = runTreasuryPlanner(
+      final a = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: _gp,
         stockpile: stockpile,
         productionAssignments: assignments,
         treasury: game.players.first.treasury,
-      );
-      final b = runTreasuryPlanner(
+      ));
+      final b = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: _gp,
         stockpile: stockpile,
         productionAssignments: assignments,
         treasury: game.players.first.treasury,
-      );
+      ));
       expect(a.length, b.length);
       for (var i = 0; i < a.length; i++) {
         expect(a[i].commodityId, b[i].commodityId);

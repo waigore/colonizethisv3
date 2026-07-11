@@ -9,24 +9,58 @@ import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import '../perception/perception_snapshot.dart';
 
-TurnTraceAiSection buildAiTraceSection({
-  required String nationId,
-  required int turn,
-  required AIConfig config,
-  required AISeedBundle seeds,
-  required AIWorldSnapshot snapshot,
-  required StrategicGoal primaryGoal,
-  required Map<StrategicGoal, int> goalScores,
-  required EconomyPlan economyPlan,
-  required Orders orders,
-  required Map<String, Object?> ordersByDomain,
-  required List<Map<String, Object?>> finalOrders,
-  String? declaredWarTargetFactionId,
-  int conquestArmyMoveCount = 0,
-  ObserverGoalPhase? observerGoalPhase,
-  PhasePlanOutcome? phasePlan,
-  DomainGateData? domainGateData,
-}) {
+/// Bundles inputs for [buildAiTraceSection] (Refs #3972 AC5).
+final class AiTraceBuildInput {
+  const AiTraceBuildInput({
+    required this.nationId,
+    required this.turn,
+    required this.config,
+    required this.seeds,
+    required this.snapshot,
+    required this.primaryGoal,
+    required this.goalScores,
+    required this.economyPlan,
+    required this.orders,
+    required this.ordersByDomain,
+    required this.finalOrders,
+    this.declaredWarTargetFactionId,
+    this.conquestArmyMoveCount = 0,
+    this.observerGoalPhase,
+    this.phasePlan,
+    this.domainGateData,
+  });
+
+  final String nationId;
+  final int turn;
+  final AIConfig config;
+  final AISeedBundle seeds;
+  final AIWorldSnapshot snapshot;
+  final StrategicGoal primaryGoal;
+  final Map<StrategicGoal, int> goalScores;
+  final EconomyPlan economyPlan;
+  final Orders orders;
+  final Map<String, Object?> ordersByDomain;
+  final List<Map<String, Object?>> finalOrders;
+  final String? declaredWarTargetFactionId;
+  final int conquestArmyMoveCount;
+  final ObserverGoalPhase? observerGoalPhase;
+  final PhasePlanOutcome? phasePlan;
+  final DomainGateData? domainGateData;
+}
+
+TurnTraceAiSection buildAiTraceSection(AiTraceBuildInput input) {
+  final config = input.config;
+  final snapshot = input.snapshot;
+  final primaryGoal = input.primaryGoal;
+  final goalScores = input.goalScores;
+  final economyPlan = input.economyPlan;
+  final ordersByDomain = input.ordersByDomain;
+  final finalOrders = input.finalOrders;
+  final declaredWarTargetFactionId = input.declaredWarTargetFactionId;
+  final conquestArmyMoveCount = input.conquestArmyMoveCount;
+  final observerGoalPhase = input.observerGoalPhase;
+  final phasePlan = input.phasePlan;
+  final domainGateData = input.domainGateData;
   final domainWeights = resolveDomainWeights(
     config.personalityId,
     overrides: config.parameterOverrides,
@@ -57,7 +91,7 @@ TurnTraceAiSection buildAiTraceSection({
       ? null
       : compactPhasePlanJson(phasePlan);
   return TurnTraceAiSection(
-    factionId: nationId,
+    factionId: input.nationId,
     state: <String, Object?>{
       'winningCandidate': <String, Object?>{
         'type': 'strategicGoal',
@@ -100,7 +134,7 @@ TurnTraceAiSection buildAiTraceSection({
       if (phasePlanJson != null && phasePlanJson.isNotEmpty)
         'phasePlan': phasePlanJson,
       'decisionContext': <String, Object?>{
-        'turnNumber': turn,
+        'turnNumber': input.turn,
         'leaderId': config.leaderId,
         'personalityId': config.personalityId,
         'hiddenAgendaId': config.hiddenAgendaId,
@@ -110,15 +144,15 @@ TurnTraceAiSection buildAiTraceSection({
     thresholds: <String, Object?>{
       'constants': <String, Object?>{
         'seeds': <String, Object?>{
-          'perception': seeds.perceptionSeed,
-          'goal': seeds.goalSeed,
-          'economy': seeds.economySeed,
-          'military': seeds.militarySeed,
-          'diplomacy': seeds.diplomacySeed,
-          'research': seeds.researchSeed,
-          'tactical': seeds.tacticalSeed,
-          'dialogue': seeds.dialogueSeed,
-          'agenda': seeds.agendaSeed,
+          'perception': input.seeds.perceptionSeed,
+          'goal': input.seeds.goalSeed,
+          'economy': input.seeds.economySeed,
+          'military': input.seeds.militarySeed,
+          'diplomacy': input.seeds.diplomacySeed,
+          'research': input.seeds.researchSeed,
+          'tactical': input.seeds.tacticalSeed,
+          'dialogue': input.seeds.dialogueSeed,
+          'agenda': input.seeds.agendaSeed,
         },
         'goalWeights': <String, Object?>{
           'defend': goalWeights.defend,

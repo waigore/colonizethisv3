@@ -113,7 +113,7 @@ MapTopology _topology() => const MapTopology(
   edges: [],
 );
 
-List<TradeOrder> _run(Game game) => runTreasuryPlanner(
+List<TradeOrder> _run(Game game) => runTreasuryPlanner(TreasuryPlannerInput(
   game: game,
   playerId: 'gpC',
   stockpile: game.players.first.stockpile,
@@ -121,7 +121,7 @@ List<TradeOrder> _run(Game game) => runTreasuryPlanner(
   treasury: game.players.first.treasury,
   tileMapByRegion: _tileMaps(),
   topology: _topology(),
-);
+));
 
 bool _hasColonyCommodityBid(List<TradeOrder> orders) => orders.any(
   (o) =>

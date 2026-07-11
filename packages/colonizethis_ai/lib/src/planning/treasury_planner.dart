@@ -79,6 +79,35 @@ int treasuryAffluenceThreshold() =>
     kTreasuryAffluenceThresholdMultiplier *
         cheapestRegimentBuildTreasuryCost();
 
+/// Bundles inputs for [runTreasuryPlanner] (Refs #3972 AC5).
+final class TreasuryPlannerInput {
+  const TreasuryPlannerInput({
+    required this.game,
+    required this.playerId,
+    required this.stockpile,
+    required this.productionAssignments,
+    required this.treasury,
+    this.snapshot,
+    this.tileMapByRegion,
+    this.topology,
+    this.currentOrders = const Orders(),
+    this.resourceRules,
+    this.extractionById,
+  });
+
+  final Game game;
+  final String playerId;
+  final Stockpile stockpile;
+  final List<AssignedRecipe> productionAssignments;
+  final int treasury;
+  final AIWorldSnapshot? snapshot;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final MapTopology? topology;
+  final Orders currentOrders;
+  final ResourceRules? resourceRules;
+  final Map<String, ExtractionTotals>? extractionById;
+}
+
 /// Returns trade orders for one AI-controlled GP after production planning.
 ///
 /// Runs after [productionAssignments] are chosen in [runEconomyPlanner]. Uses
@@ -86,20 +115,19 @@ int treasuryAffluenceThreshold() =>
 /// bid priorities. Refs #2994 F1–F5, F8 (carry-forward de-duplication and
 /// prior-fill-rate-aware offer urgency, see SPEC/ai/treasury-planner.md
 /// § Partial-fill-aware forecasting).
-List<TradeOrder> runTreasuryPlanner({
-  required Game game,
-  required String playerId,
-  required Stockpile stockpile,
-  required List<AssignedRecipe> productionAssignments,
-  required int treasury,
-  AIWorldSnapshot? snapshot,
-  Map<String, TileMapResult>? tileMapByRegion,
-  MapTopology? topology,
-  Orders currentOrders = const Orders(),
-  ResourceRules? resourceRules,
-  Map<String, ExtractionTotals>? extractionById,
-}) {
-  final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
+List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
+  final game = input.game;
+  final playerId = input.playerId;
+  final stockpile = input.stockpile;
+  final productionAssignments = input.productionAssignments;
+  final treasury = input.treasury;
+  final snapshot = input.snapshot;
+  final tileMapByRegion = input.tileMapByRegion;
+  final topology = input.topology;
+  final currentOrders = input.currentOrders;
+  final extractionById = input.extractionById;
+  final ResourceRules rules =
+      input.resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
   final tradeCargoCapacity = _resolveTradeCargoCapacity(
     game: game,

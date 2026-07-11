@@ -55,6 +55,7 @@ export 'src/planning/phase_priority_weights.dart'
 export 'src/planning/recruitment_planner.dart'
     show
         RecruitmentPlan,
+        RecruitmentPlannerInput,
         RejectedRecruitmentSuggestion,
         kRecruitmentRejectInsufficientWorkers,
         kRecruitmentRejectMilitaryBuildSuppressed,

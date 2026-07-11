@@ -239,7 +239,7 @@ void main() {
         ],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -248,7 +248,7 @@ void main() {
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api,
         growthStagePlannerEnabled: true,
-      );
+      ));
 
       expect(plan.buildUnitOrders, isEmpty);
       expect(plan.rejected, hasLength(1));
@@ -452,7 +452,7 @@ void main() {
         reason: 'mature at-war GP should assign military-input labour',
       );
 
-      final recruitPlan = runRecruitmentPlanner(
+      final recruitPlan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -470,7 +470,7 @@ void main() {
         ),
         growthStagePlannerEnabled: true,
         snapshot: snapshot,
-      );
+      ));
       expect(recruitPlan.buildUnitOrders, isNotEmpty);
     });
   });
@@ -535,7 +535,7 @@ void main() {
       final view = buildPlayerView(game, kTestTopology, 'gp1');
       final snapshot = atWarSnapshot('gp1');
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -545,7 +545,7 @@ void main() {
         suggestionApi: api(),
         growthStagePlannerEnabled: true,
         snapshot: snapshot,
-      );
+      ));
 
       expect(plan.recruitOrders, isEmpty);
       expect(plan.buildUnitOrders, isNotEmpty);
@@ -560,7 +560,7 @@ void main() {
       final view = buildPlayerView(game, kTestTopology, 'gp1');
       final snapshot = atWarSnapshot('gp1');
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -570,7 +570,7 @@ void main() {
         suggestionApi: api(),
         growthStagePlannerEnabled: true,
         snapshot: snapshot,
-      );
+      ));
 
       expect(plan.recruitOrders, isNotEmpty);
       expect(
@@ -584,7 +584,7 @@ void main() {
       final view = buildPlayerView(game, kTestTopology, 'gp1');
       final snapshot = atWarSnapshot('gp1');
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -594,7 +594,7 @@ void main() {
         suggestionApi: api(),
         growthStagePlannerEnabled: false,
         snapshot: snapshot,
-      );
+      ));
 
       expect(
         plan.rejected.map((r) => r.reason),

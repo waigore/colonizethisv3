@@ -81,113 +81,24 @@
 // New World invadable list to a single tribe-owned province so the
 // per-province priority decision is the only variable under test.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'ai_planner_fixtures.dart';
+import '../support/colonial_acquisition_test_support.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
+const String _gp1 = kColonialPhaseGp1;
+const String _tribe1 = kColonialPhaseTribe1;
 
-const String _nwProv1 = 'newWorld|tribe1_a';
-
-OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.nap,
-      sinceTurn: sinceTurn,
-    );
-
-DiplomacyRelation _friendly(String a, String b, {int score = 60}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.friendly,
-    );
-
-DiplomacyRelation _atWar(String a, String b, {int score = 10}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.hostile,
-      state: RelationState.atWar,
-    );
-
-/// Canonical "both Join Empire and declareWar valid for tribe1"
-/// fixture. Active GP holds one regiment, treasury (100 000) covers
-/// both `joinEmpireCostForMinorOrTribe(tribe1)` and the cheapest
-/// regiment build cost. A single tribe-owned NW invadable province
-/// (`newWorld|tribe1_a`) keeps the per-province priority decision
-/// the only variable under test.
-Game _bothValidGame({
-  int activePlayerTreasury = 100000,
-  List<Army>? armies,
-  List<DiplomacyRelation>? diplomacyRelations,
-  List<OvertureState>? overtureStates,
-  List<Province>? newWorldProvinces,
-}) {
-  final armiesResolved = armies ?? <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)];
-  final relationsResolved =
-      diplomacyRelations ?? <DiplomacyRelation>[_friendly(_gp1, _tribe1)];
-  final overturesResolved =
-      overtureStates ?? <OvertureState>[_nap(_gp1, _tribe1)];
-  final provincesResolved =
-      newWorldProvinces ??
-      const <Province>[
-        Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-      ];
-  return Game(
-    id: 'g-2509-colonial-acquisition-personality',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 130, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: provincesResolved),
-      armies: armiesResolved,
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: activePlayerTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-    overtureStates: overturesResolved,
-    diplomacyRelations: relationsResolved,
-  );
-}
-
-AIWorldSnapshot _bothValidSnapshot({
-  List<String> invadableNw = const [_nwProv1],
-  int treasury = 100000,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
+const String _nwProv1 = kColonialAcquisitionNwProv1;
 
 void main() {
   group('planColonialAcquisition (personality bias — Must-have #4)', () {
     test('napoleon (warmonger) -> declareWar wins over Join Empire', () {
-      final game = _bothValidGame();
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(
           game: game,
@@ -207,8 +118,10 @@ void main() {
     });
 
     test('henry (alliance-leaning) -> Join Empire wins over declareWar', () {
-      final game = _bothValidGame();
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(
           game: game,
@@ -234,8 +147,10 @@ void main() {
         // "COLONIAL personality divergence"). Same Game + AIWorldSnapshot
         // fed twice; only personalityId varies between calls; outputs
         // diverge by AcquisitionMethod alone (tribe id matches).
-        final game = _bothValidGame();
-        final snapshot = _bothValidSnapshot();
+        final game = buildColonialAcquisitionBothValidGame();
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         final napoleonResult = planColonialAcquisition(
           game: game,
           snapshot: snapshot,
@@ -272,8 +187,10 @@ void main() {
     );
 
     test('default (no personalityId) keeps legacy Join Empire-first', () {
-      final game = _bothValidGame();
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(
@@ -292,8 +209,10 @@ void main() {
       // (all fields = 50) for unknown ids. warLikelihood (50) is not
       // strictly greater than allianceTendency (50), so the legacy
       // ordering applies.
-      final game = _bothValidGame();
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(
           game: game,
@@ -316,8 +235,12 @@ void main() {
       // outer gates. With no standing regiments the declareWar pass
       // short-circuits at the outer guard and Join Empire still
       // applies because nap + Friendly + treasury are intact.
-      final game = _bothValidGame(armies: const <Army>[]);
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame(
+        armies: const <Army>[],
+      );
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(
           game: game,
@@ -347,10 +270,14 @@ void main() {
         // this test is to confirm napoleon's militaristic ordering
         // does not invent a target where the validator gates are
         // failing.
-        final game = _bothValidGame(
-          diplomacyRelations: <DiplomacyRelation>[_atWar(_gp1, _tribe1)],
+        final game = buildColonialAcquisitionBothValidGame(
+          diplomacyRelations: <DiplomacyRelation>[
+            colonialAcquisitionAtWar(_gp1, _tribe1),
+          ],
         );
-        final snapshot = _bothValidSnapshot();
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         expect(
           planColonialAcquisition(
             game: game,
@@ -369,8 +296,10 @@ void main() {
     test(
       'determinism (Must-have #7) -> identical inputs, identical outputs',
       () {
-        final game = _bothValidGame();
-        final snapshot = _bothValidSnapshot();
+        final game = buildColonialAcquisitionBothValidGame();
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         final first = planColonialAcquisition(
           game: game,
           snapshot: snapshot,
@@ -409,8 +338,10 @@ void main() {
       // tracks this enumeration. If a future rebalance inverts a
       // threshold this test surfaces the drift before it silently
       // changes acquisition behavior.
-      final game = _bothValidGame();
-      final snapshot = _bothValidSnapshot();
+      final game = buildColonialAcquisitionBothValidGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       const expected = <String, AcquisitionMethod>{
         'napoleon': AcquisitionMethod.declareWar,
         'isabella': AcquisitionMethod.declareWar,

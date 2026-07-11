@@ -93,7 +93,7 @@ void main() {
         ],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -103,7 +103,7 @@ void main() {
         suggestionApi: api,
         growthStagePlannerEnabled: false,
         paperBudgetLedgerEnabled: true,
-      );
+      ));
 
       expect(plan.recruitOrders, hasLength(1));
       expect(plan.recruitOrders.single.targetTier, WorkerTier.journeyman);
@@ -135,7 +135,7 @@ void main() {
         build: [_civilianBuild(kUnitTypeBuilder)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -147,7 +147,7 @@ void main() {
         growthStagePlannerEnabled: false,
         paperBudgetLedgerEnabled: true,
         includeCivilianBuilds: true,
-      );
+      ));
 
       expect(plan.recruitOrders, hasLength(1));
       expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
@@ -177,7 +177,7 @@ void main() {
         build: [_civilianBuild(kUnitTypeBuilder)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -189,7 +189,7 @@ void main() {
         growthStagePlannerEnabled: false,
         paperBudgetLedgerEnabled: true,
         includeCivilianBuilds: true,
-      );
+      ));
 
       expect(plan.buildUnitOrders, hasLength(1));
       expect(plan.buildUnitOrders.single.unitType, kUnitTypeBuilder);
@@ -225,7 +225,7 @@ void main() {
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: currentOrders,
@@ -235,7 +235,7 @@ void main() {
         suggestionApi: api,
         growthStagePlannerEnabled: false,
         paperBudgetLedgerEnabled: true,
-      );
+      ));
 
       expect(plan.recruitOrders, isEmpty);
       expect(plan.rejected.single.reason, kRecruitmentRejectPaperBudget);
@@ -257,7 +257,7 @@ void main() {
         RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
       ];
 
-      RecruitmentPlan run() => runRecruitmentPlanner(
+      RecruitmentPlan run() => runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -267,7 +267,7 @@ void main() {
         suggestionApi: _fakeApi(recruit: recruits()),
         growthStagePlannerEnabled: false,
         paperBudgetLedgerEnabled: true,
-      );
+      ));
 
       final plan1 = run();
       final plan2 = run();
@@ -298,7 +298,7 @@ void main() {
         build: [_civilianBuild(kUnitTypeBuilder)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -309,7 +309,7 @@ void main() {
         growthStagePlannerEnabled: false,
         // paperBudgetLedgerEnabled omitted → default false.
         includeCivilianBuilds: true,
-      );
+      ));
 
       expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
       expect(plan.buildUnitOrders.single.unitType, kUnitTypeBuilder);
