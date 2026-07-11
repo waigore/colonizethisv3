@@ -1,4 +1,11 @@
-part of 'capital_and_gp_fall.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/src/logging.dart';
+
+import 'game_world_mutations.dart';
+import 'player_state_pipeline.dart';
+import 'port_seaboard_registry_key.dart';
+import 'province_lookup.dart';
+import 'province_owner_cache.dart';
 
 RegionData _transferFactionProvinceAndUnits(
   RegionData region, {

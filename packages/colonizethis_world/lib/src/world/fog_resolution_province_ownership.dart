@@ -1,4 +1,8 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'game_world_mutations.dart';
+import 'province_lookup.dart';
+import 'visibility_map_helpers.dart';
 
 /// Immediate visibility adjustment when province [provinceId] (prefixed id or
 /// legacy short id from [resolveProvinceRowForOwnershipTransfer]) transfers from

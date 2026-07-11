@@ -1,9 +1,16 @@
-part of 'army_migration.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../world_constants.dart';
+import 'army_lookup.dart';
+import 'army_migration_region.dart';
+import 'province_lookup.dart';
+import 'region_unit_lists.dart';
+import 'unit_lookup.dart';
 
 // Army station retargeting and per-regiment relocation across regions
 // (Refs #3290 Phase-0 file-split). Behaviour-preserving move: same library
 // scope as `army_migration.dart`, so imports, constants ([kRegionOldWorld],
-// [kRegionNewWorld]), and shared helpers ([_regionIdForProvinceInWorld]) are
+// [kRegionNewWorld]), and shared helpers ([regionIdForProvinceInWorld]) are
 // unchanged.
 
 /// Updates army [stationedProvinceId] and all regiment locations for [armyId].
@@ -12,7 +19,7 @@ WorldState updateArmyStation(
   String armyId,
   String destinationProvinceId,
 ) {
-  final regionId = _regionIdForProvinceInWorld(
+  final regionId = regionIdForProvinceInWorld(
     worldState,
     destinationProvinceId,
   );

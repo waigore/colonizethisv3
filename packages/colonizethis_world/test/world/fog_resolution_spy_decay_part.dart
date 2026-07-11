@@ -5,38 +5,15 @@ group('applySpyRevealTimerDecay', () {
     test(
       'decrements timers for other-faction provinces when timer expires',
       () {
-        const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'p1': {tileKeyP2: 'fullyVisible'},
-            },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                '$ow|P2': [tileKeyP2],
-              },
-            },
-            spyRevealTurnsByPlayer: const {
-              'p1': {'$ow|P2': 1},
-            },
-          ),
-          players: const [
-            Player(id: 'p1', displayName: 'P1', isHuman: true),
-            Player(id: 'p2', displayName: 'P2', isHuman: false),
-          ],
+        final game = spyRevealFogGame(
+          spyPlayerId: 'p1',
+          targetOwnerId: 'p2',
+          provinceLocalId: 'P2',
+          tileKey: tileKeyP2,
+          visibilityLevel: 'fullyVisible',
+          spyRevealTurns: 1,
         );
 
         final (visibility, timers) = applySpyRevealTimerDecay(game);
@@ -48,33 +25,15 @@ group('applySpyRevealTimerDecay', () {
     );
 
     test('never applies timers to own provinces', () {
-      const ow = 'oldWorld';
       const tileKeyP1 = 'oldWorld|P1|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP1: 'fullyVisible'},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|P1': [tileKeyP1],
-            },
-          },
-          // Spy timer mistakenly applied to own province; helper must ignore it.
-          spyRevealTurnsByPlayer: const {
-            'p1': {'$ow|P1': 1},
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      final game = spyRevealFogGame(
+        spyPlayerId: 'p1',
+        targetOwnerId: 'p1',
+        provinceLocalId: 'P1',
+        tileKey: tileKeyP1,
+        visibilityLevel: 'fullyVisible',
+        spyRevealTurns: 1,
       );
 
       final (visibility, timers) = applySpyRevealTimerDecay(game);
@@ -85,35 +44,15 @@ group('applySpyRevealTimerDecay', () {
     });
 
     test('leaves unknown tiles unchanged when timer expires', () {
-      const ow = 'oldWorld';
       const tileKeyP2 = 'oldWorld|P2|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'unknown'},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|P2': [tileKeyP2],
-            },
-          },
-          spyRevealTurnsByPlayer: const {
-            'p1': {'$ow|P2': 1},
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
-        ],
+      final game = spyRevealFogGame(
+        spyPlayerId: 'p1',
+        targetOwnerId: 'p2',
+        provinceLocalId: 'P2',
+        tileKey: tileKeyP2,
+        visibilityLevel: 'unknown',
+        spyRevealTurns: 1,
       );
 
       final (visibility, timers) = applySpyRevealTimerDecay(game);

@@ -1,4 +1,14 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'connectivity_tile_helpers.dart' show fullProvinceIdFromTileKey;
+import 'fog_spy_reveal_decay.dart';
+import 'naval_coastal_visibility.dart'
+    show coastalLandTileKeysFromNavalPresenceAtSea;
+import 'player_view.dart';
+import 'province_lookup.dart';
+import 'province_traversal.dart';
+import 'unit_lookup.dart';
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's

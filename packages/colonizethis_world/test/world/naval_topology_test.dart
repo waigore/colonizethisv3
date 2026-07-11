@@ -10,7 +10,8 @@ import '../world_test_support/world_test_support.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
-/// Exercises naval topology helpers in `lib/src/world/naval.dart`.
+/// Exercises naval topology helpers in `lib/src/world/naval.dart` and
+/// topology identity APIs in `lib/src/world/topology_identity.dart` (Refs #3968).
 /// SPEC/program/naval-movement-resolution.md and SPEC/game/ships-and-naval.md.
 ///
 /// Two regions: `oldWorld` (province p1 + sea s1) and `newWorld` (province n1 +
