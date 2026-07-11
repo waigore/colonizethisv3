@@ -35,7 +35,7 @@ void main() {
       );
       expect(json['cheapestRegimentBuildTreasuryCost'], 2000);
       expect(
-        (json['gpTradeOrdersEmitted'] as Map)['gp1'],
+        (json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp1'],
         {'offers': 2, 'urgentOffers': 1, 'bids': 3},
       );
     });
@@ -58,11 +58,11 @@ void main() {
       );
 
       expect(
-        (json['gpTradeOrdersEmitted'] as Map)['gp9'],
+        (json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp9'],
         {'offers': 0, 'urgentOffers': 0, 'bids': 0},
       );
       expect(
-        (json['gpDealsMatched'] as Map)['gp9'],
+        (json['gpDealsMatched'] as Map<String, Object?>)['gp9'],
         {'asSeller': 0, 'asBuyer': 0},
       );
     });

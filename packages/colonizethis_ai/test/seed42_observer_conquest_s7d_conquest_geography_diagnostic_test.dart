@@ -49,7 +49,7 @@ void main() {
       );
       expect(json['gpOwGain'], {'gp1': 3});
       expect(
-        (json['gpPhaseTurnCount'] as Map)['gp1'],
+        (json['gpPhaseTurnCount'] as Map<String, Object?>)['gp1'],
         containsPair('expand', 100),
       );
     });
