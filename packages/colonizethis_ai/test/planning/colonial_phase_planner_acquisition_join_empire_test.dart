@@ -61,100 +61,20 @@
 // list, treasury, overture state, and province-owner map; nothing
 // else.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
-const String _minor1 = 'minor1';
+import '../support/colonial_acquisition_test_support.dart';
 
-const String _province1 = 'newWorld|tribe1_a';
-const String _province2 = 'newWorld|tribe2_b';
+const String _gp1 = kColonialPhaseGp1;
+const String _gp2 = kColonialPhaseGp2;
+const String _tribe1 = kColonialPhaseTribe1;
+const String _tribe2 = kColonialPhaseTribe2;
+
+const String _province1 = kColonialAcquisitionNwProv1;
+const String _province2 = kColonialAcquisitionNwProv2;
 const String _province3 = 'newWorld|gp2_a';
-
-Game _acquisitionGame({
-  int turnNumber = 130,
-  int activePlayerTreasury = 100000,
-  List<Province> newWorldProvinces = const [],
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 100000),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false),
-  ],
-  List<Tribe> tribes = const [
-    Tribe(id: _tribe1, displayName: 'T1'),
-    Tribe(id: _tribe2, displayName: 'T2'),
-  ],
-  List<MinorNation> minorNations = const [
-    MinorNation(id: _minor1, displayName: 'M1'),
-  ],
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  final patchedPlayers = <Player>[
-    for (final p in players)
-      if (p.id == _gp1) p.copyWith(treasury: activePlayerTreasury) else p,
-  ];
-  return Game(
-    id: 'g-2509-colonial-acquisition-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: newWorldProvinces),
-    ),
-    players: patchedPlayers,
-    tribes: tribes,
-    minorNations: minorNations,
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-AIWorldSnapshot _acquisitionSnapshot({
-  required List<String> invadableNw,
-  String playerId = _gp1,
-  int treasury = 100000,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
-OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.nap,
-      sinceTurn: sinceTurn,
-    );
-
-OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.embassy,
-      sinceTurn: sinceTurn,
-    );
-
-DiplomacyRelation _friendly(String a, String b, {int score = 60}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.friendly,
-    );
 
 void main() {
   group('planColonialAcquisition (Join Empire path)', () {
@@ -163,8 +83,11 @@ void main() {
       // before reading the overture / relation / treasury gates. A
       // regression that emitted a target for an empty list would
       // produce an out-of-band acquisition order.
-      final game = _acquisitionGame();
-      final snapshot = _acquisitionSnapshot(invadableNw: const []);
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
+      );
+      final snapshot = buildColonialAcquisitionSnapshot(invadableNw: const []);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -179,8 +102,11 @@ void main() {
       // `game.players`. The planner's outer guard returns null so a
       // mis-dispatched call (e.g. snapshot built for a stale roster)
       // cannot emit an acquisition order.
-      final game = _acquisitionGame();
-      final snapshot = _acquisitionSnapshot(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
+      );
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
         playerId: 'gp-ghost',
       );
@@ -201,14 +127,18 @@ void main() {
       // The planner skips GP-owned NW provinces structurally so the
       // tribe-targeted Join Empire is never accidentally emitted
       // toward a GP.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province3, regionId: 'newWorld', ownerId: _gp2),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _gp2)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _gp2)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _gp2)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _gp2),
+        ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province3],
       );
       expect(
@@ -225,13 +155,17 @@ void main() {
       // No `OvertureState(gpId, targetId)` row -> the overture
       // chain has not started, so Join Empire is not reachable
       // (`nap` is the precondition).
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
       );
       expect(
@@ -247,14 +181,20 @@ void main() {
       // The validator gates on `currentStage == OvertureStage.nap`;
       // an earlier stage like `embassy` cannot advance directly to
       // `joinEmpire`. The planner mirrors the validator's gate.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
       );
       expect(
@@ -274,15 +214,19 @@ void main() {
       // `tribe1` owns one NW province -> joinEmpire cost =
       // joinEmpireBaseCost (5000) + 1 * joinEmpirePerProvinceCost
       // (2000) = 7000. Treasury 6999 -> reject.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         activePlayerTreasury: 6999,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
         treasury: 6999,
       );
@@ -301,11 +245,13 @@ void main() {
       // Friendly relations" when score < relationScoreMinFriendly
       // (51). The planner mirrors the gate so it does not suggest
       // a rejected order.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
         diplomacyRelations: <DiplomacyRelation>[
           DiplomacyRelation(
             factionId1: _gp1,
@@ -315,7 +261,7 @@ void main() {
           ),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
       );
       expect(
@@ -333,14 +279,18 @@ void main() {
       // `(tribe1, joinEmpire)` target so the orchestrator can emit
       // `establishOverture(tribe1)` advancing the chain
       // nap -> joinEmpire on resolution.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1],
       );
       expect(
@@ -363,21 +313,23 @@ void main() {
       // `invadableNewWorldProvinceIdsSorted` (ascending). With
       // `province1 = newWorld|tribe1_a` < `province2 = newWorld|tribe2_b`
       // the iteration hits tribe1 first.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
         ],
         overtureStates: <OvertureState>[
-          _nap(_gp1, _tribe1),
-          _nap(_gp1, _tribe2),
+          colonialAcquisitionNap(_gp1, _tribe1),
+          colonialAcquisitionNap(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _friendly(_gp1, _tribe1),
-          _friendly(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionFriendly(_gp1, _tribe2),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1, _province2],
       );
       expect(
@@ -402,21 +354,23 @@ void main() {
       // at `embassy` (fails the nap gate), tribe2 at `nap` -> tribe2
       // wins. Pins the per-target gate evaluation order independently
       // of the iteration order.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
         ],
         overtureStates: <OvertureState>[
-          _embassy(_gp1, _tribe1),
-          _nap(_gp1, _tribe2),
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+          colonialAcquisitionNap(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _friendly(_gp1, _tribe1),
-          _friendly(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionFriendly(_gp1, _tribe2),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1, _province2],
       );
       expect(
@@ -436,21 +390,23 @@ void main() {
     test('determinism: identical inputs produce identical targets', () {
       // Must-have #7 pin: repeated calls on the same game / snapshot
       // must return byte-identical results.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition',
+        minorNations: kColonialAcquisitionDefaultMinors,
         newWorldProvinces: const [
           Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
         ],
         overtureStates: <OvertureState>[
-          _nap(_gp1, _tribe1),
-          _nap(_gp1, _tribe2),
+          colonialAcquisitionNap(_gp1, _tribe1),
+          colonialAcquisitionNap(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _friendly(_gp1, _tribe1),
-          _friendly(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionFriendly(_gp1, _tribe2),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_province1, _province2],
       );
       final first = planColonialAcquisition(game: game, snapshot: snapshot);
