@@ -356,24 +356,27 @@ List<TradeOrder> runTreasuryPlanner({
         )
       : null;
 
-  // Refs #3758 file-split: offer/bid suggestion, supplier offer-tier alignment,
-  // and treasury/cargo-clamped bid prioritization are assembled in
-  // [_emitTradeOrders] so this planner body stays within the function-size
-  // budget. Behaviour-preserving (same library scope, identical emission path).
+  // Refs #3758 file-split / #3967: offer/bid suggestion, supplier offer-tier
+  // alignment, and treasury/cargo-clamped bid prioritization are assembled in
+  // [_emitTradeOrders] via [_EmitTradeOrdersInput] so this planner body stays
+  // within the function-size budget. Behaviour-preserving (same library scope,
+  // identical emission path).
   return _emitTradeOrders(
-    game: game,
-    playerId: playerId,
-    bidTypeCap: bidTypeCap,
-    tradeCargoCapacity: tradeCargoCapacity,
-    available: available,
-    need: need,
-    treasuryBudgetForBids: treasuryBudgetForBids,
-    offerPriority: offerPriority,
-    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
-    isLiquidityBuyer: isLiquidityBuyer,
-    lockRecoveryUrgent: lockRecoveryUrgent,
-    rules: rules,
-    tradeDealPreferredBidCommodityId: tradeDealPreferredBidCommodityId,
+    _EmitTradeOrdersInput(
+      game: game,
+      playerId: playerId,
+      bidTypeCap: bidTypeCap,
+      tradeCargoCapacity: tradeCargoCapacity,
+      available: available,
+      need: need,
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      offerPriority: offerPriority,
+      isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+      isLiquidityBuyer: isLiquidityBuyer,
+      lockRecoveryUrgent: lockRecoveryUrgent,
+      rules: rules,
+      tradeDealPreferredBidCommodityId: tradeDealPreferredBidCommodityId,
+    ),
   );
 }
 

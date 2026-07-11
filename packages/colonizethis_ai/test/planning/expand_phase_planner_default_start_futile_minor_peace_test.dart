@@ -35,11 +35,11 @@
 //      futile). Returned in ascending lex order over the minor
 //      `factionId`s.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpRival = 'gp_rival';
@@ -113,25 +113,6 @@ Game _ownGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group('defaultStartFutileMinorPeaceTargets — outer guards', () {
     test('returns const [] when above the observer OW quota', () {
@@ -143,7 +124,7 @@ void main() {
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
         atWarWith: const [_minor1],
         invadableProvinceIdsSorted: const ['oldWorld|future_target'],
@@ -169,7 +150,7 @@ void main() {
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: ownOw,
         atWarWith: const [_minor1],
         invadableProvinceIdsSorted: const ['oldWorld|gp_target'],
@@ -193,7 +174,7 @@ void main() {
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
         atWarWith: const [_minor1],
         invadableProvinceIdsSorted: const [],
@@ -226,7 +207,7 @@ void main() {
             minorOwProvincesByMinorId: const {_minor2: [], _minor1: []},
             atWarMinorIds: const [_minor1, _minor2],
           );
-          final snapshot = _ownSnapshot(
+          final snapshot = ownSnapshot(
             oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
             atWarWith: const [_minor2, _minor1],
             invadableProvinceIdsSorted: const ['oldWorld|${_gpRival}_1'],
@@ -253,7 +234,7 @@ void main() {
             rivalGpProvinces: 1,
             atWarMinorIds: const [],
           );
-          final snapshot = _ownSnapshot(
+          final snapshot = ownSnapshot(
             oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
             atWarWith: const [_gpRival],
             invadableProvinceIdsSorted: const ['oldWorld|${_gpRival}_1'],
@@ -280,7 +261,7 @@ void main() {
           minorOwProvincesByMinorId: const {_minor1: []},
           atWarMinorIds: const [_minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
           atWarWith: const [_minor1, _gpRival],
           invadableProvinceIdsSorted: const ['oldWorld|${_gpRival}_1'],
@@ -312,7 +293,7 @@ void main() {
         },
         atWarMinorIds: const [_minor1, _minor2],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
         atWarWith: const [_minor1, _minor2],
         invadableProvinceIdsSorted: const [minor1InvadablePid],
@@ -343,7 +324,7 @@ void main() {
           },
           atWarMinorIds: const [_minor2, _minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
           atWarWith: const [_minor2, _minor1],
           invadableProvinceIdsSorted: const [minorOwnedPid],
@@ -376,7 +357,7 @@ void main() {
         },
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
         atWarWith: const [_minor1, _gpRival],
         invadableProvinceIdsSorted: const [otherMinorInvadablePid],
@@ -404,7 +385,7 @@ void main() {
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: ownOw,
         atWarWith: const [_minor1],
         invadableProvinceIdsSorted: const ['oldWorld|future_target'],
@@ -435,7 +416,7 @@ void main() {
         },
         atWarMinorIds: const [_minor1, _minor2],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
         atWarWith: const [_minor1, _minor2],
         invadableProvinceIdsSorted: const [minor1InvadablePid],

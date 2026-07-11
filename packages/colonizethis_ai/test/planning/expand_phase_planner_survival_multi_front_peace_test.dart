@@ -88,181 +88,26 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
 const String _gpEnemy = 'gp_enemy';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
 const String _tribe1 = 'tribe1';
 
-/// Builds a minimal `Game` where:
-///
-///   * `gp_own` owns [ownProvinces] OW provinces.
-///   * The named enemy GPs in [enemyGpIds] each own a single OW
-///     province (so they exist via `game.playerById`).
-///   * Minors named in [minorIds] each own a single OW province (so
-///     they appear in `game.minorNations` and route to the
-///     `stalledZeroRegimentAllFactionPeaceTargets` minor/tribe arm
-///     rather than this GP arm).
-///   * Tribes named in [tribeIds] each appear in `game.tribes`.
-///   * Each GP gets a home army; `gp_own`'s home army carries
-///     [ownRegimentCount] regiments, each enemy GP's home army
-///     carries [enemyRegimentCount] regiments. Both `ownRegimentCount`
-///     and `enemyRegimentCount` may be `0` to exercise the
-///     zero-regiment guard arms.
-///   * Diplomacy: `gp_own` is at war with every enemy GP in
-///     [enemyGpIds] (so the canonical helpers and the GP-war filter
-///     see them), and at war with every minor / tribe id supplied in
-///     [atWarMinorIds] / [atWarTribeIds].
-Game _zeroRegimentGame({
-  required int ownProvinces,
-  required int ownRegimentCount,
-  required List<String> enemyGpIds,
-  required int enemyRegimentCount,
-  List<String> minorIds = const [],
-  List<String> tribeIds = const [],
-  List<String> atWarMinorIds = const [],
-  List<String> atWarTribeIds = const [],
-}) {
-  final provinces = <Province>[
-    Province(
-      id: 'oldWorld|${_gpOwn}_home',
-      regionId: 'oldWorld',
-      ownerId: _gpOwn,
-    ),
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final enemyId in enemyGpIds)
-      Province(
-        id: 'oldWorld|${enemyId}_home',
-        regionId: 'oldWorld',
-        ownerId: enemyId,
-      ),
-    for (final minorId in minorIds)
-      Province(
-        id: 'oldWorld|${minorId}_home',
-        regionId: 'oldWorld',
-        ownerId: minorId,
-      ),
-  ];
-
-  final armies = <Army>[
-    Army(
-      id: homeArmyIdFor(_gpOwn),
-      ownerId: _gpOwn,
-      regionId: 'oldWorld',
-      stationedProvinceId: 'oldWorld|${_gpOwn}_home',
-      regimentUnitIds: List<String>.unmodifiable(
-        List<String>.generate(ownRegimentCount, (i) => 'u_${_gpOwn}_${i + 1}'),
-      ),
-      isHomeArmy: true,
-    ),
-    for (final enemyId in enemyGpIds)
-      Army(
-        id: homeArmyIdFor(enemyId),
-        ownerId: enemyId,
-        regionId: 'oldWorld',
-        stationedProvinceId: 'oldWorld|${enemyId}_home',
-        regimentUnitIds: List<String>.unmodifiable(
-          List<String>.generate(
-            enemyRegimentCount,
-            (i) => 'u_${enemyId}_${i + 1}',
-          ),
-        ),
-        isHomeArmy: true,
-      ),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final enemyId in enemyGpIds)
-      Player(id: enemyId, displayName: enemyId.toUpperCase(), isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final minorId in minorIds)
-      MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final tribes = <Tribe>[
-    for (final tribeId in tribeIds) Tribe(id: tribeId, displayName: tribeId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final enemyId in enemyGpIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: enemyId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final minorId in atWarMinorIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: minorId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final tribeId in atWarTribeIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: tribeId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-zero-regiment-gp-peace-canonical-'
-        '${ownProvinces}_${ownRegimentCount}_${enemyRegimentCount}_'
-        '${enemyGpIds.join("-")}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-      armies: armies,
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(oldWorldProvincesOwned: oldWorldProvincesOwned),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group('stalledZeroRegimentGpPeaceTargets — canonical outer guards', () {
     test('returns const [] when ownOw exceeds the stalled band '
         '(ownOw > kStalledOldWorldProvinceThreshold)', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold + 1,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpEnemy],
         enemyRegimentCount: 0,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
         atWarWith: const [_gpEnemy],
       );
@@ -282,13 +127,13 @@ void main() {
     test(
       'returns const [] when the active player has at least one regiment',
       () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: 6,
           ownRegimentCount: 1,
           enemyGpIds: const [_gpEnemy],
           enemyRegimentCount: 0,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_gpEnemy],
         );
@@ -306,7 +151,7 @@ void main() {
     );
 
     test('returns const [] when no Great Powers are at war', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 6,
         ownRegimentCount: 0,
         enemyGpIds: const [],
@@ -314,7 +159,7 @@ void main() {
         minorIds: const [_minor1],
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_minor1],
       );
@@ -334,13 +179,13 @@ void main() {
 
   group('stalledZeroRegimentGpPeaceTargets — canonical firing path', () {
     test('peaces all at-war Great Powers at the stalled boundary', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpEnemy],
         enemyRegimentCount: 0,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
         atWarWith: const [_gpEnemy],
       );
@@ -358,7 +203,7 @@ void main() {
     });
 
     test('filters minors and tribes out of the GP-only result', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 6,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpEnemy],
@@ -368,7 +213,7 @@ void main() {
         atWarMinorIds: const [_minor1],
         atWarTribeIds: const [_tribe1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_minor1, _gpEnemy, _tribe1],
       );
@@ -386,13 +231,13 @@ void main() {
 
     test('sorts multiple Great Power enemies ascending regardless of '
         'atWarWith iteration order', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 6,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpThird, _gpEnemy],
         enemyRegimentCount: 0,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_gpThird, _gpEnemy],
       );
@@ -415,13 +260,13 @@ void main() {
     () {
       test('returns const [] when ownOw exceeds the stalled band '
           '(ownOw > kStalledOldWorldProvinceThreshold)', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: kStalledOldWorldProvinceThreshold + 1,
           ownRegimentCount: 0,
           enemyGpIds: const [_gpEnemy],
           enemyRegimentCount: 0,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
           atWarWith: const [_gpEnemy],
         );
@@ -442,13 +287,13 @@ void main() {
       test(
         'returns const [] when the active player has at least one regiment',
         () {
-          final game = _zeroRegimentGame(
+          final game = buildZeroRegimentExpandPeaceGame(
             ownProvinces: 6,
             ownRegimentCount: 1,
             enemyGpIds: const [_gpEnemy],
             enemyRegimentCount: 0,
           );
-          final snapshot = _ownSnapshot(
+          final snapshot = ownSnapshot(
             oldWorldProvincesOwned: 6,
             atWarWith: const [_gpEnemy],
           );
@@ -467,13 +312,13 @@ void main() {
       );
 
       test('returns const [] when the sole at-war GP still has regiments', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: 6,
           ownRegimentCount: 0,
           enemyGpIds: const [_gpEnemy],
           enemyRegimentCount: 2,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_gpEnemy],
         );
@@ -492,7 +337,7 @@ void main() {
       });
 
       test('returns const [] when no Great Power is at war', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: 6,
           ownRegimentCount: 0,
           enemyGpIds: const [],
@@ -500,7 +345,7 @@ void main() {
           minorIds: const [_minor1],
           atWarMinorIds: const [_minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_minor1],
         );
@@ -518,13 +363,13 @@ void main() {
       });
 
       test('returns const [] when multiple Great Powers are at war', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: 6,
           ownRegimentCount: 0,
           enemyGpIds: const [_gpEnemy, _gpThird],
           enemyRegimentCount: 0,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [_gpEnemy, _gpThird],
         );
@@ -549,13 +394,13 @@ void main() {
     'mutualZeroRegimentGpStalematePeaceTargets — canonical firing path',
     () {
       test('peaces the sole GP enemy when both sides are exhausted', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: kStalledOldWorldProvinceThreshold,
           ownRegimentCount: 0,
           enemyGpIds: const [_gpEnemy],
           enemyRegimentCount: 0,
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
           atWarWith: const [_gpEnemy],
         );
@@ -576,7 +421,7 @@ void main() {
 
       test('still peaces when minors are also at war (GP-only filter keeps '
           'the carve-out tight on the lone GP enemy)', () {
-        final game = _zeroRegimentGame(
+        final game = buildZeroRegimentExpandPeaceGame(
           ownProvinces: kStalledOldWorldProvinceThreshold,
           ownRegimentCount: 0,
           enemyGpIds: const [_gpEnemy],
@@ -584,7 +429,7 @@ void main() {
           minorIds: const [_minor1],
           atWarMinorIds: const [_minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
           atWarWith: const [_minor1, _gpEnemy],
         );
@@ -608,13 +453,13 @@ void main() {
   group('Determinism (Must-have #7)', () {
     test('stalledZeroRegimentGpPeaceTargets is byte-equivalent across '
         'two consecutive invocations on the same inputs', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 7,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpThird, _gpEnemy],
         enemyRegimentCount: 0,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpThird, _gpEnemy],
       );
@@ -641,13 +486,13 @@ void main() {
 
     test('mutualZeroRegimentGpStalematePeaceTargets is byte-equivalent '
         'across two consecutive invocations on the same inputs', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 7,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpEnemy],
         enemyRegimentCount: 0,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpEnemy],
       );
@@ -672,46 +517,46 @@ void main() {
       final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
         // 1. Above stalled band → const [].
         (
-          game: _zeroRegimentGame(
+          game: buildZeroRegimentExpandPeaceGame(
             ownProvinces: kStalledOldWorldProvinceThreshold + 1,
             ownRegimentCount: 0,
             enemyGpIds: const [_gpEnemy],
             enemyRegimentCount: 0,
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
             atWarWith: const [_gpEnemy],
           ),
         ),
         // 2. Active player still has regiments → const [].
         (
-          game: _zeroRegimentGame(
+          game: buildZeroRegimentExpandPeaceGame(
             ownProvinces: 6,
             ownRegimentCount: 1,
             enemyGpIds: const [_gpEnemy],
             enemyRegimentCount: 0,
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 6,
             atWarWith: const [_gpEnemy],
           ),
         ),
         // 3. Inside stalled band, zero regiments, multi-GP sort.
         (
-          game: _zeroRegimentGame(
+          game: buildZeroRegimentExpandPeaceGame(
             ownProvinces: 6,
             ownRegimentCount: 0,
             enemyGpIds: const [_gpThird, _gpEnemy],
             enemyRegimentCount: 0,
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 6,
             atWarWith: const [_gpThird, _gpEnemy],
           ),
         ),
         // 4. Minor / tribe filter — GP-only result.
         (
-          game: _zeroRegimentGame(
+          game: buildZeroRegimentExpandPeaceGame(
             ownProvinces: 6,
             ownRegimentCount: 0,
             enemyGpIds: const [_gpEnemy],
@@ -721,7 +566,7 @@ void main() {
             atWarMinorIds: const [_minor1],
             atWarTribeIds: const [_tribe1],
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 6,
             atWarWith: const [_minor1, _gpEnemy, _tribe1],
           ),
@@ -769,43 +614,43 @@ void main() {
         //  6. Firing path: sole GP, both sides exhausted, stalled band.
         final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: kStalledOldWorldProvinceThreshold + 1,
               ownRegimentCount: 0,
               enemyGpIds: const [_gpEnemy],
               enemyRegimentCount: 0,
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
               atWarWith: const [_gpEnemy],
             ),
           ),
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: 6,
               ownRegimentCount: 1,
               enemyGpIds: const [_gpEnemy],
               enemyRegimentCount: 0,
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: 6,
               atWarWith: const [_gpEnemy],
             ),
           ),
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: 6,
               ownRegimentCount: 0,
               enemyGpIds: const [_gpEnemy],
               enemyRegimentCount: 2,
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: 6,
               atWarWith: const [_gpEnemy],
             ),
           ),
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: 6,
               ownRegimentCount: 0,
               enemyGpIds: const [],
@@ -813,31 +658,31 @@ void main() {
               minorIds: const [_minor1],
               atWarMinorIds: const [_minor1],
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: 6,
               atWarWith: const [_minor1],
             ),
           ),
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: 6,
               ownRegimentCount: 0,
               enemyGpIds: const [_gpEnemy, _gpThird],
               enemyRegimentCount: 0,
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: 6,
               atWarWith: const [_gpEnemy, _gpThird],
             ),
           ),
           (
-            game: _zeroRegimentGame(
+            game: buildZeroRegimentExpandPeaceGame(
               ownProvinces: kStalledOldWorldProvinceThreshold,
               ownRegimentCount: 0,
               enemyGpIds: const [_gpEnemy],
               enemyRegimentCount: 0,
             ),
-            snapshot: _ownSnapshot(
+            snapshot: ownSnapshot(
               oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
               atWarWith: const [_gpEnemy],
             ),
@@ -875,7 +720,7 @@ void main() {
 
   group('stalledZeroRegimentAllFactionPeaceTargets — canonical', () {
     test('peaces minors and tribes only when stalled with zero regiments', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 8,
         ownRegimentCount: 0,
         enemyGpIds: const [],
@@ -883,105 +728,131 @@ void main() {
         minorIds: const [_minor1],
         atWarMinorIds: const [_minor1, 'minor2'],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 8,
         atWarWith: const [_minor1, 'minor2'],
       );
       expect(
-        stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot),
+        stalledZeroRegimentAllFactionPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ),
         const [_minor1, 'minor2'],
       );
     });
 
     test('delegating stub matches canonical implementation', () {
-      final game = _zeroRegimentGame(
+      final game = buildZeroRegimentExpandPeaceGame(
         ownProvinces: 8,
         ownRegimentCount: 0,
         enemyGpIds: const [_gpEnemy],
         enemyRegimentCount: 0,
         atWarMinorIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 8,
         atWarWith: const [_minor1, _gpEnemy],
       );
       expect(
-        diplomacy_planner_peace_targets.stalledZeroRegimentAllFactionPeaceTargets(
+        diplomacy_planner_peace_targets
+            .stalledZeroRegimentAllFactionPeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+        stalledZeroRegimentAllFactionPeaceTargets(
           game: game,
           snapshot: snapshot,
         ),
-        stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot),
       );
     });
   });
 
-  group('mutualExhaustedBelowQuotaGpStalematePeaceTargets — stub delegation', () {
-    test('delegating stub matches canonical on exhausted-plateau fixture', () {
-      final game = Game(
-        id: 'g-mutual-exhausted-delegation',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
-          oldWorld: RegionData(
-            provinces: [
-              for (var i = 1; i <= 8; i++)
-                Province(
-                  id: 'oldWorld|gp4_$i',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp4',
-                ),
-              for (var i = 1; i <= 9; i++)
-                Province(
-                  id: 'oldWorld|gp3_$i',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
+  group(
+    'mutualExhaustedBelowQuotaGpStalematePeaceTargets — stub delegation',
+    () {
+      test(
+        'delegating stub matches canonical on exhausted-plateau fixture',
+        () {
+          final game = Game(
+            id: 'g-mutual-exhausted-delegation',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 100,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  for (var i = 1; i <= 8; i++)
+                    Province(
+                      id: 'oldWorld|gp4_$i',
+                      regionId: 'oldWorld',
+                      ownerId: 'gp4',
+                    ),
+                  for (var i = 1; i <= 9; i++)
+                    Province(
+                      id: 'oldWorld|gp3_$i',
+                      regionId: 'oldWorld',
+                      ownerId: 'gp3',
+                    ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              armies: const [],
+            ),
+            players: const [
+              Player(
+                id: 'gp4',
+                displayName: 'GP4',
+                isHuman: false,
+                treasury: 0,
+              ),
+              Player(
+                id: 'gp3',
+                displayName: 'GP3',
+                isHuman: false,
+                treasury: 0,
+              ),
             ],
-          ),
-          newWorld: const RegionData(),
-          armies: const [],
-        ),
-        players: const [
-          Player(id: 'gp4', displayName: 'GP4', isHuman: false, treasury: 0),
-          Player(id: 'gp3', displayName: 'GP3', isHuman: false, treasury: 0),
-        ],
-        diplomacyRelations: const [
-          DiplomacyRelation(
-            factionId1: 'gp4',
-            factionId2: 'gp3',
-            state: RelationState.atWar,
-            score: 30,
-          ),
-        ],
+            diplomacyRelations: const [
+              DiplomacyRelation(
+                factionId1: 'gp4',
+                factionId2: 'gp3',
+                state: RelationState.atWar,
+                score: 30,
+              ),
+            ],
+          );
+          const snapshot = AIWorldSnapshot(
+            playerId: 'gp4',
+            threats: ThreatSummary(atWarWith: ['gp3']),
+            opportunities: const OpportunitySummary(),
+            conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+            colonial: const ColonialSummary(),
+            economy: const EconomySummary(),
+            relations: const {},
+          );
+          expect(
+            diplomacy_planner_peace_targets
+                .mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+                  game: game,
+                  snapshot: snapshot,
+                ),
+            mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+          );
+          expect(
+            mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+            ['gp3'],
+          );
+        },
       );
-      const snapshot = AIWorldSnapshot(
-        playerId: 'gp4',
-        threats: ThreatSummary(atWarWith: ['gp3']),
-        opportunities: const OpportunitySummary(),
-        conquest: ConquestSummary(oldWorldProvincesOwned: 8),
-        colonial: const ColonialSummary(),
-        economy: const EconomySummary(),
-        relations: const {},
-      );
-      expect(
-        diplomacy_planner_peace_targets
-            .mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        ),
-        mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        ),
-      );
-      expect(
-        mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        ),
-        ['gp3'],
-      );
-    });
-  });
+    },
+  );
 
   group('multiFrontNonBlockerGpPeaceTargets — canonical', () {
     test('three GP wars peaces non-blocker GPs sorted', () {
@@ -991,26 +862,10 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
           oldWorld: RegionData(
             provinces: const [
-              Province(
-                id: 'oldWorld|a',
-                regionId: 'oldWorld',
-                ownerId: 'gp4',
-              ),
-              Province(
-                id: 'oldWorld|b',
-                regionId: 'oldWorld',
-                ownerId: 'gp1',
-              ),
-              Province(
-                id: 'oldWorld|c',
-                regionId: 'oldWorld',
-                ownerId: 'gp2',
-              ),
-              Province(
-                id: 'oldWorld|d',
-                regionId: 'oldWorld',
-                ownerId: 'gp3',
-              ),
+              Province(id: 'oldWorld|a', regionId: 'oldWorld', ownerId: 'gp4'),
+              Province(id: 'oldWorld|b', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|c', regionId: 'oldWorld', ownerId: 'gp2'),
+              Province(id: 'oldWorld|d', regionId: 'oldWorld', ownerId: 'gp3'),
             ],
           ),
           newWorld: const RegionData(),
@@ -1048,7 +903,11 @@ void main() {
         opportunities: OpportunitySummary(),
         conquest: ConquestSummary(
           oldWorldProvincesOwned: 11,
-          invadableProvinceIdsSorted: ['oldWorld|b', 'oldWorld|c', 'oldWorld|d'],
+          invadableProvinceIdsSorted: [
+            'oldWorld|b',
+            'oldWorld|c',
+            'oldWorld|d',
+          ],
         ),
         economy: EconomySummary(),
         relations: const {},

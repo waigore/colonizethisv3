@@ -2,53 +2,17 @@ part of 'diplomatic_candidate_scoring.dart';
 
 /// Declare-war score ladder.
 ///
-/// Entry point [_scoreDeclareWarDiplomaticOrder] builds the per-target
+/// Entry point [_scoreDeclareWarDiplomaticOrder] accepts a prebuilt
 /// [_DeclareWarTargetContext] (see
 /// `diplomatic_candidate_scoring_declare_war_context.dart`), then walks the
 /// suppression chain ([_declareWarSuppressedScore]) before delegating the
 /// surviving candidates to the bonus addends
-/// (`diplomatic_candidate_scoring_declare_war_bonuses.dart`). Split from the
-/// context builder for readability (Refs #3749); behaviour is unchanged.
-int _scoreDeclareWarDiplomaticOrder({
-  required DiplomaticOrder order,
-  required String nationId,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required String agendaId,
-  required PersonalityThresholds thresholds,
-  required int maxRelationForDeclareWar,
-  required bool behindVictoryPace,
-  required bool suppressGpDeclareWar,
-  required Set<String> invadableOwners,
-  required Map<String, String> provinceOwner,
-  required int warCooldownTurns,
-  required int currentTurn,
-  required bool anyMinorOwnsOldWorld,
-  required StrategicGoal? primaryGoal,
-  required int Function(String targetFactionId, num relationScore)
-  warDesireForTarget,
+/// (`diplomatic_candidate_scoring_declare_war_bonuses.dart`). Call sites build
+/// the context once (Refs #3967); behaviour is unchanged.
+int _scoreDeclareWarDiplomaticOrder(
+  _DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
-  PhasePlanOutcome? phasePlan,
 }) {
-  final ctx = _DeclareWarTargetContext.build(
-    order: order,
-    nationId: nationId,
-    game: game,
-    snapshot: snapshot,
-    thresholds: thresholds,
-    maxRelationForDeclareWar: maxRelationForDeclareWar,
-    behindVictoryPace: behindVictoryPace,
-    suppressGpDeclareWar: suppressGpDeclareWar,
-    invadableOwners: invadableOwners,
-    provinceOwner: provinceOwner,
-    warCooldownTurns: warCooldownTurns,
-    currentTurn: currentTurn,
-    anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
-    primaryGoal: primaryGoal,
-    warDesireForTarget: warDesireForTarget,
-    agendaId: agendaId,
-    phasePlan: phasePlan,
-  );
   final suppressed = _declareWarSuppressedScore(
     ctx,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
@@ -202,8 +166,7 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
       ctx.invadableOwOwnedByGp &&
       !ctx.hasInvadableMinorOwner &&
       (ctx.isTribeTarget ||
-          (ctx.targetIsGreatPower &&
-              !ctx.invadableGpBlocker) ||
+          (ctx.targetIsGreatPower && !ctx.invadableGpBlocker) ||
           (ctx.isMinorTarget &&
               !ctx.isTribeTarget &&
               !ctx.weakerDistantMinor))) {
@@ -419,11 +382,11 @@ int? _declareWarSuppressedWarConcentrationScore(
       ctx.targetNotAlreadyAtWar) {
     return 0;
   }
-  if (ctx.isAdjacentGp &&
-      ctx.targetIsGreatPower &&
-      ctx.targetNotAlreadyAtWar) {
-    final attackerGpWarCount =
-        gpFactionIdsAtWarWith(ctx.game, ctx.snapshot).length;
+  if (ctx.isAdjacentGp && ctx.targetIsGreatPower && ctx.targetNotAlreadyAtWar) {
+    final attackerGpWarCount = gpFactionIdsAtWarWith(
+      ctx.game,
+      ctx.snapshot,
+    ).length;
     if (attackerGpWarCount >= 2) {
       return 0;
     }
