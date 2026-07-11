@@ -9,33 +9,15 @@ import '../common/game_graphs.dart';
 const _playerId = 'gp1';
 const _ow = 'oldWorld';
 
-Player osgwPlayer({int treasury = 5000}) =>
-    Player(id: _playerId, displayName: 'Human', isHuman: true, treasury: treasury);
-
-Unit _osgwUnit({
-  required String id,
-  required String type,
-  required String provinceId,
-  String tileKey = '$_ow|p1|0|0',
-}) => Unit(
-  id: id,
-  type: type,
-  ownerId: _playerId,
-  locationProvinceId: provinceId,
-  tileKey: tileKey,
-  status: UnitStatus.idle,
-);
-
-({Game game, MapTopology topology, PlayerView view}) _osgwBundle({
-  required Game game,
-  required MapTopology topology,
-}) => (
-  game: game,
-  topology: topology,
-  view: buildPlayerView(game, topology, _playerId),
-);
-
 // dart format off
+Player osgwPlayer({int treasury = 5000}) => Player(id: _playerId, displayName: 'Human', isHuman: true, treasury: treasury);
+
+Unit _osgwUnit({required String id, required String type, required String provinceId, String tileKey = '$_ow|p1|0|0'}) =>
+    Unit(id: id, type: type, ownerId: _playerId, locationProvinceId: provinceId, tileKey: tileKey, status: UnitStatus.idle);
+
+({Game game, MapTopology topology, PlayerView view}) _osgwBundle({required Game game, required MapTopology topology}) =>
+    (game: game, topology: topology, view: buildPlayerView(game, topology, _playerId));
+
 Game _osgwOwGame({
   required List<Province> provinces,
   required List<Unit> units,
@@ -58,10 +40,7 @@ Game _osgwOwGame({
   const p1 = '$_ow|p1';
   const p2 = '$_ow|p2';
   final game = _osgwOwGame(
-    provinces: [
-      Province(id: p1, regionId: _ow, ownerId: _playerId),
-      Province(id: p2, regionId: _ow, ownerId: _playerId),
-    ],
+    provinces: [Province(id: p1, regionId: _ow, ownerId: _playerId), Province(id: p2, regionId: _ow, ownerId: _playerId)],
     units: [
       _osgwUnit(id: 'u_explorer', type: kUnitTypeExplorer, provinceId: p1),
       _osgwUnit(id: 'u_builder', type: kUnitTypeBuilder, provinceId: p1),
@@ -72,14 +51,7 @@ Game _osgwOwGame({
     tiles: {_ow: {p1: ['$_ow|p1|0|0'], p2: ['$_ow|p2|0|0']}},
     resources: const {'$_ow|p1|0|0': 'grain'},
   );
-  return _osgwBundle(
-    game: game,
-    topology: ordersProvinceTopology(
-      game.worldState.oldWorld.provinces,
-      regionId: _ow,
-      edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
-    ),
-  );
+  return _osgwBundle(game: game, topology: ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow, edges: const [TopologyEdge(id1: 'p1', id2: 'p2')]));
 }
 
 ({Game game, MapTopology topology, PlayerView view}) osgwSingleExplorerGame() {
@@ -91,10 +63,7 @@ Game _osgwOwGame({
     tiles: {_ow: {p1: ['$_ow|p1|0|0', '$_ow|p1|0|1']}},
     resources: const {'$_ow|p1|0|0': 'grain'},
   );
-  return _osgwBundle(
-    game: game,
-    topology: ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow),
-  );
+  return _osgwBundle(game: game, topology: ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow));
 }
 
 ({Game game, MapTopology topology, PlayerView view}) osgwTwoIronTilesFoggedGame() {
@@ -110,14 +79,10 @@ Game _osgwOwGame({
     resources: const {t0: 'iron', t1: 'iron'},
     vis: const {_playerId: {t0: 'fogged', t1: 'fogged'}},
   );
-  return _osgwBundle(
-    game: game,
-    topology: ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow),
-  );
+  return _osgwBundle(game: game, topology: ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow));
 }
 
-({Game game, MapTopology topology, PlayerView view, Orders orders})
-osgwExplorerPendingDuplicateGame() {
+({Game game, MapTopology topology, PlayerView view, Orders orders}) osgwExplorerPendingDuplicateGame() {
   const provinceId = '$_ow|p1';
   const tile = '$_ow|p1|0|0';
   final game = _osgwOwGame(
@@ -128,19 +93,10 @@ osgwExplorerPendingDuplicateGame() {
     vis: {_playerId: {tile: 'fullyVisible'}},
   );
   final topology = ordersProvinceTopology(game.worldState.oldWorld.provinces, regionId: _ow);
-  final orders = Orders(
-    workOrdersByPlayerId: {
-      _playerId: const [
-        WorkOrder(unitId: 'u_explorer', target: kWorkTargetExplore, targetTileKey: tile),
-        WorkOrder(unitId: 'u_explorer', target: kWorkTargetProspect, targetTileKey: tile),
-      ],
-    },
-  );
-  return (
-    game: game,
-    topology: topology,
-    view: buildPlayerView(game, topology, _playerId),
-    orders: orders,
-  );
+  final orders = Orders(workOrdersByPlayerId: {_playerId: const [
+    WorkOrder(unitId: 'u_explorer', target: kWorkTargetExplore, targetTileKey: tile),
+    WorkOrder(unitId: 'u_explorer', target: kWorkTargetProspect, targetTileKey: tile),
+  ]});
+  return (game: game, topology: topology, view: buildPlayerView(game, topology, _playerId), orders: orders);
 }
 // dart format on

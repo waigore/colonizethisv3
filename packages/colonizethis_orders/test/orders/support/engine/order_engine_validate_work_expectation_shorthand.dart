@@ -25,31 +25,21 @@ OrderValidationResult vwValidateBuildImprovement({
   Map<String, TileMapResult>? tileMapByRegion,
   String targetTileKey = ValidateWorkOw.tileKey,
   String unitId = 'builder1',
-}) => vwValidateSingleWork(
-  game: game,
-  order: WorkOrder(unitId: unitId, target: kWorkTargetBuildImprovement, targetTileKey: targetTileKey),
-  tileMapByRegion: tileMapByRegion,
-);
+}) => vwValidateSingleWork(game: game, order: WorkOrder(unitId: unitId, target: kWorkTargetBuildImprovement, targetTileKey: targetTileKey), tileMapByRegion: tileMapByRegion);
 
 OrderValidationResult vwValidateOwWorkTarget({
   required Game game,
   required String unitId,
   required String target,
   Map<String, TileMapResult>? tileMapByRegion,
-}) => vwValidateSingleWork(
-  game: game,
-  order: WorkOrder(unitId: unitId, target: target, targetTileKey: ValidateWorkOw.tileKey),
-  tileMapByRegion: tileMapByRegion,
-);
+}) => vwValidateSingleWork(game: game, order: WorkOrder(unitId: unitId, target: target, targetTileKey: ValidateWorkOw.tileKey), tileMapByRegion: tileMapByRegion);
 
 void vwExpectRejected(OrderValidationResult result, {String? reasonContains}) {
   expect(result.status, OrderValidationStatus.rejected);
   if (reasonContains != null) expect(result.reason, contains(reasonContains));
 }
 
-void vwExpectAccepted(OrderValidationResult result) {
-  expect(result.status, OrderValidationStatus.accepted);
-}
+void vwExpectAccepted(OrderValidationResult result) => expect(result.status, OrderValidationStatus.accepted);
 
 void vwExpectDualWorkOrders({
   required Game game,
@@ -63,37 +53,19 @@ void vwExpectDualWorkOrders({
   final engine = OrderEngine()..addWorkOrder(playerId, first)..addWorkOrder(playerId, second);
   final results = engine.validatePlayerOrdersWithContext(game, topology ?? ValidateWorkOw.topology(), playerId);
   expect(results, hasLength(statuses.length));
-  for (var i = 0; i < statuses.length; i++) {
-    expect(results[i].status, statuses[i]);
-  }
+  for (var i = 0; i < statuses.length; i++) {expect(results[i].status, statuses[i]);}
   if (lastReasonContains != null) expect(results.last.reason, contains(lastReasonContains));
 }
 
-void vwExpectRejectMinorProvinceRoad({required Game game, required String reasonContains}) {
-  vwExpectRejected(
-    vwValidateSingleWork(
-      game: game,
-      playerId: 'gp1',
-      order: WorkOrder(unitId: 'e1', target: kWorkTargetBuildRoad, targetTileKey: minorProvinceRoadTileKey()),
-      topology: minorProvinceRoadTopology(),
-    ),
-    reasonContains: reasonContains,
-  );
-}
+void vwExpectRejectMinorProvinceRoad({required Game game, required String reasonContains}) => vwExpectRejected(
+  vwValidateSingleWork(game: game, playerId: 'gp1', order: WorkOrder(unitId: 'e1', target: kWorkTargetBuildRoad, targetTileKey: minorProvinceRoadTileKey()), topology: minorProvinceRoadTopology()),
+  reasonContains: reasonContains,
+);
 
 void vwExpectBuildImprovementMineral({required bool prospected}) {
   const tileKey = ValidateWorkOw.tileKey;
-  final result = vwValidateBuildImprovement(
-    game: buildImprovementBaseGame(
-      resourceByTileKey: {tileKey: 'iron'},
-      playerProspectedTiles: prospected ? {'p1': {tileKey}} : null,
-    ),
-  );
-  if (prospected) {
-    vwExpectAccepted(result);
-  } else {
-    vwExpectRejected(result, reasonContains: 'prospected');
-  }
+  final result = vwValidateBuildImprovement(game: buildImprovementBaseGame(resourceByTileKey: {tileKey: 'iron'}, playerProspectedTiles: prospected ? {'p1': {tileKey}} : null));
+  if (prospected) {vwExpectAccepted(result);} else {vwExpectRejected(result, reasonContains: 'prospected');}
 }
 
 void vwExpectPurchaseLandRejected({
@@ -104,43 +76,27 @@ void vwExpectPurchaseLandRejected({
   Map<String, Set<String>>? playerProspectedTiles,
   Map<String, String>? purchasedTilesByTileKey,
   required String reasonContains,
-}) {
-  vwExpectRejected(
-    vwValidateSingleWork(
-      game: PurchaseLandTestFixture.baseGame(
-        treasury: treasury,
-        overtureStates: overtureStates,
-        diplomacyRelations: diplomacyRelations,
-        resourceByTileKey: resourceByTileKey,
-        playerProspectedTiles: playerProspectedTiles,
-        purchasedTilesByTileKey: purchasedTilesByTileKey,
-      ),
-      order: const WorkOrder(unitId: 'merchant1', target: kWorkTargetPurchaseLand, targetTileKey: PurchaseLandTestFixture.tileKey),
-      topology: PurchaseLandTestFixture.topology(),
-    ),
-    reasonContains: reasonContains,
-  );
-}
+}) => vwExpectRejected(
+  vwValidateSingleWork(
+    game: PurchaseLandTestFixture.baseGame(treasury: treasury, overtureStates: overtureStates, diplomacyRelations: diplomacyRelations, resourceByTileKey: resourceByTileKey, playerProspectedTiles: playerProspectedTiles, purchasedTilesByTileKey: purchasedTilesByTileKey),
+    order: const WorkOrder(unitId: 'merchant1', target: kWorkTargetPurchaseLand, targetTileKey: PurchaseLandTestFixture.tileKey),
+    topology: PurchaseLandTestFixture.topology(),
+  ),
+  reasonContains: reasonContains,
+);
 
 void vwExpectPurchaseLandAccepted({
   int treasury = 500,
   List<OvertureState>? overtureStates = purchaseLandEmbassyOverture,
   Map<String, String>? resourceByTileKey,
   Map<String, Set<String>>? playerProspectedTiles,
-}) {
-  vwExpectAccepted(
-    vwValidateSingleWork(
-      game: PurchaseLandTestFixture.baseGame(
-        treasury: treasury,
-        overtureStates: overtureStates,
-        resourceByTileKey: resourceByTileKey,
-        playerProspectedTiles: playerProspectedTiles,
-      ),
-      order: const WorkOrder(unitId: 'merchant1', target: kWorkTargetPurchaseLand, targetTileKey: PurchaseLandTestFixture.tileKey),
-      topology: PurchaseLandTestFixture.topology(),
-    ),
-  );
-}
+}) => vwExpectAccepted(
+  vwValidateSingleWork(
+    game: PurchaseLandTestFixture.baseGame(treasury: treasury, overtureStates: overtureStates, resourceByTileKey: resourceByTileKey, playerProspectedTiles: playerProspectedTiles),
+    order: const WorkOrder(unitId: 'merchant1', target: kWorkTargetPurchaseLand, targetTileKey: PurchaseLandTestFixture.tileKey),
+    topology: PurchaseLandTestFixture.topology(),
+  ),
+);
 
 void vwExpectPurchaseLandMineral({required bool prospected}) {
   final tk = PurchaseLandTestFixture.tileKey;
@@ -151,6 +107,12 @@ void vwExpectPurchaseLandMineral({required bool prospected}) {
   }
 }
 
+void _vwExpectOutcome(OrderValidationResult result, {required bool accepted, String? reasonContains, void Function(OrderValidationResult result)? onRejected}) {
+  if (accepted) {vwExpectAccepted(result); return;}
+  vwExpectRejected(result, reasonContains: reasonContains);
+  onRejected?.call(result);
+}
+
 void vwExpectBuildImprovementOutcome({
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
@@ -158,63 +120,17 @@ void vwExpectBuildImprovementOutcome({
   required bool accepted,
   String? reasonContains,
   void Function(OrderValidationResult result)? onRejected,
-}) {
-  _vwExpectOutcome(
-    vwValidateBuildImprovement(game: game, tileMapByRegion: tileMapByRegion, targetTileKey: targetTileKey),
-    accepted: accepted,
-    reasonContains: reasonContains,
-    onRejected: onRejected,
-  );
-}
+}) => _vwExpectOutcome(vwValidateBuildImprovement(game: game, tileMapByRegion: tileMapByRegion, targetTileKey: targetTileKey), accepted: accepted, reasonContains: reasonContains, onRejected: onRejected);
 
-void _vwExpectOutcome(
-  OrderValidationResult result, {
-  required bool accepted,
-  String? reasonContains,
-  void Function(OrderValidationResult result)? onRejected,
-}) {
-  if (accepted) {
-    vwExpectAccepted(result);
-    return;
-  }
-  vwExpectRejected(result, reasonContains: reasonContains);
-  onRejected?.call(result);
-}
+void vwExpectFortBuildRejected({required int fortLevel, required Stockpile stockpile, Map<String, bool>? techUnlocked, required String reasonContains}) =>
+    vwExpectRejected(vwValidateOwWorkTarget(game: fortWorkGame(fortLevel: fortLevel, stockpile: stockpile, techUnlocked: techUnlocked), unitId: 'eng1', target: kWorkTargetBuildFort), reasonContains: reasonContains);
 
-void vwExpectFortBuildRejected({
-  required int fortLevel,
-  required Stockpile stockpile,
-  Map<String, bool>? techUnlocked,
-  required String reasonContains,
-}) {
-  vwExpectRejected(
-    vwValidateOwWorkTarget(game: fortWorkGame(fortLevel: fortLevel, stockpile: stockpile, techUnlocked: techUnlocked), unitId: 'eng1', target: kWorkTargetBuildFort),
-    reasonContains: reasonContains,
-  );
-}
+void vwExpectRailBuildOutcome({required TileMapState tileState, Map<String, bool>? techUnlocked, required Map<String, TileMapResult> tileMapByRegion, required bool accepted, String? reasonContains}) =>
+    _vwExpectOutcome(vwValidateOwWorkTarget(game: gameWithRailUnit(tileState: tileState, techUnlocked: techUnlocked), unitId: 'rail1', target: kWorkTargetBuildRail, tileMapByRegion: tileMapByRegion), accepted: accepted, reasonContains: reasonContains);
 
-void vwExpectRailBuildOutcome({
-  required TileMapState tileState,
-  Map<String, bool>? techUnlocked,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required bool accepted,
-  String? reasonContains,
-}) {
-  _vwExpectOutcome(
-    vwValidateOwWorkTarget(game: gameWithRailUnit(tileState: tileState, techUnlocked: techUnlocked), unitId: 'rail1', target: kWorkTargetBuildRail, tileMapByRegion: tileMapByRegion),
-    accepted: accepted,
-    reasonContains: reasonContains,
-  );
-}
-
-void vwExpectUpgradeTownOutcome({required bool accepted, required Map<String, bool> techUnlocked}) {
-  _vwExpectOutcome(
-    vwValidateSingleWork(
-      game: upgradeTownWorkGame(techUnlocked: techUnlocked),
-      order: const WorkOrder(unitId: 'b1', target: kWorkTargetUpgradeTown, targetTileKey: ValidateWorkOw.tileKey),
-    ),
-    accepted: accepted,
-    reasonContains: accepted ? null : 'National Bureaucracy',
-  );
-}
+void vwExpectUpgradeTownOutcome({required bool accepted, required Map<String, bool> techUnlocked}) => _vwExpectOutcome(
+  vwValidateSingleWork(game: upgradeTownWorkGame(techUnlocked: techUnlocked), order: const WorkOrder(unitId: 'b1', target: kWorkTargetUpgradeTown, targetTileKey: ValidateWorkOw.tileKey)),
+  accepted: accepted,
+  reasonContains: accepted ? null : 'National Bureaucracy',
+);
 // dart format on

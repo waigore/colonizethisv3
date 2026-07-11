@@ -2509,3 +2509,18 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 8: **16451**. Rema
 
 Raw `Game(` outside `common/`: **0**. Support LOC after slice 9: **15783**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
 
+
+## Wave 4 — Slice 10: densify graphs / oemwc / naval / VWT / application shorthand (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| game-graphs-densify | format-off densify shared `ordersOwRegionGame` / two-GP builders | `common/game_graphs.dart` | same | #3971 |
+| oemwc-foreign-gp | extract `oemwcForeignGpTileGame` + migrate raw `Game(` scenario bodies | oemwc expectation + scenarios | same | #3971 |
+| naval-shorthand-densify | shared `_novExpectResult` + densify at-sea/in-port/dock helpers | `naval_order_validator_expectation_shorthand.dart` | same | #3971 |
+| nw-vwt-densify | densify NW partial-reveal + VWT fixtures/test-support | `nw_partial_reveal_*`, `valid_work_tiles_*` | same | #3971 |
+| osc-waa-vw-densify | densify osc/waa/vw fixtures + expectation shorthand | suggestion + application + engine | same | #3971 |
+| osua-api-logging | densify unit-availability scenarios + api-impl + work-logging | suggestion fixtures/scenarios | same | #3971 |
+| feedstock-but-densify | densify feedstock-gate graphs + build-unit training fixtures | `feedstock_gate_graphs.dart`, `build_unit_training_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 15800 → 14900 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 10: **14852** (AC ≤14,900 met). Remaining: package `test/` ≤16,400; optional precheck/replay lib extracts.

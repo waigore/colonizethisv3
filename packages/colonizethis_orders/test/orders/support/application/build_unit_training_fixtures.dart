@@ -37,116 +37,47 @@ Player _butPlayer({
   String? capitalProvinceId,
   CapitalTile? capitalTile,
   String displayName = 'Player 1',
-}) => Player(
-  id: ButIds.playerId,
-  displayName: displayName,
-  isHuman: true,
-  capitalProvinceId: capitalProvinceId,
-  capitalTile: capitalTile,
-  stockpile: stockpile,
-  workerPool: workerPool,
-  treasury: treasury,
-  techUnlocked: techUnlocked,
-);
+}) => Player(id: ButIds.playerId, displayName: displayName, isHuman: true, capitalProvinceId: capitalProvinceId, capitalTile: capitalTile, stockpile: stockpile, workerPool: workerPool, treasury: treasury, techUnlocked: techUnlocked);
 
 Game butMilitaryBaseGame({required int peasants, required int treasury}) =>
     butOwGame(players: [_butPlayer(treasury: treasury, workerPool: WorkerPool(peasants: peasants))]);
 
 Orders butOrdersFor(String unitType, {String? spawnProvinceId}) {
   final spawn = spawnProvinceId ?? ButIds.prov('P1');
-  return Orders(
-    buildUnitOrdersByPlayerId: {
-      ButIds.playerId: [
-        BuildUnitOrder(
-          unitType: unitType,
-          isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military,
-          spawnProvinceId: spawn,
-        ),
-      ],
-    },
-  );
+  return Orders(buildUnitOrdersByPlayerId: {ButIds.playerId: [BuildUnitOrder(unitType: unitType, isMilitary: buildUnitCategoryForUnitType(unitType) == BuildUnitCategory.military, spawnProvinceId: spawn)]});
 }
 
-Game butCivilianGame({
-  required int treasury,
-  required int paper,
-  Map<String, bool>? techUnlocked,
-}) {
+Game butCivilianGame({required int treasury, required int paper, Map<String, bool>? techUnlocked}) {
   var stockpile = const Stockpile();
   if (paper > 0) stockpile = stockpile.applyDelta(CommodityCatalog.paper.id, paper);
-  return butOwGame(
-    players: [
-      _butPlayer(
-        treasury: treasury,
-        stockpile: stockpile,
-        capitalProvinceId: ButIds.prov('P1'),
-        capitalTile: const CapitalTile(regionId: ButIds.ow, provinceId: 'P1', x: 0, y: 0),
-        techUnlocked: techUnlocked,
-      ),
-    ],
-  );
+  return butOwGame(players: [_butPlayer(treasury: treasury, stockpile: stockpile, capitalProvinceId: ButIds.prov('P1'), capitalTile: const CapitalTile(regionId: ButIds.ow, provinceId: 'P1', x: 0, y: 0), techUnlocked: techUnlocked)]);
 }
 
 Stockpile butStockpileCovering(Map<String, int> inputs, {int surplus = 1}) {
   var stockpile = const Stockpile();
-  for (final e in inputs.entries) {
-    stockpile = stockpile.applyDelta(e.key, e.value + surplus);
-  }
+  for (final e in inputs.entries) {stockpile = stockpile.applyDelta(e.key, e.value + surplus);}
   return stockpile;
 }
 
 MapTopology _butSeaTopology({required bool adjacent}) => MapTopology(
-  nodes: const [
-    TopologyNode(id: 'P1', regionId: ButIds.ow, type: TopologyNodeType.province),
-    TopologyNode(id: 'sea1', regionId: ButIds.ow, type: TopologyNodeType.seaZone),
-  ],
+  nodes: const [TopologyNode(id: 'P1', regionId: ButIds.ow, type: TopologyNodeType.province), TopologyNode(id: 'sea1', regionId: ButIds.ow, type: TopologyNodeType.seaZone)],
   edges: adjacent ? const [TopologyEdge(id1: 'P1', id2: 'sea1')] : const [],
 );
 
 MapTopology butCapitalAdjacentSeaTopology() => _butSeaTopology(adjacent: true);
 MapTopology butCapitalIsolatedSeaTopology() => _butSeaTopology(adjacent: false);
 
-Game butRegimentBuildGame({
-  required Map<String, int> buildInputs,
-  required int peasants,
-  required int treasury,
-  Map<String, bool>? techUnlocked,
-}) => butOwGame(
-  players: [
-    _butPlayer(
-      treasury: treasury,
-      stockpile: butStockpileCovering(buildInputs),
-      workerPool: WorkerPool(peasants: peasants),
-      techUnlocked: techUnlocked,
-      displayName: 'P1',
-    ),
-  ],
-);
+Game butRegimentBuildGame({required Map<String, int> buildInputs, required int peasants, required int treasury, Map<String, bool>? techUnlocked}) =>
+    butOwGame(players: [_butPlayer(treasury: treasury, stockpile: butStockpileCovering(buildInputs), workerPool: WorkerPool(peasants: peasants), techUnlocked: techUnlocked, displayName: 'P1')]);
 
-Player butShipBuildPlayer({
-  required Stockpile stockpile,
-  required int peasants,
-  required int treasury,
-  Map<String, bool>? techUnlocked,
-  String? capitalProvinceId,
-  String displayName = 'P1',
-}) => _butPlayer(
-  treasury: treasury,
-  stockpile: stockpile,
-  workerPool: WorkerPool(peasants: peasants),
-  techUnlocked: techUnlocked,
-  capitalProvinceId: capitalProvinceId,
-  displayName: displayName,
-);
+Player butShipBuildPlayer({required Stockpile stockpile, required int peasants, required int treasury, Map<String, bool>? techUnlocked, String? capitalProvinceId, String displayName = 'P1'}) =>
+    _butPlayer(treasury: treasury, stockpile: stockpile, workerPool: WorkerPool(peasants: peasants), techUnlocked: techUnlocked, capitalProvinceId: capitalProvinceId, displayName: displayName);
 
-Game butShipBuildGame({required Player player, String provinceId = 'oldWorld|P1'}) =>
-    butOwGame(players: [player], provinceId: provinceId);
+Game butShipBuildGame({required Player player, String provinceId = 'oldWorld|P1'}) => butOwGame(players: [player], provinceId: provinceId);
 
 Stockpile butDoubleShipBuildStockpile(Map<String, int> buildInputs) {
   var stockpile = const Stockpile();
-  for (final e in buildInputs.entries) {
-    stockpile = stockpile.applyDelta(e.key, e.value * 2 + 1);
-  }
+  for (final e in buildInputs.entries) {stockpile = stockpile.applyDelta(e.key, e.value * 2 + 1);}
   return stockpile;
 }
 

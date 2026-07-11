@@ -8,26 +8,16 @@ import '../common/expectation_asserts.dart';
 import 'orders_application_test_support.dart';
 import 'work_application_fixtures.dart';
 
-Game waaApply(
-  Game game,
-  Orders orders, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) => applyBuildAndWorkOrders(game, orders, tileMapByRegion: tileMapByRegion);
+Game waaApply(Game game, Orders orders, {Map<String, TileMapResult>? tileMapByRegion}) =>
+    applyBuildAndWorkOrders(game, orders, tileMapByRegion: tileMapByRegion);
 
 Unit waaSingleUnit(Game game) => game.worldState.oldWorld.units.single;
 
-void waaExpectPurchased(
-  Game next, {
-  required String? ownerId,
-  String tileKey = WorkAppIds.tileKeyMinor,
-}) => expect(next.worldState.purchasedTilesByTileKey[tileKey], ownerId);
+void waaExpectPurchased(Game next, {required String? ownerId, String tileKey = WorkAppIds.tileKeyMinor}) =>
+    expect(next.worldState.purchasedTilesByTileKey[tileKey], ownerId);
 
-void waaExpectStockpileDeducted(
-  Game before,
-  Game after,
-  Map<String, int> cost, {
-  String playerId = 'p1',
-}) => expectStockpileDeducted(before, after, cost, playerId: playerId);
+void waaExpectStockpileDeducted(Game before, Game after, Map<String, int> cost, {String playerId = 'p1'}) =>
+    expectStockpileDeducted(before, after, cost, playerId: playerId);
 
 void waaExpectUnitIdle(Game next) {
   final u = waaSingleUnit(next);
@@ -35,78 +25,36 @@ void waaExpectUnitIdle(Game next) {
   expect(u.currentWork, isNull);
 }
 
-void waaExpectRoadLevel(Game next, int level) =>
-    expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), level);
+void waaExpectRoadLevel(Game next, int level) => expect(next.worldState.tileState.roadLevel(WorkAppIds.tileKey), level);
 
 void waaExpectExploreWork(Game next, {int? totalTurns, int? remainingTurns}) =>
-    expectCurrentWorkFields(
-      waaSingleUnit(next),
-      workTarget: kWorkTargetExplore,
-      totalTurns: totalTurns,
-      remainingTurns: remainingTurns,
-    );
+    expectCurrentWorkFields(waaSingleUnit(next), workTarget: kWorkTargetExplore, totalTurns: totalTurns, remainingTurns: remainingTurns);
 
 // dart format off
 Game waaEngineerRoadGame({Stockpile? stockpile}) => workAppOwnedGame(units: [workAppUnit(type: kUnitTypeEngineer)], players: [workAppPlayer(stockpile: stockpile ?? OrdersApplicationTestSupport.stockpileCovering(workOrderCostBuildRoad))]);
 
 Game waaEngineerFortGame({int fortLevel = 0, Stockpile? stockpile, Map<String, bool>? techUnlocked}) => workAppOwnedGame(units: [workAppUnit(type: kUnitTypeEngineer)], provinces: [workAppOwnedProvince(fortLevel: fortLevel)], players: [workAppPlayer(stockpile: stockpile ?? OrdersApplicationTestSupport.stockpileCovering(workOrderCostBuildFort(fortLevel)), techUnlocked: techUnlocked)]);
-// dart format on
 
-void waaExpectCurrentWorkTiming(
-  Game next, {
-  required String workTarget,
-  int? totalTurns,
-  int? remainingTurns,
-  String? originTileKey,
-  String? assignedTileKey,
-  String unitId = 'u1',
-}) {
+void waaExpectCurrentWorkTiming(Game next, {required String workTarget, int? totalTurns, int? remainingTurns, String? originTileKey, String? assignedTileKey, String unitId = 'u1'}) {
   final u = next.worldState.oldWorld.units.firstWhere((u) => u.id == unitId);
-  expectCurrentWorkFields(
-    u,
-    workTarget: workTarget,
-    totalTurns: totalTurns,
-    remainingTurns: remainingTurns,
-  );
+  expectCurrentWorkFields(u, workTarget: workTarget, totalTurns: totalTurns, remainingTurns: remainingTurns);
   if (originTileKey != null) expect(u.originTileKey, originTileKey);
   if (assignedTileKey != null) expect(u.assignedTileKey, assignedTileKey);
 }
 
-void waaExpectProspect({
-  required bool expected,
-  TerrainType? terrain,
-  Map<String, String>? resourceByTileKey,
-}) {
+void waaExpectProspect({required bool expected, TerrainType? terrain, Map<String, String>? resourceByTileKey}) {
   final next = waaApply(
-    workAppOwnedGame(
-      units: [workAppUnit(type: kUnitTypeExplorer)],
-      resourceByTileKey: resourceByTileKey,
-    ),
+    workAppOwnedGame(units: [workAppUnit(type: kUnitTypeExplorer)], resourceByTileKey: resourceByTileKey),
     workAppSingleWorkOrder(target: kWorkTargetProspect),
-    tileMapByRegion: terrain == null
-        ? null
-        : {
-            WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(
-              terrain,
-            ),
-          },
+    tileMapByRegion: terrain == null ? null : {WorkAppIds.ow: OrdersApplicationTestSupport.tileMapWithTerrain(terrain)},
   );
-  final prospected =
-      next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
+  final prospected = next.worldState.playerProspectedTiles['p1'] ?? const <String>{};
   expect(prospected.contains(WorkAppIds.tileKey), expected);
-  if (expected) {
-    expectUnitIdleCleared(waaSingleUnit(next), tileKey: WorkAppIds.tileKey);
-  }
+  if (expected) expectUnitIdleCleared(waaSingleUnit(next), tileKey: WorkAppIds.tileKey);
 }
 
-void waaExpectPurchaseRejected({
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  final game = workAppSingleGpPurchaseLandGame(
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-  );
+void waaExpectPurchaseRejected({List<OvertureState> overtureStates = const [], List<DiplomacyRelation> diplomacyRelations = const []}) {
+  final game = workAppSingleGpPurchaseLandGame(overtureStates: overtureStates, diplomacyRelations: diplomacyRelations);
   final next = waaApply(game, workAppPurchaseLandOrders());
   waaExpectPurchased(next, ownerId: null);
   expect(next.playerById('p1')!.treasury, game.playerById('p1')!.treasury);
@@ -114,13 +62,7 @@ void waaExpectPurchaseRejected({
 
 void waaExpectFortSkipAtLevel(int fortLevel) {
   final next = waaApply(
-    waaEngineerFortGame(
-      fortLevel: fortLevel,
-      stockpile: const Stockpile(),
-      techUnlocked: fortLevel == 1
-          ? const {}
-          : const {kTechIdMineEngineering: true},
-    ),
+    waaEngineerFortGame(fortLevel: fortLevel, stockpile: const Stockpile(), techUnlocked: fortLevel == 1 ? const {} : const {kTechIdMineEngineering: true}),
     workAppSingleWorkOrder(target: kWorkTargetBuildFort),
   );
   expect(next.worldState.oldWorld.provinces.single.fortLevel, fortLevel);
@@ -129,26 +71,13 @@ void waaExpectFortSkipAtLevel(int fortLevel) {
 
 void waaExpectPurchaseSuccess() {
   const cost = WorkAppIds.purchaseLandGrainCost;
-  final game = workAppSingleGpPurchaseLandGame(
-    overtureStates: const [
-      OvertureState(
-        gpId: 'p1',
-        targetId: 'minor1',
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
+  final game = workAppSingleGpPurchaseLandGame(overtureStates: const [OvertureState(gpId: 'p1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0)]);
   final next = waaApply(game, workAppPurchaseLandOrders());
   waaExpectPurchased(next, ownerId: 'p1');
-  expect(
-    next.playerById('p1')!.treasury,
-    game.playerById('p1')!.treasury - cost,
-  );
+  expect(next.playerById('p1')!.treasury, game.playerById('p1')!.treasury - cost);
   expectUnitIdleCleared(waaSingleUnit(next), tileKey: WorkAppIds.tileKeyMinor);
 }
 
-// dart format off
 void waaExpectDualPurchaseFirstWins() {
   const cost = WorkAppIds.purchaseLandGrainCost;
   final game = workAppPurchaseLandGame(

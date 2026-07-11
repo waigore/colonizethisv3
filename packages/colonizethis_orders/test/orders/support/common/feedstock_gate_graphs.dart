@@ -17,32 +17,19 @@ const ordersFeedstockGateTimberTile = 'oldWorld|gp1-s0|1|0';
 const ordersFeedstockGateIronTile = 'oldWorld|gp1-s0|2|0';
 const ordersFeedstockGateSellerWoolTile = 'oldWorld|gp2-p0|0|0';
 
+// dart format off
 /// Default OW province list for the supplier/seller feedstock gate.
 List<Province> ordersFeedstockGateOwProvinces({
   int supplierOw = kObserverConquestMinOwProvincesPerGp,
   int sellerOw = 5,
 }) => [
-  for (var i = 0; i < supplierOw; i++)
-    Province(
-      id: 'oldWorld|gp1-s$i',
-      regionId: kRegionOldWorld,
-      ownerId: ordersFeedstockGateSupplierId,
-    ),
-  for (var i = 0; i < sellerOw; i++)
-    Province(
-      id: 'oldWorld|gp2-p$i',
-      regionId: kRegionOldWorld,
-      ownerId: ordersFeedstockGateSellerId,
-    ),
+  for (var i = 0; i < supplierOw; i++) Province(id: 'oldWorld|gp1-s$i', regionId: kRegionOldWorld, ownerId: ordersFeedstockGateSupplierId),
+  for (var i = 0; i < sellerOw; i++) Province(id: 'oldWorld|gp2-p$i', regionId: kRegionOldWorld, ownerId: ordersFeedstockGateSellerId),
 ];
 
 const ordersFeedstockGateDefaultTileKeys = <String, Map<String, List<String>>>{
   kRegionOldWorld: {
-    'oldWorld|gp1-s0': [
-      ordersFeedstockGateGrainTile,
-      ordersFeedstockGateTimberTile,
-      ordersFeedstockGateIronTile,
-    ],
+    'oldWorld|gp1-s0': [ordersFeedstockGateGrainTile, ordersFeedstockGateTimberTile, ordersFeedstockGateIronTile],
     'oldWorld|gp2-p0': [ordersFeedstockGateSellerWoolTile],
   },
 };
@@ -75,39 +62,18 @@ Game ordersFeedstockGateGame({
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
   Map<String, String>? resourceByTileKey,
   TileMapState? tileState,
-}) {
-  final newWorldProvinces = <Province>[
-    for (var i = 0; i < sellerNw; i++)
-      Province(
-        id: 'newWorld|gp2-n$i',
-        regionId: kRegionNewWorld,
-        ownerId: ordersFeedstockGateSellerId,
-      ),
-  ];
-  return ordersOwRegionGame(
-    id: 'g',
-    turnNumber: 1,
-    players: players,
-    oldWorld: RegionData(
-      provinces: ordersFeedstockGateOwProvinces(
-        supplierOw: supplierOw,
-        sellerOw: sellerOw,
-      ),
-      units: units,
-    ),
-    newWorld: RegionData(provinces: newWorldProvinces),
-    playerVisibilityByTile: playerVisibilityByTile,
-    playerProspectedTiles:
-        playerProspectedTiles ??
-        const {
-          ordersFeedstockGateSupplierId: {ordersFeedstockGateIronTile},
-        },
-    tileKeysByRegionAndProvince:
-        tileKeysByRegionAndProvince ?? ordersFeedstockGateDefaultTileKeys,
-    resourceByTileKey: resourceByTileKey ?? ordersFeedstockGateDefaultResources,
-    tileState: tileState ?? ordersFeedstockGateDefaultTileState,
-  );
-}
+}) => ordersOwRegionGame(
+  id: 'g',
+  turnNumber: 1,
+  players: players,
+  oldWorld: RegionData(provinces: ordersFeedstockGateOwProvinces(supplierOw: supplierOw, sellerOw: sellerOw), units: units),
+  newWorld: RegionData(provinces: [for (var i = 0; i < sellerNw; i++) Province(id: 'newWorld|gp2-n$i', regionId: kRegionNewWorld, ownerId: ordersFeedstockGateSellerId)]),
+  playerVisibilityByTile: playerVisibilityByTile,
+  playerProspectedTiles: playerProspectedTiles ?? const {ordersFeedstockGateSupplierId: {ordersFeedstockGateIronTile}},
+  tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? ordersFeedstockGateDefaultTileKeys,
+  resourceByTileKey: resourceByTileKey ?? ordersFeedstockGateDefaultResources,
+  tileState: tileState ?? ordersFeedstockGateDefaultTileState,
+);
 
 /// Default supplier/seller players for feedstock-gate fixtures.
 List<Player> ordersFeedstockGateDefaultPlayers({
@@ -115,18 +81,7 @@ List<Player> ordersFeedstockGateDefaultPlayers({
   Stockpile sellerStockpile = const Stockpile(quantities: {'lumber': 1}),
   int supplierTreasury = 100000,
 }) => [
-  Player(
-    id: ordersFeedstockGateSupplierId,
-    displayName: 'Supplier',
-    isHuman: false,
-    treasury: supplierTreasury,
-    stockpile: supplierStockpile,
-  ),
-  Player(
-    id: ordersFeedstockGateSellerId,
-    displayName: 'Seller',
-    isHuman: false,
-    treasury: cheapestRegimentBuildTreasuryCost(),
-    stockpile: sellerStockpile,
-  ),
+  Player(id: ordersFeedstockGateSupplierId, displayName: 'Supplier', isHuman: false, treasury: supplierTreasury, stockpile: supplierStockpile),
+  Player(id: ordersFeedstockGateSellerId, displayName: 'Seller', isHuman: false, treasury: cheapestRegimentBuildTreasuryCost(), stockpile: sellerStockpile),
 ];
+// dart format on

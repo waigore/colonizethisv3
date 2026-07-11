@@ -9,6 +9,7 @@ import 'valid_work_tiles_test_support.dart';
 /// NW home + adjacent target province with partial visibility (home full, t0
 /// unknown, t1 fogged). Used by suggest explore/prospect scenario bodies.
 class NwPartialRevealHomeTarget {
+  // dart format off
   NwPartialRevealHomeTarget({
     required this.homeLocalId,
     required this.targetLocalId,
@@ -17,32 +18,11 @@ class NwPartialRevealHomeTarget {
     this.unitId = 'ex1',
     this.resourceByTileKey = const {},
     this.playerProspectedTiles = const {},
-  }) : provHome = ValidWorkTilesTestSupport.provinceId(
-         homeLocalId,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       provTarget = ValidWorkTilesTestSupport.provinceId(
-         targetLocalId,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       tileHome = ValidWorkTilesTestSupport.tileKey(
-         homeLocalId,
-         0,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       t0 = ValidWorkTilesTestSupport.tileKey(
-         targetLocalId,
-         0,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       ),
-       t1 = ValidWorkTilesTestSupport.tileKey(
-         targetLocalId,
-         1,
-         0,
-         regionId: ValidWorkTilesTestSupport.nw,
-       );
+  }) : provHome = ValidWorkTilesTestSupport.provinceId(homeLocalId, regionId: ValidWorkTilesTestSupport.nw),
+       provTarget = ValidWorkTilesTestSupport.provinceId(targetLocalId, regionId: ValidWorkTilesTestSupport.nw),
+       tileHome = ValidWorkTilesTestSupport.tileKey(homeLocalId, 0, 0, regionId: ValidWorkTilesTestSupport.nw),
+       t0 = ValidWorkTilesTestSupport.tileKey(targetLocalId, 0, 0, regionId: ValidWorkTilesTestSupport.nw),
+       t1 = ValidWorkTilesTestSupport.tileKey(targetLocalId, 1, 0, regionId: ValidWorkTilesTestSupport.nw);
 
   final String homeLocalId;
   final String targetLocalId;
@@ -59,21 +39,12 @@ class NwPartialRevealHomeTarget {
 
   MapTopology topology() => MapTopology(
     nodes: [
-      TopologyNode(
-        id: homeLocalId,
-        regionId: ValidWorkTilesTestSupport.nw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: targetLocalId,
-        regionId: ValidWorkTilesTestSupport.nw,
-        type: TopologyNodeType.province,
-      ),
+      TopologyNode(id: homeLocalId, regionId: ValidWorkTilesTestSupport.nw, type: TopologyNodeType.province),
+      TopologyNode(id: targetLocalId, regionId: ValidWorkTilesTestSupport.nw, type: TopologyNodeType.province),
     ],
     edges: [TopologyEdge(id1: homeLocalId, id2: targetLocalId)],
   );
 
-  // dart format off
   Game game({
     required String id,
     List<Player>? players,
@@ -82,9 +53,7 @@ class NwPartialRevealHomeTarget {
     List<OvertureState>? overtureStates,
     Unit? unit,
   }) {
-    final actor = unit ?? ValidWorkTilesTestSupport.explorerUnit(
-      id: unitId, locationProvinceId: provHome, tileKey: tileHome,
-    );
+    final actor = unit ?? ValidWorkTilesTestSupport.explorerUnit(id: unitId, locationProvinceId: provHome, tileKey: tileHome);
     return ordersOwRegionGame(
       id: id,
       turnNumber: 1,
@@ -106,11 +75,7 @@ class NwPartialRevealHomeTarget {
       ),
       resourceByTileKey: resourceByTileKey,
       playerProspectedTiles: playerProspectedTiles,
-      playerVisibilityByTile: {
-        ValidWorkTilesTestSupport.playerId: {
-          tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged',
-        },
-      },
+      playerVisibilityByTile: {ValidWorkTilesTestSupport.playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'}},
     );
   }
 
@@ -122,15 +87,11 @@ class NwPartialRevealHomeTarget {
       targetLocalId: 'tribe1',
       targetOwnerId: 'tribe1',
       resourceByTileKey: {t0: 'grain', t1: 'iron'},
-      playerProspectedTiles: prospectedIron
-          ? {ValidWorkTilesTestSupport.playerId: {t1}}
-          : const {},
+      playerProspectedTiles: prospectedIron ? {ValidWorkTilesTestSupport.playerId: {t1}} : const {},
     );
   }
 
-  static NwPartialRevealHomeTarget minorPurchase({
-    Map<String, String> resourceByTileKey = const {},
-  }) {
+  static NwPartialRevealHomeTarget minorPurchase({Map<String, String> resourceByTileKey = const {}}) {
     final t1 = ValidWorkTilesTestSupport.tileKey('m1', 1, 0, regionId: ValidWorkTilesTestSupport.nw);
     return NwPartialRevealHomeTarget(
       homeLocalId: 'own',
@@ -139,7 +100,6 @@ class NwPartialRevealHomeTarget {
       resourceByTileKey: resourceByTileKey.isEmpty ? {t1: 'grain'} : resourceByTileKey,
     );
   }
-  // dart format on
 
   Game tribeConsulateGame(String id) => game(
     id: id,
@@ -147,18 +107,12 @@ class NwPartialRevealHomeTarget {
     overtureStates: const [ValidWorkTilesTestSupport.tribeConsulateOverture],
   );
 
-  Game minorPurchaseGame(String id, {List<OvertureState>? overtureStates}) =>
-      game(
-        id: id,
-        players: [ValidWorkTilesTestSupport.playerWithTreasury()],
-        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-        overtureStates: overtureStates,
-        unit: Unit(
-          id: 'u1',
-          type: kUnitTypeMerchant,
-          ownerId: ValidWorkTilesTestSupport.playerId,
-          locationProvinceId: provHome,
-          tileKey: tileHome,
-        ),
-      );
+  Game minorPurchaseGame(String id, {List<OvertureState>? overtureStates}) => game(
+    id: id,
+    players: [ValidWorkTilesTestSupport.playerWithTreasury()],
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+    overtureStates: overtureStates,
+    unit: Unit(id: 'u1', type: kUnitTypeMerchant, ownerId: ValidWorkTilesTestSupport.playerId, locationProvinceId: provHome, tileKey: tileHome),
+  );
+  // dart format on
 }

@@ -10,6 +10,13 @@ import '../common/game_graphs.dart';
 import 'order_engine_move_and_work_context_fixtures.dart';
 
 const oemwcTileP1 = 'oldWorld|P1|0|0';
+const oemwcTileP2 = 'oldWorld|P2|0|0';
+
+const _oemwcP1 = Player(id: 'p1', displayName: 'P1', isHuman: true);
+const _oemwcTwoGps = [
+  Player(id: 'p1', displayName: 'P1', isHuman: true),
+  Player(id: 'p2', displayName: 'P2', isHuman: true),
+];
 
 // dart format off
 Game oemwcExplorerProvinceGame({
@@ -20,7 +27,7 @@ Game oemwcExplorerProvinceGame({
   List<OvertureState>? overtureStates,
   String tileKey = oemwcTileP1,
 }) => ordersOwRegionGame(
-  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  players: const [_oemwcP1],
   oldWorld: RegionData(
     provinces: [Province(id: '$oemwcOw|P1', regionId: oemwcOw, ownerId: provinceOwnerId)],
     units: [Unit(id: 'u1', type: kUnitTypeExplorer, ownerId: 'p1', locationProvinceId: '$oemwcOw|P1', tileKey: tileKey)],
@@ -33,9 +40,7 @@ Game oemwcExplorerProvinceGame({
 );
 
 Game oemwcThreeProvinceUnitGame({required String unitType, required String p3OwnerId}) => ordersOwRegionGame(
-  players: p3OwnerId == 'p2'
-      ? const [Player(id: 'p1', displayName: 'P1', isHuman: true), Player(id: 'p2', displayName: 'P2', isHuman: true)]
-      : const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+  players: p3OwnerId == 'p2' ? _oemwcTwoGps : const [_oemwcP1],
   oldWorld: RegionData(
     provinces: [
       Province(id: '$oemwcOw|P1', regionId: oemwcOw, ownerId: 'p1'),
@@ -45,6 +50,48 @@ Game oemwcThreeProvinceUnitGame({required String unitType, required String p3Own
     units: [Unit(id: 'u1', type: unitType, ownerId: 'p1', locationProvinceId: '$oemwcOw|P1')],
   ),
   playerVisibilityByTile: oemwcThreeTilesVisible,
+);
+
+/// Two-GP OW game with explorer on P1 and foreign P2 tiles (explore/prospect reject pins).
+Game oemwcForeignGpTileGame({
+  required Map<String, String> visibilityByTile,
+  Map<String, String>? resourceByTileKey,
+  List<String> p2Tiles = const [oemwcTileP2],
+  bool includeExplorerTileKey = true,
+}) => ordersOwRegionGame(
+  players: _oemwcTwoGps,
+  oldWorld: RegionData(
+    provinces: [
+      Province(id: '$oemwcOw|P1', regionId: oemwcOw, ownerId: 'p1'),
+      Province(id: '$oemwcOw|P2', regionId: oemwcOw, ownerId: 'p2'),
+    ],
+    units: [
+      Unit(
+        id: 'u1',
+        type: kUnitTypeExplorer,
+        ownerId: 'p1',
+        locationProvinceId: '$oemwcOw|P1',
+        tileKey: includeExplorerTileKey ? oemwcTileP1 : null,
+      ),
+    ],
+  ),
+  resourceByTileKey: resourceByTileKey ?? const {},
+  playerVisibilityByTile: {'p1': visibilityByTile},
+  tileKeysByRegionAndProvince: {
+    oemwcOw: {'oldWorld|P1': [oemwcTileP1], 'oldWorld|P2': p2Tiles},
+  },
+);
+
+Game oemwcUnknownDestinationMoveGame() => ordersOwRegionGame(
+  players: const [_oemwcP1],
+  oldWorld: RegionData(
+    provinces: [
+      Province(id: '$oemwcOw|P1', regionId: oemwcOw, ownerId: 'p1'),
+      Province(id: '$oemwcOw|P2', regionId: oemwcOw, ownerId: 'p1'),
+    ],
+    units: [Unit(id: 'u1', type: kUnitTypeExplorer, ownerId: 'p1', locationProvinceId: '$oemwcOw|P1')],
+  ),
+  playerVisibilityByTile: const {'p1': {oemwcTileP1: 'fullyVisible'}},
 );
 
 void oemwcExpectWork(
