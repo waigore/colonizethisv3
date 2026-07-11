@@ -116,13 +116,13 @@ Game _game({
   );
 }
 
-List<TradeOrder> _run(Game game, String playerId) => runTreasuryPlanner(
+List<TradeOrder> _run(Game game, String playerId) => runTreasuryPlanner(TreasuryPlannerInput(
       game: game,
       playerId: playerId,
       stockpile: game.players.firstWhere((p) => p.id == playerId).stockpile,
       productionAssignments: const [],
       treasury: game.players.firstWhere((p) => p.id == playerId).treasury,
-    );
+    ));
 
 Iterable<TradeOrder> _bidsFor(List<TradeOrder> orders, String commodityId) =>
     orders.where(

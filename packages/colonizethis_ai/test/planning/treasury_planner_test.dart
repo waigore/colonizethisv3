@@ -91,7 +91,7 @@ Game _lockRecoverySellerGame({
 }
 
 void main() {
-  group('runTreasuryPlanner (Refs #2994)', () {
+  group('runTreasuryPlanner(TreasuryPlannerInput(Refs #2994))', () {
     test(
       'surplus timber below regiment treasury threshold emits urgent sell offer',
       () {
@@ -100,13 +100,13 @@ void main() {
           stockpile: stockpile,
           treasury: 0,
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         final offers = orders
             .where((o) => o.type == TradeOrderType.offer)
             .toList();
@@ -133,13 +133,13 @@ void main() {
           stockpile: stockpile,
           treasury: treasury,
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: treasury,
-        );
+        ));
         final timberOffer = orders
             .where(
               (o) =>
@@ -182,13 +182,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: game.players.first.treasury,
-        );
+        ));
         final fabricBids = orders
             .where(
               (o) =>
@@ -235,13 +235,13 @@ void main() {
           ],
         );
         expect(lockRecoveryDesignatedBuyerId(game), isEmpty);
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         expect(
           orders.where((o) => o.type == TradeOrderType.bid),
           isEmpty,
@@ -373,13 +373,13 @@ void main() {
           reason: 'gp2 is the affluent GP and gp1 is broke, so the F12 '
               'affluent-only rotation selects gp2 as designated buyer.',
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp2',
           stockpile: Stockpile.empty,
           productionAssignments: const [],
           treasury: affluentTreasury,
-        );
+        ));
         final grainBids = orders
             .where((o) => o.type == TradeOrderType.bid && o.commodityId == 'grain');
         final grainOffers = orders
@@ -446,13 +446,13 @@ void main() {
           reason: 'F15 buy-side is logic-phase minor auto-bids when no GP is '
               'affluent.',
         );
-        final gp2Orders = runTreasuryPlanner(
+        final gp2Orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp2',
           stockpile: Stockpile.empty,
           productionAssignments: const [],
           treasury: 80,
-        );
+        ));
         expect(
           gp2Orders.where(
             (o) => o.type == TradeOrderType.bid && o.commodityId == 'grain',
@@ -495,13 +495,13 @@ void main() {
           ),
         );
         expect(lockRecoveryDesignatedBuyerId(game), isEmpty);
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 50,
-        );
+        ));
         expect(
           orders.where((o) => o.type == TradeOrderType.bid),
           isEmpty,
@@ -546,13 +546,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 1999,
-        );
+        ));
         final offers = orders.where((o) => o.type == TradeOrderType.offer);
         expect(offers, isNotEmpty);
         for (final offer in offers) {
@@ -564,20 +564,20 @@ void main() {
     test('deterministic for identical inputs', () {
       final stockpile = const Stockpile().applyDelta('timber', 60);
       final game = _gameWithStockpile(stockpile: stockpile, treasury: 10);
-      final a = runTreasuryPlanner(
+      final a = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: 'gp1',
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: 10,
-      );
-      final b = runTreasuryPlanner(
+      ));
+      final b = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: 'gp1',
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: 10,
-      );
+      ));
       expect(a, b);
     });
   });
@@ -590,13 +590,13 @@ void main() {
         // buffer dropped, so grain 16 yields surplus 8 -> an urgent offer.
         final stockpile = const Stockpile().applyDelta('grain', 16);
         final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         final grainOffers = orders
             .where(
               (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
@@ -622,13 +622,13 @@ void main() {
         // buffers.
         final stockpile = const Stockpile().applyDelta('grain', 8);
         final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         expect(
           orders.where(
             (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
@@ -645,13 +645,13 @@ void main() {
         // is below the 2x reserve (24), so no offer is emitted.
         final stockpile = const Stockpile().applyDelta('grain', 16);
         final game = _gameWithStockpile(stockpile: stockpile, treasury: 0);
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         expect(
           orders.where(
             (o) => o.type == TradeOrderType.offer && o.commodityId == 'grain',
@@ -666,20 +666,20 @@ void main() {
     test('seller food-release path is deterministic', () {
       final stockpile = const Stockpile().applyDelta('grain', 20);
       final game = _lockRecoverySellerGame(stockpile: stockpile, treasury: 0);
-      final a = runTreasuryPlanner(
+      final a = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: 'gp1',
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: 0,
-      );
-      final b = runTreasuryPlanner(
+      ));
+      final b = runTreasuryPlanner(TreasuryPlannerInput(
         game: game,
         playerId: 'gp1',
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: 0,
-      );
+      ));
       expect(a, b);
     });
 
@@ -697,21 +697,21 @@ void main() {
           economy: EconomySummary(treasury: 0),
           relations: {},
         );
-        final withoutSnapshot = runTreasuryPlanner(
+        final withoutSnapshot = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
-        final withSnapshot = runTreasuryPlanner(
+        ));
+        final withSnapshot = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
           snapshot: snapshot,
-        );
+        ));
         expect(withSnapshot, withoutSnapshot);
       },
     );

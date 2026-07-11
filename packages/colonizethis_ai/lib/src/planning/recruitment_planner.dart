@@ -103,6 +103,39 @@ class RejectedRecruitmentSuggestion {
       'RejectedRecruitmentSuggestion(reason: $reason, tier: $targetTier)';
 }
 
+/// Bundles inputs for [runRecruitmentPlanner] (Refs #3972 AC5).
+final class RecruitmentPlannerInput {
+  const RecruitmentPlannerInput({
+    required this.game,
+    required this.view,
+    required this.currentOrders,
+    required this.config,
+    required this.seeds,
+    required this.goalPhase,
+    required this.suggestionApi,
+    this.topology,
+    this.economyPlanHint,
+    this.growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
+    this.paperBudgetLedgerEnabled = false,
+    this.includeCivilianBuilds = false,
+    this.snapshot,
+  });
+
+  final Game game;
+  final PlayerView view;
+  final Orders currentOrders;
+  final AIConfig config;
+  final AISeedBundle seeds;
+  final ObserverGoalPhase goalPhase;
+  final OrderSuggestionAPI suggestionApi;
+  final MapTopology? topology;
+  final EconomyPlan? economyPlanHint;
+  final bool growthStagePlannerEnabled;
+  final bool paperBudgetLedgerEnabled;
+  final bool includeCivilianBuilds;
+  final AIWorldSnapshot? snapshot;
+}
+
 /// Plans worker recruit / train, regiment builds, and ship builds for one
 /// AI-controlled player on one turn. Deterministic given inputs.
 ///
@@ -134,21 +167,20 @@ class RejectedRecruitmentSuggestion {
 ///   [kRecruitmentRejectPaperBudget] when its paper cost would push the
 ///   remaining budget below `0`. When `false` (the default) the planner emits
 ///   no paper checks and behaves byte-identically to the pre-#3793 path.
-RecruitmentPlan runRecruitmentPlanner({
-  required Game game,
-  required PlayerView view,
-  required Orders currentOrders,
-  required AIConfig config,
-  required AISeedBundle seeds,
-  required ObserverGoalPhase goalPhase,
-  required OrderSuggestionAPI suggestionApi,
-  MapTopology? topology,
-  EconomyPlan? economyPlanHint,
-  bool growthStagePlannerEnabled = kGrowthStagePlannerEnabled,
-  bool paperBudgetLedgerEnabled = false,
-  bool includeCivilianBuilds = false,
-  AIWorldSnapshot? snapshot,
-}) {
+RecruitmentPlan runRecruitmentPlanner(RecruitmentPlannerInput input) {
+  final game = input.game;
+  final view = input.view;
+  final currentOrders = input.currentOrders;
+  final config = input.config;
+  final seeds = input.seeds;
+  final goalPhase = input.goalPhase;
+  final suggestionApi = input.suggestionApi;
+  final topology = input.topology;
+  final economyPlanHint = input.economyPlanHint;
+  final growthStagePlannerEnabled = input.growthStagePlannerEnabled;
+  final paperBudgetLedgerEnabled = input.paperBudgetLedgerEnabled;
+  final includeCivilianBuilds = input.includeCivilianBuilds;
+  final snapshot = input.snapshot;
   final playerId = view.playerId;
   final player = game.playerById(playerId);
   if (player == null) {

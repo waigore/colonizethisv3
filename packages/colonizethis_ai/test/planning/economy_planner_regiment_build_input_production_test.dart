@@ -1,344 +1,16 @@
 /// Regiment build-input production priority (Refs #2847 H8 production companion).
+///
+/// Shared Game / phase-plan fixtures live in
+/// `economy_planner_regiment_build_input_support.dart` (Refs #3972).
 library;
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _topology = MapTopology(nodes: [], edges: []);
-
-Game _regimentRebuildProductionGame({
-  required int treasury,
-  bool hasRegiment = false,
-}) {
-  return Game(
-    id: 'g-h8-production',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: 'oldWorld|p0',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        if (hasRegiment)
-          const Army(
-            id: 'army-gp1-field',
-            ownerId: 'gp1',
-            regionId: 'oldWorld',
-            stationedProvinceId: 'oldWorld|p0',
-            regimentUnitIds: ['reg-1'],
-          ),
-      ],
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: 'oldWorld|p0',
-        treasury: treasury,
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.wool.id, 10)
-            .applyDelta(CommodityCatalog.timber.id, 30)
-            .applyDelta(CommodityCatalog.iron.id, 10),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-    ],
-  );
-}
-
-/// A below-quota zero-NW lock-recovery seller whose improvement-input gate
-/// (`regimentBuildInputFeedstockImprovementInputCost`) is active: recovered
-/// treasury, zero regiments, 3 Old World provinces, zero New World, missing
-/// `fabric`, and an owned **unimproved** `wool` resource tile. Holds
-/// `timber` + `iron` so the `castIron_from_iron` recipe is feasible,
-/// and zero `castIron`. Refs #2847 § H8-extraction castIron residual.
-Game _castIronImprovementInputGame({
-  required int treasury,
-  bool gateActive = true,
-}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-h8-castiron-production',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 3; i++)
-            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      // Unimproved wool resource tile in the seller's capital province (only
-      // present when the gate should be active).
-      resourceByTileKey: gateActive
-          ? const {'oldWorld|seller_0|1|0': 'wool'}
-          : const {},
-    ),
-    players: [
-      Player(
-        id: 'gp_seller',
-        displayName: 'Seller',
-        isHuman: false,
-        capitalProvinceId: '$ow|seller_0',
-        treasury: treasury,
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.timber.id, 30)
-            .applyDelta(CommodityCatalog.iron.id, 10),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-    ],
-  );
-}
-
-/// A two-GP game pairing a locked seller (castIron improvement-input gate
-/// active, like [_castIronImprovementInputGame]) with an affluent supplier
-/// (`gp_supplier`) holding `timber` + `iron` feedstock and ample labour, above
-/// the conquest quota so it is **not** a lock-recovery seller. Refs #2847
-/// H8-supply castIron source. When [sellerGateActive] is false the seller holds
-/// `castIron`, so no locked seller needs the improvement input and the supplier
-/// over-production trigger is off (negative control).
-Game _supplierCastIronSourceGame({
-  required int treasury,
-  bool sellerGateActive = true,
-  int sellerOwProvinces = 3,
-  int supplierIronHeld = 40,
-}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-h8-castiron-supplier-source',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < sellerOwProvinces; i++)
-            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
-          for (var i = 0; i < 12; i++)
-            Province(
-              id: '$ow|supplier_$i',
-              regionId: ow,
-              ownerId: 'gp_supplier',
-            ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      resourceByTileKey: const {'oldWorld|seller_0|1|0': 'wool'},
-    ),
-    players: [
-      Player(
-        id: 'gp_seller',
-        displayName: 'Seller',
-        isHuman: false,
-        capitalProvinceId: '$ow|seller_0',
-        treasury: treasury,
-        stockpile: sellerGateActive
-            ? const Stockpile().applyDelta(CommodityCatalog.grain.id, 30)
-            : const Stockpile()
-                .applyDelta(CommodityCatalog.grain.id, 30)
-                .applyDelta(CommodityCatalog.castIron.id, 1),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-      Player(
-        id: 'gp_supplier',
-        displayName: 'Supplier',
-        isHuman: false,
-        capitalProvinceId: '$ow|supplier_0',
-        treasury: treasury,
-        // Ample feedstock + labour and no competing output shortage (every
-        // feasible output held at the shortage threshold, 8) so the supplier
-        // has genuine spare capacity: the small leftover-capacity castIron
-        // release boost is the differentiator, not shortage scoring.
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 80)
-            .applyDelta(CommodityCatalog.timber.id, 40)
-            .applyDelta(CommodityCatalog.iron.id, supplierIronHeld)
-            .applyDelta(CommodityCatalog.castIron.id, 8)
-            .applyDelta(CommodityCatalog.lumber.id, 8)
-            .applyDelta(CommodityCatalog.paper.id, 8),
-        workerPool: const WorkerPool(peasants: 40),
-      ),
-    ],
-  );
-}
-
-/// A below-quota zero-NW lock-recovery seller whose castIron improvement-input
-/// gate is active, with **configurable** `timber` / `iron` feedstock so a test
-/// can pin the partial-feedstock state where the single-input
-/// `lumber_from_timber` recipe would otherwise drain the `timber` the
-/// multi-input `castIron_from_iron` recipe is assembling
-/// (Refs #2847 § H8-extraction feedstock co-availability). When [gateActive] is
-/// false the unimproved feedstock tile is removed, so the seller is no longer a
-/// reserve-target GP (negative control — no feedstock reservation).
-Game _castIronFeedstockCoavailabilityGame({
-  required int treasury,
-  required int timber,
-  required int iron,
-  bool gateActive = true,
-}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-h8-castiron-coavailability',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 3; i++)
-            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      resourceByTileKey: gateActive
-          ? const {'oldWorld|seller_0|1|0': 'wool'}
-          : const {},
-    ),
-    players: [
-      Player(
-        id: 'gp_seller',
-        displayName: 'Seller',
-        isHuman: false,
-        capitalProvinceId: '$ow|seller_0',
-        treasury: treasury,
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.timber.id, timber)
-            .applyDelta(CommodityCatalog.iron.id, iron),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-    ],
-  );
-}
-
-/// A below-quota zero-NW lock-recovery seller whose **fabric** improvement-cost
-/// gate is inactive — it owns a `castIron`-feedstock (`timber`) tile but **no**
-/// unimproved `wool` / `cotton` tile — yet co-holds `timber` + `iron` so the
-/// `castIron_from_iron` recipe is materially feasible. This is the
-/// seed-42 gp5 profile after its fabric feedstock tile has been improved: the
-/// prior `selfLockRecoverySellerNeededProducibleImprovementInputs` set is empty
-/// here, so only the new stageable path can assign the domestic castIron run.
-/// Refs #2847 § H8 production allocation (S7-D castIron, PR #3289). When
-/// [ownsFeedstockTile] is false the timber tile is removed (the seller no longer
-/// owns castIron feedstock to extract), so the staging gate self-clears
-/// (negative control). [owProvinces] >= the conquest quota lifts the seller out
-/// of the lock-recovery band (negative control).
-Game _castIronStagingNoFabricGateGame({
-  required int treasury,
-  bool ownsFeedstockTile = true,
-  int owProvinces = 3,
-}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-h8-castiron-staging',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < owProvinces; i++)
-            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      // Owns a `timber` feedstock tile but NO `wool` / `cotton` tile, so the
-      // fabric improvement-cost gate is inactive and the prior self-need helper
-      // is empty — isolating the new stageable path.
-      resourceByTileKey: ownsFeedstockTile
-          ? const {'oldWorld|seller_0|2|0': 'timber'}
-          : const {},
-    ),
-    players: [
-      Player(
-        id: 'gp_seller',
-        displayName: 'Seller',
-        isHuman: false,
-        capitalProvinceId: '$ow|seller_0',
-        treasury: treasury,
-        // Holds timber + iron (castIron feedstock) but zero castIron.
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.timber.id, 30)
-            .applyDelta(CommodityCatalog.iron.id, 10),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-    ],
-  );
-}
-
-PhasePlanOutcome _expandForceRegimentBuildPlan({
-  required bool forceCheapestRegimentBuild,
-  bool boostCastIronLabourPeasantRecruitment = false,
-}) {
-  return PhasePlanOutcome(
-    phase: ObserverGoalPhase.expand,
-    expandEconomyPlan: ExpandEconomyPlan(
-      forceCheapestRegimentBuild: forceCheapestRegimentBuild,
-      boostTreasuryRecoveryCargo: false,
-      boostCastIronLabourPeasantRecruitment: boostCastIronLabourPeasantRecruitment,
-    ),
-  );
-}
-
-/// Lock-recovery seller holding one `fabric` (enough for regiment build but
-/// short the 2-`fabric` peasant recruit row) with wool feedstock for a
-/// domestic fabric run, castIron material-feasible yet labour-population-bound
-/// (1 peasant < castIron run labour of 2). Refs #2847 castIron-labour peasant-recruit
-/// fabric bootstrap.
-Game _castIronLabourPeasantRecruitFabricStagingGame({required int fabricHeld}) {
-  const ow = 'oldWorld';
-  const tileIron = 'oldWorld|seller_0|2|0';
-  return Game(
-    id: 'g-h8-peasant-recruit-fabric',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 3; i++)
-            Province(id: '$ow|seller_$i', regionId: ow, ownerId: 'gp_seller'),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      resourceByTileKey: const {tileIron: 'iron'},
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          '$ow|seller_0': [tileIron],
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: 'gp_seller',
-        displayName: 'Seller',
-        isHuman: false,
-        capitalProvinceId: '$ow|seller_0',
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: Stockpile.empty
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.iron.id, 4)
-            .applyDelta(CommodityCatalog.wool.id, 10)
-            .applyDelta(CommodityCatalog.fabric.id, fabricHeld),
-        workerPool: const WorkerPool(peasants: 1),
-      ),
-    ],
-  );
-}
-
-Set<String> _assignedRecipeIds(EconomyPlan plan) =>
-    plan.productionAssignments.map((a) => a.recipeId).toSet();
+import 'economy_planner_regiment_build_input_support.dart';
 
 void main() {
   group('regiment build-input production priority (Refs #2847 H8)', () {
@@ -354,15 +26,15 @@ void main() {
       'forceCheapestRegimentBuild prioritizes a fabric recipe when fabric is '
       'missing and treasury has recovered',
       () {
-        final game = _regimentRebuildProductionGame(treasury: threshold);
-        final view = buildPlayerView(game, _topology, 'gp1');
+        final game = regimentRebuildProductionGame(treasury: threshold);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp1');
 
         final withBoost = runEconomyPlanner(
           game: game,
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
@@ -372,7 +44,7 @@ void main() {
           ProductionRecipesCatalog.fabricFromCotton.id,
         };
         expect(
-          _assignedRecipeIds(withBoost).intersection(fabricRecipeIds),
+          assignedRecipeIds(withBoost).intersection(fabricRecipeIds),
           isNotEmpty,
           reason:
               'H8 production boost should assign labour to a fabric recipe '
@@ -389,21 +61,21 @@ void main() {
         // treasury recovery so it is on hand the moment treasury crosses the
         // cost. Production spends no treasury, so the broke turn is exactly
         // when the seller must build up the input.
-        final game = _regimentRebuildProductionGame(treasury: threshold - 1);
-        final view = buildPlayerView(game, _topology, 'gp1');
+        final game = regimentRebuildProductionGame(treasury: threshold - 1);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp1');
 
         final plan = runEconomyPlanner(
           game: game,
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
 
         expect(
-          _assignedRecipeIds(plan).intersection({
+          assignedRecipeIds(plan).intersection({
             ProductionRecipesCatalog.fabricFromWool.id,
             ProductionRecipesCatalog.fabricFromCotton.id,
           }),
@@ -424,27 +96,27 @@ void main() {
         // must not fire. Compare fabric labour against the same seed with the
         // boost-eligible (zero-regiment) game to prove the regiment is the only
         // differing input that suppresses the boost.
-        final withRegiment = _regimentRebuildProductionGame(
+        final withRegiment = regimentRebuildProductionGame(
           treasury: threshold,
           hasRegiment: true,
         );
         final withRegimentPlan = runEconomyPlanner(
           game: withRegiment,
-          view: buildPlayerView(withRegiment, _topology, 'gp1'),
+          view: buildPlayerView(withRegiment, kRegimentBuildInputEmptyTopology, 'gp1'),
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
 
-        final zeroRegiment = _regimentRebuildProductionGame(treasury: threshold);
+        final zeroRegiment = regimentRebuildProductionGame(treasury: threshold);
         final zeroRegimentPlan = runEconomyPlanner(
           game: zeroRegiment,
-          view: buildPlayerView(zeroRegiment, _topology, 'gp1'),
+          view: buildPlayerView(zeroRegiment, kRegimentBuildInputEmptyTopology, 'gp1'),
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
@@ -474,15 +146,15 @@ void main() {
       'same seed without forceCheapestRegimentBuild may omit fabric when '
       'competing recipes score higher',
       () {
-        final game = _regimentRebuildProductionGame(treasury: threshold);
-        final view = buildPlayerView(game, _topology, 'gp1');
+        final game = regimentRebuildProductionGame(treasury: threshold);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp1');
 
         final withoutBoost = runEconomyPlanner(
           game: game,
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: false,
           ),
         );
@@ -495,7 +167,7 @@ void main() {
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
@@ -521,8 +193,8 @@ void main() {
       'domestic improvement-input boost assigns a castIron recipe when the '
       'improvement-input gate is active and feedstock is on hand',
       () {
-        final game = _castIronImprovementInputGame(treasury: threshold);
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final game = castIronImprovementInputGame(treasury: threshold);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
 
         // No forceCheapestRegimentBuild directive: the boost is driven solely by
         // the active improvement-input gate.
@@ -534,7 +206,7 @@ void main() {
         );
 
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'When the seller must produce castIron domestically (no market '
@@ -551,11 +223,11 @@ void main() {
         // gateActive: false removes the owned unimproved feedstock tile, so
         // `regimentBuildInputFeedstockImprovementInputCost` returns empty and the
         // castIron output gets no H8 boost (+6 baseline GPs are unaffected).
-        final game = _castIronImprovementInputGame(
+        final game = castIronImprovementInputGame(
           treasury: threshold,
           gateActive: false,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
 
         final plan = runEconomyPlanner(
           game: game,
@@ -569,10 +241,10 @@ void main() {
         // it by comparing against the same seed where the gate is the only
         // differing input).
         final gated = runEconomyPlanner(
-          game: _castIronImprovementInputGame(treasury: threshold),
+          game: castIronImprovementInputGame(treasury: threshold),
           view: buildPlayerView(
-            _castIronImprovementInputGame(treasury: threshold),
-            _topology,
+            castIronImprovementInputGame(treasury: threshold),
+            kRegimentBuildInputEmptyTopology,
             'gp_seller',
           ),
           config: config,
@@ -606,8 +278,8 @@ void main() {
       'seller needs the castIron improvement input (Refs #2847 H8-supply '
       'castIron source)',
       () {
-        final game = _supplierCastIronSourceGame(treasury: threshold);
-        final supplierView = buildPlayerView(game, _topology, 'gp_supplier');
+        final game = supplierCastIronSourceGame(treasury: threshold);
+        final supplierView = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_supplier');
         final plan = runEconomyPlanner(
           game: game,
           view: supplierView,
@@ -615,7 +287,7 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'A supplier that is not a locked seller must over-produce castIron '
@@ -630,26 +302,26 @@ void main() {
       'improvement input (negative control — +6 baseline GPs unaffected)',
       () {
         final active = runEconomyPlanner(
-          game: _supplierCastIronSourceGame(treasury: threshold),
+          game: supplierCastIronSourceGame(treasury: threshold),
           view: buildPlayerView(
-            _supplierCastIronSourceGame(treasury: threshold),
-            _topology,
+            supplierCastIronSourceGame(treasury: threshold),
+            kRegimentBuildInputEmptyTopology,
             'gp_supplier',
           ),
           config: config,
           seeds: seeds,
         );
         final inactive = runEconomyPlanner(
-          game: _supplierCastIronSourceGame(
+          game: supplierCastIronSourceGame(
             treasury: threshold,
             sellerGateActive: false,
           ),
           view: buildPlayerView(
-            _supplierCastIronSourceGame(
+            supplierCastIronSourceGame(
               treasury: threshold,
               sellerGateActive: false,
             ),
-            _topology,
+            kRegimentBuildInputEmptyTopology,
             'gp_supplier',
           ),
           config: config,
@@ -681,11 +353,11 @@ void main() {
         // The supplier holds no `iron` (mirrors the seed-42 condition where the
         // supplier's mineral feedstock is never prospected), so the multi-input
         // `castIron` recipe is infeasible and lumber is the released output.
-        final game = _supplierCastIronSourceGame(
+        final game = supplierCastIronSourceGame(
           treasury: threshold,
           supplierIronHeld: 0,
         );
-        final supplierView = buildPlayerView(game, _topology, 'gp_supplier');
+        final supplierView = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_supplier');
         final plan = runEconomyPlanner(
           game: game,
           view: supplierView,
@@ -693,7 +365,7 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.lumberFromTimber.id),
           reason:
               'A supplier that is not a locked seller must over-produce lumber '
@@ -713,31 +385,31 @@ void main() {
         // off. The supplier-release boost must never raise lumber labour in the
         // inactive case above the active case.
         final active = runEconomyPlanner(
-          game: _supplierCastIronSourceGame(
+          game: supplierCastIronSourceGame(
             treasury: threshold,
             supplierIronHeld: 0,
           ),
           view: buildPlayerView(
-            _supplierCastIronSourceGame(treasury: threshold, supplierIronHeld: 0),
-            _topology,
+            supplierCastIronSourceGame(treasury: threshold, supplierIronHeld: 0),
+            kRegimentBuildInputEmptyTopology,
             'gp_supplier',
           ),
           config: config,
           seeds: seeds,
         );
         final inactive = runEconomyPlanner(
-          game: _supplierCastIronSourceGame(
+          game: supplierCastIronSourceGame(
             treasury: threshold,
             sellerOwProvinces: 12,
             supplierIronHeld: 0,
           ),
           view: buildPlayerView(
-            _supplierCastIronSourceGame(
+            supplierCastIronSourceGame(
               treasury: threshold,
               sellerOwProvinces: 12,
               supplierIronHeld: 0,
             ),
-            _topology,
+            kRegimentBuildInputEmptyTopology,
             'gp_supplier',
           ),
           config: config,
@@ -758,12 +430,12 @@ void main() {
       'iron-only castIron no longer reserves timber for co-availability '
       '(Refs #3858)',
       () {
-        final game = _castIronFeedstockCoavailabilityGame(
+        final game = castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
           iron: 0,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -787,13 +459,13 @@ void main() {
       () {
         // gateActive: false removes the feedstock tile, so the GP is not a
         // castIron reserve target; the feasible lumber recipe consumes timber.
-        final game = _castIronFeedstockCoavailabilityGame(
+        final game = castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
           iron: 0,
           gateActive: false,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -818,12 +490,12 @@ void main() {
       () {
         // 2 timber + 2 iron: one full castIron run is now co-available, so the
         // boosted multi-input recipe runs.
-        final game = _castIronFeedstockCoavailabilityGame(
+        final game = castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
           iron: 2,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -831,7 +503,7 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'With timber + iron co-available the reserved feedstock lets the '
@@ -851,12 +523,12 @@ void main() {
         // binding level-0 lumber input (waived castIron), so lumber joins the
         // seller-side domestic production set and is produced from owned timber
         // instead of depending on the thin lumber market.
-        final game = _castIronFeedstockCoavailabilityGame(
+        final game = castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 8,
           iron: 0,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -864,7 +536,7 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.lumberFromTimber.id),
           reason:
               'A locked seller short the binding level-0 lumber input must '
@@ -877,12 +549,12 @@ void main() {
       'iron-only castIron and lumber no longer compete on timber feedstock '
       '(Refs #3858)',
       () {
-        final game = _castIronFeedstockCoavailabilityGame(
+        final game = castIronFeedstockCoavailabilityGame(
           treasury: threshold,
           timber: 2,
           iron: 2,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -897,7 +569,7 @@ void main() {
               'timber is not reserved for castIron co-availability.',
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
         );
       },
@@ -907,15 +579,15 @@ void main() {
       'reserve-target allocation is deterministic across identical runs',
       () {
         Set<String> run() {
-          final game = _castIronFeedstockCoavailabilityGame(
+          final game = castIronFeedstockCoavailabilityGame(
             treasury: threshold,
             timber: 2,
             iron: 0,
           );
-          return _assignedRecipeIds(
+          return assignedRecipeIds(
             runEconomyPlanner(
               game: game,
-              view: buildPlayerView(game, _topology, 'gp_seller'),
+              view: buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller'),
               config: config,
               seeds: seeds,
             ),
@@ -931,8 +603,8 @@ void main() {
       'owns a feedstock tile even after the fabric improvement gate goes '
       'inactive (Refs #2847 H8 production allocation — S7-D castIron, PR #3289)',
       () {
-        final game = _castIronStagingNoFabricGateGame(treasury: threshold);
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final game = castIronStagingNoFabricGateGame(treasury: threshold);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -940,7 +612,7 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
           reason:
               'A recovered lock-recovery seller that no longer owns an '
@@ -955,26 +627,26 @@ void main() {
       '(negative control — staging requires an owned feedstock tile)',
       () {
         final active = runEconomyPlanner(
-          game: _castIronStagingNoFabricGateGame(treasury: threshold),
+          game: castIronStagingNoFabricGateGame(treasury: threshold),
           view: buildPlayerView(
-            _castIronStagingNoFabricGateGame(treasury: threshold),
-            _topology,
+            castIronStagingNoFabricGateGame(treasury: threshold),
+            kRegimentBuildInputEmptyTopology,
             'gp_seller',
           ),
           config: config,
           seeds: seeds,
         );
         final inactive = runEconomyPlanner(
-          game: _castIronStagingNoFabricGateGame(
+          game: castIronStagingNoFabricGateGame(
             treasury: threshold,
             ownsFeedstockTile: false,
           ),
           view: buildPlayerView(
-            _castIronStagingNoFabricGateGame(
+            castIronStagingNoFabricGateGame(
               treasury: threshold,
               ownsFeedstockTile: false,
             ),
-            _topology,
+            kRegimentBuildInputEmptyTopology,
             'gp_seller',
           ),
           config: config,
@@ -996,26 +668,26 @@ void main() {
       '+6 baseline GPs unaffected)',
       () {
         final belowQuota = runEconomyPlanner(
-          game: _castIronStagingNoFabricGateGame(treasury: threshold),
+          game: castIronStagingNoFabricGateGame(treasury: threshold),
           view: buildPlayerView(
-            _castIronStagingNoFabricGateGame(treasury: threshold),
-            _topology,
+            castIronStagingNoFabricGateGame(treasury: threshold),
+            kRegimentBuildInputEmptyTopology,
             'gp_seller',
           ),
           config: config,
           seeds: seeds,
         );
         final aboveQuota = runEconomyPlanner(
-          game: _castIronStagingNoFabricGateGame(
+          game: castIronStagingNoFabricGateGame(
             treasury: threshold,
             owProvinces: 12,
           ),
           view: buildPlayerView(
-            _castIronStagingNoFabricGateGame(
+            castIronStagingNoFabricGateGame(
               treasury: threshold,
               owProvinces: 12,
             ),
-            _topology,
+            kRegimentBuildInputEmptyTopology,
             'gp_seller',
           ),
           config: config,
@@ -1035,22 +707,22 @@ void main() {
       'castIron-labour peasant-recruit fabric boost leaves assignments empty '
       'when one peasant cannot run 2-labour recipes (Refs #3858)',
       () {
-        final game = _castIronLabourPeasantRecruitFabricStagingGame(
+        final game = castIronLabourPeasantRecruitFabricStagingGame(
           fabricHeld: 1,
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
             boostCastIronLabourPeasantRecruitment: true,
           ),
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           isEmpty,
           reason:
               'One effective labour cannot satisfy the 2-labour fabric or '
@@ -1063,7 +735,7 @@ void main() {
       'castIron-labour fabric pre-pass defers to castIron when both recipes '
       'need only two labour and the seller holds four peasants (Refs #3858)',
       () {
-        final base = _castIronLabourPeasantRecruitFabricStagingGame(
+        final base = castIronLabourPeasantRecruitFabricStagingGame(
           fabricHeld: 0,
         );
         final game = base.copyWith(
@@ -1073,7 +745,7 @@ void main() {
             ),
           ],
         );
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final plan = runEconomyPlanner(
           game: game,
           view: view,
@@ -1081,11 +753,11 @@ void main() {
           seeds: seeds,
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           contains(ProductionRecipesCatalog.castIronFromIron.id),
         );
         expect(
-          _assignedRecipeIds(plan),
+          assignedRecipeIds(plan),
           isNot(contains(ProductionRecipesCatalog.fabricFromWool.id)),
           reason:
               'With iron-only castIron at 2 labour the planner assigns castIron '
@@ -1098,14 +770,14 @@ void main() {
       'castIron-labour peasant-recruit fabric boost is off once fabric meets '
       'recruit cost (negative control)',
       () {
-        final game = _castIronLabourPeasantRecruitFabricStagingGame(fabricHeld: 2);
-        final view = buildPlayerView(game, _topology, 'gp_seller');
+        final game = castIronLabourPeasantRecruitFabricStagingGame(fabricHeld: 2);
+        final view = buildPlayerView(game, kRegimentBuildInputEmptyTopology, 'gp_seller');
         final withBoost = runEconomyPlanner(
           game: game,
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
             boostCastIronLabourPeasantRecruitment: true,
           ),
@@ -1115,13 +787,13 @@ void main() {
           view: view,
           config: config,
           seeds: seeds,
-          phasePlan: _expandForceRegimentBuildPlan(
+          phasePlan: expandForceRegimentBuildPlan(
             forceCheapestRegimentBuild: true,
           ),
         );
         expect(
-          _assignedRecipeIds(withBoost),
-          equals(_assignedRecipeIds(withoutBoost)),
+          assignedRecipeIds(withBoost),
+          equals(assignedRecipeIds(withoutBoost)),
           reason:
               'When fabric already meets the recruit cost the peasant-recruit '
               'fabric boost must not change production assignments.',

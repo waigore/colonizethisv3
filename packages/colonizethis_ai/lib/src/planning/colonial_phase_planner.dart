@@ -221,6 +221,8 @@ import 'planning_helpers.dart' show gpFactionIdsAtWarWith, planningListEquals;
 part 'colonial_phase_planner_acquisition.dart';
 part 'colonial_phase_planner_military.dart';
 part 'colonial_phase_planner_naval.dart';
+part 'colonial_phase_planner_lite.dart';
+part 'colonial_phase_planner_civilian.dart';
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.

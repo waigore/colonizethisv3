@@ -115,135 +115,23 @@
 // on overture stage, so the absence of an overture row is sufficient
 // to suppress the Join Empire and `purchase_land` passes.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/colonial_acquisition_test_support.dart';
 import 'ai_planner_fixtures.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
+const String _gp1 = kColonialPhaseGp1;
+const String _gp2 = kColonialPhaseGp2;
+const String _tribe1 = kColonialPhaseTribe1;
+const String _tribe2 = kColonialPhaseTribe2;
 
-const String _nwProv1 = 'newWorld|tribe1_a';
-const String _nwProv2 = 'newWorld|tribe2_b';
-const String _nwProvGp = 'newWorld|gp2_c';
+const String _nwProv1 = kColonialAcquisitionNwProv1;
+const String _nwProv2 = kColonialAcquisitionNwProv2;
+const String _nwProvGp = kColonialAcquisitionNwProvGp;
 
-const String _nwTile1 = 'newWorld|tribe1_a|1|1';
-
-/// Builds a `Game` for the `declareWar` arm tests.
-///
-/// Defaults to a turn ≥120 / NW-only fixture (matching the
-/// purchase_land sibling fixture) and accepts explicit armies so each
-/// test can pin `regimentCountForPlayer` independently. The OW region
-/// stays empty because the declareWar arm reads only the NW invadable
-/// list, treasury, regiment count, province-owner map, and relation
-/// state.
-Game _declareWarGame({
-  int turnNumber = 130,
-  int activePlayerTreasury = 100000,
-  List<Province> newWorldProvinces = const [],
-  List<Army> armies = const [],
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  return Game(
-    id: 'g-2509-colonial-acquisition-declare-war-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: newWorldProvinces),
-      armies: armies,
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: activePlayerTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [
-      Tribe(id: _tribe1, displayName: 'T1'),
-      Tribe(id: _tribe2, displayName: 'T2'),
-    ],
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-AIWorldSnapshot _declareWarSnapshot({
-  required List<String> invadableNw,
-  String playerId = _gp1,
-  int treasury = 100000,
-  int newWorldProvincesOwned = 0,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: invadableNw,
-      newWorldProvincesOwned: newWorldProvincesOwned,
-    ),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
-const ExpandEconomyPlan _nwTreasuryRecoveryOverridePlan = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: true,
-  boostTreasuryRecoveryCargo: true,
-);
-
-OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.embassy,
-      sinceTurn: sinceTurn,
-    );
-
-OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.nap,
-      sinceTurn: sinceTurn,
-    );
-
-DiplomacyRelation _peaceFriendly(String a, String b, {int score = 60}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.friendly,
-    );
-
-DiplomacyRelation _peaceNeutral(String a, String b, {int score = 40}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.neutral,
-    );
-
-DiplomacyRelation _atWar(String a, String b, {int score = 10}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.hostile,
-      state: RelationState.atWar,
-    );
+const String _nwTile1 = kColonialAcquisitionNwTile1;
 
 void main() {
   group('planColonialAcquisition (declareWar path)', () {
@@ -254,14 +142,19 @@ void main() {
       // commit. A regression that emitted a declareWar target here
       // would surface an order pair the orchestrator could not
       // complete (declareWar + NW army move per spec).
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: const <Army>[],
-        diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -280,15 +173,18 @@ void main() {
       // even with a standing regiment present (so the regiment-count
       // guard succeeds first).
       final cheapest = cheapestRegimentBuildCost();
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         activePlayerTreasury: cheapest - 1,
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _declareWarSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1],
         treasury: cheapest - 1,
       );
@@ -309,14 +205,19 @@ void main() {
       // fallback territory, not an acquisition decision. The planner
       // mirrors the Join Empire / `purchase_land` arms' GP-skip via
       // `game.playerById(ownerId) != null`.
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProvGp, regionId: 'newWorld', ownerId: _gp2),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _gp2)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _gp2),
+        ],
       );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProvGp]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProvGp],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -335,14 +236,19 @@ void main() {
       // re-declares war on an active front. Already-at-war tribes
       // are pursued by planColonialMilitary's declared-target /
       // at-war fallback arms instead.
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[_atWar(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionAtWar(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -365,14 +271,19 @@ void main() {
       // (Join Empire requires stage == nap); purchase_land is
       // suppressed by the absence of any Merchant unit anywhere.
       // declareWar therefore wins as the third-priority arm.
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(
@@ -394,14 +305,17 @@ void main() {
       // The planner mirrors that semantics: a tribe with no prior
       // DiplomacyRelation row is still a valid declareWar candidate
       // so first-contact tribes are not excluded from the third arm.
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: const <DiplomacyRelation>[],
       );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(
@@ -416,91 +330,109 @@ void main() {
       );
     });
 
-    test('Join Empire reachable -> Join Empire wins (declareWar suppressed)',
-        () {
-      // Priority pin: even with regiments + treasury sufficient for
-      // declareWar, a satisfying Join Empire candidate ends the
-      // function in the first pass. Pins the spec's "Join Empire is
-      // always preferred first" framing across all three arms.
-      final game = _declareWarGame(
-        newWorldProvinces: const [
-          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-        ],
-        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
-      );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.joinEmpire,
-        ),
-        reason:
-            'Join Empire (Method 1) reachable -> the function returns '
-            'in the first pass and declareWar (Method 3) is never '
-            'evaluated; pins the "always preferred first" priority.',
-      );
-    });
-
-    test('purchase_land reachable -> purchase_land wins (declareWar suppressed)',
-        () {
-      // Priority pin: even with regiments + treasury sufficient for
-      // declareWar, a satisfying purchase_land candidate ends the
-      // function in the second pass. Pins the structural Method 2 ->
-      // Method 3 ordering.
-      final game = Game(
-        id: 'g-2509-colonial-acquisition-declare-war-priority-pl',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 130, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: const [
-              Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-            ],
-            units: <Unit>[
-              Unit(
-                id: 'm1',
-                type: kUnitTypeMerchant,
-                ownerId: _gp1,
-                locationProvinceId: _nwProv1,
-                tileKey: '$_nwProv1|5|5',
-                status: UnitStatus.idle,
-              ),
-            ],
-          ),
+    test(
+      'Join Empire reachable -> Join Empire wins (declareWar suppressed)',
+      () {
+        // Priority pin: even with regiments + treasury sufficient for
+        // declareWar, a satisfying Join Empire candidate ends the
+        // function in the first pass. Pins the spec's "Join Empire is
+        // always preferred first" framing across all three arms.
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
           armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-          resourceByTileKey: const {_nwTile1: 'grain'},
-        ),
-        players: const [
-          Player(
-            id: _gp1,
-            displayName: 'GP1',
-            isHuman: false,
-            treasury: 100000,
+          overtureStates: <OvertureState>[
+            colonialAcquisitionNap(_gp1, _tribe1),
+          ],
+          diplomacyRelations: <DiplomacyRelation>[
+            colonialAcquisitionFriendly(_gp1, _tribe1),
+          ],
+        );
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
+        expect(
+          planColonialAcquisition(game: game, snapshot: snapshot),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.joinEmpire,
           ),
-          Player(id: _gp2, displayName: 'GP2', isHuman: false),
-        ],
-        tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-        ],
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
-      );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.purchaseLand,
-        ),
-        reason:
-            'purchase_land (Method 2) reachable -> the function returns '
-            'in the second pass and declareWar (Method 3) is never '
-            'evaluated; pins the Method 2 -> Method 3 priority.',
-      );
-    });
+          reason:
+              'Join Empire (Method 1) reachable -> the function returns '
+              'in the first pass and declareWar (Method 3) is never '
+              'evaluated; pins the "always preferred first" priority.',
+        );
+      },
+    );
+
+    test(
+      'purchase_land reachable -> purchase_land wins (declareWar suppressed)',
+      () {
+        // Priority pin: even with regiments + treasury sufficient for
+        // declareWar, a satisfying purchase_land candidate ends the
+        // function in the second pass. Pins the structural Method 2 ->
+        // Method 3 ordering.
+        final game = Game(
+          id: 'g-2509-colonial-acquisition-declare-war-priority-pl',
+          worldState: WorldState(
+            turnState: const TurnState(
+              turnNumber: 130,
+              phase: TurnPhase.orders,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: RegionData(
+              provinces: const [
+                Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+              ],
+              units: <Unit>[
+                Unit(
+                  id: 'm1',
+                  type: kUnitTypeMerchant,
+                  ownerId: _gp1,
+                  locationProvinceId: _nwProv1,
+                  tileKey: '$_nwProv1|5|5',
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
+            resourceByTileKey: const {_nwTile1: 'grain'},
+          ),
+          players: const [
+            Player(
+              id: _gp1,
+              displayName: 'GP1',
+              isHuman: false,
+              treasury: 100000,
+            ),
+            Player(id: _gp2, displayName: 'GP2', isHuman: false),
+          ],
+          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          overtureStates: <OvertureState>[
+            colonialAcquisitionEmbassy(_gp1, _tribe1),
+          ],
+          diplomacyRelations: <DiplomacyRelation>[
+            colonialAcquisitionFriendly(_gp1, _tribe1),
+          ],
+        );
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
+        expect(
+          planColonialAcquisition(game: game, snapshot: snapshot),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.purchaseLand,
+          ),
+          reason:
+              'purchase_land (Method 2) reachable -> the function returns '
+              'in the second pass and declareWar (Method 3) is never '
+              'evaluated; pins the Method 2 -> Method 3 priority.',
+        );
+      },
+    );
 
     test('two valid tribe targets -> first sorted invadable NW wins', () {
       // Deterministic iteration over
@@ -509,20 +441,21 @@ void main() {
       // over the second (`_nwProv2` = "newWorld|tribe2_b"). Mirrors
       // the Join Empire / purchase_land arms' tiebreak so all three
       // priority levels share one iteration contract.
-      final game = _declareWarGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
         diplomacyRelations: <DiplomacyRelation>[
-          _peaceNeutral(_gp1, _tribe1),
-          _peaceNeutral(_gp1, _tribe2),
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe2),
         ],
       );
       // Snapshot lists invadable in sorted order; the planner walks
       // them as provided.
-      final snapshot = _declareWarSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1, _nwProv2],
       );
       expect(
@@ -539,98 +472,104 @@ void main() {
       );
     });
 
-    test('determinism: identical inputs produce identical declareWar targets',
-        () {
-      // Refs #2509 Must-have #7. The planner must be pure: identical
-      // inputs always yield identical `ColonialAcquisitionTarget`s.
-      final game = _declareWarGame(
-        newWorldProvinces: const [
-          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-          Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
-        ],
-        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[
-          _peaceNeutral(_gp1, _tribe1),
-          _peaceNeutral(_gp1, _tribe2),
-        ],
-      );
-      final snapshot = _declareWarSnapshot(
-        invadableNw: const [_nwProv1, _nwProv2],
-      );
-      final first = planColonialAcquisition(game: game, snapshot: snapshot);
-      final second = planColonialAcquisition(game: game, snapshot: snapshot);
-      expect(
-        second,
-        equals(first),
-        reason:
-            'Pure-function determinism (Refs #2509 Must-have #7): '
-            'the second call must return a ColonialAcquisitionTarget '
-            'value-equal to the first.',
-      );
-      expect(
-        first,
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.declareWar,
-        ),
-        reason:
-            'Pin the actual return so the determinism check cannot '
-            'silently regress to `(null, null)` on both calls.',
-      );
-    });
-  });
-
-  group('planColonialAcquisition declareWar Path E (Refs #2924)', () {
     test(
-      'treasury zero with NW recovery override emits declareWar target',
+      'determinism: identical inputs produce identical declareWar targets',
       () {
-        final cheapest = cheapestRegimentBuildCost();
-        final game = _declareWarGame(
-          activePlayerTreasury: 0,
+        // Refs #2509 Must-have #7. The planner must be pure: identical
+        // inputs always yield identical `ColonialAcquisitionTarget`s.
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+            Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
           ],
-          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
-          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
+          diplomacyRelations: <DiplomacyRelation>[
+            colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+            colonialAcquisitionPeaceNeutral(_gp1, _tribe2),
+          ],
         );
-        final snapshot = _declareWarSnapshot(
-          invadableNw: const [_nwProv1],
-          treasury: 0,
-          newWorldProvincesOwned: 0,
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1, _nwProv2],
+        );
+        final first = planColonialAcquisition(game: game, snapshot: snapshot);
+        final second = planColonialAcquisition(game: game, snapshot: snapshot);
+        expect(
+          second,
+          equals(first),
+          reason:
+              'Pure-function determinism (Refs #2509 Must-have #7): '
+              'the second call must return a ColonialAcquisitionTarget '
+              'value-equal to the first.',
         );
         expect(
-          planColonialAcquisition(
-            game: game,
-            snapshot: snapshot,
-            expandEconomyPlan: _nwTreasuryRecoveryOverridePlan,
-          ),
+          first,
           const ColonialAcquisitionTarget(
             targetFactionId: _tribe1,
             method: AcquisitionMethod.declareWar,
           ),
           reason:
-              'Under the treasury-recovery resource-need override '
-              '(treasury == 0, NW == 0, boostTreasuryRecoveryCargo) '
-              'the declareWar arm must waive the planner-level '
-              'treasury gate so the NW conquest → riches chain can '
-              'begin without bypassing build affordability.',
+              'Pin the actual return so the determinism check cannot '
+              'silently regress to `(null, null)` on both calls.',
         );
-        expect(cheapest, greaterThan(0));
       },
     );
+  });
+
+  group('planColonialAcquisition declareWar Path E (Refs #2924)', () {
+    test('treasury zero with NW recovery override emits declareWar target', () {
+      final cheapest = cheapestRegimentBuildCost();
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
+        activePlayerTreasury: 0,
+        newWorldProvinces: const [
+          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+        ],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+        ],
+      );
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+        treasury: 0,
+        newWorldProvincesOwned: 0,
+      );
+      expect(
+        planColonialAcquisition(
+          game: game,
+          snapshot: snapshot,
+          expandEconomyPlan: kNwTreasuryRecoveryOverridePlan,
+        ),
+        const ColonialAcquisitionTarget(
+          targetFactionId: _tribe1,
+          method: AcquisitionMethod.declareWar,
+        ),
+        reason:
+            'Under the treasury-recovery resource-need override '
+            '(treasury == 0, NW == 0, boostTreasuryRecoveryCargo) '
+            'the declareWar arm must waive the planner-level '
+            'treasury gate so the NW conquest → riches chain can '
+            'begin without bypassing build affordability.',
+      );
+      expect(cheapest, greaterThan(0));
+    });
 
     test(
       'partial treasury with boostTreasuryRecoveryCargo emits declareWar',
       () {
-        final game = _declareWarGame(
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
           activePlayerTreasury: 500,
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
           armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
-          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
+          diplomacyRelations: <DiplomacyRelation>[
+            colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+          ],
         );
-        final snapshot = _declareWarSnapshot(
+        final snapshot = buildColonialAcquisitionSnapshot(
           invadableNw: const [_nwProv1],
           treasury: 500,
           newWorldProvincesOwned: 0,
@@ -655,35 +594,35 @@ void main() {
       },
     );
 
-    test(
-      'treasury zero without override keeps declareWar suppressed',
-      () {
-        final game = _declareWarGame(
-          activePlayerTreasury: 0,
-          newWorldProvinces: const [
-            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-          ],
-          armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
-          diplomacyRelations: <DiplomacyRelation>[_peaceNeutral(_gp1, _tribe1)],
-        );
-        final snapshot = _declareWarSnapshot(
-          invadableNw: const [_nwProv1],
-          treasury: 0,
-          newWorldProvincesOwned: 0,
-        );
-        expect(
-          planColonialAcquisition(
-            game: game,
-            snapshot: snapshot,
-            expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
-          ),
-          isNull,
-          reason:
-              'Regression guard: without boostTreasuryRecoveryCargo the '
-              'legacy treasury >= cheapestRegimentBuildTreasuryCost gate '
-              'must still suppress declareWar at treasury zero.',
-        );
-      },
-    );
+    test('treasury zero without override keeps declareWar suppressed', () {
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-declare-war',
+        activePlayerTreasury: 0,
+        newWorldProvinces: const [
+          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+        ],
+        armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionPeaceNeutral(_gp1, _tribe1),
+        ],
+      );
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+        treasury: 0,
+        newWorldProvincesOwned: 0,
+      );
+      expect(
+        planColonialAcquisition(
+          game: game,
+          snapshot: snapshot,
+          expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+        ),
+        isNull,
+        reason:
+            'Regression guard: without boostTreasuryRecoveryCargo the '
+            'legacy treasury >= cheapestRegimentBuildTreasuryCost gate '
+            'must still suppress declareWar at treasury zero.',
+      );
+    });
   });
 }

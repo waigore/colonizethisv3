@@ -35,9 +35,10 @@ import 'support/s7d/diagnostic_json.dart';
 
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847 / #3967).
 ///
-/// Historical findings live in `support/s7d/s7d_diagnostic_findings.dart`.
-/// Probe helpers live under `support/s7d/`. This file owns the campaign
-/// runner, rollup JSON emission, and structural invariant assertion.
+/// Historical findings live under `support/s7d/` (barrel
+/// `s7d_diagnostic_findings.dart` + topic modules). Probe helpers live
+/// under `support/s7d/` as well. This file owns the campaign runner,
+/// rollup JSON emission, and structural invariant assertion.
 ///
 /// Skip: long-running (~4 min). Re-run with `dart test --run-skipped`.
 

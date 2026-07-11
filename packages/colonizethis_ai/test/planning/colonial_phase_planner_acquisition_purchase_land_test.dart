@@ -105,149 +105,24 @@
 // purchased-tile map, resource-by-tile map, and the active player's
 // idle Merchant roster; nothing else.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
+import '../support/colonial_acquisition_test_support.dart';
 
-const String _nwProv1 = 'newWorld|tribe1_a';
-const String _nwProv2 = 'newWorld|tribe2_b';
-const String _nwProvGp = 'newWorld|gp2_c';
+const String _gp1 = kColonialPhaseGp1;
+const String _gp2 = kColonialPhaseGp2;
+const String _tribe1 = kColonialPhaseTribe1;
+const String _tribe2 = kColonialPhaseTribe2;
 
-const String _nwTile1 = 'newWorld|tribe1_a|1|1';
-const String _nwTile1Alt = 'newWorld|tribe1_a|2|2';
-const String _nwTile2 = 'newWorld|tribe2_b|1|1';
+const String _nwProv1 = kColonialAcquisitionNwProv1;
+const String _nwProv2 = kColonialAcquisitionNwProv2;
+const String _nwProvGp = kColonialAcquisitionNwProvGp;
 
-/// Builds a `Game` for the `purchase_land` arm tests.
-///
-/// `units` are placed in the New World region — the Merchant lookup
-/// scans both regions via [allUnitsFromWorld], so the test fixture
-/// can keep OW empty. `prospectedTilesForGp1` seeds the active
-/// player's [WorldState.playerProspectedTiles] entry; `purchasedTiles`
-/// seeds [WorldState.purchasedTilesByTileKey] (existing buyer ownership
-/// of a tile blocks new `purchase_land` orders).
-Game _purchaseLandGame({
-  int turnNumber = 130,
-  int activePlayerTreasury = 100000,
-  List<Province> newWorldProvinces = const [],
-  List<Unit> newWorldUnits = const [],
-  Map<String, String> resourceByTileKey = const {},
-  Set<String> prospectedTilesForGp1 = const {},
-  Map<String, String> purchasedTiles = const {},
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  return Game(
-    id: 'g-2509-colonial-acquisition-purchase-land-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: newWorldProvinces, units: newWorldUnits),
-      resourceByTileKey: resourceByTileKey,
-      playerProspectedTiles: prospectedTilesForGp1.isEmpty
-          ? const <String, Set<String>>{}
-          : <String, Set<String>>{_gp1: prospectedTilesForGp1},
-      purchasedTilesByTileKey: purchasedTiles,
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: activePlayerTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [
-      Tribe(id: _tribe1, displayName: 'T1'),
-      Tribe(id: _tribe2, displayName: 'T2'),
-    ],
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-AIWorldSnapshot _purchaseLandSnapshot({
-  required List<String> invadableNw,
-  String playerId = _gp1,
-  int treasury = 100000,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
-OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.embassy,
-      sinceTurn: sinceTurn,
-    );
-
-OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.nap,
-      sinceTurn: sinceTurn,
-    );
-
-OvertureState _tradeConsulate(
-  String gpId,
-  String targetId, {
-  int sinceTurn = 100,
-}) => OvertureState(
-  gpId: gpId,
-  targetId: targetId,
-  stage: OvertureStage.tradeConsulate,
-  sinceTurn: sinceTurn,
-);
-
-DiplomacyRelation _peaceFriendly(String a, String b, {int score = 60}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.friendly,
-    );
-
-DiplomacyRelation _atWar(String a, String b, {int score = 10}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.hostile,
-      state: RelationState.atWar,
-    );
-
-Unit _merchant(
-  String id, {
-  String provinceId = _nwProv1,
-  UnitStatus status = UnitStatus.idle,
-  String tileSuffix = '5|5',
-}) => Unit(
-  id: id,
-  type: kUnitTypeMerchant,
-  ownerId: _gp1,
-  locationProvinceId: provinceId,
-  tileKey: '$provinceId|$tileSuffix',
-  status: status,
-);
+const String _nwTile1 = kColonialAcquisitionNwTile1;
+const String _nwTile1Alt = kColonialAcquisitionNwTile1Alt;
+const String _nwTile2 = kColonialAcquisitionNwTile2;
 
 void main() {
   group('planColonialAcquisition (purchase_land path)', () {
@@ -258,15 +133,22 @@ void main() {
       // Merchant units -> outer guard short-circuits the second
       // loop. A regression that suggested `purchase_land` here would
       // emit an order with no eligible Merchant to execute it.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -282,16 +164,25 @@ void main() {
       // [UnitStatus.idle] is required so the resolver can re-task
       // the unit; mirror the Builder-idle filter pinned in
       // `planColonialCivilian`.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m_busy', status: UnitStatus.working)],
+        newWorldUnits: <Unit>[
+          colonialAcquisitionMerchant('m_busy', status: UnitStatus.working),
+        ],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -307,16 +198,21 @@ void main() {
       // province". The planner enforces this structurally via
       // `game.playerById(ownerId) != null` -> skip; mirrors the
       // Join-Empire arm's GP-skip pin.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProvGp, regionId: 'newWorld', ownerId: _gp2),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {'newWorld|gp2_c|1|1': 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _gp2)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _gp2)],
+        overtureStates: <OvertureState>[colonialAcquisitionEmbassy(_gp1, _gp2)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _gp2),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProvGp]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProvGp],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -331,16 +227,23 @@ void main() {
       // Validator: "Cannot purchase land: at war with that faction".
       // Even with embassy + valid tile + idle Merchant, the at-war
       // gate must reject the candidate.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_atWar(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionAtWar(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -354,15 +257,20 @@ void main() {
       // Validator: "Cannot purchase land: embassy required ...". With
       // no `OvertureState(gpId, targetId)` row, `getOverture` returns
       // null -> embassy gate fails.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -377,16 +285,23 @@ void main() {
       // `{embassy, nap, joinEmpire}`. The `tradeConsulate` stage
       // sits one rung below `embassy` and must be rejected by the
       // planner just as it is by the validator.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_tradeConsulate(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionTradeConsulate(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -401,16 +316,23 @@ void main() {
       // Validator: "Tile has no resource". Without at least one tile
       // in the province carrying a non-empty resource id, the
       // planner cannot find a satisfying `purchase_land` candidate.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const <String, String>{},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -426,16 +348,23 @@ void main() {
       // planner mirrors the gate using the active player's
       // `WorldState.playerProspectedTiles` entry. With no entry for
       // gp1, the iron tile fails the gate.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'iron'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -452,17 +381,22 @@ void main() {
       // $cost)". `purchaseLandCost('grain') = 15 *
       // landPurchaseDefaultBasePrice (10) = 150`; treasury 149 fails
       // the gate.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         activePlayerTreasury: 149,
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1],
         treasury: 149,
       );
@@ -481,17 +415,24 @@ void main() {
       // `WorldState.purchasedTilesByTileKey` is locked out of
       // additional `purchase_land` orders regardless of buyer
       // identity.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
         purchasedTiles: const {_nwTile1: _gp2},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -517,18 +458,23 @@ void main() {
         // target tile, when planColonialAcquisition runs and Join
         // Empire is unavailable, then the return value is
         // (tribeFactionId, AcquisitionMethod.purchaseLand)."
-        final game = _purchaseLandGame(
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          newWorldUnits: <Unit>[_merchant('m1')],
+          newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
           resourceByTileKey: const {_nwTile1: 'grain'},
-          overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
+          overtureStates: <OvertureState>[
+            colonialAcquisitionEmbassy(_gp1, _tribe1),
+          ],
           diplomacyRelations: <DiplomacyRelation>[
-            _peaceFriendly(_gp1, _tribe1),
+            colonialAcquisitionFriendly(_gp1, _tribe1),
           ],
         );
-        final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         expect(
           planColonialAcquisition(game: game, snapshot: snapshot),
           const ColonialAcquisitionTarget(
@@ -553,19 +499,24 @@ void main() {
         // tile is in the active player's prospected set so the
         // mineral-gate is satisfied; the planner returns the
         // canonical purchase_land target.
-        final game = _purchaseLandGame(
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          newWorldUnits: <Unit>[_merchant('m1')],
+          newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
           resourceByTileKey: const {_nwTile1: 'iron'},
           prospectedTilesForGp1: const {_nwTile1},
-          overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
+          overtureStates: <OvertureState>[
+            colonialAcquisitionEmbassy(_gp1, _tribe1),
+          ],
           diplomacyRelations: <DiplomacyRelation>[
-            _peaceFriendly(_gp1, _tribe1),
+            colonialAcquisitionFriendly(_gp1, _tribe1),
           ],
         );
-        final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         expect(
           planColonialAcquisition(game: game, snapshot: snapshot),
           const ColonialAcquisitionTarget(
@@ -589,18 +540,23 @@ void main() {
         // covering joinEmpire cost AND purchaseLand cost, valid tile
         // and idle Merchant in scope. The Method 1 pass must win;
         // the planner should never even reach the second pass.
-        final game = _purchaseLandGame(
+        final game = buildColonialAcquisitionGame(
+          gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
           newWorldProvinces: const [
             Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           ],
-          newWorldUnits: <Unit>[_merchant('m1')],
+          newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
           resourceByTileKey: const {_nwTile1: 'grain'},
-          overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
+          overtureStates: <OvertureState>[
+            colonialAcquisitionNap(_gp1, _tribe1),
+          ],
           diplomacyRelations: <DiplomacyRelation>[
-            _peaceFriendly(_gp1, _tribe1),
+            colonialAcquisitionFriendly(_gp1, _tribe1),
           ],
         );
-        final snapshot = _purchaseLandSnapshot(invadableNw: const [_nwProv1]);
+        final snapshot = buildColonialAcquisitionSnapshot(
+          invadableNw: const [_nwProv1],
+        );
         expect(
           planColonialAcquisition(game: game, snapshot: snapshot),
           const ColonialAcquisitionTarget(
@@ -626,17 +582,20 @@ void main() {
       //   - the second pass actually runs after Method 1 fails;
       //   - the Method 2 gates differ from Method 1's (e.g. no
       //     `nap` requirement; embassy is enough).
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         activePlayerTreasury: 1000,
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
       );
-      final snapshot = _purchaseLandSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1],
         treasury: 1000,
       );
@@ -662,23 +621,24 @@ void main() {
       // (ascending). With `_nwProv1 = newWorld|tribe1_a` <
       // `_nwProv2 = newWorld|tribe2_b` the iteration hits tribe1
       // first.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain', _nwTile2: 'grain'},
         overtureStates: <OvertureState>[
-          _embassy(_gp1, _tribe1),
-          _embassy(_gp1, _tribe2),
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+          colonialAcquisitionEmbassy(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _peaceFriendly(_gp1, _tribe1),
-          _peaceFriendly(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionFriendly(_gp1, _tribe2),
         ],
       );
-      final snapshot = _purchaseLandSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1, _nwProv2],
       );
       expect(
@@ -701,23 +661,24 @@ void main() {
       // embassy), the alt-tile selection (`_nwTile1Alt` carrying
       // `grain` while `_nwTile1` lacks any resource entry), and the
       // sorted iteration over invadable NW provinces.
-      final game = _purchaseLandGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-2509-colonial-acquisition-purchase-land',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1Alt: 'grain', _nwTile2: 'grain'},
         overtureStates: <OvertureState>[
-          _embassy(_gp1, _tribe1),
-          _embassy(_gp1, _tribe2),
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+          colonialAcquisitionEmbassy(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _peaceFriendly(_gp1, _tribe1),
-          _atWar(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionAtWar(_gp1, _tribe2),
         ],
       );
-      final snapshot = _purchaseLandSnapshot(
+      final snapshot = buildColonialAcquisitionSnapshot(
         invadableNw: const [_nwProv1, _nwProv2],
       );
       final first = planColonialAcquisition(game: game, snapshot: snapshot);
