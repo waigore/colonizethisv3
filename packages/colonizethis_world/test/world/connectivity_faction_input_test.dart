@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/world/connectivity_faction_input.dart';
@@ -47,20 +46,10 @@ void main() {
 
   group('ConnectivityFactionInput', () {
     test('fromGame exposes topology and ownership inputs (positive)', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'oldWorld|sea1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
+      final topology = provinceAndSeaUnlinkedTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'oldWorld|p1',
+        seaZoneId: 'oldWorld|sea1',
       );
       final game = ordersPhaseGame(
         id: 'g3',
