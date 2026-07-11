@@ -99,76 +99,11 @@
 // destination filter (tribe / minor NW invadable provinces) that the
 // orchestrator consumes.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
-const String _minor1 = 'minor1';
-
-/// Game scaffold for COLONIAL-lite naval tests. New World provinces,
-/// players, tribes, and minors are passed in so each test can shape
-/// ownership independently. Old World defaults to empty because the
-/// planner does not query OW state (the OW invadable summary is read
-/// only by [planExpandMilitary] / [planColonialMilitary], not by
-/// [planColonialLiteNaval]).
-Game _colonialLiteGame({
-  int turnNumber = 125,
-  List<Province> newWorldProvinces = const [],
-  List<Province> oldWorldProvinces = const [],
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    Player(id: _gp3, displayName: 'GP3', isHuman: false),
-  ],
-  List<Tribe> tribes = const [],
-  List<MinorNation> minorNations = const [],
-}) {
-  return Game(
-    id: 'g-2509-colonial-lite-naval-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: RegionData(provinces: newWorldProvinces),
-    ),
-    players: players,
-    tribes: tribes,
-    minorNations: minorNations,
-  );
-}
-
-/// Snapshot tuned for COLONIAL-lite: own OW defaults to 9 (the
-/// COLONIAL-lite outer schedule -- "OW ≥9 and <10"). Tests shape
-/// `invadableNw` and `invadableOw` to exercise the structural OW
-/// suppression and the tribe / minor / GP owner filter. The planner
-/// does not re-check the phase so the values are still consistent with
-/// COLONIAL-lite only so debugging traces stay coherent.
-AIWorldSnapshot _colonialLiteSnapshot({
-  List<String> invadableNw = const [],
-  List<String> invadableOw = const [],
-  List<String> atWarWith = const [],
-  int oldWorldProvincesOwned = 9,
-  String playerId = _gp1,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: 31,
-      invadableProvinceIdsSorted: invadableOw,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
+import '../support/colonial_phase_planner_test_support.dart';
 
 void main() {
   group('planColonialLiteNaval', () {
@@ -177,17 +112,17 @@ void main() {
       // player must not crash; the planner returns the default plan.
       // Matches the symmetric guard in [planColonialLiteOvertures] and
       // [planColonialMilitary].
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|tribe1_a'],
         playerId: 'ghost-player',
       );
@@ -205,126 +140,119 @@ void main() {
       // No NW frontier means there is no province to filter; the
       // function must short-circuit before any owner scan so an empty
       // constraint never leaks to the orchestrator.
-      final game = _colonialLiteGame();
-      final snapshot = _colonialLiteSnapshot(invadableNw: const []);
+      final game = buildColonialLiteNavalGame();
+      final snapshot = buildColonialLiteNavalSnapshot(invadableNw: const []);
       expect(
         planColonialLiteNaval(game: game, snapshot: snapshot),
         same(ColonialLiteNavalPlan.defaultPlan),
       );
     });
 
-    test(
-      'AC: single tribe-owned NW invadable -> restrict to that province '
-      '+ tribe as sole owner',
-      () {
-        // Canonical happy path from the spec: a single tribe-owned NW
-        // invadable province surfaces in the plan as the exploration
-        // focus. A regression that filtered tribes structurally
-        // would show empty here.
-        final game = _colonialLiteGame(
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|tribe1_a',
-              regionId: 'newWorld',
-              ownerId: _tribe1,
-            ),
-          ],
-          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        );
-        final snapshot = _colonialLiteSnapshot(
-          invadableNw: const ['newWorld|tribe1_a'],
-        );
-        expect(
-          planColonialLiteNaval(game: game, snapshot: snapshot),
-          const ColonialLiteNavalPlan(
-            priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-            priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+    test('AC: single tribe-owned NW invadable -> restrict to that province '
+        '+ tribe as sole owner', () {
+      // Canonical happy path from the spec: a single tribe-owned NW
+      // invadable province surfaces in the plan as the exploration
+      // focus. A regression that filtered tribes structurally
+      // would show empty here.
+      final game = buildColonialLiteNavalGame(
+        newWorldProvinces: const [
+          Province(
+            id: 'newWorld|tribe1_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseTribe1,
           ),
-          reason:
-              'Canonical COLONIAL-lite naval focus: single tribe-owned NW '
-              'invadable -> plan restricts to that province and lists the '
-              'tribe as the sole priority owner.',
-        );
-      },
-    );
+        ],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+      );
+      final snapshot = buildColonialLiteNavalSnapshot(
+        invadableNw: const ['newWorld|tribe1_a'],
+      );
+      expect(
+        planColonialLiteNaval(game: game, snapshot: snapshot),
+        const ColonialLiteNavalPlan(
+          priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
+        ),
+        reason:
+            'Canonical COLONIAL-lite naval focus: single tribe-owned NW '
+            'invadable -> plan restricts to that province and lists the '
+            'tribe as the sole priority owner.',
+      );
+    });
 
-    test(
-      'single minor-owned NW invadable -> restrict to that province + minor '
-      'as sole owner',
-      () {
-        // Mirror branch from the minor-owner side. Tribes and minors are
-        // both first-class COLONIAL-lite naval targets per issue #2509
-        // § COLONIAL-lite "establishOverture toward visible NW tribe /
-        // minor owners".
-        final game = _colonialLiteGame(
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|minor1_a',
-              regionId: 'newWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _colonialLiteSnapshot(
-          invadableNw: const ['newWorld|minor1_a'],
-        );
-        expect(
-          planColonialLiteNaval(game: game, snapshot: snapshot),
-          const ColonialLiteNavalPlan(
-            priorityNwProvinceIdsSorted: <String>['newWorld|minor1_a'],
-            priorityTargetOwnerFactionIdsSorted: <String>[_minor1],
+    test('single minor-owned NW invadable -> restrict to that province + minor '
+        'as sole owner', () {
+      // Mirror branch from the minor-owner side. Tribes and minors are
+      // both first-class COLONIAL-lite naval targets per issue #2509
+      // § COLONIAL-lite "establishOverture toward visible NW tribe /
+      // minor owners".
+      final game = buildColonialLiteNavalGame(
+        newWorldProvinces: const [
+          Province(
+            id: 'newWorld|minor1_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseMinor1,
           ),
-          reason:
-              'Minors are first-class COLONIAL-lite naval targets (same '
-              'class as tribes); the planner does not discriminate '
-              'between Tribe and MinorNation entries.',
-        );
-      },
-    );
+        ],
+        minorNations: const [
+          MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+        ],
+      );
+      final snapshot = buildColonialLiteNavalSnapshot(
+        invadableNw: const ['newWorld|minor1_a'],
+      );
+      expect(
+        planColonialLiteNaval(game: game, snapshot: snapshot),
+        const ColonialLiteNavalPlan(
+          priorityNwProvinceIdsSorted: <String>['newWorld|minor1_a'],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseMinor1],
+        ),
+        reason:
+            'Minors are first-class COLONIAL-lite naval targets (same '
+            'class as tribes); the planner does not discriminate '
+            'between Tribe and MinorNation entries.',
+      );
+    });
 
-    test(
-      'multiple tribe-owned NW invadable -> all those provinces, '
-      'sorted ascending',
-      () {
-        // Multiple tribe-owned NW invadable provinces: the COLONIAL-lite
-        // naval focus keeps ALL of them, sorted ascending, regardless
-        // of the input order. Defensive determinism against future
-        // builder changes (Refs #2509 Must-have #7).
-        final game = _colonialLiteGame(
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|tribe1_a',
-              regionId: 'newWorld',
-              ownerId: _tribe1,
-            ),
-            Province(
-              id: 'newWorld|tribe1_b',
-              regionId: 'newWorld',
-              ownerId: _tribe1,
-            ),
-          ],
-          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        );
-        final snapshot = _colonialLiteSnapshot(
-          invadableNw: const ['newWorld|tribe1_b', 'newWorld|tribe1_a'],
-        );
-        expect(
-          planColonialLiteNaval(game: game, snapshot: snapshot),
-          const ColonialLiteNavalPlan(
-            priorityNwProvinceIdsSorted: <String>[
-              'newWorld|tribe1_a',
-              'newWorld|tribe1_b',
-            ],
-            priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+    test('multiple tribe-owned NW invadable -> all those provinces, '
+        'sorted ascending', () {
+      // Multiple tribe-owned NW invadable provinces: the COLONIAL-lite
+      // naval focus keeps ALL of them, sorted ascending, regardless
+      // of the input order. Defensive determinism against future
+      // builder changes (Refs #2509 Must-have #7).
+      final game = buildColonialLiteNavalGame(
+        newWorldProvinces: const [
+          Province(
+            id: 'newWorld|tribe1_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseTribe1,
           ),
-          reason:
-              'COLONIAL-lite naval focus keeps ALL tribe-owned NW invadable '
-              'provinces, sorted ascending. Output order is independent of '
-              'the input invadable list order.',
-        );
-      },
-    );
+          Province(
+            id: 'newWorld|tribe1_b',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseTribe1,
+          ),
+        ],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+      );
+      final snapshot = buildColonialLiteNavalSnapshot(
+        invadableNw: const ['newWorld|tribe1_b', 'newWorld|tribe1_a'],
+      );
+      expect(
+        planColonialLiteNaval(game: game, snapshot: snapshot),
+        const ColonialLiteNavalPlan(
+          priorityNwProvinceIdsSorted: <String>[
+            'newWorld|tribe1_a',
+            'newWorld|tribe1_b',
+          ],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
+        ),
+        reason:
+            'COLONIAL-lite naval focus keeps ALL tribe-owned NW invadable '
+            'provinces, sorted ascending. Output order is independent of '
+            'the input invadable list order.',
+      );
+    });
 
     test('GP-owned NW invadable filtered out (structural)', () {
       // GP-owned NW invadable must NOT appear in the plan. COLONIAL-lite
@@ -332,16 +260,16 @@ void main() {
       // GP-owned NW is structurally excluded because the spec suppresses
       // NW `declareWar` and `purchase_land` here (issue #2509
       // § COLONIAL-lite suppressed list).
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|gp2_a',
             regionId: 'newWorld',
-            ownerId: _gp2,
+            ownerId: kColonialPhaseGp2,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|gp2_a'],
       );
       expect(
@@ -354,82 +282,84 @@ void main() {
       );
     });
 
-    test(
-      'mixed: tribe + minor + GP-owned NW invadable -> only tribe + minor '
-      'returned, sorted ascending',
-      () {
-        // Composite filter pin (GP filter + multi-owner union). The
-        // GP-owned province is dropped; the tribe and minor provinces
-        // surface in `priorityNwProvinceIdsSorted` (sorted ascending),
-        // and both owners appear in
-        // `priorityTargetOwnerFactionIdsSorted` (sorted ascending,
-        // deduplicated).
-        final game = _colonialLiteGame(
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|tribe1_a',
-              regionId: 'newWorld',
-              ownerId: _tribe1,
-            ),
-            Province(
-              id: 'newWorld|minor1_a',
-              regionId: 'newWorld',
-              ownerId: _minor1,
-            ),
-            Province(
-              id: 'newWorld|gp2_a',
-              regionId: 'newWorld',
-              ownerId: _gp2,
-            ),
-          ],
-          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _colonialLiteSnapshot(
-          invadableNw: const [
-            'newWorld|tribe1_a',
-            'newWorld|minor1_a',
-            'newWorld|gp2_a',
-          ],
-        );
-        expect(
-          planColonialLiteNaval(game: game, snapshot: snapshot),
-          const ColonialLiteNavalPlan(
-            priorityNwProvinceIdsSorted: <String>[
-              'newWorld|minor1_a',
-              'newWorld|tribe1_a',
-            ],
-            priorityTargetOwnerFactionIdsSorted: <String>[_minor1, _tribe1],
+    test('mixed: tribe + minor + GP-owned NW invadable -> only tribe + minor '
+        'returned, sorted ascending', () {
+      // Composite filter pin (GP filter + multi-owner union). The
+      // GP-owned province is dropped; the tribe and minor provinces
+      // surface in `priorityNwProvinceIdsSorted` (sorted ascending),
+      // and both owners appear in
+      // `priorityTargetOwnerFactionIdsSorted` (sorted ascending,
+      // deduplicated).
+      final game = buildColonialLiteNavalGame(
+        newWorldProvinces: const [
+          Province(
+            id: 'newWorld|tribe1_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseTribe1,
           ),
-          reason:
-              'Composite filter: GP-owned NW invadable dropped; tribe + '
-              'minor NW invadable surface in the plan with both lists '
-              'sorted ascending. minor1 < tribe1 lexically so minor1 '
-              'sorts first in both fields.',
-        );
-      },
-    );
+          Province(
+            id: 'newWorld|minor1_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseMinor1,
+          ),
+          Province(
+            id: 'newWorld|gp2_a',
+            regionId: 'newWorld',
+            ownerId: kColonialPhaseGp2,
+          ),
+        ],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        minorNations: const [
+          MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+        ],
+      );
+      final snapshot = buildColonialLiteNavalSnapshot(
+        invadableNw: const [
+          'newWorld|tribe1_a',
+          'newWorld|minor1_a',
+          'newWorld|gp2_a',
+        ],
+      );
+      expect(
+        planColonialLiteNaval(game: game, snapshot: snapshot),
+        const ColonialLiteNavalPlan(
+          priorityNwProvinceIdsSorted: <String>[
+            'newWorld|minor1_a',
+            'newWorld|tribe1_a',
+          ],
+          priorityTargetOwnerFactionIdsSorted: <String>[
+            kColonialPhaseMinor1,
+            kColonialPhaseTribe1,
+          ],
+        ),
+        reason:
+            'Composite filter: GP-owned NW invadable dropped; tribe + '
+            'minor NW invadable surface in the plan with both lists '
+            'sorted ascending. minor1 < tribe1 lexically so minor1 '
+            'sorts first in both fields.',
+      );
+    });
 
     test('only GP-owned NW invadable -> defaultPlan', () {
       // Priority-arm fall-through pin: with no tribe / minor
       // contributing any NW invadable, the planner returns the default
       // plan and the orchestrator falls back to legacy free-choice
       // colonial naval behaviour.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|gp2_a',
             regionId: 'newWorld',
-            ownerId: _gp2,
+            ownerId: kColonialPhaseGp2,
           ),
           Province(
             id: 'newWorld|gp3_a',
             regionId: 'newWorld',
-            ownerId: _gp3,
+            ownerId: kColonialPhaseGp3,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|gp2_a', 'newWorld|gp3_a'],
       );
       expect(
@@ -448,24 +378,24 @@ void main() {
       // province (stale fixture, mid-resolution diff, etc.). The
       // planner must silently skip the orphan via the
       // `if (owner == null) continue` branch and not blow up.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|orphan', 'newWorld|tribe1_a'],
       );
       expect(
         planColonialLiteNaval(game: game, snapshot: snapshot),
         const ColonialLiteNavalPlan(
           priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Orphan invadable id (no province record) is silently '
@@ -478,23 +408,25 @@ void main() {
       // Pure-function determinism (Refs #2509 Must-have #7) -- the
       // planner is called twice with the same inputs and must return
       // equal plans across both calls.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|minor1_a',
             regionId: 'newWorld',
-            ownerId: _minor1,
+            ownerId: kColonialPhaseMinor1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        minorNations: const [
+          MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+        ],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|tribe1_a', 'newWorld|minor1_a'],
       );
       final first = planColonialLiteNaval(game: game, snapshot: snapshot);
@@ -510,20 +442,20 @@ void main() {
       // `colonial.invadableNewWorldProvinceIdsSorted`. This pins the
       // structural OW suppression from the spec ("Naval exploration of
       // unrevealed NW sea zones ...").
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         oldWorldProvinces: const [
           Province(
             id: 'oldWorld|tribe1_a',
             regionId: 'oldWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const [],
         invadableOw: const ['oldWorld|tribe1_a'],
-        atWarWith: const [_tribe1],
+        atWarWith: const [kColonialPhaseTribe1],
       );
       expect(
         planColonialLiteNaval(game: game, snapshot: snapshot),
@@ -543,17 +475,17 @@ void main() {
       // NW-acquisition seed work (exploration + cargo), not
       // retaliation -- the planner must surface tribes / minors even
       // when not yet at war with them.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         invadableNw: const ['newWorld|tribe1_a'],
         atWarWith: const [],
       );
@@ -561,7 +493,7 @@ void main() {
         planColonialLiteNaval(game: game, snapshot: snapshot),
         const ColonialLiteNavalPlan(
           priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'COLONIAL-lite naval focus surfaces tribe / minor owners '
@@ -576,25 +508,25 @@ void main() {
       // `priorityTargetOwnerFactionIdsSorted`. This pins the
       // "owner list mirrors actual destinations" contract so a
       // downstream orchestrator never sees a phantom target.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|tribe2_a',
             regionId: 'newWorld',
-            ownerId: _tribe2,
+            ownerId: kColonialPhaseTribe2,
           ),
         ],
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         // tribe2's province is NOT in the snapshot invadable list, so
         // tribe2 must NOT surface as a priority owner.
         invadableNw: const ['newWorld|tribe1_a'],
@@ -603,7 +535,7 @@ void main() {
         planColonialLiteNaval(game: game, snapshot: snapshot),
         const ColonialLiteNavalPlan(
           priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
+          priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
         ),
         reason:
             'Only tribes / minors that actually contribute an NW invadable '
@@ -613,80 +545,84 @@ void main() {
       );
     });
 
-    test('owner list deduplicates across multiple provinces from same tribe',
-        () {
-      // Two provinces owned by `tribe1` must surface `tribe1` only once
-      // in `priorityTargetOwnerFactionIdsSorted`. The set-based owner
-      // collection in the planner is responsible for the dedup.
-      final game = _colonialLiteGame(
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|tribe1_a',
-            regionId: 'newWorld',
-            ownerId: _tribe1,
-          ),
-          Province(
-            id: 'newWorld|tribe1_b',
-            regionId: 'newWorld',
-            ownerId: _tribe1,
-          ),
-          Province(
-            id: 'newWorld|tribe1_c',
-            regionId: 'newWorld',
-            ownerId: _tribe1,
-          ),
-        ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-      );
-      final snapshot = _colonialLiteSnapshot(
-        invadableNw: const [
-          'newWorld|tribe1_a',
-          'newWorld|tribe1_b',
-          'newWorld|tribe1_c',
-        ],
-      );
-      expect(
-        planColonialLiteNaval(game: game, snapshot: snapshot),
-        const ColonialLiteNavalPlan(
-          priorityNwProvinceIdsSorted: <String>[
+    test(
+      'owner list deduplicates across multiple provinces from same tribe',
+      () {
+        // Two provinces owned by `tribe1` must surface `tribe1` only once
+        // in `priorityTargetOwnerFactionIdsSorted`. The set-based owner
+        // collection in the planner is responsible for the dedup.
+        final game = buildColonialLiteNavalGame(
+          newWorldProvinces: const [
+            Province(
+              id: 'newWorld|tribe1_a',
+              regionId: 'newWorld',
+              ownerId: kColonialPhaseTribe1,
+            ),
+            Province(
+              id: 'newWorld|tribe1_b',
+              regionId: 'newWorld',
+              ownerId: kColonialPhaseTribe1,
+            ),
+            Province(
+              id: 'newWorld|tribe1_c',
+              regionId: 'newWorld',
+              ownerId: kColonialPhaseTribe1,
+            ),
+          ],
+          tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        );
+        final snapshot = buildColonialLiteNavalSnapshot(
+          invadableNw: const [
             'newWorld|tribe1_a',
             'newWorld|tribe1_b',
             'newWorld|tribe1_c',
           ],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
-        ),
-        reason:
-            'Three provinces owned by tribe1 surface tribe1 only once in '
-            'priorityTargetOwnerFactionIdsSorted (set-based dedup).',
-      );
-    });
+        );
+        expect(
+          planColonialLiteNaval(game: game, snapshot: snapshot),
+          const ColonialLiteNavalPlan(
+            priorityNwProvinceIdsSorted: <String>[
+              'newWorld|tribe1_a',
+              'newWorld|tribe1_b',
+              'newWorld|tribe1_c',
+            ],
+            priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
+          ),
+          reason:
+              'Three provinces owned by tribe1 surface tribe1 only once in '
+              'priorityTargetOwnerFactionIdsSorted (set-based dedup).',
+        );
+      },
+    );
 
     test('input order shuffled -> ascending sort recovers', () {
       // Defensive determinism pin: even if a future builder regression
       // delivers the invadable list reversed, the planner's trailing
       // `priorityProvinces.sort()` recovers ascending order.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteNavalGame(
         newWorldProvinces: const [
           Province(
             id: 'newWorld|tribe1_a',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|tribe1_b',
             regionId: 'newWorld',
-            ownerId: _tribe1,
+            ownerId: kColonialPhaseTribe1,
           ),
           Province(
             id: 'newWorld|minor1_a',
             regionId: 'newWorld',
-            ownerId: _minor1,
+            ownerId: kColonialPhaseMinor1,
           ),
         ],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+        minorNations: const [
+          MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+        ],
       );
-      final snapshot = _colonialLiteSnapshot(
+      final snapshot = buildColonialLiteNavalSnapshot(
         // Reversed input order.
         invadableNw: const [
           'newWorld|tribe1_b',
@@ -706,53 +642,50 @@ void main() {
       );
       expect(
         plan.priorityTargetOwnerFactionIdsSorted,
-        const <String>[_minor1, _tribe1],
+        const <String>[kColonialPhaseMinor1, kColonialPhaseTribe1],
         reason: 'Owner list also sorted ascending across the dedup set.',
       );
     });
 
-    test(
-      'ColonialLiteNavalPlan value equality + defaultPlan equals explicit '
-      'all-empty instance',
-      () {
-        // Value-class pin so orchestrator wiring tests (#2509 S5) can
-        // compare planner output against the shared defaultPlan OR a
-        // fresh `const ColonialLiteNavalPlan(...)` with matching list
-        // contents. List equality is content-based, not identity-based.
-        const planA = ColonialLiteNavalPlan(
-          priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
-        );
-        const planB = ColonialLiteNavalPlan(
-          priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
-          priorityTargetOwnerFactionIdsSorted: <String>[_tribe1],
-        );
-        expect(planA, equals(planB));
-        expect(planA.hashCode, equals(planB.hashCode));
+    test('ColonialLiteNavalPlan value equality + defaultPlan equals explicit '
+        'all-empty instance', () {
+      // Value-class pin so orchestrator wiring tests (#2509 S5) can
+      // compare planner output against the shared defaultPlan OR a
+      // fresh `const ColonialLiteNavalPlan(...)` with matching list
+      // contents. List equality is content-based, not identity-based.
+      const planA = ColonialLiteNavalPlan(
+        priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
+        priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
+      );
+      const planB = ColonialLiteNavalPlan(
+        priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
+        priorityTargetOwnerFactionIdsSorted: <String>[kColonialPhaseTribe1],
+      );
+      expect(planA, equals(planB));
+      expect(planA.hashCode, equals(planB.hashCode));
 
-        const explicitDefault = ColonialLiteNavalPlan(
-          priorityNwProvinceIdsSorted: <String>[],
-          priorityTargetOwnerFactionIdsSorted: <String>[],
-        );
-        expect(
-          ColonialLiteNavalPlan.defaultPlan,
-          equals(explicitDefault),
-          reason:
-              'defaultPlan compares equal to a fresh all-empty const '
-              'instance; orchestrator wiring tests can assert against '
-              'either form.',
-        );
+      const explicitDefault = ColonialLiteNavalPlan(
+        priorityNwProvinceIdsSorted: <String>[],
+        priorityTargetOwnerFactionIdsSorted: <String>[],
+      );
+      expect(
+        ColonialLiteNavalPlan.defaultPlan,
+        equals(explicitDefault),
+        reason:
+            'defaultPlan compares equal to a fresh all-empty const '
+            'instance; orchestrator wiring tests can assert against '
+            'either form.',
+      );
 
-        // toString smoke test for diagnostic output consistency.
-        expect(
-          planA.toString(),
-          equals(
-            'ColonialLiteNavalPlan('
-            'priorityNwProvinceIdsSorted: [newWorld|tribe1_a], '
-            'priorityTargetOwnerFactionIdsSorted: [tribe1])',
-          ),
-        );
-      },
-    );
+      // toString smoke test for diagnostic output consistency.
+      expect(
+        planA.toString(),
+        equals(
+          'ColonialLiteNavalPlan('
+          'priorityNwProvinceIdsSorted: [newWorld|tribe1_a], '
+          'priorityTargetOwnerFactionIdsSorted: [tribe1])',
+        ),
+      );
+    });
   });
 }

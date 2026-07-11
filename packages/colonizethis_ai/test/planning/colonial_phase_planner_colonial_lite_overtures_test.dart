@@ -76,76 +76,11 @@
 //      -> only fresh tribe + minor returned:** composite filter pin
 //      (GP filter + embassy filter + sort in one fixture).
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
-const String _tribe3 = 'tribe3';
-const String _minor1 = 'minor1';
-
-/// Game scaffold for COLONIAL-lite overture tests. Tribes, minors, and
-/// overture states are passed in so each test can shape diplomatic
-/// state. Old World and New World provinces are intentionally empty
-/// because the planner does not query province ownership directly -- it
-/// reads the visible-owner faction id lists from the snapshot and the
-/// embassy filter from `game.overtureStates`.
-Game _colonialLiteGame({
-  int turnNumber = 125,
-  List<Player> players = const [
-    Player(id: _gp1, displayName: 'GP1', isHuman: false),
-    Player(id: _gp2, displayName: 'GP2', isHuman: false),
-  ],
-  List<Tribe> tribes = const [],
-  List<MinorNation> minorNations = const [],
-  List<OvertureState> overtureStates = const [],
-}) {
-  return Game(
-    id: 'g-2509-colonial-lite-overtures-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    tribes: tribes,
-    minorNations: minorNations,
-    overtureStates: overtureStates,
-  );
-}
-
-/// Snapshot tuned for COLONIAL-lite: own OW defaults to 9 (the
-/// COLONIAL-lite outer schedule -- "OW ≥9 and <10"). Tests shape the
-/// `adjacentNw` and `preferredColonial` candidate lists to exercise the
-/// union, GP filter, and embassy filter. The planner does not re-check
-/// the phase so the values are still consistent with COLONIAL-lite only
-/// so debugging traces stay coherent.
-AIWorldSnapshot _colonialLiteSnapshot({
-  List<String> adjacentNw = const [],
-  List<String> preferredColonial = const [],
-  int oldWorldProvincesOwned = 9,
-  String playerId = _gp1,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(
-      adjacentNewWorldOwnerFactionIdsSorted: adjacentNw,
-      preferredColonialTargetFactionIdsSorted: preferredColonial,
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
+import '../support/colonial_phase_planner_test_support.dart';
 
 void main() {
   group('planColonialLiteOvertures', () {
@@ -156,11 +91,15 @@ void main() {
       // A regression that always emitted the snapshot's candidate set
       // here would issue overtures for a player that does not exist
       // in the game roster.
-      final game = _colonialLiteGame(
-        players: const [Player(id: _gp2, displayName: 'GP2', isHuman: false)],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        players: const [
+          Player(id: kColonialPhaseGp2, displayName: 'GP2', isHuman: false),
+        ],
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
         isEmpty,
@@ -176,8 +115,8 @@ void main() {
       // union has no candidates. The planner returns empty without
       // touching `game.overtureStates`. This pins the
       // "no visible NW tribe / minor owner" structural short-circuit.
-      final game = _colonialLiteGame();
-      final snapshot = _colonialLiteSnapshot();
+      final game = buildColonialLiteOvertureGame();
+      final snapshot = buildColonialLiteOvertureSnapshot();
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
         isEmpty,
@@ -193,13 +132,15 @@ void main() {
       // establishOverture"). Adjacent NW owner = tribe1, no overture
       // state at all -> tribe1 returned. A regression that filtered
       // tribes structurally would surface here as empty.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'Single adjacent tribe with no existing overture is the '
             'canonical "if no embassy yet, suggest establishOverture" '
@@ -212,15 +153,15 @@ void main() {
       // `preferredColonialTargetFactionIdsSorted` instead of
       // `adjacentNewWorldOwnerFactionIdsSorted`. Both lists feed the
       // union and behave identically.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
-        preferredColonial: const [_tribe1],
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        preferredColonial: const [kColonialPhaseTribe1],
       );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'Preferred-colonial targets contribute candidates just like '
             'adjacent NW owners (both inputs feed the union).',
@@ -233,16 +174,16 @@ void main() {
       // single output entry. A regression that used a list concat
       // would emit `[tribe1, tribe1]` and the orchestrator would emit
       // a duplicate overture order.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(
-        adjacentNw: const [_tribe1],
-        preferredColonial: const [_tribe1],
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+        preferredColonial: const [kColonialPhaseTribe1],
       );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'tribe1 is present in both candidate lists; the set union '
             'must deduplicate so only one overture is suggested.',
@@ -253,21 +194,28 @@ void main() {
       // Pins the "Tiebreak: lowest factionId (deterministic)" rule
       // across the dedup union. tribe2 + tribe3 from adjacent,
       // tribe1 + minor1 from preferred -> all four sorted ascending.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteOvertureGame(
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
-          Tribe(id: _tribe3, displayName: 'T3'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe3, displayName: 'T3'),
         ],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        minorNations: const [
+          MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+        ],
       );
-      final snapshot = _colonialLiteSnapshot(
-        adjacentNw: const [_tribe2, _tribe3],
-        preferredColonial: const [_tribe1, _minor1],
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe2, kColonialPhaseTribe3],
+        preferredColonial: const [kColonialPhaseTribe1, kColonialPhaseMinor1],
       );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_minor1, _tribe1, _tribe2, _tribe3],
+        const [
+          kColonialPhaseMinor1,
+          kColonialPhaseTribe1,
+          kColonialPhaseTribe2,
+          kColonialPhaseTribe3,
+        ],
         reason:
             'Union across both candidate lists is sorted ascending '
             '(lowest factionId tiebreak from the spec).',
@@ -281,13 +229,15 @@ void main() {
       // implies GP-vs-GP wars are out of scope. A regression that
       // skipped the GP filter would emit `establishOverture(gp2)`
       // which the order engine then rejects.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_gp2, _tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseGp2, kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'gp2 resolves via `game.playerById`; the GP filter drops it '
             'so only tribe1 is suggested.',
@@ -301,17 +251,19 @@ void main() {
       // filter excludes it. A regression that omitted the embassy
       // filter would re-issue the initial overture against an
       // already-embassied tribe.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
         overtureStates: const [
           OvertureState(
-            gpId: _gp1,
-            targetId: _tribe1,
+            gpId: kColonialPhaseGp1,
+            targetId: kColonialPhaseTribe1,
             stage: OvertureStage.embassy,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
         isEmpty,
@@ -324,17 +276,19 @@ void main() {
     test('tribe at nap stage -> excluded', () {
       // `OvertureState.hasEmbassy` returns true for `embassy`, `nap`,
       // and `joinEmpire`. Pin the `nap` branch explicitly.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
         overtureStates: const [
           OvertureState(
-            gpId: _gp1,
-            targetId: _tribe1,
+            gpId: kColonialPhaseGp1,
+            targetId: kColonialPhaseTribe1,
             stage: OvertureStage.nap,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
         isEmpty,
@@ -349,17 +303,19 @@ void main() {
       // absorbed into the empire chain, the planner stops emitting
       // initial overtures (acquisition is now driven by
       // `planColonialAcquisition`).
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
         overtureStates: const [
           OvertureState(
-            gpId: _gp1,
-            targetId: _tribe1,
+            gpId: kColonialPhaseGp1,
+            targetId: kColonialPhaseTribe1,
             stage: OvertureStage.joinEmpire,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
         isEmpty,
@@ -374,20 +330,22 @@ void main() {
       // is treated as "no embassy yet" per `OvertureState.hasEmbassy`
       // returning false. Explicitly pin the case where an overture
       // record exists at stage=none (vs being absent entirely).
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
         overtureStates: const [
           OvertureState(
-            gpId: _gp1,
-            targetId: _tribe1,
+            gpId: kColonialPhaseGp1,
+            targetId: kColonialPhaseTribe1,
             stage: OvertureStage.none,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'Stage=none carries `hasEmbassy=false`; the planner treats '
             'it as "no embassy yet" and suggests the initial overture.',
@@ -399,20 +357,22 @@ void main() {
       // `hasEmbassy=false`. The spec's "if no embassy yet" rule must
       // therefore include the tribe -- the initial overture is what
       // advances past the consulate stage anyway.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+      final game = buildColonialLiteOvertureGame(
+        tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
         overtureStates: const [
           OvertureState(
-            gpId: _gp1,
-            targetId: _tribe1,
+            gpId: kColonialPhaseGp1,
+            targetId: kColonialPhaseTribe1,
             stage: OvertureStage.tradeConsulate,
           ),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [kColonialPhaseTribe1],
+      );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
+        const [kColonialPhaseTribe1],
         reason:
             'tradeConsulate stage still carries `hasEmbassy=false`; the '
             'planner must suggest the initial overture so the relation '
@@ -420,32 +380,37 @@ void main() {
       );
     });
 
-    test('sibling GP holds embassy with same target -> active NOT excluded', () {
-      // The embassy filter is keyed on the (gpId, targetId) pair, not
-      // just targetId. A sibling GP (gp2) holding an embassy with
-      // tribe1 must not block the active player (gp1) from
-      // initiating its own overture. A regression that filtered on
-      // targetId alone would silently de-prioritize tribe1 for every
-      // GP once any one GP advanced past the consulate stage.
-      final game = _colonialLiteGame(
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        overtureStates: const [
-          OvertureState(
-            gpId: _gp2,
-            targetId: _tribe1,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-      );
-      final snapshot = _colonialLiteSnapshot(adjacentNw: const [_tribe1]);
-      expect(
-        planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1],
-        reason:
-            'gp2 holds the embassy with tribe1; active player gp1 still '
-            'has no embassy of its own and must initiate an overture.',
-      );
-    });
+    test(
+      'sibling GP holds embassy with same target -> active NOT excluded',
+      () {
+        // The embassy filter is keyed on the (gpId, targetId) pair, not
+        // just targetId. A sibling GP (gp2) holding an embassy with
+        // tribe1 must not block the active player (gp1) from
+        // initiating its own overture. A regression that filtered on
+        // targetId alone would silently de-prioritize tribe1 for every
+        // GP once any one GP advanced past the consulate stage.
+        final game = buildColonialLiteOvertureGame(
+          tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'T1')],
+          overtureStates: const [
+            OvertureState(
+              gpId: kColonialPhaseGp2,
+              targetId: kColonialPhaseTribe1,
+              stage: OvertureStage.embassy,
+            ),
+          ],
+        );
+        final snapshot = buildColonialLiteOvertureSnapshot(
+          adjacentNw: const [kColonialPhaseTribe1],
+        );
+        expect(
+          planColonialLiteOvertures(game: game, snapshot: snapshot),
+          const [kColonialPhaseTribe1],
+          reason:
+              'gp2 holds the embassy with tribe1; active player gp1 still '
+              'has no embassy of its own and must initiate an overture.',
+        );
+      },
+    );
 
     test('input order shuffled (adjacent reversed) -> ascending sort', () {
       // Determinism pin (Must-have #7). Inputs are supplied in
@@ -453,19 +418,27 @@ void main() {
       // ascending order. A regression that returned the iteration
       // order of the Set would surface here as a Dart-runtime-defined
       // order rather than the spec's lowest-factionId tiebreak.
-      final game = _colonialLiteGame(
+      final game = buildColonialLiteOvertureGame(
         tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
-          Tribe(id: _tribe3, displayName: 'T3'),
+          Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+          Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
+          Tribe(id: kColonialPhaseTribe3, displayName: 'T3'),
         ],
       );
-      final snapshot = _colonialLiteSnapshot(
-        adjacentNw: const [_tribe3, _tribe2, _tribe1],
+      final snapshot = buildColonialLiteOvertureSnapshot(
+        adjacentNw: const [
+          kColonialPhaseTribe3,
+          kColonialPhaseTribe2,
+          kColonialPhaseTribe1,
+        ],
       );
       expect(
         planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_tribe1, _tribe2, _tribe3],
+        const [
+          kColonialPhaseTribe1,
+          kColonialPhaseTribe2,
+          kColonialPhaseTribe3,
+        ],
         reason:
             'Trailing `result.sort()` enforces ascending order regardless '
             'of input order (Refs #2509 Must-have #7 / lowest-factionId '
@@ -473,75 +446,92 @@ void main() {
       );
     });
 
-    test('Refs #2509 Must-have #7 determinism: identical inputs -> identical list', () {
-      // Pins Must-have #7 (determinism) at the in-module level. The
-      // mixed-input fixture exercises the union, the GP filter, the
-      // embassy filter, and the sort in one pass; repeating the call
-      // must yield byte-identical lists.
-      final game = _colonialLiteGame(
-        players: const [
-          Player(id: _gp1, displayName: 'GP1', isHuman: false),
-          Player(id: _gp2, displayName: 'GP2', isHuman: false),
-        ],
-        tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
-        ],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        overtureStates: const [
-          OvertureState(
-            gpId: _gp1,
-            targetId: _tribe2,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-      );
-      final snapshot = _colonialLiteSnapshot(
-        adjacentNw: const [_tribe2, _gp2],
-        preferredColonial: const [_tribe1, _minor1],
-      );
-      final first = planColonialLiteOvertures(game: game, snapshot: snapshot);
-      final second = planColonialLiteOvertures(game: game, snapshot: snapshot);
-      expect(second, first);
-    });
+    test(
+      'Refs #2509 Must-have #7 determinism: identical inputs -> identical list',
+      () {
+        // Pins Must-have #7 (determinism) at the in-module level. The
+        // mixed-input fixture exercises the union, the GP filter, the
+        // embassy filter, and the sort in one pass; repeating the call
+        // must yield byte-identical lists.
+        final game = buildColonialLiteOvertureGame(
+          players: const [
+            Player(id: kColonialPhaseGp1, displayName: 'GP1', isHuman: false),
+            Player(id: kColonialPhaseGp2, displayName: 'GP2', isHuman: false),
+          ],
+          tribes: const [
+            Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+            Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
+          ],
+          minorNations: const [
+            MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: kColonialPhaseGp1,
+              targetId: kColonialPhaseTribe2,
+              stage: OvertureStage.embassy,
+            ),
+          ],
+        );
+        final snapshot = buildColonialLiteOvertureSnapshot(
+          adjacentNw: const [kColonialPhaseTribe2, kColonialPhaseGp2],
+          preferredColonial: const [kColonialPhaseTribe1, kColonialPhaseMinor1],
+        );
+        final first = planColonialLiteOvertures(game: game, snapshot: snapshot);
+        final second = planColonialLiteOvertures(
+          game: game,
+          snapshot: snapshot,
+        );
+        expect(second, first);
+      },
+    );
 
-    test('composite: GP + embassied tribe + fresh tribe + minor -> filtered sorted', () {
-      // Composite pin exercising all three filters (GP filter +
-      // embassy filter + sort) in one fixture. Inputs:
-      //   adjacent = [gp2, tribe2, tribe1]
-      //   preferred = [minor1, tribe2]
-      // Embassy state: gp1 -> tribe2 (stage=embassy).
-      // Expected:
-      //   - gp2 dropped by the GP filter
-      //   - tribe2 dropped by the embassy filter (gp1 already has
-      //     embassy)
-      //   - tribe1 + minor1 survive -> sorted ascending = [minor1,
-      //     tribe1]
-      final game = _colonialLiteGame(
-        tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-          Tribe(id: _tribe2, displayName: 'T2'),
-        ],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        overtureStates: const [
-          OvertureState(
-            gpId: _gp1,
-            targetId: _tribe2,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-      );
-      final snapshot = _colonialLiteSnapshot(
-        adjacentNw: const [_gp2, _tribe2, _tribe1],
-        preferredColonial: const [_minor1, _tribe2],
-      );
-      expect(
-        planColonialLiteOvertures(game: game, snapshot: snapshot),
-        const [_minor1, _tribe1],
-        reason:
-            'Composite filter: gp2 dropped (GP filter), tribe2 dropped '
-            '(embassy filter), tribe1 + minor1 sorted ascending.',
-      );
-    });
+    test(
+      'composite: GP + embassied tribe + fresh tribe + minor -> filtered sorted',
+      () {
+        // Composite pin exercising all three filters (GP filter +
+        // embassy filter + sort) in one fixture. Inputs:
+        //   adjacent = [gp2, tribe2, tribe1]
+        //   preferred = [minor1, tribe2]
+        // Embassy state: gp1 -> tribe2 (stage=embassy).
+        // Expected:
+        //   - gp2 dropped by the GP filter
+        //   - tribe2 dropped by the embassy filter (gp1 already has
+        //     embassy)
+        //   - tribe1 + minor1 survive -> sorted ascending = [minor1,
+        //     tribe1]
+        final game = buildColonialLiteOvertureGame(
+          tribes: const [
+            Tribe(id: kColonialPhaseTribe1, displayName: 'T1'),
+            Tribe(id: kColonialPhaseTribe2, displayName: 'T2'),
+          ],
+          minorNations: const [
+            MinorNation(id: kColonialPhaseMinor1, displayName: 'M1'),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: kColonialPhaseGp1,
+              targetId: kColonialPhaseTribe2,
+              stage: OvertureStage.embassy,
+            ),
+          ],
+        );
+        final snapshot = buildColonialLiteOvertureSnapshot(
+          adjacentNw: const [
+            kColonialPhaseGp2,
+            kColonialPhaseTribe2,
+            kColonialPhaseTribe1,
+          ],
+          preferredColonial: const [kColonialPhaseMinor1, kColonialPhaseTribe2],
+        );
+        expect(
+          planColonialLiteOvertures(game: game, snapshot: snapshot),
+          const [kColonialPhaseMinor1, kColonialPhaseTribe1],
+          reason:
+              'Composite filter: gp2 dropped (GP filter), tribe2 dropped '
+              '(embassy filter), tribe1 + minor1 sorted ascending.',
+        );
+      },
+    );
   });
 }
