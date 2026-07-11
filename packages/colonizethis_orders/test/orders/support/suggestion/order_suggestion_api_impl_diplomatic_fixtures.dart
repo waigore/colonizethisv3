@@ -1,25 +1,19 @@
-// Shared diplomatic GP API impl suggestion fixtures (Refs #3949 wave 3).
+// Shared diplomatic GP API impl suggestion fixtures (Refs #3949 wave 3,
+// #3971 wave 4).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const diplomaticApiImplTopology = MapTopology(nodes: [], edges: []);
 
-const diplomaticApiImplTwoGpPlayers = [
-  Player(id: 'gp1', displayName: 'A', isHuman: false),
-  Player(id: 'gp2', displayName: 'B', isHuman: false),
-];
+const diplomaticApiImplTwoGpPlayers = ordersCommonTwoGpAb;
 
 Game diplomaticApiImplGame({
   required List<DiplomacyRelation> diplomacyRelations,
-}) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
+}) => ordersTwoGpEmptyGame(
   players: diplomaticApiImplTwoGpPlayers,
   diplomacyRelations: diplomacyRelations,
 );
