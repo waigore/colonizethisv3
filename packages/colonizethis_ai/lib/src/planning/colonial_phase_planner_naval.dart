@@ -45,10 +45,11 @@ final class ColonialNavalPlan extends PhaseDestinationResult {
   const ColonialNavalPlan({
     required List<String> priorityInvasionTransportProvinceIdsSorted,
     required List<String> priorityTargetOwnerFactionIdsSorted,
-  })  : _priorityInvasionTransportProvinceIdsSorted =
-            priorityInvasionTransportProvinceIdsSorted,
-        _priorityTargetOwnerFactionIdsSorted =
-            priorityTargetOwnerFactionIdsSorted;
+  }) : super(
+         priorityProvinceIdsSorted: priorityInvasionTransportProvinceIdsSorted,
+         priorityTargetOwnerFactionIdsSorted:
+             priorityTargetOwnerFactionIdsSorted,
+       );
 
   /// Reusable "no override" plan returned for the outer COLONIAL
   /// guards (below quota, missing player, empty NW invadable) and for
@@ -61,9 +62,6 @@ final class ColonialNavalPlan extends PhaseDestinationResult {
     priorityInvasionTransportProvinceIdsSorted: <String>[],
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
-
-  final List<String> _priorityInvasionTransportProvinceIdsSorted;
-  final List<String> _priorityTargetOwnerFactionIdsSorted;
 
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only by builder contract) where invasion-transport naval
@@ -83,7 +81,7 @@ final class ColonialNavalPlan extends PhaseDestinationResult {
   /// non-default plan does not suppress the parallel exploration /
   /// cargo activity.
   List<String> get priorityInvasionTransportProvinceIdsSorted =>
-      _priorityInvasionTransportProvinceIdsSorted;
+      priorityProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityInvasionTransportProvinceIdsSorted]. Sorted ascending
@@ -99,11 +97,7 @@ final class ColonialNavalPlan extends PhaseDestinationResult {
   ///   - Empty for [defaultPlan].
   @override
   List<String> get priorityTargetOwnerFactionIdsSorted =>
-      _priorityTargetOwnerFactionIdsSorted;
-
-  @override
-  List<String> get priorityProvinceIdsSorted =>
-      _priorityInvasionTransportProvinceIdsSorted;
+      super.priorityTargetOwnerFactionIdsSorted;
 
   @override
   String toString() =>
@@ -409,9 +403,11 @@ final class ColonialLiteNavalPlan extends PhaseDestinationResult {
   const ColonialLiteNavalPlan({
     required List<String> priorityNwProvinceIdsSorted,
     required List<String> priorityTargetOwnerFactionIdsSorted,
-  })  : _priorityNwProvinceIdsSorted = priorityNwProvinceIdsSorted,
-        _priorityTargetOwnerFactionIdsSorted =
-            priorityTargetOwnerFactionIdsSorted;
+  }) : super(
+         priorityProvinceIdsSorted: priorityNwProvinceIdsSorted,
+         priorityTargetOwnerFactionIdsSorted:
+             priorityTargetOwnerFactionIdsSorted,
+       );
 
   /// Reusable "no override" plan returned for the outer defensive
   /// guards (missing player, empty NW invadable) and for the
@@ -424,9 +420,6 @@ final class ColonialLiteNavalPlan extends PhaseDestinationResult {
     priorityNwProvinceIdsSorted: <String>[],
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
-
-  final List<String> _priorityNwProvinceIdsSorted;
-  final List<String> _priorityTargetOwnerFactionIdsSorted;
 
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only by builder contract) whose owners are tribes or minor
@@ -441,7 +434,7 @@ final class ColonialLiteNavalPlan extends PhaseDestinationResult {
   /// naval-move destinations. Cargo routing (deliver riches to OW
   /// stockpile) is satisfied at the orchestrator layer by the
   /// existing colonial naval pathing the directive does not override.
-  List<String> get priorityNwProvinceIdsSorted => _priorityNwProvinceIdsSorted;
+  List<String> get priorityNwProvinceIdsSorted => priorityProvinceIdsSorted;
 
   /// Faction ids of the tribes / minor nations owning the provinces
   /// in [priorityNwProvinceIdsSorted]. Sorted ascending and
@@ -452,10 +445,7 @@ final class ColonialLiteNavalPlan extends PhaseDestinationResult {
   /// toward visible NW tribe / minor owners"). Empty for [defaultPlan].
   @override
   List<String> get priorityTargetOwnerFactionIdsSorted =>
-      _priorityTargetOwnerFactionIdsSorted;
-
-  @override
-  List<String> get priorityProvinceIdsSorted => _priorityNwProvinceIdsSorted;
+      super.priorityTargetOwnerFactionIdsSorted;
 
   @override
   String toString() =>
