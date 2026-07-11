@@ -1,41 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world_constants.dart';
 import 'army_ids.dart';
 import 'army_lookup.dart';
+import 'army_migration_region.dart';
 import 'game_world_mutations.dart';
-import 'province_lookup.dart';
-import 'region_unit_lists.dart';
 import 'unit_lookup.dart';
 
-part 'army_migration_relocation.dart';
-
-/// Prefixed ids use [ProvinceId.regionIdFrom]; otherwise resolve from [WorldState]
-/// (legacy tests and fixtures may use local province ids only).
-String _regionIdForProvinceInWorld(WorldState ws, String provinceId) {
-  if (ProvinceId.isPrefixed(provinceId)) {
-    return ProvinceId.regionIdFrom(provinceId);
-  }
-  final region = ws.tryGetRegionIdForLegacyProvinceKey(provinceId);
-  if (region == null) {
-    throw StateError('Province id not found in either region: "$provinceId"');
-  }
-  return region;
-}
-
-/// Prefixed [Unit.locationProvinceId] uses [ProvinceId.regionIdFrom]; otherwise
-/// infer region from which regional unit list contains [u].
-String _regionIdForUnitInWorld(WorldState ws, Unit u) {
-  if (ProvinceId.isPrefixed(u.locationProvinceId)) {
-    return ProvinceId.regionIdFrom(u.locationProvinceId);
-  }
-  final region = ws.tryGetRegionIdForUnit(u);
-  if (region == null) {
-    throw StateError('Military unit ${u.id} not found in world state regions');
-  }
-  return region;
-}
+export 'army_migration_relocation.dart';
 
 /// Ensures every military regiment is in exactly one army and every GP has a home army.
 /// Rebuilds from units when [WorldState.armies] is empty or membership is invalid.
@@ -107,7 +79,7 @@ Army _homeArmyForPlayerAtCapital(WorldState ws, Player player, String cap) =>
     Army(
       id: homeArmyIdFor(player.id),
       ownerId: player.id,
-      regionId: _regionIdForProvinceInWorld(ws, cap),
+      regionId: regionIdForProvinceInWorld(ws, cap),
       stationedProvinceId: cap,
       regimentUnitIds: const [],
       isHomeArmy: true,
@@ -190,7 +162,7 @@ void _appendHomeArmies(
     army: Army(
       id: hid,
       ownerId: player.id,
-      regionId: _regionIdForProvinceInWorld(ws, cap),
+      regionId: regionIdForProvinceInWorld(ws, cap),
       stationedProvinceId: cap,
       regimentUnitIds: List<String>.from(byArmyKey[hid] ?? const []),
       isHomeArmy: true,
@@ -221,7 +193,7 @@ Army? _fieldArmyFromEntry(
   return Army(
     id: e.key,
     ownerId: sample.ownerId,
-    regionId: _regionIdForUnitInWorld(ws, sample),
+    regionId: regionIdForUnitInWorld(ws, sample),
     stationedProvinceId: sample.locationProvinceId,
     regimentUnitIds: List<String>.from(e.value)..sort(),
     isHomeArmy: false,
@@ -270,7 +242,7 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
         : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
     var target = firstArmyById(armies, targetId);
     if (target == null) {
-      final regionId = _regionIdForUnitInWorld(worldState, u);
+      final regionId = regionIdForUnitInWorld(worldState, u);
       target = Army(
         id: targetId,
         ownerId: u.ownerId,

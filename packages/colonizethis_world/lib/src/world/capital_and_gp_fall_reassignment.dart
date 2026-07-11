@@ -1,4 +1,13 @@
-part of 'capital_and_gp_fall.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_world/src/logging.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'capital_and_gp_fall_eligibility.dart';
+import 'capital_reassignment.dart';
+import 'capital_reassignment_fatal.dart';
+import 'town_capital_tile_strip.dart';
+import 'player_state_pipeline.dart';
+import 'province_lookup.dart';
 
 /// Faction-agnostic configuration for one runtime capital-reassignment pass.
 ///

@@ -1,25 +1,28 @@
-part of 'connectivity_resolver_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _connectivity_resolver_non_gp_capital_testTests();
+}
 
 void _connectivity_resolver_non_gp_capital_testTests() {
-group('resolveNonGreatPowerConnectivity', () {
+  group('resolveNonGreatPowerConnectivity', () {
     test('minor with null capitalTile gets empty ConnectivityResult', () {
       const ow = 'oldWorld';
       final tileMap = tileMapFromGrid([
         ['p1', 'p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: [],
+      final topology = singleProvinceTopology(
+        regionId: ow,
+        provinceLocalId: 'p1',
+      );
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+        ],
+        players: const [],
         minorNations: [
           // Capital intentionally unset (e.g. before terminal fall).
           const MinorNation(id: 'minor_lux'),
@@ -43,19 +46,15 @@ group('resolveNonGreatPowerConnectivity', () {
       final tileMap = tileMapFromGrid([
         ['p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: nw, provinceLocalId: 'p1');
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
-            ],
-          ),
-        ),
-        players: [],
+      final topology = singleProvinceTopology(
+        regionId: nw,
+        provinceLocalId: 'p1',
+      );
+      final game = ordersPhaseGame(
+        newWorldProvinces: [
+          Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
+        ],
+        players: const [],
         tribes: [const Tribe(id: 'tribe_iro')],
       );
 
@@ -79,12 +78,7 @@ group('resolveNonGreatPowerConnectivity', () {
           ['p1', 'p2'],
         ]);
         final topology = inlandAndSeaboardProvincesTopology(regionId: ow);
-        final cap = CapitalTile(
-          regionId: ow,
-          provinceId: '$ow|p1',
-          x: 0,
-          y: 0,
-        );
+        final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 0, y: 0);
         // Road from capital tile through both provinces' tiles to the port.
         final tileState = TileMapState()
             .setRoadLevel('oldWorld|p1|0|0', 1)
@@ -104,21 +98,14 @@ group('resolveNonGreatPowerConnectivity', () {
           targetProvinceId: '$ow|p2',
         );
 
-        final gameNoFleet = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-                Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-            portsByProvinceSeaboard: ports,
-          ),
-          players: [],
+        final gameNoFleet = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
+          ],
+          tileState: tileState,
+          portsByProvinceSeaboard: ports,
+          players: const [],
           minorNations: [
             MinorNation(
               id: 'minor_lux',
@@ -128,22 +115,15 @@ group('resolveNonGreatPowerConnectivity', () {
           ],
         );
 
-        final gameWithBlockade = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-                Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-            portsByProvinceSeaboard: ports,
-            fleets: [blockadingFleet],
-          ),
-          players: [],
+        final gameWithBlockade = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
+          ],
+          tileState: tileState,
+          portsByProvinceSeaboard: ports,
+          fleets: [blockadingFleet],
+          players: const [],
           minorNations: [
             MinorNation(
               id: 'minor_lux',
@@ -188,30 +168,21 @@ group('resolveNonGreatPowerConnectivity', () {
         // shared Road and Town rules apply faction-agnostically).
         const ow = 'oldWorld';
         final tileMap = uniformProvinceTileMap('p1', size: 3);
-        final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
-        final cap = CapitalTile(
+        final topology = singleProvinceTopology(
           regionId: ow,
-          provinceId: '$ow|p1',
-          x: 1,
-          y: 1,
+          provinceLocalId: 'p1',
         );
+        final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
         final tileState = TileMapState()
             .setRoadLevel('oldWorld|p1|1|1', 1)
             .setRoadLevel('oldWorld|p1|0|1', 1)
             .setRoadLevel('oldWorld|p1|0|0', 1);
 
-        final gpGame = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-          ),
+        final gpGame = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+          ],
+          tileState: tileState,
           players: [
             Player(
               id: 'pl1',
@@ -222,19 +193,12 @@ group('resolveNonGreatPowerConnectivity', () {
             ),
           ],
         );
-        final minorGame = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-          ),
-          players: [],
+        final minorGame = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+          ],
+          tileState: tileState,
+          players: const [],
           minorNations: [
             MinorNation(
               id: 'minor_lux',
@@ -283,18 +247,11 @@ group('resolveNonGreatPowerConnectivity', () {
           x: 1,
           y: 0,
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_lux'),
+          ],
           players: [
             Player(
               id: 'pl1',
@@ -326,5 +283,4 @@ group('resolveNonGreatPowerConnectivity', () {
       },
     );
   });
-
 }

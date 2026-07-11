@@ -188,7 +188,11 @@ void main() {
       final fieldId = game.worldState.armies
           .firstWhere((a) => !a.isHomeArmy)
           .id;
-      final next = updateArmyStation(game.worldState, fieldId, 'newWorld|beach');
+      final next = updateArmyStation(
+        game.worldState,
+        fieldId,
+        'newWorld|beach',
+      );
       final army = next.armies.firstWhere((a) => a.id == fieldId);
       expect(army.regionId, 'newWorld');
       expect(next.oldWorld.units.any((u) => u.id == 'r1'), isFalse);

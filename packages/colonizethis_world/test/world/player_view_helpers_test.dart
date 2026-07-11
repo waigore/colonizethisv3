@@ -68,24 +68,27 @@ void main() {
       );
     });
 
-    test('prospect-required resources stay hidden until prospected (fogged)', () {
-      expect(
-        resourceIdVisibleToPlayer(
-          authoritativeResourceId: 'gold',
-          visibility: VisibilityLevel.fogged,
-          tileProspectedByPlayer: false,
-        ),
-        isNull,
-      );
-      expect(
-        resourceIdVisibleToPlayer(
-          authoritativeResourceId: 'gold',
-          visibility: VisibilityLevel.fogged,
-          tileProspectedByPlayer: true,
-        ),
-        'gold',
-      );
-    });
+    test(
+      'prospect-required resources stay hidden until prospected (fogged)',
+      () {
+        expect(
+          resourceIdVisibleToPlayer(
+            authoritativeResourceId: 'gold',
+            visibility: VisibilityLevel.fogged,
+            tileProspectedByPlayer: false,
+          ),
+          isNull,
+        );
+        expect(
+          resourceIdVisibleToPlayer(
+            authoritativeResourceId: 'gold',
+            visibility: VisibilityLevel.fogged,
+            tileProspectedByPlayer: true,
+          ),
+          'gold',
+        );
+      },
+    );
 
     test('prospect-required resources stay hidden until prospected (full)', () {
       expect(

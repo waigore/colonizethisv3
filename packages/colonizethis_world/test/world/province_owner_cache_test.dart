@@ -24,12 +24,15 @@ void main() {
   );
 
   group('ProvinceOwnerCache.build', () {
-    test('provincesOwnedBy returns owned provinces old-world-first in order', () {
-      final cache = ProvinceOwnerCache.build(buildWorld());
+    test(
+      'provincesOwnedBy returns owned provinces old-world-first in order',
+      () {
+        final cache = ProvinceOwnerCache.build(buildWorld());
 
-      final owned = cache.provincesOwnedBy('p1');
-      expect(owned.map((p) => p.id).toList(), [aId, cId]);
-    });
+        final owned = cache.provincesOwnedBy('p1');
+        expect(owned.map((p) => p.id).toList(), [aId, cId]);
+      },
+    );
 
     test('ownerOf returns owner for owned and null for unowned province', () {
       final cache = ProvinceOwnerCache.build(buildWorld());
@@ -52,12 +55,15 @@ void main() {
       expect(cache.isOwnedBy(bId, 'p1'), isFalse);
     });
 
-    test('countOwnedBy counts owned provinces and zero for an absent owner', () {
-      final cache = ProvinceOwnerCache.build(buildWorld());
+    test(
+      'countOwnedBy counts owned provinces and zero for an absent owner',
+      () {
+        final cache = ProvinceOwnerCache.build(buildWorld());
 
-      expect(cache.countOwnedBy('p1'), 2);
-      expect(cache.countOwnedBy('p2'), 0);
-    });
+        expect(cache.countOwnedBy('p1'), 2);
+        expect(cache.countOwnedBy('p2'), 0);
+      },
+    );
 
     test('provincesOwnedByInRegion returns the owner provinces per region', () {
       final cache = ProvinceOwnerCache.build(buildWorld());
@@ -72,11 +78,14 @@ void main() {
       );
     });
 
-    test('provincesOwnedByInRegion is empty for an unowned-in-region owner', () {
-      final cache = ProvinceOwnerCache.build(buildWorld());
+    test(
+      'provincesOwnedByInRegion is empty for an unowned-in-region owner',
+      () {
+        final cache = ProvinceOwnerCache.build(buildWorld());
 
-      expect(cache.provincesOwnedByInRegion('p2', ow), isEmpty);
-    });
+        expect(cache.provincesOwnedByInRegion('p2', ow), isEmpty);
+      },
+    );
 
     test('ownsAnyInRegion reflects per-region ownership', () {
       final cache = ProvinceOwnerCache.build(buildWorld());

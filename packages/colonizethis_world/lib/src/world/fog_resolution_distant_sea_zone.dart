@@ -1,4 +1,12 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'fog_resolution_gp_visibility.dart';
+import 'naval_coastal_visibility.dart' show canonicalSeaZoneTileBucketKey;
+import 'player_view.dart';
+import 'province_lookup.dart';
+import 'topology_helpers.dart';
+import 'topology_identity.dart';
 
 bool _seaZoneHasOwnedCoastalProvinceForPlayer(
   Game game,
@@ -111,7 +119,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
   MapTopology topology, {
   Map<String, MapTopology>? topologyByRegion,
 }) {
-  return _forEachWorldRegionGpVisibility(
+  return forEachWorldRegionGpVisibility(
     game: game,
     visibility: visibility,
     topology: topology,

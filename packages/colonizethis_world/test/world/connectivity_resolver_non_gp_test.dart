@@ -1,26 +1,29 @@
-part of 'connectivity_resolver_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _connectivity_resolver_non_gp_testTests();
+}
 
 void _connectivity_resolver_non_gp_testTests() {
-group('resolveNonGreatPowerConnectivity', () {
+  group('resolveNonGreatPowerConnectivity', () {
     test('empty map when no minors and no tribes', () {
       const ow = 'oldWorld';
       final tileMap = tileMapFromGrid([
         ['p1', 'p1'],
         ['p1', 'p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1')],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+      final topology = singleProvinceTopology(
+        regionId: ow,
+        provinceLocalId: 'p1',
+      );
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
         ],
+        players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
       );
 
       final result = resolveNonGreatPowerConnectivity(
@@ -41,25 +44,16 @@ group('resolveNonGreatPowerConnectivity', () {
           ['p1', 'p1', 'p1'],
           ['p1', 'p1', 'p1'],
         ]);
-        final topology = singleProvinceTopology(regionId: ow, provinceLocalId: 'p1');
-        final cap = CapitalTile(
+        final topology = singleProvinceTopology(
           regionId: ow,
-          provinceId: '$ow|p1',
-          x: 1,
-          y: 1,
+          provinceLocalId: 'p1',
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: [],
+        final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
+        final game = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+          ],
+          players: const [],
           minorNations: [
             MinorNation(
               id: 'minor_lux',
@@ -95,25 +89,21 @@ group('resolveNonGreatPowerConnectivity', () {
         ['p1', 'p1', 'p1'],
         ['p1', 'p1', 'p1'],
       ]);
-      final topology = singleProvinceTopology(regionId: nw, provinceLocalId: 'p1');
+      final topology = singleProvinceTopology(
+        regionId: nw,
+        provinceLocalId: 'p1',
+      );
       final cap = CapitalTile(regionId: nw, provinceId: '$nw|p1', x: 0, y: 0);
       final tileState = TileMapState()
           .setRoadLevel('newWorld|p1|0|0', 1)
           .setRoadLevel('newWorld|p1|1|0', 1)
           .setRoadLevel('newWorld|p1|2|0', 1);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
-            ],
-          ),
-          tileState: tileState,
-        ),
-        players: [],
+      final game = ordersPhaseGame(
+        newWorldProvinces: [
+          Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
+        ],
+        tileState: tileState,
+        players: const [],
         tribes: [
           Tribe(
             id: 'tribe_iro',
@@ -168,23 +158,15 @@ group('resolveNonGreatPowerConnectivity', () {
         x: 0,
         y: 0,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-              Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_den'),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(id: '$nw|p3', regionId: nw, ownerId: 'tribe_iro'),
-            ],
-          ),
-        ),
-        players: [],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'minor_den'),
+        ],
+        newWorldProvinces: [
+          Province(id: '$nw|p3', regionId: nw, ownerId: 'tribe_iro'),
+        ],
+        players: const [],
         minorNations: [
           MinorNation(
             id: 'minor_lux',
@@ -216,17 +198,37 @@ group('resolveNonGreatPowerConnectivity', () {
       // Each faction sees its own capital tile (same per-tile semantics as the
       // Great Power resolver — see capital-and-connectivity.md § Connectivity
       // (Game Rule)).
-      expect(result['minor_lux']!.connected.contains('oldWorld|p1|0|0'), isTrue);
-      expect(result['minor_den']!.connected.contains('oldWorld|p2|0|1'), isTrue);
-      expect(result['tribe_iro']!.connected.contains('newWorld|p3|0|0'), isTrue);
+      expect(
+        result['minor_lux']!.connected.contains('oldWorld|p1|0|0'),
+        isTrue,
+      );
+      expect(
+        result['minor_den']!.connected.contains('oldWorld|p2|0|1'),
+        isTrue,
+      );
+      expect(
+        result['tribe_iro']!.connected.contains('newWorld|p3|0|0'),
+        isTrue,
+      );
       // Region isolation: tribe_iro's New World province tiles never appear in
       // minor_lux's or minor_den's Old World result, and vice versa (no
       // cross-region leakage even via single-hop expansion).
-      expect(result['minor_lux']!.connected.contains('newWorld|p3|0|0'), isFalse);
-      expect(result['minor_den']!.connected.contains('newWorld|p3|0|0'), isFalse);
-      expect(result['tribe_iro']!.connected.contains('oldWorld|p1|0|0'), isFalse);
-      expect(result['tribe_iro']!.connected.contains('oldWorld|p2|0|1'), isFalse);
+      expect(
+        result['minor_lux']!.connected.contains('newWorld|p3|0|0'),
+        isFalse,
+      );
+      expect(
+        result['minor_den']!.connected.contains('newWorld|p3|0|0'),
+        isFalse,
+      );
+      expect(
+        result['tribe_iro']!.connected.contains('oldWorld|p1|0|0'),
+        isFalse,
+      );
+      expect(
+        result['tribe_iro']!.connected.contains('oldWorld|p2|0|1'),
+        isFalse,
+      );
     });
   });
-
 }

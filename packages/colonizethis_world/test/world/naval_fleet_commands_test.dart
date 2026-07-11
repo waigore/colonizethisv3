@@ -6,9 +6,7 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 
 Game _gameWithFleets(List<Fleet> fleets) => TestFixtures.minimalGame(
   id: 'g_naval_split',
-  players: const [
-    Player(id: 'gp_human', displayName: 'Human', isHuman: true),
-  ],
+  players: const [Player(id: 'gp_human', displayName: 'Human', isHuman: true)],
   fleets: fleets,
 );
 

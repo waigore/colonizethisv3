@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -11,22 +10,16 @@ import '../world_test_support/world_test_support.dart';
 Game _singleProvinceGpGame() {
   const ow = 'oldWorld';
   final cap = CapitalTile(regionId: ow, provinceId: '$ow|p1', x: 1, y: 1);
-  return Game(
+  return ordersPhaseGame(
     id: 'metrics-g1',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: '$ow|p1',
-            regionId: ow,
-            ownerId: 'pl1',
-            townTileKey: cap.toTileKey(),
-          ),
-        ],
+    oldWorldProvinces: [
+      Province(
+        id: '$ow|p1',
+        regionId: ow,
+        ownerId: 'pl1',
+        townTileKey: cap.toTileKey(),
       ),
-      newWorld: const RegionData(),
-    ),
+    ],
     players: [
       Player(
         id: 'pl1',
@@ -76,34 +69,31 @@ void main() {
       );
     });
 
-    test(
-      'leaves an unrelated metrics instance untouched when none is passed '
-      '(no module-level coupling)',
-      () {
-        final game = _singleProvinceGpGame();
-        // Constructed but deliberately NOT passed to the resolver. With the
-        // former module-level test hook this could capture counts via the
-        // global setter; with parameter threading it must stay at zero.
-        final detached = ConnectivityHotPathMetrics();
-        final topology = singleProvinceTopology(
-          regionId: 'oldWorld',
-          provinceLocalId: 'p1',
-        );
-        final tileMapByRegion = {
-          'oldWorld': uniformProvinceTileMap('p1', size: 3),
-        };
+    test('leaves an unrelated metrics instance untouched when none is passed '
+        '(no module-level coupling)', () {
+      final game = _singleProvinceGpGame();
+      // Constructed but deliberately NOT passed to the resolver. With the
+      // former module-level test hook this could capture counts via the
+      // global setter; with parameter threading it must stay at zero.
+      final detached = ConnectivityHotPathMetrics();
+      final topology = singleProvinceTopology(
+        regionId: 'oldWorld',
+        provinceLocalId: 'p1',
+      );
+      final tileMapByRegion = {
+        'oldWorld': uniformProvinceTileMap('p1', size: 3),
+      };
 
-        resolveConnectivity(
-          game: game,
-          tileMapByRegion: tileMapByRegion,
-          topology: topology,
-        );
+      resolveConnectivity(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
 
-        expect(detached.townRuleWorklistDequeues, 0);
-        expect(detached.connectivityBottleneckDequeues, 0);
-        expect(detached.seaZoneBreadthFirstDequeues, 0);
-        expect(detached.connectivityBfsTotalDequeues, 0);
-      },
-    );
+      expect(detached.townRuleWorklistDequeues, 0);
+      expect(detached.connectivityBottleneckDequeues, 0);
+      expect(detached.seaZoneBreadthFirstDequeues, 0);
+      expect(detached.connectivityBfsTotalDequeues, 0);
+    });
   });
 }

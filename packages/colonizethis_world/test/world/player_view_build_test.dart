@@ -60,7 +60,10 @@ void main() {
 
       expect(view.playerId, 'p1');
       expect(view.ownUnitsById.keys, ['mine']);
-      expect(view.provincesById.keys, containsAll(['oldWorld|a', 'oldWorld|b']));
+      expect(
+        view.provincesById.keys,
+        containsAll(['oldWorld|a', 'oldWorld|b']),
+      );
       // Relation indexed by the OTHER faction id even when p1 is factionId2.
       expect(view.relationWith('p2'), isNotNull);
     });
@@ -94,9 +97,7 @@ void main() {
           provinces: const [
             Province(id: 'oldWorld|enemy', regionId: 'oldWorld', ownerId: 'p2'),
           ],
-          units: [
-            _spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|enemy'),
-          ],
+          units: [_spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|enemy')],
         ),
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
@@ -275,9 +276,7 @@ void main() {
             ownerId: 'p2',
           ),
         },
-        ownUnits: [
-          _spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|e'),
-        ],
+        ownUnits: [_spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|e')],
       );
       expect(
         provincePanelShowsFullTileDerivedIntel(
@@ -291,39 +290,42 @@ void main() {
       );
     });
 
-    test('foreign province with an active spy-reveal timer shows full intel', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          spyRevealTurnsByPlayer: const {
-            'p1': {'oldWorld|e': 2},
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-      );
-      final view = viewWith(
-        provincesById: const {
-          'oldWorld|e': Province(
-            id: 'oldWorld|e',
-            regionId: 'oldWorld',
-            ownerId: 'p2',
+    test(
+      'foreign province with an active spy-reveal timer shows full intel',
+      () {
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            spyRevealTurnsByPlayer: const {
+              'p1': {'oldWorld|e': 2},
+            },
           ),
-        },
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: view,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|e',
-          provinceTileKeys: const ['t1'],
-        ),
-        isTrue,
-      );
-    });
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final view = viewWith(
+          provincesById: const {
+            'oldWorld|e': Province(
+              id: 'oldWorld|e',
+              regionId: 'oldWorld',
+              ownerId: 'p2',
+            ),
+          },
+        );
+        expect(
+          provincePanelShowsFullTileDerivedIntel(
+            game: game,
+            view: view,
+            humanPlayerId: 'p1',
+            provinceId: 'oldWorld|e',
+            provinceTileKeys: const ['t1'],
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('foreign province is full only when every tile is fully visible', () {
       final game = TestFixtures.minimalGame();

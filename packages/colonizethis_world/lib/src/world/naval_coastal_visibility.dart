@@ -116,7 +116,7 @@ Map<String, Map<String, String>> revealProvinceTilesForPlayer(
 /// coastal land tiles of provinces adjacent to it set to
 /// [VisibilityLevel.fullyVisible] for [playerId].
 ///
-/// Requires [provinceIdsAdjacentToSeaZone] (from `naval.dart`) for the
+/// Requires [provinceIdsAdjacentToSeaZone] (from `topology_identity.dart`) for the
 /// region+sea-zone topology lookup.
 Map<String, Map<String, String>> revealTilesAfterMoveToSeaZone({
   required Game game,

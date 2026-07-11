@@ -1,7 +1,15 @@
-part of 'connectivity_resolver_test.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/src/world/connectivity_blockade_target.dart';
+import '../world_test_support/world_test_support.dart';
+
+void main() {
+  _connectivity_resolver_blockade_testTests();
+}
 
 void _connectivity_resolver_blockade_testTests() {
-group('ConnectivityResolver', () {
+  group('ConnectivityResolver', () {
     group('blockade', () {
       test(
         'blockadedProvinceOwnerIdForFleet returns owner for valid at-war blockade',
@@ -104,29 +112,20 @@ group('ConnectivityResolver', () {
         () {
           const ow = 'oldWorld';
           final topology = blockadeTargetProvinceTopology(regionId: ow);
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                  Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-                ],
+          final game = ordersPhaseGame(
+            oldWorldProvinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+              Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+            ],
+            fleets: [
+              blockadeFleet(
+                fleetId: 'fleet_p2',
+                ownerId: 'p2',
+                regionId: ow,
+                seaZoneId: 'sea1',
+                targetProvinceId: '$ow|p2',
               ),
-              newWorld: const RegionData(),
-              fleets: [
-                Fleet(
-                  id: 'fleet_p2',
-                  ownerId: 'p2',
-                  seaZoneId: 'sea1',
-                  inPortAtProvinceId: null,
-                  regionId: ow,
-                  mission: FleetMission.blockade,
-                  targetProvinceId: '$ow|p2',
-                ),
-              ],
-            ),
+            ],
             players: [
               Player(id: 'pl1', displayName: 'Spain', isHuman: true),
               Player(id: 'p2', displayName: 'France', isHuman: true),
@@ -149,5 +148,4 @@ group('ConnectivityResolver', () {
       );
     });
   });
-
 }

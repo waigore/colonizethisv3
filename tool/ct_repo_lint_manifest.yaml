@@ -635,6 +635,27 @@ rules:
     runner: dart
     script: tool/check_orders_no_part_directives.dart
 
+  - rule_id: repo.world_no_part_directives
+    group: structure
+    title: colonizethis_world lib must not use Dart part / part of directives (Refs #3968)
+    spec: SPEC/program/world-no-part-directives.md
+    runner: dart
+    script: tool/check_world_no_part_directives.dart
+
+  - rule_id: repo.world_topology_identity_home
+    group: structure
+    title: topology identity helpers must live in topology_identity.dart not naval.dart (Refs #3968)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_topology_identity_home.dart
+
+  - rule_id: repo.world_test_support_builders_used
+    group: structure
+    title: required world test-support builders must have external call sites (Refs #3968)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_support_builders_used.dart
+
   - rule_id: repo.no_flame_in_widgets
     group: structure
     title: app/lib/widgets must not import package:flame directly

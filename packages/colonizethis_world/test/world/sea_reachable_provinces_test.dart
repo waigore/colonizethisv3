@@ -33,30 +33,31 @@ PlayerView _viewOwning(Map<String, String?> ownersByProvinceId) {
 
 void main() {
   group('reachableNonOwnedProvinceIdsViaSeas', () {
-    test('reaches a foreign province across a sea zone from an owned anchor', () {
-      final topology = topologyFromGraph(
-        nodes: [
-          prefixedProvinceNode('oldWorld|own'),
-          prefixedSeaZoneNode('oldWorld|sea'),
-          prefixedProvinceNode('oldWorld|enemy'),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),
-          TopologyEdge(id1: 'oldWorld|sea', id2: 'oldWorld|enemy'),
-        ],
-      );
-      final view = _viewOwning(const {
-        'oldWorld|own': 'p1',
-        'oldWorld|enemy': 'p2',
-      });
+    test(
+      'reaches a foreign province across a sea zone from an owned anchor',
+      () {
+        final topology = topologyFromGraph(
+          nodes: [
+            prefixedProvinceNode('oldWorld|own'),
+            prefixedSeaZoneNode('oldWorld|sea'),
+            prefixedProvinceNode('oldWorld|enemy'),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|sea'),
+            TopologyEdge(id1: 'oldWorld|sea', id2: 'oldWorld|enemy'),
+          ],
+        );
+        final view = _viewOwning(const {
+          'oldWorld|own': 'p1',
+          'oldWorld|enemy': 'p2',
+        });
 
-      final result = reachableNonOwnedProvinceIdsViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
-      expect(result, {'oldWorld|enemy'});
-    });
+        final result = reachableNonOwnedProvinceIdsViaSeas(topology, {
+          'oldWorld|own',
+        }, view);
+        expect(result, {'oldWorld|enemy'});
+      },
+    );
 
     test('ignores anchors the player does not actually own', () {
       final topology = topologyFromGraph(
@@ -64,20 +65,16 @@ void main() {
           prefixedProvinceNode('oldWorld|own'),
           prefixedProvinceNode('oldWorld|enemy'),
         ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
-        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy')],
       );
       final view = _viewOwning(const {
         'oldWorld|own': 'p2',
         'oldWorld|enemy': 'p3',
       });
 
-      final result = reachableNonOwnedProvinceIdsViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
+      final result = reachableNonOwnedProvinceIdsViaSeas(topology, {
+        'oldWorld|own',
+      }, view);
       expect(result, isEmpty);
     });
 
@@ -99,11 +96,9 @@ void main() {
         'oldWorld|beyond': 'p3',
       });
 
-      final result = reachableNonOwnedProvinceIdsViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
+      final result = reachableNonOwnedProvinceIdsViaSeas(topology, {
+        'oldWorld|own',
+      }, view);
       expect(result, {'oldWorld|enemy'});
     });
 
@@ -113,20 +108,16 @@ void main() {
           prefixedProvinceNode('oldWorld|own'),
           prefixedProvinceNode('oldWorld|wild'),
         ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|wild'),
-        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|wild')],
       );
       final view = _viewOwning(const {
         'oldWorld|own': 'p1',
         'oldWorld|wild': null,
       });
 
-      final result = reachableNonOwnedProvinceIdsViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
+      final result = reachableNonOwnedProvinceIdsViaSeas(topology, {
+        'oldWorld|own',
+      }, view);
       expect(result, isEmpty);
     });
 
@@ -161,28 +152,29 @@ void main() {
   });
 
   group('reachableNonOwnedProvinceDistancesViaSeas', () {
-    test('a direct province-province border foreign province has distance 1', () {
-      final topology = topologyFromGraph(
-        nodes: [
-          prefixedProvinceNode('oldWorld|own'),
-          prefixedProvinceNode('oldWorld|enemy'),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
-        ],
-      );
-      final view = _viewOwning(const {
-        'oldWorld|own': 'p1',
-        'oldWorld|enemy': 'p2',
-      });
+    test(
+      'a direct province-province border foreign province has distance 1',
+      () {
+        final topology = topologyFromGraph(
+          nodes: [
+            prefixedProvinceNode('oldWorld|own'),
+            prefixedProvinceNode('oldWorld|enemy'),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|enemy'),
+          ],
+        );
+        final view = _viewOwning(const {
+          'oldWorld|own': 'p1',
+          'oldWorld|enemy': 'p2',
+        });
 
-      final result = reachableNonOwnedProvinceDistancesViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
-      expect(result, {'oldWorld|enemy': 1});
-    });
+        final result = reachableNonOwnedProvinceDistancesViaSeas(topology, {
+          'oldWorld|own',
+        }, view);
+        expect(result, {'oldWorld|enemy': 1});
+      },
+    );
 
     test('counts each traversed edge, sea zone included', () {
       final topology = topologyFromGraph(
@@ -201,11 +193,9 @@ void main() {
         'oldWorld|enemy': 'p2',
       });
 
-      final result = reachableNonOwnedProvinceDistancesViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
+      final result = reachableNonOwnedProvinceDistancesViaSeas(topology, {
+        'oldWorld|own',
+      }, view);
       expect(result, {'oldWorld|enemy': 2});
     });
 
@@ -228,11 +218,9 @@ void main() {
         'oldWorld|enemy': 'p2',
       });
 
-      final result = reachableNonOwnedProvinceDistancesViaSeas(
-        topology,
-        {'oldWorld|own'},
-        view,
-      );
+      final result = reachableNonOwnedProvinceDistancesViaSeas(topology, {
+        'oldWorld|own',
+      }, view);
       expect(result['oldWorld|enemy'], 1);
     });
 

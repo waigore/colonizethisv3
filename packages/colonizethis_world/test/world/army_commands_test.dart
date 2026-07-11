@@ -47,10 +47,7 @@ void main() {
     });
 
     test('returns same game when fewer than two owned armies match', () {
-      final game = _gameWithArmies([
-        _army('a1'),
-        _army('a2', ownerId: 'p2'),
-      ]);
+      final game = _gameWithArmies([_army('a1'), _army('a2', ownerId: 'p2')]);
       final next = applyArmyCombine(
         game: game,
         playerId: 'p1',
@@ -59,18 +56,21 @@ void main() {
       expect(next, same(game));
     });
 
-    test('returns same game when selected armies sit in different provinces', () {
-      final game = _gameWithArmies([
-        _army('a1', stationedProvinceId: 'oldWorld|p1'),
-        _army('a2', stationedProvinceId: 'oldWorld|p2'),
-      ]);
-      final next = applyArmyCombine(
-        game: game,
-        playerId: 'p1',
-        armyIds: const ['a1', 'a2'],
-      );
-      expect(next, same(game));
-    });
+    test(
+      'returns same game when selected armies sit in different provinces',
+      () {
+        final game = _gameWithArmies([
+          _army('a1', stationedProvinceId: 'oldWorld|p1'),
+          _army('a2', stationedProvinceId: 'oldWorld|p2'),
+        ]);
+        final next = applyArmyCombine(
+          game: game,
+          playerId: 'p1',
+          armyIds: const ['a1', 'a2'],
+        );
+        expect(next, same(game));
+      },
+    );
 
     test('merges regiments into the home army when one is present', () {
       final game = _gameWithArmies([
