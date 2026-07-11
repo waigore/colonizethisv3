@@ -355,13 +355,13 @@ List<TradeOrder> runRegimentInputTreasuryPlanner(
   Game game, {
   String playerId = kRegimentInputSingleGpId,
 }) =>
-    runTreasuryPlanner(
+    runTreasuryPlanner(TreasuryPlannerInput(
       game: game,
       playerId: playerId,
       stockpile: game.players.firstWhere((p) => p.id == playerId).stockpile,
       productionAssignments: const [],
       treasury: game.players.firstWhere((p) => p.id == playerId).treasury,
-    );
+    ));
 
 Iterable<TradeOrder> regimentInputBidsFor(
   List<TradeOrder> orders,

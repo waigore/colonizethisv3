@@ -208,16 +208,18 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     resolvedTradeOrders = player == null
         ? const <TradeOrder>[]
         : runTreasuryPlanner(
-            game: game,
-            playerId: nationId,
-            stockpile: player.stockpile,
-            productionAssignments: economyPlan.productionAssignments,
-            treasury: player.treasury,
-            snapshot: snapshot,
-            tileMapByRegion: options.tileMapByRegion,
-            topology: topology,
-            currentOrders: ctx.orders,
-            extractionById: options.extractionById,
+            TreasuryPlannerInput(
+              game: game,
+              playerId: nationId,
+              stockpile: player.stockpile,
+              productionAssignments: economyPlan.productionAssignments,
+              treasury: player.treasury,
+              snapshot: snapshot,
+              tileMapByRegion: options.tileMapByRegion,
+              topology: topology,
+              currentOrders: ctx.orders,
+              extractionById: options.extractionById,
+            ),
           );
   } else {
     resolvedTradeOrders = economyPlan.tradeOrders;
