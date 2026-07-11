@@ -1,10 +1,12 @@
-// Shared fixtures for own-province prospect budget priority scenarios (Refs #3949 wave 3).
+// Shared fixtures for own-province prospect budget priority scenarios (Refs #3971).
 //
 // Refs #2847 § Old World mineral feedstock prospect localization (gp1 residual).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const orderSuggestionProspectOwnProvinceBudgetPriorityPlayerId = 'gp1';
 const orderSuggestionProspectOwnProvinceBudgetPriorityRegionId =
@@ -59,13 +61,14 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
   final drainerProvinces = <Province>[];
   final units = <Unit>[];
   final tileKeysByRegion = <String, List<String>>{};
-  final visibility = <String, String>{};
-  final resourceByTile = <String, String>{};
-
-  for (final tk in drainTiles) {
-    visibility[tk] = 'fogged';
-    resourceByTile[tk] = 'iron';
-  }
+  final visibility = <String, String>{
+    for (final tk in drainTiles) tk: 'fogged',
+    feedstockTileKey: 'fogged',
+  };
+  final resourceByTile = <String, String>{
+    for (final tk in drainTiles) tk: 'iron',
+    feedstockTileKey: 'iron',
+  };
 
   for (var i = 0; i < drainerCount; i++) {
     final provId = 'oldWorld|d${i.toString().padLeft(2, '0')}';
@@ -78,10 +81,9 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
         locationProvinceId: provId,
       ),
     );
+    tileKeysByRegion[provId] = const <String>[];
   }
 
-  visibility[feedstockTileKey] = 'fogged';
-  resourceByTile[feedstockTileKey] = 'iron';
   units.add(
     Unit(
       id: feedstockUnitId,
@@ -90,50 +92,32 @@ Game orderSuggestionProspectOwnProvinceBudgetPriorityGame({
       locationProvinceId: feedstockProvinceId,
     ),
   );
-
-  for (final p in drainerProvinces) {
-    tileKeysByRegion[p.id] = const <String>[];
-  }
   tileKeysByRegion[drainProvinceId] = List<String>.from(drainTiles);
   tileKeysByRegion[feedstockProvinceId] = const [feedstockTileKey];
 
-  final prospected = <String>{if (feedstockAlreadyProspected) feedstockTileKey};
-
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+  return ordersOwRegionGame(
+    id: 'g',
+    turnNumber: 1,
+    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
     oldWorld: RegionData(
       provinces: [...drainerProvinces, drainProvince, feedstockProvince],
       units: units,
     ),
-    newWorld: const RegionData(),
     playerVisibilityByTile: {playerId: visibility},
-    playerProspectedTiles: {playerId: prospected},
+    playerProspectedTiles: {
+      playerId: {if (feedstockAlreadyProspected) feedstockTileKey},
+    },
     resourceByTileKey: resourceByTile,
     tileKeysByRegionAndProvince: {ow: tileKeysByRegion},
-  );
-  return Game(
-    id: 'g',
-    worldState: world,
-    players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
   );
 }
 
 MapTopology orderSuggestionProspectOwnProvinceBudgetPriorityTopology(
   Game game,
-) {
-  const ow = orderSuggestionProspectOwnProvinceBudgetPriorityRegionId;
-  return MapTopology(
-    nodes: [
-      for (final p in game.worldState.oldWorld.provinces)
-        TopologyNode(
-          id: ProvinceId.localIdFrom(p.id),
-          regionId: ow,
-          type: TopologyNodeType.province,
-        ),
-    ],
-    edges: const [],
-  );
-}
+) => ordersProvinceTopology(
+  game.worldState.oldWorld.provinces,
+  regionId: orderSuggestionProspectOwnProvinceBudgetPriorityRegionId,
+);
 
 List<WorkOrder>
 orderSuggestionProspectOwnProvinceBudgetPriorityFeedstockProspects(

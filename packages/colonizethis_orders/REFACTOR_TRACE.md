@@ -2468,3 +2468,15 @@ Raw `Game(` outside `common/`: **34**. Support LOC after slice 5: **17381**. Rem
 
 Raw `Game(` outside `common/`: **5**. Support LOC after slice 6: **17134**. Remaining: drive ≤14,900 / test ≤16,400; migrate last WorldState-first prospect/feedstock Games; optional precheck/replay lib extracts.
 
+## Wave 4 — Slice 7: feedstock gate graph + prospect/logging migrate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| feedstock-gate-common | extract shared two-GP feedstock-gate builder | bootstrap / NW-projection / priority fixtures | `support/common/feedstock_gate_graphs.dart` | #3971 |
+| migrate-prospect | migrate prospect budget/tile-cap/location Games onto `ordersOwRegionGame` | `order_suggestion_prospect_*_fixtures.dart` | thin wrappers | #3971 |
+| densify-logging | densify work-logging + no-engine-full-pass + tile-keys + colonial-intel + explore adjacency | suggestion fixtures | `ordersOwRegionGame` / `ordersProvinceTopology` | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 5 → 0 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17150 → 16950 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 7: **16937**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+

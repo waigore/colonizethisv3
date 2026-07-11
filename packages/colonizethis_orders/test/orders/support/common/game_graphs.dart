@@ -6,6 +6,7 @@
 // [TestFixtures.minimalGame] when isomorphic; keep specialized graphs only
 // when topology/visibility/diplomacy deltas require it.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
@@ -255,4 +256,21 @@ Game ordersOwRegionGame({
   playerProspectedTiles: playerProspectedTiles,
   tileState: tileState,
   purchasedTilesByTileKey: purchasedTilesByTileKey,
+);
+
+/// Empty-edge topology nodes for every province in [region] (local ids).
+MapTopology ordersProvinceTopology(
+  Iterable<Province> provinces, {
+  String regionId = 'oldWorld',
+  List<TopologyEdge> edges = const [],
+}) => MapTopology(
+  nodes: [
+    for (final p in provinces)
+      TopologyNode(
+        id: p.id.contains('|') ? p.id.split('|').last : p.id,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+  ],
+  edges: edges,
 );

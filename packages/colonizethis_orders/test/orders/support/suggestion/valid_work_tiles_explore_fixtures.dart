@@ -2,6 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 import 'valid_work_tiles_test_support.dart';
 
 /// Tribe-owned OW provinces with mixed visibility for explore visibility scans.
@@ -140,42 +142,27 @@ owGpAdjacentMoveFixture({
     regionId: ValidWorkTilesTestSupport.ow,
     ownerId: otherGpId,
   );
-  final game = Game(
+  final game = ordersOwRegionGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [p1, p2],
-        units: [
-          ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1.id),
-        ],
-      ),
-      newWorld: const RegionData(),
-      playerVisibilityByTile: const {
-        ValidWorkTilesTestSupport.playerId: {
-          'oldWorld|p1|0|0': 'fullyVisible',
-          'oldWorld|p2|0|0': 'fullyVisible',
-        },
-      },
-    ),
+    turnNumber: 1,
     players: [
       ValidWorkTilesTestSupport.defaultPlayer,
       Player(id: otherGpId, displayName: 'Other GP', isHuman: false),
     ],
+    oldWorld: RegionData(
+      provinces: [p1, p2],
+      units: [ValidWorkTilesTestSupport.builderUnit(locationProvinceId: p1.id)],
+    ),
+    playerVisibilityByTile: const {
+      ValidWorkTilesTestSupport.playerId: {
+        'oldWorld|p1|0|0': 'fullyVisible',
+        'oldWorld|p2|0|0': 'fullyVisible',
+      },
+    },
   );
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'p2',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-    ],
+  final topology = ordersProvinceTopology(
+    game.worldState.oldWorld.provinces,
+    regionId: ValidWorkTilesTestSupport.ow,
     edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
   );
   return (
