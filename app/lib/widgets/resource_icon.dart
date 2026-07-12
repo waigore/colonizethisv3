@@ -1,6 +1,8 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../config/app_assets.dart';
+import '../features/game/widgets/production/commodity_ui_helpers.dart';
 import 'strict_asset_icon.dart';
 
 class ResourceIcon extends StatelessWidget {
@@ -84,13 +86,15 @@ class ResourceLabelInline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolved =
+        label ?? commodityDisplayName(appL10n(context), commodityId);
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ResourceIcon(commodityId: commodityId, size: iconSize),
         const SizedBox(width: 4),
-        Text(label ?? commodityId, style: labelStyle),
+        Text(resolved, style: labelStyle),
       ],
     );
   }

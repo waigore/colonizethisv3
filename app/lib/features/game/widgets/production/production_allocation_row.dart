@@ -62,6 +62,7 @@ class ProductionAllocationRow extends StatelessWidget {
     stockpile: player.stockpile,
     desiredOutputByRecipe: desiredOutputByRecipe,
     effectiveLabour: effectiveLabour,
+    l10n: l10n,
   );
 
   bool get comfortHeadroom => recipeAllocationComfortHeadroomActive(

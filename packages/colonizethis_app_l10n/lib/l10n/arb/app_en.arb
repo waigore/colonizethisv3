@@ -1671,6 +1671,114 @@
   "@commodityCategory_advanced": {
     "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
   },
+  "commodity_grain": "Grain",
+  "@commodity_grain": {
+    "description": "Localized display name for commodity id grain."
+  },
+  "commodity_meat": "Meat",
+  "@commodity_meat": {
+    "description": "Localized display name for commodity id meat."
+  },
+  "commodity_timber": "Timber",
+  "@commodity_timber": {
+    "description": "Localized display name for commodity id timber."
+  },
+  "commodity_iron": "Iron",
+  "@commodity_iron": {
+    "description": "Localized display name for commodity id iron."
+  },
+  "commodity_wool": "Wool",
+  "@commodity_wool": {
+    "description": "Localized display name for commodity id wool."
+  },
+  "commodity_cotton": "Cotton",
+  "@commodity_cotton": {
+    "description": "Localized display name for commodity id cotton."
+  },
+  "commodity_coal": "Coal",
+  "@commodity_coal": {
+    "description": "Localized display name for commodity id coal."
+  },
+  "commodity_sugarCane": "Sugar cane",
+  "@commodity_sugarCane": {
+    "description": "Localized display name for commodity id sugarCane."
+  },
+  "commodity_tobacco": "Tobacco",
+  "@commodity_tobacco": {
+    "description": "Localized display name for commodity id tobacco."
+  },
+  "commodity_furs": "Furs",
+  "@commodity_furs": {
+    "description": "Localized display name for commodity id furs."
+  },
+  "commodity_copper": "Copper",
+  "@commodity_copper": {
+    "description": "Localized display name for commodity id copper."
+  },
+  "commodity_tin": "Tin",
+  "@commodity_tin": {
+    "description": "Localized display name for commodity id tin."
+  },
+  "commodity_horses": "Horses",
+  "@commodity_horses": {
+    "description": "Localized display name for commodity id horses."
+  },
+  "commodity_lumber": "Lumber",
+  "@commodity_lumber": {
+    "description": "Localized display name for commodity id lumber."
+  },
+  "commodity_castIron": "Cast iron",
+  "@commodity_castIron": {
+    "description": "Localized display name for commodity id castIron."
+  },
+  "commodity_fabric": "Fabric",
+  "@commodity_fabric": {
+    "description": "Localized display name for commodity id fabric."
+  },
+  "commodity_refinedSugar": "Refined sugar",
+  "@commodity_refinedSugar": {
+    "description": "Localized display name for commodity id refinedSugar."
+  },
+  "commodity_cigars": "Cigars",
+  "@commodity_cigars": {
+    "description": "Localized display name for commodity id cigars."
+  },
+  "commodity_furHats": "Fur hats",
+  "@commodity_furHats": {
+    "description": "Localized display name for commodity id furHats."
+  },
+  "commodity_steel": "Steel",
+  "@commodity_steel": {
+    "description": "Localized display name for commodity id steel."
+  },
+  "commodity_paper": "Paper",
+  "@commodity_paper": {
+    "description": "Localized display name for commodity id paper."
+  },
+  "commodity_bronze": "Bronze",
+  "@commodity_bronze": {
+    "description": "Localized display name for commodity id bronze."
+  },
+  "commodity_gold": "Gold",
+  "@commodity_gold": {
+    "description": "Localized display name for commodity id gold."
+  },
+  "commodity_silver": "Silver",
+  "@commodity_silver": {
+    "description": "Localized display name for commodity id silver."
+  },
+  "commodity_gems": "Gems",
+  "@commodity_gems": {
+    "description": "Localized display name for commodity id gems."
+  },
+  "commodity_diamonds": "Diamonds",
+  "@commodity_diamonds": {
+    "description": "Localized display name for commodity id diamonds."
+  },
+  "commodity_spices": "Spices",
+  "@commodity_spices": {
+    "description": "Localized display name for commodity id spices."
+  },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
     "description": "Civilian units panel title."
@@ -2631,14 +2739,14 @@
       }
     }
   },
-  "province_economic_resourceRow": "{terrain}/{resourceId} {detail}",
+  "province_economic_resourceRow": "{terrain}/{resourceName} {detail}",
   "@province_economic_resourceRow": {
-    "description": "Economic row in province overlay: terrain, resource id, and localized detail suffix.",
+    "description": "Economic row in province overlay: terrain, localized resource name, and localized detail suffix.",
     "placeholders": {
       "terrain": {
         "type": "String"
       },
-      "resourceId": {
+      "resourceName": {
         "type": "String"
       },
       "detail": {

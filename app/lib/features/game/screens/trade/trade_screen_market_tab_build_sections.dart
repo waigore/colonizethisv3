@@ -60,6 +60,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         quantityStyle: quantityStyle,
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
+        l10n: l10n,
       ),
       ..._buildCommoditySectionWidgets(
         sectionKey: TradeScreen.marketSectionRawMaterialsKey,
@@ -76,6 +77,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
+        l10n: l10n,
       ),
       ..._buildCommoditySectionWidgets(
         sectionKey: TradeScreen.marketSectionManufacturedKey,
@@ -92,6 +94,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
+        l10n: l10n,
       ),
     ];
   }

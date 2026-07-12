@@ -85,7 +85,7 @@ class _CommodityCostResourceBar extends StatelessWidget {
           Flexible(
             child: Text(
               l10n.trainMilitary_commodityValue(
-                commodityDisplayName(commodityId),
+                commodityDisplayName(l10n, commodityId),
                 '${stockpile.quantityOf(commodityId) - (committedCommodities[commodityId] ?? 0)}'
                 ' / ${stockpile.quantityOf(commodityId)}',
               ),
