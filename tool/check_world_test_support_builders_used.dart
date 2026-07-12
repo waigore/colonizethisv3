@@ -17,6 +17,8 @@ const List<String> worldRequiredSupportBuilderNames = [
   'factionCapitalReassignmentGame',
   'ordersPhaseGame',
   'topologyGraph',
+  'gameWithArmies',
+  'gameWithFleets',
 ];
 
 const String _worldTestPrefix = 'packages/colonizethis_world/test/';

@@ -59,11 +59,15 @@ void main() {
           '  spyRevealFogGame();\n'
           '  ownershipTransferVisibilityGame();\n'
           '  coastalSeaVisibilityGame();\n'
+          '  distantSeaVisibilityGame();\n'
+          '  fogDecayVisibilityGame();\n'
           '  capitalLossGame();\n'
           '  gpCapitalReassignmentGame();\n'
           '  factionCapitalReassignmentGame();\n'
           '  ordersPhaseGame();\n'
           '  topologyGraph();\n'
+          '  gameWithArmies();\n'
+          '  gameWithFleets();\n'
           '}\n',
         );
 
