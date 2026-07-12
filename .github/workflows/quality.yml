@@ -64,6 +64,8 @@ jobs:
               - 'tool/verify_order_engine_codegen.sh'
               - 'tool/compute_app_test_plan.dart'
               - 'test/compute_app_test_plan_test.dart'
+              - 'tool/compute_package_test_plan.py'
+              - 'test/compute_package_test_plan_test.dart'
             # True when any changed path is outside repo-root dot-directories (CI/editor meta). OpenCode
             # review is skipped when the PR only touches those paths (e.g. .github, .cursor).
             opencode_scope:
@@ -74,13 +76,27 @@ jobs:
               - '!.idea/**'
               - '!.husky/**'
             # True when any path that can affect package_tests outcomes changed.
-            # Includes packages/** plus workspace + test-runner files that change how
-            # package tests resolve, execute, or gate coverage. Used to skip the
-            # heavy `package_tests` job for app-only / tool-only / SPEC-only PRs
-            # where the one-way dependency direction (app/tool/ctdev -> packages,
-            # never the reverse) makes re-running package tests unnecessary.
+            # Scoped to CORE packages exercised by tool/run_package_tests.sh plus
+            # workspace/test-runner infra — NOT blanket packages/**. Satellite
+            # packages (app_l10n, fixtures, e2e_support, logger, …) do not reverse-
+            # depend into CORE; changing them must not expand to a full-suite run
+            # (empty CORE flags previously defaulted to every CORE package and
+            # blew the 30m package_tests budget). Refs #3987.
             packages_changed:
-              - 'packages/**'
+              - 'packages/colonizethis_models/**'
+              - 'packages/colonizethis_data/**'
+              - 'packages/colonizethis_save/**'
+              - 'packages/colonizethis_map/**'
+              - 'packages/colonizethis_world/**'
+              - 'packages/colonizethis_combat/**'
+              - 'packages/colonizethis_economy/**'
+              - 'packages/colonizethis_diplomacy/**'
+              - 'packages/colonizethis_setup/**'
+              - 'packages/colonizethis_orders/**'
+              - 'packages/colonizethis_turn/**'
+              - 'packages/colonizethis_ai_contracts/**'
+              - 'packages/colonizethis_logic/**'
+              - 'packages/colonizethis_ai/**'
               - 'pubspec.yaml'
               - 'analysis_options.yaml'
               - 'tool/run_package_tests.sh'
@@ -106,6 +122,8 @@ jobs:
               - 'packages/colonizethis_diplomacy/**'
             pkg_setup:
               - 'packages/colonizethis_setup/**'
+            pkg_orders:
+              - 'packages/colonizethis_orders/**'
             pkg_turn:
               - 'packages/colonizethis_turn/**'
             pkg_ai_contracts:
@@ -129,6 +147,7 @@ jobs:
             --changed-economy="${{ steps.filter.outputs.pkg_economy }}" \
             --changed-diplomacy="${{ steps.filter.outputs.pkg_diplomacy }}" \
             --changed-setup="${{ steps.filter.outputs.pkg_setup }}" \
+            --changed-orders="${{ steps.filter.outputs.pkg_orders }}" \
             --changed-turn="${{ steps.filter.outputs.pkg_turn }}" \
             --changed-ai_contracts="${{ steps.filter.outputs.pkg_ai_contracts }}" \
             --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
@@ -799,6 +818,9 @@ jobs:
 
       - name: Test app test plan selector (SPEC/program/ci-app-selective-tests.md)
         run: dart test test/compute_app_test_plan_test.dart --reporter=compact
+
+      - name: Test package test plan selector (SPEC/program/test-logging.md)
+        run: dart test test/compute_package_test_plan_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
