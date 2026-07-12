@@ -98,6 +98,15 @@ class _SaveGameNameDialogState extends ConsumerState<SaveGameNameDialog> {
       });
       return;
     }
+    if (!service.canCreateNewManualSave()) {
+      setState(() {
+        _errorText = appL10n(context).saveGameName_atCapError;
+        _awaitingOverwrite = false;
+        _pendingSanitizedId = null;
+        _pendingDisplayName = null;
+      });
+      return;
+    }
     _persist(sanitized, typed.trim());
   }
 

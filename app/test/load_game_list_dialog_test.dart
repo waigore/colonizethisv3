@@ -20,15 +20,22 @@ class _LoadDialogGameService extends GameService {
 
   List<LoadableSaveEntry> entries = const [];
   GameSaveSession? sessionToLoad;
+  final List<String> deletedIds = <String>[];
 
   @override
   List<LoadableSaveEntry> listLoadableSaves() => entries;
 
   @override
+  void deleteSave(String storageId) {
+    deletedIds.add(storageId);
+    entries = entries.where((e) => e.storageId != storageId).toList();
+  }
+
+  @override
   GameSaveSession? loadGameSession(String gameId) =>
       sessionToLoad != null && gameId == sessionToLoad!.game.id
-          ? sessionToLoad
-          : null;
+      ? sessionToLoad
+      : null;
 
   @override
   GameSaveSession? loadAutoSaveSession() =>
@@ -40,6 +47,18 @@ class _LoadDialogGameService extends GameService {
           )
       ? sessionToLoad
       : null;
+}
+
+LoadableSaveEntry _manual(int i, {DateTime? at}) {
+  return LoadableSaveEntry(
+    storageId: 'manual_$i',
+    label: 'Save $i',
+    kind: LoadableSaveKind.manual,
+    turnNumber: i,
+    calendarYear: 1500 + i,
+    humanNation: 'England',
+    lastSavedAt: at ?? DateTime.utc(2026, 7, 12, 12, i),
+  );
 }
 
 void main() {
@@ -77,7 +96,11 @@ void main() {
     bus.dispose();
   });
 
-  Widget host({required bool fromPause, List<LoadableSaveEntry> entries = const []}) {
+  Widget host({
+    required bool fromPause,
+    List<LoadableSaveEntry> entries = const [],
+    String? previewPendingDeleteId,
+  }) {
     service.entries = entries;
     service.sessionToLoad = GameSaveSession(
       game: loadedGame,
@@ -105,7 +128,12 @@ void main() {
       child: MaterialApp(
         localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: LoadGameListDialog(fromPause: fromPause)),
+        home: Scaffold(
+          body: LoadGameListDialog(
+            fromPause: fromPause,
+            previewPendingDeleteId: previewPendingDeleteId,
+          ),
+        ),
       ),
     );
   }
@@ -182,5 +210,191 @@ void main() {
     expect(events.whereType<NavigateToRouteEvent>(), isEmpty);
     expect(events.whereType<ClosePanelEvent>(), isEmpty);
     expect(find.byType(LoadGameListDialog), findsOneWidget);
+  });
+
+  testWidgets('positive: three-line row shows meta and last-saved', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          LoadableSaveEntry(
+            storageId: 'manual_a',
+            label: 'Spain Save',
+            kind: LoadableSaveKind.manual,
+            turnNumber: 12,
+            calendarYear: 1522,
+            humanNation: 'Spain',
+            lastSavedAt: DateTime.utc(2026, 7, 12, 8, 30),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spain Save'), findsOneWidget);
+    expect(
+      find.byKey(LoadGameListDialog.rowMetaKey('manual_a')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Turn 12'), findsOneWidget);
+    expect(find.textContaining('1522'), findsOneWidget);
+    expect(find.textContaining('Spain'), findsWidgets);
+    expect(
+      find.byKey(LoadGameListDialog.rowSavedAtKey('manual_a')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('auto-save is delineated and pinned above manuals', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 3,
+          ),
+          _manual(1),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsOneWidget);
+    expect(find.text('Auto-save'), findsWidgets);
+    expect(find.byKey(LoadGameListDialog.pagerKey), findsNothing);
+  });
+
+  testWidgets('≤10 manuals hides pager; 11 manuals pages with Next/Previous', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [for (var i = 0; i < 10; i++) _manual(i)],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(LoadGameListDialog.pagerKey), findsNothing);
+
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 99,
+          ),
+          for (var i = 0; i < 11; i++) _manual(i),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(LoadGameListDialog.pagerKey), findsOneWidget);
+    expect(find.text('Page 1 of 2'), findsOneWidget);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_0')), findsOneWidget);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_10')), findsNothing);
+    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsOneWidget);
+
+    await tester.tap(find.byKey(LoadGameListDialog.nextButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Page 2 of 2'), findsOneWidget);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_10')), findsOneWidget);
+    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsOneWidget);
+
+    await tester.tap(find.byKey(LoadGameListDialog.previousButtonKey));
+    await tester.pumpAndSettle();
+    expect(find.text('Page 1 of 2'), findsOneWidget);
+  });
+
+  testWidgets('negative: delete cancel leaves storage unchanged', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [_manual(1)],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(LoadGameListDialog.deleteConfirmKey), findsOneWidget);
+
+    await tester.tap(find.byKey(LoadGameListDialog.deleteCancelButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(service.deletedIds, isEmpty);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsOneWidget);
+  });
+
+  testWidgets('positive: delete confirm removes save and stays open', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 3,
+          ),
+          _manual(1),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LoadGameListDialog.deleteConfirmButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(service.deletedIds, ['manual_1']);
+    expect(find.byType(LoadGameListDialog), findsOneWidget);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsNothing);
+    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsOneWidget);
+  });
+
+  testWidgets('positive: confirm delete clears auto-save slot', (tester) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 3,
+          ),
+          _manual(1),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(LoadGameListDialog.deleteButtonKey(kAutoSaveSlotId)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(LoadGameListDialog.deleteConfirmButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(service.deletedIds, [kAutoSaveSlotId]);
+    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsNothing);
+    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsOneWidget);
   });
 }
