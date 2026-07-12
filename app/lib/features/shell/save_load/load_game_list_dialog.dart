@@ -18,6 +18,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 /// Lists loadable saves (manual + auto-save). Optional discard confirm from pause.
 class LoadGameListDialog extends ConsumerStatefulWidget {
@@ -55,6 +56,12 @@ class LoadGameListDialog extends ConsumerStatefulWidget {
 
   static Key rowKey(String storageId) =>
       ValueKey<String>('loadGameListDialog.row_$storageId');
+
+  static Key rowMetaKey(String storageId) =>
+      ValueKey<String>('loadGameListDialog.rowMeta_$storageId');
+
+  static Key rowSavedAtKey(String storageId) =>
+      ValueKey<String>('loadGameListDialog.rowSavedAt_$storageId');
 
   @override
   ConsumerState<LoadGameListDialog> createState() => _LoadGameListDialogState();
@@ -106,6 +113,27 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+
+  String? _secondaryMetaLine(AppLocalizations l10n, LoadableSaveEntry entry) {
+    final turn = entry.turnNumber;
+    final year = entry.calendarYear;
+    final nation = entry.humanNation;
+    if (turn != null && year != null && nation != null && nation.isNotEmpty) {
+      return l10n.loadGameList_metaLine(turn, year, nation);
+    }
+    if (turn != null) {
+      return l10n.loadGameList_turnSubtitle(turn);
+    }
+    return null;
+  }
+
+  String? _lastSavedLine(LoadableSaveEntry entry) {
+    final at = entry.lastSavedAt;
+    if (at == null) {
+      return null;
+    }
+    return DateFormat.yMd().add_jm().format(at.toLocal());
   }
 
   @override
@@ -176,7 +204,8 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
                   separatorBuilder: (_, _) => CtGap.m,
                   itemBuilder: (context, index) {
                     final entry = entries[index];
-                    final turn = entry.turnNumber;
+                    final meta = _secondaryMetaLine(l10n, entry);
+                    final savedAt = _lastSavedLine(entry);
                     return CtNinePatchButton(
                       key: LoadGameListDialog.rowKey(entry.storageId),
                       onPressed: () => _onSelect(entry),
@@ -185,9 +214,20 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(entry.label, style: bodyStyle),
-                          if (turn != null)
+                          if (meta != null)
                             Text(
-                              l10n.loadGameList_turnSubtitle(turn),
+                              meta,
+                              key: LoadGameListDialog.rowMetaKey(
+                                entry.storageId,
+                              ),
+                              style: mutedStyle,
+                            ),
+                          if (savedAt != null)
+                            Text(
+                              savedAt,
+                              key: LoadGameListDialog.rowSavedAtKey(
+                                entry.storageId,
+                              ),
                               style: mutedStyle,
                             ),
                         ],

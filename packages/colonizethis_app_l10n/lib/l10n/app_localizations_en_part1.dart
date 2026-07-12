@@ -88,10 +88,18 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get saveGameName_gameSaved => 'Game saved';
 
   @override
+  String get saveGameName_atCapError =>
+      'You already have 20 saves. Delete an old save first.';
+
+  @override
   String get loadGameList_title => 'Load Game';
 
   @override
   String get loadGameList_empty => 'No saved games.';
+
+  @override
+  String loadGameList_metaLine(int turn, int year, String nation) =>
+      'Turn $turn · $year · $nation';
 
   @override
   String loadGameList_turnSubtitle(int turn) => 'Turn $turn';

@@ -1,4 +1,5 @@
-/// One row for the shared load-game list. SPEC/program/save-load.md § listLoadableSaves.
+/// One row for the shared load-game list.
+/// SPEC/program/save-load.md § listLoadableSaves; SPEC/program/save-load-list-metadata.md.
 enum LoadableSaveKind {
   /// Manual named save under a Hive `gameId` from [GameSaveAdapter.listGameIds].
   manual,
@@ -14,6 +15,9 @@ class LoadableSaveEntry {
     required this.label,
     required this.kind,
     this.turnNumber,
+    this.calendarYear,
+    this.humanNation,
+    this.lastSavedAt,
   });
 
   /// Hive key used with [GameSaveAdapter.load] / [GameSaveAdapter.loadSession].
@@ -24,6 +28,15 @@ class LoadableSaveEntry {
 
   final LoadableSaveKind kind;
 
-  /// Turn number from the envelope `game` payload when readable; otherwise null.
+  /// Turn number from envelope `listMeta` when present.
   final int? turnNumber;
+
+  /// Calendar year from envelope `listMeta` when present.
+  final int? calendarYear;
+
+  /// Human GP nation label from envelope `listMeta` when present.
+  final String? humanNation;
+
+  /// Last-saved wall-clock time (UTC) from envelope `listMeta`.
+  final DateTime? lastSavedAt;
 }

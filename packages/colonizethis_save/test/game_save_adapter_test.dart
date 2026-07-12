@@ -967,8 +967,14 @@ void main() {
           newWorld: const RegionData(),
         ),
         players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+        turnTimeMapping: TurnTimeMapping.gdd01,
       );
-      adapter.save(box, game, displayName: 'My Spain');
+      adapter.save(
+        box,
+        game,
+        displayName: 'My Spain',
+        lastSavedAt: DateTime.utc(2026, 7, 1, 12),
+      );
       final tileMap = TileMapResult(
         width: 2,
         height: 2,
@@ -1003,18 +1009,92 @@ void main() {
         tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
         topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
         combinedTopology: topo,
+        lastSavedAt: DateTime.utc(2026, 7, 2, 12),
       );
       final entries = adapter.listLoadableSaves(box);
       expect(adapter.listGameIds(box), isNot(contains(kAutoSaveSlotId)));
+      expect(entries.first.kind, LoadableSaveKind.autoSave);
+      expect(entries.first.storageId, kAutoSaveSlotId);
+      expect(entries.first.label, kAutoSaveListLabel);
       expect(entries.any((e) => e.storageId == 'manual_a'), isTrue);
-      expect(
-        entries.where((e) => e.storageId == 'manual_a').single.label,
-        'My Spain',
+      final manual = entries.where((e) => e.storageId == 'manual_a').single;
+      expect(manual.label, 'My Spain');
+      expect(manual.turnNumber, 7);
+      expect(manual.humanNation, 'Spain');
+      expect(manual.calendarYear, isNotNull);
+      expect(manual.lastSavedAt, DateTime.utc(2026, 7, 1, 12));
+    });
+
+    test('listLoadableSaves excludes v1 and v2 envelopes (list gate)', () {
+      final game = Game(
+        id: 'legacy',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
       );
-      final auto = entries.where((e) => e.kind == LoadableSaveKind.autoSave);
-      expect(auto, hasLength(1));
-      expect(auto.single.storageId, kAutoSaveSlotId);
-      expect(auto.single.label, kAutoSaveListLabel);
+      box.put('legacy_v1', {
+        'saveFormatVersion': 1,
+        'game': game.toJson(),
+      });
+      box.put('legacy_v2', {
+        'saveFormatVersion': 2,
+        'game': game.copyWith(id: 'legacy_v2').toJson(),
+        'displayName': 'Old',
+      });
+      expect(adapter.listLoadableSaves(box), isEmpty);
+      expect(adapter.load(box, 'legacy_v1'), isNotNull);
+      expect(adapter.load(box, 'legacy_v2'), isNotNull);
+    });
+
+    test('listLoadableSaves orders manuals newest-first by lastSavedAt', () {
+      Game make(String id) => Game(
+        id: id,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      adapter.save(
+        box,
+        make('older'),
+        displayName: 'Older',
+        lastSavedAt: DateTime.utc(2026, 1, 1),
+      );
+      adapter.save(
+        box,
+        make('newer'),
+        displayName: 'Newer',
+        lastSavedAt: DateTime.utc(2026, 6, 1),
+      );
+      final manuals = adapter
+          .listLoadableSaves(box)
+          .where((e) => e.kind == LoadableSaveKind.manual)
+          .toList();
+      expect(manuals.map((e) => e.storageId).toList(), ['newer', 'older']);
+    });
+
+    test('canCreateNewManualSave respects kMaxManualSaves', () {
+      Game make(String id) => Game(
+        id: id,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      for (var i = 0; i < kMaxManualSaves; i++) {
+        adapter.save(box, make('slot_$i'), displayName: 'Slot $i');
+      }
+      expect(adapter.manualSaveCount(box), kMaxManualSaves);
+      expect(adapter.canCreateNewManualSave(box), isFalse);
+      adapter.delete(box, 'slot_0');
+      expect(adapter.canCreateNewManualSave(box), isTrue);
     });
   });
 

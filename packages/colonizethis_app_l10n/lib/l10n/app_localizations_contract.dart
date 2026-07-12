@@ -98,13 +98,19 @@ abstract class AppLocalizations {
   /// SnackBar message after a successful named save.
   String get saveGameName_gameSaved;
 
+  /// Error when creating a new manual save at the 20-slot cap (Refs #3985).
+  String get saveGameName_atCapError;
+
   /// Title of the load-game list dialog (DLG80001).
   String get loadGameList_title;
 
   /// Empty-state copy when listLoadableSaves returns no rows.
   String get loadGameList_empty;
 
-  /// Optional turn subtitle under a load-list row.
+  /// Second line of a load-list row: turn, calendar year, human nation.
+  String loadGameList_metaLine(int turn, int year, String nation);
+
+  /// Optional turn subtitle under a load-list row when year/nation are missing.
   String loadGameList_turnSubtitle(int turn);
 
   /// Discard confirmation when loading from an active pause session.

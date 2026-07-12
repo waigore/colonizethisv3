@@ -183,4 +183,39 @@ void main() {
     expect(events.whereType<ClosePanelEvent>(), isEmpty);
     expect(find.byType(LoadGameListDialog), findsOneWidget);
   });
+
+  testWidgets('positive: three-line row shows meta and last-saved', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        fromPause: false,
+        entries: [
+          LoadableSaveEntry(
+            storageId: 'manual_a',
+            label: 'Spain Save',
+            kind: LoadableSaveKind.manual,
+            turnNumber: 12,
+            calendarYear: 1522,
+            humanNation: 'Spain',
+            lastSavedAt: DateTime.utc(2026, 7, 12, 8, 30),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spain Save'), findsOneWidget);
+    expect(
+      find.byKey(LoadGameListDialog.rowMetaKey('manual_a')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Turn 12'), findsOneWidget);
+    expect(find.textContaining('1522'), findsOneWidget);
+    expect(find.textContaining('Spain'), findsWidgets);
+    expect(
+      find.byKey(LoadGameListDialog.rowSavedAtKey('manual_a')),
+      findsOneWidget,
+    );
+  });
 }
