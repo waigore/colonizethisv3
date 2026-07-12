@@ -24,7 +24,7 @@ void runCanAffordRecruitWorkerExpectation(CanAffordRecruitWorkerPins pins) {
   expect(result.reason, pins.expectedReason);
 }
 
-WorkerActionCostScenario canAffordRecruitWorkerScenario({required String label, required CanAffordRecruitWorkerPins pins, String? refs}) => (label: label, run: () => runCanAffordRecruitWorkerExpectation(pins), refs: refs);
+WorkerActionCostScenario canAffordRecruitWorkerScenario({required String label, required CanAffordRecruitWorkerPins pins, String? refs}) => (label: label, canAfford: pins, applyCost: null, apprenticeTechConsistency: false, refs: refs);
 
 /// Pins for [applyRecruitWorkerCostDeduction] rows.
 typedef ApplyRecruitWorkerCostPins = ({WorkerTier targetTier, WorkerPool initialWorkers, Map<String, int> stockpileDeltas, int treasury, WorkerPool expectedWorkers, Map<String, int> expectedStockpileQuantities, int expectedTreasury});
@@ -42,7 +42,7 @@ void runApplyRecruitWorkerCostExpectation(ApplyRecruitWorkerCostPins pins) {
   expect(next.treasury, pins.expectedTreasury);
 }
 
-WorkerActionCostScenario applyRecruitWorkerCostScenario({required String label, required ApplyRecruitWorkerCostPins pins, String? refs}) => (label: label, run: () => runApplyRecruitWorkerCostExpectation(pins), refs: refs);
+WorkerActionCostScenario applyRecruitWorkerCostScenario({required String label, required ApplyRecruitWorkerCostPins pins, String? refs}) => (label: label, canAfford: null, applyCost: pins, apprenticeTechConsistency: false, refs: refs);
 
 void runApprenticeTechConsistencyExpectation() {
   const order = RecruitWorkerOrder(targetTier: WorkerTier.apprentice);
@@ -51,5 +51,5 @@ void runApprenticeTechConsistencyExpectation() {
   expect(canAffordRecruitWorker(_playerWithTech(_masterTech), order, const WorkerPool(peasants: 1), stockpile, 200).reason, kRecruitWorkerTechLocked, reason: 'master tech does not satisfy the apprentice gate');
 }
 
-WorkerActionCostScenario apprenticeTechConsistencyScenario({required String label, String? refs}) => (label: label, run: runApprenticeTechConsistencyExpectation, refs: refs);
+WorkerActionCostScenario apprenticeTechConsistencyScenario({required String label, String? refs}) => (label: label, canAfford: null, applyCost: null, apprenticeTechConsistency: true, refs: refs);
 // dart format on

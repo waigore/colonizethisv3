@@ -18,12 +18,9 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 
 void main() {
   group('FirstRightProfit constants', () {
-    test(
-      'kFirstRightMaxProfitRate is 1.0 (#3753 R8.2 — full share, no cap)',
-      () {
-        expect(kFirstRightMaxProfitRate, 1.0);
-      },
-    );
+    test('kFirstRightMaxProfitRate is 1.0 (#3753 R8.2 — full share, no cap)', () {
+      expect(kFirstRightMaxProfitRate, 1.0);
+    });
 
     test('kFirstRightRelationScoreMax is 100', () {
       expect(kFirstRightRelationScoreMax, 100);

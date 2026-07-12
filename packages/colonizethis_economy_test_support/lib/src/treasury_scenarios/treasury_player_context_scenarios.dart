@@ -3,14 +3,14 @@
 
 import 'treasury_player_context_expectations.dart';
 
-/// One row for `PlayerContextScenario` tables (Refs #3939 slice 63).
-typedef PlayerContextScenario = ({String label, void Function() run, String? refs});
+/// One row for `PlayerContextScenario` tables (Refs #3979).
+typedef PlayerContextScenario = ({String label, PlayerContextExpectation expect, String? refs});
 
-/// Compact expect-wired row (Refs #3939 slice 59).
-PlayerContextScenario playerContextRow({required String label, required PlayerContextExpectation expect, String? refs}) => (label: label, run: () => assertPlayerContextExpectation(expect), refs: refs);
+/// Compact expect-wired row (Refs #3939 slice 59, #3979).
+PlayerContextScenario playerContextRow({required String label, required PlayerContextExpectation expect, String? refs}) => (label: label, expect: expect, refs: refs);
 
 void runPlayerContextScenario(PlayerContextScenario scenario) {
-  scenario.run();
+  assertPlayerContextExpectation(scenario.expect);
 }
 
 /// `worldMarketPlayerContextFromGame` snapshot cases (Refs #3615 Cluster 2).

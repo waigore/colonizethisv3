@@ -1,4 +1,4 @@
-// Table-driven unit tests for worker labour primitives (Refs #3939).
+// Table-driven unit tests for worker labour primitives (Refs #3939, #3979).
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/test.dart';
@@ -10,13 +10,13 @@ void main() {
     runLabeledScenarios(workerEconomyLabourFromIdleCountsScenarios(), (
       scenario,
     ) {
-      runWorkerEconomyScenario(scenario);
+      runIdleLabourScenario(scenario);
     }, labelOf: (s) => s.label);
   });
 
   group('effectiveLabourForWorkers', () {
     runLabeledScenarios(workerEconomyLabourForWorkersScenarios(), (scenario) {
-      runWorkerEconomyScenario(scenario);
+      runEffectiveLabourScenario(scenario);
     }, labelOf: (s) => s.label);
   });
 }

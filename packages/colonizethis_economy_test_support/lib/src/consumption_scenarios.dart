@@ -1,22 +1,23 @@
 // dart format off
-// Table-driven resolveConsumption scenarios (Refs #3856, #3939 slices 34 / 45).
+// Table-driven resolveConsumption scenarios (Refs #3856, #3939 slices 34 / 45, #3979).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'consumption_expectations.dart';
+import 'core_economy_test_support.dart';
 
-/// One row for `ConsumptionScenario` tables (Refs #3939 slice 63).
-typedef ConsumptionScenario = ({String label, void Function() run, String? refs});
+/// One row for resolveConsumption tables (Refs #3979).
+typedef ResolveConsumptionScenario = ({String label, Stockpile stockpile, WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, ResolveConsumptionPins pins, bool expectUnknownShipThrows, String? refs});
 
-/// Runs [scenario] (setup + assertions live in [ConsumptionScenario.run]).
-void runConsumptionScenario(ConsumptionScenario scenario) {
-  scenario.run();
+/// Runs [scenario] via [runResolveConsumption].
+void runResolveConsumptionScenario(ResolveConsumptionScenario scenario) {
+  runResolveConsumption(stockpile: scenario.stockpile, workers: scenario.workers, militaryUnits: scenario.militaryUnits, shipCountsById: scenario.shipCountsById, pins: scenario.pins, expectUnknownShipThrows: scenario.expectUnknownShipThrows);
 }
 
 /// Canonical scenarios for [resolveConsumption].
-List<ConsumptionScenario> resolveConsumptionScenarios() => [..._resolveConsumptionWorkerFoodScenarios(), ..._resolveConsumptionMilitaryLuxuryScenarios()];
+List<ResolveConsumptionScenario> resolveConsumptionScenarios() => [..._resolveConsumptionWorkerFoodScenarios(), ..._resolveConsumptionMilitaryLuxuryScenarios()];
 
-List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
+List<ResolveConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   resolveConsumptionScenario(
     label: 'peasants consume 1 food each (grain or meat)',
     stockpileDeltas: {'grain': 5, 'meat': 0},
@@ -56,7 +57,7 @@ List<ConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
   resolveConsumptionScenario(label: 'zero workers and zero military leaves stockpile unchanged', stockpileDeltas: {'grain': 5, 'meat': 5}, workers: const WorkerPool(peasants: 0), pins: const ResolveConsumptionPins(grainRemaining: 5, meatRemaining: 5, totalRegiments: 0, fullyFedRegiments: 0, totalShips: 0, fullyFedShips: 0)),
 ];
 
-List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
+List<ResolveConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(label: 'unknown ship type id throws ConsumptionUnknownShipTypeException', stockpile: const Stockpile(), workers: const WorkerPool(peasants: 0), shipCountsById: const {'not_a_real_ship': 1}, expectUnknownShipThrows: true, pins: const ResolveConsumptionPins()),
   resolveConsumptionScenario(
     label: 'resolveConsumption wires military→navy→workers strike order and counts',
@@ -85,4 +86,9 @@ List<ConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
     pins: ResolveConsumptionPins(idleLabour: WorkerIdleCounts(apprentices: 1), sugarRemaining: 0),
   ),
 ];
+
+ResolveConsumptionScenario resolveConsumptionScenario({required String label, Map<String, int>? stockpileDeltas, Stockpile? stockpile, required WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, required ResolveConsumptionPins pins, bool expectUnknownShipThrows = false}) {
+  final resolvedStockpile = stockpile ?? (stockpileDeltas == null ? const Stockpile() : stockpileWithDeltas(stockpileDeltas));
+  return (label: label, stockpile: resolvedStockpile, workers: workers, militaryUnits: militaryUnits, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows, refs: null);
+}
 // dart format on
