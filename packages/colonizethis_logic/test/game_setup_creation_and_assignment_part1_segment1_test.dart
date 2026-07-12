@@ -84,6 +84,7 @@ void main() {
         expect(result.game.players.length, 1);
         expect(result.game.players.first.id, 'gp1');
         expect(result.game.mapViewState.zoomMultiplier, 4.0);
+        expect(result.game.mapViewState.showPlayersBar, isFalse);
         expect(
           result.game.greatPowerColorOverride,
           equals({
@@ -337,6 +338,7 @@ void main() {
           gameId: 'preferred-map-zoom',
         );
         expect(preferredResult.game.mapViewState.zoomMultiplier, 3.25);
+        expect(preferredResult.game.mapViewState.showPlayersBar, isFalse);
 
         final clampedConfig = GameSetupConfig(
           selectedGreatPowerIds: ['england'],
@@ -357,6 +359,7 @@ void main() {
           gameId: 'clamped-map-zoom',
         );
         expect(clampedResult.game.mapViewState.zoomMultiplier, 8.0);
+        expect(clampedResult.game.mapViewState.showPlayersBar, isFalse);
       },
     );
   });
