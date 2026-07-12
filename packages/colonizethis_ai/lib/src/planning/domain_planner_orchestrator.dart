@@ -46,64 +46,72 @@ final _log = packageLogger();
 
 // Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
 
-/// Runs economy, military, diplomacy, and research planners; returns combined orders
-/// for [nationId]. Uses [suggestionAPI] and [economyPlan] (cargo preference) to score
-/// build candidates. Deterministic given seeds.
+/// Bundles required + optional inputs for [runDomainPlanners] /
+/// [runDomainPlannersWithOutcome] (Refs #3977 AC5).
+final class DomainPlannerInput {
+  const DomainPlannerInput({
+    required this.game,
+    required this.topology,
+    required this.nationId,
+    required this.view,
+    required this.snapshot,
+    required this.config,
+    required this.primaryGoal,
+    required this.seeds,
+    required this.suggestionAPI,
+    required this.economyPlan,
+    this.options = OrchestratorOptions.defaults,
+  });
+
+  final Game game;
+  final MapTopology topology;
+  final String nationId;
+  final PlayerView view;
+  final AIWorldSnapshot snapshot;
+  final AIConfig config;
+  final StrategicGoal primaryGoal;
+  final AISeedBundle seeds;
+  final OrderSuggestionAPI suggestionAPI;
+  final EconomyPlan economyPlan;
+  final OrchestratorOptions options;
+}
+
+/// Runs economy, military, diplomacy, and research planners; returns combined
+/// orders for [DomainPlannerInput.nationId]. Uses the suggestion API and
+/// economy plan (cargo preference) to score build candidates. Deterministic
+/// given seeds.
 ///
-/// When [onStagedPlannerProgress] is set, emits coarse phase ids aligned with
-/// staged planners A–G (Refs #2277): `suggestionPools`, `aiStageA` … `aiStageG`.
-Orders runDomainPlanners({
-  required Game game,
-  required MapTopology topology,
-  required String nationId,
-  required PlayerView view,
-  required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
-  required EconomyPlan economyPlan,
-  OrchestratorOptions options = OrchestratorOptions.defaults,
-}) {
-  return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: nationId,
-    view: view,
-    snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    economyPlan: economyPlan,
-    options: options,
-  ).orders;
+/// When [OrchestratorOptions.onStagedPlannerProgress] is set, emits coarse
+/// phase ids aligned with staged planners A–G (Refs #2277): `suggestionPools`,
+/// `aiStageA` … `aiStageG`.
+Orders runDomainPlanners(DomainPlannerInput input) {
+  return runDomainPlannersWithOutcome(input).orders;
 }
 
 /// Runs the domain-planner pipeline for one AI-controlled player turn.
 ///
-/// When [phasePlan] is provided the orchestrator threads it through every
-/// phase-derived call site instead of recomputing it via [runPhasePlanners].
-/// Callers that already resolved the dispatched plan once per AI turn
-/// (e.g. [generateStrategicOrdersWithTrace]) pass it in here so the planning
-/// pipeline does not duplicate the dispatch work for the same `(game,
-/// snapshot, personalityId)` inputs. When [phasePlan] is `null` the
-/// orchestrator falls back to the legacy internal compute so existing
-/// callers (orchestrator-level tests, the alternate `runDomainPlanners`
-/// entry without a hoisted plan) remain unchanged. Refs #2509 S5.
-DomainPlannerOutcome runDomainPlannersWithOutcome({
-  required Game game,
-  required MapTopology topology,
-  required String nationId,
-  required PlayerView view,
-  required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
-  required EconomyPlan economyPlan,
-  OrchestratorOptions options = OrchestratorOptions.defaults,
-}) {
+/// When [OrchestratorOptions.phasePlan] is provided the orchestrator threads
+/// it through every phase-derived call site instead of recomputing it via
+/// [runPhasePlanners]. Callers that already resolved the dispatched plan once
+/// per AI turn (e.g. [generateStrategicOrdersWithTrace]) pass it in here so
+/// the planning pipeline does not duplicate the dispatch work for the same
+/// `(game, snapshot, personalityId)` inputs. When [phasePlan] is `null` the
+/// orchestrator falls back to the legacy internal compute so existing callers
+/// (orchestrator-level tests, the alternate [runDomainPlanners] entry without
+/// a hoisted plan) remain unchanged. Refs #2509 S5.
+DomainPlannerOutcome runDomainPlannersWithOutcome(DomainPlannerInput input) {
+  final game = input.game;
+  final topology = input.topology;
+  final nationId = input.nationId;
+  final view = input.view;
+  final snapshot = input.snapshot;
+  final config = input.config;
+  final primaryGoal = input.primaryGoal;
+  final seeds = input.seeds;
+  final suggestionAPI = input.suggestionAPI;
+  final economyPlan = input.economyPlan;
+  final options = input.options;
+
   void emit(String phaseId) => options.onStagedPlannerProgress?.call(phaseId);
 
   final resolvedPhasePlan =

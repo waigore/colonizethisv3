@@ -87,20 +87,22 @@ void main() {
         hiddenAgendaId: 'warmonger',
       );
       final scores = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'gp2',
-          ),
-          DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
       );
       expect(scores.length, 2);
       expect(scores[0], greaterThan(scores[1]));
@@ -205,28 +207,32 @@ void main() {
         hiddenAgendaId: 'peacemaker',
       );
       final peaceHi = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.offerPeace,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: highDesireGame,
-        snapshot: snapHi,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: highDesireGame,
+          snapshot: snapHi,
+          config: config,
+        ),
       ).single;
       final peaceLo = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.offerPeace,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: lowDesireGame,
-        snapshot: snapLo,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: lowDesireGame,
+          snapshot: snapLo,
+          config: config,
+        ),
       ).single;
       expect(peaceLo, greaterThan(peaceHi));
     });
@@ -294,34 +300,38 @@ void main() {
         ),
       ];
       final withWeakGp = computeDiplomaticCandidateScores(
-        candidates: candidate,
-        nationId: 'gp1',
-        game: game,
-        snapshot: const AIWorldSnapshot(
-          playerId: 'gp1',
-          threats: ThreatSummary(),
-          opportunities: OpportunitySummary(weakNeighbors: ['gp2']),
-          conquest: ConquestSummary(provincesToVictory: 10),
-          economy: EconomySummary(),
-          relations: {},
+        DiplomaticCandidateScoringInput(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: const AIWorldSnapshot(
+            playerId: 'gp1',
+            threats: ThreatSummary(),
+            opportunities: OpportunitySummary(weakNeighbors: ['gp2']),
+            conquest: ConquestSummary(provincesToVictory: 10),
+            economy: EconomySummary(),
+            relations: {},
+          ),
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
         ),
-        config: config,
-        primaryGoal: StrategicGoal.conquer,
       ).single;
       final withoutWeakGp = computeDiplomaticCandidateScores(
-        candidates: candidate,
-        nationId: 'gp1',
-        game: game,
-        snapshot: const AIWorldSnapshot(
-          playerId: 'gp1',
-          threats: ThreatSummary(),
-          opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(provincesToVictory: 10),
-          economy: EconomySummary(),
-          relations: {},
+        DiplomaticCandidateScoringInput(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: const AIWorldSnapshot(
+            playerId: 'gp1',
+            threats: ThreatSummary(),
+            opportunities: OpportunitySummary(),
+            conquest: ConquestSummary(provincesToVictory: 10),
+            economy: EconomySummary(),
+            relations: {},
+          ),
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
         ),
-        config: config,
-        primaryGoal: StrategicGoal.conquer,
       ).single;
       expect(withWeakGp, greaterThan(withoutWeakGp));
       expect(
@@ -403,18 +413,22 @@ void main() {
           relations: {},
         );
         final behindScore = computeDiplomaticCandidateScores(
-          candidates: candidate,
-          nationId: 'gp1',
-          game: game,
-          snapshot: behindPaceSnapshot,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: candidate,
+            nationId: 'gp1',
+            game: game,
+            snapshot: behindPaceSnapshot,
+            config: config,
+          ),
         ).single;
         final nearVictoryScore = computeDiplomaticCandidateScores(
-          candidates: candidate,
-          nationId: 'gp1',
-          game: game,
-          snapshot: nearVictorySnapshot,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: candidate,
+            nationId: 'gp1',
+            game: game,
+            snapshot: nearVictorySnapshot,
+            config: config,
+          ),
         ).single;
         expect(behindScore, greaterThan(0));
         expect(nearVictoryScore, 0);
@@ -496,30 +510,34 @@ void main() {
           topology: topology,
         );
         final adjacentScore = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.trade,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.trade,
+          ),
         ).single;
         final distantScore = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor6',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.trade,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor6',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.trade,
+          ),
         ).single;
         expect(adjacentScore, greaterThan(distantScore));
         expect(
@@ -568,28 +586,32 @@ void main() {
           hiddenAgendaId: 'merchant',
         );
         final minorScore = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         final gpScore = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp2',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(minorScore, kDeclareWarNonAdjacentSuppressedScore);
         expect(gpScore, kDeclareWarNonAdjacentSuppressedScore);
@@ -669,16 +691,18 @@ void main() {
           hiddenAgendaId: 'merchant',
         );
         final gpScore = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp2',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(gpScore, kDeclareWarNonAdjacentSuppressedScore);
       },

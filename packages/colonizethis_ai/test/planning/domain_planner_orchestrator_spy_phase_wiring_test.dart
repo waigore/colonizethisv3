@@ -55,17 +55,19 @@ Orders _runWithPhase(PhasePlanOutcome phasePlan) {
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = AIWorldSnapshot.fromPlayerView(view);
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.expand,
-    seeds: AISeedBundle.fromTurnSeed(383400),
-    suggestionAPI: _spyWorkApi,
-    economyPlan: _economyPlan,
-    options: OrchestratorOptions(phasePlan: phasePlan),
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.expand,
+      seeds: AISeedBundle.fromTurnSeed(383400),
+      suggestionAPI: _spyWorkApi,
+      economyPlan: _economyPlan,
+      options: OrchestratorOptions(phasePlan: phasePlan),
+    ),
   ).orders;
 }
 

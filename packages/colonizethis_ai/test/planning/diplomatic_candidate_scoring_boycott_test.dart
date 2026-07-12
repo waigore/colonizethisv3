@@ -61,11 +61,13 @@ void main() {
             : {'personalityThresholds.warLikelihood': warLikelihoodOverride},
       );
       return computeDiplomaticCandidateScores(
-        candidates: boycottCandidate,
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: boycottCandidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
       ).single;
     }
 

@@ -99,17 +99,19 @@ DomainPlannerOutcome _runForPhase(PhasePlanOutcome plan) {
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandSnapshot();
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.conquer,
-    seeds: AISeedBundle.fromTurnSeed(2832100),
-    suggestionAPI: _conquestCandidateApi,
-    economyPlan: _economyPlan,
-    options: OrchestratorOptions(phasePlan: plan),
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.conquer,
+      seeds: AISeedBundle.fromTurnSeed(2832100),
+      suggestionAPI: _conquestCandidateApi,
+      economyPlan: _economyPlan,
+      options: OrchestratorOptions(phasePlan: plan),
+    ),
   );
 }
 
@@ -148,16 +150,18 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2832200),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2832200),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final gates = outcome.domainGateData;

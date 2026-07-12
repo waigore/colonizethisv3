@@ -183,17 +183,19 @@ Orders _runOrchestrator({
   );
 
   return runDomainPlanners(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.expand,
-    seeds: AISeedBundle.fromTurnSeed(turnSeed),
-    suggestionAPI: _nwTribeDeclareWarApi,
-    economyPlan: _economyPlan,
-    options: OrchestratorOptions(phasePlan: phasePlan),
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.expand,
+      seeds: AISeedBundle.fromTurnSeed(turnSeed),
+      suggestionAPI: _nwTribeDeclareWarApi,
+      economyPlan: _economyPlan,
+      options: OrchestratorOptions(phasePlan: phasePlan),
+    ),
   );
 }
 

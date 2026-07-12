@@ -229,25 +229,27 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(2509240),
-        suggestionAPI: _nwTribeDeclareWarApi,
-        economyPlan: _economyPlan,
-        // Pin the legacy EXPAND hard-suppress contract by threading an
-        // explicit `newWorldAcquisition = 0.0` override through the
-        // orchestrator (Refs #2847 Phase 3). Under the soft-weight
-        // production curve `_curveWeightsForOw(7)` returns 0.05 and the
-        // scoring path now keeps NW declare-war reachable at low
-        // priority — see
-        // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
-        // This test continues to assert the strict regression contract.
-        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(2509240),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+          // Pin the legacy EXPAND hard-suppress contract by threading an
+          // explicit `newWorldAcquisition = 0.0` override through the
+          // orchestrator (Refs #2847 Phase 3). Under the soft-weight
+          // production curve `_curveWeightsForOw(7)` returns 0.05 and the
+          // scoring path now keeps NW declare-war reachable at low
+          // priority — see
+          // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
+          // This test continues to assert the strict regression contract.
+          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        ),
       );
 
       expect(
@@ -299,16 +301,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509241),
-          suggestionAPI: _nwTribeDeclareWarApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509241),
+            suggestionAPI: _nwTribeDeclareWarApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         expect(
@@ -343,17 +347,19 @@ void main() {
       final snapshot = _expandSnapshot();
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(turnSeed),
-        suggestionAPI: _nwTribeDeclareWarApi,
-        economyPlan: _economyPlan,
-        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        ),
       );
 
       final firstRun = runOnce(2509242);

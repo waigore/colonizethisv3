@@ -86,12 +86,14 @@ void main() {
         hiddenAgendaId: 'merchant',
       );
       return computeDiplomaticCandidateScores(
-        candidates: overtureCandidate,
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
-        sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+        DiplomaticCandidateScoringInput(
+          candidates: overtureCandidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+          sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+        ),
       ).single;
     }
 

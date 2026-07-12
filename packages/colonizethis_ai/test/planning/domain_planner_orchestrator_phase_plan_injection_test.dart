@@ -143,16 +143,18 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509300),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         expect(
@@ -191,17 +193,19 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: PhasePlanOutcome.defaultDevelop),
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509300),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+            options: OrchestratorOptions(phasePlan: PhasePlanOutcome.defaultDevelop),
+          ),
         );
 
         expect(
@@ -249,30 +253,34 @@ void main() {
         );
 
         final ordersInternal = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509301),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509301),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         ).orders;
 
         final ordersExternal = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509301),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: naturalPlan),
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509301),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+            options: OrchestratorOptions(phasePlan: naturalPlan),
+          ),
         ).orders;
 
         expect(
@@ -343,18 +351,20 @@ void main() {
         );
 
         DomainPlannerOutcome runOnce() => runDomainPlannersWithOutcome(
-              game: game,
-              topology: topology,
-              nationId: _nationId,
-              view: view,
-              snapshot: snapshot,
-              config: _aiConfig,
-              primaryGoal: StrategicGoal.conquer,
-              seeds: AISeedBundle.fromTurnSeed(2509302),
-              suggestionAPI: _conquestCandidateApi,
-              economyPlan: _economyPlan,
-              options: OrchestratorOptions(phasePlan: naturalPlan),
-            );
+          DomainPlannerInput(
+                game: game,
+                topology: topology,
+                nationId: _nationId,
+                view: view,
+                snapshot: snapshot,
+                config: _aiConfig,
+                primaryGoal: StrategicGoal.conquer,
+                seeds: AISeedBundle.fromTurnSeed(2509302),
+                suggestionAPI: _conquestCandidateApi,
+                economyPlan: _economyPlan,
+                options: OrchestratorOptions(phasePlan: naturalPlan),
+          ),
+        );
 
         final first = runOnce();
         final second = runOnce();

@@ -214,17 +214,19 @@ void main() {
       final view = _viewWithCivilians(game, const {});
       final snapshot = AIWorldSnapshot.fromPlayerView(view);
       return runDomainPlannersWithOutcome(
-        game: game,
-        topology: topology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: kTestAiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(7),
-        suggestionAPI: fakeApi(),
-        economyPlan: kTestEconomyPlan,
-        options: OrchestratorOptions(civilianBuildPlannerEnabled: civilianBuildPlannerEnabled),
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: 'gp1',
+          view: view,
+          snapshot: snapshot,
+          config: kTestAiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(7),
+          suggestionAPI: fakeApi(),
+          economyPlan: kTestEconomyPlan,
+          options: OrchestratorOptions(civilianBuildPlannerEnabled: civilianBuildPlannerEnabled),
+        ),
       ).orders;
     }
 

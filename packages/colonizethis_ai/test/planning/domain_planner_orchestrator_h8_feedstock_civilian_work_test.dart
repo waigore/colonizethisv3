@@ -83,27 +83,29 @@ void main() {
           topology: topology,
         );
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: const AIConfig(
-            leaderId: 'napoleon',
-            personalityId: 'napoleon',
-            hiddenAgendaId: 'peacemaker',
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: const AIConfig(
+              leaderId: 'napoleon',
+              personalityId: 'napoleon',
+              hiddenAgendaId: 'peacemaker',
+            ),
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(284701),
+            suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
+              work: [grainImprovement, woolImprovement],
+              build: [],
+              move: [],
+              research: [],
+              navalMove: [],
+              navalMission: [],
+            ),
+            economyPlan: kTestEconomyPlan,
           ),
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(284701),
-          suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-            work: [grainImprovement, woolImprovement],
-            build: [],
-            move: [],
-            research: [],
-            navalMove: [],
-            navalMission: [],
-          ),
-          economyPlan: kTestEconomyPlan,
         );
 
         expect(outcome.domainGateData?.workPlannerRan, isTrue);
@@ -127,27 +129,29 @@ void main() {
           topology: topology,
         );
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: const AIConfig(
-            leaderId: 'napoleon',
-            personalityId: 'napoleon',
-            hiddenAgendaId: 'peacemaker',
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: const AIConfig(
+              leaderId: 'napoleon',
+              personalityId: 'napoleon',
+              hiddenAgendaId: 'peacemaker',
+            ),
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(284701),
+            suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
+              work: [grainImprovement, woolImprovement],
+              build: [],
+              move: [],
+              research: [],
+              navalMove: [],
+              navalMission: [],
+            ),
+            economyPlan: kTestEconomyPlan,
           ),
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(284701),
-          suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-            work: [grainImprovement, woolImprovement],
-            build: [],
-            move: [],
-            research: [],
-            navalMove: [],
-            navalMission: [],
-          ),
-          economyPlan: kTestEconomyPlan,
         );
 
         expect(outcome.domainGateData?.workPlannerRan, isTrue);

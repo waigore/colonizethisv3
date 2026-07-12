@@ -304,11 +304,13 @@ List<int> _scoreTribeDeclareWar({
       _colonialTribeScenarioGame(overtureStates: overtureStates);
   final snapshot = _colonialSnapshot();
   return computeDiplomaticCandidateScores(
-    candidates: _tribeDeclareWarCandidates,
-    nationId: _nationId,
-    game: game,
-    snapshot: snapshot,
-    config: _aiConfig,
+    DiplomaticCandidateScoringInput(
+      candidates: _tribeDeclareWarCandidates,
+      nationId: _nationId,
+      game: game,
+      snapshot: snapshot,
+      config: _aiConfig,
+    ),
   );
 }
 

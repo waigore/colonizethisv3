@@ -278,11 +278,13 @@ List<int> _scoreFor(AIConfig config) {
   final game = _colonialScenarioGame();
   final snapshot = _colonialSnapshot();
   return computeDiplomaticCandidateScores(
-    candidates: _candidates,
-    nationId: _nationId,
-    game: game,
-    snapshot: snapshot,
-    config: config,
+    DiplomaticCandidateScoringInput(
+      candidates: _candidates,
+      nationId: _nationId,
+      game: game,
+      snapshot: snapshot,
+      config: config,
+    ),
   );
 }
 

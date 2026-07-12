@@ -85,16 +85,20 @@ EconomyPlan runEconomyPlanner({
 
   final stockpile = player.stockpile;
   final workers = player.workerPool;
-  final effectiveLabour = EffectiveLabourState.fromGame(game, view.playerId).compute();
+  final effectiveLabour = EffectiveLabourState.fromGame(
+    game,
+    view.playerId,
+  ).compute();
 
-  final belowQuotaPeaceTreasuryRecovery = _resolveBelowQuotaPeaceTreasuryRecovery(
-    game: game,
-    view: view,
-    snapshot: snapshot,
-    phasePlan: phasePlan,
-    treasury: player.treasury,
-    stockpile: stockpile,
-  );
+  final belowQuotaPeaceTreasuryRecovery =
+      _resolveBelowQuotaPeaceTreasuryRecovery(
+        game: game,
+        view: view,
+        snapshot: snapshot,
+        phasePlan: phasePlan,
+        treasury: player.treasury,
+        stockpile: stockpile,
+      );
 
   if (effectiveLabour <= 0) {
     return EconomyPlan(
@@ -129,7 +133,8 @@ EconomyPlan runEconomyPlanner({
     );
   }
 
-  final militaryRebuildCrisis = snapshot != null &&
+  final militaryRebuildCrisis =
+      snapshot != null &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       snapshot.threats.atWarWith.isNotEmpty &&
       regimentCountForPlayer(game, view.playerId) <
@@ -138,8 +143,9 @@ EconomyPlan runEconomyPlanner({
   final expandEconomy = phasePlan != null
       ? expandEconomyPlanFromPhasePlan(phasePlan)
       : ExpandEconomyPlan.defaultPlan;
-  final missingRegimentBuildInputs =
-      _missingCheapestRegimentBuildInputIds(stockpile);
+  final missingRegimentBuildInputs = _missingCheapestRegimentBuildInputIds(
+    stockpile,
+  );
   // Refs #2847 § H8-extraction (S7-D lumber re-localization): when the
   // improvement-input gate is active (a recovered, zero-regiment lock-recovery
   // seller that owns an unimproved feedstock tile), the level-0
@@ -242,11 +248,11 @@ EconomyPlan runEconomyPlanner({
         view.playerId,
         snapshot: snapshot,
       )
-          ? const <String>{}
-          : peerLockRecoverySellerNeededProducibleImprovementInputs(
-              game,
-              excludePlayerId: view.playerId,
-            );
+      ? const <String>{}
+      : peerLockRecoverySellerNeededProducibleImprovementInputs(
+          game,
+          excludePlayerId: view.playerId,
+        );
 
   // Refs #2847 H8-extraction feedstock co-availability: the multi-input
   // `castIron` recipe needs `timber` + `iron` together, but the single-input
@@ -281,37 +287,35 @@ EconomyPlan runEconomyPlanner({
   };
 
   final growthStage = growthStagePlannerEnabled
-      ? GrowthStage.compute(
-          game,
-          view.playerId,
-          snapshot: snapshot,
-        )
+      ? GrowthStage.compute(game, view.playerId, snapshot: snapshot)
       : null;
 
   final assignments = _allocateLabour(
-    stockpile: stockpile,
-    workers: workers,
-    effectiveLabour: effectiveLabour,
-    config: config,
-    seeds: seeds,
-    techUnlocked: player.techUnlocked,
-    militaryRebuildCrisis: militaryRebuildCrisis,
-    regimentBuildInputProductionBoost: growthStagePlannerEnabled
-        ? false
-        : regimentBuildInputProductionBoost,
-    missingRegimentBuildInputIds: growthStagePlannerEnabled
-        ? const <String>{}
-        : boostedBuildInputOutputs,
-    supplierReleaseImprovementInputIds: growthStagePlannerEnabled
-        ? const <String>{}
-        : supplierReleaseImprovementInputs,
-    feedstockReserveOutputIds: growthStagePlannerEnabled
-        ? const <String>{}
-        : feedstockReserveOutputIds,
-    castIronLabourPeasantRecruitFabricBoost: growthStagePlannerEnabled
-        ? false
-        : castIronLabourPeasantRecruitFabricBoost,
-    growthStage: growthStage,
+    LabourAllocationInput(
+      stockpile: stockpile,
+      workers: workers,
+      effectiveLabour: effectiveLabour,
+      config: config,
+      seeds: seeds,
+      techUnlocked: player.techUnlocked,
+      militaryRebuildCrisis: militaryRebuildCrisis,
+      regimentBuildInputProductionBoost: growthStagePlannerEnabled
+          ? false
+          : regimentBuildInputProductionBoost,
+      missingRegimentBuildInputIds: growthStagePlannerEnabled
+          ? const <String>{}
+          : boostedBuildInputOutputs,
+      supplierReleaseImprovementInputIds: growthStagePlannerEnabled
+          ? const <String>{}
+          : supplierReleaseImprovementInputs,
+      feedstockReserveOutputIds: growthStagePlannerEnabled
+          ? const <String>{}
+          : feedstockReserveOutputIds,
+      castIronLabourPeasantRecruitFabricBoost: growthStagePlannerEnabled
+          ? false
+          : castIronLabourPeasantRecruitFabricBoost,
+      growthStage: growthStage,
+    ),
   );
 
   final cargoPref = _cargoPreference(
