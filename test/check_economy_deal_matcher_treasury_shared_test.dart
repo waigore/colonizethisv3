@@ -24,7 +24,7 @@ void main() {
       );
       _writeFile(
         root,
-        'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_matching.dart',
+        'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_session.dart',
         'void main() { maxAffordableBidQuantity(bidRemaining: 1); decrementTreasuryForFill(buyerFactionId: "gp1"); }\n',
       );
       _writeFile(
@@ -53,7 +53,7 @@ void main() {
       );
       _writeFile(
         root,
-        'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_matching.dart',
+        'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_session.dart',
         'void main() { maxAffordableBidQuantity(bidRemaining: 1); decrementTreasuryForFill(buyerFactionId: "gp1"); }\n',
       );
       _writeFile(

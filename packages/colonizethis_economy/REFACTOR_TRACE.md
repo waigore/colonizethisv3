@@ -156,7 +156,7 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/lock_recovery_minor_bids_test_support.dart`
 - `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_test_support.dart`
 
-Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_matching.dart` delegates (lint `repo.economy_deal_matcher_treasury_budget_shared`).
+Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_session.dart` delegates after de-part (lint `repo.economy_deal_matcher_treasury_budget_shared`).
 
 Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
 
