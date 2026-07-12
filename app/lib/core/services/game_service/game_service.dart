@@ -115,6 +115,20 @@ class GameService {
   List<LoadableSaveEntry> listLoadableSaves() =>
       _gameServiceListLoadableSaves(this);
 
+  /// Count of manual named saves (auto-save excluded).
+  int manualSaveCount() => _adapter.manualSaveCount(_box);
+
+  /// Whether a new sanitized manual id may be created (count < [kMaxManualSaves]).
+  bool canCreateNewManualSave() => _adapter.canCreateNewManualSave(_box);
+
+  /// Deletes a manual save or the auto-save slot (game + map keys).
+  void deleteSave(String storageId) {
+    _adapter.delete(_box, storageId);
+    if (storageId != kAutoSaveSlotId) {
+      _mapCache.remove(storageId);
+    }
+  }
+
   /// Whether the Hive auto-save slot is playable.
   bool hasValidAutoSave() => _gameServiceHasValidAutoSave(this);
 

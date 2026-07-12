@@ -19,12 +19,16 @@ class _SaveDialogGameService extends GameService {
   _SaveDialogGameService(super.box, super.adapter);
 
   List<String> existingIds = const [];
+  bool allowNewManual = true;
   int saveCalls = 0;
   String? lastSaveId;
   String? lastDisplayName;
 
   @override
   List<String> listGameIds() => existingIds;
+
+  @override
+  bool canCreateNewManualSave() => allowNewManual;
 
   @override
   void saveGameSession({
@@ -157,6 +161,26 @@ void main() {
     await tester.tap(find.byKey(SaveGameNameDialog.overwriteCancelButtonKey));
     await tester.pumpAndSettle();
 
+    expect(service.saveCalls, 0);
+    expect(find.byType(SaveGameNameDialog), findsOneWidget);
+  });
+
+  testWidgets('negative: at-cap new id shows error and does not save', (
+    tester,
+  ) async {
+    service.allowNewManual = false;
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(SaveGameNameDialog.nameFieldKey),
+      'Fresh Slot',
+    );
+    await tester.tap(find.byKey(SaveGameNameDialog.saveButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(SaveGameNameDialog.errorTextKey), findsOneWidget);
+    expect(find.textContaining('20 saves'), findsOneWidget);
     expect(service.saveCalls, 0);
     expect(find.byType(SaveGameNameDialog), findsOneWidget);
   });

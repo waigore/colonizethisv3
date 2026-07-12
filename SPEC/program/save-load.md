@@ -17,9 +17,10 @@
 - **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Human-facing clients that open the box (**Flutter app** and **ctdev**) must handle lock failure in a user-visible way (e.g. explain that another instance may hold the store, offer retry or safe exit) and must not delete the lock file without explicit user consent.
 - **Key convention:**
   - **Game:** key = `gameId`; value = envelope JSON `{ saveFormatVersion, game, draftOrders?, productionDesiredOutputByRecipe?, displayName? }`.
-    - `saveFormatVersion`: integer; current write version is **2** (`kSaveFormatVersion`). Supported read set is `{1, 2}`.
+    - `saveFormatVersion`: integer; current write version is **3** (`kSaveFormatVersion`). Supported read set is `{1, 2, 3}`.
     - `game`: `Game.toJson()` payload. `Game.toJson()` includes all core fields, including `politicalGlyphByPlayerId` (1-character political owner glyphs) so that ownership glyphs on political maps are stable across loads, and `mapViewState` (Empire overview map zoom + map display toggles) so map UI state restores across load. Diplomacy persistence includes `diplomacyRelations[].formalAlliance` (treaty flag; normalized to `false` on load when `state = atWar`) and `allianceBreakCooldowns` (bilateral post-break overture cooldown records keyed by sorted faction pair + `sinceTurn`; Refs #3811).
-    - **Mid-turn draft envelope (v2):** `draftOrders` (`Orders.toJson()`), `productionDesiredOutputByRecipe` (recipe id → int ≥ 0), `displayName` (user-facing label). Written by app named saves and mid-turn auto-save mirrors. **Legacy v1:** missing draft keys load as empty `Orders()`, `{}`, and null `displayName` (list UI falls back to Hive `gameId`).
+    - **Mid-turn draft envelope (v2+):** `draftOrders` (`Orders.toJson()`), `productionDesiredOutputByRecipe` (recipe id → int ≥ 0), `displayName` (user-facing label). Written by app named saves and mid-turn auto-save mirrors. **Legacy v1:** missing draft keys load as empty `Orders()`, `{}`, and null `displayName`.
+    - **List metadata (v3+):** see [save-load-list-metadata.md](save-load-list-metadata.md) (`listMeta`, list gate, capacity, ordering).
   - **Hive gameId vs display name:** Hive keys remain storage identity. User-typed names are stored as `displayName`. `sanitizeGameId(typed)` trims, replaces whitespace runs with `_`, strips map-data suffixes (`_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`, `_warpLinks`), and returns null when empty. Overwrite detection uses sanitized id equality with existing manual keys.
   - **gameId constraints:** The `gameId` must be a non-empty string. It may contain any characters except those that would create ambiguity with map-data keys (see below). For clarity, avoid gameIds that end with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` unless you intentionally want the game to be treated as a potential map-data key (see listGameIds behavior).
   - **Required map data:** keys = `gameId + suffix`; suffixes: `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`. Values = JSON produced by the respective model `toJson()` (e.g. `TileMapResult`, `MapTopology`).
@@ -27,7 +28,7 @@
 
 ### listLoadableSaves
 
-- Returns ordered `LoadableSaveEntry` rows: each manual id from `listGameIds` (label = envelope `displayName` ?? id, optional `turnNumber`) plus, when `hasValidAutoSave`, one auto-save row keyed by `kAutoSaveSlotId` with fixed label `kAutoSaveListLabel` (`"Auto-save"`). Does **not** change `listGameIds` exclusion of the auto-save stem.
+- Returns ordered `LoadableSaveEntry` rows per [save-load-list-metadata.md](save-load-list-metadata.md): list-gate manuals (v3+ `listMeta`) newest-first, plus a pinned auto-save row when the slot is listable. Label = envelope `displayName` ?? id (auto-save uses `kAutoSaveListLabel`). Does **not** change `listGameIds` exclusion of the auto-save stem.
 
 ### Auto-save slot (Flutter app)
 
@@ -96,6 +97,6 @@
 
 - **Legacy v1 empty drafts.** Given a v1 envelope with only `saveFormatVersion` and `game`, when the system loads with `loadSession`, then `draftOrders` is empty, `productionDesiredOutputByRecipe` is `{}`, and `displayName` is null.
 
-- **listLoadableSaves includes auto.** Given a Hive box with at least one manual save and a valid auto-save, when the system calls `listLoadableSaves`, then the result includes the manual entries and one auto-save entry with `storageId == kAutoSaveSlotId` and label `Auto-save`, while `listGameIds` still excludes `kAutoSaveSlotId`.
+- **listLoadableSaves includes auto.** Given a Hive box with at least one list-gate (v3+) manual save and a valid listable auto-save, when the system calls `listLoadableSaves`, then the result places the auto-save first (`storageId == kAutoSaveSlotId`, label `Auto-save`) then manuals newest-first, while `listGameIds` still excludes `kAutoSaveSlotId`. See [save-load-list-metadata.md](save-load-list-metadata.md).
 
 - **sanitizeGameId.** Given typed names with whitespace, map-data suffixes, or empty/whitespace-only input, when the system calls `sanitizeGameId`, then whitespace becomes `_`, forbidden suffixes are stripped, and empty results return null.

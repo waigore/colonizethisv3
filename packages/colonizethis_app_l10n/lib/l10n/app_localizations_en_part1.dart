@@ -88,10 +88,18 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get saveGameName_gameSaved => 'Game saved';
 
   @override
+  String get saveGameName_atCapError =>
+      'You already have 20 saves. Delete an old save first.';
+
+  @override
   String get loadGameList_title => 'Load Game';
 
   @override
   String get loadGameList_empty => 'No saved games.';
+
+  @override
+  String loadGameList_metaLine(int turn, int year, String nation) =>
+      'Turn $turn · $year · $nation';
 
   @override
   String loadGameList_turnSubtitle(int turn) => 'Turn $turn';
@@ -102,6 +110,25 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get loadGameList_load => 'Load';
+
+  @override
+  String get loadGameList_delete => 'Delete';
+
+  @override
+  String get loadGameList_deleteConfirm => 'Delete this save?';
+
+  @override
+  String get loadGameList_previous => 'Previous';
+
+  @override
+  String get loadGameList_next => 'Next';
+
+  @override
+  String loadGameList_pageOf(int page, int pageCount) =>
+      'Page $page of $pageCount';
+
+  @override
+  String get loadGameList_autoSaveBadge => 'Auto-save';
 
   @override
   String get game_screenTitle => 'Game';
