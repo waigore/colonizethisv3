@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'conflict_detection_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a land conflict-detection scenario table.
-class ConflictDetectionScenario {
+class ConflictDetectionScenario implements LabeledScenario {
   const ConflictDetectionScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class ConflictDetectionScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [ConflictDetectionScenario.run]).
-void runConflictDetectionScenario(ConflictDetectionScenario scenario) {
-  scenario.run();
-}
 
 List<ConflictDetectionScenario> detectConflictsScenarios() => [
   ..._detectConflictsCoreScenarios(),

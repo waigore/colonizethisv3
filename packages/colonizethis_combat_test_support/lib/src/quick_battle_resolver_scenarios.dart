@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'quick_battle_input_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a Quick Battle resolver scenario table.
-class QuickBattleResolverScenario {
+class QuickBattleResolverScenario implements LabeledScenario {
   const QuickBattleResolverScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class QuickBattleResolverScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [QuickBattleResolverScenario.run]).
-void runQuickBattleResolverScenario(QuickBattleResolverScenario scenario) {
-  scenario.run();
-}
 
 /// Scenarios for [resolveQuickBattle].
 List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [

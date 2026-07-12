@@ -873,6 +873,13 @@ rules:
     runner: dart
     script: tool/check_combat_dedup_precombat_indexes.dart
 
+  - rule_id: repo.combat_no_part_directives
+    group: structure
+    title: colonizethis_combat lib must not use Dart part / part of directives (Refs #3983)
+    spec: SPEC/program/combat-no-part-directives.md
+    runner: dart
+    script: tool/check_combat_no_part_directives.dart
+
   - rule_id: repo.economy_no_logic_deps
     group: architecture
     title: colonizethis_economy must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 1)
@@ -1337,6 +1344,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_test_duplicate_descriptions.dart
+
+  - rule_id: repo.combat_test_scenario_harness
+    group: structure
+    title: colonizethis_combat tests must use runLabeledScenarios harness (Refs #3983)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_scenario_harness.dart
 
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture

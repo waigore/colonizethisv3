@@ -5,9 +5,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+import 'scenario_runner.dart';
 
 /// One row in a naval privateering scenario table.
-class NavalCombatPrivateeringScenario {
+class NavalCombatPrivateeringScenario implements LabeledScenario {
   const NavalCombatPrivateeringScenario({
     required this.scenarioId,
     required this.label,
@@ -15,16 +16,11 @@ class NavalCombatPrivateeringScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [NavalCombatPrivateeringScenario.run]).
-void runNavalCombatPrivateeringScenario(
-  NavalCombatPrivateeringScenario scenario,
-) {
-  scenario.run();
-}
 
 Game _gameWithInterceptorTech({required bool hasPrivateering}) =>
     TestFixtures.minimalGame(

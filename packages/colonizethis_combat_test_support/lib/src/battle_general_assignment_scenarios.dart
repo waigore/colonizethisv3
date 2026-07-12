@@ -6,9 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a battle general assignment scenario table.
-class BattleGeneralAssignmentScenario {
+class BattleGeneralAssignmentScenario implements LabeledScenario {
   const BattleGeneralAssignmentScenario({
     required this.scenarioId,
     required this.label,
@@ -16,14 +17,11 @@ class BattleGeneralAssignmentScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [BattleGeneralAssignmentScenario.run]).
-void runBattleGeneralAssignmentScenario(BattleGeneralAssignmentScenario scenario) {
-  scenario.run();
-}
 
 List<BattleGeneralAssignmentScenario> battleGeneralAssignmentScenarios() => [
   BattleGeneralAssignmentScenario(
