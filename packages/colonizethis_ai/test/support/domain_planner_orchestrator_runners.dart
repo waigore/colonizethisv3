@@ -27,17 +27,19 @@ DomainPlannerOutcome runOrchestratorWithFakeApi({
 }) {
   final view = buildPlayerView(game, topology, nationId);
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: nationId,
-    view: view,
-    snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: AISeedBundle.fromTurnSeed(turnSeed),
-    suggestionAPI: suggestionAPI,
-    economyPlan: economyPlan,
-    options: options,
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: nationId,
+      view: view,
+      snapshot: snapshot,
+      config: config,
+      primaryGoal: primaryGoal,
+      seeds: AISeedBundle.fromTurnSeed(turnSeed),
+      suggestionAPI: suggestionAPI,
+      economyPlan: economyPlan,
+      options: options,
+    ),
   );
 }
 

@@ -203,24 +203,26 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
     extractionById: tradeForecastExtractionById,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
-    game: planningGame,
-    topology: input.topology,
-    nationId: input.nationId,
-    view: planningView,
-    snapshot: planningSnapshot,
-    config: input.config,
-    primaryGoal: primaryGoal,
-    seeds: input.seeds,
-    suggestionAPI: input.suggestionAPI,
-    economyPlan: economyPlan,
-    options: OrchestratorOptions(
-      tileMapByRegion: input.tileMapByRegion,
-      onStagedPlannerProgress: input.onStagedPlannerProgress,
-      sameTurnPriorDiplomaticOrders: input.sameTurnPriorDiplomaticOrders,
-      phasePlan: phasePlan,
-      recomputeTradeOrdersWithPendingCosts: true,
-      growthStagePlannerEnabled: input.growthStagePlannerEnabled,
-      extractionById: tradeForecastExtractionById,
+    DomainPlannerInput(
+      game: planningGame,
+      topology: input.topology,
+      nationId: input.nationId,
+      view: planningView,
+      snapshot: planningSnapshot,
+      config: input.config,
+      primaryGoal: primaryGoal,
+      seeds: input.seeds,
+      suggestionAPI: input.suggestionAPI,
+      economyPlan: economyPlan,
+      options: OrchestratorOptions(
+        tileMapByRegion: input.tileMapByRegion,
+        onStagedPlannerProgress: input.onStagedPlannerProgress,
+        sameTurnPriorDiplomaticOrders: input.sameTurnPriorDiplomaticOrders,
+        phasePlan: phasePlan,
+        recomputeTradeOrdersWithPendingCosts: true,
+        growthStagePlannerEnabled: input.growthStagePlannerEnabled,
+        extractionById: tradeForecastExtractionById,
+      ),
     ),
   );
   // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
@@ -230,7 +232,8 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   final moveCount = orders.moveOrdersByPlayerId[input.nationId]?.length ?? 0;
   final armyMoveCount =
       orders.armyMoveOrdersByPlayerId[input.nationId]?.length ?? 0;
-  final buildCount = orders.buildUnitOrdersByPlayerId[input.nationId]?.length ?? 0;
+  final buildCount =
+      orders.buildUnitOrdersByPlayerId[input.nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[input.nationId]?.length ?? 0;
   final researchCount =
       orders.researchOrdersByPlayerId[input.nationId]?.length ?? 0;

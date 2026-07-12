@@ -266,21 +266,23 @@ void main() {
         relations: {},
       );
       final scores = computeDiplomaticCandidateScores(
-        game: game,
-        snapshot: snapshot,
-        nationId: 'gp1',
-        config: const AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'merchant',
-        ),
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'tribe1',
+        DiplomaticCandidateScoringInput(
+          game: game,
+          snapshot: snapshot,
+          nationId: 'gp1',
+          config: const AIConfig(
+            leaderId: 'henry',
+            personalityId: 'henry',
+            hiddenAgendaId: 'merchant',
           ),
-        ],
-        primaryGoal: StrategicGoal.expand,
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          primaryGoal: StrategicGoal.expand,
+        ),
       );
       expect(scores.single, 0);
     });
@@ -352,12 +354,14 @@ void main() {
         hiddenAgendaId: 'merchant',
       );
       final scores = computeDiplomaticCandidateScores(
-        game: game,
-        snapshot: snapshot,
-        nationId: 'gp1',
-        config: config,
-        candidates: const [candidate],
-        primaryGoal: StrategicGoal.expand,
+        DiplomaticCandidateScoringInput(
+          game: game,
+          snapshot: snapshot,
+          nationId: 'gp1',
+          config: config,
+          candidates: const [candidate],
+          primaryGoal: StrategicGoal.expand,
+        ),
       );
       expect(
         scores.single,
@@ -370,12 +374,14 @@ void main() {
       // "deterministic for fixed seed" clause of AC #1 without coupling to
       // the broader Full AI determinism harness.
       final repeat = computeDiplomaticCandidateScores(
-        game: game,
-        snapshot: snapshot,
-        nationId: 'gp1',
-        config: config,
-        candidates: const [candidate],
-        primaryGoal: StrategicGoal.expand,
+        DiplomaticCandidateScoringInput(
+          game: game,
+          snapshot: snapshot,
+          nationId: 'gp1',
+          config: config,
+          candidates: const [candidate],
+          primaryGoal: StrategicGoal.expand,
+        ),
       );
       expect(repeat.single, scores.single);
     });
@@ -407,21 +413,23 @@ void main() {
         relations: {},
       );
       final scores = computeDiplomaticCandidateScores(
-        game: game,
-        snapshot: snapshot,
-        nationId: 'gp1',
-        config: const AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'merchant',
-        ),
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'gp2',
+        DiplomaticCandidateScoringInput(
+          game: game,
+          snapshot: snapshot,
+          nationId: 'gp1',
+          config: const AIConfig(
+            leaderId: 'henry',
+            personalityId: 'henry',
+            hiddenAgendaId: 'merchant',
           ),
-        ],
-        primaryGoal: StrategicGoal.conquer,
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          primaryGoal: StrategicGoal.conquer,
+        ),
       );
       expect(scores.single, kDeclareWarNonAdjacentSuppressedScore);
     });
@@ -637,21 +645,23 @@ void main() {
         relations: {},
       );
       final scores = computeDiplomaticCandidateScores(
-        game: game,
-        snapshot: snapshot,
-        nationId: 'gp1',
-        config: const AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'merchant',
-        ),
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'tribe1',
+        DiplomaticCandidateScoringInput(
+          game: game,
+          snapshot: snapshot,
+          nationId: 'gp1',
+          config: const AIConfig(
+            leaderId: 'henry',
+            personalityId: 'henry',
+            hiddenAgendaId: 'merchant',
           ),
-        ],
-        primaryGoal: StrategicGoal.conquer,
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          primaryGoal: StrategicGoal.conquer,
+        ),
       );
       expect(scores.single, greaterThan(0));
     });
@@ -727,16 +737,18 @@ void main() {
 
       DiplomaticOrderType topTypeFor(String personalityId) {
         final scores = computeDiplomaticCandidateScores(
-          game: game,
-          snapshot: snapshot,
-          nationId: 'gp1',
-          config: AIConfig(
-            leaderId: personalityId,
-            personalityId: personalityId,
-            hiddenAgendaId: 'merchant',
+          DiplomaticCandidateScoringInput(
+            game: game,
+            snapshot: snapshot,
+            nationId: 'gp1',
+            config: AIConfig(
+              leaderId: personalityId,
+              personalityId: personalityId,
+              hiddenAgendaId: 'merchant',
+            ),
+            candidates: candidates,
+            primaryGoal: StrategicGoal.conquer,
           ),
-          candidates: candidates,
-          primaryGoal: StrategicGoal.conquer,
         );
         var bestIdx = 0;
         for (var i = 1; i < scores.length; i++) {

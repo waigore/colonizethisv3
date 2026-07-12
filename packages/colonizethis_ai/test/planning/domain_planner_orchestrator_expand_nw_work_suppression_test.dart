@@ -276,16 +276,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509001),
-          suggestionAPI: _mixedRegionWorkApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(2509001),
+            suggestionAPI: _mixedRegionWorkApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
@@ -340,17 +342,19 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509006),
-          suggestionAPI: _mixedRegionWorkApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: phasePlan),
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(2509006),
+            suggestionAPI: _mixedRegionWorkApi,
+            economyPlan: _economyPlan,
+            options: OrchestratorOptions(phasePlan: phasePlan),
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
@@ -403,16 +407,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(2509002),
-          suggestionAPI: _mixedRegionWorkApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.diplomacy,
+            seeds: AISeedBundle.fromTurnSeed(2509002),
+            suggestionAPI: _mixedRegionWorkApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
@@ -469,16 +475,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509004),
-          suggestionAPI: _mixedOwNwArmyMoveApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(2509004),
+            suggestionAPI: _mixedOwNwArmyMoveApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final armyMoves =
@@ -528,16 +536,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509005),
-          suggestionAPI: _nwOnlyArmyMoveApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509005),
+            suggestionAPI: _nwOnlyArmyMoveApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final armyMoves =
@@ -573,28 +583,32 @@ void main() {
       final seeds = AISeedBundle.fromTurnSeed(2509003);
 
       final first = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: seeds,
-        suggestionAPI: _mixedRegionWorkApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: seeds,
+          suggestionAPI: _mixedRegionWorkApi,
+          economyPlan: _economyPlan,
+        ),
       );
       final second = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: seeds,
-        suggestionAPI: _mixedRegionWorkApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: seeds,
+          suggestionAPI: _mixedRegionWorkApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       List<String> describe(Orders orders) =>

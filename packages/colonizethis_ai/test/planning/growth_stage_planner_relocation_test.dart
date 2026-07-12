@@ -172,20 +172,22 @@ void main() {
         topology: twoProvinceTopology,
       );
       final outcome = runDomainPlannersWithOutcome(
-        game: game,
-        topology: twoProvinceTopology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: kTestAiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: kTestSeeds,
-        suggestionAPI: const DefaultOrderSuggestionAPI(),
-        economyPlan: const EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
+        DomainPlannerInput(
+          game: game,
+          topology: twoProvinceTopology,
+          nationId: 'gp1',
+          view: view,
+          snapshot: snapshot,
+          config: kTestAiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: kTestSeeds,
+          suggestionAPI: const DefaultOrderSuggestionAPI(),
+          economyPlan: const EconomyPlan(
+            productionAssignments: [],
+            cargoPreference: CargoPreference.none,
+          ),
+          options: OrchestratorOptions(growthStagePlannerEnabled: true),
         ),
-        options: OrchestratorOptions(growthStagePlannerEnabled: true),
       );
       final moves = outcome.orders.moveOrdersByPlayerId['gp1'] ?? const [];
       expect(

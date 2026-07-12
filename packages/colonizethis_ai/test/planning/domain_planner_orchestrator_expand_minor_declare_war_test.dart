@@ -182,16 +182,18 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(2509101),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(2509101),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       expect(
@@ -226,16 +228,18 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.diplomacy,
-        seeds: AISeedBundle.fromTurnSeed(2509102),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.diplomacy,
+          seeds: AISeedBundle.fromTurnSeed(2509102),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       expect(
@@ -260,16 +264,18 @@ void main() {
       final snapshot = _expandSnapshot();
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(turnSeed),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       final firstRun = runOnce(2509103);

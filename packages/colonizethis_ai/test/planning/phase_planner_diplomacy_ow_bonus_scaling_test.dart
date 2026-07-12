@@ -77,17 +77,19 @@ Game _buildGame() => Game(
 
 int _minorDeclareWarScore({required PhasePlanOutcome phasePlan}) {
   return computeDiplomaticCandidateScores(
-    candidates: const [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: 'minor1',
-      ),
-    ],
-    nationId: 'gp1',
-    game: _buildGame(),
-    snapshot: _stalledAdjacentInvadableMinorSnap,
-    config: _config,
-    phasePlan: phasePlan,
+    DiplomaticCandidateScoringInput(
+      candidates: const [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'minor1',
+        ),
+      ],
+      nationId: 'gp1',
+      game: _buildGame(),
+      snapshot: _stalledAdjacentInvadableMinorSnap,
+      config: _config,
+      phasePlan: phasePlan,
+    ),
   ).single;
 }
 
@@ -146,17 +148,19 @@ void main() {
         ),
       );
       final nullPlanScore = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'minor1',
-          ),
-        ],
-        nationId: 'gp1',
-        game: _buildGame(),
-        snapshot: _stalledAdjacentInvadableMinorSnap,
-        config: _config,
-        phasePlan: null,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: _buildGame(),
+          snapshot: _stalledAdjacentInvadableMinorSnap,
+          config: _config,
+          phasePlan: null,
+        ),
       ).single;
       expect(
         nullPlanScore,

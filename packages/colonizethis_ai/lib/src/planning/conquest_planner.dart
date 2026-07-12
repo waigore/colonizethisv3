@@ -145,6 +145,69 @@ Set<String> _invadableProvinceIdsForConquestPass({
 }
 
 /// Invasion army moves after same-turn declare war. SPEC/ai/ai-architecture.md.
+/// Resolves the military-economy weight floor for a conquest army-move pass
+/// (Refs #3977 AC6). Behaviour-preserving extraction from
+/// [runConquestArmyMovePlanner].
+int _resolveConquestArmyMoveWeight({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required bool stalledExpansion,
+  required bool colonialPressureActive,
+  required PhasePlanOutcome? phasePlan,
+}) {
+  var weight = ctx.resolveMilitaryEconomyWeight();
+  final provincesToVictory = snapshot.conquest.provincesToVictory;
+  if (ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
+    weight = weight < 10 ? 10 : weight;
+  }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
+      weight < 10) {
+    weight = 10;
+  }
+  final atWarWithInvadableTarget =
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      snapshot.threats.atWarWith.isNotEmpty;
+  if (stalledExpansion &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < 90) {
+    weight = 90;
+  } else if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
+    weight = 80;
+  }
+  if (stalledExpansion && weight < kConquestArmyMoveMinWeightWhenStalled) {
+    weight = kConquestArmyMoveMinWeightWhenStalled;
+  }
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      !isAtWarWithAnyGreatPower(ctx.game, snapshot) &&
+      weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
+    weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
+  }
+  // Refs #2847 Phase 3 conquest colonial-pressure floor wiring: source
+  // the floor magnitude from the soft-phase NW acquisition weight on the
+  // dispatched phase plan instead of the legacy hard
+  // `kConquestArmyMoveMinWeightWhenColonialPressure` floor. The null-phase-plan
+  // fallback maps the legacy boolean (`colonialPressureActive`) to
+  // `1.0 / 0.0` so callers without a `PhasePlanOutcome` preserve
+  // pre-Phase-3 behaviour exactly. At the early-sprint default curve
+  // (`newWorldAcquisition = 0.05` for OW <= 7) the floor collapses to
+  // `round(45 * 0.05) = 2`, well below the stalled-expansion floors so
+  // the OW conquest sprint is not dominated by colonial-pressure pulls.
+  final colonialPressureWeight = colonialPressureScaleFromWeight(
+    colonialPressureWeight: phasePlan != null
+        ? resolvePhaseConquestColonialPressureWeight(phasePlan: phasePlan)
+        : null,
+    legacyColonialPressureActive: colonialPressureActive,
+  );
+  final colonialPressureFloor = conquestColonialPressureMinWeightFloor(
+    colonialPressureWeight: colonialPressureWeight,
+  );
+  if (weight < colonialPressureFloor) {
+    weight = colonialPressureFloor;
+  }
+  return weight;
+}
+
 Orders runConquestArmyMovePlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -253,56 +316,13 @@ Orders runConquestArmyMovePlanner({
     }
     return ctx.orders;
   }
-  var weight = ctx.resolveMilitaryEconomyWeight();
-  final provincesToVictory = snapshot.conquest.provincesToVictory;
-  if (ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
-    weight = weight < 10 ? 10 : weight;
-  }
-  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
-      weight < 10) {
-    weight = 10;
-  }
-  final atWarWithInvadableTarget =
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      snapshot.threats.atWarWith.isNotEmpty;
-  if (stalledExpansion &&
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      weight < 90) {
-    weight = 90;
-  } else if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
-    weight = 80;
-  }
-  if (stalledExpansion && weight < kConquestArmyMoveMinWeightWhenStalled) {
-    weight = kConquestArmyMoveMinWeightWhenStalled;
-  }
-  if (snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold &&
-      !isAtWarWithAnyGreatPower(ctx.game, snapshot) &&
-      weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
-    weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
-  }
-  // Refs #2847 Phase 3 conquest colonial-pressure floor wiring: source
-  // the floor magnitude from the soft-phase NW acquisition weight on the
-  // dispatched phase plan instead of the legacy hard
-  // `kConquestArmyMoveMinWeightWhenColonialPressure` floor. The null-phase-plan
-  // fallback maps the legacy boolean (`colonialPressureActive`) to
-  // `1.0 / 0.0` so callers without a `PhasePlanOutcome` preserve
-  // pre-Phase-3 behaviour exactly. At the early-sprint default curve
-  // (`newWorldAcquisition = 0.05` for OW <= 7) the floor collapses to
-  // `round(45 * 0.05) = 2`, well below the stalled-expansion floors so
-  // the OW conquest sprint is not dominated by colonial-pressure pulls.
-  final colonialPressureWeight = colonialPressureScaleFromWeight(
-    colonialPressureWeight: phasePlan != null
-        ? resolvePhaseConquestColonialPressureWeight(phasePlan: phasePlan)
-        : null,
-    legacyColonialPressureActive: colonialPressureActive,
+  final weight = _resolveConquestArmyMoveWeight(
+    ctx: ctx,
+    snapshot: snapshot,
+    stalledExpansion: stalledExpansion,
+    colonialPressureActive: colonialPressureActive,
+    phasePlan: phasePlan,
   );
-  final colonialPressureFloor = conquestColonialPressureMinWeightFloor(
-    colonialPressureWeight: colonialPressureWeight,
-  );
-  if (weight < colonialPressureFloor) {
-    weight = colonialPressureFloor;
-  }
   if (weight < 10) {
     if (_log.debugEnabled) {
       _log.d(
