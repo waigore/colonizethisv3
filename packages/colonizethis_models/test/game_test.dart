@@ -373,6 +373,15 @@ void main() {
       expect(legacy.mapViewState, MapViewState.defaults);
       expect(legacy.mapViewState.showPlayerTurnEventsFeed, isFalse);
       expect(legacy.mapViewState.showPlayersBar, isTrue);
+
+      // Defaults are still written so legacy implicit true becomes explicit
+      // on the next save (Refs #3986).
+      expect(legacy.toJson()['mapViewState'], isA<Map<String, dynamic>>());
+      expect(
+        (legacy.toJson()['mapViewState']
+            as Map<String, dynamic>)['showPlayersBar'],
+        isTrue,
+      );
     });
 
     test('copyWith id and players', () {

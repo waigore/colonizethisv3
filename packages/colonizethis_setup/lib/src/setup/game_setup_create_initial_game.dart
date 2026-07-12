@@ -64,6 +64,9 @@ Game _buildInitialGame({
         config.startingResources.capitalTileGrainBonusPerTurn,
     mapViewState: MapViewState.defaults.copyWith(
       zoomMultiplier: initialMapZoomMultiplier,
+      // New campaigns hide the players bar; legacy missing-field loads keep
+      // MapViewState.defaults.showPlayersBar == true (Refs #3986).
+      showPlayersBar: false,
     ),
     infiniteMode: config.infiniteMode,
     worldMarketState: WorldMarketState.withDefaultPrices(

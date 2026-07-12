@@ -242,7 +242,8 @@ void main() {
             find.byKey(kGameMapPlayersBarKey),
             findsOneWidget,
             reason:
-                'Issue #3898: at 320 dp with default showPlayersBar=true, '
+                'Issue #3898: at 320 dp with fixture showPlayersBar=true '
+                '(model/legacy default; new-game setup uses false per #3986), '
                 'the players bar mounts below the news-feed anchor on narrow.',
           );
         },

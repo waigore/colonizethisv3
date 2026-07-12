@@ -547,6 +547,7 @@ void main() {
       expect(loaded.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
       expect(loaded.mapViewState.showPlayerTurnEventsFeed, isTrue);
+      expect(loaded.mapViewState.showPlayersBar, isTrue);
 
       final legacyGameJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
@@ -558,6 +559,19 @@ void main() {
       expect(legacyLoaded, isNotNull);
       expect(legacyLoaded!.mapViewState, MapViewState.defaults);
       expect(legacyLoaded.mapViewState.showPlayerTurnEventsFeed, isFalse);
+      expect(legacyLoaded.mapViewState.showPlayersBar, isTrue);
+
+      final rematerializeId = 'legacyMapViewStateRematerialize';
+      adapter.save(box, legacyLoaded.copyWith(id: rematerializeId));
+      final rematerialized = box.get(rematerializeId) as Map<dynamic, dynamic>;
+      final rematerializedGame =
+          rematerialized['game'] as Map<dynamic, dynamic>;
+      expect(rematerializedGame.containsKey('mapViewState'), isTrue);
+      expect(
+        (rematerializedGame['mapViewState']
+            as Map<dynamic, dynamic>)['showPlayersBar'],
+        isTrue,
+      );
     });
 
     test(

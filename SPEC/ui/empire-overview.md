@@ -165,7 +165,7 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 ### Players bar (in-game map stack)
 
-- **Toggle:** Tab-bar trailing cluster order is `treasury → cargo → players-bar toggle → news toggle`. Toggle chrome matches the news toggle (`28 × 22 dp`, dark editorial-monocle border/hover/active). Persisted in `MapViewState.showPlayersBar` (default **`true`** for new games and legacy saves missing the field). Functional in **global observe** (explicit carve-out from observe sentinel pattern).
+- **Toggle:** Tab-bar trailing cluster order is `treasury → cargo → players-bar toggle → news toggle`. Toggle chrome matches the news toggle (`28 × 22 dp`, dark editorial-monocle border/hover/active). Persisted in `MapViewState.showPlayersBar`. **New-game default:** `false` (set only in standard game setup; bar starts hidden). **Legacy / model default:** `true` when `mapViewState` or `showPlayersBar` is missing on load (`MapViewState.defaults` / `fromJson` `?? true`). Functional in **global observe** (explicit carve-out from observe sentinel pattern).
 - **Placement:** Floating column anchored below the top bar + tab bar chrome. **Wide:** `top: 78 dp`, `right: 6 dp` (respects province-panel right inset). **Narrow:** below the news-feed anchor (`top: 56 dp` region); stacks vertically beneath an open `PlayerTurnEventFeedCard` when both are visible.
 - **Visibility:** Shown when `mapViewState.showPlayersBar == true` and `Game.victory == null`. Hidden when toggled off or during victory overlay.
 - **Order:** One chip per **Great Power** (`Game.players` filtered to non-tribe entries). Sorted by **`greatPowerPowerScore` descending**; tie-break `player.id` ascending.
@@ -176,7 +176,13 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 **Acceptance (players bar):**
 
-- Given a new game or legacy save without `showPlayersBar`, when the map shell loads, then `mapViewState.showPlayersBar == true` and the players bar is visible on wide layout.
+- Given a brand-new campaign created through standard game setup, when the map shell loads on a wide viewport (≥600 dp), then `mapViewState.showPlayersBar == false`, `GameMapPlayersBar` is not mounted, and the players-bar toggle remains visible in the tab bar trailing cluster.
+- Given a brand-new campaign, when the player toggles the players bar on and saves, then reload restores `showPlayersBar == true` and the bar is mounted.
+- Given a save with `showPlayersBar == false`, when loaded, then the bar remains hidden until toggled on.
+- Given a legacy save envelope with no `mapViewState` (or `mapViewState` without `showPlayersBar`), when loaded, then `showPlayersBar == true` and the bar is visible on wide layout.
+- Given a legacy save loaded with implicit `showPlayersBar == true`, when the player saves without toggling, then the saved envelope includes explicit `mapViewState.showPlayersBar: true`.
+- Given narrow viewport (<600 dp) and `showPlayersBar == false` on a new game, when the map renders, then `GameMapPlayersBar` is not mounted.
+- Given global or player observe mode and `showPlayersBar == false`, when the map renders, then the bar is hidden and the players-bar toggle remains functional.
 - Given `showPlayersBar == false`, when the wide map renders, then `GameMapPlayersBar` is not mounted.
 - Given two GPs with deterministic `greatPowerPowerScore` values, when the bar renders, then chips appear in descending score order with formatted power scores.
 - Given normal play for human `gp1`, when the bar renders, then `gp1` display name uses bold accent and other GP names use muted style.
