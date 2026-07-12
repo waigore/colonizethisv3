@@ -54,7 +54,6 @@ const Set<String> aiTestMirrorsLibAllowlist = <String>{
   'seed42_observer_world_market_diagnostic_test.dart',
   'seed42_observer_world_market_lock_recovery_diagnostic_test.dart',
   'seed42_observer_world_market_lock_recovery_regression_test.dart',
-  'seed42_s7d_feedstock_helpers_test.dart',
 };
 
 /// True when the repo-relative [slashPath] is under the AI package `test/`.

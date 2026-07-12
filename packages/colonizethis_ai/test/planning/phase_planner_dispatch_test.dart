@@ -56,17 +56,18 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/colonial_phase_planner_test_support.dart';
 import 'ai_planner_fixtures.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _minor1 = 'minor1';
+const String _gp1 = kColonialPhaseGp1;
+const String _gp2 = kColonialPhaseGp2;
+const String _gp3 = kColonialPhaseGp3;
+const String _tribe1 = kColonialPhaseTribe1;
+const String _minor1 = kColonialPhaseMinor1;
 
-const String _owProvGp1 = 'oldWorld|gp1_a';
-const String _owProvMinor = 'oldWorld|m1_a';
-const String _nwProvTribe = 'newWorld|tribe1_a';
+const String _owProvGp1 = kColonialPhaseDispatchOwProvGp1;
+const String _owProvMinor = kColonialPhaseDispatchOwProvMinor;
+const String _nwProvTribe = kColonialPhaseNwProvTribeA;
 
 /// Game scaffold for the EXPAND-phase route.
 ///
@@ -134,18 +135,6 @@ AIWorldSnapshot _expandSnapshot({
   );
 }
 
-/// Game scaffold for the COLONIAL-lite route: turn >= 120, OW = 9, and
-/// a NW province visibly owned by a tribe (so
-/// `globalNewWorldHasNonGpOwnership` returns true).
-Game _colonialLiteGame() {
-  return _expandGame(
-    turnNumber: kObserverColonialLiteMinTurn + 5,
-    newWorldProvinces: const [
-      Province(id: _nwProvTribe, regionId: kNewWorldRegionId, ownerId: _tribe1),
-    ],
-  );
-}
-
 /// Snapshot for COLONIAL-lite posture: OW = 9, NW summary populated
 /// so `planColonialLiteOvertures` and `planColonialLiteNaval` have
 /// candidates.
@@ -167,42 +156,6 @@ AIWorldSnapshot _colonialLiteSnapshot() {
     ),
     economy: EconomySummary(),
     relations: {},
-  );
-}
-
-/// Game scaffold for the COLONIAL route: OW at quota (10), NW
-/// invadable populated.
-Game _colonialGame({int regimentCount = 6, int ownTreasury = 9999}) {
-  return Game(
-    id: 'g-2509-phase-planner-dispatch-colonial',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 130, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: _owProvGp1, regionId: kOldWorldRegionId, ownerId: _gp1),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _nwProvTribe,
-            regionId: kNewWorldRegionId,
-            ownerId: _tribe1,
-          ),
-        ],
-      ),
-      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: ownTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
   );
 }
 
@@ -307,7 +260,7 @@ void main() {
 
     test('COLONIAL-lite when turn>=120, OW=9, NW non-GP-owned visible', () {
       final outcome = runPhasePlanners(
-        game: _colonialLiteGame(),
+        game: buildPhasePlannerDispatchColonialLiteGame(),
         snapshot: _colonialLiteSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.colonialLite);
@@ -315,7 +268,7 @@ void main() {
 
     test('COLONIAL when OW at quota with colonial acquisition targets', () {
       final outcome = runPhasePlanners(
-        game: _colonialGame(),
+        game: buildPhasePlannerDispatchColonialGame(),
         snapshot: _colonialSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.colonial);
@@ -412,7 +365,7 @@ void main() {
 
   group('COLONIAL-lite outcome composition', () {
     test('COLONIAL-lite populates EXPAND + COLONIAL-lite slots', () {
-      final game = _colonialLiteGame();
+      final game = buildPhasePlannerDispatchColonialLiteGame();
       final snapshot = _colonialLiteSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
@@ -464,7 +417,7 @@ void main() {
         // factionId into both `planColonialMilitary` and
         // `planColonialNaval` -- the at-war fallback arm fires for both
         // sibling plans with `_tribe1` listed as the priority owner.
-        final game = _colonialGame();
+        final game = buildPhasePlannerDispatchColonialGame();
         final snapshot = _colonialSnapshot();
         final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
@@ -530,7 +483,7 @@ void main() {
       // therefore pass `null` as `colonialDeclaredWarTargetFactionId`
       // and the at-war fallback arms fire identically to a direct
       // call.
-      final game = _colonialGame(regimentCount: 0);
+      final game = buildPhasePlannerDispatchColonialGame(regimentCount: 0);
       // Still at-war with the tribe so the at-war fallback arm
       // populates the priority owner roster (tribe1) for both
       // military and naval.
@@ -613,7 +566,7 @@ void main() {
     });
 
     test('COLONIAL outcome equal across repeated calls', () {
-      final game = _colonialGame();
+      final game = buildPhasePlannerDispatchColonialGame();
       final snapshot = _colonialSnapshot();
       final a = runPhasePlanners(game: game, snapshot: snapshot);
       final b = runPhasePlanners(game: game, snapshot: snapshot);
@@ -649,7 +602,7 @@ void main() {
 
     test('COLONIAL-lite outcome carries weights field-equal to '
         'computePhasePriorityWeights', () {
-      final game = _colonialLiteGame();
+      final game = buildPhasePlannerDispatchColonialLiteGame();
       final snapshot = _colonialLiteSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
       expect(
@@ -664,7 +617,7 @@ void main() {
 
     test('COLONIAL outcome carries weights from default ExpandEconomyPlan (no '
         'EXPAND planner ran)', () {
-      final game = _colonialGame();
+      final game = buildPhasePlannerDispatchColonialGame();
       final snapshot = _colonialSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
       // Sanity: COLONIAL outcome leaves EXPAND plan at default.
