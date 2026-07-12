@@ -146,6 +146,34 @@
   "@loadGameList_load": {
     "description": "Confirm load button after discard confirmation."
   },
+  "loadGameList_delete": "Delete",
+  "@loadGameList_delete": {
+    "description": "Per-row delete control on the load-game list (DLG80001)."
+  },
+  "loadGameList_deleteConfirm": "Delete this save?",
+  "@loadGameList_deleteConfirm": {
+    "description": "Confirmation body before deleting a save from the load list."
+  },
+  "loadGameList_previous": "Previous",
+  "@loadGameList_previous": {
+    "description": "Pager control for the previous page of manual saves."
+  },
+  "loadGameList_next": "Next",
+  "@loadGameList_next": {
+    "description": "Pager control for the next page of manual saves."
+  },
+  "loadGameList_pageOf": "Page {page} of {pageCount}",
+  "@loadGameList_pageOf": {
+    "description": "Pager label showing current manual-save page (1-based).",
+    "placeholders": {
+      "page": { "type": "int" },
+      "pageCount": { "type": "int" }
+    }
+  },
+  "loadGameList_autoSaveBadge": "Auto-save",
+  "@loadGameList_autoSaveBadge": {
+    "description": "Badge above the pinned auto-save row in the load list."
+  },
   "game_screenTitle": "Game",
   "@game_screenTitle": {
     "description": "Title used for the main game screen shell."

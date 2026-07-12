@@ -119,6 +119,24 @@ abstract class AppLocalizations {
   /// Confirm load button after discard confirmation.
   String get loadGameList_load;
 
+  /// Per-row delete control on the load-game list (DLG80001).
+  String get loadGameList_delete;
+
+  /// Confirmation body before deleting a save from the load list.
+  String get loadGameList_deleteConfirm;
+
+  /// Pager control for the previous page of manual saves.
+  String get loadGameList_previous;
+
+  /// Pager control for the next page of manual saves.
+  String get loadGameList_next;
+
+  /// Pager label showing current manual-save page (1-based).
+  String loadGameList_pageOf(int page, int pageCount);
+
+  /// Badge above the pinned auto-save row in the load list.
+  String get loadGameList_autoSaveBadge;
+
   /// Title used for the main game screen shell.
   String get game_screenTitle;
 

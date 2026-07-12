@@ -112,6 +112,25 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get loadGameList_load => 'Load';
 
   @override
+  String get loadGameList_delete => 'Delete';
+
+  @override
+  String get loadGameList_deleteConfirm => 'Delete this save?';
+
+  @override
+  String get loadGameList_previous => 'Previous';
+
+  @override
+  String get loadGameList_next => 'Next';
+
+  @override
+  String loadGameList_pageOf(int page, int pageCount) =>
+      'Page $page of $pageCount';
+
+  @override
+  String get loadGameList_autoSaveBadge => 'Auto-save';
+
+  @override
   String get game_screenTitle => 'Game';
 
   @override

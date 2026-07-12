@@ -14,11 +14,15 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
+/// Manual saves shown per page in [LoadGameListDialog] (auto-save excluded).
+const int kLoadGameManualPageSize = 10;
 
 /// Lists loadable saves (manual + auto-save). Optional discard confirm from pause.
 class LoadGameListDialog extends ConsumerStatefulWidget {
@@ -26,6 +30,7 @@ class LoadGameListDialog extends ConsumerStatefulWidget {
     super.key,
     this.fromPause = false,
     this.previewEntries,
+    this.previewPendingDeleteId,
   });
 
   /// SPEC/ui/load-game-list-dialog.md — [UiScreenIds.loadGameListDialog].
@@ -37,10 +42,24 @@ class LoadGameListDialog extends ConsumerStatefulWidget {
   /// Optional fixed list for Widgetbook / tests (skips [GameService] listing).
   final List<LoadableSaveEntry>? previewEntries;
 
+  /// Widgetbook: open already on delete-confirm for this [storageId].
+  final String? previewPendingDeleteId;
+
   static const Key emptyStateKey = ValueKey<String>(
     'loadGameListDialog.emptyState',
   );
   static const Key listKey = ValueKey<String>('loadGameListDialog.list');
+  static const Key autoSaveSectionKey = ValueKey<String>(
+    'loadGameListDialog.autoSaveSection',
+  );
+  static const Key pagerKey = ValueKey<String>('loadGameListDialog.pager');
+  static const Key previousButtonKey = ValueKey<String>(
+    'loadGameListDialog.previous',
+  );
+  static const Key nextButtonKey = ValueKey<String>('loadGameListDialog.next');
+  static const Key pageLabelKey = ValueKey<String>(
+    'loadGameListDialog.pageLabel',
+  );
   static const Key discardConfirmKey = ValueKey<String>(
     'loadGameListDialog.discardConfirm',
   );
@@ -49,6 +68,15 @@ class LoadGameListDialog extends ConsumerStatefulWidget {
   );
   static const Key discardConfirmButtonKey = ValueKey<String>(
     'loadGameListDialog.discardConfirmButton',
+  );
+  static const Key deleteConfirmKey = ValueKey<String>(
+    'loadGameListDialog.deleteConfirm',
+  );
+  static const Key deleteCancelButtonKey = ValueKey<String>(
+    'loadGameListDialog.deleteCancel',
+  );
+  static const Key deleteConfirmButtonKey = ValueKey<String>(
+    'loadGameListDialog.deleteConfirmButton',
   );
   static const Key closeButtonKey = ValueKey<String>(
     'loadGameListDialog.closeButton',
@@ -63,31 +91,95 @@ class LoadGameListDialog extends ConsumerStatefulWidget {
   static Key rowSavedAtKey(String storageId) =>
       ValueKey<String>('loadGameListDialog.rowSavedAt_$storageId');
 
+  static Key deleteButtonKey(String storageId) =>
+      ValueKey<String>('loadGameListDialog.delete_$storageId');
+
   @override
   ConsumerState<LoadGameListDialog> createState() => _LoadGameListDialogState();
 }
 
 class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
-  LoadableSaveEntry? _pendingEntry;
+  LoadableSaveEntry? _pendingLoad;
+  LoadableSaveEntry? _pendingDelete;
+  int _manualPageIndex = 0;
+  List<LoadableSaveEntry>? _mutablePreview;
+
+  @override
+  void initState() {
+    super.initState();
+    final preview = widget.previewEntries;
+    if (preview != null) {
+      _mutablePreview = List<LoadableSaveEntry>.from(preview);
+    }
+    final pendingId = widget.previewPendingDeleteId;
+    if (pendingId != null && _mutablePreview != null) {
+      for (final entry in _mutablePreview!) {
+        if (entry.storageId == pendingId) {
+          _pendingDelete = entry;
+          break;
+        }
+      }
+    }
+  }
+
+  List<LoadableSaveEntry> _currentEntries() {
+    return _mutablePreview ??
+        ref.read(gameServiceProvider).listLoadableSaves();
+  }
 
   void _onSelect(LoadableSaveEntry entry) {
     if (widget.fromPause) {
-      setState(() => _pendingEntry = entry);
+      setState(() => _pendingLoad = entry);
       return;
     }
     _loadEntry(entry);
   }
 
   void _onDiscardCancel() {
-    setState(() => _pendingEntry = null);
+    setState(() => _pendingLoad = null);
   }
 
   void _onDiscardConfirm() {
-    final entry = _pendingEntry;
+    final entry = _pendingLoad;
     if (entry == null) {
       return;
     }
     _loadEntry(entry);
+  }
+
+  void _onDeleteRequest(LoadableSaveEntry entry) {
+    setState(() => _pendingDelete = entry);
+  }
+
+  void _onDeleteCancel() {
+    setState(() => _pendingDelete = null);
+  }
+
+  void _onDeleteConfirm() {
+    final entry = _pendingDelete;
+    if (entry == null) {
+      return;
+    }
+    if (_mutablePreview != null) {
+      _mutablePreview!.removeWhere((e) => e.storageId == entry.storageId);
+    } else {
+      ref.read(gameServiceProvider).deleteSave(entry.storageId);
+    }
+    setState(() {
+      _pendingDelete = null;
+      final manuals = _currentEntries()
+          .where((e) => e.kind == LoadableSaveKind.manual)
+          .length;
+      final pageCount = manuals == 0
+          ? 0
+          : ((manuals + kLoadGameManualPageSize - 1) ~/
+                kLoadGameManualPageSize);
+      if (pageCount == 0) {
+        _manualPageIndex = 0;
+      } else if (_manualPageIndex >= pageCount) {
+        _manualPageIndex = pageCount - 1;
+      }
+    });
   }
 
   void _loadEntry(LoadableSaveEntry entry) {
@@ -136,6 +228,52 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
     return DateFormat.yMd().add_jm().format(at.toLocal());
   }
 
+  Widget _rowContent({
+    required AppLocalizations l10n,
+    required TextStyle bodyStyle,
+    required TextStyle mutedStyle,
+    required LoadableSaveEntry entry,
+  }) {
+    final meta = _secondaryMetaLine(l10n, entry);
+    final savedAt = _lastSavedLine(entry);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: CtNinePatchButton(
+            key: LoadGameListDialog.rowKey(entry.storageId),
+            onPressed: () => _onSelect(entry),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(entry.label, style: bodyStyle),
+                if (meta != null)
+                  Text(
+                    meta,
+                    key: LoadGameListDialog.rowMetaKey(entry.storageId),
+                    style: mutedStyle,
+                  ),
+                if (savedAt != null)
+                  Text(
+                    savedAt,
+                    key: LoadGameListDialog.rowSavedAtKey(entry.storageId),
+                    style: mutedStyle,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: CtSpacing.s),
+        CtNinePatchButton(
+          key: LoadGameListDialog.deleteButtonKey(entry.storageId),
+          onPressed: () => _onDeleteRequest(entry),
+          child: Text(l10n.loadGameList_delete),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -149,10 +287,33 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
       color: EditorialMonoclePalette.fg,
     );
     final mutedStyle = bodyStyle.copyWith(color: EditorialMonoclePalette.muted);
-    final entries =
-        widget.previewEntries ??
-        ref.read(gameServiceProvider).listLoadableSaves();
-    final pending = _pendingEntry;
+    final entries = _currentEntries();
+    final pendingLoad = _pendingLoad;
+    final pendingDelete = _pendingDelete;
+
+    LoadableSaveEntry? autoSave;
+    final manuals = <LoadableSaveEntry>[];
+    for (final entry in entries) {
+      if (entry.kind == LoadableSaveKind.autoSave) {
+        autoSave = entry;
+      } else {
+        manuals.add(entry);
+      }
+    }
+    final pageCount = manuals.isEmpty
+        ? 0
+        : ((manuals.length + kLoadGameManualPageSize - 1) ~/
+              kLoadGameManualPageSize);
+    final showPager = manuals.length > kLoadGameManualPageSize;
+    final pageIndex = pageCount == 0
+        ? 0
+        : _manualPageIndex.clamp(0, pageCount - 1);
+    final pageManuals = pageCount == 0
+        ? const <LoadableSaveEntry>[]
+        : manuals
+              .skip(pageIndex * kLoadGameManualPageSize)
+              .take(kLoadGameManualPageSize)
+              .toList();
 
     return CtDialogShell(
       maxWidth: 420,
@@ -164,7 +325,30 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
         children: [
           Text(l10n.loadGameList_title, style: titleStyle),
           CtGap.ml,
-          if (pending != null) ...[
+          if (pendingDelete != null) ...[
+            Text(
+              l10n.loadGameList_deleteConfirm,
+              key: LoadGameListDialog.deleteConfirmKey,
+              style: bodyStyle,
+            ),
+            CtGap.l,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CtNinePatchButton(
+                  key: LoadGameListDialog.deleteCancelButtonKey,
+                  onPressed: _onDeleteCancel,
+                  child: Text(l10n.common_cancel),
+                ),
+                const SizedBox(width: CtSpacing.m),
+                CtNinePatchButton(
+                  key: LoadGameListDialog.deleteConfirmButtonKey,
+                  onPressed: _onDeleteConfirm,
+                  child: Text(l10n.loadGameList_delete),
+                ),
+              ],
+            ),
+          ] else if (pendingLoad != null) ...[
             Text(
               l10n.loadGameList_discardConfirm,
               key: LoadGameListDialog.discardConfirmKey,
@@ -198,44 +382,95 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
               ConstrainedBox(
                 key: LoadGameListDialog.listKey,
                 constraints: const BoxConstraints(maxHeight: 320),
-                child: ListView.separated(
+                child: ListView(
                   shrinkWrap: true,
-                  itemCount: entries.length,
-                  separatorBuilder: (_, _) => CtGap.m,
-                  itemBuilder: (context, index) {
-                    final entry = entries[index];
-                    final meta = _secondaryMetaLine(l10n, entry);
-                    final savedAt = _lastSavedLine(entry);
-                    return CtNinePatchButton(
-                      key: LoadGameListDialog.rowKey(entry.storageId),
-                      onPressed: () => _onSelect(entry),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(entry.label, style: bodyStyle),
-                          if (meta != null)
+                  children: [
+                    if (autoSave != null) ...[
+                      Container(
+                        key: LoadGameListDialog.autoSaveSectionKey,
+                        padding: const EdgeInsets.all(CtSpacing.s),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: EditorialMonoclePalette.accent,
+                            width: 2,
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              EditorialMonoclePalette.surfaceLite,
+                              EditorialMonoclePalette.surface,
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                             Text(
-                              meta,
-                              key: LoadGameListDialog.rowMetaKey(
-                                entry.storageId,
+                              l10n.loadGameList_autoSaveBadge,
+                              style: mutedStyle.copyWith(
+                                color: EditorialMonoclePalette.accent,
+                                fontWeight: FontWeight.w700,
                               ),
-                              style: mutedStyle,
                             ),
-                          if (savedAt != null)
-                            Text(
-                              savedAt,
-                              key: LoadGameListDialog.rowSavedAtKey(
-                                entry.storageId,
-                              ),
-                              style: mutedStyle,
+                            const SizedBox(height: CtSpacing.s),
+                            _rowContent(
+                              l10n: l10n,
+                              bodyStyle: bodyStyle,
+                              mutedStyle: mutedStyle,
+                              entry: autoSave,
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                      if (pageManuals.isNotEmpty) ...[
+                        CtGap.m,
+                        const CtBrassDivider(),
+                        CtGap.m,
+                      ],
+                    ],
+                    for (var i = 0; i < pageManuals.length; i++) ...[
+                      if (i > 0) CtGap.m,
+                      _rowContent(
+                        l10n: l10n,
+                        bodyStyle: bodyStyle,
+                        mutedStyle: mutedStyle,
+                        entry: pageManuals[i],
+                      ),
+                    ],
+                  ],
                 ),
               ),
+            if (showPager) ...[
+              CtGap.m,
+              Row(
+                key: LoadGameListDialog.pagerKey,
+                children: [
+                  CtNinePatchButton(
+                    key: LoadGameListDialog.previousButtonKey,
+                    onPressed: pageIndex <= 0
+                        ? null
+                        : () => setState(() => _manualPageIndex = pageIndex - 1),
+                    child: Text(l10n.loadGameList_previous),
+                  ),
+                  Expanded(
+                    child: Text(
+                      l10n.loadGameList_pageOf(pageIndex + 1, pageCount),
+                      key: LoadGameListDialog.pageLabelKey,
+                      textAlign: TextAlign.center,
+                      style: mutedStyle,
+                    ),
+                  ),
+                  CtNinePatchButton(
+                    key: LoadGameListDialog.nextButtonKey,
+                    onPressed: pageIndex >= pageCount - 1
+                        ? null
+                        : () => setState(() => _manualPageIndex = pageIndex + 1),
+                    child: Text(l10n.loadGameList_next),
+                  ),
+                ],
+              ),
+            ],
             CtGap.l,
             Align(
               alignment: Alignment.centerRight,
