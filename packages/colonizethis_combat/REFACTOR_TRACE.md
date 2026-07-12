@@ -16,9 +16,14 @@ Delivered in this slice:
 
 Combat test LOC: **1,577 → 507** physical lines (`find … | wc -l`; target ≤1,340).
 
-Deferred for a follow-up commit/PR on #3983:
+## Phase 3 — slice 2 (Refs #3983)
 
-- Optional naval resolver detect-vs-resolve/apply file split (file still dense after de-part).
+Delivered in this slice:
+
+- Split naval resolver seams: `naval_combat_types.dart` (types + ship clone + retreat constants), `naval_combat_detection.dart` (detect + attacker normalize), `naval_combat_resolver.dart` (strength + resolve + apply; re-exports types/detection for the package barrel).
+
+Deferred (still optional):
+
 - Optional DESCRIPTION_BASELINE file (trace table below + duplicate-description gate cover labels).
 - Optional densify of test_support preamble after harness adoption.
 
