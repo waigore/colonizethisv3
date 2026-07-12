@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'combat_rng.dart';
+import 'combat_survivor_units.dart';
 import 'conflict_detection.dart';
 import 'quick_battle_action_modifiers.dart';
 import 'quick_battle_emplaced_guns.dart';
@@ -252,9 +253,10 @@ Game applyQuickBattleResultToGame(
     ...result.attackerCasualties,
     ...result.defenderCasualties,
   };
-  final survivingUnits = region.units
-      .where((u) => !casualtySet.contains(u.id))
-      .toList();
+  final survivingUnits = unitsExcludingCasualtyIds(
+    region.units,
+    casualtySet,
+  ).toList();
 
   var provinces = region.provinces;
   if (result.fortDowngradeFromDestroyedEmplaced) {

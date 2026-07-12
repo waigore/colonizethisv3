@@ -3,9 +3,10 @@
 import 'package:colonizethis_combat/src/combat/quick_battle_action_modifiers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'scenario_runner.dart';
 
 /// One row in a Quick Battle action-modifier scenario table.
-class QuickBattleActionModifierScenario {
+class QuickBattleActionModifierScenario implements LabeledScenario {
   const QuickBattleActionModifierScenario({
     required this.scenarioId,
     required this.label,
@@ -13,16 +14,11 @@ class QuickBattleActionModifierScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [QuickBattleActionModifierScenario.run]).
-void runQuickBattleActionModifierScenario(
-  QuickBattleActionModifierScenario scenario,
-) {
-  scenario.run();
-}
 
 /// Scenarios for [aggregateActionModifiers].
 List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [

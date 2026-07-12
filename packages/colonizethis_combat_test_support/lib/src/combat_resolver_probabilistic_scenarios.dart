@@ -4,9 +4,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a probabilistic engagement scenario table.
-class CombatResolverProbabilisticScenario {
+class CombatResolverProbabilisticScenario implements LabeledScenario {
   const CombatResolverProbabilisticScenario({
     required this.scenarioId,
     required this.label,
@@ -14,16 +15,11 @@ class CombatResolverProbabilisticScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario].
-void runCombatResolverProbabilisticScenario(
-  CombatResolverProbabilisticScenario scenario,
-) {
-  scenario.run();
-}
 
 /// Scenarios for [resolveEngagementProbabilistic].
 List<CombatResolverProbabilisticScenario>

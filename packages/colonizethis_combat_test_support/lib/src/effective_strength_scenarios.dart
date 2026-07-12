@@ -2,9 +2,10 @@
 
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_test/test.dart';
+import 'scenario_runner.dart';
 
 /// One row in an effective-strength scenario table.
-class EffectiveStrengthScenario {
+class EffectiveStrengthScenario implements LabeledScenario {
   const EffectiveStrengthScenario({
     required this.scenarioId,
     required this.label,
@@ -12,14 +13,11 @@ class EffectiveStrengthScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [EffectiveStrengthScenario.run]).
-void runEffectiveStrengthScenario(EffectiveStrengthScenario scenario) {
-  scenario.run();
-}
 
 /// Attacker-side effective-strength scenarios for [combatEffectiveAttackerStrength].
 List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [

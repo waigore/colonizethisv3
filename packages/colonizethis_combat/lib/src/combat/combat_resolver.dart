@@ -1,6 +1,3 @@
-import 'dart:math';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -8,8 +5,11 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'battle_general_assignment.dart';
 import 'combat_constants.dart';
 import 'combat_engagement.dart';
+import 'combat_resolver_engagement_outcome.dart';
+import 'combat_resolver_post_battle.dart';
+import 'combat_resolver_support.dart';
 import 'combat_rng.dart';
-import 'combat_types.dart';
+import 'combat_survivor_units.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
@@ -17,10 +17,6 @@ import 'military_strength.dart';
 export 'combat_constants.dart';
 export 'combat_engagement.dart' show resolveEngagement;
 export 'combat_types.dart';
-
-part 'combat_resolver_engagement_outcome.dart';
-part 'combat_resolver_post_battle.dart';
-part 'combat_resolver_support.dart';
 
 /// Resolves one battle context and returns updated Game state.
 /// SPEC/program/combat-resolution.md.
@@ -35,7 +31,7 @@ Game resolveBattleContext(
 
   final unitsById = unitsByIdFromRegion(region);
   final provinceOwnerAtBattleStart =
-      _provinceOwnerIdAtBattleStart(game, ctx) ?? ctx.defenderFactionId;
+      provinceOwnerIdAtBattleStart(game, ctx) ?? ctx.defenderFactionId;
   // Keep (copy-disposition, Refs #3448 AC5): mutation-isolated working copy of
   // the defender unit ids; this engagement reassigns it as the defender changes.
   var defenderUnitIds = ctx.defenderUnitIds.toList();
@@ -44,9 +40,9 @@ Game resolveBattleContext(
   var generalsById = {for (final g in game.generals) g.id: g};
   final battleRng = battleAssignmentRng(game, ctx);
   final attackerSidesWithMedals = ctx.attackers.map((att) {
-    return _AttackingSideInBattle(side: att, assignedGeneralId: att.generalId);
+    return AttackingSideInBattle(side: att, assignedGeneralId: att.generalId);
   }).toList();
-  _sortAttackersByInitiative(attackerSidesWithMedals, unitsById, battleRng);
+  sortAttackersByInitiative(attackerSidesWithMedals, unitsById, battleRng);
   var currentDefenderGeneralId = ctx.defenderGeneralId;
   var currentDefenderMedals = ctx.defenderGeneralMedals;
   final defenderEffectiveLevelByFaction = <String, int>{};
@@ -66,19 +62,17 @@ Game resolveBattleContext(
       break;
     }
 
-    final attackerUnits = attacker.side.unitIds
-        .map((id) => unitsById[id])
-        .whereType<Unit>()
-        .where((u) => !allCasualties.contains(u.id))
-        .toList();
+    final attackerUnits = unitsExcludingCasualtyIds(
+      attacker.side.unitIds.map((id) => unitsById[id]).whereType<Unit>(),
+      allCasualties,
+    ).toList();
 
     if (attackerUnits.isEmpty) continue;
 
-    final defenderUnits = defenderUnitIds
-        .map((id) => unitsById[id])
-        .whereType<Unit>()
-        .where((u) => !allCasualties.contains(u.id))
-        .toList();
+    final defenderUnits = unitsExcludingCasualtyIds(
+      defenderUnitIds.map((id) => unitsById[id]).whereType<Unit>(),
+      allCasualties,
+    ).toList();
 
     if (defenderUnits.isEmpty) {
       survivingAttackerFactionId = attacker.side.factionId;
@@ -86,12 +80,12 @@ Game resolveBattleContext(
     }
 
     // Deployment limit per side. SPEC/game/military-generals.md.
-    final attackerLimit = _deploymentLimitForFaction(
+    final attackerLimit = deploymentLimitForFaction(
       game,
       attacker.side.factionId,
       attacker.side.generalMedals,
     );
-    final defenderLimit = _deploymentLimitForFaction(
+    final defenderLimit = deploymentLimitForFaction(
       game,
       defenderFactionId,
       currentDefenderMedals,
@@ -149,12 +143,12 @@ Game resolveBattleContext(
     }
 
     // Casualties apply to full defender list; engagement was fought with capped subset.
-    defenderUnitIds = defenderUnits
-        .map((u) => u.id)
-        .where((id) => !outcome.defenderCasualties.contains(id))
-        .toList();
+    defenderUnitIds = idsExcludingCasualtyIds(
+      defenderUnits.map((u) => u.id),
+      outcome.defenderCasualties.toSet(),
+    ).toList();
 
-    final updatedState = _applyEngagementOutcomeState(
+    final updatedState = applyEngagementOutcomeState(
       outcomeResult: outcome.result,
       attacker: attacker,
       currentDefenderGeneralId: currentDefenderGeneralId,
@@ -179,7 +173,7 @@ Game resolveBattleContext(
     defenderUnitIds = updatedState.defenderUnitIds;
   }
 
-  final post = _buildPostBattleRegion(
+  final post = buildPostBattleRegion(
     region: region,
     ctx: ctx,
     allCasualties: allCasualties,
@@ -189,7 +183,7 @@ Game resolveBattleContext(
     defenderUnitIds: defenderUnitIds,
   );
 
-  final resolved = _buildResolvedBattleGame(
+  final resolved = buildResolvedBattleGame(
     game: game,
     ctx: ctx,
     post: post,
