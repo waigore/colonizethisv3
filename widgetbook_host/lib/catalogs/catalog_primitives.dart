@@ -82,15 +82,38 @@ List<WidgetbookNode> get saveLoadDialogDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Empty list',
-        builder: (context) => const _LoadGameListDialogStoryHost(empty: true),
+        builder: (context) =>
+            const _LoadGameListDialogStoryHost(variant: _LoadListStory.empty),
       ),
       WidgetbookUseCase(
-        name: 'Populated list (mobile)',
-        builder: (context) => const _LoadGameListDialogStoryHost(empty: false),
+        name: 'Populated ≤10 (mobile)',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.populated,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Multi-page manuals',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.multiPage,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Auto-save pinned',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.autoPinned,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Delete confirm',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.deleteConfirm,
+        ),
       ),
     ],
   ),
 ];
+
+enum _LoadListStory { empty, populated, multiPage, autoPinned, deleteConfirm }
 
 class _SaveGameNameDialogStoryHost extends StatelessWidget {
   const _SaveGameNameDialogStoryHost();
@@ -133,28 +156,60 @@ class _SaveGameNameDialogStoryHost extends StatelessWidget {
 }
 
 class _LoadGameListDialogStoryHost extends StatelessWidget {
-  const _LoadGameListDialogStoryHost({required this.empty});
+  const _LoadGameListDialogStoryHost({required this.variant});
 
-  final bool empty;
+  final _LoadListStory variant;
+
+  List<LoadableSaveEntry> _entries() {
+    switch (variant) {
+      case _LoadListStory.empty:
+        return const [];
+      case _LoadListStory.populated:
+      case _LoadListStory.autoPinned:
+      case _LoadListStory.deleteConfirm:
+        return const [
+          LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 12,
+            calendarYear: 1522,
+            humanNation: 'England',
+          ),
+          LoadableSaveEntry(
+            storageId: 'England_-_Queen_Victoria_-_3',
+            label: 'England - Queen Victoria - 3',
+            kind: LoadableSaveKind.manual,
+            turnNumber: 3,
+            calendarYear: 1513,
+            humanNation: 'England',
+          ),
+        ];
+      case _LoadListStory.multiPage:
+        return [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 99,
+          ),
+          for (var i = 0; i < 12; i++)
+            LoadableSaveEntry(
+              storageId: 'manual_$i',
+              label: 'Manual save $i',
+              kind: LoadableSaveKind.manual,
+              turnNumber: i + 1,
+            ),
+        ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final entries = empty
-        ? const <LoadableSaveEntry>[]
-        : const [
-            LoadableSaveEntry(
-              storageId: 'England_-_Queen_Victoria_-_3',
-              label: 'England - Queen Victoria - 3',
-              kind: LoadableSaveKind.manual,
-              turnNumber: 3,
-            ),
-            LoadableSaveEntry(
-              storageId: kAutoSaveSlotId,
-              label: kAutoSaveListLabel,
-              kind: LoadableSaveKind.autoSave,
-              turnNumber: 3,
-            ),
-          ];
+    final entries = _entries();
+    final pendingDelete = variant == _LoadListStory.deleteConfirm
+        ? 'England_-_Queen_Victoria_-_3'
+        : null;
     return ProviderScope(
       child: MaterialApp(
         theme: AppThemes.editorialMonocle,
@@ -168,6 +223,7 @@ class _LoadGameListDialogStoryHost extends StatelessWidget {
               child: LoadGameListDialog(
                 fromPause: false,
                 previewEntries: entries,
+                previewPendingDeleteId: pendingDelete,
               ),
             ),
           ),

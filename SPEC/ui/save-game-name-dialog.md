@@ -4,6 +4,7 @@
 **SPEC/ui** — Named save prompt from pause **Save Game**. Implementation: `app/lib/features/shell/save_load/save_game_name_dialog.dart`.
 **Widgetbook:** `Save Game Name Dialog` → `widgetbook_host/lib/catalogs/catalog_primitives.dart` (use case: Default — name field).
 **Mockup:** [mockups/DLG70001-save-game-name-dialog.html](mockups/DLG70001-save-game-name-dialog.html).
+**Capacity:** [save-load-list-metadata.md](../program/save-load-list-metadata.md).
 
 ## Widget contract
 
@@ -22,7 +23,7 @@
 CtDialogShell
   title "Save Game"
   TextField (default `{nation} - {leader} - {turn}`)
-  optional error / overwrite confirm row
+  optional error (invalid name / at-cap) / overwrite confirm row
   Cancel | Save  (CtNinePatchButton)
 ```
 
@@ -39,8 +40,8 @@ CtDialogShell
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
 | Cancel | always | `Navigator.pop` | Dismiss |
-| Save | always | `sanitizeGameId`; on null show error; on id collision show overwrite; else `saveGameSession` | SnackBar `Game saved`; pop |
-| Overwrite confirm | after collision | `saveGameSession` | Same as Save |
+| Save | always | `sanitizeGameId`; on null show error; on id collision show overwrite; on **new** id when `!canCreateNewManualSave` show at-cap error and stay open; else `saveGameSession` | SnackBar `Game saved`; pop |
+| Overwrite confirm | after collision | `saveGameSession` | Same as Save (allowed at cap) |
 
 ## States and variants
 
@@ -48,6 +49,7 @@ CtDialogShell
 |----|---------|---------|-------------------|
 | `DLG70001` | default | open | Name field + Cancel/Save |
 | `DLG70001a` | overwrite | id exists | Overwrite copy + Cancel/Overwrite |
+| `DLG70001b` | at-cap | new id, count ≥ 20 | At-cap error; dialog stays open |
 
 ## Components
 
@@ -58,4 +60,6 @@ CtDialogShell
 - Given a human game is loaded, when the dialog opens, then the name field defaults to `{displayName} - {leader} - {turnNumber}` per leader-variant resolution.
 - Given an empty/invalid sanitized name, when the user taps Save, then an error is shown and the dialog stays open.
 - Given a colliding sanitized id, when the user taps Save then Cancel on overwrite, then no save is written.
-- Given a valid new name, when the user taps Save, then `saveGameSession` persists drafts + `displayName` and a `ShowSnackBarEvent` with `Game saved` is emitted.
+- Given 20 existing manuals and a **new** sanitized id, when the user taps Save, then no write occurs, the at-cap error is shown, and the dialog stays open.
+- Given 20 manuals and a colliding existing id, when the user confirms overwrite, then the save succeeds.
+- Given a valid new name under the cap, when the user taps Save, then `saveGameSession` persists drafts + `displayName` (v3 `listMeta`) and a `ShowSnackBarEvent` with `Game saved` is emitted.

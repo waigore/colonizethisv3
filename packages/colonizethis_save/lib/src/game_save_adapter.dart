@@ -19,9 +19,21 @@ const String _saveGamePayloadKey = 'game';
 const String _draftOrdersKey = 'draftOrders';
 const String _productionDesiredOutputKey = 'productionDesiredOutputByRecipe';
 const String _displayNameKey = 'displayName';
+const String _listMetaKey = 'listMeta';
+const String _listMetaLastSavedAtKey = 'lastSavedAt';
+const String _listMetaTurnNumberKey = 'turnNumber';
+const String _listMetaCalendarYearKey = 'calendarYear';
+const String _listMetaHumanNationKey = 'humanNation';
 
 /// Fixed label for the auto-save row in [listLoadableSaves] (UI may localize).
 const String kAutoSaveListLabel = 'Auto-save';
+
+/// Max manual named saves for **new** create; overwrite still allowed at cap.
+/// SPEC/program/save-load-list-metadata.md.
+const int kMaxManualSaves = 20;
+
+/// Minimum `saveFormatVersion` included by [GameSaveAdapter.listLoadableSaves].
+const int kListGateSaveFormatVersion = 3;
 
 const List<String> _mapDataKeySuffixes = <String>[
   _suffixTileMapByRegion,
@@ -31,9 +43,10 @@ const List<String> _mapDataKeySuffixes = <String>[
 ];
 
 /// Current save format version for game envelopes written by [GameSaveAdapter].
-/// v2 adds mid-turn draft fields; v1 remains readable with empty draft defaults.
-const int kSaveFormatVersion = 2;
-const Set<int> _supportedSaveFormatVersions = {1, kSaveFormatVersion};
+/// v2 adds mid-turn draft fields; v3 adds list metadata (`listMeta`).
+/// v1/v2 remain readable; only v3+ appears in [listLoadableSaves].
+const int kSaveFormatVersion = 3;
+const Set<int> _supportedSaveFormatVersions = {1, 2, kSaveFormatVersion};
 
 /// Fixed Hive key stem for the single auto-save slot. Not listed in [listGameIds].
 /// See SPEC/program/save-load.md § Auto-save slot.
@@ -43,12 +56,14 @@ const String kAutoSaveSlotId = '__colonizethis_autosave';
 /// Map data (tile maps, topology) is required for playable saves. See SPEC/program/save-load.md.
 class GameSaveAdapter {
   /// Saves [game] to [box] as a versioned envelope (optionally with mid-turn drafts).
+  /// [lastSavedAt] defaults to UTC now; inject in tests for deterministic ordering.
   void save(
     Box<dynamic> box,
     Game game, {
     Orders draftOrders = const Orders(),
     Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
     String? displayName,
+    DateTime? lastSavedAt,
   }) {
     _log.i('saving gameId=${game.id}');
     box.put(
@@ -58,6 +73,7 @@ class GameSaveAdapter {
         draftOrders: draftOrders,
         productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
         displayName: displayName,
+        lastSavedAt: lastSavedAt,
       ),
     );
     _log.i('saved gameId=${game.id}');
@@ -75,6 +91,7 @@ class GameSaveAdapter {
     Orders draftOrders = const Orders(),
     Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
     String? displayName,
+    DateTime? lastSavedAt,
   }) {
     _log.i('saving auto-save slot logicalGameId=${game.id}');
     box.put(
@@ -84,6 +101,7 @@ class GameSaveAdapter {
         draftOrders: draftOrders,
         productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
         displayName: displayName,
+        lastSavedAt: lastSavedAt,
       ),
     );
     saveMapData(
@@ -102,6 +120,7 @@ class GameSaveAdapter {
     required Orders draftOrders,
     required Map<String, int> productionDesiredOutputByRecipe,
     String? displayName,
+    DateTime? lastSavedAt,
   }) {
     return <String, dynamic>{
       _saveFormatVersionKey: kSaveFormatVersion,
@@ -109,6 +128,27 @@ class GameSaveAdapter {
       _draftOrdersKey: draftOrders.toJson(),
       _productionDesiredOutputKey: productionDesiredOutputByRecipe,
       if (displayName != null) _displayNameKey: displayName,
+      _listMetaKey: _buildListMeta(game, lastSavedAt: lastSavedAt),
+    };
+  }
+
+  Map<String, dynamic> _buildListMeta(Game game, {DateTime? lastSavedAt}) {
+    final turn = game.worldState.turnState.turnNumber;
+    final mapping = game.turnTimeMapping;
+    final year = mapping?.yearAtTurn(turn);
+    String? nation;
+    for (final player in game.players) {
+      if (player.isHuman) {
+        nation = player.displayName;
+        break;
+      }
+    }
+    final savedAt = (lastSavedAt ?? DateTime.now()).toUtc();
+    return <String, dynamic>{
+      _listMetaLastSavedAtKey: savedAt.toIso8601String(),
+      _listMetaTurnNumberKey: turn,
+      if (year != null) _listMetaCalendarYearKey: year,
+      if (nation != null && nation.isNotEmpty) _listMetaHumanNationKey: nation,
     };
   }
 
@@ -316,36 +356,112 @@ class GameSaveAdapter {
     return result;
   }
 
-  /// Manual saves from [listGameIds] plus a valid auto-save row when present.
-  /// Does not change [listGameIds] exclusion of [kAutoSaveSlotId].
+  /// Count of manual Hive game ids (auto-save stem excluded).
+  int manualSaveCount(Box<dynamic> box) => listGameIds(box).length;
+
+  /// Whether a **new** sanitized manual id may be created (count < [kMaxManualSaves]).
+  bool canCreateNewManualSave(Box<dynamic> box) =>
+      manualSaveCount(box) < kMaxManualSaves;
+
+  /// List-gate manuals (newest first) plus pinned auto-save when listable.
+  /// Reads envelope `listMeta` without [Game.fromJson]. Refs #3985.
   List<LoadableSaveEntry> listLoadableSaves(Box<dynamic> box) {
-    final entries = <LoadableSaveEntry>[];
-    final manualIds = listGameIds(box)..sort();
-    for (final id in manualIds) {
-      final session = loadSession(box, id);
-      final turn = session?.game.worldState.turnState.turnNumber;
-      final label = session?.displayName;
-      entries.add(
-        LoadableSaveEntry(
-          storageId: id,
-          label: (label != null && label.isNotEmpty) ? label : id,
-          kind: LoadableSaveKind.manual,
-          turnNumber: turn,
-        ),
+    final manuals = <LoadableSaveEntry>[];
+    for (final id in listGameIds(box)) {
+      final entry = _tryParseListEntry(
+        storageId: id,
+        raw: box.get(id),
+        kind: LoadableSaveKind.manual,
       );
+      if (entry != null) {
+        manuals.add(entry);
+      }
     }
+    manuals.sort((a, b) {
+      final aAt = a.lastSavedAt;
+      final bAt = b.lastSavedAt;
+      if (aAt == null && bAt == null) {
+        return a.storageId.compareTo(b.storageId);
+      }
+      if (aAt == null) {
+        return 1;
+      }
+      if (bAt == null) {
+        return -1;
+      }
+      final byTime = bAt.compareTo(aAt);
+      if (byTime != 0) {
+        return byTime;
+      }
+      return a.storageId.compareTo(b.storageId);
+    });
+
+    final result = <LoadableSaveEntry>[];
     if (hasValidAutoSave(box)) {
-      final session = loadSession(box, kAutoSaveSlotId);
-      entries.add(
-        LoadableSaveEntry(
-          storageId: kAutoSaveSlotId,
-          label: kAutoSaveListLabel,
-          kind: LoadableSaveKind.autoSave,
-          turnNumber: session?.game.worldState.turnState.turnNumber,
-        ),
+      final auto = _tryParseListEntry(
+        storageId: kAutoSaveSlotId,
+        raw: box.get(kAutoSaveSlotId),
+        kind: LoadableSaveKind.autoSave,
+        forcedLabel: kAutoSaveListLabel,
       );
+      if (auto != null) {
+        result.add(auto);
+      }
     }
-    return entries;
+    result.addAll(manuals);
+    return result;
+  }
+
+  LoadableSaveEntry? _tryParseListEntry({
+    required String storageId,
+    required Object? raw,
+    required LoadableSaveKind kind,
+    String? forcedLabel,
+  }) {
+    if (raw is! Map<dynamic, dynamic>) {
+      return null;
+    }
+    final envelope = Map<String, dynamic>.from(raw);
+    final version = envelope[_saveFormatVersionKey];
+    if (version is! int || version < kListGateSaveFormatVersion) {
+      return null;
+    }
+    final metaRaw = envelope[_listMetaKey];
+    if (metaRaw is! Map<dynamic, dynamic>) {
+      return null;
+    }
+    final meta = Map<String, dynamic>.from(metaRaw);
+    final lastSavedRaw = meta[_listMetaLastSavedAtKey];
+    if (lastSavedRaw is! String || lastSavedRaw.isEmpty) {
+      return null;
+    }
+    final lastSavedAt = DateTime.tryParse(lastSavedRaw)?.toUtc();
+    if (lastSavedAt == null) {
+      return null;
+    }
+    final turnRaw = meta[_listMetaTurnNumberKey];
+    final turnNumber = turnRaw is int ? turnRaw : null;
+    final yearRaw = meta[_listMetaCalendarYearKey];
+    final calendarYear = yearRaw is int ? yearRaw : null;
+    final nationRaw = meta[_listMetaHumanNationKey];
+    final humanNation = nationRaw is String && nationRaw.isNotEmpty
+        ? nationRaw
+        : null;
+    final displayName = _parseDisplayName(envelope[_displayNameKey]);
+    final label =
+        forcedLabel ??
+        ((displayName != null && displayName.isNotEmpty)
+            ? displayName
+            : storageId);
+    return LoadableSaveEntry(
+      storageId: storageId,
+      label: label,
+      kind: kind,
+      turnNumber: turnNumber,
+      calendarYear: calendarYear,
+      humanNation: humanNation,
+      lastSavedAt: lastSavedAt,
+    );
   }
 
   /// Saves required map data for [gameId].
