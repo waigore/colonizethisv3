@@ -19,6 +19,11 @@ class QuickBattleInputBuilderScenario implements LabeledScenario {
 }
 
 List<QuickBattleInputBuilderScenario> quickBattleInputBuilderScenarios() => [
+  ..._quickBattleInputBuilderCoreScenarios(),
+  ..._quickBattleInputBuilderRegionAndMedalScenarios(),
+];
+
+List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() => [
   QuickBattleInputBuilderScenario(
     scenarioId: 'qbib-groups',
     label: 'produces QuickBattleInput with defender and attacker groups',
@@ -146,6 +151,10 @@ List<QuickBattleInputBuilderScenario> quickBattleInputBuilderScenarios() => [
       expect(input.defenderLeaderMultiplier, 1.0);
     },
   ),
+];
+
+List<QuickBattleInputBuilderScenario>
+_quickBattleInputBuilderRegionAndMedalScenarios() => [
   QuickBattleInputBuilderScenario(
     scenarioId: 'qbib-new-world',
     label: 'builds input from newWorld BattleContext',
