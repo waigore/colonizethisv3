@@ -7,9 +7,10 @@ import 'package:colonizethis_test/test.dart';
 
 import 'quick_battle_input_test_support.dart';
 import 'quick_battle_siege_pipeline_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a Quick Battle siege scenario table.
-class QuickBattleSiegeScenario {
+class QuickBattleSiegeScenario implements LabeledScenario {
   const QuickBattleSiegeScenario({
     required this.scenarioId,
     required this.label,
@@ -17,14 +18,11 @@ class QuickBattleSiegeScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [QuickBattleSiegeScenario.run]).
-void runQuickBattleSiegeScenario(QuickBattleSiegeScenario scenario) {
-  scenario.run();
-}
 
 /// Emplaced-gun siege scenarios for [resolveQuickBattle].
 List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [

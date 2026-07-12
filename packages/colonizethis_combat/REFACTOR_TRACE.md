@@ -4,6 +4,58 @@ Maps consolidated scenario modules to preserved test descriptions, source files,
 
 Baseline: `dev` @ `df7bbd62` (combat test LOC 6,573 physical lines across 31 `*_test.dart` files before slice 1).
 
+## Phase 3 — slice 1 (Refs #3983)
+
+Delivered in this slice:
+
+- Shared harness `runLabeledScenarios` / `runLabeledScenarioGroup` / `LabeledScenario` in `colonizethis_combat_test_support`; all prior thin runners + nine residual imperative suites adopted.
+- Collapsed `run*Scenario` trampolines onto `(s) => s.run()`.
+- De-`part`ed land `combat_resolver_*` into explicit-import libraries; `repo.combat_no_part_directives`.
+- Survivor/casualty filter helper `combat_survivor_units.dart` used in land auto-resolve, post-battle, and Quick Battle apply/engine.
+- Harness gate `repo.combat_test_scenario_harness` (zero bare scenario for-loops).
+
+Combat test LOC: **1,577 → 507** physical lines (`find … | wc -l`; target ≤1,340).
+
+Deferred for a follow-up commit/PR on #3983:
+
+- Optional naval resolver detect-vs-resolve/apply file split (file still dense after de-part).
+- Optional DESCRIPTION_BASELINE file (trace table below + duplicate-description gate cover labels).
+- Optional densify of test_support preamble after harness adoption.
+
+| scenario_id | test description | source file |
+|---|---|---|
+| pci-prefixed-destination | passes through an already-prefixed destination unchanged | `pre_combat_index_test.dart` |
+| pci-qualifies-local-destination | qualifies a bare local id with the army stationed region | `pre_combat_index_test.dart` |
+| pci-units-grouped-ordered | groups combat units by province, preserving region.units order | `pre_combat_index_test.dart` |
+| pci-units-empty | returns an empty map for a region without units | `pre_combat_index_test.dart` |
+| pci-provinces-by-id | maps each province id to its province | `pre_combat_index_test.dart` |
+| pci-build-* | greatPowerIds contains every player id and armiesById every army; includes Great Power army moves with destinations resolved in order; skips moves from factions that are not Great Powers; skips home armies; skips orders for unknown army ids; skips orders whose army owner differs from the ordering faction | `pre_combat_index_test.dart` |
+| upc-captures-undefended | captures undefended minor province when GP army moved in at war | `unopposed_province_capture_test.dart` |
+| upc-defender-units | skips when province owner still has combat units in province | `unopposed_province_capture_test.dart` |
+| upc-peace | skips when attacker is not at war with province owner | `unopposed_province_capture_test.dart` |
+| mae-base-cost | base cost 100 without military tech discounts | `military_attack_economy_test.dart` |
+| mae-tech-discounts | applies multiplicative discounts for machinery and modern funding | `military_attack_economy_test.dart` |
+| mae-deducts-one | deducts per attacker Great Power once per battle context | `military_attack_economy_test.dart` |
+| mae-deducts-nonfirst | deducts treasury when attacker is not first in players list order | `military_attack_economy_test.dart` |
+| mae-deducts-distinct | deducts treasury for each distinct Great Power attacker side | `military_attack_economy_test.dart` |
+| mae-skip-minor | does not deduct treasury when attacker is not a Great Power | `military_attack_economy_test.dart` |
+| qbras-old-world-clear | quick battle conquest clears Spy timer for new owner province | `quick_battle_resolver_apply_spy_test.dart` |
+| qbras-new-world-clear | quick battle conquest in newWorld region also clears Spy timer | `quick_battle_resolver_apply_spy_test.dart` |
+| qbib-* | produces QuickBattleInput with defender and attacker groups; filters out unit ids not present in region; supplies leader multipliers from Game players (napoleon 1.25, frederick 1.15); leader multipliers default to 1.0 when players have no leaderKey; builds input from newWorld BattleContext; passes attacker and defender medals from battle assignment | `quick_battle_input_builder_test.dart` |
+| clp-* | blunts strong attacker victory when attacker morale is lower; uses decisive attacker band at the blunt upper bound; keeps exact ratio thresholds in the documented bands; uses default close-fight profile below attacker edge | `combat_loss_profile_test.dart` |
+| clp-strong-striker | classifies at and above the strong-striker threshold | `combat_loss_profile_test.dart` |
+| clp-strong-target | classifies at and below the strong-target threshold | `combat_loss_profile_test.dart` |
+| clp-even | classifies the open interval between thresholds as even | `combat_loss_profile_test.dart` |
+| clp-breakpoints | exposes the canonical breakpoint values | `combat_loss_profile_test.dart` |
+| clp-casualty-round-clamp | rounds fractional losses up and clamps to available units | `combat_loss_profile_test.dart` |
+| crng-* | quickBattleRng matches Random(seed) sequence; quickBattleRng is deterministic for a fixed seed; probabilisticEngagementRng falls back to 0 for a null seed; probabilisticEngagementRng matches Random(seed) for non-null seed; navalCombatRng matches DeterministicRng(seed) sequence; navalCombatRng is deterministic for a fixed seed | `combat_rng_test.dart` |
+| crng-precombat-hash | preCombatBindingRng matches the SPEC §3 hash recipe | `combat_rng_test.dart` |
+| crng-precombat-null | preCombatBindingRng treats a null globalGameSeed as 0 | `combat_rng_test.dart` |
+| crng-assignment-hash | battleAssignmentRng matches hash(seed, turn, region, province) | `combat_rng_test.dart` |
+| crng-assignment-province | battleAssignmentRng differs across provinces | `combat_rng_test.dart` |
+| crpot-owner-not-defender | transfers from province owner when battle defender is another occupant | `combat_resolver_province_owner_transfer_test.dart` |
+| cdai-local-defender-army | defender army selection ignores unrelated armies in other provinces | `conflict_detection_army_index_test.dart` |
+
 ## Slice 1 — test_support package, effective-strength tables, military-strength fixtures
 
 | scenario_id | test description | source file(s) | refs |

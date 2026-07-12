@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a land resolver engagement scenario table.
-class CombatResolverEngagementScenario {
+class CombatResolverEngagementScenario implements LabeledScenario {
   const CombatResolverEngagementScenario({
     required this.scenarioId,
     required this.label,
@@ -15,16 +16,11 @@ class CombatResolverEngagementScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario].
-void runCombatResolverEngagementScenario(
-  CombatResolverEngagementScenario scenario,
-) {
-  scenario.run();
-}
 
 /// Scenarios for [resolveEngagement] and [resolveBattleContext] (part 1).
 List<CombatResolverEngagementScenario> combatResolverEngagementScenarios() =>

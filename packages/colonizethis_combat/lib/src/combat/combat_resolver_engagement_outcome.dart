@@ -1,4 +1,10 @@
-part of 'combat_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'combat_constants.dart';
+import 'combat_resolver_support.dart';
+import 'combat_types.dart';
+import 'conflict_detection.dart';
 
 /// Per-engagement outcome state transition for [resolveBattleContext].
 ///
@@ -15,9 +21,9 @@ part of 'combat_resolver.dart';
   int currentDefenderMedals,
   List<String> defenderUnitIds,
 })
-_applyEngagementOutcomeState({
+applyEngagementOutcomeState({
   required EngagementResult outcomeResult,
-  required _AttackingSideInBattle attacker,
+  required AttackingSideInBattle attacker,
   required String? currentDefenderGeneralId,
   required int currentDefenderMedals,
   required String provinceOwnerId,
@@ -25,7 +31,7 @@ _applyEngagementOutcomeState({
   required String? survivingAttackerFactionId,
   required List<String> defenderUnitIds,
   required int attackerIndex,
-  required List<_AttackingSideInBattle> attackerSidesWithMedals,
+  required List<AttackingSideInBattle> attackerSidesWithMedals,
   required int initialDefenderCount,
   required int defenderEffectiveLevel,
   required Map<String, General> generalsById,
@@ -34,7 +40,7 @@ _applyEngagementOutcomeState({
 }) {
   switch (outcomeResult) {
     case EngagementResult.attackerVictory:
-      _incrementGeneralMedals(
+      incrementGeneralMedals(
         generalsById: generalsById,
         generalId: attacker.assignedGeneralId,
       );
@@ -54,7 +60,7 @@ _applyEngagementOutcomeState({
         defenderUnitIds: defenderUnitIds,
       );
     case EngagementResult.defenderVictory:
-      _incrementGeneralMedals(
+      incrementGeneralMedals(
         generalsById: generalsById,
         generalId: currentDefenderGeneralId,
       );
@@ -83,7 +89,7 @@ _applyEngagementOutcomeState({
         defenderUnitIds: defenderUnitIds,
       );
     case EngagementResult.mutualAnnihilation:
-      final updatedDefenderIds = _recoverDefenderGarrisonIfNeeded(
+      final updatedDefenderIds = recoverDefenderGarrisonIfNeeded(
         attackerIndex: attackerIndex,
         attackerSidesWithMedals: attackerSidesWithMedals,
         initialDefenderCount: initialDefenderCount,
@@ -104,9 +110,9 @@ _applyEngagementOutcomeState({
   }
 }
 
-List<String> _recoverDefenderGarrisonIfNeeded({
+List<String> recoverDefenderGarrisonIfNeeded({
   required int attackerIndex,
-  required List<_AttackingSideInBattle> attackerSidesWithMedals,
+  required List<AttackingSideInBattle> attackerSidesWithMedals,
   required int initialDefenderCount,
   required int defenderEffectiveLevel,
   required List<String> defenderUnitIds,

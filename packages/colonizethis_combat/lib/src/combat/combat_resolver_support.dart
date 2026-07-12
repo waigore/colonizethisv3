@@ -1,13 +1,32 @@
-part of 'combat_resolver.dart';
+import 'dart:math';
 
-void _sortAttackersByInitiative(
-  List<_AttackingSideInBattle> attackers,
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'combat_constants.dart';
+import 'conflict_detection.dart';
+import 'military_strength.dart';
+
+/// Working attacker side for land auto-resolve initiative and medal updates.
+class AttackingSideInBattle {
+  const AttackingSideInBattle({
+    required this.side,
+    required this.assignedGeneralId,
+  });
+
+  final AttackingSide side;
+  final String? assignedGeneralId;
+}
+
+void sortAttackersByInitiative(
+  List<AttackingSideInBattle> attackers,
   Map<String, Unit> unitsById,
   Random rng,
 ) {
   final tieBreakRoll = rng.nextInt(kInitiativeTieBreakRngUpperExclusive);
   int tieRank(String factionId) => Object.hash(factionId, tieBreakRoll);
-  final initiativeByAttacker = <_AttackingSideInBattle, double>{};
+  final initiativeByAttacker = <AttackingSideInBattle, double>{};
   for (final attacker in attackers) {
     final cavalryShare = attacker.side.unitIds.isEmpty
         ? kZeroCavalryShareWhenNoUnits
@@ -26,17 +45,7 @@ void _sortAttackersByInitiative(
   });
 }
 
-class _AttackingSideInBattle {
-  const _AttackingSideInBattle({
-    required this.side,
-    required this.assignedGeneralId,
-  });
-
-  final AttackingSide side;
-  final String? assignedGeneralId;
-}
-
-void _incrementGeneralMedals({
+void incrementGeneralMedals({
   required Map<String, General> generalsById,
   required String? generalId,
 }) {
@@ -53,7 +62,7 @@ void _incrementGeneralMedals({
 
 /// Max regiments that can participate per side in one engagement.
 /// SPEC/game/military-generals.md: base 10; Nationalism tech → 12; +1 per general medal.
-int _deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
+int deploymentLimitForFaction(Game game, String factionId, int generalMedals) {
   final baseLimit =
       game.playerById(factionId)?.techUnlocked?[kTechIdNationalism] == true
       ? deploymentLimitWithNationalism
