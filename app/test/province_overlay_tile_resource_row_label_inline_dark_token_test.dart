@@ -202,7 +202,7 @@ void main() {
         find.byWidgetPredicate(
           (Widget w) =>
               w is Text &&
-              w.data == 'grain' &&
+              w.data == 'Grain' &&
               w.style?.color == EditorialMonoclePalette.fg,
         ),
       );
@@ -210,7 +210,7 @@ void main() {
         fgGrain,
         hasLength(1),
         reason:
-            'Exactly one rendered "grain" Text widget must carry '
+            'Exactly one rendered "Grain" Text widget must carry '
             'style.color == EditorialMonoclePalette.fg (the Tile '
             'commodity-id label inside ResourceLabelInline). Found '
             '${fgGrain.length}. Check that the Tile call site still '
@@ -340,7 +340,7 @@ void main() {
       );
 
       final text = tester.widget<Text>(
-        find.byWidgetPredicate((Widget w) => w is Text && w.data == 'grain'),
+        find.byWidgetPredicate((Widget w) => w is Text && w.data == 'Grain'),
       );
       expect(
         text.style,

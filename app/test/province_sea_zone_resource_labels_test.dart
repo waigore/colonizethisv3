@@ -137,7 +137,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('grain'), findsNWidgets(2));
+        expect(find.text('Grain'), findsNWidgets(2));
         expect(find.byType(ResourceLabelInline), findsNWidgets(2));
         expect(find.byType(StrictAssetIcon), findsNWidgets(2));
       },
@@ -192,7 +192,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('grain'), findsOneWidget);
+        expect(find.text('Grain'), findsOneWidget);
         expect(find.byType(ResourceLabelInline), findsOneWidget);
       },
     );
@@ -417,8 +417,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('grain'), findsOneWidget);
-      expect(find.text('timber'), findsNWidgets(2));
+      expect(find.text('Grain'), findsOneWidget);
+      expect(find.text('Timber'), findsNWidgets(2));
       expect(find.byType(ResourceLabelInline), findsNWidgets(3));
       expect(find.byType(StrictAssetIcon), findsNWidgets(3));
     });

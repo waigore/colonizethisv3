@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -77,6 +78,7 @@ RecipeAffordance computeRecipeAffordance({
   required Stockpile stockpile,
   required Map<String, int> desiredOutputByRecipe,
   required int effectiveLabour,
+  AppLocalizations? l10n,
   int sliderCap = kProductionAllocationSliderCap,
 }) {
   final labourPerOutput = recipe.labourPerOutput;
@@ -124,7 +126,9 @@ RecipeAffordance computeRecipeAffordance({
     }
     final runs = runsPerInput[entry.key] ?? 0;
     if (runs == trueMax) {
-      limitingLabel = commodityDisplayName(entry.key);
+      limitingLabel = l10n == null
+          ? entry.key
+          : commodityDisplayName(l10n, entry.key);
       break;
     }
   }
