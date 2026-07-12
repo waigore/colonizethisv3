@@ -418,7 +418,7 @@ class GameSaveAdapter {
     required LoadableSaveKind kind,
     String? forcedLabel,
   }) {
-    if (raw is! Map) {
+    if (raw is! Map<dynamic, dynamic>) {
       return null;
     }
     final envelope = Map<String, dynamic>.from(raw);
@@ -427,7 +427,7 @@ class GameSaveAdapter {
       return null;
     }
     final metaRaw = envelope[_listMetaKey];
-    if (metaRaw is! Map) {
+    if (metaRaw is! Map<dynamic, dynamic>) {
       return null;
     }
     final meta = Map<String, dynamic>.from(metaRaw);

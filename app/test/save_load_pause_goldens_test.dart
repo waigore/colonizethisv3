@@ -202,7 +202,8 @@ void main() {
       expect(find.byType(LoadGameListDialog), findsOneWidget);
       expect(find.text('Load Game'), findsOneWidget);
       expect(find.text('Spain Save'), findsOneWidget);
-      expect(find.text('Auto-save'), findsOneWidget);
+      // Badge + row label both use the Auto-save string (Refs #3985).
+      expect(find.text('Auto-save'), findsNWidgets(2));
       expect(find.text('Turn 9'), findsOneWidget);
       expect(find.text('Turn 8'), findsOneWidget);
       expect(find.byKey(LoadGameListDialog.listKey), findsOneWidget);
