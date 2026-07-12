@@ -1003,6 +1003,88 @@ abstract class AppLocalizations {
   /// CommodityCategory.advanced.
   String get commodityCategory_advanced;
 
+  /// Localized display name for commodity id `grain`.
+  String get commodity_grain;
+
+  /// Localized display name for commodity id `meat`.
+  String get commodity_meat;
+
+  /// Localized display name for commodity id `timber`.
+  String get commodity_timber;
+
+  /// Localized display name for commodity id `iron`.
+  String get commodity_iron;
+
+  /// Localized display name for commodity id `wool`.
+  String get commodity_wool;
+
+  /// Localized display name for commodity id `cotton`.
+  String get commodity_cotton;
+
+  /// Localized display name for commodity id `coal`.
+  String get commodity_coal;
+
+  /// Localized display name for commodity id `sugarCane`.
+  String get commodity_sugarCane;
+
+  /// Localized display name for commodity id `tobacco`.
+  String get commodity_tobacco;
+
+  /// Localized display name for commodity id `furs`.
+  String get commodity_furs;
+
+  /// Localized display name for commodity id `copper`.
+  String get commodity_copper;
+
+  /// Localized display name for commodity id `tin`.
+  String get commodity_tin;
+
+  /// Localized display name for commodity id `horses`.
+  String get commodity_horses;
+
+  /// Localized display name for commodity id `lumber`.
+  String get commodity_lumber;
+
+  /// Localized display name for commodity id `castIron`.
+  String get commodity_castIron;
+
+  /// Localized display name for commodity id `fabric`.
+  String get commodity_fabric;
+
+  /// Localized display name for commodity id `refinedSugar`.
+  String get commodity_refinedSugar;
+
+  /// Localized display name for commodity id `cigars`.
+  String get commodity_cigars;
+
+  /// Localized display name for commodity id `furHats`.
+  String get commodity_furHats;
+
+  /// Localized display name for commodity id `steel`.
+  String get commodity_steel;
+
+  /// Localized display name for commodity id `paper`.
+  String get commodity_paper;
+
+  /// Localized display name for commodity id `bronze`.
+  String get commodity_bronze;
+
+  /// Localized display name for commodity id `gold`.
+  String get commodity_gold;
+
+  /// Localized display name for commodity id `silver`.
+  String get commodity_silver;
+
+  /// Localized display name for commodity id `gems`.
+  String get commodity_gems;
+
+  /// Localized display name for commodity id `diamonds`.
+  String get commodity_diamonds;
+
+  /// Localized display name for commodity id `spices`.
+  String get commodity_spices;
+
+
   /// Civilian units panel title.
   String get civilian_units_title;
 
@@ -1533,10 +1615,10 @@ abstract class AppLocalizations {
   /// Semantics value for zoom slider (spoken).
   String regionMinimap_zoomSemanticsValue(int pct);
 
-  /// Economic row in province overlay: terrain, resource id, and localized detail suffix.
+  /// Economic row in province overlay: terrain, localized resource name, and detail suffix.
   String province_economic_resourceRow(
     String terrain,
-    String resourceId,
+    String resourceName,
     String detail,
   );
 

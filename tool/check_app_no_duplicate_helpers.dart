@@ -56,8 +56,7 @@ const List<_CanonicalHelper> _trackedCanonicalHelpers = <_CanonicalHelper>[
   ),
   _CanonicalHelper(
     symbol: 'commodityDisplayName',
-    canonicalRelativePath:
-        'app/lib/features/game/widgets/production/commodity_ui_helpers.dart',
+    canonicalRelativePath: 'app/lib/widgets/commodity_display_name.dart',
     kind: 'commodity UI helper',
   ),
   _CanonicalHelper(
@@ -144,7 +143,7 @@ const List<_RemovedHelper> _removedPrivateHelpers = <_RemovedHelper>[
   _RemovedHelper(
     symbol: '_commodityDisplayName',
     replacement:
-        'commodityDisplayName from app/lib/features/game/widgets/production/commodity_ui_helpers.dart',
+        'commodityDisplayName from app/lib/widgets/commodity_display_name.dart',
   ),
   // #3279: thin wrapper deleted; call `regionDisplayLabel` directly.
   _RemovedHelper(

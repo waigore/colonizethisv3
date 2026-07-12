@@ -600,10 +600,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String province_economic_resourceRow(
     String terrain,
-    String resourceId,
+    String resourceName,
     String detail,
   ) {
-    return '$terrain/$resourceId $detail';
+    return '$terrain/$resourceName $detail';
   }
 
   @override

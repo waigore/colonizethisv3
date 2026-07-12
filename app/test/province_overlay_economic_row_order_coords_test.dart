@@ -149,26 +149,26 @@ Widget _overlay({
   );
 }
 
-/// Improved-tile economic row label: `"{terrain}/grain with {improvement}"`
+/// Improved-tile economic row label: `"{terrain}/Grain with {improvement}"`
 /// (`province_economic_resourceRow` + `province_economic_withImprovement`).
 /// Excludes the `(improvable)` suffix so the two row variants never collide.
 Finder _improvedRowLabelFinder() {
   return find.byWidgetPredicate(
     (w) =>
         w is Text &&
-        (w.data ?? '').contains('grain') &&
+        (w.data ?? '').contains('Grain') &&
         (w.data ?? '').contains('with ') &&
         !(w.data ?? '').contains('(improvable)'),
   );
 }
 
-/// Improvable-tile economic row label: `"{terrain}/grain (improvable)"`
+/// Improvable-tile economic row label: `"{terrain}/Grain (improvable)"`
 /// (`province_economic_resourceRow` + `province_economic_improvableSuffix`).
 Finder _improvableRowLabelFinder() {
   return find.byWidgetPredicate(
     (w) =>
         w is Text &&
-        (w.data ?? '').contains('grain') &&
+        (w.data ?? '').contains('Grain') &&
         (w.data ?? '').contains('(improvable)'),
   );
 }
@@ -214,14 +214,14 @@ void main() {
             findsOneWidget,
             reason:
                 'Test setup: improvementByTile[$improvedTk] = 2 must render '
-                'one "{terrain}/grain with {impBase}" improved row.',
+                'one "{terrain}/Grain with {impBase}" improved row.',
           );
           expect(
             improvable,
             findsOneWidget,
             reason:
                 'Test setup: the unimproved grain tile $improvableTk must '
-                'render one "{terrain}/grain (improvable)" row.',
+                'render one "{terrain}/Grain (improvable)" row.',
           );
 
           final double improvedDy = tester.getCenter(improved).dy;
@@ -269,8 +269,8 @@ void main() {
           final String improvableText =
               tester.widget<Text>(_improvableRowLabelFinder()).data ?? '';
 
-          // The economic row labels are "{terrain}/grain with {impBase}" and
-          // "{terrain}/grain (improvable)". With plains terrain and the grain
+          // The economic row labels are "{terrain}/Grain with {impBase}" and
+          // "{terrain}/Grain (improvable)". With plains terrain and the grain
           // Farm improvement name, no row token carries a digit, so any digit
           // in the rendered row text could only come from a leaked tile
           // coordinate (x=3 / y=0 / x=7). SPEC § "Economic rows omit

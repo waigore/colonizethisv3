@@ -124,7 +124,7 @@ PlayerView _omniscientViewForTiles(Iterable<String> keys) {
 
 /// Finds the `Expanded(child: Text(...))` row label whose data contains the
 /// localized improved-tile suffix (`with ...`) and the `grain` resource id.
-/// The label string is `"{terrain}/grain with {impBase}"` per
+/// The label string is `"{terrain}/Grain with {impBase}"` per
 /// `app/lib/l10n/arb/app_en.arb` `province_economic_resourceRow` +
 /// `province_economic_withImprovement`. The match deliberately excludes the
 /// `(improvable)` suffix so the test never confuses the two row variants.
@@ -132,7 +132,7 @@ Finder _improvedRowLabelFinder() {
   return find.byWidgetPredicate(
     (w) =>
         w is Text &&
-        (w.data ?? '').contains('grain') &&
+        (w.data ?? '').contains('Grain') &&
         (w.data ?? '').contains('with ') &&
         !(w.data ?? '').contains('(improvable)'),
   );
@@ -140,12 +140,12 @@ Finder _improvedRowLabelFinder() {
 
 /// Finds the `Expanded(child: Text(...))` row label whose data carries the
 /// localized improvable-tile suffix `(improvable)` and the `grain` resource
-/// id. The label string is `"{terrain}/grain (improvable)"` per
+/// id. The label string is `"{terrain}/Grain (improvable)"` per
 /// `app/lib/l10n/arb/app_en.arb` `province_economic_resourceRow` +
 /// `province_economic_improvableSuffix`.
 Finder _improvableRowLabelFinder() {
   return find.byWidgetPredicate(
-    (w) => w is Text && (w.data ?? '').contains('grain') && (w.data ?? '').contains('(improvable)'),
+    (w) => w is Text && (w.data ?? '').contains('Grain') && (w.data ?? '').contains('(improvable)'),
   );
 }
 
@@ -189,7 +189,7 @@ void main() {
             findsAtLeastNWidgets(1),
             reason:
                 'Test setup: with improvementByTile[$tk] = 2 the Economic '
-                'section must render the "{terrain}/grain with {impBase}" '
+                'section must render the "{terrain}/Grain with {impBase}" '
                 'row label per province_economic_resourceRow + '
                 'province_economic_withImprovement (app_en.arb).',
           );
@@ -239,7 +239,7 @@ void main() {
             findsAtLeastNWidgets(1),
             reason:
                 'Test setup: with no improvement set, the Economic section '
-                'must render the "{terrain}/grain (improvable)" row label '
+                'must render the "{terrain}/Grain (improvable)" row label '
                 'per province_economic_resourceRow + '
                 'province_economic_improvableSuffix (app_en.arb).',
           );

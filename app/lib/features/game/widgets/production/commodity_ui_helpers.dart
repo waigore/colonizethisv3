@@ -1,10 +1,9 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/commodity_display_name.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
-
-String commodityDisplayName(String commodityId) {
-  return CommodityCatalog.byId[commodityId]?.displayName ?? commodityId;
-}
+export 'package:colonizethis_app/widgets/commodity_display_name.dart'
+    show commodityDisplayName;
 
 /// Localized lowercase category name for [category] (e.g. `manufactured`),
 /// used in resource-icon tooltips. See
@@ -36,7 +35,7 @@ String commodityIconTooltip(AppLocalizations l10n, String commodityId) {
   final commodity = CommodityCatalog.byId[commodityId];
   if (commodity == null) return commodityId;
   return l10n.trainDialog_costCommodityTooltip(
-    commodity.displayName ?? commodityId,
+    commodityDisplayName(l10n, commodityId),
     commodityCategoryDisplayName(l10n, commodity.category),
   );
 }

@@ -46,7 +46,7 @@ Widget _buildEconomicSection({
                 child: Text(
                   l10n.province_economic_resourceRow(
                     row.terrain,
-                    resId,
+                    commodityDisplayName(l10n, resId),
                     l10n.province_economic_withImprovement(row.impBase),
                   ),
                   style: TextStyle(color: EditorialMonoclePalette.fg),
@@ -75,7 +75,7 @@ Widget _buildEconomicSection({
                 child: Text(
                   l10n.province_economic_resourceRow(
                     row.terrain,
-                    resId,
+                    commodityDisplayName(l10n, resId),
                     l10n.province_economic_improvableSuffix,
                   ),
                   style: TextStyle(color: EditorialMonoclePalette.muted),
