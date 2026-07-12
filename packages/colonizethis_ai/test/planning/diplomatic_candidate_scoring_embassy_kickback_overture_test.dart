@@ -28,11 +28,13 @@ void main() {
       buildPlayerView(game, topology, 'gp1'),
     );
     return computeDiplomaticCandidateScores(
-      candidates: candidates,
-      nationId: 'gp1',
-      game: game,
-      snapshot: snapshot,
-      config: config,
+      DiplomaticCandidateScoringInput(
+        candidates: candidates,
+        nationId: 'gp1',
+        game: game,
+        snapshot: snapshot,
+        config: config,
+      ),
     ).single;
   }
 

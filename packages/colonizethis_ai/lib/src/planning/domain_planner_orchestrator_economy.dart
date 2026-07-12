@@ -92,8 +92,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     phaseProgress: phasePlan.priorityWeights.newWorldCivilian,
   );
   final hasSpyWork = workCandidates.any(
-    (o) =>
-        o.target == kWorkTargetCounterSpy,
+    (o) => o.target == kWorkTargetCounterSpy,
   );
   var workThreshold =
       40 -
@@ -267,16 +266,18 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   );
 
   final buildResult = _appendEconomyBuildOrders(
-    ctx: ctx,
-    snapshot: snapshot,
-    phasePlan: phasePlan,
-    economyPhaseGates: economyPhaseGates,
-    economyPlan: economyPlan,
-    ordersBuilder: ordersBuilder,
-    colonialPressure: colonialPressure,
-    buildCandidates: buildCandidates,
-    civilianScoring: civilianScoring,
-    domainEconomyWeight: domainWeights.economy,
+    EconomyBuildPassInput(
+      ctx: ctx,
+      snapshot: snapshot,
+      phasePlan: phasePlan,
+      economyPhaseGates: economyPhaseGates,
+      economyPlan: economyPlan,
+      ordersBuilder: ordersBuilder,
+      colonialPressure: colonialPressure,
+      buildCandidates: buildCandidates,
+      civilianScoring: civilianScoring,
+      domainEconomyWeight: domainWeights.economy,
+    ),
   );
   emit('aiStageB');
   return _EconomyDomainPlannersResult(

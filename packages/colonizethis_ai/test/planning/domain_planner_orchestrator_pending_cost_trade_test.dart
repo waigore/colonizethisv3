@@ -72,17 +72,19 @@ DomainPlannerOutcome _runOrchestrator({
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandSnapshot();
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.expand,
-    seeds: AISeedBundle.fromTurnSeed(3122700),
-    suggestionAPI: api,
-    economyPlan: economyPlan,
-    options: OrchestratorOptions(recomputeTradeOrdersWithPendingCosts: recompute),
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.expand,
+      seeds: AISeedBundle.fromTurnSeed(3122700),
+      suggestionAPI: api,
+      economyPlan: economyPlan,
+      options: OrchestratorOptions(recomputeTradeOrdersWithPendingCosts: recompute),
+    ),
   );
 }
 

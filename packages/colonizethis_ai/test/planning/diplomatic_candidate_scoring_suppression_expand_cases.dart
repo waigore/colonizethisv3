@@ -62,21 +62,23 @@ void registerDiplomaticCandidateScoringSuppressionExpandCases() {
           ],
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp3',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: const AIConfig(
+              leaderId: 'henry',
+              personalityId: 'henry',
+              hiddenAgendaId: 'merchant',
             ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: const AIConfig(
-            leaderId: 'henry',
-            personalityId: 'henry',
-            hiddenAgendaId: 'merchant',
+            primaryGoal: StrategicGoal.conquer,
           ),
-          primaryGoal: StrategicGoal.conquer,
         ).single;
         expect(score, 0);
       },
@@ -555,17 +557,19 @@ void registerDiplomaticCandidateScoringSuppressionExpandCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.conquer,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp3',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.conquer,
+          ),
         ).single;
         expect(score, 0);
       },
@@ -638,17 +642,19 @@ void registerDiplomaticCandidateScoringSuppressionExpandCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.conquer,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp3',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.conquer,
+          ),
         ).single;
         expect(score, 0);
       },
@@ -713,26 +719,28 @@ void registerDiplomaticCandidateScoringSuppressionExpandCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp3',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.conquer,
+            sameTurnPriorDiplomaticOrders: Orders(
+              diplomaticOrdersByPlayerId: {
+                'gp1': [
+                  const DiplomaticOrder(
+                    type: DiplomaticOrderType.declareWar,
+                    targetFactionId: 'gp3',
+                  ),
+                ],
+              },
             ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.conquer,
-          sameTurnPriorDiplomaticOrders: Orders(
-            diplomaticOrdersByPlayerId: {
-              'gp1': [
-                const DiplomaticOrder(
-                  type: DiplomaticOrderType.declareWar,
-                  targetFactionId: 'gp3',
-                ),
-              ],
-            },
           ),
         ).single;
         expect(score, 0);
@@ -798,17 +806,19 @@ void registerDiplomaticCandidateScoringSuppressionExpandCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.conquer,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp3',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+            primaryGoal: StrategicGoal.conquer,
+          ),
         ).single;
         expect(score, 0);
       },

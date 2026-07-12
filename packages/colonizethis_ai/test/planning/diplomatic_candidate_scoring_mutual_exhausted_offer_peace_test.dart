@@ -171,11 +171,13 @@ const _config = AIConfig(
 
 int _scoreOfferPeaceTowardEnemy(Game game) {
   return computeDiplomaticCandidateScores(
-    candidates: _offerPeaceCandidates,
-    nationId: _ownNationId,
-    game: game,
-    snapshot: _snapshotForOwn,
-    config: _config,
+    DiplomaticCandidateScoringInput(
+      candidates: _offerPeaceCandidates,
+      nationId: _ownNationId,
+      game: game,
+      snapshot: _snapshotForOwn,
+      config: _config,
+    ),
   ).single;
 }
 
@@ -284,25 +286,31 @@ void main() {
           final game = _exhaustedStalemateGame();
 
           final first = computeDiplomaticCandidateScores(
-            candidates: _offerPeaceCandidates,
-            nationId: _ownNationId,
-            game: game,
-            snapshot: _snapshotForOwn,
-            config: _config,
+            DiplomaticCandidateScoringInput(
+              candidates: _offerPeaceCandidates,
+              nationId: _ownNationId,
+              game: game,
+              snapshot: _snapshotForOwn,
+              config: _config,
+            ),
           );
           final second = computeDiplomaticCandidateScores(
-            candidates: _offerPeaceCandidates,
-            nationId: _ownNationId,
-            game: game,
-            snapshot: _snapshotForOwn,
-            config: _config,
+            DiplomaticCandidateScoringInput(
+              candidates: _offerPeaceCandidates,
+              nationId: _ownNationId,
+              game: game,
+              snapshot: _snapshotForOwn,
+              config: _config,
+            ),
           );
           final third = computeDiplomaticCandidateScores(
-            candidates: _offerPeaceCandidates,
-            nationId: _ownNationId,
-            game: game,
-            snapshot: _snapshotForOwn,
-            config: _config,
+            DiplomaticCandidateScoringInput(
+              candidates: _offerPeaceCandidates,
+              nationId: _ownNationId,
+              game: game,
+              snapshot: _snapshotForOwn,
+              config: _config,
+            ),
           );
 
           expect(first, second);

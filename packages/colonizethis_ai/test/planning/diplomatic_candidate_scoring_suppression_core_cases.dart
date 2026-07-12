@@ -48,16 +48,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'tribe1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'tribe1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, greaterThan(0));
         expect(score, greaterThanOrEqualTo(kDeclareWarColonialAdjacentTribeBonus));
@@ -126,20 +128,22 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'peacemaker',
         );
         final scores = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'tribe1',
-            ),
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'tribe1',
+              ),
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         );
         expect(scores[1], greaterThan(scores[0]));
       },
@@ -208,20 +212,22 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final scores = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'tribe1',
-            ),
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'tribe1',
+              ),
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         );
         expect(scores[0], 0);
         expect(scores[1], greaterThan(0));
@@ -287,16 +293,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor2',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor2',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, greaterThan(0));
       },
@@ -364,16 +372,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, greaterThan(0));
       },
@@ -442,16 +452,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'minor1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, greaterThan(0));
         expect(
@@ -512,16 +524,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'tribe1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.establishOverture,
+                targetFactionId: 'tribe1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, greaterThanOrEqualTo(kEstablishOvertureColonialInvadableOwnerBonus));
       },
@@ -583,16 +597,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'tribe1',
-            ),
-          ],
-          nationId: 'gp1',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.establishOverture,
+                targetFactionId: 'tribe1',
+              ),
+            ],
+            nationId: 'gp1',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, 0);
       },
@@ -646,16 +662,18 @@ void registerDiplomaticCandidateScoringSuppressionCoreCases() {
           hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'tribe1',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
+          DiplomaticCandidateScoringInput(
+            candidates: const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'tribe1',
+              ),
+            ],
+            nationId: 'gp4',
+            game: game,
+            snapshot: snap,
+            config: config,
+          ),
         ).single;
         expect(score, 0);
       },

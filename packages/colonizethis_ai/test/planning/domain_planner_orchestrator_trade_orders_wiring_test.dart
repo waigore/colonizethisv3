@@ -85,16 +85,18 @@ DomainPlannerOutcome _runOrchestrator({required EconomyPlan economyPlan}) {
   final view = buildPlayerView(game, topology, _nationId);
   final snapshot = _expandSnapshot();
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.trade,
-    seeds: AISeedBundle.fromTurnSeed(2994700),
-    suggestionAPI: _emptyApi,
-    economyPlan: economyPlan,
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.trade,
+      seeds: AISeedBundle.fromTurnSeed(2994700),
+      suggestionAPI: _emptyApi,
+      economyPlan: economyPlan,
+    ),
   );
 }
 

@@ -76,8 +76,7 @@ const int kSpeculativeBidStockpileTarget = kShortageThreshold;
 
 /// Treasury band at which speculative bidding activates. Refs #2924 F10.
 int treasuryAffluenceThreshold() =>
-    kTreasuryAffluenceThresholdMultiplier *
-        cheapestRegimentBuildTreasuryCost();
+    kTreasuryAffluenceThresholdMultiplier * cheapestRegimentBuildTreasuryCost();
 
 /// Bundles inputs for [runTreasuryPlanner] (Refs #3972 AC5).
 final class TreasuryPlannerInput {
@@ -116,6 +115,16 @@ final class TreasuryPlannerInput {
 /// prior-fill-rate-aware offer urgency, see SPEC/ai/treasury-planner.md
 /// § Partial-fill-aware forecasting).
 List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
+  final emitInput = _buildEmitTradeOrdersInput(input);
+  if (emitInput == null) {
+    return const <TradeOrder>[];
+  }
+  return _emitTradeOrders(emitInput);
+}
+
+/// Assembles surplus/need maps and emission inputs for [runTreasuryPlanner]
+/// (Refs #3977 AC6). Returns `null` when both offer and bid maps are empty.
+_EmitTradeOrdersInput? _buildEmitTradeOrdersInput(TreasuryPlannerInput input) {
   final game = input.game;
   final playerId = input.playerId;
   final stockpile = input.stockpile;
@@ -126,8 +135,7 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   final topology = input.topology;
   final currentOrders = input.currentOrders;
   final extractionById = input.extractionById;
-  final ResourceRules rules =
-      input.resourceRules ?? ResourceRules.defaultRules;
+  final ResourceRules rules = input.resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
   final tradeCargoCapacity = _resolveTradeCargoCapacity(
     game: game,
@@ -197,11 +205,11 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
       lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
-          lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
-          peerLockRecoverySellerNeededProducibleImprovementInputs(
-            game,
-            excludePlayerId: playerId,
-          ).isNotEmpty;
+      lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
+      peerLockRecoverySellerNeededProducibleImprovementInputs(
+        game,
+        excludePlayerId: playerId,
+      ).isNotEmpty;
   // Refs #2847 H8-extraction supply-side fix: releasing a *surplus* (stock held
   // above the GP's own consumption + production-input reserve) is selling, not
   // speculating, so the supplier role must not be gated on the supplier's own
@@ -247,10 +255,12 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   );
   final treasuryBudgetForBidsRaw =
       rawTreasury - pendingCosts - carryForwardBidNotional;
-  final treasuryBudgetForBids =
-      treasuryBudgetForBidsRaw < 0 ? 0 : treasuryBudgetForBidsRaw;
+  final treasuryBudgetForBids = treasuryBudgetForBidsRaw < 0
+      ? 0
+      : treasuryBudgetForBidsRaw;
 
-  final treasuryForecast = treasury +
+  final treasuryForecast =
+      treasury +
       _expectedOfferInflow(
         available: available,
         marketPrices: marketPrices,
@@ -360,7 +370,7 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   }
 
   if (available.isEmpty && need.isEmpty) {
-    return const <TradeOrder>[];
+    return null;
   }
 
   // Refs #3758 S9/R10: trade-deal relation-boost-aware bid preference. Resolve
@@ -371,7 +381,8 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   // and a no-op when no qualifying partner holds a standing matching offer, so
   // common-path emission (and seed-42 tuning) is byte-identical. Deterministic.
   // SPEC/ai/treasury-planner.md § Trade-deal relation-boost-aware bid preference.
-  final tradeDealPreferredBidCommodityId = (snapshot != null &&
+  final tradeDealPreferredBidCommodityId =
+      (snapshot != null &&
           !isLiquidityBuyer &&
           !isAffluentDesignatedBuyer &&
           !isLockRecoverySeller &&
@@ -389,22 +400,20 @@ List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
   // [_emitTradeOrders] via [_EmitTradeOrdersInput] so this planner body stays
   // within the function-size budget. Behaviour-preserving (same library scope,
   // identical emission path).
-  return _emitTradeOrders(
-    _EmitTradeOrdersInput(
-      game: game,
-      playerId: playerId,
-      bidTypeCap: bidTypeCap,
-      tradeCargoCapacity: tradeCargoCapacity,
-      available: available,
-      need: need,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      offerPriority: offerPriority,
-      isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
-      isLiquidityBuyer: isLiquidityBuyer,
-      lockRecoveryUrgent: lockRecoveryUrgent,
-      rules: rules,
-      tradeDealPreferredBidCommodityId: tradeDealPreferredBidCommodityId,
-    ),
+  return _EmitTradeOrdersInput(
+    game: game,
+    playerId: playerId,
+    bidTypeCap: bidTypeCap,
+    tradeCargoCapacity: tradeCargoCapacity,
+    available: available,
+    need: need,
+    treasuryBudgetForBids: treasuryBudgetForBids,
+    offerPriority: offerPriority,
+    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+    isLiquidityBuyer: isLiquidityBuyer,
+    lockRecoveryUrgent: lockRecoveryUrgent,
+    rules: rules,
+    tradeDealPreferredBidCommodityId: tradeDealPreferredBidCommodityId,
   );
 }
 
@@ -418,7 +427,9 @@ int _resolveTradeCargoCapacity({
   required MapTopology? topology,
   Map<String, ExtractionTotals>? extractionById,
 }) {
-  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty && topology != null) {
+  if (tileMapByRegion != null &&
+      tileMapByRegion.isNotEmpty &&
+      topology != null) {
     return tradeCargoCapacityForGreatPower(
       game: game,
       playerId: playerId,

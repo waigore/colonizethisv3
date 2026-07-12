@@ -1,10 +1,44 @@
 part of 'economy_planner.dart';
 
+/// Bundles inputs for [_allocateLabour] (Refs #3977 AC5).
+final class LabourAllocationInput {
+  const LabourAllocationInput({
+    required this.stockpile,
+    required this.workers,
+    required this.effectiveLabour,
+    required this.config,
+    required this.seeds,
+    this.techUnlocked,
+    this.militaryRebuildCrisis = false,
+    this.regimentBuildInputProductionBoost = false,
+    this.missingRegimentBuildInputIds = const {},
+    this.supplierReleaseImprovementInputIds = const {},
+    this.feedstockReserveOutputIds = const {},
+    this.castIronLabourPeasantRecruitFabricBoost = false,
+    this.growthStage,
+  });
+
+  final Stockpile stockpile;
+  final WorkerPool workers;
+  final int effectiveLabour;
+  final AIConfig config;
+  final AISeedBundle seeds;
+  final Map<String, bool>? techUnlocked;
+  final bool militaryRebuildCrisis;
+  final bool regimentBuildInputProductionBoost;
+  final Set<String> missingRegimentBuildInputIds;
+  final Set<String> supplierReleaseImprovementInputIds;
+  final Set<String> feedstockReserveOutputIds;
+  final bool castIronLabourPeasantRecruitFabricBoost;
+  final GrowthStage? growthStage;
+}
+
 /// Commodity ids the cheapest regiment still needs in the stockpile before
 /// `suggestBuildOrders` will surface it (Refs #2847 H8).
 Set<String> _missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
   final missing = <String>{};
-  for (final entry in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
+  for (final entry
+      in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
     if (stockpile.quantityOf(entry.key) < entry.value) {
       missing.add(entry.key);
     }
@@ -12,21 +46,22 @@ Set<String> _missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
   return missing;
 }
 
-List<AssignedRecipe> _allocateLabour({
-  required Stockpile stockpile,
-  required WorkerPool workers,
-  required int effectiveLabour,
-  required AIConfig config,
-  required AISeedBundle seeds,
-  Map<String, bool>? techUnlocked,
-  bool militaryRebuildCrisis = false,
-  bool regimentBuildInputProductionBoost = false,
-  Set<String> missingRegimentBuildInputIds = const {},
-  Set<String> supplierReleaseImprovementInputIds = const {},
-  Set<String> feedstockReserveOutputIds = const {},
-  bool castIronLabourPeasantRecruitFabricBoost = false,
-  GrowthStage? growthStage,
-}) {
+List<AssignedRecipe> _allocateLabour(LabourAllocationInput input) {
+  final stockpile = input.stockpile;
+  final workers = input.workers;
+  final effectiveLabour = input.effectiveLabour;
+  final config = input.config;
+  final techUnlocked = input.techUnlocked;
+  final militaryRebuildCrisis = input.militaryRebuildCrisis;
+  final regimentBuildInputProductionBoost =
+      input.regimentBuildInputProductionBoost;
+  final missingRegimentBuildInputIds = input.missingRegimentBuildInputIds;
+  final supplierReleaseImprovementInputIds =
+      input.supplierReleaseImprovementInputIds;
+  final feedstockReserveOutputIds = input.feedstockReserveOutputIds;
+  final castIronLabourPeasantRecruitFabricBoost =
+      input.castIronLabourPeasantRecruitFabricBoost;
+  final growthStage = input.growthStage;
   // Labour allocation scores every feasible recipe to pick the best runs, so
   // this is an intrinsic full-catalog pass, not an output-keyed lookup that the
   // producing()/byId index could replace (Refs #3288).
@@ -41,8 +76,9 @@ List<AssignedRecipe> _allocateLabour({
   // recipes the GP is actively producing (Refs #2847 H8-extraction feedstock
   // co-availability). Empty when no such recipe is targeted, in which case
   // feasibility falls back to the unreduced stockpile (behaviour-equal).
-  final feedstockReserve =
-      _feedstockReserveForOutputs(feedstockReserveOutputIds);
+  final feedstockReserve = _feedstockReserveForOutputs(
+    feedstockReserveOutputIds,
+  );
   final labourByRecipe = <String, int>{};
 
   if (castIronLabourPeasantRecruitFabricBoost) {
@@ -84,8 +120,8 @@ List<AssignedRecipe> _allocateLabour({
     // cannot drain the feedstock the target recipe is assembling.
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
-            ? virtual
-            : _stockpileWithReserve(virtual, feedstockReserve);
+        ? virtual
+        : _stockpileWithReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
       stockpile: feasibilityStock,
@@ -136,16 +172,13 @@ List<AssignedRecipe> _allocateLabour({
     );
   }
 
-  final rankedRecipes = sortByScore(
-    candidates,
-    (a, b) => a.id.compareTo(b.id),
-  );
+  final rankedRecipes = sortByScore(candidates, (a, b) => a.id.compareTo(b.id));
 
   for (final recipe in rankedRecipes) {
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
-            ? virtual
-            : _stockpileWithReserve(virtual, feedstockReserve);
+        ? virtual
+        : _stockpileWithReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
       stockpile: feasibilityStock,
@@ -210,8 +243,8 @@ void _assignCastIronLabourFabricPrePass({
     if (nextRemainingLabour < recipe.labourPerOutput) continue;
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
-            ? nextVirtual
-            : _stockpileWithReserve(nextVirtual, feedstockReserve);
+        ? nextVirtual
+        : _stockpileWithReserve(nextVirtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
       stockpile: feasibilityStock,
@@ -316,4 +349,3 @@ bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
   };
   return militaryOutputIds.contains(recipe.outputCommodityId);
 }
-

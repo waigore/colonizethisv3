@@ -361,24 +361,26 @@ void main() {
           );
 
           final outcome = runDomainPlannersWithOutcome(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: const AIConfig(
-              leaderId: 'henry',
-              personalityId: 'navigator',
-              hiddenAgendaId: 'navigator',
+            DomainPlannerInput(
+              game: game,
+              topology: topology,
+              nationId: _nationId,
+              view: view,
+              snapshot: snapshot,
+              config: const AIConfig(
+                leaderId: 'henry',
+                personalityId: 'navigator',
+                hiddenAgendaId: 'navigator',
+              ),
+              primaryGoal: StrategicGoal.expand,
+              seeds: AISeedBundle.fromTurnSeed(2847001),
+              suggestionAPI: fakeApi,
+              economyPlan: const EconomyPlan(
+                productionAssignments: [],
+                cargoPreference: CargoPreference.strongCargo,
+              ),
+              options: OrchestratorOptions(phasePlan: phasePlan),
             ),
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(2847001),
-            suggestionAPI: fakeApi,
-            economyPlan: const EconomyPlan(
-              productionAssignments: [],
-              cargoPreference: CargoPreference.strongCargo,
-            ),
-            options: OrchestratorOptions(phasePlan: phasePlan),
           );
 
           final builds =
