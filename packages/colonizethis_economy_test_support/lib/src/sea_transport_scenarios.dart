@@ -1,16 +1,16 @@
 // dart format off
-// Table-driven sea transport scenarios (Refs #3939 phase 3).
+// Table-driven sea transport scenarios (Refs #3939 phase 3, #3979).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'sea_transport_expectations.dart';
 
-/// One row in [cargoHoldsForHomeFleetScenarios] (Refs #3939 slice 64).
-typedef CargoHoldsForHomeFleetScenario = ({String label, void Function() run, String? refs});
+/// One row in [cargoHoldsForHomeFleetScenarios] (Refs #3979).
+typedef CargoHoldsForHomeFleetScenario = ({String label, CargoHoldsPins pins, String? refs});
 
 void runCargoHoldsForHomeFleetScenario(CargoHoldsForHomeFleetScenario scenario) {
-  scenario.run();
+  runCargoHoldsExpectation(scenario.pins);
 }
 
 /// Canonical scenarios for [cargoHoldsForHomeFleet].
@@ -55,11 +55,11 @@ List<CargoHoldsForHomeFleetScenario> cargoHoldsForHomeFleetScenarios() => [
   ),
 ];
 
-/// One row in [allocateOverseasToStockpileScenarios] (Refs #3939 slice 64).
-typedef AllocateOverseasToStockpileScenario = ({String label, void Function() run, String? refs});
+/// One row in [allocateOverseasToStockpileScenarios] (Refs #3979).
+typedef AllocateOverseasToStockpileScenario = ({String label, AllocateOverseasPins pins, String? refs});
 
 void runAllocateOverseasToStockpileScenario(AllocateOverseasToStockpileScenario scenario) {
-  scenario.run();
+  runAllocateOverseasExpectation(scenario.pins);
 }
 
 /// Canonical scenarios for [allocateOverseasToStockpile].

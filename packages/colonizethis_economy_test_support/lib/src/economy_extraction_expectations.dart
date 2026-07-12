@@ -1,5 +1,5 @@
 // dart format off
-// Compact economy extraction assertions (Refs #3939 phase 3 slice 34).
+// Compact economy extraction assertions (Refs #3939 phase 3 slice 34, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -19,7 +19,7 @@ void runApplyExtractionToStockpileExpectation({Stockpile? initialStockpile, Map<
   }
 }
 
-ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({required String label, Map<String, int>? initialDeltas, Stockpile? initialStockpile, required Map<String, int> extracted, required StockpileQuantityPins expectedQuantities}) => (label: label, run: () => runApplyExtractionToStockpileExpectation(initialStockpile: initialStockpile, initialDeltas: initialDeltas, extracted: extracted, expectedQuantities: expectedQuantities), refs: null);
+ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({required String label, Map<String, int>? initialDeltas, Stockpile? initialStockpile, required Map<String, int> extracted, required StockpileQuantityPins expectedQuantities}) => (label: label, initialDeltas: initialDeltas, initialStockpile: initialStockpile, extracted: extracted, expectedQuantities: expectedQuantities, refs: null);
 
 /// One player's expected stockpile commodity quantity after [applyExtractionForPlayers].
 typedef PlayerStockpilePin = ({int playerIndex, String commodityId, int quantity});
@@ -35,5 +35,5 @@ void runApplyExtractionForPlayersExpectation({required Game game, required Map<S
   }
 }
 
-ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({required String label, required Game game, required Map<String, Map<String, int>> extractedByPlayerId, List<PlayerStockpilePin>? stockpilePins, bool expectUnchangedPlayers = false}) => (label: label, run: () => runApplyExtractionForPlayersExpectation(game: game, extractedByPlayerId: extractedByPlayerId, stockpilePins: stockpilePins, expectUnchangedPlayers: expectUnchangedPlayers), refs: null);
+ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({required String label, required Game game, required Map<String, Map<String, int>> extractedByPlayerId, List<PlayerStockpilePin>? stockpilePins, bool expectUnchangedPlayers = false}) => (label: label, game: game, extractedByPlayerId: extractedByPlayerId, stockpilePins: stockpilePins, expectUnchangedPlayers: expectUnchangedPlayers, refs: null);
 // dart format on

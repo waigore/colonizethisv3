@@ -1,13 +1,11 @@
-part of 'deal_matcher.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-// Order-indexing, aggregation, carry-forward, and per-buyer treasury /
-// affordability helpers for the world market deal matcher, split out of
-// `deal_matcher.dart` by concern to keep each library file below the repo
-// non-comment line limit (`SPEC/program/dart-file-non-comment-line-size.md`).
-// These are top-level private functions sharing the parent library's scope via
-// `part`, so visibility and behaviour are unchanged (Refs #3290 Phase 0).
+import 'deal_matcher_session.dart';
 
-List<CommodityId> _collectCommodityIds(
+/// Order-indexing, aggregation, and carry-forward helpers for the world market
+/// deal matcher (Refs #3979). Package-internal library — not barrel-exported.
+
+List<CommodityId> collectMatchCommodityIds(
   Map<String, List<TradeOrder>> offers,
   Map<String, List<TradeOrder>> bids,
 ) {
@@ -26,17 +24,17 @@ List<CommodityId> _collectCommodityIds(
   return sorted;
 }
 
-Map<String, List<_OrderState>> _indexOrdersByFaction(
+Map<String, List<MatchOrderState>> indexOrdersByFaction(
   Map<String, List<TradeOrder>> ordersByFaction,
 ) {
   final sortedFactionIds = ordersByFaction.keys.toList()..sort();
-  final result = <String, List<_OrderState>>{};
+  final result = <String, List<MatchOrderState>>{};
   for (final factionId in sortedFactionIds) {
     final orders = ordersByFaction[factionId] ?? const <TradeOrder>[];
-    final states = <_OrderState>[];
+    final states = <MatchOrderState>[];
     for (var i = 0; i < orders.length; i++) {
       states.add(
-        _OrderState(
+        MatchOrderState(
           factionId: factionId,
           order: orders[i],
           factionLocalIndex: i,
@@ -49,30 +47,22 @@ Map<String, List<_OrderState>> _indexOrdersByFaction(
 }
 
 /// Groups every order state by [TradeOrder.commodityId] in a single pass,
-/// preserving the exact ordering the per-commodity scan produced (faction
-/// order from [_indexOrdersByFaction] insertion — alphabetical — then
-/// faction-local index). Built once in the [DealMatcher.matchDeals] prologue so
-/// the per-commodity matching loop is an O(1) map lookup instead of an
-/// O(total-states) re-scan for every commodity, avoiding the duplicate global
-/// scan flagged by `colonizethis-turn-resolution-budget.mdc` (Refs #3517
-/// Cluster 3). The grouped lists reference the same mutable [_OrderState]
-/// objects as [statesByFaction], so `remaining` decrements during matching stay
-/// visible to the carry-forward pass.
-Map<CommodityId, List<_OrderState>> _indexStatesByCommodity(
-  Map<String, List<_OrderState>> statesByFaction,
+/// preserving faction-then-local-index order from [indexOrdersByFaction].
+Map<CommodityId, List<MatchOrderState>> indexStatesByCommodity(
+  Map<String, List<MatchOrderState>> statesByFaction,
 ) {
-  final out = <CommodityId, List<_OrderState>>{};
+  final out = <CommodityId, List<MatchOrderState>>{};
   for (final entry in statesByFaction.entries) {
     for (final state in entry.value) {
-      (out[state.order.commodityId] ??= <_OrderState>[]).add(state);
+      (out[state.order.commodityId] ??= <MatchOrderState>[]).add(state);
     }
   }
   return out;
 }
 
-List<int> _collectPriorityTiers(
-  List<_OrderState> offers,
-  List<_OrderState> bids,
+List<int> collectPriorityTiers(
+  List<MatchOrderState> offers,
+  List<MatchOrderState> bids,
 ) {
   final tiers = <int>{};
   for (final state in offers) {
@@ -85,7 +75,7 @@ List<int> _collectPriorityTiers(
   return sorted;
 }
 
-int _sumInputQuantity(List<_OrderState> states) {
+int sumInputQuantity(List<MatchOrderState> states) {
   var total = 0;
   for (final state in states) {
     total += state.order.quantity;
@@ -93,8 +83,8 @@ int _sumInputQuantity(List<_OrderState> states) {
   return total;
 }
 
-Map<String, List<TradeOrder>> _carryForwardByFaction(
-  Map<String, List<_OrderState>> statesByFaction,
+Map<String, List<TradeOrder>> carryForwardByFaction(
+  Map<String, List<MatchOrderState>> statesByFaction,
 ) {
   final result = <String, List<TradeOrder>>{};
   for (final entry in statesByFaction.entries) {
@@ -110,10 +100,3 @@ Map<String, List<TradeOrder>> _carryForwardByFaction(
   }
   return Map.unmodifiable(result);
 }
-
-int _min3(int a, int b, int c) {
-  var m = a < b ? a : b;
-  if (c < m) m = c;
-  return m;
-}
-

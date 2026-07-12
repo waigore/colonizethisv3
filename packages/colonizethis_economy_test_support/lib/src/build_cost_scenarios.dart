@@ -1,17 +1,27 @@
 // dart format off
-// Table-driven build-cost scenarios (Refs #3856).
+// Table-driven build-cost scenarios (Refs #3856, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'build_cost_expectations.dart';
 
-/// One row for `BuildCostScenario` tables (Refs #3939 slice 63).
-typedef BuildCostScenario = ({String label, void Function() run, String? refs});
+/// One row for build-cost tables (Refs #3979). Exactly one pin family is set.
+typedef BuildCostScenario = ({String label, BuildCostUnknownUnitPins? unknownUnit, BuildCostAffordApplyPins? affordApply, BuildCostAffordRejectPins? affordReject, String? refs});
 
-/// Runs [scenario] (setup + assertions live in [BuildCostScenario.run]).
+/// Runs [scenario] via the matching expectation helper.
 void runBuildCostScenario(BuildCostScenario scenario) {
-  scenario.run();
+  final unknownUnit = scenario.unknownUnit;
+  if (unknownUnit != null) {
+    runBuildCostUnknownUnitExpectation(unknownUnit);
+    return;
+  }
+  final affordApply = scenario.affordApply;
+  if (affordApply != null) {
+    runBuildCostAffordApplyExpectation(affordApply);
+    return;
+  }
+  runBuildCostAffordRejectExpectation(scenario.affordReject!);
 }
 
 /// Canonical scenarios for [canAffordBuild] and [applyBuildCostDeduction].

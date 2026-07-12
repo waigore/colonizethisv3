@@ -1,5 +1,5 @@
 // dart format off
-// Table-driven worker recruit/train cost scenarios (Refs #3856).
+// Table-driven worker recruit/train cost scenarios (Refs #3856, #3979).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -7,12 +7,22 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'worker_action_cost_expectations.dart';
 
-/// One row for `WorkerActionCostScenario` tables (Refs #3939 slice 63).
-typedef WorkerActionCostScenario = ({String label, void Function() run, String? refs});
+/// One row for worker-action-cost tables (Refs #3979). Exactly one family is set.
+typedef WorkerActionCostScenario = ({String label, CanAffordRecruitWorkerPins? canAfford, ApplyRecruitWorkerCostPins? applyCost, bool apprenticeTechConsistency, String? refs});
 
-/// Runs [scenario] (setup + assertions live in [WorkerActionCostScenario.run]).
+/// Runs [scenario] via the matching expectation helper.
 void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {
-  scenario.run();
+  final canAfford = scenario.canAfford;
+  if (canAfford != null) {
+    runCanAffordRecruitWorkerExpectation(canAfford);
+    return;
+  }
+  final applyCost = scenario.applyCost;
+  if (applyCost != null) {
+    runApplyRecruitWorkerCostExpectation(applyCost);
+    return;
+  }
+  runApprenticeTechConsistencyExpectation();
 }
 
 /// Canonical scenarios for [canAffordRecruitWorker].

@@ -1,4 +1,4 @@
-// Table-driven unit tests for per-phase consumption helpers (Refs #3856).
+// Table-driven unit tests for per-phase consumption helpers (Refs #3856 / #3979).
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/test.dart';
@@ -7,42 +7,32 @@ import 'package:colonizethis_test/test.dart';
 /// `economy_consumption.dart`. SPEC/game/workers-and-population.md.
 void main() {
   group('consumeMilitaryFood', () {
-    for (final scenario in consumeMilitaryFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeMilitaryFoodScenarios(), (scenario) {
+      runMilitaryFoodScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeNavyFood', () {
-    for (final scenario in consumeNavyFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeNavyFoodScenarios(), (scenario) {
+      runNavyFoodScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeWorkerFood', () {
-    for (final scenario in consumeWorkerFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeWorkerFoodScenarios(), (scenario) {
+      runWorkerFoodScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('assignWorkerLuxury', () {
-    for (final scenario in assignWorkerLuxuryScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(assignWorkerLuxuryScenarios(), (scenario) {
+      runWorkerLuxuryScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeFoodUnits', () {
-    for (final scenario in consumeFoodUnitsScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeFoodUnitsScenarios(), (scenario) {
+      runFoodUnitsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

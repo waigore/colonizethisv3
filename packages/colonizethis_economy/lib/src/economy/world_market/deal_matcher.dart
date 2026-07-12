@@ -9,30 +9,16 @@
 /// pipeline under the 15-second turn-resolution budget per
 /// `.cursor/rules/colonizethis-turn-resolution-budget.mdc`.
 ///
-/// This slice covers priority-queue fills, the same-tier FTP tiebreaker,
-/// partial fills, per-buyer cross-commodity cargo tracking, and the First
-/// Right of Refusal (FRR) absolute-priority override added by Issue D /
-/// #2992 D2: when a minor/tribe offer carries a non-null
-/// `originTileKey` that resolves through [PurchasedTileIndex], the owning
-/// Great Power's bids for the same commodity match against that offer
-/// before any integer-priority tier or FTP pair runs.
-///
-/// The matching passes and the order-indexing / treasury-affordability
-/// helpers live in `part of` concern files
-/// (`deal_matcher_matching.dart`, `deal_matcher_indexing.dart`) to keep
-/// each file below the repo file-size policy (`SPEC/program/
-/// dart-file-non-comment-line-size.md`); they share this library's private
-/// scope so behaviour is unchanged (Refs #3290 Phase 0 file decomposition).
+/// Matching / indexing live in standalone libraries with explicit imports
+/// (Refs #3979); shared mutable pass state is [DealMatchSession].
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'deal_matcher_indexing.dart';
+import 'deal_matcher_matching.dart';
+import 'deal_matcher_session.dart';
 import 'purchased_tile_index.dart';
-import 'treasury_bid_budget.dart'
-    show decrementTreasuryForFill, maxAffordableBidQuantity;
-
-part 'deal_matcher_matching.dart';
-part 'deal_matcher_indexing.dart';
 
 /// Inputs for a single [DealMatcher.matchDeals] pass.
 ///
@@ -89,32 +75,6 @@ typedef DealMatchInputs = ({
   Set<String> boycottBlockedPairKeys,
 });
 
-/// Internal mutable bookkeeping for a single order participating in matching.
-class _OrderState {
-  _OrderState({
-    required this.factionId,
-    required this.order,
-    required this.factionLocalIndex,
-  }) : remaining = order.quantity;
-
-  final String factionId;
-  final TradeOrder order;
-
-  /// Stable index of this order inside the faction's input list, used as a
-  /// tiebreaker so ordering is deterministic across runs.
-  final int factionLocalIndex;
-
-  int remaining;
-
-  /// True once the treasury clamp has prevented this bid from fully
-  /// filling at least one match attempt. Drives single-note emission per
-  /// truncated bid per `SPEC/program/world-market-resolution.md` § Step C
-  /// (Refs #3115); only used for bid states (offers leave this `false`).
-  bool treasuryTruncated = false;
-
-  TradeOrder asCarryForward() => order.copyWith(quantity: remaining);
-}
-
 /// Pure helpers and the canonical matching pass for the world market phase.
 class DealMatcher {
   const DealMatcher._();
@@ -124,12 +84,7 @@ class DealMatcher {
   /// FTP membership is symmetric — `pairKey('a', 'b') == pairKey('b', 'a')`.
   /// Callers populate `ftpPairKeys` with the result so the matcher does not
   /// need to query both orderings.
-  static String pairKey(String a, String b) {
-    if (a.compareTo(b) <= 0) {
-      return '$a|$b';
-    }
-    return '$b|$a';
-  }
+  static String pairKey(String a, String b) => DealMatchSession.pairKey(a, b);
 
   /// Runs a single matching pass over the supplied inputs.
   ///
@@ -141,7 +96,7 @@ class DealMatcher {
   /// carry-forward (carry-forwards are excluded from the supply/demand
   /// signal per `SPEC/game/world-market.md` § Price discovery).
   static DealMatchResult matchDeals(DealMatchInputs inputs) {
-    final commodityIds = _collectCommodityIds(
+    final commodityIds = collectMatchCommodityIds(
       inputs.offersByFactionId,
       inputs.bidsByFactionId,
     );
@@ -154,14 +109,6 @@ class DealMatcher {
         entry.key: entry.value < 0 ? 0 : entry.value,
     };
 
-    // Per-buyer running treasury accumulator (Refs #3115). Mirrors the
-    // existing `remainingCargo` pattern: initialized from the buyer's
-    // start-of-phase treasury budget (already clamped at 0 for negative
-    // balances by the caller per
-    // `SPEC/program/world-market-resolution.md` § Deal matching engine);
-    // decremented by `round(matchQty × pricePerUnit)` after each emitted
-    // `FilledDeal`. A defensive `< 0` clamp here mirrors the cargo
-    // initialization in case a caller passes a stale negative value.
     final remainingTreasury = <String, int>{
       for (final entry in inputs.treasuryBudgetByBuyerFactionId.entries)
         entry.key: entry.value < 0 ? 0 : entry.value,
@@ -171,16 +118,18 @@ class DealMatcher {
     final activity = <CommodityId, MarketActivity>{};
     final notesByCommodity = <CommodityId, List<MarketActivityNote>>{};
 
-    final offerStatesByFaction = _indexOrdersByFaction(
-      inputs.offersByFactionId,
-    );
-    final bidStatesByFaction = _indexOrdersByFaction(inputs.bidsByFactionId);
+    final offerStatesByFaction = indexOrdersByFaction(inputs.offersByFactionId);
+    final bidStatesByFaction = indexOrdersByFaction(inputs.bidsByFactionId);
 
-    // Pre-build the per-commodity views once (Refs #3517 Cluster 3) so the
-    // matching loop below is an O(1) lookup instead of re-scanning every order
-    // state for each commodity.
-    final offerStatesByCommodity = _indexStatesByCommodity(offerStatesByFaction);
-    final bidStatesByCommodity = _indexStatesByCommodity(bidStatesByFaction);
+    final offerStatesByCommodity = indexStatesByCommodity(offerStatesByFaction);
+    final bidStatesByCommodity = indexStatesByCommodity(bidStatesByFaction);
+
+    final session = DealMatchSession(
+      remainingCargo: remainingCargo,
+      remainingTreasury: remainingTreasury,
+      filledOut: filled,
+      boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
+    );
 
     final purchasedTileIndex = inputs.purchasedTileIndex;
     final firstRightEnabled =
@@ -188,38 +137,35 @@ class DealMatcher {
 
     for (final commodityId in commodityIds) {
       final commodityOffers =
-          offerStatesByCommodity[commodityId] ?? const <_OrderState>[];
+          offerStatesByCommodity[commodityId] ?? const <MatchOrderState>[];
       final commodityBids =
-          bidStatesByCommodity[commodityId] ?? const <_OrderState>[];
+          bidStatesByCommodity[commodityId] ?? const <MatchOrderState>[];
 
-      final totalOfferQuantity = _sumInputQuantity(commodityOffers);
-      final totalBidQuantity = _sumInputQuantity(commodityBids);
+      final totalOfferQuantity = sumInputQuantity(commodityOffers);
+      final totalBidQuantity = sumInputQuantity(commodityBids);
       var filledQuantity = 0;
 
       if (commodityOffers.isNotEmpty && commodityBids.isNotEmpty) {
         final price = inputs.pricesByCommodityId[commodityId] ?? 0.0;
 
         if (firstRightEnabled) {
-          filledQuantity += _runFirstRightMatching(
+          filledQuantity += runFirstRightMatching(
+            session: session,
             commodityOffers: commodityOffers,
             commodityBids: commodityBids,
             commodityId: commodityId,
             pricePerUnit: price,
             purchasedTileIndex: purchasedTileIndex,
-            remainingCargo: remainingCargo,
-            remainingTreasury: remainingTreasury,
-            filledOut: filled,
-            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
 
-        final tiers = _collectPriorityTiers(commodityOffers, commodityBids);
+        final tiers = collectPriorityTiers(commodityOffers, commodityBids);
 
         for (final tier in tiers) {
           final tierOffers = commodityOffers
               .where((s) => s.order.priority == tier && s.remaining > 0)
               .toList();
-          _sortOffersLockRecoverySellersFirst(
+          sortOffersLockRecoverySellersFirst(
             tierOffers,
             lockRecoverySellerPriorityIds: inputs.lockRecoverySellerPriorityIds,
             treasuryByFactionId: inputs.treasuryByFactionId,
@@ -228,7 +174,8 @@ class DealMatcher {
               .where((s) => s.order.priority == tier && s.remaining > 0)
               .toList(growable: false);
 
-          filledQuantity += _runTierMatching(
+          filledQuantity += runTierMatching(
+            session: session,
             tierOffers: tierOffers,
             tierBids: tierBids,
             commodityId: commodityId,
@@ -236,21 +183,10 @@ class DealMatcher {
             ftpPairKeys: inputs.ftpPairKeys,
             sellPriorityRelationByMinorTribeSeller:
                 inputs.sellPriorityRelationByMinorTribeSeller,
-            remainingCargo: remainingCargo,
-            remainingTreasury: remainingTreasury,
-            filledOut: filled,
-            boycottBlockedPairKeys: inputs.boycottBlockedPairKeys,
           );
         }
       }
 
-      // Emit one `bidPartialFillTreasuryInsufficient` note per truncated
-      // bid (`SPEC/program/world-market-resolution.md` § Step C, Refs
-      // #3115). Iteration order matches the offers-then-bids walks above;
-      // we re-scan the bid states list to preserve original submission
-      // order across factions (factions are alphabetically ordered by
-      // `_indexOrdersByFaction`, so the resulting note sequence is
-      // deterministic for fixed inputs).
       for (final state in commodityBids) {
         if (!state.treasuryTruncated) continue;
         final commodityNotes = notesByCommodity.putIfAbsent(
@@ -284,8 +220,8 @@ class DealMatcher {
 
     return DealMatchResult(
       filledDeals: List.unmodifiable(filled),
-      unfilledOffersByFactionId: _carryForwardByFaction(offerStatesByFaction),
-      unfilledBidsByFactionId: _carryForwardByFaction(bidStatesByFaction),
+      unfilledOffersByFactionId: carryForwardByFaction(offerStatesByFaction),
+      unfilledBidsByFactionId: carryForwardByFaction(bidStatesByFaction),
       activityByCommodityId: Map.unmodifiable(activity),
     );
   }

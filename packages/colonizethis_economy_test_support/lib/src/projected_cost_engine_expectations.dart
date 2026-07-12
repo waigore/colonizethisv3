@@ -1,5 +1,5 @@
 // dart format off
-// Compact ProjectedCostEngine helper assertions (Refs #3939 phase 3 slice 35).
+// Compact ProjectedCostEngine helper assertions (Refs #3939 phase 3 slice 35, #3979).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -9,6 +9,9 @@ import 'package:colonizethis_test/test.dart';
 import 'core_economy_test_support.dart';
 import 'projected_cost_engine_scenarios.dart';
 
+/// Discriminator for work-material scenario rows (Refs #3979).
+enum ProjectedCostWorkMaterialKind { afford, deduct }
+
 /// Pins for work-material affordability rows.
 typedef WorkMaterialAffordPins = ({Map<String, int> stockpileDeltas, Map<String, int> cost, bool expectedAfford});
 
@@ -17,7 +20,7 @@ void runWorkMaterialAffordExpectation(WorkMaterialAffordPins pins) {
   expect(ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, pins.cost), pins.expectedAfford);
 }
 
-ProjectedCostEngineWorkMaterialScenario workMaterialAffordScenario({required String label, required WorkMaterialAffordPins pins}) => (label: label, run: () => runWorkMaterialAffordExpectation(pins), refs: null);
+ProjectedCostEngineWorkMaterialScenario workMaterialAffordScenario({required String label, required WorkMaterialAffordPins pins}) => (label: label, kind: ProjectedCostWorkMaterialKind.afford, affordPins: pins, deductPins: null, refs: null);
 
 /// Pins for work-material deduction rows.
 typedef WorkMaterialDeductPins = ({Map<String, int> stockpileDeltas, Map<String, int> cost, Map<String, int> expectedQuantities});
@@ -30,7 +33,7 @@ void runWorkMaterialDeductExpectation(WorkMaterialDeductPins pins) {
   }
 }
 
-ProjectedCostEngineWorkMaterialScenario workMaterialDeductScenario({required String label, required WorkMaterialDeductPins pins}) => (label: label, run: () => runWorkMaterialDeductExpectation(pins), refs: null);
+ProjectedCostEngineWorkMaterialScenario workMaterialDeductScenario({required String label, required WorkMaterialDeductPins pins}) => (label: label, kind: ProjectedCostWorkMaterialKind.deduct, affordPins: null, deductPins: pins, refs: null);
 
 const _delegationPlayer = Player(id: 'p1', displayName: 'P', isHuman: true);
 
@@ -42,6 +45,18 @@ const _delegationBuildOrder = BuildUnitOrder(unitType: 'unknown_unit_xyz', isMil
 
 const _delegationTreasury = 10000;
 
+/// Discriminator for build-delegation scenario rows (Refs #3979).
+enum ProjectedCostBuildTarget { affordDelegation, applyDeductionDelegation }
+
+void runProjectedCostBuildExpectation(ProjectedCostBuildTarget target) {
+  switch (target) {
+    case ProjectedCostBuildTarget.affordDelegation:
+      runBuildAffordDelegationExpectation();
+    case ProjectedCostBuildTarget.applyDeductionDelegation:
+      runBuildApplyDeductionDelegationExpectation();
+  }
+}
+
 void runBuildAffordDelegationExpectation() {
   final viaEngine = ProjectedCostEngine.canAffordBuildOrder(_delegationPlayer, _delegationBuildOrder, _delegationWorkers, _delegationStockpile, _delegationTreasury);
   final direct = canAffordBuild(_delegationPlayer, _delegationBuildOrder, _delegationWorkers, _delegationStockpile, _delegationTreasury);
@@ -49,7 +64,7 @@ void runBuildAffordDelegationExpectation() {
   expect(viaEngine.reason, direct.reason);
 }
 
-ProjectedCostEngineBuildScenario buildAffordDelegationScenario({required String label}) => (label: label, run: runBuildAffordDelegationExpectation, refs: null);
+ProjectedCostEngineBuildScenario buildAffordDelegationScenario({required String label}) => (label: label, target: ProjectedCostBuildTarget.affordDelegation, refs: null);
 
 const _applyDeductionPlayer = Player(
   id: 'p1',
@@ -77,5 +92,5 @@ void runBuildApplyDeductionDelegationExpectation() {
   expect(viaEngine.stockpile.quantities, direct.stockpile.quantities);
 }
 
-ProjectedCostEngineBuildScenario buildApplyDeductionDelegationScenario({required String label}) => (label: label, run: runBuildApplyDeductionDelegationExpectation, refs: null);
+ProjectedCostEngineBuildScenario buildApplyDeductionDelegationScenario({required String label}) => (label: label, target: ProjectedCostBuildTarget.applyDeductionDelegation, refs: null);
 // dart format on

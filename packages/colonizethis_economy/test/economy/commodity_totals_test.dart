@@ -3,26 +3,20 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('addUnits', () {
-    for (final scenario in addUnitsScenarios()) {
-      test(scenario.label, () {
-        runCommodityTotalsScenario(scenario);
-      });
-    }
+    runLabeledScenarios(addUnitsScenarios(), (scenario) {
+      runAddUnitsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('sumValues', () {
-    for (final scenario in sumValuesScenarios()) {
-      test(scenario.label, () {
-        runCommodityTotalsScenario(scenario);
-      });
-    }
+    runLabeledScenarios(sumValuesScenarios(), (scenario) {
+      runSumValuesScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('sumNestedValues', () {
-    for (final scenario in sumNestedValuesScenarios()) {
-      test(scenario.label, () {
-        runCommodityTotalsScenario(scenario);
-      });
-    }
+    runLabeledScenarios(sumNestedValuesScenarios(), (scenario) {
+      runSumNestedValuesScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

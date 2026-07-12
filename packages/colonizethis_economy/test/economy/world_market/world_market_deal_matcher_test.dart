@@ -116,9 +116,9 @@ void main() {
   group(
     'AC #1 — owning-GP bid wins above priority tiers AND FTP (#2992 D5)',
     () {
-      for (final scenario in frrIssueAcD5MatcherScenarios()) {
-        test(scenario.label, () => runDealMatcherScenario(scenario));
-      }
+      runLabeledScenarios(frrIssueAcD5MatcherScenarios(), (scenario) {
+        runDealMatcherScenario(scenario);
+      }, labelOf: (s) => s.label);
     },
   );
 
@@ -149,25 +149,21 @@ void main() {
   });
 
   group('boycottedColonySellableCommodityIds (Refs #3758 S7/R12)', () {
-    for (final scenario in boycottBlockedCommoditiesScenarios()) {
-      test(scenario.label, () {
-        runBoycottBlockedCommoditiesScenario(
-          scenario: scenario,
-          defaultTileMaps: boycottTileMaps,
-          defaultTopology: boycottTopology,
-        );
-      });
-    }
+    runLabeledScenarios(boycottBlockedCommoditiesScenarios(), (scenario) {
+      runBoycottBlockedCommoditiesScenario(
+        scenario: scenario,
+        defaultTileMaps: boycottTileMaps,
+        defaultTopology: boycottTopology,
+      );
+    }, labelOf: (s) => s.label);
   });
 
   group('computeLockRecoveryMinorAutoBids', () {
-    for (final scenario in lockRecoveryMinorBidsScenarios()) {
-      test(scenario.label, () {
-        runLockRecoveryMinorBidsScenario(
-          scenario: scenario,
-          worldMarketState: lockRecoveryGrainMarket(),
-        );
-      });
-    }
+    runLabeledScenarios(lockRecoveryMinorBidsScenarios(), (scenario) {
+      runLockRecoveryMinorBidsScenario(
+        scenario: scenario,
+        worldMarketState: lockRecoveryGrainMarket(),
+      );
+    }, labelOf: (s) => s.label);
   });
 }

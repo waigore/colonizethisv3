@@ -1,4 +1,4 @@
-// Compact worker labour primitive assertions (Refs #3939 phase 3 slice 33).
+// Compact worker labour primitive assertions (Refs #3939 phase 3 slice 33, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -14,15 +14,15 @@ void runIdleLabourExpectation(IdleLabourPins pins) {
   expect(effectiveLabourFromIdleCounts(pins.idle), pins.expected);
 }
 
-WorkerEconomyScenario idleLabourScenario({required String label, required IdleLabourPins pins}) => (label: label, run: () => runIdleLabourExpectation(pins), refs: null);
+IdleLabourScenario idleLabourScenario({required String label, required IdleLabourPins pins}) => (label: label, pins: pins, refs: null);
 
 /// Pins for [effectiveLabourForWorkers] rows.
 typedef EffectiveLabourPins = ({WorkerPool workers, Stockpile stockpile, int militaryUnits, int expected});
 
 void runEffectiveLabourExpectation(EffectiveLabourPins pins) {
-  final labour = effectiveLabourForWorkers(workers: pins.workers, stockpile: pins.stockpile, militaryUnits: pins.militaryUnits);
+  final labour = effectiveLabourForWorkers(workers: pins.workers, stockpile: pins.stockpile, foodCounts: MilitaryNavyFoodCounts(militaryUnits: pins.militaryUnits));
   expect(labour, pins.expected);
 }
 
-WorkerEconomyScenario effectiveLabourScenario({required String label, required EffectiveLabourPins pins}) => (label: label, run: () => runEffectiveLabourExpectation(pins), refs: null);
+EffectiveLabourScenario effectiveLabourScenario({required String label, required EffectiveLabourPins pins}) => (label: label, pins: pins, refs: null);
 // dart format on

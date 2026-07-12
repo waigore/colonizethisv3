@@ -1,15 +1,15 @@
 // dart format off
-// Table-driven trade cargo capacity scenarios (Refs #3939 phase 3 slice 35).
+// Table-driven trade cargo capacity scenarios (Refs #3939 phase 3 slice 35, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 import 'trade_cargo_capacity_expectations.dart';
 
-/// One row in [overseasShippedTonnageScenarios] (Refs #3939 slice 64).
-typedef OverseasShippedTonnageScenario = ({String label, void Function() run, String? refs});
+/// One row in [overseasShippedTonnageScenarios] (Refs #3979).
+typedef OverseasShippedTonnageScenario = ({String label, OverseasShippedTonnagePins pins, String? refs});
 
 void runOverseasShippedTonnageScenario(OverseasShippedTonnageScenario scenario) {
-  scenario.run();
+  runOverseasShippedTonnageExpectation(scenario.pins);
 }
 
 /// Canonical scenarios for [overseasShippedTonnageFromExtractionTotals].
@@ -33,21 +33,34 @@ List<OverseasShippedTonnageScenario> overseasShippedTonnageScenarios() => [
   ),
 ];
 
-/// One row in [tradeCargoCapacityForGreatPowerScenarios] (Refs #3939 slice 64).
-typedef TradeCargoCapacityForGreatPowerScenario = ({String label, void Function() run, String? refs});
+/// One row in [tradeCargoCapacityForGreatPowerScenarios] (Refs #3979).
+typedef TradeCargoCapacityForGreatPowerScenario = ({String label, TradeCargoCapacityGpTarget target, String? refs});
 
 void runTradeCargoCapacityForGreatPowerScenario(TradeCargoCapacityForGreatPowerScenario scenario) {
-  scenario.run();
+  runTradeCargoCapacityGpExpectation(scenario.target);
 }
 
 /// Canonical scenarios for [tradeCargoCapacityForGreatPower] (empty tile maps).
 List<TradeCargoCapacityForGreatPowerScenario> tradeCargoCapacityForGreatPowerScenarios() => [tradeCargoCapacityEmptyTileMapsScenario(label: 'returns full home fleet when tile maps are empty')];
 
-/// One row in [extractionByIdBypassScenarios] (Refs #3939 slice 64).
-typedef ExtractionByIdBypassScenario = ({String label, void Function() run, String? refs});
+/// One row in [extractionByIdBypassScenarios] (Refs #3979).
+typedef ExtractionByIdBypassScenario = ({
+  String label,
+  ExtractionByIdBypassKind kind,
+  ForecastOverseasTonnagePins? forecastPins,
+  TradeCargoCapacityExtractionPins? capacityPins,
+  String? refs,
+});
 
 void runExtractionByIdBypassScenario(ExtractionByIdBypassScenario scenario) {
-  scenario.run();
+  switch (scenario.kind) {
+    case ExtractionByIdBypassKind.forecast:
+      runForecastOverseasTonnageExpectation(scenario.forecastPins!);
+    case ExtractionByIdBypassKind.capacity:
+      runTradeCargoCapacityExtractionExpectation(scenario.capacityPins!);
+    case ExtractionByIdBypassKind.emptyMaps:
+      runComputeExtractionTotalsEmptyMapsExpectation();
+  }
 }
 
 /// Canonical scenarios for extractionById bypass (Refs #3517 Cluster 4).
