@@ -58,6 +58,21 @@ class GameService {
   /// Optional strip for session-only observe control overrides before persist.
   Game Function(Game)? prepareGameForPersistence;
 
+  /// Clears map cache and turn-trace sessions. SPEC/program/save-load-session-clear.md.
+  void clearSessionCaches() {
+    _mapCache.clear();
+    _turnTraceSessionsByGameId.clear();
+  }
+
+  /// Whether [gameId] is present in the in-memory map cache (tests / diagnostics).
+  bool hasMapCacheEntry(String gameId) => _mapCache.containsKey(gameId);
+
+  /// Count of in-memory map-cache entries (tests / diagnostics).
+  int get mapCacheEntryCount => _mapCache.length;
+
+  /// Count of turn-trace sessions (tests / diagnostics).
+  int get turnTraceSessionCount => _turnTraceSessionsByGameId.length;
+
   /// Loads game by id. Returns null if not found or required map data is missing/invalid.
   Game? loadGame(String gameId) => _gameServiceLoadGame(this, gameId);
 

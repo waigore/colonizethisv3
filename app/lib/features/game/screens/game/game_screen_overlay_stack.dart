@@ -38,7 +38,10 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             child: CtIconAction(
               icon: Icons.menu,
               iconSize: 24,
-              onPressed: () => _showPauseMenu(ref.read(appEventBusProvider)),
+              onPressed: turnResolutionBlocking
+                  ? null
+                  : () => _showPauseMenu(ref.read(appEventBusProvider)),
+              enabled: !turnResolutionBlocking,
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
           ),

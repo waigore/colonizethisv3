@@ -23,7 +23,7 @@ The panel itself does not dismiss the dialog directly. It emits a `ClosePanelEve
 ## Trigger conditions
 
 - **Open:** `GameScreen` (and any other in-game host) emits `OpenPauseMenuPanelEvent` on the bus. `AppEventHandler._openPauseMenuPanel` calls `showDialog<void>(useRootNavigator: true, barrierColor: EditorialMonoclePalette.dialogScrim, builder: (ctx) => PauseMenuPanel(bus: _bus))` per [`app-ui-wiring.md`](../program/app-ui-wiring.md).
-- **Available during turn resolution:** `OpenPauseMenuPanelEvent` is one of the events allowed while `turnResolutionBlockingProvider == true` (alongside `ClosePanelEvent`); see [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress and the regression contract `app/test/turn_resolution_event_blocking_test.dart`.
+- **Not available during turn resolution:** While `turnResolutionBlockingProvider == true`, the in-game pause control is disabled and `AppEventHandler` suppresses `OpenPauseMenuPanelEvent` ([save-load-session-clear.md](../program/save-load-session-clear.md)). `ClosePanelEvent` remains allowed if a panel is already open.
 - **Close:** Any action inside the panel that emits `ClosePanelEvent` on the bus causes the modal to dismiss via the bus handler. The user may also tap outside the modal (the standard `showDialog` scrim) to dismiss without firing any event.
 
 ---
@@ -57,7 +57,7 @@ The panel has no custom close button — dismissal goes through Resume, Exit to 
 | State | Trigger | Render / behaviour |
 |-------|---------|--------------------|
 | Default | Panel is opened by `OpenPauseMenuPanelEvent` while a game is active and `turnResolutionBlockingProvider == false`. | Title `Game Paused`, `CtBrassDivider`, then five `CtNinePatchButton` rows in declared order. **Resume**, **Save Game**, **Load Game**, and **Exit to Main Menu** are enabled. **Settings** remains disabled (`onPressed: null`). **Save Game** emits `OpenDialogEvent(save_game_name)`; **Load Game** emits `OpenDialogEvent(load_game_list, {fromPause: true})`. |
-| Resume during turn resolution | Panel was opened while `turnResolutionBlockingProvider == true`. | Same five-button render. **Save Game** and **Load Game** are disabled. Tapping **Resume** emits a `ClosePanelEvent` only, which the bus handler always allows (see [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress). The next-turn handler in [`game-screen.md`](game-screen.md) is unaffected. |
+| Turn resolution in progress | `turnResolutionBlockingProvider == true` before open. | Pause control disabled; panel does not open. If a panel was already open when blocking became true, **Save Game** / **Load Game** stay disabled; **Resume** may emit `ClosePanelEvent` only. |
 
 Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu.md`](game-side-menu.md) (the hamburger drawer). Adding it back here is a SPEC change (file a separate issue).
 
@@ -114,9 +114,9 @@ Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu
   When the widget tree is inspected,
   Then it contains zero direct `Navigator.pushNamed`, `Navigator.pushReplacement`, or `Navigator.pop` calls; cross-cutting transitions are bus events only (matches [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Banned `Navigator` chains).
 
-- Given the in-game host is in turn resolution (`turnResolutionBlockingProvider == true`) and the user opens the pause panel via `OpenPauseMenuPanelEvent`,
-  When the panel is rendered,
-  Then the **Resume** button is enabled (`onPressed != null`), matching the gating rule that `OpenPauseMenuPanelEvent` and `ClosePanelEvent` are allowed during turn resolution per [`app-ui-wiring.md`](../program/app-ui-wiring.md).
+- Given the in-game host is in turn resolution (`turnResolutionBlockingProvider == true`),
+  When the pause control would emit `OpenPauseMenuPanelEvent`,
+  Then the control is disabled and `AppEventHandler` suppresses `OpenPauseMenuPanelEvent` per [`save-load-session-clear.md`](../program/save-load-session-clear.md).
 
 - Given `PauseMenuPanel` is mounted,
   When the widget tree is inspected,

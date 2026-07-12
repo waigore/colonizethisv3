@@ -52,14 +52,14 @@ CtDialogShell (maxWidth 420, maxHeight 480)
 
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
-| Row tap (load) | list non-empty; not in confirm | load session | Restore game/orders/desired; menu: `NavigateToRouteEvent(Routes.game)`; pause: `ClosePanelEvent`; pop |
+| Row tap (load) | list non-empty; not in confirm | `clearActiveGameSession` then load session (auto vs manual) then apply providers | Ordered per [save-load-session-clear.md](../program/save-load-session-clear.md); menu: `NavigateToRouteEvent(Routes.game)`; pause: `ClosePanelEvent`; pop. On load failure after clear: empty session (no prior-game resurrection). |
 | Delete | row visible; not in confirm | — | Enter delete-confirm for that row |
 | Delete cancel | delete pending | — | Clear pending; list unchanged |
 | Delete confirm | delete pending | `GameService.deleteSave(storageId)` | Refresh list/pager; stay open; do not load |
 | Previous / Next | manuals > 10; page allows | — | Change manual page; auto-save stays pinned |
 | Close | always (list mode) | `Navigator.pop` | Dismiss |
 | Discard cancel | fromPause pending | — | Clear pending |
-| Discard confirm | fromPause pending | load | Same restore path |
+| Discard confirm | fromPause pending | clear+load | Same restore path |
 
 ## States and variants
 
@@ -81,4 +81,5 @@ CtDialogShell (maxWidth 420, maxHeight 480)
 - Given a listed row, when the user chooses Delete then cancels, then storage is unchanged and the list remains.
 - Given a listed manual or auto-save row, when the user confirms Delete, then `deleteSave` runs for that `storageId`, the dialog stays open, and the list/pager refreshes without loading that game.
 - Given `fromPause: true`, when the user selects a row then cancels discard, then providers are unchanged.
-- Given main-menu open (`fromPause: false`), when the user selects a row, then providers restore drafts and `NavigateToRouteEvent(Routes.game)` is emitted.
+- Given main-menu open (`fromPause: false`), when the user selects a row, then the system runs `clearActiveGameSession` before apply, providers restore drafts from the loaded envelope, and `NavigateToRouteEvent(Routes.game)` is emitted.
+- Given a dirty prior session and a failing load after clear, when the load path finishes, then `currentGame` remains null.

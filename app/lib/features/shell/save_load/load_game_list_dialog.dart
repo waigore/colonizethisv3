@@ -3,11 +3,9 @@
 
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
+import 'package:colonizethis_app/core/services/game_session_clear.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/observe_session_provider.dart';
-import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_gap.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -184,18 +182,16 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
 
   void _loadEntry(LoadableSaveEntry entry) {
     final service = ref.read(gameServiceProvider);
-    final session = entry.storageId == kAutoSaveSlotId
-        ? service.loadAutoSaveSession()
-        : service.loadGameSession(entry.storageId);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final session = clearLoadAndApplyGameSession(
+      container: container,
+      load: () => entry.storageId == kAutoSaveSlotId
+          ? service.loadAutoSaveSession()
+          : service.loadGameSession(entry.storageId),
+    );
     if (session == null) {
       return;
     }
-    ref.read(observeSessionProvider.notifier).reset();
-    ref.read(currentGameProvider.notifier).setGame(session.game);
-    ref.read(currentOrdersProvider.notifier).replaceAll(session.draftOrders);
-    ref
-        .read(productionDesiredOutputProvider.notifier)
-        .replaceAll(session.productionDesiredOutputByRecipe);
     final bus = ref.read(appEventBusProvider);
     if (widget.fromPause) {
       bus.emit(const ClosePanelEvent());

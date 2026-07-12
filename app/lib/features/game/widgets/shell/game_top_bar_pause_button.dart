@@ -4,7 +4,7 @@ part of 'game_top_bar.dart';
 class _GameTopBarPauseButton extends StatefulWidget {
   const _GameTopBarPauseButton({required this.onPressed, required this.tooltip});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String tooltip;
 
   static const double _hoverBackgroundAlpha = 0.4;
@@ -56,33 +56,37 @@ class _GameTopBarPauseButtonState extends State<_GameTopBarPauseButton> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => _handleHover(true),
-      onExit: (_) => _handleHover(false),
-      child: SizedBox(
-        key: GameTopBar.pauseButtonKey,
-        width: GameTopBar.hamburgerSize,
-        height: GameTopBar.hamburgerSize,
-        child: Tooltip(
-          message: widget.tooltip,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onPressed,
-              onHighlightChanged: _handlePressed,
-              child: AnimatedContainer(
-                duration: _GameTopBarPauseButton._animationDuration,
-                curve: _GameTopBarPauseButton._animationCurve,
-                decoration: BoxDecoration(
-                  color: _backgroundColor,
-                  border: Border.all(color: _borderColor, width: 1),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.play_arrow,
-                    size: 14,
-                    color: _glyphColor,
+    final enabled = widget.onPressed != null;
+    return Opacity(
+      opacity: enabled ? 1.0 : CtNinePatchButton.disabledOpacity,
+      child: MouseRegion(
+        cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        onEnter: enabled ? (_) => _handleHover(true) : null,
+        onExit: enabled ? (_) => _handleHover(false) : null,
+        child: SizedBox(
+          key: GameTopBar.pauseButtonKey,
+          width: GameTopBar.hamburgerSize,
+          height: GameTopBar.hamburgerSize,
+          child: Tooltip(
+            message: widget.tooltip,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onPressed,
+                onHighlightChanged: enabled ? _handlePressed : null,
+                child: AnimatedContainer(
+                  duration: _GameTopBarPauseButton._animationDuration,
+                  curve: _GameTopBarPauseButton._animationCurve,
+                  decoration: BoxDecoration(
+                    color: _backgroundColor,
+                    border: Border.all(color: _borderColor, width: 1),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.play_arrow,
+                      size: 14,
+                      color: _glyphColor,
+                    ),
                   ),
                 ),
               ),

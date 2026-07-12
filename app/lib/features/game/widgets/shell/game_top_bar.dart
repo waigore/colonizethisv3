@@ -59,8 +59,9 @@ class GameTopBar extends StatelessWidget {
 
   /// Tap callback for the bordered pause affordance. The host emits
   /// `OpenPauseMenuPanelEvent` on the app bus per
-  /// `SPEC/ui/in-game-shell-narrow.md` § Top bar.
-  final VoidCallback onPausePressed;
+  /// `SPEC/ui/in-game-shell-narrow.md` § Top bar. Null while turn resolution
+  /// blocks ([save-load-session-clear.md]).
+  final VoidCallback? onPausePressed;
 
   /// Tap callback for the trailing wood-panel `Next turn` button. The
   /// host handles the confirmation + processing dialog flow per

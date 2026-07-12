@@ -7,11 +7,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../config/routes.dart';
 import '../../config/ui_screen_ids.dart';
 import '../../core/services/app_event_handler/app_event_handler_scope.dart';
+import '../../core/services/game_session_clear.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
-import '../../providers/observe_session_provider.dart';
-import '../../providers/production_allocation_provider.dart';
 import '../../widgets/main_menu.dart';
 
 /// App shell. Shows CtMainMenu per SPEC/ui/main-menu.md. Phase 1: wired to resolve and persist.
@@ -37,16 +36,12 @@ class ShellScreen extends ConsumerWidget {
       resumeGameVisible: resumeAvailable,
       onResumeGame: () {
         final service = ref.read(gameServiceProvider);
-        final session = service.loadAutoSaveSession();
+        final container = ProviderScope.containerOf(context, listen: false);
+        final session = clearLoadAndApplyGameSession(
+          container: container,
+          load: service.loadAutoSaveSession,
+        );
         if (session != null && context.mounted) {
-          ref.read(observeSessionProvider.notifier).reset();
-          ref.read(currentGameProvider.notifier).setGame(session.game);
-          ref
-              .read(currentOrdersProvider.notifier)
-              .replaceAll(session.draftOrders);
-          ref
-              .read(productionDesiredOutputProvider.notifier)
-              .replaceAll(session.productionDesiredOutputByRecipe);
           bus.emit(const NavigateToRouteEvent(Routes.game));
         }
       },

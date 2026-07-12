@@ -36,6 +36,7 @@ import '../../../config/routes.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import '../subscription_tracker.dart';
+import '../game_session_clear.dart';
 import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
 import '../../../features/game/widgets/units/military/military_units_panel.dart';
@@ -46,7 +47,6 @@ import '../../../features/game/widgets/units/shared/units_panel_viewport_constra
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
-import '../../../providers/observe_session_provider.dart';
 import '../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../widgets/ct_confirm_dialog.dart';
 
@@ -163,13 +163,13 @@ class AppEventHandler {
     }
   }
 
-  /// While turn resolution blocks UI bus actions, pause menu remains reachable (#2160).
+  /// While turn resolution blocks UI bus actions, pause open is suppressed (#3989).
   bool _shouldBlockUiActionDuringTurnResolution(
     NavigatorState? nav,
     UIActionEvent event,
   ) {
-    // Pause sheet open/close must stay reachable while resolving (#2160).
-    if (event is OpenPauseMenuPanelEvent || event is ClosePanelEvent) {
+    // Allow dismissing an already-open panel; do not open pause mid-resolve.
+    if (event is ClosePanelEvent) {
       return false;
     }
     final ctx = nav?.context;
