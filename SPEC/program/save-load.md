@@ -8,6 +8,7 @@
 
 - Define the save/load contract implemented by `colonizethis_save` (GameSaveAdapter): storage backend, key convention, schema, required map data, and behaviour on load for the current schema.
 - Cross-referenced by: [world-model.md](../game/world-model.md) (serialization), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve; auto-save mirror on complete), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) (GP colour override persisted on Game), [main-menu.md](../ui/main-menu.md) (Resume game).
+- **In-memory session wipe before load/resume/new-game/exit:** [save-load-session-clear.md](save-load-session-clear.md) (`clearActiveGameSession`, ordered activate sequence, pause disabled while turn resolution blocks).
 
 ---
 

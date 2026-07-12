@@ -108,9 +108,7 @@ extension _AppEventHandlerNavigation on AppEventHandler {
     if (ctx.mounted) {
       try {
         final container = ProviderScope.containerOf(ctx, listen: false);
-        container.read(currentGameProvider.notifier).clear();
-        container.read(currentOrdersProvider.notifier).clear();
-        container.read(observeSessionProvider.notifier).reset();
+        clearActiveGameSession(container);
       } catch (e, st) {
         _log.d(
           'navigateToShell: skipped in-memory game clear (no ProviderScope)',

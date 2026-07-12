@@ -41,9 +41,11 @@ mixin _GameMapAreaBuild
           sideMenuOpen: _sideMenuOpen,
           onToggleSideMenu: () =>
               setState(() => _sideMenuOpen = !_sideMenuOpen),
-          onPausePressed: () => ref
-              .read(appEventBusProvider)
-              .emit(const ct_models.OpenPauseMenuPanelEvent()),
+          onPausePressed: _isTurnResolving
+              ? null
+              : () => ref
+                    .read(appEventBusProvider)
+                    .emit(const ct_models.OpenPauseMenuPanelEvent()),
           onNextTurn: _onNextTurn,
           nextTurnEnabled:
               !_isTurnResolving &&

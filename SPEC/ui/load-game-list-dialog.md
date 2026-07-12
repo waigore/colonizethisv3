@@ -39,10 +39,10 @@ CtDialogShell
 
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
-| Row tap | list non-empty | load session (auto vs manual) | Restore game/orders/desired; from menu: `NavigateToRouteEvent(Routes.game)`; from pause: `ClosePanelEvent`; pop dialog |
+| Row tap | list non-empty | `clearActiveGameSession` then load session (auto vs manual) then apply providers | Ordered per [save-load-session-clear.md](../program/save-load-session-clear.md); from menu: `NavigateToRouteEvent(Routes.game)`; from pause: `ClosePanelEvent`; pop dialog. On load failure after clear: empty session (no prior-game resurrection). |
 | Close | always | `Navigator.pop` | Dismiss |
 | Discard cancel | fromPause pending | — | Clear pending |
-| Discard confirm | fromPause pending | load | Same restore path |
+| Discard confirm | fromPause pending | clear+load | Same restore path |
 
 ## States and variants
 
@@ -61,4 +61,5 @@ CtDialogShell
 - Given no loadable saves, when the dialog opens, then empty-state text is shown and Close dismisses.
 - Given manual + valid auto-save, when the list builds, then both appear and auto-save uses the fixed Auto-save label.
 - Given `fromPause: true`, when the user selects a row then cancels discard, then providers are unchanged.
-- Given main-menu open (`fromPause: false`), when the user selects a row, then providers restore drafts and `NavigateToRouteEvent(Routes.game)` is emitted.
+- Given main-menu open (`fromPause: false`), when the user selects a row, then the system runs `clearActiveGameSession` before apply, providers restore drafts from the loaded envelope, and `NavigateToRouteEvent(Routes.game)` is emitted.
+- Given a dirty prior session and a failing load after clear, when the load path finishes, then `currentGame` remains null.

@@ -10,9 +10,9 @@ When building or rebuilding game overlays (widget `build`, scroll/pan, selection
 
 Authoritative world and player-view updates happen primarily at **turn resolution** and other explicit commit boundaries. Overlays read **stable** models (`Game`, `PlayerView`, map view data, draft orders) and **cheap** pure predicates shared with the engine (for example `isMineralEligibleTile` with visibility and prospected-tile state), not re-run the engine solely to paint affordances. Province detail prospect shortcut behavior is specified in [province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md).
 
-### Turn resolution in progress (#2160)
+### Turn resolution in progress (#2160 / #3989)
 
-While **`turnResolutionBlockingProvider`** is true (background turn resolution from the map), **bus-driven** navigation, dialogs, and unit panels must not open except **`OpenPauseMenuPanelEvent`** and **`ClosePanelEvent`** as documented in [app-event-bus.md](app-event-bus.md). The map uses local **`IgnorePointer`** for gameplay taps; the **pause / hamburger** path stays available. Do not bypass this with direct **`Navigator`** calls for cross-cutting UI.
+While **`turnResolutionBlockingProvider`** is true (background turn resolution from the map), **bus-driven** navigation, dialogs, and unit panels must not open except **`ClosePanelEvent`** as documented in [app-event-bus.md](app-event-bus.md). The map uses local **`IgnorePointer`** for gameplay taps. The **pause control is disabled** and **`OpenPauseMenuPanelEvent` is suppressed** so load/exit cannot clear session memory mid-resolve ([save-load-session-clear.md](save-load-session-clear.md)). The hamburger / side-menu path may remain available for non-clearing debug affordances. Do not bypass this with direct **`Navigator`** calls for cross-cutting UI.
 
 ---
 

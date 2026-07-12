@@ -14,10 +14,10 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/core/services/game_session_clear.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
@@ -63,6 +63,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
   final bus = container.read(appEventBusProvider);
 
   while (true) {
+    clearActiveGameSession(container);
     final perAttemptSeed = newGameSetupConfigSeedForAttempt(
       dialogChosenSeed: baseSeed,
       attemptIndex: attemptIndex,
@@ -97,7 +98,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
 
     switch (outcome) {
       case _NewGameOutcomeSuccess(:final game):
-        container.read(currentGameProvider.notifier).setGame(game);
+        applyNewGameSession(container, game);
         ctAppPerfInstant('navigate.game');
         bus.emit(const NavigateToRouteEvent(Routes.game));
         return;
