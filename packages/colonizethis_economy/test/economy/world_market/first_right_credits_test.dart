@@ -18,9 +18,12 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 
 void main() {
   group('FirstRightProfit constants', () {
-    test('kFirstRightMaxProfitRate is 1.0 (#3753 R8.2 — full share, no cap)', () {
-      expect(kFirstRightMaxProfitRate, 1.0);
-    });
+    test(
+      'kFirstRightMaxProfitRate is 1.0 (#3753 R8.2 — full share, no cap)',
+      () {
+        expect(kFirstRightMaxProfitRate, 1.0);
+      },
+    );
 
     test('kFirstRightRelationScoreMax is 100', () {
       expect(kFirstRightRelationScoreMax, 100);
@@ -37,11 +40,9 @@ void main() {
   });
 
   group('computeFirstRightProfitRate (#3753 R8.2 — full relation-linear)', () {
-    for (final scenario in firstRightProfitRateScenarios()) {
-      test(scenario.label, () {
-        runFirstRightProfitRateScenario(scenario);
-      });
-    }
+    runLabeledScenarios(firstRightProfitRateScenarios(), (scenario) {
+      runFirstRightProfitRateScenario(scenario);
+    }, labelOf: (s) => s.label);
 
     test('is monotonically non-decreasing across 0..100', () {
       double prev = -1.0;
@@ -55,11 +56,9 @@ void main() {
   });
 
   group('computeFirstRightProfit (#2992 D3 + D4 helper)', () {
-    for (final scenario in firstRightProfitScenarios()) {
-      test(scenario.label, () {
-        runFirstRightProfitScenario(scenario);
-      });
-    }
+    runLabeledScenarios(firstRightProfitScenarios(), (scenario) {
+      runFirstRightProfitScenario(scenario);
+    }, labelOf: (s) => s.label);
 
     test('treasury equals filledQuantity * pricePerUnit * profitRate', () {
       const rs = 50;
@@ -92,34 +91,32 @@ void main() {
   });
 
   group('computeEmbassyKickback (#3753 R8.3 — 10% of relation portion)', () {
-    for (final scenario in embassyKickbackScenarios()) {
-      test(scenario.label, () {
-        runEmbassyKickbackScenario(scenario);
-      });
-    }
+    runLabeledScenarios(embassyKickbackScenarios(), (scenario) {
+      runEmbassyKickbackScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits (#2992 D4)', () {
-    for (final scenario in frrCreditsDefensiveScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsDefensiveScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits aggregation (#3753 R8.2 full share)', () {
-    for (final scenario in frrCreditsAggregationScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsAggregationScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits embassy kickbacks (#3753 R8.3)', () {
-    for (final scenario in frrCreditsKickbackScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsKickbackScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits D5 AC2–AC5 (#2992)', () {
-    for (final scenario in frrIssueAcD5CreditsScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrIssueAcD5CreditsScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

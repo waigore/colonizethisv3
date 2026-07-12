@@ -5,10 +5,8 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('build_cost', () {
-    for (final scenario in buildCostScenarios()) {
-      test(scenario.label, () {
-        runBuildCostScenario(scenario);
-      });
-    }
+    runLabeledScenarios(buildCostScenarios(), (scenario) {
+      runBuildCostScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

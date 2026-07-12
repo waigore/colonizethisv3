@@ -6,18 +6,14 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('resolveProduction', () {
-    for (final scenario in resolveProductionScenarios()) {
-      test(scenario.label, () {
-        runEconomyProductionScenario(scenario);
-      });
-    }
+    runLabeledScenarios(resolveProductionScenarios(), (scenario) {
+      runEconomyProductionScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('effectiveLabourForWorkers', () {
-    for (final scenario in effectiveLabourForWorkersScenarios()) {
-      test(scenario.label, () {
-        runEconomyProductionScenario(scenario);
-      });
-    }
+    runLabeledScenarios(effectiveLabourForWorkersScenarios(), (scenario) {
+      runEconomyProductionScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

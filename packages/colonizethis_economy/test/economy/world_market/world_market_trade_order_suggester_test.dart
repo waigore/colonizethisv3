@@ -10,59 +10,49 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('TradeOrderSuggester.suggest — empty / defensive paths', () {
-    for (final scenario in tradeOrderSuggesterEmptyDefensiveScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterEmptyDefensiveScenarios(), (
+      scenario,
+    ) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester.suggest — surplus offer detection', () {
-    for (final scenario in tradeOrderSuggesterSurplusOfferScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterSurplusOfferScenarios(), (scenario) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester.suggest — deficit bid detection', () {
-    for (final scenario in tradeOrderSuggesterDeficitBidScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterDeficitBidScenarios(), (scenario) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester.suggest — bid type cap (rule 4)', () {
-    for (final scenario in tradeOrderSuggesterBidTypeCapScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterBidTypeCapScenarios(), (scenario) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester.suggest — cumulative cargo cap (rule 5)', () {
-    for (final scenario in tradeOrderSuggesterCargoCapScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterCargoCapScenarios(), (scenario) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester — validator-clean by construction', () {
-    for (final scenario in tradeOrderSuggesterValidatorCleanScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterValidatorCleanScenarios(), (
+      scenario,
+    ) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderSuggester.suggest — cumulative treasury cap (rule 5)', () {
-    for (final scenario in tradeOrderSuggesterTreasuryCapScenarios()) {
-      test(scenario.label, () {
-        runTradeOrderSuggesterScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeOrderSuggesterTreasuryCapScenarios(), (scenario) {
+      runTradeOrderSuggesterScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('isWorldMarketTradeableCommodity (rule 2)', () {
@@ -83,43 +73,35 @@ void main() {
   });
 
   group('commoditiesWithBidAndOffer (rule 3)', () {
-    for (final scenario in commoditiesWithBidAndOfferScenarios()) {
-      test(scenario.label, () {
-        final excluded = commoditiesWithBidAndOffer(scenario.proposedOrders);
-        expect(excluded, scenario.expected);
-      });
-    }
+    runLabeledScenarios(commoditiesWithBidAndOfferScenarios(), (scenario) {
+      final excluded = commoditiesWithBidAndOffer(scenario.proposedOrders);
+      expect(excluded, scenario.expected);
+    }, labelOf: (s) => s.label);
   });
 
   group('admittedBidCommodityIdsInSubmissionOrder (rule 4)', () {
-    for (final scenario in admittedBidCommodityIdsScenarios()) {
-      test(scenario.label, () {
-        verifyAdmittedBidCommodityIdsScenario(scenario);
-      });
-    }
+    runLabeledScenarios(admittedBidCommodityIdsScenarios(), (scenario) {
+      verifyAdmittedBidCommodityIdsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('offerCapByCommodityId (Refs #3093)', () {
-    for (final scenario in offerCapByCommodityIdScenarios()) {
-      test(scenario.label, () {
-        verifyOfferCapScenario(scenario);
-      });
-    }
+    runLabeledScenarios(offerCapByCommodityIdScenarios(), (scenario) {
+      verifyOfferCapScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('stagedOfferQuantitiesByCommodityId (Refs #3093)', () {
-    for (final scenario in stagedOfferQuantitiesByCommodityIdScenarios()) {
-      test(scenario.label, () {
-        verifyStagedOfferQuantitiesScenario(scenario);
-      });
-    }
+    runLabeledScenarios(stagedOfferQuantitiesByCommodityIdScenarios(), (
+      scenario,
+    ) {
+      verifyStagedOfferQuantitiesScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('sellableHeadroomByCommodityId (Refs #3093)', () {
-    for (final scenario in sellableHeadroomByCommodityIdScenarios()) {
-      test(scenario.label, () {
-        verifySellableHeadroomScenario(scenario);
-      });
-    }
+    runLabeledScenarios(sellableHeadroomByCommodityIdScenarios(), (scenario) {
+      verifySellableHeadroomScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

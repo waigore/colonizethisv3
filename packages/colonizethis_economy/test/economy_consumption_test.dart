@@ -6,10 +6,8 @@ import 'package:colonizethis_test/test.dart';
 /// Tests for economy_consumption.dart. SPEC/game/workers-and-population.md.
 void main() {
   group('resolveConsumption', () {
-    for (final scenario in resolveConsumptionScenarios()) {
-      test(scenario.label, () {
-        runConsumptionScenario(scenario);
-      });
-    }
+    runLabeledScenarios(resolveConsumptionScenarios(), (scenario) {
+      runConsumptionScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

@@ -20,7 +20,7 @@ WorkerEconomyScenario idleLabourScenario({required String label, required IdleLa
 typedef EffectiveLabourPins = ({WorkerPool workers, Stockpile stockpile, int militaryUnits, int expected});
 
 void runEffectiveLabourExpectation(EffectiveLabourPins pins) {
-  final labour = effectiveLabourForWorkers(workers: pins.workers, stockpile: pins.stockpile, militaryUnits: pins.militaryUnits);
+  final labour = effectiveLabourForWorkers(workers: pins.workers, stockpile: pins.stockpile, foodCounts: MilitaryNavyFoodCounts(militaryUnits: pins.militaryUnits));
   expect(labour, pins.expected);
 }
 

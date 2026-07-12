@@ -5,10 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'commodity_totals.dart';
 import 'game_lookup_helpers.dart';
-import 'non_gp_extraction_shared.dart';
-import 'resource_extractor.dart';
-import 'sea_transport.dart';
-import 'town_connected_tile_walk.dart';
+import 'town_connected_province_extraction.dart';
 
 /// Town manufacturing clustering bonus (Refs #3872).
 /// SPEC/game/extraction-and-improvements.md § Town manufacturing bonus.
@@ -74,8 +71,7 @@ Map<CommodityId, int> computeTownManufacturingBonusForProvince({
 }
 
 /// Per-province town-connected **delivered** raw extraction keyed by province id.
-typedef ProvinceDeliveredRawExtraction =
-    Map<String, Map<CommodityId, int>>;
+typedef ProvinceDeliveredRawExtraction = Map<String, Map<CommodityId, int>>;
 
 /// Per-faction aggregated manufactured bonus keyed by faction id.
 typedef FactionManufacturingBonus = Map<String, Map<CommodityId, int>>;
@@ -92,6 +88,14 @@ ProvinceDeliveredRawExtraction computeTownConnectedDeliveredRawByProvince({
   final landByProvince = <String, Map<CommodityId, int>>{};
   final overseasByPlayerProvince =
       <String, Map<String, Map<CommodityId, int>>>{};
+  final ctx = TownConnectedProvinceExtractionContext(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    provincesByFullId: provincesByFullId,
+    portTileKeys: portTileKeys,
+    landByProvince: landByProvince,
+    overseasByPlayerProvince: overseasByPlayerProvince,
+  );
 
   for (final province in allProvinces(game.worldState)) {
     final ownerId = province.ownerId;
@@ -101,175 +105,34 @@ ProvinceDeliveredRawExtraction computeTownConnectedDeliveredRawByProvince({
 
     final player = game.playerById(ownerId);
     if (player != null) {
-      _accumulateGpProvinceExtraction(
-        game: game,
-        tileMapByRegion: tileMapByRegion,
+      accumulateGpProvinceExtraction(
+        ctx: ctx,
         player: player,
         province: province,
         townConnected: townConnected,
         connectivity: gpConnectivityByPlayerId[player.id],
-        provincesByFullId: provincesByFullId,
-        portTileKeys: portTileKeys,
-        landByProvince: landByProvince,
-        overseasByPlayerProvince: overseasByPlayerProvince,
       );
       continue;
     }
 
     final connectivity = nonGpConnectivityByFactionId[ownerId];
     if (connectivity == null) continue;
-    _accumulateNonGpProvinceExtraction(
-      game: game,
-      tileMapByRegion: tileMapByRegion,
+    accumulateNonGpProvinceExtraction(
+      ctx: ctx,
       province: province,
       townConnected: townConnected,
       connectivity: connectivity,
       ownerId: ownerId,
-      provincesByFullId: provincesByFullId,
-      portTileKeys: portTileKeys,
-      landByProvince: landByProvince,
     );
   }
 
-  _applyOverseasCargoDeliveryToProvinces(
+  applyOverseasCargoDeliveryToProvinces(
     game: game,
     overseasByPlayerProvince: overseasByPlayerProvince,
     landByProvince: landByProvince,
   );
 
   return landByProvince;
-}
-
-void _accumulateGpProvinceExtraction({
-  required Game game,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Player player,
-  required Province province,
-  required Set<String> townConnected,
-  required ConnectivityResult? connectivity,
-  required Map<String, Province> provincesByFullId,
-  required Set<String> portTileKeys,
-  required Map<String, Map<CommodityId, int>> landByProvince,
-  required Map<String, Map<String, Map<CommodityId, int>>>
-  overseasByPlayerProvince,
-}) {
-  final connected = connectivity?.connected ?? const <String>{};
-  if (connected.isEmpty) return;
-  final pathTransportCap = connectivity?.pathTransportCap ?? const {};
-  final roadRuleTiles = connectivity?.connectedByRoadRule ?? const {};
-  final prospected =
-      game.worldState.playerProspectedTiles[player.id] ?? const {};
-  final capitalRegionId = player.capitalTile?.regionId;
-
-  forEachTownConnectedTileInProvince(
-    connectedTiles: connected,
-    townConnected: townConnected,
-    provinceId: province.id,
-    onTile: (tileKey) {
-      final contribution = computeTileExtractionContributionForPlayer(
-        game: game,
-        tileMapByRegion: tileMapByRegion,
-        player: player,
-        tileKey: tileKey,
-        connectedTileKeys: connected,
-        pathTransportCap: pathTransportCap,
-        connectedByRoadRule: roadRuleTiles,
-        portTileKeys: portTileKeys,
-        prospectedTileKeys: prospected,
-        capitalRegionId: capitalRegionId,
-        techCapForPlayer: (_) => extractionCapForUnlocked(player.techUnlocked),
-        techCapForPlayerAndResource: (_, resourceId) =>
-            extractionCapForResourceForUnlocked(player.techUnlocked, resourceId),
-        provincesByFullId: provincesByFullId,
-      );
-      if (contribution == null || contribution.units <= 0) return;
-
-      if (contribution.isLandRelativeToCapital) {
-        final totals = landByProvince.putIfAbsent(province.id, () => {});
-        addUnits(totals, contribution.commodityId, contribution.units);
-      } else {
-        final byProvince = overseasByPlayerProvince.putIfAbsent(
-          player.id,
-          () => {},
-        );
-        final totals = byProvince.putIfAbsent(province.id, () => {});
-        addUnits(totals, contribution.commodityId, contribution.units);
-      }
-    },
-  );
-}
-
-void _accumulateNonGpProvinceExtraction({
-  required Game game,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Province province,
-  required Set<String> townConnected,
-  required ConnectivityResult connectivity,
-  required String ownerId,
-  required Map<String, Province> provincesByFullId,
-  required Set<String> portTileKeys,
-  required Map<String, Map<CommodityId, int>> landByProvince,
-}) {
-  forEachTownConnectedNonGpTileContributionInProvince(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-    ownerId: ownerId,
-    province: province,
-    townConnected: townConnected,
-    connectivity: connectivity,
-    provincesByFullId: provincesByFullId,
-    portTileKeys: portTileKeys,
-    onContribution: (contribution) {
-      final totals = landByProvince.putIfAbsent(province.id, () => {});
-      addUnits(totals, contribution.commodityId, contribution.units);
-    },
-  );
-}
-
-void _applyOverseasCargoDeliveryToProvinces({
-  required Game game,
-  required Map<String, Map<String, Map<CommodityId, int>>>
-  overseasByPlayerProvince,
-  required Map<String, Map<CommodityId, int>> landByProvince,
-}) {
-  if (overseasByPlayerProvince.isEmpty) return;
-  final fleetsById = fleetsByIdForWorld(game.worldState);
-  for (final entry in overseasByPlayerProvince.entries) {
-    final playerId = entry.key;
-    final byProvince = entry.value;
-    if (byProvince.isEmpty) continue;
-
-    final overseasTotals = <CommodityId, int>{};
-    for (final provinceTotals in byProvince.values) {
-      for (final c in provinceTotals.entries) {
-        addUnits(overseasTotals, c.key, c.value);
-      }
-    }
-    final cargoHolds = cargoHoldsForHomeFleet(
-      game,
-      playerId,
-      fleetsById: fleetsById,
-    );
-    final delivered = allocateOverseasToStockpile(
-      overseasTotals,
-      cargoHolds: cargoHolds,
-    );
-
-    final sortedProvinceIds = byProvince.keys.toList()..sort();
-    for (final commodityId in delivered.keys) {
-      var remaining = delivered[commodityId] ?? 0;
-      if (remaining <= 0) continue;
-      for (final provinceId in sortedProvinceIds) {
-        if (remaining <= 0) break;
-        final available = byProvince[provinceId]?[commodityId] ?? 0;
-        if (available <= 0) continue;
-        final take = available < remaining ? available : remaining;
-        final totals = landByProvince.putIfAbsent(provinceId, () => {});
-        addUnits(totals, commodityId, take);
-        remaining -= take;
-      }
-    }
-  }
 }
 
 /// Per-province manufactured bonus keyed by full province id.

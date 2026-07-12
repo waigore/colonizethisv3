@@ -38,11 +38,11 @@ class ResolveConsumptionPins {
 
 void runResolveConsumption({required Stockpile stockpile, required WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, required ResolveConsumptionPins pins, bool expectUnknownShipThrows = false}) {
   if (expectUnknownShipThrows) {
-    expect(() => resolveConsumption(stockpile: stockpile, workers: workers, shipCountsById: shipCountsById ?? const {}), throwsA(isA<ConsumptionUnknownShipTypeException>()));
+    expect(() => resolveConsumption(stockpile: stockpile, workers: workers, foodCounts: MilitaryNavyFoodCounts(shipCountsById: shipCountsById ?? const {})), throwsA(isA<ConsumptionUnknownShipTypeException>()));
     return;
   }
 
-  final result = resolveConsumption(stockpile: stockpile, workers: workers, militaryUnits: militaryUnits ?? 0, shipCountsById: shipCountsById ?? const {});
+  final result = resolveConsumption(stockpile: stockpile, workers: workers, foodCounts: MilitaryNavyFoodCounts(militaryUnits: militaryUnits ?? 0, shipCountsById: shipCountsById ?? const {}));
 
   if (pins.workerPool != null) {
     expect(result.workerPool, pins.workerPool);

@@ -7,42 +7,32 @@ import 'package:colonizethis_test/test.dart';
 /// `economy_consumption.dart`. SPEC/game/workers-and-population.md.
 void main() {
   group('consumeMilitaryFood', () {
-    for (final scenario in consumeMilitaryFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeMilitaryFoodScenarios(), (scenario) {
+      runConsumptionPhaseScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeNavyFood', () {
-    for (final scenario in consumeNavyFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeNavyFoodScenarios(), (scenario) {
+      runConsumptionPhaseScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeWorkerFood', () {
-    for (final scenario in consumeWorkerFoodScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeWorkerFoodScenarios(), (scenario) {
+      runConsumptionPhaseScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('assignWorkerLuxury', () {
-    for (final scenario in assignWorkerLuxuryScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(assignWorkerLuxuryScenarios(), (scenario) {
+      runConsumptionPhaseScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('consumeFoodUnits', () {
-    for (final scenario in consumeFoodUnitsScenarios()) {
-      test(scenario.label, () {
-        runConsumptionPhaseScenario(scenario);
-      });
-    }
+    runLabeledScenarios(consumeFoodUnitsScenarios(), (scenario) {
+      runConsumptionPhaseScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

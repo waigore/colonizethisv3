@@ -7,18 +7,16 @@ import 'package:colonizethis_test/test.dart';
 /// SPEC/program/economy-models.md, SPEC/game/workers-and-population.md.
 void main() {
   group('effectiveLabourFromIdleCounts', () {
-    for (final scenario in workerEconomyLabourFromIdleCountsScenarios()) {
-      test(scenario.label, () {
-        runWorkerEconomyScenario(scenario);
-      });
-    }
+    runLabeledScenarios(workerEconomyLabourFromIdleCountsScenarios(), (
+      scenario,
+    ) {
+      runWorkerEconomyScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('effectiveLabourForWorkers', () {
-    for (final scenario in workerEconomyLabourForWorkersScenarios()) {
-      test(scenario.label, () {
-        runWorkerEconomyScenario(scenario);
-      });
-    }
+    runLabeledScenarios(workerEconomyLabourForWorkersScenarios(), (scenario) {
+      runWorkerEconomyScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

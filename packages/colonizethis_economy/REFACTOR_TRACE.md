@@ -1327,3 +1327,15 @@ Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` wit
 | `zero quantities do not change stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
 | `zero riches yields zero delta and unchanged stockpile` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
 
+
+## Phase 5 slice 1 — town-bonus DRY, MilitaryNavyFoodCounts, DealMatcher de-part, harness adoption (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| town-bonus-ctx | `TownConnectedProvinceExtractionContext` + GP/non-GP accumulate + overseas delivery helpers | `town_connected_province_extraction.dart`; `town_manufacturing_bonus.dart` shrunk | #3979 |
+| food-counts | `MilitaryNavyFoodCounts` threaded through preview/resolve/effectiveLabour | `military_navy_food_counts.dart`, consumption + worker_economy + callers | #3979 |
+| deal-matcher-depart | Drop `part`/`part of`; `DealMatchSession` + `MatchOrderState`; indexing/matching standalone libs | `deal_matcher*.dart`, `deal_matcher_session.dart` | #3979 |
+| economy-no-part-gate | `repo.economy_no_part_directives` | `tool/check_economy_no_part_directives.dart`, SPEC | #3979 |
+| harness-run-labeled-adopt | Economy `test/**` bare scenario for-loops → `runLabeledScenarios` | all former bare-loop runners | #3979 |
+
+Deferred to follow-up commits on this issue: remaining `void Function() run` scenario migration, scenario-table allowlist shrink to ≤2, optional wall-clock / setUpAll caching.

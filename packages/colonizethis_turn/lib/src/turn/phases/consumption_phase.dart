@@ -32,8 +32,10 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
     final result = resolveConsumption(
       stockpile: player.stockpile,
       workers: player.workerPool,
-      regimentCountsById: regimentCounts,
-      shipCountsById: shipCounts,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
     );
 
     final landCoverage = result.totalRegiments <= 0

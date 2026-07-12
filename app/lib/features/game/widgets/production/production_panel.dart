@@ -92,8 +92,10 @@ class ProductionPanel extends StatelessWidget {
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
       stockpile: player.stockpile,
-      regimentCountsById: regimentCounts,
-      shipCountsById: shipCounts,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
     );
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;
