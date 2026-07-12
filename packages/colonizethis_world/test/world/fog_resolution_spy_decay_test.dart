@@ -73,33 +73,25 @@ void _fog_resolution_spy_decay_testTests() {
   });
 
   group('applyFogDecay', () {
+    const fogDecayPlayers = [
+      Player(id: 'p1', displayName: 'P1', isHuman: true),
+      Player(id: 'p2', displayName: 'P2', isHuman: false),
+    ];
+
     test(
       'fogs tiles in other-faction provinces when no Explorer or Spy timer',
       () {
         const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'p1': {tileKeyP2: 'fullyVisible'},
-            },
-          ),
-          players: const [
-            Player(id: 'p1', displayName: 'P1', isHuman: true),
-            Player(id: 'p2', displayName: 'P2', isHuman: false),
+        final game = fogDecayVisibilityGame(
+          oldWorldProvinces: const [
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
           ],
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fullyVisible'},
+          },
+          players: fogDecayPlayers,
         );
 
         final nextVisibility = applyFogDecay(game);
@@ -114,35 +106,22 @@ void _fog_resolution_spy_decay_testTests() {
         const ow = 'oldWorld';
         const tileKeyP2 = 'oldWorld|P2|0|0';
 
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 1,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'explorer1',
-                  type: kUnitTypeExplorer,
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P2',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              'p1': {tileKeyP2: 'fullyVisible'},
-            },
-          ),
-          players: const [
-            Player(id: 'p1', displayName: 'P1', isHuman: true),
-            Player(id: 'p2', displayName: 'P2', isHuman: false),
+        final game = fogDecayVisibilityGame(
+          oldWorldProvinces: const [
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
           ],
+          oldWorldUnits: [
+            Unit(
+              id: 'explorer1',
+              type: kUnitTypeExplorer,
+              ownerId: 'p1',
+              locationProvinceId: '$ow|P2',
+            ),
+          ],
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fullyVisible'},
+          },
+          players: fogDecayPlayers,
         );
 
         final nextVisibility = applyFogDecay(game);
@@ -158,24 +137,14 @@ void _fog_resolution_spy_decay_testTests() {
       const ow = 'oldWorld';
       const tileKeyP2 = 'oldWorld|P2|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'fullyVisible'},
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
+      final game = fogDecayVisibilityGame(
+        oldWorldProvinces: const [
+          Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
         ],
+        playerVisibilityByTile: const {
+          'p1': {tileKeyP2: 'fullyVisible'},
+        },
+        players: fogDecayPlayers,
       );
 
       final nextVisibility = applyFogDecay(game);
@@ -187,24 +156,14 @@ void _fog_resolution_spy_decay_testTests() {
       const nw = 'newWorld';
       const tileKeyNw = 'newWorld|P2|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: const [
-              Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
-            ],
-          ),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyNw: 'unknown'},
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
+      final game = fogDecayVisibilityGame(
+        newWorldProvinces: const [
+          Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
         ],
+        playerVisibilityByTile: const {
+          'p1': {tileKeyNw: 'unknown'},
+        },
+        players: fogDecayPlayers,
       );
 
       final nextVisibility = applyFogDecay(game);
@@ -216,24 +175,14 @@ void _fog_resolution_spy_decay_testTests() {
       const ow = 'oldWorld';
       const tileKeyP2 = 'oldWorld|P2|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'fogged'},
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
+      final game = fogDecayVisibilityGame(
+        oldWorldProvinces: const [
+          Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
         ],
+        playerVisibilityByTile: const {
+          'p1': {tileKeyP2: 'fogged'},
+        },
+        players: fogDecayPlayers,
       );
 
       final nextVisibility = applyFogDecay(game);

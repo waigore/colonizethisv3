@@ -105,3 +105,56 @@ Game coastalSeaVisibilityGame({
     players: players,
   );
 }
+
+/// Distant-sea fog-revert scenario (Refs #3978).
+Game distantSeaVisibilityGame({
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  required Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince,
+  required List<Player> players,
+  List<Fleet> fleets = const [],
+  Map<String, Map<String, String>> playerVisibilityByTile = const {},
+  int turnNumber = 0,
+  String id = 'g1',
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.endOfTurn, turnNumber: turnNumber),
+      oldWorld: RegionData(provinces: oldWorldProvinces),
+      newWorld: RegionData(provinces: newWorldProvinces),
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      fleets: fleets,
+      playerVisibilityByTile: playerVisibilityByTile,
+    ),
+    players: players,
+  );
+}
+
+/// Immediate fog-decay visibility scenario (Refs #3978).
+Game fogDecayVisibilityGame({
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  List<Unit> oldWorldUnits = const [],
+  List<Unit> newWorldUnits = const [],
+  required Map<String, Map<String, String>> playerVisibilityByTile,
+  required List<Player> players,
+  String id = 'g1',
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: oldWorldProvinces,
+        units: oldWorldUnits,
+      ),
+      newWorld: RegionData(
+        provinces: newWorldProvinces,
+        units: newWorldUnits,
+      ),
+      playerVisibilityByTile: playerVisibilityByTile,
+    ),
+    players: players,
+  );
+}

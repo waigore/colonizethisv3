@@ -5,7 +5,7 @@ import 'connectivity_metrics.dart';
 import 'connectivity_propagation.dart';
 import 'connectivity_result.dart';
 import 'connectivity_tile_helpers.dart';
-import 'province_traversal.dart';
+import 'province_owner_cache.dart';
 import 'topology_helpers.dart';
 
 /// Shared faction-input / province-cache setup for GP and non-GP connectivity
@@ -73,27 +73,31 @@ class ConnectivityFactionInput {
   }
 }
 
-/// Buckets a single dual-region province pass by owner id so per-faction work
-/// avoids repeating that scan. Returned maps key by `Province.ownerId` and
-/// include only provinces with a non-null owner. (Refs #2394 / #3968.)
+/// Buckets ownership from [ProvinceOwnerCache] plus town-tile enrichment so
+/// per-faction connectivity work avoids a second dual-region ownership scan.
+/// Returned maps key by `Province.ownerId` and include only provinces with a
+/// non-null owner. (Refs #2394 / #3968 / #3978.)
 ({
   Map<String, Set<String>> ownedByFaction,
   Map<String, Map<String, Province>> townByTileKeyByFaction,
 })
 buildFactionProvinceCaches(Game game) {
+  final cache = ProvinceOwnerCache.of(game.worldState);
   final ownedByFaction = <String, Set<String>>{};
   final townByTileKeyByFaction = <String, Map<String, Province>>{};
-  for (final entry in traverseProvinces(game.worldState)) {
-    final ownerId = entry.ownerId;
-    if (ownerId == null) continue;
-    final province = entry.province;
-    ownedByFaction.putIfAbsent(ownerId, () => <String>{}).add(province.id);
-    final tk = province.townTileKey;
-    if (tk != null) {
-      townByTileKeyByFaction.putIfAbsent(
-        ownerId,
-        () => <String, Province>{},
-      )[tk] = province;
+  for (final ownerId in cache.ownerIds) {
+    final owned = <String>{};
+    final townByTile = <String, Province>{};
+    for (final province in cache.provincesOwnedBy(ownerId)) {
+      owned.add(province.id);
+      final tk = province.townTileKey;
+      if (tk != null) {
+        townByTile[tk] = province;
+      }
+    }
+    ownedByFaction[ownerId] = owned;
+    if (townByTile.isNotEmpty) {
+      townByTileKeyByFaction[ownerId] = townByTile;
     }
   }
   return (

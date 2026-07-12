@@ -16,6 +16,7 @@ import 'topology_helpers.dart';
 /// Province local ids in [regionId] that are adjacent to [localProvinceId] (P–P only).
 /// Use this when topology may have duplicate local ids across regions.
 /// Handles both prefixed (regionId|localId) and unprefixed topology node ids.
+/// Consults cached [topologyAdjacency] rather than scanning all edges (Refs #3978).
 Iterable<String> neighborProvinceIdsInRegion(
   MapTopology topology,
   String regionId,
@@ -30,9 +31,9 @@ Iterable<String> neighborProvinceIdsInRegion(
       ? localProvinceId
       : ProvinceId.full(regionId, localProvinceId);
   if (!nodeIdsInRegion.contains(idToMatch)) return;
-  for (final edge in topology.edges) {
-    if (edge.id1 != idToMatch && edge.id2 != idToMatch) continue;
-    final other = edge.id1 == idToMatch ? edge.id2 : edge.id1;
+  final neighbors = topologyAdjacency(topology)[idToMatch];
+  if (neighbors == null) return;
+  for (final other in neighbors) {
     if (nodeIdsInRegion.contains(other)) {
       yield ProvinceId.isPrefixed(other)
           ? ProvinceId.localIdFrom(other)
@@ -89,38 +90,6 @@ bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
   return true;
 }
 
-RegionUnitLists _replaceCivilianUnitInSameRegion(
-  RegionUnitLists lists,
-  String srcRegion,
-  String unitId,
-  Unit moved,
-) {
-  if (srcRegion == kRegionOldWorld) {
-    return (
-      ow: lists.ow.map((x) => x.id == unitId ? moved : x).toList(),
-      nw: lists.nw,
-    );
-  }
-  return (
-    ow: lists.ow,
-    nw: lists.nw.map((x) => x.id == unitId ? moved : x).toList(),
-  );
-}
-
-RegionUnitLists _moveCivilianUnitAcrossRegions(
-  RegionUnitLists lists,
-  String unitId,
-  Unit moved,
-  String destRegion,
-) {
-  final ow = List<Unit>.from(lists.ow)..removeWhere((u) => u.id == unitId);
-  final nw = List<Unit>.from(lists.nw)..removeWhere((u) => u.id == unitId);
-  if (destRegion == kRegionOldWorld) {
-    return (ow: [...ow, moved], nw: nw);
-  }
-  return (ow: ow, nw: [...nw, moved]);
-}
-
 RegionUnitLists _applyCivilianMoveToWorkingUnitLists({
   required RegionUnitLists lists,
   required String unitId,
@@ -129,14 +98,9 @@ RegionUnitLists _applyCivilianMoveToWorkingUnitLists({
   required String destRegion,
 }) {
   if (srcRegion == destRegion) {
-    return _replaceCivilianUnitInSameRegion(
-      lists,
-      srcRegion,
-      unitId,
-      moved,
-    );
+    return lists.replaceUnitInRegion(srcRegion, unitId, moved);
   }
-  return _moveCivilianUnitAcrossRegions(lists, unitId, moved, destRegion);
+  return lists.moveUnitAcrossRegions(unitId, moved, destRegion);
 }
 
 /// Applies civilian [MoveOrder]s (tile destinations) across both world regions.

@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_lookup.dart';
+import 'province_owner_cache.dart';
 
 /// One province row during a dual-region traversal (Refs #2560).
 final class ProvinceTraversalEntry {
@@ -52,15 +53,11 @@ Iterable<ProvinceTraversalEntry> traverseProvinces(
   }
 }
 
-/// Single dual-region pass yielding `{ provinceId: ownerId }` across both
-/// regions. Mirrors the inline `{ for (... in traverseProvinces(world))
-/// e.provinceId: e.ownerId }` idiom several scanners had repeated; centralizing
-/// it keeps fog/movement/spy decay readers semantically aligned with the same
-/// canonical ordering used by [traverseProvinces]. Refs #2560.
-Map<String, String?> ownerByProvinceIdMap(WorldState world) => {
-  for (final entry in traverseProvinces(world))
-    entry.provinceId: entry.ownerId,
-};
+/// Thin wrapper over [ProvinceOwnerCache.ownerByProvinceId] for call sites that
+/// still want a plain map (Refs #2560 / #3978). Prefer [ProvinceOwnerCache.of]
+/// on hot paths so Expando memoisation is reused.
+Map<String, String?> ownerByProvinceIdMap(WorldState world) =>
+    ProvinceOwnerCache.of(world).ownerByProvinceId;
 
 List<String>? _tileKeysForProvince(
   Map<String, List<String>>? tilesByProvince,

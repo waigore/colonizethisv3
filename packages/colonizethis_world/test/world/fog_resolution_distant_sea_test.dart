@@ -18,27 +18,16 @@ void _fog_resolution_distant_sea_testTests() {
         const ow = 'oldWorld';
         const tileSea2 = 'oldWorld|s2|0|0';
         final topology = provinceSeaChainTopology(regionId: ow);
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 0,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                '$ow|s1': ['oldWorld|s1|0|0'],
-                '$ow|s2': [tileSea2],
-              },
+        final game = distantSeaVisibilityGame(
+          oldWorldProvinces: const [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          ],
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|s1': ['oldWorld|s1|0|0'],
+              '$ow|s2': [tileSea2],
             },
-            fleets: const [],
-          ),
+          },
           players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
         );
         final inputVis = <String, Map<String, String>>{
@@ -55,31 +44,24 @@ void _fog_resolution_distant_sea_testTests() {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
       final topology = provinceSeaChainTopology(regionId: ow);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|s2': [tileSea2],
-            },
+      final game = distantSeaVisibilityGame(
+        oldWorldProvinces: const [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+        ],
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            '$ow|s2': [tileSea2],
           },
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'gp1',
-              seaZoneId: 's2',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
+        },
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'gp1',
+            seaZoneId: 's2',
+            regionId: ow,
+            shipTypeIds: const ['carrack'],
+          ),
+        ],
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
       final inputVis = <String, Map<String, String>>{
@@ -95,31 +77,24 @@ void _fog_resolution_distant_sea_testTests() {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
       final topology = provinceSeaChainTopology(regionId: ow);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|s2': [tileSea2],
-            },
+      final game = distantSeaVisibilityGame(
+        oldWorldProvinces: const [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+        ],
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            '$ow|s2': [tileSea2],
           },
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'gp2',
-              seaZoneId: 's2',
-              regionId: ow,
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
+        },
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'gp2',
+            seaZoneId: 's2',
+            regionId: ow,
+            shipTypeIds: const ['carrack'],
+          ),
+        ],
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true),
           Player(id: 'gp2', displayName: 'GP2', isHuman: false),
@@ -142,37 +117,28 @@ void _fog_resolution_distant_sea_testTests() {
         const nw = kRegionNewWorld;
         const tileNwSea = 'newWorld|nwSea|0|0';
         final topologies = owSeaChainWithIsolatedNwSea();
-        final game = Game(
+        final game = distantSeaVisibilityGame(
           id: 'g_fog_2023',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.endOfTurn,
-              turnNumber: 0,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                '$ow|s2': const ['oldWorld|s2|0|0'],
-              },
-              nw: {
-                '$nw|nwSea': [tileNwSea],
-              },
+          oldWorldProvinces: const [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          ],
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|s2': const ['oldWorld|s2|0|0'],
             },
-            fleets: [
-              Fleet(
-                id: 'f_ow',
-                ownerId: 'gp1',
-                seaZoneId: 's2',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
+            nw: {
+              '$nw|nwSea': [tileNwSea],
+            },
+          },
+          fleets: [
+            Fleet(
+              id: 'f_ow',
+              ownerId: 'gp1',
+              seaZoneId: 's2',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
           players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
         );
         final inputVis = <String, Map<String, String>>{
@@ -194,31 +160,24 @@ void _fog_resolution_distant_sea_testTests() {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
       final topology = provinceSeaChainTopology(regionId: ow);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|s2': [tileSea2],
-            },
+      final game = distantSeaVisibilityGame(
+        oldWorldProvinces: const [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+        ],
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            '$ow|s2': [tileSea2],
           },
-          fleets: [
-            Fleet(
-              id: 'f1',
-              ownerId: 'gp1',
-              regionId: ow,
-              inPortAtProvinceId: '$ow|p1',
-              shipTypeIds: const ['carrack'],
-            ),
-          ],
-        ),
+        },
+        fleets: [
+          Fleet(
+            id: 'f1',
+            ownerId: 'gp1',
+            regionId: ow,
+            inPortAtProvinceId: '$ow|p1',
+            shipTypeIds: const ['carrack'],
+          ),
+        ],
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
       final inputVis = <String, Map<String, String>>{
@@ -234,18 +193,12 @@ void _fog_resolution_distant_sea_testTests() {
       const ow = 'oldWorld';
       const tileSea2 = 'oldWorld|s2|0|0';
       final topology = isolatedSeaZoneTopology(regionId: ow, seaZoneId: 's2');
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|s2': [tileSea2],
-            },
+      final game = distantSeaVisibilityGame(
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            '$ow|s2': [tileSea2],
           },
-        ),
+        },
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
       final inputVis = <String, Map<String, String>>{
