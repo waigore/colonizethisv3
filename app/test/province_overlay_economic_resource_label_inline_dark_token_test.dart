@@ -202,7 +202,7 @@ void main() {
         find.byWidgetPredicate(
           (Widget w) =>
               w is Text &&
-              w.data == 'grain' &&
+              w.data == 'Grain' &&
               w.style?.color == EditorialMonoclePalette.fg,
         ),
       );
@@ -269,7 +269,7 @@ void main() {
         find.byWidgetPredicate(
           (Widget w) =>
               w is Text &&
-              w.data == 'grain' &&
+              w.data == 'Grain' &&
               w.style?.color == EditorialMonoclePalette.muted,
         ),
       );

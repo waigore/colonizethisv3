@@ -81,6 +81,7 @@ import '../../../../widgets/ct_tab_strip.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../../../widgets/resource_icon.dart';
 import '../../../../widgets/strict_asset_icon.dart';
+import '../../widgets/production/commodity_ui_helpers.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'trade_section_handlers.dart';

@@ -10,11 +10,10 @@ extension _AllocationSubpanelRows on _AllocationSubpanel {
     bool locked,
   ) {
     final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
-    final outputName = outputCommodity?.displayName ?? recipe.outputCommodityId;
+    final outputName = commodityDisplayName(l10n, recipe.outputCommodityId);
     final inputParts = recipe.inputQuantities.entries
         .map((e) {
-          final comm = CommodityCatalog.byId[e.key];
-          final name = comm?.displayName ?? e.key;
+          final name = commodityDisplayName(l10n, e.key);
           return '$name ×${e.value}';
         })
         .join(', ');

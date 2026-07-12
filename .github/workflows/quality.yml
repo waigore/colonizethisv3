@@ -376,6 +376,7 @@ jobs:
             packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part3.dart
             packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part4.dart
             packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part5.dart
+            packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part6.dart
           )
           for f in "${rels[@]}"; do
             test -f "$f" || { echo "missing tracked l10n file: $f"; exit 1; }
