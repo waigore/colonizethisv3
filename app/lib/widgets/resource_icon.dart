@@ -2,7 +2,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../config/app_assets.dart';
-import '../features/game/widgets/production/commodity_ui_helpers.dart';
+import 'commodity_display_name.dart';
 import 'strict_asset_icon.dart';
 
 class ResourceIcon extends StatelessWidget {
