@@ -10,11 +10,14 @@ Accepts per-package change flags via --changed-<name>=true|false.
 Outputs a JSON array of package directory names (e.g. ["colonizethis_logic","colonizethis_ai"])
 to stdout.
 
-When invoked with no changed packages the output includes all packages.
+When invoked with no CLI flags, the output includes all CORE packages (local
+default). When CI passes `--changed-*=true|false` flags and none are true,
+the output is an empty list (do not expand satellite-only diffs to a full
+suite).
 
-Packages outside the six core packages (colonizethis_models, _data, _save,
-_map, _logic, _ai) are ignored because they do not run in the package_tests
-CI job.
+Satellite packages under `packages/` that are not in CORE_PACKAGES (e.g.
+colonizethis_app_l10n) are ignored by this planner; the workflow must not
+treat them as `packages_changed` for the package_tests job.
 
 Example:
   python3 tool/compute_package_test_plan.py \
@@ -125,6 +128,7 @@ SHORT_TO_FULL: dict[str, str] = {
     "economy": "colonizethis_economy",
     "diplomacy": "colonizethis_diplomacy",
     "setup": "colonizethis_setup",
+    "orders": "colonizethis_orders",
     "turn": "colonizethis_turn",
     "ai_contracts": "colonizethis_ai_contracts",
     "logic": "colonizethis_logic",
@@ -132,29 +136,38 @@ SHORT_TO_FULL: dict[str, str] = {
 }
 
 
-def parse_args() -> set[str]:
-    """Parse --changed-<name>=true CLI flags; return set of changed package names.
+def parse_args() -> tuple[set[str], bool]:
+    """Parse --changed-<name>=true CLI flags.
 
+    Returns (changed_package_names, had_changed_flags).
     Accepts both long names (--changed-colonizethis_ai=true) and short names
     (--changed-ai=true)."""
     changed: set[str] = set()
+    had_flags = False
     for arg in sys.argv[1:]:
         m = re.match(r"^--changed-(\S+)=(true|false)$", arg)
-        if m and m.group(2) == "true":
-            name = m.group(1)
-            if name in CORE_PACKAGES:
-                changed.add(name)
-            elif name in SHORT_TO_FULL:
-                changed.add(SHORT_TO_FULL[name])
-    return changed
+        if not m:
+            continue
+        had_flags = True
+        if m.group(2) != "true":
+            continue
+        name = m.group(1)
+        if name in CORE_PACKAGES:
+            changed.add(name)
+        elif name in SHORT_TO_FULL:
+            changed.add(SHORT_TO_FULL[name])
+    return changed, had_flags
 
 
 def main() -> None:
-    changed = parse_args()
+    changed, had_flags = parse_args()
 
     if changed:
         rev_graph = build_reverse_dep_graph()
         result = transitive_downstream(changed, rev_graph)
+    elif had_flags:
+        # CI selective plan: every CORE flag false → nothing to run.
+        result = []
     else:
         result = list(CORE_PACKAGES)
 
