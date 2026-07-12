@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'quick_battle_emplaced_guns_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a Quick Battle emplaced-gun scenario table.
-class QuickBattleEmplacedGunScenario {
+class QuickBattleEmplacedGunScenario implements LabeledScenario {
   const QuickBattleEmplacedGunScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class QuickBattleEmplacedGunScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [QuickBattleEmplacedGunScenario.run]).
-void runQuickBattleEmplacedGunScenario(QuickBattleEmplacedGunScenario scenario) {
-  scenario.run();
-}
 
 /// Scenarios for [MutableEmplacedGun.fromInput].
 List<QuickBattleEmplacedGunScenario> mutableEmplacedGunFromInputScenarios() => [

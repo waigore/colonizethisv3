@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'quick_battle_input_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a Quick Battle perf-invariant scenario table.
-class QuickBattlePerfInvariantScenario {
+class QuickBattlePerfInvariantScenario implements LabeledScenario {
   const QuickBattlePerfInvariantScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class QuickBattlePerfInvariantScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [QuickBattlePerfInvariantScenario.run]).
-void runQuickBattlePerfInvariantScenario(QuickBattlePerfInvariantScenario scenario) {
-  scenario.run();
-}
 
 void _expectEmplacedGunOutcomesMatch(
   QuickBattleResult r1,

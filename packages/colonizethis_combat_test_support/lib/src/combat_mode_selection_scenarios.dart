@@ -4,9 +4,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+import 'scenario_runner.dart';
 
 /// One row in a combat mode selection scenario table.
-class CombatModeSelectionScenario {
+class CombatModeSelectionScenario implements LabeledScenario {
   const CombatModeSelectionScenario({
     required this.scenarioId,
     required this.label,
@@ -14,14 +15,11 @@ class CombatModeSelectionScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [CombatModeSelectionScenario.run]).
-void runCombatModeSelectionScenario(CombatModeSelectionScenario scenario) {
-  scenario.run();
-}
 
 List<CombatModeSelectionScenario> isCapitalSiegeScenarios() => [
   CombatModeSelectionScenario(

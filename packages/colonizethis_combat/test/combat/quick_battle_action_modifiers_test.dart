@@ -1,10 +1,9 @@
 import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('aggregateActionModifiers', () {
-    for (final scenario in aggregateActionModifiersScenarios()) {
-      test(scenario.label, () => runQuickBattleActionModifierScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'aggregateActionModifiers',
+    aggregateActionModifiersScenarios(),
+    (s) => s.run(),
+  );
 }

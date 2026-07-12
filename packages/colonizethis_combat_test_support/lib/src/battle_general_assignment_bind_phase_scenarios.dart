@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 BattleContext _bindPhaseCtx(String provinceId) => BattleContext(
   provinceId: provinceId,
@@ -19,7 +20,7 @@ BattleContext _bindPhaseCtx(String provinceId) => BattleContext(
 );
 
 /// One row in a bind-generals-for-combat-phase scenario table.
-class BattleGeneralAssignmentBindPhaseScenario {
+class BattleGeneralAssignmentBindPhaseScenario implements LabeledScenario {
   const BattleGeneralAssignmentBindPhaseScenario({
     required this.scenarioId,
     required this.label,
@@ -27,16 +28,11 @@ class BattleGeneralAssignmentBindPhaseScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [BattleGeneralAssignmentBindPhaseScenario.run]).
-void runBattleGeneralAssignmentBindPhaseScenario(
-  BattleGeneralAssignmentBindPhaseScenario scenario,
-) {
-  scenario.run();
-}
 
 List<BattleGeneralAssignmentBindPhaseScenario>
 battleGeneralAssignmentBindPhaseScenarios() => [

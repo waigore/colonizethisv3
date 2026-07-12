@@ -5,6 +5,7 @@
 /// scenario wiring into one canonical location (Refs #3865).
 library colonizethis_combat_test_support;
 
+export 'src/scenario_runner.dart';
 export 'src/effective_strength_scenarios.dart';
 export 'src/military_strength_scenarios.dart';
 export 'src/military_strength_test_support.dart';
@@ -33,3 +34,12 @@ export 'src/combat_resolver_spy_civilian_scenarios.dart';
 export 'src/battle_general_assignment_scenarios.dart';
 export 'src/battle_general_assignment_bind_phase_scenarios.dart';
 export 'src/combat_mode_selection_scenarios.dart';
+export 'src/combat_loss_profile_scenarios.dart';
+export 'src/combat_rng_scenarios.dart';
+export 'src/military_attack_economy_scenarios.dart';
+export 'src/combat_resolver_province_owner_transfer_scenarios.dart';
+export 'src/conflict_detection_army_index_scenarios.dart';
+export 'src/pre_combat_index_scenarios.dart';
+export 'src/quick_battle_input_builder_scenarios.dart';
+export 'src/quick_battle_resolver_apply_spy_scenarios.dart';
+export 'src/unopposed_province_capture_scenarios.dart';
