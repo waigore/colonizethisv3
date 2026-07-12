@@ -2,30 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('aggregateMilitaryStrengthForPlayer', () {
-    for (final scenario in aggregateMilitaryStrengthForPlayerScenarios()) {
-      test(scenario.label, () => runMilitaryStrengthScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'aggregateMilitaryStrengthForPlayer',
+    aggregateMilitaryStrengthForPlayerScenarios(),
+    (s) => s.run(),
+  );
 
-  group('aggregateStrength', () {
-    for (final scenario in aggregateStrengthScenarios()) {
-      test(scenario.label, () => runMilitaryStrengthScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'aggregateStrength',
+    aggregateStrengthScenarios(),
+    (s) => s.run(),
+  );
 
-  group('effectiveEraForFaction', () {
-    for (final scenario in effectiveEraForFactionScenarios()) {
-      test(scenario.label, () => runMilitaryStrengthScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'effectiveEraForFaction',
+    effectiveEraForFactionScenarios(),
+    (s) => s.run(),
+  );
 
-  group('cavalryFraction', () {
-    for (final scenario in cavalryFractionScenarios()) {
-      test(scenario.label, () => runMilitaryStrengthScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'cavalryFraction',
+    cavalryFractionScenarios(),
+    (s) => s.run(),
+  );
 }

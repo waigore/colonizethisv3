@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'naval_combat_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a naval battle resolution scenario table.
-class NavalCombatResolutionScenario {
+class NavalCombatResolutionScenario implements LabeledScenario {
   const NavalCombatResolutionScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class NavalCombatResolutionScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [NavalCombatResolutionScenario.run]).
-void runNavalCombatResolutionScenario(NavalCombatResolutionScenario scenario) {
-  scenario.run();
-}
 
 List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
   NavalCombatResolutionScenario(
