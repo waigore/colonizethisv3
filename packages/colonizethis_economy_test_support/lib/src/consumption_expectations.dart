@@ -1,13 +1,10 @@
 // dart format off
 // Compact resolveConsumption integration assertions (Refs #3939 phase 3
-// slices 34 / 45).
+// slices 34 / 45, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-import 'consumption_scenarios.dart';
-import 'core_economy_test_support.dart';
 
 final _grainId = 'grain';
 final _meatId = 'meat';
@@ -80,10 +77,5 @@ void runResolveConsumption({required Stockpile stockpile, required WorkerPool wo
   if (pins.fullyFedShips != null) {
     expect(result.fullyFedShips, pins.fullyFedShips);
   }
-}
-
-ConsumptionScenario resolveConsumptionScenario({required String label, Map<String, int>? stockpileDeltas, Stockpile? stockpile, required WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, required ResolveConsumptionPins pins, bool expectUnknownShipThrows = false}) {
-  final resolvedStockpile = stockpile ?? (stockpileDeltas == null ? const Stockpile() : stockpileWithDeltas(stockpileDeltas));
-  return (label: label, run: () => runResolveConsumption(stockpile: resolvedStockpile, workers: workers, militaryUnits: militaryUnits, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows), refs: null);
 }
 // dart format on

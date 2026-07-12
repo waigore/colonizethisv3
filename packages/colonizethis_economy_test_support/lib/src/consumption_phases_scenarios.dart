@@ -1,16 +1,15 @@
 // dart format off
-// Table-driven per-phase consumption helper scenarios (Refs #3856, #3939 slice 7).
+// Table-driven per-phase consumption helper scenarios (Refs #3856, #3939 slice 7, #3979).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'consumption_phases_expectations.dart';
-import 'consumption_scenarios.dart';
 
-/// Back-compat alias — phase tables share [ConsumptionScenario].
-typedef ConsumptionPhaseScenario = ConsumptionScenario;
+/// One row for per-phase consumption tables (Refs #3979).
+typedef ConsumptionPhaseScenario = ({String label, void Function() verify, String? refs});
 
-/// Back-compat runner for per-phase consumption scenario tables.
-void runConsumptionPhaseScenario(ConsumptionPhaseScenario scenario) => runConsumptionScenario(scenario);
+/// Runs a per-phase consumption scenario row.
+void runConsumptionPhaseScenario(ConsumptionPhaseScenario scenario) => scenario.verify();
 
 /// Canonical scenarios for [consumeMilitaryFood].
 List<ConsumptionPhaseScenario> consumeMilitaryFoodScenarios() => [

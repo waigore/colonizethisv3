@@ -32,7 +32,7 @@ void runBuildCostUnknownUnitExpectation(BuildCostUnknownUnitPins pins) {
   expect(result.reason, 'Insufficient resources');
 }
 
-BuildCostScenario buildCostUnknownUnitScenario({required String label, required BuildCostUnknownUnitPins pins}) => (label: label, run: () => runBuildCostUnknownUnitExpectation(pins), refs: null);
+BuildCostScenario buildCostUnknownUnitScenario({required String label, required BuildCostUnknownUnitPins pins}) => (label: label, unknownUnit: pins, affordApply: null, affordReject: null, refs: null);
 
 /// Pins for afford-then-apply catalog rows.
 typedef BuildCostAffordApplyPins = ({String unitType, bool isMilitary, int peasants, int treasuryPadding});
@@ -65,7 +65,7 @@ void runBuildCostAffordApplyExpectation(BuildCostAffordApplyPins pins) {
   return (econ, stockpileWithDeltas(econ.buildInputs), treasuryPadding, 0);
 }
 
-BuildCostScenario buildCostAffordApplyScenario({required String label, required BuildCostAffordApplyPins pins}) => (label: label, run: () => runBuildCostAffordApplyExpectation(pins), refs: null);
+BuildCostScenario buildCostAffordApplyScenario({required String label, required BuildCostAffordApplyPins pins}) => (label: label, unknownUnit: null, affordApply: pins, affordReject: null, refs: null);
 
 /// Pins for afford-reject rows.
 typedef BuildCostAffordRejectPins = ({String unitType, bool isMilitary, int peasants, Map<String, bool>? techUnlocked, int treasuryPadding, String expectedReason});
@@ -80,5 +80,5 @@ void runBuildCostAffordRejectExpectation(BuildCostAffordRejectPins pins) {
   expect(result.reason, pins.expectedReason);
 }
 
-BuildCostScenario buildCostAffordRejectScenario({required String label, required BuildCostAffordRejectPins pins}) => (label: label, run: () => runBuildCostAffordRejectExpectation(pins), refs: null);
+BuildCostScenario buildCostAffordRejectScenario({required String label, required BuildCostAffordRejectPins pins}) => (label: label, unknownUnit: null, affordApply: null, affordReject: pins, refs: null);
 // dart format on

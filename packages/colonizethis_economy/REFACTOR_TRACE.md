@@ -1339,3 +1339,19 @@ Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` wit
 | harness-run-labeled-adopt | Economy `test/**` bare scenario for-loops → `runLabeledScenarios` | all former bare-loop runners | #3979 |
 
 Deferred to follow-up commits on this issue: remaining `void Function() run` scenario migration, scenario-table allowlist shrink to ≤2, optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 2 — scenario pin migration + allowlist empty (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| allowlist-empty | `check_economy_scenario_table_runner` allowlist → empty (≤2 cap retained in comment) | `tool/check_economy_scenario_table_runner.dart` | #3979 |
+| cost-check-pins | `CheckPreconditionsInOrderScenario.pins` (drop `void Function() run`) | `cost_check_scenarios.dart`, `cost_check_expectations.dart` | #3979 |
+| commodity-totals-pins | split `AddUnits`/`SumValues`/`SumNestedValues` pin scenarios | `commodity_totals_*.dart`, `commodity_totals_test.dart` | #3979 |
+| worker-economy-pins | split idle/effective labour pin scenarios | `worker_economy_*.dart`, `worker_economy_test.dart` | #3979 |
+| player-context-expect | `PlayerContextScenario.expect` data field | `treasury_player_context_scenarios.dart` | #3979 |
+| validator-context-expect | `TradeOrderValidatorContextScenario.expect` data field | `validator_context_scenarios.dart` | #3979 |
+| build-cost-pins | pin-family fields on `BuildCostScenario` | `build_cost_*.dart` | #3979 |
+| worker-action-cost-pins | pin-family fields on `WorkerActionCostScenario` | `worker_action_cost_*.dart` | #3979 |
+| resolve-consumption-pins | `ResolveConsumptionScenario` data + pins | `consumption_scenarios.dart`, `consumption_expectations.dart` | #3979 |
+
+Deferred: remaining `void Function() run` modules (sea transport, trade interception, extraction, production, projected cost, cargo capacity, purchased-tile attribution, tile pipeline, trade interception); consumption-phase rows still use thin `verify` wrappers over expectation helpers; optional wall-clock / setUpAll caching.

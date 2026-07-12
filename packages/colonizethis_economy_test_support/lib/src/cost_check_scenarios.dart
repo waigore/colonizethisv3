@@ -1,13 +1,13 @@
 // dart format off
-// Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35).
+// Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35, #3979).
 
 import 'cost_check_expectations.dart';
 
-/// One row for `CheckPreconditionsInOrderScenario` tables (Refs #3939 slice 63).
-typedef CheckPreconditionsInOrderScenario = ({String label, void Function() run, String? refs});
+/// One row for `CheckPreconditionsInOrderScenario` tables (Refs #3979).
+typedef CheckPreconditionsInOrderScenario = ({String label, CheckPreconditionsInOrderPins pins, String? refs});
 
 void runCheckPreconditionsInOrderScenario(CheckPreconditionsInOrderScenario scenario) {
-  scenario.run();
+  runCheckPreconditionsInOrderExpectation(scenario.pins);
 }
 
 /// Canonical scenarios for [checkPreconditionsInOrder].
