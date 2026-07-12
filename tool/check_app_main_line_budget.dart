@@ -1,13 +1,14 @@
-// Caps colonizethis_app `by_package_role.main` at 59_500 lines per
+// Caps colonizethis_app `by_package_role.main` at 59_650 lines per
 // `pytool/project_stats.py`. Refs #3942 headroom (was 60_000 under #3878);
-// raised for named save/load dialogs (Refs #3959).
+// raised for named save/load dialogs (Refs #3959); raised again for load-game
+// list paging/delete/metadata UI (Refs #3985).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 59500;
+const _maxMainLines = 59650;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
