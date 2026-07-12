@@ -47,7 +47,16 @@ Any package or app that has tests adds **colonizethis_test** as a **dev_dependen
 
 ## Verifying the quality gate
 
-The GitHub workflow **.github/workflows/quality.yml** runs PR checks in parallel jobs: **`package_tests`** (six `colonizethis_*` packages + package coverage gates via **`tool/run_package_tests.sh`**), **`quality`** (lint, analyze, checker tests, `run_observer_game` + observer coverage), and app test shards + **`quality_app_coverage`**. All use `--reporter=compact` (pass/fail only). **Tool package tests** and **`melos run sim_scenarios`** run in **`.github/workflows/nightly.yml`** (daily **23:00 Asia/Hong_Kong**, `workflow_dispatch`); local parity: **`tool/run_nightly_gate_tests.sh`**. Refs #2509.
+The GitHub workflow **.github/workflows/quality.yml** runs PR checks in parallel jobs: **`package_tests`** (CORE `colonizethis_*` packages + package coverage gates via **`tool/run_package_tests.sh`**), **`quality`** (lint, analyze, checker tests, `run_observer_game` + observer coverage), and app test shards + **`quality_app_coverage`**. All use `--reporter=compact` (pass/fail only). **Tool package tests** and **`melos run sim_scenarios`** run in **`.github/workflows/nightly.yml`** (daily **23:00 Asia/Hong_Kong**, `workflow_dispatch`); local parity: **`tool/run_nightly_gate_tests.sh`**. Refs #2509.
+
+**`package_tests` path gate:** The job’s `packages_changed` filter matches only CORE package trees exercised by `tool/run_package_tests.sh` (plus workspace/`tool/run_package_tests.sh` / `tool/compute_package_test_plan.py` / coverage-gate infra). Satellite packages such as `colonizethis_app_l10n` do **not** set `packages_changed`. When every CORE `--changed-*` flag is false, `tool/compute_package_test_plan.py` emits an empty plan and `tool/run_package_tests.sh` exits 0 without running suites — it must **not** expand to the full CORE list (that previously exhausted the 30-minute job budget on l10n-only PRs). Refs #3987.
+
+### Acceptance criteria (package_tests path gate)
+
+- Given a PR whose only `packages/` changes are under `packages/colonizethis_app_l10n/**`, when the Quality `changes` filter runs, then `packages_changed` is false and the `package_tests` job skips CORE suite execution.
+- Given `tool/compute_package_test_plan.py` is invoked with every `--changed-*=false` flag, when it prints JSON, then the list is empty.
+- Given `PACKAGES_TO_TEST` is set to the empty string, when `tool/run_package_tests.sh` runs, then it exits 0 without running any package suite.
+- Given no CLI flags, when `tool/compute_package_test_plan.py` runs, then the JSON list includes every CORE package name used by `tool/run_package_tests.sh`.
 
 You can verify locally in either of these ways:
 
