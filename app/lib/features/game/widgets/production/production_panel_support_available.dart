@@ -44,7 +44,7 @@ class _AvailableSubpanel extends StatelessWidget {
   }
 
   Widget _buildCommodityCell(Commodity c, int qty, int change) {
-    final name = c.displayName ?? c.id;
+    final name = commodityDisplayName(l10n, c.id);
     return CtResourceCell(
       key: ValueKey<String>('production_available_cell_${c.id}'),
       iconBuilder: (_) => ResourceIcon(

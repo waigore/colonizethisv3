@@ -103,7 +103,7 @@ Finder _improvedGrainRowLabelFinder() {
   return find.byWidgetPredicate(
     (w) =>
         w is Text &&
-        (w.data ?? '').contains('grain') &&
+        (w.data ?? '').contains('Grain') &&
         (w.data ?? '').contains('with ') &&
         !(w.data ?? '').contains('(improvable)'),
   );
