@@ -12,13 +12,23 @@ void main() {
         sourcesByPath: {
           'packages/colonizethis_orders/test/orders/a_test.dart':
               "void main() {\n  test('alpha pin', () {});\n}\n",
+          'packages/colonizethis_orders/test/orders/b_test.dart':
+              "void main() {\n  test(\n    'delta wrapped pin',\n    () {},\n  );\n}\n",
         },
         scenarioSourcesByPath: {
           'packages/colonizethis_orders/test/orders/support/x.dart':
               "final rows = [\n  (label: 'beta pin'),\n  rs('gamma pin', () {}),\n];\n",
         },
       );
-      expect(descriptions, containsAll(['alpha pin', 'beta pin', 'gamma pin']));
+      expect(
+        descriptions,
+        containsAll([
+          'alpha pin',
+          'beta pin',
+          'gamma pin',
+          'delta wrapped pin',
+        ]),
+      );
     });
   });
 
