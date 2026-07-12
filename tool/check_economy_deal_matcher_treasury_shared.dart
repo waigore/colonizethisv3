@@ -4,19 +4,20 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// SPEC: SPEC/program/repo-lint.md (Refs #3856).
+/// SPEC: SPEC/program/repo-lint.md (Refs #3856 / #3979).
 ///
 /// Guards shared deal-matcher treasury affordability helpers in
-/// `treasury_bid_budget.dart`. `deal_matcher_indexing.dart` must delegate
-/// to the shared module instead of redefining local treasury math.
+/// `treasury_bid_budget.dart`. After de-part, match attempts live in
+/// `deal_matcher_session.dart` and must call the shared symbols;
+/// `deal_matcher_indexing.dart` must not redefine local treasury math.
 const _helperRelativePath =
     'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart';
 
 const _consumerRelativePath =
     'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_indexing.dart';
 
-const _matchingRelativePath =
-    'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_matching.dart';
+const _sessionRelativePath =
+    'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_session.dart';
 
 const _sharedMaxAffordableSymbol = 'maxAffordableBidQuantity';
 const _sharedDecrementSymbol = 'decrementTreasuryForFill';
@@ -62,16 +63,16 @@ int runCheckEconomyDealMatcherTreasuryShared(
     }
   }
 
-  final matchingFile = File(p.join(root, _matchingRelativePath));
-  if (!matchingFile.existsSync()) {
-    logE('ERROR: Missing deal matcher matching part: $_matchingRelativePath');
+  final sessionFile = File(p.join(root, _sessionRelativePath));
+  if (!sessionFile.existsSync()) {
+    logE('ERROR: Missing deal matcher session: $_sessionRelativePath');
     return 1;
   }
-  final matchingSource = matchingFile.readAsStringSync();
+  final sessionSource = sessionFile.readAsStringSync();
   for (final symbol in [_sharedMaxAffordableSymbol, _sharedDecrementSymbol]) {
-    if (!matchingSource.contains('$symbol(')) {
+    if (!sessionSource.contains('$symbol(')) {
       logE(
-        'ERROR: $_matchingRelativePath must call `$symbol` from '
+        'ERROR: $_sessionRelativePath must call `$symbol` from '
         'treasury_bid_budget.dart (Refs #3856).',
       );
       return 1;
@@ -80,7 +81,7 @@ int runCheckEconomyDealMatcherTreasuryShared(
 
   final consumerFile = File(p.join(root, _consumerRelativePath));
   if (!consumerFile.existsSync()) {
-    logE('ERROR: Missing deal matcher indexing part: $_consumerRelativePath');
+    logE('ERROR: Missing deal matcher indexing: $_consumerRelativePath');
     return 1;
   }
   final consumerSource = consumerFile.readAsStringSync();

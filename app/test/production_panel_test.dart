@@ -51,7 +51,8 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
       _ProductionPanelTestWrapperState();
 }
 
-class _ProductionPanelTestWrapperState extends State<_ProductionPanelTestWrapper> {
+class _ProductionPanelTestWrapperState
+    extends State<_ProductionPanelTestWrapper> {
   late Map<String, int> _desiredOutput;
 
   @override
@@ -145,15 +146,16 @@ void main() {
       expect(find.text('Breakdown'), findsNothing);
     });
 
-    testWidgets('Available header shows Breakdown text button when callback set', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildPanel(player: fullPlayer, onOpenCommodityBreakdown: () {}),
-      );
-      await pumpSettleCapped(tester);
-      expect(find.text('Breakdown'), findsOneWidget);
-    });
+    testWidgets(
+      'Available header shows Breakdown text button when callback set',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(player: fullPlayer, onOpenCommodityBreakdown: () {}),
+        );
+        await pumpSettleCapped(tester);
+        expect(find.text('Breakdown'), findsOneWidget);
+      },
+    );
 
     testWidgets(
       'Available header Breakdown renders as CtActionTextButton (Refs #2862 S10b / C11)',
@@ -299,8 +301,10 @@ void main() {
         const ValueKey<String>('production_allocation_reset_button'),
       );
       expect(resetFinder, findsOneWidget);
-      expect(find.descendant(of: resetFinder, matching: find.text('Reset')),
-          findsOneWidget);
+      expect(
+        find.descendant(of: resetFinder, matching: find.text('Reset')),
+        findsOneWidget,
+      );
       await tester.tap(resetFinder);
       await pumpSyncFrames(tester);
 
@@ -342,13 +346,13 @@ void main() {
         await tester.pumpWidget(buildPanel(player: fullPlayer));
         await pumpSettleCapped(tester);
 
-        final ninePatchButtonsWithResetLabel = find.byWidgetPredicate(
-          (Widget w) {
-            if (w is! CtNinePatchButton) return false;
-            final child = w.child;
-            return child is Text && child.data == 'Reset';
-          },
-        );
+        final ninePatchButtonsWithResetLabel = find.byWidgetPredicate((
+          Widget w,
+        ) {
+          if (w is! CtNinePatchButton) return false;
+          final child = w.child;
+          return child is Text && child.data == 'Reset';
+        });
         expect(
           ninePatchButtonsWithResetLabel,
           findsNothing,
@@ -367,17 +371,14 @@ void main() {
       await tester.pumpWidget(
         buildPanel(
           player: fullPlayer,
-          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
-            next,
-          ),
+          onDesiredOutputChanged: (next) =>
+              lastOutput = Map<String, int>.from(next),
         ),
       );
       await pumpSettleCapped(tester);
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.tap(
-        find
-            .bySemanticsLabel(l10n.production_allocationIncrementRecipe)
-            .first,
+        find.bySemanticsLabel(l10n.production_allocationIncrementRecipe).first,
       );
       await pumpSyncFrames(tester);
       expect(lastOutput, isNotNull);
@@ -398,9 +399,8 @@ void main() {
         buildPanel(
           player: fullPlayer,
           desiredOutputByRecipe: const {lumberId: 3},
-          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
-            next,
-          ),
+          onDesiredOutputChanged: (next) =>
+              lastOutput = Map<String, int>.from(next),
         ),
       );
       await pumpSettleCapped(tester);
@@ -427,9 +427,8 @@ void main() {
         buildPanel(
           player: fullPlayer,
           desiredOutputByRecipe: const {lumberId: 4},
-          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
-            next,
-          ),
+          onDesiredOutputChanged: (next) =>
+              lastOutput = Map<String, int>.from(next),
         ),
       );
       await pumpSettleCapped(tester);
@@ -456,9 +455,8 @@ void main() {
         buildPanel(
           player: fullPlayer,
           desiredOutputByRecipe: const {lumberId: 1},
-          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
-            next,
-          ),
+          onDesiredOutputChanged: (next) =>
+              lastOutput = Map<String, int>.from(next),
         ),
       );
       await pumpSettleCapped(tester);
@@ -474,8 +472,10 @@ void main() {
       final effectiveLabour = effectiveLabourForWorkers(
         workers: fullPlayer.workerPool,
         stockpile: fullPlayer.stockpile,
-        regimentCountsById: regimentCounts,
-        shipCountsById: shipCounts,
+        foodCounts: MilitaryNavyFoodCounts(
+          regimentCountsById: regimentCounts,
+          shipCountsById: shipCounts,
+        ),
       );
       final expectedMax = computeRecipeAffordance(
         recipe: ProductionRecipesCatalog.byId[lumberId]!,
@@ -735,37 +735,34 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Available commodity quantity subtracts staged trade offers '
-      '(Refs #3093)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildPanel(
-            player: fullPlayer,
-            currentOrders: Orders(
-              tradeOrdersByPlayerId: {
-                fullPlayer.id: [
-                  TradeOrder(
-                    commodityId: CommodityCatalog.fabric.id,
-                    type: TradeOrderType.offer,
-                    quantity: 4,
-                    priority: 5,
-                  ),
-                ],
-              },
-            ),
+    testWidgets('Available commodity quantity subtracts staged trade offers '
+        '(Refs #3093)', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          currentOrders: Orders(
+            tradeOrdersByPlayerId: {
+              fullPlayer.id: [
+                TradeOrder(
+                  commodityId: CommodityCatalog.fabric.id,
+                  type: TradeOrderType.offer,
+                  quantity: 4,
+                  priority: 5,
+                ),
+              ],
+            },
           ),
-        );
-        await pumpSettleCapped(tester);
+        ),
+      );
+      await pumpSettleCapped(tester);
 
-        final fabricCell = find.byKey(
-          const ValueKey<String>('production_available_cell_fabric'),
-        );
-        expect(fabricCell, findsOneWidget);
-        final cellWidget = tester.widget<CtResourceCell>(fabricCell);
-        expect(cellWidget.quantity, 46);
-      },
-    );
+      final fabricCell = find.byKey(
+        const ValueKey<String>('production_available_cell_fabric'),
+      );
+      expect(fabricCell, findsOneWidget);
+      final cellWidget = tester.widget<CtResourceCell>(fabricCell);
+      expect(cellWidget.quantity, 46);
+    });
 
     testWidgets(
       'Available commodity cells omit delta region when net change is zero '
@@ -783,66 +780,59 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Workers section renders one CtResourceCell per worker tier '
-      '(Refs #2862 S2)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+    testWidgets('Workers section renders one CtResourceCell per worker tier '
+        '(Refs #2862 S2)', (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await pumpSettleCapped(tester);
 
-        for (final tier in const <String>[
-          'peasant',
-          'apprentice',
-          'journeyman',
-          'master',
-        ]) {
-          expect(
-            find.byKey(ValueKey<String>('production_available_worker_$tier')),
-            findsOneWidget,
-            reason: 'Worker cell for $tier should be present',
-          );
-        }
-      },
-    );
-
-    testWidgets(
-      'Allocation row chrome wraps every recipe row in '
-      'ProductionAllocationRowChrome (Refs #2862 S3 / R13)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
-
-        final recipeCount = ProductionRecipesCatalog.all.length;
-        expect(recipeCount, greaterThan(1));
-
+      for (final tier in const <String>[
+        'peasant',
+        'apprentice',
+        'journeyman',
+        'master',
+      ]) {
         expect(
-          find.byType(ProductionAllocationRow),
-          findsNWidgets(recipeCount),
+          find.byKey(ValueKey<String>('production_available_worker_$tier')),
+          findsOneWidget,
+          reason: 'Worker cell for $tier should be present',
+        );
+      }
+    });
+
+    testWidgets('Allocation row chrome wraps every recipe row in '
+        'ProductionAllocationRowChrome (Refs #2862 S3 / R13)', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await pumpSettleCapped(tester);
+
+      final recipeCount = ProductionRecipesCatalog.all.length;
+      expect(recipeCount, greaterThan(1));
+
+      expect(find.byType(ProductionAllocationRow), findsNWidgets(recipeCount));
+      expect(
+        find.byType(ProductionAllocationRowChrome),
+        findsNWidgets(recipeCount),
+      );
+
+      // Every ProductionAllocationRow must be a descendant of a
+      // ProductionAllocationRowChrome — no bare rows allowed.
+      for (final row in tester.widgetList<ProductionAllocationRow>(
+        find.byType(ProductionAllocationRow),
+      )) {
+        final wrapped = find.ancestor(
+          of: find.byWidget(row),
+          matching: find.byType(ProductionAllocationRowChrome),
         );
         expect(
-          find.byType(ProductionAllocationRowChrome),
-          findsNWidgets(recipeCount),
+          wrapped,
+          findsOneWidget,
+          reason:
+              'ProductionAllocationRow for ${row.recipe.id} must be wrapped '
+              'in ProductionAllocationRowChrome per SPEC.',
         );
-
-        // Every ProductionAllocationRow must be a descendant of a
-        // ProductionAllocationRowChrome — no bare rows allowed.
-        for (final row in tester.widgetList<ProductionAllocationRow>(
-          find.byType(ProductionAllocationRow),
-        )) {
-          final wrapped = find.ancestor(
-            of: find.byWidget(row),
-            matching: find.byType(ProductionAllocationRowChrome),
-          );
-          expect(
-            wrapped,
-            findsOneWidget,
-            reason:
-                'ProductionAllocationRow for ${row.recipe.id} must be wrapped '
-                'in ProductionAllocationRowChrome per SPEC.',
-          );
-        }
-      },
-    );
+      }
+    });
 
     testWidgets(
       'Allocation row chrome paints CtGradients.rowGradient inside a 1px '
@@ -875,34 +865,34 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Allocation rows are separated by exactly N-1 CtBrassDividers '
-      '(Refs #2862 S3 / R13)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+    testWidgets('Allocation rows are separated by exactly N-1 CtBrassDividers '
+        '(Refs #2862 S3 / R13)', (WidgetTester tester) async {
+      await tester.pumpWidget(buildPanel(player: fullPlayer));
+      await pumpSettleCapped(tester);
 
-        final recipeCount = ProductionRecipesCatalog.all.length;
-        expect(recipeCount, greaterThan(1));
+      final recipeCount = ProductionRecipesCatalog.all.length;
+      expect(recipeCount, greaterThan(1));
 
-        // CtBrassDivider may appear elsewhere on the screen via shared
-        // chrome — scope the count to those inside the allocation rows
-        // column by counting dividers that share an ancestor with the
-        // allocation row chromes.
-        final dividers = find.descendant(
-          of: find.byType(ProductionAllocationRow).first,
-          matching: find.byType(CtBrassDivider),
-        );
-        expect(dividers, findsNothing,
-            reason: 'No divider should live inside a recipe row.');
+      // CtBrassDivider may appear elsewhere on the screen via shared
+      // chrome — scope the count to those inside the allocation rows
+      // column by counting dividers that share an ancestor with the
+      // allocation row chromes.
+      final dividers = find.descendant(
+        of: find.byType(ProductionAllocationRow).first,
+        matching: find.byType(CtBrassDivider),
+      );
+      expect(
+        dividers,
+        findsNothing,
+        reason: 'No divider should live inside a recipe row.',
+      );
 
-        final totalDividers = find.byType(CtBrassDivider).evaluate().length;
-        // Allow other CtBrassDivider instances elsewhere on the screen — but
-        // require at least N-1 to appear (one between each pair of recipe
-        // rows in the allocation subpanel).
-        expect(totalDividers, greaterThanOrEqualTo(recipeCount - 1));
-      },
-    );
+      final totalDividers = find.byType(CtBrassDivider).evaluate().length;
+      // Allow other CtBrassDivider instances elsewhere on the screen — but
+      // require at least N-1 to appear (one between each pair of recipe
+      // rows in the allocation subpanel).
+      expect(totalDividers, greaterThanOrEqualTo(recipeCount - 1));
+    });
 
     // S7 — Labour Controls subsection placement (Refs #2862 S7a).
 
@@ -919,8 +909,7 @@ void main() {
         onDisband: (_) {},
       );
       return MaterialApp(
-        localizationsDelegates:
-            AppLocalizationsBinding.localizationsDelegates,
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: const [Locale('en')],
         home: Scaffold(
           body: SizedBox(
@@ -963,7 +952,8 @@ void main() {
         expect(
           labourY,
           greaterThan(effectiveY),
-          reason: 'Labour Controls section label must render below the '
+          reason:
+              'Labour Controls section label must render below the '
               'Effective Labour line per SPEC § Labour Controls (12-A).',
         );
       },

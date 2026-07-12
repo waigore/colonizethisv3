@@ -1,18 +1,25 @@
-// Table-driven projected cost engine scenarios (Refs #3939 phase 3 slice 35).
+// Table-driven projected cost engine scenarios (Refs #3939 phase 3 slice 35, #3979).
 
 import 'projected_cost_engine_expectations.dart';
 
-/// One row in [projectedCostEngineWorkMaterialScenarios] (Refs #3939 slice 64).
+/// One row in [projectedCostEngineWorkMaterialScenarios] (Refs #3979).
 typedef ProjectedCostEngineWorkMaterialScenario = ({
   String label,
-  void Function() run,
+  ProjectedCostWorkMaterialKind kind,
+  WorkMaterialAffordPins? affordPins,
+  WorkMaterialDeductPins? deductPins,
   String? refs,
 });
 
 void runProjectedCostEngineWorkMaterialScenario(
   ProjectedCostEngineWorkMaterialScenario scenario,
 ) {
-  scenario.run();
+  switch (scenario.kind) {
+    case ProjectedCostWorkMaterialKind.afford:
+      runWorkMaterialAffordExpectation(scenario.affordPins!);
+    case ProjectedCostWorkMaterialKind.deduct:
+      runWorkMaterialDeductExpectation(scenario.deductPins!);
+  }
 }
 
 /// Canonical scenarios for ProjectedCostEngine work-material helpers.
@@ -25,11 +32,11 @@ List<ProjectedCostEngineWorkMaterialScenario> projectedCostEngineWorkMaterialSce
   ),
 ];
 
-/// One row in [projectedCostEngineBuildScenarios] (Refs #3939 slice 64).
-typedef ProjectedCostEngineBuildScenario = ({String label, void Function() run, String? refs});
+/// One row in [projectedCostEngineBuildScenarios] (Refs #3979).
+typedef ProjectedCostEngineBuildScenario = ({String label, ProjectedCostBuildTarget target, String? refs});
 
 void runProjectedCostEngineBuildScenario(ProjectedCostEngineBuildScenario scenario) {
-  scenario.run();
+  runProjectedCostBuildExpectation(scenario.target);
 }
 
 /// Canonical scenarios for ProjectedCostEngine build delegation.

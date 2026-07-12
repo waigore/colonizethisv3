@@ -8,14 +8,14 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 
 void main() {
   group('computeNonGreatPowerExtraction (SPEC ACs)', () {
-    for (final scenario in nonGpExtractionSpecAcScenarios()) {
-      test(scenario.label, () => runNonGpExtractionScenario(scenario));
-    }
+    runLabeledScenarios(nonGpExtractionSpecAcScenarios(), (scenario) {
+      runNonGpExtractionScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeNonGreatPowerExtraction (boundary + multi-faction)', () {
-    for (final scenario in nonGpExtractionBoundaryScenarios()) {
-      test(scenario.label, () => runNonGpExtractionScenario(scenario));
-    }
+    runLabeledScenarios(nonGpExtractionBoundaryScenarios(), (scenario) {
+      runNonGpExtractionScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

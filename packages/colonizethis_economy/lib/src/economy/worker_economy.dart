@@ -17,16 +17,12 @@ int effectiveLabourFromIdleCounts(WorkerIdleCounts idle) =>
 int effectiveLabourForWorkers({
   required WorkerPool workers,
   required Stockpile stockpile,
-  int militaryUnits = 0,
-  Map<String, int> regimentCountsById = const {},
-  Map<String, int> shipCountsById = const {},
+  MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
 }) {
   final idle = previewWorkerIdleLabour(
     stockpile: stockpile,
     workers: workers,
-    militaryUnits: militaryUnits,
-    regimentCountsById: regimentCountsById,
-    shipCountsById: shipCountsById,
+    foodCounts: foodCounts,
   );
   return effectiveLabourFromIdleCounts(idle);
 }

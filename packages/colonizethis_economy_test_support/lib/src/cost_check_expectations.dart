@@ -33,5 +33,5 @@ void runCheckPreconditionsInOrderExpectation(CheckPreconditionsInOrderPins pins)
 }
 
 CheckPreconditionsInOrderScenario checkPreconditionsInOrderScenario({required String label, required CheckPreconditionsInOrderPins pins, String? refs}) =>
-    (label: label, run: () => runCheckPreconditionsInOrderExpectation(pins), refs: refs);
+    (label: label, pins: pins, refs: refs);
 // dart format on

@@ -30,7 +30,7 @@ void runCargoHoldsExpectation(CargoHoldsPins pins) {
   }
 }
 
-CargoHoldsForHomeFleetScenario cargoHoldsScenario({required String label, required CargoHoldsPins pins}) => (label: label, run: () => runCargoHoldsExpectation(pins), refs: null);
+CargoHoldsForHomeFleetScenario cargoHoldsScenario({required String label, required CargoHoldsPins pins}) => (label: label, pins: pins, refs: null);
 
 /// Pins for [allocateOverseasToStockpile] rows.
 typedef AllocateOverseasPins = ({Map<String, int> overseas, int cargoHolds, List<CommodityCategory>? priorityOrder, bool expectEmpty, int? expectedTotal, Map<String, int?>? expectedDelivered});
@@ -58,5 +58,5 @@ void runAllocateOverseasExpectation(AllocateOverseasPins pins) {
   }
 }
 
-AllocateOverseasToStockpileScenario allocateOverseasScenario({required String label, required AllocateOverseasPins pins}) => (label: label, run: () => runAllocateOverseasExpectation(pins), refs: null);
+AllocateOverseasToStockpileScenario allocateOverseasScenario({required String label, required AllocateOverseasPins pins}) => (label: label, pins: pins, refs: null);
 // dart format on

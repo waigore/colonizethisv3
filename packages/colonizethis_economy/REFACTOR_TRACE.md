@@ -156,7 +156,7 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/lock_recovery_minor_bids_test_support.dart`
 - `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_test_support.dart`
 
-Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_matching.dart` delegates (lint `repo.economy_deal_matcher_treasury_budget_shared`).
+Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_session.dart` delegates after de-part (lint `repo.economy_deal_matcher_treasury_budget_shared`).
 
 Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
 
@@ -1327,3 +1327,41 @@ Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` wit
 | `zero quantities do not change stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
 | `zero riches yields zero delta and unchanged stockpile` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
 
+
+## Phase 5 slice 1 — town-bonus DRY, MilitaryNavyFoodCounts, DealMatcher de-part, harness adoption (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| town-bonus-ctx | `TownConnectedProvinceExtractionContext` + GP/non-GP accumulate + overseas delivery helpers | `town_connected_province_extraction.dart`; `town_manufacturing_bonus.dart` shrunk | #3979 |
+| food-counts | `MilitaryNavyFoodCounts` threaded through preview/resolve/effectiveLabour | `military_navy_food_counts.dart`, consumption + worker_economy + callers | #3979 |
+| deal-matcher-depart | Drop `part`/`part of`; `DealMatchSession` + `MatchOrderState`; indexing/matching standalone libs | `deal_matcher*.dart`, `deal_matcher_session.dart` | #3979 |
+| economy-no-part-gate | `repo.economy_no_part_directives` | `tool/check_economy_no_part_directives.dart`, SPEC | #3979 |
+| harness-run-labeled-adopt | Economy `test/**` bare scenario for-loops → `runLabeledScenarios` | all former bare-loop runners | #3979 |
+
+Deferred to follow-up commits on this issue: remaining `void Function() run` scenario migration, scenario-table allowlist shrink to ≤2, optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 2 — scenario pin migration + allowlist empty (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| allowlist-empty | `check_economy_scenario_table_runner` allowlist → empty (≤2 cap retained in comment) | `tool/check_economy_scenario_table_runner.dart` | #3979 |
+| cost-check-pins | `CheckPreconditionsInOrderScenario.pins` (drop `void Function() run`) | `cost_check_scenarios.dart`, `cost_check_expectations.dart` | #3979 |
+| commodity-totals-pins | split `AddUnits`/`SumValues`/`SumNestedValues` pin scenarios | `commodity_totals_*.dart`, `commodity_totals_test.dart` | #3979 |
+| worker-economy-pins | split idle/effective labour pin scenarios | `worker_economy_*.dart`, `worker_economy_test.dart` | #3979 |
+| player-context-expect | `PlayerContextScenario.expect` data field | `treasury_player_context_scenarios.dart` | #3979 |
+| validator-context-expect | `TradeOrderValidatorContextScenario.expect` data field | `validator_context_scenarios.dart` | #3979 |
+| build-cost-pins | pin-family fields on `BuildCostScenario` | `build_cost_*.dart` | #3979 |
+| worker-action-cost-pins | pin-family fields on `WorkerActionCostScenario` | `worker_action_cost_*.dart` | #3979 |
+| resolve-consumption-pins | `ResolveConsumptionScenario` data + pins | `consumption_scenarios.dart`, `consumption_expectations.dart` | #3979 |
+
+Deferred: remaining `void Function() run` modules (sea transport, trade interception, extraction, production, projected cost, cargo capacity, purchased-tile attribution, tile pipeline, trade interception); consumption-phase rows still use thin `verify` wrappers over expectation helpers; optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 3 — finish leftover run/verify shells (Refs #3979)
+
+| Slice | Goal | Outcome | Refs |
+|-------|------|---------|------|
+| leftover-run-pins | Migrate remaining `void Function() run` scenario modules to pins/targets | sea_transport, trade_interception, trade_cargo_capacity, projected_cost, tile_extraction_*, economy_extraction, economy_production, purchased-tile attribution | #3979 |
+| consumption-phase-pins | Replace thin `verify` wrappers with typed pin scenario records | `consumption_phases_*.dart`, `economy_consumption_phases_test.dart` | #3979 |
+| treasury-gate-session | Point `repo.economy_deal_matcher_treasury_budget_shared` at `deal_matcher_session.dart` after de-part | `tool/check_economy_deal_matcher_treasury_shared.dart` | #3979 |
+
+Deferred: optional group `setUpAll` caching / wall-clock median note.

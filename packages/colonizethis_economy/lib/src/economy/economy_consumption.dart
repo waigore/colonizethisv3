@@ -3,9 +3,11 @@ import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_consumption_phases.dart';
+import 'military_navy_food_counts.dart';
 
 export 'economy_consumption_phases.dart'
     show ConsumptionUnknownShipTypeException, consumeFoodUnits;
+export 'military_navy_food_counts.dart';
 
 /// Consumption resolution helpers.
 /// SPEC/game/workers-and-population.md
@@ -41,16 +43,12 @@ class ConsumptionResult {
 WorkerIdleCounts previewWorkerIdleLabour({
   required Stockpile stockpile,
   required WorkerPool workers,
-  int militaryUnits = 0,
-  Map<String, int> regimentCountsById = const {},
-  Map<String, int> shipCountsById = const {},
+  MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
 }) {
   return _allocateConsumption(
     stockpile: stockpile,
     workers: workers,
-    militaryUnits: militaryUnits,
-    regimentCountsById: regimentCountsById,
-    shipCountsById: shipCountsById,
+    foodCounts: foodCounts,
   ).idleLabour;
 }
 
@@ -60,7 +58,7 @@ WorkerIdleCounts previewWorkerIdleLabour({
 /// - Peasant: 1 grain or meat
 /// - Apprentice/Journeyman/Master: 2 food units (grain then meat)
 /// - Land military: per-type `foodUpkeep` from [RegimentEconomyCatalog], or 2/regiment
-///   when only [militaryUnits] is set
+///   when only [MilitaryNavyFoodCounts.militaryUnits] is set
 /// - Navy: per-type `foodUpkeep` from [ShipEconomyCatalog]
 ///
 /// Order: land military → navy → workers. Worker food priority:
@@ -69,21 +67,17 @@ WorkerIdleCounts previewWorkerIdleLabour({
 /// for food-fed trained workers who receive a unit; food-unfed trained workers
 /// consume **no** luxury.
 ///
-/// Throws [ConsumptionUnknownShipTypeException] if [shipCountsById] contains a type
-/// id not present in [ShipEconomyCatalog].
+/// Throws [ConsumptionUnknownShipTypeException] if [MilitaryNavyFoodCounts.shipCountsById]
+/// contains a type id not present in [ShipEconomyCatalog].
 ConsumptionResult resolveConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
-  int militaryUnits = 0,
-  Map<String, int> regimentCountsById = const {},
-  Map<String, int> shipCountsById = const {},
+  MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
 }) {
   final alloc = _allocateConsumption(
     stockpile: stockpile,
     workers: workers,
-    militaryUnits: militaryUnits,
-    regimentCountsById: regimentCountsById,
-    shipCountsById: shipCountsById,
+    foodCounts: foodCounts,
   );
   economyLog.d(
     'consumption totalRegiments=${alloc.totalRegiments} '
@@ -113,21 +107,22 @@ ConsumptionResult resolveConsumption({
 _allocateConsumption({
   required Stockpile stockpile,
   required WorkerPool workers,
-  int militaryUnits = 0,
-  Map<String, int> regimentCountsById = const {},
-  Map<String, int> shipCountsById = const {},
+  required MilitaryNavyFoodCounts foodCounts,
 }) {
   // Order: land military → navy → workers (food), then per-tier luxury.
-  final (afterMilitary, totalRegiments, fullyFedRegiments) =
-      consumeMilitaryFood(
-        stockpile: stockpile,
-        militaryUnits: militaryUnits,
-        regimentCountsById: regimentCountsById,
-      );
+  final (
+    afterMilitary,
+    totalRegiments,
+    fullyFedRegiments,
+  ) = consumeMilitaryFood(
+    stockpile: stockpile,
+    militaryUnits: foodCounts.militaryUnits,
+    regimentCountsById: foodCounts.regimentCountsById,
+  );
 
   final (afterNavy, totalShips, fullyFedShips) = consumeNavyFood(
     stockpile: afterMilitary,
-    shipCountsById: shipCountsById,
+    shipCountsById: foodCounts.shipCountsById,
   );
 
   final fed = consumeWorkerFood(stockpile: afterNavy, workers: workers);

@@ -1,16 +1,28 @@
 // dart format off
-// Table-driven economy extraction scenarios (Refs #3939 phase 3 slice 34).
+// Table-driven economy extraction scenarios (Refs #3939 phase 3 slice 34, #3979).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'core_economy_test_support.dart';
 import 'economy_extraction_expectations.dart';
 
-/// One row in [applyExtractionToStockpileScenarios] (Refs #3939 slice 64).
-typedef ApplyExtractionToStockpileScenario = ({String label, void Function() run, String? refs});
+/// One row in [applyExtractionToStockpileScenarios] (Refs #3979).
+typedef ApplyExtractionToStockpileScenario = ({
+  String label,
+  Map<String, int>? initialDeltas,
+  Stockpile? initialStockpile,
+  Map<String, int> extracted,
+  StockpileQuantityPins expectedQuantities,
+  String? refs,
+});
 
 void runApplyExtractionToStockpileScenario(ApplyExtractionToStockpileScenario scenario) {
-  scenario.run();
+  runApplyExtractionToStockpileExpectation(
+    initialStockpile: scenario.initialStockpile,
+    initialDeltas: scenario.initialDeltas,
+    extracted: scenario.extracted,
+    expectedQuantities: scenario.expectedQuantities,
+  );
 }
 
 /// Canonical scenarios for [applyExtractionToStockpile].
@@ -23,11 +35,23 @@ List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() =
   applyExtractionToStockpileScenario(label: 'adds large extraction without storage cap (unbounded strategic stockpile)', initialDeltas: {'grain': 1000000}, extracted: {'grain': 500000}, expectedQuantities: {'grain': 1500000}),
 ];
 
-/// One row in [applyExtractionForPlayersScenarios] (Refs #3939 slice 64).
-typedef ApplyExtractionForPlayersScenario = ({String label, void Function() run, String? refs});
+/// One row in [applyExtractionForPlayersScenarios] (Refs #3979).
+typedef ApplyExtractionForPlayersScenario = ({
+  String label,
+  Game game,
+  Map<String, Map<String, int>> extractedByPlayerId,
+  List<PlayerStockpilePin>? stockpilePins,
+  bool expectUnchangedPlayers,
+  String? refs,
+});
 
 void runApplyExtractionForPlayersScenario(ApplyExtractionForPlayersScenario scenario) {
-  scenario.run();
+  runApplyExtractionForPlayersExpectation(
+    game: scenario.game,
+    extractedByPlayerId: scenario.extractedByPlayerId,
+    stockpilePins: scenario.stockpilePins,
+    expectUnchangedPlayers: scenario.expectUnchangedPlayers,
+  );
 }
 
 /// Canonical scenarios for [applyExtractionForPlayers].

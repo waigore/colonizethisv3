@@ -61,17 +61,5 @@ void runTileContributionDisconnectedPin({required TileMapResult grainTileMap}) {
 
 enum TileExtractionContributionPin { connectedGrainExcludesCapitalBonus, disconnectedNull }
 
-TileExtractionContributionScenario tileExtractionContributionScenario({required String label, required TileExtractionContributionPin pin, TileContributionConnectedPin? connectedPins, TileMapResult? grainTileMap}) => (
-  label: label,
-  run: () {
-    final tileMap = grainTileMap ?? singleTileMap(Resource.grain);
-    switch (pin) {
-      case TileExtractionContributionPin.connectedGrainExcludesCapitalBonus:
-        runTileContributionConnectedPin(grainTileMap: tileMap, pins: connectedPins!);
-      case TileExtractionContributionPin.disconnectedNull:
-        runTileContributionDisconnectedPin(grainTileMap: tileMap);
-    }
-  },
-  refs: null,
-);
+TileExtractionContributionScenario tileExtractionContributionScenario({required String label, required TileExtractionContributionPin pin, TileContributionConnectedPin? connectedPins, TileMapResult? grainTileMap}) => (label: label, pin: pin, connectedPins: connectedPins, grainTileMap: grainTileMap, refs: null);
 // dart format on

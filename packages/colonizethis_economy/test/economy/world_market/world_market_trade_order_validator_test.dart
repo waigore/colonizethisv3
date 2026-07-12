@@ -12,66 +12,69 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 /// Refs #2989 A5, #3093, #3123, #3856.
 void main() {
   group('TradeOrderValidator.validate — empty / accept paths', () {
-    for (final scenario in tradeOrderValidatorEmptyAcceptScenarios()) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorEmptyAcceptScenarios(), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 1: invalid quantity', () {
-    for (final scenario in tradeOrderValidatorRule1Scenarios()) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorRule1Scenarios(), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 2: riches not tradeable', () {
-    for (final scenario in tradeOrderValidatorRule2Scenarios()) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorRule2Scenarios(), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 3: mutual exclusion', () {
-    for (final scenario in tradeOrderValidatorRule3Scenarios()) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorRule3Scenarios(), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 4: bid type cap', () {
-    for (final scenario in tradeOrderValidatorCapScenarios().take(5)) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorCapScenarios().take(5), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 6: bid cargo cap', () {
-    for (final scenario in tradeOrderValidatorCapScenarios().skip(5).take(3)) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorCapScenarios().skip(5).take(3), (
+      scenario,
+    ) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 7: offer stockpile', () {
-    for (final scenario in tradeOrderValidatorCapScenarios().skip(8).take(3)) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorCapScenarios().skip(8).take(3), (
+      scenario,
+    ) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule precedence', () {
-    for (final scenario in tradeOrderValidatorCapScenarios().skip(11)) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorCapScenarios().skip(11), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('TradeOrderValidator.validate — rule 5: bid treasury cap', () {
-    for (final scenario in tradeOrderValidatorTreasuryScenarios()) {
-      test(scenario.label, () => runTradeOrderValidatorScenario(scenario));
-    }
+    runLabeledScenarios(tradeOrderValidatorTreasuryScenarios(), (scenario) {
+      runTradeOrderValidatorScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('tradeOrderValidationContextFromGame (Refs #3123)', () {
-    for (final scenario in tradeOrderValidatorContextTreasuryScenarios()) {
-      test(
-        scenario.label,
-        () => runTradeOrderValidatorContextScenario(scenario),
-      );
-    }
+    runLabeledScenarios(tradeOrderValidatorContextTreasuryScenarios(), (
+      scenario,
+    ) {
+      runTradeOrderValidatorContextScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('effectiveMarketPriceForCommodityId — catalog default coverage '

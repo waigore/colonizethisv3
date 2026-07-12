@@ -10,7 +10,12 @@ void main() {
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 5)
           .applyDelta(CommodityCatalog.meat.id, 0);
-      const workers = WorkerPool(peasants: 5, apprentices: 0, journeymen: 0, masters: 0);
+      const workers = WorkerPool(
+        peasants: 5,
+        apprentices: 0,
+        journeymen: 0,
+        masters: 0,
+      );
 
       final result = resolveConsumption(stockpile: stockpile, workers: workers);
 
@@ -53,7 +58,7 @@ void main() {
       final result = resolveConsumption(
         stockpile: stockpile,
         workers: workers,
-        militaryUnits: 3,
+        foodCounts: const MilitaryNavyFoodCounts(militaryUnits: 3),
       );
 
       expect(result.totalRegiments, 3);
@@ -107,7 +112,12 @@ void main() {
 
     test('food strike: pool unchanged when no food', () {
       const stockpile = Stockpile();
-      const workers = WorkerPool(peasants: 2, apprentices: 1, journeymen: 0, masters: 0);
+      const workers = WorkerPool(
+        peasants: 2,
+        apprentices: 1,
+        journeymen: 0,
+        masters: 0,
+      );
 
       final result = resolveConsumption(stockpile: stockpile, workers: workers);
 
@@ -120,7 +130,12 @@ void main() {
           .applyDelta(CommodityCatalog.grain.id, 2)
           .applyDelta(CommodityCatalog.meat.id, 10)
           .applyDelta(CommodityCatalog.refinedSugar.id, 2);
-      const workers = WorkerPool(peasants: 0, apprentices: 2, journeymen: 0, masters: 0);
+      const workers = WorkerPool(
+        peasants: 0,
+        apprentices: 2,
+        journeymen: 0,
+        masters: 0,
+      );
 
       final result = resolveConsumption(stockpile: stockpile, workers: workers);
 
@@ -152,7 +167,9 @@ void main() {
         () => resolveConsumption(
           stockpile: stockpile,
           workers: workers,
-          shipCountsById: const {'not_a_real_ship': 1},
+          foodCounts: const MilitaryNavyFoodCounts(
+            shipCountsById: {'not_a_real_ship': 1},
+          ),
         ),
         throwsA(isA<ConsumptionUnknownShipTypeException>()),
       );
@@ -167,7 +184,9 @@ void main() {
       final result = resolveConsumption(
         stockpile: stockpile,
         workers: workers,
-        shipCountsById: const {'carrack': 1},
+        foodCounts: const MilitaryNavyFoodCounts(
+          shipCountsById: {'carrack': 1},
+        ),
       );
       expect(result.totalShips, 1);
       expect(result.fullyFedShips, 1);
@@ -185,25 +204,36 @@ void main() {
       final result = resolveConsumption(
         stockpile: stockpile,
         workers: workers,
-        shipCountsById: const {'carrack': 2},
+        foodCounts: const MilitaryNavyFoodCounts(
+          shipCountsById: {'carrack': 2},
+        ),
       );
       expect(result.totalShips, 2);
       expect(result.fullyFedShips, 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.grain.id), 0);
     });
 
-    test('luxury only for food-fed trained; no sugar deducted if apprentice on strike', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 1)
-          .applyDelta(CommodityCatalog.meat.id, 0)
-          .applyDelta(CommodityCatalog.refinedSugar.id, 5);
-      const workers = WorkerPool(apprentices: 2, peasants: 0);
+    test(
+      'luxury only for food-fed trained; no sugar deducted if apprentice on strike',
+      () {
+        var stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 1)
+            .applyDelta(CommodityCatalog.meat.id, 0)
+            .applyDelta(CommodityCatalog.refinedSugar.id, 5);
+        const workers = WorkerPool(apprentices: 2, peasants: 0);
 
-      final result = resolveConsumption(stockpile: stockpile, workers: workers);
+        final result = resolveConsumption(
+          stockpile: stockpile,
+          workers: workers,
+        );
 
-      expect(result.idleLabour.apprentices, 0);
-      expect(result.stockpile.quantityOf(CommodityCatalog.refinedSugar.id), 5);
-    });
+        expect(result.idleLabour.apprentices, 0);
+        expect(
+          result.stockpile.quantityOf(CommodityCatalog.refinedSugar.id),
+          5,
+        );
+      },
+    );
 
     test('trained workers consume tier luxuries when food-fed', () {
       var stockpile = const Stockpile()
@@ -230,17 +260,26 @@ void main() {
       expect(result.stockpile.quantityOf(CommodityCatalog.furHats.id), 0);
     });
 
-    test('luxury strike: food-fed but short luxury → idle capped, partial deduction', () {
-      var stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 10)
-          .applyDelta(CommodityCatalog.meat.id, 10)
-          .applyDelta(CommodityCatalog.refinedSugar.id, 1);
-      const workers = WorkerPool(apprentices: 3, peasants: 0);
+    test(
+      'luxury strike: food-fed but short luxury → idle capped, partial deduction',
+      () {
+        var stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, 10)
+            .applyDelta(CommodityCatalog.meat.id, 10)
+            .applyDelta(CommodityCatalog.refinedSugar.id, 1);
+        const workers = WorkerPool(apprentices: 3, peasants: 0);
 
-      final result = resolveConsumption(stockpile: stockpile, workers: workers);
+        final result = resolveConsumption(
+          stockpile: stockpile,
+          workers: workers,
+        );
 
-      expect(result.idleLabour.apprentices, 1);
-      expect(result.stockpile.quantityOf(CommodityCatalog.refinedSugar.id), 0);
-    });
+        expect(result.idleLabour.apprentices, 1);
+        expect(
+          result.stockpile.quantityOf(CommodityCatalog.refinedSugar.id),
+          0,
+        );
+      },
+    );
   });
 }
