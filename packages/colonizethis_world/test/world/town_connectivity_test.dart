@@ -73,10 +73,7 @@ void main() {
             .setRoadLevel(adjacentKey, 1)
             .setRoadLevel('$ow|p1|1|0', 1)
             .setRoadLevel(pathKey, 1);
-        final world = WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
+        final world = TestFixtures.worldStateAtOrdersPhase(
           tileState: tileState,
           tileKeysByRegionAndProvince: {
             ow: {

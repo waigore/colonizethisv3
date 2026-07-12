@@ -656,6 +656,20 @@ rules:
     runner: dart
     script: tool/check_world_test_support_builders_used.dart
 
+  - rule_id: repo.world_fog_connectivity_no_owner_map_rebuild
+    group: architecture
+    title: fog/connectivity world lib must use ProvinceOwnerCache, not ownerByProvinceIdMap (Refs #3978)
+    spec: SPEC/program/world-fog-connectivity-ownership-sot.md
+    runner: dart
+    script: tool/check_world_fog_connectivity_no_owner_map_rebuild.dart
+
+  - rule_id: repo.world_test_no_raw_game_worldstate
+    group: architecture
+    title: fog/capital/connectivity world tests must not inline Game/WorldState outside world_test_support (Refs #3978)
+    spec: SPEC/program/world-test-no-raw-game-worldstate.md
+    runner: dart
+    script: tool/check_world_test_no_raw_game_worldstate.dart
+
   - rule_id: repo.no_flame_in_widgets
     group: structure
     title: app/lib/widgets must not import package:flame directly

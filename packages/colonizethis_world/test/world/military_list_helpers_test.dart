@@ -1,7 +1,34 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/military_list_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
+  group('fleetsByIdForWorld', () {
+    test('indexes fleets by id (positive)', () {
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        fleets: [
+          Fleet(id: 'f1', ownerId: 'p1', regionId: 'oldWorld', seaZoneId: 's1'),
+          Fleet(id: 'f2', ownerId: 'p1', regionId: 'oldWorld', seaZoneId: 's2'),
+        ],
+      );
+      final byId = fleetsByIdForWorld(world);
+      expect(byId.keys, containsAll(['f1', 'f2']));
+      expect(byId['f1']!.seaZoneId, 's1');
+    });
+
+    test('returns empty map when no fleets (negative)', () {
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      );
+      expect(fleetsByIdForWorld(world), isEmpty);
+    });
+  });
+
   group('partitionBySelectedIds', () {
     test('splits selected vs remaining by id (positive)', () {
       final items = [(id: 'a', v: 1), (id: 'b', v: 2), (id: 'c', v: 3)];

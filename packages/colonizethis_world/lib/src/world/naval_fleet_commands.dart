@@ -14,12 +14,7 @@ Game applyNavalSplitFleet({
 }) {
   if (shipInstanceIdsToNewFleet.isEmpty) return game;
 
-  Fleet? originalFleet;
-  for (final f in game.worldState.fleets) {
-    if (f.id == originalFleetId) {
-      originalFleet = f;
-    }
-  }
+  final originalFleet = fleetsByIdForWorld(game.worldState)[originalFleetId];
   if (originalFleet == null) return game;
   final orig = originalFleet;
 
@@ -78,15 +73,9 @@ Game applyNavalTransferShipsBetweenFleets({
     return game;
   }
 
-  Fleet? sourceFleet;
-  Fleet? targetFleet;
-  for (final fleet in game.worldState.fleets) {
-    if (fleet.id == sourceFleetId) {
-      sourceFleet = fleet;
-    } else if (fleet.id == targetFleetId) {
-      targetFleet = fleet;
-    }
-  }
+  final byId = fleetsByIdForWorld(game.worldState);
+  final sourceFleet = byId[sourceFleetId];
+  final targetFleet = byId[targetFleetId];
   if (sourceFleet == null || targetFleet == null) {
     return game;
   }

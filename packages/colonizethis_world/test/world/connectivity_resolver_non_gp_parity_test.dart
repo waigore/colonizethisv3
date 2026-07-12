@@ -1,73 +1,15 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import '../world_test_support/world_test_support.dart';
 
 void main() {
-  _connectivity_resolver_non_gp_capital_testTests();
+  _connectivity_resolver_non_gp_parity_testTests();
 }
 
-void _connectivity_resolver_non_gp_capital_testTests() {
-  group('resolveNonGreatPowerConnectivity', () {
-    test('minor with null capitalTile gets empty ConnectivityResult', () {
-      const ow = 'oldWorld';
-      final tileMap = tileMapFromGrid([
-        ['p1', 'p1'],
-      ]);
-      final topology = singleProvinceTopology(
-        regionId: ow,
-        provinceLocalId: 'p1',
-      );
-      final game = ordersPhaseGame(
-        oldWorldProvinces: [
-          Province(id: '$ow|p1', regionId: ow, ownerId: 'minor_lux'),
-        ],
-        players: const [],
-        minorNations: [
-          // Capital intentionally unset (e.g. before terminal fall).
-          const MinorNation(id: 'minor_lux'),
-        ],
-      );
-
-      final result = resolveNonGreatPowerConnectivity(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap},
-        topology: topology,
-      );
-
-      expect(result['minor_lux'], isNotNull);
-      expect(result['minor_lux']!.connected, isEmpty);
-      expect(result['minor_lux']!.pathTransportCap, isEmpty);
-      expect(result['minor_lux']!.connectedByRoadRule, isEmpty);
-    });
-
-    test('tribe with null capitalTile gets empty ConnectivityResult', () {
-      const nw = 'newWorld';
-      final tileMap = tileMapFromGrid([
-        ['p1'],
-      ]);
-      final topology = singleProvinceTopology(
-        regionId: nw,
-        provinceLocalId: 'p1',
-      );
-      final game = ordersPhaseGame(
-        newWorldProvinces: [
-          Province(id: '$nw|p1', regionId: nw, ownerId: 'tribe_iro'),
-        ],
-        players: const [],
-        tribes: [const Tribe(id: 'tribe_iro')],
-      );
-
-      final result = resolveNonGreatPowerConnectivity(
-        game: game,
-        tileMapByRegion: {'newWorld': tileMap},
-        topology: topology,
-      );
-
-      expect(result['tribe_iro'], isNotNull);
-      expect(result['tribe_iro']!.connected, isEmpty);
-    });
-
+void _connectivity_resolver_non_gp_parity_testTests() {
+  group('resolveNonGreatPowerConnectivity parity / policy', () {
     test(
       'war does not block market access: enemy fleet on Blockade against minor port leaves minor connectivity unchanged',
       () {

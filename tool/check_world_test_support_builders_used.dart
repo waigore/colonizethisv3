@@ -10,11 +10,15 @@ const List<String> worldRequiredSupportBuilderNames = [
   'spyRevealFogGame',
   'ownershipTransferVisibilityGame',
   'coastalSeaVisibilityGame',
+  'distantSeaVisibilityGame',
+  'fogDecayVisibilityGame',
   'capitalLossGame',
   'gpCapitalReassignmentGame',
   'factionCapitalReassignmentGame',
   'ordersPhaseGame',
   'topologyGraph',
+  'gameWithArmies',
+  'gameWithFleets',
 ];
 
 const String _worldTestPrefix = 'packages/colonizethis_world/test/';

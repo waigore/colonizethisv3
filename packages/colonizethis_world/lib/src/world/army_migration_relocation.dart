@@ -159,53 +159,22 @@ RegionUnitLists _relocateRegimentInSameRegion({
   required String destinationProvinceId,
   required bool inOldWorld,
 }) {
-  if (inOldWorld) {
-    return _relocateRegimentInOldWorld(
-      ow,
-      nw,
-      regimentUnitId,
-      destinationProvinceId,
-    );
+  final lists = (ow: ow, nw: nw);
+  final regionId = inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+  Unit? current;
+  for (final u in lists.unitListForRegion(regionId)) {
+    if (u.id == regimentUnitId) {
+      current = u;
+      break;
+    }
   }
-  return _relocateRegimentInNewWorld(
-    ow,
-    nw,
+  if (current == null) return lists;
+  return lists.replaceUnitInRegion(
+    regionId,
     regimentUnitId,
-    destinationProvinceId,
+    current.copyWith(locationProvinceId: destinationProvinceId),
   );
 }
-
-RegionUnitLists _relocateRegimentInOldWorld(
-  List<Unit> ow,
-  List<Unit> nw,
-  String regimentUnitId,
-  String destinationProvinceId,
-) => (
-  ow: ow
-      .map(
-        (u) => u.id == regimentUnitId
-            ? u.copyWith(locationProvinceId: destinationProvinceId)
-            : u,
-      )
-      .toList(),
-  nw: nw,
-);
-
-RegionUnitLists _relocateRegimentInNewWorld(
-  List<Unit> ow,
-  List<Unit> nw,
-  String regimentUnitId,
-  String destinationProvinceId,
-) => (
-  ow: ow,
-  nw: nw
-      .map(
-        (u) => u.id == regimentUnitId
-            ? u.copyWith(locationProvinceId: destinationProvinceId)
-            : u,
-      )
-      .toList(),
-);
 
 RegionUnitLists _relocateRegimentAcrossRegions({
   required List<Unit> ow,
@@ -216,10 +185,11 @@ RegionUnitLists _relocateRegimentAcrossRegions({
   required String destinationRegionId,
   required bool inOldWorld,
 }) {
-  final unit = inOldWorld ? ow.removeAt(owIdx) : nw.removeAt(nwIdx);
+  final unit = inOldWorld ? ow[owIdx] : nw[nwIdx];
   final moved = unit.copyWith(locationProvinceId: destinationProvinceId);
-  if (destinationRegionId == kRegionOldWorld) {
-    return (ow: [...ow, moved], nw: nw);
-  }
-  return (ow: ow, nw: [...nw, moved]);
+  return (ow: ow, nw: nw).moveUnitAcrossRegions(
+    unit.id,
+    moved,
+    destinationRegionId,
+  );
 }

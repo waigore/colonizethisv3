@@ -7,7 +7,7 @@ import 'naval_coastal_visibility.dart'
     show coastalLandTileKeysFromNavalPresenceAtSea;
 import 'player_view.dart';
 import 'province_lookup.dart';
-import 'province_traversal.dart';
+import 'province_owner_cache.dart';
 import 'unit_lookup.dart';
 import 'visibility_map_helpers.dart' show mutableVisibilityByPlayerCopy;
 
@@ -22,7 +22,8 @@ applySpyRevealTimerDecay(Game game) {
   );
 
   // Province ownership lookup so we can ensure timers only affect other-faction provinces.
-  final ownerByProvinceId = ownerByProvinceIdMap(world);
+  final ownerByProvinceId =
+      ProvinceOwnerCache.of(world).ownerByProvinceId;
 
   final nextSpyTimers = <String, Map<String, int>>{};
   for (final entry in world.spyRevealTurnsByPlayer.entries) {
@@ -54,7 +55,7 @@ Map<String, Map<String, String>> applyFogDecay(
   MapTopology? navalCoastalIntelTopology,
 }) {
   const explorerTypes = {'explorer', 'spy'};
-  final ownerByProvince = ownerByProvinceIdMap(game.worldState);
+  final owners = ProvinceOwnerCache.of(game.worldState);
 
   final navalCoastalIntelByPlayer = <String, Set<String>>{};
   if (navalCoastalIntelTopology != null) {
@@ -88,7 +89,7 @@ Map<String, Map<String, String>> applyFogDecay(
     for (final tileKey in visibility.keys.toList()) {
       final fullProvinceId = fullProvinceIdFromTileKey(tileKey);
       if (fullProvinceId == null) continue;
-      final ownerId = ownerByProvince[fullProvinceId];
+      final ownerId = owners.ownerOf(fullProvinceId);
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;
       if (navalCoastalIntel.contains(tileKey)) continue;
