@@ -13,8 +13,16 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../planning/ai_planner_fixtures.dart';
+
 export 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show ExpandEconomyPlan;
+
+/// OW province id used by phase-planner dispatch COLONIAL / lite scaffolds.
+const String kColonialPhaseDispatchOwProvGp1 = 'oldWorld|gp1_a';
+
+/// Invadable OW minor province for dispatch EXPAND / COLONIAL-lite scaffolds.
+const String kColonialPhaseDispatchOwProvMinor = 'oldWorld|m1_a';
 
 /// Default active GP id used by most COLONIAL military / naval pins.
 const String kColonialPhaseGp1 = 'gp1';
@@ -115,6 +123,7 @@ Game buildColonialPhaseGame({
   List<Province> oldWorldProvinces = const [],
   List<Unit> oldWorldUnits = const [],
   List<Unit> newWorldUnits = const [],
+  List<Army> armies = const [],
   Map<String, String> resourceByTileKey = const {},
   TileMapState tileState = const TileMapState(),
   List<Player> players = kColonialPhaseDefaultPlayers,
@@ -130,6 +139,7 @@ Game buildColonialPhaseGame({
       turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: oldWorldProvinces, units: oldWorldUnits),
       newWorld: RegionData(provinces: newWorldProvinces, units: newWorldUnits),
+      armies: armies,
       resourceByTileKey: resourceByTileKey,
       tileState: tileState,
     ),
@@ -137,6 +147,89 @@ Game buildColonialPhaseGame({
     tribes: tribes,
     minorNations: minorNations,
     overtureStates: overtureStates,
+  );
+}
+
+/// Phase-planner dispatch COLONIAL-lite Game: turn ≥ 120, OW near quota
+/// scaffold with a tribe-owned NW province (Refs #3977).
+Game buildPhasePlannerDispatchColonialLiteGame({
+  int turnNumber = kObserverColonialLiteMinTurn + 5,
+  int regimentCount = 6,
+  int ownTreasury = 9999,
+}) {
+  return buildColonialPhaseGame(
+    turnNumber: turnNumber,
+    gameId: 'g-2509-phase-planner-dispatch-expand-t$turnNumber',
+    oldWorldProvinces: const [
+      Province(
+        id: kColonialPhaseDispatchOwProvGp1,
+        regionId: kOldWorldRegionId,
+        ownerId: kColonialPhaseGp1,
+      ),
+      Province(
+        id: kColonialPhaseDispatchOwProvMinor,
+        regionId: kOldWorldRegionId,
+        ownerId: kColonialPhaseMinor1,
+      ),
+    ],
+    newWorldProvinces: const [
+      Province(
+        id: kColonialPhaseNwProvTribeA,
+        regionId: kNewWorldRegionId,
+        ownerId: kColonialPhaseTribe1,
+      ),
+    ],
+    armies: [homeArmyWithRegiments(kColonialPhaseGp1, regimentCount)],
+    players: [
+      Player(
+        id: kColonialPhaseGp1,
+        displayName: 'GP1',
+        isHuman: false,
+        treasury: ownTreasury,
+      ),
+      const Player(id: kColonialPhaseGp2, displayName: 'GP2', isHuman: false),
+    ],
+    minorNations: const [
+      MinorNation(id: kColonialPhaseMinor1, displayName: 'Minor1'),
+    ],
+    tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'Tribe1')],
+  );
+}
+
+/// Phase-planner dispatch COLONIAL Game: OW at quota with NW invadable
+/// tribe province and Home Army regiment count (Refs #3977).
+Game buildPhasePlannerDispatchColonialGame({
+  int regimentCount = 6,
+  int ownTreasury = 9999,
+}) {
+  return buildColonialPhaseGame(
+    turnNumber: 130,
+    gameId: 'g-2509-phase-planner-dispatch-colonial',
+    oldWorldProvinces: const [
+      Province(
+        id: kColonialPhaseDispatchOwProvGp1,
+        regionId: kOldWorldRegionId,
+        ownerId: kColonialPhaseGp1,
+      ),
+    ],
+    newWorldProvinces: const [
+      Province(
+        id: kColonialPhaseNwProvTribeA,
+        regionId: kNewWorldRegionId,
+        ownerId: kColonialPhaseTribe1,
+      ),
+    ],
+    armies: [homeArmyWithRegiments(kColonialPhaseGp1, regimentCount)],
+    players: [
+      Player(
+        id: kColonialPhaseGp1,
+        displayName: 'GP1',
+        isHuman: false,
+        treasury: ownTreasury,
+      ),
+      const Player(id: kColonialPhaseGp2, displayName: 'GP2', isHuman: false),
+    ],
+    tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'Tribe1')],
   );
 }
 
