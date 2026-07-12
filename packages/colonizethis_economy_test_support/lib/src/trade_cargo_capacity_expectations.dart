@@ -1,5 +1,5 @@
 // dart format off
-// Compact trade cargo capacity assertions (Refs #3939 phase 3 slice 35).
+// Compact trade cargo capacity assertions (Refs #3939 phase 3 slice 35, #3979).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
@@ -21,7 +21,17 @@ void runOverseasShippedTonnageExpectation(OverseasShippedTonnagePins pins) {
   }
 }
 
-OverseasShippedTonnageScenario overseasShippedTonnageScenario({required String label, required OverseasShippedTonnagePins pins}) => (label: label, run: () => runOverseasShippedTonnageExpectation(pins), refs: null);
+OverseasShippedTonnageScenario overseasShippedTonnageScenario({required String label, required OverseasShippedTonnagePins pins}) => (label: label, pins: pins, refs: null);
+
+/// Discriminator for GP trade-cargo capacity rows (Refs #3979).
+enum TradeCargoCapacityGpTarget { emptyTileMaps }
+
+void runTradeCargoCapacityGpExpectation(TradeCargoCapacityGpTarget target) {
+  switch (target) {
+    case TradeCargoCapacityGpTarget.emptyTileMaps:
+      runTradeCargoCapacityEmptyTileMapsExpectation();
+  }
+}
 
 void runTradeCargoCapacityEmptyTileMapsExpectation() {
   final game = minimalGpGame();
@@ -36,7 +46,7 @@ void runTradeCargoCapacityEmptyTileMapsExpectation() {
   );
 }
 
-TradeCargoCapacityForGreatPowerScenario tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (label: label, run: runTradeCargoCapacityEmptyTileMapsExpectation, refs: null);
+TradeCargoCapacityForGreatPowerScenario tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (label: label, target: TradeCargoCapacityGpTarget.emptyTileMaps, refs: null);
 
 Game _gameWithGp(String id) => minimalGpGame(playerId: id);
 
@@ -68,7 +78,10 @@ void runForecastOverseasTonnageExpectation(ForecastOverseasTonnagePins pins) {
   }
 }
 
-ExtractionByIdBypassScenario forecastOverseasTonnageScenario({required String label, required ForecastOverseasTonnagePins pins, String? refs}) => (label: label, run: () => runForecastOverseasTonnageExpectation(pins), refs: refs);
+/// Discriminator for extractionById bypass rows (Refs #3979).
+enum ExtractionByIdBypassKind { forecast, capacity, emptyMaps }
+
+ExtractionByIdBypassScenario forecastOverseasTonnageScenario({required String label, required ForecastOverseasTonnagePins pins, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.forecast, forecastPins: pins, capacityPins: null, refs: refs);
 
 /// Pins for trade-cargo capacity with pre-computed extraction rows.
 typedef TradeCargoCapacityExtractionPins = ({String playerId, Map<String, ExtractionTotals> extractionById, int overseasTonnageSubtracted});
@@ -80,12 +93,12 @@ void runTradeCargoCapacityExtractionExpectation(TradeCargoCapacityExtractionPins
   expect(capacity, holds - pins.overseasTonnageSubtracted);
 }
 
-ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({required String label, required TradeCargoCapacityExtractionPins pins, String? refs}) => (label: label, run: () => runTradeCargoCapacityExtractionExpectation(pins), refs: refs);
+ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({required String label, required TradeCargoCapacityExtractionPins pins, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.capacity, forecastPins: null, capacityPins: pins, refs: refs);
 
 void runComputeExtractionTotalsEmptyMapsExpectation() {
   final game = _gameWithGp('gp1');
   expect(computeExtractionTotalsForTradeForecast(game: game, tileMapByRegion: const {}, topology: _emptyTopologyForTradeCargo), isEmpty);
 }
 
-ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({required String label, String? refs}) => (label: label, run: runComputeExtractionTotalsEmptyMapsExpectation, refs: refs);
+ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({required String label, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.emptyMaps, forecastPins: null, capacityPins: null, refs: refs);
 // dart format on

@@ -1,5 +1,5 @@
 // dart format off
-// Compact economy production assertions (Refs #3939 phase 3 slice 37).
+// Compact economy production assertions (Refs #3939 phase 3 slice 37, #3979).
 
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -28,15 +28,15 @@ void runResolveProductionExpectation(ResolveProductionPins pins) {
   }
 }
 
-EconomyProductionScenario resolveProductionScenario({required String label, required ResolveProductionPins pins, String? refs}) => (label: label, run: () => runResolveProductionExpectation(pins), refs: refs);
+ResolveProductionScenario resolveProductionScenario({required String label, required ResolveProductionPins pins, String? refs}) => (label: label, pins: pins, refs: refs);
 
-/// Pins for [effectiveLabourForWorkers] rows.
-typedef EffectiveLabourPins = ({WorkerPool workers, Map<String, int> stockpileDeltas, int expectedLabour});
+/// Pins for production [effectiveLabourForWorkers] rows (Refs #3979).
+typedef ProductionEffectiveLabourPins = ({WorkerPool workers, Map<String, int> stockpileDeltas, int expectedLabour});
 
-void runEffectiveLabourExpectation(EffectiveLabourPins pins) {
+void runProductionEffectiveLabourExpectation(ProductionEffectiveLabourPins pins) {
   final stockpile = stockpileWithDeltas(pins.stockpileDeltas);
   expect(effectiveLabourForWorkers(workers: pins.workers, stockpile: stockpile), pins.expectedLabour);
 }
 
-EconomyProductionScenario effectiveLabourScenario({required String label, required EffectiveLabourPins pins, String? refs}) => (label: label, run: () => runEffectiveLabourExpectation(pins), refs: refs);
+ProductionEffectiveLabourScenario productionEffectiveLabourScenario({required String label, required ProductionEffectiveLabourPins pins, String? refs}) => (label: label, pins: pins, refs: refs);
 // dart format on

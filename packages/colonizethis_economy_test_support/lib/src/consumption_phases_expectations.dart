@@ -24,7 +24,7 @@ void runMilitaryFoodConsumption({required int stockpileGrain, Map<String, int>? 
   }
 }
 
-ConsumptionPhaseScenario militaryFoodScenario({required String label, required int stockpileGrain, Map<String, int>? regimentCountsById, int? militaryUnits, required FoodConsumptionPins pins}) => (label: label, verify: () => runMilitaryFoodConsumption(stockpileGrain: stockpileGrain, regimentCountsById: regimentCountsById, militaryUnits: militaryUnits, pins: pins), refs: null);
+MilitaryFoodScenario militaryFoodScenario({required String label, required int stockpileGrain, Map<String, int>? regimentCountsById, int? militaryUnits, required FoodConsumptionPins pins}) => (label: label, stockpileGrain: stockpileGrain, regimentCountsById: regimentCountsById, militaryUnits: militaryUnits, pins: pins, refs: null);
 
 void runNavyFoodConsumption({required int stockpileGrain, Map<String, int>? shipCountsById, FoodConsumptionPins? pins, bool expectUnknownShipThrows = false}) {
   final stockpile = Stockpile().applyDelta(_grainId, stockpileGrain);
@@ -41,7 +41,7 @@ void runNavyFoodConsumption({required int stockpileGrain, Map<String, int>? ship
   }
 }
 
-ConsumptionPhaseScenario navyFoodScenario({required String label, required int stockpileGrain, Map<String, int>? shipCountsById, FoodConsumptionPins? pins, bool expectUnknownShipThrows = false}) => (label: label, verify: () => runNavyFoodConsumption(stockpileGrain: stockpileGrain, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows), refs: null);
+NavyFoodScenario navyFoodScenario({required String label, required int stockpileGrain, Map<String, int>? shipCountsById, FoodConsumptionPins? pins, bool expectUnknownShipThrows = false}) => (label: label, stockpileGrain: stockpileGrain, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows, refs: null);
 
 /// Data-driven expectations for [consumeWorkerFood] rows.
 class WorkerFoodConsumptionExpectation {
@@ -77,7 +77,7 @@ void runWorkerFoodConsumption({required Stockpile stockpile, required WorkerPool
   }
 }
 
-ConsumptionPhaseScenario workerFoodScenario({required String label, required Stockpile stockpile, required WorkerPool workers, required WorkerFoodConsumptionExpectation expectation}) => (label: label, verify: () => runWorkerFoodConsumption(stockpile: stockpile, workers: workers, expectation: expectation), refs: null);
+WorkerFoodScenario workerFoodScenario({required String label, required Stockpile stockpile, required WorkerPool workers, required WorkerFoodConsumptionExpectation expectation}) => (label: label, stockpile: stockpile, workers: workers, expectation: expectation, refs: null);
 
 /// Pins for [assignWorkerLuxury] rows.
 typedef WorkerLuxuryPins = ({int withLuxury, int sugarRemaining});
@@ -88,7 +88,7 @@ void runWorkerLuxuryAssignment({required Stockpile stockpile, required int foodF
   expect(next.quantityOf(_sugarId), pins.sugarRemaining);
 }
 
-ConsumptionPhaseScenario workerLuxuryScenario({required String label, required Stockpile stockpile, required int foodFedCount, required WorkerLuxuryPins pins}) => (label: label, verify: () => runWorkerLuxuryAssignment(stockpile: stockpile, foodFedCount: foodFedCount, pins: pins), refs: null);
+WorkerLuxuryScenario workerLuxuryScenario({required String label, required Stockpile stockpile, required int foodFedCount, required WorkerLuxuryPins pins}) => (label: label, stockpile: stockpile, foodFedCount: foodFedCount, pins: pins, refs: null);
 
 /// Pins for [consumeFoodUnits] rows.
 typedef FoodUnitsPins = ({int consumed, int grainRemaining, int? meatRemaining});
@@ -102,5 +102,5 @@ void runFoodUnitsConsumption({required Stockpile stockpile, required int require
   }
 }
 
-ConsumptionPhaseScenario foodUnitsScenario({required String label, required Stockpile stockpile, required int required, required FoodUnitsPins pins}) => (label: label, verify: () => runFoodUnitsConsumption(stockpile: stockpile, requiredUnits: required, pins: pins), refs: null);
+FoodUnitsScenario foodUnitsScenario({required String label, required Stockpile stockpile, required int required, required FoodUnitsPins pins}) => (label: label, stockpile: stockpile, required: required, pins: pins, refs: null);
 // dart format on

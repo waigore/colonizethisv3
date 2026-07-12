@@ -87,7 +87,7 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
   }
 }
 
-ApplyTradeInterceptionScenario applyTradeInterceptionScenario({required String label, required ApplyTradeInterceptionTarget target, String? refs}) => (label: label, run: () => runApplyTradeInterceptionExpectation(target), refs: refs);
+ApplyTradeInterceptionScenario applyTradeInterceptionScenario({required String label, required ApplyTradeInterceptionTarget target, String? refs}) => (label: label, target: target, refs: refs);
 
 /// Pins for [scanTradeInterceptionInputs] rows.
 enum TradeInterceptionScanTarget { noEnemyPatrol, merchantEscortCount, enemyBlockade, privateeringScales }
@@ -128,5 +128,5 @@ void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
   }
 }
 
-TradeInterceptionScanScenario tradeInterceptionScanScenario({required String label, required TradeInterceptionScanTarget target, String? refs}) => (label: label, run: () => runTradeInterceptionScanExpectation(target), refs: refs);
+TradeInterceptionScanScenario tradeInterceptionScanScenario({required String label, required TradeInterceptionScanTarget target, String? refs}) => (label: label, target: target, refs: refs);
 // dart format on

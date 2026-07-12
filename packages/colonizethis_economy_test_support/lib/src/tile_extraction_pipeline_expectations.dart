@@ -42,7 +42,7 @@ void runResolveTileKeyResourceContextExpectation(ResolveTileKeyResourceContextTa
   }
 }
 
-ResolveTileKeyResourceContextScenario resolveTileKeyResourceContextScenario({required String label, required ResolveTileKeyResourceContextTarget target, String? refs}) => (label: label, run: () => runResolveTileKeyResourceContextExpectation(target), refs: refs);
+ResolveTileKeyResourceContextScenario resolveTileKeyResourceContextScenario({required String label, required ResolveTileKeyResourceContextTarget target, String? refs}) => (label: label, target: target, refs: refs);
 
 const _extractionContextProvinceId = 'oldWorld|p1';
 
@@ -76,5 +76,5 @@ void runResolveTileKeyExtractionContextExpectation(ResolveTileKeyExtractionConte
   }
 }
 
-ResolveTileKeyExtractionContextScenario resolveTileKeyExtractionContextScenario({required String label, required ResolveTileKeyExtractionContextTarget target, String? refs}) => (label: label, run: () => runResolveTileKeyExtractionContextExpectation(target), refs: refs);
+ResolveTileKeyExtractionContextScenario resolveTileKeyExtractionContextScenario({required String label, required ResolveTileKeyExtractionContextTarget target, String? refs}) => (label: label, target: target, refs: refs);
 // dart format on

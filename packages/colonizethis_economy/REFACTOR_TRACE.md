@@ -1355,3 +1355,13 @@ Deferred to follow-up commits on this issue: remaining `void Function() run` sce
 | resolve-consumption-pins | `ResolveConsumptionScenario` data + pins | `consumption_scenarios.dart`, `consumption_expectations.dart` | #3979 |
 
 Deferred: remaining `void Function() run` modules (sea transport, trade interception, extraction, production, projected cost, cargo capacity, purchased-tile attribution, tile pipeline, trade interception); consumption-phase rows still use thin `verify` wrappers over expectation helpers; optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 3 — finish leftover run/verify shells (Refs #3979)
+
+| Slice | Goal | Outcome | Refs |
+|-------|------|---------|------|
+| leftover-run-pins | Migrate remaining `void Function() run` scenario modules to pins/targets | sea_transport, trade_interception, trade_cargo_capacity, projected_cost, tile_extraction_*, economy_extraction, economy_production, purchased-tile attribution | #3979 |
+| consumption-phase-pins | Replace thin `verify` wrappers with typed pin scenario records | `consumption_phases_*.dart`, `economy_consumption_phases_test.dart` | #3979 |
+| treasury-gate-session | Point `repo.economy_deal_matcher_treasury_budget_shared` at `deal_matcher_session.dart` after de-part | `tool/check_economy_deal_matcher_treasury_shared.dart` | #3979 |
+
+Deferred: optional group `setUpAll` caching / wall-clock median note.

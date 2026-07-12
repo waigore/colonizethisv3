@@ -66,7 +66,7 @@ void main() {
     runLabeledScenarios(purchasedTileAttributionSemanticsScenarios(), (
       scenario,
     ) {
-      scenario.run();
+      runPurchasedTileAttributionSemanticsScenario(scenario);
     }, labelOf: (s) => s.label);
   });
 

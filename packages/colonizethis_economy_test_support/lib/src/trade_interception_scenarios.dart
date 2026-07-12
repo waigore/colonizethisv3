@@ -1,13 +1,13 @@
-// Table-driven trade-interception scenarios (Refs #3939 phase 3).
+// Table-driven trade-interception scenarios (Refs #3939 phase 3, #3979).
 
 import 'trade_interception_expectations.dart';
 
 // dart format off
-/// One row in [applyTradeInterceptionScenarios] (Refs #3939 slice 64).
-typedef ApplyTradeInterceptionScenario = ({String label, void Function() run, String? refs});
+/// One row in [applyTradeInterceptionScenarios] (Refs #3979).
+typedef ApplyTradeInterceptionScenario = ({String label, ApplyTradeInterceptionTarget target, String? refs});
 
 void runApplyTradeInterceptionScenario(ApplyTradeInterceptionScenario scenario) {
-  scenario.run();
+  runApplyTradeInterceptionExpectation(scenario.target);
 }
 
 /// Canonical scenarios for [applyTradeInterception].
@@ -23,11 +23,11 @@ List<ApplyTradeInterceptionScenario> applyTradeInterceptionScenarios() => [
   applyTradeInterceptionScenario(label: 'can remove merchant ships when interception triggers and RNG hits', target: ApplyTradeInterceptionTarget.shipRemovalLoop),
 ];
 
-/// One row in [tradeInterceptionScanScenarios] (Refs #3939 slice 64).
-typedef TradeInterceptionScanScenario = ({String label, void Function() run, String? refs});
+/// One row in [tradeInterceptionScanScenarios] (Refs #3979).
+typedef TradeInterceptionScanScenario = ({String label, TradeInterceptionScanTarget target, String? refs});
 
 void runTradeInterceptionScanScenario(TradeInterceptionScanScenario scenario) {
-  scenario.run();
+  runTradeInterceptionScanExpectation(scenario.target);
 }
 
 /// Canonical scenarios for [scanTradeInterceptionInputs].

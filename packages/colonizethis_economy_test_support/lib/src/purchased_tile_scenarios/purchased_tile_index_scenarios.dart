@@ -9,46 +9,58 @@ import 'package:colonizethis_test/test.dart';
 import 'purchased_tile_expectations.dart';
 import 'purchased_tile_index_test_support.dart';
 
-/// One row in [purchasedTileAttributionSemanticsScenarios].
-typedef PurchasedTileAttributionSemanticsScenario = ({String label, void Function() run, String? refs});
+/// One row in [purchasedTileAttributionSemanticsScenarios] (Refs #3979).
+typedef PurchasedTileAttributionSemanticsScenario = ({
+  String label,
+  PurchasedTileAttributionSemanticsTarget target,
+  String? refs,
+});
+
+void runPurchasedTileAttributionSemanticsScenario(
+  PurchasedTileAttributionSemanticsScenario scenario,
+) {
+  runPurchasedTileAttributionSemanticsExpectation(scenario.target);
+}
+
+/// Discriminator for attribution semantics rows (Refs #3979).
+enum PurchasedTileAttributionSemanticsTarget {
+  equality,
+  inequality,
+  toStringFields,
+}
 
 /// Canonical K1 attribution for semantics rows (Refs #3939 slice 56).
 const PurchasedTileAttribution _kAttrM1GpA = PurchasedTileAttribution(tileKey: 'oldWorld|M1|0|0', owningGpId: 'gpA', sourceFactionId: 'M1', provinceId: 'oldWorld|M1');
 
 PurchasedTileAttribution _attr({String? tileKey, String? owningGpId, String? sourceFactionId, String? provinceId}) => PurchasedTileAttribution(tileKey: tileKey ?? _kAttrM1GpA.tileKey, owningGpId: owningGpId ?? _kAttrM1GpA.owningGpId, sourceFactionId: sourceFactionId ?? _kAttrM1GpA.sourceFactionId, provinceId: provinceId ?? _kAttrM1GpA.provinceId);
 
-/// Canonical scenarios for [PurchasedTileAttribution] value semantics.
-List<PurchasedTileAttributionSemanticsScenario> purchasedTileAttributionSemanticsScenarios() => [
-  (
-    label: 'equality holds across all four fields',
-    run: () {
+void runPurchasedTileAttributionSemanticsExpectation(
+  PurchasedTileAttributionSemanticsTarget target,
+) {
+  switch (target) {
+    case PurchasedTileAttributionSemanticsTarget.equality:
       final a = _kAttrM1GpA;
       final b = _attr();
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
-    },
-    refs: null,
-  ),
-  (
-    label: 'inequality on any differing field',
-    run: () {
+    case PurchasedTileAttributionSemanticsTarget.inequality:
       expect(_kAttrM1GpA, isNot(equals(_attr(tileKey: 'oldWorld|M1|1|0'))));
       expect(_kAttrM1GpA, isNot(equals(_attr(owningGpId: 'gpB'))));
       expect(_kAttrM1GpA, isNot(equals(_attr(sourceFactionId: 'M2'))));
       expect(_kAttrM1GpA, isNot(equals(_attr(provinceId: 'oldWorld|M2'))));
-    },
-    refs: null,
-  ),
-  (
-    label: 'toString surfaces every field for trace logs',
-    run: () {
+    case PurchasedTileAttributionSemanticsTarget.toStringFields:
       final s = _kAttrM1GpA.toString();
       expect(s, contains('oldWorld|M1|0|0'));
       expect(s, contains('gpA'));
       expect(s, contains('M1'));
-    },
-    refs: null,
-  ),
+  }
+}
+
+/// Canonical scenarios for [PurchasedTileAttribution] value semantics.
+List<PurchasedTileAttributionSemanticsScenario> purchasedTileAttributionSemanticsScenarios() => [
+  (label: 'equality holds across all four fields', target: PurchasedTileAttributionSemanticsTarget.equality, refs: null),
+  (label: 'inequality on any differing field', target: PurchasedTileAttributionSemanticsTarget.inequality, refs: null),
+  (label: 'toString surfaces every field for trace logs', target: PurchasedTileAttributionSemanticsTarget.toStringFields, refs: null),
 ];
 
 /// One row in [purchasedTileIndexFromGameScenarios] (Refs #3939 slice 64).
