@@ -1,5 +1,5 @@
-/// Pins Phase-5 topic splits for S7-D findings + orchestrator support
-/// (Refs #3972 AC3 / AC4).
+/// Pins Phase-5/6 topic splits for S7-D findings + orchestrator support
+/// (Refs #3972 AC3 / AC4; #3977 AC4).
 library;
 
 import 'dart:io';
@@ -130,6 +130,57 @@ void main() {
       ).readAsStringSync();
       expect(barrel.contains('kGp1OwProvincesBelowQuota'), isFalse);
       expect(barrel.contains('Game buildOrchestrator'), isFalse);
+    });
+  });
+
+  group('s7d diagnostic orchestration shrink (Refs #3977 AC4)', () {
+    test('diagnostic contract is orchestration-only and under 800 lines', () {
+      final contract = File(
+        p.join(
+          packageRoot,
+          'test',
+          'seed42_observer_conquest_s7d_diagnostic_test.dart',
+        ),
+      );
+      final lines = contract.readAsLinesSync();
+      expect(lines.length, lessThanOrEqualTo(800));
+      final source = contract.readAsStringSync();
+      expect(source, contains('runSeed42S7dDiagnosticCampaign'));
+      expect(source, isNot(contains('runSeed42ObserverCampaign(')));
+      expect(source, isNot(contains('S7D_DIAGNOSTIC_JSON_BEGIN')));
+    });
+
+    test('campaign runner lives under support/s7d', () {
+      expect(
+        File(
+          p.join(s7dDir.path, 'run_seed42_s7d_diagnostic_campaign.dart'),
+        ).existsSync(),
+        isTrue,
+      );
+    });
+
+    test('feedstock helper unit tests live under support_test/', () {
+      expect(
+        File(
+          p.join(
+            packageRoot,
+            'test',
+            'support_test',
+            'seed42_s7d_feedstock_helpers_test.dart',
+          ),
+        ).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(
+          p.join(
+            packageRoot,
+            'test',
+            'seed42_s7d_feedstock_helpers_test.dart',
+          ),
+        ).existsSync(),
+        isFalse,
+      );
     });
   });
 }

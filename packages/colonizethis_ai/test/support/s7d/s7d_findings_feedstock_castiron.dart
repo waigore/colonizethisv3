@@ -392,7 +392,7 @@ library;
 /// already satisfied on the feasible turns). This slice is read-only diagnostic
 /// instrumentation (no behaviour change, no config constants, no gate-threshold
 /// changes; positive + negative unit tests for the two helpers in
-/// `seed42_s7d_feedstock_helpers_test.dart`).
+/// `support_test/seed42_s7d_feedstock_helpers_test.dart`).
 ///
 /// ## S7-D refresh (captured 2026-06-06 — castIron labour-starvation sub-cause
 ///     fork resolved: population-bound, not food-starved; Refs #2847)
@@ -440,7 +440,7 @@ library;
 /// read-only diagnostic instrumentation (no behaviour change, no config
 /// constants, no gate-threshold changes; positive + negative unit tests for the
 /// three helpers `playerEffectiveLabour` / `playerRawLabourSupply` /
-/// `playerFoodOnHand` in `seed42_s7d_feedstock_helpers_test.dart`).
+/// `playerFoodOnHand` in `support_test/seed42_s7d_feedstock_helpers_test.dart`).
 ///
 /// ## Refs #2847 — #3303 peasant-recruit effectiveness (circular fabric lock)
 ///

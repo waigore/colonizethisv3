@@ -2,7 +2,7 @@
 //
 // Pins the feedstock key surface used by the campaign diagnostic JSON without
 // re-running the 100-turn observer loop. Probe behaviour remains covered by
-// `seed42_s7d_feedstock_helpers_test.dart` and `support/s7d/*`.
+// `support_test/seed42_s7d_feedstock_helpers_test.dart` and `support/s7d/*`.
 
 import 'package:colonizethis_test/test.dart';
 
