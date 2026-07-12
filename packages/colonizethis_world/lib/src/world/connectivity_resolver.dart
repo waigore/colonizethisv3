@@ -75,23 +75,19 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
-    final capital = player.capitalTile;
-    if (capital == null || player.capitalProvinceId == null) {
-      worldLog.d(
-        'connectivity resolve player=${player.id} skipped (no capital)',
-      );
-      result[player.id] = const ConnectivityResult(connected: {});
-      continue;
-    }
-
-    result[player.id] = input.resolveFaction(
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
       game: game,
       factionId: player.id,
-      capital: capital,
+      capitalTile: player.capitalTile,
+      capitalProvinceId: player.capitalProvinceId,
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
       metrics: metrics,
+      skipLogMessage:
+          'connectivity resolve player=${player.id} skipped (no capital)',
     );
   }
 
@@ -151,41 +147,36 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
   );
   final result = <String, ConnectivityResult>{};
 
-  void runForFaction({
-    required String factionId,
-    required CapitalTile? capitalTile,
-    required String? capitalProvinceId,
-  }) {
-    if (capitalTile == null || capitalProvinceId == null) {
-      worldLog.d(
-        'non_gp connectivity resolve faction=$factionId skipped (no capital)',
-      );
-      result[factionId] = const ConnectivityResult(connected: {});
-      return;
-    }
-    result[factionId] = input.resolveFaction(
+  for (final minor in game.minorNations) {
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
       game: game,
-      factionId: factionId,
-      capital: capitalTile,
+      factionId: minor.id,
+      capitalTile: minor.capitalTile,
+      capitalProvinceId: minor.capitalProvinceId,
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       blockadedPortProvinces: const <String>{},
       metrics: metrics,
-    );
-  }
-
-  for (final minor in game.minorNations) {
-    runForFaction(
-      factionId: minor.id,
-      capitalTile: minor.capitalTile,
-      capitalProvinceId: minor.capitalProvinceId,
+      skipLogMessage:
+          'non_gp connectivity resolve faction=${minor.id} skipped (no capital)',
     );
   }
   for (final tribe in game.tribes) {
-    runForFaction(
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
+      game: game,
       factionId: tribe.id,
       capitalTile: tribe.capitalTile,
       capitalProvinceId: tribe.capitalProvinceId,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+      blockadedPortProvinces: const <String>{},
+      metrics: metrics,
+      skipLogMessage:
+          'non_gp connectivity resolve faction=${tribe.id} skipped (no capital)',
     );
   }
 
@@ -194,4 +185,38 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
       .join(' ');
   worldLog.d('non_gp connectivity resolve end $summary');
   return result;
+}
+
+/// Shared per-faction resolve shell for GP and non-GP entrypoints (Refs #3978).
+///
+/// Policy (blockade set, faction source, log prefix) stays on the public
+/// callers — this helper only centralizes missing-capital → empty result and
+/// the [ConnectivityFactionInput.resolveFaction] call.
+void _putFactionConnectivityResult({
+  required Map<String, ConnectivityResult> result,
+  required ConnectivityFactionInput input,
+  required Game game,
+  required String factionId,
+  required CapitalTile? capitalTile,
+  required String? capitalProvinceId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+  required Set<String> blockadedPortProvinces,
+  required String skipLogMessage,
+  ConnectivityHotPathMetrics? metrics,
+}) {
+  if (capitalTile == null || capitalProvinceId == null) {
+    worldLog.d(skipLogMessage);
+    result[factionId] = const ConnectivityResult(connected: {});
+    return;
+  }
+  result[factionId] = input.resolveFaction(
+    game: game,
+    factionId: factionId,
+    capital: capitalTile,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+    blockadedPortProvinces: blockadedPortProvinces,
+    metrics: metrics,
+  );
 }
