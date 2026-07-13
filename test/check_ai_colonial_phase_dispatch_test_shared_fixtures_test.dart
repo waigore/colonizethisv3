@@ -5,9 +5,9 @@ import 'package:test/test.dart';
 
 import '../tool/check_ai_colonial_phase_dispatch_test_shared_fixtures.dart';
 
-const String _localColonialLiteBody =
+const String _localExpandSnapshotBody =
     "import 'package:test/test.dart';\n\n"
-    'Game _colonialLiteGame() {\n'
+    'AIWorldSnapshot _expandSnapshot() {\n'
     '  throw UnimplementedError();\n'
     '}\n\n'
     'void main() {}\n';
@@ -16,17 +16,48 @@ const String _sharedImportBody =
     "import 'package:test/test.dart';\n"
     "import '../support/colonial_phase_planner_test_support.dart';\n\n"
     'void main() {\n'
-    '  final game = buildPhasePlannerDispatchColonialLiteGame();\n'
+    '  final game = buildPhasePlannerDispatchExpandGame();\n'
+    '  final snap = buildPhasePlannerDispatchExpandSnapshot();\n'
     '  expect(game.players, isNotEmpty);\n'
+    '  expect(snap.playerId, isNotEmpty);\n'
     '}\n';
 
 void main() {
   group('runCheckAiColonialPhaseDispatchTestSharedFixtures', () {
+    test('fails when dispatch redeclares _expandSnapshot', () {
+      final temp = Directory.systemTemp.createTempSync('ai-disp-expand-');
+      try {
+        _writeSupportStub(temp);
+        _writeDispatchTest(temp, _localExpandSnapshotBody);
+        final errors = <String>[];
+        final exitCode = runCheckAiColonialPhaseDispatchTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_expandSnapshot'));
+        expect(
+          errors.join('\n'),
+          contains('buildPhasePlannerDispatchExpandSnapshot'),
+        );
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('fails when dispatch redeclares _colonialLiteGame', () {
       final temp = Directory.systemTemp.createTempSync('ai-disp-lite-');
       try {
         _writeSupportStub(temp);
-        _writeDispatchTest(temp, _localColonialLiteBody);
+        _writeDispatchTest(
+          temp,
+          "import 'package:test/test.dart';\n\n"
+          'Game _colonialLiteGame() {\n'
+          '  throw UnimplementedError();\n'
+          '}\n\n'
+          'void main() {}\n',
+        );
         final errors = <String>[];
         final exitCode = runCheckAiColonialPhaseDispatchTestSharedFixtures(
           temp.path,
@@ -84,7 +115,13 @@ void _writeSupportStub(Directory temp) {
     p.join(support.path, 'colonial_phase_planner_test_support.dart'),
   ).writeAsStringSync(
     'Object buildPhasePlannerDispatchColonialLiteGame() => Object();\n'
-    'Object buildPhasePlannerDispatchColonialGame() => Object();\n',
+    'Object buildPhasePlannerDispatchColonialGame() => Object();\n'
+    'Object buildPhasePlannerDispatchExpandGame() => Object();\n'
+    'Object buildPhasePlannerDispatchDevelopGame() => Object();\n'
+    'Object buildPhasePlannerDispatchExpandSnapshot() => Object();\n'
+    'Object buildPhasePlannerDispatchColonialLiteSnapshot() => Object();\n'
+    'Object buildPhasePlannerDispatchColonialSnapshot() => Object();\n'
+    'Object buildPhasePlannerDispatchDevelopSnapshot() => Object();\n',
   );
 }
 

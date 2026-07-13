@@ -60,7 +60,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Explicit NW-acquisition-zero phase plan emulating the legacy
 // hard-suppress contract for EXPAND-phase regression assertions
@@ -129,69 +128,8 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> EXPAND (below the observer quota of 10).
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      provincesToVictory: 24,
-    ),
-    // Tribe is both a visible NW invadable owner **and** a preferred
-    // colonial target so the EXPAND `declareWar` score collapse path in
-    // `computeDiplomaticCandidateScores` is exercised across all
-    // triggering predicates (tribe / preferred / invadable owner) —
-    // matches the scoring-level fixture for `EXPAND suppresses NW
-    // declareWar scoring`.
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
-
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 11 OW provinces -> COLONIAL when colonial acquisition targets are
-    // visible. The EXPAND NW declareWar suppression must **not** fire
-    // here so the COLONIAL acquisition path "declare-war + NW invasion"
-    // remains reachable (SPEC § COLONIAL phase, acquisition priority).
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
+// Snapshots: buildOrchestratorExpandNwTribeTargetSnapshot /
+// buildOrchestratorColonialNwTribeTargetSnapshot (Refs #3997).
 
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
@@ -216,7 +154,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -286,7 +224,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _colonialSnapshot();
+        final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(tribeRelationScore: 0);
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -344,7 +282,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
         DomainPlannerInput(

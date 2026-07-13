@@ -40,6 +40,232 @@ AIWorldSnapshot buildOrchestratorExpandMinorWarAtWarSnapshot({
   );
 }
 
+/// EXPAND below-quota snapshot with visible NW tribe acquisition targets.
+///
+/// Shared by NW `declareWar` / `establishOverture` suppression and COLONIAL
+/// tribe declare-war EXPAND negative controls (Refs #3997).
+///
+/// When [tribePeaceRelationScore] is non-null, embeds an at-peace tribe
+/// relation at that score; otherwise [relations] is empty.
+AIWorldSnapshot buildOrchestratorExpandNwTribeTargetSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String tribeId = kOrchestratorTribeId,
+  String tribeNwProvince = kOrchestratorTribeNwProvince,
+  int oldWorldProvincesOwned = 7,
+  int provincesToVictory = 24,
+  int? tribePeaceRelationScore,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: const ThreatSummary(),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+    ),
+    colonial: ColonialSummary(
+      invadableNewWorldProvinceIdsSorted: [tribeNwProvince],
+      adjacentNewWorldOwnerFactionIdsSorted: [tribeId],
+      preferredColonialTargetFactionIdsSorted: [tribeId],
+    ),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: tribePeaceRelationScore == null
+        ? const <String, DiplomacyRelation>{}
+        : <String, DiplomacyRelation>{
+            tribeId: DiplomacyRelation(
+              factionId1: playerId,
+              factionId2: tribeId,
+              state: RelationState.atPeace,
+              score: tribePeaceRelationScore,
+            ),
+          },
+  );
+}
+
+/// COLONIAL at-/past-quota snapshot with visible NW tribe acquisition targets.
+///
+/// Shared by NW suppression COLONIAL controls, COLONIAL tribe declare-war
+/// positive pins, and diplomatic-scoring COLONIAL tribe pins (Refs #3997).
+///
+/// When [adjacentNewWorldOwnerFactionIdsSorted] is omitted, defaults to
+/// `[tribeId]` (orchestrator adjacency geometry). Pass an empty list for
+/// scoring pins that historically omitted adjacent NW owners.
+AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String tribeId = kOrchestratorTribeId,
+  String tribeNwProvince = kOrchestratorTribeNwProvince,
+  int oldWorldProvincesOwned = 11,
+  int provincesToVictory = 20,
+  int newWorldProvincesOwned = 0,
+  List<String> atWarWith = const <String>[],
+  List<String>? adjacentNewWorldOwnerFactionIdsSorted,
+  int? tribeRelationScore,
+  RelationState tribeRelationState = RelationState.atPeace,
+}) {
+  final adjacentOwners =
+      adjacentNewWorldOwnerFactionIdsSorted ?? <String>[tribeId];
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: ThreatSummary(atWarWith: atWarWith),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+    ),
+    colonial: ColonialSummary(
+      newWorldProvincesOwned: newWorldProvincesOwned,
+      invadableNewWorldProvinceIdsSorted: [tribeNwProvince],
+      adjacentNewWorldOwnerFactionIdsSorted: adjacentOwners,
+      preferredColonialTargetFactionIdsSorted: [tribeId],
+    ),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: tribeRelationScore == null
+        ? const <String, DiplomacyRelation>{}
+        : <String, DiplomacyRelation>{
+            tribeId: DiplomacyRelation(
+              factionId1: playerId,
+              factionId2: tribeId,
+              state: tribeRelationState,
+              score: tribeRelationScore,
+            ),
+          },
+  );
+}
+
+/// EXPAND below-quota snapshot with a GP-only invadable OW frontier.
+AIWorldSnapshot buildOrchestratorExpandGpOnlyBlockerSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String blockerGpId = kOrchestratorBlockerGpId,
+  List<String> invadableProvinceIdsSorted = kOrchestratorBlockerOwProvinces,
+  int oldWorldProvincesOwned = 7,
+  int provincesToVictory = 24,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: const ThreatSummary(),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
+      adjacentOwnerFactionIdsSorted: <String>[blockerGpId],
+    ),
+    colonial: const ColonialSummary(),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: const <String, DiplomacyRelation>{},
+  );
+}
+
+/// DEVELOP past-quota snapshot with the same GP-only invadable frontier.
+AIWorldSnapshot buildOrchestratorDevelopGpOnlyBlockerSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String blockerGpId = kOrchestratorBlockerGpId,
+  List<String> invadableProvinceIdsSorted = kOrchestratorBlockerOwProvinces,
+  int oldWorldProvincesOwned = 12,
+  int provincesToVictory = 19,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: const ThreatSummary(),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
+      adjacentOwnerFactionIdsSorted: <String>[blockerGpId],
+    ),
+    colonial: const ColonialSummary(),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: const <String, DiplomacyRelation>{},
+  );
+}
+
+/// DEVELOP past-quota snapshot with GP-owned NW and no colonial acquisition
+/// targets — used by DEVELOP `declareWar` suppression pins (Refs #3997).
+///
+/// When [tribeRelationScore] is non-null, embeds a tribe relation so the
+/// declare-war candidate remains structurally valid while DEVELOP drops it.
+AIWorldSnapshot buildOrchestratorDevelopNoColonialTargetsSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String tribeId = kOrchestratorTribeId,
+  int oldWorldProvincesOwned = 11,
+  int provincesToVictory = 20,
+  int newWorldProvincesOwned = 1,
+  List<String> atWarWith = const <String>[],
+  int? tribeRelationScore,
+  RelationState tribeRelationState = RelationState.atWar,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: ThreatSummary(atWarWith: atWarWith),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+    ),
+    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: tribeRelationScore == null
+        ? const <String, DiplomacyRelation>{}
+        : <String, DiplomacyRelation>{
+            tribeId: DiplomacyRelation(
+              factionId1: playerId,
+              factionId2: tribeId,
+              state: tribeRelationState,
+              score: tribeRelationScore,
+            ),
+          },
+  );
+}
+
+/// EXPAND below-quota snapshot with an adjacent invadable OW minor.
+AIWorldSnapshot buildOrchestratorExpandAdjacentMinorSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String minorId = kOrchestratorAdjacentMinorId,
+  String owMinorProvince = kOrchestratorAdjacentMinorOwProvince,
+  int oldWorldProvincesOwned = 7,
+  int provincesToVictory = 24,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: const ThreatSummary(),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+      invadableProvinceIdsSorted: <String>[owMinorProvince],
+      adjacentOwnerFactionIdsSorted: <String>[minorId],
+    ),
+    colonial: const ColonialSummary(),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: const <String, DiplomacyRelation>{},
+  );
+}
+
+/// DEVELOP past-quota snapshot with the same adjacent invadable OW minor.
+AIWorldSnapshot buildOrchestratorDevelopAdjacentMinorSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String minorId = kOrchestratorAdjacentMinorId,
+  String owMinorProvince = kOrchestratorAdjacentMinorOwProvince,
+  int oldWorldProvincesOwned = 12,
+  int provincesToVictory = 19,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: const ThreatSummary(),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+      invadableProvinceIdsSorted: <String>[owMinorProvince],
+      adjacentOwnerFactionIdsSorted: <String>[minorId],
+    ),
+    colonial: const ColonialSummary(),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: const <String, DiplomacyRelation>{},
+  );
+}
+
 /// Builds a minimal dual-region Game for orchestrator integration pins.
 ///
 /// Callers supply any extra Old/New World provinces, diplomacy, armies, and
@@ -172,6 +398,30 @@ Game buildOrchestratorGp1TribeNwScenarioGame({
     ],
     diplomacyRelations: diplomacyRelations,
     overtureStates: overtureStates,
+  );
+}
+
+/// DEVELOP declare-war suppression fixture: at-quota OW holdings plus one
+/// GP-owned NW province so colonial acquisition targets stay empty.
+Game buildOrchestratorDevelopGpOwnedNwScenarioGame({
+  required String id,
+  List<String> gp1OwProvinces = kGp1OwProvincesAtQuota,
+  int turnNumber = 140,
+}) {
+  return buildOrchestratorScenarioGame(
+    id: id,
+    gp1OwProvinces: gp1OwProvinces,
+    turnNumber: turnNumber,
+    newWorldProvinces: const <Province>[
+      Province(
+        id: kOrchestratorGpOwnedNwProvince,
+        regionId: 'newWorld',
+        ownerId: kOrchestratorGp1NationId,
+      ),
+    ],
+    tribes: const <Tribe>[
+      Tribe(id: kOrchestratorTribeId, displayName: 'T1'),
+    ],
   );
 }
 

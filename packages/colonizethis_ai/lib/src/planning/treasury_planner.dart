@@ -228,16 +228,18 @@ _EmitTradeOrdersInput? _buildEmitTradeOrdersInput(TreasuryPlannerInput input) {
       regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
   _populateTreasurySurplusAndNeedMaps(
-    trackedCommodityIds: trackedCommodityIds,
-    inputNeeds: inputNeeds,
-    projected: projected,
-    carryForwardOffers: carryForwardOffers,
-    carryForwardBids: carryForwardBids,
-    marketPrices: marketPrices,
-    isLockRecoverySeller: isLockRecoverySeller,
-    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
-    available: available,
-    need: need,
+    _TreasurySurplusNeedMapsInput(
+      trackedCommodityIds: trackedCommodityIds,
+      inputNeeds: inputNeeds,
+      projected: projected,
+      carryForwardOffers: carryForwardOffers,
+      carryForwardBids: carryForwardBids,
+      marketPrices: marketPrices,
+      isLockRecoverySeller: isLockRecoverySeller,
+      isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+      available: available,
+      need: need,
+    ),
   );
 
   // Refs #3122: treasury budget that bounds total bid notional this turn.
@@ -316,14 +318,13 @@ _EmitTradeOrdersInput? _buildEmitTradeOrdersInput(TreasuryPlannerInput input) {
   // exclusion). Other broke GPs sell only (F13).
   if (isLiquidityBuyer || isAffluentDesignatedBuyer) {
     _applyLockRecoveryLiquidityBid(
-      playerId: playerId,
-      game: game,
-      need: need,
-      available: available,
-      carryForwardBids: carryForwardBids,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      treasuryForecast: treasuryForecast,
-      addSyntheticBid: isLiquidityBuyer,
+      _LockRecoveryLiquidityBidInput(
+        game: game,
+        need: need,
+        available: available,
+        treasuryBudgetForBids: treasuryBudgetForBids,
+        addSyntheticBid: isLiquidityBuyer,
+      ),
     );
     if (isLiquidityBuyer) {
       final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
@@ -339,15 +340,17 @@ _EmitTradeOrdersInput? _buildEmitTradeOrdersInput(TreasuryPlannerInput input) {
   // feedstock reservation. SPEC/ai/treasury-planner.md
   // § Lock-recovery seller regiment build-input bootstrap.
   _applyLockRecoverySellerRegimentRebuildBids(
-    isLockRecoverySeller: isLockRecoverySeller,
-    rawTreasury: rawTreasury,
-    threshold: threshold,
-    game: game,
-    playerId: playerId,
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
-    available: available,
+    _LockRecoverySellerRegimentRebuildBidsInput(
+      isLockRecoverySeller: isLockRecoverySeller,
+      rawTreasury: rawTreasury,
+      threshold: threshold,
+      game: game,
+      playerId: playerId,
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+      available: available,
+    ),
   );
 
   // Refs #3758 S7/R12: drop bids for commodities only sourceable from a colony
@@ -471,21 +474,38 @@ int _resolveTradeCargoCapacity({
 /// regiment. SPEC/ai/treasury-planner.md
 /// § Lock-recovery seller regiment build-input bootstrap +
 /// § Lock-recovery seller build-input feedstock reservation.
-void _applyLockRecoverySellerRegimentRebuildBids({
-  required bool isLockRecoverySeller,
-  required int rawTreasury,
-  required int threshold,
-  required Game game,
-  required String playerId,
-  required Stockpile projected,
-  required Map<CommodityId, int> carryForwardBids,
-  required Map<CommodityId, int> need,
-  required Map<CommodityId, int> available,
-}) {
-  if (!isLockRecoverySeller) {
+/// Parameter bag for [_applyLockRecoverySellerRegimentRebuildBids] (Refs #3997).
+final class _LockRecoverySellerRegimentRebuildBidsInput {
+  const _LockRecoverySellerRegimentRebuildBidsInput({
+    required this.isLockRecoverySeller,
+    required this.rawTreasury,
+    required this.threshold,
+    required this.game,
+    required this.playerId,
+    required this.projected,
+    required this.carryForwardBids,
+    required this.need,
+    required this.available,
+  });
+
+  final bool isLockRecoverySeller;
+  final int rawTreasury;
+  final int threshold;
+  final Game game;
+  final String playerId;
+  final Stockpile projected;
+  final Map<CommodityId, int> carryForwardBids;
+  final Map<CommodityId, int> need;
+  final Map<CommodityId, int> available;
+}
+
+void _applyLockRecoverySellerRegimentRebuildBids(
+  _LockRecoverySellerRegimentRebuildBidsInput input,
+) {
+  if (!input.isLockRecoverySeller) {
     return;
   }
-  final zeroRegimentRebuildPath = regimentCountForPlayer(game, playerId) == 0;
+  final zeroRegimentRebuildPath = regimentCountForPlayer(input.game, input.playerId) == 0;
   // Refs #2847 § castIron-labour peasant-recruit fabric staging: the recruit
   // row costs 2 `fabric` while the regiment build input needs only 1, so a
   // seller holding one unit clears the regiment missing-input check yet still
@@ -493,9 +513,9 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // `fabric >= 2` when the population-bound castIron labour path is active.
   final peasantRecruitFabricStaging =
       isCastIronLabourPeasantRecruitFabricMarketPathActive(
-        game: game,
-        playerId: playerId,
-        projected: projected,
+        game: input.game,
+        playerId: input.playerId,
+        projected: input.projected,
       );
   final castIronLabourPeasantRecruitMarketPath = peasantRecruitFabricStaging;
   if (!zeroRegimentRebuildPath && !castIronLabourPeasantRecruitMarketPath) {
@@ -519,13 +539,13 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   if (zeroRegimentRebuildPath || castIronLabourPeasantRecruitMarketPath) {
     for (final buildInputId
         in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
-      available.remove(buildInputId);
+      input.available.remove(buildInputId);
     }
     for (final feedstockId in _regimentBuildInputFeedstockIds(
-      projected,
+      input.projected,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     )) {
-      available.remove(feedstockId);
+      input.available.remove(feedstockId);
     }
   }
   // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
@@ -534,22 +554,22 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // offers-only (minus the staged input reservations above) until it crosses
   // the regiment cost. SPEC/ai/treasury-planner.md § Lock-recovery seller
   // regiment build-input bootstrap.
-  if (rawTreasury < threshold) {
+  if (input.rawTreasury < input.threshold) {
     return;
   }
   if (castIronLabourPeasantRecruitMarketPath &&
       isDomesticFabricProductionLabourInfeasible(
-        game: game,
-        playerId: playerId,
+        game: input.game,
+        playerId: input.playerId,
       )) {
     // Domestic `fabric_from_*` is material-feasible yet labour-walled
     // (`labourPerOutput == 2` > effective labour). Feedstock bids cannot unblock
     // the peasant recruit — buy finished `fabric` from affluent suppliers instead
     // (Refs #2847 § labour-infeasible fabric market path).
     _addRegimentBuildInputDirectNeed(
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: true,
     );
     return;
@@ -559,19 +579,19 @@ void _applyLockRecoverySellerRegimentRebuildBids({
     // feedstock / direct bids only (no zero-regiment improvement-input chain).
     final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
       feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
-        projected,
+        input.projected,
         peasantRecruitFabricStaging: peasantRecruitFabricStaging,
       ),
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     );
     if (!feedstockStillMissing) {
       _addRegimentBuildInputDirectNeed(
-        projected: projected,
-        carryForwardBids: carryForwardBids,
-        need: need,
+        projected: input.projected,
+        carryForwardBids: input.carryForwardBids,
+        need: input.need,
         peasantRecruitFabricStaging: peasantRecruitFabricStaging,
       );
     }
@@ -586,29 +606,29 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // bid slot targets the prerequisite supply. Self-clears once the inputs land
   // (or the tile is improved / a regiment is owned).
   if (_addRegimentFeedstockImprovementInputNeed(
-    game: game,
-    playerId: playerId,
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
+    game: input.game,
+    playerId: input.playerId,
+    projected: input.projected,
+    carryForwardBids: input.carryForwardBids,
+    need: input.need,
   )) {
     return;
   }
   final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
     feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
-      projected,
+      input.projected,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     ),
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
+    projected: input.projected,
+    carryForwardBids: input.carryForwardBids,
+    need: input.need,
     peasantRecruitFabricStaging: peasantRecruitFabricStaging,
   );
   if (!feedstockStillMissing) {
     _addRegimentBuildInputDirectNeed(
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     );
   }

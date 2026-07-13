@@ -106,17 +106,19 @@ double _scoreArmyMoveDestination(
   var score = 1.0;
   if (stalledExpansion) {
     final delta = _stalledExpansionArmyMoveScoreDelta(
-      move: move,
-      nationId: nationId,
-      game: game,
-      topology: topology,
-      snapshot: snapshot,
-      provinceOwner: provinceOwner,
-      invadable: invadable,
-      destOwner: destOwner,
-      destRegion: destRegion,
-      destNeighborLocals: destNeighborLocals,
-      declaredWarTargetFactionId: declaredWarTargetFactionId,
+      _StalledExpansionArmyMoveScoreDeltaInput(
+        move: move,
+        nationId: nationId,
+        game: game,
+        topology: topology,
+        snapshot: snapshot,
+        provinceOwner: provinceOwner,
+        invadable: invadable,
+        destOwner: destOwner,
+        destRegion: destRegion,
+        destNeighborLocals: destNeighborLocals,
+        declaredWarTargetFactionId: declaredWarTargetFactionId,
+      ),
     );
     if (delta < 0) {
       score *= 0.05;

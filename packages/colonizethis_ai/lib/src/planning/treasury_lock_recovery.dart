@@ -387,6 +387,23 @@ String lockRecoveryDesignatedBuyerId(
   _LockRecoveryGameScan? scan,
 }) => (scan ?? _LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
 
+/// Parameter bag for [_applyLockRecoveryLiquidityBid] (Refs #3997).
+final class _LockRecoveryLiquidityBidInput {
+  const _LockRecoveryLiquidityBidInput({
+    required this.game,
+    required this.need,
+    required this.available,
+    required this.treasuryBudgetForBids,
+    required this.addSyntheticBid,
+  });
+
+  final Game game;
+  final Map<CommodityId, int> need;
+  final Map<CommodityId, int> available;
+  final int treasuryBudgetForBids;
+  final bool addSyntheticBid;
+}
+
 /// Designated buyer bids [commodityId] and does not offer it this turn.
 ///
 /// Bid quantity is the smaller of the F11 stockpile-target ceiling and
@@ -394,22 +411,14 @@ String lockRecoveryDesignatedBuyerId(
 /// more treasury than it currently holds (Refs #2924 F12 — treasury-capped)
 /// **and** never overcommits against pending costs or carry-forward bid
 /// notional already accounted for in [treasuryBudgetForBids] (Refs #3122).
-void _applyLockRecoveryLiquidityBid({
-  required String playerId,
-  required Game game,
-  required Map<CommodityId, int> need,
-  required Map<CommodityId, int> available,
-  required Map<CommodityId, int> carryForwardBids,
-  required int treasuryBudgetForBids,
-  required int treasuryForecast,
-  required bool addSyntheticBid,
-}) {
-  final commodityId = _lockRecoveryLiquidityCommodity(game.worldMarketState);
-  available.remove(commodityId);
-  if (!addSyntheticBid) return;
-  final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;
+void _applyLockRecoveryLiquidityBid(_LockRecoveryLiquidityBidInput input) {
+  final commodityId = _lockRecoveryLiquidityCommodity(input.game.worldMarketState);
+  input.available.remove(commodityId);
+  if (!input.addSyntheticBid) return;
+  final pricePerUnit = input.game.worldMarketState.prices[commodityId] ?? 0;
   if (pricePerUnit <= 0) return;
-  final budget = treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
+  final budget =
+      input.treasuryBudgetForBids < 0 ? 0 : input.treasuryBudgetForBids;
   final affordableQty = budget ~/ pricePerUnit;
   // Refs #2924 F14: lock-recovery liquidity bids use the full per-turn
   // treasury budget (after pending costs and carry-forward notional), not
@@ -418,8 +427,8 @@ void _applyLockRecoveryLiquidityBid({
   // deal seller credits too small to approach the regiment threshold.
   final liquidityQty = affordableQty;
   if (liquidityQty <= 0) return;
-  final existing = need[commodityId] ?? 0;
+  final existing = input.need[commodityId] ?? 0;
   if (liquidityQty > existing) {
-    need[commodityId] = liquidityQty;
+    input.need[commodityId] = liquidityQty;
   }
 }
