@@ -43,6 +43,61 @@ void main() {
       );
     });
 
+    test('recruitment planner is concern-split under the near-gate preference '
+        '(Refs #3997 AC5)', () {
+      final recruitment = File(
+        p.join(planningDir.path, 'recruitment_planner.dart'),
+      );
+      final candidates = File(
+        p.join(planningDir.path, 'recruitment_planner_candidates.dart'),
+      );
+      expect(candidates.existsSync(), isTrue);
+      expect(
+        recruitment.readAsStringSync(),
+        contains("part 'recruitment_planner_candidates.dart';"),
+      );
+      expect(
+        candidates.readAsStringSync(),
+        contains("part of 'recruitment_planner.dart';"),
+      );
+      expect(
+        recruitment.readAsLinesSync().length,
+        lessThanOrEqualTo(250),
+        reason:
+            'recruitment_planner.dart keeps the public surface + thin '
+            'orchestrator after candidate concern split',
+      );
+      // Positive: entry body stays comfortably under the ~200-line extract
+      // threshold (gather/evaluate/emit live in the candidates part).
+      final lines = recruitment.readAsLinesSync();
+      final start = lines.indexWhere(
+        (l) =>
+            l.contains(
+              'RecruitmentPlan runRecruitmentPlanner(RecruitmentPlannerInput input)',
+            ),
+      );
+      expect(start, greaterThanOrEqualTo(0));
+      var depth = 0;
+      var started = false;
+      var end = start;
+      for (var i = start; i < lines.length; i++) {
+        depth += '{'.allMatches(lines[i]).length - '}'.allMatches(lines[i]).length;
+        if (lines[i].contains('{')) started = true;
+        if (started && depth == 0) {
+          end = i;
+          break;
+        }
+      }
+      final bodyLines = end - start + 1;
+      expect(
+        bodyLines,
+        lessThanOrEqualTo(80),
+        reason:
+            'runRecruitmentPlanner body should stay well under ~200 after '
+            'concern split (was 199); got $bodyLines',
+      );
+    });
+
     test('negative: flat ≥8-param public signatures are gone', () {
       final aiTrace = File(
         p.join(planningDir.path, 'ai_trace_builder.dart'),

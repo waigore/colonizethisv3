@@ -10,54 +10,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _playerId = 'gp5';
-const _tileIron = 'oldWorld|p0|2|0';
-
-Game _lockRecoverySellerGame({
-  required WorkerPool workerPool,
-  required Stockpile stockpile,
-}) {
-  return Game(
-    id: 'g-castiron-labour',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 5; i++)
-            Province(
-              id: 'oldWorld|p$i',
-              regionId: kRegionOldWorld,
-              ownerId: _playerId,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: const {_tileIron: 'iron'},
-      tileKeysByRegionAndProvince: const {
-        kRegionOldWorld: {
-          'oldWorld|p0': [_tileIron],
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: _playerId,
-        displayName: 'Seller',
-        isHuman: false,
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: stockpile,
-        workerPool: workerPool,
-      ),
-    ],
-  );
-}
+import '../support/lock_recovery_seller_test_support.dart';
 
 void main() {
   group('isCastIronLabourPopulationBoundForLockRecoverySeller (Refs #2847)', () {
     test(
       'positive: material-feasible castIron with fed workers below one run',
       () {
-        final game = _lockRecoverySellerGame(
+        final game = buildCastIronLabourLockRecoverySellerGame(
           workerPool: const WorkerPool(peasants: 1),
           stockpile: Stockpile.empty
               .applyDelta(CommodityCatalog.iron.id, 4)
@@ -66,7 +26,7 @@ void main() {
         expect(
           isCastIronLabourPopulationBoundForLockRecoverySeller(
             game: game,
-            playerId: _playerId,
+            playerId: kCastIronLabourLockRecoverySellerId,
           ),
           isTrue,
         );
@@ -76,7 +36,7 @@ void main() {
     test(
       'negative: enough peasants to run castIron when fully fed',
       () {
-        final game = _lockRecoverySellerGame(
+        final game = buildCastIronLabourLockRecoverySellerGame(
           workerPool: const WorkerPool(peasants: 2),
           stockpile: Stockpile.empty
               .applyDelta(CommodityCatalog.iron.id, 4)
@@ -85,7 +45,7 @@ void main() {
         expect(
           isCastIronLabourPopulationBoundForLockRecoverySeller(
             game: game,
-            playerId: _playerId,
+            playerId: kCastIronLabourLockRecoverySellerId,
           ),
           isFalse,
         );
@@ -104,14 +64,14 @@ void main() {
                 Province(
                   id: 'oldWorld|p0',
                   regionId: kRegionOldWorld,
-                  ownerId: _playerId,
+                  ownerId: kCastIronLabourLockRecoverySellerId,
                 ),
               ],
               units: [
                 Unit(
                   id: 'r1',
                   type: 'peasant_levies',
-                  ownerId: _playerId,
+                  ownerId: kCastIronLabourLockRecoverySellerId,
                   locationProvinceId: 'oldWorld|p0',
                 ),
               ],
@@ -120,7 +80,7 @@ void main() {
           ),
           players: [
             Player(
-              id: _playerId,
+              id: kCastIronLabourLockRecoverySellerId,
               displayName: 'Healthy',
               isHuman: false,
               workerPool: const WorkerPool(peasants: 1),
@@ -132,7 +92,7 @@ void main() {
         expect(
           isCastIronLabourPopulationBoundForLockRecoverySeller(
             game: game,
-            playerId: _playerId,
+            playerId: kCastIronLabourLockRecoverySellerId,
           ),
           isFalse,
         );
@@ -142,7 +102,7 @@ void main() {
 
   group('isDomesticFabricProductionLabourInfeasible (Refs #2847)', () {
     test('positive: material-feasible fabric recipe with labour below one run', () {
-      final game = _lockRecoverySellerGame(
+      final game = buildCastIronLabourLockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
             .applyDelta('iron', 4)
@@ -153,14 +113,14 @@ void main() {
       expect(
         isDomesticFabricProductionLabourInfeasible(
           game: game,
-          playerId: _playerId,
+          playerId: kCastIronLabourLockRecoverySellerId,
         ),
         isTrue,
       );
     });
 
     test('negative: enough labour to run at least one fabric recipe', () {
-      final game = _lockRecoverySellerGame(
+      final game = buildCastIronLabourLockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 2),
         stockpile: Stockpile.empty
             .applyDelta('iron', 4)
@@ -171,14 +131,14 @@ void main() {
       expect(
         isDomesticFabricProductionLabourInfeasible(
           game: game,
-          playerId: _playerId,
+          playerId: kCastIronLabourLockRecoverySellerId,
         ),
         isFalse,
       );
     });
 
     test('negative: no material-feasible fabric recipe', () {
-      final game = _lockRecoverySellerGame(
+      final game = buildCastIronLabourLockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
             .applyDelta('iron', 4)
@@ -188,7 +148,7 @@ void main() {
       expect(
         isDomesticFabricProductionLabourInfeasible(
           game: game,
-          playerId: _playerId,
+          playerId: kCastIronLabourLockRecoverySellerId,
         ),
         isFalse,
       );
@@ -197,7 +157,7 @@ void main() {
 
   group('isCastIronLabourPeasantRecruitFabricMarketPathActive (Refs #2847)', () {
     test('true for population-bound seller short peasant fabric cost', () {
-      final game = _lockRecoverySellerGame(
+      final game = buildCastIronLabourLockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
             .applyDelta('iron', 4)
@@ -208,7 +168,7 @@ void main() {
       expect(
         isCastIronLabourPeasantRecruitFabricMarketPathActive(
           game: game,
-          playerId: _playerId,
+          playerId: kCastIronLabourLockRecoverySellerId,
           projected: game.players.first.stockpile,
         ),
         isTrue,
@@ -216,7 +176,7 @@ void main() {
     });
 
     test('false when fabric meets peasant recruit cost', () {
-      final game = _lockRecoverySellerGame(
+      final game = buildCastIronLabourLockRecoverySellerGame(
         workerPool: const WorkerPool(peasants: 1),
         stockpile: Stockpile.empty
             .applyDelta('iron', 4)
@@ -227,7 +187,7 @@ void main() {
       expect(
         isCastIronLabourPeasantRecruitFabricMarketPathActive(
           game: game,
-          playerId: _playerId,
+          playerId: kCastIronLabourLockRecoverySellerId,
           projected: game.players.first.stockpile,
         ),
         isFalse,

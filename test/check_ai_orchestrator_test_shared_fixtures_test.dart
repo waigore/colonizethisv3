@@ -468,6 +468,79 @@ void main() {
 
     test(
       'fails when a diplomatic-scoring COLONIAL adopter redeclares '
+      'arrow-wrapper _colonialSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-arrow-');
+        try {
+          _writeSupportStub(temp);
+          _writeDiplomaticScoringAdopter(
+            temp,
+            'diplomatic_candidate_scoring_intervention_tribe_tolerance_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _colonialSnapshot() =>\n'
+            '    buildOrchestratorColonialNwTribeTargetSnapshot();\n\n'
+            'void main() {}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_colonialSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorColonialNwTribeTargetSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a COLONIAL-lite declare-war pin redeclares '
+      'arrow-wrapper _colonialLiteSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-lite-arrow-');
+        try {
+          _writeSupportStub(temp);
+          _writeOrchestratorTest(
+            temp,
+            'colonial_lite_arrow_wrapper_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _colonialLiteSnapshot() =>\n'
+            '    buildOrchestratorExpandNwTribeTargetSnapshot();\n\n'
+            'void main() {\n'
+            '  buildOrchestratorColonialLiteDeclareWarScenarioGame(\n'
+            '    id: "g",\n'
+            '    gp1OwProvinces: const <String>[],\n'
+            '  );\n'
+            '}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_colonialLiteSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorExpandNwTribeTargetSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a diplomatic-scoring COLONIAL adopter redeclares '
       '_gp1OwProvincesAtQuota',
       () {
         final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-q-');
