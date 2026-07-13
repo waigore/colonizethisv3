@@ -1,11 +1,44 @@
 /// EXPAND-family scenario Game builders for orchestrator pins
-/// (Refs #3941 / #3972).
+/// (Refs #3941 / #3972 / #3997).
 library;
 
+import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_logic/ai_api.dart' show homeArmyIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_orchestrator_quota_consts.dart';
+
+/// Shared EXPAND snapshot: gp1 below OW quota, at war with the OW minor
+/// frontier used by [buildOrchestratorExpandMinorWarScenarioGame].
+///
+/// Used by domain-gates / phase-plan / trade-wiring / pending-cost pins
+/// (Refs #3997 fixture consolidation).
+AIWorldSnapshot buildOrchestratorExpandMinorWarAtWarSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String minorId = kOrchestratorMinorId,
+  String owMinorProvince = kOrchestratorOwMinorProvince,
+  int oldWorldProvincesOwned = 7,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: ThreatSummary(atWarWith: [minorId]),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      invadableProvinceIdsSorted: [owMinorProvince],
+      adjacentOwnerFactionIdsSorted: [minorId],
+    ),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: {
+      minorId: DiplomacyRelation(
+        factionId1: playerId,
+        factionId2: minorId,
+        state: RelationState.atWar,
+        score: -100,
+      ),
+    },
+  );
+}
 
 /// Builds a minimal dual-region Game for orchestrator integration pins.
 ///

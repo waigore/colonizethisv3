@@ -171,6 +171,72 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
+
+    test(
+      'fails when a minor-war Game pin redeclares local _expandSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-snap-');
+        try {
+          _writeSupportStub(temp);
+          _writeOrchestratorTest(
+            temp,
+            'expand_snap_clone_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _expandSnapshot() {\n'
+            '  return const AIWorldSnapshot(playerId: "gp1");\n'
+            '}\n\n'
+            'void main() {\n'
+            '  buildOrchestratorExpandMinorWarScenarioGame(id: "g");\n'
+            '}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_expandSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorExpandMinorWarAtWarSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'passes when a minor-war Game pin uses the shared at-war snapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-snap-ok-');
+        try {
+          _writeSupportStub(temp);
+          _writeOrchestratorTest(
+            temp,
+            'expand_snap_shared_test.dart',
+            "import 'package:test/test.dart';\n"
+            "import '../support/domain_planner_orchestrator_test_support.dart';\n\n"
+            'void main() {\n'
+            '  buildOrchestratorExpandMinorWarScenarioGame(id: "g");\n'
+            '  final snap = buildOrchestratorExpandMinorWarAtWarSnapshot();\n'
+            '  expect(snap.playerId, isNotEmpty);\n'
+            '}\n',
+          );
+
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: (_) {},
+          );
+          expect(exitCode, 0);
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
   });
 }
 
