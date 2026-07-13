@@ -14,6 +14,7 @@ const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 /// Basenames gated as residual fat pins are cases-split under Phase 8.
 const Set<String> residualFatPinSuiteGatedBasenames = {
   'observer_goal_phase_test.dart',
+  'treasury_planner_treasury_budget_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {
