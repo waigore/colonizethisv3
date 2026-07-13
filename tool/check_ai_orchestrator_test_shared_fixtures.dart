@@ -50,23 +50,27 @@ final RegExp _localExpandTwoGpProvincesConst = RegExp(
 
 /// Forbidden local minor-war at-war EXPAND snapshot clones; use
 /// [buildOrchestratorExpandMinorWarAtWarSnapshot] (Refs #3997).
+/// Matches brace-bodied and arrow wrappers (`=>` / `{`).
 final RegExp _localExpandSnapshotFn = RegExp(
-  r'AIWorldSnapshot\s+_expandSnapshot\s*\(\s*\)\s*\{',
+  r'AIWorldSnapshot\s+_expandSnapshot\s*\(',
 );
 
 /// Forbidden local COLONIAL NW-tribe snapshot clones (Refs #3997).
+/// Matches brace-bodied and arrow wrappers (`=>` / `{`).
 final RegExp _localColonialSnapshotFn = RegExp(
-  r'AIWorldSnapshot\s+_colonialSnapshot\s*\(\s*\)\s*\{',
+  r'AIWorldSnapshot\s+_colonialSnapshot\s*\(',
 );
 
 /// Forbidden local DEVELOP snapshot clones (Refs #3997).
+/// Matches brace-bodied and arrow wrappers (`=>` / `{`).
 final RegExp _localDevelopSnapshotFn = RegExp(
-  r'AIWorldSnapshot\s+_developSnapshot\s*\(\s*\)\s*\{',
+  r'AIWorldSnapshot\s+_developSnapshot\s*\(',
 );
 
 /// Forbidden local COLONIAL-lite snapshot clones (Refs #3997).
+/// Matches brace-bodied and arrow wrappers (`=>` / `{`).
 final RegExp _localColonialLiteSnapshotFn = RegExp(
-  r'AIWorldSnapshot\s+_colonialLiteSnapshot\s*\(\s*\)\s*\{',
+  r'AIWorldSnapshot\s+_colonialLiteSnapshot\s*\(',
 );
 
 /// True when [content] uses a Game builder that pairs with the shared

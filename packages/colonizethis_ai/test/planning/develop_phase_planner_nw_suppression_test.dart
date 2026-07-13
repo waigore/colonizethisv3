@@ -55,175 +55,13 @@
 //     factions in `atWarWith` — every surface a DEVELOP planner
 //     could possibly leak through.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/develop_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _minor1 = 'minor1';
-
-const String _gp1OwProvinceId = 'oldWorld|gp1_a';
-const String _gp1NwProvinceId = 'newWorld|gp1_a';
-const String _tribeNwProvinceId = 'newWorld|tribe1_a';
-const String _unownedNwProvinceId = 'newWorld|p_unowned';
-
-/// Owned-OW tile (active player can improve).
-const String _ownedOwTileKey = 'oldWorld|gp1_a|3|3';
-
-/// Owned-NW tile (active player can improve — NW IS allowed for
-/// DEVELOP since the gate is ownership, not region).
-const String _ownedNwTileKey = 'newWorld|gp1_a|4|4';
-
-/// Tribe-held NW tile (foreign ownership; planner must structurally
-/// reject this even though it carries a resource entry).
-const String _tribeNwTileKey = 'newWorld|tribe1_a|2|2';
-
-/// Unowned NW tile (no owner / no tribe; planner must structurally
-/// reject this even though it carries a resource entry).
-const String _unownedNwTileKey = 'newWorld|p_unowned|1|1';
-
-/// Build a Game scaffold for the planner-set AC pin:
-///   - Active player ([_gp1]) owns one OW and one NW province so
-///     `planDevelopCivilian` has eligible tiles in both regions; this
-///     proves the planner emits orders for OW + owned-NW (positive
-///     coverage path) while rejecting foreign / unowned NW (the AC
-///     suppression).
-///   - Tribe ([_tribe1]) owns a NW province with a resource tile —
-///     the structural NW-acquisition leakage surface.
-///   - A second NW province is left unowned with a resource tile —
-///     the structural `purchase_land` leakage surface.
-///   - One idle Builder belongs to the active player.
-Game _developGame({int turnNumber = 145}) {
-  return Game(
-    id: 'g-2509-develop-phase-planner-nw-suppression-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _gp1OwProvinceId,
-            regionId: kOldWorldRegionId,
-            ownerId: _gp1,
-          ),
-        ],
-        units: [
-          // Two idle builders so the `min(builders, eligibleTiles)`
-          // cap is 2 and the planner emits orders for BOTH owned
-          // tiles (OW + owned-NW). The single-builder case is
-          // already pinned in `develop_phase_planner_test.dart` —
-          // here we want full eligible-tile coverage so the
-          // suppression check exercises every tile the planner
-          // walks.
-          Unit(
-            id: 'b1',
-            type: kUnitTypeBuilder,
-            ownerId: _gp1,
-            locationProvinceId: _gp1OwProvinceId,
-            tileKey: '$_gp1OwProvinceId|9|9',
-          ),
-          Unit(
-            id: 'b2',
-            type: kUnitTypeBuilder,
-            ownerId: _gp1,
-            locationProvinceId: _gp1OwProvinceId,
-            tileKey: '$_gp1OwProvinceId|8|8',
-          ),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _gp1NwProvinceId,
-            regionId: kNewWorldRegionId,
-            ownerId: _gp1,
-          ),
-          Province(
-            id: _tribeNwProvinceId,
-            regionId: kNewWorldRegionId,
-            ownerId: _tribe1,
-          ),
-          Province(id: _unownedNwProvinceId, regionId: kNewWorldRegionId),
-        ],
-        // One idle NW Builder so the owned-NW tile has an in-region
-        // candidate under the distance-aware + same-region pairing
-        // (Refs #2848 § S2). Without an NW Builder the NW improvement
-        // slot is left unfilled — the planner-set NW-suppression AC
-        // exercises the **positive coverage path** (NW + OW both
-        // assigned) so the suppression check exercises every tile the
-        // planner walks; the cross-region tile-skipping behaviour is
-        // pinned separately in `develop_phase_planner_test.dart`.
-        units: [
-          Unit(
-            id: 'b3',
-            type: kUnitTypeBuilder,
-            ownerId: _gp1,
-            locationProvinceId: _gp1NwProvinceId,
-            tileKey: '$_gp1NwProvinceId|7|7',
-          ),
-        ],
-      ),
-      // Every NW tile slot the planner-set could possibly leak
-      // through carries a resource entry so resource-availability is
-      // never the gating filter — only ownership / region structure
-      // can keep NW-acquisition out of the output.
-      resourceByTileKey: const {
-        _ownedOwTileKey: 'grain',
-        _ownedNwTileKey: 'tobacco',
-        _tribeNwTileKey: 'spices',
-        _unownedNwTileKey: 'gold',
-      },
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-      Player(id: _gp3, displayName: 'GP3', isHuman: false),
-    ],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
-    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
-  );
-}
-
-/// Snapshot for DEVELOP posture: OW at quota (10), no visible
-/// colonial acquisition targets in conquest summary (DEVELOP routing
-/// requires `hasColonialAcquisitionTargets == false`), `atWarWith`
-/// includes both GPs (to exercise peace), a tribe, and a minor (to
-/// exercise the non-GP filter in `planDevelopPeace`).
-///
-/// `ColonialSummary` is populated with NW tribe-owned and unowned
-/// invadable provinces so the planner-set has live NW state to lean
-/// on if any suppression slipped — the AC explicitly says the
-/// planner set must not emit NW-acquisition / declareWar even when
-/// colonial signals are present.
-AIWorldSnapshot _developSnapshot({
-  List<String> atWarWith = const [_gp2, _gp3, _tribe1, _minor1],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-    ),
-    colonial: const ColonialSummary(
-      newWorldProvincesOwned: 1,
-      invadableNewWorldProvinceIdsSorted: [
-        _tribeNwProvinceId,
-        _unownedNwProvinceId,
-      ],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribe1],
-      preferredColonialTargetFactionIdsSorted: [_tribe1],
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
+import '../support/phase_planner_nw_suppression_test_support.dart';
 
 /// Whether [provinceId] is in the New World region.
 bool _isNwProvinceId(String provinceId) =>
@@ -258,8 +96,8 @@ void main() {
   group('DEVELOP planner set NW suppression (AC pin)', () {
     test('planner set output contains no declareWar, no NW acquisition, '
         'and no NW-invasion orders', () {
-      final game = _developGame();
-      final snapshot = _developSnapshot();
+      final game = buildDevelopPhaseNwSuppressionGame();
+      final snapshot = buildDevelopPhaseNwSuppressionSnapshot();
 
       // 1. planDevelopPeace: returns offerPeace targets (GP
       //    factionIds), never a declareWar emission. The function
@@ -285,7 +123,7 @@ void main() {
       // Positive coverage: both at-war GPs appear so we know the
       // planner is exercising live data, not the empty short-
       // circuit (the AC pin would otherwise be tautological).
-      expect(peace, containsAll(<String>[_gp2, _gp3]));
+      expect(peace, containsAll(<String>[kNwSuppressionGp2, kNwSuppressionGp3]));
 
       // 2. planDevelopCivilian: emits only `build_improvement`
       //    orders (target field is always
@@ -316,7 +154,7 @@ void main() {
         );
         expect(
           tileOwner,
-          _gp1,
+          kNwSuppressionGp1,
           reason:
               'planDevelopCivilian emitted a build_improvement '
               'order against tile ${order.targetTileKey} whose '
@@ -331,8 +169,8 @@ void main() {
       // sort rather than the empty short-circuit. NW score >
       // OW score, so owned-NW comes first.
       expect(civilian.map((o) => o.targetTileKey), <String>[
-        _ownedNwTileKey,
-        _ownedOwTileKey,
+        kDevelopNwSuppressionOwnedNwTileKey,
+        kDevelopNwSuppressionOwnedOwTileKey,
       ]);
 
       // 3. Structural NW-tile rejection pin: even though the
@@ -342,7 +180,7 @@ void main() {
       //    the negative side.
       final emittedTileKeys = civilian.map((o) => o.targetTileKey).toSet();
       expect(
-        emittedTileKeys.contains(_tribeNwTileKey),
+        emittedTileKeys.contains(kDevelopNwSuppressionTribeNwTileKey),
         isFalse,
         reason:
             'planDevelopCivilian must not emit improvements toward '
@@ -351,7 +189,7 @@ void main() {
             'the ownership gate (province.ownerId != playerId).',
       );
       expect(
-        emittedTileKeys.contains(_unownedNwTileKey),
+        emittedTileKeys.contains(kDevelopNwSuppressionUnownedNwTileKey),
         isFalse,
         reason:
             'planDevelopCivilian must not emit improvements toward '
@@ -370,8 +208,10 @@ void main() {
       // `planDevelopCivilian` must still emit only owned-tile
       // improvements (no NW-acquisition leakage even though tribes
       // hold visible NW provinces).
-      final game = _developGame();
-      final snapshot = _developSnapshot(atWarWith: const [_tribe1, _minor1]);
+      final game = buildDevelopPhaseNwSuppressionGame();
+      final snapshot = buildDevelopPhaseNwSuppressionSnapshot(
+        atWarWith: const [kNwSuppressionTribe1, kNwSuppressionMinor1],
+      );
 
       expect(
         planDevelopPeace(game: game, snapshot: snapshot),
@@ -388,7 +228,7 @@ void main() {
         expect(order.target, kWorkTargetBuildImprovement);
         expect(
           _isNwProvinceId(order.targetTileKey) &&
-              _ownerOfProvinceContainingTile(game, order.targetTileKey) != _gp1,
+              _ownerOfProvinceContainingTile(game, order.targetTileKey) != kNwSuppressionGp1,
           isFalse,
           reason:
               'planDevelopCivilian must never emit a NW order '
@@ -410,8 +250,8 @@ void main() {
       // planner-set output against a NW-loaded colonial summary
       // and pins that the only NW tile in the output (if any) is
       // the active player's owned NW tile.
-      final game = _developGame();
-      final snapshot = _developSnapshot();
+      final game = buildDevelopPhaseNwSuppressionGame();
+      final snapshot = buildDevelopPhaseNwSuppressionSnapshot();
       // Re-affirm the colonial summary is populated (test fixture
       // contract — guards against silent fixture drift).
       expect(snapshot.colonial.invadableNewWorldProvinceIdsSorted, isNotEmpty);
@@ -429,7 +269,7 @@ void main() {
             'A larger NW count would indicate leakage from the '
             'colonial summary into civilian planning.',
       );
-      expect(nwOrders.single.targetTileKey, _ownedNwTileKey);
+      expect(nwOrders.single.targetTileKey, kDevelopNwSuppressionOwnedNwTileKey);
     });
 
     test('determinism across the planner set (Must-have #7): same '
@@ -439,8 +279,8 @@ void main() {
       // even when called together in the orchestrator dispatch
       // order. A regression that cached state across calls would
       // surface here.
-      final game = _developGame();
-      final snapshot = _developSnapshot();
+      final game = buildDevelopPhaseNwSuppressionGame();
+      final snapshot = buildDevelopPhaseNwSuppressionSnapshot();
 
       final peace1 = planDevelopPeace(game: game, snapshot: snapshot);
       final civilian1 = planDevelopCivilian(game: game, snapshot: snapshot);
