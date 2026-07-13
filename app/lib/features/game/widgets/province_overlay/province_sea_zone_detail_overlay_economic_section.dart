@@ -207,22 +207,15 @@ Widget _extractionCondensedLine({
       _commodityHoverSegment(
         tileKeys: totals.tileKeys,
         onHighlightTiles: onHighlightTiles,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ResourceIcon(commodityId: commodity.id, size: 20),
-            const SizedBox(width: CtSpacing.m / 4),
-            Text(qtyText, style: TextStyle(color: EditorialMonoclePalette.fg)),
-          ],
+        child: _commoditySegmentRow(
+          commodityId: commodity.id,
+          quantityText: qtyText,
         ),
       ),
     );
   }
   if (segments.isEmpty) return _emptyBodyDashText();
-  return Wrap(
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: segments,
-  );
+  return _condensedCommodityWrap(segments);
 }
 
 Widget _availableCondensedLine({
@@ -246,21 +239,56 @@ Widget _availableCondensedLine({
       _commodityHoverSegment(
         tileKeys: entry.tileKeys,
         onHighlightTiles: onHighlightTiles,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ResourceIcon(commodityId: commodity.id, size: 20),
-            const SizedBox(width: CtSpacing.m / 4),
-            Text(qtyText, style: TextStyle(color: EditorialMonoclePalette.fg)),
-          ],
+        child: _commoditySegmentRow(
+          commodityId: commodity.id,
+          quantityText: qtyText,
         ),
       ),
     );
   }
   if (segments.isEmpty) return _emptyBodyDashText();
-  return Wrap(
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: segments,
+  return _condensedCommodityWrap(segments);
+}
+
+/// Wraps commodity chips so each segment respects the panel max width
+/// (wrap-not-truncate; no ellipsis). Refs #4002.
+Widget _condensedCommodityWrap(List<Widget> segments) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final maxWidth = constraints.maxWidth.isFinite
+          ? constraints.maxWidth
+          : double.infinity;
+      return Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final segment in segments)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: segment,
+            ),
+        ],
+      );
+    },
+  );
+}
+
+Widget _commoditySegmentRow({
+  required String commodityId,
+  required String quantityText,
+}) {
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ResourceIcon(commodityId: commodityId, size: 20),
+      const SizedBox(width: CtSpacing.m / 4),
+      Flexible(
+        child: Text(
+          quantityText,
+          style: TextStyle(color: EditorialMonoclePalette.fg),
+          softWrap: true,
+        ),
+      ),
+    ],
   );
 }
 

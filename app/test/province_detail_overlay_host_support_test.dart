@@ -181,4 +181,93 @@ void main() {
       expect(buildOnly.onBuildImprovementTap, isNotNull);
     });
   });
+
+  group('provinceExtractionSnapshotPreview ownership gate (Refs #4002)', () {
+    const provinceId = 'oldWorld|p1';
+
+    Game gameWithSnapshot({
+      required String provinceOwnerId,
+      required String snapshotOwnerId,
+    }) {
+      return Game(
+        id: 'g_extraction_preview',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: provinceId,
+                regionId: 'oldWorld',
+                ownerId: provinceOwnerId,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          lastTurnProvinceExtractionByProvinceId: {
+            provinceId: ProvinceExtractionSnapshot(
+              ownerId: snapshotOwnerId,
+              byCommodity: const {
+                'grain': ProvinceExtractionCommodityTotals(
+                  effective: 1,
+                  full: 5,
+                  tileKeys: ['oldWorld|p1|0|0'],
+                ),
+              },
+            ),
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        ],
+      );
+    }
+
+    test('returns snapshot when owner matches', () {
+      final game = gameWithSnapshot(
+        provinceOwnerId: 'gp1',
+        snapshotOwnerId: 'gp1',
+      );
+      final snap = provinceExtractionSnapshotPreview(
+        game: game,
+        provinceId: provinceId,
+      );
+      expect(snap, isNotNull);
+      expect(snap!.byCommodity['grain']!.effective, 1);
+      expect(snap.byCommodity['grain']!.full, 5);
+    });
+
+    test('returns null when ownership changed after last extraction', () {
+      final game = gameWithSnapshot(
+        provinceOwnerId: 'gp2',
+        snapshotOwnerId: 'gp1',
+      );
+      expect(
+        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
+        isNull,
+      );
+    });
+
+    test('returns null when snapshot is absent', () {
+      final game = Game(
+        id: 'g_no_snap',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+        ],
+      );
+      expect(
+        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
+        isNull,
+      );
+    });
+  });
 }
