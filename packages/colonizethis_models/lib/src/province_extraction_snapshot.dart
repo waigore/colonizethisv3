@@ -29,7 +29,7 @@ class ProvinceExtractionCommodityTotals {
 
   static ProvinceExtractionCommodityTotals fromJson(Map<String, dynamic> json) {
     final keysRaw = json['tileKeys'];
-    final tileKeys = keysRaw is List
+    final tileKeys = keysRaw is List<Object?>
         ? keysRaw.map((e) => e.toString()).toList()
         : const <String>[];
     return ProvinceExtractionCommodityTotals(
@@ -82,9 +82,9 @@ class ProvinceExtractionSnapshot {
   static ProvinceExtractionSnapshot fromJson(Map<String, dynamic> json) {
     final byRaw = json['byCommodity'];
     final byCommodity = <String, ProvinceExtractionCommodityTotals>{};
-    if (byRaw is Map) {
+    if (byRaw is Map<Object?, Object?>) {
       byRaw.forEach((key, value) {
-        if (value is Map) {
+        if (value is Map<Object?, Object?>) {
           byCommodity[key
               .toString()] = ProvinceExtractionCommodityTotals.fromJson(
             Map<String, dynamic>.from(value),
