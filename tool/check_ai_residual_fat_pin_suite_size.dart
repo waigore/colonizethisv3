@@ -15,6 +15,7 @@ const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const Set<String> residualFatPinSuiteGatedBasenames = {
   'observer_goal_phase_test.dart',
   'treasury_planner_treasury_budget_test.dart',
+  'economy_planner_regiment_build_input_production_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {

@@ -1242,7 +1242,7 @@ rules:
 
   - rule_id: repo.ai_residual_fat_pin_cases_required
     group: testing
-    title: colonizethis_ai residual fat-pin contracts (observer_goal_phase_test.dart) above 750 physical lines must import a sibling *_cases.dart (Refs #3997)
+    title: colonizethis_ai residual fat-pin contracts (observer_goal_phase / treasury_budget / regiment production) above 750 physical lines must import a sibling *_cases.dart (Refs #3997)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
