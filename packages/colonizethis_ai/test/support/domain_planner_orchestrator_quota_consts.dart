@@ -90,6 +90,10 @@ const String kOrchestratorOwHomeProvince = 'oldWorld|gp1_0';
 const String kOrchestratorTribeId = 'tribe1';
 const String kOrchestratorTribeNwProvince = 'newWorld|tribe1_nw0';
 
+/// GP-owned NW province used by DEVELOP declare-war suppression pins so
+/// `hasColonialAcquisitionTargets` stays false while NW ownership is non-zero.
+const String kOrchestratorGpOwnedNwProvince = 'newWorld|gp1_nw0';
+
 /// Shared adjacent-minor fixture for EXPAND minor declare-war orchestrator pins.
 const String kOrchestratorAdjacentMinorId = 'minor1';
 const String kOrchestratorAdjacentMinorOwProvince = 'oldWorld|minor1_0';

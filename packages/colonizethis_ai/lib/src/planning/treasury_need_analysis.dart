@@ -84,45 +84,64 @@ Map<CommodityId, int> _inputNeedsFromAssignments(
   return needs;
 }
 
-void _populateTreasurySurplusAndNeedMaps({
-  required Iterable<CommodityId> trackedCommodityIds,
-  required Map<CommodityId, int> inputNeeds,
-  required Stockpile projected,
-  required Map<CommodityId, int> carryForwardOffers,
-  required Map<CommodityId, int> carryForwardBids,
-  required Map<CommodityId, int> marketPrices,
-  required bool isLockRecoverySeller,
-  required bool isRegimentBuildInputMarketSupplier,
-  required Map<CommodityId, int> available,
-  required Map<CommodityId, int> need,
-}) {
-  for (final id in trackedCommodityIds) {
+/// Parameter bag for [_populateTreasurySurplusAndNeedMaps] (Refs #3997).
+final class _TreasurySurplusNeedMapsInput {
+  const _TreasurySurplusNeedMapsInput({
+    required this.trackedCommodityIds,
+    required this.inputNeeds,
+    required this.projected,
+    required this.carryForwardOffers,
+    required this.carryForwardBids,
+    required this.marketPrices,
+    required this.isLockRecoverySeller,
+    required this.isRegimentBuildInputMarketSupplier,
+    required this.available,
+    required this.need,
+  });
+
+  final Iterable<CommodityId> trackedCommodityIds;
+  final Map<CommodityId, int> inputNeeds;
+  final Stockpile projected;
+  final Map<CommodityId, int> carryForwardOffers;
+  final Map<CommodityId, int> carryForwardBids;
+  final Map<CommodityId, int> marketPrices;
+  final bool isLockRecoverySeller;
+  final bool isRegimentBuildInputMarketSupplier;
+  final Map<CommodityId, int> available;
+  final Map<CommodityId, int> need;
+}
+
+void _populateTreasurySurplusAndNeedMaps(_TreasurySurplusNeedMapsInput input) {
+  for (final id in input.trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
     final commodity = CommodityCatalog.byId[id];
     if (commodity == null) continue;
     final consumption = _consumptionForecast(
       commodityId: id,
       commodity: commodity,
-      inputNeeds: inputNeeds,
+      inputNeeds: input.inputNeeds,
     );
-    final inputs = inputNeeds[id] ?? 0;
+    final inputs = input.inputNeeds[id] ?? 0;
     var safety = commodity.category == CommodityCategory.food
-        ? (isLockRecoverySeller ? 0 : consumption * 2)
+        ? (input.isLockRecoverySeller ? 0 : consumption * 2)
         : consumption;
-    if (isRegimentBuildInputMarketSupplier &&
+    if (input.isRegimentBuildInputMarketSupplier &&
         _regimentBuildInputSupplyCommodityIds.contains(id)) {
       safety = 0;
     }
     final reserve = consumption + inputs + safety;
-    final projectedQty = projected.quantityOf(id);
-    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
+    final projectedQty = input.projected.quantityOf(id);
+    final surplus =
+        projectedQty - reserve - (input.carryForwardOffers[id] ?? 0);
     if (surplus > 0) {
-      available[id] = surplus;
+      input.available[id] = surplus;
     }
-    final deficit =
-        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
-    if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
-      need[id] = deficit;
+    final deficit = (consumption + inputs) -
+        projectedQty -
+        (input.carryForwardBids[id] ?? 0);
+    if (deficit > 0 &&
+        _marketPriceBelowProductionCost(id, input.marketPrices)) {
+      input.need[id] = deficit;
     }
   }
 }

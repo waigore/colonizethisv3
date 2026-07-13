@@ -56,7 +56,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Explicit NW-acquisition-zero phase plan emulating the legacy
 // hard-suppress contract for the EXPAND negative-control assertion
@@ -119,49 +118,8 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 11 OW provinces -> COLONIAL when colonial acquisition targets are
-    // visible in the snapshot.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {},
-  );
-}
-
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> EXPAND while invadable NW is visible: the AI
-    // must suppress NW tribe declare-war candidates below OW quota
-    // even though the suggestion API surfaces them.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      provincesToVictory: 24,
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {},
-  );
-}
+// Snapshots: buildOrchestratorExpandNwTribeTargetSnapshot /
+// buildOrchestratorColonialNwTribeTargetSnapshot (Refs #3997).
 
 List<String> _declareWarTargets(Orders orders) => <String>[
       for (final order
@@ -179,7 +137,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _colonialSnapshot();
+      final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot();
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -223,7 +181,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot();
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -276,7 +234,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _colonialSnapshot();
+      final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot();
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
         DomainPlannerInput(
