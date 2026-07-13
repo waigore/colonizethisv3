@@ -35,6 +35,11 @@ class TownIconCache extends AssetImageCache {
   static const double portIconSize = 64.0;
   static const double townIconSize = 64.0;
 
+  /// On-map destination side (px) by level (Refs #3870 S10): 48/56/60/64.
+  /// Ports use [portIconSize] and ignore this ladder.
+  static double townIconDestinationSize(int townDevelopmentLevel) =>
+      const <double>[48, 56, 60, 64][townDevelopmentLevel.clamp(1, 4) - 1];
+
   @override
   Iterable<String> get assetIds => kTownIconIds;
 
