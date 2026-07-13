@@ -1240,6 +1240,13 @@ rules:
     runner: dart
     script: tool/check_ai_planning_cases_suite_size.dart
 
+  - rule_id: repo.ai_residual_fat_pin_cases_required
+    group: testing
+    title: colonizethis_ai residual fat-pin contracts (observer_goal_phase_test.dart) above 750 physical lines must import a sibling *_cases.dart (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_residual_fat_pin_suite_size.dart
+
   - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
     group: testing
     title: colonizethis_ai colonial_phase_planner_acquisition_*_test.dart pins must import shared Game / DiplomacyRelation helpers from colonial_acquisition_test_support.dart (no local _acquisitionGame / _purchaseLandGame / _declareWarGame / _bothValidGame / _friendly / _peaceFriendly / _atWar) (Refs #3972)
