@@ -9,6 +9,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _minorAlpha = 'minor_alpha';
@@ -113,24 +114,6 @@ Game _focusMinorGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
   group('belowQuotaActiveMinorWarTarget — fire path', () {
@@ -147,7 +130,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
           },
           atWarMinors: const [_minorAlpha, _minorBeta],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
           atWarWith: const [_minorAlpha, _minorBeta],
           invadableProvinceIdsSorted: const [
@@ -178,7 +161,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
         },
         atWarMinors: const [_minorAlpha],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
         atWarWith: const [_minorAlpha],
         invadableProvinceIdsSorted: const [],
@@ -204,7 +187,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
         },
         atWarMinors: const [_minorAlpha, _minorBeta],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_minorAlpha, _minorBeta],
         invadableProvinceIdsSorted: const [
@@ -229,7 +212,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
           },
           atWarMinors: const [_minorAlpha],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
           atWarWith: const [_minorAlpha],
           invadableProvinceIdsSorted: const [
@@ -264,7 +247,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
             peacefulMinors: const [_minorAlpha],
             atWarTribes: const [_tribeOne],
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 7,
             atWarWith: const [_tribeOne],
             invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -280,7 +263,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
             },
             atWarMinors: const [_minorAlpha, _minorBeta],
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 7,
             atWarWith: const [_minorAlpha, _minorBeta],
             invadableProvinceIdsSorted: const [
@@ -300,7 +283,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
             },
             atWarMinors: const [_minorAlpha, _minorGamma],
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 7,
             atWarWith: const [_minorAlpha, _minorGamma],
             invadableProvinceIdsSorted: const [
@@ -346,7 +329,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
                   },
                   atWarMinors: const [_minorAlpha],
                 ),
-                snapshot: _ownSnapshot(
+                snapshot: ownSnapshot(
                   oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
                   atWarWith: const [_minorAlpha],
                   invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -361,7 +344,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
                   },
                   atWarMinors: const [_minorAlpha],
                 ),
-                snapshot: _ownSnapshot(
+                snapshot: ownSnapshot(
                   oldWorldProvincesOwned:
                       kObserverConquestMinOwProvincesPerGp - 2,
                   atWarWith: const [_minorAlpha],
@@ -380,7 +363,7 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
                   },
                   atWarMinors: const [_minorAlpha],
                 ),
-                snapshot: _ownSnapshot(
+                snapshot: ownSnapshot(
                   oldWorldProvincesOwned:
                       kObserverConquestMinOwProvincesPerGp - 2,
                   atWarWith: const [_minorAlpha],

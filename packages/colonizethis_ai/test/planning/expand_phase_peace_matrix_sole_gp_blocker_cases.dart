@@ -13,6 +13,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -168,106 +169,6 @@ Game _twoGpGame({
 /// the at-war partner `partnerId` holds [partnerProvinces] OW provinces, and
 /// the OW map optionally carries a [minorId]-owned province and/or
 /// [extraInvadableMinorOwnerId]-owned invadable province.
-Game _ownVsPartnerGame({
-  required int ownProvinces,
-  required int partnerProvinces,
-  required String partnerId,
-  String? extraGpId,
-  int extraGpProvinces = 0,
-  String? minorId,
-  int minorProvinces = 0,
-  String? extraInvadableMinorOwnerId,
-  bool atWarWithPartner = true,
-  bool atWarWithExtraGp = true,
-  bool atWarWithMinor = false,
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|gp_own_$i',
-        regionId: 'oldWorld',
-        ownerId: 'gp_own',
-      ),
-    for (var i = 1; i <= partnerProvinces; i++)
-      Province(
-        id: 'oldWorld|${partnerId}_$i',
-        regionId: 'oldWorld',
-        ownerId: partnerId,
-      ),
-    if (extraGpId != null)
-      for (var i = 1; i <= extraGpProvinces; i++)
-        Province(
-          id: 'oldWorld|${extraGpId}_$i',
-          regionId: 'oldWorld',
-          ownerId: extraGpId,
-        ),
-    if (minorId != null)
-      for (var i = 1; i <= minorProvinces; i++)
-        Province(
-          id: 'oldWorld|${minorId}_$i',
-          regionId: 'oldWorld',
-          ownerId: minorId,
-        ),
-    if (extraInvadableMinorOwnerId != null)
-      Province(
-        id: 'oldWorld|invadable_minor',
-        regionId: 'oldWorld',
-        ownerId: extraInvadableMinorOwnerId,
-      ),
-  ];
-
-  final players = <Player>[
-    const Player(id: 'gp_own', displayName: 'GP_OWN', isHuman: false),
-    Player(id: partnerId, displayName: partnerId, isHuman: false),
-    if (extraGpId != null)
-      Player(id: extraGpId, displayName: extraGpId, isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    if (minorId != null) MinorNation(id: minorId, displayName: minorId),
-    if (extraInvadableMinorOwnerId != null)
-      MinorNation(
-        id: extraInvadableMinorOwnerId,
-        displayName: extraInvadableMinorOwnerId,
-      ),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    if (atWarWithPartner)
-      DiplomacyRelation(
-        factionId1: 'gp_own',
-        factionId2: partnerId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    if (extraGpId != null && atWarWithExtraGp)
-      DiplomacyRelation(
-        factionId1: 'gp_own',
-        factionId2: extraGpId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    if (minorId != null && atWarWithMinor)
-      DiplomacyRelation(
-        factionId1: 'gp_own',
-        factionId2: minorId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id: 'g-unwinnable-sole-gp-${ownProvinces}_vs_$partnerProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    diplomacyRelations: relations,
-  );
-}
 
 void registerExpandPeaceSoleGpBlockerCases() {
   _runDecider(
@@ -334,7 +235,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'null when two Great Powers are at war (multi-front, no single '
           'enemy)',
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 12,
         partnerId: 'gp_partner',
@@ -354,7 +255,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     ),
     _Case(
       name: 'null at the observer OW quota even with a stronger sole GP enemy',
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         partnerProvinces: kObserverConquestMinOwProvincesPerGp + 5,
         partnerId: 'gp_partner',
@@ -373,7 +274,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
       name: 'null when no minor pivot remains '
           '(canPivotFromSoleGpWarAfterPeace=false)',
       // own < quota, no minors on the OW map, every invadable GP-owned.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 6,
         partnerProvinces: 12,
         partnerId: 'gp_partner',
@@ -395,7 +296,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
       name: 'null at default-start when enemy ties OW count (lead 0)',
       // own=kObserverDefaultStartOldWorldProvincesPerGp, minDeficit=1 row.
       // Enemy ties exactly (lead 0). `enemyOw < own + 1` -> null.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         partnerId: 'gp_partner',
@@ -417,7 +318,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
       name: 'null at 8 OW non-GP-only when enemy ties (lead 0)',
       // own=8 >= kObserverConquestMinOwProvincesPerGp - 2, !GP-only frontier
       // (minor on the invadable), minDeficit=1. Enemy ties -> null.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 8,
         partnerProvinces: 8,
         partnerId: 'gp_partner',
@@ -437,7 +338,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'null at 9 OW non-GP-only when enemy ties (lead 0)',
       // Re-pin the 8-9 OW non-GP-only minDeficit=1 row at the upper boundary.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 9,
         partnerProvinces: 9,
         partnerId: 'gp_partner',
@@ -457,7 +358,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'returns enemy at 9 OW non-GP-only with one-province lead',
       // Enemy=10 leads by 1; minDeficit=1; satisfies.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 9,
         partnerProvinces: 10,
         partnerId: 'gp_partner',
@@ -480,7 +381,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
           '(needs 2)',
       // own=8 on a GP-only invadable frontier triggers the
       // kUnwinnableSoleGpMinProvinceDeficit row. Enemy=9 (lead 1) -> null.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 8,
         partnerProvinces: 9,
         partnerId: 'gp_partner',
@@ -502,7 +403,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'returns enemy at 8 OW GP-only frontier when enemy leads by 2',
       // own=8 GP-only frontier, enemy=10 (lead 2 == minDeficit).
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 8,
         partnerProvinces: 10,
         partnerId: 'gp_partner',
@@ -525,7 +426,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'null at 9 OW GP-only frontier when enemy leads by only 1',
       // Upper boundary of the GP-only band (own=9). Lead 1 still fails.
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 9,
         partnerProvinces: 10,
         partnerId: 'gp_partner',
@@ -547,7 +448,7 @@ void registerExpandPeaceSoleGpBlockerCases() {
     _Case(
       name: 'returns enemy at 9 OW GP-only frontier when enemy leads by 2',
       // own=9 GP-only frontier, enemy=11 (lead 2).
-      game: _ownVsPartnerGame(
+      game: buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: 9,
         partnerProvinces: 11,
         partnerId: 'gp_partner',

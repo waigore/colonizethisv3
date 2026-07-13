@@ -68,119 +68,6 @@ const String _gpPartner = 'gp_partner';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
 
-/// Builds a minimal `Game` where `gp_own` holds [ownProvinces] OW
-/// provinces, the at-war partner [partnerId] holds [partnerProvinces]
-/// OW provinces, and the OW map optionally carries:
-///
-///   * an additional GP [extraGpId] (with [extraGpProvinces] OW
-///     provinces) to opt into the "two GPs in atWarWith" multi-front
-///     shape used by [stalledBelowQuotaGpLeadPeaceTargets] tests;
-///   * a minor [minorId] (with [minorProvinces] OW provinces) used by
-///     the GP-only-frontier carve-out tests so the invadable frontier
-///     can be shaped to include or exclude minor-owned tiles;
-///   * a single invadable province at `oldWorld|invadable_partner`
-///     owned by [partnerId] when [invadablePartnerProvince] is `true`,
-///     mirroring the `_ownVsPartnerGame` shape from
-///     `expand_phase_planner_sole_gp_peace_deciders_test.dart`.
-///
-/// Diplomacy relations between `gp_own` and the partner default to
-/// atWar; the optional extra GP is also placed at war when supplied.
-/// Minors are never in the at-war set so the focus stays on the GP
-/// lead-peace and critical-hold branches.
-Game _ownVsPartnerGame({
-  required int ownProvinces,
-  required int partnerProvinces,
-  String partnerId = _gpPartner,
-  String? extraGpId,
-  int extraGpProvinces = 0,
-  String? minorId,
-  int minorProvinces = 0,
-  bool invadablePartnerProvince = false,
-  bool atWarWithPartner = true,
-  bool atWarWithExtraGp = true,
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (var i = 1; i <= partnerProvinces; i++)
-      Province(
-        id: 'oldWorld|${partnerId}_$i',
-        regionId: 'oldWorld',
-        ownerId: partnerId,
-      ),
-    if (extraGpId != null)
-      for (var i = 1; i <= extraGpProvinces; i++)
-        Province(
-          id: 'oldWorld|${extraGpId}_$i',
-          regionId: 'oldWorld',
-          ownerId: extraGpId,
-        ),
-    if (minorId != null)
-      for (var i = 1; i <= minorProvinces; i++)
-        Province(
-          id: 'oldWorld|${minorId}_$i',
-          regionId: 'oldWorld',
-          ownerId: minorId,
-        ),
-    if (invadablePartnerProvince)
-      Province(
-        id: 'oldWorld|invadable_partner',
-        regionId: 'oldWorld',
-        ownerId: partnerId,
-      ),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    Player(id: partnerId, displayName: partnerId, isHuman: false),
-    if (extraGpId != null)
-      Player(
-        id: extraGpId,
-        displayName: extraGpId.toUpperCase(),
-        isHuman: false,
-      ),
-  ];
-
-  final minorNations = <MinorNation>[
-    if (minorId != null) MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    if (atWarWithPartner)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: partnerId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    if (extraGpId != null && atWarWithExtraGp)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: extraGpId,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-critical-hold-stalled-lead-canonical-'
-        '${ownProvinces}_vs_$partnerProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    diplomacyRelations: relations,
-  );
-}
-
 void main() {
   group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
     test('returns const [] when atWarWith collapses to no Great Powers', () {
@@ -242,7 +129,7 @@ void main() {
   group('criticalOwHoldPeaceTargets — canonical critical-band table', () {
     test('returns const [] one province above the defend threshold '
         '(own == kFewOldWorldProvincesDefendThreshold + 1)', () {
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold + 1,
         partnerProvinces: 6,
       );
@@ -265,7 +152,7 @@ void main() {
 
     test('returns sorted GP list exactly at the defend threshold '
         '(own == kFewOldWorldProvincesDefendThreshold)', () {
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold,
         partnerProvinces: 10,
       );
@@ -287,7 +174,7 @@ void main() {
 
     test('returns const [] at the observer quota '
         '(own == kObserverConquestMinOwProvincesPerGp)', () {
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         partnerProvinces: 12,
       );
@@ -310,7 +197,7 @@ void main() {
     test(
       'sorts multiple GP enemies ascending regardless of atWarWith order',
       () {
-        final game = _ownVsPartnerGame(
+        final game = buildOwnVsPartnerExpandPeaceGame(
           ownProvinces: kFewOldWorldProvincesDefendThreshold,
           partnerProvinces: 10,
           partnerId: 'gp_z',
@@ -337,7 +224,7 @@ void main() {
 
   group('stalledBelowQuotaGpLeadPeaceTargets — canonical quota guard', () {
     test('returns const [] at the observer OW quota even when enemy leads', () {
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         partnerProvinces: kObserverConquestMinOwProvincesPerGp + 3,
       );
@@ -369,7 +256,7 @@ void main() {
           // own == kObserverDefaultStartOldWorldProvincesPerGp (7) so the
           // minLeadDeficit table selects kUnwinnableSoleGpMinProvinceDeficit
           // (2). lead exactly 2 peaces.
-          final game = _ownVsPartnerGame(
+          final game = buildOwnVsPartnerExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             partnerProvinces:
                 kObserverDefaultStartOldWorldProvincesPerGp +
@@ -394,7 +281,7 @@ void main() {
       );
 
       test('default-start row skips one-province lead (below band)', () {
-        final game = _ownVsPartnerGame(
+        final game = buildOwnVsPartnerExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
         );
@@ -414,7 +301,7 @@ void main() {
       });
 
       test('post-default row peaces a one-province lead (8 OW + 1)', () {
-        final game = _ownVsPartnerGame(
+        final game = buildOwnVsPartnerExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
           partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 2,
         );
@@ -436,7 +323,7 @@ void main() {
       });
 
       test('post-default row skips a tied enemy (lead == 0)', () {
-        final game = _ownVsPartnerGame(
+        final game = buildOwnVsPartnerExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
           partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
         );
@@ -464,7 +351,7 @@ void main() {
       // primary blocker must be excluded even though it satisfies the
       // deficit gate — so the canonical helper returns const [] when
       // the sole at-war GP is the blocker.
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         partnerProvinces:
             kObserverDefaultStartOldWorldProvincesPerGp +
@@ -494,7 +381,7 @@ void main() {
       // Partner is the GP-only frontier blocker (owns the only
       // invadable province). gp_third is a non-blocker GP at war
       // with own and leads by 2 → must still peace.
-      final game = _ownVsPartnerGame(
+      final game = buildOwnVsPartnerExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         partnerProvinces:
             kObserverDefaultStartOldWorldProvincesPerGp +

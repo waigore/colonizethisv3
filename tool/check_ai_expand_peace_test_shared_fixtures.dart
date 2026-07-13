@@ -9,11 +9,34 @@ import 'ct_repo_lint_scan_contract.dart';
 const String _expandPeaceTestPathPrefix =
     'packages/colonizethis_ai/test/planning/expand_phase_planner_';
 
+/// Planning-test directory that also hosts Phase-8 ownSnapshot /
+/// ownVsPartner adopters outside the peace-pin glob (Refs #3997).
+const String _planningTestDir = 'packages/colonizethis_ai/test/planning/';
+
 /// Canonical shared support library that owns [ownSnapshot] and the
-/// critical / distraction / zero-regiment / peer Game builders.
+/// critical / distraction / zero-regiment / peer / own-vs-partner Game
+/// builders.
 const String expandPeaceSharedFixturesSupportFile =
     'packages/colonizethis_ai/test/support/'
     'expand_phase_peace_test_support.dart';
+
+/// Phase-8 files that must import [ownSnapshot] instead of redeclaring
+/// `_ownSnapshot` (Refs #3997).
+const Set<String> _ownSnapshotAdopterBasenames = {
+  'expand_phase_planner_focus_minor_target_early_cases.dart',
+  'expand_phase_planner_focus_minor_target_later_cases.dart',
+  'expand_phase_planner_stalled_minor_or_gp_blocker_pivot_test.dart',
+  'observer_goal_phase_survival_great_power_peace_targets_test.dart',
+};
+
+/// Sole-GP matrix / peace-pin modules that must import
+/// [buildOwnVsPartnerExpandPeaceGame] (Refs #3997).
+///
+/// Classic expand-peace `*peace*_test.dart` pins are also covered via
+/// [_isExpandPeacePinPath] (sole-GP deciders + critical OW-hold).
+const Set<String> _ownVsPartnerAdopterBasenames = {
+  'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
+};
 
 /// Forbidden local snapshot helper declarations in expand-peace pins.
 final RegExp _localOwnSnapshotDecl = RegExp(
@@ -26,19 +49,41 @@ final RegExp _localCriticalGameDecl = RegExp(r'Game\s+_criticalGame\b');
 final RegExp _localDistractionGameDecl = RegExp(r'Game\s+_distractionGame\b');
 final RegExp _localZeroRegimentGameDecl = RegExp(r'Game\s+_zeroRegimentGame\b');
 final RegExp _localPeerGameDecl = RegExp(r'Game\s+_peerGame\b');
+final RegExp _localOwnVsPartnerGameDecl = RegExp(r'Game\s+_ownVsPartnerGame\b');
 
-/// True when the repo-relative [slashPath] is an in-scope expand-peace
-/// `*_peace*_test.dart` pin (not the shared support library).
-bool aiExpandPeaceSharedFixturesPathInScope(String slashPath) {
-  final normalized = slashPath.replaceAll('\\', '/');
+/// True when [slashPath] is a classic expand-peace `*_peace*_test.dart` pin.
+bool _isExpandPeacePinPath(String normalized) {
   if (!normalized.startsWith(_expandPeaceTestPathPrefix)) {
     return false;
   }
   if (!normalized.endsWith('_test.dart')) {
     return false;
   }
-  final fileName = p.basename(normalized);
-  return fileName.contains('peace');
+  return p.basename(normalized).contains('peace');
+}
+
+/// True when [slashPath] is a Phase-8 ownSnapshot adopter.
+bool _isOwnSnapshotAdopterPath(String normalized) {
+  if (!normalized.startsWith(_planningTestDir)) {
+    return false;
+  }
+  return _ownSnapshotAdopterBasenames.contains(p.basename(normalized));
+}
+
+/// True when [slashPath] is a sole-GP matrix ownVsPartner adopter.
+bool _isOwnVsPartnerAdopterPath(String normalized) {
+  if (!normalized.startsWith(_planningTestDir)) {
+    return false;
+  }
+  return _ownVsPartnerAdopterBasenames.contains(p.basename(normalized));
+}
+
+/// True when the repo-relative [slashPath] is in scope for this gate.
+bool aiExpandPeaceSharedFixturesPathInScope(String slashPath) {
+  final normalized = slashPath.replaceAll('\\', '/');
+  return _isExpandPeacePinPath(normalized) ||
+      _isOwnSnapshotAdopterPath(normalized) ||
+      _isOwnVsPartnerAdopterPath(normalized);
 }
 
 /// Returns a violation reason when [content] redeclares a local expand-peace
@@ -49,32 +94,42 @@ String? aiExpandPeaceSharedFixturesViolationReason(
   String content,
 ) {
   final normalized = slashPath.replaceAll('\\', '/');
-  if (!aiExpandPeaceSharedFixturesPathInScope(normalized)) {
+  final isPeacePin = _isExpandPeacePinPath(normalized);
+  final isOwnSnapshotAdopter = _isOwnSnapshotAdopterPath(normalized);
+  final isOwnVsPartnerAdopter = _isOwnVsPartnerAdopterPath(normalized);
+  if (!isPeacePin && !isOwnSnapshotAdopter && !isOwnVsPartnerAdopter) {
     return null;
   }
-  if (_localOwnSnapshotDecl.hasMatch(content)) {
+  if ((isPeacePin || isOwnSnapshotAdopter) &&
+      _localOwnSnapshotDecl.hasMatch(content)) {
     return 'redeclares local `_ownSnapshot`; import `ownSnapshot` from '
-        '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
+        '`$expandPeaceSharedFixturesSupportFile` (Refs #3967 / #3997)';
   }
-  if (_localCriticalGameDecl.hasMatch(content)) {
+  if (isPeacePin && _localCriticalGameDecl.hasMatch(content)) {
     return 'redeclares local `_criticalGame`; import '
         '`buildCriticalExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
   }
-  if (_localDistractionGameDecl.hasMatch(content)) {
+  if (isPeacePin && _localDistractionGameDecl.hasMatch(content)) {
     return 'redeclares local `_distractionGame`; import '
         '`buildDistractionExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
   }
-  if (_localZeroRegimentGameDecl.hasMatch(content)) {
+  if (isPeacePin && _localZeroRegimentGameDecl.hasMatch(content)) {
     return 'redeclares local `_zeroRegimentGame`; import '
         '`buildZeroRegimentExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
   }
-  if (_localPeerGameDecl.hasMatch(content)) {
+  if (isPeacePin && _localPeerGameDecl.hasMatch(content)) {
     return 'redeclares local `_peerGame`; import '
         '`buildPeerExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
+  }
+  if ((isPeacePin || isOwnVsPartnerAdopter) &&
+      _localOwnVsPartnerGameDecl.hasMatch(content)) {
+    return 'redeclares local `_ownVsPartnerGame`; import '
+        '`buildOwnVsPartnerExpandPeaceGame` from '
+        '`$expandPeaceSharedFixturesSupportFile` (Refs #3997)';
   }
   return null;
 }

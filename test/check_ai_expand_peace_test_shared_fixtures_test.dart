@@ -139,6 +139,117 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
+
+    test(
+      'fails when a Phase-8 ownSnapshot adopter redeclares _ownSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-peace-adopter-');
+        try {
+          _writeSupportStub(temp);
+          final planning = Directory(
+            p.join(
+              temp.path,
+              'packages',
+              'colonizethis_ai',
+              'test',
+              'planning',
+            ),
+          )..createSync(recursive: true);
+          File(
+            p.join(
+              planning.path,
+              'expand_phase_planner_focus_minor_target_early_cases.dart',
+            ),
+          ).writeAsStringSync(_localOwnSnapshotBody);
+
+          final errors = <String>[];
+          final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_ownSnapshot'));
+          expect(errors.join('\n'), contains('ownSnapshot'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a sole-GP matrix cases file redeclares _ownVsPartnerGame',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-peace-partner-');
+        try {
+          _writeSupportStub(temp);
+          final planning = Directory(
+            p.join(
+              temp.path,
+              'packages',
+              'colonizethis_ai',
+              'test',
+              'planning',
+            ),
+          )..createSync(recursive: true);
+          File(
+            p.join(
+              planning.path,
+              'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
+            ),
+          ).writeAsStringSync(
+            "import 'package:test/test.dart';\n\n"
+            'Game _ownVsPartnerGame({required int ownProvinces}) {\n'
+            '  throw UnimplementedError();\n'
+            '}\n\n'
+            'void main() {}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_ownVsPartnerGame'));
+          expect(
+            errors.join('\n'),
+            contains('buildOwnVsPartnerExpandPeaceGame'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test('fails when an expand-peace pin redeclares _ownVsPartnerGame', () {
+      final temp = Directory.systemTemp.createTempSync('ai-peace-partner-pin-');
+      try {
+        _writeSupportStub(temp);
+        _writeExpandPeaceTest(
+          temp,
+          'sole_gp_peace_deciders_test.dart',
+          "import 'package:test/test.dart';\n\n"
+              'Game _ownVsPartnerGame({required int ownProvinces}) {\n'
+              '  throw UnimplementedError();\n'
+              '}\n\n'
+              'void main() {}\n',
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_ownVsPartnerGame'));
+        expect(errors.join('\n'), contains('buildOwnVsPartnerExpandPeaceGame'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
   });
 }
 
