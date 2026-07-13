@@ -73,6 +73,31 @@ class GameService {
   /// Count of turn-trace sessions (tests / diagnostics).
   int get turnTraceSessionCount => _turnTraceSessionsByGameId.length;
 
+  /// Cache-only map fingerprint for session-clear isolation tests.
+  String? cachedMapContentFingerprint(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached == null) return null;
+    final ids = cached.tileMapByRegion.keys.toList()..sort();
+    return [
+      for (final id in ids)
+        () {
+          final m = cached.tileMapByRegion[id]!;
+          final sig = m.grid.fold<int>(
+            0,
+            (s, row) => row.fold<int>(s, Object.hash),
+          );
+          return '$id:${m.width}x${m.height}:$sig';
+        }(),
+    ].join('|');
+  }
+
+  /// Seeds a turn-trace session for tests (no export / resolution).
+  void debugSeedTurnTraceSession(String gameId) =>
+      _turnTraceSessionsByGameId.putIfAbsent(
+        gameId,
+        () => _TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
+      );
+
   /// Loads game by id. Returns null if not found or required map data is missing/invalid.
   Game? loadGame(String gameId) => _gameServiceLoadGame(this, gameId);
 
