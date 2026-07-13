@@ -6,14 +6,17 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Physical-line ceiling for COLONIAL military / naval `*_test.dart`
 /// contracts after Phase-6 case extraction (Refs #3977).
+/// Phase 8 extends the same ≤750-or-cases pattern to COLONIAL-lite naval
+/// (Refs #3997).
 const int colonialMilitaryNavalPinSuitePhysicalLineCeiling = 750;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 
-/// Basenames gated after military / naval case extraction.
+/// Basenames gated after military / naval / lite-naval case extraction.
 const Set<String> colonialMilitaryNavalPinSuiteGatedBasenames = {
   'colonial_phase_planner_military_test.dart',
   'colonial_phase_planner_naval_test.dart',
+  'colonial_phase_planner_colonial_lite_naval_test.dart',
 };
 
 bool aiColonialMilitaryNavalPinSuiteSizePathInScope(String slashPath) {
