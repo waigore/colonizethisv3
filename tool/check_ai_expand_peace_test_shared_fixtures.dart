@@ -29,8 +29,11 @@ const Set<String> _ownSnapshotAdopterBasenames = {
   'observer_goal_phase_survival_great_power_peace_targets_test.dart',
 };
 
-/// Sole-GP matrix case modules that must import
+/// Sole-GP matrix / peace-pin modules that must import
 /// [buildOwnVsPartnerExpandPeaceGame] (Refs #3997).
+///
+/// Classic expand-peace `*peace*_test.dart` pins are also covered via
+/// [_isExpandPeacePinPath] (sole-GP deciders + critical OW-hold).
 const Set<String> _ownVsPartnerAdopterBasenames = {
   'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
 };
@@ -46,9 +49,7 @@ final RegExp _localCriticalGameDecl = RegExp(r'Game\s+_criticalGame\b');
 final RegExp _localDistractionGameDecl = RegExp(r'Game\s+_distractionGame\b');
 final RegExp _localZeroRegimentGameDecl = RegExp(r'Game\s+_zeroRegimentGame\b');
 final RegExp _localPeerGameDecl = RegExp(r'Game\s+_peerGame\b');
-final RegExp _localOwnVsPartnerGameDecl = RegExp(
-  r'Game\s+_ownVsPartnerGame\b',
-);
+final RegExp _localOwnVsPartnerGameDecl = RegExp(r'Game\s+_ownVsPartnerGame\b');
 
 /// True when [slashPath] is a classic expand-peace `*_peace*_test.dart` pin.
 bool _isExpandPeacePinPath(String normalized) {
@@ -124,7 +125,8 @@ String? aiExpandPeaceSharedFixturesViolationReason(
         '`buildPeerExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3967)';
   }
-  if (isOwnVsPartnerAdopter && _localOwnVsPartnerGameDecl.hasMatch(content)) {
+  if ((isPeacePin || isOwnVsPartnerAdopter) &&
+      _localOwnVsPartnerGameDecl.hasMatch(content)) {
     return 'redeclares local `_ownVsPartnerGame`; import '
         '`buildOwnVsPartnerExpandPeaceGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #3997)';

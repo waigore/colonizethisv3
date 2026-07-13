@@ -369,25 +369,29 @@ Game buildPeerExpandPeaceGame({
   );
 }
 
-/// Sole-GP / unwinnable-frontier Game builder used by the expand peace
-/// matrix sole-GP case modules (Refs #3997 fixture consolidation).
+/// Sole-GP / unwinnable-frontier / critical-hold Game builder used by the
+/// expand peace matrix sole-GP case modules and the sole-GP / critical
+/// OW-hold peace pins (Refs #3997 fixture consolidation).
 ///
-/// Distinct from [buildPeerExpandPeaceGame]: preserves the sole-GP matrix
-/// game id, turn 80, relation score `30` on minor arms, and optional
-/// [extraInvadableMinorOwnerId] province.
+/// Distinct from [buildPeerExpandPeaceGame]: preserves turn 80, relation
+/// score `30` on minor arms, optional [extraInvadableMinorOwnerId]
+/// province, and optional partner-owned [invadablePartnerProvince] at
+/// `oldWorld|invadable_partner` (GP-only frontier carve-out pins).
 Game buildOwnVsPartnerExpandPeaceGame({
   required int ownProvinces,
   required int partnerProvinces,
-  required String partnerId,
+  String partnerId = kExpandPeaceGpPartner,
   String ownPlayerId = kExpandPeaceGpOwn,
   String? extraGpId,
   int extraGpProvinces = 0,
   String? minorId,
   int minorProvinces = 0,
   String? extraInvadableMinorOwnerId,
+  bool invadablePartnerProvince = false,
   bool atWarWithPartner = true,
   bool atWarWithExtraGp = true,
   bool atWarWithMinor = false,
+  String? gameId,
 }) {
   final provinces = <Province>[
     for (var i = 1; i <= ownProvinces; i++)
@@ -421,6 +425,12 @@ Game buildOwnVsPartnerExpandPeaceGame({
         id: 'oldWorld|invadable_minor',
         regionId: 'oldWorld',
         ownerId: extraInvadableMinorOwnerId,
+      ),
+    if (invadablePartnerProvince)
+      Province(
+        id: 'oldWorld|invadable_partner',
+        regionId: 'oldWorld',
+        ownerId: partnerId,
       ),
   ];
 
@@ -465,7 +475,7 @@ Game buildOwnVsPartnerExpandPeaceGame({
   ];
 
   return Game(
-    id: 'g-unwinnable-sole-gp-${ownProvinces}_vs_$partnerProvinces',
+    id: gameId ?? 'g-unwinnable-sole-gp-${ownProvinces}_vs_$partnerProvinces',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
       oldWorld: RegionData(provinces: provinces),
