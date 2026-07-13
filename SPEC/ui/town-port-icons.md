@@ -40,8 +40,8 @@ Retired: `ui_icon_com_town_inland_64.png` / `town_inland_64`.
 ### Asset and Render Requirements
 
 - **Format:** 64×64 PNG, RGBA transparent.
-- **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures) — **not** by shrinking the overall silhouette.
-- **On-map size parity:** All four levels target the same **48×48 px inner box** centered in the 64×64 canvas (8 px margin). Level **1** must appear **as large on the map** as levels 2–4 and other 64×64 map markers (port, resources). **S9c (merged):** PO-approved S9b level-1 candidates are promoted to default production paths; retired S9a hamlets live at `_legacy_64` paths for rollback.
+- **Style:** Colonial-era pixel art; development levels differ by **architectural complexity** (structure count, roof variety, spires/totems, walls/enclosures). Asset files stay 64×64; **on-map size** is paint-time scale (S10), not silhouette shrink in the PNG.
+- **On-map level scale (S10):** Destination draw sides are **48 / 56 / 60 / 64** px for levels **1–4** (`TownIconCache.townIconDestinationSize`). L4 equals `townIconSize` (64); lower levels shrink. Assets remain 64×64; no regen for size. Ports stay at `portIconSize` (64). Capital gold ring stays **fixed** (does not scale with the town glyph).
 - **S9c legacy fallback flag:** `CT_LEGACY_TOWN_ICONS` compile-time dart define (`defaultValue: false`). When **false** (default), `TownIconCache` loads promoted production `ui_icon_com_town_{style}_1_64.png` for level **1** and canonical paths for levels **2–4**. When **true**, level **1** only loads `ui_icon_com_town_{style}_1_legacy_64.png` (retired S9a hamlets). Config: `app/lib/config/ct_legacy_town_icons.dart`.
 - **S9b candidate art (completed):** Regenerated with PixelLab **Pixflux** using the verbatim prompt table below (Refs #3870). PO-approved level-1 candidates promoted to production in S9c; `_candidate_64` paths removed.
 
@@ -84,20 +84,21 @@ Shared negative: `blurry, anti-aliased, smooth gradient, photorealistic, circula
 
 All styles: centered cluster, transparent background, no circular badge, colonial 16th/17th c. pixel art, single-color black outline, medium shading.
 
-**On-map size rule:** The axis-aligned bounding box of opaque pixels for level **1** must be within **±2 px** of level **4** on each axis (width, height, min-x, min-y) and center offset for the same style.
+**On-map size rule (S10):** Render destination side is level-scaled (**48 / 56 / 60 / 64**). Asset bbox / height-floor checks remain **art quality** gates only — they do **not** define on-map size.
 
-| Level | Tier name | Mandatory visual elements |
-|-------|-----------|----------------------------|
-| **1** | Hamlet | **2–3** ground structures spread across the full 48×48 inner box; **zero** spires/towers/totems; simplest roof shapes; **same silhouette extent** as levels 2–4 |
-| **2** | Village | **4–5** structures; **one** low central roof or bell-cote; **no** thin spire |
-| **3** | Town | **6+** structures; **one** tower or spire; visible wall segment or market enclosure |
-| **4** | City | **8+** structures; **2+** towers/spires/totems; grandest enclosure |
+| Level | Tier name | Mandatory visual elements | Dest. side |
+|-------|-----------|----------------------------|------------|
+| **1** | Hamlet | **2–3** ground structures; **zero** spires/towers/totems; simplest roofs | **48** |
+| **2** | Village | **4–5** structures; **one** low central roof or bell-cote; **no** thin spire | **56** |
+| **3** | Town | **6+** structures; **one** tower or spire; wall/market enclosure | **60** |
+| **4** | City | **8+** structures; **2+** towers/spires/totems; grandest enclosure | **64** |
 
 **Automatable proxy tests:**
 
 - **Complexity (required):** For each style, opaque pixel count strictly increases **1 < 2 < 3 < 4**.
-- **Size parity (S9c):** For each style, level-1 vs level-4 bbox width/height/min-x/min-y and center offset differ by at most **6 px** on promoted production art (PO-approved S9b candidates; Pixflux bbox variance).
-- **Height floor (S9c):** Level-1 `maxColumnHeight` ≥ **75%** of level-4 `maxColumnHeight` (prevents tiny silhouettes). Automatable tests run against promoted production level-1 PNGs.
+- **Asset bbox (S9c art quality):** For each style, level-1 vs level-4 bbox width/height/min-x/min-y and center offset differ by at most **6 px** on promoted production art.
+- **Height floor (S9c art quality):** Level-1 `maxColumnHeight` ≥ **75%** of level-4 `maxColumnHeight`.
+- **Render scale (S10):** `townIconDestinationSize(n+1) > townIconDestinationSize(n)` for n∈{1,2,3}; ports ignore the ladder.
 - **Removed:** Strict `maxColumnHeight(1) < maxColumnHeight(2) < …` — height must **not** be the primary differentiation axis.
 
 ---
@@ -116,17 +117,19 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Acceptance Criteria (Given–When–Then)
 
-- **Given** a province with `townDevelopmentLevel` **L** (1–4) and style **S** per style resolution, **when** the map renders the town tile in full visibility, **then** the glyph is `town_{S}_{L}`.
-- **Given** `townDevelopmentLevel` changes after turn resolution, **when** the map refreshes, **then** the matching level glyph renders without reload.
-- **Given** a fogged town tile, **when** the map renders, **then** the icon shows the **true** level (reduced opacity only).
+- **Given** a province with `townDevelopmentLevel` **L** (1–4) and style **S** per style resolution, **when** the map renders the town tile in full visibility, **then** the glyph is `town_{S}_{L}` drawn at destination side **48 / 56 / 60 / 64** for L **1–4**.
+- **Given** `townDevelopmentLevel` changes after turn resolution, **when** the map refreshes, **then** the matching level glyph renders at that level’s destination size without reload.
+- **Given** a fogged town tile, **when** the map renders, **then** the icon shows the **true** level at that level’s scale (reduced opacity only).
 - **Given** an unrevealed town tile, **when** the map renders, **then** **no** town icon is drawn.
-- **Given** level-**1** and level-**4** town glyphs of the same style rendered at 64×64 on the map, **when** a player views them side-by-side, **then** level **1** appears **the same map scale** as level **4** (not noticeably smaller or distant). *(S9c promoted art.)*
+- **Given** town glyphs for levels **1–4** of the same style, **when** compared side-by-side, **then** destination sides are strictly increasing **48 < 56 < 60 < 64**.
+- **Given** a port glyph and a level-**3** town glyph, **when** both render, **then** the port draws at **64** px (`portIconSize`) and the town at **60** px.
+- **Given** a capital town tile with gold ring, **when** the town glyph uses a level scale, **then** the gold ring radius stays at its current fixed size.
 - **Given** each style, **when** opaque pixel counts are measured on levels 1–4, **then** counts strictly increase **1 < 2 < 3 < 4**.
 - **Given** the three level-**1** legacy town PNGs at `ui_icon_com_town_{style}_1_legacy_64.png`, **when** loaded from the asset bundle, **then** file byte lengths match the pre-#3892 #3871 hamlets (`bed8a84a`) and decode as readable pixel-art (opaque count > 100 per icon).
-- **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for promoted production levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **6 px** (size parity on PO-approved S9c art).
-- **Given** each style, **when** `maxColumnHeight` is measured on promoted production levels **1** and **4**, **then** level **1** is at least **75%** of level **4** (prevents tiny silhouettes).
-- **Given** the app is built **without** `--dart-define=CT_LEGACY_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system uses promoted production `ui_icon_com_town_{style}_1_64.png` assets.
-- **Given** the app is built with `--dart-define=CT_LEGACY_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system loads legacy `ui_icon_com_town_{style}_1_legacy_64.png` assets. Levels **2–4** always use production paths.
+- **Given** each style, **when** axis-aligned bounding boxes of opaque pixels are measured for promoted production levels **1** and **4**, **then** width, height, min-x, min-y, and center offset differ by at most **6 px** (art-quality gate; not on-map size).
+- **Given** each style, **when** `maxColumnHeight` is measured on promoted production levels **1** and **4**, **then** level **1** is at least **75%** of level **4**.
+- **Given** the app is built **without** `--dart-define=CT_LEGACY_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system uses promoted production `ui_icon_com_town_{style}_1_64.png` assets (still at 48 px destination).
+- **Given** the app is built with `--dart-define=CT_LEGACY_TOWN_ICONS=true`, **when** the map renders level-**1** town glyphs, **then** the system loads legacy `ui_icon_com_town_{style}_1_legacy_64.png` assets at the same S10 level-1 destination size. Levels **2–4** always use production paths.
 
 (Port placement, tap/hit-test, and event-bus ACs unchanged from prior spec — see GitHub #1361.)
 
@@ -134,6 +137,7 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ## Implementation Notes
 
-- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level **1** honors `kCtLegacyTownIconsEnabled` (`CT_LEGACY_TOWN_ICONS`) via `legacyTownIconAssetPaths`; levels **2–4** always use production paths.
+- `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level **1** honors `kCtLegacyTownIconsEnabled` (`CT_LEGACY_TOWN_ICONS`) via `legacyTownIconAssetPaths`; levels **2–4** always use production paths. `townIconDestinationSize` applies S10 paint-time sides **48 / 56 / 60 / 64**.
+- `_paintTownIconAt` uses destination size for town glyphs; ports always use `portIconSize`. Capital ring paint stays fixed radius.
 - `buildTownMarkers` populates `townDevelopmentLevel` and `townIconStyle` from province + game faction data.
 - Province overlay Political section shows `Town development: {level}` (Refs #3870, `SPEC/ui/province-sea-zone-detail-overlay.md`).

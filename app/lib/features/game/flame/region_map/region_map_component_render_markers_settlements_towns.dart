@@ -23,6 +23,7 @@ extension _CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
           townIconStyle: town.townIconStyle,
           townDevelopmentLevel: town.townDevelopmentLevel,
         ),
+        townDevelopmentLevel: town.townDevelopmentLevel,
       );
     }
 
@@ -55,6 +56,7 @@ extension _CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
     required int cx,
     required int cy,
     required String icon,
+    int? townDevelopmentLevel,
   }) {
     final uiImage = townIconCache.getIcon(icon);
     if (uiImage == null) return;
@@ -63,7 +65,7 @@ extension _CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
     final centerY = cy * cellSize + cellSize / 2;
     final iconSize = icon == TownIconCache.portIconId
         ? TownIconCache.portIconSize
-        : TownIconCache.townIconSize;
+        : TownIconCache.townIconDestinationSize(townDevelopmentLevel ?? 4);
     final halfIcon = iconSize / 2;
 
     final srcRect = Rect.fromLTWH(
