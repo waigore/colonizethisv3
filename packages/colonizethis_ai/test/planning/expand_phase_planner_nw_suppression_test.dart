@@ -61,121 +61,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'ai_planner_fixtures.dart';
-
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _minor1 = 'minor1';
-
-const String _owProvMinor = 'oldWorld|m1_a';
-const String _nwProvTribe = 'newWorld|tribe1_a';
-const String _nwProvUnowned = 'newWorld|p_unowned';
-
-/// Builds a Game scaffold where:
-///   - Active player (`gp1`) holds [oldWorldProvincesOwned] OW
-///     provinces (below the EXPAND quota of 10).
-///   - Minor [_minor1] owns an OW invadable province
-///     ([_owProvMinor]) so the OW priority arms in the planner set
-///     have real candidates to read.
-///   - Tribe [_tribe1] owns NW provinces ([_nwProvTribe] and
-///     [_nwProvUnowned]) so the planner set can be tempted to leak
-///     NW orders if any guard is missing.
-///   - Active player has [regimentCount] regiments via a home army so
-///     the economy / declare-war arms exercise live treasury /
-///     regiment gates (otherwise outer guards short-circuit and the
-///     NW suppression check would be tautological).
-Game _expandGame({
-  int turnNumber = 50,
-  int ownTreasury = 9999,
-  int regimentCount = 6,
-}) {
-  return Game(
-    id: 'g-2509-expand-phase-planner-nw-suppression-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          // Active player's own OW province (snapshot
-          // `oldWorldProvincesOwned` is the authoritative quota signal
-          // for the planner set; this entry just keeps the region
-          // non-empty so any future helpers that walk `worldState`
-          // see consistent ownership state).
-          Province(
-            id: 'oldWorld|gp1_a',
-            regionId: kOldWorldRegionId,
-            ownerId: _gp1,
-          ),
-          // Minor-held OW province: feeds `invadableProvinceIdsSorted`
-          // when the snapshot mirrors it.
-          Province(
-            id: _owProvMinor,
-            regionId: kOldWorldRegionId,
-            ownerId: _minor1,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          // Tribe-held NW province: visible target for any NW leakage.
-          Province(
-            id: _nwProvTribe,
-            regionId: kNewWorldRegionId,
-            ownerId: _tribe1,
-          ),
-          // Unowned NW province: surface for purchase_land /
-          // establishOverture leakage if any planner forgot the
-          // suppression.
-          Province(id: _nwProvUnowned, regionId: kNewWorldRegionId),
-        ],
-      ),
-      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: ownTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
-  );
-}
-
-/// Snapshot for active player [_gp1] in EXPAND posture (OW below
-/// quota, OW invadable populated, NW invadable + adjacent NW owners
-/// populated to verify suppression).
-///
-/// `oldWorldProvincesOwned` defaults to 8 so the EXPAND outer guards
-/// (`isBelowObserverConquestQuota`, `_isMutualBelowQuotaPlateauPeer`)
-/// fire; `atWarWith` includes the tribe + minor so the declare-war
-/// and military-fallback arms have at-war candidates to scan.
-AIWorldSnapshot _expandSnapshot({
-  int oldWorldProvincesOwned = 8,
-  List<String> atWarWith = const [_minor1, _tribe1],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: const [_owProvMinor],
-      adjacentOwnerFactionIdsSorted: const [_minor1, _tribe1],
-    ),
-    colonial: const ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_nwProvTribe, _nwProvUnowned],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribe1],
-      preferredColonialTargetFactionIdsSorted: [_tribe1],
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
+import '../support/phase_planner_nw_suppression_test_support.dart';
 
 /// Boolean test for whether [factionId] resolves to a tribe or minor
 /// nation in [game] (i.e. a non-Great-Power faction whose ownership
@@ -216,8 +102,8 @@ void main() {
       // remain valid (minor with OW invadable + active player below
       // quota) so the planners do not bail out at outer guards;
       // bailing out would make the suppression check tautological.
-      final game = _expandGame();
-      final snapshot = _expandSnapshot();
+      final game = buildExpandPhaseNwSuppressionGame();
+      final snapshot = buildExpandPhaseNwSuppressionSnapshot();
 
       // 1. planExpandDeclareWar must never return a tribe factionId
       //    sourced from the colonial summary
@@ -287,7 +173,7 @@ void main() {
       //    fallback fires for the minor); (b) declare-war target ==
       //    minor (Priority 1 fires). Both arms must return only OW
       //    destinations.
-      for (final dwTarget in <String?>[null, _minor1]) {
+      for (final dwTarget in <String?>[null, kNwSuppressionMinor1]) {
         final military = planExpandMilitary(
           game: game,
           snapshot: snapshot,
@@ -336,10 +222,10 @@ void main() {
       // is tribe-only), military returns defaultPlan (no OW
       // invadable), and economy still computes its flags from OW
       // signals alone.
-      final game = _expandGame();
+      final game = buildExpandPhaseNwSuppressionGame();
       final snapshot = AIWorldSnapshot(
-        playerId: _gp1,
-        threats: const ThreatSummary(atWarWith: [_tribe1]),
+        playerId: kNwSuppressionGp1,
+        threats: const ThreatSummary(atWarWith: [kNwSuppressionTribe1]),
         opportunities: const OpportunitySummary(),
         conquest: const ConquestSummary(
           oldWorldProvincesOwned: 8,
@@ -347,12 +233,12 @@ void main() {
           // OW invadable empty: every NW-leakage path must hit a
           // suppression guard.
           invadableProvinceIdsSorted: [],
-          adjacentOwnerFactionIdsSorted: [_tribe1],
+          adjacentOwnerFactionIdsSorted: [kNwSuppressionTribe1],
         ),
         colonial: const ColonialSummary(
-          invadableNewWorldProvinceIdsSorted: [_nwProvTribe],
-          adjacentNewWorldOwnerFactionIdsSorted: [_tribe1],
-          preferredColonialTargetFactionIdsSorted: [_tribe1],
+          invadableNewWorldProvinceIdsSorted: [kExpandNwSuppressionNwProvTribe],
+          adjacentNewWorldOwnerFactionIdsSorted: [kNwSuppressionTribe1],
+          preferredColonialTargetFactionIdsSorted: [kNwSuppressionTribe1],
         ),
         economy: const EconomySummary(),
         relations: const {},
@@ -412,8 +298,8 @@ void main() {
       // dispatch order. A regression that memoized state in the
       // first call (e.g. caching province-owner maps across calls
       // without invalidation) would surface here.
-      final game = _expandGame();
-      final snapshot = _expandSnapshot();
+      final game = buildExpandPhaseNwSuppressionGame();
+      final snapshot = buildExpandPhaseNwSuppressionSnapshot();
 
       final dw1 = planExpandDeclareWar(game: game, snapshot: snapshot);
       final peace1 = planExpandPeace(game: game, snapshot: snapshot);
