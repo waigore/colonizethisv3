@@ -91,31 +91,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'warmonger',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(atWarWith: [_minorId]),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> below the observer quota; one invadable minor
-    // frontier so the natural-dispatch EXPAND conquest pass has somewhere
-    // to march.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      invadableProvinceIdsSorted: [_owMinorProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _minorId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    },
-  );
-}
-
 void main() {
   group('runDomainPlannersWithOutcome phasePlan injection', () {
     test(
@@ -128,7 +103,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -180,7 +155,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -244,7 +219,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         final naturalPlan = runPhasePlanners(
           game: game,
@@ -342,7 +317,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         final naturalPlan = runPhasePlanners(
           game: game,
