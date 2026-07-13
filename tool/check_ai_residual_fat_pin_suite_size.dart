@@ -10,6 +10,8 @@ import 'ct_repo_lint_scan_contract.dart';
 const int residualFatPinSuitePhysicalLineCeiling = 750;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
+const String _supportTestPrefix =
+    'packages/colonizethis_ai/test/support_test/';
 
 /// Basenames gated as residual fat pins are cases-split under Phase 8.
 const Set<String> residualFatPinSuiteGatedBasenames = {
@@ -22,14 +24,19 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'phase_planner_conquest_wiring_test.dart',
   'treasury_planner_test.dart',
   'diplomatic_candidate_scoring_test.dart',
+  'expand_phase_planner_focus_minor_target_test.dart',
+  'colonial_phase_planner_acquisition_purchase_land_test.dart',
+  'seed42_s7d_feedstock_helpers_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
-  if (!normalized.startsWith(_planningPrefix)) {
+  final basename = p.basename(normalized);
+  if (!residualFatPinSuiteGatedBasenames.contains(basename)) {
     return false;
   }
-  return residualFatPinSuiteGatedBasenames.contains(p.basename(normalized));
+  return normalized.startsWith(_planningPrefix) ||
+      normalized.startsWith(_supportTestPrefix);
 }
 
 bool aiResidualFatPinSuiteImportsCases(String content) {
