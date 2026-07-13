@@ -60,7 +60,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Fake API provides one `declareWar(tribe1)` candidate. The fake's
 // `suggestDeclareWarOrders` filters by `type == declareWar`, so the
@@ -101,73 +100,22 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _colonialLiteSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 9 OW provinces -> below quota (matches `_gp1OwProvincesAtColonialLiteFloor`).
-    // Combined with turn=120 and a non-GP-owned NW province in the
-    // fixture this lands the GP in COLONIAL-lite per
-    // `isObserverColonialLitePhase`.
-    conquest: ConquestSummary(
+// COLONIAL-lite / COLONIAL NW-tribe snapshots share the expand/colonial
+// tribe-target builders (Refs #3997). OW counts + provincesToVictory keep
+// the COLONIAL-lite (OW=9) vs COLONIAL (OW=10) boundary under test.
+AIWorldSnapshot _colonialLiteSnapshot() =>
+    buildOrchestratorExpandNwTribeTargetSnapshot(
       oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
       provincesToVictory: 22,
-    ),
-    // Tribe is both a visible NW invadable owner **and** a preferred
-    // colonial target so every `declareWar` scoring-collapse predicate in
-    // `computeDiplomaticCandidateScores` for COLONIAL-lite is exercised
-    // (tribe / preferred / invadable owner) — mirrors the EXPAND NW
-    // declareWar suppression fixture.
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 9),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
+      tribePeaceRelationScore: 0,
+    );
 
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 10 OW provinces -> at quota (matches `_gp1OwProvincesExactQuota`).
-    // `isBelowObserverConquestQuota(10)` -> false so COLONIAL-lite cannot
-    // fire even at turn 120, and `hasColonialAcquisitionTargets` true
-    // places the GP in COLONIAL. Boundary differs from the positive case
-    // by a single OW province.
-    conquest: ConquestSummary(
+AIWorldSnapshot _colonialSnapshot() =>
+    buildOrchestratorColonialNwTribeTargetSnapshot(
       oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
       provincesToVictory: 21,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 10),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
+      tribeRelationScore: 0,
+    );
 
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
