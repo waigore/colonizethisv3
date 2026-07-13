@@ -84,8 +84,12 @@ AIWorldSnapshot buildOrchestratorExpandNwTribeTargetSnapshot({
 
 /// COLONIAL at-/past-quota snapshot with visible NW tribe acquisition targets.
 ///
-/// Shared by NW suppression COLONIAL controls and COLONIAL tribe declare-war
-/// positive pins (Refs #3997).
+/// Shared by NW suppression COLONIAL controls, COLONIAL tribe declare-war
+/// positive pins, and diplomatic-scoring COLONIAL tribe pins (Refs #3997).
+///
+/// When [adjacentNewWorldOwnerFactionIdsSorted] is omitted, defaults to
+/// `[tribeId]` (orchestrator adjacency geometry). Pass an empty list for
+/// scoring pins that historically omitted adjacent NW owners.
 AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
   String playerId = kOrchestratorGp1NationId,
   String tribeId = kOrchestratorTribeId,
@@ -94,9 +98,12 @@ AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
   int provincesToVictory = 20,
   int newWorldProvincesOwned = 0,
   List<String> atWarWith = const <String>[],
+  List<String>? adjacentNewWorldOwnerFactionIdsSorted,
   int? tribeRelationScore,
   RelationState tribeRelationState = RelationState.atPeace,
 }) {
+  final adjacentOwners =
+      adjacentNewWorldOwnerFactionIdsSorted ?? <String>[tribeId];
   return AIWorldSnapshot(
     playerId: playerId,
     threats: ThreatSummary(atWarWith: atWarWith),
@@ -108,7 +115,7 @@ AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
     colonial: ColonialSummary(
       newWorldProvincesOwned: newWorldProvincesOwned,
       invadableNewWorldProvinceIdsSorted: [tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [tribeId],
+      adjacentNewWorldOwnerFactionIdsSorted: adjacentOwners,
       preferredColonialTargetFactionIdsSorted: [tribeId],
     ),
     economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
@@ -170,6 +177,44 @@ AIWorldSnapshot buildOrchestratorDevelopGpOnlyBlockerSnapshot({
     colonial: const ColonialSummary(),
     economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
     relations: const <String, DiplomacyRelation>{},
+  );
+}
+
+/// DEVELOP past-quota snapshot with GP-owned NW and no colonial acquisition
+/// targets — used by DEVELOP `declareWar` suppression pins (Refs #3997).
+///
+/// When [tribeRelationScore] is non-null, embeds a tribe relation so the
+/// declare-war candidate remains structurally valid while DEVELOP drops it.
+AIWorldSnapshot buildOrchestratorDevelopNoColonialTargetsSnapshot({
+  String playerId = kOrchestratorGp1NationId,
+  String tribeId = kOrchestratorTribeId,
+  int oldWorldProvincesOwned = 11,
+  int provincesToVictory = 20,
+  int newWorldProvincesOwned = 1,
+  List<String> atWarWith = const <String>[],
+  int? tribeRelationScore,
+  RelationState tribeRelationState = RelationState.atWar,
+}) {
+  return AIWorldSnapshot(
+    playerId: playerId,
+    threats: ThreatSummary(atWarWith: atWarWith),
+    opportunities: const OpportunitySummary(),
+    conquest: ConquestSummary(
+      oldWorldProvincesOwned: oldWorldProvincesOwned,
+      provincesToVictory: provincesToVictory,
+    ),
+    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
+    economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),
+    relations: tribeRelationScore == null
+        ? const <String, DiplomacyRelation>{}
+        : <String, DiplomacyRelation>{
+            tribeId: DiplomacyRelation(
+              factionId1: playerId,
+              factionId2: tribeId,
+              state: tribeRelationState,
+              score: tribeRelationScore,
+            ),
+          },
   );
 }
 
@@ -353,6 +398,30 @@ Game buildOrchestratorGp1TribeNwScenarioGame({
     ],
     diplomacyRelations: diplomacyRelations,
     overtureStates: overtureStates,
+  );
+}
+
+/// DEVELOP declare-war suppression fixture: at-quota OW holdings plus one
+/// GP-owned NW province so colonial acquisition targets stay empty.
+Game buildOrchestratorDevelopGpOwnedNwScenarioGame({
+  required String id,
+  List<String> gp1OwProvinces = kGp1OwProvincesAtQuota,
+  int turnNumber = 140,
+}) {
+  return buildOrchestratorScenarioGame(
+    id: id,
+    gp1OwProvinces: gp1OwProvinces,
+    turnNumber: turnNumber,
+    newWorldProvinces: const <Province>[
+      Province(
+        id: kOrchestratorGpOwnedNwProvince,
+        regionId: 'newWorld',
+        ownerId: kOrchestratorGp1NationId,
+      ),
+    ],
+    tribes: const <Tribe>[
+      Tribe(id: kOrchestratorTribeId, displayName: 'T1'),
+    ],
   );
 }
 

@@ -354,6 +354,145 @@ void main() {
         }
       },
     );
+
+    test(
+      'fails when a DEVELOP GP-owned-NW Game pin redeclares _developSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-dev-');
+        try {
+          _writeSupportStub(temp);
+          _writeOrchestratorTest(
+            temp,
+            'develop_snap_clone_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _developSnapshot() {\n'
+            '  return const AIWorldSnapshot(playerId: "gp1");\n'
+            '}\n\n'
+            'void main() {\n'
+            '  buildOrchestratorDevelopGpOwnedNwScenarioGame(id: "g");\n'
+            '}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_developSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorDevelopNoColonialTargetsSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a COLONIAL-lite declare-war Game pin redeclares '
+      '_colonialLiteSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-clite-');
+        try {
+          _writeSupportStub(temp);
+          _writeOrchestratorTest(
+            temp,
+            'colonial_lite_snap_clone_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _colonialLiteSnapshot() {\n'
+            '  return const AIWorldSnapshot(playerId: "gp1");\n'
+            '}\n\n'
+            'void main() {\n'
+            '  buildOrchestratorColonialLiteDeclareWarScenarioGame(\n'
+            '    id: "g",\n'
+            '    gp1OwProvinces: const <String>[],\n'
+            '  );\n'
+            '}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_colonialLiteSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorExpandNwTribeTargetSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a diplomatic-scoring COLONIAL adopter redeclares '
+      'brace-bodied _colonialSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-');
+        try {
+          _writeSupportStub(temp);
+          _writeDiplomaticScoringAdopter(
+            temp,
+            'diplomatic_candidate_scoring_personality_colonial_divergence_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _colonialSnapshot() {\n'
+            '  return const AIWorldSnapshot(playerId: "gp1");\n'
+            '}\n\n'
+            'void main() {}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_colonialSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorColonialNwTribeTargetSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a diplomatic-scoring COLONIAL adopter redeclares '
+      '_gp1OwProvincesAtQuota',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-q-');
+        try {
+          _writeSupportStub(temp);
+          _writeDiplomaticScoringAdopter(
+            temp,
+            'diplomatic_candidate_scoring_intervention_tribe_tolerance_test.dart',
+            _localAtQuotaBody,
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_gp1OwProvincesAtQuota'));
+          expect(errors.join('\n'), contains('kGp1OwProvincesAtQuota'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
   });
 }
 
@@ -389,4 +528,21 @@ void _writeOrchestratorTest(Directory temp, String name, String body) {
   File(
     p.join(planning.path, 'domain_planner_orchestrator_$name'),
   ).writeAsStringSync(body);
+}
+
+void _writeDiplomaticScoringAdopter(
+  Directory temp,
+  String basename,
+  String body,
+) {
+  final planning = Directory(
+    p.join(
+      temp.path,
+      'packages',
+      'colonizethis_ai',
+      'test',
+      'planning',
+    ),
+  )..createSync(recursive: true);
+  File(p.join(planning.path, basename)).writeAsStringSync(body);
 }

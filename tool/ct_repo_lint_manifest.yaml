@@ -1221,7 +1221,7 @@ rules:
 
   - rule_id: repo.ai_colonial_phase_test_shared_fixtures
     group: testing
-    title: colonizethis_ai phase_planner_dispatch_test.dart must not redeclare _colonialLiteGame / _colonialGame (use colonial_phase_planner_test_support dispatch builders) (Refs #3977)
+    title: colonizethis_ai phase_planner_dispatch_test.dart must not redeclare local expand/colonial/develop Game or snapshot helpers (use colonial_phase_planner_test_support dispatch builders) (Refs #3977 / #3997)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_colonial_phase_dispatch_test_shared_fixtures.dart
@@ -1246,6 +1246,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
+
+  - rule_id: repo.ai_s7d_support_suite_size
+    group: testing
+    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 800 physical lines (soft post-split gate) (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_s7d_support_suite_size.dart
 
   - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
     group: testing

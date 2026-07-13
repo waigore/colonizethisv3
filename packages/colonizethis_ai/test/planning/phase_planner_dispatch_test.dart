@@ -52,191 +52,13 @@ import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart'
     show phasePlanFullColonialOutputsActive;
 import 'package:colonizethis_ai/src/planning/develop_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/colonial_phase_planner_test_support.dart';
 import 'ai_planner_fixtures.dart';
 
-const String _gp1 = kColonialPhaseGp1;
-const String _gp2 = kColonialPhaseGp2;
-const String _gp3 = kColonialPhaseGp3;
 const String _tribe1 = kColonialPhaseTribe1;
 const String _minor1 = kColonialPhaseMinor1;
-
-const String _owProvGp1 = kColonialPhaseDispatchOwProvGp1;
-const String _owProvMinor = kColonialPhaseDispatchOwProvMinor;
-const String _nwProvTribe = kColonialPhaseNwProvTribeA;
-
-/// Game scaffold for the EXPAND-phase route.
-///
-/// Active player [_gp1] holds [_owProvGp1] in OW and [regimentCount]
-/// regiments. Minor [_minor1] owns the invadable OW province
-/// [_owProvMinor] so the EXPAND priority-1 minor arm fires (and the
-/// military-fallback arm has a candidate). NW left empty so
-/// `observerGoalPhaseFor` cannot route to COLONIAL-lite or COLONIAL.
-Game _expandGame({
-  int turnNumber = 50,
-  int regimentCount = 6,
-  int ownTreasury = 9999,
-  List<Province> newWorldProvinces = const [],
-}) {
-  return Game(
-    id: 'g-2509-phase-planner-dispatch-expand-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: _owProvGp1, regionId: kOldWorldRegionId, ownerId: _gp1),
-          Province(
-            id: _owProvMinor,
-            regionId: kOldWorldRegionId,
-            ownerId: _minor1,
-          ),
-        ],
-      ),
-      newWorld: RegionData(provinces: newWorldProvinces),
-      armies: [homeArmyWithRegiments(_gp1, regimentCount)],
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: ownTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
-  );
-}
-
-/// Snapshot for EXPAND posture: OW below quota, OW invadable populated.
-AIWorldSnapshot _expandSnapshot({
-  int oldWorldProvincesOwned = 8,
-  List<String> atWarWith = const <String>[],
-  List<String> adjacentOwners = const <String>[_minor1],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: const [_owProvMinor],
-      adjacentOwnerFactionIdsSorted: adjacentOwners,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
-/// Snapshot for COLONIAL-lite posture: OW = 9, NW summary populated
-/// so `planColonialLiteOvertures` and `planColonialLiteNaval` have
-/// candidates.
-AIWorldSnapshot _colonialLiteSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: [_owProvMinor],
-      adjacentOwnerFactionIdsSorted: [_minor1],
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_nwProvTribe],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribe1],
-      preferredColonialTargetFactionIdsSorted: [_tribe1],
-    ),
-    economy: EconomySummary(),
-    relations: {},
-  );
-}
-
-/// Snapshot for COLONIAL posture: OW = 10 (at quota), NW invadable
-/// + at-war tribe so `planColonialMilitary` / `planColonialNaval`
-/// have non-default candidates and `planColonialAcquisition` declareWar
-/// arm is the priority pick (no overture / merchant -> joinEmpire and
-/// purchase_land both null). Treasury set on the economy summary
-/// (not the player) because `planColonialAcquisition`'s declareWar arm
-/// reads `snapshot.economy.treasury` for the cheapest-regiment cost
-/// gate, not the player record.
-AIWorldSnapshot _colonialSnapshot({
-  List<String> atWarWith = const <String>[_tribe1],
-  int treasury = 9999,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-    ),
-    colonial: const ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_nwProvTribe],
-    ),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
-/// Game scaffold for the DEVELOP route: OW at quota, no NW colonial
-/// targets visible.
-Game _developGame() {
-  return Game(
-    id: 'g-2509-phase-planner-dispatch-develop',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 140, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: _owProvGp1, regionId: kOldWorldRegionId, ownerId: _gp1),
-        ],
-      ),
-      // All NW provinces fully GP-owned so COLONIAL-lite preconditions
-      // fail and DEVELOP wins the routing (own OW = 10, no invadable
-      // NW visible, no NW outside GPs).
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: 'newWorld|gp2_owned',
-            regionId: kNewWorldRegionId,
-            ownerId: _gp2,
-          ),
-        ],
-      ),
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-  );
-}
-
-/// Snapshot for DEVELOP posture: OW at quota, no colonial acquisition
-/// targets in the colonial summary, one at-war GP so
-/// `planDevelopPeace` returns a non-empty list (the contract pin needs
-/// observable content, not just an empty list).
-AIWorldSnapshot _developSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: [_gp3]),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(),
-    relations: {},
-  );
-}
 
 void main() {
   // Sanity-pin the regiment-cost helper so a regression in
@@ -252,8 +74,8 @@ void main() {
   group('runPhasePlanners phase routing', () {
     test('EXPAND when OW below quota', () {
       final outcome = runPhasePlanners(
-        game: _expandGame(),
-        snapshot: _expandSnapshot(),
+        game: buildPhasePlannerDispatchExpandGame(),
+        snapshot: buildPhasePlannerDispatchExpandSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.expand);
     });
@@ -261,7 +83,7 @@ void main() {
     test('COLONIAL-lite when turn>=120, OW=9, NW non-GP-owned visible', () {
       final outcome = runPhasePlanners(
         game: buildPhasePlannerDispatchColonialLiteGame(),
-        snapshot: _colonialLiteSnapshot(),
+        snapshot: buildPhasePlannerDispatchColonialLiteSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.colonialLite);
     });
@@ -269,15 +91,15 @@ void main() {
     test('COLONIAL when OW at quota with colonial acquisition targets', () {
       final outcome = runPhasePlanners(
         game: buildPhasePlannerDispatchColonialGame(),
-        snapshot: _colonialSnapshot(),
+        snapshot: buildPhasePlannerDispatchColonialSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.colonial);
     });
 
     test('DEVELOP when OW at quota and no colonial acquisition targets', () {
       final outcome = runPhasePlanners(
-        game: _developGame(),
-        snapshot: _developSnapshot(),
+        game: buildPhasePlannerDispatchDevelopGame(),
+        snapshot: buildPhasePlannerDispatchDevelopSnapshot(),
       );
       expect(outcome.phase, ObserverGoalPhase.develop);
     });
@@ -286,8 +108,8 @@ void main() {
   group('EXPAND outcome composition', () {
     test('EXPAND populates EXPAND slots and colonial bundle when NW weight > 0 '
         '(Refs #2847)', () {
-      final game = _expandGame();
-      final snapshot = _expandSnapshot();
+      final game = buildPhasePlannerDispatchExpandGame();
+      final snapshot = buildPhasePlannerDispatchExpandSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
       // EXPAND fields paired with the per-planner outputs the
@@ -366,7 +188,7 @@ void main() {
   group('COLONIAL-lite outcome composition', () {
     test('COLONIAL-lite populates EXPAND + COLONIAL-lite slots', () {
       final game = buildPhasePlannerDispatchColonialLiteGame();
-      final snapshot = _colonialLiteSnapshot();
+      final snapshot = buildPhasePlannerDispatchColonialLiteSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
       // EXPAND continues to run during the safeguard ("Begin NW
@@ -418,7 +240,7 @@ void main() {
         // `planColonialNaval` -- the at-war fallback arm fires for both
         // sibling plans with `_tribe1` listed as the priority owner.
         final game = buildPhasePlannerDispatchColonialGame();
-        final snapshot = _colonialSnapshot();
+        final snapshot = buildPhasePlannerDispatchColonialSnapshot();
         final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
         expect(outcome.phase, ObserverGoalPhase.colonial);
@@ -487,7 +309,7 @@ void main() {
       // Still at-war with the tribe so the at-war fallback arm
       // populates the priority owner roster (tribe1) for both
       // military and naval.
-      final snapshot = _colonialSnapshot();
+      final snapshot = buildPhasePlannerDispatchColonialSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
       expect(outcome.phase, ObserverGoalPhase.colonial);
@@ -517,8 +339,8 @@ void main() {
 
   group('DEVELOP outcome composition', () {
     test('DEVELOP populates DEVELOP slots only', () {
-      final game = _developGame();
-      final snapshot = _developSnapshot();
+      final game = buildPhasePlannerDispatchDevelopGame();
+      final snapshot = buildPhasePlannerDispatchDevelopSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
       expect(outcome.phase, ObserverGoalPhase.develop);
@@ -548,8 +370,8 @@ void main() {
 
   group('determinism (Must-have #7)', () {
     test('EXPAND outcome equal across repeated calls', () {
-      final game = _expandGame();
-      final snapshot = _expandSnapshot();
+      final game = buildPhasePlannerDispatchExpandGame();
+      final snapshot = buildPhasePlannerDispatchExpandSnapshot();
       final a = runPhasePlanners(game: game, snapshot: snapshot);
       final b = runPhasePlanners(game: game, snapshot: snapshot);
       expect(b.phase, a.phase);
@@ -567,7 +389,7 @@ void main() {
 
     test('COLONIAL outcome equal across repeated calls', () {
       final game = buildPhasePlannerDispatchColonialGame();
-      final snapshot = _colonialSnapshot();
+      final snapshot = buildPhasePlannerDispatchColonialSnapshot();
       final a = runPhasePlanners(game: game, snapshot: snapshot);
       final b = runPhasePlanners(game: game, snapshot: snapshot);
       expect(b.phase, a.phase);
@@ -586,8 +408,8 @@ void main() {
     test(
       'EXPAND outcome carries weights field-equal to computePhasePriorityWeights',
       () {
-        final game = _expandGame();
-        final snapshot = _expandSnapshot();
+        final game = buildPhasePlannerDispatchExpandGame();
+        final snapshot = buildPhasePlannerDispatchExpandSnapshot();
         final outcome = runPhasePlanners(game: game, snapshot: snapshot);
         expect(
           outcome.priorityWeights,
@@ -603,7 +425,7 @@ void main() {
     test('COLONIAL-lite outcome carries weights field-equal to '
         'computePhasePriorityWeights', () {
       final game = buildPhasePlannerDispatchColonialLiteGame();
-      final snapshot = _colonialLiteSnapshot();
+      final snapshot = buildPhasePlannerDispatchColonialLiteSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
       expect(
         outcome.priorityWeights,
@@ -618,7 +440,7 @@ void main() {
     test('COLONIAL outcome carries weights from default ExpandEconomyPlan (no '
         'EXPAND planner ran)', () {
       final game = buildPhasePlannerDispatchColonialGame();
-      final snapshot = _colonialSnapshot();
+      final snapshot = buildPhasePlannerDispatchColonialSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
       // Sanity: COLONIAL outcome leaves EXPAND plan at default.
       expect(outcome.expandEconomyPlan, ExpandEconomyPlan.defaultPlan);
@@ -634,8 +456,8 @@ void main() {
 
     test('DEVELOP outcome carries weights from default ExpandEconomyPlan (no '
         'EXPAND planner ran)', () {
-      final game = _developGame();
-      final snapshot = _developSnapshot();
+      final game = buildPhasePlannerDispatchDevelopGame();
+      final snapshot = buildPhasePlannerDispatchDevelopSnapshot();
       final outcome = runPhasePlanners(game: game, snapshot: snapshot);
       expect(outcome.expandEconomyPlan, ExpandEconomyPlan.defaultPlan);
       expect(
@@ -651,8 +473,8 @@ void main() {
     test(
       'weights are advisory — repeated dispatches yield identical weights',
       () {
-        final game = _expandGame();
-        final snapshot = _expandSnapshot();
+        final game = buildPhasePlannerDispatchExpandGame();
+        final snapshot = buildPhasePlannerDispatchExpandSnapshot();
         final a = runPhasePlanners(game: game, snapshot: snapshot);
         final b = runPhasePlanners(game: game, snapshot: snapshot);
         expect(b.priorityWeights, a.priorityWeights);
