@@ -1233,6 +1233,13 @@ rules:
     runner: dart
     script: tool/check_ai_colonial_military_naval_pin_suite_size.dart
 
+  - rule_id: repo.ai_planning_cases_suite_size
+    group: testing
+    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 650 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_cases_suite_size.dart
+
   - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
     group: testing
     title: colonizethis_ai colonial_phase_planner_acquisition_*_test.dart pins must import shared Game / DiplomacyRelation helpers from colonial_acquisition_test_support.dart (no local _acquisitionGame / _purchaseLandGame / _declareWarGame / _bothValidGame / _friendly / _peaceFriendly / _atWar) (Refs #3972)
