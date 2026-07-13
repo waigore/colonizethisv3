@@ -2,11 +2,11 @@
 // Pins canonical homes for stalledFocusMinorTarget /
 // belowQuotaActiveMinorWarTarget (Refs #2509 S1).
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpRival = 'gp_rival';
@@ -112,24 +112,6 @@ Game _focusMinorGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
   group('stalledFocusMinorTarget — canonical outer guards', () {
@@ -146,7 +128,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         atWarTribes: const [_tribeOne],
         atWarRivalGps: const [_gpRival],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_tribeOne, _gpRival],
         invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
@@ -176,7 +158,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
           },
           atWarMinors: const [_minorAlpha, _minorBeta],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
           atWarWith: const [_minorAlpha, _minorBeta],
           // None of the at-war minors' provinces appear in the
@@ -208,7 +190,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         },
         atWarMinors: const [_minorAlpha, _minorBeta],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_minorAlpha, _minorBeta],
         invadableProvinceIdsSorted: const [
@@ -241,7 +223,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         },
         atWarMinors: const [_minorAlpha, _minorGamma],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_minorGamma, _minorAlpha],
         invadableProvinceIdsSorted: const [
@@ -303,7 +285,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         tribes: game.tribes,
         diplomacyRelations: game.diplomacyRelations,
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_minorAlpha, _tribeOne, _gpRival],
         invadableProvinceIdsSorted: const [
@@ -342,7 +324,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
           },
           atWarMinors: const [_minorAlpha],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
           atWarWith: const [_minorAlpha],
           invadableProvinceIdsSorted: const [
