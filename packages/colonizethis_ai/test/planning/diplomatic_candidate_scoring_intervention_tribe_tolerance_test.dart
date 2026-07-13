@@ -253,21 +253,19 @@ const List<OvertureState> _interventionEmbassies = <OvertureState>[
 ///     `kDeclareWarColonialAdjacentTribeBonus` (+70) from the
 ///     declare-war side so the residual score delta is dominated by
 ///     the war-desire / intervention-risk path the AC pins.
-AIWorldSnapshot _colonialSnapshot() =>
-    buildOrchestratorColonialNwTribeTargetSnapshot(
-      newWorldProvincesOwned: 1,
-      tribeRelationScore: 30,
-      // Scoring pins historically omitted adjacent NW owners; keep that
-      // geometry so adjacency bonuses cannot mask intervention deltas.
-      adjacentNewWorldOwnerFactionIdsSorted: const <String>[],
-    );
-
 List<int> _scoreTribeDeclareWar({
   required List<OvertureState> overtureStates,
 }) {
   final game =
       _colonialTribeScenarioGame(overtureStates: overtureStates);
-  final snapshot = _colonialSnapshot();
+  // Shared COLONIAL NW-tribe snapshot (Refs #3997). Scoring pins
+  // historically omitted adjacent NW owners so adjacency bonuses cannot
+  // mask intervention deltas.
+  final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(
+    newWorldProvincesOwned: 1,
+    tribeRelationScore: 30,
+    adjacentNewWorldOwnerFactionIdsSorted: const <String>[],
+  );
   return computeDiplomaticCandidateScores(
     DiplomaticCandidateScoringInput(
       candidates: _tribeDeclareWarCandidates,

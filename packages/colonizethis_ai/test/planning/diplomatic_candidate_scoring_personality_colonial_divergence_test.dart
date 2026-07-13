@@ -185,43 +185,34 @@ Game _colonialScenarioGame() {
   );
 }
 
-/// COLONIAL-phase snapshot mirroring the AC's "tribe colonial target where
-/// both Join Empire and declare-war are valid candidates" preconditions:
-///   - `oldWorldProvincesOwned = 11` → `!isBelowObserverConquestQuota` →
-///     `observerGoalPhaseFor` selects [ObserverGoalPhase.colonial] because
-///     `hasColonialAcquisitionTargets` is true via
-///     `invadableNewWorldProvinceIdsSorted`.
-///   - `provincesToVictory = 20` so `behindVictoryPace` evaluates `false`
-///     against `kConquerScoreFloorProvincesToVictoryThreshold` and the
-///     finalize-stage quarter conquer bonus applies symmetrically to both
-///     personality runs.
-///   - The tribe is the GP's preferred colonial target and owns the GP's
-///     visible invadable NW province, but is **not** in the OW conquest
-///     `adjacentOwnerFactionIdsSorted` list and **not** in the colonial
-///     `adjacentNewWorldOwnerFactionIdsSorted` list. That keeps the
-///     conquest-side `_declareWarAdjacencyAndStalledBonuses` quiet and
-///     drops the `kDeclareWarColonialAdjacentTribeBonus` from the
-///     declare-war side without losing the
-///     `kEstablishOvertureColonialInvadableOwnerBonus` /
-///     `kEstablishOvertureColonialTribeBonus` boost on the overture side,
-///     so the residual score gap is driven by the personality
-///     `warLikelihood` / `allianceTendency` deltas the AC pins. (When the
-///     tribe is *also* colonial-adjacent, the +70 adjacent-tribe
-///     declare-war bonus stacks on top of the +100 NW-tribe dominance
-///     bonus and the personality deltas cannot flip the ranking — a
-///     dimension already exercised by the existing
-///     `domain_planner_orchestrator_colonial_lite_test.dart` fixture where
-///     `_henry`'s overture still survives without needing to outrank
-///     declare-war.)
-AIWorldSnapshot _colonialSnapshot() =>
-    buildOrchestratorColonialNwTribeTargetSnapshot(
-      newWorldProvincesOwned: 1,
-      tribeRelationScore: 30,
-      // Scoring pins historically omitted adjacent NW owners; keep that
-      // geometry so adjacency bonuses cannot mask personality deltas.
-      adjacentNewWorldOwnerFactionIdsSorted: const <String>[],
-    );
-
+// COLONIAL-phase snapshot mirroring the AC's "tribe colonial target where
+// both Join Empire and declare-war are valid candidates" preconditions:
+//   - `oldWorldProvincesOwned = 11` → `!isBelowObserverConquestQuota` →
+//     `observerGoalPhaseFor` selects [ObserverGoalPhase.colonial] because
+//     `hasColonialAcquisitionTargets` is true via
+//     `invadableNewWorldProvinceIdsSorted`.
+//   - `provincesToVictory = 20` so `behindVictoryPace` evaluates `false`
+//     against `kConquerScoreFloorProvincesToVictoryThreshold` and the
+//     finalize-stage quarter conquer bonus applies symmetrically to both
+//     personality runs.
+//   - The tribe is the GP's preferred colonial target and owns the GP's
+//     visible invadable NW province, but is **not** in the OW conquest
+//     `adjacentOwnerFactionIdsSorted` list and **not** in the colonial
+//     `adjacentNewWorldOwnerFactionIdsSorted` list. That keeps the
+//     conquest-side `_declareWarAdjacencyAndStalledBonuses` quiet and
+//     drops the `kDeclareWarColonialAdjacentTribeBonus` from the
+//     declare-war side without losing the
+//     `kEstablishOvertureColonialInvadableOwnerBonus` /
+//     `kEstablishOvertureColonialTribeBonus` boost on the overture side,
+//     so the residual score gap is driven by the personality
+//     `warLikelihood` / `allianceTendency` deltas the AC pins. (When the
+//     tribe is *also* colonial-adjacent, the +70 adjacent-tribe
+//     declare-war bonus stacks on top of the +100 NW-tribe dominance
+//     bonus and the personality deltas cannot flip the ranking — a
+//     dimension already exercised by the existing
+//     `domain_planner_orchestrator_colonial_lite_test.dart` fixture where
+//     `_henry`'s overture still survives without needing to outrank
+//     declare-war.)
 // `merchant` is intentionally not in any of `agendaConquerModifiers`,
 // `agendaTreatyBreakingModifiers`, `agendaAllianceAcceptanceModifiers`, or
 // `declareWarMaxRelationScoreByAgenda`, so every agenda modifier resolves to
@@ -242,7 +233,14 @@ const AIConfig _henryConfig = AIConfig(
 
 List<int> _scoreFor(AIConfig config) {
   final game = _colonialScenarioGame();
-  final snapshot = _colonialSnapshot();
+  // Shared COLONIAL NW-tribe snapshot (Refs #3997). Scoring pins
+  // historically omitted adjacent NW owners so adjacency bonuses cannot
+  // mask personality deltas.
+  final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(
+    newWorldProvincesOwned: 1,
+    tribeRelationScore: 30,
+    adjacentNewWorldOwnerFactionIdsSorted: const <String>[],
+  );
   return computeDiplomaticCandidateScores(
     DiplomaticCandidateScoringInput(
       candidates: _candidates,
