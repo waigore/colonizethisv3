@@ -1,4 +1,6 @@
 // Session clear API and bleed isolation. SPEC/program/save-load-session-clear.md.
+// Remaining ACs for #3989: same-id reload, exit→load, new-game dirty queues,
+// secondary providers, map content identity, turn-trace isolation.
 
 import 'dart:io';
 
@@ -48,6 +50,44 @@ Orders _draftOrders({required String unitType}) => Orders(
   },
 );
 
+void _dirtySessionA(ProviderContainer container, Game gameA) {
+  container.read(currentGameProvider.notifier).setGame(gameA);
+  container
+      .read(currentOrdersProvider.notifier)
+      .replaceAll(_draftOrders(unitType: 'farmer'));
+  container
+      .read(productionDesiredOutputProvider.notifier)
+      .replaceAll(const {'grain': 9});
+  container.read(tribeFirstContactHeraldQueueProvider.notifier).enqueue(
+    const TribeFirstContactHeraldPayload(
+      tribeId: 'tribe_from_a',
+      tribeName: 'From A',
+      capitalName: 'A Cap',
+    ),
+  );
+  container.read(pendingDiplomacyProvider.notifier).setOvertures(const [
+    OvertureOffer(
+      offererGpId: 'england',
+      targetFactionId: 'from_a',
+      stage: OvertureStage.embassy,
+    ),
+  ]);
+  container
+      .read(tribeFirstContactHeraldsShownProvider.notifier)
+      .markShown(gameA.id, 'tribe_from_a');
+  container.read(gameIdsWithIntroShownProvider.notifier).markShown(gameA.id);
+  container.read(offlineQueueProvider.notifier).enqueueAll([Object()]);
+}
+
+void _expectCleanOfABleed(ProviderContainer container, GameService service) {
+  expect(container.read(tribeFirstContactHeraldQueueProvider), isEmpty);
+  expect(container.read(pendingDiplomacyProvider), isNull);
+  expect(container.read(tribeFirstContactHeraldsShownProvider), isEmpty);
+  expect(container.read(gameIdsWithIntroShownProvider), isEmpty);
+  expect(container.read(offlineQueueProvider), isEmpty);
+  expect(service.turnTraceSessionCount, 0);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -84,6 +124,8 @@ void main() {
     final service = container.read(gameServiceProvider);
     final gameA = service.createNewGame(id: 'game_a', config: _config(seed: 11));
     expect(service.hasMapCacheEntry('game_a'), isTrue);
+    service.debugSeedTurnTraceSession('game_a');
+    expect(service.turnTraceSessionCount, 1);
 
     container.read(currentGameProvider.notifier).setGame(gameA);
     container
@@ -145,6 +187,7 @@ void main() {
     expect(container.read(settingsProvider), settingsBefore);
     expect(service.mapCacheEntryCount, 0);
     expect(service.hasMapCacheEntry('game_a'), isFalse);
+    expect(service.turnTraceSessionCount, 0);
     expect(bus.deliveryGeneration, genBefore + 1);
     expect(gamesBox.containsKey('game_a'), isTrue);
   });
@@ -153,8 +196,11 @@ void main() {
     final service = container.read(gameServiceProvider);
     final gameA = service.createNewGame(id: 'save_a', config: _config(seed: 101));
     final gameB = service.createNewGame(id: 'save_b', config: _config(seed: 202));
-    expect(service.hasMapCacheEntry('save_a'), isTrue);
-    expect(service.hasMapCacheEntry('save_b'), isTrue);
+    final fingerprintA = service.cachedMapContentFingerprint('save_a');
+    final fingerprintB = service.cachedMapContentFingerprint('save_b');
+    expect(fingerprintA, isNotNull);
+    expect(fingerprintB, isNotNull);
+    expect(fingerprintA, isNot(fingerprintB));
 
     service.saveGameSession(
       sessionGame: gameA,
@@ -173,24 +219,9 @@ void main() {
       mirrorAutoSave: false,
     );
 
-    container.read(currentGameProvider.notifier).setGame(gameA);
-    container
-        .read(currentOrdersProvider.notifier)
-        .replaceAll(_draftOrders(unitType: 'farmer'));
-    container.read(tribeFirstContactHeraldQueueProvider.notifier).enqueue(
-      const TribeFirstContactHeraldPayload(
-        tribeId: 'tribe_from_a',
-        tribeName: 'From A',
-        capitalName: 'A Cap',
-      ),
-    );
-    container.read(pendingDiplomacyProvider.notifier).setOvertures(const [
-      OvertureOffer(
-        offererGpId: 'england',
-        targetFactionId: 'from_a',
-        stage: OvertureStage.embassy,
-      ),
-    ]);
+    _dirtySessionA(container, gameA);
+    service.debugSeedTurnTraceSession('save_a');
+    expect(service.turnTraceSessionCount, 1);
 
     final loaded = clearLoadAndApplyGameSession(
       container: container,
@@ -208,10 +239,11 @@ void main() {
       'miner',
     );
     expect(container.read(productionDesiredOutputProvider), {'iron': 1});
-    expect(container.read(tribeFirstContactHeraldQueueProvider), isEmpty);
-    expect(container.read(pendingDiplomacyProvider), isNull);
+    _expectCleanOfABleed(container, service);
     expect(service.hasMapCacheEntry('save_a'), isFalse);
     expect(service.hasMapCacheEntry('save_b'), isTrue);
+    expect(service.cachedMapContentFingerprint('save_a'), isNull);
+    expect(service.cachedMapContentFingerprint('save_b'), fingerprintB);
   });
 
   test('clearLoadAndApplyGameSession leaves empty session when load fails', () {
@@ -237,13 +269,104 @@ void main() {
     expect(gamesBox.containsKey('keep_disk'), isTrue);
   });
 
-  test('clear then applyNewGameSession keeps only the new map cache entry', () {
+  test('same-id reload clears dirty memory then restores disk envelope', () {
     final service = container.read(gameServiceProvider);
-    service.createNewGame(id: 'old_game', config: _config(seed: 1));
+    final gameA = service.createNewGame(id: 'save_a', config: _config(seed: 33));
+    service.saveGameSession(
+      sessionGame: gameA,
+      saveGameId: 'save_a',
+      draftOrders: _draftOrders(unitType: 'miner'),
+      productionDesiredOutputByRecipe: const {'iron': 2},
+      displayName: 'Save A',
+      mirrorAutoSave: false,
+    );
+
+    _dirtySessionA(container, gameA);
+    expect(container.read(tribeFirstContactHeraldQueueProvider), isNotEmpty);
+    expect(
+      container
+          .read(currentOrdersProvider)
+          .buildUnitOrdersByPlayerId['england']!
+          .single
+          .unitType,
+      'farmer',
+    );
+
+    final loaded = clearLoadAndApplyGameSession(
+      container: container,
+      load: () => service.loadGameSession('save_a'),
+    );
+
+    expect(loaded, isNotNull);
+    expect(container.read(currentGameProvider)?.id, 'save_a');
+    expect(
+      container
+          .read(currentOrdersProvider)
+          .buildUnitOrdersByPlayerId['england']!
+          .single
+          .unitType,
+      'miner',
+    );
+    expect(container.read(productionDesiredOutputProvider), {'iron': 2});
+    _expectCleanOfABleed(container, service);
+  });
+
+  test('exit clear then load B isolates dirty A session', () {
+    final service = container.read(gameServiceProvider);
+    final gameA = service.createNewGame(id: 'save_a', config: _config(seed: 41));
+    final gameB = service.createNewGame(id: 'save_b', config: _config(seed: 42));
+    final fingerprintB = service.cachedMapContentFingerprint('save_b');
+
+    service.saveGameSession(
+      sessionGame: gameA,
+      saveGameId: 'save_a',
+      draftOrders: _draftOrders(unitType: 'farmer'),
+      displayName: 'Save A',
+      mirrorAutoSave: false,
+    );
+    service.saveGameSession(
+      sessionGame: gameB,
+      saveGameId: 'save_b',
+      draftOrders: _draftOrders(unitType: 'miner'),
+      productionDesiredOutputByRecipe: const {'timber': 4},
+      displayName: 'Save B',
+      mirrorAutoSave: false,
+    );
+
+    _dirtySessionA(container, gameA);
+    service.debugSeedTurnTraceSession('save_a');
+
+    // Exit-to-main-menu path: clear only (no restore), then later load B.
+    clearActiveGameSession(container);
+    expect(container.read(currentGameProvider), isNull);
+    expect(service.mapCacheEntryCount, 0);
+    expect(service.turnTraceSessionCount, 0);
+    _expectCleanOfABleed(container, service);
+
+    final loaded = clearLoadAndApplyGameSession(
+      container: container,
+      load: () => service.loadGameSession('save_b'),
+    );
+
+    expect(loaded, isNotNull);
+    expect(container.read(currentGameProvider)?.id, 'save_b');
+    expect(container.read(productionDesiredOutputProvider), {'timber': 4});
+    _expectCleanOfABleed(container, service);
+    expect(service.hasMapCacheEntry('save_a'), isFalse);
+    expect(service.cachedMapContentFingerprint('save_b'), fingerprintB);
+  });
+
+  test('clear then applyNewGameSession drops dirty queues and old map', () {
+    final service = container.read(gameServiceProvider);
+    final gameA = service.createNewGame(id: 'old_game', config: _config(seed: 1));
+    _dirtySessionA(container, gameA);
+    service.debugSeedTurnTraceSession('old_game');
     expect(service.hasMapCacheEntry('old_game'), isTrue);
 
     clearActiveGameSession(container);
     expect(service.mapCacheEntryCount, 0);
+    expect(service.turnTraceSessionCount, 0);
+    _expectCleanOfABleed(container, service);
 
     final created = service.createNewGame(
       id: 'new_game',
@@ -256,7 +379,11 @@ void main() {
       container.read(currentOrdersProvider).buildUnitOrdersByPlayerId,
       isEmpty,
     );
+    expect(container.read(productionDesiredOutputProvider), isEmpty);
+    expect(container.read(tribeFirstContactHeraldQueueProvider), isEmpty);
+    expect(container.read(pendingDiplomacyProvider), isNull);
     expect(service.hasMapCacheEntry('old_game'), isFalse);
     expect(service.hasMapCacheEntry('new_game'), isTrue);
+    expect(service.mapCacheEntryCount, 1);
   });
 }
