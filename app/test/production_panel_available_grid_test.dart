@@ -315,5 +315,48 @@ void main() {
         }
       },
     );
+
+    testWidgets(
+      'Grain quantity is visible at wide Available grid width and aligns '
+      'with a same-column Raw Materials peer (Refs #3999)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _ProductionPanelGridTestWrapper(
+            displayGame: productionPanelTestGameFor(fullPlayer),
+            player: fullPlayer,
+            viewportWidth: 800,
+            viewportHeight: 720,
+          ),
+        );
+        await pumpSettleCapped(tester);
+
+        final Finder grainCell = find.byKey(
+          const ValueKey<String>('production_available_cell_grain'),
+        );
+        final Finder timberCell = find.byKey(
+          const ValueKey<String>('production_available_cell_timber'),
+        );
+        expect(grainCell, findsOneWidget);
+        expect(timberCell, findsOneWidget);
+
+        final Finder grainQty = find.descendant(
+          of: grainCell,
+          matching: find.byKey(CtResourceCell.quantityTextKey),
+        );
+        final Finder timberQty = find.descendant(
+          of: timberCell,
+          matching: find.byKey(CtResourceCell.quantityTextKey),
+        );
+        expect(grainQty, findsOneWidget);
+        expect(tester.getSize(grainQty).width, greaterThan(1));
+        // Food and Raw Materials both use the same Available width and 3-col
+        // grid, so column-0 amount anchors (Grain, Timber) must share screen-x.
+        expect(
+          tester.getTopRight(grainQty).dx,
+          closeTo(tester.getTopRight(timberQty).dx, 0.5),
+          reason: 'Grain and Timber share column-0 amount anchors across sections',
+        );
+      },
+    );
   });
 }

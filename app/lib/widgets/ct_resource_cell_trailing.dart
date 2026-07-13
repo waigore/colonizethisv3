@@ -1,7 +1,7 @@
 part of 'ct_resource_cell.dart';
 
 extension _CtResourceCellTrailing on CtResourceCell {
-  /// A single trailing monospace [Text] (ellipsizing, one line). Kept as a
+  /// A single trailing monospace [Text] (one line, non-ellipsizing). Kept as a
   /// distinct widget per value so the quantity and delta remain individually
   /// findable / colour-assertable, while [trailingCluster] composes them.
   Widget monoText(
@@ -9,65 +9,68 @@ extension _CtResourceCellTrailing on CtResourceCell {
     required String text,
     required Color color,
     required double fontSize,
+    Key? key,
   }) {
     return Text(
       text,
+      key: key,
       style: monoStyle(context, color: color, fontSize: fontSize),
       maxLines: 1,
       softWrap: false,
-      overflow: TextOverflow.ellipsis,
+      overflow: TextOverflow.visible,
     );
   }
 
-  /// Builds the trailing quantity + optional delta as the **last** flex child
-  /// of the outer [Row] (see [CtResourceCell.build]). The cluster slot's
-  /// right edge coincides with the card's inner-right edge, and the cluster's
-  /// content is right-aligned within the slot via [Alignment.centerRight], so
-  /// the quantity (and, when present, the trailing `+N` / `-N` delta) is pinned
-  /// hard against the card's right edge whether or not a delta is shown (issue
-  /// #3485). The optional delta sits immediately to the right of the quantity
-  /// per the mockup `.resource-cell` order. Inside the cluster each value is a
-  /// loose [Flexible] with `maxLines: 1` + ellipsis so it shrinks as a
-  /// defensive last-resort fallback at pathologically narrow widths instead of
-  /// overflowing; in normal usage neither value ellipsizes (Refs #2862 S9 / C10,
-  /// #3485).
+  /// Builds the trailing quantity + reserved delta slot as the sole non-flex
+  /// sibling of the name [Flexible] inside the inner [Row].
+  ///
+  /// The leading [CtResourceCell.itemGap] is included inside the [FittedBox]
+  /// so the outer row has only one non-flex child and cannot overflow when the
+  /// Available grid slot is tighter than gap + trailing intrinsic width
+  /// (Refs #3999). [FittedBox] `scaleDown` keeps amounts visible (scaled) when
+  /// space is scarce instead of ellipsizing them to a blank region. A fixed
+  /// delta slot is always reserved so quantity right edges share a panel-wide
+  /// column whether or not a signed delta is painted.
   Widget trailingCluster(
     BuildContext context, {
     required String quantityText,
     required String? deltaText,
     required Color? deltaTextColor,
   }) {
-    return Flexible(
-      fit: FlexFit.loose,
-      flex: CtResourceCell.trailingFlex,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Flexible(
-              fit: FlexFit.loose,
-              child: monoText(
-                context,
-                text: quantityText,
-                color: EditorialMonoclePalette.accentDim,
-                fontSize: CtResourceCell.quantityFontSize,
-              ),
-            ),
-            if (deltaText != null) ...<Widget>[
-              const SizedBox(width: CtResourceCell.quantityToDeltaGap),
-              Flexible(
-                fit: FlexFit.loose,
-                child: monoText(
-                  context,
-                  text: deltaText,
-                  color: deltaTextColor!,
-                  fontSize: CtResourceCell.deltaFontSize,
-                ),
-              ),
-            ],
-          ],
-        ),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const SizedBox(width: CtResourceCell.itemGap),
+          monoText(
+            context,
+            key: CtResourceCell.quantityTextKey,
+            text: quantityText,
+            color: EditorialMonoclePalette.accentDim,
+            fontSize: CtResourceCell.quantityFontSize,
+          ),
+          SizedBox(
+            width:
+                CtResourceCell.quantityToDeltaGap +
+                CtResourceCell.reservedDeltaSlotWidth,
+            child: deltaText == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(
+                      left: CtResourceCell.quantityToDeltaGap,
+                    ),
+                    child: monoText(
+                      context,
+                      key: CtResourceCell.deltaTextKey,
+                      text: deltaText,
+                      color: deltaTextColor!,
+                      fontSize: CtResourceCell.deltaFontSize,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
