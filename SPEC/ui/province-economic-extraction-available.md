@@ -52,3 +52,4 @@ Add use case **Standalone — extraction & available** with partial-bracket fixt
 - Given a commodity segment with tile keys, when the pointer enters then exits that segment, then the map secondary-highlights all those keys then clears.
 - Given many commodities on a narrow panel, when the line lays out, then segments wrap and none are ellipsized.
 - Given Town production bonuses, when Economic renders, then Town production still shows icon + `+N` rows (or `—`) below the new subsections.
+- Given the partial-bracket Extraction fixture (grain effective 1 full 5, iron 5/5) and Available grain/timber counts under Economic full intel, when the System runs the province overlay Extraction/Available widget golden suite, then `matchesGoldenFile` baselines for the partial-bracket panel and the multi-commodity narrow wrap panel match committed PNGs under `app/test/goldens/`.
