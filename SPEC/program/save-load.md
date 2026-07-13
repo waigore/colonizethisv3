@@ -101,3 +101,8 @@
 - **listLoadableSaves includes auto.** Given a Hive box with at least one list-gate (v3+) manual save and a valid listable auto-save, when the system calls `listLoadableSaves`, then the result places the auto-save first (`storageId == kAutoSaveSlotId`, label `Auto-save`) then manuals newest-first, while `listGameIds` still excludes `kAutoSaveSlotId`. See [save-load-list-metadata.md](save-load-list-metadata.md).
 
 - **sanitizeGameId.** Given typed names with whitespace, map-data suffixes, or empty/whitespace-only input, when the system calls `sanitizeGameId`, then whitespace becomes `_`, forbidden suffixes are stripped, and empty results return null.
+
+## Province last-turn extraction snapshot
+
+`WorldState.lastTurnProvinceExtractionByProvinceId` round-trips with the game save (JSON key of the same name). Missing field → empty map. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4002.
+

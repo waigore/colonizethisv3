@@ -1,0 +1,227 @@
+/// Builds last-turn province Extraction snapshots for display. Refs #4002.
+///
+/// SPEC: SPEC/program/province-extraction-snapshot.md
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'tile_extraction_pipeline.dart';
+import 'tile_extraction_yield.dart';
+
+/// Mutable per-commodity accumulator used while building a province snapshot.
+class _CommodityAcc {
+  int effective = 0;
+  int full = 0;
+  final Set<String> tileKeys = <String>{};
+}
+
+/// Dual production/effective contribution for one improved extractable tile.
+class TileExtractionDisplayContribution {
+  const TileExtractionDisplayContribution({
+    required this.provinceId,
+    required this.commodityId,
+    required this.effective,
+    required this.full,
+    required this.tileKey,
+  });
+
+  final String provinceId;
+  final String commodityId;
+  final int effective;
+  final int full;
+  final String tileKey;
+}
+
+/// Computes production (full) and effective yield for one improved tile,
+/// including disconnected tiles where effective is 0 and full > 0.
+TileExtractionDisplayContribution? computeTileExtractionDisplayContribution({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required String tileKey,
+  required Set<String> connectedTileKeys,
+  required Map<String, int> pathTransportCap,
+  required Set<String> connectedByRoadRule,
+  required Set<String> portTileKeys,
+  required String? capitalProvinceId,
+  required int Function(CommodityId commodityId) techCapForCommodity,
+  required bool Function(String tileKey, CommodityId commodityId)
+  isCommodityExtractable,
+  Map<String, Province>? provincesByFullId,
+}) {
+  final tileContext = resolveTileKeyExtractionContext(
+    tileKey: tileKey,
+    tileMapByRegion: tileMapByRegion,
+    provincesByFullId: provincesByFullId,
+    game: game,
+    logContext: 'provinceExtractionSnapshot',
+  );
+  if (tileContext == null) {
+    return null;
+  }
+
+  final commodityId = tileContext.commodityId;
+  if (!isCommodityExtractable(tileKey, commodityId)) {
+    return null;
+  }
+
+  final improvementLevel = game.worldState.tileState
+      .improvementLevel(tileKey)
+      .clamp(0, 4);
+  if (improvementLevel < 1) {
+    return null;
+  }
+
+  final rawTechCap = techCapForCommodity(commodityId);
+  final terrain = tileMapByRegion[tileContext.regionId]?.terrainAt(
+    tileContext.resourceContext.x,
+    tileContext.resourceContext.y,
+  );
+  final techCap = terrain == null
+      ? rawTechCap
+      : clampExtractionCapForTerrain(rawTechCap, commodityId, terrain);
+
+  final production = (improvementLevel < techCap ? improvementLevel : techCap)
+      .clamp(0, 4);
+  if (production <= 0) {
+    return null;
+  }
+
+  var effective = 0;
+  if (connectedTileKeys.contains(tileKey)) {
+    final province = tileContext.province;
+    final townTileKey = province.townTileKey;
+    final townTileIsPort =
+        townTileKey != null && portTileKeys.contains(townTileKey);
+    effective = computeEffectiveTileYield(
+      tileState: game.worldState.tileState,
+      tileKey: tileKey,
+      techCap: techCap,
+      townDevelopmentCap: province.townDevelopmentLevel,
+      townTileIsPort: townTileIsPort,
+      isCapitalProvince: tileContext.provinceId == capitalProvinceId,
+      usesRoadRule: connectedByRoadRule.contains(tileKey),
+      portTileKeys: portTileKeys,
+      pathTransportCap: pathTransportCap,
+    );
+  }
+
+  return TileExtractionDisplayContribution(
+    provinceId: tileContext.provinceId,
+    commodityId: commodityId,
+    effective: effective,
+    full: production,
+    tileKey: tileKey,
+  );
+}
+
+/// Builds a fresh map of province Extraction snapshots for all GP owners.
+Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, ConnectivityResult> connectivityResult,
+  int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+}) {
+  final provincesByFullId = buildProvinceIndex(game);
+  final portTileKeys = collectPortTileKeys(game);
+  final accByProvince = <String, Map<String, _CommodityAcc>>{};
+  final ownerByProvince = <String, String>{};
+
+  for (final player in game.players) {
+    final cr = connectivityResult[player.id];
+    final connected = cr?.connected ?? const <String>{};
+    final pathTransportCap = cr?.pathTransportCap ?? const <String, int>{};
+    final roadRuleTiles = cr?.connectedByRoadRule ?? const <String>{};
+    final prospected =
+        game.worldState.playerProspectedTiles[player.id] ?? const <String>{};
+
+    for (final tileKey in game.worldState.tileState.improvementByTile.keys) {
+      final contribution = computeTileExtractionDisplayContribution(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        tileKey: tileKey,
+        connectedTileKeys: connected,
+        pathTransportCap: pathTransportCap,
+        connectedByRoadRule: roadRuleTiles,
+        portTileKeys: portTileKeys,
+        capitalProvinceId: player.capitalProvinceId,
+        provincesByFullId: provincesByFullId,
+        techCapForCommodity: (commodityId) =>
+            techCapForPlayerAndResource?.call(player.id, commodityId) ??
+            techCapForPlayer(player.id),
+        isCommodityExtractable: (tk, commodityId) =>
+            !kMineralResourceIds.contains(commodityId) ||
+            prospected.contains(tk),
+      );
+      if (contribution == null) {
+        continue;
+      }
+
+      final province = provincesByFullId[contribution.provinceId];
+      if (province == null || province.ownerId != player.id) {
+        continue;
+      }
+
+      ownerByProvince[contribution.provinceId] = player.id;
+      final byCommodity = accByProvince.putIfAbsent(
+        contribution.provinceId,
+        () => {},
+      );
+      final acc = byCommodity.putIfAbsent(
+        contribution.commodityId,
+        _CommodityAcc.new,
+      );
+      acc.effective += contribution.effective;
+      acc.full += contribution.full;
+      acc.tileKeys.add(contribution.tileKey);
+    }
+
+    final capBonus = game.capitalTileGrainBonusPerTurn;
+    final capitalProvinceId = player.capitalProvinceId;
+    if (player.capitalTile != null &&
+        capitalProvinceId != null &&
+        capBonus > 0) {
+      ownerByProvince[capitalProvinceId] = player.id;
+      final byCommodity = accByProvince.putIfAbsent(
+        capitalProvinceId,
+        () => {},
+      );
+      final acc = byCommodity.putIfAbsent(
+        CommodityCatalog.grain.id,
+        _CommodityAcc.new,
+      );
+      acc.effective += capBonus;
+      acc.full += capBonus;
+    }
+  }
+
+  final out = <String, ProvinceExtractionSnapshot>{};
+  for (final provinceId in accByProvince.keys.toList()..sort()) {
+    final ownerId = ownerByProvince[provinceId];
+    if (ownerId == null) continue;
+    final byCommodity = <String, ProvinceExtractionCommodityTotals>{};
+    final raw = accByProvince[provinceId]!;
+    for (final commodityId in raw.keys.toList()..sort()) {
+      final acc = raw[commodityId]!;
+      if (acc.effective <= 0 && acc.full <= 0) continue;
+      final keys = acc.tileKeys.toList()..sort();
+      byCommodity[commodityId] = ProvinceExtractionCommodityTotals(
+        effective: acc.effective,
+        full: acc.full,
+        tileKeys: keys,
+      );
+    }
+    if (byCommodity.isEmpty) continue;
+    out[provinceId] = ProvinceExtractionSnapshot(
+      ownerId: ownerId,
+      byCommodity: byCommodity,
+    );
+  }
+  return out;
+}
+
+int _defaultTechCap(String playerId) => defaultExtractionCap;
