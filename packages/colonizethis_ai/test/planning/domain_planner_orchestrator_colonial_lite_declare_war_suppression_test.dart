@@ -100,23 +100,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-// COLONIAL-lite / COLONIAL NW-tribe snapshots share the expand/colonial
-// tribe-target builders (Refs #3997). OW counts + provincesToVictory keep
-// the COLONIAL-lite (OW=9) vs COLONIAL (OW=10) boundary under test.
-AIWorldSnapshot _colonialLiteSnapshot() =>
-    buildOrchestratorExpandNwTribeTargetSnapshot(
-      oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
-      provincesToVictory: 22,
-      tribePeaceRelationScore: 0,
-    );
-
-AIWorldSnapshot _colonialSnapshot() =>
-    buildOrchestratorColonialNwTribeTargetSnapshot(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: 21,
-      tribeRelationScore: 0,
-    );
-
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
       in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
@@ -136,7 +119,13 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
+          // OW=9 + provincesToVictory keep the COLONIAL-lite boundary
+          // (Refs #3997 shared builders).
+          final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
+            provincesToVictory: 22,
+            tribePeaceRelationScore: 0,
+          );
 
           expect(
             observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -193,7 +182,12 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialSnapshot();
+          // OW=10 negative control: COLONIAL (not COLONIAL-lite).
+          final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
+            provincesToVictory: 21,
+            tribeRelationScore: 0,
+          );
 
           expect(
             observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -246,7 +240,11 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
+          final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
+            provincesToVictory: 22,
+            tribePeaceRelationScore: 0,
+          );
 
           Orders runOnce(int turnSeed) => runDomainPlanners(
             DomainPlannerInput(
