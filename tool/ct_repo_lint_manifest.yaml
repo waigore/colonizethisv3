@@ -1207,7 +1207,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_test_shared_fixtures
     group: testing
-    title: colonizethis_ai expand_phase_planner_*peace*_test.dart pins must import ownSnapshot / shared Game builders from expand_phase_peace_test_support.dart (no local _ownSnapshot / _criticalGame / _distractionGame / _zeroRegimentGame / _peerGame) (Refs #3967)
+    title: colonizethis_ai expand-peace pins + Phase-8 ownSnapshot/ownVsPartner adopters must import shared fixtures from expand_phase_peace_test_support.dart (no local _ownSnapshot / _criticalGame / _distractionGame / _zeroRegimentGame / _peerGame / _ownVsPartnerGame) (Refs #3967 / #3997)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_test_shared_fixtures.dart

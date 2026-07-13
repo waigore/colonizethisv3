@@ -42,46 +42,107 @@ bool _provinceNeighborOwnedByAtWarMinorOrTribe({
   return false;
 }
 
-/// Whether [move]'s destination is a stalled-expansion march step toward an
-/// at-war minor/tribe reachable only through the geographic peer-war lock
-/// (Refs #2847 § H4-b).
-bool _isGeographicPeerLockMinorTransitDestination({
-  required ArmyMoveOrder move,
-  required String nationId,
-  required Game game,
-  required MapTopology topology,
-  required AIWorldSnapshot snapshot,
-  required Map<String, String?> provinceOwner,
-  required String destOwner,
-  required String destRegion,
-  required Iterable<String> destNeighborLocals,
-  required String peerGpId,
-}) {
-  final atWarWith = snapshot.threats.atWarWith;
-  if (destOwner == peerGpId) {
-    return _provinceNeighborOwnedByAtWarMinorOrTribe(
+/// Shared destination inputs for geographic peer-lock transit checks
+/// (Refs #3997).
+final class _GeographicPeerLockTransitInput {
+  const _GeographicPeerLockTransitInput({
+    required this.nationId,
+    required this.game,
+    required this.topology,
+    required this.snapshot,
+    required this.provinceOwner,
+    required this.destOwner,
+    required this.destRegion,
+    required this.destNeighborLocals,
+    required this.peerGpId,
+  });
+
+  final String nationId;
+  final Game game;
+  final MapTopology topology;
+  final AIWorldSnapshot snapshot;
+  final Map<String, String?> provinceOwner;
+  final String destOwner;
+  final String destRegion;
+  final Iterable<String> destNeighborLocals;
+  final String peerGpId;
+}
+
+/// Shared destination inputs for stalled-expansion army-move score deltas
+/// (Refs #3997).
+final class _StalledExpansionArmyMoveScoreDeltaInput {
+  const _StalledExpansionArmyMoveScoreDeltaInput({
+    required this.move,
+    required this.nationId,
+    required this.game,
+    required this.topology,
+    required this.snapshot,
+    required this.provinceOwner,
+    required this.invadable,
+    required this.destOwner,
+    required this.destRegion,
+    required this.destNeighborLocals,
+    required this.declaredWarTargetFactionId,
+  });
+
+  final ArmyMoveOrder move;
+  final String nationId;
+  final Game game;
+  final MapTopology topology;
+  final AIWorldSnapshot snapshot;
+  final Map<String, String?> provinceOwner;
+  final Set<String> invadable;
+  final String destOwner;
+  final String destRegion;
+  final Iterable<String> destNeighborLocals;
+  final String? declaredWarTargetFactionId;
+
+  _GeographicPeerLockTransitInput transitInput(String peerGpId) {
+    return _GeographicPeerLockTransitInput(
+      nationId: nationId,
       game: game,
+      topology: topology,
+      snapshot: snapshot,
       provinceOwner: provinceOwner,
-      regionId: destRegion,
-      neighborLocals: destNeighborLocals,
+      destOwner: destOwner,
+      destRegion: destRegion,
+      destNeighborLocals: destNeighborLocals,
+      peerGpId: peerGpId,
+    );
+  }
+}
+
+/// Whether [input.move]'s destination is a stalled-expansion march step toward
+/// an at-war minor/tribe reachable only through the geographic peer-war lock
+/// (Refs #2847 § H4-b).
+bool _isGeographicPeerLockMinorTransitDestination(
+  _GeographicPeerLockTransitInput input,
+) {
+  final atWarWith = input.snapshot.threats.atWarWith;
+  if (input.destOwner == input.peerGpId) {
+    return _provinceNeighborOwnedByAtWarMinorOrTribe(
+      game: input.game,
+      provinceOwner: input.provinceOwner,
+      regionId: input.destRegion,
+      neighborLocals: input.destNeighborLocals,
       atWarWith: atWarWith,
     );
   }
-  if (destOwner != nationId) {
+  if (input.destOwner != input.nationId) {
     return false;
   }
-  for (final peerLocal in destNeighborLocals) {
-    final peerFull = ProvinceId.full(destRegion, peerLocal);
-    if ((provinceOwner[peerFull] ?? '') != peerGpId) continue;
+  for (final peerLocal in input.destNeighborLocals) {
+    final peerFull = ProvinceId.full(input.destRegion, peerLocal);
+    if ((input.provinceOwner[peerFull] ?? '') != input.peerGpId) continue;
     final beyondPeer = neighborProvinceIdsInRegion(
-      topology,
-      destRegion,
+      input.topology,
+      input.destRegion,
       peerLocal,
     );
     if (_provinceNeighborOwnedByAtWarMinorOrTribe(
-      game: game,
-      provinceOwner: provinceOwner,
-      regionId: destRegion,
+      game: input.game,
+      provinceOwner: input.provinceOwner,
+      regionId: input.destRegion,
       neighborLocals: beyondPeer,
       atWarWith: atWarWith,
     )) {
@@ -91,77 +152,49 @@ bool _isGeographicPeerLockMinorTransitDestination({
   return false;
 }
 
-double _stalledExpansionArmyMoveScoreDelta({
-  required ArmyMoveOrder move,
-  required String nationId,
-  required Game game,
-  required MapTopology topology,
-  required AIWorldSnapshot snapshot,
-  required Map<String, String?> provinceOwner,
-  required Set<String> invadable,
-  required String destOwner,
-  required String destRegion,
-  required Iterable<String> destNeighborLocals,
-  required String? declaredWarTargetFactionId,
-}) {
-  final geoLockPeerGpId = _geographicPeerWarLockPeerGpId(snapshot);
+double _stalledExpansionArmyMoveScoreDelta(
+  _StalledExpansionArmyMoveScoreDeltaInput input,
+) {
+  final geoLockPeerGpId = _geographicPeerWarLockPeerGpId(input.snapshot);
   final geoLockActive =
       geoLockPeerGpId != null &&
       expandIsGeographicPeerWarLock(
-        snapshot: snapshot,
+        snapshot: input.snapshot,
         peerGpId: geoLockPeerGpId,
       ) &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          provinceCountOwnedBy(game, geoLockPeerGpId);
+      input.snapshot.conquest.oldWorldProvincesOwned <=
+          provinceCountOwnedBy(input.game, geoLockPeerGpId);
   if (geoLockActive &&
       _isGeographicPeerLockMinorTransitDestination(
-        move: move,
-        nationId: nationId,
-        game: game,
-        topology: topology,
-        snapshot: snapshot,
-        provinceOwner: provinceOwner,
-        destOwner: destOwner,
-        destRegion: destRegion,
-        destNeighborLocals: destNeighborLocals,
-        peerGpId: geoLockPeerGpId,
+        input.transitInput(geoLockPeerGpId),
       )) {
     return kConquestArmyMoveAdjacentAtWarFrontierBonus +
         kConquestArmyMoveStalledDeclaredTargetBonus;
   }
   final atWarMinorOrTribe =
-      destOwner.isNotEmpty &&
-      destOwner != nationId &&
-      snapshot.threats.atWarWith.contains(destOwner) &&
-      isMinorOrTribeFaction(game, destOwner);
+      input.destOwner.isNotEmpty &&
+      input.destOwner != input.nationId &&
+      input.snapshot.threats.atWarWith.contains(input.destOwner) &&
+      isMinorOrTribeFaction(input.game, input.destOwner);
   final atWarGpInvadableBlocker =
       !geoLockActive &&
-      destOwner.isNotEmpty &&
-      destOwner != nationId &&
-      snapshot.threats.atWarWith.contains(destOwner) &&
-      game.playerById(destOwner) != null &&
-      snapshot.conquest.invadableProvinceIdsSorted.any(
-        (pid) => provinceOwner[pid] == destOwner,
+      input.destOwner.isNotEmpty &&
+      input.destOwner != input.nationId &&
+      input.snapshot.threats.atWarWith.contains(input.destOwner) &&
+      input.game.playerById(input.destOwner) != null &&
+      input.snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => input.provinceOwner[pid] == input.destOwner,
       );
   final peerDeclaredWarWithoutMinorTransit =
       geoLockActive &&
-      declaredWarTargetFactionId == geoLockPeerGpId &&
-      destOwner == geoLockPeerGpId &&
+      input.declaredWarTargetFactionId == geoLockPeerGpId &&
+      input.destOwner == geoLockPeerGpId &&
       !_isGeographicPeerLockMinorTransitDestination(
-        move: move,
-        nationId: nationId,
-        game: game,
-        topology: topology,
-        snapshot: snapshot,
-        provinceOwner: provinceOwner,
-        destOwner: destOwner,
-        destRegion: destRegion,
-        destNeighborLocals: destNeighborLocals,
-        peerGpId: geoLockPeerGpId,
+        input.transitInput(geoLockPeerGpId),
       );
   final targetsDeclaredOrAtWarEnemy =
-      (declaredWarTargetFactionId != null &&
-          destOwner == declaredWarTargetFactionId &&
+      (input.declaredWarTargetFactionId != null &&
+          input.destOwner == input.declaredWarTargetFactionId &&
           !peerDeclaredWarWithoutMinorTransit) ||
       atWarMinorOrTribe ||
       atWarGpInvadableBlocker;
@@ -171,33 +204,33 @@ double _stalledExpansionArmyMoveScoreDelta({
         : kConquestArmyMoveStalledDeclaredTargetBonus;
     if (atWarMinorOrTribe &&
         isBelowObserverConquestQuota(
-          snapshot.conquest.oldWorldProvincesOwned,
+          input.snapshot.conquest.oldWorldProvincesOwned,
         )) {
       delta += kConquestArmyMoveStalledDeclaredTargetBonus;
     }
     if (atWarGpInvadableBlocker) {
       final deficit = oldWorldProvinceLeadOver(
-        game: game,
-        snapshot: snapshot,
-        factionId: destOwner,
+        game: input.game,
+        snapshot: input.snapshot,
+        factionId: input.destOwner,
       );
       if (deficit > 0) {
         delta +=
             deficit * kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince;
       }
     }
-    if (invadable.contains(move.destinationProvinceId)) {
+    if (input.invadable.contains(input.move.destinationProvinceId)) {
       delta += kConquestArmyMoveStalledDeclaredTargetInvadableBonus;
     }
     return delta;
   }
-  if (destOwner != nationId) return 0;
+  if (input.destOwner != input.nationId) return 0;
   if (_isOnAtWarMinorOrTribeFrontier(
-    game: game,
-    provinceOwner: provinceOwner,
-    destRegion: destRegion,
-    destNeighborLocals: destNeighborLocals,
-    atWarWith: snapshot.threats.atWarWith,
+    game: input.game,
+    provinceOwner: input.provinceOwner,
+    destRegion: input.destRegion,
+    destNeighborLocals: input.destNeighborLocals,
+    atWarWith: input.snapshot.threats.atWarWith,
   )) {
     return kConquestArmyMoveAdjacentAtWarFrontierBonus;
   }
