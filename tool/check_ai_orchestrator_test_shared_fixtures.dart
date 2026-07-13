@@ -41,8 +41,18 @@ final RegExp _localExpandTwoGpProvincesConst = RegExp(
 
 /// Forbidden local minor-war at-war EXPAND snapshot clones; use
 /// [buildOrchestratorExpandMinorWarAtWarSnapshot] (Refs #3997).
-final RegExp _localExpandMinorWarAtWarSnapshotFn = RegExp(
+final RegExp _localExpandSnapshotFn = RegExp(
   r'AIWorldSnapshot\s+_expandSnapshot\s*\(\s*\)\s*\{',
+);
+
+/// Forbidden local COLONIAL NW-tribe snapshot clones (Refs #3997).
+final RegExp _localColonialSnapshotFn = RegExp(
+  r'AIWorldSnapshot\s+_colonialSnapshot\s*\(\s*\)\s*\{',
+);
+
+/// Forbidden local DEVELOP snapshot clones (Refs #3997).
+final RegExp _localDevelopSnapshotFn = RegExp(
+  r'AIWorldSnapshot\s+_developSnapshot\s*\(\s*\)\s*\{',
 );
 
 /// True when [content] uses a Game builder that pairs with the shared
@@ -50,6 +60,21 @@ final RegExp _localExpandMinorWarAtWarSnapshotFn = RegExp(
 bool _usesExpandMinorWarAtWarSnapshotPairing(String content) {
   return content.contains('buildOrchestratorExpandMinorWarScenarioGame') ||
       content.contains('buildOrchestratorPendingCostTradeScenarioGame');
+}
+
+/// True when [content] uses the shared gp1+tribe NW Game builder.
+bool _usesGp1TribeNwScenarioPairing(String content) {
+  return content.contains('buildOrchestratorGp1TribeNwScenarioGame');
+}
+
+/// True when [content] uses the GP-only blocker Game builder.
+bool _usesGpOnlyBlockerScenarioPairing(String content) {
+  return content.contains('buildOrchestratorExpandGpOnlyBlockerScenarioGame');
+}
+
+/// True when [content] uses the adjacent-minor Game builder.
+bool _usesAdjacentMinorScenarioPairing(String content) {
+  return content.contains('buildOrchestratorExpandAdjacentMinorScenarioGame');
 }
 
 /// True when the repo-relative [slashPath] is an in-scope orchestrator
@@ -94,9 +119,45 @@ String? aiOrchestratorSharedFixturesViolationReason(
         '`$orchestratorSharedFixturesSupportFile` (Refs #3941)';
   }
   if (_usesExpandMinorWarAtWarSnapshotPairing(content) &&
-      _localExpandMinorWarAtWarSnapshotFn.hasMatch(content)) {
+      _localExpandSnapshotFn.hasMatch(content)) {
     return 'redeclares local `_expandSnapshot`; call '
         '`buildOrchestratorExpandMinorWarAtWarSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesGp1TribeNwScenarioPairing(content) &&
+      _localExpandSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_expandSnapshot`; call '
+        '`buildOrchestratorExpandNwTribeTargetSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesGp1TribeNwScenarioPairing(content) &&
+      _localColonialSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_colonialSnapshot`; call '
+        '`buildOrchestratorColonialNwTribeTargetSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesGpOnlyBlockerScenarioPairing(content) &&
+      _localExpandSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_expandSnapshot`; call '
+        '`buildOrchestratorExpandGpOnlyBlockerSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesGpOnlyBlockerScenarioPairing(content) &&
+      _localDevelopSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_developSnapshot`; call '
+        '`buildOrchestratorDevelopGpOnlyBlockerSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesAdjacentMinorScenarioPairing(content) &&
+      _localExpandSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_expandSnapshot`; call '
+        '`buildOrchestratorExpandAdjacentMinorSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_usesAdjacentMinorScenarioPairing(content) &&
+      _localDevelopSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_developSnapshot`; call '
+        '`buildOrchestratorDevelopAdjacentMinorSnapshot` from '
         '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
   }
   return null;

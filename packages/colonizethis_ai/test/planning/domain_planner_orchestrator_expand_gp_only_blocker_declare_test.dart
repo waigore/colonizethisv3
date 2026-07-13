@@ -115,68 +115,8 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> EXPAND (`isBelowObserverConquestQuota` true,
-    // observer goal phase routes to EXPAND). The invadable list lists
-    // only `_blockerGpId`-owned provinces so
-    // `primaryInvadableOldWorldGpBlocker` resolves to `_blockerGpId`
-    // and `isOldWorldGpOnlyInvadableFrontier` is true. The blocker
-    // also appears in `adjacentOwnerFactionIdsSorted` because that is
-    // how the perception layer surfaces a sole GP frontier neighbor
-    // (mirrors the helper-level fixture in
-    // `diplomatic_candidate_scoring_suppression_part2_test.dart`
-    // group `stalledGpBlockerDeclareWarTarget returns GP-only invadable
-    // blocker`).
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      provincesToVictory: 24,
-      invadableProvinceIdsSorted: <String>[
-        'oldWorld|gp2_inv_0',
-        'oldWorld|gp2_inv_1',
-        'oldWorld|gp2_inv_2',
-        'oldWorld|gp2_inv_3',
-      ],
-      adjacentOwnerFactionIdsSorted: <String>[_blockerGpId],
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {},
-  );
-}
-
-AIWorldSnapshot _developSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 12 OW provinces past the observer quota with no colonial
-    // acquisition targets: `observerGoalPhaseFor` routes to DEVELOP.
-    // Both `isBelowObserverConquestQuota(12)` and
-    // `isStalledOldWorldExpansion(12)` are false, so the helper
-    // `stalledGpBlockerDeclareWarTarget` short-circuits at its
-    // observer-quota / stalled-OW gate and the
-    // `_plateauGpBlockerDeclarePlannerResultIfNeeded` wrapper
-    // additionally short-circuits at the same gate.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 12,
-      provincesToVictory: 19,
-      invadableProvinceIdsSorted: <String>[
-        'oldWorld|gp2_inv_0',
-        'oldWorld|gp2_inv_1',
-        'oldWorld|gp2_inv_2',
-        'oldWorld|gp2_inv_3',
-      ],
-      adjacentOwnerFactionIdsSorted: <String>[_blockerGpId],
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(ownProvinceCount: 12),
-    relations: {},
-  );
-}
+// Snapshots: buildOrchestratorExpandGpOnlyBlockerSnapshot /
+// buildOrchestratorDevelopGpOnlyBlockerSnapshot (Refs #3997).
 
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
@@ -194,7 +134,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandGpOnlyBlockerSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -247,7 +187,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _developSnapshot();
+        final snapshot = buildOrchestratorDevelopGpOnlyBlockerSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -302,7 +242,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandGpOnlyBlockerSnapshot();
 
         Orders runOnce(int turnSeed) => runDomainPlanners(
           DomainPlannerInput(
