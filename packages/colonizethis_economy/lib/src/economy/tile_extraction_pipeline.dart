@@ -78,6 +78,11 @@ TileKeyResourceContext? resolveTileKeyResourceContext({
   if (map == null) {
     return null;
   }
+  // Incomplete / stub tile maps (integration fixtures, partial saves) may list
+  // improvement keys outside the grid; treat as no resource rather than throw.
+  if (coords.x >= map.width || coords.y >= map.height) {
+    return null;
+  }
 
   final resource = map.resourceAt(coords.x, coords.y);
   if (resource == null) {

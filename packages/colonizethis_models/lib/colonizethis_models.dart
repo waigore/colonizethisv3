@@ -22,6 +22,7 @@ export 'src/stockpile.dart';
 export 'src/player.dart';
 export 'src/tile_map_state.dart';
 export 'src/province.dart';
+export 'src/province_extraction_snapshot.dart';
 export 'src/province_id.dart';
 export 'src/quick_battle.dart';
 export 'src/regiment_transfer.dart';

@@ -34,6 +34,7 @@ class CtRegionMap extends StatefulWidget {
     this.selectedTileKey,
     this.selectedCivilianTileKey,
     this.secondaryHighlightTileKey,
+    this.secondaryHighlightTileKeys,
     this.centerOnTileKey,
     this.validTileKeys,
     this.onTileSelected,
@@ -64,6 +65,7 @@ class CtRegionMap extends StatefulWidget {
   final String? selectedTileKey;
   final String? selectedCivilianTileKey;
   final String? secondaryHighlightTileKey;
+  final Set<String>? secondaryHighlightTileKeys;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
   final void Function(String tileKey)? onTileSelected;

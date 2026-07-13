@@ -30,11 +30,19 @@ class TileMapResult {
 
   String cell(int x, int y) => grid[y][x];
 
-  TerrainType? terrainAt(int x, int y) =>
-      terrainGrid != null ? terrainGrid![y][x] : null;
+  TerrainType? terrainAt(int x, int y) {
+    if (terrainGrid == null || x < 0 || y < 0 || x >= width || y >= height) {
+      return null;
+    }
+    return terrainGrid![y][x];
+  }
 
-  Resource? resourceAt(int x, int y) =>
-      resourceGrid != null ? resourceGrid![y][x] : null;
+  Resource? resourceAt(int x, int y) {
+    if (resourceGrid == null || x < 0 || y < 0 || x >= width || y >= height) {
+      return null;
+    }
+    return resourceGrid![y][x];
+  }
 
   /// Copy with [resource] at ([x], [y]). Requires an existing [resourceGrid].
   /// SPEC/game/tile-map-and-generation.md § Great Power starting grain (bootstrap).

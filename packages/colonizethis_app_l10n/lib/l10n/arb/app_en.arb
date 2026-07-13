@@ -2710,6 +2710,53 @@
       }
     }
   },
+  "provinceOverlay_extractionHeading": "Extraction",
+  "@provinceOverlay_extractionHeading": {
+    "description": "Subheading within the Economic section for last-turn Extraction condensed line."
+  },
+  "provinceOverlay_availableHeading": "Available",
+  "@provinceOverlay_availableHeading": {
+    "description": "Subheading within the Economic section for improvable resource tile counts."
+  },
+  "provinceOverlay_extractionQuantity": "{quantity} {name}",
+  "@provinceOverlay_extractionQuantity": {
+    "description": "Full-yield Extraction commodity segment (effective equals full).",
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_extractionQuantityPartial": "{effective} ({full}) {name}",
+  "@provinceOverlay_extractionQuantityPartial": {
+    "description": "Partial-yield Extraction commodity segment when effective is below full.",
+    "placeholders": {
+      "effective": {
+        "type": "int"
+      },
+      "full": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_availableTileCount": "{count} {name}",
+  "@provinceOverlay_availableTileCount": {
+    "description": "Available improvable resource tile count commodity segment.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_sectionMilitary": "Military",
   "@provinceOverlay_sectionMilitary": {
     "description": "Province overlay section heading for military details."

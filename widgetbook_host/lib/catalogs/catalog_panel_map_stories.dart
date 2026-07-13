@@ -49,6 +49,61 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Standalone — extraction & available',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          final ownerId = game.players.first.id;
+          return SizedBox(
+            width: 320,
+            height: 520,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: ownerId,
+              playerView: demoHumanPlayerViewForOverlay,
+              omniscientDetail: true,
+              extractionSnapshot: ProvinceExtractionSnapshot(
+                ownerId: ownerId,
+                byCommodity: {
+                  CommodityCatalog.grain.id:
+                      const ProvinceExtractionCommodityTotals(
+                        effective: 1,
+                        full: 5,
+                        tileKeys: ['oldWorld|p1|0|0'],
+                      ),
+                  CommodityCatalog.iron.id:
+                      const ProvinceExtractionCommodityTotals(
+                        effective: 5,
+                        full: 5,
+                        tileKeys: ['oldWorld|p1|1|0'],
+                      ),
+                  CommodityCatalog.timber.id:
+                      const ProvinceExtractionCommodityTotals(
+                        effective: 2,
+                        full: 2,
+                        tileKeys: ['oldWorld|p1|2|0'],
+                      ),
+                },
+              ),
+              availableByCommodity: {
+                CommodityCatalog.grain.id: const ProvinceImprovableCommodityCount(
+                  count: 3,
+                  tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
+                ),
+                CommodityCatalog.timber.id: const ProvinceImprovableCommodityCount(
+                  count: 2,
+                  tileKeys: ['oldWorld|p1|0|1'],
+                ),
+              },
+              onClose: () {},
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — sea zone',
         builder: (context) {
           final game = demoGameForOverlay;

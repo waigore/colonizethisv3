@@ -125,6 +125,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   selectedTileKey: panel.selectedTileKey,
                   selectedCivilianTileKey: selectedCivilianTileKey,
                   secondaryHighlightTileKey: panel.secondaryHighlightTileKey,
+                  secondaryHighlightTileKeys: panel.secondaryHighlightTileKeys,
                   centerOnTileKey: centerOnTileKey,
                   validTileKeys: validTileKeysForSelection,
                   onTileSelected: onTileSelectedForWork,

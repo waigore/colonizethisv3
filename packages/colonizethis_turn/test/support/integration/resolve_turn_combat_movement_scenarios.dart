@@ -97,11 +97,12 @@ test(
                 [Resource.grain, Resource.grain],
               ],
             );
+            // Grid is width=2 height=1: P1 at (0,0), P2 at (1,0).
             final tileState = TileMapState()
                 .setImprovement('$ow|P1|0|0', 1)
                 .setRoadLevel('$ow|P1|0|0', 1)
-                .setImprovement('$ow|P2|0|1', 1)
-                .setRoadLevel('$ow|P2|0|1', 1);
+                .setImprovement('$ow|P2|1|0', 1)
+                .setRoadLevel('$ow|P2|1|0', 1);
             final cap = CapitalTile(regionId: ow, provinceId: '$ow|P2', x: 1, y: 0);
             final game = ensureMilitaryArmiesForGame(
               Game(
@@ -135,7 +136,7 @@ test(
                   tileKeysByRegionAndProvince: {
                     ow: {
                       'P1': ['$ow|P1|0|0'],
-                      'P2': ['$ow|P2|0|1'],
+                      'P2': ['$ow|P2|1|0'],
                     },
                   },
                 ),

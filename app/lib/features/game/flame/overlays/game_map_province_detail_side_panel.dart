@@ -110,6 +110,15 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       provinceId: displayId,
       mapData: mapData,
     );
+    final extractionSnapshot = provinceExtractionSnapshotPreview(
+      game: game,
+      provinceId: displayId,
+    );
+    final availableByCommodity = provinceAvailableResourceCountsPreview(
+      game: game,
+      provinceId: displayId,
+      mapData: mapData,
+    );
     Widget overlay = ProvinceSeaZoneDetailOverlay(
       game: game,
       region: region,
@@ -119,8 +128,13 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       playerView: playerView,
       draftOrders: draftOrders,
       townProductionBonusByCommodity: townProductionBonus,
+      extractionSnapshot: extractionSnapshot,
+      availableByCommodity: availableByCommodity,
       onHighlightTile: (k) =>
           ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(k),
+      onHighlightTiles: (keys) => ref
+          .read(mapProvincePanelProvider.notifier)
+          .setSecondaryHighlights(keys),
       onClose: () => ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
       showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
       prospectActionEnabled: canMutateViaUi && prospectState.enabled,

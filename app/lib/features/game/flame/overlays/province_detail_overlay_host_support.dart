@@ -17,7 +17,10 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         PlayerView,
-        previewTownManufacturingBonusByProvince;
+        ProvinceImprovableCommodityCount,
+        previewTownManufacturingBonusByProvince,
+        provinceImprovableResourceTileCounts,
+        WorldStateProvinceLookup;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';

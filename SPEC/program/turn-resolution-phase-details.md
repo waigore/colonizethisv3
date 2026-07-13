@@ -34,6 +34,8 @@ Immediately after Diplomacy and before Research (Refs #3834): (1) kill rolls for
 
 **Override:** When `extractedByPlayerId` is **non-empty**, the phase applies `applyExtractionForPlayers` only: per-player maps are merged into central stockpiles with **no** connectivity, tile extraction, land/overseas split, cargo-hold cap, or interception. See [auto-transport.md](auto-transport.md) § Caller-supplied extraction override.
 
+**Province Extraction snapshot (Refs #4002):** On the normal path the phase also writes `WorldState.lastTurnProvinceExtractionByProvinceId` (effective/full/tileKeys per province). On the scripted override path the map is cleared. Details and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md).
+
 ---
 
 ## Riches to treasury

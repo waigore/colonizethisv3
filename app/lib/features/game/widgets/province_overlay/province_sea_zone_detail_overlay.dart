@@ -1,5 +1,7 @@
 // Province and sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show CommodityCatalog, terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         explorerConsulateGateBlocksMinorTribeProvince,
@@ -12,11 +14,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kRegionNewWorld,
         kRegionOldWorld,
         PlayerView,
+        ProvinceImprovableCommodityCount,
         provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
         VisibilityLevel,
         WorldStateProvinceLookup;
-import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -86,6 +88,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onBuildImprovementTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
+    this.extractionSnapshot,
+    this.availableByCommodity = const {},
+    this.onHighlightTiles,
   });
 
   final Game game;
@@ -100,6 +105,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// Current-turn draft orders (session). Used for Civilian/Military/Naval preview.
   final Orders draftOrders;
   final void Function(String? tileKey)? onHighlightTile;
+  final void Function(Iterable<String>? tileKeys)? onHighlightTiles;
   final VoidCallback? onClose;
   final bool showProspectActionIcon;
   final bool prospectActionEnabled;
@@ -116,6 +122,12 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   /// Projected town manufacturing bonus for the displayed province (Economic section).
   final Map<String, int> townProductionBonusByCommodity;
+
+  /// Last-turn Extraction snapshot for display (ownership-gated by host).
+  final ProvinceExtractionSnapshot? extractionSnapshot;
+
+  /// Improvable resource tile counts for Available condensed line.
+  final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
 
   bool _isSeaZone(String id) {
     final regionPart = prefixedIdRegionSegment(id);
@@ -171,6 +183,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onBuildImprovementTap: onBuildImprovementTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
+      extractionSnapshot: extractionSnapshot,
+      availableByCommodity: availableByCommodity,
+      onHighlightTiles: onHighlightTiles,
     );
   }
 }

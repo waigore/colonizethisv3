@@ -1576,6 +1576,25 @@ abstract class AppLocalizations {
   /// Signed quantity for a projected town manufacturing bonus commodity row.
   String provinceOverlay_townProductionQuantity(int quantity);
 
+  /// Subheading for last-turn Extraction condensed line.
+  String get provinceOverlay_extractionHeading;
+
+  /// Subheading for improvable Available condensed line.
+  String get provinceOverlay_availableHeading;
+
+  /// Full-yield Extraction commodity segment text.
+  String provinceOverlay_extractionQuantity(int quantity, String name);
+
+  /// Partial-yield Extraction commodity segment text.
+  String provinceOverlay_extractionQuantityPartial(
+    int effective,
+    int full,
+    String name,
+  );
+
+  /// Available improvable tile-count commodity segment text.
+  String provinceOverlay_availableTileCount(int count, String name);
+
   /// Province overlay section heading for military details.
   String get provinceOverlay_sectionMilitary;
 
