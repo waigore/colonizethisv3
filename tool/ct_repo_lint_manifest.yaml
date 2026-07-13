@@ -1226,6 +1226,13 @@ rules:
     runner: dart
     script: tool/check_ai_colonial_phase_dispatch_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_phase_planner_nw_suppression_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand/develop_phase_planner_nw_suppression_test.dart must not redeclare local _expandGame/_expandSnapshot/_developGame/_developSnapshot (use phase_planner_nw_suppression_test_support) (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_planner_nw_suppression_test_shared_fixtures.dart
+
   - rule_id: repo.ai_colonial_military_naval_pin_cases_required
     group: testing
     title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 750 physical lines must import a sibling *_cases.dart (Refs #3977, #3997)
