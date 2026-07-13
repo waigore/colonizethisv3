@@ -1,0 +1,346 @@
+// Case bodies for `diplomatic_candidate_scoring_test.dart` (Refs #3997 Phase 8).
+// Registered from the thin contract; pin coverage preserved 1:1 from the
+// former inline suite.
+
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+void registerDiplomaticCandidateScoringCoreEarlyCases() {
+  group('computeDiplomaticCandidateScores', () {
+test('declareWar score exceeds establishOverture for same hostile target', () {
+      final game = Game(
+        id: 'g-diplo-score-1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p2',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p3',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p4',
+                regionId: 'oldWorld',
+                ownerId: 'gp2',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                locationProvinceId: 'oldWorld|p1',
+              ),
+              Unit(
+                id: 'u2',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                locationProvinceId: 'oldWorld|p2',
+              ),
+              Unit(
+                id: 'u3',
+                type: 'grenadiers',
+                ownerId: 'gp1',
+                locationProvinceId: 'oldWorld|p3',
+              ),
+              Unit(
+                id: 'u4',
+                type: 'grenadiers',
+                ownerId: 'gp2',
+                locationProvinceId: 'oldWorld|p4',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 20,
+            level: RelationLevel.hostile,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      final snapshot = AIWorldSnapshot.fromPlayerView(view);
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      final scores = computeDiplomaticCandidateScores(
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
+      );
+      expect(scores.length, 2);
+      expect(scores[0], greaterThan(scores[1]));
+    });
+
+test('offer peace candidate scores lower when war desire is higher', () {
+      Game gameForWarDesire({
+        required int gp2ProvinceCount,
+        required int gp2Regiments,
+      }) {
+        final provinces = <Province>[
+          const Province(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            ownerId: 'gp1',
+          ),
+        ];
+        var i = 0;
+        for (; i < gp2ProvinceCount; i++) {
+          provinces.add(
+            Province(
+              id: 'oldWorld|g2_$i',
+              regionId: 'oldWorld',
+              ownerId: 'gp2',
+            ),
+          );
+        }
+        final units = <Unit>[
+          Unit(
+            id: 'a1',
+            type: 'grenadiers',
+            ownerId: 'gp1',
+            locationProvinceId: 'oldWorld|p1',
+          ),
+          Unit(
+            id: 'a2',
+            type: 'grenadiers',
+            ownerId: 'gp1',
+            locationProvinceId: 'oldWorld|p1',
+          ),
+        ];
+        for (var r = 0; r < gp2Regiments; r++) {
+          units.add(
+            Unit(
+              id: 'b$r',
+              type: 'grenadiers',
+              ownerId: 'gp2',
+              locationProvinceId: 'oldWorld|g2_0',
+            ),
+          );
+        }
+        return Game(
+          id: 'g-peace-$gp2ProvinceCount-$gp2Regiments',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(provinces: provinces, units: units),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              score: 25,
+              level: RelationLevel.hostile,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+      }
+
+      final highDesireGame = gameForWarDesire(gp2ProvinceCount: 1, gp2Regiments: 1);
+      final lowDesireGame =
+          gameForWarDesire(gp2ProvinceCount: 3, gp2Regiments: 4);
+      expect(
+        computeWarDesireScore(
+          game: highDesireGame,
+          nationId: 'gp1',
+          targetFactionId: 'gp2',
+          relationScore: 25,
+        ),
+        greaterThan(
+          computeWarDesireScore(
+            game: lowDesireGame,
+            nationId: 'gp1',
+            targetFactionId: 'gp2',
+            relationScore: 25,
+          ),
+        ),
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final viewHi = buildPlayerView(highDesireGame, topology, 'gp1');
+      final viewLo = buildPlayerView(lowDesireGame, topology, 'gp1');
+      final snapHi = AIWorldSnapshot.fromPlayerView(viewHi);
+      final snapLo = AIWorldSnapshot.fromPlayerView(viewLo);
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final peaceHi = computeDiplomaticCandidateScores(
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: highDesireGame,
+          snapshot: snapHi,
+          config: config,
+        ),
+      ).single;
+      final peaceLo = computeDiplomaticCandidateScores(
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: lowDesireGame,
+          snapshot: snapLo,
+          config: config,
+        ),
+      ).single;
+      expect(peaceLo, greaterThan(peaceHi));
+    });
+
+test('declareWar toward weak-neighbor GP gets GP targeting bonus', () {
+      final game = Game(
+        id: 'g-gp-war-bonus',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < 8; i++)
+                Province(
+                  id: 'oldWorld|p1_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+              const Province(
+                id: 'oldWorld|p2',
+                regionId: 'oldWorld',
+                ownerId: 'gp2',
+              ),
+            ],
+            units: [
+              for (var i = 0; i < 6; i++)
+                Unit(
+                  id: 'a$i',
+                  type: 'grenadiers',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p1_0',
+                ),
+              Unit(
+                id: 'b1',
+                type: 'grenadiers',
+                ownerId: 'gp2',
+                locationProvinceId: 'oldWorld|p2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+          Player(id: 'gp2', displayName: 'B', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 25,
+            level: RelationLevel.hostile,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      const candidate = [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'gp2',
+        ),
+      ];
+      final withWeakGp = computeDiplomaticCandidateScores(
+        DiplomaticCandidateScoringInput(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: const AIWorldSnapshot(
+            playerId: 'gp1',
+            threats: ThreatSummary(),
+            opportunities: OpportunitySummary(weakNeighbors: ['gp2']),
+            conquest: ConquestSummary(provincesToVictory: 10),
+            economy: EconomySummary(),
+            relations: {},
+          ),
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ),
+      ).single;
+      final withoutWeakGp = computeDiplomaticCandidateScores(
+        DiplomaticCandidateScoringInput(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: const AIWorldSnapshot(
+            playerId: 'gp1',
+            threats: ThreatSummary(),
+            opportunities: OpportunitySummary(),
+            conquest: ConquestSummary(provincesToVictory: 10),
+            economy: EconomySummary(),
+            relations: {},
+          ),
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ),
+      ).single;
+      expect(withWeakGp, greaterThan(withoutWeakGp));
+      expect(
+        withWeakGp - withoutWeakGp,
+        greaterThanOrEqualTo(kDeclareWarGpWeakNeighborBonus),
+      );
+    });
+  });
+}

@@ -1,0 +1,262 @@
+// Case bodies for `phase_planner_conquest_wiring_test.dart` (Refs #3997 Phase 8).
+// Registered from the thin contract; pin coverage preserved 1:1 from the
+// former inline suite.
+
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart';
+import 'package:colonizethis_test/test.dart';
+
+void registerPhasePlannerConquestWiringPressureExtraCases() {
+group('resolvePhaseConquestColonialPressureActive', () {
+    test('active only under COLONIAL', () {
+      expect(
+        resolvePhaseConquestColonialPressureActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.colonial),
+        ),
+        isTrue,
+      );
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseConquestColonialPressureActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason: '$phase must not engage colonial-pressure weight floor',
+        );
+      }
+    });
+  });
+
+group('resolvePhaseConquestSuppressNwInvasionScoring', () {
+    test('suppressed under EXPAND, COLONIAL-lite, and DEVELOP', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseConquestSuppressNwInvasionScoring(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isTrue,
+          reason: '$phase must suppress NW invasion army-move scoring',
+        );
+      }
+    });
+
+    test('allowed under COLONIAL', () {
+      expect(
+        resolvePhaseConquestSuppressNwInvasionScoring(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.colonial),
+        ),
+        isFalse,
+      );
+    });
+  });
+
+group('resolvePhaseConquestExtraPassesActive', () {
+    test('active under EXPAND', () {
+      expect(
+        resolvePhaseConquestExtraPassesActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.expand),
+        ),
+        isTrue,
+        reason:
+            'EXPAND phase entry requires '
+            'oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp '
+            '(10), which is the same predicate the legacy compound '
+            'isStalledOldWorldExpansion(ow) || isBelowObserverConquestQuota(ow) '
+            'evaluated to before the lift; the orchestrator must run '
+            'kStalledConquestArmyMovePasses conquest passes and skip the '
+            'relocation pass for EXPAND turns.',
+      );
+    });
+
+    test('active under COLONIAL-lite', () {
+      expect(
+        resolvePhaseConquestExtraPassesActive(
+          phasePlan: const PhasePlanOutcome(
+            phase: ObserverGoalPhase.colonialLite,
+          ),
+        ),
+        isTrue,
+        reason:
+            'COLONIAL-lite is a subset of EXPAND (still '
+            'oldWorldProvincesOwned in [9, 10)), so the OW conquest push '
+            'continues with extra passes and the relocation skip stays in '
+            'effect (issue #2509 § COLONIAL-lite "Begin NW penetration '
+            'without weakening OW push").',
+      );
+    });
+
+    test('suppressed under COLONIAL', () {
+      expect(
+        resolvePhaseConquestExtraPassesActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.colonial),
+        ),
+        isFalse,
+        reason:
+            'COLONIAL phase entry requires '
+            'oldWorldProvincesOwned >= kObserverConquestMinOwProvincesPerGp '
+            '(10); the OW quota is met, so a single conquest pass runs '
+            'alongside the normal relocation pass.',
+      );
+    });
+
+    test('suppressed under DEVELOP', () {
+      expect(
+        resolvePhaseConquestExtraPassesActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.develop),
+        ),
+        isFalse,
+        reason:
+            'DEVELOP phase entry requires '
+            'oldWorldProvincesOwned >= kObserverConquestMinOwProvincesPerGp '
+            '(10); no invadable colonial targets remain, so the relocation '
+            'pass must run normally and only one conquest pass is needed '
+            'for any standing wars.',
+      );
+    });
+
+    test(
+      'reads only outcome.phase — populated EXPAND / COLONIAL / DEVELOP slots '
+      'do not flip the resolver',
+      () {
+        // The PhasePlanOutcome dispatcher already enforces structural
+        // phase separation: EXPAND slots only populate under EXPAND /
+        // COLONIAL-lite, COLONIAL slots only under COLONIAL, DEVELOP
+        // slots only under DEVELOP. This guard pins the resolver
+        // against a hypothetical regression that started leaking slot
+        // content into other phases — populated slots must not flip
+        // the resolver, only outcome.phase decides.
+        const expandMilitaryPopulated = ExpandMilitaryPlan(
+          priorityDestinationProvinceIdsSorted: <String>['oldWorld|minor1_a'],
+          priorityTargetOwnerFactionIdsSorted: <String>['minor1'],
+        );
+        const colonialMilitaryPopulated = ColonialMilitaryPlan(
+          priorityDestinationProvinceIdsSorted: <String>['newWorld|tribe1_a'],
+          priorityTargetOwnerFactionIdsSorted: <String>['tribe1'],
+        );
+        // Populated EXPAND slot under COLONIAL must still resolve to false.
+        expect(
+          resolvePhaseConquestExtraPassesActive(
+            phasePlan: const PhasePlanOutcome(
+              phase: ObserverGoalPhase.colonial,
+              expandDeclareWarTargetFactionId: 'minor1',
+              expandPeaceTargetFactionIdsSorted: <String>['gp2'],
+              expandMilitaryPlan: expandMilitaryPopulated,
+            ),
+          ),
+          isFalse,
+          reason:
+              'COLONIAL with populated EXPAND slots must still resolve '
+              'to false — only outcome.phase decides.',
+        );
+        // Populated COLONIAL slot under EXPAND must still resolve to true.
+        expect(
+          resolvePhaseConquestExtraPassesActive(
+            phasePlan: const PhasePlanOutcome(
+              phase: ObserverGoalPhase.expand,
+              colonialMilitaryPlan: colonialMilitaryPopulated,
+              colonialPeaceTargetFactionIdsSorted: <String>['gp2'],
+            ),
+          ),
+          isTrue,
+          reason:
+              'EXPAND with populated COLONIAL slots must still resolve '
+              'to true — only outcome.phase decides.',
+        );
+        // Populated DEVELOP slot under COLONIAL-lite must still resolve to true.
+        expect(
+          resolvePhaseConquestExtraPassesActive(
+            phasePlan: const PhasePlanOutcome(
+              phase: ObserverGoalPhase.colonialLite,
+              developPeaceTargetFactionIdsSorted: <String>['gp2'],
+            ),
+          ),
+          isTrue,
+          reason:
+              'COLONIAL-lite with populated DEVELOP slots must still resolve '
+              'to true — only outcome.phase decides.',
+        );
+      },
+    );
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final a = resolvePhaseConquestExtraPassesActive(phasePlan: outcome);
+        final b = resolvePhaseConquestExtraPassesActive(phasePlan: outcome);
+        final c = resolvePhaseConquestExtraPassesActive(phasePlan: outcome);
+        expect(a, b, reason: '$phase: two-call determinism');
+        expect(b, c, reason: '$phase: three-call determinism');
+      }
+    });
+
+    test(
+      'partition matrix with resolvePhaseConquestColonialPressureActive '
+      '— exactly one of the two conquest-routing resolvers returns true for '
+      'any non-DEVELOP phase, and both return false under DEVELOP',
+      () {
+        // The two conquest-routing resolvers gate disjoint orchestrator
+        // decisions (extra-passes / relocation-skip vs colonial-pressure
+        // weight floor). They must form a partition over the non-DEVELOP
+        // phases so the orchestrator routes deterministically:
+        //   EXPAND, COLONIAL-lite -> extra passes only (no NW floor)
+        //   COLONIAL              -> NW floor only (no extra passes)
+        //   DEVELOP               -> neither (skipConquestPass via
+        //                            resolvePhaseConquestInvadable)
+        // A future regression that fired both simultaneously would mean
+        // the same player turn is treated as both below-OW-quota and
+        // in-COLONIAL-acquisition-pressure, contradicting the phase-
+        // planner single-goal architecture (issue #2509 § Single-goal
+        // replacement).
+        const expectedExtraPasses = <ObserverGoalPhase, bool>{
+          ObserverGoalPhase.expand: true,
+          ObserverGoalPhase.colonialLite: true,
+          ObserverGoalPhase.colonial: false,
+          ObserverGoalPhase.develop: false,
+        };
+        const expectedColonialPressure = <ObserverGoalPhase, bool>{
+          ObserverGoalPhase.expand: false,
+          ObserverGoalPhase.colonialLite: false,
+          ObserverGoalPhase.colonial: true,
+          ObserverGoalPhase.develop: false,
+        };
+        for (final phase in ObserverGoalPhase.values) {
+          final outcome = PhasePlanOutcome(phase: phase);
+          final extra = resolvePhaseConquestExtraPassesActive(
+            phasePlan: outcome,
+          );
+          final pressure = resolvePhaseConquestColonialPressureActive(
+            phasePlan: outcome,
+          );
+          expect(
+            extra,
+            expectedExtraPasses[phase],
+            reason: '$phase: extra-passes value',
+          );
+          expect(
+            pressure,
+            expectedColonialPressure[phase],
+            reason: '$phase: colonial-pressure value',
+          );
+          expect(
+            extra && pressure,
+            isFalse,
+            reason:
+                '$phase: extra-passes and colonial-pressure resolvers '
+                'must never both return true (phases are mutually '
+                'exclusive per outcome.phase).',
+          );
+        }
+      },
+    );
+  });
+}
