@@ -33,11 +33,24 @@ final RegExp _localBareGp1OwProvincesConst = RegExp(
   r'const\s+List<String>\s+_gp1OwProvinces\b',
 );
 
-/// Forbidden EXPAND two-GP local `_gp1Provinces` copies; use
+/// Forbidden local EXPAND two-GP local `_gp1Provinces` copies; use
 /// [kGp1OwProvincesExpandTwoGp] instead (Refs #3941).
 final RegExp _localExpandTwoGpProvincesConst = RegExp(
   r'const\s+List<String>\s+_gp1Provinces\b',
 );
+
+/// Forbidden local minor-war at-war EXPAND snapshot clones; use
+/// [buildOrchestratorExpandMinorWarAtWarSnapshot] (Refs #3997).
+final RegExp _localExpandMinorWarAtWarSnapshotFn = RegExp(
+  r'AIWorldSnapshot\s+_expandSnapshot\s*\(\s*\)\s*\{',
+);
+
+/// True when [content] uses a Game builder that pairs with the shared
+/// minor-war at-war snapshot (those pins must not redeclare it locally).
+bool _usesExpandMinorWarAtWarSnapshotPairing(String content) {
+  return content.contains('buildOrchestratorExpandMinorWarScenarioGame') ||
+      content.contains('buildOrchestratorPendingCostTradeScenarioGame');
+}
 
 /// True when the repo-relative [slashPath] is an in-scope orchestrator
 /// `*_test.dart` (not the shared support library).
@@ -79,6 +92,12 @@ String? aiOrchestratorSharedFixturesViolationReason(
     return 'redeclares local `_gp1Provinces`; import '
         '`kGp1OwProvincesExpandTwoGp` from '
         '`$orchestratorSharedFixturesSupportFile` (Refs #3941)';
+  }
+  if (_usesExpandMinorWarAtWarSnapshotPairing(content) &&
+      _localExpandMinorWarAtWarSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_expandSnapshot`; call '
+        '`buildOrchestratorExpandMinorWarAtWarSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
   }
   return null;
 }
