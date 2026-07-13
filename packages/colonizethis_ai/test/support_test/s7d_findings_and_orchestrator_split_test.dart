@@ -18,8 +18,14 @@ void main() {
         p.join(s7dDir.path, 's7d_diagnostic_findings.dart'),
       ).readAsStringSync();
       expect(barrel, contains("export 's7d_findings_geography.dart';"));
-      expect(barrel, contains("export 's7d_findings_feedstock_extraction.dart';"));
-      expect(barrel, contains("export 's7d_findings_feedstock_castiron.dart';"));
+      expect(
+        barrel,
+        contains("export 's7d_findings_feedstock_extraction.dart';"),
+      );
+      expect(
+        barrel,
+        contains("export 's7d_findings_feedstock_castiron.dart';"),
+      );
       expect(barrel, contains("export 's7d_findings_lock_recovery.dart';"));
       expect(
         barrel,
@@ -159,6 +165,40 @@ void main() {
       );
     });
 
+    test('campaign concerns have topical modules below the size budget', () {
+      for (final name in <String>[
+        's7d_campaign_rollup.dart',
+        's7d_campaign_turn_aggregation.dart',
+        's7d_campaign_emission.dart',
+      ]) {
+        expect(
+          File(p.join(s7dDir.path, name)).existsSync(),
+          isTrue,
+          reason: 'missing campaign topical library $name',
+        );
+      }
+      for (final file in s7dDir.listSync().whereType<File>()) {
+        final lines = file.readAsLinesSync().length;
+        expect(
+          lines,
+          lessThanOrEqualTo(800),
+          reason: '${p.basename(file.path)} has $lines physical lines',
+        );
+      }
+    });
+
+    test('campaign entry stays a thin public orchestrator', () {
+      final entry = File(
+        p.join(s7dDir.path, 'run_seed42_s7d_diagnostic_campaign.dart'),
+      );
+      final source = entry.readAsStringSync();
+      final lines = entry.readAsLinesSync();
+      expect(source, contains('runSeed42S7dDiagnosticCampaign'));
+      expect(lines.length, lessThan(200));
+      // Negative pin: the former ~1517-line campaign monolith must not return.
+      expect(lines.length, lessThanOrEqualTo(800));
+    });
+
     test('feedstock helper unit tests live under support_test/', () {
       expect(
         File(
@@ -173,11 +213,7 @@ void main() {
       );
       expect(
         File(
-          p.join(
-            packageRoot,
-            'test',
-            'seed42_s7d_feedstock_helpers_test.dart',
-          ),
+          p.join(packageRoot, 'test', 'seed42_s7d_feedstock_helpers_test.dart'),
         ).existsSync(),
         isFalse,
       );
