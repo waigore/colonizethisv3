@@ -104,6 +104,15 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       provinceId: displayId,
       mapData: mapData,
     );
+    final extractionSnapshot = provinceExtractionSnapshotPreview(
+      game: game,
+      provinceId: displayId,
+    );
+    final availableByCommodity = provinceAvailableResourceCountsPreview(
+      game: game,
+      provinceId: displayId,
+      mapData: mapData,
+    );
     final overlay = SizedBox(
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
@@ -116,9 +125,14 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         playerView: playerView,
         draftOrders: draftOrders,
         townProductionBonusByCommodity: townProductionBonus,
+        extractionSnapshot: extractionSnapshot,
+        availableByCommodity: availableByCommodity,
         onHighlightTile: (k) => ref
             .read(mapProvincePanelProvider.notifier)
             .setSecondaryHighlight(k),
+        onHighlightTiles: (keys) => ref
+            .read(mapProvincePanelProvider.notifier)
+            .setSecondaryHighlights(keys),
         onClose: () =>
             ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
         showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
