@@ -31,6 +31,31 @@ void main() {
       expect(TownIconCache.portIconSize, equals(64.0));
     });
 
+    test('S10 destination sizes strictly increase by level (Refs #3870)', () {
+      expect(TownIconCache.townIconDestinationSize(1), 48.0);
+      expect(TownIconCache.townIconDestinationSize(2), 56.0);
+      expect(TownIconCache.townIconDestinationSize(3), 60.0);
+      expect(TownIconCache.townIconDestinationSize(4), 64.0);
+      expect(TownIconCache.townIconDestinationSize(4), TownIconCache.townIconSize);
+      for (var level = 1; level <= 3; level++) {
+        expect(
+          TownIconCache.townIconDestinationSize(level + 1),
+          greaterThan(TownIconCache.townIconDestinationSize(level)),
+        );
+      }
+      // Ports ignore the town ladder (negative / regression).
+      expect(TownIconCache.portIconSize, TownIconCache.townIconSize);
+      expect(
+        TownIconCache.portIconSize,
+        isNot(equals(TownIconCache.townIconDestinationSize(3))),
+      );
+    });
+
+    test('S10 clamps out-of-range levels to 1–4 destination sizes', () {
+      expect(TownIconCache.townIconDestinationSize(0), 48.0);
+      expect(TownIconCache.townIconDestinationSize(99), 64.0);
+    });
+
     test('townIconIdForMarker resolves style and level', () {
       expect(
         TownIconCache.townIconIdForMarker(
