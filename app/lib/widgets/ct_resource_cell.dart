@@ -25,14 +25,11 @@ part 'ct_resource_cell_trailing.dart';
 ///   * `delta > 0`  → `+N`, colour `--success`
 ///   * `delta < 0`  → `-N` (numeric sign), colour `--danger`
 ///   * `delta == 0` → `0`, colour `--muted`
-///   * `delta == null` → delta glyphs are omitted, but a fixed-width delta
-///     **slot** is still reserved so the quantity stays on a panel-wide
-///     vertical column (Refs #3999)
+///   * `delta == null` → delta glyphs omitted; fixed-width delta **slot** still
+///     reserved for panel-wide quantity alignment (Refs #3999)
 ///
-/// The trailing quantity + reserved delta slot prefers its intrinsic width via
-/// `Flexible(flex: 0)` + [FittedBox] scale-down so amounts remain visible at
-/// representative Available grid widths and do not steal flex from the name
-/// column (Refs #3485 / #3999).
+/// Trailing quantity + reserved delta use intrinsic width + [FittedBox]
+/// scale-down so amounts stay visible at Available grid widths (Refs #3999).
 ///
 /// All colors resolve from [EditorialMonoclePalette] tokens (issue #2858);
 /// no hard-coded hex literals.
@@ -58,8 +55,7 @@ class CtResourceCell extends StatelessWidget {
   /// dark-theme monospace slot.
   final int quantity;
 
-  /// Optional signed delta. See class dartdoc for colour and prefix rules.
-  /// `null` omits the delta region entirely.
+  /// Optional signed delta. See class dartdoc; `null` omits delta glyphs only.
   final int? delta;
 
   /// Outer padding for the cell (`4px` vertical / `CtSpacing.s` (6px)
@@ -108,17 +104,13 @@ class CtResourceCell extends StatelessWidget {
   /// Renders an integer with thousands separators (`1_240` → `1,240`).
   static String formatQuantity(int value) => _ctResourceCellFormatQuantity(value);
 
-  /// Stable key on the quantity [Text] for widget tests (visibility +
-  /// panel-wide amount alignment, Refs #3999).
+  /// Quantity [Text] key for visibility / panel-wide alignment tests (#3999).
   static const Key quantityTextKey = ValueKey<String>('ct_resource_cell_quantity');
 
-  /// Stable key on the delta [Text] when a non-null [delta] is painted.
+  /// Delta [Text] key when a non-null [delta] is painted.
   static const Key deltaTextKey = ValueKey<String>('ct_resource_cell_delta');
 
-  /// Fixed logical width reserved for the optional signed delta so the
-  /// quantity's right edge stays on one vertical column across equal-width
-  /// Available cards whether or not a delta is shown (Refs #3999). Sized to
-  /// fit magnitude-matrix extremes such as `-999` at [deltaFontSize].
+  /// Reserved delta slot width (fits `-999` at [deltaFontSize]; Refs #3999).
   static const double reservedDeltaSlotWidth = 28;
 
   @override
@@ -144,9 +136,6 @@ class CtResourceCell extends StatelessWidget {
               child: Center(child: iconBuilder(context)),
             ),
             const SizedBox(width: itemGap),
-            // Name + trailing share one Expanded so the trailing FittedBox
-            // receives a bounded max width (sibling-aware) and can scaleDown
-            // instead of overflowing tight Available grid slots (Refs #3999).
             Expanded(
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {

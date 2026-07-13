@@ -1,9 +1,7 @@
 part of 'ct_resource_cell.dart';
 
 extension _CtResourceCellTrailing on CtResourceCell {
-  /// A single trailing monospace [Text] (one line, non-ellipsizing). Kept as a
-  /// distinct widget per value so the quantity and delta remain individually
-  /// findable / colour-assertable, while [trailingCluster] composes them.
+  /// One-line monospace [Text] for quantity/delta (non-ellipsizing).
   Widget monoText(
     BuildContext context, {
     required String text,
@@ -21,16 +19,7 @@ extension _CtResourceCellTrailing on CtResourceCell {
     );
   }
 
-  /// Builds the trailing quantity + reserved delta slot as the sole non-flex
-  /// sibling of the name [Flexible] inside the inner [Row].
-  ///
-  /// The leading [CtResourceCell.itemGap] is included inside the [FittedBox]
-  /// so the outer row has only one non-flex child and cannot overflow when the
-  /// Available grid slot is tighter than gap + trailing intrinsic width
-  /// (Refs #3999). [FittedBox] `scaleDown` keeps amounts visible (scaled) when
-  /// space is scarce instead of ellipsizing them to a blank region. A fixed
-  /// delta slot is always reserved so quantity right edges share a panel-wide
-  /// column whether or not a signed delta is painted.
+  /// Quantity + reserved delta slot inside [FittedBox] scale-down (Refs #3999).
   Widget trailingCluster(
     BuildContext context, {
     required String quantityText,
