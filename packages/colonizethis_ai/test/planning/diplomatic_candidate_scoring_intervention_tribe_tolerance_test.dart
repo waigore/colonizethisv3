@@ -75,29 +75,11 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
+import '../support/domain_planner_orchestrator_test_support.dart';
 
-// At-quota OW set (>= `kObserverConquestMinOwProvincesPerGp` = 10) so the
-// GP passes the EXPAND gate and `observerGoalPhaseFor` routes to COLONIAL
-// when colonial acquisition targets are visible. Eleven provinces also
-// keeps `isObserverConquestExpansionPressure` false (no stalled-band
-// penalties / floors / caps on the declare-war side of the scorer that
-// could mask an intervention-risk regression).
-const List<String> _gp1OwProvincesAtQuota = <String>[
-  'oldWorld|gp1_0',
-  'oldWorld|gp1_1',
-  'oldWorld|gp1_2',
-  'oldWorld|gp1_3',
-  'oldWorld|gp1_4',
-  'oldWorld|gp1_5',
-  'oldWorld|gp1_6',
-  'oldWorld|gp1_7',
-  'oldWorld|gp1_8',
-  'oldWorld|gp1_9',
-  'oldWorld|gp1_10',
-];
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
+const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // COLONIAL-phase tribe target. Only a single declare-war candidate is
 // scored so the assertion can pin the tribe declare-war slot directly
@@ -147,7 +129,7 @@ Game _colonialTribeScenarioGame({
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
       oldWorld: RegionData(
         provinces: [
-          for (final id in _gp1OwProvincesAtQuota)
+          for (final id in kGp1OwProvincesAtQuota)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
         ],
       ),
@@ -169,7 +151,7 @@ Game _colonialTribeScenarioGame({
           id: homeArmyIdFor(_nationId),
           ownerId: _nationId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp1OwProvincesAtQuota.first,
+          stationedProvinceId: kGp1OwProvincesAtQuota.first,
           regimentUnitIds: const ['u_gp1_home'],
           isHomeArmy: true,
         ),
@@ -271,31 +253,14 @@ const List<OvertureState> _interventionEmbassies = <OvertureState>[
 ///     `kDeclareWarColonialAdjacentTribeBonus` (+70) from the
 ///     declare-war side so the residual score delta is dominated by
 ///     the war-desire / intervention-risk path the AC pins.
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(
+AIWorldSnapshot _colonialSnapshot() =>
+    buildOrchestratorColonialNwTribeTargetSnapshot(
       newWorldProvincesOwned: 1,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 30,
-      ),
-    },
-  );
-}
+      tribeRelationScore: 30,
+      // Scoring pins historically omitted adjacent NW owners; keep that
+      // geometry so adjacency bonuses cannot mask intervention deltas.
+      adjacentNewWorldOwnerFactionIdsSorted: const <String>[],
+    );
 
 List<int> _scoreTribeDeclareWar({
   required List<OvertureState> overtureStates,

@@ -84,8 +84,12 @@ AIWorldSnapshot buildOrchestratorExpandNwTribeTargetSnapshot({
 
 /// COLONIAL at-/past-quota snapshot with visible NW tribe acquisition targets.
 ///
-/// Shared by NW suppression COLONIAL controls and COLONIAL tribe declare-war
-/// positive pins (Refs #3997).
+/// Shared by NW suppression COLONIAL controls, COLONIAL tribe declare-war
+/// positive pins, and diplomatic-scoring COLONIAL tribe pins (Refs #3997).
+///
+/// When [adjacentNewWorldOwnerFactionIdsSorted] is omitted, defaults to
+/// `[tribeId]` (orchestrator adjacency geometry). Pass an empty list for
+/// scoring pins that historically omitted adjacent NW owners.
 AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
   String playerId = kOrchestratorGp1NationId,
   String tribeId = kOrchestratorTribeId,
@@ -94,9 +98,12 @@ AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
   int provincesToVictory = 20,
   int newWorldProvincesOwned = 0,
   List<String> atWarWith = const <String>[],
+  List<String>? adjacentNewWorldOwnerFactionIdsSorted,
   int? tribeRelationScore,
   RelationState tribeRelationState = RelationState.atPeace,
 }) {
+  final adjacentOwners =
+      adjacentNewWorldOwnerFactionIdsSorted ?? <String>[tribeId];
   return AIWorldSnapshot(
     playerId: playerId,
     threats: ThreatSummary(atWarWith: atWarWith),
@@ -108,7 +115,7 @@ AIWorldSnapshot buildOrchestratorColonialNwTribeTargetSnapshot({
     colonial: ColonialSummary(
       newWorldProvincesOwned: newWorldProvincesOwned,
       invadableNewWorldProvinceIdsSorted: [tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [tribeId],
+      adjacentNewWorldOwnerFactionIdsSorted: adjacentOwners,
       preferredColonialTargetFactionIdsSorted: [tribeId],
     ),
     economy: EconomySummary(ownProvinceCount: oldWorldProvincesOwned),

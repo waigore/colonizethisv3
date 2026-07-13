@@ -9,6 +9,15 @@ import 'ct_repo_lint_scan_contract.dart';
 const String _orchestratorTestPathPrefix =
     'packages/colonizethis_ai/test/planning/domain_planner_orchestrator_';
 
+/// Diplomatic-scoring COLONIAL tribe pins that must use shared at-quota OW
+/// lists and [buildOrchestratorColonialNwTribeTargetSnapshot] (Refs #3997).
+const Set<String> _diplomaticScoringColonialSnapshotAdopters = <String>{
+  'packages/colonizethis_ai/test/planning/'
+      'diplomatic_candidate_scoring_intervention_tribe_tolerance_test.dart',
+  'packages/colonizethis_ai/test/planning/'
+      'diplomatic_candidate_scoring_personality_colonial_divergence_test.dart',
+};
+
 /// Canonical shared support library that owns
 /// [kGp1OwProvincesBelowQuota] / [kGp1OwProvincesAtQuota].
 const String orchestratorSharedFixturesSupportFile =
@@ -93,9 +102,13 @@ bool _usesColonialLiteDeclareWarScenarioPairing(String content) {
 }
 
 /// True when the repo-relative [slashPath] is an in-scope orchestrator
-/// `*_test.dart` (not the shared support library).
+/// `*_test.dart` (not the shared support library) or a documented
+/// diplomatic-scoring colonial-snapshot adopter.
 bool aiOrchestratorSharedFixturesPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
+  if (_diplomaticScoringColonialSnapshotAdopters.contains(normalized)) {
+    return true;
+  }
   if (!normalized.startsWith(_orchestratorTestPathPrefix)) {
     return false;
   }
@@ -191,6 +204,12 @@ String? aiOrchestratorSharedFixturesViolationReason(
       _localColonialLiteSnapshotFn.hasMatch(content)) {
     return 'redeclares local `_colonialLiteSnapshot`; call '
         '`buildOrchestratorExpandNwTribeTargetSnapshot` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_diplomaticScoringColonialSnapshotAdopters.contains(normalized) &&
+      _localColonialSnapshotFn.hasMatch(content)) {
+    return 'redeclares local `_colonialSnapshot`; call '
+        '`buildOrchestratorColonialNwTribeTargetSnapshot` from '
         '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
   }
   return null;

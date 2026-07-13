@@ -430,6 +430,69 @@ void main() {
         }
       },
     );
+
+    test(
+      'fails when a diplomatic-scoring COLONIAL adopter redeclares '
+      'brace-bodied _colonialSnapshot',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-');
+        try {
+          _writeSupportStub(temp);
+          _writeDiplomaticScoringAdopter(
+            temp,
+            'diplomatic_candidate_scoring_personality_colonial_divergence_test.dart',
+            "import 'package:test/test.dart';\n\n"
+            'AIWorldSnapshot _colonialSnapshot() {\n'
+            '  return const AIWorldSnapshot(playerId: "gp1");\n'
+            '}\n\n'
+            'void main() {}\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_colonialSnapshot'));
+          expect(
+            errors.join('\n'),
+            contains('buildOrchestratorColonialNwTribeTargetSnapshot'),
+          );
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'fails when a diplomatic-scoring COLONIAL adopter redeclares '
+      '_gp1OwProvincesAtQuota',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-orch-diplo-q-');
+        try {
+          _writeSupportStub(temp);
+          _writeDiplomaticScoringAdopter(
+            temp,
+            'diplomatic_candidate_scoring_intervention_tribe_tolerance_test.dart',
+            _localAtQuotaBody,
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckAiOrchestratorTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('_gp1OwProvincesAtQuota'));
+          expect(errors.join('\n'), contains('kGp1OwProvincesAtQuota'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
   });
 }
 
@@ -465,4 +528,21 @@ void _writeOrchestratorTest(Directory temp, String name, String body) {
   File(
     p.join(planning.path, 'domain_planner_orchestrator_$name'),
   ).writeAsStringSync(body);
+}
+
+void _writeDiplomaticScoringAdopter(
+  Directory temp,
+  String basename,
+  String body,
+) {
+  final planning = Directory(
+    p.join(
+      temp.path,
+      'packages',
+      'colonizethis_ai',
+      'test',
+      'planning',
+    ),
+  )..createSync(recursive: true);
+  File(p.join(planning.path, basename)).writeAsStringSync(body);
 }
