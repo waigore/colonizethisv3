@@ -3,7 +3,8 @@
 // raised for named save/load dialogs (Refs #3959); raised again for load-game
 // list paging/delete/metadata UI (Refs #3985); raised for full game-session
 // clear API + pause-disable-while-resolving wiring (Refs #3989); raised for
-// province Economic Extraction/Available condensed UI (Refs #4002).
+// session-clear isolation test hooks on GameService (Refs #3989 assurance);
+// raised for province Economic Extraction/Available condensed UI (Refs #4002).
 import 'dart:convert';
 import 'dart:io';
 
