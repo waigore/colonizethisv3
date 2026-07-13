@@ -185,7 +185,10 @@ List<_AvailableScenario> _availableScenarios() => [
         provinceId: 'oldWorld|p1',
         ownerId: 'pl1',
         tileMapByRegion: {'oldWorld': map},
-        ownerTechUnlocked: const {'moldboard_plow': true, 'circular_saw': true},
+        ownerTechUnlocked: const {
+          kTechIdMoldboardPlow: true,
+          kTechIdCircularSaw: true,
+        },
       );
       expect(counts['grain']?.count, 3);
       expect(counts['timber']?.count, 2);

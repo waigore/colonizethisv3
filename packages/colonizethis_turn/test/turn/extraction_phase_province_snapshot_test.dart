@@ -63,7 +63,7 @@ void main() {
       );
       final game = _baseGame(
         tileState: TileMapState().setImprovement(tk, 2).setRoadLevel(tk, 4),
-        techUnlocked: const {'moldboard_plow': true},
+        techUnlocked: const {kTechIdMoldboardPlow: true},
       );
       final topology = MapTopology(
         nodes: const [
