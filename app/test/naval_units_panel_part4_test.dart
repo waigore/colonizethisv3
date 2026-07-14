@@ -88,6 +88,43 @@ Future<void> _emitScopedMove(
   await tester.pumpAndSettle();
 }
 
+Future<(AppEventBus, List<ClosePanelEvent>)> _pumpAutocloseCase(
+  WidgetTester tester, {
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  String? locationScopeKey = 'sea:oldWorld|s1',
+  MapTopology? topology,
+  bool removeFleetOnNextFrame = false,
+}) async {
+  final (bus, closeEvents) = _wireCloseCapture();
+  await _pumpScopedHarness(
+    tester,
+    game: buildNavalPanelSingleSeaFleetGame(
+      humanId: humanId,
+      gameId: gameId,
+      displayName: displayName,
+    ),
+    humanPlayerId: humanId,
+    bus: bus,
+    topology: topology ?? buildNavalTwoSeaZonesTopology(),
+    locationScopeKey: locationScopeKey,
+    removeFleetOnNextFrame: removeFleetOnNextFrame,
+  );
+  return (bus, closeEvents);
+}
+
+List<Fleet> _nonHomeFleetsWithShips(Game game, String humanId) {
+  return game.worldState.fleets
+      .where(
+        (f) =>
+            f.ownerId == humanId &&
+            f.shipTypeIds.isNotEmpty &&
+            f.id != homeFleetIdFor(humanId),
+      )
+      .toList();
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -218,18 +255,11 @@ void main() {
       'AC: Scoped panel auto-closes after confirmed move empties scope',
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_yes';
-        final (bus, closeEvents) = _wireCloseCapture();
-        await _pumpScopedHarness(
+        final (bus, closeEvents) = await _pumpAutocloseCase(
           tester,
-          game: buildNavalPanelSingleSeaFleetGame(
-            humanId: humanId,
-            gameId: 'g_scope_autoclose_yes',
-            displayName: 'Scoped AutoClose',
-          ),
-          humanPlayerId: humanId,
-          bus: bus,
-          topology: buildNavalTwoSeaZonesTopology(),
-          locationScopeKey: 'sea:oldWorld|s1',
+          humanId: humanId,
+          gameId: 'g_scope_autoclose_yes',
+          displayName: 'Scoped AutoClose',
         );
         expect(find.textContaining('Fleet f1'), findsOneWidget);
         await _emitScopedMove(tester, bus, humanId);
@@ -241,17 +271,11 @@ void main() {
       'AC: Full-list mode move confirm does not emit scoped auto-close event',
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_no_full';
-        final (bus, closeEvents) = _wireCloseCapture();
-        await _pumpScopedHarness(
+        final (bus, closeEvents) = await _pumpAutocloseCase(
           tester,
-          game: buildNavalPanelSingleSeaFleetGame(
-            humanId: humanId,
-            gameId: 'g_scope_autoclose_no_full',
-            displayName: 'Full List',
-          ),
-          humanPlayerId: humanId,
-          bus: bus,
-          topology: buildNavalTwoSeaZonesTopology(),
+          humanId: humanId,
+          gameId: 'g_scope_autoclose_no_full',
+          displayName: 'Full List',
           locationScopeKey: null,
         );
         await _emitScopedMove(tester, bus, humanId);
@@ -262,19 +286,12 @@ void main() {
     testWidgets(
       'AC: Scoped empty state without move confirm does not auto-close',
       (WidgetTester tester) async {
-        const humanId = 'gp_scope_autoclose_no_external';
-        final (bus, closeEvents) = _wireCloseCapture();
-        await _pumpScopedHarness(
+        final (_, closeEvents) = await _pumpAutocloseCase(
           tester,
-          game: buildNavalPanelSingleSeaFleetGame(
-            humanId: humanId,
-            gameId: 'g_scope_autoclose_no_external',
-            displayName: 'Scoped External',
-          ),
-          humanPlayerId: humanId,
-          bus: bus,
+          humanId: 'gp_scope_autoclose_no_external',
+          gameId: 'g_scope_autoclose_no_external',
+          displayName: 'Scoped External',
           topology: const MapTopology(),
-          locationScopeKey: 'sea:oldWorld|s1',
           removeFleetOnNextFrame: true,
         );
         expect(closeEvents, isEmpty);
@@ -309,14 +326,7 @@ void main() {
       'AC: Non-home collapsed Move action opens MoveFleetDialog without expansion',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        final nonHomeFleets = game.worldState.fleets
-            .where(
-              (f) =>
-                  f.ownerId == humanId &&
-                  f.shipTypeIds.isNotEmpty &&
-                  f.id != homeFleetIdFor(humanId),
-            )
-            .toList();
+        final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
         if (nonHomeFleets.isEmpty) return;
         final targetFleet = nonHomeFleets.first;
 
@@ -350,14 +360,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(320, 800));
 
       final humanId = humanPlayerIdWithFleets;
-      final nonHomeFleets = game.worldState.fleets
-          .where(
-            (f) =>
-                f.ownerId == humanId &&
-                f.shipTypeIds.isNotEmpty &&
-                f.id != homeFleetIdFor(humanId),
-          )
-          .toList();
+      final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
       if (nonHomeFleets.isEmpty) return;
       final targetFleet = nonHomeFleets.first;
 

@@ -1,9 +1,8 @@
 // In-game shell chrome (part1). SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
+// In-file surface/treasury/options helpers densify mid-size fixtures (Refs #4021).
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
@@ -14,7 +13,6 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -38,7 +36,27 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  Widget buildGameScreen({required double width, required double height}) =>
+  void bindSurface(
+    WidgetTester tester, {
+    double width = 1500,
+    double height = 700,
+  }) {
+    final dpr = tester.view.devicePixelRatio;
+    tester.view.physicalSize = Size(width * dpr, height * dpr);
+    addTearDown(tester.view.reset);
+  }
+
+  Future<void> pumpShell(
+    WidgetTester tester, {
+    double width = 1500,
+    double height = 700,
+    bool bindWide = false,
+    TreasurySummary treasurySummary = const TreasurySummary(treasury: 12345),
+  }) async {
+    if (bindWide) {
+      bindSurface(tester, width: width, height: height);
+    }
+    await tester.pumpWidget(
       buildGameScreenHost(
         gamesBox: gamesBox,
         game: baseGame,
@@ -46,34 +64,76 @@ void main() {
         width: width,
         height: height,
         navigatorKey: appNavigatorKey,
-      );
+        treasurySummary: treasurySummary,
+      ),
+    );
+    await tester.pump();
+  }
+
+  Future<void> openMapOptions(WidgetTester tester) async {
+    await tester.tap(find.byKey(kMapDisplayOptionsButtonKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+
+  Future<void> closeMapOptions(WidgetTester tester) async {
+    await tester.tap(find.text('Close'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+
+  bool toggleValue(WidgetTester tester, Key key) =>
+      tester.widget<CtToggleSwitch>(find.byKey(key)).value;
+
+  Future<void> tapToggle(
+    WidgetTester tester,
+    Key key, {
+    int settleMs = 200,
+  }) async {
+    await tester.tap(find.byKey(key));
+    await tester.pump();
+    await tester.pump(Duration(milliseconds: settleMs));
+  }
+
+  Future<void> toggleCloseReopen(
+    WidgetTester tester,
+    Key key, {
+    required bool expectAfter,
+  }) async {
+    await tapToggle(tester, key);
+    await closeMapOptions(tester);
+    await openMapOptions(tester);
+    expect(toggleValue(tester, key), expectAfter);
+  }
+
+  String? iconUnder(WidgetTester tester, Finder ancestor) {
+    final iconFinder = find.descendant(
+      of: ancestor,
+      matching: find.byType(StrictAssetIcon),
+    );
+    expect(iconFinder, findsOneWidget);
+    return tester.widget<StrictAssetIcon>(iconFinder).assetPath;
+  }
 
   group('GameScreen — SPEC/ui/in-game-shell-narrow.md', () {
     testWidgets(
       'AC: cargo hold indicator appears beside region tabs in used/capacity format (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
+        await pumpShell(tester, bindWide: true);
 
         final indicator = find.byKey(kCargoHoldIndicatorKey);
         expect(indicator, findsOneWidget);
-
-        final formattedValue = find.descendant(
-          of: indicator,
-          matching: find.textContaining(RegExp(r'^\d+/\d+$')),
+        expect(
+          find.descendant(
+            of: indicator,
+            matching: find.textContaining(RegExp(r'^\d+/\d+$')),
+          ),
+          findsOneWidget,
         );
-        expect(formattedValue, findsOneWidget);
-
-        final iconFinder = find.descendant(
-          of: indicator,
-          matching: find.byType(StrictAssetIcon),
+        expect(
+          iconUnder(tester, indicator),
+          'assets/icons/32/ui_icon_cargo_hold.png',
         );
-        expect(iconFinder, findsOneWidget);
-        final iconWidget = tester.widget<StrictAssetIcon>(iconFinder);
-        expect(iconWidget.assetPath, 'assets/icons/32/ui_icon_cargo_hold.png');
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
@@ -81,49 +141,22 @@ void main() {
     testWidgets(
       'AC: treasury indicator appears between New World and cargo with exact value and dedicated icon',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: buildGameScreenShellOverrides(
-              gamesBox: gamesBox,
-              game: baseGame,
-              mapViewData: lightMapViewData,
-              treasurySummary: const TreasurySummary(
-                treasury: 12345,
-                projectedDelta: 250,
-              ),
-            ),
-            child: AppEventHandlerScope(
-              child: MaterialApp(
-                navigatorKey: appNavigatorKey,
-                theme: AppThemes.colonial,
-                home: MediaQuery(
-                  data: const MediaQueryData(size: Size(1500, 700)),
-                  child: const GameScreen(),
-                ),
-              ),
-            ),
+        await pumpShell(
+          tester,
+          bindWide: true,
+          treasurySummary: const TreasurySummary(
+            treasury: 12345,
+            projectedDelta: 250,
           ),
         );
-        await tester.pump();
 
         final treasuryIndicator = find.byKey(kTreasuryIndicatorKey);
-        final cargoIndicator = find.byKey(kCargoHoldIndicatorKey);
         expect(treasuryIndicator, findsOneWidget);
-        expect(cargoIndicator, findsOneWidget);
+        expect(find.byKey(kCargoHoldIndicatorKey), findsOneWidget);
         expect(find.text('12,345'), findsOneWidget);
         expect(find.text('+250'), findsOneWidget);
-
-        final iconFinder = find.descendant(
-          of: treasuryIndicator,
-          matching: find.byType(StrictAssetIcon),
-        );
-        expect(iconFinder, findsOneWidget);
-        final iconWidget = tester.widget<StrictAssetIcon>(iconFinder);
         expect(
-          iconWidget.assetPath,
+          iconUnder(tester, treasuryIndicator),
           'assets/icons/32/ui_icon_treasury_coin.png',
         );
       },
@@ -133,9 +166,7 @@ void main() {
     testWidgets(
       'AC: tapping treasury indicator toggles exact and abbreviated display',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
+        await pumpShell(tester);
         final treasuryIndicator = find.byKey(kTreasuryIndicatorKey);
         expect(treasuryIndicator, findsOneWidget);
         expect(find.text('12,345'), findsOneWidget);
@@ -154,27 +185,13 @@ void main() {
     testWidgets(
       'AC: treasury delta shows signed text for positive values',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: buildGameScreenShellOverrides(
-              gamesBox: gamesBox,
-              game: baseGame,
-              mapViewData: lightMapViewData,
-              treasurySummary: const TreasurySummary(
-                treasury: 12345,
-                projectedDelta: 250,
-              ),
-            ),
-            child: AppEventHandlerScope(
-              child: MaterialApp(
-                navigatorKey: appNavigatorKey,
-                theme: AppThemes.colonial,
-                home: const GameScreen(),
-              ),
-            ),
+        await pumpShell(
+          tester,
+          treasurySummary: const TreasurySummary(
+            treasury: 12345,
+            projectedDelta: 250,
           ),
         );
-        await tester.pump();
         expect(find.text('+250'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -183,27 +200,13 @@ void main() {
     testWidgets(
       'AC: treasury delta shows signed text for negative values',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: buildGameScreenShellOverrides(
-              gamesBox: gamesBox,
-              game: baseGame,
-              mapViewData: lightMapViewData,
-              treasurySummary: const TreasurySummary(
-                treasury: 12345,
-                projectedDelta: -400,
-              ),
-            ),
-            child: AppEventHandlerScope(
-              child: MaterialApp(
-                navigatorKey: appNavigatorKey,
-                theme: AppThemes.colonial,
-                home: const GameScreen(),
-              ),
-            ),
+        await pumpShell(
+          tester,
+          treasurySummary: const TreasurySummary(
+            treasury: 12345,
+            projectedDelta: -400,
           ),
         );
-        await tester.pump();
         expect(find.textContaining('400'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -212,27 +215,13 @@ void main() {
     testWidgets(
       'AC: treasury delta hides when projected delta is zero',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: buildGameScreenShellOverrides(
-              gamesBox: gamesBox,
-              game: baseGame,
-              mapViewData: lightMapViewData,
-              treasurySummary: const TreasurySummary(
-                treasury: 12345,
-                projectedDelta: 0,
-              ),
-            ),
-            child: AppEventHandlerScope(
-              child: MaterialApp(
-                navigatorKey: appNavigatorKey,
-                theme: AppThemes.colonial,
-                home: const GameScreen(),
-              ),
-            ),
+        await pumpShell(
+          tester,
+          treasurySummary: const TreasurySummary(
+            treasury: 12345,
+            projectedDelta: 0,
           ),
         );
-        await tester.pump();
         expect(find.text('+250'), findsNothing);
         expect(find.text('-400'), findsNothing);
       },
@@ -242,19 +231,13 @@ void main() {
     testWidgets(
       'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (wide viewport)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
+        await pumpShell(tester, bindWide: true);
 
         expect(find.textContaining('Next turn'), findsOneWidget);
         expect(find.byIcon(Icons.menu), findsOneWidget);
-        // Empire labels are tooltips only, not top bar
         expect(find.text('Production'), findsNothing);
         expect(find.text('Civilian Units'), findsNothing);
         expect(find.text('Technology'), findsNothing);
-        // Left rail icon keys (always visible without opening hamburger)
         expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
         expect(find.byKey(kEmpireTechnologyButtonKey), findsOneWidget);
       },
@@ -264,9 +247,7 @@ void main() {
     testWidgets(
       'AC: top bar shows hamburger menu and turn counter; empire buttons NOT in top bar (narrow viewport)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildGameScreen(width: 399, height: 700));
-        await tester.pump();
-
+        await pumpShell(tester, width: 399);
         expect(find.textContaining('Next turn'), findsOneWidget);
         expect(find.byIcon(Icons.menu), findsOneWidget);
         expect(find.text('Production'), findsNothing);
@@ -278,12 +259,7 @@ void main() {
     testWidgets(
       'AC: base layer cycle button is visible on map; tap cycles mode (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
+        await pumpShell(tester, bindWide: true);
         final buttonFinder = find.byKey(kBaseLayerCycleButtonKey);
         expect(buttonFinder, findsOneWidget);
         for (var i = 0; i < 4; i++) {
@@ -298,23 +274,12 @@ void main() {
     testWidgets(
       'AC: home-to-capital button is visible beside base layer button and tappable (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        final baseButtonFinder = find.byKey(kBaseLayerCycleButtonKey);
+        await pumpShell(tester, bindWide: true);
         final homeButtonFinder = find.byKey(kHomeToCapitalButtonKey);
-
-        expect(baseButtonFinder, findsOneWidget);
+        expect(find.byKey(kBaseLayerCycleButtonKey), findsOneWidget);
         expect(homeButtonFinder, findsOneWidget);
-
         await tester.tap(homeButtonFinder);
         await tester.pump();
-
-        // No additional assertions here; behavior (centering on capital tile)
-        // is covered by CtRegionMap's centerOnTileKey tests and capitalTile specs.
         expect(homeButtonFinder, findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 15)),
@@ -323,19 +288,9 @@ void main() {
     testWidgets(
       'AC: map display options button is visible in bottom tool row and opens dialog (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
-        expect(optionsButtonFinder, findsOneWidget);
-
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
+        await pumpShell(tester, bindWide: true);
+        expect(find.byKey(kMapDisplayOptionsButtonKey), findsOneWidget);
+        await openMapOptions(tester);
         expect(find.text('Map display options'), findsOneWidget);
         expect(find.text('Show province overlay'), findsOneWidget);
         expect(find.text('Show province ownership'), findsOneWidget);
@@ -347,51 +302,16 @@ void main() {
     testWidgets(
       'AC: toggling Show province overlay in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
-        expect(optionsButtonFinder, findsOneWidget);
-
-        // Open dialog.
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        final overlayToggleFinder = find.byKey(
-          kGameMapOptionsShowProvinceOverlayToggleKey,
-        );
-        expect(overlayToggleFinder, findsOneWidget);
+        await pumpShell(tester, bindWide: true);
+        await openMapOptions(tester);
         expect(
-          tester.widget<CtToggleSwitch>(overlayToggleFinder).value,
+          toggleValue(tester, kGameMapOptionsShowProvinceOverlayToggleKey),
           isTrue,
         );
-
-        // Toggle off.
-        await tester.tap(overlayToggleFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        // Close dialog.
-        await tester.tap(find.text('Close'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Re-open and ensure the toggle remains off.
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceOverlayToggleKey),
-              )
-              .value,
-          isFalse,
+        await toggleCloseReopen(
+          tester,
+          kGameMapOptionsShowProvinceOverlayToggleKey,
+          expectAfter: false,
         );
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -400,63 +320,21 @@ void main() {
     testWidgets(
       'AC: toggling Show province ownership in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        final ownershipFinder = find.byKey(
-          kGameMapOptionsShowProvinceOwnershipToggleKey,
-        );
-        expect(ownershipFinder, findsOneWidget);
-
-        // Default OFF — turn ON and persist.
-        await tester.tap(ownershipFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        await tester.tap(find.text('Close'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
+        await pumpShell(tester, bindWide: true);
+        await openMapOptions(tester);
         expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
-              )
-              .value,
-          isTrue,
-        );
-
-        // Turn OFF again and persist.
-        await tester.tap(
           find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+          findsOneWidget,
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.tap(find.text('Close'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
-              )
-              .value,
-          isFalse,
+        await toggleCloseReopen(
+          tester,
+          kGameMapOptionsShowProvinceOwnershipToggleKey,
+          expectAfter: true,
+        );
+        await toggleCloseReopen(
+          tester,
+          kGameMapOptionsShowProvinceOwnershipToggleKey,
+          expectAfter: false,
         );
       },
       timeout: const Timeout(Duration(seconds: 20)),
@@ -465,38 +343,18 @@ void main() {
     testWidgets(
       'AC: first map display options open shows overlay and names ON, ownership OFF (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        await tester.tap(find.byKey(kMapDisplayOptionsButtonKey));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
+        await pumpShell(tester, bindWide: true);
+        await openMapOptions(tester);
         expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceOverlayToggleKey),
-              )
-              .value,
+          toggleValue(tester, kGameMapOptionsShowProvinceOverlayToggleKey),
           isTrue,
         );
         expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
-              )
-              .value,
+          toggleValue(tester, kGameMapOptionsShowProvinceOwnershipToggleKey),
           isFalse,
         );
         expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
-              )
-              .value,
+          toggleValue(tester, kGameMapOptionsShowProvinceNamesToggleKey),
           isTrue,
         );
       },
@@ -506,41 +364,16 @@ void main() {
     testWidgets(
       'AC: toggling Show province names in dialog updates state and persists within session (SPEC/ui/empire-overview.md)',
       (WidgetTester tester) async {
-        final dpr = tester.view.devicePixelRatio;
-        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
-        await tester.pump();
-
-        final optionsButtonFinder = find.byKey(kMapDisplayOptionsButtonKey);
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        final namesToggleFinder = find.byKey(
-          kGameMapOptionsShowProvinceNamesToggleKey,
-        );
-        expect(namesToggleFinder, findsOneWidget);
-
-        await tester.tap(namesToggleFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        await tester.tap(find.text('Close'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        await tester.tap(optionsButtonFinder);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
+        await pumpShell(tester, bindWide: true);
+        await openMapOptions(tester);
         expect(
-          tester
-              .widget<CtToggleSwitch>(
-                find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
-              )
-              .value,
-          isFalse,
+          find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
+          findsOneWidget,
+        );
+        await toggleCloseReopen(
+          tester,
+          kGameMapOptionsShowProvinceNamesToggleKey,
+          expectAfter: false,
         );
       },
       timeout: const Timeout(Duration(seconds: 20)),
