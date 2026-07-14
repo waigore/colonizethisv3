@@ -1,17 +1,13 @@
 // dart format off
 // Table-driven First Right credits scenarios (Refs #3836, #3939 slice 44).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart' show FirstRightCreditsResult, PurchasedTileIndex, computeFirstRightCredits, kFirstRightMaxProfitRate;
 import 'package:colonizethis_models/colonizethis_models.dart' show FilledDeal;
 import 'package:colonizethis_test/test.dart';
-
 import 'frr_credits_expectations.dart';
 import 'frr_credits_test_support.dart';
 import 'frr_d5_test_support.dart';
-
 /// One row for `computeFirstRightCredits` scenario tables.
 typedef FrrCreditsScenario = ({String label, List<FilledDeal> filledDeals, PurchasedTileIndex? purchasedTileIndex, num Function(String owningGpId, String sourceFactionId) relationScoreFor, Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor, void Function(FirstRightCreditsResult result) verify, String? deterministicRerunFirstKey, String? refs});
-
 void runFrrCreditsScenario(FrrCreditsScenario scenario) {
   FirstRightCreditsResult run() => computeFirstRightCredits(filledDeals: scenario.filledDeals, purchasedTileIndex: scenario.purchasedTileIndex, relationScoreFor: scenario.relationScoreFor, embassyGpRelationsFor: scenario.embassyGpRelationsFor);
   final result = run();
@@ -27,13 +23,11 @@ void runFrrCreditsScenario(FrrCreditsScenario scenario) {
     expect(result.treasuryCreditByGpId.keys.first, firstKey, reason: 'insertion order tracks first deal mentioning each owning GP');
   }
 }
-
 /// Compact FRR credits row builder (Refs #3939 slice 44 / 57 / 60).
 FrrCreditsScenario frrCreditsRow({required String label, required FrrCreditsExpectation expect, List<FilledDeal>? filledDeals, PurchasedTileIndex? purchasedTileIndex, bool nullPurchasedTileIndex = false, num Function(String owningGpId, String sourceFactionId)? relationScoreFor, int? constantRelation, Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor, String? deterministicRerunFirstKey, String? refs}) {
   final num Function(String, String) relation = relationScoreFor ?? (constantRelation != null ? frrConstantRelation(constantRelation) : frrAlwaysZeroRelation);
   return (label: label, filledDeals: filledDeals ?? [dealOn('k1', buyer: 'gpB')], purchasedTileIndex: nullPurchasedTileIndex ? null : (purchasedTileIndex ?? frrIdxK1GpA()), relationScoreFor: relation, embassyGpRelationsFor: embassyGpRelationsFor, deterministicRerunFirstKey: deterministicRerunFirstKey, verify: (result) => assertFrrCreditsExpectation(result, expect), refs: refs);
 }
-
 /// Empty-result defensive row (Refs #3939 slice 60).
 FrrCreditsScenario frrEmptyCreditsRow({required String label, List<FilledDeal>? filledDeals, PurchasedTileIndex? purchasedTileIndex, bool nullPurchasedTileIndex = false, int? constantRelation, double? totalProfitTreasury, String? refs = '#2992'}) => frrCreditsRow(
   label: label,
@@ -44,10 +38,8 @@ FrrCreditsScenario frrEmptyCreditsRow({required String label, List<FilledDeal>? 
   expect: FrrCreditsExpectation(empty: true, totalProfitTreasury: totalProfitTreasury),
   refs: refs,
 );
-
 /// D5 credits row defaults other-buy deal + k1/gpA index (Refs #3939 slice 65).
 FrrCreditsScenario frrD5CreditsRow({required String label, required FrrCreditsExpectation expect, FilledDeal? filledDeal, List<FilledDeal>? filledDeals, PurchasedTileIndex? purchasedTileIndex, int? constantRelation, num Function(String, String)? relationScoreFor, String? refs}) => frrCreditsRow(label: label, filledDeals: filledDeals ?? [filledDeal ?? frrD5OtherBuyDeal()], purchasedTileIndex: purchasedTileIndex ?? frrD5IdxK1GpA(), constantRelation: constantRelation, relationScoreFor: relationScoreFor, expect: expect, refs: refs);
-
 /// Defensive / skip branches from `first_right_credits_test.dart`.
 List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
   frrEmptyCreditsRow(label: 'empty input returns FirstRightCreditsResult.empty (no deals)', filledDeals: const <FilledDeal>[], totalProfitTreasury: 0.0),
@@ -72,7 +64,6 @@ List<FrrCreditsScenario> frrCreditsDefensiveScenarios() => [
     constantRelation: 100,
   ),
 ];
-
 FrrCreditsScenario _frrCreditsDeterminismScenario() => frrCreditsRow(
   label: 'deterministic — identical inputs return identical credit/aggregation order',
   filledDeals: [
@@ -86,7 +77,6 @@ FrrCreditsScenario _frrCreditsDeterminismScenario() => frrCreditsRow(
   deterministicRerunFirstKey: 'gpB',
   refs: '#3753',
 );
-
 /// Aggregation cases from `first_right_credits_aggregation_test.dart`.
 List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
   frrCreditsRow(
@@ -116,7 +106,6 @@ List<FrrCreditsScenario> frrCreditsAggregationScenarios() => [
   ),
   _frrCreditsDeterminismScenario(),
 ];
-
 /// Embassy kickback cases from `first_right_credits_kickback_test.dart`.
 List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
   frrCreditsRow(
@@ -160,7 +149,6 @@ List<FrrCreditsScenario> frrCreditsKickbackScenarios() => [
     refs: '#3753',
   ),
 ];
-
 /// D5 credits AC2–AC5 rows (Refs #2992 D5, #3939 slice 57 / 61 / 65).
 List<FrrCreditsScenario> frrIssueAcD5CreditsScenarios() => [
   frrD5CreditsRow(

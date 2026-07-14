@@ -7,7 +7,6 @@
 /// validator_test_support.dart` and `world_market_deal_matcher_test_support.
 /// dart` copies into one canonical location (Refs #3615 Cluster 6).
 library colonizethis_economy_test_support;
-
 export 'src/build_cost_scenarios.dart';
 export 'src/commodity_totals_expectations.dart';
 export 'src/commodity_totals_scenarios.dart';
@@ -46,6 +45,8 @@ export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
 export 'src/treasury_scenarios/treasury_scenarios.dart';
 export 'src/projected_cost_engine_scenarios.dart';
+export 'src/province_extraction_snapshot_expectations.dart';
+export 'src/province_extraction_snapshot_scenarios.dart';
 export 'src/purchased_tile_fixture_support.dart';
 export 'src/purchased_tile_scenarios/purchased_tile_expectations.dart';
 export 'src/purchased_tile_scenarios/purchased_tile_scenarios.dart';

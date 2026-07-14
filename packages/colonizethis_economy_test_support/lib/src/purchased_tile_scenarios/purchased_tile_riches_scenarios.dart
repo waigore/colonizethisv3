@@ -1,18 +1,14 @@
 // dart format off
 // Table-driven purchased-tile riches scenarios (Refs #3856, #3939 slice 17+48).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-
 import '../extraction_fixture_support.dart';
 import 'purchased_tile_expectations.dart';
 import 'purchased_tile_riches_test_support.dart';
-
 /// One row in [purchasedTileRichesScenarios].
 typedef PurchasedTileRichesScenario = ({String label, Game Function() buildGame, Map<String, TileMapResult> Function() tileMaps, double? richesCashMultiplier, void Function(PurchasedTileRichesResult result, PurchasedTileIndex index, Game game) verify, String? refs});
-
 /// Compact purchased-tile riches row (Refs #3939 slice 48 / 59).
 PurchasedTileRichesScenario purchasedTileRichesRow({required String label, required PurchasedTileRichesExpectation expect, Resource? resource, int improvementLevel = 1, int roadLevel = 1, Game Function()? buildGame, Map<String, TileMapResult> Function()? tileMaps, double? richesCashMultiplier, Map<String, String>? portsByProvinceSeaboard, String? refs}) {
   final resolvedResource = resource ?? Resource.gold;
@@ -20,7 +16,6 @@ PurchasedTileRichesScenario purchasedTileRichesRow({required String label, requi
   final Map<String, TileMapResult> Function() resolvedMaps = tileMaps ?? () => tileMapByRegionForResource(resolvedResource);
   return (label: label, buildGame: resolvedBuild, tileMaps: resolvedMaps, richesCashMultiplier: richesCashMultiplier, verify: (result, index, game) => assertPurchasedTileRichesExpectation(result, index, game, expect, tileMapByRegion: resolvedMaps(), richesCashMultiplier: richesCashMultiplier ?? 1.0), refs: refs);
 }
-
 /// Canonical scenarios for [computePurchasedTileRichesCredits].
 List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
   purchasedTileRichesRow(
@@ -104,7 +99,6 @@ List<PurchasedTileRichesScenario> purchasedTileRichesScenarios() => [
   purchasedTileRichesRow(label: 'empty tileMapByRegion returns empty result', tileMaps: () => const <String, TileMapResult>{}, expect: const PurchasedTileRichesExpectation(creditsEmpty: true, treasuryCreditEmpty: true, equalsEmpty: true)),
   purchasedTileRichesRow(label: 'determinism — two calls with the same inputs return equal credits', resource: Resource.gems, expect: const PurchasedTileRichesExpectation(deterministicRichesRerun: true)),
 ];
-
 /// Runs [scenario] through [computePurchasedTileRichesCredits].
 PurchasedTileRichesResult runPurchasedTileRichesScenario(PurchasedTileRichesScenario scenario) {
   final game = scenario.buildGame();

@@ -1,18 +1,13 @@
 // dart format off
 // Table-driven world-market player-context facade scenarios (Refs #3856, #3939 slice 19).
-
 import 'treasury_player_context_expectations.dart';
-
 /// One row for `PlayerContextScenario` tables (Refs #3979).
 typedef PlayerContextScenario = ({String label, PlayerContextExpectation expect, String? refs});
-
 /// Compact expect-wired row (Refs #3939 slice 59, #3979).
 PlayerContextScenario playerContextRow({required String label, required PlayerContextExpectation expect, String? refs}) => (label: label, expect: expect, refs: refs);
-
 void runPlayerContextScenario(PlayerContextScenario scenario) {
   assertPlayerContextExpectation(scenario.expect);
 }
-
 /// `worldMarketPlayerContextFromGame` snapshot cases (Refs #3615 Cluster 2).
 List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
   playerContextRow(
@@ -38,7 +33,6 @@ List<PlayerContextScenario> worldMarketPlayerContextSnapshotScenarios() => [
     refs: '#3615',
   ),
 ];
-
 /// Factory parity over the shared snapshot (single build path).
 List<PlayerContextScenario> worldMarketPlayerContextFactoryParityScenarios() => [
   playerContextRow(
@@ -56,7 +50,6 @@ List<PlayerContextScenario> worldMarketPlayerContextFactoryParityScenarios() => 
     refs: '#3615',
   ),
 ];
-
 /// `tradeSuggestionContextFromGame` concern-specific behavior.
 List<PlayerContextScenario> tradeSuggestionContextFromGameBehaviorScenarios() => [
   playerContextRow(

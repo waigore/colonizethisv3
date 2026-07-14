@@ -1,17 +1,12 @@
 // dart format off
 // Compact trade interception assertions (Refs #3939 phase 3 slice 37 / 65).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'core_economy_test_support.dart';
 import 'trade_interception_scenarios.dart';
-
 Fleet _patrolFleet({String id = 'f1'}) => Fleet(id: id, ownerId: 'p2', seaZoneId: 'sea1', regionId: 'oldWorld', shipTypeIds: const ['carrack'], mission: FleetMission.patrol);
-
 TradeInterceptionResult _apply({required Game game, Map<String, int> delivered = const {}, int seed = 42}) => applyTradeInterception(game, 'p1', delivered, seed: seed);
-
 void _expectUnchanged(TradeInterceptionResult result, Game game, Map<String, int> delivered) {
   for (final entry in delivered.entries) {
     expect(result.reducedDelivered[entry.key], entry.value);
@@ -21,10 +16,8 @@ void _expectUnchanged(TradeInterceptionResult result, Game game, Map<String, int
   }
   expect(result.updatedFleets, game.worldState.fleets);
 }
-
 /// Pins for [applyTradeInterception] rows.
 enum ApplyTradeInterceptionTarget { emptyOverseas, noEnemiesAtWar, atWarNoInterceptor, enemyPatrolReduces, deterministicSeed, privateeringBaseline, privateeringBoosted, privateeringDeterministic, shipRemovalLoop }
-
 void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
   switch (target) {
     case ApplyTradeInterceptionTarget.emptyOverseas:
@@ -86,14 +79,10 @@ void runApplyTradeInterceptionExpectation(ApplyTradeInterceptionTarget target) {
       expect(shipRemoved, isTrue, reason: 'some seed should trigger ship loss');
   }
 }
-
 ApplyTradeInterceptionScenario applyTradeInterceptionScenario({required String label, required ApplyTradeInterceptionTarget target, String? refs}) => (label: label, target: target, refs: refs);
-
 /// Pins for [scanTradeInterceptionInputs] rows.
 enum TradeInterceptionScanTarget { noEnemyPatrol, merchantEscortCount, enemyBlockade, privateeringScales }
-
 TradeInterceptionScan _scan(List<Fleet> fleets, {Set<String> enemiesAtWar = const {'p2'}, Set<String> privateeringOwners = const {}}) => scanTradeInterceptionInputs(fleets, enemiesAtWar, 'p1', privateeringOwners);
-
 void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
   switch (target) {
     case TradeInterceptionScanTarget.noEnemyPatrol:
@@ -127,6 +116,5 @@ void runTradeInterceptionScanExpectation(TradeInterceptionScanTarget target) {
       expect(boosted.interceptScore, closeTo(baseline.interceptScore * kPrivateeringTradeRaidBonus, 1e-9));
   }
 }
-
 TradeInterceptionScanScenario tradeInterceptionScanScenario({required String label, required TradeInterceptionScanTarget target, String? refs}) => (label: label, target: target, refs: refs);
 // dart format on

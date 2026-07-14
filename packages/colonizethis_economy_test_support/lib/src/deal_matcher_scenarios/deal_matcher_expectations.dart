@@ -1,13 +1,10 @@
 // dart format off
 // Compact DealMatcher result assertions (Refs #3939 phase 3 slice 10+).
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Per-deal field pins for data-driven [DealMatchExpectation] rows.
 class FilledDealExpectation {
   const FilledDealExpectation({this.buyerFactionId, this.sellerFactionId, this.commodityId, this.quantity, this.pricePerUnit, this.isFtpMatch, this.isFirstRightOfRefusalMatch});
-
   final String? buyerFactionId;
   final String? sellerFactionId;
   final String? commodityId;
@@ -16,7 +13,6 @@ class FilledDealExpectation {
   final bool? isFtpMatch;
   final bool? isFirstRightOfRefusalMatch;
 }
-
 void _assertFilledDealExpectation(FilledDeal deal, FilledDealExpectation expectation) {
   if (expectation.buyerFactionId != null) {
     expect(deal.buyerFactionId, expectation.buyerFactionId);
@@ -40,11 +36,9 @@ void _assertFilledDealExpectation(FilledDeal deal, FilledDealExpectation expecta
     expect(deal.isFirstRightOfRefusalMatch, expectation.isFirstRightOfRefusalMatch);
   }
 }
-
 /// Data-driven expectations for [DealMatchResult] scenario rows.
 class DealMatchExpectation {
   const DealMatchExpectation({this.filledDeals, this.filledDealsLength, this.filledDealsEmpty = false, this.filledDealExpectations, this.filledDealCommodityIds, this.frrFilledDeal, this.nonFrrFilledDeal, this.unfilledOffersByFactionId, this.unfilledBidsByFactionId, this.unfilledBidsPinsByFactionId, this.unfilledOffersEmpty = false, this.unfilledBidsEmpty = false, this.activityByCommodityId, this.filledDealQuantityByCommodityId, this.firstFilledDeal, this.resultEqualsEmpty = false, this.activityNotesByCommodityId, this.activityNotesEmptyForCommodities, this.activityPriceChangePercent, this.custom});
-
   final List<FilledDeal>? filledDeals;
   final int? filledDealsLength;
   final bool filledDealsEmpty;
@@ -66,7 +60,6 @@ class DealMatchExpectation {
   final Map<CommodityId, double>? activityPriceChangePercent;
   final void Function(DealMatchResult result)? custom;
 }
-
 void assertDealMatchExpectation(DealMatchResult result, DealMatchExpectation expectation) {
   if (expectation.filledDealsEmpty) {
     expect(result.filledDeals, isEmpty);

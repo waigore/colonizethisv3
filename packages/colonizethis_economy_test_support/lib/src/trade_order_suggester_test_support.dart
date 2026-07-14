@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 /// Shared [TradeSuggestionContext] builder for suggester unit tests (Refs #3831).
 // dart format off
 TradeSuggestionContext suggesterCtx({

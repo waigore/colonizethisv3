@@ -1,28 +1,21 @@
 // dart format off
 // Table-driven non-GP auto-offer scenarios (Refs #3856, #3939 slice 47 / 58 / 62).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-
 import 'extraction_fixture_support.dart';
 import 'non_gp_auto_offers_expectations.dart';
 import 'non_gp_auto_offers_test_support.dart';
-
 /// One row for `computeNonGreatPowerAutoOffers` scenario tables
 /// (Refs #3939 slice 63).
 typedef NonGpAutoOffersScenario = ({String label, Game game, Map<String, TileMapResult> tileMapByRegion, Map<String, ConnectivityResult> connectivityByFactionId, void Function(Map<String, List<TradeOrder>> result) verify, String? refs});
-
 NonGpAutoOffersScenario nonGpAutoOfferRow({required String label, required Game game, required Map<String, TileMapResult> tileMapByRegion, required Map<String, ConnectivityResult> connectivityByFactionId, required NonGpAutoOffersExpectation expect, String? refs}) => (label: label, game: game, tileMapByRegion: tileMapByRegion, connectivityByFactionId: connectivityByFactionId, verify: (result) => assertNonGpAutoOffersExpectation(result, expect, game: game), refs: refs);
-
 NonGpAutoOffersScenario nonGpEmptyAutoOfferRow({required String label, Game? game, Map<String, TileMapResult> tileMapByRegion = const {}, Map<String, ConnectivityResult> connectivityByFactionId = const {}, String? refs = '#2991 C4'}) => nonGpAutoOfferRow(label: label, game: game ?? nonGpEmptyGame(), tileMapByRegion: tileMapByRegion, connectivityByFactionId: connectivityByFactionId, expect: const NonGpAutoOffersExpectation(empty: true), refs: refs);
-
 void runNonGpAutoOffersScenario(NonGpAutoOffersScenario scenario) {
   final result = computeNonGreatPowerAutoOffers(game: scenario.game, tileMapByRegion: scenario.tileMapByRegion, connectivityByFactionId: scenario.connectivityByFactionId);
   scenario.verify(result);
 }
-
 /// Compact minor/OW auto-offer row (Refs #3939 slice 47 / 57 / 58).
 NonGpAutoOffersScenario nonGpAutoOfferMinorRow({required String label, required NonGpAutoOffersExpectation expect, required List<List<Resource?>> resources, required Set<String> connected, List<TileImprovementSpec>? tileSpecs, bool emptyConnectivity = false, String? refs = '#2991 C4'}) => nonGpAutoOfferRow(
   label: label,
@@ -32,7 +25,6 @@ NonGpAutoOffersScenario nonGpAutoOfferMinorRow({required String label, required 
   expect: expect,
   refs: refs,
 );
-
 /// Compact purchased-tile C6 auto-offer row (Refs #3939 slice 47).
 NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({required String label, required NonGpAutoOffersExpectation expect, required Resource resource, String tileKey = 'oldWorld|m1|0|0', String? refs = '#2991 C6'}) => nonGpAutoOfferRow(
   label: label,
@@ -44,10 +36,8 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({required String label, requi
   expect: expect,
   refs: refs,
 );
-
 /// Canonical scenarios from `non_gp_auto_offers_test.dart` (Issue #2991 C4).
 List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [..._nonGpAutoOffersEmptyScenarios(), ..._nonGpAutoOffersOfferScenarios(), ...nonGpAutoOffersPurchasedTileScenarios()];
-
 List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
   nonGpEmptyAutoOfferRow(label: 'empty when no minors and no tribes are configured'),
   nonGpEmptyAutoOfferRow(
@@ -68,7 +58,6 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
     expect: const NonGpAutoOffersExpectation(empty: true),
   ),
 ];
-
 List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
   final dual = nonGpMinorTribeTimberFursFixture();
   return [
@@ -116,12 +105,10 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
     ),
   ];
 }
-
 /// Purchased-tile parity scenarios (Refs #2991 C6, #3939).
 List<NonGpAutoOffersScenario> nonGpAutoOffersPurchasedTileScenarios() {
   const purchasedTileKey = 'oldWorld|m1|0|0';
   const unpurchasedTileKey = 'oldWorld|m1|1|0';
-
   return [
     nonGpAutoOfferPurchasedRow(
       label:

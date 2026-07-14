@@ -1365,3 +1365,16 @@ Deferred: remaining `void Function() run` modules (sea transport, trade intercep
 | treasury-gate-session | Point `repo.economy_deal_matcher_treasury_budget_shared` at `deal_matcher_session.dart` after de-part | `tool/check_economy_deal_matcher_treasury_shared.dart` | #3979 |
 
 Deferred: optional group `setUpAll` caching / wall-clock median note.
+
+## Phase 6 — snapshot dedup, dual-yield DRY, interception helpers, LOC ratchet (Refs #4014)
+
+| Slice | Goal | Outcome | Refs |
+|-------|------|---------|------|
+| province-scenario-migration | Move #4002 Extraction/Available pins into test_support; thin runner; no local `void Function() run` | `province_extraction_snapshot_{scenarios,expectations}.dart`; thin `province_extraction_snapshot_builder_test.dart`; lint `repo.economy_test_no_local_run_scenarios` | #4014 |
+| dual-yield-dry | Share resolve/clamp/production prelude between display + tile yield | `resolveImprovedTileProductionPrelude` / `ImprovedTileProductionPrelude` in `tile_extraction_pipeline.dart`; display path delegates | #4014 |
+| trade-interception-helpers | Split odds / cargo reduce / ship loss from `applyTradeInterception` | `computeTradeInterceptionOdds`, `reduceDeliveredForCargoIntercept`, `countMerchantShipsLost`, `applyMerchantShipLoss` | #4014 |
+| test-support-loc-ratchet | Densify blanks + CI ceiling ≤7999 | format-off blank strip; lint `repo.economy_test_support_loc` | #4014 |
+
+Wall-clock advisory: median **10.74s** over 3 runs (`tool/check_economy_test_wall_clock.sh`, ceiling 25s) — PASS.
+
+Deferred: optional additional `setUpAll` group fixture caches; stretch ≤7,800 densify; FRR/treasury touch-ups when a clear seam opens.

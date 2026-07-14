@@ -1,11 +1,8 @@
 // dart format off
 // Table-driven `computeTileExtractionContributionForPlayer` scenarios (Refs #3939, #3979).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
-
 import 'extraction_fixture_support.dart';
 import 'tile_extraction_contribution_expectations.dart';
-
 /// One row for per-tile extraction contribution scenario tables (Refs #3979).
 typedef TileExtractionContributionScenario = ({
   String label,
@@ -14,7 +11,6 @@ typedef TileExtractionContributionScenario = ({
   TileMapResult? grainTileMap,
   String? refs,
 });
-
 void runTileExtractionContributionScenario(
   TileExtractionContributionScenario scenario,
 ) {
@@ -29,7 +25,6 @@ void runTileExtractionContributionScenario(
       runTileContributionDisconnectedPin(grainTileMap: tileMap);
   }
 }
-
 List<TileExtractionContributionScenario> tileExtractionContributionScenarios({
   required TileMapResult grainTileMap,
 }) => [

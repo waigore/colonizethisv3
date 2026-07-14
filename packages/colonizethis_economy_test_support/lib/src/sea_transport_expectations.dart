@@ -1,17 +1,13 @@
 // dart format off
 // Compact sea transport assertions (Refs #3939 phase 3 slice 36).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'core_economy_test_support.dart';
 import 'sea_transport_scenarios.dart';
-
 /// Pins for [cargoHoldsForHomeFleet] rows.
 typedef CargoHoldsPins = ({List<Fleet>? fleets, String playerId, int? expectedExact, bool expectNonNegativeOnly, bool parityFleetsById});
-
 void runCargoHoldsExpectation(CargoHoldsPins pins) {
   final game = minimalEconomyGame(
     fleets: pins.fleets,
@@ -29,12 +25,9 @@ void runCargoHoldsExpectation(CargoHoldsPins pins) {
     expect(holds, pins.expectedExact);
   }
 }
-
 CargoHoldsForHomeFleetScenario cargoHoldsScenario({required String label, required CargoHoldsPins pins}) => (label: label, pins: pins, refs: null);
-
 /// Pins for [allocateOverseasToStockpile] rows.
 typedef AllocateOverseasPins = ({Map<String, int> overseas, int cargoHolds, List<CommodityCategory>? priorityOrder, bool expectEmpty, int? expectedTotal, Map<String, int?>? expectedDelivered});
-
 void runAllocateOverseasExpectation(AllocateOverseasPins pins) {
   final delivered = allocateOverseasToStockpile(pins.overseas, cargoHolds: pins.cargoHolds, priorityOrder: pins.priorityOrder);
   if (pins.expectEmpty) {
@@ -57,6 +50,5 @@ void runAllocateOverseasExpectation(AllocateOverseasPins pins) {
     }
   }
 }
-
 AllocateOverseasToStockpileScenario allocateOverseasScenario({required String label, required AllocateOverseasPins pins}) => (label: label, pins: pins, refs: null);
 // dart format on

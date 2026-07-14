@@ -1,21 +1,16 @@
 // dart format off
 // Compact treasury UI composition and GP-credit assertions (Refs #3939 phase 3 slice 13).
-
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Pins for [TreasuryUiCompositionExpectation.maxAffordableQty].
 typedef MaxAffordableQtyPin = ({String commodityId, int qty});
-
 /// Pins for [TreasuryUiCompositionExpectation.spendIncrementExceedsBudget].
 typedef SpendIncrementExceedsBudgetPin = ({String commodityId, int delta});
-
 /// Data-driven expectations for [TreasuryUiCompositionScenario] rows.
 class TreasuryUiCompositionExpectation {
   const TreasuryUiCompositionExpectation({this.budget, this.commodityPrices, this.headroom, this.maxAffordableQty, this.headroomLessThanCommodity, this.spendIncrementExceedsBudget, this.budgetLessThanCommodity});
-
   final int? budget;
   final Map<CommodityId, int>? commodityPrices;
   final int? headroom;
@@ -24,7 +19,6 @@ class TreasuryUiCompositionExpectation {
   final SpendIncrementExceedsBudgetPin? spendIncrementExceedsBudget;
   final CommodityId? budgetLessThanCommodity;
 }
-
 void assertTreasuryUiCompositionExpectation({required Game game, required data.ResourceRules rules, required int budget, required int currentSpend, required TreasuryUiCompositionExpectation expectation}) {
   if (expectation.budget != null) {
     expect(budget, expectation.budget);
@@ -57,19 +51,15 @@ void assertTreasuryUiCompositionExpectation({required Game game, required data.R
     expect(budget < rowPrice!, isTrue);
   }
 }
-
 /// Optional extra assertions for [TreasuryAvailableScenario] rows.
 class TreasuryAvailableExpectation {
   const TreasuryAvailableExpectation({this.omitProjectedDeltaAlias = false, this.ignoredProjectedDeltaWhenTreasuryZero});
-
   /// When true, calling with `projectedNonBidTreasuryDelta: 0` matches omitting
   /// the parameter (legacy raw-treasury contract).
   final bool omitProjectedDeltaAlias;
-
   /// When set, asserts that this projected delta is ignored when treasury is 0.
   final int? ignoredProjectedDeltaWhenTreasuryZero;
 }
-
 void assertTreasuryAvailableExpectation({required Game game, required String playerId, required TreasuryAvailableExpectation expectation}) {
   if (expectation.omitProjectedDeltaAlias) {
     expect(treasuryAvailableForBidsByPlayer(game: game, playerId: playerId, projectedNonBidTreasuryDelta: 0), treasuryAvailableForBidsByPlayer(game: game, playerId: playerId));
@@ -78,25 +68,20 @@ void assertTreasuryAvailableExpectation({required Game game, required String pla
     expect(treasuryAvailableForBidsByPlayer(game: game, playerId: playerId, projectedNonBidTreasuryDelta: expectation.ignoredProjectedDeltaWhenTreasuryZero!), 0);
   }
 }
-
 /// Data-driven expectations for carry-forward bid-notional rows.
 class CarryForwardBidNotionalExpectation {
   const CarryForwardBidNotionalExpectation({required this.catalogCommodity, required this.quantity});
-
   final CommodityId catalogCommodity;
   final int quantity;
 }
-
 void assertCarryForwardBidNotionalExpectation({required int notional, required data.ResourceRules rules, required CarryForwardBidNotionalExpectation expectation}) {
   final catalogPrice = rules.defaultMarketPriceForCommodityId(expectation.catalogCommodity) ?? 0;
   expect(catalogPrice, greaterThan(0));
   expect(notional, expectation.quantity * catalogPrice);
 }
-
 /// Data-driven expectations for [GpTreasuryCreditAccumulator] scenario rows.
 class GpTreasuryCreditExpectation<T extends num> {
   const GpTreasuryCreditExpectation({this.isEmpty, this.total, this.totalCloseTo, this.view, this.viewCloseTo, this.viewKeyOrder, this.viewUnmodifiable = false, this.totalEqualsNaiveViewSum = false});
-
   final bool? isEmpty;
   final T? total;
   final T? totalCloseTo;
@@ -106,7 +91,6 @@ class GpTreasuryCreditExpectation<T extends num> {
   final bool viewUnmodifiable;
   final bool totalEqualsNaiveViewSum;
 }
-
 void assertGpTreasuryCreditExpectation<T extends num>(GpTreasuryCreditAccumulator<T> acc, GpTreasuryCreditExpectation<T> expectation) {
   if (expectation.isEmpty != null) {
     expect(acc.isEmpty, expectation.isEmpty);
@@ -141,19 +125,15 @@ void assertGpTreasuryCreditExpectation<T extends num>(GpTreasuryCreditAccumulato
     }
   }
 }
-
 /// Pins for per-order [bidTreasurySpendForOrder] parity rows.
 typedef BidTreasurySpendPin = ({TradeOrder order, int expected, String? reason});
-
 /// Data-driven expectations for staged vs carry-forward bid-spend parity rows.
 class BidSpendParityExpectation {
   const BidSpendParityExpectation({this.stagedSpend, this.carryForwardEqualsStaged = true, this.bidTreasurySpendPins});
-
   final int? stagedSpend;
   final bool carryForwardEqualsStaged;
   final List<BidTreasurySpendPin>? bidTreasurySpendPins;
 }
-
 void assertBidSpendParityExpectation({required int staged, required int carryForward, required Game game, required data.ResourceRules rules, required BidSpendParityExpectation expectation}) {
   if (expectation.stagedSpend != null) {
     expect(staged, expectation.stagedSpend);

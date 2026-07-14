@@ -1,27 +1,21 @@
 // dart format off
 // Rule 5 treasury-cap validator scenarios (Refs #3093, #3123, #3939 phase 3 slice 30).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-
 import 'trade_order_validator_test_support.dart';
 import 'validator_expectations.dart';
 import 'validator_scenario.dart';
-
 int _catalogTimberBudgetForQty2() {
   final int? catalogTimber = ResourceRules.defaultRules.defaultMarketPriceForCommodityId('timber');
   return catalogTimber! * 2;
 }
-
 int _catalogLumberBudgetForQty1() {
   final int? catalogLumber = ResourceRules.defaultRules.defaultMarketPriceForCommodityId('lumber');
   return catalogLumber!;
 }
-
 /// Rule 5 treasury-cap scenarios from
 /// `world_market_trade_order_validator_treasury_test.dart`.
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [...tradeOrderValidatorTreasuryCapScenarios(), ...tradeOrderValidatorTreasuryCatalogScenarios()];
-
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
   validatorTreasuryTimberIronBids(
     label: 'rejects bid when cumulative spend exceeds treasuryBudgetForBids',
@@ -52,7 +46,6 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     refs: '#3123',
   ),
 ];
-
 List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() => [
   validatorTreasuryTimberBids(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',

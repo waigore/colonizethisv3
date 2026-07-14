@@ -1,14 +1,10 @@
 // dart format off
 // Table-driven PriceDiscovery scenarios (Refs #3856).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'price_discovery_expectations.dart';
-
 /// One row in [priceDiscoveryNextPriceScenarios].
 typedef PriceDiscoveryNextPriceScenario = ({String label, double oldPrice, int basePrice, int newBidQuantity, int newOfferQuantity, double expectedPrice, double tolerance, String? refs});
-
 /// Canonical scenarios for [PriceDiscovery.computeNextPrice].
 const List<PriceDiscoveryNextPriceScenario> priceDiscoveryNextPriceScenarios = [
   (label: 'zero volume returns oldPrice unchanged', oldPrice: 100.0, basePrice: 100, newBidQuantity: 0, newOfferQuantity: 0, expectedPrice: 100.0, tolerance: 0.0, refs: null),
@@ -21,10 +17,8 @@ const List<PriceDiscoveryNextPriceScenario> priceDiscoveryNextPriceScenarios = [
   (label: 'balanced bid==offer keeps oldPrice (delta = 0)', oldPrice: 50.0, basePrice: 50, newBidQuantity: 7, newOfferQuantity: 7, expectedPrice: 50.0, tolerance: 0.0, refs: null),
   (label: 'negative-leaning ratio applies symmetric formula', oldPrice: 100.0, basePrice: 100, newBidQuantity: 10, newOfferQuantity: 20, expectedPrice: 100.0 * (1.0 - 1.0 / 6.0), tolerance: 1e-9, refs: null),
 ];
-
 /// One row in [priceDiscoveryMarketActivityScenarios].
 typedef PriceDiscoveryMarketActivityScenario = ({String label, double oldPrice, int basePrice, int newBidQuantity, int newOfferQuantity, int filledQuantity, PriceDiscoveryMarketActivityExpectation expect, String? refs});
-
 /// Canonical scenarios for [PriceDiscovery.computeMarketActivity].
 List<PriceDiscoveryMarketActivityScenario> priceDiscoveryMarketActivityScenarios() => [
   (label: 'records new totals and computes priceChangePercent', oldPrice: 100.0, basePrice: 100, newBidQuantity: 20, newOfferQuantity: 10, filledQuantity: 10, expect: const PriceDiscoveryMarketActivityExpectation(totalBidQuantity: 20, totalOfferQuantity: 10, filledQuantity: 10, priceChangePercentCloseTo: 1.0 / 6.0), refs: null),
@@ -32,7 +26,6 @@ List<PriceDiscoveryMarketActivityScenario> priceDiscoveryMarketActivityScenarios
   (label: 'zero oldPrice (defensive) yields 0 priceChangePercent', oldPrice: 0.0, basePrice: 100, newBidQuantity: 5, newOfferQuantity: 5, filledQuantity: 5, expect: const PriceDiscoveryMarketActivityExpectation(priceChangePercent: 0.0), refs: null),
   (label: 'returns MarketActivity instance compatible with empty equality', oldPrice: 100.0, basePrice: 100, newBidQuantity: 0, newOfferQuantity: 0, filledQuantity: 0, expect: const PriceDiscoveryMarketActivityExpectation(equalsEmpty: true), refs: null),
 ];
-
 /// Runs a [PriceDiscovery.computeNextPrice] scenario row.
 void runPriceDiscoveryNextPriceScenario(PriceDiscoveryNextPriceScenario scenario) {
   final price = PriceDiscovery.computeNextPrice((oldPrice: scenario.oldPrice, basePrice: scenario.basePrice, newBidQuantity: scenario.newBidQuantity, newOfferQuantity: scenario.newOfferQuantity));
@@ -42,7 +35,6 @@ void runPriceDiscoveryNextPriceScenario(PriceDiscoveryNextPriceScenario scenario
     expect(price, scenario.expectedPrice);
   }
 }
-
 /// Runs a [PriceDiscovery.computeMarketActivity] scenario row.
 void runPriceDiscoveryMarketActivityScenario(PriceDiscoveryMarketActivityScenario scenario) {
   final activity = PriceDiscovery.computeMarketActivity((oldPrice: scenario.oldPrice, basePrice: scenario.basePrice, newBidQuantity: scenario.newBidQuantity, newOfferQuantity: scenario.newOfferQuantity), filledQuantity: scenario.filledQuantity);

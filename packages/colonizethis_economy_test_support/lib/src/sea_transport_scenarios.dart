@@ -1,18 +1,13 @@
 // dart format off
 // Table-driven sea transport scenarios (Refs #3939 phase 3, #3979).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'sea_transport_expectations.dart';
-
 /// One row in [cargoHoldsForHomeFleetScenarios] (Refs #3979).
 typedef CargoHoldsForHomeFleetScenario = ({String label, CargoHoldsPins pins, String? refs});
-
 void runCargoHoldsForHomeFleetScenario(CargoHoldsForHomeFleetScenario scenario) {
   runCargoHoldsExpectation(scenario.pins);
 }
-
 /// Canonical scenarios for [cargoHoldsForHomeFleet].
 List<CargoHoldsForHomeFleetScenario> cargoHoldsForHomeFleetScenarios() => [
   cargoHoldsScenario(label: 'returns 0 when no home fleet exists', pins: (fleets: null, playerId: 'p1', expectedExact: null, expectNonNegativeOnly: true, parityFleetsById: false)),
@@ -54,14 +49,11 @@ List<CargoHoldsForHomeFleetScenario> cargoHoldsForHomeFleetScenarios() => [
     ),
   ),
 ];
-
 /// One row in [allocateOverseasToStockpileScenarios] (Refs #3979).
 typedef AllocateOverseasToStockpileScenario = ({String label, AllocateOverseasPins pins, String? refs});
-
 void runAllocateOverseasToStockpileScenario(AllocateOverseasToStockpileScenario scenario) {
   runAllocateOverseasExpectation(scenario.pins);
 }
-
 /// Canonical scenarios for [allocateOverseasToStockpile].
 List<AllocateOverseasToStockpileScenario> allocateOverseasToStockpileScenarios() => [
   allocateOverseasScenario(label: 'returns empty when overseas is empty', pins: (overseas: {}, cargoHolds: 10, priorityOrder: null, expectEmpty: true, expectedTotal: null, expectedDelivered: null)),

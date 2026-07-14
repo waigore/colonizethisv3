@@ -1,21 +1,16 @@
 // dart format off
 // Table-driven town manufacturing bonus scenarios (Refs #3939 phase 3).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-
 import 'extraction_fixture_support.dart';
 import 'town_manufacturing_bonus_expectations.dart';
-
 /// One row in [townManufacturingBonusProvinceScenarios].
 typedef TownManufacturingBonusProvinceScenario = ({String label, int townDevelopmentLevel, Map<CommodityId, int> townConnectedDeliveredRawByCommodity, Map<String, bool>? techUnlocked, void Function(Map<CommodityId, int> bonus) verify, String? refs});
-
 /// Compact province-bonus row (Refs #3939 slice 47 / 57).
 TownManufacturingBonusProvinceScenario townBonusProvinceRow({required String label, required int townDevelopmentLevel, required Map<CommodityId, int> townConnectedDeliveredRawByCommodity, required TownManufacturingBonusProvinceExpectation expect, Map<String, bool> techUnlocked = const {}, String? refs = '#3872'}) => (label: label, townDevelopmentLevel: townDevelopmentLevel, townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity, techUnlocked: techUnlocked, refs: refs, verify: (bonus) => assertTownManufacturingBonusProvinceExpectation(bonus, expect, townDevelopmentLevel: townDevelopmentLevel, townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity));
-
 /// Canonical scenarios for [computeTownManufacturingBonusForProvince].
 List<TownManufacturingBonusProvinceScenario> townManufacturingBonusProvinceScenarios() => [
   townBonusProvinceRow(
@@ -44,27 +39,21 @@ List<TownManufacturingBonusProvinceScenario> townManufacturingBonusProvinceScena
     expect: TownManufacturingBonusProvinceExpectation(absentCommodities: ['fabric'], techGated: (techUnlocked: {kTechIdCottonWeaving: true}, withTechCommodityAmounts: {'fabric': 2}, withTechAbsentCommodities: <CommodityId>[])),
   ),
 ];
-
 void runTownManufacturingBonusProvinceScenario(TownManufacturingBonusProvinceScenario scenario) {
   final bonus = computeTownManufacturingBonusForProvince(townDevelopmentLevel: scenario.townDevelopmentLevel, townConnectedDeliveredRawByCommodity: scenario.townConnectedDeliveredRawByCommodity, techUnlocked: scenario.techUnlocked);
   scenario.verify(bonus);
 }
-
 /// Fixture-backed game-level scenario pins (Refs #3939 phase 3 slice 32).
 enum TownManufacturingBonusGamePin { gpTownTimberBonus, minorDeliveredRaw, autoOffersMinor, previewMatchesLive, previewEmpty }
-
 /// One row in [townManufacturingBonusGameScenarios] (Refs #3939 slice 63).
 typedef TownManufacturingBonusGameScenario = ({String label, TownManufacturingBonusGamePin pin, TownManufacturingBonusGameExpectation expect, String? refs});
-
 void runTownManufacturingBonusGameScenario(TownManufacturingBonusGameScenario scenario) {
   runTownManufacturingBonusGamePin(scenario.pin, scenario.expect);
 }
-
 const _ow = 'oldWorld';
 const _gpProvinceId = '$_ow|p1';
 const _gpTownKey = '$_gpProvinceId|0|0';
 const _gpTimberTile = '$_gpProvinceId|1|0';
-
 ({Game game, Map<String, TileMapResult> tileMaps}) _gpTownTimberFixture() {
   final tileMaps = {
     _ow: TileMapResult(
@@ -95,7 +84,6 @@ const _gpTimberTile = '$_gpProvinceId|1|0';
     tileMaps: tileMaps,
   );
 }
-
 void runTownManufacturingBonusGamePin(TownManufacturingBonusGamePin pin, TownManufacturingBonusGameExpectation expect) {
   switch (pin) {
     case TownManufacturingBonusGamePin.gpTownTimberBonus:
@@ -158,7 +146,6 @@ void runTownManufacturingBonusGamePin(TownManufacturingBonusGamePin pin, TownMan
       assertTownManufacturingBonusGameExpectation(expectation: expect, previewByProvince: preview);
   }
 }
-
 /// Canonical fixture-backed scenarios for game-level town manufacturing bonus.
 List<TownManufacturingBonusGameScenario> townManufacturingBonusGameScenarios() => [
   (

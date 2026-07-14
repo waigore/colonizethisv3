@@ -1,24 +1,18 @@
 // dart format off
 // Compact tile extraction contribution assertions (Refs #3939 phase 3 slice 33).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'extraction_fixture_support.dart';
 import 'tile_extraction_contribution_scenarios.dart';
-
 const _tileKey = 'oldWorld|p1|0|0';
 const _provinceId = 'oldWorld|p1';
-
 /// Pins for connected-tile extraction contribution rows.
 typedef TileContributionConnectedPin = ({String commodityId, int units, bool verifyProvinceIndexParity});
-
 /// Pins for disconnected-tile extraction contribution rows.
 typedef TileContributionDisconnectedPin = ();
-
 void runTileContributionConnectedPin({required TileMapResult grainTileMap, required TileContributionConnectedPin pins}) {
   const connected = {_tileKey};
   final player = spainPl1Player(capitalProvinceId: _provinceId);
@@ -35,7 +29,6 @@ void runTileContributionConnectedPin({required TileMapResult grainTileMap, requi
   expect(contribution, isNotNull);
   expect(contribution!.commodityId, pins.commodityId);
   expect(contribution.units, pins.units);
-
   if (pins.verifyProvinceIndexParity) {
     final provincesByFullId = {for (final p in game.worldState.oldWorld.provinces) p.id: p, for (final p in game.worldState.newWorld.provinces) p.id: p};
     final withIndex = computeTileExtractionContributionForPlayer(game: game, tileMapByRegion: {'oldWorld': grainTileMap}, player: player, tileKey: _tileKey, connectedTileKeys: connected, pathTransportCap: const {}, connectedByRoadRule: connected, portTileKeys: const {}, prospectedTileKeys: connected, capitalRegionId: 'oldWorld', techCapForPlayer: (_) => 4, provincesByFullId: provincesByFullId);
@@ -44,7 +37,6 @@ void runTileContributionConnectedPin({required TileMapResult grainTileMap, requi
     expect(withIndex.units, contribution.units);
   }
 }
-
 void runTileContributionDisconnectedPin({required TileMapResult grainTileMap}) {
   final player = spainPl1Player(capitalProvinceId: _provinceId);
   final game = TestFixtures.minimalGame(
@@ -58,8 +50,6 @@ void runTileContributionDisconnectedPin({required TileMapResult grainTileMap}) {
   final contribution = computeTileExtractionContributionForPlayer(game: game, tileMapByRegion: {'oldWorld': grainTileMap}, player: player, tileKey: _tileKey, connectedTileKeys: const {}, pathTransportCap: const {}, connectedByRoadRule: const {}, portTileKeys: const {}, prospectedTileKeys: const {}, capitalRegionId: 'oldWorld', techCapForPlayer: (_) => 4);
   expect(contribution, isNull);
 }
-
 enum TileExtractionContributionPin { connectedGrainExcludesCapitalBonus, disconnectedNull }
-
 TileExtractionContributionScenario tileExtractionContributionScenario({required String label, required TileExtractionContributionPin pin, TileContributionConnectedPin? connectedPins, TileMapResult? grainTileMap}) => (label: label, pin: pin, connectedPins: connectedPins, grainTileMap: grainTileMap, refs: null);
 // dart format on

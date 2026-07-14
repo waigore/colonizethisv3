@@ -1,15 +1,11 @@
 // dart format off
 // Table-driven worker recruit/train cost scenarios (Refs #3856, #3979).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'worker_action_cost_expectations.dart';
-
 /// One row for worker-action-cost tables (Refs #3979). Exactly one family is set.
 typedef WorkerActionCostScenario = ({String label, CanAffordRecruitWorkerPins? canAfford, ApplyRecruitWorkerCostPins? applyCost, bool apprenticeTechConsistency, String? refs});
-
 /// Runs [scenario] via the matching expectation helper.
 void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {
   final canAfford = scenario.canAfford;
@@ -24,7 +20,6 @@ void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {
   }
   runApprenticeTechConsistencyExpectation();
 }
-
 /// Canonical scenarios for [canAffordRecruitWorker].
 List<WorkerActionCostScenario> canAffordRecruitWorkerScenarios() => [
   canAffordRecruitWorkerScenario(label: 'peasant recruit needs only fabric (no tech, no peasant, no treasury)', pins: (tech: null, targetTier: WorkerTier.peasant, workers: WorkerPool.empty, stockpileDeltas: {'fabric': 2}, treasury: 0, expectedCanAfford: true, expectedReason: null)),
@@ -41,7 +36,6 @@ List<WorkerActionCostScenario> canAffordRecruitWorkerScenarios() => [
     pins: (tech: {kTechIdApprenticeWorkers: true, kTechIdSugarRefining: true}, targetTier: WorkerTier.apprentice, workers: const WorkerPool(peasants: 1), stockpileDeltas: {'paper': 2}, treasury: 200, expectedCanAfford: true, expectedReason: null),
   ),
 ];
-
 /// Canonical scenarios for [applyRecruitWorkerCostDeduction].
 List<WorkerActionCostScenario> applyRecruitWorkerCostDeductionScenarios() => [
   applyRecruitWorkerCostScenario(label: 'peasant recruit adds a peasant and deducts only fabric', pins: (targetTier: WorkerTier.peasant, initialWorkers: const WorkerPool(peasants: 3), stockpileDeltas: {'fabric': 5}, treasury: 100, expectedWorkers: const WorkerPool(peasants: 4), expectedStockpileQuantities: {'fabric': 3}, expectedTreasury: 100)),
