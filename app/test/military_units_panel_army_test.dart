@@ -21,54 +21,12 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'gp_home_no_move';
-      const cap = 'oldWorld|cap';
-      final game = Game(
+      final game = buildMilitaryHomeArmyAtCapitalGame(
         id: 'ghm',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: cap,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'tk',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'u_home',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: cap,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'home_army',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: cap,
-              regimentUnitIds: const ['u_home'],
-              isHomeArmy: true,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              cap: ['tk'],
-            },
-          },
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'Home',
-            isHuman: true,
-            capitalProvinceId: cap,
-          ),
-        ],
+        playerId: playerId,
+        regimentIds: const ['u_home'],
+        townTileKey: 'tk',
+        playerDisplayName: 'Home',
       );
 
       await tester.pumpWidget(buildMilitaryPanel(game: game, humanPlayerId: playerId));

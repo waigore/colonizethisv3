@@ -26,6 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 
 import 'app_shell_harness.dart';
+import 'panel_fixtures/core.dart';
 
 /// Builds the canonical [MilitaryUnitsPanel] host used across the panel's
 /// widget tests: editorial-monocle [buildAppShell] > [Scaffold] wrapping the
@@ -48,6 +49,211 @@ Widget buildMilitaryPanel({
         draftOrders: draftOrders,
       ),
     ),
+  );
+}
+
+/// Minimal province + tile-key lookup game for
+/// `tileKeyForProvinceLocation` edge cases (Refs #4013).
+Game buildMilitaryProvinceTileLookupGame({
+  String id = 'min',
+  String regionId = 'oldWorld',
+  String provinceId = 'p1',
+  String tileKey = 'oldWorld|p1|0|0',
+  String? ownerId,
+}) {
+  final prefixedId = '$regionId|$provinceId';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: regionId,
+            ownerId: ownerId,
+            townTileKey: null,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      tileKeysByRegionAndProvince: {
+        regionId: {
+          prefixedId: [tileKey],
+        },
+      },
+    ),
+    players: const [],
+  );
+}
+
+/// Sea-zone fleet display scenario shared by military panel display asserts
+/// (Refs #4013 densify of `military_units_panel_display_test.dart`).
+Game buildMilitarySeaFleetDisplayGame({
+  required String id,
+  required String playerId,
+  required List<String> shipTypeIds,
+  required FleetMission mission,
+  String seaZoneId = 'atlantic',
+  String fleetId = 'fleet1',
+  bool includeLisbonProvince = false,
+  String playerDisplayName = 'Test',
+}) {
+  const provinceId = 'lisbon';
+  const tileKey = 'oldWorld|lisbon|0|0';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        units: const [],
+        provinces: includeLisbonProvince
+            ? [
+                Province(
+                  id: provinceId,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                ),
+              ]
+            : const [],
+      ),
+      newWorld: const RegionData(),
+      fleets: [
+        Fleet(
+          id: fleetId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          seaZoneId: seaZoneId,
+          shipTypeIds: shipTypeIds,
+          mission: mission,
+        ),
+      ],
+      portsByProvinceSeaboard: const {
+        'oldWorld|lisbon|atlantic': tileKey,
+      },
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          'oldWorld|lisbon': [tileKey],
+        },
+      },
+    ),
+    players: [
+      Player(id: playerId, displayName: playerDisplayName, isHuman: true),
+    ],
+  );
+}
+
+/// Land-army display scenario at `oldWorld|lisbon` (medals / status pins).
+Game buildMilitaryArmyAtLisbonDisplayGame({
+  required String id,
+  required String playerId,
+  required String armyId,
+  required List<Unit> units,
+  String playerDisplayName = 'Test',
+}) {
+  const provinceId = 'oldWorld|lisbon';
+  const tileKey = 'oldWorld|lisbon|0|0';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        units: units,
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            townTileKey: tileKey,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      fleets: const [],
+      armies: [
+        Army(
+          id: armyId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: provinceId,
+          regimentUnitIds: units.map((u) => u.id).toList(growable: false),
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          provinceId: [tileKey],
+        },
+      },
+    ),
+    players: [
+      Player(id: playerId, displayName: playerDisplayName, isHuman: true),
+    ],
+  );
+}
+
+/// Home-army-at-capital scenario for split-UI / shell harness smoke (Refs #4013).
+Game buildMilitaryHomeArmyAtCapitalGame({
+  required String id,
+  required String playerId,
+  required List<String> regimentIds,
+  String capitalProvinceId = 'oldWorld|cap',
+  String townTileKey = 'tk_cap',
+  String armyId = 'home_army',
+  int nextArmySeq = 1,
+  String playerDisplayName = 'Splitter',
+  String regimentType = kPanelTestRegimentType,
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: capitalProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: 'Capital',
+            townTileKey: townTileKey,
+          ),
+        ],
+        units: [
+          for (final regimentId in regimentIds)
+            Unit(
+              id: regimentId,
+              type: regimentType,
+              ownerId: playerId,
+              locationProvinceId: capitalProvinceId,
+            ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: [
+        Army(
+          id: armyId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: capitalProvinceId,
+          regimentUnitIds: List<String>.from(regimentIds),
+          isHomeArmy: true,
+        ),
+      ],
+      nextArmySeq: nextArmySeq,
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          capitalProvinceId: [townTileKey],
+        },
+      },
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: true,
+        capitalProvinceId: capitalProvinceId,
+      ),
+    ],
   );
 }
 

@@ -35,32 +35,10 @@ void main() {
     test(
       'returns first tile from tileKeysByRegionAndProvince when townTileKey is null',
       () {
-        const regionId = 'oldWorld';
-        const provinceId = 'p1';
-        const prefixedId = 'oldWorld|p1';
         const tileKey = 'oldWorld|p1|0|0';
-        final minimalGame = Game(
-          id: 'min',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: provinceId,
-                  regionId: regionId,
-                  ownerId: humanPlayerIdWithUnits,
-                  townTileKey: null,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              regionId: {
-                prefixedId: [tileKey],
-              },
-            },
-          ),
-          players: const [],
+        final minimalGame = buildMilitaryProvinceTileLookupGame(
+          ownerId: humanPlayerIdWithUnits,
+          tileKey: tileKey,
         );
         final province = minimalGame.worldState.oldWorld.provinces.first;
         final key = tileKeyForProvinceLocation(minimalGame, province);
@@ -114,38 +92,12 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'test_player';
-      const seaZoneId = 'atlantic';
-      final gameWithSeaFleet = Game(
+      final gameWithSeaFleet = buildMilitarySeaFleetDisplayGame(
         id: 'sea_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [],
-            provinces: [
-              Province(id: 'lisbon', regionId: 'oldWorld', ownerId: playerId),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'fleet1',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              seaZoneId: seaZoneId,
-              shipTypeIds: ['galleon', 'carrack'],
-              mission: FleetMission.patrol,
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+        playerId: playerId,
+        shipTypeIds: const ['galleon', 'carrack'],
+        mission: FleetMission.patrol,
+        includeLisbonProvince: true,
       );
 
       await tester.pumpWidget(
@@ -163,32 +115,11 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'test_player';
-      final gameWithMultipleShips = Game(
+      final gameWithMultipleShips = buildMilitarySeaFleetDisplayGame(
         id: 'multi_ship_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'fleet1',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              seaZoneId: 'atlantic',
-              shipTypeIds: ['galleon', 'galleon', 'galleon'],
-              mission: FleetMission.blockade,
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+        playerId: playerId,
+        shipTypeIds: const ['galleon', 'galleon', 'galleon'],
+        mission: FleetMission.blockade,
       );
 
       await tester.pumpWidget(
@@ -204,32 +135,11 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'test_player';
-      final gameWithDefendFleet = Game(
+      final gameWithDefendFleet = buildMilitarySeaFleetDisplayGame(
         id: 'defend_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'fleet1',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              seaZoneId: 'atlantic',
-              shipTypeIds: ['fluyte'],
-              mission: FleetMission.defend,
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+        playerId: playerId,
+        shipTypeIds: const ['fluyte'],
+        mission: FleetMission.defend,
       );
 
       await tester.pumpWidget(
@@ -246,65 +156,36 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'multi_medal_player';
-      final gameWithMixedMedals = Game(
+      final gameWithMixedMedals = buildMilitaryArmyAtLisbonDisplayGame(
         id: 'mixed_medals_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 1,
-                status: UnitStatus.idle,
-              ),
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 2,
-                status: UnitStatus.idle,
-              ),
-              Unit(
-                id: 'u3',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 3,
-                status: UnitStatus.idle,
-              ),
-            ],
-            provinces: [
-              Province(
-                id: 'oldWorld|lisbon',
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'oldWorld|lisbon|0|0',
-              ),
-            ],
+        playerId: playerId,
+        armyId: 'army_mixed',
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 1,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          fleets: [],
-          armies: [
-            Army(
-              id: 'army_mixed',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: 'oldWorld|lisbon',
-              regimentUnitIds: const ['u1', 'u2', 'u3'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+          Unit(
+            id: 'u2',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 2,
+            status: UnitStatus.idle,
+          ),
+          Unit(
+            id: 'u3',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 3,
+            status: UnitStatus.idle,
+          ),
+        ],
       );
 
       await tester.pumpWidget(
@@ -323,57 +204,28 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'working_status_player';
-      final gameWithWorkingUnit = Game(
+      final gameWithWorkingUnit = buildMilitaryArmyAtLisbonDisplayGame(
         id: 'working_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 1,
-                status: UnitStatus.idle,
-              ),
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 1,
-                status: UnitStatus.working,
-              ),
-            ],
-            provinces: [
-              Province(
-                id: 'oldWorld|lisbon',
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'oldWorld|lisbon|0|0',
-              ),
-            ],
+        playerId: playerId,
+        armyId: 'army_w',
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 1,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          fleets: [],
-          armies: [
-            Army(
-              id: 'army_w',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: 'oldWorld|lisbon',
-              regimentUnitIds: const ['u1', 'u2'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+          Unit(
+            id: 'u2',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 1,
+            status: UnitStatus.working,
+          ),
+        ],
       );
 
       await tester.pumpWidget(
@@ -390,49 +242,20 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'idle_status_player';
-      final gameWithIdleUnit = Game(
+      final gameWithIdleUnit = buildMilitaryArmyAtLisbonDisplayGame(
         id: 'idle_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|lisbon',
-                medals: 1,
-                status: UnitStatus.idle,
-              ),
-            ],
-            provinces: [
-              Province(
-                id: 'oldWorld|lisbon',
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'oldWorld|lisbon|0|0',
-              ),
-            ],
+        playerId: playerId,
+        armyId: 'army_d',
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|lisbon',
+            medals: 1,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          fleets: [],
-          armies: [
-            Army(
-              id: 'army_d',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: 'oldWorld|lisbon',
-              regimentUnitIds: const ['u1'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: [Player(id: playerId, displayName: 'Test', isHuman: true)],
+        ],
       );
 
       await tester.pumpWidget(

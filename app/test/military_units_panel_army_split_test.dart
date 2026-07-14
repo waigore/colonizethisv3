@@ -18,62 +18,10 @@ void main() {
       'split home army (all regiments): panel shows new army with regiment rows',
       (WidgetTester tester) async {
         const playerId = 'gp_split_ui_full';
-        const cap = 'oldWorld|cap';
-        final initial = Game(
+        final initial = buildMilitaryHomeArmyAtCapitalGame(
           id: 'g_split_full',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: cap,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Capital',
-                  townTileKey: 'tk_cap',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-                Unit(
-                  id: 'r2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'home_army',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: cap,
-                regimentUnitIds: const ['r1', 'r2'],
-                isHomeArmy: true,
-              ),
-            ],
-            nextArmySeq: 1,
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                cap: ['tk_cap'],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'Splitter',
-              isHuman: true,
-              capitalProvinceId: cap,
-            ),
-          ],
+          playerId: playerId,
+          regimentIds: const ['r1', 'r2'],
         );
 
         final bus = AppEventBus.create();
@@ -121,62 +69,11 @@ void main() {
       'split home army (partial): panel shows correct counts on both armies',
       (WidgetTester tester) async {
         const playerId = 'gp_split_ui_partial';
-        const cap = 'oldWorld|cap';
-        final initial = Game(
+        final initial = buildMilitaryHomeArmyAtCapitalGame(
           id: 'g_split_partial',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: cap,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Capital',
-                  townTileKey: 'tk_cap',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-                Unit(
-                  id: 'r2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: cap,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'home_army',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: cap,
-                regimentUnitIds: const ['r1', 'r2'],
-                isHomeArmy: true,
-              ),
-            ],
-            nextArmySeq: 7,
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                cap: ['tk_cap'],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'Splitter',
-              isHuman: true,
-              capitalProvinceId: cap,
-            ),
-          ],
+          playerId: playerId,
+          regimentIds: const ['r1', 'r2'],
+          nextArmySeq: 7,
         );
 
         final bus = AppEventBus.create();
