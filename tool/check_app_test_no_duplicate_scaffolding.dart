@@ -179,7 +179,9 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
   }
   if (name.startsWith('civilian_units_panel_part') ||
       name.startsWith('naval_units_panel_part') ||
+      name.startsWith('military_units_panel_army') ||
       name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
       name == 'naval_units_panel_mockup_fidelity_test.dart') {
     return true;

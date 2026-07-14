@@ -62,6 +62,12 @@ void main() {
     );
   }
 
+  void expectDialogChromeTexts(Iterable<String> texts) {
+    for (final text in texts) {
+      expect(find.text(text), findsOneWidget);
+    }
+  }
+
   group('parseSeedInput', () {
     test('empty and invalid map to 42', () {
       expect(NewGameLeaderSelectionDialog.parseSeedInput(''), 42);
@@ -84,19 +90,18 @@ void main() {
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
-      expect(find.text('Choose nations and leaders'), findsOneWidget);
-      expect(
-        find.text('Choose six great powers and a leader variant for each'),
-        findsOneWidget,
-      );
       // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
-      expect(find.text('Slot 1'), findsOneWidget);
-      expect(find.text('YOU'), findsOneWidget);
-      expect(find.text('Slot 2'), findsOneWidget);
-      expect(find.text('Slot 6'), findsOneWidget);
-      expect(find.text('Game seed'), findsOneWidget);
-      expect(find.text('Enter 0 for a random seed'), findsOneWidget);
-      expect(find.text('Infinite mode (no victory condition)'), findsOneWidget);
+      expectDialogChromeTexts(const [
+        'Choose nations and leaders',
+        'Choose six great powers and a leader variant for each',
+        'Slot 1',
+        'YOU',
+        'Slot 2',
+        'Slot 6',
+        'Game seed',
+        'Enter 0 for a random seed',
+        'Infinite mode (no victory condition)',
+      ]);
       // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
       expect(find.byType(CtToggleSwitch), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);

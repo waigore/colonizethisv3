@@ -77,7 +77,8 @@ Game _namedSeaZoneGame({String name = 'Named Test Sea'}) {
   );
 }
 
-Widget _overlayApp({
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
   required String displayId,
   String? selectedTileKey,
   Game? game,
@@ -94,7 +95,8 @@ Widget _overlayApp({
   bool buildImprovementActionEnabled = false,
   VoidCallback? onBuildImprovementTap,
   Size? mediaQuerySize,
-}) {
+  bool settle = true,
+}) async {
   final g = game ?? demoGameForOverlay;
   final r = region ?? demoRegionForOverlay;
   Widget child = MaterialApp(
@@ -126,53 +128,57 @@ Widget _overlayApp({
       child: child,
     );
   }
-  return child;
-}
-
-Future<void> _pumpOverlay(
-  WidgetTester tester, {
-  required String displayId,
-  String? selectedTileKey,
-  Game? game,
-  RegionMapViewData? region,
-  void Function(String?)? onHighlightTile,
-  VoidCallback? onClose,
-  bool showProspectActionIcon = false,
-  bool prospectActionEnabled = false,
-  VoidCallback? onProspectWithExplorerTap,
-  bool showExploreActionIcon = false,
-  bool exploreActionEnabled = false,
-  VoidCallback? onExploreWithExplorerTap,
-  bool showBuildImprovementActionIcon = false,
-  bool buildImprovementActionEnabled = false,
-  VoidCallback? onBuildImprovementTap,
-  Size? mediaQuerySize,
-  bool settle = true,
-}) async {
-  await tester.pumpWidget(
-    _overlayApp(
-      displayId: displayId,
-      selectedTileKey: selectedTileKey,
-      game: game,
-      region: region,
-      onHighlightTile: onHighlightTile,
-      onClose: onClose,
-      showProspectActionIcon: showProspectActionIcon,
-      prospectActionEnabled: prospectActionEnabled,
-      onProspectWithExplorerTap: onProspectWithExplorerTap,
-      showExploreActionIcon: showExploreActionIcon,
-      exploreActionEnabled: exploreActionEnabled,
-      onExploreWithExplorerTap: onExploreWithExplorerTap,
-      showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-      buildImprovementActionEnabled: buildImprovementActionEnabled,
-      onBuildImprovementTap: onBuildImprovementTap,
-      mediaQuerySize: mediaQuerySize,
-    ),
-  );
+  await tester.pumpWidget(child);
   if (settle) {
     await tester.pumpAndSettle();
   } else {
     await tester.pump();
+  }
+}
+
+/// Map + optional overlay side-by-side host (Refs #4021 densify).
+Widget _mapBesideOverlayHost({
+  required Widget map,
+  Widget? overlay,
+  bool expandMap = true,
+  double mapWidth = 400,
+  double mapHeight = 320,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: Row(
+        children: [
+          if (expandMap)
+            Expanded(child: map)
+          else
+            SizedBox(width: mapWidth, height: mapHeight, child: map),
+          if (overlay != null) SizedBox(width: 320, child: overlay),
+        ],
+      ),
+    ),
+  );
+}
+
+ProvinceSeaZoneDetailOverlay _demoOverlay({
+  required String displayId,
+  required String? selectedTileKey,
+  required VoidCallback onClose,
+}) {
+  final g = demoGameForOverlay;
+  return ProvinceSeaZoneDetailOverlay(
+    game: g,
+    region: demoRegionForOverlay,
+    displayId: displayId,
+    selectedTileKey: selectedTileKey,
+    humanPlayerId: g.players.first.id,
+    playerView: demoHumanPlayerViewForOverlay,
+    onClose: onClose,
+  );
+}
+
+void _expectOverlayTexts(Iterable<String> texts) {
+  for (final text in texts) {
+    expect(find.text(text), findsOneWidget);
   }
 }
 
@@ -205,15 +211,17 @@ void main() {
         );
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-        expect(find.text('Province'), findsOneWidget);
         // Section headers render via CtSectionLabel (Refs #2865 S4) which
         // upper-cases the label per SPEC § Dark-theme section labels.
-        expect(find.text('TILE'), findsOneWidget);
-        expect(find.text('POLITICAL'), findsOneWidget);
-        expect(find.text('ECONOMIC'), findsOneWidget);
-        expect(find.text('MILITARY'), findsOneWidget);
-        expect(find.text('CIVILIAN'), findsOneWidget);
-        expect(find.text('NAVAL'), findsOneWidget);
+        _expectOverlayTexts(const [
+          'Province',
+          'TILE',
+          'POLITICAL',
+          'ECONOMIC',
+          'MILITARY',
+          'CIVILIAN',
+          'NAVAL',
+        ]);
         expect(find.byKey(const Key('overlay_close')), findsOneWidget);
       },
     );
@@ -258,9 +266,7 @@ void main() {
       await _pumpOverlay(tester, displayId: sampleSeaZoneIdForOverlay);
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-      expect(find.text('Sea zone'), findsOneWidget);
-      expect(find.text('POLITICAL'), findsOneWidget);
-      expect(find.text('NAVAL'), findsOneWidget);
+      _expectOverlayTexts(const ['Sea zone', 'POLITICAL', 'NAVAL']);
     });
 
     testWidgets('sea zone overlay uses sea-zone display name field', (
@@ -511,44 +517,27 @@ void main() {
     testWidgets('AC: Map orange selection may persist after overlay closes', (
       WidgetTester tester,
     ) async {
-      final game = demoGameForOverlay;
       final selectedTk = sampleTileKeyForProvinceOverlay;
       var overlayOpen = true;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: StatefulBuilder(
-            builder: (context, setState) {
-              return Scaffold(
-                body: Row(
-                  children: [
-                    Expanded(
-                      child: CtRegionMap(
-                        region: demoRegionForOverlay,
-                        cellSizePx: 28,
-                        selectedTileKey: selectedTk,
-                      ),
-                    ),
-                    if (overlayOpen)
-                      SizedBox(
-                        width: 320,
-                        child: ProvinceSeaZoneDetailOverlay(
-                          game: game,
-                          region: demoRegionForOverlay,
-                          displayId: sampleProvinceIdForOverlay,
-                          selectedTileKey: selectedTk,
-                          humanPlayerId: game.players.first.id,
-                          playerView: demoHumanPlayerViewForOverlay,
-                          onClose: () => setState(() {
-                            overlayOpen = false;
-                          }),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _mapBesideOverlayHost(
+              map: CtRegionMap(
+                region: demoRegionForOverlay,
+                cellSizePx: 28,
+                selectedTileKey: selectedTk,
+              ),
+              overlay: overlayOpen
+                  ? _demoOverlay(
+                      displayId: sampleProvinceIdForOverlay,
+                      selectedTileKey: selectedTk,
+                      onClose: () => setState(() => overlayOpen = false),
+                    )
+                  : null,
+            );
+          },
         ),
       );
       await tester.pump();
@@ -570,47 +559,33 @@ void main() {
         String? selectedTileKey;
         var overlayOpen = false;
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: StatefulBuilder(
-                builder: (context, setState) {
-                  return Row(
-                    children: [
-                      SizedBox(
-                        width: 400,
-                        height: 320,
-                        child: CtRegionMap(
-                          region: region,
-                          cellSizePx: 28,
-                          selectedTileKey: selectedTileKey,
-                          onMapTileTappedForDetail: (tk) => setState(() {
-                            selectedTileKey = tk;
-                            overlayOpen = true;
-                          }),
-                        ),
-                      ),
-                      if (overlayOpen && selectedTileKey != null)
-                        SizedBox(
-                          width: 320,
-                          child: ProvinceSeaZoneDetailOverlay(
-                            game: demoGameForOverlay,
-                            region: demoRegionForOverlay,
-                            displayId: selectedTileKey!.split('|').length >= 2
-                                ? '${selectedTileKey!.split('|')[0]}|${selectedTileKey!.split('|')[1]}'
-                                : '',
-                            selectedTileKey: selectedTileKey,
-                            humanPlayerId: demoGameForOverlay.players.first.id,
-                            playerView: demoHumanPlayerViewForOverlay,
-                            onClose: () => setState(() {
-                              overlayOpen = false;
-                            }),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
+          StatefulBuilder(
+            builder: (context, setState) {
+              final tk = selectedTileKey;
+              final parts = tk?.split('|') ?? const <String>[];
+              final displayId = parts.length >= 2
+                  ? '${parts[0]}|${parts[1]}'
+                  : '';
+              return _mapBesideOverlayHost(
+                expandMap: false,
+                map: CtRegionMap(
+                  region: region,
+                  cellSizePx: 28,
+                  selectedTileKey: selectedTileKey,
+                  onMapTileTappedForDetail: (next) => setState(() {
+                    selectedTileKey = next;
+                    overlayOpen = true;
+                  }),
+                ),
+                overlay: overlayOpen && tk != null
+                    ? _demoOverlay(
+                        displayId: displayId,
+                        selectedTileKey: tk,
+                        onClose: () => setState(() => overlayOpen = false),
+                      )
+                    : null,
+              );
+            },
           ),
         );
         await tester.pump();

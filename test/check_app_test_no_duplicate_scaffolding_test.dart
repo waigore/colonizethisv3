@@ -328,6 +328,56 @@ WidgetbookUseCase _useCase(
     );
   });
 
+  test('fails when military army suite inlines Game(', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_army_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_army_test.dart',
+      'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline Game( construction'),
+    );
+  });
+
+  test('fails when military display suite inlines Game(', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_display_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_display_test.dart',
+      'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline Game( construction'),
+    );
+  });
+
   test('passes when naval mockup-fidelity uses shared OwFleets factory only', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_app_test_no_dup_scaffolding_naval_ok_',

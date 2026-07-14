@@ -168,6 +168,43 @@ void main() {
     humanPlayerId: humanPlayerId,
   );
 
+  RegionMapViewData regionWithExplorerMarker(
+    String regionId,
+    String sourceTile,
+  ) => baseRegion(
+    regionId,
+    markers: [
+      civilianMarker(
+        tileKey: sourceTile,
+        unitId: explorerId,
+        unitType: ct_models.kUnitTypeExplorer,
+      ),
+    ],
+  );
+
+  void expectSingleProjectedTile({
+    required RegionMapViewData region,
+    required ct_models.Game game,
+    required ct_models.Orders orders,
+    required String tileKey,
+  }) {
+    final projected = projectDraft(region: region, game: game, orders: orders);
+    expect(projected.civilianTileMarkers, hasLength(1));
+    expect(projected.civilianTileMarkers.single.tileKey, tileKey);
+  }
+
+  void expectEmptyProjection({
+    required RegionMapViewData region,
+    required ct_models.Game game,
+    required ct_models.Orders orders,
+  }) {
+    expect(
+      projectDraft(region: region, game: game, orders: orders)
+          .civilianTileMarkers,
+      isEmpty,
+    );
+  }
+
   group('GameMapAreaStateLogic', () {
     test(
       'projectCivilianMarkersForHumanDraft projects pending assignment tile in same turn',
@@ -238,36 +275,28 @@ void main() {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
           final game = gameExplorerOldToNew(sourceTile: sourceTile);
-          final oldRegion = baseRegion(
-            'oldWorld',
-            markers: [
-              civilianMarker(
-                tileKey: sourceTile,
-                unitId: explorerId,
-                unitType: ct_models.kUnitTypeExplorer,
-              ),
-            ],
-          );
+          final oldRegion = regionWithExplorerMarker('oldWorld', sourceTile);
           final newRegion = baseRegion('newWorld');
           final orders = prospectOrder(targetTile);
 
-          final projectedNw = projectDraft(
+          expectSingleProjectedTile(
             region: newRegion,
             game: game,
             orders: orders,
+            tileKey: targetTile,
           );
-          expect(projectedNw.civilianTileMarkers, hasLength(1));
-          final nwMarker = projectedNw.civilianTileMarkers.single;
-          expect(nwMarker.tileKey, targetTile);
+          final nwMarker = projectDraft(
+            region: newRegion,
+            game: game,
+            orders: orders,
+          ).civilianTileMarkers.single;
           expect(nwMarker.localProvinceId, 'p1');
           expect(nwMarker.unitIds, contains(explorerId));
-
-          final projectedOw = projectDraft(
+          expectEmptyProjection(
             region: oldRegion,
             game: game,
             orders: orders,
           );
-          expect(projectedOw.civilianTileMarkers, isEmpty);
         });
 
         test('New World explorer with prospect draft appears in Old World '
@@ -291,33 +320,21 @@ void main() {
               ],
             ),
           );
-          final newRegion = baseRegion(
-            'newWorld',
-            markers: [
-              civilianMarker(
-                tileKey: sourceTile,
-                unitId: explorerId,
-                unitType: ct_models.kUnitTypeExplorer,
-              ),
-            ],
-          );
+          final newRegion = regionWithExplorerMarker('newWorld', sourceTile);
           final oldRegion = baseRegion('oldWorld');
           final orders = prospectOrder(targetTile);
 
-          final projectedOw = projectDraft(
+          expectSingleProjectedTile(
             region: oldRegion,
             game: game,
             orders: orders,
+            tileKey: targetTile,
           );
-          expect(projectedOw.civilianTileMarkers, hasLength(1));
-          expect(projectedOw.civilianTileMarkers.single.tileKey, targetTile);
-
-          final projectedNw = projectDraft(
+          expectEmptyProjection(
             region: newRegion,
             game: game,
             orders: orders,
           );
-          expect(projectedNw.civilianTileMarkers, isEmpty);
         });
 
         test(
@@ -326,12 +343,10 @@ void main() {
             const sourceTile = 'oldWorld|p1|0|0';
             const targetTile = 'newWorld|p1|1|0';
             final game = gameExplorerOldToNew(sourceTile: sourceTile);
-            final newRegion = baseRegion('newWorld');
-            final orders = prospectOrder(targetTile);
             final projectedNw = projectDraft(
-              region: newRegion,
+              region: baseRegion('newWorld'),
               game: game,
-              orders: orders,
+              orders: prospectOrder(targetTile),
             );
             expect(projectedNw.civilianTileMarkers.single.tileKey, targetTile);
             expect(
@@ -345,19 +360,10 @@ void main() {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
           final game = gameExplorerOldToNew(sourceTile: sourceTile);
-          final oldRegion = baseRegion(
-            'oldWorld',
-            markers: [
-              civilianMarker(
-                tileKey: sourceTile,
-                unitId: explorerId,
-                unitType: ct_models.kUnitTypeExplorer,
-              ),
-            ],
-          );
+          final oldRegion = regionWithExplorerMarker('oldWorld', sourceTile);
           final newRegion = baseRegion('newWorld');
           final ordersDraft = prospectOrder(targetTile);
-          final cleared = const ct_models.Orders();
+          const cleared = ct_models.Orders();
 
           expect(
             projectDraft(
@@ -367,20 +373,17 @@ void main() {
             ).civilianTileMarkers,
             isNotEmpty,
           );
-          final afterCancelNw = projectDraft(
+          expectEmptyProjection(
             region: newRegion,
             game: game,
             orders: cleared,
           );
-          expect(afterCancelNw.civilianTileMarkers, isEmpty);
-
-          final afterCancelOw = projectDraft(
+          expectSingleProjectedTile(
             region: oldRegion,
             game: game,
             orders: cleared,
+            tileKey: sourceTile,
           );
-          expect(afterCancelOw.civilianTileMarkers, hasLength(1));
-          expect(afterCancelOw.civilianTileMarkers.single.tileKey, sourceTile);
         });
 
         test(
@@ -400,13 +403,11 @@ void main() {
             final ordersA = prospectOrder(targetA);
             final ordersB = prospectOrder(targetB);
 
-            expect(
-              projectDraft(
-                region: newRegion,
-                game: game,
-                orders: ordersA,
-              ).civilianTileMarkers.single.tileKey,
-              targetA,
+            expectSingleProjectedTile(
+              region: newRegion,
+              game: game,
+              orders: ordersA,
+              tileKey: targetA,
             );
             final markerB = projectDraft(
               region: newRegion,
@@ -468,24 +469,10 @@ void main() {
           final m = projected.civilianTileMarkers.single;
           expect(m.tileKey, targetTile);
           expect(m.unitIds, containsAll([explorerId, merchantId]));
-
-          final oldRegion = baseRegion(
-            'oldWorld',
-            markers: [
-              civilianMarker(
-                tileKey: sourceTile,
-                unitId: explorerId,
-                unitType: ct_models.kUnitTypeExplorer,
-              ),
-            ],
-          );
-          expect(
-            projectDraft(
-              region: oldRegion,
-              game: game,
-              orders: orders,
-            ).civilianTileMarkers,
-            isEmpty,
+          expectEmptyProjection(
+            region: regionWithExplorerMarker('oldWorld', sourceTile),
+            game: game,
+            orders: orders,
           );
         });
       },
