@@ -300,7 +300,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 |--------|-------|-------------------|
 | `naval_units_panel_test` | 5 | Combined physical lines ~2402 ≫1000 |
 | `ct_region_map_widget_test` | 4 | Combined physical lines ~2018 ≫1000 |
-| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1785 ≫1000 |
+| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1710 ≫1000 |
 | `military_units_panel_test` | army/display/split siblings | Combined physical lines ~1079 ≫1000 |
 | `civilian_units_panel_test` | 3 | Combined physical lines ~1471 ≫1000 |
 

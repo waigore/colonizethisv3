@@ -9,6 +9,23 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
+  Game emptyWorldGame({
+    required String id,
+    TurnPhase phase = TurnPhase.orders,
+    int turnNumber = 1,
+    required List<Player> players,
+  }) {
+    return Game(
+      id: id,
+      worldState: WorldState(
+        turnState: TurnState(phase: phase, turnNumber: turnNumber),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: players,
+    );
+  }
+
   group('applyDebugTreasuryCredit', () {
     test('returns message when there is no active game', () {
       const event = CreditDebugTreasuryEvent(
@@ -22,13 +39,8 @@ void main() {
     });
 
     test('adds credited amount to human player treasury', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-treasury',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 100),
           Player(id: 'p2', displayName: 'P2', isHuman: false),
@@ -48,13 +60,8 @@ void main() {
     });
 
     test('clamped success message includes requested and credited amounts', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-treasury2',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 0),
         ],
@@ -71,13 +78,9 @@ void main() {
     });
 
     test('rejects command outside human orders phase', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-treasury3',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
+        phase: TurnPhase.movement,
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 10),
         ],
@@ -98,13 +101,8 @@ void main() {
 
   group('applyDebugStockpileCredit', () {
     test('adds credited amount to human player stockpile commodity', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-stockpile',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [
           Player(
             id: 'p1',
@@ -130,13 +128,9 @@ void main() {
     });
 
     test('rejects add_resource command outside human orders phase', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-stockpile2',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
+        phase: TurnPhase.movement,
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       const event = CreditDebugStockpileCommodityEvent(
@@ -154,13 +148,8 @@ void main() {
     });
 
     test('clamped success message includes requested and credited amounts', () {
-      final game = Game(
+      final game = emptyWorldGame(
         id: 'g-stockpile3',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       const event = CreditDebugStockpileCommodityEvent(
@@ -181,7 +170,14 @@ void main() {
   });
 
   group('applyDebugFlipProvinceOwnership', () {
-    Game _baseGame({
+    const flipHuman = Player(
+      id: 'human_1',
+      displayName: 'Human',
+      isHuman: true,
+    );
+    const flipAi = Player(id: 'ai_1', displayName: 'AI', isHuman: false);
+
+    Game baseGame({
       required TurnPhase phase,
       required String ownerId,
       required String humanVisibility,
@@ -218,29 +214,39 @@ void main() {
             'human_1': {'oldWorld|P1|0|0': humanVisibility},
           },
         ),
-        players: const [
-          Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
-        ],
+        players: const [flipHuman, flipAi],
+      );
+    }
+
+    FlipDebugProvinceOwnershipEvent nameEvent([
+      String displayName = 'New Bordeaux',
+    ]) {
+      return FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: displayName,
+      );
+    }
+
+    ({Game? game, String message}) flip(
+      Game game,
+      FlipDebugProvinceOwnershipEvent event,
+    ) {
+      return applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
       );
     }
 
     test('flips province through canonical transfer on valid command', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'ai_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'ai_1',
+          humanVisibility: 'fogged',
+        ),
+        nameEvent(),
       );
 
       expect(result.game, isNotNull);
@@ -254,21 +260,13 @@ void main() {
     });
 
     test('rejects command outside human orders phase', () {
-      final game = _baseGame(
-        phase: TurnPhase.movement,
-        ownerId: 'ai_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.movement,
+          ownerId: 'ai_1',
+          humanVisibility: 'fogged',
+        ),
+        nameEvent(),
       );
 
       expect(result.game, isNull);
@@ -279,21 +277,13 @@ void main() {
     });
 
     test('rejects unknown province visibility to human', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'ai_1',
-        humanVisibility: 'unknown',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'ai_1',
+          humanVisibility: 'unknown',
+        ),
+        nameEvent(),
       );
 
       expect(result.game, isNull);
@@ -301,21 +291,13 @@ void main() {
     });
 
     test('rejects already human-owned province', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'human_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'human_1',
+          humanVisibility: 'fogged',
+        ),
+        nameEvent(),
       );
 
       expect(result.game, isNull);
@@ -357,43 +339,23 @@ void main() {
             },
           },
         ),
-        players: const [
-          Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
-        ],
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
+        players: const [flipHuman, flipAi],
       );
 
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
-      );
+      final result = flip(game, nameEvent());
 
       expect(result.game, isNull);
       expect(result.message, contains('ambiguous'));
     });
 
     test('rejects province display name not found in region', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'ai_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'Nonexistent Province',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'ai_1',
+          humanVisibility: 'fogged',
+        ),
+        nameEvent('Nonexistent Province'),
       );
 
       expect(result.game, isNull);
@@ -425,43 +387,23 @@ void main() {
             'human_1': {'oldWorld|P1|0|0': 'fogged'},
           },
         ),
-        players: const [
-          Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
-        ],
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
+        players: const [flipHuman, flipAi],
       );
 
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
-      );
+      final result = flip(game, nameEvent());
 
       expect(result.game, isNull);
       expect(result.message, contains('no current owner'));
     });
 
     test('JSON round-trip preserves flip outcome (persistence parity)', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'ai_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: 'New Bordeaux',
-      );
-
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'ai_1',
+          humanVisibility: 'fogged',
+        ),
+        nameEvent(),
       );
 
       expect(result.game, isNotNull);
@@ -507,21 +449,9 @@ void main() {
               },
             },
           ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-            Player(id: 'ai_1', displayName: 'AI', isHuman: false),
-          ],
+          players: const [flipHuman, flipAi],
         );
-        const event = FlipDebugProvinceOwnershipEvent(
-          humanPlayerId: 'human_1',
-          regionId: 'oldWorld',
-          provinceDisplayName: 'New Bordeaux',
-        );
-        final result = applyDebugFlipProvinceOwnership(
-          currentGame: game,
-          event: event,
-          combinedTopology: const MapTopology(),
-        );
+        final result = flip(game, nameEvent());
         expect(result.game, isNull);
         expect(
           result.message,
@@ -532,19 +462,16 @@ void main() {
     );
 
     test('flip resolves directly by full province id', () {
-      final game = _baseGame(
-        phase: TurnPhase.orders,
-        ownerId: 'ai_1',
-        humanVisibility: 'fogged',
-      );
-      const event = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        fullProvinceId: 'oldWorld|P1',
-      );
-      final result = applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
+      final result = flip(
+        baseGame(
+          phase: TurnPhase.orders,
+          ownerId: 'ai_1',
+          humanVisibility: 'fogged',
+        ),
+        const FlipDebugProvinceOwnershipEvent(
+          humanPlayerId: 'human_1',
+          fullProvinceId: 'oldWorld|P1',
+        ),
       );
       expect(result.game, isNotNull);
       expect(

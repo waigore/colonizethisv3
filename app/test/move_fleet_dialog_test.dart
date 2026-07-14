@@ -109,10 +109,14 @@ void main() {
   Future<void> openDialog(
     WidgetTester tester, {
     required AppEventBus bus,
+    Game? game,
+    MapTopology? topology,
+    Fleet? fleet,
+    String playerId = humanId,
   }) async {
-    final game = buildGame();
-    final topology = buildTopology();
-    final fleet = buildFleet();
+    final resolvedGame = game ?? buildGame();
+    final resolvedTopology = topology ?? buildTopology();
+    final resolvedFleet = fleet ?? buildFleet();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -122,10 +126,10 @@ void main() {
                 showDialog<void>(
                   context: context,
                   builder: (_) => MoveFleetDialog(
-                    game: game,
-                    topology: topology,
-                    humanPlayerId: humanId,
-                    fleet: fleet,
+                    game: resolvedGame,
+                    topology: resolvedTopology,
+                    humanPlayerId: playerId,
+                    fleet: resolvedFleet,
                     bus: bus,
                   ),
                 );
@@ -161,97 +165,73 @@ void main() {
   testWidgets(
     'shows links-to Old World for new-world fleet cross-region picks',
     (WidgetTester tester) async {
-      const humanId = 'gp_move_dialog_nw';
-      const originSea = 'sea_nw_origin';
+      const nwHumanId = 'gp_move_dialog_nw';
+      const nwOriginSea = 'sea_nw_origin';
       const sameRegionAdjacentSea = 'sea_nw_local';
       const crossRegionAdjacentSea = 'sea_ow_cross';
-      final game = Game(
-        id: 'g_move_dialog_nw',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          portsByProvinceSeaboard: const {},
-          seaZoneDisplayNameById: const {
-            'newWorld|sea_nw_origin': 'Origin NW Sea',
-            'newWorld|sea_nw_local': 'Adjacent NW Sea',
-            'oldWorld|sea_ow_cross': 'Cross OW Sea',
-          },
+      await openDialog(
+        tester,
+        bus: AppEventBus.create(),
+        playerId: nwHumanId,
+        game: Game(
+          id: 'g_move_dialog_nw',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            portsByProvinceSeaboard: const {},
+            seaZoneDisplayNameById: const {
+              'newWorld|sea_nw_origin': 'Origin NW Sea',
+              'newWorld|sea_nw_local': 'Adjacent NW Sea',
+              'oldWorld|sea_ow_cross': 'Cross OW Sea',
+            },
+          ),
+          players: const [
+            Player(
+              id: nwHumanId,
+              displayName: 'Move Dialog Tester NW',
+              isHuman: true,
+              capitalProvinceId: 'newWorld|port_home_nw',
+              capitalTile: CapitalTile(
+                regionId: 'newWorld',
+                provinceId: 'newWorld|port_home_nw',
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
         ),
-        players: const [
-          Player(
-            id: humanId,
-            displayName: 'Move Dialog Tester NW',
-            isHuman: true,
-            capitalProvinceId: 'newWorld|port_home_nw',
-            capitalTile: CapitalTile(
+        topology: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: nwOriginSea,
               regionId: 'newWorld',
-              provinceId: 'newWorld|port_home_nw',
-              x: 0,
-              y: 0,
+              type: TopologyNodeType.seaZone,
             ),
-          ),
-        ],
-      );
-      const topology = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: originSea,
-            regionId: 'newWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: sameRegionAdjacentSea,
-            regionId: 'newWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: crossRegionAdjacentSea,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [
-          TopologyEdge(id1: originSea, id2: sameRegionAdjacentSea),
-          TopologyEdge(id1: originSea, id2: crossRegionAdjacentSea),
-        ],
-      );
-      final fleet = Fleet(
-        id: 'f_move_nw',
-        ownerId: humanId,
-        regionId: 'newWorld',
-        seaZoneId: originSea,
-        ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-      );
-      final bus = AppEventBus.create();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => MoveFleetDialog(
-                        game: game,
-                        topology: topology,
-                        humanPlayerId: humanId,
-                        fleet: fleet,
-                        bus: bus,
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
+            TopologyNode(
+              id: sameRegionAdjacentSea,
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
             ),
-          ),
+            TopologyNode(
+              id: crossRegionAdjacentSea,
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [
+            TopologyEdge(id1: nwOriginSea, id2: sameRegionAdjacentSea),
+            TopologyEdge(id1: nwOriginSea, id2: crossRegionAdjacentSea),
+          ],
+        ),
+        fleet: Fleet(
+          id: 'f_move_nw',
+          ownerId: nwHumanId,
+          regionId: 'newWorld',
+          seaZoneId: nwOriginSea,
+          ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
         ),
       );
-
-      await tester.tap(find.text('open'));
-      await tester.pump();
 
       expect(find.text('Adjacent NW Sea'), findsOneWidget);
       expect(find.text('Cross OW Sea links to Old World'), findsOneWidget);
@@ -336,102 +316,78 @@ void main() {
       const ow = 'oldWorld';
       const localCap = 'port_cap';
       final fullCap = '$ow|$localCap';
-      final combinedTopology = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: fullCap,
-            regionId: ow,
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: '$ow|sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: '$ow|sea2',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [
-          TopologyEdge(id1: fullCap, id2: '$ow|sea1'),
-          TopologyEdge(id1: fullCap, id2: '$ow|sea2'),
-          TopologyEdge(id1: '$ow|sea1', id2: '$ow|sea2'),
-        ],
-      );
-      final gameInPort = Game(
-        id: 'g_move_dialog_in_port',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: fullCap,
-                regionId: ow,
-                ownerId: humanId,
-                displayName: 'Seabound Capital',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          portsByProvinceSeaboard: const {},
-          seaZoneDisplayNameById: const {
-            'oldWorld|sea1': 'First Sea',
-            'oldWorld|sea2': 'Second Sea',
-          },
-        ),
-        players: [
-          Player(
-            id: humanId,
-            displayName: 'Move Dialog Tester',
-            isHuman: true,
-            capitalProvinceId: fullCap,
-            capitalTile: CapitalTile(
+      await openDialog(
+        tester,
+        bus: AppEventBus.create(),
+        topology: MapTopology(
+          nodes: [
+            TopologyNode(
+              id: fullCap,
               regionId: ow,
-              provinceId: fullCap,
-              x: 0,
-              y: 0,
+              type: TopologyNodeType.province,
             ),
-          ),
-        ],
-      );
-      final fleetInPort = Fleet(
-        id: 'f_in_port',
-        ownerId: humanId,
-        regionId: ow,
-        seaZoneId: null,
-        inPortAtProvinceId: fullCap,
-        ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-      );
-      final bus = AppEventBus.create();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => MoveFleetDialog(
-                        game: gameInPort,
-                        topology: combinedTopology,
-                        humanPlayerId: humanId,
-                        fleet: fleetInPort,
-                        bus: bus,
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
+            TopologyNode(
+              id: '$ow|sea1',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
             ),
+            TopologyNode(
+              id: '$ow|sea2',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [
+            TopologyEdge(id1: fullCap, id2: '$ow|sea1'),
+            TopologyEdge(id1: fullCap, id2: '$ow|sea2'),
+            TopologyEdge(id1: '$ow|sea1', id2: '$ow|sea2'),
+          ],
+        ),
+        game: Game(
+          id: 'g_move_dialog_in_port',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: fullCap,
+                  regionId: ow,
+                  ownerId: humanId,
+                  displayName: 'Seabound Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            portsByProvinceSeaboard: const {},
+            seaZoneDisplayNameById: const {
+              'oldWorld|sea1': 'First Sea',
+              'oldWorld|sea2': 'Second Sea',
+            },
           ),
+          players: [
+            Player(
+              id: humanId,
+              displayName: 'Move Dialog Tester',
+              isHuman: true,
+              capitalProvinceId: fullCap,
+              capitalTile: CapitalTile(
+                regionId: ow,
+                provinceId: fullCap,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        ),
+        fleet: Fleet(
+          id: 'f_in_port',
+          ownerId: humanId,
+          regionId: ow,
+          seaZoneId: null,
+          inPortAtProvinceId: fullCap,
+          ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
         ),
       );
-      await tester.tap(find.text('open'));
-      await tester.pump();
 
       expect(
         find.text('No adjacent sea zones (check map topology).'),
@@ -447,109 +403,87 @@ void main() {
   testWidgets('sea zone section lists S–S neighbors only, not provinces', (
     WidgetTester tester,
   ) async {
-    const humanId = 'gp_mix';
+    const mixHumanId = 'gp_mix';
     const seaA = 'sea_a';
     const seaB = 'sea_b';
     const coastProv = 'coast_p';
-    final game = Game(
-      id: 'g_mix',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|inland_cap',
-              regionId: 'oldWorld',
-              ownerId: humanId,
-              displayName: 'Inland Capital',
-            ),
-            Province(
-              id: 'oldWorld|$coastProv',
-              regionId: 'oldWorld',
-              ownerId: humanId,
-              displayName: 'Coastal Province',
-            ),
-          ],
+    await openDialog(
+      tester,
+      bus: AppEventBus.create(),
+      playerId: mixHumanId,
+      game: Game(
+        id: 'g_mix',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|inland_cap',
+                regionId: 'oldWorld',
+                ownerId: mixHumanId,
+                displayName: 'Inland Capital',
+              ),
+              Province(
+                id: 'oldWorld|$coastProv',
+                regionId: 'oldWorld',
+                ownerId: mixHumanId,
+                displayName: 'Coastal Province',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          portsByProvinceSeaboard: const {},
+          seaZoneDisplayNameById: const {
+            'oldWorld|$seaA': 'Alpha Sea',
+            'oldWorld|$seaB': 'Beta Sea',
+          },
         ),
-        newWorld: const RegionData(),
-        portsByProvinceSeaboard: const {},
-        seaZoneDisplayNameById: const {
-          'oldWorld|$seaA': 'Alpha Sea',
-          'oldWorld|$seaB': 'Beta Sea',
-        },
+        players: const [
+          Player(
+            id: mixHumanId,
+            displayName: 'T',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|inland_cap',
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|inland_cap',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
       ),
-      players: const [
-        Player(
-          id: humanId,
-          displayName: 'T',
-          isHuman: true,
-          capitalProvinceId: 'oldWorld|inland_cap',
-          capitalTile: CapitalTile(
+      topology: const MapTopology(
+        nodes: [
+          TopologyNode(
+            id: seaA,
             regionId: 'oldWorld',
-            provinceId: 'oldWorld|inland_cap',
-            x: 0,
-            y: 0,
+            type: TopologyNodeType.seaZone,
           ),
-        ),
-      ],
-    );
-    const topology = MapTopology(
-      nodes: [
-        TopologyNode(
-          id: seaA,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: seaB,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: coastProv,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: [
-        TopologyEdge(id1: seaA, id2: coastProv),
-        TopologyEdge(id1: seaA, id2: seaB),
-      ],
-    );
-    final fleet = Fleet(
-      id: 'f_mix',
-      ownerId: humanId,
-      regionId: 'oldWorld',
-      seaZoneId: seaA,
-      ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-    );
-    final bus = AppEventBus.create();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return TextButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) => MoveFleetDialog(
-                      game: game,
-                      topology: topology,
-                      humanPlayerId: humanId,
-                      fleet: fleet,
-                      bus: bus,
-                    ),
-                  );
-                },
-                child: const Text('open'),
-              );
-            },
+          TopologyNode(
+            id: seaB,
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
           ),
-        ),
+          TopologyNode(
+            id: coastProv,
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: seaA, id2: coastProv),
+          TopologyEdge(id1: seaA, id2: seaB),
+        ],
+      ),
+      fleet: Fleet(
+        id: 'f_mix',
+        ownerId: mixHumanId,
+        regionId: 'oldWorld',
+        seaZoneId: seaA,
+        ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
       ),
     );
-    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
     // CtSectionLabel upper-cases its text per the editorial-monocle catalog
