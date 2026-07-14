@@ -14,9 +14,14 @@ import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'game_start_intro_overlay.dart';
 import 'ct_dialogue_view.dart';
+import 'yarn_dialogue_bootstrap.dart';
 
 part 'tribe_first_contact_overlay_flow.dart';
 part 'tribe_first_contact_overlay_build.dart';
+
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
+CtDialogueView _createTribeFirstContactDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
 
 /// Blocking herald when the human GP first discovers a Tribe faction.
 /// SPEC/ui/tribe-first-contact-overlay.md (OVL80001).

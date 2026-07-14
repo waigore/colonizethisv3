@@ -32,39 +32,18 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons,
         visibilityForTerrainForMapCell;
-import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/ct_region_map_game.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
-CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
-  final finder = find.byWidgetPredicate(
-    (w) => w.runtimeType.toString().startsWith('GameWidget<'),
-  );
-  expect(finder, findsOneWidget);
-  final gameWidget = tester.widget(finder);
-  final game = (gameWidget as dynamic).game as CtRegionMapGame;
-  return game.debugMapComponentForTest;
-}
 
 void main() {
   suppressLogsForTests();
 
   group('CtRegionMap (Flame map widget)', () {
-    setUpAll(() async {
-      // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
-      // pump() is not enough when tests run alone (e.g. CI --total-shards).
-      await terrainTilesetCache.load();
-      await transportOverlayTilesetCache.load();
-      await resourceIconCache.load();
-      await civilianIconCache.load();
-      await townIconCache.load();
-      await provinceLabelIconCache.load();
-    });
+    setUpAll(warmCtRegionMapCachesForTests);
 
     testWidgets(
       'tap on port drawable sea cell emits OpenProvinceDetailPanelEvent same as town',

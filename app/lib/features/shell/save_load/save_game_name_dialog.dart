@@ -18,32 +18,24 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+part 'save_game_name_dialog_body.dart';
+
 /// Prompts for a save display name, sanitizes to Hive id, confirms overwrite.
 class SaveGameNameDialog extends ConsumerStatefulWidget {
   const SaveGameNameDialog({super.key});
 
   /// SPEC/ui/save-game-name-dialog.md — [UiScreenIds.saveGameNameDialog].
   static const screenId = UiScreenIds.saveGameNameDialog;
-
-  static const Key nameFieldKey = ValueKey<String>('saveGameNameDialog.nameField');
-  static const Key cancelButtonKey = ValueKey<String>(
-    'saveGameNameDialog.cancelButton',
-  );
-  static const Key saveButtonKey = ValueKey<String>(
-    'saveGameNameDialog.saveButton',
-  );
-  static const Key errorTextKey = ValueKey<String>(
-    'saveGameNameDialog.errorText',
-  );
-  static const Key overwriteConfirmKey = ValueKey<String>(
-    'saveGameNameDialog.overwriteConfirm',
-  );
-  static const Key overwriteCancelButtonKey = ValueKey<String>(
-    'saveGameNameDialog.overwriteCancel',
-  );
-  static const Key overwriteConfirmButtonKey = ValueKey<String>(
-    'saveGameNameDialog.overwriteConfirmButton',
-  );
+  static const Key nameFieldKey = ValueKey('saveGameNameDialog.nameField');
+  static const Key cancelButtonKey = ValueKey('saveGameNameDialog.cancelButton');
+  static const Key saveButtonKey = ValueKey('saveGameNameDialog.saveButton');
+  static const Key errorTextKey = ValueKey('saveGameNameDialog.errorText');
+  static const Key overwriteConfirmKey =
+      ValueKey('saveGameNameDialog.overwriteConfirm');
+  static const Key overwriteCancelButtonKey =
+      ValueKey('saveGameNameDialog.overwriteCancel');
+  static const Key overwriteConfirmButtonKey =
+      ValueKey('saveGameNameDialog.overwriteConfirmButton');
 
   @override
   ConsumerState<SaveGameNameDialog> createState() => _SaveGameNameDialogState();
@@ -71,40 +63,31 @@ class _SaveGameNameDialogState extends ConsumerState<SaveGameNameDialog> {
     super.dispose();
   }
 
-  void _onCancel() {
-    Navigator.of(context).pop();
+  void _onCancel() => Navigator.of(context).pop();
+
+  void _setFeedback({String? error, bool awaiting = false, String? id, String? name}) {
+    setState(() {
+      _errorText = error;
+      _awaitingOverwrite = awaiting;
+      _pendingSanitizedId = id;
+      _pendingDisplayName = name;
+    });
   }
 
   void _onSavePressed() {
     final typed = _controller.text;
     final sanitized = sanitizeGameId(typed);
     if (sanitized == null) {
-      setState(() {
-        _errorText = appL10n(context).saveGameName_invalidName;
-        _awaitingOverwrite = false;
-        _pendingSanitizedId = null;
-        _pendingDisplayName = null;
-      });
+      _setFeedback(error: appL10n(context).saveGameName_invalidName);
       return;
     }
     final service = ref.read(gameServiceProvider);
-    final existing = service.listGameIds();
-    if (existing.contains(sanitized)) {
-      setState(() {
-        _errorText = null;
-        _awaitingOverwrite = true;
-        _pendingSanitizedId = sanitized;
-        _pendingDisplayName = typed.trim();
-      });
+    if (service.listGameIds().contains(sanitized)) {
+      _setFeedback(awaiting: true, id: sanitized, name: typed.trim());
       return;
     }
     if (!service.canCreateNewManualSave()) {
-      setState(() {
-        _errorText = appL10n(context).saveGameName_atCapError;
-        _awaitingOverwrite = false;
-        _pendingSanitizedId = null;
-        _pendingDisplayName = null;
-      });
+      _setFeedback(error: appL10n(context).saveGameName_atCapError);
       return;
     }
     _persist(sanitized, typed.trim());
@@ -113,151 +96,18 @@ class _SaveGameNameDialogState extends ConsumerState<SaveGameNameDialog> {
   void _onOverwriteConfirm() {
     final id = _pendingSanitizedId;
     final name = _pendingDisplayName;
-    if (id == null || name == null) {
-      return;
-    }
-    _persist(id, name);
+    if (id != null && name != null) _persist(id, name);
   }
 
-  void _onOverwriteCancel() {
-    setState(() {
-      _awaitingOverwrite = false;
-      _pendingSanitizedId = null;
-      _pendingDisplayName = null;
-    });
-  }
-
-  void _persist(String saveGameId, String displayName) {
-    final game = ref.read(currentGameProvider);
-    if (game == null) {
-      return;
-    }
-    final service = ref.read(gameServiceProvider);
-    final orders = ref.read(currentOrdersProvider);
-    final desired = ref.read(productionDesiredOutputProvider);
-    service.saveGameSession(
-      sessionGame: game,
-      saveGameId: saveGameId,
-      draftOrders: orders,
-      productionDesiredOutputByRecipe: desired,
-      displayName: displayName,
-    );
-    ref.read(appEventBusProvider).emit(
-      ShowSnackBarEvent(message: appL10n(context).saveGameName_gameSaved),
-    );
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
-  }
+  void _onOverwriteCancel() => _setFeedback();
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final theme = Theme.of(context);
-    final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
-        .copyWith(
-          color: EditorialMonoclePalette.accent,
-          fontWeight: FontWeight.w700,
-        );
-    final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-      color: EditorialMonoclePalette.fg,
-    );
-    final errorStyle = bodyStyle.copyWith(color: EditorialMonoclePalette.danger);
-    final idleBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: EditorialMonoclePalette.border),
-    );
-
     return CtDialogShell(
       maxWidth: 420,
       maxHeight: 360,
       padding: const EdgeInsets.all(CtSpacing.l),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l10n.saveGameName_title, style: titleStyle),
-          CtGap.ml,
-          TextField(
-            key: SaveGameNameDialog.nameFieldKey,
-            controller: _controller,
-            style: bodyStyle,
-            decoration: InputDecoration(
-              isDense: true,
-              border: idleBorder,
-              enabledBorder: idleBorder,
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: EditorialMonoclePalette.accent,
-                  width: 2,
-                ),
-              ),
-            ),
-            onChanged: (_) {
-              if (_errorText != null || _awaitingOverwrite) {
-                setState(() {
-                  _errorText = null;
-                  _awaitingOverwrite = false;
-                  _pendingSanitizedId = null;
-                  _pendingDisplayName = null;
-                });
-              }
-            },
-          ),
-          if (_errorText != null) ...[
-            CtGap.m,
-            Text(
-              _errorText!,
-              key: SaveGameNameDialog.errorTextKey,
-              style: errorStyle,
-            ),
-          ],
-          if (_awaitingOverwrite) ...[
-            CtGap.m,
-            Text(
-              l10n.saveGameName_overwriteConfirm,
-              key: SaveGameNameDialog.overwriteConfirmKey,
-              style: bodyStyle,
-            ),
-            CtGap.m,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  key: SaveGameNameDialog.overwriteCancelButtonKey,
-                  onPressed: _onOverwriteCancel,
-                  child: Text(l10n.common_cancel),
-                ),
-                const SizedBox(width: CtSpacing.m),
-                CtNinePatchButton(
-                  key: SaveGameNameDialog.overwriteConfirmButtonKey,
-                  onPressed: _onOverwriteConfirm,
-                  child: Text(l10n.saveGameName_overwrite),
-                ),
-              ],
-            ),
-          ] else ...[
-            CtGap.l,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  key: SaveGameNameDialog.cancelButtonKey,
-                  onPressed: _onCancel,
-                  child: Text(l10n.common_cancel),
-                ),
-                const SizedBox(width: CtSpacing.m),
-                CtNinePatchButton(
-                  key: SaveGameNameDialog.saveButtonKey,
-                  onPressed: _onSavePressed,
-                  child: Text(l10n.saveGameName_save),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
+      child: _dialogBody(appL10n(context)),
     );
   }
 }

@@ -54,6 +54,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/game_fixture.dart';
 import 'support/golden_capture_harness.dart';
 
@@ -61,25 +62,6 @@ import 'support/golden_capture_harness.dart';
 /// the header, resource bar, and the first unit rows without the scroll body
 /// clipping the chrome under test).
 const Size _hostViewport = Size(420, 900);
-
-int _argb(Color c) {
-  final int a = (c.a * 255.0).round() & 0xFF;
-  final int r = (c.r * 255.0).round() & 0xFF;
-  final int g = (c.g * 255.0).round() & 0xFF;
-  final int b = (c.b * 255.0).round() & 0xFF;
-  return (a << 24) | (r << 16) | (g << 8) | b;
-}
-
-void _expectEditorialMonocleDarkChrome(WidgetTester tester) {
-  final BuildContext ctx = tester.element(find.byType(Scaffold).first);
-  final ThemeData theme = Theme.of(ctx);
-  expect(theme.brightness, Brightness.dark);
-  expect(
-    _argb(theme.colorScheme.primary),
-    _argb(EditorialMonoclePalette.accent),
-    reason: 'Train dialogs must render under the editorial-monocle dark theme',
-  );
-}
 
 Widget _host({required Key boundaryKey, required Widget child}) {
   return wrapGoldenBoundary(
@@ -247,7 +229,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainCiviliansDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC1: £ + comma grouping, no `k` abbreviation.
       expect(find.textContaining('£5,000'), findsOneWidget);
       expect(find.textContaining('5k'), findsNothing);
@@ -381,7 +363,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainCiviliansDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC3: after reset the bar shows remaining == total for both resources.
       expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
       expect(find.textContaining('12 / 12'), findsOneWidget);
@@ -412,7 +394,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC6: shared £+comma treasury and the boxed inset resource bar.
       expect(find.textContaining('£10,000'), findsOneWidget);
       expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
@@ -445,7 +427,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC5/AC6: at least one regiment treasury cost cannot be afforded, so a
       // danger-colored cost label and a danger-variant `[+]` are present.
       expect(_dangerColoredTextCount(tester), greaterThan(0));
@@ -476,7 +458,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainNavalDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC9: treasury chip renders `remaining / total` with £+comma grouping
       // and the boxed inset resource bar is present.
       expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
@@ -510,7 +492,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainNavalDialog), findsOneWidget);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       // AC6: every ship's treasury cost is unaffordable → danger cost labels and
       // a danger-variant `[+]` button are visible.
       expect(_dangerColoredTextCount(tester), greaterThan(0));

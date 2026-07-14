@@ -3,12 +3,40 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, Player;
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/ct_region_map_game.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode;
+    show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMapComponent;
+import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'support/map_view_fixture.dart';
+
+/// Shared by `ct_region_map_widget_part*_test.dart` (Refs #4013).
+CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
+  final finder = find.byWidgetPredicate(
+    (w) => w.runtimeType.toString().startsWith('GameWidget<'),
+  );
+  expect(finder, findsOneWidget);
+  final gameWidget = tester.widget(finder);
+  final game = (gameWidget as dynamic).game as CtRegionMapGame;
+  return game.debugMapComponentForTest;
+}
+
+/// Warms Flame caches required before a lone `pump()` in map widget tests.
+Future<void> warmCtRegionMapCachesForTests() async {
+  await terrainTilesetCache.load();
+  await transportOverlayTilesetCache.load();
+  await resourceIconCache.load();
+  await civilianIconCache.load();
+  await townIconCache.load();
+  await provinceLabelIconCache.load();
+}
 
 /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].
 const ctRegionMapTestPlayerView = PlayerView(

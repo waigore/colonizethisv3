@@ -1,18 +1,17 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
+import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
@@ -28,25 +27,12 @@ void main() {
 
   setUpAll(() async {
     await setUpNinePatchAssets();
-
-    // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
-    // map generation of getDebugInitGameResult(); this family asserts only on
-    // fleets/provinces/ports/sea-zone names, which the fixture provides.
-    //
-    // Like the original demo game, the human starts with a single Home Fleet so
-    // the panel renders exactly one fleet row by default (the global
-    // `find.byTooltip('Split')` assertions expect one). The tests that need a
-    // second non-home/sea/port fleet inject it themselves via `copyWith`.
-    final base = buildNavalPanelTestGame();
-    final homeFleet = base.worldState.fleets.firstWhere(
-      (f) => f.inPortAtProvinceId != null,
-    );
-    game = base.copyWith(
-      worldState: base.worldState.copyWith(fleets: [homeFleet]),
-    );
+    // Full fixture (home + non-home fleets, both regions) so locate / Split
+    // cases are non-vacuous. Refs #4013 densify of part1.
+    game = buildNavalPanelTestGame();
     humanPlayerIdWithFleets = game.players.isNotEmpty
         ? game.players.first.id
-        : 'gp1';
+        : kPanelTestHumanPlayerId;
   });
 
   group('NavalUnitsPanel', () {
@@ -96,9 +82,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Depending on scenario data, there may be a Home Fleet or no fleets at all.
-        // This test only asserts that the panel builds without throwing and that
-        // any content is rendered inside a CtPanel.
         expect(find.byType(CtPanel), findsOneWidget);
       },
     );
@@ -142,18 +125,9 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(size: Size(1400, 900)),
-          child: MaterialApp(
-            home: Scaffold(
-              body: NavalUnitsPanel(
-                game: game,
-                humanPlayerId: humanPlayerIdWithFleets,
-                bus: AppEventBus.create(),
-                topology: const MapTopology(),
-              ),
-            ),
-          ),
+        buildNavalPanelWideViewport(
+          game: game,
+          humanPlayerId: humanPlayerIdWithFleets,
         ),
       );
       await tester.pumpAndSettle();
@@ -203,13 +177,11 @@ void main() {
       final tiles = find.byType(ExpansionTile);
       if (tiles.evaluate().isEmpty) return;
 
-      // Collapsed content is compact and excludes strength summary text.
       expect(find.textContaining('Strength:'), findsNothing);
 
       await tester.tap(tiles.first);
       await tester.pumpAndSettle();
 
-      // Expanded details include strength.
       expect(find.textContaining('Strength:'), findsAtLeastNWidgets(1));
     });
 
@@ -217,59 +189,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const humanId = 'gp_named_sea';
-      const capProvince = 'oldWorld|cap1';
-      const zoneId = 'zone_alpha';
-      final namedSeaGame = Game(
-        id: 'named-sea',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'cap1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Capital',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'sea_named',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: zoneId,
-              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-            ),
-          ],
-          seaZoneDisplayNameById: const {
-            'oldWorld|zone_alpha': 'Caribbean Sea',
-          },
-          portsByProvinceSeaboard: const {
-            'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
-          },
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              capProvince: ['oldWorld|cap1|0|0'],
-            },
-          },
-        ),
-        players: const [
-          Player(
-            id: humanId,
-            displayName: 'Named Sea Tester',
-            isHuman: true,
-            capitalProvinceId: capProvince,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capProvince,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
+      final namedSeaGame = buildNavalPanelNamedSeaZoneGame(humanId: humanId);
       await tester.pumpWidget(
         buildNavalPanel(game: namedSeaGame, humanPlayerId: humanId),
       );
@@ -281,53 +201,7 @@ void main() {
       'AC: expanded composition lists ship display names not raw ids',
       (WidgetTester tester) async {
         const humanId = 'gp_ship_display';
-        const capProvince = 'oldWorld|cap1';
-        final homeId = homeFleetIdFor(humanId);
-        final shipLabelGame = Game(
-          id: 'g_ship_labels',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'h1', typeId: 'carrack')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Ship Label Tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
-            ),
-          ],
-        );
+        final shipLabelGame = buildNavalPanelShipLabelGame(humanId: humanId);
 
         await tester.pumpWidget(
           buildNavalPanel(game: shipLabelGame, humanPlayerId: humanId),
@@ -339,10 +213,6 @@ void main() {
         await tester.tap(homeTile);
         await tester.pumpAndSettle();
 
-        // Per #2866 S8 R29 the expanded view renders ship rows as a `Table`
-        // with columns `Type | ×Count | Role`, so the ship-type display
-        // label and its count live in separate cells (e.g. `Carrack` +
-        // `×1`). The legacy `Carrack: 1` combined label no longer renders.
         expect(find.text('Carrack'), findsOneWidget);
         expect(find.text('×1'), findsAtLeastNWidgets(1));
         expect(find.textContaining('carrack:'), findsNothing);
@@ -353,46 +223,24 @@ void main() {
       'sections render for fleets in both regions and locate button passes region id',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-
         final playerFleets = game.worldState.fleets
             .where((f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty)
             .toList();
-        expect(
-          playerFleets,
-          isNotEmpty,
-          reason: 'Demo game must include at least one fleet with ships',
-        );
+        expect(playerFleets, isNotEmpty);
         final baseFleet = playerFleets.first;
+        final newProvinces = game.worldState.newWorld.provinces;
+        expect(newProvinces, isNotEmpty);
+        final newProvince = newProvinces.first;
 
-        final oldProvinceList = game.worldState.oldWorld.provinces;
-        final newProvinceList = game.worldState.newWorld.provinces;
-        expect(oldProvinceList, isNotEmpty);
-        expect(newProvinceList, isNotEmpty);
-        final oldProvince = oldProvinceList.first;
-        final newProvince = newProvinceList.first;
-
-        // Inject deterministic port fleets in both regions so region headers
-        // render reliably in the test.
-        final extraOldFleet = baseFleet.copyWith(
-          id: 'test_old_world_fleet',
-          regionId: 'oldWorld',
-          inPortAtProvinceId: oldProvince.id,
-          seaZoneId: null,
-          ownerId: humanId,
-        );
-        final extraNewFleet = baseFleet.copyWith(
-          id: 'test_new_world_fleet',
-          regionId: 'newWorld',
-          inPortAtProvinceId: newProvince.id,
-          seaZoneId: null,
-          ownerId: humanId,
-        );
-
-        final gameWithExtraFleets = game.copyWith(
-          worldState: game.worldState.copyWith(
-            fleets: [...game.worldState.fleets, extraOldFleet, extraNewFleet],
+        final gameWithNwFleet = withNavalPanelExtraFleets(game, [
+          baseFleet.copyWith(
+            id: 'test_new_world_fleet',
+            regionId: 'newWorld',
+            inPortAtProvinceId: newProvince.id,
+            seaZoneId: null,
+            ownerId: humanId,
           ),
-        );
+        ]);
 
         String? locatedTileKey;
         String? locatedRegionId;
@@ -404,26 +252,21 @@ void main() {
 
         await tester.pumpWidget(
           buildNavalPanel(
-            game: gameWithExtraFleets,
+            game: gameWithNwFleet,
             humanPlayerId: humanId,
             bus: bus,
           ),
         );
         await tester.pumpAndSettle();
 
-        // Old/New World headers should appear when fleets exist in both regions.
-        // Per #2866 S1–S3, RegionSectionHeader renders via CtSectionLabel which
-        // uppercases the label text.
         expect(find.text('OLD WORLD'), findsAtLeastNWidgets(1));
         expect(find.text('NEW WORLD'), findsAtLeastNWidgets(1));
 
         Finder tileFinder = find.widgetWithText(
           ExpansionTile,
-          'Fleet ${extraNewFleet.id}',
+          'Fleet test_new_world_fleet',
         );
         if (tileFinder.evaluate().isEmpty) {
-          // If the injected fleet lands on the player's capital province, the
-          // panel labels it "Home Fleet".
           tileFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
         }
         await tester.ensureVisible(tileFinder);
@@ -449,99 +292,45 @@ void main() {
     testWidgets(
       'AC: Missing Home Fleet entity does not render synthetic Home Fleet row',
       (WidgetTester tester) async {
-        final gameInstance = game;
-        final player = game.players.firstWhere(
-          (p) => p.id == humanPlayerIdWithFleets,
-          orElse: () => game.players.first,
-        );
-
-        final capitalTile = player.capitalTile;
-        expect(
-          capitalTile,
-          isNotNull,
-          reason: 'Demo game must define a capital tile',
-        );
-
-        final capitalParts = capitalTile!.toTileKey().split('|');
-        expect(capitalParts.length, greaterThanOrEqualTo(2));
-        final capitalRegionId = capitalParts[0];
-        final capitalProvinceLocalId = capitalParts[1];
-
-        String? locatedTileKey;
-        String? locatedRegionId;
         final bus = AppEventBus.create();
-        bus.on<LocateMapTileEvent>().listen((e) {
-          locatedTileKey = e.tileKey;
-          locatedRegionId = e.regionId;
-        });
+        LocateMapTileEvent? locateEvent;
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
-        // Remove any actual fleet that would be considered home at the capital.
-        final filteredFleets = gameInstance.worldState.fleets.where((f) {
-          if (f.ownerId != humanPlayerIdWithFleets) return true;
-          if (f.isAtSea) return true;
-          final inPortId = f.inPortAtProvinceId;
-          if (inPortId == null) return true;
-          return !(f.regionId == capitalRegionId &&
-              (inPortId == capitalProvinceLocalId ||
-                  inPortId == '$capitalRegionId|$capitalProvinceLocalId'));
-        }).toList();
-
-        final gameWithoutHomeFleets = gameInstance.copyWith(
-          worldState: gameInstance.worldState.copyWith(fleets: filteredFleets),
+        final gameWithoutHome = withoutNavalPanelCapitalHomeFleets(
+          game,
+          humanPlayerIdWithFleets,
         );
 
         await tester.pumpWidget(
           buildNavalPanel(
-            game: gameWithoutHomeFleets,
+            game: gameWithoutHome,
             humanPlayerId: humanPlayerIdWithFleets,
             bus: bus,
           ),
         );
         await tester.pumpAndSettle();
 
-        final homeTileFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        expect(homeTileFinder, findsNothing);
-        expect(locatedTileKey, isNull);
-        expect(locatedRegionId, isNull);
+        expect(
+          find.widgetWithText(ExpansionTile, 'Home Fleet'),
+          findsNothing,
+        );
+        expect(locateEvent, isNull);
       },
     );
 
     testWidgets(
       'AC: Sea-zone fleet locate button uses correct sea-zone tile key',
       (WidgetTester tester) async {
-        final gameInstance = game;
         final humanId = humanPlayerIdWithFleets;
-
-        final baseFleetCandidates = gameInstance.worldState.fleets
-            .where((f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty)
-            .toList();
-        expect(baseFleetCandidates, isNotEmpty);
-        final baseFleet = baseFleetCandidates.first;
-
-        final portsEntry = gameInstance
-            .worldState
-            .portsByProvinceSeaboard
-            .entries
+        final seaFleet = game.worldState.fleets.firstWhere(
+          (f) =>
+              f.ownerId == humanId &&
+              f.shipTypeIds.isNotEmpty &&
+              f.isAtSea,
+        );
+        final portsEntry = game.worldState.portsByProvinceSeaboard.entries
             .firstWhere((e) => e.key.split('|').length >= 2);
-        final portsParts = portsEntry.key.split('|');
-        final seaRegionId = portsParts.first;
-        final localSeaZoneId = portsParts.last;
-
-        final seaFleet = baseFleet.copyWith(
-          id: 'test_sea_zone_fleet',
-          ownerId: humanId,
-          regionId: seaRegionId,
-          seaZoneId: localSeaZoneId,
-          inPortAtProvinceId: null,
-        );
-
         final expectedTileKey = portsEntry.value;
-
-        final gameWithExtraFleets = gameInstance.copyWith(
-          worldState: gameInstance.worldState.copyWith(
-            fleets: [...gameInstance.worldState.fleets, seaFleet],
-          ),
-        );
 
         String? locatedTileKey;
         String? locatedRegionId;
@@ -551,17 +340,13 @@ void main() {
           locatedRegionId = e.regionId;
         });
         await tester.pumpWidget(
-          buildNavalPanel(
-            game: gameWithExtraFleets,
-            humanPlayerId: humanId,
-            bus: bus,
-          ),
+          buildNavalPanel(game: game, humanPlayerId: humanId, bus: bus),
         );
         await tester.pumpAndSettle();
 
         final fleetTileFinder = find.widgetWithText(
           ExpansionTile,
-          'Fleet ${seaFleet.id}',
+          navalFleetTileLabel(seaFleet, humanId),
         );
         expect(fleetTileFinder, findsOneWidget);
 
@@ -582,73 +367,23 @@ void main() {
     testWidgets('AC: Port fleet locate button uses correct province tile key', (
       WidgetTester tester,
     ) async {
-      final gameInstance = game;
       final humanId = humanPlayerIdWithFleets;
-      final player = gameInstance.players.firstWhere(
-        (p) => p.id == humanId,
-        orElse: () => gameInstance.players.first,
-      );
-
-      final capitalTile = player.capitalTile;
-      expect(capitalTile, isNotNull);
-      final capitalParts = capitalTile!.toTileKey().split('|');
-      expect(capitalParts.length, greaterThanOrEqualTo(2));
-      final capitalRegionId = capitalParts[0];
-
-      final baseFleetCandidates = gameInstance.worldState.fleets
-          .where((f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty)
-          .toList();
-      expect(baseFleetCandidates, isNotEmpty);
-      final baseFleet = baseFleetCandidates.first;
-
-      Province? targetProvince;
-      String? expectedTileKey;
-
-      final oldProvinces = gameInstance.worldState.oldWorld.provinces;
-      final newProvinces = gameInstance.worldState.newWorld.provinces;
-
-      for (final province in [...oldProvinces, ...newProvinces]) {
-        // Ensure the injected fleet can't be labeled "Home Fleet" by skipping
-        // the player's capital region entirely.
-        if (province.regionId == capitalRegionId) continue;
-
-        // Mirror tileKeyForProvinceLocation() selection logic.
-        String? tileKey;
-        if (province.townTileKey != null && province.townTileKey!.isNotEmpty) {
-          tileKey = province.townTileKey;
-        } else {
-          final byProvince = gameInstance
-              .worldState
-              .tileKeysByRegionAndProvince[province.regionId];
-          final prefixedId = '${province.regionId}|${province.id}';
-          final tiles = byProvince?[prefixedId] ?? byProvince?[province.id];
-          if (tiles != null && tiles.isNotEmpty) tileKey = tiles.first;
-        }
-
-        if (tileKey == null) continue;
-
-        targetProvince = province;
-        expectedTileKey = tileKey;
-        break;
-      }
-
-      if (targetProvince == null || expectedTileKey == null) {
+      final target = firstNavalNonCapitalLocateTarget(game, humanId);
+      if (target == null) {
         fail('No non-capital province with a resolvable tile key found');
       }
 
+      final baseFleet = game.worldState.fleets.firstWhere(
+        (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
+      );
       final portFleet = baseFleet.copyWith(
         id: 'test_port_fleet',
         ownerId: humanId,
-        regionId: targetProvince.regionId,
-        inPortAtProvinceId: targetProvince.id,
+        regionId: target.province.regionId,
+        inPortAtProvinceId: target.province.id,
         seaZoneId: null,
       );
-
-      final gameWithExtraFleets = gameInstance.copyWith(
-        worldState: gameInstance.worldState.copyWith(
-          fleets: [...gameInstance.worldState.fleets, portFleet],
-        ),
-      );
+      final gameWithPort = withNavalPanelExtraFleets(game, [portFleet]);
 
       String? locatedTileKey;
       String? locatedRegionId;
@@ -659,7 +394,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        buildNavalPanel(game: gameWithExtraFleets, humanPlayerId: humanId, bus: bus),
+        buildNavalPanel(game: gameWithPort, humanPlayerId: humanId, bus: bus),
       );
       await tester.pumpAndSettle();
 
@@ -678,7 +413,7 @@ void main() {
       await tester.tap(locateFinder.first);
       await tester.pumpAndSettle();
 
-      expect(locatedTileKey, expectedTileKey);
+      expect(locatedTileKey, target.tileKey);
       expect(locatedRegionId, portFleet.regionId);
     });
 
@@ -687,26 +422,25 @@ void main() {
     ) async {
       final humanId = humanPlayerIdWithFleets;
 
-      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(
+        buildNavalPanel(game: game, humanPlayerId: humanId),
+      );
       await tester.pumpAndSettle();
 
       final homeFleetFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-      if (homeFleetFinder.evaluate().isEmpty) {
-        return;
-      }
-
-      final homeFleet = game.worldState.fleets.where(
-        (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
-      );
-      if (homeFleet.isEmpty) {
-        return;
-      }
+      expect(homeFleetFinder, findsOneWidget);
 
       await tester.ensureVisible(homeFleetFinder);
       await tester.tap(homeFleetFinder);
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Split'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: homeFleetFinder,
+          matching: find.byTooltip('Split'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets(
@@ -714,16 +448,16 @@ void main() {
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
 
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
           ExpansionTile,
           'Home Fleet',
         );
-        if (homeFleetFinder.evaluate().isEmpty) {
-          return;
-        }
+        expect(homeFleetFinder, findsOneWidget);
 
         expect(
           find.descendant(of: homeFleetFinder, matching: find.byType(Checkbox)),
@@ -754,80 +488,91 @@ void main() {
       WidgetTester tester,
     ) async {
       final humanId = humanPlayerIdWithFleets;
+      final homeId = homeFleetIdFor(humanId);
 
       final playerFleets = game.worldState.fleets
           .where(
             (f) =>
                 f.ownerId == humanId &&
                 f.shipTypeIds.isNotEmpty &&
-                f.id != 'home_fleet',
+                f.id != homeId,
           )
           .toList();
-      if (playerFleets.isEmpty) return;
+      expect(playerFleets, isNotEmpty);
 
-      final baseFleet = playerFleets.first;
-
-      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(
+        buildNavalPanel(game: game, humanPlayerId: humanId),
+      );
       await tester.pumpAndSettle();
 
       final fleetFinder = find.widgetWithText(
         ExpansionTile,
-        'Fleet ${baseFleet.id}',
+        navalFleetTileLabel(playerFleets.first, humanId),
       );
-      if (fleetFinder.evaluate().isEmpty) return;
+      expect(fleetFinder, findsOneWidget);
 
       await tester.ensureVisible(fleetFinder);
       await tester.tap(fleetFinder);
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Split'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: fleetFinder,
+          matching: find.byTooltip('Split'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets(
       'AC: Expanding home/non-home fleet and tapping Split opens Split Fleet dialog',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        final homeId = homeFleetIdFor(humanId);
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
           ExpansionTile,
           'Home Fleet',
         );
-        if (homeFleetFinder.evaluate().isNotEmpty) {
-          await tester.ensureVisible(homeFleetFinder);
-          await tester.tap(homeFleetFinder);
-          await tester.pumpAndSettle();
-          final splitButton = find.byTooltip('Split');
-          if (splitButton.evaluate().isNotEmpty) {
-            await tester.tap(splitButton.first);
-            await tester.pumpAndSettle();
-            expect(find.text('Split Fleet'), findsOneWidget);
-            await tester.tap(find.text('Cancel'));
-            await tester.pumpAndSettle();
-          }
-        }
+        expect(homeFleetFinder, findsOneWidget);
+        await tester.ensureVisible(homeFleetFinder);
+        await tester.tap(homeFleetFinder);
+        await tester.pumpAndSettle();
+        final homeSplit = find.descendant(
+          of: homeFleetFinder,
+          matching: find.byTooltip('Split'),
+        );
+        expect(homeSplit, findsOneWidget);
+        await tester.tap(homeSplit);
+        await tester.pumpAndSettle();
+        expect(find.text('Split Fleet'), findsOneWidget);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
 
-        final nonHomeFleets = game.worldState.fleets
-            .where(
-              (f) =>
-                  f.ownerId == humanId &&
-                  f.shipTypeIds.isNotEmpty &&
-                  f.id != 'home_fleet',
-            )
-            .toList();
-        if (nonHomeFleets.isEmpty) return;
+        final nonHome = game.worldState.fleets.firstWhere(
+          (f) =>
+              f.ownerId == humanId &&
+              f.shipTypeIds.isNotEmpty &&
+              f.id != homeId,
+        );
         final nonHomeFinder = find.widgetWithText(
           ExpansionTile,
-          'Fleet ${nonHomeFleets.first.id}',
+          navalFleetTileLabel(nonHome, humanId),
         );
-        if (nonHomeFinder.evaluate().isEmpty) return;
+        expect(nonHomeFinder, findsOneWidget);
         await tester.ensureVisible(nonHomeFinder);
         await tester.tap(nonHomeFinder);
         await tester.pumpAndSettle();
-        final splitButton = find.byTooltip('Split');
-        if (splitButton.evaluate().isEmpty) return;
-        await tester.tap(splitButton.first);
+        final splitButton = find.descendant(
+          of: nonHomeFinder,
+          matching: find.byTooltip('Split'),
+        );
+        expect(splitButton, findsOneWidget);
+        await tester.tap(splitButton);
         await tester.pumpAndSettle();
         expect(find.text('Split Fleet'), findsOneWidget);
       },
@@ -837,18 +582,16 @@ void main() {
       'AC: Combine control is in the panel header when fleets exist',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
+        expect(
+          game.worldState.fleets.where(
+            (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
+          ),
+          isNotEmpty,
+        );
 
-        final playerFleets = game.worldState.fleets
-            .where(
-              (f) =>
-                  f.ownerId == humanId &&
-                  f.shipTypeIds.isNotEmpty &&
-                  f.id != 'home_fleet',
-            )
-            .toList();
-        if (playerFleets.isEmpty) return;
-
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         expect(
@@ -875,15 +618,10 @@ void main() {
         );
         addTearDown(subSplit.cancel);
 
-        final splittable = game.worldState.fleets
-            .where((f) => f.ownerId == humanId && f.shipTypeIds.length >= 2)
-            .toList();
-        if (splittable.isEmpty) return;
-
-        final targetFleet = splittable.first;
-        final tileLabel = targetFleet.id == 'home_fleet'
-            ? 'Home Fleet'
-            : 'Fleet ${targetFleet.id}';
+        final targetFleet = game.worldState.fleets.firstWhere(
+          (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
+        );
+        final tileLabel = navalFleetTileLabel(targetFleet, humanId);
 
         await tester.pumpWidget(
           buildNavalPanel(bus: bus, game: game, humanPlayerId: humanId),
@@ -891,26 +629,29 @@ void main() {
         await tester.pumpAndSettle();
 
         final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
-        if (fleetFinder.evaluate().isEmpty) return;
+        expect(fleetFinder, findsOneWidget);
 
         await tester.ensureVisible(fleetFinder);
         await tester.tap(fleetFinder);
         await tester.pumpAndSettle();
 
-        final splitButton = find.byTooltip('Split');
-        if (splitButton.evaluate().isEmpty) return;
+        final splitButton = find.descendant(
+          of: fleetFinder,
+          matching: find.byTooltip('Split'),
+        );
+        expect(splitButton, findsOneWidget);
 
         await tester.tap(splitButton);
         await tester.pumpAndSettle();
 
-        final moveToNew = find.byIcon(Icons.arrow_back);
-        if (moveToNew.evaluate().isEmpty) return;
-
-        await tester.tap(moveToNew);
+        final moveTypeId = targetFleet.ships.first.typeId;
+        await tester.tap(
+          find.byKey(CtTransferListKeys.leftMoveOne(moveTypeId)),
+        );
         await tester.pumpAndSettle();
 
         final confirmSplit = find.text('Confirm Split');
-        if (confirmSplit.evaluate().isEmpty) return;
+        expect(confirmSplit, findsOneWidget);
 
         await tester.tap(confirmSplit);
         await tester.pumpAndSettle();
@@ -941,64 +682,50 @@ void main() {
           observedFleetCount.dispose();
         });
 
-        final splittable = game.worldState.fleets
-            .where((f) => f.ownerId == humanId && f.shipTypeIds.length >= 2)
-            .toList();
-        if (splittable.isEmpty) return;
-
-        final targetFleet = splittable.first;
-        final tileLabel = targetFleet.id == 'home_fleet'
-            ? 'Home Fleet'
-            : 'Fleet ${targetFleet.id}';
+        final targetFleet = game.worldState.fleets.firstWhere(
+          (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
+        );
+        final tileLabel = navalFleetTileLabel(targetFleet, humanId);
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Column(
-                children: [
-                  ValueListenableBuilder<int>(
-                    valueListenable: observedFleetCount,
-                    builder: (context, count, _) =>
-                        Text('observed-fleet-count:$count'),
-                  ),
-                  Expanded(
-                    child: NavalUnitsPanel(
-                      game: game,
-                      humanPlayerId: humanId,
-                      bus: bus,
-                      topology: const MapTopology(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          buildNavalPanelWithFleetCountWatcher(
+            game: game,
+            humanPlayerId: humanId,
+            bus: bus,
+            observedFleetCount: observedFleetCount,
           ),
         );
         await tester.pumpAndSettle();
 
-        final beforeText = find.text(
-          'observed-fleet-count:${game.worldState.fleets.length}',
+        expect(
+          find.text(
+            'observed-fleet-count:${game.worldState.fleets.length}',
+          ),
+          findsOneWidget,
         );
-        expect(beforeText, findsOneWidget);
 
         final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
-        if (fleetFinder.evaluate().isEmpty) return;
+        expect(fleetFinder, findsOneWidget);
         await tester.ensureVisible(fleetFinder);
         await tester.tap(fleetFinder);
         await tester.pumpAndSettle();
 
-        final splitButton = find.byTooltip('Split');
-        if (splitButton.evaluate().isEmpty) return;
+        final splitButton = find.descendant(
+          of: fleetFinder,
+          matching: find.byTooltip('Split'),
+        );
+        expect(splitButton, findsOneWidget);
         await tester.tap(splitButton);
         await tester.pumpAndSettle();
 
-        final moveToNew = find.byIcon(Icons.arrow_back);
-        if (moveToNew.evaluate().isEmpty) return;
-        await tester.tap(moveToNew.first);
+        final moveTypeId = targetFleet.ships.first.typeId;
+        await tester.tap(
+          find.byKey(CtTransferListKeys.leftMoveOne(moveTypeId)),
+        );
         await tester.pumpAndSettle();
 
         final confirmSplit = find.text('Confirm Split');
-        if (confirmSplit.evaluate().isEmpty) return;
+        expect(confirmSplit, findsOneWidget);
         await tester.tap(confirmSplit);
         await tester.pumpAndSettle();
 

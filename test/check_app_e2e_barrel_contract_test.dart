@@ -1,5 +1,5 @@
 // Static contract pins for the colonizethis_app_e2e_support public barrel.
-// Flutter-level tear-off pins live in app/test/e2e_helpers_barrel_test.dart.
+// Flutter-level tear-off pins live in app/test/e2e_helpers_barrel_part1_test.dart.
 // Refs #3878 Phase 1.
 import 'dart:io';
 

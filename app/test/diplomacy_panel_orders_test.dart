@@ -29,30 +29,15 @@ void main() {
     'DiplomacyPanel shows always-visible section headings + tribe placeholder '
     'when no factions discovered',
     (WidgetTester tester) async {
-      const humanId = 'solo';
-      final game = Game(
-        id: 'solo_game',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: humanId, displayName: 'Only', isHuman: true, treasury: 0),
-        ],
-      );
+      final game = buildDiplomacyPanelGameWithNoDiscoveredFactions();
+      final humanId = game.players.first.id;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: MapTopology(),
-              currentOrders: const Orders(),
-              bus: AppEventBus.create(),
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: AppEventBus.create(),
         ),
       );
       await tester.pumpAndSettle();
@@ -82,16 +67,11 @@ void main() {
       addTearDown(confirmSub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -146,16 +126,11 @@ void main() {
       addTearDown(confirmSub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -196,16 +171,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: currentOrders,
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          currentOrders: currentOrders,
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -245,16 +216,11 @@ void main() {
       addTearDown(confirmSub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -299,16 +265,11 @@ void main() {
       addTearDown(confirmSub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -355,16 +316,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: currentOrders,
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          currentOrders: currentOrders,
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -415,16 +372,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: currentOrders,
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          currentOrders: currentOrders,
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -450,16 +403,11 @@ void main() {
       final game = buildDiplomacyPanelTestGame();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: AppEventBus.create(),
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: AppEventBus.create(),
         ),
       );
       await tester.pump();
@@ -478,16 +426,11 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: AppEventBus.create(),
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: AppEventBus.create(),
         ),
       );
       await tester.pump();
@@ -528,16 +471,12 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: currentOrders,
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          currentOrders: currentOrders,
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -584,16 +523,11 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: AppEventBus.create(),
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: AppEventBus.create(),
         ),
       );
       await tester.pump();
@@ -635,16 +569,12 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: currentOrders,
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          currentOrders: currentOrders,
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -707,16 +637,11 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();
@@ -764,16 +689,11 @@ void main() {
 
       await bindDiplomacyTallTestSurface(tester);
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanId,
-              topology: const MapTopology(),
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
+        buildDiplomacyPanelShell(
+          game: game,
+          humanPlayerId: humanId,
+          topology: const MapTopology(),
+          bus: bus,
         ),
       );
       await tester.pump();

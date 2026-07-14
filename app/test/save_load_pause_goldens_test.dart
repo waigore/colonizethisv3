@@ -24,15 +24,14 @@ import 'package:colonizethis_app/features/shell/save_load/default_save_display_n
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/features/shell/save_load/save_game_name_dialog.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/golden_capture_harness.dart';
 
 void _noop() {}
@@ -53,25 +52,6 @@ Game _sessionGame() {
         leaderKey: 'england_leader',
       ),
     ],
-  );
-}
-
-int _argb(Color c) {
-  final int a = (c.a * 255.0).round() & 0xFF;
-  final int r = (c.r * 255.0).round() & 0xFF;
-  final int g = (c.g * 255.0).round() & 0xFF;
-  final int b = (c.b * 255.0).round() & 0xFF;
-  return (a << 24) | (r << 16) | (g << 8) | b;
-}
-
-void _expectEditorialMonocleDarkChrome(WidgetTester tester) {
-  final BuildContext ctx = tester.element(find.byType(Scaffold).first);
-  final ThemeData theme = Theme.of(ctx);
-  expect(theme.brightness, Brightness.dark);
-  expect(
-    _argb(theme.colorScheme.primary),
-    _argb(EditorialMonoclePalette.accent),
-    reason: 'Surfaces must render under the editorial-monocle dark theme',
   );
 }
 
@@ -114,7 +94,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       expect(find.byKey(GameTopBar.hamburgerKey), findsOneWidget);
       expect(find.byKey(GameTopBar.pauseButtonKey), findsOneWidget);
       expect(find.byKey(kGameMapNextTurnButtonKey), findsOneWidget);
@@ -151,7 +131,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       expect(find.byType(SaveGameNameDialog), findsOneWidget);
       expect(find.text('Save Game'), findsOneWidget);
       expect(find.text(expectedDefault), findsOneWidget);
@@ -198,7 +178,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      _expectEditorialMonocleDarkChrome(tester);
+      expectEditorialMonocleDarkChrome(tester);
       expect(find.byType(LoadGameListDialog), findsOneWidget);
       expect(find.text('Load Game'), findsOneWidget);
       expect(find.text('Spain Save'), findsOneWidget);

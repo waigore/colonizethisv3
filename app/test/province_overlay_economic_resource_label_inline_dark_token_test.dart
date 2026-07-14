@@ -19,10 +19,6 @@
 // production-panel chips and any other unmigrated call site keep their
 // existing token contract until separately migrated.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
-import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
@@ -37,97 +34,12 @@ const _localProvinceId = 'pEconResLabelTest';
 const _humanPlayerId = 'gp1';
 String get _fullProvinceId => '$_regionId|$_localProvinceId';
 
-String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
-
-RegionMapViewData _regionWithGrainCells(
-  List<({int x, int y})> coords, {
-  required int width,
-  required int height,
-}) {
-  final cells = <CellViewData>[
-    for (final c in coords)
-      CellViewData(
-        x: c.x,
-        y: c.y,
-        regionCellId: _localProvinceId,
-        isSea: false,
-        terrainTypeId: 'plains',
-        resourceId: 'grain',
-        visibility: TileVisibility.visible,
-      ),
-  ];
-  return RegionMapViewData(
-    regionId: _regionId,
-    width: width,
-    height: height,
-    cellSize: 32,
-    cells: cells,
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: const {_humanPlayerId},
-    terrainColors: const {},
-  );
-}
-
-Game _gameWithGrainTiles({
-  required List<String> tileKeys,
-  required Map<String, int> improvementByTile,
-}) {
-  final visibility = <String, String>{
-    for (final tk in tileKeys) tk: 'fullyVisible',
-  };
-  final prospected = <String>{...tileKeys};
-  return Game(
-    id: 'economic_res_label_dark_token_test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _fullProvinceId,
-            regionId: _regionId,
-            ownerId: _humanPlayerId,
-            displayName: 'EconResLabelTest',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        _regionId: {_fullProvinceId: tileKeys},
-      },
-      resourceByTileKey: {for (final tk in tileKeys) tk: 'grain'},
-      playerVisibilityByTile: {_humanPlayerId: visibility},
-      playerProspectedTiles: {_humanPlayerId: prospected},
-      tileState: TileMapState(improvementByTile: improvementByTile),
-    ),
-    players: const [
-      Player(
-        id: _humanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        treasury: 0,
-      ),
-    ],
-  );
-}
-
-PlayerView _omniscientViewForTiles(Iterable<String> keys) {
-  return PlayerView(
-    playerId: _humanPlayerId,
-    player: const Player(
-      id: _humanPlayerId,
-      displayName: 'Human',
-      isHuman: true,
-      treasury: 0,
-    ),
-    ownUnitsById: const {},
-    provincesById: const {},
-    visibilityByTile: {for (final k in keys) k: VisibilityLevel.fullyVisible},
-    prospectedTiles: const {},
-    diplomacyByOtherId: const {},
-  );
-}
+String _tileKey(int x, int y) => overlayDarkTokenTileKey(
+  regionId: _regionId,
+  localProvinceId: _localProvinceId,
+  x: x,
+  y: y,
+);
 
 /// Selects every `ResourceLabelInline` mounted by the Economic section
 /// for the rendered grain-tile rows. The Tile section's
@@ -156,11 +68,25 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = _gameWithGrainTiles(
+      final game = gameWithGrainTilesForOverlay(
+        gameId: 'economic_res_label_dark_token_test',
+        regionId: _regionId,
+        fullProvinceId: _fullProvinceId,
+        displayName: 'EconResLabelTest',
+        humanPlayerId: _humanPlayerId,
         tileKeys: [tk],
         improvementByTile: {tk: 2},
+        provinceOwnerId: _humanPlayerId,
       );
-      final region = _regionWithGrainCells([(x: 0, y: 0)], width: 1, height: 1);
+      final region = regionMapWithLandCells(
+        regionId: _regionId,
+        localProvinceId: _localProvinceId,
+        coords: [(x: 0, y: 0)],
+        width: 1,
+        height: 1,
+        greatPowerFactionIds: const {_humanPlayerId},
+        resourceId: 'grain',
+      );
 
       // Use a selectedTileKey that does not match any tile in the
       // region so the Tile section emits no ResourceLabelInline.
@@ -171,7 +97,10 @@ void main() {
           displayId: _fullProvinceId,
           selectedTileKey: '$_regionId|other|9|9',
           humanPlayerId: _humanPlayerId,
-          playerView: _omniscientViewForTiles([tk]),
+          playerView: omniscientPlayerViewForTiles(
+            humanPlayerId: _humanPlayerId,
+            keys: [tk],
+          ),
           shellWidth: 800,
         ),
       );
@@ -225,11 +154,25 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = _gameWithGrainTiles(
+      final game = gameWithGrainTilesForOverlay(
+        gameId: 'economic_res_label_dark_token_test',
+        regionId: _regionId,
+        fullProvinceId: _fullProvinceId,
+        displayName: 'EconResLabelTest',
+        humanPlayerId: _humanPlayerId,
         tileKeys: [tk],
         improvementByTile: const {},
+        provinceOwnerId: _humanPlayerId,
       );
-      final region = _regionWithGrainCells([(x: 0, y: 0)], width: 1, height: 1);
+      final region = regionMapWithLandCells(
+        regionId: _regionId,
+        localProvinceId: _localProvinceId,
+        coords: [(x: 0, y: 0)],
+        width: 1,
+        height: 1,
+        greatPowerFactionIds: const {_humanPlayerId},
+        resourceId: 'grain',
+      );
 
       await tester.pumpWidget(
         buildProvinceOverlayDarkThemeShell(
@@ -238,7 +181,10 @@ void main() {
           displayId: _fullProvinceId,
           selectedTileKey: '$_regionId|other|9|9',
           humanPlayerId: _humanPlayerId,
-          playerView: _omniscientViewForTiles([tk]),
+          playerView: omniscientPlayerViewForTiles(
+            humanPlayerId: _humanPlayerId,
+            keys: [tk],
+          ),
           shellWidth: 800,
         ),
       );
@@ -294,14 +240,24 @@ void main() {
       'fallback regression guard)',
       (WidgetTester tester) async {
         final tk = _tileKey(0, 0);
-        final game = _gameWithGrainTiles(
+        final game = gameWithGrainTilesForOverlay(
+          gameId: 'economic_res_label_dark_token_test',
+          regionId: _regionId,
+          fullProvinceId: _fullProvinceId,
+          displayName: 'EconResLabelTest',
+          humanPlayerId: _humanPlayerId,
           tileKeys: [tk],
           improvementByTile: {tk: 2},
+          provinceOwnerId: _humanPlayerId,
         );
-        final region = _regionWithGrainCells(
-          [(x: 0, y: 0)],
+        final region = regionMapWithLandCells(
+          regionId: _regionId,
+          localProvinceId: _localProvinceId,
+          coords: [(x: 0, y: 0)],
           width: 1,
           height: 1,
+          greatPowerFactionIds: const {_humanPlayerId},
+          resourceId: 'grain',
         );
 
         await tester.pumpWidget(
@@ -311,7 +267,10 @@ void main() {
             displayId: _fullProvinceId,
             selectedTileKey: '$_regionId|other|9|9',
             humanPlayerId: _humanPlayerId,
-            playerView: _omniscientViewForTiles([tk]),
+            playerView: omniscientPlayerViewForTiles(
+              humanPlayerId: _humanPlayerId,
+              keys: [tk],
+            ),
             shellWidth: 800,
           ),
         );
@@ -373,14 +332,24 @@ void main() {
       'regression guard)',
       (WidgetTester tester) async {
         final tk = _tileKey(0, 0);
-        final game = _gameWithGrainTiles(
+        final game = gameWithGrainTilesForOverlay(
+          gameId: 'economic_res_label_dark_token_test',
+          regionId: _regionId,
+          fullProvinceId: _fullProvinceId,
+          displayName: 'EconResLabelTest',
+          humanPlayerId: _humanPlayerId,
           tileKeys: [tk],
           improvementByTile: const {},
+          provinceOwnerId: _humanPlayerId,
         );
-        final region = _regionWithGrainCells(
-          [(x: 0, y: 0)],
+        final region = regionMapWithLandCells(
+          regionId: _regionId,
+          localProvinceId: _localProvinceId,
+          coords: [(x: 0, y: 0)],
           width: 1,
           height: 1,
+          greatPowerFactionIds: const {_humanPlayerId},
+          resourceId: 'grain',
         );
 
         await tester.pumpWidget(
@@ -390,7 +359,10 @@ void main() {
             displayId: _fullProvinceId,
             selectedTileKey: '$_regionId|other|9|9',
             humanPlayerId: _humanPlayerId,
-            playerView: _omniscientViewForTiles([tk]),
+            playerView: omniscientPlayerViewForTiles(
+              humanPlayerId: _humanPlayerId,
+              keys: [tk],
+            ),
             shellWidth: 800,
           ),
         );

@@ -27,54 +27,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay;
+    show demoGameForOverlay, demoHumanPlayerViewForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
-/// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
-/// with cell visibility overridden by [visibilityForCell]. Mirrors the
-/// pattern in `province_overlay_obfuscated_body_dark_tokens_test.dart`
-/// so this test can deterministically reveal a sea zone (i.e. force at
-/// least one of its sea cells to `TileVisibility != unrevealed`) without
-/// depending on the debug-init visibility distribution.
-RegionMapViewData _regionWith({
-  required TileVisibility Function(CellViewData) visibilityForCell,
-}) {
-  final base = demoRegionForOverlay;
-  final cells = base.cells
-      .map(
-        (c) => CellViewData(
-          x: c.x,
-          y: c.y,
-          regionCellId: c.regionCellId,
-          isSea: c.isSea,
-          terrainTypeId: c.terrainTypeId,
-          terrainType: c.terrainType,
-          resourceId: c.resourceId,
-          ownerFactionId: c.ownerFactionId,
-          provinceDisplayName: c.provinceDisplayName,
-          improvementLevel: c.improvementLevel,
-          roadLevel: c.roadLevel,
-          visibility: visibilityForCell(c),
-        ),
-      )
-      .toList();
-  return RegionMapViewData(
-    regionId: base.regionId,
-    width: base.width,
-    height: base.height,
-    cellSize: base.cellSize,
-    cells: cells,
-    capitalMarkers: base.capitalMarkers,
-    portMarkers: base.portMarkers,
-    factionColors: base.factionColors,
-    greatPowerFactionIds: base.greatPowerFactionIds,
-    terrainColors: base.terrainColors,
-    unitMarkers: base.unitMarkers,
-  );
-}
+import 'support/province_overlay_dark_token_scenarios.dart';
 
 Widget _overlay({
   required ThemeData theme,
@@ -124,7 +80,7 @@ void main() {
           // via `_buildSection(political, Text(provinceOverlay_seaZone))`.
           // Land cells keep their visibility so unrelated paths are not
           // perturbed.
-          final region = _regionWith(
+          final region = regionMapWithCellVisibility(
             visibilityForCell: (c) =>
                 c.isSea ? TileVisibility.fogged : c.visibility,
           );
@@ -173,7 +129,7 @@ void main() {
         'and does not resolve to the dark Material `Colors.white` '
         'fallback',
         (WidgetTester tester) async {
-          final region = _regionWith(
+          final region = regionMapWithCellVisibility(
             visibilityForCell: (c) =>
                 c.isSea ? TileVisibility.fogged : c.visibility,
           );
@@ -243,7 +199,7 @@ void main() {
           // resolve to the dark Material `Colors.white` fallback. With
           // the SPEC-authorized token in place the row still resolves
           // to `EditorialMonoclePalette.fg` regardless of theme.
-          final region = _regionWith(
+          final region = regionMapWithCellVisibility(
             visibilityForCell: (c) =>
                 c.isSea ? TileVisibility.fogged : c.visibility,
           );

@@ -44,7 +44,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 
-import 'production_panel_test_fixtures.dart';
+import 'support/production_panel_test_support.dart';
 import 'support/min_viewport_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';

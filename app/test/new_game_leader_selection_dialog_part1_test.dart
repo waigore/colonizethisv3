@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
@@ -16,12 +15,7 @@ import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
-const Key _kSlotPickersStackedColumnKey = ValueKey<String>(
-  'newGameLeaderDialogSlotPickersColumn',
-);
-const Key _kSlotPickersSideBySideRowKey = ValueKey<String>(
-  'newGameLeaderDialogSlotPickersRow',
-);
+import 'support/new_game_leader_selection_dialog_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -41,94 +35,10 @@ void main() {
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    Future<void> ensureTapStart(WidgetTester tester) async {
-      final startButton = find.ancestor(
-        of: find.text('Start'),
-        matching: find.byType(CtNinePatchButton),
-      );
-      await tester.ensureVisible(startButton);
-      await tester.pumpAndSettle();
-      await tester.tap(startButton);
-      await tester.pumpAndSettle();
-    }
-
-    Future<void> ensureTapCancel(WidgetTester tester) async {
-      final cancelButton = find.ancestor(
-        of: find.text('Cancel'),
-        matching: find.byType(CtNinePatchButton),
-      );
-      await tester.ensureVisible(cancelButton);
-      await tester.pumpAndSettle();
-      await tester.tap(cancelButton);
-      await tester.pumpAndSettle();
-    }
-
-    Future<void> pumpDialog(
-      WidgetTester tester, {
-      Size surfaceSize = const Size(800, 1300),
-      required void Function(
-        List<String> orderedGreatPowerIds,
-        Map<String, String> leaderVariantByGpId,
-        int seed,
-        bool infiniteMode,
-        double terrainVariation,
-        Map<String, String?> aiProfileByGpId,
-        AdvancedStartType advancedStart,
-      )
-      onConfirmed,
-    }) async {
-      addTearDown(tester.view.reset);
-      tester.view.physicalSize = surfaceSize;
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    final base = GameSetupConfig.defaultConfig;
-                    final naming = defaultNamingConfig;
-                    final initial = <String, String>{};
-                    for (final gpId in base.selectedGreatPowerIds) {
-                      final gp = naming.gpById(gpId);
-                      if (gp != null && gp.leaderVariants.isNotEmpty) {
-                        initial[gpId] = gp.defaultLeaderVariantId;
-                      }
-                    }
-                    showDialog<void>(
-                      context: context,
-                      builder: (ctx) => NewGameLeaderSelectionDialog(
-                        baseConfig: base,
-                        naming: naming,
-                        initialLeaderByGpId: initial,
-                        blessedProfileNames: const [],
-                        onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: onConfirmed,
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-    }
-
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+      await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -144,10 +54,7 @@ void main() {
       expect(find.text('Slot 6'), findsOneWidget);
       expect(find.text('Game seed'), findsOneWidget);
       expect(find.text('Enter 0 for a random seed'), findsOneWidget);
-      expect(
-        find.text('Infinite mode (no victory condition)'),
-        findsOneWidget,
-      );
+      expect(find.text('Infinite mode (no victory condition)'), findsOneWidget);
       // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
       expect(find.byType(CtToggleSwitch), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
@@ -156,16 +63,14 @@ void main() {
     testWidgets(
       'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
 
         // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
         // the dialog frame is pinned to the refreshed mockup
         // `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1). This guards
         // against regressing to the stale 480 dp figure in the original
         // D1 text — the mockup is the visual source of truth.
-        final shell = tester.widget<CtDialogShell>(
-          find.byType(CtDialogShell),
-        );
+        final shell = tester.widget<CtDialogShell>(find.byType(CtDialogShell));
         expect(shell.maxWidth, 540);
         expect(shell.maxHeight, 720);
       },
@@ -174,7 +79,7 @@ void main() {
     testWidgets(
       'large viewport: six slots visible; single shell vertical scroll only',
       (WidgetTester tester) async {
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           surfaceSize: const Size(900, 2000),
           onConfirmed: (_, _, _, _, _, _, _) {},
@@ -200,7 +105,7 @@ void main() {
     testWidgets('narrow viewport: shell scroll reaches Start', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(
+      await pumpNewGameLeaderSelectionDialog(
         tester,
         surfaceSize: const Size(520, 420),
         onConfirmed: (_, _, _, _, _, _, _) {},
@@ -229,7 +134,7 @@ void main() {
       int? gotSeed;
       bool? gotInfiniteMode;
 
-      await pumpDialog(
+      await pumpNewGameLeaderSelectionDialog(
         tester,
         onConfirmed: (ids, leaders, seed, infiniteMode, _, __, ___) {
           gotIds = ids;
@@ -239,7 +144,7 @@ void main() {
         },
       );
 
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
 
       expect(gotIds, GameSetupConfig.defaultConfig.selectedGreatPowerIds);
       expect(gotLeaders, isNotNull);
@@ -253,55 +158,14 @@ void main() {
       WidgetTester tester,
     ) async {
       Map<String, String?>? gotProfiles;
-      addTearDown(tester.view.reset);
-      tester.view.physicalSize = const Size(900, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    final base = GameSetupConfig.defaultConfig;
-                    final naming = defaultNamingConfig;
-                    final initial = <String, String>{};
-                    for (final gpId in base.selectedGreatPowerIds) {
-                      final gp = naming.gpById(gpId);
-                      if (gp != null && gp.leaderVariants.isNotEmpty) {
-                        initial[gpId] = gp.defaultLeaderVariantId;
-                      }
-                    }
-                    showDialog<void>(
-                      context: context,
-                      builder: (ctx) => NewGameLeaderSelectionDialog(
-                        baseConfig: base,
-                        naming: naming,
-                        initialLeaderByGpId: initial,
-                        blessedProfileNames: const ['aggressive_v2'],
-                        onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed:
-                            (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
-        ),
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        surfaceSize: const Size(900, 2000),
+        blessedProfileNames: const ['aggressive_v2'],
+        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
       expect(find.byType(CtDropdown<String>), findsNWidgets(17));
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotProfiles, isEmpty);
     });
 
@@ -309,59 +173,21 @@ void main() {
       WidgetTester tester,
     ) async {
       Map<String, String?>? gotProfiles;
-      addTearDown(tester.view.reset);
-      tester.view.physicalSize = const Size(900, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    final base = GameSetupConfig.defaultConfig;
-                    final naming = defaultNamingConfig;
-                    final initial = <String, String>{};
-                    for (final gpId in base.selectedGreatPowerIds) {
-                      final gp = naming.gpById(gpId);
-                      if (gp != null && gp.leaderVariants.isNotEmpty) {
-                        initial[gpId] = gp.defaultLeaderVariantId;
-                      }
-                    }
-                    showDialog<void>(
-                      context: context,
-                      builder: (ctx) => NewGameLeaderSelectionDialog(
-                        baseConfig: base,
-                        naming: naming,
-                        initialLeaderByGpId: initial,
-                        blessedProfileNames: const ['aggressive_v2'],
-                        onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed:
-                            (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
-        ),
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        surfaceSize: const Size(900, 2000),
+        blessedProfileNames: const ['aggressive_v2'],
+        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-      final profileDropdowns = find.widgetWithText(CtDropdown<String>, 'Normal');
+      final profileDropdowns = find.widgetWithText(
+        CtDropdown<String>,
+        'Normal',
+      );
       await tester.tap(profileDropdowns.first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('aggressive_v2').last);
       await tester.pumpAndSettle();
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotProfiles?.values, contains('aggressive_v2'));
     });
 
@@ -369,14 +195,14 @@ void main() {
       WidgetTester tester,
     ) async {
       var confirmed = false;
-      await pumpDialog(
+      await pumpNewGameLeaderSelectionDialog(
         tester,
         onConfirmed: (_, _, _, _, _, _, _) {
           confirmed = true;
         },
       );
 
-      await ensureTapCancel(tester);
+      await ensureTapNewGameLeaderSelectionCancel(tester);
 
       expect(confirmed, isFalse);
       expect(find.text('Choose nations and leaders'), findsNothing);
@@ -388,7 +214,7 @@ void main() {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
 
-      await pumpDialog(
+      await pumpNewGameLeaderSelectionDialog(
         tester,
         onConfirmed: (ids, leaders, _, _, _, __, ___) {
           gotIds = ids;
@@ -401,7 +227,7 @@ void main() {
       await tester.tap(find.text('Sweden'));
       await tester.pumpAndSettle();
 
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
 
       expect(gotIds, isNotNull);
       expect(gotIds!.first, 'sweden');
@@ -413,13 +239,16 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s);
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
+      );
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
       await tester.enterText(field, '0');
       await tester.pump();
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotSeed, 0);
     });
 
@@ -427,13 +256,16 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s);
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
+      );
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
       await tester.enterText(field, '');
       await tester.pump();
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotSeed, 42);
     });
 
@@ -441,7 +273,7 @@ void main() {
       WidgetTester tester,
     ) async {
       bool? gotInfiniteMode;
-      await pumpDialog(
+      await pumpNewGameLeaderSelectionDialog(
         tester,
         onConfirmed: (_, _, _, infiniteMode, _, __, ___) =>
             gotInfiniteMode = infiniteMode,
@@ -451,7 +283,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(toggle);
       await tester.pumpAndSettle();
-      await ensureTapStart(tester);
+      await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotInfiniteMode, isTrue);
     });
 
@@ -460,14 +292,14 @@ void main() {
         WidgetTester tester,
       ) async {
         AdvancedStartType? gotAdvancedStart;
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           onConfirmed: (_, _, _, _, _, __, advancedStart) =>
               gotAdvancedStart = advancedStart,
         );
         expect(find.text('Advanced start'), findsOneWidget);
         expect(find.text('None (Turn 0)'), findsOneWidget);
-        await ensureTapStart(tester);
+        await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotAdvancedStart, AdvancedStartType.none);
       });
 
@@ -475,7 +307,7 @@ void main() {
         WidgetTester tester,
       ) async {
         AdvancedStartType? gotAdvancedStart;
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           onConfirmed: (_, _, _, _, _, __, advancedStart) =>
               gotAdvancedStart = advancedStart,
@@ -490,81 +322,40 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('50 Turns In (1598)').last);
         await tester.pumpAndSettle();
-        await ensureTapStart(tester);
+        await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotAdvancedStart, AdvancedStartType.turns50);
       });
 
       testWidgets(
         'non-locked profile shows disabled helper and Start emits none',
-        (WidgetTester tester,
-      ) async {
-        AdvancedStartType? gotAdvancedStart;
-        addTearDown(tester.view.reset);
-        tester.view.physicalSize = const Size(900, 2000);
-        tester.view.devicePixelRatio = 1.0;
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.colonial,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: Builder(
-                builder: (context) {
-                  return TextButton(
-                    onPressed: () {
-                      final baseConfig = GameSetupConfig(
-                        numProvincesOldWorld: 24,
-                        numProvincesNewWorld: 12,
-                      );
-                      final naming = defaultNamingConfig;
-                      final initial = <String, String>{};
-                      for (final gpId in baseConfig.selectedGreatPowerIds) {
-                        final gp = naming.gpById(gpId);
-                        if (gp != null && gp.leaderVariants.isNotEmpty) {
-                          initial[gpId] = gp.defaultLeaderVariantId;
-                        }
-                      }
-                      showDialog<void>(
-                        context: context,
-                        builder: (ctx) => NewGameLeaderSelectionDialog(
-                          baseConfig: baseConfig,
-                          naming: naming,
-                          initialLeaderByGpId: initial,
-                          blessedProfileNames: const [],
-                          onCancel: () => Navigator.of(ctx).pop(),
-                          onConfirmed:
-                              (_, _, _, _, _, __, advancedStart) =>
-                                  gotAdvancedStart = advancedStart,
-                        ),
-                      );
-                    },
-                    child: const Text('open'),
-                  );
-                },
-              ),
+        (WidgetTester tester) async {
+          AdvancedStartType? gotAdvancedStart;
+          await pumpNewGameLeaderSelectionDialog(
+            tester,
+            surfaceSize: const Size(900, 2000),
+            baseConfig: GameSetupConfig(
+              numProvincesOldWorld: 24,
+              numProvincesNewWorld: 12,
             ),
-          ),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-        expect(
-          find.text(
-            'Advanced start requires the standard six-power campaign profile.',
-          ),
-          findsOneWidget,
-        );
-        await ensureTapStart(tester);
-        expect(gotAdvancedStart, AdvancedStartType.none);
-      });
+            onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+                gotAdvancedStart = advancedStart,
+          );
+          expect(
+            find.text(
+              'Advanced start requires the standard six-power campaign profile.',
+            ),
+            findsOneWidget,
+          );
+          await ensureTapNewGameLeaderSelectionStart(tester);
+          expect(gotAdvancedStart, AdvancedStartType.none);
+        },
+      );
     });
 
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         expect(find.byType(CtSlider), findsOneWidget);
         expect(find.text('Terrain variation:'), findsOneWidget);
         // Live percent value rendered separately from the static label.
@@ -577,12 +368,12 @@ void main() {
       'Start passes default terrainVariation 0.5 when slider not moved',
       (WidgetTester tester) async {
         double? gotTerrainVariation;
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
-        await ensureTapStart(tester);
+        await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotTerrainVariation, closeTo(0.5, 1e-9));
       },
     );
@@ -591,7 +382,7 @@ void main() {
       'Start passes terrainVariation 0.0 after dragging slider to leftmost',
       (WidgetTester tester) async {
         double? gotTerrainVariation;
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
@@ -604,7 +395,7 @@ void main() {
         final rect = tester.getRect(slider);
         await tester.tapAt(Offset(rect.left + 1, rect.center.dy));
         await tester.pumpAndSettle();
-        await ensureTapStart(tester);
+        await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotTerrainVariation, closeTo(0.0, 1e-6));
       },
     );
@@ -613,7 +404,7 @@ void main() {
       'Start passes terrainVariation 1.0 after dragging slider to rightmost',
       (WidgetTester tester) async {
         double? gotTerrainVariation;
-        await pumpDialog(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
@@ -625,7 +416,7 @@ void main() {
         final rect = tester.getRect(slider);
         await tester.tapAt(Offset(rect.right - 1, rect.center.dy));
         await tester.pumpAndSettle();
-        await ensureTapStart(tester);
+        await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotTerrainVariation, closeTo(1.0, 1e-6));
       },
     );
@@ -641,68 +432,6 @@ void main() {
     // slot to a previously unused nation unmounts the wrapper and
     // re-enables Start.
     group('Duplicate slot validation feedback (#2867 R19)', () {
-      Future<void> pumpDialogWithConfig(
-        WidgetTester tester, {
-        required GameSetupConfig baseConfig,
-        Size surfaceSize = const Size(900, 1600),
-        void Function(
-          List<String> orderedGreatPowerIds,
-          Map<String, String> leaderVariantByGpId,
-          int seed,
-          bool infiniteMode,
-          double terrainVariation,
-          Map<String, String?> aiProfileByGpId,
-          AdvancedStartType advancedStart,
-        )?
-        onConfirmed,
-      }) async {
-        addTearDown(tester.view.reset);
-        tester.view.physicalSize = surfaceSize;
-        tester.view.devicePixelRatio = 1.0;
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.colonial,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: Builder(
-                builder: (context) {
-                  return TextButton(
-                    onPressed: () {
-                      final naming = defaultNamingConfig;
-                      final initial = <String, String>{};
-                      for (final gpId in baseConfig.selectedGreatPowerIds) {
-                        final gp = naming.gpById(gpId);
-                        if (gp != null && gp.leaderVariants.isNotEmpty) {
-                          initial[gpId] = gp.defaultLeaderVariantId;
-                        }
-                      }
-                      showDialog<void>(
-                        context: context,
-                        builder: (ctx) => NewGameLeaderSelectionDialog(
-                          baseConfig: baseConfig,
-                          naming: naming,
-                          initialLeaderByGpId: initial,
-                          blessedProfileNames: const [],
-                          onCancel: () => Navigator.of(ctx).pop(),
-                          onConfirmed: onConfirmed ?? (_, _, _, _, _, _, _) {},
-                        ),
-                      );
-                    },
-                    child: const Text('open'),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-      }
-
       bool hasDangerBorder(WidgetTester tester, int slotIndex) {
         final finder = find.byKey(
           ValueKey<String>(
@@ -739,7 +468,11 @@ void main() {
             ],
           );
 
-          await pumpDialogWithConfig(tester, baseConfig: config);
+          await pumpNewGameLeaderSelectionDialog(
+            tester,
+            baseConfig: config,
+            surfaceSize: const Size(900, 1600),
+          );
 
           expect(
             hasDangerBorder(tester, 0),
@@ -787,9 +520,10 @@ void main() {
 
       testWidgets('negative: default config (six unique nations) mounts no '
           'danger-border wrapper under any slot', (WidgetTester tester) async {
-        await pumpDialogWithConfig(
+        await pumpNewGameLeaderSelectionDialog(
           tester,
           baseConfig: GameSetupConfig.defaultConfig,
+          surfaceSize: const Size(900, 1600),
         );
 
         for (var i = 0; i < 6; i++) {
@@ -823,7 +557,11 @@ void main() {
             ],
           );
 
-          await pumpDialogWithConfig(tester, baseConfig: config);
+          await pumpNewGameLeaderSelectionDialog(
+            tester,
+            baseConfig: config,
+            surfaceSize: const Size(900, 1600),
+          );
 
           // Confirm initial duplicate borders are present.
           expect(hasDangerBorder(tester, 0), isTrue);
@@ -898,7 +636,7 @@ void main() {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
-          await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+          await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
           final titleFinder = find.byKey(
             const ValueKey<String>('leaderSelectionDialogTitle'),
           );
@@ -920,7 +658,7 @@ void main() {
       testWidgets('renders exactly one CtBrassDivider keyed below the title', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final dividerFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogBrassDivider'),
         );
@@ -942,7 +680,7 @@ void main() {
       testWidgets('intro paints --muted italic body color', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final introFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogIntro'),
         );
@@ -956,7 +694,7 @@ void main() {
           '(regression guard against unstyled headings)', (
         WidgetTester tester,
       ) async {
-        await pumpDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
         final Text title = tester.widget<Text>(
           find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
         );
@@ -969,136 +707,6 @@ void main() {
               'instead of the canonical --accent token (#2867 R1).',
         );
       });
-    });
-  });
-
-  // Refs #2870 R3 / #3507 D2 — narrow slot-row stacking at
-  // `< kLeaderSelectionNarrowBreakpoint` (540 dp), the DLG10001-dedicated
-  // breakpoint matching the mockup `@media (min-width: 540px)` rule, per
-  // SPEC/ui/new-game-leader-selection-dialog.md.
-  // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
-  // + § Acceptance Criteria narrow-viewport stacking AC; mirrors
-  // `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
-  group('NewGameLeaderSelectionDialog narrow slot stacking', () {
-    Future<void> pumpDialogAt(
-      WidgetTester tester, {
-      required Size surfaceSize,
-    }) async {
-      addTearDown(tester.view.reset);
-      tester.view.physicalSize = surfaceSize;
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    final base = GameSetupConfig.defaultConfig;
-                    final naming = defaultNamingConfig;
-                    final initial = <String, String>{};
-                    for (final gpId in base.selectedGreatPowerIds) {
-                      final gp = naming.gpById(gpId);
-                      if (gp != null && gp.leaderVariants.isNotEmpty) {
-                        initial[gpId] = gp.defaultLeaderVariantId;
-                      }
-                    }
-                    showDialog<void>(
-                      context: context,
-                      builder: (ctx) => NewGameLeaderSelectionDialog(
-                        baseConfig: base,
-                        naming: naming,
-                        initialLeaderByGpId: initial,
-                        blessedProfileNames: const [],
-                        onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: (_, _, _, _, _, _, _) {},
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-    }
-
-    testWidgets('wide viewport (>= 540 dp): slot bodies render side-by-side row, '
-        'no stacked column body, no exception', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(800, 1300));
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.byKey(_kSlotPickersSideBySideRowKey),
-        findsNWidgets(6),
-        reason:
-            'Wide viewport must render one side-by-side row per slot '
-            '(SPEC/ui/new-game-leader-selection-dialog.md narrow stacking AC).',
-      );
-      expect(
-        find.byKey(_kSlotPickersStackedColumnKey),
-        findsNothing,
-        reason:
-            'Wide viewport must not mount the stacked column body '
-            '(negative AC).',
-      );
-      expect(
-        find.byType(CtDropdown<String>),
-        findsAtLeast(12),
-        reason: 'Six slot rows × (nation + leader) = 12 dropdowns.',
-      );
-    });
-
-    testWidgets('narrow viewport (< 540 dp): slot bodies render stacked column, '
-        'no side-by-side row body, no exception', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(480, 1300));
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.byKey(_kSlotPickersStackedColumnKey),
-        findsNWidgets(6),
-        reason:
-            'Narrow viewport must render one stacked column per slot '
-            '(SPEC/ui/new-game-leader-selection-dialog.md narrow stacking AC).',
-      );
-      expect(
-        find.byKey(_kSlotPickersSideBySideRowKey),
-        findsNothing,
-        reason:
-            'Narrow viewport must not mount the side-by-side row body '
-            '(negative AC).',
-      );
-      expect(
-        find.byType(CtDropdown<String>),
-        findsAtLeast(12),
-        reason:
-            'Both nation and leader dropdowns still mount in the stacked '
-            'layout — six slots × two dropdowns = 12.',
-      );
-    });
-
-    testWidgets('boundary: viewport exactly at 540 dp uses wide row body '
-        '(breakpoint is strict <)', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(540, 1300));
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.byKey(_kSlotPickersSideBySideRowKey),
-        findsNWidgets(6),
-        reason:
-            '540 dp is the boundary — kLeaderSelectionNarrowBreakpoint is a '
-            'strict less-than check, so 540 dp keeps the wide row body.',
-      );
-      expect(find.byKey(_kSlotPickersStackedColumnKey), findsNothing);
     });
   });
 }

@@ -38,33 +38,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'p_beach';
-      final gameBeach = Game(
-        id: 'beach_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'bf1',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              seaZoneId: 'atlantic',
-              shipTypeIds: const ['carrack'],
-              mission: FleetMission.beachhead,
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|lisbon|atlantic': 'oldWorld|lisbon|0|0',
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-            },
-          },
-        ),
-        players: const [Player(id: playerId, displayName: 'P', isHuman: true)],
-      );
+      final gameBeach = buildNavalPanelBeachheadMissionGame(humanId: playerId);
 
       await tester.pumpWidget(
         buildNavalPanel(game: gameBeach, humanPlayerId: playerId),
@@ -78,22 +52,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'p_empty';
-      final emptyGame = Game(
-        id: 'empty_naval',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: [
-          const Player(
-            id: playerId,
-            displayName: 'Solo',
-            isHuman: true,
-            treasury: 0,
-          ),
-        ],
-      );
+      final emptyGame = buildNavalPanelEmptyHumanGame(humanId: playerId);
 
       await tester.pumpWidget(
         buildNavalPanel(game: emptyGame, humanPlayerId: playerId),
@@ -111,52 +70,33 @@ void main() {
         final homeId = homeFleetIdFor(humanId);
         final markerScope = 'port:oldWorld|p1';
 
-        final markerScopeGame = Game(
-          id: 'g_marker_scope',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: capitalPrefixedId,
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital Port',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capitalPrefixedId,
-                ships: const [
-                  ShipInstance(id: 'home_ship_1', typeId: 'carrack'),
-                ],
-              ),
-            ],
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                capitalPrefixedId: ['oldWorld|p1|0|0'],
-              },
-            },
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Scope Test',
-              isHuman: true,
-              capitalProvinceId: capitalPrefixedId,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capitalPrefixedId,
-                x: 0,
-                y: 0,
-              ),
+        final markerScopeGame = buildNavalPanelOwFleetsGame(
+          gameId: 'g_marker_scope',
+          humanId: humanId,
+          displayName: 'Scope Test',
+          capitalProvinceId: capitalPrefixedId,
+          oldWorldProvinces: const [
+            Province(
+              id: capitalPrefixedId,
+              regionId: 'oldWorld',
+              ownerId: humanId,
+              displayName: 'Capital Port',
             ),
           ],
+          fleets: [
+            Fleet(
+              id: homeId,
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: capitalPrefixedId,
+              ships: const [
+                ShipInstance(id: 'home_ship_1', typeId: 'carrack'),
+              ],
+            ),
+          ],
+          tileKeysByProvince: const {
+            capitalPrefixedId: ['oldWorld|p1|0|0'],
+          },
         );
 
         await tester.pumpWidget(
@@ -180,25 +120,10 @@ void main() {
       'AC: Cross-region projected marker scope shows destination region rows',
       (WidgetTester tester) async {
         const humanId = 'gp_cross_region_scope';
-        final scopedGame = Game(
-          id: 'g_cross_region_scope',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 's1',
-                ships: const [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Cross Scope', isHuman: true),
-          ],
+        final scopedGame = buildNavalPanelSingleSeaFleetGame(
+          humanId: humanId,
+          gameId: 'g_cross_region_scope',
+          displayName: 'Cross Scope',
         );
         const draftOrders = Orders(
           navalMoveOrdersByPlayerId: {
@@ -210,20 +135,9 @@ void main() {
             ],
           },
         );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|s1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'newWorld|s2',
-              regionId: 'newWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'newWorld|s2')],
+        final topology = buildNavalTwoSeaZonesTopology(
+          fromZoneId: 'oldWorld|s1',
+          toZoneId: 'newWorld|s2',
         );
 
         await tester.pumpWidget(
@@ -252,41 +166,12 @@ void main() {
         final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
         addTearDown(closeSub.cancel);
 
-        final scopedGame = Game(
-          id: 'g_scope_autoclose_yes',
-          worldState: WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 's1',
-                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Scoped AutoClose', isHuman: true),
-          ],
+        final scopedGame = buildNavalPanelSingleSeaFleetGame(
+          humanId: humanId,
+          gameId: 'g_scope_autoclose_yes',
+          displayName: 'Scoped AutoClose',
         );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|s1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'oldWorld|s2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
-        );
+        final topology = buildNavalTwoSeaZonesTopology();
 
         await tester.pumpWidget(
           _ScopedNavalPanelHarness(
@@ -324,41 +209,12 @@ void main() {
         final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
         addTearDown(closeSub.cancel);
 
-        final gameFull = Game(
-          id: 'g_scope_autoclose_no_full',
-          worldState: WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 's1',
-                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Full List', isHuman: true),
-          ],
+        final gameFull = buildNavalPanelSingleSeaFleetGame(
+          humanId: humanId,
+          gameId: 'g_scope_autoclose_no_full',
+          displayName: 'Full List',
         );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|s1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'oldWorld|s2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
-        );
+        final topology = buildNavalTwoSeaZonesTopology();
 
         await tester.pumpWidget(
           _ScopedNavalPanelHarness(
@@ -395,25 +251,10 @@ void main() {
         final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
         addTearDown(closeSub.cancel);
 
-        final gameScoped = Game(
-          id: 'g_scope_autoclose_no_external',
-          worldState: WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 's1',
-                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Scoped External', isHuman: true),
-          ],
+        final gameScoped = buildNavalPanelSingleSeaFleetGame(
+          humanId: humanId,
+          gameId: 'g_scope_autoclose_no_external',
+          displayName: 'Scoped External',
         );
 
         await tester.pumpWidget(
@@ -436,53 +277,13 @@ void main() {
       WidgetTester tester,
     ) async {
       const humanId = 'gp_move_home';
-      const capProvince = 'oldWorld|cap1';
-      final homeId = homeFleetIdFor(humanId);
 
-      final moveHomeGame = Game(
-        id: 'g_move_home',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'cap1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Capital',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: homeId,
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: capProvince,
-              ships: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
-            ),
-          ],
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              capProvince: ['oldWorld|cap1|0|0'],
-            },
-          },
-        ),
-        players: const [
-          Player(
-            id: humanId,
-            displayName: 'Move Home Test',
-            isHuman: true,
-            capitalProvinceId: capProvince,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capProvince,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
+      final moveHomeGame = buildNavalPanelCapitalHomeAndPeersGame(
+        humanId: humanId,
+        gameId: 'g_move_home',
+        displayName: 'Move Home Test',
+        peerFleets: const [],
+        homeShips: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
       );
 
       await tester.pumpWidget(
@@ -586,56 +387,19 @@ void main() {
         const capProvince = 'oldWorld|cap1';
         final homeId = homeFleetIdFor(humanId);
 
-        final homeNeverDeleteGame = Game(
-          id: 'g_home_never_deleted',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'donor',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 3,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Home never deleted tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+        final homeNeverDeleteGame = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_home_never_deleted',
+          displayName: 'Home never deleted tester',
+          nextShipInstanceSeq: 3,
+          homeShips: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
+          peerFleets: [
+            Fleet(
+              id: 'donor',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: capProvince,
+              ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
             ),
           ],
         );
@@ -711,58 +475,20 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_nonhome_removed';
         const capProvince = 'oldWorld|cap1';
-        final homeId = homeFleetIdFor(humanId);
 
-        final nonHomeSplitGame = Game(
-          id: 'g_nonhome_removed',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'split_me',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 3,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Non-home removed tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+        final nonHomeSplitGame = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_nonhome_removed',
+          displayName: 'Non-home removed tester',
+          nextShipInstanceSeq: 3,
+          homeShips: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
+          peerFleets: [
+            Fleet(
+              id: 'split_me',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: capProvince,
+              ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
             ),
           ],
         );
