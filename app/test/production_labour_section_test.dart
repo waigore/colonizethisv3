@@ -83,6 +83,24 @@ Widget _mount({
   );
 }
 
+Future<void> _pumpSection(
+  WidgetTester tester, {
+  required Player player,
+  Orders currentOrders = const Orders(),
+  bool canEdit = true,
+  ProductionLabourCallbacks? callbacks,
+}) async {
+  await tester.pumpWidget(
+    _mount(
+      player: player,
+      currentOrders: currentOrders,
+      canEdit: canEdit,
+      callbacks: callbacks,
+    ),
+  );
+  await pumpSettleCapped(tester);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -91,8 +109,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final player = _gpWithPool(peasants: 1, apprentices: 1, journeymen: 1, masters: 1);
-      await tester.pumpWidget(_mount(player: player));
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player);
 
       // All four tier rows present.
       for (final tier in kProductionLabourTierOrder) {
@@ -133,10 +150,7 @@ void main() {
       final player = _gpWithPool(
         stockpile: {CommodityCatalog.fabric.id: 2},
       );
-      await tester.pumpWidget(
-        _mount(player: player, callbacks: capture.asCallbacks()),
-      );
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.tap(
@@ -167,14 +181,12 @@ void main() {
           _playerId: const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
         },
       );
-      await tester.pumpWidget(
-        _mount(
-          player: player,
-          currentOrders: orders,
-          callbacks: capture.asCallbacks(),
-        ),
+      await _pumpSection(
+        tester,
+        player: player,
+        currentOrders: orders,
+        callbacks: capture.asCallbacks(),
       );
-      await pumpSettleCapped(tester);
 
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.tap(
@@ -199,10 +211,7 @@ void main() {
           ],
         },
       );
-      await tester.pumpWidget(
-        _mount(player: player, currentOrders: orders),
-      );
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, currentOrders: orders);
 
       expect(find.text('Queued: 2'), findsOneWidget);
       // Other tiers have no queued orders so no badge appears for them.
@@ -218,10 +227,7 @@ void main() {
         treasury: 5000,
         stockpile: {CommodityCatalog.paper.id: 50},
       );
-      await tester.pumpWidget(
-        _mount(player: player, callbacks: capture.asCallbacks()),
-      );
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.tap(
@@ -241,10 +247,7 @@ void main() {
       final capture = _Capture();
       // Three Disband buttons (one per trained tier); only journeyman enabled.
       final player = _gpWithPool(journeymen: 1);
-      await tester.pumpWidget(
-        _mount(player: player, callbacks: capture.asCallbacks()),
-      );
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
       await tester.tap(
         find.byKey(const ValueKey<String>('production_labour_disband_journeymen')),
@@ -260,10 +263,7 @@ void main() {
       final capture = _Capture();
       // No trained workers at all — all three disband buttons rendered, disabled.
       final player = _gpWithPool(peasants: 1);
-      await tester.pumpWidget(
-        _mount(player: player, callbacks: capture.asCallbacks()),
-      );
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
       await tester.tap(
         find.byKey(const ValueKey<String>('production_labour_disband_masters')),
@@ -278,8 +278,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final player = _gpWithPool(peasants: 2, journeymen: 1);
-      await tester.pumpWidget(_mount(player: player, canEdit: false));
-      await pumpSettleCapped(tester);
+      await _pumpSection(tester, player: player, canEdit: false);
 
       // No disband buttons rendered when read-only.
       expect(find.text('Disband'), findsNothing);
@@ -300,8 +299,7 @@ void main() {
       'tier label suffixes (unlocked) for peasant when techUnlocked is empty',
       (WidgetTester tester) async {
         final player = _gpWithPool(peasants: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final l10n = lookupAppLocalizations(const Locale('en'));
         expect(
@@ -320,8 +318,7 @@ void main() {
       'trained tier label suffixes (locked) when required techs missing',
       (WidgetTester tester) async {
         final player = _gpWithPool(peasants: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final l10n = lookupAppLocalizations(const Locale('en'));
         for (final tierName in [
@@ -353,8 +350,7 @@ void main() {
             kTechIdSugarRefining: true,
           },
         );
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final l10n = lookupAppLocalizations(const Locale('en'));
         expect(
@@ -375,8 +371,7 @@ void main() {
       'disband control renders as CtDangerTextButton and not CtNinePatchButton',
       (WidgetTester tester) async {
         final player = _gpWithPool(journeymen: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         // Three trained tiers each render a visible Disband
         // `CtDangerTextButton`, plus the peasant row reserves an invisible
@@ -397,8 +392,7 @@ void main() {
       'enabled disband CtDangerTextButton idle opacity is 0.7',
       (WidgetTester tester) async {
         final player = _gpWithPool(journeymen: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_journeymen'),
@@ -416,8 +410,7 @@ void main() {
       (WidgetTester tester) async {
         // No journeyman in pool → disband for journeyman disabled (still mounted).
         final player = _gpWithPool(peasants: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_journeymen'),
@@ -434,8 +427,7 @@ void main() {
       'disband CtDangerTextButton paints danger border (no hard-coded colours)',
       (WidgetTester tester) async {
         final player = _gpWithPool(apprentices: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_apprentices'),
@@ -460,8 +452,7 @@ void main() {
       'CtDangerTextButton hover lifts opacity to 1.0',
       (WidgetTester tester) async {
         final player = _gpWithPool(journeymen: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_journeymen'),
@@ -501,8 +492,7 @@ void main() {
             kTechIdSugarRefining: true,
           },
         );
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         final l10n = lookupAppLocalizations(const Locale('en'));
 
@@ -637,8 +627,7 @@ void main() {
       'peasant row reserves invisible Disband slot (S8a)',
       (WidgetTester tester) async {
         final player = _gpWithPool(peasants: 1);
-        await tester.pumpWidget(_mount(player: player));
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player);
 
         // Reserved peasant slot is unkeyed and excluded from semantics; only
         // the 3 trained rows render keyed Disband controls. Total mounted
@@ -659,10 +648,7 @@ void main() {
       (WidgetTester tester) async {
         final capture = _Capture();
         final player = _gpWithPool(apprentices: 1);
-        await tester.pumpWidget(
-          _mount(player: player, callbacks: capture.asCallbacks()),
-        );
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_apprentices'),
@@ -685,10 +671,7 @@ void main() {
       (WidgetTester tester) async {
         final capture = _Capture();
         final player = _gpWithPool(peasants: 1);
-        await tester.pumpWidget(
-          _mount(player: player, callbacks: capture.asCallbacks()),
-        );
-        await pumpSettleCapped(tester);
+        await _pumpSection(tester, player: player, callbacks: capture.asCallbacks());
 
         final disbandFinder = find.byKey(
           const ValueKey<String>('production_labour_disband_apprentices'),
