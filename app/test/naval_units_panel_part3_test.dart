@@ -118,6 +118,75 @@ Game _mergePortGame({
   fleets: fleets,
 );
 
+Game _sameSeaCombineGame({required String humanId}) {
+  const capProvince = 'oldWorld|cap1';
+  return buildNavalPanelOwFleetsGame(
+    gameId: 'g_same_sea_combine',
+    humanId: humanId,
+    displayName: 'Same-sea combine',
+    capitalProvinceId: capProvince,
+    oldWorldProvinces: [
+      Province(
+        id: 'coast',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Coast',
+      ),
+      Province(
+        id: 'cap1',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: 'sea_1',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: 'zone_alpha',
+        inPortAtProvinceId: null,
+        ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
+        mission: FleetMission.patrol,
+      ),
+      Fleet(
+        id: 'sea_2',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: 'zone_alpha',
+        inPortAtProvinceId: null,
+        ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
+      ),
+    ],
+    portsByProvinceSeaboard: {
+      'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+    },
+    tileKeysByProvince: {
+      capProvince: ['oldWorld|cap1|0|0'],
+      'oldWorld|coast': ['oldWorld|coast|0|0'],
+    },
+    nextShipInstanceSeq: 3,
+  );
+}
+
+Future<NavalFleetsUpdatedEvent?> _pumpCheckCombine(
+  WidgetTester tester, {
+  required Game game,
+  required String humanId,
+  required List<String> labels,
+  bool scroll = false,
+  bool? expectCombineEnabled,
+}) async {
+  final (bus, latest) = _wireFleetsUpdated();
+  await _pumpNaval(tester, game: game, humanPlayerId: humanId, bus: bus);
+  await _tapFleetCheckboxes(tester, labels, scroll: scroll);
+  if (expectCombineEnabled != null) {
+    _expectCombineEnabled(tester, enabled: expectCombineEnabled);
+  }
+  await _tapCombine(tester);
+  return latest();
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -252,69 +321,13 @@ void main() {
       'AC: Two fleets in the same sea zone combine; mission becomes none',
       (WidgetTester tester) async {
         const humanId = 'gp_same_sea_combine';
-        const capProvince = 'oldWorld|cap1';
-
-        final sameSeaGame = buildNavalPanelOwFleetsGame(
-          gameId: 'g_same_sea_combine',
-          humanId: humanId,
-          displayName: 'Same-sea combine',
-          capitalProvinceId: capProvince,
-          oldWorldProvinces: [
-            Province(
-              id: 'coast',
-              regionId: 'oldWorld',
-              ownerId: humanId,
-              displayName: 'Coast',
-            ),
-            Province(
-              id: 'cap1',
-              regionId: 'oldWorld',
-              ownerId: humanId,
-              displayName: 'Capital',
-            ),
-          ],
-          fleets: [
-            Fleet(
-              id: 'sea_1',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_alpha',
-              inPortAtProvinceId: null,
-              ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
-              mission: FleetMission.patrol,
-            ),
-            Fleet(
-              id: 'sea_2',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_alpha',
-              inPortAtProvinceId: null,
-              ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-          },
-          tileKeysByProvince: {
-            capProvince: ['oldWorld|cap1|0|0'],
-            'oldWorld|coast': ['oldWorld|coast|0|0'],
-          },
-          nextShipInstanceSeq: 3,
-        );
-
-        final (bus, latest) = _wireFleetsUpdated();
-        await _pumpNaval(
+        final updated = await _pumpCheckCombine(
           tester,
-          game: sameSeaGame,
-          humanPlayerId: humanId,
-          bus: bus,
+          game: _sameSeaCombineGame(humanId: humanId),
+          humanId: humanId,
+          labels: const ['Fleet sea_1', 'Fleet sea_2'],
+          expectCombineEnabled: true,
         );
-
-        await _tapFleetCheckboxes(tester, ['Fleet sea_1', 'Fleet sea_2']);
-        _expectCombineEnabled(tester, enabled: true);
-        await _tapCombine(tester);
-
-        final updated = latest();
         expect(updated, isNotNull);
         final fleetsAfter = updated!.game.worldState.fleets;
         expect(fleetsAfter.length, 1);
@@ -330,34 +343,39 @@ void main() {
       'AC: Combining two non-home fleets clears non-none missions on survivor',
       (WidgetTester tester) async {
         const humanId = 'gp_mission_clear';
-
-        final missionGame = _mergePortGame(
-          humanId: humanId,
-          gameId: 'g_mission_clear',
-          displayName: 'Mission clear tester',
-          fleets: [
-            _pf('m1', humanId, 'ms1', 'carrack', mission: FleetMission.patrol),
-            _pf('m2', humanId, 'ms2', 'fluyte', mission: FleetMission.blockade),
-          ],
-        );
-
-        final (bus, latest) = _wireFleetsUpdated();
-        await _pumpNaval(
+        final updated = await _pumpCheckCombine(
           tester,
-          game: missionGame,
-          humanPlayerId: humanId,
-          bus: bus,
+          game: _mergePortGame(
+            humanId: humanId,
+            gameId: 'g_mission_clear',
+            displayName: 'Mission clear tester',
+            fleets: [
+              _pf(
+                'm1',
+                humanId,
+                'ms1',
+                'carrack',
+                mission: FleetMission.patrol,
+              ),
+              _pf(
+                'm2',
+                humanId,
+                'ms2',
+                'fluyte',
+                mission: FleetMission.blockade,
+              ),
+            ],
+          ),
+          humanId: humanId,
+          labels: const ['Fleet m1', 'Fleet m2'],
         );
-
-        await _tapFleetCheckboxes(tester, ['Fleet m1', 'Fleet m2']);
-        await _tapCombine(tester);
-
-        final updated = latest();
         expect(updated, isNotNull);
-        final merged = updated!.game.worldState.fleets.firstWhere(
-          (f) => f.id == 'm1',
+        expect(
+          updated!.game.worldState.fleets
+              .firstWhere((f) => f.id == 'm1')
+              .mission,
+          FleetMission.none,
         );
-        expect(merged.mission, FleetMission.none);
       },
     );
 
@@ -417,35 +435,23 @@ void main() {
       'AC: Three-fleet combine survivor is first in panel order regardless of check order',
       (WidgetTester tester) async {
         const humanId = 'gp_reverse_check';
-
-        final revGame = _mergePortGame(
+        final updated = await _pumpCheckCombine(
+          tester,
+          game: _mergePortGame(
+            humanId: humanId,
+            gameId: 'g_reverse_check',
+            displayName: 'Reverse check tester',
+            nextShipInstanceSeq: 4,
+            fleets: [
+              _pf('r1', humanId, 'rs1', 'carrack'),
+              _pf('r2', humanId, 'rs2', 'fluyte'),
+              _pf('r3', humanId, 'rs3', 'carrack'),
+            ],
+          ),
           humanId: humanId,
-          gameId: 'g_reverse_check',
-          displayName: 'Reverse check tester',
-          nextShipInstanceSeq: 4,
-          fleets: [
-            _pf('r1', humanId, 'rs1', 'carrack'),
-            _pf('r2', humanId, 'rs2', 'fluyte'),
-            _pf('r3', humanId, 'rs3', 'carrack'),
-          ],
-        );
-
-        final (bus, latest) = _wireFleetsUpdated();
-        await _pumpNaval(
-          tester,
-          game: revGame,
-          humanPlayerId: humanId,
-          bus: bus,
-        );
-
-        await _tapFleetCheckboxes(
-          tester,
-          ['Fleet r3', 'Fleet r2', 'Fleet r1'],
+          labels: const ['Fleet r3', 'Fleet r2', 'Fleet r1'],
           scroll: true,
         );
-        await _tapCombine(tester);
-
-        final updated = latest();
         expect(updated, isNotNull);
         final fleetsAfter = updated!.game.worldState.fleets;
         expect(fleetsAfter.length, 1);
@@ -500,7 +506,6 @@ void main() {
       'AC: Collapsed rows keep inline Split action while checkbox selection works',
       (WidgetTester tester) async {
         const humanId = 'gp_collapsed_cb';
-
         final collapsedGame = _mergePortGame(
           humanId: humanId,
           gameId: 'g_collapsed_cb',
@@ -533,13 +538,13 @@ void main() {
           find.descendant(of: tileA, matching: find.byTooltip('Split')),
           findsOne,
         );
-
         await _tapCombine(tester);
 
         final updated = latest();
         expect(updated, isNotNull);
-        final fleetsAfter = updated!.game.worldState.fleets;
-        final merged = fleetsAfter.firstWhere((f) => f.id == 'col_a');
+        final merged = updated!.game.worldState.fleets.firstWhere(
+          (f) => f.id == 'col_a',
+        );
         final mergedIds = merged.ships.map((s) => s.id).toList()..sort();
         expect(mergedIds, ['cs1', 'cs2']);
       },

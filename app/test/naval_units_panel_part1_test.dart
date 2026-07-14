@@ -418,19 +418,11 @@ void main() {
       expect(events.last.regionId, portFleet.regionId);
     });
 
-    testWidgets('AC: Split button is shown for Home Fleet with ships', (
-      WidgetTester tester,
-    ) async {
-      await pumpNaval(tester, humanPlayerId: humanPlayerIdWithFleets);
-      final home = fleetTile('Home Fleet');
-      expect(home, findsOneWidget);
-      await expandAndExpectSplit(tester, home);
-    });
-
     testWidgets(
-      'AC: Home Fleet row has a checkbox; Combine is only in the panel header',
+      'AC: Home Fleet row has checkbox; Split shown; Combine stays in header only',
       (WidgetTester tester) async {
-        await pumpNaval(tester, humanPlayerId: humanPlayerIdWithFleets);
+        final humanId = humanPlayerIdWithFleets;
+        await pumpNaval(tester, humanPlayerId: humanId);
         final home = fleetTile('Home Fleet');
         expect(home, findsOneWidget);
         expect(
@@ -441,7 +433,7 @@ void main() {
           find.widgetWithText(CtActionTextButton, 'Combine'),
           findsOneWidget,
         );
-        await expandFleetTile(tester, home);
+        await expandAndExpectSplit(tester, home);
         expect(
           find.descendant(
             of: home,
@@ -452,31 +444,17 @@ void main() {
       },
     );
 
-    testWidgets('AC: Split button is shown for non-Home Fleet', (
-      WidgetTester tester,
-    ) async {
-      final humanId = humanPlayerIdWithFleets;
-      final homeId = homeFleetIdFor(humanId);
-      final playerFleets = game.worldState.fleets
-          .where(
-            (f) =>
-                f.ownerId == humanId &&
-                f.shipTypeIds.isNotEmpty &&
-                f.id != homeId,
-          )
-          .toList();
-      expect(playerFleets, isNotEmpty);
-      await pumpNaval(tester, humanPlayerId: humanId);
-      final fleet = fleetTile(navalFleetTileLabel(playerFleets.first, humanId));
-      expect(fleet, findsOneWidget);
-      await expandAndExpectSplit(tester, fleet);
-    });
-
     testWidgets(
-      'AC: Expanding home/non-home fleet and tapping Split opens Split Fleet dialog',
+      'AC: Split on home/non-home opens Split Fleet dialog; non-home shows Split',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
         final homeId = homeFleetIdFor(humanId);
+        final nonHome = game.worldState.fleets.firstWhere(
+          (f) =>
+              f.ownerId == humanId &&
+              f.shipTypeIds.isNotEmpty &&
+              f.id != homeId,
+        );
         await pumpNaval(tester, humanPlayerId: humanId);
 
         final home = fleetTile('Home Fleet');
@@ -486,34 +464,11 @@ void main() {
         await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
 
-        final nonHome = game.worldState.fleets.firstWhere(
-          (f) =>
-              f.ownerId == humanId &&
-              f.shipTypeIds.isNotEmpty &&
-              f.id != homeId,
-        );
         final nonHomeFinder = fleetTile(navalFleetTileLabel(nonHome, humanId));
         expect(nonHomeFinder, findsOneWidget);
+        await expandAndExpectSplit(tester, nonHomeFinder);
         await expandAndTapSplit(tester, nonHomeFinder);
         expect(find.text('Split Fleet'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AC: Combine control is in the panel header when fleets exist',
-      (WidgetTester tester) async {
-        final humanId = humanPlayerIdWithFleets;
-        expect(
-          game.worldState.fleets.where(
-            (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
-          ),
-          isNotEmpty,
-        );
-        await pumpNaval(tester, humanPlayerId: humanId);
-        expect(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-          findsOneWidget,
-        );
       },
     );
 
