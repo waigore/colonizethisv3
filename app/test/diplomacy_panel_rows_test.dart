@@ -1,6 +1,7 @@
 // Pure-function tests for DiplomacyPanel row building and power-comparison
 // helpers, split out of diplomacy_panel_test.dart to keep each test file at or
 // below the repo dart_file_non_comment_line_size gate. SPEC/ui/diplomacy-panel.md.
+// Shared tables densify residual mid-500 cases (Refs #4021).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -45,29 +46,28 @@ const _seaReachableTopology = MapTopology(
   ],
 );
 
-/// Turn-0 fixture where Tribe `t1` owns a New-World province that is
-/// sea-reachable from the human GP's Old-World anchor, but the GP has **no**
-/// non-`unknown` New-World tile visibility and **no** GP↔Tribe relation
-/// (Refs #3620 AC-1). The tribe must not be surfaced in the Tribes section.
-Game _gameWithSeaReachableTribeNoContact() {
-  return const Game(
-    id: 'sea-reachable-no-contact',
+Game _tribeFixture({
+  required String id,
+  required int turnNumber,
+  required Map<String, Map<String, String>> playerVisibilityByTile,
+  List<DiplomacyRelation> diplomacyRelations = const [],
+}) {
+  return Game(
+    id: id,
     worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: const RegionData(
         provinces: [
           Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
       ),
-      newWorld: RegionData(
+      newWorld: const RegionData(
         provinces: [
           Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 't1'),
         ],
       ),
-      playerVisibilityByTile: {
-        'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
-      },
-      tileKeysByRegionAndProvince: {
+      playerVisibilityByTile: playerVisibilityByTile,
+      tileKeysByRegionAndProvince: const {
         'oldWorld': {
           'oldWorld|home': ['oldWorld|home|0|0'],
         },
@@ -76,46 +76,42 @@ Game _gameWithSeaReachableTribeNoContact() {
         },
       },
     ),
-    players: [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
-    tribes: [Tribe(id: 't1', displayName: 'Tribe One')],
-    diplomacyRelations: [],
+    players: const [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
+    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: diplomacyRelations,
   );
 }
+
+/// Turn-0 fixture where Tribe `t1` owns a New-World province that is
+/// sea-reachable from the human GP's Old-World anchor, but the GP has **no**
+/// non-`unknown` New-World tile visibility and **no** GP↔Tribe relation
+/// (Refs #3620 AC-1). The tribe must not be surfaced in the Tribes section.
+Game _gameWithSeaReachableTribeNoContact() => _tribeFixture(
+  id: 'sea-reachable-no-contact',
+  turnNumber: 0,
+  playerVisibilityByTile: const {
+    'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
+  },
+);
 
 /// Fixture for the contact-survives-fog-decay AC (Refs #3620 AC-7): the human
 /// GP holds a persisted GP↔Tribe relation with `t1` but currently has **no**
 /// non-`unknown` tile visibility into any province `t1` owns.
-Game _gameWithTribeRelationButNoVisibility() {
-  return const Game(
-    id: 'tribe-relation-fog-decay',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 7),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: [
-          Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 't1'),
-        ],
-      ),
-      playerVisibilityByTile: {},
+Game _gameWithTribeRelationButNoVisibility() => _tribeFixture(
+  id: 'tribe-relation-fog-decay',
+  turnNumber: 7,
+  playerVisibilityByTile: const {},
+  diplomacyRelations: const [
+    DiplomacyRelation(
+      factionId1: 'gp1',
+      factionId2: 't1',
+      state: RelationState.atPeace,
+      score: 50,
+      sinceTurn: 4,
+      lastInteractionTurn: 4,
     ),
-    players: [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
-    tribes: [Tribe(id: 't1', displayName: 'Tribe One')],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 't1',
-        state: RelationState.atPeace,
-        score: 50,
-        sinceTurn: 4,
-        lastInteractionTurn: 4,
-      ),
-    ],
-  );
-}
+  ],
+);
 
 void main() {
   suppressLogsForTests();
@@ -144,17 +140,21 @@ void main() {
     test(
       'display mapping aligned with SPEC (10-step ladder bands, Refs #3753)',
       () {
-        expect(relationScoreToDisplayLabel(0), 'Hostile');
-        expect(relationScoreToDisplayLabel(10), 'Antagonistic');
-        expect(relationScoreToDisplayLabel(20), 'Distrustful');
-        expect(relationScoreToDisplayLabel(30), 'Unfriendly');
-        expect(relationScoreToDisplayLabel(40), 'Wary');
-        expect(relationScoreToDisplayLabel(50), 'Neutral');
-        expect(relationScoreToDisplayLabel(60), 'Cordial');
-        expect(relationScoreToDisplayLabel(70), 'Amicable');
-        expect(relationScoreToDisplayLabel(80), 'Friendly');
-        expect(relationScoreToDisplayLabel(90), 'Devoted');
-        expect(relationScoreToDisplayLabel(100), 'Devoted');
+        for (final c in <(int, String)>[
+          (0, 'Hostile'),
+          (10, 'Antagonistic'),
+          (20, 'Distrustful'),
+          (30, 'Unfriendly'),
+          (40, 'Wary'),
+          (50, 'Neutral'),
+          (60, 'Cordial'),
+          (70, 'Amicable'),
+          (80, 'Friendly'),
+          (90, 'Devoted'),
+          (100, 'Devoted'),
+        ]) {
+          expect(relationScoreToDisplayLabel(c.$1), c.$2);
+        }
       },
     );
 
@@ -372,102 +372,99 @@ void main() {
   });
 
   group('powerComparisonPercent', () {
-    test('GP stronger than player produces positive percentage', () {
-      expect(powerComparisonPercent(110, 100), 10);
-    });
-
-    test('GP weaker than player produces negative percentage', () {
-      expect(powerComparisonPercent(78, 100), -22);
-    });
-
-    test('equal scores produce zero percentage', () {
-      expect(powerComparisonPercent(100, 100), 0);
-    });
-
-    test('rounding uses banker-agnostic round() (positive)', () {
-      // (105 - 100) / 100 = 0.05 → +5
-      expect(powerComparisonPercent(105, 100), 5);
-      // (114 - 100) / 100 = 0.14 → +14
-      expect(powerComparisonPercent(114, 100), 14);
-    });
-
-    test('zero playerPowerScore uses max(playerScore, 1) guard', () {
-      // With denominator clamped to 1, (50 - 0) / 1 = 50 → +5000%
-      expect(powerComparisonPercent(50, 0), 5000);
-      // (0 - 0) / max(0, 1) = 0 → 0%, finite (no NaN, no division-by-zero)
-      expect(powerComparisonPercent(0, 0), 0);
-    });
-
-    test('negative playerPowerScore is still guarded by max(.., 1)', () {
-      // The SPEC formula uses `max(playerPowerScore, 1)`; a defensive call
-      // with a negative `playerPowerScore` must not produce a sign flip via a
-      // negative denominator. Result must be a finite integer using `1` as
-      // the effective denominator.
-      expect(powerComparisonPercent(50, -10), 6000);
-    });
+    for (final c in <({String name, int gp, int player, int want})>[
+      (
+        name: 'GP stronger than player produces positive percentage',
+        gp: 110,
+        player: 100,
+        want: 10,
+      ),
+      (
+        name: 'GP weaker than player produces negative percentage',
+        gp: 78,
+        player: 100,
+        want: -22,
+      ),
+      (
+        name: 'equal scores produce zero percentage',
+        gp: 100,
+        player: 100,
+        want: 0,
+      ),
+      (
+        name: 'rounding uses banker-agnostic round() (positive mid)',
+        gp: 105,
+        player: 100,
+        want: 5,
+      ),
+      (
+        name: 'rounding uses banker-agnostic round() (positive high)',
+        gp: 114,
+        player: 100,
+        want: 14,
+      ),
+      (
+        name: 'zero playerPowerScore uses max(playerScore, 1) guard',
+        gp: 50,
+        player: 0,
+        want: 5000,
+      ),
+      (name: 'zero/zero is finite 0% (no NaN)', gp: 0, player: 0, want: 0),
+      (
+        name: 'negative playerPowerScore is still guarded by max(.., 1)',
+        gp: 50,
+        player: -10,
+        want: 6000,
+      ),
+    ]) {
+      test(c.name, () {
+        expect(powerComparisonPercent(c.gp, c.player), c.want);
+      });
+    }
   });
 
   group('formatPowerComparisonPercent', () {
-    test('positive percentage uses ASCII plus and percent suffix', () {
-      expect(formatPowerComparisonPercent(10), '+10%');
-      expect(formatPowerComparisonPercent(1), '+1%');
-    });
+    for (final c in <(int, String)>[
+      (10, '+10%'),
+      (1, '+1%'),
+      (-22, '\u221222%'),
+      (-1, '\u22121%'),
+      (0, '0%'),
+    ]) {
+      test('formats ${c.$1} as ${c.$2}', () {
+        expect(formatPowerComparisonPercent(c.$1), c.$2);
+      });
+    }
 
     test('negative percentage uses unicode minus sign (U+2212)', () {
-      // U+2212 MINUS SIGN, not U+002D HYPHEN-MINUS.
-      expect(formatPowerComparisonPercent(-22), '\u221222%');
-      expect(formatPowerComparisonPercent(-1), '\u22121%');
       expect(formatPowerComparisonPercent(-22).startsWith('\u2212'), isTrue);
       expect(formatPowerComparisonPercent(-22).startsWith('-'), isFalse);
-    });
-
-    test('zero percentage formats as "0%" without sign', () {
-      expect(formatPowerComparisonPercent(0), '0%');
     });
   });
 
   group('powerComparisonTier (SPEC § Relative power line boundary table)', () {
-    test('roughly-equal band: −10 … +10 inclusive (and 0)', () {
-      expect(powerComparisonTier(0), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(10), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(-10), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(5), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(-7), PowerComparisonTier.roughlyEqual);
-    });
-
-    test('superior band: +11 … +30 inclusive', () {
-      expect(powerComparisonTier(11), PowerComparisonTier.superior);
-      expect(powerComparisonTier(30), PowerComparisonTier.superior);
-      expect(powerComparisonTier(22), PowerComparisonTier.superior);
-    });
-
-    test('vastly-superior band: ≥ +31 (no cap)', () {
-      expect(powerComparisonTier(31), PowerComparisonTier.vastlySuperior);
-      expect(powerComparisonTier(100), PowerComparisonTier.vastlySuperior);
-      expect(powerComparisonTier(4900), PowerComparisonTier.vastlySuperior);
-    });
-
-    test('inferior band: −30 … −11 inclusive', () {
-      expect(powerComparisonTier(-11), PowerComparisonTier.inferior);
-      expect(powerComparisonTier(-30), PowerComparisonTier.inferior);
-      expect(powerComparisonTier(-22), PowerComparisonTier.inferior);
-    });
-
-    test('vastly-inferior band: ≤ −31', () {
-      expect(powerComparisonTier(-31), PowerComparisonTier.vastlyInferior);
-      expect(powerComparisonTier(-90), PowerComparisonTier.vastlyInferior);
-    });
-
-    test('exact boundary integers map per the confirmed table', () {
-      expect(powerComparisonTier(10), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(11), PowerComparisonTier.superior);
-      expect(powerComparisonTier(30), PowerComparisonTier.superior);
-      expect(powerComparisonTier(31), PowerComparisonTier.vastlySuperior);
-      expect(powerComparisonTier(-10), PowerComparisonTier.roughlyEqual);
-      expect(powerComparisonTier(-11), PowerComparisonTier.inferior);
-      expect(powerComparisonTier(-30), PowerComparisonTier.inferior);
-      expect(powerComparisonTier(-31), PowerComparisonTier.vastlyInferior);
-    });
+    for (final c in <(int, PowerComparisonTier)>[
+      (0, PowerComparisonTier.roughlyEqual),
+      (10, PowerComparisonTier.roughlyEqual),
+      (-10, PowerComparisonTier.roughlyEqual),
+      (5, PowerComparisonTier.roughlyEqual),
+      (-7, PowerComparisonTier.roughlyEqual),
+      (11, PowerComparisonTier.superior),
+      (30, PowerComparisonTier.superior),
+      (22, PowerComparisonTier.superior),
+      (31, PowerComparisonTier.vastlySuperior),
+      (100, PowerComparisonTier.vastlySuperior),
+      (4900, PowerComparisonTier.vastlySuperior),
+      (-11, PowerComparisonTier.inferior),
+      (-30, PowerComparisonTier.inferior),
+      (-22, PowerComparisonTier.inferior),
+      (-31, PowerComparisonTier.vastlyInferior),
+      (-90, PowerComparisonTier.vastlyInferior),
+    ]) {
+      test('${c.$1} → ${c.$2}', () {
+        expect(powerComparisonTier(c.$1), c.$2);
+      });
+    }
   });
 
   group('diplomacyFilterShowsKind', () {
@@ -481,55 +478,50 @@ void main() {
       }
     });
 
-    test('mode `greatPowersOnly` shows only Great Power rows', () {
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.greatPower,
-        ),
-        isTrue,
-      );
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.minor,
-        ),
-        isFalse,
-      );
-      expect(
-        diplomacyFilterShowsKind(
-          DiplomacyFilterMode.greatPowersOnly,
-          FactionKind.tribe,
-        ),
-        isFalse,
-      );
-    });
-
-    test(
-      'mode `minorsOnly` shows Minor Nations and Tribes but not Great Powers',
-      () {
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.minor,
+    for (final c
+        in <
+          ({String name, DiplomacyFilterMode mode, FactionKind kind, bool want})
+        >[
+          (
+            name: 'greatPowersOnly shows Great Power',
+            mode: DiplomacyFilterMode.greatPowersOnly,
+            kind: FactionKind.greatPower,
+            want: true,
           ),
-          isTrue,
-        );
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.tribe,
+          (
+            name: 'greatPowersOnly hides Minor',
+            mode: DiplomacyFilterMode.greatPowersOnly,
+            kind: FactionKind.minor,
+            want: false,
           ),
-          isTrue,
-        );
-        expect(
-          diplomacyFilterShowsKind(
-            DiplomacyFilterMode.minorsOnly,
-            FactionKind.greatPower,
+          (
+            name: 'greatPowersOnly hides Tribe',
+            mode: DiplomacyFilterMode.greatPowersOnly,
+            kind: FactionKind.tribe,
+            want: false,
           ),
-          isFalse,
-        );
-      },
-    );
+          (
+            name: 'minorsOnly shows Minor',
+            mode: DiplomacyFilterMode.minorsOnly,
+            kind: FactionKind.minor,
+            want: true,
+          ),
+          (
+            name: 'minorsOnly shows Tribe',
+            mode: DiplomacyFilterMode.minorsOnly,
+            kind: FactionKind.tribe,
+            want: true,
+          ),
+          (
+            name: 'minorsOnly hides Great Power',
+            mode: DiplomacyFilterMode.minorsOnly,
+            kind: FactionKind.greatPower,
+            want: false,
+          ),
+        ]) {
+      test(c.name, () {
+        expect(diplomacyFilterShowsKind(c.mode, c.kind), c.want);
+      });
+    }
   });
 }
