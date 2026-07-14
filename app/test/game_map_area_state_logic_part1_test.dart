@@ -478,38 +478,35 @@ void main() {
       },
     );
 
-    test('selectionAfterWorkAssignment clears stale selected marker tile', () {
-      expect(
-        GameMapAreaStateLogic.selectionAfterWorkAssignment(
-          currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
-          assignedTileKey: 'oldWorld|p1|1|0',
+    test('selectionAfterWorkAssignment clears or preserves by tile match', () {
+      for (final case_ in <({String selected, String assigned, String? out})>[
+        (
+          selected: 'oldWorld|p1|0|0',
+          assigned: 'oldWorld|p1|1|0',
+          out: null,
         ),
-        isNull,
-      );
-    });
-
-    test(
-      'selectionAfterWorkAssignment preserves selection on assigned tile',
-      () {
+        (
+          selected: 'oldWorld|p1|1|0',
+          assigned: 'oldWorld|p1|1|0',
+          out: 'oldWorld|p1|1|0',
+        ),
+      ]) {
         expect(
           GameMapAreaStateLogic.selectionAfterWorkAssignment(
-            currentSelectedCivilianTileKey: 'oldWorld|p1|1|0',
-            assignedTileKey: 'oldWorld|p1|1|0',
+            currentSelectedCivilianTileKey: case_.selected,
+            assignedTileKey: case_.assigned,
           ),
-          'oldWorld|p1|1|0',
+          case_.out,
         );
-      },
-    );
+      }
+    });
 
     group('displayProvinceOrSeaIdFromTileKey', () {
-      test('extracts region and province from full tile key', () {
+      test('extracts region/province or null for short/null keys', () {
         expect(
           displayProvinceOrSeaIdFromTileKey('oldWorld|p1|10|20'),
           'oldWorld|p1',
         );
-      });
-
-      test('returns null for short keys', () {
         expect(displayProvinceOrSeaIdFromTileKey('badKey'), isNull);
         expect(displayProvinceOrSeaIdFromTileKey(null), isNull);
       });
@@ -531,27 +528,19 @@ void main() {
     group('translateWorkTargetTileKey', () {
       test('preserves tile keys for explore, move, and short keys', () {
         const tile = 'oldWorld|p1|10|20';
-        expect(
-          GameMapAreaStateLogic.translateWorkTargetTileKey(
-            tileKey: tile,
-            workTarget: kWorkTargetExplore,
-          ),
-          tile,
-        );
-        expect(
-          GameMapAreaStateLogic.translateWorkTargetTileKey(
-            tileKey: tile,
-            workTarget: 'move',
-          ),
-          tile,
-        );
-        expect(
-          GameMapAreaStateLogic.translateWorkTargetTileKey(
-            tileKey: 'oldWorld|p1',
-            workTarget: kWorkTargetExplore,
-          ),
-          'oldWorld|p1',
-        );
+        for (final case_ in <({String tileKey, String workTarget})>[
+          (tileKey: tile, workTarget: kWorkTargetExplore),
+          (tileKey: tile, workTarget: 'move'),
+          (tileKey: 'oldWorld|p1', workTarget: kWorkTargetExplore),
+        ]) {
+          expect(
+            GameMapAreaStateLogic.translateWorkTargetTileKey(
+              tileKey: case_.tileKey,
+              workTarget: case_.workTarget,
+            ),
+            case_.tileKey,
+          );
+        }
       });
     });
 

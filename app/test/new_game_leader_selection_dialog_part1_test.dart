@@ -339,15 +339,10 @@ void main() {
       expect(gotLeaders!['sweden'], 'gustavus');
     });
 
-    testWidgets('Start passes seed 0 when field is 0', (
+    testWidgets('Start seed field: 0 passes through; cleared falls back to 42', (
       WidgetTester tester,
     ) async {
       expect(await confirmWithSeed(tester, '0'), 0);
-    });
-
-    testWidgets('Start uses 42 when field is cleared', (
-      WidgetTester tester,
-    ) async {
       expect(await confirmWithSeed(tester, ''), 42);
     });
 
@@ -429,43 +424,32 @@ void main() {
       );
     });
 
-    testWidgets(
-      'shows terrain variation slider with default helper and label',
-      (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        expect(find.byType(CtSlider), findsOneWidget);
-        expect(find.text('Terrain variation:'), findsOneWidget);
-        expect(find.text('50%'), findsOneWidget);
-        expect(find.text('0% flat — 100% extreme'), findsOneWidget);
-      },
-    );
+    testWidgets('shows terrain variation slider with default helper and label', (
+      WidgetTester tester,
+    ) async {
+      await pumpNewGameLeaderSelectionDialog(tester);
+      expect(find.byType(CtSlider), findsOneWidget);
+      expectDialogChromeTexts(const [
+        'Terrain variation:',
+        '50%',
+        '0% flat — 100% extreme',
+      ]);
+    });
 
-    testWidgets(
-      'Start passes default terrainVariation 0.5 when slider not moved',
-      (WidgetTester tester) async {
-        expect(await confirmTerrain(tester), closeTo(0.5, 1e-9));
-      },
-    );
-
-    testWidgets(
-      'Start passes terrainVariation 0.0 after dragging slider to leftmost',
-      (WidgetTester tester) async {
+    testWidgets('Start passes terrainVariation default and left/right edges', (
+      WidgetTester tester,
+    ) async {
+      for (final case_ in <({bool? dragLeft, double want})>[
+        (dragLeft: null, want: 0.5),
+        (dragLeft: true, want: 0.0),
+        (dragLeft: false, want: 1.0),
+      ]) {
         expect(
-          await confirmTerrain(tester, dragLeft: true),
-          closeTo(0.0, 1e-6),
+          await confirmTerrain(tester, dragLeft: case_.dragLeft),
+          closeTo(case_.want, case_.dragLeft == null ? 1e-9 : 1e-6),
         );
-      },
-    );
-
-    testWidgets(
-      'Start passes terrainVariation 1.0 after dragging slider to rightmost',
-      (WidgetTester tester) async {
-        expect(
-          await confirmTerrain(tester, dragLeft: false),
-          closeTo(1.0, 1e-6),
-        );
-      },
-    );
+      }
+    });
 
     // Duplicate slot validation feedback contract (#2867 R19).
     group('Duplicate slot validation feedback (#2867 R19)', () {

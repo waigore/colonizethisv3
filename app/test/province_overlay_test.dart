@@ -136,6 +136,64 @@ Future<void> _pumpOverlay(
   }
 }
 
+Future<void> _pumpProvinceDemo(
+  WidgetTester tester, {
+  VoidCallback? onClose,
+  bool showProspectActionIcon = false,
+  bool prospectActionEnabled = false,
+  VoidCallback? onProspectWithExplorerTap,
+  bool showExploreActionIcon = false,
+  bool exploreActionEnabled = false,
+  VoidCallback? onExploreWithExplorerTap,
+  bool showBuildImprovementActionIcon = false,
+  bool buildImprovementActionEnabled = false,
+  VoidCallback? onBuildImprovementTap,
+  Size? mediaQuerySize,
+  Game? game,
+  RegionMapViewData? region,
+}) {
+  return _pumpOverlay(
+    tester,
+    displayId: sampleProvinceIdForOverlay,
+    selectedTileKey: sampleTileKeyForProvinceOverlay,
+    onClose: onClose,
+    showProspectActionIcon: showProspectActionIcon,
+    prospectActionEnabled: prospectActionEnabled,
+    onProspectWithExplorerTap: onProspectWithExplorerTap,
+    showExploreActionIcon: showExploreActionIcon,
+    exploreActionEnabled: exploreActionEnabled,
+    onExploreWithExplorerTap: onExploreWithExplorerTap,
+    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+    buildImprovementActionEnabled: buildImprovementActionEnabled,
+    onBuildImprovementTap: onBuildImprovementTap,
+    mediaQuerySize: mediaQuerySize,
+    game: game,
+    region: region,
+  );
+}
+
+Future<void> _pumpNamedSea(
+  WidgetTester tester, {
+  RegionMapViewData? region,
+}) async {
+  await installNinePatchAssetMock();
+  await _pumpOverlay(
+    tester,
+    displayId: sampleSeaZoneIdForOverlay,
+    game: _namedSeaZoneGame(),
+    region: region,
+  );
+}
+
+void _expectMaxHeight(double maxHeight) {
+  expect(
+    find.byWidgetPredicate(
+      (w) => w is ConstrainedBox && w.constraints.maxHeight == maxHeight,
+    ),
+    findsAtLeastNWidgets(1),
+  );
+}
+
 /// Map + optional overlay side-by-side host (Refs #4021 densify).
 Widget _mapBesideOverlayHost({
   required Widget map,
@@ -204,11 +262,7 @@ void main() {
     testWidgets(
       'AC: Standalone province overlay displays Political, Economic, Military, Civilian, Naval',
       (WidgetTester tester) async {
-        await _pumpOverlay(
-          tester,
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-        );
+        await _pumpProvinceDemo(tester);
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
         // Section headers render via CtSectionLabel (Refs #2865 S4) which
@@ -235,11 +289,7 @@ void main() {
         (c) => !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
       );
       final game = demoGameForOverlay;
-      await _pumpOverlay(
-        tester,
-        displayId: selectedId,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-      );
+      await _pumpProvinceDemo(tester);
 
       final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
       expect(provinceName, isNotEmpty);
@@ -272,29 +322,19 @@ void main() {
     testWidgets('sea zone overlay uses sea-zone display name field', (
       WidgetTester tester,
     ) async {
-      await installNinePatchAssetMock();
-      await _pumpOverlay(
-        tester,
-        displayId: sampleSeaZoneIdForOverlay,
-        game: _namedSeaZoneGame(),
-      );
-
+      await _pumpNamedSea(tester);
       expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
     });
 
     testWidgets(
       'AC: sea zone hides canonical name when all sea tiles in zone are unrevealed',
       (WidgetTester tester) async {
-        await installNinePatchAssetMock();
-        final region = _regionWithVisibility(
-          demoRegionForOverlay,
-          (_) => TileVisibility.unrevealed,
-        );
-        await _pumpOverlay(
+        await _pumpNamedSea(
           tester,
-          displayId: sampleSeaZoneIdForOverlay,
-          game: _namedSeaZoneGame(),
-          region: region,
+          region: _regionWithVisibility(
+            demoRegionForOverlay,
+            (_) => TileVisibility.unrevealed,
+          ),
         );
 
         expect(find.textContaining('Named Test Sea'), findsNothing);
@@ -306,28 +346,22 @@ void main() {
     testWidgets(
       'AC: sea zone shows display name when at least one sea tile in zone is fogged',
       (WidgetTester tester) async {
-        await installNinePatchAssetMock();
-
         final seaPrefixed = sampleSeaZoneIdForOverlay;
         final seaParts = seaPrefixed.split('|');
         final localSea = seaParts.length >= 2
             ? seaParts.sublist(1).join('|')
             : seaPrefixed;
         var revealOneSeaInZone = true;
-        final region = _regionWithVisibility(demoRegionForOverlay, (c) {
-          final inZone = c.isSea && c.regionCellId == localSea;
-          if (inZone && revealOneSeaInZone) {
-            revealOneSeaInZone = false;
-            return TileVisibility.fogged;
-          }
-          return TileVisibility.unrevealed;
-        });
-
-        await _pumpOverlay(
+        await _pumpNamedSea(
           tester,
-          displayId: sampleSeaZoneIdForOverlay,
-          game: _namedSeaZoneGame(),
-          region: region,
+          region: _regionWithVisibility(demoRegionForOverlay, (c) {
+            final inZone = c.isSea && c.regionCellId == localSea;
+            if (inZone && revealOneSeaInZone) {
+              revealOneSeaInZone = false;
+              return TileVisibility.fogged;
+            }
+            return TileVisibility.unrevealed;
+          }),
         );
 
         expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
@@ -338,12 +372,7 @@ void main() {
       WidgetTester tester,
     ) async {
       var closed = false;
-      await _pumpOverlay(
-        tester,
-        displayId: sampleProvinceIdForOverlay,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-        onClose: () => closed = true,
-      );
+      await _pumpProvinceDemo(tester, onClose: () => closed = true);
 
       await tester.tap(find.byKey(const Key('overlay_close')));
       await tester.pumpAndSettle();
@@ -351,107 +380,59 @@ void main() {
       expect(closed, isTrue);
     });
 
-    testWidgets(
-      'Tile prospected row shows prospect shortcut icon with tooltip when enabled',
-      (WidgetTester tester) async {
-        await _pumpOverlay(
-          tester,
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-          showProspectActionIcon: true,
-          prospectActionEnabled: true,
-          onProspectWithExplorerTap: () {},
-        );
+    testWidgets('tile shortcut tooltips: prospect / explore order / build', (
+      WidgetTester tester,
+    ) async {
+      await _pumpProvinceDemo(
+        tester,
+        showProspectActionIcon: true,
+        prospectActionEnabled: true,
+        onProspectWithExplorerTap: () {},
+      );
+      expect(find.byTooltip('Prospect with explorer'), findsOneWidget);
 
-        expect(find.byTooltip('Prospect with explorer'), findsOneWidget);
-      },
-    );
+      await _pumpProvinceDemo(
+        tester,
+        showExploreActionIcon: true,
+        exploreActionEnabled: true,
+        onExploreWithExplorerTap: () {},
+        showProspectActionIcon: true,
+        prospectActionEnabled: true,
+        onProspectWithExplorerTap: () {},
+      );
+      final exploreFinder = find.byTooltip('Explore with explorer');
+      final prospectFinder = find.byTooltip('Prospect with explorer');
+      expect(exploreFinder, findsOneWidget);
+      expect(prospectFinder, findsOneWidget);
+      expect(
+        tester.getTopLeft(exploreFinder).dx,
+        lessThan(tester.getTopLeft(prospectFinder).dx),
+      );
 
-    testWidgets(
-      'Tile prospected row shows explore icon before prospect when both enabled',
-      (WidgetTester tester) async {
-        await _pumpOverlay(
-          tester,
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-          showExploreActionIcon: true,
-          exploreActionEnabled: true,
-          onExploreWithExplorerTap: () {},
-          showProspectActionIcon: true,
-          prospectActionEnabled: true,
-          onProspectWithExplorerTap: () {},
-        );
+      await _pumpProvinceDemo(
+        tester,
+        showBuildImprovementActionIcon: true,
+        buildImprovementActionEnabled: true,
+        onBuildImprovementTap: () {},
+      );
+      expect(find.byTooltip('Build improvement'), findsOneWidget);
+    });
 
-        final exploreFinder = find.byTooltip('Explore with explorer');
-        final prospectFinder = find.byTooltip('Prospect with explorer');
-        expect(exploreFinder, findsOneWidget);
-        expect(prospectFinder, findsOneWidget);
-        expect(
-          tester.getTopLeft(exploreFinder).dx,
-          lessThan(tester.getTopLeft(prospectFinder).dx),
-        );
-      },
-    );
-
-    testWidgets(
-      'Tile improvement row shows build improvement shortcut icon tooltip when enabled',
-      (WidgetTester tester) async {
-        await _pumpOverlay(
-          tester,
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-          showBuildImprovementActionIcon: true,
-          buildImprovementActionEnabled: true,
-          onBuildImprovementTap: () {},
-        );
-
-        expect(find.byTooltip('Build improvement'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AC: Overlay constrained to one-third height on narrow viewport',
-      (WidgetTester tester) async {
-        const viewportHeight = 600.0;
-        const expectedMaxHeight = 198.0; // 0.33 * 600
-        await _pumpOverlay(
-          tester,
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-          onClose: () {},
-          mediaQuerySize: const Size(400, viewportHeight),
-        );
-
-        expect(
-          find.byWidgetPredicate(
-            (w) =>
-                w is ConstrainedBox &&
-                w.constraints.maxHeight == expectedMaxHeight,
-          ),
-          findsAtLeastNWidgets(1),
-        );
-      },
-    );
-
-    testWidgets('AC: Overlay uses full height on desktop', (
+    testWidgets('AC: overlay height — narrow one-third vs desktop full', (
       WidgetTester tester,
     ) async {
       const viewportHeight = 600.0;
-      await _pumpOverlay(
-        tester,
-        displayId: sampleProvinceIdForOverlay,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-        onClose: () {},
-        mediaQuerySize: const Size(800, viewportHeight),
-      );
-
-      expect(
-        find.byWidgetPredicate(
-          (w) =>
-              w is ConstrainedBox && w.constraints.maxHeight == viewportHeight,
-        ),
-        findsAtLeastNWidgets(1),
-      );
+      for (final case_ in <({double width, double maxHeight})>[
+        (width: 400, maxHeight: 198.0), // 0.33 * 600
+        (width: 800, maxHeight: viewportHeight),
+      ]) {
+        await _pumpProvinceDemo(
+          tester,
+          onClose: () {},
+          mediaQuerySize: Size(case_.width, viewportHeight),
+        );
+        _expectMaxHeight(case_.maxHeight);
+      }
     });
 
     testWidgets(

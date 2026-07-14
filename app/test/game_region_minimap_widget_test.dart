@@ -162,67 +162,56 @@ RegionMapViewportSnapshot _snapFor(
 void main() {
   suppressLogsForTests();
 
-  testWidgets('tap center emits RequestRegionMapCameraCenterWorldEvent', (
+  testWidgets('tap center/top-left emit RequestRegionMapCameraCenterWorldEvent', (
     WidgetTester tester,
   ) async {
-    final bus = AppEventBus.create();
-    final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
-      bus,
-    );
-    final region = await _pumpTinyMinimap(
-      tester,
-      regionId: 'minimapTapRegion',
-      bus: bus,
-    );
-    final (mw, mh) = _worldDims(region);
-
-    await tester.tap(find.byKey(kRegionMinimapGestureKey));
-    await tester.pump();
-
-    expect(centers, hasLength(1));
-    final e = centers.single;
-    expect(e.regionId, region.regionId);
     // Default tap hits widget center; map is square 132×132 for 4×4 aspect-1 region.
     const minimapLogical = 132.0;
-    final expected = minimapLocalToWorldCenter(
-      localOnMinimap: const Offset(minimapLogical / 2, minimapLogical / 2),
-      minimapSize: const Size(minimapLogical, minimapLogical),
-      mapWidthWorld: mw,
-      mapHeightWorld: mh,
-    );
-    expect(e.worldCenterX, closeTo(expected.dx, 1e-6));
-    expect(e.worldCenterY, closeTo(expected.dy, 1e-6));
-  });
-
-  testWidgets('tap top-left emits world origin (clamped mapping)', (
-    WidgetTester tester,
-  ) async {
-    final bus = AppEventBus.create();
-    final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
-      bus,
-    );
-    final region = await _pumpTinyMinimap(
-      tester,
-      regionId: 'minimapCornerRegion',
-      bus: bus,
-    );
-    final (mw, mh) = _worldDims(region);
-
-    final topLeft = tester.getTopLeft(find.byKey(kRegionMinimapGestureKey));
-    await tester.tapAt(topLeft + const Offset(2, 2));
-    await tester.pump();
-
-    expect(centers, hasLength(1));
-    final e = centers.single;
-    expect(e.regionId, region.regionId);
-    final expected = minimapLocalToWorldCenter(
-      localOnMinimap: const Offset(2, 2),
-      minimapSize: const Size(132, 132),
-      mapWidthWorld: mw,
-      mapHeightWorld: mh,
-    );
-    expect(e.worldCenterX, closeTo(expected.dx, 1e-6));
-    expect(e.worldCenterY, closeTo(expected.dy, 1e-6));
+    for (final case_ in <
+      ({
+        String regionId,
+        Future<void> Function(WidgetTester t) tap,
+        Offset local,
+      })
+    >[
+      (
+        regionId: 'minimapTapRegion',
+        tap: (t) => t.tap(find.byKey(kRegionMinimapGestureKey)),
+        local: const Offset(minimapLogical / 2, minimapLogical / 2),
+      ),
+      (
+        regionId: 'minimapCornerRegion',
+        tap: (t) async {
+          final topLeft = t.getTopLeft(find.byKey(kRegionMinimapGestureKey));
+          await t.tapAt(topLeft + const Offset(2, 2));
+        },
+        local: const Offset(2, 2),
+      ),
+    ]) {
+      final bus = AppEventBus.create();
+      final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
+        bus,
+      );
+      final region = await _pumpTinyMinimap(
+        tester,
+        regionId: case_.regionId,
+        bus: bus,
+      );
+      final (mw, mh) = _worldDims(region);
+      await case_.tap(tester);
+      await tester.pump();
+      expect(centers, hasLength(1));
+      final e = centers.single;
+      expect(e.regionId, region.regionId);
+      final expected = minimapLocalToWorldCenter(
+        localOnMinimap: case_.local,
+        minimapSize: const Size(minimapLogical, minimapLogical),
+        mapWidthWorld: mw,
+        mapHeightWorld: mh,
+      );
+      expect(e.worldCenterX, closeTo(expected.dx, 1e-6));
+      expect(e.worldCenterY, closeTo(expected.dy, 1e-6));
+    }
   });
 
   testWidgets('pan gesture sums to minimapDeltaToWorldDelta', (
