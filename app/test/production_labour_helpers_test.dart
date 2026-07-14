@@ -10,6 +10,23 @@ import 'package:colonizethis_app/features/game/widgets/production/production_lab
 
 const _playerId = 'gp_labour_test';
 
+const _apprenticeTech = <String, bool>{
+  kTechIdApprenticeWorkers: true,
+  kTechIdSugarRefining: true,
+};
+
+const _trainedThroughJourneymanTech = <String, bool>{
+  ..._apprenticeTech,
+  kTechIdTrainedJourneymen: true,
+  kTechIdCigarProduction: true,
+};
+
+const _fullLabourTech = <String, bool>{
+  ..._trainedThroughJourneymanTech,
+  kTechIdMasterArtisans: true,
+  kTechIdHatProduction: true,
+};
+
 Player _gpWithPool({
   int peasants = 0,
   int apprentices = 0,
@@ -47,8 +64,7 @@ Orders _ordersWithRecruits(List<WorkerTier> tiers, {String id = _playerId}) {
 Orders _ordersWithMilitaryBuilds(int count, {String id = _playerId}) {
   if (count <= 0) return const Orders();
   // Pick a regiment unit type from the catalog so peasant-cost classification is real.
-  final militaryUnitType =
-      RegimentEconomyCatalog.byId.keys.first;
+  final militaryUnitType = RegimentEconomyCatalog.byId.keys.first;
   return Orders(
     buildUnitOrdersByPlayerId: {
       id: [
@@ -60,6 +76,42 @@ Orders _ordersWithMilitaryBuilds(int count, {String id = _playerId}) {
           ),
       ],
     },
+  );
+}
+
+Game _emptyGame({List<Player> players = const []}) {
+  return Game(
+    id: 'g',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: players,
+  );
+}
+
+bool _canAppend({
+  required Player player,
+  required WorkerTier tier,
+  Orders orders = const Orders(),
+}) {
+  return canAppendRecruitWorkerOrder(
+    player: player,
+    currentOrders: orders,
+    candidateTier: tier,
+  );
+}
+
+List<ProductionLabourTierRowData> _rows({
+  required Player player,
+  Orders orders = const Orders(),
+  bool canEdit = true,
+}) {
+  return buildProductionLabourRowData(
+    player: player,
+    currentOrders: orders,
+    canEdit: canEdit,
   );
 }
 
@@ -139,105 +191,84 @@ void main() {
 
   group('canAppendRecruitWorkerOrder', () {
     test('peasant recruit succeeds when fabric ≥ 2', () {
-      final player = _gpWithPool(
-        peasants: 0,
-        stockpile: {CommodityCatalog.fabric.id: 2},
-      );
       expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: const Orders(),
-          candidateTier: WorkerTier.peasant,
+        _canAppend(
+          player: _gpWithPool(stockpile: {CommodityCatalog.fabric.id: 2}),
+          tier: WorkerTier.peasant,
         ),
         isTrue,
       );
     });
 
     test('peasant recruit fails when fabric < 2', () {
-      final player = _gpWithPool(stockpile: {CommodityCatalog.fabric.id: 1});
       expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: const Orders(),
-          candidateTier: WorkerTier.peasant,
+        _canAppend(
+          player: _gpWithPool(stockpile: {CommodityCatalog.fabric.id: 1}),
+          tier: WorkerTier.peasant,
         ),
         isFalse,
       );
     });
 
     test('apprentice train fails when tech locked', () {
-      final player = _gpWithPool(
-        peasants: 1,
-        treasury: 200,
-        stockpile: {CommodityCatalog.paper.id: 2},
-      );
       expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: const Orders(),
-          candidateTier: WorkerTier.apprentice,
+        _canAppend(
+          player: _gpWithPool(
+            peasants: 1,
+            treasury: 200,
+            stockpile: {CommodityCatalog.paper.id: 2},
+          ),
+          tier: WorkerTier.apprentice,
         ),
         isFalse,
       );
     });
 
     test('apprentice train succeeds with full tech + cost coverage', () {
-      final player = _gpWithPool(
-        peasants: 1,
-        treasury: 200,
-        stockpile: {CommodityCatalog.paper.id: 2},
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      );
       expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: const Orders(),
-          candidateTier: WorkerTier.apprentice,
+        _canAppend(
+          player: _gpWithPool(
+            peasants: 1,
+            treasury: 200,
+            stockpile: {CommodityCatalog.paper.id: 2},
+            techUnlocked: _apprenticeTech,
+          ),
+          tier: WorkerTier.apprentice,
         ),
         isTrue,
       );
     });
 
-    test('apprentice train fails when peasant ledger exhausted by pending military builds', () {
-      final player = _gpWithPool(
-        peasants: 1,
-        treasury: 200,
-        stockpile: {CommodityCatalog.paper.id: 2},
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      );
-      final orders = _ordersWithMilitaryBuilds(1);
-      expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: orders,
-          candidateTier: WorkerTier.apprentice,
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'apprentice train fails when peasant ledger exhausted by pending military builds',
+      () {
+        expect(
+          _canAppend(
+            player: _gpWithPool(
+              peasants: 1,
+              treasury: 200,
+              stockpile: {CommodityCatalog.paper.id: 2},
+              techUnlocked: _apprenticeTech,
+            ),
+            tier: WorkerTier.apprentice,
+            orders: _ordersWithMilitaryBuilds(1),
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('second apprentice train fails when only one peasant available', () {
-      final player = _gpWithPool(
-        peasants: 1,
-        treasury: 1000,
-        stockpile: {CommodityCatalog.paper.id: 20},
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
-      );
-      final orders = _ordersWithRecruits([WorkerTier.apprentice]);
       expect(
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: orders,
-          candidateTier: WorkerTier.apprentice,
+        _canAppend(
+          player: _gpWithPool(
+            peasants: 1,
+            treasury: 1000,
+            stockpile: {CommodityCatalog.paper.id: 20},
+            techUnlocked: _apprenticeTech,
+          ),
+          tier: WorkerTier.apprentice,
+          orders: _ordersWithRecruits([WorkerTier.apprentice]),
         ),
         isFalse,
       );
@@ -306,49 +337,44 @@ void main() {
 
   group('disband helpers', () {
     test('disband journeyman increments peasants and decrements journeymen', () {
-      final player = _gpWithPool(peasants: 0, journeymen: 1, treasury: 500);
       final updated = playerWithImmediateDisband(
-        player: player,
+        player: _gpWithPool(peasants: 0, journeymen: 1, treasury: 500),
         tier: WorkerTier.journeyman,
       );
       expect(updated, isNotNull);
       expect(updated!.workerPool.peasants, 1);
       expect(updated.workerPool.journeymen, 0);
-      expect(updated.treasury, 500, reason: 'disband has no treasury refund');
+      expect(updated.treasury, 500);
     });
 
     test('disband peasant returns null (not allowed)', () {
-      final player = _gpWithPool(peasants: 3);
-      final updated = playerWithImmediateDisband(
-        player: player,
-        tier: WorkerTier.peasant,
+      expect(
+        playerWithImmediateDisband(
+          player: _gpWithPool(peasants: 3),
+          tier: WorkerTier.peasant,
+        ),
+        isNull,
       );
-      expect(updated, isNull);
     });
 
     test('disband returns null when no worker of the tier exists', () {
-      final player = _gpWithPool(peasants: 1, masters: 0);
-      final updated = playerWithImmediateDisband(
-        player: player,
-        tier: WorkerTier.master,
+      expect(
+        playerWithImmediateDisband(
+          player: _gpWithPool(peasants: 1, masters: 0),
+          tier: WorkerTier.master,
+        ),
+        isNull,
       );
-      expect(updated, isNull);
     });
 
     test('gameWithImmediateDisband updates the matching player only', () {
-      final p1 = _gpWithPool(masters: 1).copyWith(id: 'gp_a');
-      final p2 = _gpWithPool(masters: 1).copyWith(id: 'gp_b');
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: [p1, p2],
-      );
       final next = gameWithImmediateDisband(
-        game: game,
+        game: _emptyGame(
+          players: [
+            _gpWithPool(masters: 1).copyWith(id: 'gp_a'),
+            _gpWithPool(masters: 1).copyWith(id: 'gp_b'),
+          ],
+        ),
         playerId: 'gp_a',
         tier: WorkerTier.master,
       );
@@ -362,89 +388,59 @@ void main() {
     });
 
     test('gameWithImmediateDisband returns null for unknown player', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
+      expect(
+        gameWithImmediateDisband(
+          game: _emptyGame(),
+          playerId: 'missing',
+          tier: WorkerTier.master,
         ),
-        players: const [],
+        isNull,
       );
-      final next = gameWithImmediateDisband(
-        game: game,
-        playerId: 'missing',
-        tier: WorkerTier.master,
-      );
-      expect(next, isNull);
     });
   });
 
   group('buildProductionLabourRowData', () {
     test('returns one row per tier in canonical order', () {
-      final player = _gpWithPool();
-      final rows = buildProductionLabourRowData(
-        player: player,
-        currentOrders: const Orders(),
-        canEdit: true,
-      );
       expect(
-        rows.map((r) => r.tier).toList(),
+        _rows(player: _gpWithPool()).map((r) => r.tier).toList(),
         kProductionLabourTierOrder,
       );
     });
 
     test('canEdit=false disables every append, pop, and disband action', () {
-      final player = _gpWithPool(
-        peasants: 5,
-        masters: 3,
-        treasury: 5000,
-        stockpile: {
-          CommodityCatalog.fabric.id: 10,
-          CommodityCatalog.paper.id: 50,
-        },
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-          kTechIdTrainedJourneymen: true,
-          kTechIdCigarProduction: true,
-          kTechIdMasterArtisans: true,
-          kTechIdHatProduction: true,
-        },
-      );
-      final orders = _ordersWithRecruits([WorkerTier.master]);
-      final rows = buildProductionLabourRowData(
-        player: player,
-        currentOrders: orders,
+      final rows = _rows(
+        player: _gpWithPool(
+          peasants: 5,
+          masters: 3,
+          treasury: 5000,
+          stockpile: {
+            CommodityCatalog.fabric.id: 10,
+            CommodityCatalog.paper.id: 50,
+          },
+          techUnlocked: _fullLabourTech,
+        ),
+        orders: _ordersWithRecruits([WorkerTier.master]),
         canEdit: false,
       );
       for (final row in rows) {
-        expect(row.canAppend, isFalse, reason: 'tier ${row.tier.id}');
-        expect(row.canPop, isFalse, reason: 'tier ${row.tier.id}');
-        expect(row.canDisband, isFalse, reason: 'tier ${row.tier.id}');
+        expect(row.canAppend, isFalse);
+        expect(row.canPop, isFalse);
+        expect(row.canDisband, isFalse);
       }
     });
 
     test('disband is never enabled for peasant row even with peasants > 0', () {
-      final player = _gpWithPool(peasants: 5);
-      final rows = buildProductionLabourRowData(
-        player: player,
-        currentOrders: const Orders(),
-        canEdit: true,
-      );
-      final peasantRow = rows.firstWhere((r) => r.tier == WorkerTier.peasant);
+      final peasantRow = _rows(
+        player: _gpWithPool(peasants: 5),
+      ).firstWhere((r) => r.tier == WorkerTier.peasant);
       expect(peasantRow.canDisband, isFalse);
     });
 
     test('canPop reflects queued count, canDisband reflects pool count', () {
-      final player = _gpWithPool(journeymen: 2);
-      final orders = _ordersWithRecruits([WorkerTier.journeyman]);
-      final rows = buildProductionLabourRowData(
-        player: player,
-        currentOrders: orders,
-        canEdit: true,
-      );
-      final jmRow = rows.firstWhere((r) => r.tier == WorkerTier.journeyman);
+      final jmRow = _rows(
+        player: _gpWithPool(journeymen: 2),
+        orders: _ordersWithRecruits([WorkerTier.journeyman]),
+      ).firstWhere((r) => r.tier == WorkerTier.journeyman);
       expect(jmRow.queuedCount, 1);
       expect(jmRow.canPop, isTrue);
       expect(jmRow.canDisband, isTrue);
@@ -453,15 +449,9 @@ void main() {
     test(
       'techUnlocked is true for peasant when techUnlocked map is null or empty',
       () {
-        final player = _gpWithPool();
-        final rows = buildProductionLabourRowData(
-          player: player,
-          currentOrders: const Orders(),
-          canEdit: true,
-        );
-        final peasantRow = rows.firstWhere(
-          (r) => r.tier == WorkerTier.peasant,
-        );
+        final peasantRow = _rows(
+          player: _gpWithPool(),
+        ).firstWhere((r) => r.tier == WorkerTier.peasant);
         expect(peasantRow.techUnlocked, isTrue);
       },
     );
@@ -469,22 +459,15 @@ void main() {
     test(
       'techUnlocked is false for trained tiers when techUnlocked map is null',
       () {
-        final player = _gpWithPool();
-        final rows = buildProductionLabourRowData(
-          player: player,
-          currentOrders: const Orders(),
-          canEdit: true,
-        );
+        final rows = _rows(player: _gpWithPool());
         for (final tier in [
           WorkerTier.apprentice,
           WorkerTier.journeyman,
           WorkerTier.master,
         ]) {
-          final row = rows.firstWhere((r) => r.tier == tier);
           expect(
-            row.techUnlocked,
+            rows.firstWhere((r) => r.tier == tier).techUnlocked,
             isFalse,
-            reason: 'tier ${tier.id} should be locked without techUnlocked',
           );
         }
       },
@@ -493,21 +476,12 @@ void main() {
     test(
       'techUnlocked tracks per-tier required techs in WorkerActionEconomyCatalog',
       () {
-        final player = _gpWithPool(
-          techUnlocked: const {
-            kTechIdApprenticeWorkers: true,
-            kTechIdSugarRefining: true,
-            kTechIdTrainedJourneymen: true,
-            kTechIdCigarProduction: true,
-            // Master tech gates intentionally left unlocked=false.
-          },
-        );
-        final rows = buildProductionLabourRowData(
-          player: player,
-          currentOrders: const Orders(),
-          canEdit: true,
-        );
-        final byTier = {for (final r in rows) r.tier: r};
+        final byTier = {
+          for (final r in _rows(
+            player: _gpWithPool(techUnlocked: _trainedThroughJourneymanTech),
+          ))
+            r.tier: r,
+        };
         expect(byTier[WorkerTier.peasant]!.techUnlocked, isTrue);
         expect(byTier[WorkerTier.apprentice]!.techUnlocked, isTrue);
         expect(byTier[WorkerTier.journeyman]!.techUnlocked, isTrue);
@@ -518,20 +492,14 @@ void main() {
     test(
       'techUnlocked is false when a required tech entry is present but false',
       () {
-        final player = _gpWithPool(
-          techUnlocked: const {
-            kTechIdApprenticeWorkers: true,
-            kTechIdSugarRefining: false,
-          },
-        );
-        final rows = buildProductionLabourRowData(
-          player: player,
-          currentOrders: const Orders(),
-          canEdit: true,
-        );
-        final apprenticeRow = rows.firstWhere(
-          (r) => r.tier == WorkerTier.apprentice,
-        );
+        final apprenticeRow = _rows(
+          player: _gpWithPool(
+            techUnlocked: const {
+              kTechIdApprenticeWorkers: true,
+              kTechIdSugarRefining: false,
+            },
+          ),
+        ).firstWhere((r) => r.tier == WorkerTier.apprentice);
         expect(apprenticeRow.techUnlocked, isFalse);
       },
     );
@@ -558,27 +526,26 @@ void main() {
     test(
       'returns true for a trained tier iff every required tech id is true',
       () {
-        final fullyUnlocked = _gpWithPool(
-          techUnlocked: const {
-            kTechIdMasterArtisans: true,
-            kTechIdHatProduction: true,
-          },
-        );
         expect(
           isWorkerTierTechUnlocked(
-            player: fullyUnlocked,
+            player: _gpWithPool(
+              techUnlocked: const {
+                kTechIdMasterArtisans: true,
+                kTechIdHatProduction: true,
+              },
+            ),
             tier: WorkerTier.master,
           ),
           isTrue,
         );
-
-        final partial = _gpWithPool(
-          techUnlocked: const {kTechIdMasterArtisans: true},
-        );
         expect(
-          isWorkerTierTechUnlocked(player: partial, tier: WorkerTier.master),
+          isWorkerTierTechUnlocked(
+            player: _gpWithPool(
+              techUnlocked: const {kTechIdMasterArtisans: true},
+            ),
+            tier: WorkerTier.master,
+          ),
           isFalse,
-          reason: 'missing kTechIdHatProduction',
         );
       },
     );
@@ -599,15 +566,14 @@ void main() {
     test(
       'returns false when a required tech entry is present but false',
       () {
-        final player = _gpWithPool(
-          techUnlocked: const {
-            kTechIdTrainedJourneymen: false,
-            kTechIdCigarProduction: true,
-          },
-        );
         expect(
           isWorkerTierTechUnlocked(
-            player: player,
+            player: _gpWithPool(
+              techUnlocked: const {
+                kTechIdTrainedJourneymen: false,
+                kTechIdCigarProduction: true,
+              },
+            ),
             tier: WorkerTier.journeyman,
           ),
           isFalse,

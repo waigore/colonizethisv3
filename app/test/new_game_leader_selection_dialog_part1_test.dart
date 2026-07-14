@@ -17,8 +17,50 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 import 'support/new_game_leader_selection_dialog_test_support.dart';
 
+const _largeViewport = Size(900, 2000);
+const _duplicateEnglandIds = <String>[
+  'england',
+  'france',
+  'spain',
+  'portugal',
+  'netherlands',
+  'england',
+];
+
+GameSetupConfig get _duplicateEnglandConfig => GameSetupConfig(
+  selectedGreatPowerIds: _duplicateEnglandIds,
+);
+
 void main() {
   suppressLogsForTests();
+
+  Future<void> enterSeed(WidgetTester tester, String value) async {
+    final field = find.byType(TextField);
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, value);
+    await tester.pump();
+  }
+
+  Future<void> tapSliderEdge(WidgetTester tester, {required bool left}) async {
+    final slider = find.byType(CtSlider);
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(slider);
+    await tester.tapAt(
+      Offset(left ? rect.left + 1 : rect.right - 1, rect.center.dy),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  CtNinePatchButton startButton(WidgetTester tester) {
+    return tester.widget<CtNinePatchButton>(
+      find.ancestor(
+        of: find.text('Start'),
+        matching: find.byType(CtNinePatchButton),
+      ),
+    );
+  }
 
   group('parseSeedInput', () {
     test('empty and invalid map to 42', () {
@@ -81,7 +123,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpNewGameLeaderSelectionDialog(
           tester,
-          surfaceSize: const Size(900, 2000),
+          surfaceSize: _largeViewport,
         );
         await tester.pumpAndSettle();
 
@@ -158,7 +200,7 @@ void main() {
       Map<String, String?>? gotProfiles;
       await pumpNewGameLeaderSelectionDialog(
         tester,
-        surfaceSize: const Size(900, 2000),
+        surfaceSize: _largeViewport,
         blessedProfileNames: const ['aggressive_v2'],
         onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
       );
@@ -173,7 +215,7 @@ void main() {
       Map<String, String?>? gotProfiles;
       await pumpNewGameLeaderSelectionDialog(
         tester,
-        surfaceSize: const Size(900, 2000),
+        surfaceSize: _largeViewport,
         blessedProfileNames: const ['aggressive_v2'],
         onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
       );
@@ -241,11 +283,7 @@ void main() {
         tester,
         onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
       );
-      final field = find.byType(TextField);
-      await tester.ensureVisible(field);
-      await tester.pumpAndSettle();
-      await tester.enterText(field, '0');
-      await tester.pump();
+      await enterSeed(tester, '0');
       await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotSeed, 0);
     });
@@ -258,11 +296,7 @@ void main() {
         tester,
         onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
       );
-      final field = find.byType(TextField);
-      await tester.ensureVisible(field);
-      await tester.pumpAndSettle();
-      await tester.enterText(field, '');
-      await tester.pump();
+      await enterSeed(tester, '');
       await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotSeed, 42);
     });
@@ -330,7 +364,7 @@ void main() {
           AdvancedStartType? gotAdvancedStart;
           await pumpNewGameLeaderSelectionDialog(
             tester,
-            surfaceSize: const Size(900, 2000),
+            surfaceSize: _largeViewport,
             baseConfig: GameSetupConfig(
               numProvincesOldWorld: 24,
               numProvincesNewWorld: 12,
@@ -356,7 +390,6 @@ void main() {
         await pumpNewGameLeaderSelectionDialog(tester);
         expect(find.byType(CtSlider), findsOneWidget);
         expect(find.text('Terrain variation:'), findsOneWidget);
-        // Live percent value rendered separately from the static label.
         expect(find.text('50%'), findsOneWidget);
         expect(find.text('0% flat — 100% extreme'), findsOneWidget);
       },
@@ -385,14 +418,7 @@ void main() {
           onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
-
-        final slider = find.byType(CtSlider);
-        await tester.ensureVisible(slider);
-        await tester.pumpAndSettle();
-        // Tap at the far-left of the slider track to snap to min (0.0).
-        final rect = tester.getRect(slider);
-        await tester.tapAt(Offset(rect.left + 1, rect.center.dy));
-        await tester.pumpAndSettle();
+        await tapSliderEdge(tester, left: true);
         await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotTerrainVariation, closeTo(0.0, 1e-6));
       },
@@ -407,28 +433,13 @@ void main() {
           onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
               gotTerrainVariation = terrainVariation,
         );
-
-        final slider = find.byType(CtSlider);
-        await tester.ensureVisible(slider);
-        await tester.pumpAndSettle();
-        final rect = tester.getRect(slider);
-        await tester.tapAt(Offset(rect.right - 1, rect.center.dy));
-        await tester.pumpAndSettle();
+        await tapSliderEdge(tester, left: false);
         await ensureTapNewGameLeaderSelectionStart(tester);
         expect(gotTerrainVariation, closeTo(1.0, 1e-6));
       },
     );
 
     // Duplicate slot validation feedback contract (#2867 R19).
-    //
-    // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md`
-    // § Duplicate slot validation feedback. Positive AC pins that every
-    // duplicate slot's nation `CtDropdown<String>` is wrapped in a keyed
-    // `DecoratedBox` painting a 1 dp `EditorialMonoclePalette.danger`
-    // border. Negative AC pins the absence of that wrapper when all six
-    // slots hold unique ids. Recovery AC pins that swapping a duplicate
-    // slot to a previously unused nation unmounts the wrapper and
-    // re-enables Start.
     group('Duplicate slot validation feedback (#2867 R19)', () {
       bool hasDangerBorder(WidgetTester tester, int slotIndex) {
         final finder = find.byKey(
@@ -436,15 +447,11 @@ void main() {
             NewGameLeaderSelectionDialog.duplicateSlotBorderKey(slotIndex),
           ),
         );
-        if (finder.evaluate().isEmpty) {
-          return false;
-        }
+        if (finder.evaluate().isEmpty) return false;
         final DecoratedBox box = tester.widget<DecoratedBox>(finder);
         final BoxDecoration decoration = box.decoration as BoxDecoration;
         final BoxBorder? border = decoration.border;
-        if (border is! Border) {
-          return false;
-        }
+        if (border is! Border) return false;
         return border.top.color == EditorialMonoclePalette.danger &&
             border.top.width ==
                 NewGameLeaderSelectionDialog.duplicateSlotBorderWidth;
@@ -454,202 +461,104 @@ void main() {
         'positive: two slots sharing England wrap both nation dropdowns in '
         '1 dp --danger DecoratedBox and Start stays disabled',
         (WidgetTester tester) async {
-          // Force duplicate by repeating "england" in slots 0 and 5.
-          final config = GameSetupConfig(
-            selectedGreatPowerIds: const [
-              'england',
-              'france',
-              'spain',
-              'portugal',
-              'netherlands',
-              'england',
-            ],
-          );
-
           await pumpNewGameLeaderSelectionDialog(
             tester,
-            baseConfig: config,
+            baseConfig: _duplicateEnglandConfig,
             surfaceSize: const Size(900, 1600),
           );
 
-          expect(
-            hasDangerBorder(tester, 0),
-            isTrue,
-            reason:
-                'Slot 0 holds the duplicate "england" id — its nation '
-                'dropdown must be wrapped in the keyed danger border per '
-                '#2867 R19.',
-          );
-          expect(
-            hasDangerBorder(tester, 5),
-            isTrue,
-            reason:
-                'Slot 5 also holds the duplicate "england" id — its '
-                'nation dropdown must carry the keyed danger border.',
-          );
+          expect(hasDangerBorder(tester, 0), isTrue);
+          expect(hasDangerBorder(tester, 5), isTrue);
           for (final i in const [1, 2, 3, 4]) {
-            expect(
-              hasDangerBorder(tester, i),
-              isFalse,
-              reason: 'Slot $i holds a unique id; no danger border.',
-            );
+            expect(hasDangerBorder(tester, i), isFalse);
           }
 
-          final Finder startButtonText = find.text('Start');
-          await tester.ensureVisible(startButtonText);
+          await tester.ensureVisible(find.text('Start'));
           await tester.pumpAndSettle();
-          final CtNinePatchButton startButton = tester
-              .widget<CtNinePatchButton>(
-                find.ancestor(
-                  of: startButtonText,
-                  matching: find.byType(CtNinePatchButton),
-                ),
-              );
-          expect(
-            startButton.enabled,
-            isFalse,
-            reason:
-                'Start must remain disabled while any slot is part of a '
-                'duplicate group (mirrors _startEnabled rejecting '
-                'duplicates).',
-          );
+          expect(startButton(tester).enabled, isFalse);
         },
       );
 
-      testWidgets('negative: default config (six unique nations) mounts no '
-          'danger-border wrapper under any slot', (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(
-          tester,
-          baseConfig: GameSetupConfig.defaultConfig,
-          surfaceSize: const Size(900, 1600),
-        );
+      testWidgets(
+        'negative: default config (six unique nations) mounts no '
+        'danger-border wrapper under any slot',
+        (WidgetTester tester) async {
+          await pumpNewGameLeaderSelectionDialog(
+            tester,
+            baseConfig: GameSetupConfig.defaultConfig,
+            surfaceSize: const Size(900, 1600),
+          );
 
-        for (var i = 0; i < 6; i++) {
-          final finder = find.byKey(
-            ValueKey<String>(
-              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
-            ),
-          );
-          expect(
-            finder,
-            findsNothing,
-            reason:
-                'Slot $i: with six unique nations, no slot must carry '
-                'the duplicate-border wrapper (negative AC).',
-          );
-        }
-      });
+          for (var i = 0; i < 6; i++) {
+            expect(
+              find.byKey(
+                ValueKey<String>(
+                  NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
+                ),
+              ),
+              findsNothing,
+            );
+          }
+        },
+      );
 
       testWidgets(
         'recovery: replacing the duplicate nation unmounts the wrapper and '
         're-enables Start',
         (WidgetTester tester) async {
-          final config = GameSetupConfig(
-            selectedGreatPowerIds: const [
-              'england',
-              'france',
-              'spain',
-              'portugal',
-              'netherlands',
-              'england',
-            ],
-          );
-
           await pumpNewGameLeaderSelectionDialog(
             tester,
-            baseConfig: config,
+            baseConfig: _duplicateEnglandConfig,
             surfaceSize: const Size(900, 1600),
           );
 
-          // Confirm initial duplicate borders are present.
           expect(hasDangerBorder(tester, 0), isTrue);
           expect(hasDangerBorder(tester, 5), isTrue);
 
-          // Open slot 5's nation dropdown (the second "England" instance)
-          // and pick a previously unused nation. Slot 5's dropdown is the
-          // last keyed border wrapper, so its descendant CtDropdown is
-          // unambiguous.
-          final slot5Border = find.byKey(
-            ValueKey<String>(
-              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(5),
-            ),
-          );
           final slot5Dropdown = find.descendant(
-            of: slot5Border,
+            of: find.byKey(
+              ValueKey<String>(
+                NewGameLeaderSelectionDialog.duplicateSlotBorderKey(5),
+              ),
+            ),
             matching: find.byType(CtDropdown<String>),
           );
           await tester.ensureVisible(slot5Dropdown);
           await tester.pumpAndSettle();
           await tester.tap(slot5Dropdown);
           await tester.pumpAndSettle();
-
-          // Pick "Sweden" — not present in any other slot in this config.
           await tester.tap(find.text('Sweden').last);
           await tester.pumpAndSettle();
 
-          // Both wrappers must now be absent — slot 0's id is unique
-          // again and slot 5 holds a fresh unique id.
           for (var i = 0; i < 6; i++) {
-            final finder = find.byKey(
-              ValueKey<String>(
-                NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
-              ),
-            );
             expect(
-              finder,
+              find.byKey(
+                ValueKey<String>(
+                  NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
+                ),
+              ),
               findsNothing,
-              reason:
-                  'After resolving the duplicate, no slot must carry the '
-                  'duplicate-border wrapper.',
             );
           }
-
-          final CtNinePatchButton startButton = tester
-              .widget<CtNinePatchButton>(
-                find.ancestor(
-                  of: find.text('Start'),
-                  matching: find.byType(CtNinePatchButton),
-                ),
-              );
-          expect(
-            startButton.enabled,
-            isTrue,
-            reason:
-                'Start must re-enable once every slot holds a unique '
-                'non-empty Great Power id (mirrors _startEnabled).',
-          );
+          expect(startButton(tester).enabled, isTrue);
         },
       );
     });
 
     // Dark editorial-monocle chrome contract (#2867 S6 / R1 / R2 / R21).
-    //
-    // Pins the keyed title color + `letterSpacing == fontSize * 0.05`, the
-    // single keyed `CtBrassDivider` between title and intro, and the muted
-    // italic intro style — mirroring the contract already pinned by the
-    // overture (`overture_dialogue_overlay_test.dart`) and intervention
-    // (`intervention_dialogue_overlay_dark_chrome_test.dart`) overlays so
-    // every #2867 surface enforces the same dark chrome shape.
     group('Dark editorial-monocle chrome (#2867 S6)', () {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
           await pumpNewGameLeaderSelectionDialog(tester);
-          final titleFinder = find.byKey(
-            const ValueKey<String>('leaderSelectionDialogTitle'),
+          final Text title = tester.widget<Text>(
+            find.byKey(
+              const ValueKey<String>('leaderSelectionDialogTitle'),
+            ),
           );
-          expect(titleFinder, findsOneWidget);
-          final Text title = tester.widget<Text>(titleFinder);
           expect(title.style?.color, EditorialMonoclePalette.accent);
           final double fontSize = title.style?.fontSize ?? 16;
-          expect(
-            title.style?.letterSpacing,
-            closeTo(fontSize * 0.05, 1e-9),
-            reason:
-                'letterSpacing must scale with the resolved fontSize so '
-                'theme text-scale overrides preserve the canonical 0.05em '
-                'ratio (#2867 R2).',
-          );
+          expect(title.style?.letterSpacing, closeTo(fontSize * 0.05, 1e-9));
         },
       );
 
@@ -662,16 +571,17 @@ void main() {
         );
         expect(dividerFinder, findsOneWidget);
         expect(find.byType(CtBrassDivider), findsOneWidget);
-        final Rect titleRect = tester.getRect(
-          find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
-        );
-        final Rect dividerRect = tester.getRect(dividerFinder);
         expect(
-          dividerRect.top,
-          greaterThanOrEqualTo(titleRect.bottom),
-          reason:
-              'Brass divider must paint below the title band per '
-              '#2867 R21 chrome ordering.',
+          tester.getRect(dividerFinder).top,
+          greaterThanOrEqualTo(
+            tester
+                .getRect(
+                  find.byKey(
+                    const ValueKey<String>('leaderSelectionDialogTitle'),
+                  ),
+                )
+                .bottom,
+          ),
         );
       });
 
@@ -679,32 +589,31 @@ void main() {
         WidgetTester tester,
       ) async {
         await pumpNewGameLeaderSelectionDialog(tester);
-        final introFinder = find.byKey(
-          const ValueKey<String>('leaderSelectionDialogIntro'),
+        final Text intro = tester.widget<Text>(
+          find.byKey(
+            const ValueKey<String>('leaderSelectionDialogIntro'),
+          ),
         );
-        expect(introFinder, findsOneWidget);
-        final Text intro = tester.widget<Text>(introFinder);
         expect(intro.style?.color, EditorialMonoclePalette.muted);
         expect(intro.style?.fontStyle, FontStyle.italic);
       });
 
-      testWidgets('title does NOT use the raw textTheme.titleMedium color '
-          '(regression guard against unstyled headings)', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        final Text title = tester.widget<Text>(
-          find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
-        );
-        expect(
-          title.style?.color,
-          isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
-          reason:
-              'A regression that drops the EditorialMonoclePalette '
-              'override would surface the colonial titleMedium color '
-              'instead of the canonical --accent token (#2867 R1).',
-        );
-      });
+      testWidgets(
+        'title does NOT use the raw textTheme.titleMedium color '
+        '(regression guard against unstyled headings)',
+        (WidgetTester tester) async {
+          await pumpNewGameLeaderSelectionDialog(tester);
+          final Text title = tester.widget<Text>(
+            find.byKey(
+              const ValueKey<String>('leaderSelectionDialogTitle'),
+            ),
+          );
+          expect(
+            title.style?.color,
+            isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
+          );
+        },
+      );
     });
   });
 }
