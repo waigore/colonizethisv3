@@ -23,7 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -32,49 +31,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
-
-/// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
-/// with cell visibility overridden by [visibilityForCell]. Used to trigger
-/// fully-unrevealed (province / sea zone) and partially-revealed tile
-/// branches deterministically without depending on the debug-init
-/// visibility distribution.
-RegionMapViewData _regionWith({
-  required TileVisibility Function(CellViewData) visibilityForCell,
-}) {
-  final base = demoRegionForOverlay;
-  final cells = base.cells
-      .map(
-        (c) => CellViewData(
-          x: c.x,
-          y: c.y,
-          regionCellId: c.regionCellId,
-          isSea: c.isSea,
-          terrainTypeId: c.terrainTypeId,
-          terrainType: c.terrainType,
-          resourceId: c.resourceId,
-          ownerFactionId: c.ownerFactionId,
-          provinceDisplayName: c.provinceDisplayName,
-          improvementLevel: c.improvementLevel,
-          roadLevel: c.roadLevel,
-          visibility: visibilityForCell(c),
-        ),
-      )
-      .toList();
-  return RegionMapViewData(
-    regionId: base.regionId,
-    width: base.width,
-    height: base.height,
-    cellSize: base.cellSize,
-    cells: cells,
-    capitalMarkers: base.capitalMarkers,
-    portMarkers: base.portMarkers,
-    factionColors: base.factionColors,
-    greatPowerFactionIds: base.greatPowerFactionIds,
-    terrainColors: base.terrainColors,
-    unitMarkers: base.unitMarkers,
-  );
-}
 
 /// All rendered `Text` widgets whose visible data matches one of the
 /// obfuscation tokens defined by `provinceOverlay_unknown` (`???`) or by
@@ -122,7 +80,7 @@ void main() {
       // synthetic prefixed province id below. The local id need only
       // match no actual region cell to keep the branch deterministic;
       // we still pass a valid region so the overlay constructs.
-      final region = _regionWith(
+      final region = regionMapWithCellVisibility(
         visibilityForCell: (_) => TileVisibility.unrevealed,
       );
       final provinceId =
@@ -167,7 +125,7 @@ void main() {
       // `_seaZoneContent` `isSeaZoneFullyUnrevealed` branch fires
       // for any sea-zone prefixed id (land cells keep their
       // visibility so unrelated paths are not perturbed).
-      final region = _regionWith(
+      final region = regionMapWithCellVisibility(
         visibilityForCell: (c) =>
             c.isSea ? TileVisibility.unrevealed : c.visibility,
       );
@@ -223,7 +181,7 @@ void main() {
                   other.visibility != TileVisibility.unrevealed,
             ),
       );
-      final region = _regionWith(
+      final region = regionMapWithCellVisibility(
         visibilityForCell: (c) => c.x == targetCell.x && c.y == targetCell.y
             ? TileVisibility.unrevealed
             : c.visibility,
@@ -283,7 +241,7 @@ void main() {
       // resolve to the dark Material `Colors.white` fallback. With
       // the SPEC-authorized helper in place every obfuscated row
       // still resolves to `EditorialMonoclePalette.muted`.
-      final region = _regionWith(
+      final region = regionMapWithCellVisibility(
         visibilityForCell: (_) => TileVisibility.unrevealed,
       );
       final provinceId =

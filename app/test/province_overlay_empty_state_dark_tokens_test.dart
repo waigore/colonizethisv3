@@ -36,47 +36,17 @@
 // `Colors.white` nor `Theme.of(context).colorScheme.onSurface`, and
 // resolves exactly to `EditorialMonoclePalette.muted`.
 
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
-        sampleSeaZoneIdForOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay, sampleSeaZoneIdForOverlay;
 
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
-
-/// Returns a copy of [base] with every unit removed from both regions
-/// and every entry removed from `resourceByTileKey`, so the Economic /
-/// Military / Civilian sections all render their standalone empty
-/// `Text('—')` placeholder body on a human-owned province (intel
-/// gating passes via ownership, but there is nothing to list).
-Game _sparseGame(Game base) {
-  final ws = base.worldState;
-  final updatedWs = ws.copyWith(
-    oldWorld: RegionData(provinces: ws.oldWorld.provinces, units: const []),
-    newWorld: RegionData(provinces: ws.newWorld.provinces, units: const []),
-    fleets: const [],
-    resourceByTileKey: const <String, String>{},
-  );
-  return base.copyWith(worldState: updatedWs);
-}
-
-/// Returns a copy of [base] with every fleet removed and empty
-/// `Orders` so the Naval section's sea-zone empty branch fires
-/// deterministically.
-Game _gameWithNoFleets(Game base) {
-  final ws = base.worldState;
-  return base.copyWith(worldState: ws.copyWith(fleets: const []));
-}
-
 
 /// Returns every rendered `Text` whose `data == '—'` in the current
 /// widget tree, with a deterministic ordering. Used by the empty-state
@@ -110,7 +80,7 @@ void main() {
             game: base,
             ownerId: humanId,
           );
-          final game = _sparseGame(base);
+          final game = sparseOverlayGame(base);
 
           await tester.pumpWidget(
             buildProvinceOverlayDarkThemeShell(
@@ -158,7 +128,7 @@ void main() {
           final seaZoneId = sampleSeaZoneIdForOverlay;
           // Strip fleets so the sea-zone Naval section reaches its
           // `fleets.isEmpty && pending.isEmpty` empty branch.
-          final game = _gameWithNoFleets(base);
+          final game = gameWithNoFleets(base);
 
           await tester.pumpWidget(
             buildProvinceOverlayDarkThemeShell(
@@ -204,7 +174,7 @@ void main() {
             game: base,
             ownerId: humanId,
           );
-          final game = _sparseGame(base);
+          final game = sparseOverlayGame(base);
 
           await tester.pumpWidget(
             buildProvinceOverlayDarkThemeShell(

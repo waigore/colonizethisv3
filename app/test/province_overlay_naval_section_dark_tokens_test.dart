@@ -37,78 +37,15 @@
 //    fail for the correct fleet-summary token value.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay;
 
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
-
-/// Returns the demo game with one extra fleet in port at [provinceId]
-/// (owned by [ownerId], region `oldWorld`) appended to
-/// `worldState.fleets`, plus a pending `NavalMoveOrder` in
-/// `orders.navalMoveOrdersByPlayerId[ownerId]` routing that fleet to a
-/// non-empty sea-zone destination so
-/// `provincePanelPendingNavalLines` emits the canonical "Ordered: move
-/// fleet to sea …" preview line.
-({Game game, Orders orders, String fleetId}) _gameWithFleetAndPendingMove({
-  required String ownerId,
-  required String provinceId,
-  required String destinationSeaZoneId,
-}) {
-  final base = demoGameForOverlay;
-  final ws = base.worldState;
-  const fleetId = 'test_fleet_navalDarkTokens';
-  // A single `frigate` ship instance so the fleet has non-empty
-  // `ships` and the helper renders the in-port roster summary line.
-  // The dark-token contract pinned here only depends on the pending
-  // preview line, so the ship type is incidental.
-  final fleet = Fleet(
-    id: fleetId,
-    ownerId: ownerId,
-    inPortAtProvinceId: provinceId,
-    regionId: 'oldWorld',
-    shipTypeIds: const ['frigate'],
-  );
-  final updatedWs = ws.copyWith(fleets: [...ws.fleets, fleet]);
-  final game = base.copyWith(worldState: updatedWs);
-
-  final orders = Orders(
-    navalMoveOrdersByPlayerId: {
-      ownerId: [
-        NavalMoveOrder(
-          fleetId: fleetId,
-          destinationSeaZoneId: destinationSeaZoneId,
-        ),
-      ],
-    },
-  );
-  return (game: game, orders: orders, fleetId: fleetId);
-}
-
-
-/// Picks a non-empty sea-zone id to use as the pending move destination.
-/// `provincePanelPendingNavalLines` resolves the destination via
-/// `worldState.seaZoneDisplayNameById[id] ?? id`, so any non-empty
-/// string produces the canonical "Ordered: move fleet to sea …" prefix
-/// regardless of whether the id has a display name.
-String _someSeaZoneIdForPendingMove(Game game) {
-  final namedZones = game.worldState.seaZoneDisplayNameById.keys;
-  if (namedZones.isNotEmpty) {
-    return namedZones.first;
-  }
-  // Fallback: any non-empty string is fine — the helper falls back to
-  // the raw id when no display name is registered.
-  return 'oldWorld|s1';
-}
 
 void main() {
   suppressLogsForTests();
@@ -131,9 +68,9 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final destination = _someSeaZoneIdForPendingMove(game);
+          final destination = seaZoneIdForPendingNavalMove(game);
 
-          final setup = _gameWithFleetAndPendingMove(
+          final setup = gameWithFleetAndPendingNavalMove(
             ownerId: humanId,
             provinceId: ownedProvince,
             destinationSeaZoneId: destination,
@@ -187,9 +124,9 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final destination = _someSeaZoneIdForPendingMove(game);
+          final destination = seaZoneIdForPendingNavalMove(game);
 
-          final setup = _gameWithFleetAndPendingMove(
+          final setup = gameWithFleetAndPendingNavalMove(
             ownerId: humanId,
             provinceId: ownedProvince,
             destinationSeaZoneId: destination,
@@ -260,11 +197,11 @@ void main() {
           // The fleet-summary contract pinned here does not require a
           // pending NavalMoveOrder; the in-port fleet alone suffices to
           // render the `provinceOverlay_fleetSummary` roster row.
-          // `_gameWithFleetAndPendingMove` happens to add both, which is
+          // `gameWithFleetAndPendingNavalMove` happens to add both, which is
           // fine — the order does not change the fleet-summary's own
           // styling.
-          final destination = _someSeaZoneIdForPendingMove(game);
-          final setup = _gameWithFleetAndPendingMove(
+          final destination = seaZoneIdForPendingNavalMove(game);
+          final setup = gameWithFleetAndPendingNavalMove(
             ownerId: humanId,
             provinceId: ownedProvince,
             destinationSeaZoneId: destination,
@@ -324,8 +261,8 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final destination = _someSeaZoneIdForPendingMove(game);
-          final setup = _gameWithFleetAndPendingMove(
+          final destination = seaZoneIdForPendingNavalMove(game);
+          final setup = gameWithFleetAndPendingNavalMove(
             ownerId: humanId,
             provinceId: ownedProvince,
             destinationSeaZoneId: destination,

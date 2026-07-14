@@ -13,74 +13,15 @@
 // theme owns this surface.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay;
 
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
-
-/// Returns the demo game with one extra infantry regiment (owned by
-/// [ownerId], located in [provinceId] in Old World) appended to
-/// `worldState.oldWorld.units`, plus optionally a pending land
-/// `MoveOrder` for that regiment routed to [destinationTileKey] under
-/// `orders.moveOrdersByPlayerId[ownerId]`.
-({Game game, Orders orders, String unitId}) _gameWithMilitary({
-  required String ownerId,
-  required String provinceId,
-  bool withPendingMove = false,
-  String? destinationTileKey,
-}) {
-  final base = demoGameForOverlay;
-  final ws = base.worldState;
-  const unitId = 'test_pikemen_militaryDarkTokens';
-  // `pikemen` is a canonical regiment id in
-  // `packages/colonizethis_data/lib/src/combat_config.dart`, so
-  // `isMilitaryUnit('pikemen')` returns true and the unit lands in the
-  // Military section (vs the Civilian section, which would happen with
-  // an unknown type id like `infantry`).
-  final regiment = Unit(
-    id: unitId,
-    type: 'pikemen',
-    ownerId: ownerId,
-    locationProvinceId: provinceId,
-  );
-  final updatedOldWorld = RegionData(
-    provinces: ws.oldWorld.provinces,
-    units: [...ws.oldWorld.units, regiment],
-  );
-  final updatedWs = ws.copyWith(oldWorld: updatedOldWorld);
-  final game = base.copyWith(worldState: updatedWs);
-
-  Orders orders = const Orders();
-  if (withPendingMove) {
-    if (destinationTileKey == null) {
-      fail(
-        'Test setup: withPendingMove requires destinationTileKey to be set.',
-      );
-    }
-    orders = Orders(
-      moveOrdersByPlayerId: {
-        ownerId: [
-          MoveOrder(
-            unitId: unitId,
-            destinationTileKey: destinationTileKey,
-          ),
-        ],
-      },
-    );
-  }
-  return (game: game, orders: orders, unitId: unitId);
-}
-
 
 void main() {
   suppressLogsForTests();
@@ -103,7 +44,7 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
           );
@@ -188,7 +129,7 @@ void main() {
           expect(tileKeys!, isNotEmpty);
           final destinationTileKey = tileKeys.first;
 
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
             withPendingMove: true,
@@ -241,7 +182,7 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
           );
@@ -308,7 +249,7 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
           );
@@ -322,7 +263,7 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          // `_gameWithMilitary` appends one `pikemen` regiment owned by
+          // `gameWithMilitaryDarkTokenUnit` appends one `pikemen` regiment owned by
           // [humanId] to the demo Old World. With the demo seed the
           // human-owned demo province contains no other regiments, so
           // the Military section renders exactly one localized
@@ -364,7 +305,7 @@ void main() {
             game: game,
             ownerId: humanId,
           );
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
           );
@@ -445,7 +386,7 @@ void main() {
           expect(tileKeys!, isNotEmpty);
           final destinationTileKey = tileKeys.first;
 
-          final setup = _gameWithMilitary(
+          final setup = gameWithMilitaryDarkTokenUnit(
             ownerId: humanId,
             provinceId: ownedProvince,
             withPendingMove: true,
