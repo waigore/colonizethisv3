@@ -142,40 +142,30 @@ void main() {
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    testWidgets('shows six GP colour swatches and default nation labels', (
-      WidgetTester tester,
-    ) async {
-      await pumpNewGameLeaderSelectionDialog(tester);
-
-      expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
-      expect(find.text('England'), findsWidgets);
-      // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
-      expectDialogChromeTexts(const [
-        'Choose nations and leaders',
-        'Choose six great powers and a leader variant for each',
-        'Slot 1',
-        'YOU',
-        'Slot 2',
-        'Slot 6',
-        'Game seed',
-        'Enter 0 for a random seed',
-        'Infinite mode (no victory condition)',
-      ]);
-      // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
-      expect(find.byType(CtToggleSwitch), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNothing);
-    });
-
     testWidgets(
-      'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
+      'shows six GP colour swatches, default labels, and 540×720 dialog shell',
       (WidgetTester tester) async {
         await pumpNewGameLeaderSelectionDialog(tester);
 
+        expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
+        expect(find.text('England'), findsWidgets);
+        // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
+        expectDialogChromeTexts(const [
+          'Choose nations and leaders',
+          'Choose six great powers and a leader variant for each',
+          'Slot 1',
+          'YOU',
+          'Slot 2',
+          'Slot 6',
+          'Game seed',
+          'Enter 0 for a random seed',
+          'Infinite mode (no victory condition)',
+        ]);
+        // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
+        expect(find.byType(CtToggleSwitch), findsOneWidget);
+        expect(find.byType(CheckboxListTile), findsNothing);
         // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
-        // the dialog frame is pinned to the refreshed mockup
-        // `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1). This guards
-        // against regressing to the stale 480 dp figure in the original
-        // D1 text — the mockup is the visual source of truth.
+        // pinned to mockup `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1).
         final shell = tester.widget<CtDialogShell>(find.byType(CtDialogShell));
         expect(shell.maxWidth, 540);
         expect(shell.maxHeight, 720);
@@ -258,42 +248,37 @@ void main() {
       expect(gotInfiniteMode, isFalse);
     });
 
-    testWidgets('AI slots show profile dropdown when blessed names exist', (
-      WidgetTester tester,
-    ) async {
-      Map<String, String?>? gotProfiles;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        surfaceSize: _largeViewport,
-        blessedProfileNames: const ['aggressive_v2'],
-        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-      );
-      expect(find.byType(CtDropdown<String>), findsNWidgets(17));
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotProfiles, isEmpty);
-    });
+    testWidgets(
+      'AI profile dropdowns mount for blessed names and forward selected id',
+      (WidgetTester tester) async {
+        Map<String, String?>? gotProfiles;
+        Future<void> pumpBlessed({
+          required void Function(Map<String, String?>?) onConfirmed,
+        }) {
+          return pumpNewGameLeaderSelectionDialog(
+            tester,
+            surfaceSize: _largeViewport,
+            blessedProfileNames: const ['aggressive_v2'],
+            onConfirmed: (_, _, _, _, _, profiles, __) => onConfirmed(profiles),
+          );
+        }
 
-    testWidgets('selecting blessed profile forwards aiProfileByGpId', (
-      WidgetTester tester,
-    ) async {
-      Map<String, String?>? gotProfiles;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        surfaceSize: _largeViewport,
-        blessedProfileNames: const ['aggressive_v2'],
-        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-      );
-      final profileDropdowns = find.widgetWithText(
-        CtDropdown<String>,
-        'Normal',
-      );
-      await tester.tap(profileDropdowns.first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('aggressive_v2').last);
-      await tester.pumpAndSettle();
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotProfiles?.values, contains('aggressive_v2'));
-    });
+        await pumpBlessed(onConfirmed: (p) => gotProfiles = p);
+        expect(find.byType(CtDropdown<String>), findsNWidgets(17));
+        await ensureTapNewGameLeaderSelectionStart(tester);
+        expect(gotProfiles, isEmpty);
+
+        await pumpBlessed(onConfirmed: (p) => gotProfiles = p);
+        await tester.tap(
+          find.widgetWithText(CtDropdown<String>, 'Normal').first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('aggressive_v2').last);
+        await tester.pumpAndSettle();
+        await ensureTapNewGameLeaderSelectionStart(tester);
+        expect(gotProfiles?.values, contains('aggressive_v2'));
+      },
+    );
 
     testWidgets('Cancel closes dialog without calling onConfirmed', (
       WidgetTester tester,
@@ -339,12 +324,13 @@ void main() {
       expect(gotLeaders!['sweden'], 'gustavus');
     });
 
-    testWidgets('Start seed field: 0 passes through; cleared falls back to 42', (
-      WidgetTester tester,
-    ) async {
-      expect(await confirmWithSeed(tester, '0'), 0);
-      expect(await confirmWithSeed(tester, ''), 42);
-    });
+    testWidgets(
+      'Start seed field: 0 passes through; cleared falls back to 42',
+      (WidgetTester tester) async {
+        expect(await confirmWithSeed(tester, '0'), 0);
+        expect(await confirmWithSeed(tester, ''), 42);
+      },
+    );
 
     testWidgets('Start passes infiniteMode true when toggle switched on', (
       WidgetTester tester,
@@ -424,17 +410,18 @@ void main() {
       );
     });
 
-    testWidgets('shows terrain variation slider with default helper and label', (
-      WidgetTester tester,
-    ) async {
-      await pumpNewGameLeaderSelectionDialog(tester);
-      expect(find.byType(CtSlider), findsOneWidget);
-      expectDialogChromeTexts(const [
-        'Terrain variation:',
-        '50%',
-        '0% flat — 100% extreme',
-      ]);
-    });
+    testWidgets(
+      'shows terrain variation slider with default helper and label',
+      (WidgetTester tester) async {
+        await pumpNewGameLeaderSelectionDialog(tester);
+        expect(find.byType(CtSlider), findsOneWidget);
+        expectDialogChromeTexts(const [
+          'Terrain variation:',
+          '50%',
+          '0% flat — 100% extreme',
+        ]);
+      },
+    );
 
     testWidgets('Start passes terrainVariation default and left/right edges', (
       WidgetTester tester,

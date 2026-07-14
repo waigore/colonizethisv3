@@ -159,6 +159,29 @@ RegionMapViewportSnapshot _snapFor(
   );
 }
 
+void _expectBorderColor(BoxDecoration deco, Color color, {double width = 1}) {
+  final border = deco.border! as Border;
+  expect(border.top.color, color);
+  expect(border.bottom.color, color);
+  expect(border.left.color, color);
+  expect(border.right.color, color);
+  expect(border.top.width, width);
+}
+
+ColorFilter _accentFilter(Color color) =>
+    ColorFilter.mode(color, BlendMode.srcIn);
+
+Future<void> _tapZoomTrack(
+  WidgetTester tester, {
+  required double fractionFromLeft,
+}) async {
+  final track = tester.getRect(find.byKey(kRegionMinimapZoomSliderKey));
+  await tester.tapAt(
+    Offset(track.left + track.width * fractionFromLeft, track.center.dy),
+  );
+  await tester.pump();
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -167,27 +190,30 @@ void main() {
   ) async {
     // Default tap hits widget center; map is square 132×132 for 4×4 aspect-1 region.
     const minimapLogical = 132.0;
-    for (final case_ in <
-      ({
-        String regionId,
-        Future<void> Function(WidgetTester t) tap,
-        Offset local,
-      })
-    >[
-      (
-        regionId: 'minimapTapRegion',
-        tap: (t) => t.tap(find.byKey(kRegionMinimapGestureKey)),
-        local: const Offset(minimapLogical / 2, minimapLogical / 2),
-      ),
-      (
-        regionId: 'minimapCornerRegion',
-        tap: (t) async {
-          final topLeft = t.getTopLeft(find.byKey(kRegionMinimapGestureKey));
-          await t.tapAt(topLeft + const Offset(2, 2));
-        },
-        local: const Offset(2, 2),
-      ),
-    ]) {
+    for (final case_
+        in <
+          ({
+            String regionId,
+            Future<void> Function(WidgetTester t) tap,
+            Offset local,
+          })
+        >[
+          (
+            regionId: 'minimapTapRegion',
+            tap: (t) => t.tap(find.byKey(kRegionMinimapGestureKey)),
+            local: const Offset(minimapLogical / 2, minimapLogical / 2),
+          ),
+          (
+            regionId: 'minimapCornerRegion',
+            tap: (t) async {
+              final topLeft = t.getTopLeft(
+                find.byKey(kRegionMinimapGestureKey),
+              );
+              await t.tapAt(topLeft + const Offset(2, 2));
+            },
+            local: const Offset(2, 2),
+          ),
+        ]) {
       final bus = AppEventBus.create();
       final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
         bus,
@@ -275,60 +301,38 @@ void main() {
     },
   );
 
-  testWidgets('slider onChanged emits RequestRegionMapSetZoomMultiplierEvent', (
-    WidgetTester tester,
-  ) async {
-    final bus = AppEventBus.create();
-    final zooms = _captureBusEvents<RequestRegionMapSetZoomMultiplierEvent>(
-      bus,
-    );
-    final region = _tinyRegion(regionId: 'minimapSliderEmitRegion');
-    await _pumpTinyMinimap(
-      tester,
-      regionId: 'minimapSliderEmitRegion',
-      bus: bus,
-      viewportSnapshot: _snapFor(region, zoom: 1.0),
-    );
-
-    final sliderFinder = find.byKey(kRegionMinimapZoomSliderKey);
-    final track = tester.getRect(sliderFinder);
-    await tester.tapAt(
-      Offset(track.left + track.width * 0.75, track.top + track.height / 2),
-    );
-    await tester.pump();
-
-    expect(zooms, isNotEmpty);
-    final last = zooms.last;
-    expect(last.regionId, region.regionId);
-    expect(last.zoomMultiplier, greaterThan(1.0));
-    expect(last.zoomMultiplier, lessThanOrEqualTo(kRegionMapZoomMultiplierMax));
-  });
-
   testWidgets(
-    'sequential taps on zoom track emit multiple RequestRegionMapSetZoomMultiplierEvent',
+    'zoom slider emits RequestRegionMapSetZoomMultiplierEvent (single + multi tap)',
     (WidgetTester tester) async {
       final bus = AppEventBus.create();
       final zooms = _captureBusEvents<RequestRegionMapSetZoomMultiplierEvent>(
         bus,
       );
-      final region = _tinyRegion(regionId: 'minimapMultiTapZoomRegion');
+      final region = _tinyRegion(regionId: 'minimapSliderEmitRegion');
       await _pumpTinyMinimap(
         tester,
-        regionId: 'minimapMultiTapZoomRegion',
+        regionId: 'minimapSliderEmitRegion',
         bus: bus,
         viewportSnapshot: _snapFor(region, zoom: 1.0),
       );
 
+      await _tapZoomTrack(tester, fractionFromLeft: 0.75);
+      expect(zooms, isNotEmpty);
+      expect(zooms.last.regionId, region.regionId);
+      expect(zooms.last.zoomMultiplier, greaterThan(1.0));
+      expect(
+        zooms.last.zoomMultiplier,
+        lessThanOrEqualTo(kRegionMapZoomMultiplierMax),
+      );
+
+      final beforeMulti = zooms.length;
       final box = tester.getRect(find.byKey(kRegionMinimapZoomSliderKey));
       final y = box.center.dy;
-      await tester.tapAt(Offset(box.left + 4, y));
-      await tester.pump();
-      await tester.tapAt(Offset(box.center.dx, y));
-      await tester.pump();
-      await tester.tapAt(Offset(box.right - 6, y));
-      await tester.pump();
-
-      expect(zooms.length, greaterThan(1));
+      for (final x in <double>[box.left + 4, box.center.dx, box.right - 6]) {
+        await tester.tapAt(Offset(x, y));
+        await tester.pump();
+      }
+      expect(zooms.length, greaterThan(beforeMulti));
       expect(zooms.every((e) => e.regionId == region.regionId), isTrue);
     },
   );
@@ -385,17 +389,12 @@ void main() {
         );
         final deco = panel!.decoration as BoxDecoration;
         expect(deco.color, EditorialMonoclePalette.bgDeep);
-        final border = deco.border! as Border;
-        expect(border.top.color, EditorialMonoclePalette.border);
-        expect(border.bottom.color, EditorialMonoclePalette.border);
-        expect(border.left.color, EditorialMonoclePalette.border);
-        expect(border.right.color, EditorialMonoclePalette.border);
-        expect(border.top.width, 1);
+        _expectBorderColor(deco, EditorialMonoclePalette.border);
       },
     );
 
     testWidgets(
-      'no Material under minimap paints with white or black background',
+      'no light-theme Material chrome or Material design buttons inside minimap',
       (WidgetTester tester) async {
         final mb = _MinimapBus()..disposeLater();
         await _pumpTinyMinimap(
@@ -404,56 +403,34 @@ void main() {
           bus: mb.bus,
         );
 
-        final materials = tester.widgetList<Material>(
+        for (final m in tester.widgetList<Material>(
           find.descendant(
             of: find.byType(GameRegionMinimap),
             matching: find.byType(Material),
           ),
-        );
-        for (final m in materials) {
+        )) {
+          expect(m.color, isNot(equals(Colors.white)));
+          expect(m.color, isNot(equals(Colors.black)));
+        }
+        for (final type in const <Type>[
+          ElevatedButton,
+          OutlinedButton,
+          FilledButton,
+          IconButton,
+        ]) {
           expect(
-            m.color,
-            isNot(equals(Colors.white)),
-            reason: 'Material.color must not be Colors.white inside minimap',
-          );
-          expect(
-            m.color,
-            isNot(equals(Colors.black)),
-            reason: 'Material.color must not be Colors.black inside minimap',
+            find.descendant(
+              of: find.byType(GameRegionMinimap),
+              matching: find.byType(type),
+            ),
+            findsNothing,
           );
         }
       },
     );
 
-    testWidgets('no Material design buttons paint inside minimap', (
-      WidgetTester tester,
-    ) async {
-      final mb = _MinimapBus()..disposeLater();
-      await _pumpTinyMinimap(
-        tester,
-        regionId: 'minimapNoMaterialButtons',
-        bus: mb.bus,
-      );
-
-      const forbidden = <Type>[
-        ElevatedButton,
-        OutlinedButton,
-        FilledButton,
-        IconButton,
-      ];
-      for (final type in forbidden) {
-        expect(
-          find.descendant(
-            of: find.byType(GameRegionMinimap),
-            matching: find.byType(type),
-          ),
-          findsNothing,
-        );
-      }
-    });
-
     testWidgets(
-      'toggle default state paints --bg-deep + --border + accent-dim glyph tint',
+      'toggle default and hover paint editorial-monocle glyph/outline tokens',
       (WidgetTester tester) async {
         final mb = _MinimapBus()..disposeLater();
         await _pumpTinyMinimap(
@@ -465,73 +442,48 @@ void main() {
         final toggle = find.byKey(kRegionMinimapToggleKey);
         expect(toggle, findsOneWidget);
 
-        final animated = tester.widget<AnimatedContainer>(
-          find.descendant(of: toggle, matching: find.byType(AnimatedContainer)),
+        AnimatedContainer animatedOf(Finder root) =>
+            tester.widget<AnimatedContainer>(
+              find.descendant(
+                of: root,
+                matching: find.byType(AnimatedContainer),
+              ),
+            );
+        ColorFiltered filterOf(Finder root) => tester.widget<ColorFiltered>(
+          find.descendant(of: root, matching: find.byType(ColorFiltered)),
         );
-        final deco = animated.decoration! as BoxDecoration;
-        expect(deco.color, EditorialMonoclePalette.bgDeep);
-        final border = deco.border! as Border;
-        expect(border.top.color, EditorialMonoclePalette.border);
-        expect(border.top.width, 1);
 
-        final colorFiltered = tester.widget<ColorFiltered>(
-          find.descendant(of: toggle, matching: find.byType(ColorFiltered)),
+        final defaultDeco = animatedOf(toggle).decoration! as BoxDecoration;
+        expect(defaultDeco.color, EditorialMonoclePalette.bgDeep);
+        _expectBorderColor(defaultDeco, EditorialMonoclePalette.border);
+        expect(
+          filterOf(toggle).colorFilter,
+          _accentFilter(EditorialMonoclePalette.accentDim),
         );
-        final filter = ColorFilter.mode(
-          EditorialMonoclePalette.accentDim,
-          BlendMode.srcIn,
-        );
-        expect(colorFiltered.colorFilter, filter);
-
         final icon = tester.widget<StrictAssetIcon>(
           find.descendant(of: toggle, matching: find.byType(StrictAssetIcon)),
         );
         expect(icon.width, 20);
         expect(icon.height, 20);
-      },
-    );
 
-    testWidgets(
-      'hover transitions toggle glyph tint to accent-bright + outline to accent-dim',
-      (WidgetTester tester) async {
-        final mb = _MinimapBus()..disposeLater();
-        await _pumpTinyMinimap(
-          tester,
-          regionId: 'minimapToggleHoverChrome',
-          bus: mb.bus,
-        );
-
-        final toggleFinder = find.byKey(kRegionMinimapToggleKey);
         final gesture = await tester.createGesture(
           kind: PointerDeviceKind.mouse,
         );
         addTearDown(gesture.removePointer);
         await gesture.addPointer(location: Offset.zero);
-        await gesture.moveTo(tester.getCenter(toggleFinder));
+        await gesture.moveTo(tester.getCenter(toggle));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
-        final animated = tester.widget<AnimatedContainer>(
-          find.descendant(
-            of: toggleFinder,
-            matching: find.byType(AnimatedContainer),
-          ),
+        final hoverDeco = animatedOf(toggle).decoration! as BoxDecoration;
+        expect(
+          (hoverDeco.border! as Border).top.color,
+          EditorialMonoclePalette.accentDim,
         );
-        final deco = animated.decoration! as BoxDecoration;
-        final border = deco.border! as Border;
-        expect(border.top.color, EditorialMonoclePalette.accentDim);
-
-        final colorFiltered = tester.widget<ColorFiltered>(
-          find.descendant(
-            of: toggleFinder,
-            matching: find.byType(ColorFiltered),
-          ),
+        expect(
+          filterOf(toggle).colorFilter,
+          _accentFilter(EditorialMonoclePalette.accentBright),
         );
-        final filter = ColorFilter.mode(
-          EditorialMonoclePalette.accentBright,
-          BlendMode.srcIn,
-        );
-        expect(colorFiltered.colorFilter, filter);
       },
     );
 

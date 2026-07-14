@@ -250,32 +250,41 @@ void main() {
           'map_presence_regiment',
           'map_presence_ship',
         ];
-        for (final case_ in <
-          ({ProvinceUnitPresenceView? presence, List<String> icons, String? reason})
-        >[
-          (presence: null, icons: const [], reason: 'Null presence should suppress all icons'),
-          (
-            presence: const ProvinceUnitPresenceView(
-              civilianCount: 1,
-              regimentCount: 1,
-              shipCount: 1,
-              intelVisible: false,
-            ),
-            icons: const [],
-            reason: 'Hidden intel should suppress all icons',
-          ),
-          (presence: allPresence, icons: allIcons, reason: null),
-          (
-            presence: const ProvinceUnitPresenceView(
-              civilianCount: 0,
-              regimentCount: 4,
-              shipCount: 0,
-              intelVisible: true,
-            ),
-            icons: const ['map_presence_regiment'],
-            reason: 'Only >0 classes should render',
-          ),
-        ]) {
+        for (final case_
+            in <
+              ({
+                ProvinceUnitPresenceView? presence,
+                List<String> icons,
+                String? reason,
+              })
+            >[
+              (
+                presence: null,
+                icons: const [],
+                reason: 'Null presence should suppress all icons',
+              ),
+              (
+                presence: const ProvinceUnitPresenceView(
+                  civilianCount: 1,
+                  regimentCount: 1,
+                  shipCount: 1,
+                  intelVisible: false,
+                ),
+                icons: const [],
+                reason: 'Hidden intel should suppress all icons',
+              ),
+              (presence: allPresence, icons: allIcons, reason: null),
+              (
+                presence: const ProvinceUnitPresenceView(
+                  civilianCount: 0,
+                  regimentCount: 4,
+                  shipCount: 0,
+                  intelVisible: true,
+                ),
+                icons: const ['map_presence_regiment'],
+                reason: 'Only >0 classes should render',
+              ),
+            ]) {
           expect(
             resolveProvinceLabelPresenceIconIds(case_.presence),
             case_.icons,
@@ -291,24 +300,27 @@ void main() {
           ['map_capital_star', ...allIcons],
         );
         expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: false), isEmpty);
-        expect(
-          resolveSeaZoneLabelPrefixIconIds(isWarpZone: true),
-          const ['map_warp_zone'],
-        );
+        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: true), const [
+          'map_warp_zone',
+        ]);
         expect(shouldEllipsizeProvinceLabelText(isCapital: true), isFalse);
         expect(shouldEllipsizeProvinceLabelText(isCapital: false), isTrue);
-        for (final case_ in <
-          ({double width, int icons, bool wrap, String? reason})
-        >[
-          (width: 20, icons: 0, wrap: false, reason: null),
-          (width: 60, icons: 2, wrap: false, reason: 'Content fits one line'),
-          (
-            width: 110,
-            icons: 3,
-            wrap: true,
-            reason: 'Content should wrap to second line when too wide',
-          ),
-        ]) {
+        for (final case_
+            in <({double width, int icons, bool wrap, String? reason})>[
+              (width: 20, icons: 0, wrap: false, reason: null),
+              (
+                width: 60,
+                icons: 2,
+                wrap: false,
+                reason: 'Content fits one line',
+              ),
+              (
+                width: 110,
+                icons: 3,
+                wrap: true,
+                reason: 'Content should wrap to second line when too wide',
+              ),
+            ]) {
           expect(
             shouldWrapProvinceLabelPresenceIcons(
               textWidthPx: case_.width,
@@ -358,22 +370,23 @@ void main() {
         final beforeRegion =
             (tester.widget(gameWidgetFinder) as dynamic).game.region
                 as RegionMapViewData;
-        final beforePresence =
-            beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId]!;
-        expect(beforePresence.civilianCount, 0);
-        expect(beforePresence.regimentCount, 0);
-        expect(beforePresence.shipCount, 0);
+        void expectPresence(RegionMapViewData region, int n) {
+          final p = region.provinceUnitPresenceByProvinceId[fullProvinceId]!;
+          expect(p.civilianCount, n);
+          expect(p.regimentCount, n);
+          expect(p.shipCount, n);
+        }
+
+        expectPresence(beforeRegion, 0);
 
         await tester.pumpWidget(ctRegionMapTestHarness(region: refreshed));
         await tester.pump();
 
-        final afterPresence =
-            ((tester.widget(gameWidgetFinder) as dynamic).game.region
-                    as RegionMapViewData)
-                .provinceUnitPresenceByProvinceId[fullProvinceId]!;
-        expect(afterPresence.civilianCount, 1);
-        expect(afterPresence.regimentCount, 1);
-        expect(afterPresence.shipCount, 1);
+        expectPresence(
+          (tester.widget(gameWidgetFinder) as dynamic).game.region
+              as RegionMapViewData,
+          1,
+        );
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -429,7 +442,7 @@ void main() {
         }
 
         final keys = <String>[
-          for (final id in [
+          for (final id in const [
             'grain',
             'meat',
             'horses',
@@ -439,33 +452,20 @@ void main() {
             'spices',
           ])
             terrainVariantTileKey(terrain: TerrainType.plains, resourceId: id)!,
-          featureOverlayTileKey(
-            terrain: TerrainType.hardwoodForest,
-            resourceId: 'furs',
-          ),
-          featureOverlayTileKey(
-            terrain: TerrainType.hardwoodForest,
-            resourceId: null,
-          ),
-          featureOverlayTileKey(
-            terrain: TerrainType.scrubForest,
-            resourceId: null,
-          ),
-          featureOverlayTileKey(
-            terrain: TerrainType.hills,
-            resourceId: 'iron',
-            improvementLevel: 0,
-          ),
-          featureOverlayTileKey(
-            terrain: TerrainType.hills,
-            resourceId: null,
-            improvementLevel: 0,
-          ),
-          featureOverlayTileKey(
-            terrain: TerrainType.mountain,
-            resourceId: 'gold',
-          ),
-          featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+          for (final args in <(TerrainType, String?, int?)>[
+            (TerrainType.hardwoodForest, 'furs', null),
+            (TerrainType.hardwoodForest, null, null),
+            (TerrainType.scrubForest, null, null),
+            (TerrainType.hills, 'iron', 0),
+            (TerrainType.hills, null, 0),
+            (TerrainType.mountain, 'gold', null),
+            (TerrainType.swamp, 'tin', null),
+          ])
+            featureOverlayTileKey(
+              terrain: args.$1,
+              resourceId: args.$2,
+              improvementLevel: args.$3,
+            ),
         ];
 
         for (final key in keys) {
@@ -480,18 +480,15 @@ void main() {
     );
 
     testWidgets(
-      'builds without throwing for old world region',
+      'builds for OW region across visibility, overlay, tint, and base-layer modes',
       (WidgetTester tester) async {
-        await _pumpOwMap(tester);
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      // GameWidget + Flame may keep the frame "dirty"; avoid long timeouts.
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
+        // GameWidget + Flame may keep the frame dirty; keep timeout tight.
+        final region = ctRegionMapTestOldWorldRegion();
+        void expectMap() => expect(find.byType(CtRegionMap), findsOneWidget);
 
-    testWidgets(
-      'applies non-default visibility and political overlay flags',
-      (WidgetTester tester) async {
+        await _pumpOwMap(tester);
+        expectMap();
+
         await _pumpOwMap(
           tester,
           showPoliticalOverlay: false,
@@ -499,20 +496,12 @@ void main() {
           visibilityMode: CtMapVisibilityMode.playerConstrained,
           playerConstrained: true,
         );
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
+        expectMap();
 
-    testWidgets(
-      'honors province overlay and ownership tint flags without throwing',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
         for (final cfg in [
           (overlay: true, tint: false),
           (overlay: false, tint: false),
           (overlay: true, tint: true),
-          (overlay: false, tint: false),
         ]) {
           await _pumpOwMap(
             tester,
@@ -520,23 +509,17 @@ void main() {
             showProvinceOverlay: cfg.overlay,
             showProvinceOwnershipTint: cfg.tint,
           );
-          expect(find.byType(CtRegionMap), findsOneWidget);
+          expectMap();
         }
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
 
-    testWidgets(
-      'builds with each base layer display mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
         for (final mode in BaseLayerDisplayMode.values) {
           await _pumpOwMap(tester, baseLayerDisplayMode: mode);
-          expect(find.byType(CtRegionMap), findsOneWidget);
+          expectMap();
         }
         await _pumpOwMap(tester);
-        expect(find.byType(CtRegionMap), findsOneWidget);
+        expectMap();
       },
-      timeout: const Timeout(Duration(seconds: 10)),
+      timeout: const Timeout(Duration(seconds: 15)),
     );
 
     testWidgets(

@@ -161,9 +161,11 @@ Game _capPeers({
 }) {
   NavalFleetsUpdatedEvent? updated;
   final bus = AppEventBus.create();
-  addTearDown(bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-    updated = e;
-  }).cancel);
+  addTearDown(
+    bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+      updated = e;
+    }).cancel,
+  );
   addTearDown(wire(bus).cancel);
   return (bus, () => updated);
 }
@@ -191,7 +193,7 @@ void main() {
   });
 
   group('NavalUnitsPanel', () {
-    testWidgets('AC: Beachhead mission appears in status line', (
+    testWidgets('AC: Beachhead status and empty-naval empty-state pins', (
       WidgetTester tester,
     ) async {
       await _pumpNaval(
@@ -200,11 +202,7 @@ void main() {
         humanPlayerId: 'p_beach',
       );
       expect(find.textContaining('Beachhead'), findsWidgets);
-    });
 
-    testWidgets('AC: No fleets and no capital shows empty naval message', (
-      WidgetTester tester,
-    ) async {
       await _pumpNaval(
         tester,
         game: buildNavalPanelEmptyHumanGame(humanId: 'p_empty'),
@@ -468,10 +466,10 @@ void main() {
         final fleets = updated()!.game.worldState.fleets;
         final homeFleet = fleets.where((f) => f.id == homeId);
         expect(homeFleet, isNotEmpty);
-        expect(
-          (homeFleet.first.ships.map((s) => s.id).toList()..sort()),
-          ['ship_d', 'ship_h'],
-        );
+        expect((homeFleet.first.ships.map((s) => s.id).toList()..sort()), [
+          'ship_d',
+          'ship_h',
+        ]);
         expect(fleets.any((f) => f.id == 'donor'), isFalse);
       },
     );

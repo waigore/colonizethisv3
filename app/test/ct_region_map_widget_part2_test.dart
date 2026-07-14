@@ -53,7 +53,9 @@ Future<void> _pumpOw(
       onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedCivilianTileKey: selectedCivilianTileKey,
       visibilityMode: visibilityMode,
-      playerViewForResources: playerConstrained ? ctRegionMapTestPlayerView : null,
+      playerViewForResources: playerConstrained
+          ? ctRegionMapTestPlayerView
+          : null,
     ),
   );
   await tester.pump();
@@ -73,7 +75,10 @@ Offset _mapCenter(WidgetTester tester) {
 
 Future<void> _scrollAtMap(WidgetTester tester, double dy) async {
   await tester.sendEventToBinding(
-    PointerScrollEvent(position: _mapCenter(tester), scrollDelta: Offset(0, dy)),
+    PointerScrollEvent(
+      position: _mapCenter(tester),
+      scrollDelta: Offset(0, dy),
+    ),
   );
   await tester.pump();
 }
@@ -140,21 +145,22 @@ void main() {
     setUpAll(warmCtRegionMapCachesForTests);
 
     testWidgets(
-      'camera resize logic runs when parent size changes',
+      'camera resize and small-cell clamp paths keep CtRegionMap mounted',
       (WidgetTester tester) async {
-        await _pumpOw(tester, width: 400, height: 320);
-        await _pumpOw(tester, width: 640, height: 360);
-        await _pumpOw(tester, width: 320, height: 240);
-        expect(_map, findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'small cell size triggers map-smaller-than-viewport clamp path',
-      (WidgetTester tester) async {
-        await _pumpOw(tester, width: 600, height: 600);
-        await _pumpOw(tester, width: 600, height: 600, cellSizePx: 4);
+        for (final size in const <(double, double, double)>[
+          (400, 320, 24),
+          (640, 360, 24),
+          (320, 240, 24),
+          (600, 600, 24),
+          (600, 600, 4),
+        ]) {
+          await _pumpOw(
+            tester,
+            width: size.$1,
+            height: size.$2,
+            cellSizePx: size.$3,
+          );
+        }
         expect(_map, findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 5)),
@@ -456,10 +462,7 @@ void main() {
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         String? hoveredTileKey;
-        await _pumpOw(
-          tester,
-          onTileHovered: (key) => hoveredTileKey = key,
-        );
+        await _pumpOw(tester, onTileHovered: (key) => hoveredTileKey = key);
         expect(_map, findsOneWidget);
         await _tapMap(tester);
         expect(hoveredTileKey, isNull);
