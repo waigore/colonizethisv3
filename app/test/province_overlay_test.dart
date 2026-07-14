@@ -260,13 +260,19 @@ void main() {
 
   group('ProvinceSeaZoneDetailOverlay', () {
     testWidgets(
-      'AC: Standalone province overlay displays Political, Economic, Military, Civilian, Naval',
+      'AC: province sections, name/owner, close, and sea-zone sections',
       (WidgetTester tester) async {
-        await _pumpProvinceDemo(tester);
+        final region = demoRegionForOverlay;
+        final selectedId = sampleProvinceIdForOverlay;
+        final cell = region.cells.firstWhere(
+          (c) =>
+              !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
+        );
+        final game = demoGameForOverlay;
+        var closed = false;
+        await _pumpProvinceDemo(tester, onClose: () => closed = true);
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-        // Section headers render via CtSectionLabel (Refs #2865 S4) which
-        // upper-cases the label per SPEC § Dark-theme section labels.
         _expectOverlayTexts(const [
           'Province',
           'TILE',
@@ -277,47 +283,34 @@ void main() {
           'NAVAL',
         ]);
         expect(find.byKey(const Key('overlay_close')), findsOneWidget);
+
+        final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
+        expect(provinceName, isNotEmpty);
+        expect(find.textContaining(provinceName), findsAtLeastNWidgets(1));
+        final ownerId = cell.ownerFactionId;
+        if (ownerId != null && ownerId.isNotEmpty) {
+          final ownerName =
+              game.players
+                  .where((p) => p.id == ownerId)
+                  .map((p) => p.displayName)
+                  .firstOrNull ??
+              game.minorNations
+                  .where((m) => m.id == ownerId)
+                  .map((m) => m.displayName ?? m.id)
+                  .firstOrNull ??
+              ownerId;
+          expect(find.textContaining(ownerName), findsAtLeastNWidgets(1));
+        }
+
+        await tester.tap(find.byKey(const Key('overlay_close')));
+        await tester.pumpAndSettle();
+        expect(closed, isTrue);
+
+        await _pumpOverlay(tester, displayId: sampleSeaZoneIdForOverlay);
+        expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
+        _expectOverlayTexts(const ['Sea zone', 'POLITICAL', 'NAVAL']);
       },
     );
-
-    testWidgets('AC: Province overlay shows province name and owner', (
-      WidgetTester tester,
-    ) async {
-      final region = demoRegionForOverlay;
-      final selectedId = sampleProvinceIdForOverlay;
-      final cell = region.cells.firstWhere(
-        (c) => !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
-      );
-      final game = demoGameForOverlay;
-      await _pumpProvinceDemo(tester);
-
-      final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
-      expect(provinceName, isNotEmpty);
-      expect(find.textContaining(provinceName), findsAtLeastNWidgets(1));
-      final ownerId = cell.ownerFactionId;
-      if (ownerId != null && ownerId.isNotEmpty) {
-        final ownerName =
-            game.players
-                .where((p) => p.id == ownerId)
-                .map((p) => p.displayName)
-                .firstOrNull ??
-            game.minorNations
-                .where((m) => m.id == ownerId)
-                .map((m) => m.displayName ?? m.id)
-                .firstOrNull ??
-            ownerId;
-        expect(find.textContaining(ownerName), findsAtLeastNWidgets(1));
-      }
-    });
-
-    testWidgets('AC: Sea zone overlay displays Political and Naval', (
-      WidgetTester tester,
-    ) async {
-      await _pumpOverlay(tester, displayId: sampleSeaZoneIdForOverlay);
-
-      expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-      _expectOverlayTexts(const ['Sea zone', 'POLITICAL', 'NAVAL']);
-    });
 
     testWidgets('sea zone display name follows reveal/fog visibility', (
       WidgetTester tester,
@@ -353,18 +346,6 @@ void main() {
         }),
       );
       expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
-    });
-
-    testWidgets('AC: Close button invokes onClose', (
-      WidgetTester tester,
-    ) async {
-      var closed = false;
-      await _pumpProvinceDemo(tester, onClose: () => closed = true);
-
-      await tester.tap(find.byKey(const Key('overlay_close')));
-      await tester.pumpAndSettle();
-
-      expect(closed, isTrue);
     });
 
     testWidgets('tile shortcut tooltips: prospect / explore order / build', (

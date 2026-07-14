@@ -317,67 +317,53 @@ void main() {
       },
     );
 
-    testWidgets(
-      'AC: Two fleets in the same sea zone combine; mission becomes none',
-      (WidgetTester tester) async {
-        const humanId = 'gp_same_sea_combine';
-        final updated = await _pumpCheckCombine(
-          tester,
-          game: _sameSeaCombineGame(humanId: humanId),
-          humanId: humanId,
-          labels: const ['Fleet sea_1', 'Fleet sea_2'],
-          expectCombineEnabled: true,
-        );
-        expect(updated, isNotNull);
-        final fleetsAfter = updated!.game.worldState.fleets;
-        expect(fleetsAfter.length, 1);
-        final survivor = fleetsAfter.single;
-        expect(survivor.id, 'sea_1');
-        final shipIds = survivor.ships.map((s) => s.id).toList()..sort();
-        expect(shipIds, ['ss1', 'ss2']);
-        expect(survivor.mission, FleetMission.none);
-      },
-    );
+    testWidgets('AC: combine same-sea + mission-clear survivors', (
+      WidgetTester tester,
+    ) async {
+      const sameSeaId = 'gp_same_sea_combine';
+      final sameSea = await _pumpCheckCombine(
+        tester,
+        game: _sameSeaCombineGame(humanId: sameSeaId),
+        humanId: sameSeaId,
+        labels: const ['Fleet sea_1', 'Fleet sea_2'],
+        expectCombineEnabled: true,
+      );
+      expect(sameSea, isNotNull);
+      final sameSeaSurvivor = sameSea!.game.worldState.fleets.single;
+      expect(sameSeaSurvivor.id, 'sea_1');
+      expect(
+        (sameSeaSurvivor.ships.map((s) => s.id).toList()..sort()),
+        ['ss1', 'ss2'],
+      );
+      expect(sameSeaSurvivor.mission, FleetMission.none);
 
-    testWidgets(
-      'AC: Combining two non-home fleets clears non-none missions on survivor',
-      (WidgetTester tester) async {
-        const humanId = 'gp_mission_clear';
-        final updated = await _pumpCheckCombine(
-          tester,
-          game: _mergePortGame(
-            humanId: humanId,
-            gameId: 'g_mission_clear',
-            displayName: 'Mission clear tester',
-            fleets: [
-              _pf(
-                'm1',
-                humanId,
-                'ms1',
-                'carrack',
-                mission: FleetMission.patrol,
-              ),
-              _pf(
-                'm2',
-                humanId,
-                'ms2',
-                'fluyte',
-                mission: FleetMission.blockade,
-              ),
-            ],
-          ),
-          humanId: humanId,
-          labels: const ['Fleet m1', 'Fleet m2'],
-        );
-        expect(updated, isNotNull);
-        expect(
-          updated!.game.worldState.fleets
-              .firstWhere((f) => f.id == 'm1')
-              .mission,
-          FleetMission.none,
-        );
-      },
-    );
+      const missionId = 'gp_mission_clear';
+      final cleared = await _pumpCheckCombine(
+        tester,
+        game: _mergePortGame(
+          humanId: missionId,
+          gameId: 'g_mission_clear',
+          displayName: 'Mission clear tester',
+          fleets: [
+            _pf('m1', missionId, 'ms1', 'carrack', mission: FleetMission.patrol),
+            _pf(
+              'm2',
+              missionId,
+              'ms2',
+              'fluyte',
+              mission: FleetMission.blockade,
+            ),
+          ],
+        ),
+        humanId: missionId,
+        labels: const ['Fleet m1', 'Fleet m2'],
+      );
+      expect(cleared, isNotNull);
+      expect(
+        cleared!.game.worldState.fleets.firstWhere((f) => f.id == 'm1').mission,
+        FleetMission.none,
+      );
+    });
 
     testWidgets(
       'AC: Partial row selection shows indeterminate header; header tap selects all',

@@ -10,6 +10,18 @@ Widget _openDialogButton(VoidCallback onOpen) {
   return TextButton(onPressed: onOpen, child: const Text('open'));
 }
 
+T? Function() _captureBusEvent<T extends AppEvent>(AppEventBus bus) {
+  T? captured;
+  addTearDown(bus.on<T>().listen((e) => captured = e).cancel);
+  return () => captured;
+}
+
+TopologyNode _seaNode(String id, String regionId) => TopologyNode(
+  id: id,
+  regionId: regionId,
+  type: TopologyNodeType.seaZone,
+);
+
 void main() {
   suppressLogsForTests();
 
@@ -19,92 +31,70 @@ void main() {
   const sameRegionNonWarpSea = 'sea_plain';
   const crossRegionWarpSea = 'sea_nw';
 
-  Game buildGame() {
-    return Game(
-      id: 'g_move_dialog',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(
-          provinces: [
-            Province(
-              id: 'port_home',
-              regionId: 'oldWorld',
-              ownerId: humanId,
-              displayName: 'Home Port',
-            ),
-          ],
-        ),
-        newWorld: const RegionData(),
-        portsByProvinceSeaboard: const {
-          'oldWorld|port_home|sea_local': 'oldWorld|port_home|0|0',
-          'newWorld|port_nw|sea_nw': 'newWorld|port_nw|0|0',
-        },
-        seaZoneDisplayNameById: const {
-          'oldWorld|sea_ow': 'Origin Sea',
-          'oldWorld|sea_local': 'Warp OW Sea',
-          'oldWorld|sea_plain': 'Plain OW Sea',
-          'newWorld|sea_nw': 'Cross NW Sea',
-        },
-      ),
-      players: const [
-        Player(
-          id: humanId,
-          displayName: 'Move Dialog Tester',
-          isHuman: true,
-          capitalProvinceId: 'oldWorld|port_home',
-          capitalTile: CapitalTile(
+  Game buildGame() => Game(
+    id: 'g_move_dialog',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(
+        provinces: [
+          Province(
+            id: 'port_home',
             regionId: 'oldWorld',
-            provinceId: 'oldWorld|port_home',
-            x: 0,
-            y: 0,
+            ownerId: humanId,
+            displayName: 'Home Port',
           ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      portsByProvinceSeaboard: const {
+        'oldWorld|port_home|sea_local': 'oldWorld|port_home|0|0',
+        'newWorld|port_nw|sea_nw': 'newWorld|port_nw|0|0',
+      },
+      seaZoneDisplayNameById: const {
+        'oldWorld|sea_ow': 'Origin Sea',
+        'oldWorld|sea_local': 'Warp OW Sea',
+        'oldWorld|sea_plain': 'Plain OW Sea',
+        'newWorld|sea_nw': 'Cross NW Sea',
+      },
+    ),
+    players: const [
+      Player(
+        id: humanId,
+        displayName: 'Move Dialog Tester',
+        isHuman: true,
+        capitalProvinceId: 'oldWorld|port_home',
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'oldWorld|port_home',
+          x: 0,
+          y: 0,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 
-  MapTopology buildTopology() {
-    return const MapTopology(
-      nodes: [
-        TopologyNode(
-          id: originSea,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: sameRegionWarpSea,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: sameRegionNonWarpSea,
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-        TopologyNode(
-          id: crossRegionWarpSea,
-          regionId: 'newWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: [
-        TopologyEdge(id1: originSea, id2: sameRegionWarpSea),
-        TopologyEdge(id1: originSea, id2: sameRegionNonWarpSea),
-        TopologyEdge(id1: originSea, id2: crossRegionWarpSea),
-        TopologyEdge(id1: sameRegionWarpSea, id2: crossRegionWarpSea),
-      ],
-    );
-  }
+  MapTopology buildTopology() => MapTopology(
+    nodes: [
+      _seaNode(originSea, 'oldWorld'),
+      _seaNode(sameRegionWarpSea, 'oldWorld'),
+      _seaNode(sameRegionNonWarpSea, 'oldWorld'),
+      _seaNode(crossRegionWarpSea, 'newWorld'),
+    ],
+    edges: const [
+      TopologyEdge(id1: originSea, id2: sameRegionWarpSea),
+      TopologyEdge(id1: originSea, id2: sameRegionNonWarpSea),
+      TopologyEdge(id1: originSea, id2: crossRegionWarpSea),
+      TopologyEdge(id1: sameRegionWarpSea, id2: crossRegionWarpSea),
+    ],
+  );
 
-  Fleet buildFleet() {
-    return Fleet(
-      id: 'f_move',
-      ownerId: humanId,
-      regionId: 'oldWorld',
-      seaZoneId: originSea,
-      ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-    );
-  }
+  Fleet buildFleet() => Fleet(
+    id: 'f_move',
+    ownerId: humanId,
+    regionId: 'oldWorld',
+    seaZoneId: originSea,
+    ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+  );
 
   Future<void> openDialog(
     WidgetTester tester, {
@@ -175,12 +165,11 @@ void main() {
         playerId: nwHumanId,
         game: Game(
           id: 'g_move_dialog_nw',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            portsByProvinceSeaboard: const {},
-            seaZoneDisplayNameById: const {
+          worldState: const WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+            seaZoneDisplayNameById: {
               'newWorld|sea_nw_origin': 'Origin NW Sea',
               'newWorld|sea_nw_local': 'Adjacent NW Sea',
               'oldWorld|sea_ow_cross': 'Cross OW Sea',
@@ -201,25 +190,13 @@ void main() {
             ),
           ],
         ),
-        topology: const MapTopology(
+        topology: MapTopology(
           nodes: [
-            TopologyNode(
-              id: nwOriginSea,
-              regionId: 'newWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: sameRegionAdjacentSea,
-              regionId: 'newWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: crossRegionAdjacentSea,
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
+            _seaNode(nwOriginSea, 'newWorld'),
+            _seaNode(sameRegionAdjacentSea, 'newWorld'),
+            _seaNode(crossRegionAdjacentSea, 'oldWorld'),
           ],
-          edges: [
+          edges: const [
             TopologyEdge(id1: nwOriginSea, id2: sameRegionAdjacentSea),
             TopologyEdge(id1: nwOriginSea, id2: crossRegionAdjacentSea),
           ],
@@ -240,74 +217,46 @@ void main() {
     },
   );
 
-  testWidgets('confirm emits NavalMoveFleetRequestedEvent and closes dialog', (
-    WidgetTester tester,
-  ) async {
-    NavalMoveFleetRequestedEvent? captured;
-    final bus = AppEventBus.create();
-    final sub = bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
-      captured = e;
-    });
-    addTearDown(sub.cancel);
-
-    await openDialog(tester, bus: bus);
-
+  testWidgets('confirm / cancel / locate bus events', (tester) async {
+    final confirmBus = AppEventBus.create();
+    final latestMove = _captureBusEvent<NavalMoveFleetRequestedEvent>(
+      confirmBus,
+    );
+    await openDialog(tester, bus: confirmBus);
     await tester.tap(find.text('Cross NW Sea links to New World'));
     await tester.pump();
     await tester.tap(find.text('Confirm'));
     await tester.pump();
-
+    final captured = latestMove();
     expect(captured, isNotNull);
     expect(captured!.humanPlayerId, humanId);
-    expect(captured!.moveOrder.fleetId, 'f_move');
-    expect(captured!.moveOrder.destinationSeaZoneId, crossRegionWarpSea);
-    expect(captured!.moveOrder.destinationPortProvinceId, isNull);
+    expect(captured.moveOrder.fleetId, 'f_move');
+    expect(captured.moveOrder.destinationSeaZoneId, crossRegionWarpSea);
+    expect(captured.moveOrder.destinationPortProvinceId, isNull);
     expect(find.text('Move fleet — f_move'), findsNothing);
-  });
 
-  testWidgets('cancel closes dialog without emitting move request', (
-    WidgetTester tester,
-  ) async {
-    NavalMoveFleetRequestedEvent? captured;
-    final bus = AppEventBus.create();
-    final sub = bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
-      captured = e;
-    });
-    addTearDown(sub.cancel);
-
-    await openDialog(tester, bus: bus);
-
+    final cancelBus = AppEventBus.create();
+    final cancelled = _captureBusEvent<NavalMoveFleetRequestedEvent>(cancelBus);
+    await openDialog(tester, bus: cancelBus);
     await tester.tap(find.text('Cancel'));
     await tester.pump();
-
-    expect(captured, isNull);
+    expect(cancelled(), isNull);
     expect(find.text('Move fleet — f_move'), findsNothing);
-  });
 
-  testWidgets('locate icon emits LocateMapTileEvent for selected row', (
-    WidgetTester tester,
-  ) async {
-    LocateMapTileEvent? locate;
-    final bus = AppEventBus.create();
-    final sub = bus.on<LocateMapTileEvent>().listen((e) {
-      locate = e;
-    });
-    addTearDown(sub.cancel);
-
-    await openDialog(tester, bus: bus);
-
+    final locateBus = AppEventBus.create();
+    final latestLocate = _captureBusEvent<LocateMapTileEvent>(locateBus);
+    await openDialog(tester, bus: locateBus);
     final locateButtons = find.descendant(
       of: find.byType(MoveFleetDialog),
       matching: find.byTooltip('Locate on map'),
     );
     expect(locateButtons, findsNWidgets(3));
-
     await tester.tap(locateButtons.first);
     await tester.pump();
-
+    final locate = latestLocate();
     expect(locate, isNotNull);
     expect(locate!.regionId, 'newWorld');
-    expect(locate!.tileKey, 'newWorld|port_nw|0|0');
+    expect(locate.tileKey, 'newWorld|port_nw|0|0');
   });
 
   testWidgets(
@@ -326,16 +275,8 @@ void main() {
               regionId: ow,
               type: TopologyNodeType.province,
             ),
-            TopologyNode(
-              id: '$ow|sea1',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: '$ow|sea2',
-              regionId: ow,
-              type: TopologyNodeType.seaZone,
-            ),
+            _seaNode('$ow|sea1', ow),
+            _seaNode('$ow|sea2', ow),
           ],
           edges: [
             TopologyEdge(id1: fullCap, id2: '$ow|sea1'),
@@ -358,7 +299,6 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
-            portsByProvinceSeaboard: const {},
             seaZoneDisplayNameById: const {
               'oldWorld|sea1': 'First Sea',
               'oldWorld|sea2': 'Second Sea',
@@ -383,7 +323,6 @@ void main() {
           id: 'f_in_port',
           ownerId: humanId,
           regionId: ow,
-          seaZoneId: null,
           inPortAtProvinceId: fullCap,
           ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
         ),
@@ -393,8 +332,6 @@ void main() {
         find.text('No adjacent sea zones (check map topology).'),
         findsNothing,
       );
-      // CtSectionLabel renders the localized header upper-cased; see the
-      // section-header AC in SPEC/ui/move-fleet-dialog.md.
       expect(find.text('SEA ZONES'), findsOneWidget);
       expect(find.text('Second Sea'), findsOneWidget);
     },
@@ -417,7 +354,7 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(
+              const Province(
                 id: 'oldWorld|inland_cap',
                 regionId: 'oldWorld',
                 ownerId: mixHumanId,
@@ -432,8 +369,7 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
-          portsByProvinceSeaboard: const {},
-          seaZoneDisplayNameById: const {
+          seaZoneDisplayNameById: {
             'oldWorld|$seaA': 'Alpha Sea',
             'oldWorld|$seaB': 'Beta Sea',
           },
@@ -453,25 +389,17 @@ void main() {
           ),
         ],
       ),
-      topology: const MapTopology(
+      topology: MapTopology(
         nodes: [
-          TopologyNode(
-            id: seaA,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: seaB,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
+          _seaNode(seaA, 'oldWorld'),
+          _seaNode(seaB, 'oldWorld'),
+          const TopologyNode(
             id: coastProv,
             regionId: 'oldWorld',
             type: TopologyNodeType.province,
           ),
         ],
-        edges: [
+        edges: const [
           TopologyEdge(id1: seaA, id2: coastProv),
           TopologyEdge(id1: seaA, id2: seaB),
         ],
@@ -486,9 +414,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // CtSectionLabel upper-cases its text per the editorial-monocle catalog
-    // contract (#2859 R9). Section headers in the dialog now read
-    // 'SEA ZONES' / 'PROVINCES (DOCK)'.
     expect(find.text('SEA ZONES'), findsOneWidget);
     expect(find.text('PROVINCES (DOCK)'), findsOneWidget);
     expect(find.text('Coastal Province'), findsOneWidget);

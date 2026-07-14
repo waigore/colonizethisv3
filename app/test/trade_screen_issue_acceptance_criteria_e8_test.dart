@@ -406,13 +406,9 @@ void main() {
     );
   });
 
-  group('AC #2 — Bid toggle + quantity stepper stages a TradeOrder with the '
-      'correct type, quantity, and (default) priority in '
-      'currentOrdersProvider (#2993 E8 (b))', () {
-    testWidgets('Given no staged TradeOrder, when the player taps `Bid` on '
-        'timber and increments the stepper to 5, then '
-        'tradeOrdersByPlayerId[player.id] contains exactly one '
-        'TradeOrder(type=bid, quantity=5, priority=1) for timber', (
+  group('AC #2 / #3 — stage bid+qty, offer default, mutual exclusion '
+      '(#2993 E8 (b)(c))', () {
+    testWidgets('bid timber to qty 5; offer fabric defaults to qty 1', (
       tester,
     ) async {
       final ProviderContainer container = await _pumpMarket(tester);
@@ -420,82 +416,50 @@ void main() {
 
       await _tapBid(tester, _timber);
       await _incrementCommodity(tester, _timber, 4);
-
-      final TradeOrder? staged = _stagedOrder(container, _timber);
-      expect(staged, isNotNull);
-      expect(staged!.commodityId, _timber);
-      expect(staged.type, TradeOrderType.bid);
-      expect(staged.quantity, 5);
-      expect(staged.priority, TradeScreen.marketRowDefaultPriority);
+      final TradeOrder? bid = _stagedOrder(container, _timber);
+      expect(bid, isNotNull);
+      expect(bid!.commodityId, _timber);
+      expect(bid.type, TradeOrderType.bid);
+      expect(bid.quantity, 5);
+      expect(bid.priority, TradeScreen.marketRowDefaultPriority);
       expect(_stagedRowCountForPlayer(container), 1);
+
+      await _tapOffer(tester, _fabric);
+      final TradeOrder? offer = _stagedOrder(container, _fabric);
+      expect(offer?.type, TradeOrderType.offer);
+      expect(offer?.quantity, TradeScreen.marketRowQuantityDefault);
+      expect(offer?.priority, TradeScreen.marketRowDefaultPriority);
     });
 
-    testWidgets('Offer toggle stages a TradeOrder(type=offer, quantity=1, '
-        'priority=1) with no quantity carry-over from an unstaged row', (
+    testWidgets('per-commodity mutual exclusion + cross-commodity coexistence', (
       tester,
     ) async {
       final ProviderContainer container = await _pumpMarket(tester);
 
+      await _tapBid(tester, _timber);
+      await _incrementCommodity(tester, _timber, 2);
+      expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
+      expect(_stagedOrder(container, _timber)?.quantity, 3);
+
+      await _tapOffer(tester, _timber);
+      final TradeOrder? flipped = _stagedOrder(container, _timber);
+      expect(flipped?.type, TradeOrderType.offer);
+      expect(flipped?.quantity, 3);
+      expect(
+        container
+            .read(currentOrdersProvider)
+            .tradeOrdersByPlayerId[_humanPlayerId]!
+            .where((TradeOrder o) => o.commodityId == _timber)
+            .length,
+        1,
+      );
+
+      await _tapBid(tester, _timber);
       await _tapOffer(tester, _fabric);
-
-      final TradeOrder? staged = _stagedOrder(container, _fabric);
-      expect(staged, isNotNull);
-      expect(staged!.type, TradeOrderType.offer);
-      expect(staged.quantity, TradeScreen.marketRowQuantityDefault);
-      expect(staged.priority, TradeScreen.marketRowDefaultPriority);
+      expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
+      expect(_stagedOrder(container, _fabric)?.type, TradeOrderType.offer);
+      expect(_stagedRowCountForPlayer(container), 2);
     });
-  });
-
-  group('AC #3 — Per-commodity mutual exclusion: bid on X and offer on X '
-      'cannot coexist (#2993 E8 (c))', () {
-    testWidgets(
-      'Given a staged Bid for timber (qty 3), when the player taps the '
-      '`Offer` chip on timber, then the prior bid is replaced by a '
-      'single TradeOrder(type=offer, quantity=3) — at most one staged '
-      'TradeOrder per (player, commodityId)',
-      (tester) async {
-        final ProviderContainer container = await _pumpMarket(tester);
-
-        await _tapBid(tester, _timber);
-        await _incrementCommodity(tester, _timber, 2);
-        TradeOrder? staged = _stagedOrder(container, _timber);
-        expect(staged?.type, TradeOrderType.bid);
-        expect(staged?.quantity, 3);
-
-        await _tapOffer(tester, _timber);
-
-        staged = _stagedOrder(container, _timber);
-        expect(staged?.type, TradeOrderType.offer);
-        expect(staged?.quantity, 3);
-        expect(
-          container
-              .read(currentOrdersProvider)
-              .tradeOrdersByPlayerId[_humanPlayerId]!
-              .where((TradeOrder o) => o.commodityId == _timber)
-              .length,
-          1,
-          reason:
-              'Mutual exclusion: at most one TradeOrder per '
-              '(player, commodityId).',
-        );
-      },
-    );
-
-    testWidgets(
-      'Cross-commodity mutual exclusion is per-commodity, not per-player: '
-      'staging Bid on timber AND Offer on fabric keeps both staged '
-      '(tradeOrdersByPlayerId[player.id].length == 2)',
-      (tester) async {
-        final ProviderContainer container = await _pumpMarket(tester);
-
-        await _tapBid(tester, _timber);
-        await _tapOffer(tester, _fabric);
-
-        expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
-        expect(_stagedOrder(container, _fabric)?.type, TradeOrderType.offer);
-        expect(_stagedRowCountForPlayer(container), 2);
-      },
-    );
   });
 
   group('AC #4 — Deal Book renders previous-turn filled + carry-forward rows '
