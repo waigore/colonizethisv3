@@ -277,4 +277,79 @@ WidgetbookUseCase _useCase(
       ),
     );
   });
+
+  test('fails when civilian row-card suite inlines Game(', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_civ_row_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'civilian_units_panel_row_card_r30_test.dart',
+      'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline Game( construction'),
+    );
+  });
+
+  test('fails when naval mockup-fidelity suite inlines Game(', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_naval_fid_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'naval_units_panel_mockup_fidelity_test.dart',
+      'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline Game( construction'),
+    );
+  });
+
+  test('passes when naval mockup-fidelity uses shared OwFleets factory only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_naval_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'naval_units_panel_mockup_fidelity_test.dart',
+      '''
+import 'support/naval_units_panel_test_support.dart';
+
+Game g() => buildNavalPanelOwFleetsGame(
+  gameId: 't',
+  humanId: 'h',
+  displayName: 'H',
+  oldWorldProvinces: const [],
+  fleets: const [],
+);
+''',
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
 }

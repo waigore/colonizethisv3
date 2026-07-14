@@ -120,7 +120,8 @@ int runCheckAppTestNoDuplicateScaffolding(
     'app/test/support/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
     'civilian_units_panel_test_support.dart / '
-    'military_units_panel_test_support.dart / units_panel_test_shared.dart.',
+    'military_units_panel_test_support.dart / '
+    'naval_units_panel_test_support.dart / units_panel_test_shared.dart.',
   );
   return 1;
 }
@@ -165,17 +166,25 @@ bool _isGovernedTradeScreenFile(String relativePath) {
   return true;
 }
 
-/// True for civilian part suites and the military panel core suite (Refs #4021).
+/// True for units-panel suites that must call shared Game factories
+/// (Refs #4021). Covers civilian/military/naval part + specialty suites that
+/// previously re-declared private `Game(` builders.
 bool _isGovernedUnitsPanelPartFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
   }
   final name = p.basename(relativePath);
-  if (name.startsWith('civilian_units_panel_part') &&
-      name.endsWith('_test.dart')) {
+  if (!name.endsWith('_test.dart')) {
+    return false;
+  }
+  if (name.startsWith('civilian_units_panel_part') ||
+      name.startsWith('naval_units_panel_part') ||
+      name == 'military_units_panel_test.dart' ||
+      name == 'civilian_units_panel_row_card_r30_test.dart' ||
+      name == 'naval_units_panel_mockup_fidelity_test.dart') {
     return true;
   }
-  return name == 'military_units_panel_test.dart';
+  return false;
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -315,6 +324,10 @@ class _TradeScreenHostVisitor extends RecursiveAstVisitor<void> {
 }
 
 /// Flags inline `Game(` construction in units-panel part suites (Refs #4021).
+///
+/// Unresolved `Game(...)` is a [MethodInvocation] under `parseString` without
+/// package resolution; `const Game(...)` / `new Game(...)` remain
+/// [InstanceCreationExpression]. Catch both.
 class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
   _UnitsPanelInlineGameVisitor({
     required this.relativePath,
@@ -331,17 +344,29 @@ class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
     violations.add('$relativePath:$line: $detail');
   }
 
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final typeName = node.constructorName.type.name.lexeme;
+  void _flagIfGame(String typeName, int offset) {
     if (typeName == 'Game') {
       _report(
-        node.offset,
-        'inline Game( construction; use civilian/military units-panel '
+        offset,
+        'inline Game( construction; use civilian/military/naval units-panel '
         'test support factories',
       );
     }
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    _flagIfGame(node.constructorName.type.name.lexeme, node.offset);
     super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null) {
+      _flagIfGame(node.methodName.name, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
   }
 }
 

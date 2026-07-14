@@ -19,6 +19,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/naval_units_panel_test_support.dart';
+
 const _humanId = 'gp_naval_fidelity';
 const _capitalLocalId = 'cap1';
 const _capitalProvinceId = 'oldWorld|$_capitalLocalId';
@@ -27,85 +29,68 @@ const _portProvinceId = 'oldWorld|$_portLocalId';
 const _localSeaZoneId = 'zone_alpha';
 const _zonePrefixedId = 'oldWorld|$_localSeaZoneId';
 
+/// Deterministic mockup-fidelity scenario via shared OW fleets factory
+/// (Refs #4021 — no private `Game(` in naval units-panel suites).
 Game _buildFidelityGame() {
   final homeId = homeFleetIdFor(_humanId);
-  return Game(
-    id: 'naval-fidelity',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _capitalLocalId,
-            regionId: 'oldWorld',
-            ownerId: _humanId,
-            displayName: 'London',
-          ),
-          Province(
-            id: _portLocalId,
-            regionId: 'oldWorld',
-            ownerId: _humanId,
-            displayName: 'Portsmouth',
-          ),
-        ],
+  return buildNavalPanelOwFleetsGame(
+    gameId: 'naval-fidelity',
+    humanId: _humanId,
+    displayName: 'Fidelity Tester',
+    capitalProvinceId: _capitalProvinceId,
+    oldWorldProvinces: const [
+      Province(
+        id: _capitalLocalId,
+        regionId: 'oldWorld',
+        ownerId: _humanId,
+        displayName: 'London',
       ),
-      newWorld: const RegionData(),
-      fleets: [
-        // Home Fleet (in port at capital) — drives R26 HOME chip and R29
-        // Home-Fleet cargo line.
-        Fleet(
-          id: homeId,
-          ownerId: _humanId,
-          regionId: 'oldWorld',
-          inPortAtProvinceId: _capitalProvinceId,
-          ships: const [
-            ShipInstance(id: 'h1', typeId: 'carrack'),
-            ShipInstance(id: 'h2', typeId: 'frigate'),
-          ],
-        ),
-        // In-port sea-going fleet — drives R25 dense pills, R27 locate
-        // alignment, R28 `(in port)` qualifier.
-        Fleet(
-          id: 'channel_fleet',
-          ownerId: _humanId,
-          regionId: 'oldWorld',
-          inPortAtProvinceId: _portProvinceId,
-          ships: const [
-            ShipInstance(id: 'p1', typeId: 'frigate'),
-            ShipInstance(id: 'p2', typeId: 'frigate'),
-          ],
-        ),
-        // At-sea fleet — drives R28 `(at sea)` qualifier.
-        Fleet(
-          id: 'atlantic_fleet',
-          ownerId: _humanId,
-          regionId: 'oldWorld',
-          seaZoneId: _localSeaZoneId,
-          ships: const [ShipInstance(id: 's1', typeId: 'galleon')],
-        ),
-      ],
-      seaZoneDisplayNameById: const {_zonePrefixedId: 'Bay of Biscay'},
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          _capitalProvinceId: ['oldWorld|$_capitalLocalId|0|0'],
-          _portProvinceId: ['oldWorld|$_portLocalId|0|0'],
-        },
-      },
-    ),
-    players: const [
-      Player(
-        id: _humanId,
-        displayName: 'Fidelity Tester',
-        isHuman: true,
-        capitalProvinceId: _capitalProvinceId,
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: _capitalProvinceId,
-          x: 0,
-          y: 0,
-        ),
+      Province(
+        id: _portLocalId,
+        regionId: 'oldWorld',
+        ownerId: _humanId,
+        displayName: 'Portsmouth',
       ),
     ],
+    fleets: [
+      // Home Fleet (in port at capital) — drives R26 HOME chip and R29
+      // Home-Fleet cargo line.
+      Fleet(
+        id: homeId,
+        ownerId: _humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: _capitalProvinceId,
+        ships: const [
+          ShipInstance(id: 'h1', typeId: 'carrack'),
+          ShipInstance(id: 'h2', typeId: 'frigate'),
+        ],
+      ),
+      // In-port sea-going fleet — drives R25 dense pills, R27 locate
+      // alignment, R28 `(in port)` qualifier.
+      Fleet(
+        id: 'channel_fleet',
+        ownerId: _humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: _portProvinceId,
+        ships: const [
+          ShipInstance(id: 'p1', typeId: 'frigate'),
+          ShipInstance(id: 'p2', typeId: 'frigate'),
+        ],
+      ),
+      // At-sea fleet — drives R28 `(at sea)` qualifier.
+      Fleet(
+        id: 'atlantic_fleet',
+        ownerId: _humanId,
+        regionId: 'oldWorld',
+        seaZoneId: _localSeaZoneId,
+        ships: const [ShipInstance(id: 's1', typeId: 'galleon')],
+      ),
+    ],
+    seaZoneDisplayNameById: const {_zonePrefixedId: 'Bay of Biscay'},
+    tileKeysByProvince: const {
+      _capitalProvinceId: ['oldWorld|$_capitalLocalId|0|0'],
+      _portProvinceId: ['oldWorld|$_portLocalId|0|0'],
+    },
   );
 }
 
