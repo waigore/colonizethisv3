@@ -7,12 +7,7 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      // Jenny resolves `{$tribeName}` / `{$capitalName}` interpolation at PARSE
-      // time and stores variables under their `$`-prefixed name, so the bindings
-      // must use the `$` prefix AND be set before `parse` — otherwise parsing
-      // throws `NameError: variable $tribeName is not defined` and blocks the
-      // game (#3463). StringVariable reads storage at runtime, so these values
-      // are reflected when the line renders.
+      // Seed `$`-prefixed vars before parse (Jenny interpolate, Refs #3463).
       final session = await loadYarnDialogueSession(
         bundle: bundle,
         assetPath: kDialogueTribeFirstContactAsset,
@@ -24,7 +19,6 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
         },
         requiredNodes: const [kNode],
       );
-
       final view = session.view;
       final runner = session.runner;
       view.onStateChanged = (line, choice) {

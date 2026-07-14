@@ -23,9 +23,7 @@ part 'overture_dialogue_overlay_offer_row.dart';
 part 'overture_dialogue_overlay_phase_two.dart';
 part 'overture_dialogue_overlay_build.dart';
 
-/// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
-/// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
-/// the flow mixin was split into a `part` (Refs #3878).
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
 CtDialogueView _createOvertureDialogueView(CtLogger log) =>
     CtDialogueView(logger: log);
 

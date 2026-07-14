@@ -19,9 +19,7 @@ import 'yarn_dialogue_bootstrap.dart';
 part 'tribe_first_contact_overlay_flow.dart';
 part 'tribe_first_contact_overlay_build.dart';
 
-/// Factory kept on the overlay host library so `repo.dialogue_blocking_combined_step`
-/// sees `CtDialogueView(` and `CtDialogueLineChoiceBody(` in the same file after
-/// Yarn bootstrap extraction (Refs #3878, #4013).
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
 CtDialogueView _createTribeFirstContactDialogueView(CtLogger log) =>
     CtDialogueView(logger: log);
 

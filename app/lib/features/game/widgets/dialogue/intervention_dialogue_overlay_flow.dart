@@ -27,10 +27,7 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
-      // faction variables must exist (with the `$` prefix) before `parse` or it
-      // throws a `NameError` (#3463). Real per-prompt values are bound before
-      // each node runs; StringVariable reads storage at runtime.
+      // Seed `$`-prefixed vars before parse (Jenny interpolate, Refs #3463).
       final session = await loadYarnDialogueSession(
         bundle: bundle,
         assetPath: kDialogueInterventionAsset,
