@@ -276,60 +276,49 @@ void main() {
   });
 
   group('orders mutation helpers', () {
-    test('append adds one order at end and preserves prior list', () {
-      final orders = _ordersWithRecruits([WorkerTier.peasant]);
-      final next = ordersWithAppendedRecruitWorkerOrder(
-        currentOrders: orders,
+    test('append / pop LIFO + empty-list cleanup', () {
+      final withPeasant = _ordersWithRecruits([WorkerTier.peasant]);
+      final appended = ordersWithAppendedRecruitWorkerOrder(
+        currentOrders: withPeasant,
         playerId: _playerId,
         tier: WorkerTier.master,
       );
-      final list = next.recruitWorkerOrdersByPlayerId[_playerId]!;
-      expect(list.length, 2);
-      expect(list.last.targetTier, WorkerTier.master);
-      expect(list.first.targetTier, WorkerTier.peasant);
-    });
+      final appendedList = appended.recruitWorkerOrdersByPlayerId[_playerId]!;
+      expect(appendedList.length, 2);
+      expect(appendedList.last.targetTier, WorkerTier.master);
+      expect(appendedList.first.targetTier, WorkerTier.peasant);
 
-    test('pop removes last matching tier (LIFO) and leaves others', () {
-      final orders = _ordersWithRecruits([
+      final stacked = _ordersWithRecruits([
         WorkerTier.apprentice,
         WorkerTier.master,
         WorkerTier.apprentice,
       ]);
-      final next = ordersWithLastRecruitWorkerOrderRemoved(
-        currentOrders: orders,
+      final popped = ordersWithLastRecruitWorkerOrderRemoved(
+        currentOrders: stacked,
         playerId: _playerId,
         tier: WorkerTier.apprentice,
       );
-      final list = next.recruitWorkerOrdersByPlayerId[_playerId]!;
-      expect(list.length, 2);
       expect(
-        list.map((o) => o.targetTier).toList(),
+        popped.recruitWorkerOrdersByPlayerId[_playerId]!
+            .map((o) => o.targetTier)
+            .toList(),
         [WorkerTier.apprentice, WorkerTier.master],
       );
-    });
 
-    test('pop returns unchanged orders when no matching tier', () {
-      final orders = _ordersWithRecruits([WorkerTier.peasant]);
-      final next = ordersWithLastRecruitWorkerOrderRemoved(
-        currentOrders: orders,
+      final unchanged = ordersWithLastRecruitWorkerOrderRemoved(
+        currentOrders: withPeasant,
         playerId: _playerId,
         tier: WorkerTier.master,
       );
-      expect(
-        next.recruitWorkerOrdersByPlayerId[_playerId]!.length,
-        1,
-      );
-    });
+      expect(unchanged.recruitWorkerOrdersByPlayerId[_playerId]!.length, 1);
 
-    test('pop removes player entry when list becomes empty', () {
-      final orders = _ordersWithRecruits([WorkerTier.peasant]);
-      final next = ordersWithLastRecruitWorkerOrderRemoved(
-        currentOrders: orders,
+      final cleared = ordersWithLastRecruitWorkerOrderRemoved(
+        currentOrders: withPeasant,
         playerId: _playerId,
         tier: WorkerTier.peasant,
       );
       expect(
-        next.recruitWorkerOrdersByPlayerId.containsKey(_playerId),
+        cleared.recruitWorkerOrdersByPlayerId.containsKey(_playerId),
         isFalse,
       );
     });
@@ -370,7 +359,7 @@ void main() {
       });
     }
 
-    test('gameWithImmediateDisband updates the matching player only', () {
+    test('gameWithImmediateDisband updates matching player or nulls missing', () {
       final next = gameWithImmediateDisband(
         game: _emptyGame(
           players: [
@@ -388,9 +377,7 @@ void main() {
       expect(updatedA.workerPool.peasants, 1);
       expect(unchangedB.workerPool.masters, 1);
       expect(unchangedB.workerPool.peasants, 0);
-    });
 
-    test('gameWithImmediateDisband returns null for unknown player', () {
       expect(
         gameWithImmediateDisband(
           game: _emptyGame(),
@@ -432,69 +419,45 @@ void main() {
       }
     });
 
-    test('disband is never enabled for peasant row even with peasants > 0', () {
-      final peasantRow = _rows(
-        player: _gpWithPool(peasants: 5),
-      ).firstWhere((r) => r.tier == WorkerTier.peasant);
-      expect(peasantRow.canDisband, isFalse);
-    });
-
-    test('canPop reflects queued count, canDisband reflects pool count', () {
-      final jmRow = _rows(
-        player: _gpWithPool(journeymen: 2),
-        orders: _ordersWithRecruits([WorkerTier.journeyman]),
-      ).firstWhere((r) => r.tier == WorkerTier.journeyman);
-      expect(jmRow.queuedCount, 1);
-      expect(jmRow.canPop, isTrue);
-      expect(jmRow.canDisband, isTrue);
-    });
-
     test(
-      'techUnlocked is true for peasant when techUnlocked map is null or empty',
+      'disband / pop / techUnlocked pins for peasant and trained rows',
       () {
         final peasantRow = _rows(
-          player: _gpWithPool(),
+          player: _gpWithPool(peasants: 5),
         ).firstWhere((r) => r.tier == WorkerTier.peasant);
+        expect(peasantRow.canDisband, isFalse);
         expect(peasantRow.techUnlocked, isTrue);
-      },
-    );
 
-    test(
-      'techUnlocked is false for trained tiers when techUnlocked map is null',
-      () {
-        final rows = _rows(player: _gpWithPool());
+        final jmRow = _rows(
+          player: _gpWithPool(journeymen: 2),
+          orders: _ordersWithRecruits([WorkerTier.journeyman]),
+        ).firstWhere((r) => r.tier == WorkerTier.journeyman);
+        expect(jmRow.queuedCount, 1);
+        expect(jmRow.canPop, isTrue);
+        expect(jmRow.canDisband, isTrue);
+
+        final byTierNull = {
+          for (final r in _rows(player: _gpWithPool())) r.tier: r,
+        };
         for (final tier in [
           WorkerTier.apprentice,
           WorkerTier.journeyman,
           WorkerTier.master,
         ]) {
-          expect(
-            rows.firstWhere((r) => r.tier == tier).techUnlocked,
-            isFalse,
-          );
+          expect(byTierNull[tier]!.techUnlocked, isFalse);
         }
-      },
-    );
 
-    test(
-      'techUnlocked tracks per-tier required techs in WorkerActionEconomyCatalog',
-      () {
-        final byTier = {
+        final byTierPartial = {
           for (final r in _rows(
             player: _gpWithPool(techUnlocked: _trainedThroughJourneymanTech),
           ))
             r.tier: r,
         };
-        expect(byTier[WorkerTier.peasant]!.techUnlocked, isTrue);
-        expect(byTier[WorkerTier.apprentice]!.techUnlocked, isTrue);
-        expect(byTier[WorkerTier.journeyman]!.techUnlocked, isTrue);
-        expect(byTier[WorkerTier.master]!.techUnlocked, isFalse);
-      },
-    );
+        expect(byTierPartial[WorkerTier.peasant]!.techUnlocked, isTrue);
+        expect(byTierPartial[WorkerTier.apprentice]!.techUnlocked, isTrue);
+        expect(byTierPartial[WorkerTier.journeyman]!.techUnlocked, isTrue);
+        expect(byTierPartial[WorkerTier.master]!.techUnlocked, isFalse);
 
-    test(
-      'techUnlocked is false when a required tech entry is present but false',
-      () {
         final apprenticeRow = _rows(
           player: _gpWithPool(
             techUnlocked: const {
