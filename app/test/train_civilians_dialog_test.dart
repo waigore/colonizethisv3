@@ -35,30 +35,38 @@ void main() {
     return (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
   }
 
+  Game gameWithPlayer(Player Function(Player base) update) {
+    final player = getPlayer(humanPlayerId);
+    return game.copyWith(
+      players: [
+        update(player),
+        ...game.players.where((p) => p.id != humanPlayerId),
+      ],
+    );
+  }
+
   Game gameWithResources({
     required int treasury,
     required int paper,
     String? techUnlocked,
     Map<String, bool>? techUnlockedMap,
+    bool replaceStockpile = false,
   }) {
-    final player = getPlayer(humanPlayerId);
-    final updatedPlayer = player.copyWith(
-      treasury: treasury,
-      stockpile: player.stockpile.merge(
-        Stockpile(quantities: {'paper': paper}),
-      ),
-      techUnlocked:
-          techUnlockedMap ??
-          (techUnlocked != null ? {techUnlocked: true} : null),
-      capitalProvinceId:
-          player.capitalProvinceId ?? player.capitalTile?.provinceId,
-    );
-    return game.copyWith(
-      players: [
-        updatedPlayer,
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
+    return gameWithPlayer((player) {
+      final capital =
+          player.capitalProvinceId ?? player.capitalTile?.provinceId;
+      final paperStock = Stockpile(quantities: {'paper': paper});
+      return player.copyWith(
+        treasury: treasury,
+        stockpile: replaceStockpile
+            ? const Stockpile().merge(paperStock)
+            : player.stockpile.merge(paperStock),
+        techUnlocked:
+            techUnlockedMap ??
+            (techUnlocked != null ? {techUnlocked: true} : null),
+        capitalProvinceId: capital,
+      );
+    });
   }
 
   Orders builderOrders(int count) {
@@ -78,39 +86,21 @@ void main() {
   }
 
   /// Affordance-feedback fixtures replace stockpile (paper-only), matching #3601.
-  Game gameWithCapital({required int treasury, required int paper}) {
-    final player = getPlayer(humanPlayerId);
-    final capital = player.capitalProvinceId ?? player.capitalTile?.provinceId;
-    return game.copyWith(
-      players: [
-        player.copyWith(
-          treasury: treasury,
-          stockpile: const Stockpile().merge(
-            Stockpile(quantities: {'paper': paper}),
-          ),
-          capitalProvinceId: capital,
-        ),
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
-  }
+  Game gameWithCapital({required int treasury, required int paper}) =>
+      gameWithResources(
+        treasury: treasury,
+        paper: paper,
+        replaceStockpile: true,
+      );
 
-  Widget buildDialog({
-    required Game game,
-    Orders currentOrders = const Orders(),
-    AppEventBus? bus,
-  }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: TrainCiviliansDialog(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          currentOrders: currentOrders,
-          bus: bus ?? AppEventBus.create(),
-        ),
-      ),
-    );
-  }
+  Game gameWithNoTech({int? treasury}) => gameWithPlayer(
+    (player) => player.copyWith(
+      treasury: treasury ?? player.treasury,
+      techUnlocked: <String, bool>{},
+      capitalProvinceId:
+          player.capitalProvinceId ?? player.capitalTile?.provinceId,
+    ),
+  );
 
   Future<void> pumpDialog(
     WidgetTester tester, {
@@ -119,8 +109,28 @@ void main() {
     AppEventBus? bus,
   }) async {
     await tester.pumpWidget(
-      buildDialog(game: game, currentOrders: currentOrders, bus: bus),
+      MaterialApp(
+        home: Scaffold(
+          body: TrainCiviliansDialog(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            bus: bus ?? AppEventBus.create(),
+          ),
+        ),
+      ),
     );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapStepper(
+    WidgetTester tester,
+    String glyph, {
+    int index = 0,
+  }) async {
+    final finder = find.text(glyph).at(index);
+    await tester.ensureVisible(finder);
+    await tester.tap(finder);
     await tester.pumpAndSettle();
   }
 
@@ -158,6 +168,11 @@ void main() {
         ),
       ),
     );
+  }
+
+  Future<void> pumpCivilianPanel(WidgetTester tester, [Game? panelGame]) async {
+    await tester.pumpWidget(civilianPanelWithAppHandler(panelGame ?? game));
+    await tester.pumpAndSettle();
   }
 
   group('TrainCiviliansDialog', () {
@@ -253,171 +268,78 @@ void main() {
     testWidgets('AC: Tapping + increments the count', (
       WidgetTester tester,
     ) async {
-      final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await pumpDialog(tester, game: richGame);
-
-      // Find the first + button and tap it
-      final plusButtons = find.text('+');
-      await tester.ensureVisible(plusButtons.first);
-      await tester.tap(plusButtons.first);
-      await tester.pumpAndSettle();
-
-      // Now there should be a '1' visible
+      await pumpDialog(
+        tester,
+        game: gameWithResources(treasury: 10000, paper: 100),
+      );
+      await tapStepper(tester, '+');
       expect(find.text('1'), findsWidgets);
     });
 
     testWidgets('AC: Tapping - decrements the count', (
       WidgetTester tester,
     ) async {
-      final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await pumpDialog(tester, game: richGame);
-
-      // First tap + to get to 1
-      final plusFinder = find.text('+').first;
-      await tester.ensureVisible(plusFinder);
-      await tester.tap(plusFinder);
-      await tester.pumpAndSettle();
+      await pumpDialog(
+        tester,
+        game: gameWithResources(treasury: 10000, paper: 100),
+      );
+      await tapStepper(tester, '+');
       expect(find.text('1'), findsWidgets);
-
-      // Then tap - to get back to 0
-      final minusFinder = find.text('−').first;
-      await tester.ensureVisible(minusFinder);
-      await tester.tap(minusFinder);
-      await tester.pumpAndSettle();
-      // Now there should be no '1'
+      await tapStepper(tester, '−');
       expect(find.text('1'), findsNothing);
     });
 
     testWidgets('AC: Cannot decrement below 0', (WidgetTester tester) async {
       await pumpDialog(tester, game: game);
-
-      // Try tapping - when count is 0
-      final minusButton = find.text('−').first;
-      await tester.tap(minusButton);
-      await tester.pumpAndSettle();
-
-      // Count should still be 0
+      await tapStepper(tester, '−');
       expect(find.text('0'), findsWidgets);
     });
 
     testWidgets('AC: Deficit hint shows when resources insufficient', (
       WidgetTester tester,
     ) async {
-      // Create a player with just enough for 1 unit but not 2
-      // Builder costs 1000 treasury + 2 paper
-      final limitedPlayer = getPlayer(humanPlayerId).copyWith(
-        treasury: 1500, // enough for 1 Builder but not 2
-        stockpile: getPlayer(
-          humanPlayerId,
-        ).stockpile.merge(Stockpile(quantities: {'paper': 10})),
+      // Builder costs 1000 treasury + 2 paper; 1500 treasury allows 1 not 2.
+      await pumpDialog(
+        tester,
+        game: gameWithResources(treasury: 1500, paper: 10),
       );
-      final gameWithLimited = game.copyWith(
-        players: [
-          limitedPlayer,
-          ...game.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-
-      await pumpDialog(tester, game: gameWithLimited);
-
-      // Tap + once for Builder (should succeed)
       final builderIndex = CivilianEconomyCatalog.all.indexWhere(
         (e) => e.id == kUnitTypeBuilder,
       );
-      final builderPlus = find.text('+').at(builderIndex);
-      await tester.ensureVisible(builderPlus);
-      await tester.tap(builderPlus);
-      await tester.pumpAndSettle();
-
-      // Count should be 1
+      await tapStepper(tester, '+', index: builderIndex);
       expect(find.text('1'), findsWidgets);
-
-      // Now try to tap + again - should be blocked since 2 Builders = 2000 treasury > 1500
-      await tester.ensureVisible(builderPlus);
-      await tester.tap(builderPlus);
-      await tester.pumpAndSettle();
-
-      // Verify count is still 1 (couldn't add second)
+      await tapStepper(tester, '+', index: builderIndex);
       expect(find.text('1'), findsWidgets);
     });
 
     testWidgets('AC: Locked units show 🔒 name prefix and tech requirement', (
       WidgetTester tester,
     ) async {
-      // Create a player with no tech unlocked
-      final noTechPlayer = getPlayer(
-        humanPlayerId,
-      ).copyWith(techUnlocked: <String, bool>{});
-      final gameWithNoTech = game.copyWith(
-        players: [
-          noTechPlayer,
-          ...game.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-
-      await pumpDialog(tester, game: gameWithNoTech);
-
-      // Locked rows prefix the unit name with the 🔒 glyph (#3568 chrome
-      // parity) instead of a separate lock-icon column.
+      await pumpDialog(tester, game: gameWithNoTech());
       expect(find.textContaining('\u{1F512}'), findsWidgets);
-      // Should show tech requirement for Merchant
-      expect(
-        find.textContaining('Requires:'),
-        findsNWidgets(2),
-      ); // Merchant + Rail Builder
+      expect(find.textContaining('Requires:'), findsNWidgets(2));
     });
 
     testWidgets('AC: Locked units have disabled steppers', (
       WidgetTester tester,
     ) async {
-      final noTechPlayer = getPlayer(
-        humanPlayerId,
-      ).copyWith(techUnlocked: <String, bool>{});
-      final gameWithNoTech = game.copyWith(
-        players: [
-          noTechPlayer,
-          ...game.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-
-      await pumpDialog(tester, game: gameWithNoTech);
-
-      // Find the + button for a locked unit (Merchant)
+      await pumpDialog(tester, game: gameWithNoTech());
       final merchantIndex = CivilianEconomyCatalog.all.indexWhere(
         (e) => e.id == kUnitTypeMerchant,
       );
-
-      // Merchant's + button should be disabled
-      // Since we can't easily identify which + is for which unit,
-      // just verify tapping doesn't change count
-      final merchantPlus = find.text('+').at(merchantIndex);
-      await tester.ensureVisible(merchantPlus);
-      await tester.tap(merchantPlus);
-      await tester.pumpAndSettle();
-
-      // Count should still be 0
+      await tapStepper(tester, '+', index: merchantIndex);
       expect(find.text('0'), findsWidgets);
     });
 
     testWidgets('AC: Reset clears all steppers', (WidgetTester tester) async {
-      final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await pumpDialog(tester, game: richGame);
-
-      // Increment a few steppers
-      final firstPlus = find.text('+').first;
-      await tester.ensureVisible(firstPlus);
-      await tester.tap(firstPlus);
-      await tester.pumpAndSettle();
-      final secondPlus = find.text('+').at(1);
-      await tester.ensureVisible(secondPlus);
-      await tester.tap(secondPlus);
-      await tester.pumpAndSettle();
-
-      // Now tap Reset
+      await pumpDialog(
+        tester,
+        game: gameWithResources(treasury: 10000, paper: 100),
+      );
+      await tapStepper(tester, '+');
+      await tapStepper(tester, '+', index: 1);
       await tester.tap(find.text('Reset'));
       await tester.pumpAndSettle();
-
-      // All counts should be 0
       expect(find.text('1'), findsNothing);
     });
 
@@ -463,16 +385,8 @@ void main() {
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
 
-        // Increment Builder count to 2 (Builder is at index 0)
-        final builderPlusFinder = find.text('+').at(0);
-        await tester.ensureVisible(builderPlusFinder);
-        await tester.tap(builderPlusFinder);
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(builderPlusFinder);
-        await tester.tap(builderPlusFinder);
-        await tester.pumpAndSettle();
-
-        // Verify count is 2
+        await tapStepper(tester, '+');
+        await tapStepper(tester, '+');
         expect(find.text('2'), findsWidgets);
 
         // The train dialogs have no × button per #3568 chrome parity; dismiss
@@ -493,16 +407,14 @@ void main() {
     testWidgets('AC: Train button visible in CivilianUnitsPanel header', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(civilianPanelWithAppHandler(game));
-      await tester.pumpAndSettle();
+      await pumpCivilianPanel(tester);
       expect(find.text('Train'), findsOneWidget);
     });
 
     testWidgets(
       'AC: Train button opens TrainCiviliansDialog via app event bus',
       (WidgetTester tester) async {
-        await tester.pumpWidget(civilianPanelWithAppHandler(game));
-        await tester.pumpAndSettle();
+        await pumpCivilianPanel(tester);
         await tester.tap(find.text('Train'));
         await tester.pump();
         await tester.pumpAndSettle();
@@ -616,23 +528,7 @@ void main() {
     testWidgets(
       'AC (negative): tech-locked rows keep the non-danger disabled [+]',
       (WidgetTester tester) async {
-        final player = getPlayer(humanPlayerId);
-        final noTechPlayer = player.copyWith(
-          treasury: 0,
-          techUnlocked: <String, bool>{},
-          capitalProvinceId:
-              player.capitalProvinceId ?? player.capitalTile?.provinceId,
-        );
-        final gameNoTech = game.copyWith(
-          players: [
-            noTechPlayer,
-            ...game.players.where((p) => p.id != humanPlayerId),
-          ],
-        );
-        await pumpDialog(tester, game: gameNoTech);
-
-        // Locked rows (Merchant, Rail Builder) must not show the danger
-        // variant even though resources are also insufficient.
+        await pumpDialog(tester, game: gameWithNoTech(treasury: 0));
         final lockedCount = CivilianEconomyCatalog.all
             .where((e) => unlockingTechByCivilianId[e.id] != null)
             .length;
@@ -640,8 +536,6 @@ void main() {
         final dangerCount = plusButtons(
           tester,
         ).where((b) => b.dangerVariant).length;
-        // Locked rows are excluded from danger styling; only unlocked,
-        // unaffordable rows may show it.
         expect(dangerCount, CivilianEconomyCatalog.all.length - lockedCount);
       },
     );
