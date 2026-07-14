@@ -46,188 +46,183 @@ import 'support/yarn_test_fixtures.dart';
 /// `tribe_first_contact_overlay_test.dart`).
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
-/// AC-1 fixture: a solo human Great Power with no discovered factions and no
-/// diplomacy relations, so every section is empty.
-Game _emptyStateGame() {
-  const ow = 'oldWorld';
-  final p1 = Province(id: '$ow|p1', regionId: ow, displayName: 'P1', ownerId: 'gp1');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [p1], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
+const Player _soloGp = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+const Player _albion = Player(id: 'gp1', displayName: 'Albion', isHuman: true);
+const Player _castile = Player(id: 'gp2', displayName: 'Castile', isHuman: false);
+const List<Player> _albionCastile = [_albion, _castile];
+
+Province _prov(
+  String regionId,
+  String localId,
+  String displayName,
+  String ownerId,
+) =>
+    Province(
+      id: '$regionId|$localId',
+      regionId: regionId,
+      displayName: displayName,
+      ownerId: ownerId,
+    );
+
+WorldState _goldenWorld({
+  required int turnNumber,
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  Map<String, Map<String, String>> playerVisibilityByTile = const {},
+  Map<String, String> purchasedTilesByTileKey = const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+      const {},
+}) {
+  return WorldState(
+    turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+    oldWorld: RegionData(provinces: oldWorldProvinces, units: const []),
+    newWorld: newWorldProvinces.isEmpty
+        ? const RegionData()
+        : RegionData(provinces: newWorldProvinces, units: const []),
+    playerVisibilityByTile: playerVisibilityByTile,
     playerProspectedTiles: const {},
-  );
-  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
-  return Game(
-    id: 'diplo-golden-empty',
-    worldState: world,
-    players: const [player],
-    diplomacyRelations: const [],
+    purchasedTilesByTileKey: purchasedTilesByTileKey,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
   );
 }
 
-/// AC-7 / AC-10 fixture: the human GP `gp1` holds an at-peace relation with a
-/// second Great Power `gp2` (overture stage `none`), so the GP row renders the
-/// full overture + `Establish FTP` matrix with the non-valid stages disabled.
-Game _greatPowerRowGame() {
-  const ow = 'oldWorld';
-  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
-  final rival = Province(id: '$ow|p2', regionId: ow, displayName: 'Rival', ownerId: 'gp2');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
-    oldWorld: RegionData(provinces: [home, rival], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
+Game _goldenGame({
+  required String id,
+  required WorldState world,
+  List<Player> players = const [_albion],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  List<Tribe> tribes = const [],
+  List<MinorNation> minorNations = const [],
+  List<OvertureState> overtureStates = const [],
+  List<ColonyState> colonyStates = const [],
+  List<BoycottState> boycottStates = const [],
+  List<SubsidyState> subsidyStates = const [],
+}) {
   return Game(
-    id: 'diplo-golden-gp',
+    id: id,
     worldState: world,
-    players: const [
-      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
-      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
-    ],
+    players: players,
+    tribes: tribes,
+    minorNations: minorNations,
+    diplomacyRelations: diplomacyRelations,
+    overtureStates: overtureStates,
+    colonyStates: colonyStates,
+    boycottStates: boycottStates,
+    subsidyStates: subsidyStates,
   );
 }
 
-/// AC-4 (#3625) fixture: the human GP `gp1` holds a high-relation band
-/// (score 90 → step 10 → "Devoted" on the 10-step ladder, Refs #3753) with GP
-/// `gp2` **and** a persisted formal alliance, so the GP row renders the
-/// `ALLIANCE` treaty badge on its relation line distinct from the one-word
-/// relation label.
-Game _alliedGreatPowerRowGame() {
-  const ow = 'oldWorld';
-  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
-  final rival = Province(id: '$ow|p2', regionId: ow, displayName: 'Rival', ownerId: 'gp2');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
-    oldWorld: RegionData(provinces: [home, rival], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  return Game(
-    id: 'diplo-golden-gp-alliance',
-    worldState: world,
-    players: const [
-      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
-      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: 90,
-        formalAlliance: true,
+/// AC-1: solo GP, empty sections.
+Game _emptyStateGame() => _goldenGame(
+      id: 'diplo-golden-empty',
+      world: _goldenWorld(
+        turnNumber: 0,
+        oldWorldProvinces: [_prov('oldWorld', 'p1', 'P1', 'gp1')],
       ),
-    ],
-  );
-}
+      players: const [_soloGp],
+    );
 
-/// AC-6 fixture: the human GP `gp1` has full tile sight into a New-World
-/// province owned by Tribe `t1` but holds no relation, so the Tribe is
-/// discovered via `knownDiplomaticTargetFactionIds` and renders an overture
-/// matrix at first-contact standing.
-Game _tribeRowGame() {
-  const nw = 'newWorld';
-  const ow = 'oldWorld';
-  final tribeProvince = Province(id: '$nw|t1prov', regionId: nw, displayName: 'Tribe Land', ownerId: 't1');
-  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-    oldWorld: RegionData(provinces: [home], units: const []),
-    newWorld: RegionData(provinces: [tribeProvince], units: const []),
-    playerVisibilityByTile: const {
-      'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
-    },
-    playerProspectedTiles: const {},
-  );
-  const player = Player(id: 'gp1', displayName: 'Albion', isHuman: true);
-  return Game(
-    id: 'diplo-golden-tribe',
-    worldState: world,
-    players: const [player],
-    tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
-    diplomacyRelations: const [],
-  );
-}
+/// AC-7 / AC-10: at-peace GP row with overture + FTP matrix.
+Game _greatPowerRowGame() => _goldenGame(
+      id: 'diplo-golden-gp',
+      world: _goldenWorld(
+        turnNumber: 4,
+        oldWorldProvinces: [
+          _prov('oldWorld', 'p1', 'Home', 'gp1'),
+          _prov('oldWorld', 'p2', 'Rival', 'gp2'),
+        ],
+      ),
+      players: _albionCastile,
+      diplomacyRelations: const [
+        DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
+      ],
+    );
 
-/// Refs #3753 R12/R13 fixture: the human GP `gp1` holds an Embassy-stage
-/// overture with Tribe `t1`, `t1` is a colony of `gp1`, and `gp1` boycotts GP
-/// `gp2` (Castile) through that colony. Exercises the diplomatic standing chip
-/// cluster (`Consulate` / `Embassy` treaty chips + terminal `Colony` chip,
-/// `Boycott vs Castile`) and the 10-step relation meter at a mid band
-/// (score 60 → step 7) under the editorial-monocle chrome.
-Game _colonyTribeRowGame() {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
-  final tribeProvince = Province(id: '$nw|t1prov', regionId: nw, displayName: 'Tribe Land', ownerId: 't1');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 6),
-    oldWorld: RegionData(provinces: [home], units: const []),
-    newWorld: RegionData(provinces: [tribeProvince], units: const []),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  return Game(
-    id: 'diplo-golden-colony-tribe',
-    worldState: world,
-    players: const [
-      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
-      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
-    ],
-    tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
-    diplomacyRelations: const [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 't1', score: 60),
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 40),
-    ],
-    overtureStates: const [
-      OvertureState(gpId: 'gp1', targetId: 't1', stage: OvertureStage.embassy),
-    ],
-    colonyStates: const [
-      ColonyState(tribeId: 't1', colonyOfGpId: 'gp1', sinceTurn: 5),
-    ],
-    boycottStates: const [
-      BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 6),
-    ],
-  );
-}
+/// AC-4 (#3625): allied GP row with ALLIANCE badge / Devoted band.
+Game _alliedGreatPowerRowGame() => _goldenGame(
+      id: 'diplo-golden-gp-alliance',
+      world: _goldenWorld(
+        turnNumber: 4,
+        oldWorldProvinces: [
+          _prov('oldWorld', 'p1', 'Home', 'gp1'),
+          _prov('oldWorld', 'p2', 'Rival', 'gp2'),
+        ],
+      ),
+      players: _albionCastile,
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'gp2',
+          score: 90,
+          formalAlliance: true,
+        ),
+      ],
+    );
 
-/// Refs #3753 R3/R8/R12 fixture: the human GP `gp1` holds an Embassy with Minor
-/// `m1` (Bavaria), an active 10% outgoing subsidy, and owns two purchased tiles
-/// sourced from `m1` at relation `80.0`. Exercises the `Outgoing subsidy: 10%`
-/// economic line and the `Overseas: 2 · 80%` standing chip (tile-owner share
-/// `relationScore / 100`).
+/// AC-6: discovered Tribe via tile visibility, no relation.
+Game _tribeRowGame() => _goldenGame(
+      id: 'diplo-golden-tribe',
+      world: _goldenWorld(
+        turnNumber: 3,
+        oldWorldProvinces: [_prov('oldWorld', 'p1', 'Home', 'gp1')],
+        newWorldProvinces: [
+          _prov('newWorld', 't1prov', 'Tribe Land', 't1'),
+        ],
+        playerVisibilityByTile: const {
+          'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
+        },
+      ),
+      tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
+    );
+
+/// Refs #3753 R12/R13: colony Tribe standing chips + relation meter.
+Game _colonyTribeRowGame() => _goldenGame(
+      id: 'diplo-golden-colony-tribe',
+      world: _goldenWorld(
+        turnNumber: 6,
+        oldWorldProvinces: [_prov('oldWorld', 'p1', 'Home', 'gp1')],
+        newWorldProvinces: [
+          _prov('newWorld', 't1prov', 'Tribe Land', 't1'),
+        ],
+      ),
+      players: _albionCastile,
+      tribes: const [Tribe(id: 't1', displayName: 'Powhatan')],
+      diplomacyRelations: const [
+        DiplomacyRelation(factionId1: 'gp1', factionId2: 't1', score: 60),
+        DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: 40),
+      ],
+      overtureStates: const [
+        OvertureState(gpId: 'gp1', targetId: 't1', stage: OvertureStage.embassy),
+      ],
+      colonyStates: const [
+        ColonyState(tribeId: 't1', colonyOfGpId: 'gp1', sinceTurn: 5),
+      ],
+      boycottStates: const [
+        BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 6),
+      ],
+    );
+
+/// Refs #3753 R3/R8/R12: subsidized Minor with overseas chip.
 Game _subsidizedMinorRowGame() {
-  const ow = 'oldWorld';
   const nw = 'newWorld';
   const minorProvinceId = '$nw|m1prov';
   const tileA = '$minorProvinceId|0|0';
   const tileB = '$minorProvinceId|1|0';
-  final home = Province(id: '$ow|p1', regionId: ow, displayName: 'Home', ownerId: 'gp1');
-  final minorProvince = Province(id: minorProvinceId, regionId: nw, displayName: 'Bavaria Coast', ownerId: 'm1');
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
-    oldWorld: RegionData(provinces: [home], units: const []),
-    newWorld: RegionData(provinces: [minorProvince], units: const []),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-    purchasedTilesByTileKey: const {tileA: 'gp1', tileB: 'gp1'},
-    tileKeysByRegionAndProvince: const {
-      nw: {
-        minorProvinceId: [tileA, tileB],
-      },
-    },
-  );
-  return Game(
+  return _goldenGame(
     id: 'diplo-golden-subsidized-minor',
-    worldState: world,
-    players: const [Player(id: 'gp1', displayName: 'Albion', isHuman: true)],
+    world: _goldenWorld(
+      turnNumber: 8,
+      oldWorldProvinces: [_prov('oldWorld', 'p1', 'Home', 'gp1')],
+      newWorldProvinces: [
+        _prov(nw, 'm1prov', 'Bavaria Coast', 'm1'),
+      ],
+      purchasedTilesByTileKey: const {tileA: 'gp1', tileB: 'gp1'},
+      tileKeysByRegionAndProvince: const {
+        nw: {
+          minorProvinceId: [tileA, tileB],
+        },
+      },
+    ),
     minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
     diplomacyRelations: const [
       DiplomacyRelation(factionId1: 'gp1', factionId2: 'm1', score: 80),
@@ -243,13 +238,10 @@ Game _subsidizedMinorRowGame() {
 
 Widget _panelHost({
   required Game game,
-  required String humanPlayerId,
   required Key boundaryKey,
   MapTopology topology = _emptyTopology,
-  // SPEC/ui/diplomacy-panel.md § Responsive layout: the default 460 dp host
-  // renders the narrow (≤ 500 dp) variant; a host wider than
-  // `kDiplomacyRowNarrowMaxWidth` (500 dp) exercises the wide-variant
-  // trailing action cluster (Refs #3621).
+  // SPEC/ui/diplomacy-panel.md § Responsive layout: default 460 dp = narrow;
+  // width > kDiplomacyRowNarrowMaxWidth (500) = wide trailing cluster (#3621).
   double width = 460,
   double height = 1000,
 }) {
@@ -260,13 +252,33 @@ Widget _panelHost({
       height: height,
       child: DiplomacyPanel(
         game: game,
-        humanPlayerId: humanPlayerId,
+        humanPlayerId: 'gp1',
         topology: topology,
         currentOrders: const Orders(),
         bus: AppEventBus.create(),
       ),
     ),
   );
+}
+
+Future<void> _pumpGoldenPanel(
+  WidgetTester tester, {
+  required Game game,
+  required Key boundaryKey,
+  Size surface = const Size(600, 1100),
+  double width = 460,
+  double height = 1000,
+}) async {
+  await configureGoldenSurface(tester, size: surface);
+  await tester.pumpWidget(
+    _panelHost(
+      game: game,
+      boundaryKey: boundaryKey,
+      width: width,
+      height: height,
+    ),
+  );
+  await pumpDiplomacyPanelBuilt(tester);
 }
 
 void main() {
@@ -277,17 +289,12 @@ void main() {
   testWidgets('AC-1 golden: empty-state panel shows headings + tribe placeholder', (
     WidgetTester tester,
   ) async {
-        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_empty_state_golden');
-
-    await tester.pumpWidget(
-      _panelHost(
-        game: _emptyStateGame(),
-        humanPlayerId: 'gp1',
-        boundaryKey: boundaryKey,
-      ),
+    await _pumpGoldenPanel(
+      tester,
+      game: _emptyStateGame(),
+      boundaryKey: boundaryKey,
     );
-    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Great Powers'), findsOneWidget);
     expect(find.text('Minor Nations'), findsOneWidget);
@@ -303,17 +310,12 @@ void main() {
   testWidgets('AC-7/AC-10 golden: GP row shows overture + FTP controls, disabled stages present', (
     WidgetTester tester,
   ) async {
-        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_gp_row_golden');
-
-    await tester.pumpWidget(
-      _panelHost(
-        game: _greatPowerRowGame(),
-        humanPlayerId: 'gp1',
-        boundaryKey: boundaryKey,
-      ),
+    await _pumpGoldenPanel(
+      tester,
+      game: _greatPowerRowGame(),
+      boundaryKey: boundaryKey,
     );
-    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Great Powers'), findsOneWidget);
     expect(find.text('Castile'), findsOneWidget);
@@ -336,17 +338,12 @@ void main() {
   testWidgets('AC-4 (#3625) golden: allied GP row shows ALLIANCE treaty badge', (
     WidgetTester tester,
   ) async {
-        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_gp_alliance_row_golden');
-
-    await tester.pumpWidget(
-      _panelHost(
-        game: _alliedGreatPowerRowGame(),
-        humanPlayerId: 'gp1',
-        boundaryKey: boundaryKey,
-      ),
+    await _pumpGoldenPanel(
+      tester,
+      game: _alliedGreatPowerRowGame(),
+      boundaryKey: boundaryKey,
     );
-    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Castile'), findsOneWidget);
     expect(find.text(kDiplomacyAllianceBadgeLabel), findsOneWidget);
@@ -368,19 +365,15 @@ void main() {
       // kDiplomacyRowNarrowMaxWidth) so the GP row renders the wide variant
       // with the trailing compact action cluster, unlike the 460 dp narrow
       // AC-7 golden above.
-      await configureGoldenSurface(tester, size: const Size(1000, 1200));
       const boundaryKey = ValueKey<String>('diplomacy_gp_row_wide_golden');
-
-      await tester.pumpWidget(
-        _panelHost(
-          game: _greatPowerRowGame(),
-          humanPlayerId: 'gp1',
-          boundaryKey: boundaryKey,
-          width: 800,
-          height: 1200,
-        ),
+      await _pumpGoldenPanel(
+        tester,
+        game: _greatPowerRowGame(),
+        boundaryKey: boundaryKey,
+        surface: const Size(1000, 1200),
+        width: 800,
+        height: 1200,
       );
-      await pumpDiplomacyPanelBuilt(tester);
 
       // The wide variant lays the row body out as a Row (info column + trailing
       // action cluster), not the narrow Column.
@@ -432,17 +425,12 @@ void main() {
   testWidgets('AC-6 golden: discovered Tribe row shows overture controls', (
     WidgetTester tester,
   ) async {
-        await configureGoldenSurface(tester, size: const Size(600, 1100));
     const boundaryKey = ValueKey<String>('diplomacy_tribe_row_golden');
-
-    await tester.pumpWidget(
-      _panelHost(
-        game: _tribeRowGame(),
-        humanPlayerId: 'gp1',
-        boundaryKey: boundaryKey,
-      ),
+    await _pumpGoldenPanel(
+      tester,
+      game: _tribeRowGame(),
+      boundaryKey: boundaryKey,
     );
-    await pumpDiplomacyPanelBuilt(tester);
 
     expect(find.text('Tribes'), findsOneWidget);
     expect(find.text('Powhatan'), findsOneWidget);
@@ -494,17 +482,12 @@ void main() {
   testWidgets(
     'R12/R13 golden: colony Tribe row shows standing chips + relation meter',
     (WidgetTester tester) async {
-            await configureGoldenSurface(tester, size: const Size(600, 1100));
-      const boundaryKey = ValueKey<String>('diplomacy_colony_tribe_row_golden');
-
-      await tester.pumpWidget(
-        _panelHost(
-          game: _colonyTribeRowGame(),
-          humanPlayerId: 'gp1',
-          boundaryKey: boundaryKey,
-        ),
+            const boundaryKey = ValueKey<String>('diplomacy_colony_tribe_row_golden');
+      await _pumpGoldenPanel(
+        tester,
+        game: _colonyTribeRowGame(),
+        boundaryKey: boundaryKey,
       );
-      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster ACs
       // (Refs #3753 R12): colony Tribe surfaces Colony + Embassy chips and an
@@ -529,19 +512,14 @@ void main() {
   testWidgets(
     'R3/R8/R12 golden: subsidized Minor row shows subsidy line + overseas chip',
     (WidgetTester tester) async {
-            await configureGoldenSurface(tester, size: const Size(600, 1100));
-      const boundaryKey = ValueKey<String>(
+            const boundaryKey = ValueKey<String>(
         'diplomacy_subsidized_minor_row_golden',
       );
-
-      await tester.pumpWidget(
-        _panelHost(
-          game: _subsidizedMinorRowGame(),
-          humanPlayerId: 'gp1',
-          boundaryKey: boundaryKey,
-        ),
+      await _pumpGoldenPanel(
+        tester,
+        game: _subsidizedMinorRowGame(),
+        boundaryKey: boundaryKey,
       );
-      await pumpDiplomacyPanelBuilt(tester);
 
       // SPEC/ui/diplomacy-panel.md § Per-faction row → Outgoing economic
       // diplomacy + § Diplomatic standing chip cluster (Refs #3753 R3/R8/R12):
