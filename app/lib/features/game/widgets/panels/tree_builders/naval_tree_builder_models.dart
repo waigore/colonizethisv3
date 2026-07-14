@@ -16,7 +16,7 @@ String? navalDraftMoveLineForFleet({
       final pid = o.destinationPortProvinceId!;
       final p = game.worldState.tryGetProvince(pid);
       final name = p?.displayName ?? p?.id ?? pid;
-      return 'Moving to: $name (dock)';
+      return formatDraftMoveDestinationLine(name, parenthetical: 'dock');
     }
     final z = o.destinationSeaZoneId!;
     final zReg = regionIdForSeaZone(topology, z) ?? fleetRegionId;
@@ -26,7 +26,7 @@ String? navalDraftMoveLineForFleet({
       regionId: zReg,
       seaZoneId: zoneKey,
     );
-    return 'Moving to: $label';
+    return formatDraftMoveDestinationLine(label);
   }
   return null;
 }

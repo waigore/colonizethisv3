@@ -17,6 +17,7 @@ import '../../../flame/map_state/map_location_resolver.dart';
 import '../../province_overlay/sea_zone_name_resolver.dart';
 import '../../units/shared/region_labels.dart';
 import 'fleet_mission_label.dart';
+import 'draft_move_destination_line.dart';
 
 part 'naval_tree_builder_models.dart';
 part 'naval_tree_builder_support_scope.dart';
