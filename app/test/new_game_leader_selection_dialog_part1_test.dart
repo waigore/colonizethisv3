@@ -38,7 +38,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+      await pumpNewGameLeaderSelectionDialog(tester);
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -63,7 +63,7 @@ void main() {
     testWidgets(
       'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
       (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
 
         // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
         // the dialog frame is pinned to the refreshed mockup
@@ -82,7 +82,6 @@ void main() {
         await pumpNewGameLeaderSelectionDialog(
           tester,
           surfaceSize: const Size(900, 2000),
-          onConfirmed: (_, _, _, _, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -108,7 +107,6 @@ void main() {
       await pumpNewGameLeaderSelectionDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -355,7 +353,7 @@ void main() {
     testWidgets(
       'shows terrain variation slider with default helper and label',
       (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
         expect(find.byType(CtSlider), findsOneWidget);
         expect(find.text('Terrain variation:'), findsOneWidget);
         // Live percent value rendered separately from the static label.
@@ -636,7 +634,7 @@ void main() {
       testWidgets(
         'title resolves --accent color and letterSpacing == fontSize * 0.05',
         (WidgetTester tester) async {
-          await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+          await pumpNewGameLeaderSelectionDialog(tester);
           final titleFinder = find.byKey(
             const ValueKey<String>('leaderSelectionDialogTitle'),
           );
@@ -658,7 +656,7 @@ void main() {
       testWidgets('renders exactly one CtBrassDivider keyed below the title', (
         WidgetTester tester,
       ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
         final dividerFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogBrassDivider'),
         );
@@ -680,7 +678,7 @@ void main() {
       testWidgets('intro paints --muted italic body color', (
         WidgetTester tester,
       ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
         final introFinder = find.byKey(
           const ValueKey<String>('leaderSelectionDialogIntro'),
         );
@@ -694,7 +692,7 @@ void main() {
           '(regression guard against unstyled headings)', (
         WidgetTester tester,
       ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
         final Text title = tester.widget<Text>(
           find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
         );
