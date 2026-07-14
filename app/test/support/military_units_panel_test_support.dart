@@ -17,7 +17,8 @@
 
 import 'dart:async';
 
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show MapTopology, TopologyEdge, TopologyNode, TopologyNodeType;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show applyArmySplit;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -254,6 +255,375 @@ Game buildMilitaryHomeArmyAtCapitalGame({
         capitalProvinceId: capitalProvinceId,
       ),
     ],
+  );
+}
+
+/// Adjacent OW province pair topology for army move / locate / invasion tests
+/// (Refs #4013 densify of `military_units_panel_army_test.dart`).
+MapTopology buildMilitaryAdjacentOwProvincesTopology({
+  String fromProvinceId = 'oldWorld|p2',
+  String toProvinceId = 'oldWorld|p3',
+  String regionId = 'oldWorld',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: fromProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: toProvinceId,
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: [TopologyEdge(id1: fromProvinceId, id2: toProvinceId)],
+  );
+}
+
+/// Two non-home armies at one owned province (Combine bus-event scenario).
+Game buildMilitaryTwoFieldArmiesAtProvinceGame({
+  required String id,
+  required String playerId,
+  String provinceId = 'oldWorld|p2',
+  String townTileKey = 'tk',
+  String armyIdA = 'ax',
+  String armyIdB = 'ay',
+  String regimentIdA = 'uu1',
+  String regimentIdB = 'uu2',
+  String capitalProvinceId = 'oldWorld|cap',
+  String playerDisplayName = 'C',
+  String regimentType = 'musketeers',
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            townTileKey: townTileKey,
+          ),
+        ],
+        units: [
+          Unit(
+            id: regimentIdA,
+            type: regimentType,
+            ownerId: playerId,
+            locationProvinceId: provinceId,
+          ),
+          Unit(
+            id: regimentIdB,
+            type: regimentType,
+            ownerId: playerId,
+            locationProvinceId: provinceId,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: [
+        Army(
+          id: armyIdA,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: provinceId,
+          regimentUnitIds: [regimentIdA],
+          isHomeArmy: false,
+        ),
+        Army(
+          id: armyIdB,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: provinceId,
+          regimentUnitIds: [regimentIdB],
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          provinceId: [townTileKey],
+        },
+      },
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: true,
+        capitalProvinceId: capitalProvinceId,
+      ),
+    ],
+  );
+}
+
+/// Field army at [stationProvinceId] with an adjacent owned dest for Move/Locate.
+Game buildMilitaryFieldArmyWithAdjacentOwnedGame({
+  required String id,
+  required String playerId,
+  required String armyId,
+  required List<String> regimentUnitIds,
+  String stationProvinceId = 'oldWorld|p2',
+  String adjacentProvinceId = 'oldWorld|p3',
+  String? stationTownTileKey = 'tk',
+  String? stationDisplayName,
+  String? adjacentDisplayName,
+  String playerDisplayName = 'M',
+  String regimentType = 'musketeers',
+  bool includeTileKeysAndVisibility = true,
+}) {
+  final stationTile = '$stationProvinceId|0|0';
+  final adjacentTile = '$adjacentProvinceId|0|0';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: stationProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: stationDisplayName,
+            townTileKey: stationTownTileKey,
+          ),
+          Province(
+            id: adjacentProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: adjacentDisplayName,
+          ),
+        ],
+        units: [
+          for (final regimentId in regimentUnitIds)
+            Unit(
+              id: regimentId,
+              type: regimentType,
+              ownerId: playerId,
+              locationProvinceId: stationProvinceId,
+            ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: [
+        Army(
+          id: armyId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: stationProvinceId,
+          regimentUnitIds: List<String>.from(regimentUnitIds),
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: includeTileKeysAndVisibility
+          ? {
+              'oldWorld': {
+                stationProvinceId: [stationTile],
+                adjacentProvinceId: [adjacentTile],
+              },
+            }
+          : const {},
+      playerVisibilityByTile: includeTileKeysAndVisibility
+          ? {
+              playerId: {
+                stationTile: 'fullyVisible',
+                adjacentTile: 'fullyVisible',
+              },
+            }
+          : const {},
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: true,
+        capitalProvinceId: stationProvinceId,
+      ),
+    ],
+  );
+}
+
+/// Cross-region OW+NW owned destinations for MoveArmyDialog faction grouping.
+Game buildMilitaryCrossRegionOwnedMoveGame({
+  required String id,
+  required String playerId,
+  String armyId = 'amove',
+  String regimentId = 'u1',
+  String fromProvinceId = 'oldWorld|p2',
+  String oldDestProvinceId = 'oldWorld|p3',
+  String newDestProvinceId = 'newWorld|n2',
+  String fromDisplayName = 'From',
+  String oldDestDisplayName = 'Old Port',
+  String newDestDisplayName = 'New Port',
+  String fromTownTileKey = 'tk_from',
+  String playerDisplayName = 'Grouped',
+  String regimentType = 'musketeers',
+}) {
+  final fromTile = '$fromProvinceId|0|0';
+  final oldDestTile = '$oldDestProvinceId|0|0';
+  final newDestTile = '$newDestProvinceId|0|0';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: fromProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: fromDisplayName,
+            townTileKey: fromTownTileKey,
+          ),
+          Province(
+            id: oldDestProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: oldDestDisplayName,
+          ),
+        ],
+        units: [
+          Unit(
+            id: regimentId,
+            type: regimentType,
+            ownerId: playerId,
+            locationProvinceId: fromProvinceId,
+          ),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: newDestProvinceId,
+            regionId: 'newWorld',
+            ownerId: playerId,
+            displayName: newDestDisplayName,
+          ),
+        ],
+      ),
+      armies: [
+        Army(
+          id: armyId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: fromProvinceId,
+          regimentUnitIds: [regimentId],
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          fromProvinceId: [fromTile],
+          oldDestProvinceId: [oldDestTile],
+        },
+        'newWorld': {
+          newDestProvinceId: [newDestTile],
+        },
+      },
+      playerVisibilityByTile: {
+        playerId: {
+          fromTile: 'fullyVisible',
+          oldDestTile: 'fullyVisible',
+          newDestTile: 'fullyVisible',
+        },
+      },
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: true,
+        capitalProvinceId: fromProvinceId,
+      ),
+    ],
+  );
+}
+
+/// Adjacent hostile province for invasion declare-war confirm (empty relations).
+Game buildMilitaryInvasionAdjacentHostileGame({
+  required String id,
+  required String playerId,
+  required String enemyId,
+  String armyId = 'ainv',
+  String regimentId = 'ui1',
+  String stationProvinceId = 'oldWorld|p2',
+  String hostileProvinceId = 'oldWorld|p3',
+  String hostileDisplayName = 'Hostile',
+  String playerDisplayName = 'Inv',
+  String enemyDisplayName = 'Enemy',
+  String regimentType = 'musketeers',
+}) {
+  final stationTile = '$stationProvinceId|0|0';
+  final hostileTile = '$hostileProvinceId|0|0';
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: stationProvinceId,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+          ),
+          Province(
+            id: hostileProvinceId,
+            regionId: 'oldWorld',
+            ownerId: enemyId,
+            displayName: hostileDisplayName,
+          ),
+        ],
+        units: [
+          Unit(
+            id: regimentId,
+            type: regimentType,
+            ownerId: playerId,
+            locationProvinceId: stationProvinceId,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: [
+        Army(
+          id: armyId,
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: stationProvinceId,
+          regimentUnitIds: [regimentId],
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          stationProvinceId: [stationTile],
+          hostileProvinceId: [hostileTile],
+        },
+      },
+      playerVisibilityByTile: {
+        playerId: {
+          stationTile: 'fullyVisible',
+          hostileTile: 'fullyVisible',
+        },
+      },
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: playerDisplayName,
+        isHuman: true,
+        capitalProvinceId: stationProvinceId,
+      ),
+      Player(
+        id: enemyId,
+        displayName: enemyDisplayName,
+        isHuman: true,
+        capitalProvinceId: hostileProvinceId,
+      ),
+    ],
+    diplomacyRelations: const [],
   );
 }
 

@@ -1,6 +1,5 @@
 // Tests for MilitaryUnitsPanel. SPEC/ui/military-units-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -58,68 +57,9 @@ void main() {
         bus.on<ArmyCombineRequestedEvent>().listen((e) => captured = e);
 
         const playerId = 'gp_combine';
-        const p = 'oldWorld|p2';
-        final game = Game(
+        final game = buildMilitaryTwoFieldArmiesAtProvinceGame(
           id: 'gc',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: p,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  townTileKey: 'tk',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'uu1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: p,
-                ),
-                Unit(
-                  id: 'uu2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: p,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'ax',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: p,
-                regimentUnitIds: const ['uu1'],
-                isHomeArmy: false,
-              ),
-              Army(
-                id: 'ay',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: p,
-                regimentUnitIds: const ['uu2'],
-                isHomeArmy: false,
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                p: ['tk'],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'C',
-              isHuman: true,
-              capitalProvinceId: 'oldWorld|cap',
-            ),
-          ],
+          playerId: playerId,
         );
 
         await tester.pumpWidget(
@@ -149,78 +89,13 @@ void main() {
       bus.on<ArmyMoveRequestedEvent>().listen((e) => captured = e);
 
       const playerId = 'gp_move';
-      const p = 'oldWorld|p2';
       const p3 = 'oldWorld|p3';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'oldWorld|p2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'oldWorld|p3',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
-      );
-      final game = Game(
+      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
         id: 'gm',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: p,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                townTileKey: 'tk',
-              ),
-              Province(id: p3, regionId: 'oldWorld', ownerId: playerId),
-            ],
-            units: [
-              Unit(
-                id: 'um1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: p,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'amove',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['um1'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              p: ['oldWorld|p2|0|0'],
-              p3: ['oldWorld|p3|0|0'],
-            },
-          },
-          playerVisibilityByTile: {
-            playerId: {
-              'oldWorld|p2|0|0': 'fullyVisible',
-              'oldWorld|p3|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'M',
-            isHuman: true,
-            capitalProvinceId: p,
-          ),
-        ],
+        playerId: playerId,
+        armyId: 'amove',
+        regimentUnitIds: const ['um1'],
       );
 
       await tester.pumpWidget(
@@ -262,84 +137,12 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locate = e);
 
         const playerId = 'gp_locate_cluster';
-        const p = 'oldWorld|p2';
-        const p3 = 'oldWorld|p3';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'oldWorld|p2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|p3',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
-        );
-        final game = Game(
+        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
           id: 'g_locate_cluster',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: p,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  townTileKey: 'tk',
-                ),
-                Province(id: p3, regionId: 'oldWorld', ownerId: playerId),
-              ],
-              units: [
-                Unit(
-                  id: 'um1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: p,
-                ),
-                Unit(
-                  id: 'um2',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: p,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: [
-              Army(
-                id: 'acluster',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: p,
-                regimentUnitIds: const ['um1', 'um2'],
-                isHomeArmy: false,
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                p: ['oldWorld|p2|0|0'],
-                p3: ['oldWorld|p3|0|0'],
-              },
-            },
-            playerVisibilityByTile: {
-              playerId: {
-                'oldWorld|p2|0|0': 'fullyVisible',
-                'oldWorld|p3|0|0': 'fullyVisible',
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'M',
-              isHuman: true,
-              capitalProvinceId: p,
-            ),
-          ],
+          playerId: playerId,
+          armyId: 'acluster',
+          regimentUnitIds: const ['um1', 'um2'],
         );
 
         await tester.pumpWidget(
@@ -394,100 +197,11 @@ void main() {
         bus.on<ArmyMoveRequestedEvent>().listen((e) => captured = e);
 
         const playerId = 'gp_move_grouped';
-        const from = 'oldWorld|p2';
-        const oldDest = 'oldWorld|p3';
         const newDest = 'newWorld|n2';
-
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'oldWorld|p2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|p3',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
-        );
-
-        final game = Game(
+        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final game = buildMilitaryCrossRegionOwnedMoveGame(
           id: 'g_move_grouped',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: from,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'From',
-                  townTileKey: 'tk_from',
-                ),
-                Province(
-                  id: oldDest,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Old Port',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: playerId,
-                  locationProvinceId: from,
-                ),
-              ],
-            ),
-            newWorld: RegionData(
-              provinces: [
-                Province(
-                  id: newDest,
-                  regionId: 'newWorld',
-                  ownerId: playerId,
-                  displayName: 'New Port',
-                ),
-              ],
-            ),
-            armies: [
-              Army(
-                id: 'amove',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: from,
-                regimentUnitIds: const ['u1'],
-                isHomeArmy: false,
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                from: ['oldWorld|p2|0|0'],
-                oldDest: ['oldWorld|p3|0|0'],
-              },
-              'newWorld': {
-                newDest: ['newWorld|n2|0|0'],
-              },
-            },
-            playerVisibilityByTile: {
-              playerId: {
-                'oldWorld|p2|0|0': 'fullyVisible',
-                'oldWorld|p3|0|0': 'fullyVisible',
-                'newWorld|n2|0|0': 'fullyVisible',
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'Grouped',
-              isHuman: true,
-              capitalProvinceId: from,
-            ),
-          ],
+          playerId: playerId,
         );
 
         await tester.pumpWidget(
@@ -529,56 +243,17 @@ void main() {
       WidgetTester tester,
     ) async {
       const playerId = 'gp_draft_mv';
-      const p = 'oldWorld|p2';
       const dest = 'oldWorld|p3';
-      final game = Game(
+      final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
         id: 'g_draft',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: p,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                displayName: 'Here',
-              ),
-              Province(
-                id: dest,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                displayName: 'There',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'ux',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: p,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'amove',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['ux'],
-              isHomeArmy: false,
-            ),
-          ],
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'D',
-            isHuman: true,
-            capitalProvinceId: p,
-          ),
-        ],
+        playerId: playerId,
+        armyId: 'amove',
+        regimentUnitIds: const ['ux'],
+        stationTownTileKey: null,
+        stationDisplayName: 'Here',
+        adjacentDisplayName: 'There',
+        playerDisplayName: 'D',
+        includeTileKeysAndVisibility: false,
       );
       final draft = Orders(
         armyMoveOrdersByPlayerId: {
@@ -604,85 +279,12 @@ void main() {
 
       const playerId = 'gp_inv';
       const enemyId = 'gp_enemy';
-      const loc1 = 'oldWorld|p2';
       const loc2 = 'oldWorld|p3';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'oldWorld|p2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'oldWorld|p3',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [TopologyEdge(id1: 'oldWorld|p2', id2: 'oldWorld|p3')],
-      );
-      final game = Game(
+      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final game = buildMilitaryInvasionAdjacentHostileGame(
         id: 'g_inv',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: loc1, regionId: 'oldWorld', ownerId: playerId),
-              Province(
-                id: loc2,
-                regionId: 'oldWorld',
-                ownerId: enemyId,
-                displayName: 'Hostile',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'ui1',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: loc1,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'ainv',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: loc1,
-              regimentUnitIds: const ['ui1'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              loc1: ['oldWorld|p2|0|0'],
-              loc2: ['oldWorld|p3|0|0'],
-            },
-          },
-          playerVisibilityByTile: {
-            playerId: {
-              'oldWorld|p2|0|0': 'fullyVisible',
-              'oldWorld|p3|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'Inv',
-            isHuman: true,
-            capitalProvinceId: loc1,
-          ),
-          Player(
-            id: enemyId,
-            displayName: 'Enemy',
-            isHuman: true,
-            capitalProvinceId: loc2,
-          ),
-        ],
-        diplomacyRelations: const [],
+        playerId: playerId,
+        enemyId: enemyId,
       );
 
       await tester.pumpWidget(

@@ -125,6 +125,69 @@ void main() {
     );
   });
 
+  test('buildMilitaryAdjacentOwProvincesTopology links the default OW pair', () {
+    final topology = buildMilitaryAdjacentOwProvincesTopology();
+    expect(topology.nodes, hasLength(2));
+    expect(topology.edges.single.id1, 'oldWorld|p2');
+    expect(topology.edges.single.id2, 'oldWorld|p3');
+  });
+
+  test('buildMilitaryTwoFieldArmiesAtProvinceGame seeds two non-home armies', () {
+    final game = buildMilitaryTwoFieldArmiesAtProvinceGame(
+      id: 'combine_smoke',
+      playerId: 'gp_c',
+    );
+    expect(game.worldState.armies, hasLength(2));
+    expect(game.worldState.armies.every((a) => !a.isHomeArmy), isTrue);
+    expect(game.worldState.oldWorld.units, hasLength(2));
+  });
+
+  test(
+    'buildMilitaryFieldArmyWithAdjacentOwnedGame omits tiles when visibility off',
+    () {
+      final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
+        id: 'draft_smoke',
+        playerId: 'gp_d',
+        armyId: 'a1',
+        regimentUnitIds: const ['u1'],
+        includeTileKeysAndVisibility: false,
+      );
+      expect(game.worldState.tileKeysByRegionAndProvince, isEmpty);
+      expect(game.worldState.playerVisibilityByTile, isEmpty);
+      expect(game.worldState.oldWorld.provinces, hasLength(2));
+    },
+  );
+
+  test('buildMilitaryCrossRegionOwnedMoveGame includes OW and NW owned ports', () {
+    final game = buildMilitaryCrossRegionOwnedMoveGame(
+      id: 'xr_smoke',
+      playerId: 'gp_xr',
+    );
+    expect(game.worldState.oldWorld.provinces, hasLength(2));
+    expect(game.worldState.newWorld.provinces, hasLength(1));
+    expect(game.worldState.newWorld.provinces.single.displayName, 'New Port');
+  });
+
+  test(
+    'buildMilitaryInvasionAdjacentHostileGame keeps empty diplomacy relations',
+    () {
+      final game = buildMilitaryInvasionAdjacentHostileGame(
+        id: 'inv_smoke',
+        playerId: 'gp_a',
+        enemyId: 'gp_b',
+      );
+      expect(game.players, hasLength(2));
+      expect(game.diplomacyRelations, isEmpty);
+      expect(
+        game.worldState.oldWorld.provinces
+            .where((p) => p.ownerId == 'gp_b')
+            .single
+            .displayName,
+        'Hostile',
+      );
+    },
+  );
+
   testWidgets(
     'ArmySplitTestHarness renders the panel and applies a bus-driven split',
     (WidgetTester tester) async {
