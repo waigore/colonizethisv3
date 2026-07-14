@@ -239,96 +239,85 @@ void main() {
       'province/sea label helpers: presence gate, capital prepend, warp, ellipsis, wrap',
       (WidgetTester tester) async {
         await _pumpBlank(tester);
-
-        expect(
-          resolveProvinceLabelPresenceIconIds(null),
-          isEmpty,
-          reason: 'Null presence should suppress all icons',
+        const allPresence = ProvinceUnitPresenceView(
+          civilianCount: 1,
+          regimentCount: 2,
+          shipCount: 3,
+          intelVisible: true,
         );
-        expect(
-          resolveProvinceLabelPresenceIconIds(
-            const ProvinceUnitPresenceView(
+        const allIcons = [
+          'map_presence_civilian',
+          'map_presence_regiment',
+          'map_presence_ship',
+        ];
+        for (final case_ in <
+          ({ProvinceUnitPresenceView? presence, List<String> icons, String? reason})
+        >[
+          (presence: null, icons: const [], reason: 'Null presence should suppress all icons'),
+          (
+            presence: const ProvinceUnitPresenceView(
               civilianCount: 1,
               regimentCount: 1,
               shipCount: 1,
               intelVisible: false,
             ),
+            icons: const [],
+            reason: 'Hidden intel should suppress all icons',
           ),
-          isEmpty,
-          reason: 'Hidden intel should suppress all icons',
-        );
-        expect(
-          resolveProvinceLabelPresenceIconIds(
-            const ProvinceUnitPresenceView(
-              civilianCount: 1,
-              regimentCount: 2,
-              shipCount: 3,
-              intelVisible: true,
-            ),
-          ),
-          const [
-            'map_presence_civilian',
-            'map_presence_regiment',
-            'map_presence_ship',
-          ],
-        );
-        expect(
-          resolveProvinceLabelPresenceIconIds(
-            const ProvinceUnitPresenceView(
+          (presence: allPresence, icons: allIcons, reason: null),
+          (
+            presence: const ProvinceUnitPresenceView(
               civilianCount: 0,
               regimentCount: 4,
               shipCount: 0,
               intelVisible: true,
             ),
+            icons: const ['map_presence_regiment'],
+            reason: 'Only >0 classes should render',
           ),
-          const ['map_presence_regiment'],
-          reason: 'Only >0 classes should render',
-        );
-
+        ]) {
+          expect(
+            resolveProvinceLabelPresenceIconIds(case_.presence),
+            case_.icons,
+            reason: case_.reason,
+          );
+        }
         expect(
           resolveProvinceLabelIconIds(isCapital: true, presence: null),
           const ['map_capital_star'],
         );
         expect(
-          resolveProvinceLabelIconIds(
-            isCapital: true,
-            presence: const ProvinceUnitPresenceView(
-              civilianCount: 1,
-              regimentCount: 2,
-              shipCount: 3,
-              intelVisible: true,
-            ),
-          ),
-          const [
-            'map_capital_star',
-            'map_presence_civilian',
-            'map_presence_regiment',
-            'map_presence_ship',
-          ],
+          resolveProvinceLabelIconIds(isCapital: true, presence: allPresence),
+          ['map_capital_star', ...allIcons],
         );
-
         expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: false), isEmpty);
-        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: true), const [
-          'map_warp_zone',
-        ]);
-
+        expect(
+          resolveSeaZoneLabelPrefixIconIds(isWarpZone: true),
+          const ['map_warp_zone'],
+        );
         expect(shouldEllipsizeProvinceLabelText(isCapital: true), isFalse);
         expect(shouldEllipsizeProvinceLabelText(isCapital: false), isTrue);
-
-        expect(
-          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 20, iconCount: 0),
-          isFalse,
-        );
-        expect(
-          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 60, iconCount: 2),
-          isFalse,
-          reason: 'Content fits one line',
-        );
-        expect(
-          shouldWrapProvinceLabelPresenceIcons(textWidthPx: 110, iconCount: 3),
-          isTrue,
-          reason: 'Content should wrap to second line when too wide',
-        );
+        for (final case_ in <
+          ({double width, int icons, bool wrap, String? reason})
+        >[
+          (width: 20, icons: 0, wrap: false, reason: null),
+          (width: 60, icons: 2, wrap: false, reason: 'Content fits one line'),
+          (
+            width: 110,
+            icons: 3,
+            wrap: true,
+            reason: 'Content should wrap to second line when too wide',
+          ),
+        ]) {
+          expect(
+            shouldWrapProvinceLabelPresenceIcons(
+              textWidthPx: case_.width,
+              iconCount: case_.icons,
+            ),
+            case_.wrap,
+            reason: case_.reason,
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
@@ -554,27 +543,21 @@ void main() {
       'extraction indicator visibility, stack layout, and display size',
       (WidgetTester tester) async {
         await _pumpBlank(tester);
-
-        expect(
-          shouldShowExtractionUnitIndicators(
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+        for (final case_ in <({BaseLayerDisplayMode mode, bool show})>[
+          (mode: BaseLayerDisplayMode.terrainOnly, show: false),
+          (mode: BaseLayerDisplayMode.terrainAndResources, show: true),
+          (
+            mode: BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+            show: true,
           ),
-          isFalse,
-        );
-        expect(
-          shouldShowExtractionUnitIndicators(
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-          isTrue,
-        );
-        expect(
-          shouldShowExtractionUnitIndicators(
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-          ),
-          isTrue,
-        );
-
+        ]) {
+          expect(
+            shouldShowExtractionUnitIndicators(
+              baseLayerDisplayMode: case_.mode,
+            ),
+            case_.show,
+          );
+        }
         final rects = extractionIndicatorRectsForIconRect(
           iconRect: const Rect.fromLTWH(10, 20, 64, 64),
           units: 3,
@@ -585,9 +568,12 @@ void main() {
         expect(rects[0].top, equals(rects[1].top));
         expect(rects[1].top, equals(rects[2].top));
         expect(rects[1].left, lessThan(rects[0].right));
-
-        expect(extractionIndicatorDisplaySizePx(16), greaterThanOrEqualTo(16));
-        expect(extractionIndicatorDisplaySizePx(24), greaterThanOrEqualTo(24));
+        for (final size in <double>[16, 24]) {
+          expect(
+            extractionIndicatorDisplaySizePx(size),
+            greaterThanOrEqualTo(size),
+          );
+        }
         expect(extractionIndicatorDisplaySizePx(64), equals(64));
       },
       timeout: const Timeout(Duration(seconds: 5)),

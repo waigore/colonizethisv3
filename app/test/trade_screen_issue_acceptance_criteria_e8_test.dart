@@ -324,25 +324,23 @@ void main() {
     return routeHostShell(
       globalObserve: globalObserve,
       child: Builder(
-        builder: (context) {
-          return Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
-                    RoutePaths.trade,
-                    arguments: <String, Object?>{
-                      'game': routeHostGame,
-                      'humanPlayerId': routeHostPlayer.id,
-                    },
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('open trade'),
-              ),
+        builder: (context) => Scaffold(
+          body: Center(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  RoutePaths.trade,
+                  arguments: <String, Object?>{
+                    'game': routeHostGame,
+                    'humanPlayerId': routeHostPlayer.id,
+                  },
+                );
+              },
+              // ignore: avoid_hardcoded_strings_in_widgets
+              child: const Text('open trade'),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -514,23 +512,25 @@ void main() {
         worldMarketState: _partialTimberDealBookMarket(),
       );
       await _switchToDealBook(tester);
-
-      expect(
+      for (final finder in <Finder>[
         find.byKey(
           TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
         ),
-        findsOneWidget,
-      );
-      // ignore: avoid_hardcoded_strings_in_widgets
-      expect(find.text('timber — qty 5 × 8 = 40'), findsOneWidget);
-      expect(
+        // ignore: avoid_hardcoded_strings_in_widgets
+        find.text('timber — qty 5 × 8 = 40'),
         find.byKey(
           TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideBids, 0),
         ),
-        findsOneWidget,
-      );
-      // ignore: avoid_hardcoded_strings_in_widgets
-      expect(find.text('timber — qty 5 (priority 1)'), findsOneWidget);
+        // ignore: avoid_hardcoded_strings_in_widgets
+        find.text('timber — qty 5 (priority 1)'),
+        find.byKey(
+          TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideOffers, 0),
+        ),
+        // ignore: avoid_hardcoded_strings_in_widgets
+        find.text('fabric — qty 3 (priority 1)'),
+      ]) {
+        expect(finder, findsOneWidget);
+      }
       _expectDealBookTotals(
         tester,
         bidsTotal: '${TradeScreen.dealBookTotalSpentLabel}: 40',
@@ -542,14 +542,6 @@ void main() {
         ),
         findsNothing,
       );
-      expect(
-        find.byKey(
-          TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideOffers, 0),
-        ),
-        findsOneWidget,
-      );
-      // ignore: avoid_hardcoded_strings_in_widgets
-      expect(find.text('fabric — qty 3 (priority 1)'), findsOneWidget);
       expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
       expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsNothing);
     });

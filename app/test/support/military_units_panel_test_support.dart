@@ -51,28 +51,23 @@ Game buildMilitaryProvinceTileLookupGame({
   String? ownerId,
 }) {
   final prefixedId = '$regionId|$provinceId';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: regionId,
-            ownerId: ownerId,
-            townTileKey: null,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        regionId: {
-          prefixedId: [tileKey],
-        },
-      },
-    ),
     players: const [],
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorldProvinces: [
+      Province(
+        id: provinceId,
+        regionId: regionId,
+        ownerId: ownerId,
+        townTileKey: null,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      regionId: {
+        prefixedId: [tileKey],
+      },
+    },
   );
 }
 
@@ -90,45 +85,38 @@ Game buildMilitarySeaFleetDisplayGame({
 }) {
   const provinceId = 'lisbon';
   const tileKey = 'oldWorld|lisbon|0|0';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        units: const [],
-        provinces: includeLisbonProvince
-            ? [
-                Province(
-                  id: provinceId,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                ),
-              ]
-            : const [],
-      ),
-      newWorld: const RegionData(),
-      fleets: [
-        Fleet(
-          id: fleetId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          seaZoneId: seaZoneId,
-          shipTypeIds: shipTypeIds,
-          mission: mission,
-        ),
-      ],
-      portsByProvinceSeaboard: const {
-        'oldWorld|lisbon|atlantic': tileKey,
-      },
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          'oldWorld|lisbon': [tileKey],
-        },
-      },
-    ),
     players: [
       Player(id: playerId, displayName: playerDisplayName, isHuman: true),
     ],
+    oldWorldProvinces: includeLisbonProvince
+        ? [
+            Province(
+              id: provinceId,
+              regionId: 'oldWorld',
+              ownerId: playerId,
+            ),
+          ]
+        : const [],
+    fleets: [
+      Fleet(
+        id: fleetId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        seaZoneId: seaZoneId,
+        shipTypeIds: shipTypeIds,
+        mission: mission,
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|lisbon|atlantic': tileKey,
+    },
+    tileKeysByRegionAndProvince: const {
+      'oldWorld': {
+        'oldWorld|lisbon': [tileKey],
+      },
+    },
   );
 }
 

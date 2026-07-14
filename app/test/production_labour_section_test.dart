@@ -328,108 +328,74 @@ void main() {
 
     // S7b — Tech-gate parenthetical (Refs #2862 S7).
 
-    testWidgets(
-      'tier label suffixes (unlocked) for peasant when techUnlocked is empty',
-      (WidgetTester tester) async {
-        await _pumpSection(tester, player: _gpWithPool(peasants: 1));
-
+    testWidgets('tier labels suffix unlocked/locked from techUnlocked map', (
+      WidgetTester tester,
+    ) async {
+      await _pumpSection(tester, player: _gpWithPool(peasants: 1));
+      expect(
+        find.text(
+          _l10n.production_labourTierLabel(
+            _tierName(WorkerTier.peasant),
+            _l10n.production_labourTierUnlocked,
+          ),
+        ),
+        findsOneWidget,
+      );
+      for (final tier in _trainedTiers) {
         expect(
           find.text(
             _l10n.production_labourTierLabel(
-              _tierName(WorkerTier.peasant),
-              _l10n.production_labourTierUnlocked,
+              _tierName(tier),
+              _l10n.production_labourTierLocked,
             ),
           ),
           findsOneWidget,
+          reason: '${_tierName(tier)} must render (locked) suffix',
         );
-      },
-    );
-
-    testWidgets(
-      'trained tier label suffixes (locked) when required techs missing',
-      (WidgetTester tester) async {
-        await _pumpSection(tester, player: _gpWithPool(peasants: 1));
-
-        for (final tier in _trainedTiers) {
-          expect(
-            find.text(
-              _l10n.production_labourTierLabel(
-                _tierName(tier),
-                _l10n.production_labourTierLocked,
-              ),
-            ),
-            findsOneWidget,
-            reason: '${_tierName(tier)} must render (locked) suffix',
-          );
-        }
-      },
-    );
-
-    testWidgets(
-      'trained tier label suffixes (unlocked) when all required techs are unlocked',
-      (WidgetTester tester) async {
-        await _pumpSection(
-          tester,
-          player: _gpWithPool(
-            peasants: 1,
-            techUnlocked: const {
-              kTechIdApprenticeWorkers: true,
-              kTechIdSugarRefining: true,
-            },
+      }
+      await _pumpSection(
+        tester,
+        player: _gpWithPool(
+          peasants: 1,
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+        ),
+      );
+      expect(
+        find.text(
+          _l10n.production_labourTierLabel(
+            _tierName(WorkerTier.apprentice),
+            _l10n.production_labourTierUnlocked,
           ),
-        );
-
-        expect(
-          find.text(
-            _l10n.production_labourTierLabel(
-              _tierName(WorkerTier.apprentice),
-              _l10n.production_labourTierUnlocked,
-            ),
-          ),
-          findsOneWidget,
-        );
-      },
-    );
+        ),
+        findsOneWidget,
+      );
+    });
 
     // S7c — Disband uses CtDangerTextButton (no CtNinePatchButton chrome).
 
-    testWidgets(
-      'disband control renders as CtDangerTextButton and not CtNinePatchButton',
-      (WidgetTester tester) async {
-        await _pumpSection(tester, player: _gpWithPool(journeymen: 1));
-
-        expect(find.byType(CtDangerTextButton), findsNWidgets(4));
-        expect(
-          find.byType(CtNinePatchButton),
-          findsNothing,
-          reason: 'Labour rows must not mount CtNinePatchButton (S7c)',
-        );
-      },
-    );
-
-    testWidgets(
-      'enabled disband CtDangerTextButton idle opacity is 0.7',
-      (WidgetTester tester) async {
-        await _pumpSection(tester, player: _gpWithPool(journeymen: 1));
-
-        expect(
-          _disbandOpacity(tester, WorkerTier.journeyman),
-          CtDangerTextButton.idleOpacity,
-        );
-      },
-    );
-
-    testWidgets(
-      'disabled disband CtDangerTextButton uses CtNinePatchButton.disabledOpacity',
-      (WidgetTester tester) async {
-        await _pumpSection(tester, player: _gpWithPool(peasants: 1));
-
-        expect(
-          _disbandOpacity(tester, WorkerTier.journeyman),
-          CtNinePatchButton.disabledOpacity,
-        );
-      },
-    );
+    testWidgets('disband chrome uses CtDangerTextButton opacities', (
+      WidgetTester tester,
+    ) async {
+      await _pumpSection(tester, player: _gpWithPool(journeymen: 1));
+      expect(find.byType(CtDangerTextButton), findsNWidgets(4));
+      expect(
+        find.byType(CtNinePatchButton),
+        findsNothing,
+        reason: 'Labour rows must not mount CtNinePatchButton (S7c)',
+      );
+      expect(
+        _disbandOpacity(tester, WorkerTier.journeyman),
+        CtDangerTextButton.idleOpacity,
+      );
+      await _pumpSection(tester, player: _gpWithPool(peasants: 1));
+      expect(
+        _disbandOpacity(tester, WorkerTier.journeyman),
+        CtNinePatchButton.disabledOpacity,
+      );
+    });
 
     testWidgets(
       'disband CtDangerTextButton paints danger border (no hard-coded colours)',
@@ -541,47 +507,35 @@ void main() {
 
     // S8e — Disband enabled iff `pool.<tier> >= 1`.
 
-    testWidgets(
-      'Disband is enabled when pool.<tier> == 1 and canEdit is true (S8e positive)',
-      (WidgetTester tester) async {
-        final capture = await _pumpWithCapture(
-          tester,
-          player: _gpWithPool(apprentices: 1),
-        );
+    testWidgets('Disband enabled/disabled follows pool.<tier> (S8e)', (
+      WidgetTester tester,
+    ) async {
+      final enabled = await _pumpWithCapture(
+        tester,
+        player: _gpWithPool(apprentices: 1),
+      );
+      expect(
+        _disbandOpacity(tester, WorkerTier.apprentice),
+        CtDangerTextButton.idleOpacity,
+      );
+      await tester.tap(_disbandFinder(WorkerTier.apprentice));
+      await pumpSyncFrames(tester);
+      expect(enabled.disbanded, [WorkerTier.apprentice]);
 
-        expect(
-          _disbandOpacity(tester, WorkerTier.apprentice),
-          CtDangerTextButton.idleOpacity,
-        );
-
-        await tester.tap(_disbandFinder(WorkerTier.apprentice));
-        await pumpSyncFrames(tester);
-
-        expect(capture.disbanded, [WorkerTier.apprentice]);
-      },
-    );
-
-    testWidgets(
-      'Disband is disabled when pool.<tier> == 0 (S8e negative)',
-      (WidgetTester tester) async {
-        final capture = await _pumpWithCapture(
-          tester,
-          player: _gpWithPool(peasants: 1),
-        );
-
-        expect(
-          _disbandOpacity(tester, WorkerTier.apprentice),
-          CtNinePatchButton.disabledOpacity,
-        );
-
-        await tester.tap(
-          _disbandFinder(WorkerTier.apprentice),
-          warnIfMissed: false,
-        );
-        await pumpSyncFrames(tester);
-
-        expect(capture.disbanded, isEmpty);
-      },
-    );
+      final disabled = await _pumpWithCapture(
+        tester,
+        player: _gpWithPool(peasants: 1),
+      );
+      expect(
+        _disbandOpacity(tester, WorkerTier.apprentice),
+        CtNinePatchButton.disabledOpacity,
+      );
+      await tester.tap(
+        _disbandFinder(WorkerTier.apprentice),
+        warnIfMissed: false,
+      );
+      await pumpSyncFrames(tester);
+      expect(disabled.disbanded, isEmpty);
+    });
   });
 }

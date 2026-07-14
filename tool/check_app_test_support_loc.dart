@@ -13,8 +13,8 @@ import 'package:path/path.dart' as p;
 const String appTestSupportRelativeDir = 'app/test/support';
 
 /// Post-wave-6 support-tree ceiling (physical LOC). Lower as densify slices land.
-/// Measured post wave-6 dark-token densify ≈8317; ceiling set just above.
-const int appTestSupportLocCeiling = 8320;
+/// Measured after military-support densify ≈8305; ceiling set just above.
+const int appTestSupportLocCeiling = 8310;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countAppTestSupportPhysicalLoc(Directory dir) {

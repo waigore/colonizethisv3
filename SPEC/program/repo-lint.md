@@ -183,7 +183,7 @@
 | `tool/check_economy_test_support_loc.dart` | Ratchet ceiling for `packages/colonizethis_economy_test_support/lib/**` physical Dart LOC (phase-6 ≤7999); rule `repo.economy_test_support_loc` (Refs #4014) |
 | `tool/check_economy_test_no_local_run_scenarios.dart` | Forbid local `void Function() run` scenario shells under `packages/colonizethis_economy/test/**`; pins live in `colonizethis_economy_test_support` (Refs #4014); rule `repo.economy_test_no_local_run_scenarios` |
 | `tool/check_app_test_file_size.dart` | PR-blocking physical-line gate: `app/test/**/*.dart` must stay at or below **800** lines; oversized files live on a **shrink-only** allowlist (`appTestFileSizeAllowlistForTests`) — missing or now-under-cap entries fail as stale (Refs #4013, #4021); rule `repo.app_test_file_size`. Distinct from repo-wide `repo.dart_file_non_comment_line_size` (1000 **NCL**). |
-| `tool/check_app_test_support_loc.dart` | Ratchet ceiling for all Dart under `app/test/support/` (physical LOC; post-wave-6 densify ceiling **8320**, measured ≈8317); fail on net regrowth (Refs #4021); rule `repo.app_test_support_loc` |
+| `tool/check_app_test_support_loc.dart` | Ratchet ceiling for all Dart under `app/test/support/` (physical LOC; post-wave-6 densify ceiling **8310**, measured ≈8305); fail on net regrowth (Refs #4021); rule `repo.app_test_support_loc` |
 | `tool/check_app_test_no_duplicate_dark_token_asserts.dart` | AST gate: forbid private top-level `_expectMuted*` / `_expectEditorialMonocle*` helpers outside `app/test/support/` — suites must call shared APIs in `editorial_monocle_dark_token_assertions.dart` (Refs #4013); rule `repo.app_test_no_duplicate_dark_token_asserts` |
 | `tool/check_economy_bid_quantity_cap_shared.dart` | Require `trade_order_suggester.dart` to delegate bid quantity capping to `capBidQuantityForBudgets` in `treasury_bid_budget.dart`; forbid inline `remainingTreasuryBudget ~/ unitPrice` elsewhere under economy lib (Refs #3836); rule `repo.economy_bid_quantity_cap_shared` |
 | `tool/check_economy_test_no_src_imports.dart` | Forbid `package:colonizethis_economy/src/` imports under `packages/colonizethis_economy/test/**`; tests must use the public barrel (Refs #3836); rule `repo.economy_test_no_src_imports` |
@@ -298,11 +298,11 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 | Family | Parts | Stay-split reason (wave-6 re-measure, Refs #4021) |
 |--------|-------|-------------------|
-| `naval_units_panel_test` | 5 | Combined physical lines ~2402 ≫1000 |
-| `ct_region_map_widget_test` | 4 | Combined physical lines ~2018 ≫1000 |
-| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1710 ≫1000 |
+| `naval_units_panel_test` | 5 | Combined physical lines ~2380 ≫1000 |
+| `ct_region_map_widget_test` | 4 | Combined physical lines ~1973 ≫1000 |
+| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1643 ≫1000 |
 | `military_units_panel_test` | army/display/split siblings | Combined physical lines ~1079 ≫1000 |
-| `civilian_units_panel_test` | 3 | Combined physical lines ~1471 ≫1000 |
+| `civilian_units_panel_test` | 3 | Combined physical lines ~1408 ≫1000 |
 
 **Seed-42 demo fixtures (Refs #3847):** `province_overlay_demo_data.dart`, Widgetbook catalog builders, and `debug_init_game.dart` (`getDebugInitGameResult()`) load committed seed-42 JSON via `packages/colonizethis_app_fixtures` (`test_support/seed42_fixture_loader.dart`, `seed42_init_game_result.dart`, `map_view_serialization.dart`) instead of the ~7–11 s procedural generator on VM/desktop (web falls back when fixtures are unavailable).
 
@@ -310,7 +310,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 **App test file size (Refs #4013, #4021):** `repo.app_test_file_size` caps every `app/test/**/*.dart` file at **800 physical lines**. Files over the cap must appear on the shrink-only allowlist in `tool/check_app_test_file_size.dart`; adding a new oversized file requires removing another allowlist entry or shrinking first. Stale allowlist entries (missing path or file now ≤ cap) fail CI. Wave-6 densify cleared the shrink-only allowlist (region-map / e2e barrel / game-map-area / train-civilians / debug-console / labour / dialogs-320dp-part2 / train-naval / app-event-handler suites now ≤800). Distinguishes from `repo.dart_file_non_comment_line_size` (1000 NCL, unchanged).
 
-**App test support LOC (Refs #4021):** `repo.app_test_support_loc` fails when physical LOC of all Dart under `app/test/support/` exceeds the documented post-wave ceiling (**8320**). Ratchet downward as densify slices shrink the tree.
+**App test support LOC (Refs #4021):** `repo.app_test_support_loc` fails when physical LOC of all Dart under `app/test/support/` exceeds the documented post-wave ceiling (**8310**). Ratchet downward as densify slices shrink the tree.
 
 **Feature-screen top-bar helper (Refs #3952):** Diplomacy / Production / Technology / Trade screens build Map-back + 18×18 icon + title chrome via `app/lib/widgets/game_feature_screen_top_bar.dart` (`GameFeatureScreenTopBar.build`); screen-specific `topBarKey` / title / icon asset constants remain on each screen.
 
