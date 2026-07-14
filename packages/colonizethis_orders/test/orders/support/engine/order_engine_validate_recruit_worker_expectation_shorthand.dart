@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const vrwRegionId = 'oldWorld';
 const vrwProvinceId = '$vrwRegionId|P1';
 
@@ -23,14 +25,10 @@ Game vrwGameWith({
   List<Province> provinces = const [
     Province(id: vrwProvinceId, regionId: vrwRegionId, ownerId: 'p1'),
   ],
-}) => Game(
+}) => ordersOwRegionGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: provinces),
-    newWorld: const RegionData(),
-  ),
   players: [player],
+  oldWorld: RegionData(provinces: provinces),
 );
 
 OrderEngine vrwEngine() => OrderEngine();

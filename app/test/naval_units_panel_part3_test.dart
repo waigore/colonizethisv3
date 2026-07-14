@@ -1,6 +1,5 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -28,74 +27,26 @@ void main() {
       'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
       (WidgetTester tester) async {
         const humanId = 'gp_home_transfer_apply';
-        const capProvince = 'oldWorld|cap1';
         final homeId = homeFleetIdFor(humanId);
 
-        var gameState = Game(
-          id: 'g_home_transfer_apply',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
+        var gameState = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_home_transfer_apply',
+          displayName: 'Home transfer tester',
+          peerFleets: [
+            Fleet(
+              id: 'sea_source',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_alpha',
+              ships: const [
+                ShipInstance(id: 'src_1', typeId: 'fluyte'),
+                ShipInstance(id: 'src_2', typeId: 'carrack'),
               ],
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'home_1', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'sea_source',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'zone_alpha',
-                ships: const [
-                  ShipInstance(id: 'src_1', typeId: 'fluyte'),
-                  ShipInstance(id: 'src_2', typeId: 'carrack'),
-                ],
-              ),
-            ],
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Home transfer tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
-            ),
           ],
         );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|cap1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'zone_alpha',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|cap1', id2: 'zone_alpha')],
-        );
+        final topology = buildNavalCapitalAdjacentSeaTopology();
         final bus = AppEventBus.create();
         final subTransfer = wireNavalTransferForWidgetTest(
           bus: bus,
@@ -174,70 +125,24 @@ void main() {
       'AC: Home Fleet and non-adjacent sea source keep Combine disabled',
       (WidgetTester tester) async {
         const humanId = 'gp_home_non_adjacent';
-        const capProvince = 'oldWorld|cap1';
-        final homeId = homeFleetIdFor(humanId);
 
-        final gameNonAdjacent = Game(
-          id: 'g_home_non_adjacent_transfer',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'home_1', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'sea_far',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'zone_far',
-                ships: const [ShipInstance(id: 'src_1', typeId: 'fluyte')],
-              ),
-            ],
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Home non-adjacent tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+        final gameNonAdjacent = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_home_non_adjacent_transfer',
+          displayName: 'Home non-adjacent tester',
+          peerFleets: [
+            Fleet(
+              id: 'sea_far',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_far',
+              ships: const [ShipInstance(id: 'src_1', typeId: 'fluyte')],
             ),
           ],
         );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|cap1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'zone_far',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [],
+        final topology = buildNavalCapitalAdjacentSeaTopology(
+          seaZoneId: 'zone_far',
+          includeEdge: false,
         );
 
         await tester.pumpWidget(
@@ -276,71 +181,52 @@ void main() {
         const humanId = 'gp_same_sea_combine';
         const capProvince = 'oldWorld|cap1';
 
-        final sameSeaGame = Game(
-          id: 'g_same_sea_combine',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'coast',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Coast',
-                ),
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
+        final sameSeaGame = buildNavalPanelOwFleetsGame(
+          gameId: 'g_same_sea_combine',
+          humanId: humanId,
+          displayName: 'Same-sea combine',
+          capitalProvinceId: capProvince,
+          oldWorldProvinces: [
+            Province(
+              id: 'coast',
+              regionId: 'oldWorld',
+              ownerId: humanId,
+              displayName: 'Coast',
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'sea_1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'zone_alpha',
-                inPortAtProvinceId: null,
-                ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
-                mission: FleetMission.patrol,
-              ),
-              Fleet(
-                id: 'sea_2',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'zone_alpha',
-                inPortAtProvinceId: null,
-                ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
-              ),
-            ],
-            portsByProvinceSeaboard: {
-              'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-            },
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-                'oldWorld|coast': ['oldWorld|coast|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 3,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Same-sea combine',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+            Province(
+              id: 'cap1',
+              regionId: 'oldWorld',
+              ownerId: humanId,
+              displayName: 'Capital',
             ),
           ],
+          fleets: [
+            Fleet(
+              id: 'sea_1',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_alpha',
+              inPortAtProvinceId: null,
+              ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
+              mission: FleetMission.patrol,
+            ),
+            Fleet(
+              id: 'sea_2',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              seaZoneId: 'zone_alpha',
+              inPortAtProvinceId: null,
+              ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
+            ),
+          ],
+          portsByProvinceSeaboard: {
+            'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+          },
+          tileKeysByProvince: {
+            capProvince: ['oldWorld|cap1|0|0'],
+            'oldWorld|coast': ['oldWorld|coast|0|0'],
+          },
+          nextShipInstanceSeq: 3,
         );
 
         final bus = AppEventBus.create();
@@ -392,67 +278,29 @@ void main() {
       'AC: Combining two non-home fleets clears non-none missions on survivor',
       (WidgetTester tester) async {
         const humanId = 'gp_mission_clear';
-        const capProvince = 'oldWorld|cap1';
         const mergePort = 'oldWorld|mergeport';
 
-        final missionGame = Game(
-          id: 'g_mission_clear',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-                Province(
-                  id: 'mergeport',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Merge Port',
-                ),
-              ],
+        final missionGame = buildNavalPanelCapitalMergePortFleetsGame(
+          humanId: humanId,
+          gameId: 'g_mission_clear',
+          displayName: 'Mission clear tester',
+          nextShipInstanceSeq: 3,
+          fleets: [
+            Fleet(
+              id: 'm1',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'ms1', typeId: 'carrack')],
+              mission: FleetMission.patrol,
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'm1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'ms1', typeId: 'carrack')],
-                mission: FleetMission.patrol,
-              ),
-              Fleet(
-                id: 'm2',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'ms2', typeId: 'fluyte')],
-                mission: FleetMission.blockade,
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 3,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Mission clear tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+            Fleet(
+              id: 'm2',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'ms2', typeId: 'fluyte')],
+              mission: FleetMission.blockade,
             ),
           ],
         );
@@ -498,57 +346,33 @@ void main() {
         const mergePort = 'oldWorld|mergeport';
 
         // No capital => no synthetic Home Fleet row; select-all stays one locality.
-        final partialGame = Game(
-          id: 'g_partial_header',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'mergeport',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Merge Port',
-                ),
-              ],
+        final partialGame = buildNavalPanelCapitalMergePortFleetsGame(
+          humanId: humanId,
+          gameId: 'g_partial_header',
+          displayName: 'Partial header tester',
+          playerHasCapital: false,
+          nextShipInstanceSeq: 4,
+          fleets: [
+            Fleet(
+              id: 'p1',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'ps1', typeId: 'carrack')],
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'p1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'ps1', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'p2',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'ps2', typeId: 'fluyte')],
-              ),
-              Fleet(
-                id: 'p3',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'ps3', typeId: 'carrack')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                mergePort: ['oldWorld|mergeport|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 4,
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Partial header tester',
-              isHuman: true,
-              treasury: 0,
+            Fleet(
+              id: 'p2',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'ps2', typeId: 'fluyte')],
+            ),
+            Fleet(
+              id: 'p3',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'ps3', typeId: 'carrack')],
             ),
           ],
         );
@@ -596,72 +420,34 @@ void main() {
       'AC: Three-fleet combine survivor is first in panel order regardless of check order',
       (WidgetTester tester) async {
         const humanId = 'gp_reverse_check';
-        const capProvince = 'oldWorld|cap1';
         const mergePort = 'oldWorld|mergeport';
 
-        final revGame = Game(
-          id: 'g_reverse_check',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-                Province(
-                  id: 'mergeport',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Merge Port',
-                ),
-              ],
+        final revGame = buildNavalPanelCapitalMergePortFleetsGame(
+          humanId: humanId,
+          gameId: 'g_reverse_check',
+          displayName: 'Reverse check tester',
+          nextShipInstanceSeq: 4,
+          fleets: [
+            Fleet(
+              id: 'r1',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'rs1', typeId: 'carrack')],
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'r1',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'rs1', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'r2',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'rs2', typeId: 'fluyte')],
-              ),
-              Fleet(
-                id: 'r3',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'rs3', typeId: 'carrack')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 4,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Reverse check tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+            Fleet(
+              id: 'r2',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'rs2', typeId: 'fluyte')],
+            ),
+            Fleet(
+              id: 'r3',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'rs3', typeId: 'carrack')],
             ),
           ],
         );
@@ -716,79 +502,40 @@ void main() {
       'AC: Updating game prunes combine selection to fleets that still exist',
       (WidgetTester tester) async {
         const humanId = 'gp_prune_sel';
-        const capProvince = 'oldWorld|cap1';
         const mergePort = 'oldWorld|mergeport';
 
-        WorldState stateWithTwo(String keep, String drop) => WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'cap1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Capital',
-              ),
-              Province(
-                id: 'mergeport',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Merge Port',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: keep,
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ks1', typeId: 'carrack')],
-            ),
-            Fleet(
-              id: drop,
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ks2', typeId: 'fluyte')],
-            ),
-          ],
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              capProvince: ['oldWorld|cap1|0|0'],
-            },
-          },
-          nextShipInstanceSeq: 3,
-        );
-
-        final gameTwo = Game(
-          id: 'g_prune_two',
-          worldState: stateWithTwo('stays', 'removed'),
-          players: [
-            Player(
-              id: humanId,
+        Game gameWithKeepDrop(String keep, String drop) =>
+            buildNavalPanelCapitalMergePortFleetsGame(
+              humanId: humanId,
+              gameId: 'g_prune_two',
               displayName: 'Prune tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
-            ),
-          ],
-        );
+              nextShipInstanceSeq: 3,
+              fleets: [
+                Fleet(
+                  id: keep,
+                  ownerId: humanId,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: mergePort,
+                  ships: const [ShipInstance(id: 'ks1', typeId: 'carrack')],
+                ),
+                Fleet(
+                  id: drop,
+                  ownerId: humanId,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: mergePort,
+                  ships: const [ShipInstance(id: 'ks2', typeId: 'fluyte')],
+                ),
+              ],
+            );
 
-        final gameOne = Game(
+        final gameTwo = gameWithKeepDrop('stays', 'removed');
+        final gameOne = gameTwo.copyWith(
           id: 'g_prune_one',
           worldState: gameTwo.worldState.copyWith(
             fleets: [
               gameTwo.worldState.fleets.firstWhere((f) => f.id == 'stays'),
             ],
           ),
-          players: gameTwo.players,
         );
 
         await tester.pumpWidget(
@@ -835,65 +582,27 @@ void main() {
       'AC: Collapsed rows keep inline Split action while checkbox selection works',
       (WidgetTester tester) async {
         const humanId = 'gp_collapsed_cb';
-        const capProvince = 'oldWorld|cap1';
         const mergePort = 'oldWorld|mergeport';
 
-        final collapsedGame = Game(
-          id: 'g_collapsed_cb',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-                Province(
-                  id: 'mergeport',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Merge Port',
-                ),
-              ],
+        final collapsedGame = buildNavalPanelCapitalMergePortFleetsGame(
+          humanId: humanId,
+          gameId: 'g_collapsed_cb',
+          displayName: 'Collapsed cb tester',
+          nextShipInstanceSeq: 3,
+          fleets: [
+            Fleet(
+              id: 'col_a',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'cs1', typeId: 'carrack')],
             ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'col_a',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'cs1', typeId: 'carrack')],
-              ),
-              Fleet(
-                id: 'col_b',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: mergePort,
-                ships: const [ShipInstance(id: 'cs2', typeId: 'fluyte')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-            nextShipInstanceSeq: 3,
-          ),
-          players: [
-            Player(
-              id: humanId,
-              displayName: 'Collapsed cb tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: const CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
+            Fleet(
+              id: 'col_b',
+              ownerId: humanId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: mergePort,
+              ships: const [ShipInstance(id: 'cs2', typeId: 'fluyte')],
             ),
           ],
         );

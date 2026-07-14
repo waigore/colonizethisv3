@@ -79,13 +79,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         final timberOffers = orders
             .where(
               (o) =>
@@ -129,13 +129,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         final timberOffers = orders
             .where(
               (o) =>
@@ -192,13 +192,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: assignments,
           treasury: game.players.first.treasury,
-        );
+        ));
         final fabricBids = orders
             .where(
               (o) =>
@@ -243,13 +243,13 @@ void main() {
               'Test premise: treasury must be below the urgency threshold so '
               'fill-rate discounting alone determines the urgency switch.',
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: treasury,
-        );
+        ));
         final timberOffer = orders.firstWhere(
           (o) =>
               o.commodityId == CommodityCatalog.timber.id &&
@@ -291,13 +291,13 @@ void main() {
               'Test premise: treasury must be below the regiment threshold so '
               'F16 keeps the offer urgent despite the clearing forecast.',
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: treasury,
-        );
+        ));
         final timberOffer = orders.firstWhere(
           (o) =>
               o.commodityId == CommodityCatalog.timber.id &&
@@ -335,13 +335,13 @@ void main() {
           stockpile: stockpile,
           treasury: affluent,
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluent,
-        );
+        ));
         final bids = orders
             .where((o) => o.type == TradeOrderType.bid)
             .toList();
@@ -395,13 +395,13 @@ void main() {
             },
           ),
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluent,
-        );
+        ));
         final bids = orders
             .where((o) => o.type == TradeOrderType.bid)
             .toList();
@@ -434,13 +434,13 @@ void main() {
           stockpile: stockpile,
           treasury: affluent,
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluent,
-        );
+        ));
         expect(
           orders.where((o) => o.type == TradeOrderType.bid),
           isEmpty,
@@ -469,13 +469,13 @@ void main() {
           stockpile: stockpile,
           treasury: justBelow,
         );
-        final orders = runTreasuryPlanner(
+        final orders = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: justBelow,
-        );
+        ));
         expect(
           orders.where((o) => o.type == TradeOrderType.bid),
           isEmpty,
@@ -497,20 +497,20 @@ void main() {
           stockpile: stockpile,
           treasury: affluent,
         );
-        final a = runTreasuryPlanner(
+        final a = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluent,
-        );
-        final b = runTreasuryPlanner(
+        ));
+        final b = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: affluent,
-        );
+        ));
         expect(a, b);
       },
     );
@@ -543,20 +543,20 @@ void main() {
             },
           ),
         );
-        final a = runTreasuryPlanner(
+        final a = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
-        final b = runTreasuryPlanner(
+        ));
+        final b = runTreasuryPlanner(TreasuryPlannerInput(
           game: game,
           playerId: 'gp1',
           stockpile: stockpile,
           productionAssignments: const [],
           treasury: 0,
-        );
+        ));
         expect(a, b);
       },
     );

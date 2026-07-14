@@ -45,6 +45,17 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     );
   }
 
+  void _paintSecondaryHighlightTiles(Canvas canvas, Set<String> tileKeys) {
+    for (final tileKey in tileKeys) {
+      _paintTileOutlineRing(
+        canvas,
+        tileKey: tileKey,
+        color: _kMapSecondarySelectionCyan,
+        strokeWidth: kMapSecondaryHighlightStrokeWidth,
+      );
+    }
+  }
+
   void _paintTileOutlineRing(
     Canvas canvas, {
     required String tileKey,

@@ -1,4 +1,11 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'fog_resolution_gp_visibility.dart';
+import 'naval_coastal_visibility.dart' show canonicalSeaZoneTileBucketKey;
+import 'province_owner_cache.dart';
+import 'topology_helpers.dart';
+import 'visibility_map_helpers.dart';
 
 void _fullyVisibleAllTilesInSeaZoneBuckets(
   Map<String, String> vis,
@@ -58,7 +65,7 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
 }) {
   final ownerCache = ProvinceOwnerCache.of(game.worldState);
 
-  return _forEachWorldRegionGpVisibility(
+  return forEachWorldRegionGpVisibility(
     game: game,
     visibility: visibilityAfterFogDecay,
     topology: topology,

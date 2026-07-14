@@ -552,6 +552,31 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_extractionHeading => 'Extraction';
+
+  @override
+  String get provinceOverlay_availableHeading => 'Available';
+
+  @override
+  String provinceOverlay_extractionQuantity(int quantity, String name) {
+    return '$quantity $name';
+  }
+
+  @override
+  String provinceOverlay_extractionQuantityPartial(
+    int effective,
+    int full,
+    String name,
+  ) {
+    return '$effective ($full) $name';
+  }
+
+  @override
+  String provinceOverlay_availableTileCount(int count, String name) {
+    return '$count $name';
+  }
+
+  @override
   String get provinceOverlay_sectionMilitary => 'Military';
 
   @override
@@ -600,10 +625,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String province_economic_resourceRow(
     String terrain,
-    String resourceId,
+    String resourceName,
     String detail,
   ) {
-    return '$terrain/$resourceId $detail';
+    return '$terrain/$resourceName $detail';
   }
 
   @override

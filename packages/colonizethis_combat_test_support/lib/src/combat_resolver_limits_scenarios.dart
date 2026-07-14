@@ -6,9 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a land resolver limits scenario table.
-class CombatResolverLimitsScenario {
+class CombatResolverLimitsScenario implements LabeledScenario {
   const CombatResolverLimitsScenario({
     required this.scenarioId,
     required this.label,
@@ -16,14 +17,11 @@ class CombatResolverLimitsScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario].
-void runCombatResolverLimitsScenario(CombatResolverLimitsScenario scenario) {
-  scenario.run();
-}
 
 /// Deployment limits and general-medal scenarios (part 1 limits).
 List<CombatResolverLimitsScenario> combatResolverLimitsScenarios() => [

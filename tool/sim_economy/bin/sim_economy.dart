@@ -110,8 +110,9 @@ void main(List<String> arguments) {
   final initialWorkers = workers;
 
   for (var turn = 1; turn <= totalTurns; turn++) {
-    final scriptTurn =
-        useScript && turn <= scriptTurns.length ? scriptTurns[turn - 1] : null;
+    final scriptTurn = useScript && turn <= scriptTurns.length
+        ? scriptTurns[turn - 1]
+        : null;
 
     final stockpileStart = stockpile;
     final workersStart = workers;
@@ -133,15 +134,15 @@ void main(List<String> arguments) {
     final consumptionResult = resolveConsumption(
       stockpile: stockpile,
       workers: workers,
-      militaryUnits: militaryUnits,
+      foodCounts: MilitaryNavyFoodCounts(militaryUnits: militaryUnits),
     );
     stockpile = consumptionResult.stockpile;
     workers = consumptionResult.workerPool;
     final stockpileAfterConsumption = stockpile;
 
     // 5. Production
-    final assignments = scriptTurn?.assignments ??
-        _defaultAssignments(workers, stockpile, rng);
+    final assignments =
+        scriptTurn?.assignments ?? _defaultAssignments(workers, stockpile, rng);
     final productionResult = resolveProduction(
       stockpile: stockpile,
       workers: workers,
@@ -203,7 +204,8 @@ void main(List<String> arguments) {
 void _printUsage() {
   _log.i('Usage:');
   _log.i(
-      '  melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]');
+    '  melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]',
+  );
   _log.i('');
   _log.i('Simulates a single player economy using Phase 2 rules.');
 }
@@ -211,15 +213,10 @@ void _printUsage() {
 Map<String, int> _quantitiesFromStockpile(Stockpile stockpile) {
   final json = stockpile.toJson();
   final quantities = json['quantities'] as Map<dynamic, dynamic>? ?? const {};
-  return quantities.map(
-    (key, value) => MapEntry('$key', value as int),
-  );
+  return quantities.map((key, value) => MapEntry('$key', value as int));
 }
 
-Map<String, int> _deltaMap(
-  Map<String, int> before,
-  Map<String, int> after,
-) {
+Map<String, int> _deltaMap(Map<String, int> before, Map<String, int> after) {
   final result = <String, int>{};
   final keys = <String>{}
     ..addAll(before.keys)
@@ -274,8 +271,9 @@ Map<String, dynamic> buildTurnLogEntry({
   final startMap = _quantitiesFromStockpile(stockpileStart);
   final afterExtractionMap = _quantitiesFromStockpile(stockpileAfterExtraction);
   final afterRichesMap = _quantitiesFromStockpile(stockpileAfterRiches);
-  final afterConsumptionMap =
-      _quantitiesFromStockpile(stockpileAfterConsumption);
+  final afterConsumptionMap = _quantitiesFromStockpile(
+    stockpileAfterConsumption,
+  );
   final afterProductionMap = _quantitiesFromStockpile(stockpileAfterProduction);
   final endMap = _quantitiesFromStockpile(stockpileEnd);
 
@@ -289,12 +287,7 @@ Map<String, dynamic> buildTurnLogEntry({
   };
 
   final workerAssignmentsJson = assignments
-      .map(
-        (a) => {
-          'recipeId': a.recipeId,
-          'assignedLabour': a.assignedLabour,
-        },
-      )
+      .map((a) => {'recipeId': a.recipeId, 'assignedLabour': a.assignedLabour})
       .toList();
 
   return <String, dynamic>{
@@ -338,7 +331,9 @@ String buildMarkdownReport({
   buffer.writeln('| Key | Value |');
   buffer.writeln('| --- | ----- |');
   buffer.writeln('| Seed | ${seed ?? 'random'} |');
-  buffer.writeln('| Script | ${scriptPath?.isNotEmpty == true ? scriptPath : '-'} |');
+  buffer.writeln(
+    '| Script | ${scriptPath?.isNotEmpty == true ? scriptPath : '-'} |',
+  );
   buffer.writeln('| Total turns | $totalTurns |');
   buffer.writeln('| Generated at | $now |');
   buffer.writeln();
@@ -387,24 +382,23 @@ String buildMarkdownReport({
 
   for (final entry in turns) {
     final turn = entry['turn'] as int;
-    final stockpileStart =
-        (entry['stockpileStart'] as Map).cast<String, int>();
+    final stockpileStart = (entry['stockpileStart'] as Map).cast<String, int>();
     final stockpileEnd = (entry['stockpileEnd'] as Map).cast<String, int>();
-    final deltaExtraction =
-        (entry['deltaExtraction'] as Map).cast<String, int>();
+    final deltaExtraction = (entry['deltaExtraction'] as Map)
+        .cast<String, int>();
     final deltaRiches =
         (entry['deltaRiches'] as Map?)?.cast<String, int>() ?? const {};
-    final deltaProduction =
-        (entry['deltaProduction'] as Map).cast<String, int>();
-    final deltaConsumption =
-        (entry['deltaConsumption'] as Map).cast<String, int>();
-    final treasuryDeltaFromRiches = entry['treasuryDeltaFromRiches'] as int? ?? 0;
+    final deltaProduction = (entry['deltaProduction'] as Map)
+        .cast<String, int>();
+    final deltaConsumption = (entry['deltaConsumption'] as Map)
+        .cast<String, int>();
+    final treasuryDeltaFromRiches =
+        entry['treasuryDeltaFromRiches'] as int? ?? 0;
     final treasuryEndOfTurn = entry['treasuryEndOfTurn'] as int?;
-    final workersStart =
-        (entry['workersStart'] as Map).cast<String, dynamic>();
+    final workersStart = (entry['workersStart'] as Map).cast<String, dynamic>();
     final workersEnd = (entry['workersEnd'] as Map).cast<String, dynamic>();
-    final assignments =
-        (entry['workerAssignments'] as List).cast<Map<String, dynamic>>();
+    final assignments = (entry['workerAssignments'] as List)
+        .cast<Map<String, dynamic>>();
 
     buffer.writeln('### Turn $turn');
     buffer.writeln();
@@ -439,7 +433,8 @@ String buildMarkdownReport({
       final flowsCell = flows.isEmpty ? '' : flows.join(', ');
 
       final reasonParts = <String>[];
-      final totalWorkersStart = (workersStart['peasants'] as int? ?? 0) +
+      final totalWorkersStart =
+          (workersStart['peasants'] as int? ?? 0) +
           (workersStart['apprentices'] as int? ?? 0) +
           (workersStart['journeymen'] as int? ?? 0) +
           (workersStart['masters'] as int? ?? 0);
@@ -478,8 +473,7 @@ String buildMarkdownReport({
         reasonParts.insert(0, 'extraction');
       }
 
-      final reasonCell =
-          reasonParts.isEmpty ? '' : reasonParts.join(' + ');
+      final reasonCell = reasonParts.isEmpty ? '' : reasonParts.join(' + ');
 
       buffer.writeln(
         '| $id | $start | $end | ${_signed(deltaTotal)} | $flowsCell | $reasonCell |',
@@ -488,23 +482,21 @@ String buildMarkdownReport({
 
     if (treasuryEndOfTurn != null || treasuryDeltaFromRiches != 0) {
       buffer.writeln();
-      buffer.writeln('Treasury: ${treasuryEndOfTurn ?? '-'}'
-          '${treasuryDeltaFromRiches != 0 ? ' (Δ from riches: ${_signed(treasuryDeltaFromRiches)})' : ''}');
+      buffer.writeln(
+        'Treasury: ${treasuryEndOfTurn ?? '-'}'
+        '${treasuryDeltaFromRiches != 0 ? ' (Δ from riches: ${_signed(treasuryDeltaFromRiches)})' : ''}',
+      );
     }
 
     buffer.writeln();
     buffer.writeln('#### Labour – workers & assignments');
     buffer.writeln();
-    buffer.writeln(
-        '| Type | Name | Start | End | Δ / Labour | Notes |');
-    buffer.writeln(
-        '| ---- | ---- | ----- | --- | ---------- | ----- |');
+    buffer.writeln('| Type | Name | Start | End | Δ / Labour | Notes |');
+    buffer.writeln('| ---- | ---- | ----- | --- | ---------- | ----- |');
 
     void writeWorkerRow(String name, int start, int end) {
       final delta = end - start;
-      buffer.writeln(
-        '| W | $name | $start | $end | Δ ${_signed(delta)} | |',
-      );
+      buffer.writeln('| W | $name | $start | $end | Δ ${_signed(delta)} | |');
     }
 
     writeWorkerRow(
@@ -530,17 +522,12 @@ String buildMarkdownReport({
 
     int totalStartLabour = 0;
     int totalEndLabour = 0;
-    totalStartLabour +=
-        (workersStart['peasants'] as int? ?? 0) * 1;
+    totalStartLabour += (workersStart['peasants'] as int? ?? 0) * 1;
     totalEndLabour += (workersEnd['peasants'] as int? ?? 0) * 1;
-    totalStartLabour +=
-        (workersStart['apprentices'] as int? ?? 0) * 4;
-    totalEndLabour +=
-        (workersEnd['apprentices'] as int? ?? 0) * 4;
-    totalStartLabour +=
-        (workersStart['journeymen'] as int? ?? 0) * 6;
-    totalEndLabour +=
-        (workersEnd['journeymen'] as int? ?? 0) * 6;
+    totalStartLabour += (workersStart['apprentices'] as int? ?? 0) * 4;
+    totalEndLabour += (workersEnd['apprentices'] as int? ?? 0) * 4;
+    totalStartLabour += (workersStart['journeymen'] as int? ?? 0) * 6;
+    totalEndLabour += (workersEnd['journeymen'] as int? ?? 0) * 6;
 
     final totalDeltaLabour = totalEndLabour - totalStartLabour;
     buffer.writeln(
@@ -556,9 +543,7 @@ String buildMarkdownReport({
         final outputId = recipe.outputCommodityId;
         notes = '→ $outputId';
       }
-      buffer.writeln(
-        '| R | $recipeId | - | - | L $labour | $notes |',
-      );
+      buffer.writeln('| R | $recipeId | - | - | L $labour | $notes |');
     }
 
     buffer.writeln();
@@ -581,14 +566,13 @@ SimEconomyOutputConfig resolveOutputConfig({
   String? outputPath,
   String? jsonOutputPath,
 }) {
-  final markdownPath =
-      (outputPath == null || outputPath.isEmpty) ? 'sim_economy.md' : outputPath;
-  final jsonPath =
-      (jsonOutputPath == null || jsonOutputPath.isEmpty) ? null : jsonOutputPath;
-  return SimEconomyOutputConfig(
-    markdownPath: markdownPath,
-    jsonPath: jsonPath,
-  );
+  final markdownPath = (outputPath == null || outputPath.isEmpty)
+      ? 'sim_economy.md'
+      : outputPath;
+  final jsonPath = (jsonOutputPath == null || jsonOutputPath.isEmpty)
+      ? null
+      : jsonOutputPath;
+  return SimEconomyOutputConfig(markdownPath: markdownPath, jsonPath: jsonPath);
 }
 
 class _RandomInitialState {
@@ -681,20 +665,14 @@ List<AssignedRecipe> _defaultAssignments(
 
   return [
     if (toFabric > 0)
-      AssignedRecipe(
-        recipeId: 'fabric_from_wool',
-        assignedLabour: toFabric,
-      ),
+      AssignedRecipe(recipeId: 'fabric_from_wool', assignedLabour: toFabric),
     if (toCastIron > 0)
       AssignedRecipe(
         recipeId: 'castIron_from_iron',
         assignedLabour: toCastIron,
       ),
     if (toLumber > 0)
-      AssignedRecipe(
-        recipeId: 'lumber_from_timber',
-        assignedLabour: toLumber,
-      ),
+      AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: toLumber),
   ];
 }
 
@@ -730,12 +708,9 @@ ParsedScript parseSimEconomyScript(Map<String, dynamic> json) {
   final initial = json['initialState'] as Map<String, dynamic>? ?? {};
   final stockpileJson =
       (initial['stockpile'] as Map<String, dynamic>?) ?? const {};
-  final workersJson =
-      (initial['workers'] as Map<String, dynamic>?) ?? const {};
+  final workersJson = (initial['workers'] as Map<String, dynamic>?) ?? const {};
 
-  final stockpile = Stockpile.fromJson({
-    'quantities': stockpileJson,
-  });
+  final stockpile = Stockpile.fromJson({'quantities': stockpileJson});
   final workers = WorkerPool.fromJson(workersJson);
   final militaryUnits = (initial['militaryUnits'] as int?) ?? 0;
   final treasury = (initial['treasury'] as int?) ?? 0;
@@ -759,8 +734,7 @@ ParsedScript parseSimEconomyScript(Map<String, dynamic> json) {
       });
     }
 
-    final assignmentsRaw =
-        t['workerAssignments'] as List<dynamic>? ?? const [];
+    final assignmentsRaw = t['workerAssignments'] as List<dynamic>? ?? const [];
     final assignments = <AssignedRecipe>[];
     for (final a in assignmentsRaw) {
       final map = Map<String, dynamic>.from(a as Map);
@@ -796,4 +770,3 @@ extension AssignedRecipeCopy on AssignedRecipe {
     );
   }
 }
-

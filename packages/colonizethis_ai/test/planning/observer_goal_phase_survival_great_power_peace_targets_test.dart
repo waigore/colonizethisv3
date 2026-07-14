@@ -71,12 +71,12 @@
 //      `.toList()` materialisation of the `Iterable` so the
 //      `sync*` generator is re-driven from scratch on each call).
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpStronger = 'gp_stronger';
@@ -211,24 +211,6 @@ Game _survivalGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 void main() {
   group('survivalGreatPowerPeaceTargets — canonical home', () {
@@ -238,7 +220,7 @@ void main() {
       // critical-survival and mutual-stalemate arms also cannot
       // engage. The aggregator must therefore yield nothing.
       final game = _survivalGame(ownProvinces: 9, ownRegimentCount: 2);
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
         atWarWith: const [],
       );
@@ -275,7 +257,7 @@ void main() {
       expect(
         survivalGreatPowerPeaceTargets(
           game: game,
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
             atWarWith: const [_gpStronger],
           ),
@@ -305,7 +287,7 @@ void main() {
         minorId: _minor1,
         atWarFactionIds: const [_minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [_minor1],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_home'],
@@ -346,7 +328,7 @@ void main() {
         minorId: _minor1,
         atWarFactionIds: const [_gpStronger, _minor1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
         atWarWith: const [_gpStronger, _minor1],
         invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_home'],
@@ -391,7 +373,7 @@ void main() {
           minorId: _minor1,
           atWarFactionIds: const [_gpStronger, _minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
           atWarWith: const [_gpStronger, _minor1],
           invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_home'],

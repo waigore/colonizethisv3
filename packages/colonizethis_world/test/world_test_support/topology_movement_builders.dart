@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'topology_constants.dart';
 import 'topology_core_builders.dart';
+import 'topology_graph_dsl.dart';
 
 /// Two provinces in one region with no sea (connectivity parity tests).
 MapTopology twoProvinceLandTopology({
@@ -9,20 +10,9 @@ MapTopology twoProvinceLandTopology({
   String province1Id = 'p1',
   String province2Id = 'p2',
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: province1Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: province2Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: const [],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [province1Id, province2Id],
   );
 }
 
@@ -33,25 +23,10 @@ MapTopology threeProvincePartialChainTopology({
   String province2Id = 'p2',
   String province3Id = 'p3',
 }) {
-  return topologyFromGraph(
-    nodes: [
-      TopologyNode(
-        id: province1Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: province2Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: province3Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: [TopologyEdge(id1: province1Id, id2: province2Id)],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [province1Id, province2Id, province3Id],
+    edges: [(province1Id, province2Id)],
   );
 }
 
@@ -107,32 +82,16 @@ MapTopology duplicateLocalProvinceIdsByRegionTopology({
   String owSeaLocalId = 'sea1',
   String nwSeaLocalId = 'sea2',
 }) {
-  return topologyFromGraph(
+  return topologyGraphNodes(
     nodes: [
-      TopologyNode(
-        id: sharedLocalProvinceId,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: owSeaLocalId,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: sharedLocalProvinceId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nwSeaLocalId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.seaZone,
-      ),
+      provinceRow(kWorldTestOw, sharedLocalProvinceId),
+      seaRow(kWorldTestOw, owSeaLocalId),
+      provinceRow(kWorldTestNw, sharedLocalProvinceId),
+      seaRow(kWorldTestNw, nwSeaLocalId),
     ],
     edges: [
-      TopologyEdge(id1: sharedLocalProvinceId, id2: owSeaLocalId),
-      TopologyEdge(id1: sharedLocalProvinceId, id2: nwSeaLocalId),
+      (sharedLocalProvinceId, owSeaLocalId),
+      (sharedLocalProvinceId, nwSeaLocalId),
     ],
   );
 }
@@ -145,38 +104,18 @@ MapTopology homeFleetSplitMovementIntegrationTopology({
   String nwProvince = 'newWorld|p1',
   String nwSea = 'newWorld|seaOther',
 }) {
-  return topologyFromGraph(
+  return topologyGraphNodes(
     nodes: [
-      TopologyNode(
-        id: owCoastProv,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: seaOrigin,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: seaDest,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: nwProvince,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nwSea,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.seaZone,
-      ),
+      provinceRow(kWorldTestOw, owCoastProv),
+      seaRow(kWorldTestOw, seaOrigin),
+      seaRow(kWorldTestOw, seaDest),
+      provinceRow(kWorldTestNw, nwProvince),
+      seaRow(kWorldTestNw, nwSea),
     ],
     edges: [
-      TopologyEdge(id1: owCoastProv, id2: seaDest),
-      TopologyEdge(id1: seaOrigin, id2: seaDest),
-      TopologyEdge(id1: nwProvince, id2: nwSea),
+      (owCoastProv, seaDest),
+      (seaOrigin, seaDest),
+      (nwProvince, nwSea),
     ],
   );
 }
@@ -187,24 +126,11 @@ MapTopology threeProvinceDualRegionLandTopology({
   String owProvince2Id = 'p2',
   String nwProvinceId = 'p3',
 }) {
-  return MapTopology(
+  return topologyGraphNodes(
     nodes: [
-      TopologyNode(
-        id: owProvince1Id,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: owProvince2Id,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nwProvinceId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.province,
-      ),
+      provinceRow(kWorldTestOw, owProvince1Id),
+      provinceRow(kWorldTestOw, owProvince2Id),
+      provinceRow(kWorldTestNw, nwProvinceId),
     ],
-    edges: const [],
   );
 }

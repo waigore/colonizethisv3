@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/army_movement.dart';
 import 'package:colonizethis_test/test.dart';
@@ -69,18 +68,16 @@ void main() {
           _army('other', ownerId: 'p2'),
         ],
       );
-      final next = applyArmyMoveOrdersToRegion(
-        world,
-        topology,
-        const {
-          'p1': [
-            ArmyMoveOrder(armyId: 'missing', destinationProvinceId: 'oldWorld|p2'),
-            ArmyMoveOrder(armyId: 'other', destinationProvinceId: 'oldWorld|p2'),
-            ArmyMoveOrder(armyId: 'home', destinationProvinceId: 'oldWorld|p2'),
-          ],
-        },
-        regionId: 'oldWorld',
-      );
+      final next = applyArmyMoveOrdersToRegion(world, topology, const {
+        'p1': [
+          ArmyMoveOrder(
+            armyId: 'missing',
+            destinationProvinceId: 'oldWorld|p2',
+          ),
+          ArmyMoveOrder(armyId: 'other', destinationProvinceId: 'oldWorld|p2'),
+          ArmyMoveOrder(armyId: 'home', destinationProvinceId: 'oldWorld|p2'),
+        ],
+      }, regionId: 'oldWorld');
       // None applied: stations unchanged.
       expect(
         next.armies.firstWhere((a) => a.id == 'other').stationedProvinceId,
@@ -95,51 +92,45 @@ void main() {
     test('ignores army stationed in a different region', () {
       final world = _worldWith(
         armies: [
-          _army(
-            'a1',
-            stationedProvinceId: 'newWorld|n1',
-            regionId: 'newWorld',
-          ),
+          _army('a1', stationedProvinceId: 'newWorld|n1', regionId: 'newWorld'),
         ],
       );
-      final next = applyArmyMoveOrdersToRegion(
-        world,
-        topology,
-        const {
-          'p1': [
-            ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'oldWorld|p2'),
-          ],
-        },
-        regionId: 'oldWorld',
-      );
+      final next = applyArmyMoveOrdersToRegion(world, topology, const {
+        'p1': [
+          ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'oldWorld|p2'),
+        ],
+      }, regionId: 'oldWorld');
       expect(next.armies.single.stationedProvinceId, 'newWorld|n1');
     });
 
-    test('traces destination_in_other_region for cross-region prefixed dest', () {
-      final world = _worldWith(armies: [_army('a1')]);
-      final traces = <String>[];
-      final next = applyArmyMoveOrdersToRegion(
-        world,
-        topology,
-        const {
-          'p1': [
-            ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'newWorld|n1'),
-          ],
-        },
-        regionId: 'oldWorld',
-        onArmyMoveOrderTrace:
-            ({
-              required playerId,
-              required order,
-              required applied,
-              regionId,
-              destinationProvinceId,
-              ignoreReason,
-            }) => traces.add(ignoreReason ?? 'applied'),
-      );
-      expect(traces, ['destination_in_other_region']);
-      expect(next.armies.single.stationedProvinceId, 'oldWorld|p1');
-    });
+    test(
+      'traces destination_in_other_region for cross-region prefixed dest',
+      () {
+        final world = _worldWith(armies: [_army('a1')]);
+        final traces = <String>[];
+        final next = applyArmyMoveOrdersToRegion(
+          world,
+          topology,
+          const {
+            'p1': [
+              ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'newWorld|n1'),
+            ],
+          },
+          regionId: 'oldWorld',
+          onArmyMoveOrderTrace:
+              ({
+                required playerId,
+                required order,
+                required applied,
+                regionId,
+                destinationProvinceId,
+                ignoreReason,
+              }) => traces.add(ignoreReason ?? 'applied'),
+        );
+        expect(traces, ['destination_in_other_region']);
+        expect(next.armies.single.stationedProvinceId, 'oldWorld|p1');
+      },
+    );
 
     test('traces invalid_adjacency when destination is not a neighbor', () {
       final world = _worldWith(armies: [_army('a1')]);
@@ -281,10 +272,7 @@ void main() {
             // Home army: skipped.
             ArmyMoveOrder(armyId: 'home', destinationProvinceId: 'newWorld|n1'),
             // Destination owned by another player: skipped.
-            ArmyMoveOrder(
-              armyId: 'a1',
-              destinationProvinceId: 'newWorld|n1',
-            ),
+            ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'newWorld|n1'),
           ],
         },
       );

@@ -66,11 +66,11 @@
   },
   "game_pauseMenu_saveGame": "Save Game",
   "@game_pauseMenu_saveGame": {
-    "description": "Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to save the current game."
   },
   "game_pauseMenu_loadGame": "Load Game",
   "@game_pauseMenu_loadGame": {
-    "description": "Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to load a saved game."
   },
   "game_pauseMenu_settings": "Settings",
   "@game_pauseMenu_settings": {
@@ -83,6 +83,96 @@
   "game_pauseMenu_tooltip": "Pause menu",
   "@game_pauseMenu_tooltip": {
     "description": "Tooltip for the pause menu button in the in-game UI."
+  },
+  "saveGameName_title": "Save Game",
+  "@saveGameName_title": {
+    "description": "Title of the named save dialog (DLG70001)."
+  },
+  "saveGameName_save": "Save",
+  "@saveGameName_save": {
+    "description": "Confirm button on the named save dialog."
+  },
+  "saveGameName_invalidName": "Enter a valid save name.",
+  "@saveGameName_invalidName": {
+    "description": "Error when sanitizeGameId rejects the typed save name."
+  },
+  "saveGameName_overwriteConfirm": "A save with this name already exists. Overwrite it?",
+  "@saveGameName_overwriteConfirm": {
+    "description": "Overwrite confirmation body when sanitized gameId collides."
+  },
+  "saveGameName_overwrite": "Overwrite",
+  "@saveGameName_overwrite": {
+    "description": "Confirm overwrite button on the named save dialog."
+  },
+  "saveGameName_gameSaved": "Game saved",
+  "@saveGameName_gameSaved": {
+    "description": "SnackBar message after a successful named save."
+  },
+  "saveGameName_atCapError": "You already have 20 saves. Delete an old save first.",
+  "@saveGameName_atCapError": {
+    "description": "Error when creating a new manual save at the 20-slot cap (Refs #3985)."
+  },
+  "loadGameList_title": "Load Game",
+  "@loadGameList_title": {
+    "description": "Title of the load-game list dialog (DLG80001)."
+  },
+  "loadGameList_empty": "No saved games.",
+  "@loadGameList_empty": {
+    "description": "Empty-state copy when listLoadableSaves returns no rows."
+  },
+  "loadGameList_metaLine": "Turn {turn} · {year} · {nation}",
+  "@loadGameList_metaLine": {
+    "description": "Second line of a load-list row: turn, calendar year, human nation (Refs #3985).",
+    "placeholders": {
+      "turn": { "type": "int" },
+      "year": { "type": "int" },
+      "nation": { "type": "String" }
+    }
+  },
+  "loadGameList_turnSubtitle": "Turn {turn}",
+  "@loadGameList_turnSubtitle": {
+    "description": "Optional turn subtitle under a load-list row when year/nation are missing.",
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameList_discardConfirm": "Unsaved progress will be lost. Load this save?",
+  "@loadGameList_discardConfirm": {
+    "description": "Discard confirmation when loading from an active pause session."
+  },
+  "loadGameList_load": "Load",
+  "@loadGameList_load": {
+    "description": "Confirm load button after discard confirmation."
+  },
+  "loadGameList_delete": "Delete",
+  "@loadGameList_delete": {
+    "description": "Per-row delete control on the load-game list (DLG80001)."
+  },
+  "loadGameList_deleteConfirm": "Delete this save?",
+  "@loadGameList_deleteConfirm": {
+    "description": "Confirmation body before deleting a save from the load list."
+  },
+  "loadGameList_previous": "Previous",
+  "@loadGameList_previous": {
+    "description": "Pager control for the previous page of manual saves."
+  },
+  "loadGameList_next": "Next",
+  "@loadGameList_next": {
+    "description": "Pager control for the next page of manual saves."
+  },
+  "loadGameList_pageOf": "Page {page} of {pageCount}",
+  "@loadGameList_pageOf": {
+    "description": "Pager label showing current manual-save page (1-based).",
+    "placeholders": {
+      "page": { "type": "int" },
+      "pageCount": { "type": "int" }
+    }
+  },
+  "loadGameList_autoSaveBadge": "Auto-save",
+  "@loadGameList_autoSaveBadge": {
+    "description": "Badge above the pinned auto-save row in the load list."
   },
   "game_screenTitle": "Game",
   "@game_screenTitle": {
@@ -1622,6 +1712,114 @@
   "@commodityCategory_advanced": {
     "description": "Lowercase commodity-category name used in resource tooltips for CommodityCategory.advanced."
   },
+  "commodity_grain": "Grain",
+  "@commodity_grain": {
+    "description": "Localized display name for commodity id grain."
+  },
+  "commodity_meat": "Meat",
+  "@commodity_meat": {
+    "description": "Localized display name for commodity id meat."
+  },
+  "commodity_timber": "Timber",
+  "@commodity_timber": {
+    "description": "Localized display name for commodity id timber."
+  },
+  "commodity_iron": "Iron",
+  "@commodity_iron": {
+    "description": "Localized display name for commodity id iron."
+  },
+  "commodity_wool": "Wool",
+  "@commodity_wool": {
+    "description": "Localized display name for commodity id wool."
+  },
+  "commodity_cotton": "Cotton",
+  "@commodity_cotton": {
+    "description": "Localized display name for commodity id cotton."
+  },
+  "commodity_coal": "Coal",
+  "@commodity_coal": {
+    "description": "Localized display name for commodity id coal."
+  },
+  "commodity_sugarCane": "Sugar cane",
+  "@commodity_sugarCane": {
+    "description": "Localized display name for commodity id sugarCane."
+  },
+  "commodity_tobacco": "Tobacco",
+  "@commodity_tobacco": {
+    "description": "Localized display name for commodity id tobacco."
+  },
+  "commodity_furs": "Furs",
+  "@commodity_furs": {
+    "description": "Localized display name for commodity id furs."
+  },
+  "commodity_copper": "Copper",
+  "@commodity_copper": {
+    "description": "Localized display name for commodity id copper."
+  },
+  "commodity_tin": "Tin",
+  "@commodity_tin": {
+    "description": "Localized display name for commodity id tin."
+  },
+  "commodity_horses": "Horses",
+  "@commodity_horses": {
+    "description": "Localized display name for commodity id horses."
+  },
+  "commodity_lumber": "Lumber",
+  "@commodity_lumber": {
+    "description": "Localized display name for commodity id lumber."
+  },
+  "commodity_castIron": "Cast iron",
+  "@commodity_castIron": {
+    "description": "Localized display name for commodity id castIron."
+  },
+  "commodity_fabric": "Fabric",
+  "@commodity_fabric": {
+    "description": "Localized display name for commodity id fabric."
+  },
+  "commodity_refinedSugar": "Refined sugar",
+  "@commodity_refinedSugar": {
+    "description": "Localized display name for commodity id refinedSugar."
+  },
+  "commodity_cigars": "Cigars",
+  "@commodity_cigars": {
+    "description": "Localized display name for commodity id cigars."
+  },
+  "commodity_furHats": "Fur hats",
+  "@commodity_furHats": {
+    "description": "Localized display name for commodity id furHats."
+  },
+  "commodity_steel": "Steel",
+  "@commodity_steel": {
+    "description": "Localized display name for commodity id steel."
+  },
+  "commodity_paper": "Paper",
+  "@commodity_paper": {
+    "description": "Localized display name for commodity id paper."
+  },
+  "commodity_bronze": "Bronze",
+  "@commodity_bronze": {
+    "description": "Localized display name for commodity id bronze."
+  },
+  "commodity_gold": "Gold",
+  "@commodity_gold": {
+    "description": "Localized display name for commodity id gold."
+  },
+  "commodity_silver": "Silver",
+  "@commodity_silver": {
+    "description": "Localized display name for commodity id silver."
+  },
+  "commodity_gems": "Gems",
+  "@commodity_gems": {
+    "description": "Localized display name for commodity id gems."
+  },
+  "commodity_diamonds": "Diamonds",
+  "@commodity_diamonds": {
+    "description": "Localized display name for commodity id diamonds."
+  },
+  "commodity_spices": "Spices",
+  "@commodity_spices": {
+    "description": "Localized display name for commodity id spices."
+  },
   "civilian_units_title": "Civilian Units",
   "@civilian_units_title": {
     "description": "Civilian units panel title."
@@ -2512,6 +2710,53 @@
       }
     }
   },
+  "provinceOverlay_extractionHeading": "Extraction",
+  "@provinceOverlay_extractionHeading": {
+    "description": "Subheading within the Economic section for last-turn Extraction condensed line."
+  },
+  "provinceOverlay_availableHeading": "Available",
+  "@provinceOverlay_availableHeading": {
+    "description": "Subheading within the Economic section for improvable resource tile counts."
+  },
+  "provinceOverlay_extractionQuantity": "{quantity} {name}",
+  "@provinceOverlay_extractionQuantity": {
+    "description": "Full-yield Extraction commodity segment (effective equals full).",
+    "placeholders": {
+      "quantity": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_extractionQuantityPartial": "{effective} ({full}) {name}",
+  "@provinceOverlay_extractionQuantityPartial": {
+    "description": "Partial-yield Extraction commodity segment when effective is below full.",
+    "placeholders": {
+      "effective": {
+        "type": "int"
+      },
+      "full": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_availableTileCount": "{count} {name}",
+  "@provinceOverlay_availableTileCount": {
+    "description": "Available improvable resource tile count commodity segment.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_sectionMilitary": "Military",
   "@provinceOverlay_sectionMilitary": {
     "description": "Province overlay section heading for military details."
@@ -2582,14 +2827,14 @@
       }
     }
   },
-  "province_economic_resourceRow": "{terrain}/{resourceId} {detail}",
+  "province_economic_resourceRow": "{terrain}/{resourceName} {detail}",
   "@province_economic_resourceRow": {
-    "description": "Economic row in province overlay: terrain, resource id, and localized detail suffix.",
+    "description": "Economic row in province overlay: terrain, localized resource name, and localized detail suffix.",
     "placeholders": {
       "terrain": {
         "type": "String"
       },
-      "resourceId": {
+      "resourceName": {
         "type": "String"
       },
       "detail": {

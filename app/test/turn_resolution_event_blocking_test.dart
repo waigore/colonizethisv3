@@ -83,7 +83,7 @@ void main() {
     );
 
     testWidgets(
-      'given turnResolutionBlockingProvider is active, OpenPauseMenuPanelEvent still opens pause UI',
+      'given turnResolutionBlockingProvider is active, OpenPauseMenuPanelEvent does not open pause UI',
       (tester) async {
         handler.bind();
 
@@ -108,7 +108,7 @@ void main() {
         bus.emit(const OpenPauseMenuPanelEvent());
         await tester.pumpAndSettle();
 
-        expect(find.byType(PauseMenuPanel), findsOneWidget);
+        expect(find.byType(PauseMenuPanel), findsNothing);
       },
     );
 

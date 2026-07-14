@@ -88,6 +88,10 @@ class TribeFirstContactHeraldsShownNotifier extends Notifier<Set<String>> {
   void markShown(String gameId, String tribeId) {
     state = {...state, '$gameId|$tribeId'};
   }
+
+  void clear() {
+    state = <String>{};
+  }
 }
 
 final tribeFirstContactHeraldsShownProvider =
@@ -113,6 +117,10 @@ class TribeFirstContactHeraldQueueNotifier
   void dequeueHead() {
     if (state.isEmpty) return;
     state = state.sublist(1);
+  }
+
+  void clear() {
+    state = const [];
   }
 }
 

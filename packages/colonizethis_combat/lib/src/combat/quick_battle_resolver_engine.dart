@@ -16,6 +16,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_effective_strength.dart';
 import 'combat_loss_profile.dart';
+import 'combat_survivor_units.dart';
 import 'quick_battle_action_modifiers.dart';
 import 'quick_battle_emplaced_guns.dart';
 
@@ -114,7 +115,7 @@ List<QuickBattleGroup> removeCasualties(
   return groups
       .map(
         (g) => g.copyWith(
-          unitIds: g.unitIds.where((id) => !casualtySet.contains(id)).toList(),
+          unitIds: idsExcludingCasualtyIds(g.unitIds, casualtySet).toList(),
         ),
       )
       .where((g) => g.unitIds.isNotEmpty)

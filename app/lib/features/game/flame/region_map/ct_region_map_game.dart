@@ -47,6 +47,7 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     required this.selectedTileKey,
     required this.selectedCivilianTileKey,
     required this.secondaryHighlightTileKey,
+    this.secondaryHighlightTileKeys,
     required this.validTileKeys,
     required this.onTileSelected,
     required this.onWorkTargetSelectionCancelled,
@@ -80,6 +81,7 @@ class CtRegionMapGame extends FlameGame with TapDetector {
   String? selectedTileKey;
   String? selectedCivilianTileKey;
   String? secondaryHighlightTileKey;
+  Set<String>? secondaryHighlightTileKeys;
   Set<String>? validTileKeys;
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
@@ -125,9 +127,11 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     String? selectedTileKey,
     String? selectedCivilianTileKey,
     String? secondaryHighlightTileKey,
+    Set<String>? secondaryHighlightTileKeys,
     bool clearSelectedTileKey = false,
     bool clearSelectedCivilianTileKey = false,
     bool clearSecondaryHighlightTileKey = false,
+    bool clearSecondaryHighlightTileKeys = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
@@ -156,9 +160,11 @@ class CtRegionMapGame extends FlameGame with TapDetector {
         selectedTileKey: selectedTileKey,
         selectedCivilianTileKey: selectedCivilianTileKey,
         secondaryHighlightTileKey: secondaryHighlightTileKey,
+        secondaryHighlightTileKeys: secondaryHighlightTileKeys,
         clearSelectedTileKey: clearSelectedTileKey,
         clearSelectedCivilianTileKey: clearSelectedCivilianTileKey,
         clearSecondaryHighlightTileKey: clearSecondaryHighlightTileKey,
+        clearSecondaryHighlightTileKeys: clearSecondaryHighlightTileKeys,
         validTileKeys: validTileKeys,
         clearValidTileKeys: clearValidTileKeys,
         onTileSelected: onTileSelected,

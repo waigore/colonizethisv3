@@ -1,44 +1,16 @@
+// dart format off
 // Compact TradeOrderSuggester result assertions (Refs #3939 phase 3 slice 14).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Pins for a single suggested offer or bid row.
-typedef SuggesterOrderPin = ({
-  String commodityId,
-  int? quantity,
-  TradeOrderType? type,
-  int? priority,
-  bool? isFtp,
-});
-
+typedef SuggesterOrderPin = ({String commodityId, int? quantity, TradeOrderType? type, int? priority, bool? isFtp});
 /// Ordered bid quantity pins for multi-bid cargo/treasury scenarios.
 typedef SuggesterBidQuantityPin = ({String commodityId, int quantity});
-
 /// Data-driven expectations for [TradeOrderSuggesterScenario] rows.
 class SuggesterExpectation {
-  const SuggesterExpectation({
-    this.isEmpty,
-    this.offersEmpty,
-    this.bidsEmpty,
-    this.offersNotEmpty,
-    this.bidsNotEmpty,
-    this.offersLength,
-    this.bidsLength,
-    this.offerCommodityIds,
-    this.bidCommodityIds,
-    this.bidQuantities,
-    this.singleOffer,
-    this.singleBid,
-    this.validatorAllAccepted,
-    this.offerBidDisjoint,
-    this.offersContain,
-    this.bidsContainAll,
-    this.custom,
-  });
-
+  const SuggesterExpectation({this.isEmpty, this.offersEmpty, this.bidsEmpty, this.offersNotEmpty, this.bidsNotEmpty, this.offersLength, this.bidsLength, this.offerCommodityIds, this.bidCommodityIds, this.bidQuantities, this.singleOffer, this.singleBid, this.validatorAllAccepted, this.offerBidDisjoint, this.offersContain, this.bidsContainAll, this.custom});
   final bool? isEmpty;
   final bool? offersEmpty;
   final bool? bidsEmpty;
@@ -55,20 +27,20 @@ class SuggesterExpectation {
   final bool? offerBidDisjoint;
   final Set<String>? offersContain;
   final Set<String>? bidsContainAll;
-  final void Function(
-    TradeSuggestionContext context,
-    TradeSuggestionResult result,
-  )?
-  custom;
+  final void Function(TradeSuggestionContext context, TradeSuggestionResult result)? custom;
 }
-
-void assertSuggesterExpectation(
-  TradeSuggestionContext context,
-  TradeSuggestionResult result,
-  SuggesterExpectation expectation,
-) {
+/// Single-offer pin sugar (Refs #3939 slice 62).
+SuggesterExpectation suggesterSingleOfferExpect(String commodityId, int quantity, {bool pinDefaults = false, bool bidsEmpty = false, int? offersLength = 1}) => SuggesterExpectation(offersLength: offersLength, bidsEmpty: bidsEmpty ? true : null, singleOffer: (commodityId: commodityId, quantity: quantity, type: pinDefaults ? TradeOrderType.offer : null, priority: pinDefaults ? TradeSuggestionContext.defaultOfferPriority : null, isFtp: pinDefaults ? false : null));
+/// Single-bid pin sugar (Refs #3939 slice 62).
+SuggesterExpectation suggesterSingleBidExpect(String commodityId, int quantity, {bool pinDefaults = false, bool offersEmpty = false, int? bidsLength = 1}) => SuggesterExpectation(bidsLength: bidsLength, offersEmpty: offersEmpty ? true : null, singleBid: (commodityId: commodityId, quantity: quantity, type: pinDefaults ? TradeOrderType.bid : null, priority: pinDefaults ? TradeSuggestionContext.defaultBidPriority : null, isFtp: pinDefaults ? false : null));
+void assertSuggesterExpectation(TradeSuggestionContext context, TradeSuggestionResult result, SuggesterExpectation expectation) {
   if (expectation.isEmpty != null) {
     expect(result.isEmpty, expectation.isEmpty);
+    // `isEmpty: true` implies empty offers + bids (Refs #3939 slice 61).
+    if (expectation.isEmpty!) {
+      expect(result.offers, isEmpty);
+      expect(result.bids, isEmpty);
+    }
   }
   if (expectation.offersEmpty != null) {
     expect(result.offers, expectation.offersEmpty! ? isEmpty : isNotEmpty);
@@ -89,14 +61,10 @@ void assertSuggesterExpectation(
     expect(result.bids, hasLength(expectation.bidsLength!));
   }
   if (expectation.offerCommodityIds != null) {
-    expect(result.offers.map((o) => o.commodityId).toList(),
-        expectation.offerCommodityIds);
+    expect(result.offers.map((o) => o.commodityId).toList(), expectation.offerCommodityIds);
   }
   if (expectation.bidCommodityIds != null) {
-    expect(
-      result.bids.map((b) => b.commodityId).toList(),
-      expectation.bidCommodityIds,
-    );
+    expect(result.bids.map((b) => b.commodityId).toList(), expectation.bidCommodityIds);
   }
   if (expectation.bidQuantities != null) {
     expect(result.bids, hasLength(expectation.bidQuantities!.length));
@@ -140,20 +108,10 @@ void assertSuggesterExpectation(
       expect(bid.isFtp, pin.isFtp);
     }
   }
-  if (expectation.validatorAllAccepted != null &&
-      expectation.validatorAllAccepted!) {
+  if (expectation.validatorAllAccepted != null && expectation.validatorAllAccepted!) {
     final all = <TradeOrder>[...result.offers, ...result.bids];
     final validatorResults = TradeOrderValidator.validate(
-      context: TradeOrderValidationContext(
-        playerId: context.playerId,
-        bidTypeCap: context.bidTypeCap,
-        tradeCargoCapacity: context.tradeCargoCapacity,
-        availableStockpileByCommodityId:
-            context.availableStockpileByCommodityId,
-        treasuryBudgetForBids: context.treasuryBudgetForBids,
-        worldMarketState: context.worldMarketState,
-        resourceRules: context.resourceRules ?? ResourceRules.defaultRules,
-      ),
+      context: TradeOrderValidationContext(playerId: context.playerId, bidTypeCap: context.bidTypeCap, tradeCargoCapacity: context.tradeCargoCapacity, availableStockpileByCommodityId: context.availableStockpileByCommodityId, treasuryBudgetForBids: context.treasuryBudgetForBids, worldMarketState: context.worldMarketState, resourceRules: context.resourceRules ?? ResourceRules.defaultRules),
       proposedOrders: all,
     );
     for (final r in validatorResults) {
@@ -175,3 +133,4 @@ void assertSuggesterExpectation(
   }
   expectation.custom?.call(context, result);
 }
+// dart format on

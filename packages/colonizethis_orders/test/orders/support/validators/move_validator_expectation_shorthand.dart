@@ -7,35 +7,19 @@ import 'package:colonizethis_test/test.dart';
 
 import 'move_validator_test_support.dart';
 
+// dart format off
 const mvMinor1 = MinorNation(id: 'minor1', displayName: 'Minor');
-
-const mvMinor1Capital = MinorNation(
-  id: 'minor1',
-  displayName: 'Minor1',
-  capitalProvinceId: 'oldWorld|P2',
-);
-
-const mvTribe1Capital = Tribe(
-  id: 'tribe1',
-  displayName: 'Tribe1',
-  capitalProvinceId: 'newWorld|P2',
-);
+const mvMinor1Capital = MinorNation(id: 'minor1', displayName: 'Minor1', capitalProvinceId: 'oldWorld|P2');
+const mvTribe1Capital = Tribe(id: 'tribe1', displayName: 'Tribe1', capitalProvinceId: 'newWorld|P2');
 
 MapTopology mvOwNwProvinceTopology() => const MapTopology(
   nodes: [
-    TopologyNode(
-      id: 'P1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'P2',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
+    TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+    TopologyNode(id: 'P2', regionId: 'newWorld', type: TopologyNodeType.province),
   ],
   edges: [],
 );
+// dart format on
 
 void mvExpectUnitMove({
   required Game game,

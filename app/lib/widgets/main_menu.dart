@@ -39,13 +39,13 @@ enum MainMenuVariant {
 
 /// Content state of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuState {
-  /// Default: no subtitle; Load Game enabled if [noSaves] is not used.
+  /// Default: no subtitle; Load Game always enabled (empty dialog when no saves).
   default_,
 
   /// After victory: show subtitle "Congratulations, you won your last game."
   afterVictory,
 
-  /// No saves: Load Game disabled with explanatory helper text/tooltip.
+  /// Legacy Widgetbook variant; Load Game remains enabled on the product path.
   noSaves,
 }
 
@@ -82,7 +82,7 @@ class CtMainMenu extends StatelessWidget {
   final VoidCallback onSettings;
   final VoidCallback onQuit;
 
-  bool get _loadGameEnabled => state != MainMenuState.noSaves;
+  bool get _loadGameEnabled => true;
   bool get _showAfterVictorySubtitle => state == MainMenuState.afterVictory;
 
   @override

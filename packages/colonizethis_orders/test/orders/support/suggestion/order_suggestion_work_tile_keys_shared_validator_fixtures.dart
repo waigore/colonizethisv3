@@ -1,8 +1,10 @@
-// Shared work-tile-keys shared-validator fixtures (Refs #3949 wave 3).
+// Shared work-tile-keys shared-validator fixtures (Refs #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const workTileKeysSharedValidatorPlayerId = 'gp1';
 const workTileKeysSharedValidatorOw = 'oldWorld';
@@ -40,24 +42,29 @@ WorkTileKeysSharedValidatorFixture workTileKeysSharedValidatorFixture({
   const ow = workTileKeysSharedValidatorOw;
   const tileA = workTileKeysSharedValidatorTileA;
   const tileB = workTileKeysSharedValidatorTileB;
-  final player = Player(
-    id: playerId,
-    displayName: 'GP',
-    isHuman: false,
-    stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
-  );
-  final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
-  final b1 = Unit(
-    id: 'b1',
-    type: kUnitTypeBuilder,
-    ownerId: playerId,
-    locationProvinceId: '$ow|p1',
-    tileKey: tileA,
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: [p1], units: [b1]),
-    newWorld: const RegionData(),
+  final game = ordersOwRegionGame(
+    id: gameId,
+    turnNumber: 1,
+    players: [
+      Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+      ),
+    ],
+    oldWorld: RegionData(
+      provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+      units: [
+        Unit(
+          id: 'b1',
+          type: kUnitTypeBuilder,
+          ownerId: playerId,
+          locationProvinceId: '$ow|p1',
+          tileKey: tileA,
+        ),
+      ],
+    ),
     playerVisibilityByTile: {
       playerId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
     },
@@ -66,25 +73,20 @@ WorkTileKeysSharedValidatorFixture workTileKeysSharedValidatorFixture({
         '$ow|p1': [tileA, tileB],
       },
     },
-    resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
-    tileState: TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
+    resourceByTileKey: const {tileA: 'grain', tileB: 'grain'},
+    tileState: const TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
   );
-  final game = Game(id: gameId, worldState: world, players: [player]);
   const topology = workTileKeysSharedValidatorEmptyTopology;
   final view = buildPlayerView(game, topology, playerId);
-  const orders = Orders();
-  final ownedIds = <String>{
-    for (final e in view.provincesById.entries)
-      if (e.value.ownerId == playerId) e.key,
-  };
-  final unitsById = unitsByIdFromWorld(game.worldState);
-
   return WorkTileKeysSharedValidatorFixture(
     game: game,
     topology: topology,
     view: view,
-    orders: orders,
-    ownedIds: ownedIds,
-    unitsById: unitsById,
+    orders: const Orders(),
+    ownedIds: {
+      for (final e in view.provincesById.entries)
+        if (e.value.ownerId == playerId) e.key,
+    },
+    unitsById: unitsByIdFromWorld(game.worldState),
   );
 }

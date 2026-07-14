@@ -1,4 +1,4 @@
-// Table-driven unit tests for worker labour primitives (Refs #3939).
+// Table-driven unit tests for worker labour primitives (Refs #3939, #3979).
 
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/test.dart';
@@ -7,18 +7,16 @@ import 'package:colonizethis_test/test.dart';
 /// SPEC/program/economy-models.md, SPEC/game/workers-and-population.md.
 void main() {
   group('effectiveLabourFromIdleCounts', () {
-    for (final scenario in workerEconomyLabourFromIdleCountsScenarios()) {
-      test(scenario.label, () {
-        runWorkerEconomyScenario(scenario);
-      });
-    }
+    runLabeledScenarios(workerEconomyLabourFromIdleCountsScenarios(), (
+      scenario,
+    ) {
+      runIdleLabourScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('effectiveLabourForWorkers', () {
-    for (final scenario in workerEconomyLabourForWorkersScenarios()) {
-      test(scenario.label, () {
-        runWorkerEconomyScenario(scenario);
-      });
-    }
+    runLabeledScenarios(workerEconomyLabourForWorkersScenarios(), (scenario) {
+      runEffectiveLabourScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

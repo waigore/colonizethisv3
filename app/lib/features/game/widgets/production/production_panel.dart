@@ -16,6 +16,7 @@ import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
 import '../chrome/ct_action_text_button.dart';
 import '../chrome/ct_danger_text_button.dart';
+import 'commodity_ui_helpers.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
 import 'production_available_grid.dart';
@@ -92,8 +93,10 @@ class ProductionPanel extends StatelessWidget {
     final effectiveLabour = effectiveLabourForWorkers(
       workers: player.workerPool,
       stockpile: player.stockpile,
-      regimentCountsById: regimentCounts,
-      shipCountsById: shipCounts,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
     );
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;

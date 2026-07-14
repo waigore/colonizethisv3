@@ -59,6 +59,7 @@ export 'package:colonizethis_economy/colonizethis_economy.dart'
         carryForwardBidNotionalByPlayer,
         computeExtractionTotalsForTradeForecast,
         effectiveLabourForWorkers,
+        MilitaryNavyFoodCounts,
         effectiveMarketPriceForCommodityId,
         kWorldMarketBaselineBidTypeCap,
         pendingRichesTreasuryDelta,

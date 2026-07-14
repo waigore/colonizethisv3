@@ -3,7 +3,7 @@ import 'package:colonizethis_world/src/world/army_ids.dart';
 import 'package:colonizethis_world/src/world/army_migration.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
+import '../world_test_support/world_test_support.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
@@ -23,27 +23,10 @@ Unit _regiment(
   locationProvinceId: locationProvinceId,
 );
 
-Game _game({
-  List<Unit> oldWorldUnits = const [],
-  List<Unit> newWorldUnits = const [],
-  List<Army> armies = const [],
-  List<Player> players = const [
-    Player(id: 'p1', displayName: 'P1', isHuman: true),
-  ],
-  int nextArmySeq = 1,
-}) => TestFixtures.minimalGame(
-  id: 'g',
-  players: players,
-  oldWorld: RegionData(units: oldWorldUnits),
-  newWorld: RegionData(units: newWorldUnits),
-  armies: armies,
-  nextArmySeq: nextArmySeq,
-);
-
 void main() {
   group('ensureMilitaryArmiesForGame — rebuild path', () {
     test('rebuilds home + field armies from military units', () {
-      final game = _game(
+      final game = gameWithArmies(
         oldWorldUnits: [
           _regiment('r1', locationProvinceId: 'oldWorld|cap'),
           _regiment('r2', locationProvinceId: 'oldWorld|front'),
@@ -71,7 +54,7 @@ void main() {
     });
 
     test('empty armies + no military units yields no field armies', () {
-      final game = _game();
+      final game = gameWithArmies();
       final next = ensureMilitaryArmiesForGame(game);
       expect(next.worldState.armies.where((a) => !a.isHomeArmy), isEmpty);
     });
@@ -86,7 +69,7 @@ void main() {
         stationedProvinceId: 'oldWorld|front',
         regimentUnitIds: const ['r1'],
       );
-      final game = _game(
+      final game = gameWithArmies(
         oldWorldUnits: [_regiment('r1', locationProvinceId: 'oldWorld|front')],
         armies: [field],
         players: const [
@@ -117,7 +100,7 @@ void main() {
         regimentUnitIds: const ['r1'],
         isHomeArmy: true,
       );
-      final game = _game(
+      final game = gameWithArmies(
         oldWorldUnits: [_regiment('r1', locationProvinceId: 'oldWorld|cap')],
         armies: [home],
         players: const [
@@ -142,7 +125,7 @@ void main() {
         stationedProvinceId: 'oldWorld|front',
         regimentUnitIds: const ['ghost'],
       );
-      final game = _game(
+      final game = gameWithArmies(
         oldWorldUnits: [_regiment('r1', locationProvinceId: 'oldWorld|front')],
         armies: [stale],
       );
@@ -158,7 +141,7 @@ void main() {
   group('updateArmyStation', () {
     test('retargets the army and relocates regiments same-region', () {
       final game = ensureMilitaryArmiesForGame(
-        _game(
+        gameWithArmies(
           oldWorldUnits: [
             _regiment('r1', locationProvinceId: 'oldWorld|front'),
           ],
@@ -179,7 +162,7 @@ void main() {
 
     test('relocates regiments across regions', () {
       final game = ensureMilitaryArmiesForGame(
-        _game(
+        gameWithArmies(
           oldWorldUnits: [
             _regiment('r1', locationProvinceId: 'oldWorld|front'),
           ],
@@ -188,7 +171,11 @@ void main() {
       final fieldId = game.worldState.armies
           .firstWhere((a) => !a.isHomeArmy)
           .id;
-      final next = updateArmyStation(game.worldState, fieldId, 'newWorld|beach');
+      final next = updateArmyStation(
+        game.worldState,
+        fieldId,
+        'newWorld|beach',
+      );
       final army = next.armies.firstWhere((a) => a.id == fieldId);
       expect(army.regionId, 'newWorld');
       expect(next.oldWorld.units.any((u) => u.id == 'r1'), isFalse);
@@ -199,7 +186,7 @@ void main() {
     });
 
     test('returns world unchanged when army id is unknown', () {
-      final world = _game().worldState;
+      final world = gameWithArmies().worldState;
       final next = updateArmyStation(world, 'missing', 'oldWorld|p1');
       expect(next, same(world));
     });
@@ -210,7 +197,7 @@ void main() {
       // shared `RegionUnitLists` (ow, nw) pair into the next (Refs #3403
       // Phase 3 — shared region-unit-list type).
       final game = ensureMilitaryArmiesForGame(
-        _game(
+        gameWithArmies(
           oldWorldUnits: [
             _regiment('r1', locationProvinceId: 'oldWorld|front'),
             _regiment('r2', locationProvinceId: 'oldWorld|front'),
@@ -247,13 +234,13 @@ void main() {
         stationedProvinceId: 'oldWorld|front',
         regimentUnitIds: const ['dead'],
       );
-      final game = _game(armies: [field]);
+      final game = gameWithArmies(armies: [field]);
       final next = reconcileArmiesAfterUnitsChanged(game.worldState, game);
       expect(next.armies, isEmpty);
     });
 
     test('assigns an orphan regiment to a new field army', () {
-      final game = _game(
+      final game = gameWithArmies(
         oldWorldUnits: [_regiment('r1', locationProvinceId: 'oldWorld|front')],
       );
       final next = reconcileArmiesAfterUnitsChanged(game.worldState, game);
@@ -272,7 +259,7 @@ void main() {
         regimentUnitIds: const [],
         isHomeArmy: true,
       );
-      final game = _game(armies: [home]);
+      final game = gameWithArmies(armies: [home]);
       final next = reconcileArmiesAfterUnitsChanged(game.worldState, game);
       expect(next.armies.single.id, homeArmyIdFor('p1'));
     });

@@ -18,7 +18,13 @@ cd "$ROOT"
 ALL_PKGS=(colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_world colonizethis_combat colonizethis_economy colonizethis_diplomacy colonizethis_setup colonizethis_orders colonizethis_turn colonizethis_ai_contracts colonizethis_logic colonizethis_ai)
 
 # ---- read package filter ---------------------------------------------------
-if [ -n "${PACKAGES_TO_TEST:-}" ]; then
+# Distinguishes: unset → all packages (local default); set-but-empty → skip
+# (CI selective plan with no CORE package changes).
+if [ "${PACKAGES_TO_TEST+set}" = "set" ]; then
+  if [ -z "$PACKAGES_TO_TEST" ]; then
+    echo "=== PACKAGES_TO_TEST is empty; skipping package tests ==="
+    exit 0
+  fi
   IFS=',' read -ra PKGS <<< "$PACKAGES_TO_TEST"
 else
   PKGS=("${ALL_PKGS[@]}")

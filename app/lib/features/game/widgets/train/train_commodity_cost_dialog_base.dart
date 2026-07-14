@@ -107,7 +107,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
         stockpile: player?.stockpile ?? const Stockpile(),
         committedCommodities: totalCommodityCosts(),
         commodityIds: resourceBarCommodityIds,
-        deficitHint: commodityCostDeficitHint,
+        deficitHint: commodityCostDeficitHint(l10n),
         l10n: l10n,
       ),
       const SizedBox(height: CtSpacing.ml),

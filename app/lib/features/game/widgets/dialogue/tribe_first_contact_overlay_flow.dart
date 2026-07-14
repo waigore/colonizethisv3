@@ -7,29 +7,20 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(kDialogueTribeFirstContactAsset);
-      final project = YarnProject();
-      // Jenny resolves `{$tribeName}` / `{$capitalName}` interpolation at PARSE
-      // time and stores variables under their `$`-prefixed name, so the bindings
-      // must use the `$` prefix AND be set before `parse` — otherwise parsing
-      // throws `NameError: variable $tribeName is not defined` and blocks the
-      // game (#3463). StringVariable reads storage at runtime, so these values
-      // are reflected when the line renders.
-      project.variables.setVariable(r'$tribeName', widget.tribeName);
-      project.variables.setVariable(r'$capitalName', widget.capitalName);
-      project.parse(text);
-      if (!project.nodes.containsKey(kNode)) {
-        throw StateError(
-          'Tribe first-contact node "$kNode" not found in '
-          '$kDialogueTribeFirstContactAsset',
-        );
-      }
-
-      final view = CtDialogueView(logger: log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
+      // Seed `$`-prefixed vars before parse (Jenny interpolate, Refs #3463).
+      final session = await loadYarnDialogueSession(
+        bundle: bundle,
+        assetPath: kDialogueTribeFirstContactAsset,
+        logger: log,
+        createView: _createTribeFirstContactDialogueView,
+        beforeParse: (project) {
+          project.variables.setVariable(r'$tribeName', widget.tribeName);
+          project.variables.setVariable(r'$capitalName', widget.capitalName);
+        },
+        requiredNodes: const [kNode],
       );
+      final view = session.view;
+      final runner = session.runner;
       view.onStateChanged = (line, choice) {
         if (mounted) setState(() {});
       };

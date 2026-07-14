@@ -4,10 +4,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
-import '../world_test_support/unit_lookup_test_support.dart';
 
 void main() {
-group('WorldStateUnitLookup.tryGetUnitById', () {
+  group('WorldStateUnitLookup.tryGetUnitById', () {
     final uOld = Unit(
       id: 'u-old',
       type: kUnitTypeExplorer,

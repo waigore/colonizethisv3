@@ -354,7 +354,11 @@ void main() {
     );
   });
 
-  group('CtResourceCell amount right-edge anchoring (#3485)', () {
+  group('CtResourceCell panel-wide amount alignment (#3999)', () {
+    /// Representative Available 3-column cell width (~800 dp wide Production
+    /// with side-by-side subpanels → ~120–130 dp slots).
+    const double gridCellWidth = 120;
+
     Future<void> pumpFixedWidth(
       WidgetTester tester,
       Widget cell, {
@@ -374,42 +378,320 @@ void main() {
       await tester.pump();
     }
 
-    // The card's inner-right x: the card right edge minus the cell's horizontal
-    // padding (`CtSpacing.s`). The trailing cluster must be flush with this.
-    double innerRightX(WidgetTester tester) {
-      final double cardRight =
-          tester.getTopRight(find.byType(CtResourceCell)).dx;
-      return cardRight - CtSpacing.s;
+    Future<void> pumpAlignedColumn(
+      WidgetTester tester,
+      List<Widget> cells, {
+      required double cellWidth,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.editorialMonocle,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: cellWidth,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: cells,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    double quantityRight(WidgetTester tester, Finder cellFinder) {
+      final Finder qty = find.descendant(
+        of: cellFinder,
+        matching: find.byKey(CtResourceCell.quantityTextKey),
+      );
+      expect(qty, findsOneWidget);
+      return tester.getTopRight(qty).dx;
+    }
+
+    double quantityWidth(WidgetTester tester, Finder cellFinder) {
+      final Finder qty = find.descendant(
+        of: cellFinder,
+        matching: find.byKey(CtResourceCell.quantityTextKey),
+      );
+      expect(qty, findsOneWidget);
+      return tester.getSize(qty).width;
     }
 
     testWidgets(
-      'quantity right edge is pinned to the card inner-right edge (no delta)',
+      'quantity 0 with null delta stays visible at grid width',
       (tester) async {
-        const double width = 240;
         await pumpFixedWidth(
           tester,
           CtResourceCell(
             iconBuilder: tinyIcon,
-            name: 'Iron',
-            quantity: 430,
+            name: 'Grain',
+            quantity: 0,
           ),
-          width: width,
+          width: gridCellWidth,
         );
-        final double qtyRight = tester.getTopRight(find.text('430')).dx;
+        expect(find.text('0'), findsOneWidget);
         expect(
-          qtyRight,
-          closeTo(innerRightX(tester), 1.5),
-          reason: 'The stockpile amount must be pinned to the card right edge '
-              '(legacy equal-flex trailing cluster left it near the middle).',
+          quantityWidth(tester, find.byType(CtResourceCell)),
+          greaterThan(1),
         );
       },
     );
 
     testWidgets(
-      'delta (not quantity) is flush to the right edge, with the quantity '
-      'immediately to its left',
+      'quantity 0 with negative delta shows both values at grid width',
       (tester) async {
-        const double width = 240;
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Grain',
+            quantity: 0,
+            delta: -16,
+          ),
+          width: gridCellWidth,
+        );
+        expect(find.text('0'), findsOneWidget);
+        expect(find.text('-16'), findsOneWidget);
+        expect(
+          quantityWidth(tester, find.byType(CtResourceCell)),
+          greaterThan(1),
+        );
+      },
+    );
+
+    testWidgets(
+      'quantity 0 with positive delta shows both values at grid width',
+      (tester) async {
+        await pumpFixedWidth(
+          tester,
+          CtResourceCell(
+            iconBuilder: tinyIcon,
+            name: 'Grain',
+            quantity: 0,
+            delta: 12,
+          ),
+          width: gridCellWidth,
+        );
+        expect(find.text('0'), findsOneWidget);
+        expect(find.text('+12'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'different label lengths share the same quantity right-edge x',
+      (tester) async {
+        const Key tinKey = ValueKey<String>('cell_tin');
+        const Key sugarKey = ValueKey<String>('cell_sugar');
+        const Key refinedKey = ValueKey<String>('cell_refined');
+        await pumpAlignedColumn(
+          tester,
+          <Widget>[
+            CtResourceCell(
+              key: tinKey,
+              iconBuilder: tinyIcon,
+              name: 'Tin',
+              quantity: 4,
+            ),
+            CtResourceCell(
+              key: sugarKey,
+              iconBuilder: tinyIcon,
+              name: 'Sugar Cane',
+              quantity: 4,
+            ),
+            CtResourceCell(
+              key: refinedKey,
+              iconBuilder: tinyIcon,
+              name: 'Refined Sugar',
+              quantity: 4,
+            ),
+          ],
+          cellWidth: gridCellWidth,
+        );
+        final double tinX = quantityRight(tester, find.byKey(tinKey));
+        final double sugarX = quantityRight(tester, find.byKey(sugarKey));
+        final double refinedX = quantityRight(tester, find.byKey(refinedKey));
+        expect(tinX, closeTo(sugarX, 0.5));
+        expect(sugarX, closeTo(refinedX, 0.5));
+      },
+    );
+
+    testWidgets(
+      'quantity right-edge is delta-stable (null vs non-zero delta)',
+      (tester) async {
+        const Key noDeltaKey = ValueKey<String>('cell_no_delta');
+        const Key withDeltaKey = ValueKey<String>('cell_with_delta');
+        await pumpAlignedColumn(
+          tester,
+          <Widget>[
+            CtResourceCell(
+              key: noDeltaKey,
+              iconBuilder: tinyIcon,
+              name: 'Meat',
+              quantity: 0,
+            ),
+            CtResourceCell(
+              key: withDeltaKey,
+              iconBuilder: tinyIcon,
+              name: 'Grain',
+              quantity: 0,
+              delta: -16,
+            ),
+          ],
+          cellWidth: gridCellWidth,
+        );
+        expect(
+          quantityRight(tester, find.byKey(noDeltaKey)),
+          closeTo(quantityRight(tester, find.byKey(withDeltaKey)), 0.5),
+        );
+      },
+    );
+
+    testWidgets(
+      'worker counts follow the same quantity alignment rule',
+      (tester) async {
+        const Key shortKey = ValueKey<String>('worker_short');
+        const Key longKey = ValueKey<String>('worker_long');
+        await pumpAlignedColumn(
+          tester,
+          <Widget>[
+            CtResourceCell(
+              key: shortKey,
+              iconBuilder: tinyIcon,
+              name: 'Masters',
+              quantity: 6,
+            ),
+            CtResourceCell(
+              key: longKey,
+              iconBuilder: tinyIcon,
+              name: 'Journeymen',
+              quantity: 6,
+            ),
+          ],
+          cellWidth: 160,
+        );
+        expect(
+          quantityRight(tester, find.byKey(shortKey)),
+          closeTo(quantityRight(tester, find.byKey(longKey)), 0.5),
+        );
+      },
+    );
+
+    testWidgets(
+      'magnitude matrix A–H: visibility + alignment at grid width',
+      (tester) async {
+        const List<({String id, int qty, int? delta, String qtyText})> cases =
+            <({String id, int qty, int? delta, String qtyText})>[
+          (id: 'A', qty: 0, delta: null, qtyText: '0'),
+          (id: 'B', qty: 0, delta: -16, qtyText: '0'),
+          (id: 'C', qty: 0, delta: 12, qtyText: '0'),
+          (id: 'D', qty: 4, delta: null, qtyText: '4'),
+          (id: 'E', qty: 999, delta: null, qtyText: '999'),
+          (id: 'F', qty: 9999, delta: null, qtyText: '9,999'),
+          (id: 'G', qty: 9999, delta: -999, qtyText: '9,999'),
+          (id: 'H', qty: -5, delta: null, qtyText: '-5'),
+        ];
+
+        for (final case_ in cases) {
+          const Key refKey = ValueKey<String>('matrix_ref');
+          final Key caseKey = ValueKey<String>('matrix_${case_.id}');
+          await pumpAlignedColumn(
+            tester,
+            <Widget>[
+              CtResourceCell(
+                key: refKey,
+                iconBuilder: tinyIcon,
+                name: 'Tin',
+                quantity: case_.qty,
+                delta: case_.delta,
+              ),
+              CtResourceCell(
+                key: caseKey,
+                iconBuilder: tinyIcon,
+                name: 'Refined Sugar',
+                quantity: case_.qty,
+                delta: case_.delta,
+              ),
+            ],
+            cellWidth: gridCellWidth,
+          );
+
+          final Finder caseCell = find.byKey(caseKey);
+          expect(
+            find.descendant(of: caseCell, matching: find.text(case_.qtyText)),
+            findsOneWidget,
+            reason: 'Case ${case_.id}: quantity ${case_.qtyText} must be visible',
+          );
+          expect(
+            quantityWidth(tester, caseCell),
+            greaterThan(1),
+            reason: 'Case ${case_.id}: quantity must have non-zero layout width',
+          );
+          if (case_.delta != null) {
+            final String? deltaText =
+                CtResourceCell.formattedDeltaText(case_.delta);
+            expect(
+              find.descendant(of: caseCell, matching: find.text(deltaText!)),
+              findsOneWidget,
+              reason: 'Case ${case_.id}: delta $deltaText must be visible',
+            );
+          }
+          expect(
+            quantityRight(tester, find.byKey(refKey)),
+            closeTo(quantityRight(tester, caseCell), 0.5),
+            reason: 'Case ${case_.id}: quantity anchors must align',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'delta sits immediately to the right of quantity without shifting '
+      'the quantity anchor vs a null-delta peer',
+      (tester) async {
+        const Key peerKey = ValueKey<String>('adj_peer');
+        const Key deltaKey = ValueKey<String>('adj_delta');
+        await pumpAlignedColumn(
+          tester,
+          <Widget>[
+            CtResourceCell(
+              key: peerKey,
+              iconBuilder: tinyIcon,
+              name: 'Wool',
+              quantity: 4,
+            ),
+            CtResourceCell(
+              key: deltaKey,
+              iconBuilder: tinyIcon,
+              name: 'Wool',
+              quantity: 4,
+              delta: -40,
+            ),
+          ],
+          cellWidth: gridCellWidth,
+        );
+        final Finder deltaCell = find.byKey(deltaKey);
+        final double qtyRight = quantityRight(tester, deltaCell);
+        final double deltaLeft =
+            tester.getTopLeft(find.descendant(
+              of: deltaCell,
+              matching: find.text('-40'),
+            )).dx;
+        expect(deltaLeft - qtyRight, closeTo(CtResourceCell.quantityToDeltaGap, 1.0));
+        expect(
+          quantityRight(tester, find.byKey(peerKey)),
+          closeTo(qtyRight, 0.5),
+        );
+      },
+    );
+
+    testWidgets(
+      'trailing cluster right edge remains within card inner-right bounds',
+      (tester) async {
         await pumpFixedWidth(
           tester,
           CtResourceCell(
@@ -418,109 +700,18 @@ void main() {
             quantity: 920,
             delta: -40,
           ),
-          width: width,
+          width: 240,
         );
-        final double deltaRight = tester.getTopRight(find.text('-40')).dx;
-        final double qtyRight = tester.getTopRight(find.text('920')).dx;
-        final double deltaLeft = tester.getTopLeft(find.text('-40')).dx;
+        final double cardRight =
+            tester.getTopRight(find.byType(CtResourceCell)).dx;
+        final double innerRight = cardRight - CtSpacing.s;
+        final double clusterRight = tester
+            .getTopRight(find.byKey(CtResourceCell.deltaTextKey))
+            .dx;
+        expect(clusterRight, lessThanOrEqualTo(innerRight + 0.5));
         expect(
-          deltaRight,
-          closeTo(innerRightX(tester), 1.5),
-          reason: 'When a delta is present it is the rightmost element and is '
-              'pinned to the card right edge.',
-        );
-        // Quantity sits immediately to the left of the delta (delta adjacency).
-        expect(qtyRight, lessThanOrEqualTo(deltaLeft + 0.5));
-        expect(
-          deltaLeft - qtyRight,
-          closeTo(CtResourceCell.quantityToDeltaGap, 1.0),
-        );
-      },
-    );
-
-    testWidgets(
-      'worker cells follow the same right-edge amount anchoring rule',
-      (tester) async {
-        const double width = 200;
-        await pumpFixedWidth(
-          tester,
-          CtResourceCell(
-            iconBuilder: tinyIcon,
-            name: 'Journeymen',
-            quantity: 6,
-          ),
-          width: width,
-        );
-        final double qtyRight = tester.getTopRight(find.text('6')).dx;
-        expect(qtyRight, closeTo(innerRightX(tester), 1.5));
-      },
-    );
-
-    testWidgets(
-      'amounts of two equal-width cards with different name lengths align to '
-      'the same right edge',
-      (tester) async {
-        const double width = 220;
-        await pumpFixedWidth(
-          tester,
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              CtResourceCell(
-                iconBuilder: tinyIcon,
-                name: 'Tin',
-                quantity: 85,
-              ),
-              CtResourceCell(
-                iconBuilder: tinyIcon,
-                name: 'Refined Sugar',
-                quantity: 50,
-              ),
-            ],
-          ),
-          width: width,
-        );
-        final double shortQtyRight = tester.getTopRight(find.text('85')).dx;
-        final double longQtyRight = tester.getTopRight(find.text('50')).dx;
-        expect(
-          shortQtyRight,
-          closeTo(longQtyRight, 1.5),
-          reason: 'Right-pinned amounts must line up vertically regardless of '
-              'commodity name length.',
-        );
-      },
-    );
-
-    testWidgets(
-      'canonical commodity name renders in full at a representative wide grid '
-      'cell width that the legacy equal-flex layout would have truncated',
-      (tester) async {
-        // ~240 logical px approximates a 3-column cell when the Available panel
-        // is ~740 dp wide. The legacy layout gave the name only ~half the
-        // residual width (~99 px here) and clipped "Refined Sugar"; the fix
-        // gives the name all residual width so it renders in full.
-        const double width = 240;
-        await pumpFixedWidth(
-          tester,
-          CtResourceCell(
-            iconBuilder: tinyIcon,
-            name: 'Refined Sugar',
-            quantity: 50,
-            delta: 5,
-          ),
-          width: width,
-        );
-        final paragraph = tester.renderObject<RenderParagraph>(
-          find.descendant(
-            of: find.byType(CtResourceCell),
-            matching: find.text('Refined Sugar'),
-          ),
-        );
-        expect(
-          paragraph.didExceedMaxLines,
-          isFalse,
-          reason: 'The name must render in full at a representative wide grid '
-              'cell width per #3485.',
+          innerRight - clusterRight,
+          lessThan(CtResourceCell.reservedDeltaSlotWidth + 1),
         );
       },
     );

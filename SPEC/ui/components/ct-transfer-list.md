@@ -102,7 +102,7 @@ Consumer specs link back here instead of duplicating the wireframe.
 ## Tests
 
 - `app/test/widgets/ct_transfer_list_test.dart` — widget contract tests pinning move semantics, totals, default `canConfirm`, and the narrow-stack threshold.
-- `app/test/dialogs_320dp_min_viewport_test.dart` — pins the three hosted dialogs at `kMinViewportWidth = 320` dp without overflow.
+- `app/test/dialogs_320dp_min_viewport_part2_test.dart` — pins the three hosted dialogs at `kMinViewportWidth = 320` dp without overflow.
 - `app/test/spec_components_ct_transfer_list_test.dart` — spec-pinning tests asserting this spec exists, declares the canonical sections, enumerates the three consumers, and restates the `360` dp threshold.
 
 ---

@@ -6,18 +6,17 @@
 library;
 
 import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('round-robin gun HP damage stays deterministic when guns die mid-round', () {
-    for (final scenario in quickBattlePerfInvariantScenarios().take(2)) {
-      test(scenario.label, () => runQuickBattlePerfInvariantScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'round-robin gun HP damage stays deterministic when guns die mid-round',
+    quickBattlePerfInvariantScenarios().take(2),
+    (s) => s.run(),
+  );
 
-  group('effective-strength caching preserves outcomes across initiative branches', () {
-    for (final scenario in quickBattlePerfInvariantScenarios().skip(2)) {
-      test(scenario.label, () => runQuickBattlePerfInvariantScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'effective-strength caching preserves outcomes across initiative branches',
+    quickBattlePerfInvariantScenarios().skip(2),
+    (s) => s.run(),
+  );
 }

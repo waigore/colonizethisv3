@@ -81,16 +81,22 @@ void main() {
         },
       );
 
-      final (nextGame, maps) =
-          stripResourcesAndExtractionImprovementsOnTileKeys(
-        game,
-        null,
-        const ['oldWorld|p1|0|0', 'not-a-tile-key'],
-      );
+      final (
+        nextGame,
+        maps,
+      ) = stripResourcesAndExtractionImprovementsOnTileKeys(game, null, const [
+        'oldWorld|p1|0|0',
+        'not-a-tile-key',
+      ]);
 
-      expect(nextGame.worldState.resourceByTileKey.containsKey('oldWorld|p1|0|0'),
-          isFalse);
-      expect(nextGame.worldState.resourceByTileKey['oldWorld|p1|1|1'], 'silver');
+      expect(
+        nextGame.worldState.resourceByTileKey.containsKey('oldWorld|p1|0|0'),
+        isFalse,
+      );
+      expect(
+        nextGame.worldState.resourceByTileKey['oldWorld|p1|1|1'],
+        'silver',
+      );
       expect(maps, isNull);
     });
 
@@ -99,8 +105,10 @@ void main() {
         resourceByTileKey: const {'oldWorld|p1|0|0': 'food'},
       );
 
-      final (nextGame, maps) =
-          stripResourcesAndExtractionImprovementsOnTileKeys(
+      final (
+        nextGame,
+        maps,
+      ) = stripResourcesAndExtractionImprovementsOnTileKeys(
         game,
         const {},
         const ['oldWorld|p1|0|0'],

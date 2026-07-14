@@ -1,22 +1,15 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/game_screen_test_support.dart';
 import 'support/map_view_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -36,33 +29,18 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  Widget buildGameScreen({required double width, required double height}) {
-    return ProviderScope(
-      overrides: [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(
-          () => CurrentGameNotifier(baseGame),
-        ),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => mapViewData),
-        gameIdsWithIntroShownProvider.overrideWith(
-          () => GameIdsWithIntroShownNotifier({baseGame.id}),
-        ),
-      ],
-      child: MaterialApp(
-        theme: AppThemes.colonial,
-        home: MediaQuery(
-          data: MediaQueryData(size: Size(width, height)),
-          child: const GameScreen(),
-        ),
-      ),
-    );
-  }
+  Widget buildGameScreen({required double width, required double height}) =>
+      buildGameScreenHost(
+        gamesBox: gamesBox,
+        game: baseGame,
+        mapViewData: mapViewData,
+        width: width,
+        height: height,
+        includeAppEventBus: false,
+        includeHomeFleetCargo: false,
+        includeTreasury: false,
+        wrapAppEventHandler: false,
+      );
 
   testWidgets('GameScreen taps menu icon to open/close side menu', (
     WidgetTester tester,
@@ -93,4 +71,3 @@ void main() {
     expect(find.text('Debug log'), findsNothing);
   });
 }
-

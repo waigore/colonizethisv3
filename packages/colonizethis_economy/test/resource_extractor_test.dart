@@ -9,73 +9,45 @@ final TileMapResult _ironTileMap = singleTileMap(Resource.iron);
 
 void main() {
   group('ResourceExtractor', () {
-    for (final scenario in resourceExtractorConnectivityCapScenarios(
-      grainTileMap: _grainTileMap,
-    )) {
-      test(scenario.label, () => runResourceExtractorScenario(scenario));
-    }
+    runLabeledScenarios(
+      resourceExtractorConnectivityCapScenarios(grainTileMap: _grainTileMap),
+      (scenario) {
+        runResourceExtractorScenario(scenario);
+      },
+      labelOf: (s) => s.label,
+    );
 
-    test(
-      resourceExtractorPlayerTechCapScenario(grainTileMap: _grainTileMap).label,
-      () => runResourceExtractorScenario(
-        resourceExtractorPlayerTechCapScenario(grainTileMap: _grainTileMap),
+    runLabeledScenarios(
+      resourceExtractorMineralTownDevScenarios(
+        ironTileMap: _ironTileMap,
+        grainTileMap: _grainTileMap,
       ),
+      (scenario) {
+        runResourceExtractorScenario(scenario);
+      },
+      labelOf: (s) => s.label,
     );
 
-    for (final scenario in resourceExtractorMineralTownDevScenarios(
-      ironTileMap: _ironTileMap,
-      grainTileMap: _grainTileMap,
-    )) {
-      test(scenario.label, () => runResourceExtractorScenario(scenario));
-    }
+    runLabeledScenarios(resourceExtractorEmptyConnectivityScenarios(), (
+      scenario,
+    ) {
+      runResourceExtractorScenario(scenario);
+    }, labelOf: (s) => s.label);
 
-    test(
-      townRuleNonPortNoCapScenario().label,
-      () => runResourceExtractorScenario(townRuleNonPortNoCapScenario()),
+    runLabeledScenarios(
+      resourceExtractorSpecialCaseScenarios(grainTileMap: _grainTileMap),
+      (scenario) {
+        runResourceExtractorScenario(scenario);
+      },
+      labelOf: (s) => s.label,
     );
 
-    test(
-      townRulePortCapScenario().label,
-      () => runResourceExtractorScenario(townRulePortCapScenario()),
+    runLabeledScenarios(
+      tileExtractionContributionScenarios(grainTileMap: _grainTileMap),
+      (scenario) {
+        runTileExtractionContributionScenario(scenario);
+      },
+      labelOf: (s) => s.label,
     );
-
-    test(
-      overseasExtractionScenario().label,
-      () => runResourceExtractorScenario(overseasExtractionScenario()),
-    );
-
-    test(
-      blockadedOverseasPortScenario().label,
-      () => runResourceExtractorScenario(blockadedOverseasPortScenario()),
-    );
-
-    test(
-      pathTransportCapScenario(grainTileMap: _grainTileMap).label,
-      () => runResourceExtractorScenario(
-        pathTransportCapScenario(grainTileMap: _grainTileMap),
-      ),
-    );
-
-    for (final scenario in resourceExtractorEmptyConnectivityScenarios()) {
-      test(scenario.label, () => runResourceExtractorScenario(scenario));
-    }
-
-    test(
-      provinceMissingFromRegionScenario(grainTileMap: _grainTileMap).label,
-      () => runResourceExtractorScenario(
-        provinceMissingFromRegionScenario(grainTileMap: _grainTileMap),
-      ),
-    );
-
-    test(
-      capitalGrainBonusScenario().label,
-      () => runResourceExtractorScenario(capitalGrainBonusScenario()),
-    );
-
-    for (final scenario in tileExtractionContributionScenarios(
-      grainTileMap: _grainTileMap,
-    )) {
-      test(scenario.label, () => runTileExtractionContributionScenario(scenario));
-    }
   });
 }

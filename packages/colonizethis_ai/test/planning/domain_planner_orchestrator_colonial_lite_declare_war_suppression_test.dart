@@ -60,7 +60,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Fake API provides one `declareWar(tribe1)` candidate. The fake's
 // `suggestDeclareWarOrders` filters by `type == declareWar`, so the
@@ -101,74 +100,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _colonialLiteSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 9 OW provinces -> below quota (matches `_gp1OwProvincesAtColonialLiteFloor`).
-    // Combined with turn=120 and a non-GP-owned NW province in the
-    // fixture this lands the GP in COLONIAL-lite per
-    // `isObserverColonialLitePhase`.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
-      provincesToVictory: 22,
-    ),
-    // Tribe is both a visible NW invadable owner **and** a preferred
-    // colonial target so every `declareWar` scoring-collapse predicate in
-    // `computeDiplomaticCandidateScores` for COLONIAL-lite is exercised
-    // (tribe / preferred / invadable owner) — mirrors the EXPAND NW
-    // declareWar suppression fixture.
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 9),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
-
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 10 OW provinces -> at quota (matches `_gp1OwProvincesExactQuota`).
-    // `isBelowObserverConquestQuota(10)` -> false so COLONIAL-lite cannot
-    // fire even at turn 120, and `hasColonialAcquisitionTargets` true
-    // places the GP in COLONIAL. Boundary differs from the positive case
-    // by a single OW province.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: 21,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 10),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
-
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
       in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
@@ -188,7 +119,13 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
+          // OW=9 + provincesToVictory keep the COLONIAL-lite boundary
+          // (Refs #3997 shared builders).
+          final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
+            provincesToVictory: 22,
+            tribePeaceRelationScore: 0,
+          );
 
           expect(
             observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -203,16 +140,18 @@ void main() {
           );
 
           final orders = runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(2509300),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
+            DomainPlannerInput(
+              game: game,
+              topology: topology,
+              nationId: _nationId,
+              view: view,
+              snapshot: snapshot,
+              config: _aiConfig,
+              primaryGoal: StrategicGoal.expand,
+              seeds: AISeedBundle.fromTurnSeed(2509300),
+              suggestionAPI: _nwTribeDeclareWarApi,
+              economyPlan: _economyPlan,
+            ),
           );
 
           expect(
@@ -243,7 +182,12 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialSnapshot();
+          // OW=10 negative control: COLONIAL (not COLONIAL-lite).
+          final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
+            provincesToVictory: 21,
+            tribeRelationScore: 0,
+          );
 
           expect(
             observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -258,16 +202,18 @@ void main() {
           );
 
           final orders = runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.conquer,
-            seeds: AISeedBundle.fromTurnSeed(2509301),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
+            DomainPlannerInput(
+              game: game,
+              topology: topology,
+              nationId: _nationId,
+              view: view,
+              snapshot: snapshot,
+              config: _aiConfig,
+              primaryGoal: StrategicGoal.conquer,
+              seeds: AISeedBundle.fromTurnSeed(2509301),
+              suggestionAPI: _nwTribeDeclareWarApi,
+              economyPlan: _economyPlan,
+            ),
           );
 
           expect(
@@ -294,19 +240,25 @@ void main() {
           );
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
+          final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(
+            oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
+            provincesToVictory: 22,
+            tribePeaceRelationScore: 0,
+          );
 
           Orders runOnce(int turnSeed) => runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(turnSeed),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
+            DomainPlannerInput(
+              game: game,
+              topology: topology,
+              nationId: _nationId,
+              view: view,
+              snapshot: snapshot,
+              config: _aiConfig,
+              primaryGoal: StrategicGoal.expand,
+              seeds: AISeedBundle.fromTurnSeed(turnSeed),
+              suggestionAPI: _nwTribeDeclareWarApi,
+              economyPlan: _economyPlan,
+            ),
           );
 
           final firstRun = runOnce(2509302);

@@ -110,13 +110,7 @@ void oenbpaRunRejectsNavalBuildWhenPeasantsZero() {
 /// Labels must match wave-3 [DESCRIPTION_BASELINE.txt] entries and former
 /// `order_engine_naval_build_projection_and_workers_test.dart` descriptions.
 List<RunnableScenario>
-orderEngineNavalBuildProjectionAndWorkersScenarios() => const [
-  RunnableScenario(
-    label: 'projectedEffects returns treasuryDelta when orders affect treasury',
-    run: oenbpaRunProjectedEffectsTreasuryDelta,
-  ),
-  RunnableScenario(
-    label: 'rejects naval build when peasants are zero',
-    run: oenbpaRunRejectsNavalBuildWhenPeasantsZero,
-  ),
+orderEngineNavalBuildProjectionAndWorkersScenarios() => [
+  rs('projectedEffects returns treasuryDelta when orders affect treasury', oenbpaRunProjectedEffectsTreasuryDelta),
+  rs('rejects naval build when peasants are zero', oenbpaRunRejectsNavalBuildWhenPeasantsZero),
 ];

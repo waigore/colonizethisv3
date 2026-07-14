@@ -28,10 +28,11 @@ final class ColonialMilitaryPlan extends PhaseDestinationResult {
   const ColonialMilitaryPlan({
     required List<String> priorityDestinationProvinceIdsSorted,
     required List<String> priorityTargetOwnerFactionIdsSorted,
-  })  : _priorityDestinationProvinceIdsSorted =
-            priorityDestinationProvinceIdsSorted,
-        _priorityTargetOwnerFactionIdsSorted =
-            priorityTargetOwnerFactionIdsSorted;
+  }) : super(
+         priorityProvinceIdsSorted: priorityDestinationProvinceIdsSorted,
+         priorityTargetOwnerFactionIdsSorted:
+             priorityTargetOwnerFactionIdsSorted,
+       );
 
   /// Reusable "no override" plan returned for non-COLONIAL callers, GPs
   /// below the observer conquest quota, the empty-NW-invadable guard,
@@ -43,15 +44,12 @@ final class ColonialMilitaryPlan extends PhaseDestinationResult {
     priorityTargetOwnerFactionIdsSorted: <String>[],
   );
 
-  final List<String> _priorityDestinationProvinceIdsSorted;
-  final List<String> _priorityTargetOwnerFactionIdsSorted;
-
   /// Subset of [ColonialSummary.invadableNewWorldProvinceIdsSorted]
   /// (NW only) whose owners match the priority-arm filter for this
   /// turn. Sorted ascending so identical inputs yield identical lists
   /// (Refs #2509 Must-have #7). Empty for [defaultPlan].
   List<String> get priorityDestinationProvinceIdsSorted =>
-      _priorityDestinationProvinceIdsSorted;
+      priorityProvinceIdsSorted;
 
   /// Faction ids of the owners covered by
   /// [priorityDestinationProvinceIdsSorted]. Sorted ascending and
@@ -67,11 +65,7 @@ final class ColonialMilitaryPlan extends PhaseDestinationResult {
   ///   - Empty for [defaultPlan].
   @override
   List<String> get priorityTargetOwnerFactionIdsSorted =>
-      _priorityTargetOwnerFactionIdsSorted;
-
-  @override
-  List<String> get priorityProvinceIdsSorted =>
-      _priorityDestinationProvinceIdsSorted;
+      super.priorityTargetOwnerFactionIdsSorted;
 
   @override
   String toString() =>

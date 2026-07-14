@@ -23,10 +23,6 @@
 // `labelStyle.color` matches `EditorialMonoclePalette.fg` and which
 // renders the commodity-id label inside `_buildTileResourceLabelRow`.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
-import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,79 +31,19 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
+import 'support/province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pTileResLabelTest';
 String get _fullProvinceId => '$_regionId|$_localProvinceId';
 
-String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
-
-RegionMapViewData _regionWithCells(List<CellViewData> cells, int w, int h) {
-  return RegionMapViewData(
-    regionId: _regionId,
-    width: w,
-    height: h,
-    cellSize: 32,
-    cells: cells,
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: const {'gp1'},
-    terrainColors: const {},
-  );
-}
-
-Game _minimalGameWithGrainTile(String tk) {
-  return Game(
-    id: 'tile_res_label_token_test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _fullProvinceId,
-            regionId: _regionId,
-            displayName: 'TileResLabelTest',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        _regionId: {
-          _fullProvinceId: [tk],
-        },
-      },
-      resourceByTileKey: {tk: 'grain'},
-      playerVisibilityByTile: {
-        'gp1': {tk: 'fullyVisible'},
-      },
-      playerProspectedTiles: {
-        'gp1': {tk},
-      },
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
-    ],
-  );
-}
-
-PlayerView _omniscientViewForTiles(Iterable<String> keys) {
-  return PlayerView(
-    playerId: 'gp1',
-    player: const Player(
-      id: 'gp1',
-      displayName: 'Human',
-      isHuman: true,
-      treasury: 0,
-    ),
-    ownUnitsById: const {},
-    provincesById: const {},
-    visibilityByTile: {for (final k in keys) k: VisibilityLevel.fullyVisible},
-    prospectedTiles: const {},
-    diplomacyByOtherId: const {},
-  );
-}
+String _tileKey(int x, int y) => overlayDarkTokenTileKey(
+  regionId: _regionId,
+  localProvinceId: _localProvinceId,
+  x: x,
+  y: y,
+);
 
 /// Selects the Tile section's `ResourceLabelInline` widget by matching on
 /// its `labelStyle.color` token (`EditorialMonoclePalette.fg`). The
@@ -141,21 +77,22 @@ void main() {
         'editorialMonocle (positive AC: Resource row commodity-id label '
         'colour)', (WidgetTester tester) async {
       final tk = _tileKey(0, 0);
-      final game = _minimalGameWithGrainTile(tk);
-      final region = _regionWithCells(
-        const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: _localProvinceId,
-            isSea: false,
-            terrainTypeId: 'plains',
-            resourceId: 'grain',
-            visibility: TileVisibility.visible,
-          ),
-        ],
-        1,
-        1,
+      final game = gameWithGrainTilesForOverlay(
+        gameId: 'tile_res_label_token_test',
+        regionId: _regionId,
+        fullProvinceId: _fullProvinceId,
+        displayName: 'TileResLabelTest',
+        humanPlayerId: 'gp1',
+        tileKeys: [tk],
+      );
+      final region = regionMapWithLandCells(
+        regionId: _regionId,
+        localProvinceId: _localProvinceId,
+        coords: [(x: 0, y: 0)],
+        width: 1,
+        height: 1,
+        greatPowerFactionIds: const {'gp1'},
+        resourceId: 'grain',
       );
       await tester.pumpWidget(
         buildProvinceOverlayDarkThemeShell(
@@ -164,7 +101,10 @@ void main() {
           displayId: _fullProvinceId,
           selectedTileKey: tk,
           humanPlayerId: 'gp1',
-          playerView: _omniscientViewForTiles([tk]),
+          playerView: omniscientPlayerViewForTiles(
+            humanPlayerId: 'gp1',
+            keys: [tk],
+          ),
           shellWidth: 800,
         ),
       );
@@ -202,7 +142,7 @@ void main() {
         find.byWidgetPredicate(
           (Widget w) =>
               w is Text &&
-              w.data == 'grain' &&
+              w.data == 'Grain' &&
               w.style?.color == EditorialMonoclePalette.fg,
         ),
       );
@@ -210,7 +150,7 @@ void main() {
         fgGrain,
         hasLength(1),
         reason:
-            'Exactly one rendered "grain" Text widget must carry '
+            'Exactly one rendered "Grain" Text widget must carry '
             'style.color == EditorialMonoclePalette.fg (the Tile '
             'commodity-id label inside ResourceLabelInline). Found '
             '${fgGrain.length}. Check that the Tile call site still '
@@ -225,21 +165,22 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = _minimalGameWithGrainTile(tk);
-      final region = _regionWithCells(
-        const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: _localProvinceId,
-            isSea: false,
-            terrainTypeId: 'plains',
-            resourceId: 'grain',
-            visibility: TileVisibility.visible,
-          ),
-        ],
-        1,
-        1,
+      final game = gameWithGrainTilesForOverlay(
+        gameId: 'tile_res_label_token_test',
+        regionId: _regionId,
+        fullProvinceId: _fullProvinceId,
+        displayName: 'TileResLabelTest',
+        humanPlayerId: 'gp1',
+        tileKeys: [tk],
+      );
+      final region = regionMapWithLandCells(
+        regionId: _regionId,
+        localProvinceId: _localProvinceId,
+        coords: [(x: 0, y: 0)],
+        width: 1,
+        height: 1,
+        greatPowerFactionIds: const {'gp1'},
+        resourceId: 'grain',
       );
       await tester.pumpWidget(
         buildProvinceOverlayDarkThemeShell(
@@ -248,7 +189,10 @@ void main() {
           displayId: _fullProvinceId,
           selectedTileKey: tk,
           humanPlayerId: 'gp1',
-          playerView: _omniscientViewForTiles([tk]),
+          playerView: omniscientPlayerViewForTiles(
+            humanPlayerId: 'gp1',
+            keys: [tk],
+          ),
           shellWidth: 800,
         ),
       );
@@ -340,7 +284,7 @@ void main() {
       );
 
       final text = tester.widget<Text>(
-        find.byWidgetPredicate((Widget w) => w is Text && w.data == 'grain'),
+        find.byWidgetPredicate((Widget w) => w is Text && w.data == 'Grain'),
       );
       expect(
         text.style,

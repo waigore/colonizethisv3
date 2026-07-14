@@ -19,7 +19,9 @@ void main() {
           units: [],
         ),
         tileKeysByRegionAndProvince: const {
-          ow: {p1: [listedTile]},
+          ow: {
+            p1: [listedTile],
+          },
         },
       );
       expect(isLandTileKeyForGame(game, listedTile), isTrue);
@@ -50,7 +52,8 @@ void main() {
     const ow = 'oldWorld';
     const tileP2 = '$ow|p2|0|0';
 
-    Game gameWithProvinces(List<Province> provinces) => TestFixtures.minimalGame(
+    Game gameWithProvinces(List<Province> provinces) =>
+        TestFixtures.minimalGame(
           oldWorld: RegionData(provinces: provinces, units: const []),
           players: const [
             Player(id: 'gp1', displayName: 'A', isHuman: false),
@@ -74,44 +77,50 @@ void main() {
       );
     });
 
-    test('factionMembership snapshot matches linear classification (Refs #2394)', () {
-      final game = gameWithProvinces([
-        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
-      ]);
-      final membership = DiplomacyFactionMembership.from(game);
-      expect(
-        civilianMayOccupyLandTileKey(
-          game: game,
-          playerId: 'gp1',
-          unitType: kUnitTypeSpy,
-          destinationTileKey: tileP2,
-          factionMembership: membership,
-        ),
-        civilianMayOccupyLandTileKey(
-          game: game,
-          playerId: 'gp1',
-          unitType: kUnitTypeSpy,
-          destinationTileKey: tileP2,
-        ),
-      );
-    });
+    test(
+      'factionMembership snapshot matches linear classification (Refs #2394)',
+      () {
+        final game = gameWithProvinces([
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+        ]);
+        final membership = DiplomacyFactionMembership.from(game);
+        expect(
+          civilianMayOccupyLandTileKey(
+            game: game,
+            playerId: 'gp1',
+            unitType: kUnitTypeSpy,
+            destinationTileKey: tileP2,
+            factionMembership: membership,
+          ),
+          civilianMayOccupyLandTileKey(
+            game: game,
+            playerId: 'gp1',
+            unitType: kUnitTypeSpy,
+            destinationTileKey: tileP2,
+          ),
+        );
+      },
+    );
 
-    test('Builder may not occupy another Great Power province without purchase', () {
-      final game = gameWithProvinces([
-        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
-      ]);
-      expect(
-        civilianMayOccupyLandTileKey(
-          game: game,
-          playerId: 'gp1',
-          unitType: kUnitTypeBuilder,
-          destinationTileKey: tileP2,
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'Builder may not occupy another Great Power province without purchase',
+      () {
+        final game = gameWithProvinces([
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+        ]);
+        expect(
+          civilianMayOccupyLandTileKey(
+            game: game,
+            playerId: 'gp1',
+            unitType: kUnitTypeBuilder,
+            destinationTileKey: tileP2,
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('purchased tile allows Builder on tile inside other GP province', () {
       final game = TestFixtures.minimalGame(

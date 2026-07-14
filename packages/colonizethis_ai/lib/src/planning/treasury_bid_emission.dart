@@ -7,47 +7,69 @@ part of 'treasury_planner.dart';
 // treasury-planner library), so imports, shared helpers, and visibility are
 // unchanged.
 
+/// Parameter bag for [_emitTradeOrders] (Refs #3967).
+///
+/// Collapses the 13-field emission signature so [runTreasuryPlanner] forwards
+/// one context object instead of re-listing the same scalars at the call site.
+final class _EmitTradeOrdersInput {
+  const _EmitTradeOrdersInput({
+    required this.game,
+    required this.playerId,
+    required this.bidTypeCap,
+    required this.tradeCargoCapacity,
+    required this.available,
+    required this.need,
+    required this.treasuryBudgetForBids,
+    required this.offerPriority,
+    required this.isRegimentBuildInputMarketSupplier,
+    required this.isLiquidityBuyer,
+    required this.lockRecoveryUrgent,
+    required this.rules,
+    this.tradeDealPreferredBidCommodityId,
+  });
+
+  final Game game;
+  final String playerId;
+  final int bidTypeCap;
+  final int tradeCargoCapacity;
+  final Map<CommodityId, int> available;
+  final Map<CommodityId, int> need;
+  final int treasuryBudgetForBids;
+  final int offerPriority;
+  final bool isRegimentBuildInputMarketSupplier;
+  final bool isLiquidityBuyer;
+  final bool lockRecoveryUrgent;
+  final ResourceRules rules;
+  final CommodityId? tradeDealPreferredBidCommodityId;
+}
+
 /// Builds the final trade-order list (offers followed by prioritized bids) for
 /// [runTreasuryPlanner] once the surplus/need maps and the optional trade-deal
 /// relation-boost bid-preference hint are resolved. Extracted (Refs #3758
 /// file-split) to keep the planner body within the function-size budget;
 /// behaviour-preserving move (same library scope, identical emission logic).
-List<TradeOrder> _emitTradeOrders({
-  required Game game,
-  required String playerId,
-  required int bidTypeCap,
-  required int tradeCargoCapacity,
-  required Map<CommodityId, int> available,
-  required Map<CommodityId, int> need,
-  required int treasuryBudgetForBids,
-  required int offerPriority,
-  required bool isRegimentBuildInputMarketSupplier,
-  required bool isLiquidityBuyer,
-  required bool lockRecoveryUrgent,
-  required ResourceRules rules,
-  CommodityId? tradeDealPreferredBidCommodityId,
-}) {
+List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
   // Refs #3122 + #3127: pass the treasury-budget-aware bid cap (computed in the
   // planner — `rawTreasury - pendingCosts - carryForwardBidNotional`, floored at
   // 0) into the suggester so it never emits bids the validator rule 5 would
   // reject. Subsumes #3127's bare `max(0, treasury)` formulation.
   final suggestion = TradeOrderSuggester.suggest(
     TradeSuggestionContext(
-      playerId: playerId,
-      bidTypeCap: bidTypeCap,
-      tradeCargoCapacity: tradeCargoCapacity,
-      availableStockpileByCommodityId: available,
-      commodityNeedByCommodityId: need,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      worldMarketState: game.worldMarketState,
-      offerPriority: offerPriority,
+      playerId: input.playerId,
+      bidTypeCap: input.bidTypeCap,
+      tradeCargoCapacity: input.tradeCargoCapacity,
+      availableStockpileByCommodityId: input.available,
+      commodityNeedByCommodityId: input.need,
+      treasuryBudgetForBids: input.treasuryBudgetForBids,
+      worldMarketState: input.game.worldMarketState,
+      offerPriority: input.offerPriority,
       bidPriority: kTreasuryBidPriorityRawMaterial,
       // Refs #3758 S9/R10: admit the trade-deal-relation-boost preferred bid
       // commodity ahead of other deficits when the bid-type cap binds. Always
       // `null` in lock-recovery states (gated in the planner), so the
       // liquidity-buyer single-commodity `need` and the legacy alphabetical
       // order are unchanged.
-      preferredBidCommodityId: tradeDealPreferredBidCommodityId,
+      preferredBidCommodityId: input.tradeDealPreferredBidCommodityId,
     ),
   );
 
@@ -66,7 +88,7 @@ List<TradeOrder> _emitTradeOrders({
   // so the two cross. Mirrors the bid-side `alignBidPriorityWithUrgentOffers`
   // tier-alignment machinery (Refs #2924 F12/F16).
   // SPEC/ai/treasury-planner.md § Supplier offer-tier alignment.
-  final offers = isRegimentBuildInputMarketSupplier
+  final offers = input.isRegimentBuildInputMarketSupplier
       ? _alignBuildInputSupplyOfferTiers(suggestion.offers)
       : suggestion.offers;
   // Refs #2924 F11/F12: when the designated buyer is affluent its own forecast
@@ -77,19 +99,20 @@ List<TradeOrder> _emitTradeOrders({
   // kTreasuryOfferPriorityUrgent regardless of the buyer's own offerPriority.
   final bids = _prioritizedBids(
     rawBids: suggestion.bids,
-    need: need,
-    bidTypeCap: bidTypeCap,
-    tradeCargoCapacity: tradeCargoCapacity,
-    offerPriority: offerPriority,
-    alignBidPriorityWithUrgentOffers: isLiquidityBuyer || lockRecoveryUrgent,
+    need: input.need,
+    bidTypeCap: input.bidTypeCap,
+    tradeCargoCapacity: input.tradeCargoCapacity,
+    offerPriority: input.offerPriority,
+    alignBidPriorityWithUrgentOffers:
+        input.isLiquidityBuyer || input.lockRecoveryUrgent,
     forceBidPriority:
-        isLiquidityBuyer ? kTreasuryOfferPriorityUrgent : null,
-    preferCommodityId: isLiquidityBuyer
-        ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
-        : tradeDealPreferredBidCommodityId,
-    treasuryBudgetForBids: treasuryBudgetForBids,
-    worldMarketState: game.worldMarketState,
-    resourceRules: rules,
+        input.isLiquidityBuyer ? kTreasuryOfferPriorityUrgent : null,
+    preferCommodityId: input.isLiquidityBuyer
+        ? _lockRecoveryLiquidityCommodity(input.game.worldMarketState)
+        : input.tradeDealPreferredBidCommodityId,
+    treasuryBudgetForBids: input.treasuryBudgetForBids,
+    worldMarketState: input.game.worldMarketState,
+    resourceRules: input.rules,
   );
 
   return [...offers, ...bids];

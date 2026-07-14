@@ -78,6 +78,11 @@ TileKeyResourceContext? resolveTileKeyResourceContext({
   if (map == null) {
     return null;
   }
+  // Incomplete / stub tile maps (integration fixtures, partial saves) may list
+  // improvement keys outside the grid; treat as no resource rather than throw.
+  if (coords.x >= map.width || coords.y >= map.height) {
+    return null;
+  }
 
   final resource = map.resourceAt(coords.x, coords.y);
   if (resource == null) {
@@ -158,6 +163,92 @@ class TileYieldContribution {
   final bool isLandRelativeToCapital;
 }
 
+/// Shared resolve → mineral gate → terrain-clamped tech cap → production
+/// prelude for improved extractable tiles (Refs #4014).
+///
+/// Used by [computeTileYieldContribution] (connected-only GP/non-GP path) and
+/// [computeTileExtractionDisplayContribution] (display dual-yield including
+/// disconnected `full > 0` / `effective == 0`).
+class ImprovedTileProductionPrelude {
+  const ImprovedTileProductionPrelude({
+    required this.tileContext,
+    required this.techCap,
+    required this.production,
+  });
+
+  final TileKeyExtractionContext tileContext;
+  final int techCap;
+
+  /// Terrain-/tech-capped production units (`full` for snapshot display).
+  final int production;
+
+  CommodityId get commodityId => tileContext.commodityId;
+  String get provinceId => tileContext.provinceId;
+  Province get province => tileContext.province;
+}
+
+/// Resolves tile context, applies [isCommodityExtractable], clamps tech for
+/// terrain, and computes production = min(improvement, techCap). Returns null
+/// when the tile is not an improved extractable resource tile.
+ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required String tileKey,
+  required String logContext,
+  required int Function(CommodityId commodityId) techCapForCommodity,
+  required bool Function(String tileKey, CommodityId commodityId)
+  isCommodityExtractable,
+  Map<String, Province>? provincesByFullId,
+}) {
+  final tileContext = resolveTileKeyExtractionContext(
+    tileKey: tileKey,
+    tileMapByRegion: tileMapByRegion,
+    provincesByFullId: provincesByFullId,
+    game: game,
+    logContext: logContext,
+  );
+  if (tileContext == null) {
+    return null;
+  }
+
+  final commodityId = tileContext.commodityId;
+  if (!isCommodityExtractable(tileKey, commodityId)) {
+    return null;
+  }
+
+  final improvementLevel = game.worldState.tileState
+      .improvementLevel(tileKey)
+      .clamp(0, 4);
+  if (improvementLevel < 1) {
+    return null;
+  }
+
+  // Terrain hard caps (R4, issue #3573): scrub-forest timber is clamped to
+  // level 1 regardless of unlocked gathering tech. The terrain is resolved from
+  // the same region map the resource came from; when terrain data is absent the
+  // tech cap is used unchanged. SPEC/game/extraction-and-improvements.md.
+  final rawTechCap = techCapForCommodity(commodityId);
+  final terrain = tileMapByRegion[tileContext.regionId]?.terrainAt(
+    tileContext.resourceContext.x,
+    tileContext.resourceContext.y,
+  );
+  final techCap = terrain == null
+      ? rawTechCap
+      : clampExtractionCapForTerrain(rawTechCap, commodityId, terrain);
+
+  final production = (improvementLevel < techCap ? improvementLevel : techCap)
+      .clamp(0, 4);
+  if (production <= 0) {
+    return null;
+  }
+
+  return ImprovedTileProductionPrelude(
+    tileContext: tileContext,
+    techCap: techCap,
+    production: production,
+  );
+}
+
 /// Computes the effective extraction contribution for one connected [tileKey],
 /// hosting the orchestration shared by the Great-Power
 /// ([computeTileExtractionContributionForPlayer], `resource_extractor.dart`)
@@ -201,51 +292,31 @@ TileYieldContribution? computeTileYieldContribution({
     return null;
   }
 
-  final tileContext = resolveTileKeyExtractionContext(
-    tileKey: tileKey,
-    tileMapByRegion: tileMapByRegion,
-    provincesByFullId: provincesByFullId,
+  final prelude = resolveImprovedTileProductionPrelude(
     game: game,
+    tileMapByRegion: tileMapByRegion,
+    tileKey: tileKey,
+    provincesByFullId: provincesByFullId,
     logContext: logContext,
+    techCapForCommodity: techCapForCommodity,
+    isCommodityExtractable: isCommodityExtractable,
   );
-  if (tileContext == null) {
+  if (prelude == null) {
     return null;
   }
 
-  final commodityId = tileContext.commodityId;
-  if (!isCommodityExtractable(tileKey, commodityId)) {
-    return null;
-  }
-
-  // Terrain hard caps (R4, issue #3573): scrub-forest timber is clamped to
-  // level 1 regardless of unlocked gathering tech. The terrain is resolved from
-  // the same region map the resource came from; when terrain data is absent the
-  // tech cap is used unchanged. SPEC/game/extraction-and-improvements.md.
-  final rawTechCap = techCapForCommodity(commodityId);
-  final terrain = tileMapByRegion[tileContext.regionId]?.terrainAt(
-    tileContext.resourceContext.x,
-    tileContext.resourceContext.y,
-  );
-  final techCap = terrain == null
-      ? rawTechCap
-      : clampExtractionCapForTerrain(rawTechCap, commodityId, terrain);
-  final province = tileContext.province;
-  final provinceId = tileContext.provinceId;
-  final townDevelopmentCap = province.townDevelopmentLevel;
+  final province = prelude.province;
   final townTileKey = province.townTileKey;
   final townTileIsPort =
       townTileKey != null && portTileKeys.contains(townTileKey);
-
-  final isCapitalProvince = provinceId == capitalProvinceId;
-  final usesRoadRule = connectedByRoadRule.contains(tileKey);
   final effective = computeEffectiveTileYield(
     tileState: game.worldState.tileState,
     tileKey: tileKey,
-    techCap: techCap,
-    townDevelopmentCap: townDevelopmentCap,
+    techCap: prelude.techCap,
+    townDevelopmentCap: province.townDevelopmentLevel,
     townTileIsPort: townTileIsPort,
-    isCapitalProvince: isCapitalProvince,
-    usesRoadRule: usesRoadRule,
+    isCapitalProvince: prelude.provinceId == capitalProvinceId,
+    usesRoadRule: connectedByRoadRule.contains(tileKey),
     portTileKeys: portTileKeys,
     pathTransportCap: pathTransportCap,
   );
@@ -254,9 +325,9 @@ TileYieldContribution? computeTileYieldContribution({
   }
 
   return TileYieldContribution(
-    commodityId: commodityId,
+    commodityId: prelude.commodityId,
     units: effective,
-    regionId: tileContext.regionId,
-    isLandRelativeToCapital: tileContext.regionId == capitalRegionId,
+    regionId: prelude.tileContext.regionId,
+    isLandRelativeToCapital: prelude.tileContext.regionId == capitalRegionId,
   );
 }

@@ -11,7 +11,6 @@
 // contract those stories produce — without re-running the full Widgetbook
 // chrome at test time.
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
@@ -26,15 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/panel_test_fixtures.dart';
-
-int _argb(Color c) {
-  final int a = (c.a * 255.0).round() & 0xFF;
-  final int r = (c.r * 255.0).round() & 0xFF;
-  final int g = (c.g * 255.0).round() & 0xFF;
-  final int b = (c.b * 255.0).round() & 0xFF;
-  return (a << 24) | (r << 16) | (g << 8) | b;
-}
 
 void _expectNoMaterialChromeBans(WidgetTester tester) {
   expect(find.byType(AppBar), findsNothing, reason: 'AppBar is banned chrome');
@@ -50,17 +42,6 @@ void _expectNoMaterialChromeBans(WidgetTester tester) {
     reason: 'LinearProgressIndicator is banned — use CtProgressBar',
   );
   expect(find.byType(Slider), findsNothing, reason: 'Slider is banned chrome');
-}
-
-void _expectEditorialMonocleTheme(WidgetTester tester) {
-  // Resolve theme from any descendant of the editorial-monocle MaterialApp.
-  final BuildContext ctx = tester.element(find.byType(Scaffold).first);
-  final ThemeData theme = Theme.of(ctx);
-  expect(theme.brightness, Brightness.dark);
-  expect(
-    _argb(theme.colorScheme.primary),
-    _argb(EditorialMonoclePalette.accent),
-  );
 }
 
 Widget _editorialMonocleHost({required Widget child}) {
@@ -112,7 +93,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       _expectNoMaterialChromeBans(tester);
-      _expectEditorialMonocleTheme(tester);
+      expectEditorialMonocleDarkChrome(tester);
     });
 
     testWidgets('Military Units Panel (Standalone story)', (
@@ -136,7 +117,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       _expectNoMaterialChromeBans(tester);
-      _expectEditorialMonocleTheme(tester);
+      expectEditorialMonocleDarkChrome(tester);
     });
 
     testWidgets('Naval Units Panel (Standalone story)', (
@@ -159,7 +140,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       _expectNoMaterialChromeBans(tester);
-      _expectEditorialMonocleTheme(tester);
+      expectEditorialMonocleDarkChrome(tester);
     });
 
     testWidgets('Train Civilians Dialog (Standalone story)', (
@@ -195,7 +176,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       _expectNoMaterialChromeBans(tester);
-      _expectEditorialMonocleTheme(tester);
+      expectEditorialMonocleDarkChrome(tester);
     });
 
     testWidgets('Train Military Dialog (Standalone story)', (
@@ -241,7 +222,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       _expectNoMaterialChromeBans(tester);
-      _expectEditorialMonocleTheme(tester);
+      expectEditorialMonocleDarkChrome(tester);
     });
   });
 }

@@ -27,7 +27,10 @@ class EffectiveLabourState {
     return EffectiveLabourState(
       workers: player.workerPool,
       stockpile: player.stockpile,
-      regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
+      regimentCountsById: regimentTypeCountsForPlayer(
+        game.worldState,
+        playerId,
+      ),
       shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
     );
   }
@@ -35,7 +38,9 @@ class EffectiveLabourState {
   int compute() => effectiveLabourForWorkers(
     workers: workers,
     stockpile: stockpile,
-    regimentCountsById: regimentCountsById,
-    shipCountsById: shipCountsById,
+    foodCounts: MilitaryNavyFoodCounts(
+      regimentCountsById: regimentCountsById,
+      shipCountsById: shipCountsById,
+    ),
   );
 }

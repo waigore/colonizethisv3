@@ -69,6 +69,68 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_pauseMenu_tooltip => 'Pause menu';
 
   @override
+  String get saveGameName_title => 'Save Game';
+
+  @override
+  String get saveGameName_save => 'Save';
+
+  @override
+  String get saveGameName_invalidName => 'Enter a valid save name.';
+
+  @override
+  String get saveGameName_overwriteConfirm =>
+      'A save with this name already exists. Overwrite it?';
+
+  @override
+  String get saveGameName_overwrite => 'Overwrite';
+
+  @override
+  String get saveGameName_gameSaved => 'Game saved';
+
+  @override
+  String get saveGameName_atCapError =>
+      'You already have 20 saves. Delete an old save first.';
+
+  @override
+  String get loadGameList_title => 'Load Game';
+
+  @override
+  String get loadGameList_empty => 'No saved games.';
+
+  @override
+  String loadGameList_metaLine(int turn, int year, String nation) =>
+      'Turn $turn · $year · $nation';
+
+  @override
+  String loadGameList_turnSubtitle(int turn) => 'Turn $turn';
+
+  @override
+  String get loadGameList_discardConfirm =>
+      'Unsaved progress will be lost. Load this save?';
+
+  @override
+  String get loadGameList_load => 'Load';
+
+  @override
+  String get loadGameList_delete => 'Delete';
+
+  @override
+  String get loadGameList_deleteConfirm => 'Delete this save?';
+
+  @override
+  String get loadGameList_previous => 'Previous';
+
+  @override
+  String get loadGameList_next => 'Next';
+
+  @override
+  String loadGameList_pageOf(int page, int pageCount) =>
+      'Page $page of $pageCount';
+
+  @override
+  String get loadGameList_autoSaveBadge => 'Auto-save';
+
+  @override
   String get game_screenTitle => 'Game';
 
   @override

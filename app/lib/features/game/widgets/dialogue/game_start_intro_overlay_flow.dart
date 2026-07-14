@@ -12,18 +12,16 @@ extension _GameStartIntroOverlayFlow on _GameStartIntroOverlayState {
       final text = await bundle.loadString(kDialogueGameIntroAsset);
       ctAppPerfInstant('intro.asset_load.end');
       log.i('game_intro asset_load end chars=${text.length}');
-      final project = YarnProject();
-      project.parse(text);
-      if (!project.nodes.containsKey(kIntroNode)) {
-        throw StateError(
-          'Intro node "$kIntroNode" not found in $kDialogueGameIntroAsset',
-        );
-      }
-      final view = CtDialogueView(logger: log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
+      final session = await loadYarnDialogueSession(
+        bundle: bundle,
+        assetPath: kDialogueGameIntroAsset,
+        yarnSource: text,
+        logger: log,
+        createView: _createGameStartIntroDialogueView,
+        requiredNodes: const [kIntroNode],
       );
+      final view = session.view;
+      final runner = session.runner;
       view.onStateChanged = (line, choice) {
         if (!_loggedFirstLine && line != null) {
           _loggedFirstLine = true;

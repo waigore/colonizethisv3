@@ -12,70 +12,6 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 
 import 'support/panel_test_fixtures.dart';
 
-Game _gameWithNoDiscoveredFactions() {
-  const ow = 'oldWorld';
-  final p1 = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'P1',
-    ownerId: 'gp1',
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [p1], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
-  return Game(
-    id: 'empty-diplo',
-    worldState: world,
-    players: const [player],
-    diplomacyRelations: const [],
-  );
-}
-
-/// Fixture for the discovery-via-visibility ACs (Refs #3341): the human GP
-/// `gp1` has fully-visible tile sight into a New-World province owned by Tribe
-/// `t1` but holds **no** `DiplomacyRelation` with the tribe. Per
-/// SPEC/ui/diplomacy-panel.md § Discovered factions, the panel must discover
-/// the tribe via `knownDiplomaticTargetFactionIds` and surface the default
-/// neutral first-contact standing.
-Game _gameWithTribeDiscoveredByVisibility() {
-  const nw = 'newWorld';
-  const ow = 'oldWorld';
-  final tribeProvince = Province(
-    id: '$nw|t1prov',
-    regionId: nw,
-    displayName: 'Tribe Land',
-    ownerId: 't1',
-  );
-  final homeProvince = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'Home',
-    ownerId: 'gp1',
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-    oldWorld: RegionData(provinces: [homeProvince], units: const []),
-    newWorld: RegionData(provinces: [tribeProvince], units: const []),
-    playerVisibilityByTile: const {
-      'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
-    },
-    playerProspectedTiles: const {},
-  );
-  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
-  return Game(
-    id: 'tribe-visibility',
-    worldState: world,
-    players: const [player],
-    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
-    diplomacyRelations: const [],
-  );
-}
-
 /// Old World coastal province sea-connected to an unrevealed New World tribe
 /// colony, with **zero** New World tile visibility (Refs #3620 AC-1). Mirrors
 /// the colonial-intel fixture used in the diplomacy package tests.
@@ -125,11 +61,7 @@ Game _gameWithSeaReachableTribeNoContact() {
       ),
       newWorld: RegionData(
         provinces: [
-          Province(
-            id: 'newWorld|colony',
-            regionId: 'newWorld',
-            ownerId: 't1',
-          ),
+          Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 't1'),
         ],
       ),
       playerVisibilityByTile: {
@@ -165,11 +97,7 @@ Game _gameWithTribeRelationButNoVisibility() {
       ),
       newWorld: RegionData(
         provinces: [
-          Province(
-            id: 'newWorld|colony',
-            regionId: 'newWorld',
-            ownerId: 't1',
-          ),
+          Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 't1'),
         ],
       ),
       playerVisibilityByTile: {},
@@ -209,7 +137,7 @@ void main() {
     humanPlayerId = gameWithFactions.players.isNotEmpty
         ? gameWithFactions.players.first.id
         : 'gp1';
-    gameWithNoDiscovered = _gameWithNoDiscoveredFactions();
+    gameWithNoDiscovered = buildDiplomacyPanelGameWithNoDiscoveredFactions();
   });
 
   group('buildDiplomacyRows', () {
@@ -245,7 +173,7 @@ void main() {
       'relation, surfacing AT_PEACE / 50 / neutral first-contact standing',
       () {
         final rows = buildDiplomacyRows(
-          _gameWithTribeDiscoveredByVisibility(),
+          buildDiplomacyPanelGameWithTribeDiscoveredByVisibility(),
           const MapTopology(nodes: [], edges: []),
           'gp1',
           const Orders(),
@@ -270,38 +198,35 @@ void main() {
       },
     );
 
-    test(
-      'AC-1 (#3620): turn-0 sea-reachable tribe with no contact yields no '
-      'tribe rows and is absent from knownDiplomaticTargetFactionIds',
-      () {
-        final game = _gameWithSeaReachableTribeNoContact();
-        final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
-        // The shared first-contact gate now lives in the helper itself, so the
-        // sea-reachable tribe is excluded at the source (#3620).
-        expect(
-          knownDiplomaticTargetFactionIds(
-            view: view,
-            game: game,
-            topology: _seaReachableTopology,
-          ),
-          isNot(contains('t1')),
-        );
+    test('AC-1 (#3620): turn-0 sea-reachable tribe with no contact yields no '
+        'tribe rows and is absent from knownDiplomaticTargetFactionIds', () {
+      final game = _gameWithSeaReachableTribeNoContact();
+      final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
+      // The shared first-contact gate now lives in the helper itself, so the
+      // sea-reachable tribe is excluded at the source (#3620).
+      expect(
+        knownDiplomaticTargetFactionIds(
+          view: view,
+          game: game,
+          topology: _seaReachableTopology,
+        ),
+        isNot(contains('t1')),
+      );
 
-        final rows = buildDiplomacyRows(
-          game,
-          _seaReachableTopology,
-          'gp1',
-          const Orders(),
-        );
-        expect(
-          rows.where((r) => r.kind == FactionKind.tribe),
-          isEmpty,
-          reason:
-              'Sea-reachable colonial intel alone must not surface a Tribe row '
-              '(SPEC § Tribes require first contact).',
-        );
-      },
-    );
+      final rows = buildDiplomacyRows(
+        game,
+        _seaReachableTopology,
+        'gp1',
+        const Orders(),
+      );
+      expect(
+        rows.where((r) => r.kind == FactionKind.tribe),
+        isEmpty,
+        reason:
+            'Sea-reachable colonial intel alone must not surface a Tribe row '
+            '(SPEC § Tribes require first contact).',
+      );
+    });
 
     test(
       'AC-7 (#3620): tribe with persisted relation but no current visibility '
@@ -372,26 +297,29 @@ void main() {
       }
     });
 
-    test('AC-6: minor row enumerates all overture stages with disabled reasons', () {
-      final minorId = gameWithFactions.minorNations.first.id;
-      final rows = buildDiplomacyRows(
-        gameWithFactions,
-        topology,
-        humanPlayerId,
-        const Orders(),
-      );
-      final minorRow = rows.firstWhere((r) => r.factionId == minorId);
-      final overtureActions = minorRow.actions
-          .where((a) => a.order.type == DiplomaticOrderType.establishOverture)
-          .toList();
-      expect(overtureActions, hasLength(4));
-      final disabled = overtureActions.where((a) => !a.enabled).toList();
-      expect(disabled, isNotEmpty);
-      for (final action in disabled) {
-        expect(action.rejectionReason, isNotNull);
-        expect(action.rejectionReason, isNotEmpty);
-      }
-    });
+    test(
+      'AC-6: minor row enumerates all overture stages with disabled reasons',
+      () {
+        final minorId = gameWithFactions.minorNations.first.id;
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final minorRow = rows.firstWhere((r) => r.factionId == minorId);
+        final overtureActions = minorRow.actions
+            .where((a) => a.order.type == DiplomaticOrderType.establishOverture)
+            .toList();
+        expect(overtureActions, hasLength(4));
+        final disabled = overtureActions.where((a) => !a.enabled).toList();
+        expect(disabled, isNotEmpty);
+        for (final action in disabled) {
+          expect(action.rejectionReason, isNotNull);
+          expect(action.rejectionReason, isNotEmpty);
+        }
+      },
+    );
 
     test('AC-10: GP row keeps invalid Offer Peace action in matrix', () {
       final otherGp = gameWithFactions.players.firstWhere(

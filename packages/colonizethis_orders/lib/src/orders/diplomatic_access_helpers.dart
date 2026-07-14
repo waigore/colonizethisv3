@@ -31,11 +31,46 @@ bool civilianEmbassyWorkAllowedInMinorTribeProvince({
   )) {
     return false;
   }
-  final rel = getRelation(game, playerId, provinceOwnerId);
-  if (rel?.atWar == true) return false;
-  final overture = getOverture(game, playerId, provinceOwnerId);
-  if (overture == null || !overture.hasEmbassy) return false;
+  if (!hasPeaceTimeEmbassy(game, playerId, provinceOwnerId)) {
+    return false;
+  }
   return player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
+}
+
+/// True when [playerId] is not at war with [otherFactionId] and holds an
+/// embassy (or higher) overture with them.
+///
+/// Shared by civilian embassy-work eligibility, town-tile candidacy for
+/// Minor/Tribe upgrade_town, and validator rejection helpers (Refs #3971).
+bool hasPeaceTimeEmbassy(
+  Game game,
+  String playerId,
+  String otherFactionId,
+) {
+  final rel = getRelation(game, playerId, otherFactionId);
+  if (rel?.atWar == true) return false;
+  final overture = getOverture(game, playerId, otherFactionId);
+  return overture != null && overture.hasEmbassy;
+}
+
+/// Rejects when [playerId] is at war with [otherFactionId] or lacks an embassy
+/// overture; returns `null` when the peace-time embassy gate passes.
+OrderValidationResult? rejectAtWarOrWithoutEmbassy(
+  Game game,
+  String playerId,
+  String otherFactionId, {
+  required String atWarMessage,
+  required String embassyMessage,
+}) {
+  final rel = getRelation(game, playerId, otherFactionId);
+  if (rel?.atWar == true) {
+    return OrderValidationResult.rejected(atWarMessage);
+  }
+  final overture = getOverture(game, playerId, otherFactionId);
+  if (overture == null || !overture.hasEmbassy) {
+    return OrderValidationResult.rejected(embassyMessage);
+  }
+  return null;
 }
 
 /// Player-facing rejection when an Explorer tries `explore`/`prospect` inside a

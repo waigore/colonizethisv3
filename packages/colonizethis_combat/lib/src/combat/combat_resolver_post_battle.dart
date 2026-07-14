@@ -1,6 +1,12 @@
-part of 'combat_resolver.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-String? _provinceOwnerIdAtBattleStart(Game game, BattleContext ctx) {
+import 'battle_general_assignment.dart';
+import 'combat_constants.dart';
+import 'combat_survivor_units.dart';
+import 'conflict_detection.dart';
+
+String? provinceOwnerIdAtBattleStart(Game game, BattleContext ctx) {
   final row = resolveProvinceRowForOwnershipTransfer(
     game.worldState,
     ctx.provinceId,
@@ -8,7 +14,7 @@ String? _provinceOwnerIdAtBattleStart(Game game, BattleContext ctx) {
   return row?.province.ownerId;
 }
 
-Game _buildResolvedBattleGame({
+Game buildResolvedBattleGame({
   required Game game,
   required BattleContext ctx,
   required ({RegionData region, bool provinceChangedOwner}) post,
@@ -47,7 +53,7 @@ Game _buildResolvedBattleGame({
 
 /// Builds post-battle region state: applies casualties, garrison recovery,
 /// province ownership change, and civilian cleanup when province changes hands.
-({RegionData region, bool provinceChangedOwner}) _buildPostBattleRegion({
+({RegionData region, bool provinceChangedOwner}) buildPostBattleRegion({
   required RegionData region,
   required BattleContext ctx,
   required Set<String> allCasualties,
@@ -56,9 +62,10 @@ Game _buildResolvedBattleGame({
   required String? survivingAttackerFactionId,
   required List<String> defenderUnitIds,
 }) {
-  final survivingUnits = region.units
-      .where((u) => !allCasualties.contains(u.id))
-      .toList();
+  final survivingUnits = unitsExcludingCasualtyIds(
+    region.units,
+    allCasualties,
+  ).toList();
 
   var updatedProvinces = region.provinces;
   var provinceChangedOwner = false;
@@ -69,13 +76,10 @@ Game _buildResolvedBattleGame({
     );
   }
 
-  final recoveredUnits = unitsById.values
-      .where(
-        (u) =>
-            u.id.startsWith(kRecoveryUnitPrefix) &&
-            !allCasualties.contains(u.id),
-      )
-      .toList();
+  final recoveredUnits = unitsExcludingCasualtyIds(
+    unitsById.values.where((u) => u.id.startsWith(kRecoveryUnitPrefix)),
+    allCasualties,
+  ).toList();
   var finalUnits = [...survivingUnits, ...recoveredUnits];
 
   final newRegion = RegionData(provinces: updatedProvinces, units: finalUnits);

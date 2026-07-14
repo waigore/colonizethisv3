@@ -5,9 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'military_strength_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a military-strength scenario table.
-class MilitaryStrengthScenario {
+class MilitaryStrengthScenario implements LabeledScenario {
   const MilitaryStrengthScenario({
     required this.scenarioId,
     required this.label,
@@ -15,14 +16,11 @@ class MilitaryStrengthScenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario] (setup + assertions live in [MilitaryStrengthScenario.run]).
-void runMilitaryStrengthScenario(MilitaryStrengthScenario scenario) {
-  scenario.run();
-}
 
 /// Scenarios for [aggregateMilitaryStrengthForPlayer].
 List<MilitaryStrengthScenario> aggregateMilitaryStrengthForPlayerScenarios() => [

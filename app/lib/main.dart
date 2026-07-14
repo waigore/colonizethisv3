@@ -17,6 +17,7 @@ import 'core/services/app_event_handler/app_event_handler_scope.dart';
 import 'core/services/ai/blessed_ai_profile_loader.dart';
 import 'core/services/platform/desktop_window_startup_service.dart';
 import 'features/shell/new_game_leader_dialog_builder.dart';
+import 'features/shell/save_load/save_load_dialog_builders.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
 Future<void> _openHiveBoxSafely(String name) async {
@@ -67,6 +68,8 @@ Future<void> bootstrapApp({
       child: AppEventHandlerScope(
         extraDialogBuilders: {
           newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+          saveGameNameDialogId: buildSaveGameNameDialog,
+          loadGameListDialogId: buildLoadGameListDialog,
         },
         child: App(),
       ),

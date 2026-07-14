@@ -12,9 +12,11 @@ void _ctRegionMapGameUpdateProps(
   String? selectedTileKey,
   String? selectedCivilianTileKey,
   String? secondaryHighlightTileKey,
+  Set<String>? secondaryHighlightTileKeys,
   bool clearSelectedTileKey = false,
   bool clearSelectedCivilianTileKey = false,
   bool clearSecondaryHighlightTileKey = false,
+  bool clearSecondaryHighlightTileKeys = false,
   Set<String>? validTileKeys,
   bool clearValidTileKeys = false,
   void Function(String tileKey)? onTileSelected,
@@ -69,6 +71,11 @@ void _ctRegionMapGameUpdateProps(
   } else if (secondaryHighlightTileKey != null) {
     game.secondaryHighlightTileKey = secondaryHighlightTileKey;
   }
+  if (clearSecondaryHighlightTileKeys) {
+    game.secondaryHighlightTileKeys = null;
+  } else if (secondaryHighlightTileKeys != null) {
+    game.secondaryHighlightTileKeys = secondaryHighlightTileKeys;
+  }
   if (clearValidTileKeys) {
     game.validTileKeys = null;
   } else if (validTileKeys != null) {
@@ -105,6 +112,7 @@ void _ctRegionMapGameUpdateProps(
       ..selectedTileKey = game.selectedTileKey
       ..selectedCivilianTileKey = game.selectedCivilianTileKey
       ..secondaryHighlightTileKey = game.secondaryHighlightTileKey
+      ..secondaryHighlightTileKeys = game.secondaryHighlightTileKeys
       ..validTileKeys = game.validTileKeys
       ..playerViewForResources = game.playerViewForResources
       ..onFleetMarkerTapped = onFleetMarkerTapped;

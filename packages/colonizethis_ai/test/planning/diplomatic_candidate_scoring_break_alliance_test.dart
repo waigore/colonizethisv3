@@ -68,11 +68,13 @@ void main() {
               },
       );
       return computeDiplomaticCandidateScores(
-        candidates: breakAllianceCandidate,
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: breakAllianceCandidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
       ).single;
     }
 

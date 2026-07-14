@@ -6,13 +6,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/order_engine.dart';
 import 'package:colonizethis_orders/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_orders/src/orders/order_validators.dart';
-import 'package:colonizethis_orders/src/orders/validators/army_move_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/build_order_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/diplomatic_order_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/move_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/recruit_worker_order_validator.dart';
-import 'package:colonizethis_orders/src/orders/validators/work_order_validator.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 /// Injected move validator that always rejects for factory-injection scenarios.

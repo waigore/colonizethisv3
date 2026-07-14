@@ -38,6 +38,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
+import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/province_overlay_test_harness.dart';
 
 /// Mounts the overlay under the editorial-monocle dark theme for [displayId]
@@ -183,7 +184,7 @@ void main() {
           );
           final Color promptOnSurface =
               Theme.of(promptContext).colorScheme.onSurface;
-          _expectMutedSingleSource(prompt.style?.color, promptOnSurface,
+          expectMutedSingleSource(prompt.style?.color, promptOnSurface,
               'no-selection guidance prompt');
 
           // Degenerate em-dash placeholder.
@@ -214,7 +215,7 @@ void main() {
           );
           final Color dashOnSurface =
               Theme.of(dashContext).colorScheme.onSurface;
-          _expectMutedSingleSource(
+          expectMutedSingleSource(
               dash.style?.color, dashOnSurface, 'degenerate em-dash');
         },
       );
@@ -224,38 +225,3 @@ void main() {
 
 /// Asserts [color] declares its own value, is neither `Colors.white` nor the
 /// dark Material `onSurface` proxy, and resolves exactly to
-/// `EditorialMonoclePalette.muted` (the single source).
-void _expectMutedSingleSource(Color? color, Color onSurface, String label) {
-  expect(
-    color,
-    isNotNull,
-    reason:
-        'Material defaults regression guard: the Tile $label placeholder '
-        'must declare its own TextStyle.color rather than relying on '
-        'DefaultTextStyle fall-through.',
-  );
-  expect(
-    color,
-    isNot(equals(Colors.white)),
-    reason:
-        'Material defaults regression guard: the Tile $label placeholder '
-        'must not resolve to the dark Material `Colors.white` fallback.',
-  );
-  expect(
-    color,
-    isNot(equals(onSurface)),
-    reason:
-        'Material defaults regression guard: the Tile $label placeholder '
-        'must not resolve to Theme.of(context).colorScheme.onSurface (the '
-        'dark Material `bodyMedium` proxy — distinct from '
-        '`EditorialMonoclePalette.muted` under any non-`editorialMonocle` '
-        'theme).',
-  );
-  expect(
-    color,
-    equals(EditorialMonoclePalette.muted),
-    reason:
-        'Material defaults regression guard: the Tile $label placeholder '
-        'must resolve to EditorialMonoclePalette.muted (the single source).',
-  );
-}

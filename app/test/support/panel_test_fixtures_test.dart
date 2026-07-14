@@ -43,16 +43,10 @@ void main() {
       final game = buildCivilianPanelTestGame();
       final human = game.players.first.id;
       final idleOld = game.worldState.oldWorld.units.where(
-        (u) =>
-            u.ownerId == human &&
-            u.tileKey != null &&
-            u.currentWork == null,
+        (u) => u.ownerId == human && u.tileKey != null && u.currentWork == null,
       );
       final idleNew = game.worldState.newWorld.units.where(
-        (u) =>
-            u.ownerId == human &&
-            u.tileKey != null &&
-            u.currentWork == null,
+        (u) => u.ownerId == human && u.tileKey != null && u.currentWork == null,
       );
       expect(idleOld, isNotEmpty);
       expect(idleNew, isNotEmpty);
@@ -112,19 +106,21 @@ void main() {
       }
     });
 
-    test('a non-owning player id yields no armies or regiments (empty state)',
-        () {
-      final game = buildMilitaryPanelTestGame();
-      expect(
-        game.worldState.armies.where((a) => a.ownerId == 'no-such-player'),
-        isEmpty,
-      );
-      final owned = [
-        ...game.worldState.oldWorld.units,
-        ...game.worldState.newWorld.units,
-      ].where((u) => u.ownerId == 'no-such-player');
-      expect(owned, isEmpty);
-    });
+    test(
+      'a non-owning player id yields no armies or regiments (empty state)',
+      () {
+        final game = buildMilitaryPanelTestGame();
+        expect(
+          game.worldState.armies.where((a) => a.ownerId == 'no-such-player'),
+          isEmpty,
+        );
+        final owned = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ].where((u) => u.ownerId == 'no-such-player');
+        expect(owned, isEmpty);
+      },
+    );
   });
 
   group('buildTechnologyPanelTestGame', () {
@@ -142,27 +138,33 @@ void main() {
       expect(game.worldState.newWorld.units, isEmpty);
     });
 
-    test('uses the default research-slot count (player.researchSlots null)', () {
-      final game = buildTechnologyPanelTestGame();
-      // Null defers to TechnologyPanel's `player.researchSlots ?? 3` default
-      // (three active + one locked slot card).
-      expect(game.players.first.researchSlots, isNull);
-    });
+    test(
+      'uses the default research-slot count (player.researchSlots null)',
+      () {
+        final game = buildTechnologyPanelTestGame();
+        // Null defers to TechnologyPanel's `player.researchSlots ?? 3` default
+        // (three active + one locked slot card).
+        expect(game.players.first.researchSlots, isNull);
+      },
+    );
   });
 
   group('buildSideMenuTestGame', () {
-    test('exposes a single human player and defaults infiniteMode to false', () {
-      final game = buildSideMenuTestGame();
-      expect(game.players, hasLength(1));
-      expect(game.players.first.id, kPanelTestHumanPlayerId);
-      expect(game.players.first.isHuman, isTrue);
-      // The Game Parameters dialog reads `infiniteMode`; suites opt into the
-      // "Infinite mode: On" line via copyWith, so the base must be false.
-      expect(game.infiniteMode, isFalse);
-      // No generated map/topology data is consumed by the menu chrome.
-      expect(game.worldState.oldWorld.units, isEmpty);
-      expect(game.worldState.newWorld.units, isEmpty);
-    });
+    test(
+      'exposes a single human player and defaults infiniteMode to false',
+      () {
+        final game = buildSideMenuTestGame();
+        expect(game.players, hasLength(1));
+        expect(game.players.first.id, kPanelTestHumanPlayerId);
+        expect(game.players.first.isHuman, isTrue);
+        // The Game Parameters dialog reads `infiniteMode`; suites opt into the
+        // "Infinite mode: On" line via copyWith, so the base must be false.
+        expect(game.infiniteMode, isFalse);
+        // No generated map/topology data is consumed by the menu chrome.
+        expect(game.worldState.oldWorld.units, isEmpty);
+        expect(game.worldState.newWorld.units, isEmpty);
+      },
+    );
   });
 
   group('buildGameScreenSpecsTestGame', () {
@@ -183,18 +185,21 @@ void main() {
   });
 
   group('buildDiplomacyScreenTestGame', () {
-    test('human first player has an affordable treasury and an AI opponent', () {
-      final game = buildDiplomacyScreenTestGame();
-      expect(game.players, hasLength(2));
-      final human = game.players.first;
-      expect(human.id, kPanelTestHumanPlayerId);
-      expect(human.isHuman, isTrue);
-      // Grant-aid dialog default amount (1000) must be affordable by default.
-      expect(human.treasury, greaterThanOrEqualTo(1000));
-      // players[1] resolves as a grant/subsidy target faction.
-      expect(game.players[1].id, 'gp2');
-      expect(game.players[1].isHuman, isFalse);
-    });
+    test(
+      'human first player has an affordable treasury and an AI opponent',
+      () {
+        final game = buildDiplomacyScreenTestGame();
+        expect(game.players, hasLength(2));
+        final human = game.players.first;
+        expect(human.id, kPanelTestHumanPlayerId);
+        expect(human.isHuman, isTrue);
+        // Grant-aid dialog default amount (1000) must be affordable by default.
+        expect(human.treasury, greaterThanOrEqualTo(1000));
+        // players[1] resolves as a grant/subsidy target faction.
+        expect(game.players[1].id, 'gp2');
+        expect(game.players[1].isHuman, isFalse);
+      },
+    );
 
     test('seeds no diplomacy relations (opponent stays undiscovered)', () {
       final game = buildDiplomacyScreenTestGame();
@@ -208,16 +213,19 @@ void main() {
   });
 
   group('buildDiplomacyPanelTestGame', () {
-    test('human first player with an affordable treasury and an AI opponent', () {
-      final game = buildDiplomacyPanelTestGame();
-      expect(game.players, hasLength(2));
-      final human = game.players.first;
-      expect(human.id, kPanelTestHumanPlayerId);
-      expect(human.isHuman, isTrue);
-      expect(human.treasury, greaterThanOrEqualTo(1000));
-      expect(game.players[1].id, 'gp2');
-      expect(game.players[1].isHuman, isFalse);
-    });
+    test(
+      'human first player with an affordable treasury and an AI opponent',
+      () {
+        final game = buildDiplomacyPanelTestGame();
+        expect(game.players, hasLength(2));
+        final human = game.players.first;
+        expect(human.id, kPanelTestHumanPlayerId);
+        expect(human.isHuman, isTrue);
+        expect(human.treasury, greaterThanOrEqualTo(1000));
+        expect(game.players[1].id, 'gp2');
+        expect(game.players[1].isHuman, isFalse);
+      },
+    );
 
     test('seeds an at-peace GP relation so the opponent is discovered', () {
       final game = buildDiplomacyPanelTestGame();
@@ -264,8 +272,9 @@ void main() {
       final byOther = {
         for (final r in game.diplomacyRelations)
           (r.factionId1 == kPanelTestHumanPlayerId
-              ? r.factionId2
-              : r.factionId1): r,
+                  ? r.factionId2
+                  : r.factionId1):
+              r,
       };
       expect(byOther['gp2']!.state, RelationState.atPeace);
       expect(byOther['gp3']!.state, RelationState.atWar);
@@ -273,10 +282,32 @@ void main() {
 
     test('gp2 outranks gp3 by military strength for a non-vacuous GP sort', () {
       final game = buildDiplomacyRichPanelTestGame();
-      int regimentsFor(String id) => game.worldState.oldWorld.units
-          .where((u) => u.ownerId == id)
-          .length;
+      int regimentsFor(String id) =>
+          game.worldState.oldWorld.units.where((u) => u.ownerId == id).length;
       expect(regimentsFor('gp2'), greaterThan(regimentsFor('gp3')));
+    });
+  });
+
+  group('buildDiplomacyPanelGameWithNoDiscoveredFactions', () {
+    test('seeds only the solo human with empty relations', () {
+      final game = buildDiplomacyPanelGameWithNoDiscoveredFactions();
+      expect(game.players.map((p) => p.id), ['gp1']);
+      expect(game.diplomacyRelations, isEmpty);
+      expect(game.tribes, isEmpty);
+      expect(game.minorNations, isEmpty);
+    });
+  });
+
+  group('buildDiplomacyPanelGameWithTribeDiscoveredByVisibility', () {
+    test('seeds tribe ownership and full visibility without a relation', () {
+      final game = buildDiplomacyPanelGameWithTribeDiscoveredByVisibility();
+      expect(game.tribes.map((t) => t.id), ['t1']);
+      expect(game.diplomacyRelations, isEmpty);
+      expect(
+        game.worldState.playerVisibilityByTile['gp1'],
+        containsPair('newWorld|t1prov|0|0', 'fullyVisible'),
+      );
+      expect(game.worldState.newWorld.provinces.single.ownerId, 't1');
     });
   });
 
@@ -312,10 +343,7 @@ void main() {
       expect(ports, isNotEmpty);
       // A `region|province|seazone` key (>= 2 segments) so the sea-zone locate
       // assertions can resolve a port tile key.
-      expect(
-        ports.keys.any((k) => k.split('|').length >= 2),
-        isTrue,
-      );
+      expect(ports.keys.any((k) => k.split('|').length >= 2), isTrue);
       expect(game.worldState.tileKeysByRegionAndProvince, isNotEmpty);
     });
 
@@ -345,36 +373,41 @@ void main() {
   });
 
   group('buildEventFeedNarrowInsetTestGame', () {
-    test('single human owns one old-world province for the narrow inset suite',
-        () {
-      final game = buildEventFeedNarrowInsetTestGame();
-      expect(game.players, hasLength(1));
-      expect(game.players.first.id, kPanelTestHumanPlayerId);
-      expect(game.worldState.oldWorld.provinces, hasLength(1));
-      expect(
-        game.worldState.oldWorld.provinces.single.ownerId,
-        kPanelTestHumanPlayerId,
-      );
-      // No generated map/topology cells are needed; the suite only mounts the
-      // canvas via buildLightweightMapViewData().
-      expect(game.worldState.newWorld.units, isEmpty);
-    });
+    test(
+      'single human owns one old-world province for the narrow inset suite',
+      () {
+        final game = buildEventFeedNarrowInsetTestGame();
+        expect(game.players, hasLength(1));
+        expect(game.players.first.id, kPanelTestHumanPlayerId);
+        expect(game.worldState.oldWorld.provinces, hasLength(1));
+        expect(
+          game.worldState.oldWorld.provinces.single.ownerId,
+          kPanelTestHumanPlayerId,
+        );
+        // No generated map/topology cells are needed; the suite only mounts the
+        // canvas via buildLightweightMapViewData().
+        expect(game.worldState.newWorld.units, isEmpty);
+      },
+    );
 
-    test('exposes a tappable old-world tile key mapped back to its province',
-        () {
-      final game = buildEventFeedNarrowInsetTestGame();
-      final byProv = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
-      expect(byProv, isNotNull);
-      // The suite taps `_firstOldWorldTileKey`; it must resolve a non-empty
-      // tile key whose province id matches a seeded province so the opened
-      // narrow overlay resolves real province data.
-      final entry = byProv!.entries.firstWhere((e) => e.value.isNotEmpty);
-      final tileKey = entry.value.first;
-      expect(tileKey, isNotEmpty);
-      final provinceIds =
-          game.worldState.oldWorld.provinces.map((p) => p.id).toSet();
-      expect(provinceIds, contains(entry.key));
-    });
+    test(
+      'exposes a tappable old-world tile key mapped back to its province',
+      () {
+        final game = buildEventFeedNarrowInsetTestGame();
+        final byProv = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
+        expect(byProv, isNotNull);
+        // The suite taps `_firstOldWorldTileKey`; it must resolve a non-empty
+        // tile key whose province id matches a seeded province so the opened
+        // narrow overlay resolves real province data.
+        final entry = byProv!.entries.firstWhere((e) => e.value.isNotEmpty);
+        final tileKey = entry.value.first;
+        expect(tileKey, isNotEmpty);
+        final provinceIds = game.worldState.oldWorld.provinces
+            .map((p) => p.id)
+            .toSet();
+        expect(provinceIds, contains(entry.key));
+      },
+    );
   });
 
   group('buildMapAreaEventFeedTestGame', () {
@@ -423,9 +456,12 @@ void main() {
       },
     );
 
-    test('a non-owning player id resolves to no player (empty-state guard)', () {
-      final game = buildProductionBreakdownDeltaTestGame();
-      expect(game.players.where((p) => p.id == 'no-such-player'), isEmpty);
-    });
+    test(
+      'a non-owning player id resolves to no player (empty-state guard)',
+      () {
+        final game = buildProductionBreakdownDeltaTestGame();
+        expect(game.players.where((p) => p.id == 'no-such-player'), isEmpty);
+      },
+    );
   });
 }

@@ -1,28 +1,27 @@
 import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('MutableEmplacedGun.fromInput', () {
-    for (final scenario in mutableEmplacedGunFromInputScenarios()) {
-      test(scenario.label, () => runQuickBattleEmplacedGunScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'MutableEmplacedGun.fromInput',
+    mutableEmplacedGunFromInputScenarios(),
+    (s) => s.run(),
+  );
 
-  group('aliveGunStrengthSum', () {
-    for (final scenario in aliveGunStrengthSumScenarios()) {
-      test(scenario.label, () => runQuickBattleEmplacedGunScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'aliveGunStrengthSum',
+    aliveGunStrengthSumScenarios(),
+    (s) => s.run(),
+  );
 
-  group('sumAliveGunHp', () {
-    for (final scenario in sumAliveGunHpScenarios()) {
-      test(scenario.label, () => runQuickBattleEmplacedGunScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'sumAliveGunHp',
+    sumAliveGunHpScenarios(),
+    (s) => s.run(),
+  );
 
-  group('applyRoundRobinGunHpDamage', () {
-    for (final scenario in applyRoundRobinGunHpDamageScenarios()) {
-      test(scenario.label, () => runQuickBattleEmplacedGunScenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'applyRoundRobinGunHpDamage',
+    applyRoundRobinGunHpDamageScenarios(),
+    (s) => s.run(),
+  );
 }

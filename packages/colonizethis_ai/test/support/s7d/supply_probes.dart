@@ -239,8 +239,13 @@ bool stockpileAndLabourAffordAnyProductionRecipe(
   final effectiveLabour = effectiveLabourForWorkers(
     workers: player.workerPool,
     stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+    foodCounts: MilitaryNavyFoodCounts(
+      regimentCountsById: regimentTypeCountsForPlayer(
+        game.worldState,
+        playerId,
+      ),
+      shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+    ),
   );
   for (final recipe in recipes) {
     if (feasibleRuns(
@@ -275,8 +280,13 @@ int playerEffectiveLabour(Game game, String playerId) {
   return effectiveLabourForWorkers(
     workers: player.workerPool,
     stockpile: player.stockpile,
-    regimentCountsById: regimentTypeCountsForPlayer(game.worldState, playerId),
-    shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+    foodCounts: MilitaryNavyFoodCounts(
+      regimentCountsById: regimentTypeCountsForPlayer(
+        game.worldState,
+        playerId,
+      ),
+      shipCountsById: shipTypeCountsForPlayer(game.worldState, playerId),
+    ),
   );
 }
 

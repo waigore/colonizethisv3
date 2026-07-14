@@ -55,27 +55,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'warmonger',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(atWarWith: [_minorId]),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      invadableProvinceIdsSorted: [_owMinorProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _minorId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    },
-  );
-}
 
 DomainPlannerOutcome _runOrchestrator({required EconomyPlan economyPlan}) {
   final game = buildOrchestratorExpandMinorWarScenarioGame(
@@ -83,18 +62,20 @@ DomainPlannerOutcome _runOrchestrator({required EconomyPlan economyPlan}) {
   );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
-  final snapshot = _expandSnapshot();
+  final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.trade,
-    seeds: AISeedBundle.fromTurnSeed(2994700),
-    suggestionAPI: _emptyApi,
-    economyPlan: economyPlan,
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.trade,
+      seeds: AISeedBundle.fromTurnSeed(2994700),
+      suggestionAPI: _emptyApi,
+      economyPlan: economyPlan,
+    ),
   );
 }
 

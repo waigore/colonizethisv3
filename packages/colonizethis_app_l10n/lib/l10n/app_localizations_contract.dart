@@ -65,10 +65,10 @@ abstract class AppLocalizations {
   /// Pause menu option label to resume the game.
   String get game_pauseMenu_resume;
 
-  /// Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired).
+  /// Pause menu option label to save the current game.
   String get game_pauseMenu_saveGame;
 
-  /// Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired).
+  /// Pause menu option label to load a saved game.
   String get game_pauseMenu_loadGame;
 
   /// Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired).
@@ -79,6 +79,63 @@ abstract class AppLocalizations {
 
   /// Tooltip for the pause menu button in the in-game UI.
   String get game_pauseMenu_tooltip;
+
+  /// Title of the named save dialog (DLG70001).
+  String get saveGameName_title;
+
+  /// Confirm button on the named save dialog.
+  String get saveGameName_save;
+
+  /// Error when sanitizeGameId rejects the typed save name.
+  String get saveGameName_invalidName;
+
+  /// Overwrite confirmation body when sanitized gameId collides.
+  String get saveGameName_overwriteConfirm;
+
+  /// Confirm overwrite button on the named save dialog.
+  String get saveGameName_overwrite;
+
+  /// SnackBar message after a successful named save.
+  String get saveGameName_gameSaved;
+
+  /// Error when creating a new manual save at the 20-slot cap (Refs #3985).
+  String get saveGameName_atCapError;
+
+  /// Title of the load-game list dialog (DLG80001).
+  String get loadGameList_title;
+
+  /// Empty-state copy when listLoadableSaves returns no rows.
+  String get loadGameList_empty;
+
+  /// Second line of a load-list row: turn, calendar year, human nation.
+  String loadGameList_metaLine(int turn, int year, String nation);
+
+  /// Optional turn subtitle under a load-list row when year/nation are missing.
+  String loadGameList_turnSubtitle(int turn);
+
+  /// Discard confirmation when loading from an active pause session.
+  String get loadGameList_discardConfirm;
+
+  /// Confirm load button after discard confirmation.
+  String get loadGameList_load;
+
+  /// Per-row delete control on the load-game list (DLG80001).
+  String get loadGameList_delete;
+
+  /// Confirmation body before deleting a save from the load list.
+  String get loadGameList_deleteConfirm;
+
+  /// Pager control for the previous page of manual saves.
+  String get loadGameList_previous;
+
+  /// Pager control for the next page of manual saves.
+  String get loadGameList_next;
+
+  /// Pager label showing current manual-save page (1-based).
+  String loadGameList_pageOf(int page, int pageCount);
+
+  /// Badge above the pinned auto-save row in the load list.
+  String get loadGameList_autoSaveBadge;
 
   /// Title used for the main game screen shell.
   String get game_screenTitle;
@@ -946,6 +1003,88 @@ abstract class AppLocalizations {
   /// CommodityCategory.advanced.
   String get commodityCategory_advanced;
 
+  /// Localized display name for commodity id `grain`.
+  String get commodity_grain;
+
+  /// Localized display name for commodity id `meat`.
+  String get commodity_meat;
+
+  /// Localized display name for commodity id `timber`.
+  String get commodity_timber;
+
+  /// Localized display name for commodity id `iron`.
+  String get commodity_iron;
+
+  /// Localized display name for commodity id `wool`.
+  String get commodity_wool;
+
+  /// Localized display name for commodity id `cotton`.
+  String get commodity_cotton;
+
+  /// Localized display name for commodity id `coal`.
+  String get commodity_coal;
+
+  /// Localized display name for commodity id `sugarCane`.
+  String get commodity_sugarCane;
+
+  /// Localized display name for commodity id `tobacco`.
+  String get commodity_tobacco;
+
+  /// Localized display name for commodity id `furs`.
+  String get commodity_furs;
+
+  /// Localized display name for commodity id `copper`.
+  String get commodity_copper;
+
+  /// Localized display name for commodity id `tin`.
+  String get commodity_tin;
+
+  /// Localized display name for commodity id `horses`.
+  String get commodity_horses;
+
+  /// Localized display name for commodity id `lumber`.
+  String get commodity_lumber;
+
+  /// Localized display name for commodity id `castIron`.
+  String get commodity_castIron;
+
+  /// Localized display name for commodity id `fabric`.
+  String get commodity_fabric;
+
+  /// Localized display name for commodity id `refinedSugar`.
+  String get commodity_refinedSugar;
+
+  /// Localized display name for commodity id `cigars`.
+  String get commodity_cigars;
+
+  /// Localized display name for commodity id `furHats`.
+  String get commodity_furHats;
+
+  /// Localized display name for commodity id `steel`.
+  String get commodity_steel;
+
+  /// Localized display name for commodity id `paper`.
+  String get commodity_paper;
+
+  /// Localized display name for commodity id `bronze`.
+  String get commodity_bronze;
+
+  /// Localized display name for commodity id `gold`.
+  String get commodity_gold;
+
+  /// Localized display name for commodity id `silver`.
+  String get commodity_silver;
+
+  /// Localized display name for commodity id `gems`.
+  String get commodity_gems;
+
+  /// Localized display name for commodity id `diamonds`.
+  String get commodity_diamonds;
+
+  /// Localized display name for commodity id `spices`.
+  String get commodity_spices;
+
+
   /// Civilian units panel title.
   String get civilian_units_title;
 
@@ -1437,6 +1576,25 @@ abstract class AppLocalizations {
   /// Signed quantity for a projected town manufacturing bonus commodity row.
   String provinceOverlay_townProductionQuantity(int quantity);
 
+  /// Subheading for last-turn Extraction condensed line.
+  String get provinceOverlay_extractionHeading;
+
+  /// Subheading for improvable Available condensed line.
+  String get provinceOverlay_availableHeading;
+
+  /// Full-yield Extraction commodity segment text.
+  String provinceOverlay_extractionQuantity(int quantity, String name);
+
+  /// Partial-yield Extraction commodity segment text.
+  String provinceOverlay_extractionQuantityPartial(
+    int effective,
+    int full,
+    String name,
+  );
+
+  /// Available improvable tile-count commodity segment text.
+  String provinceOverlay_availableTileCount(int count, String name);
+
   /// Province overlay section heading for military details.
   String get provinceOverlay_sectionMilitary;
 
@@ -1476,10 +1634,10 @@ abstract class AppLocalizations {
   /// Semantics value for zoom slider (spoken).
   String regionMinimap_zoomSemanticsValue(int pct);
 
-  /// Economic row in province overlay: terrain, resource id, and localized detail suffix.
+  /// Economic row in province overlay: terrain, localized resource name, and detail suffix.
   String province_economic_resourceRow(
     String terrain,
-    String resourceId,
+    String resourceName,
     String detail,
   );
 

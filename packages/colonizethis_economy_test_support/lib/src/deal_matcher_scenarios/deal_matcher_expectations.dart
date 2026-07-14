@@ -1,21 +1,10 @@
+// dart format off
 // Compact DealMatcher result assertions (Refs #3939 phase 3 slice 10+).
-
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Per-deal field pins for data-driven [DealMatchExpectation] rows.
 class FilledDealExpectation {
-  const FilledDealExpectation({
-    this.buyerFactionId,
-    this.sellerFactionId,
-    this.commodityId,
-    this.quantity,
-    this.pricePerUnit,
-    this.isFtpMatch,
-    this.isFirstRightOfRefusalMatch,
-  });
-
+  const FilledDealExpectation({this.buyerFactionId, this.sellerFactionId, this.commodityId, this.quantity, this.pricePerUnit, this.isFtpMatch, this.isFirstRightOfRefusalMatch});
   final String? buyerFactionId;
   final String? sellerFactionId;
   final String? commodityId;
@@ -24,11 +13,7 @@ class FilledDealExpectation {
   final bool? isFtpMatch;
   final bool? isFirstRightOfRefusalMatch;
 }
-
-void _assertFilledDealExpectation(
-  FilledDeal deal,
-  FilledDealExpectation expectation,
-) {
+void _assertFilledDealExpectation(FilledDeal deal, FilledDealExpectation expectation) {
   if (expectation.buyerFactionId != null) {
     expect(deal.buyerFactionId, expectation.buyerFactionId);
   }
@@ -51,32 +36,9 @@ void _assertFilledDealExpectation(
     expect(deal.isFirstRightOfRefusalMatch, expectation.isFirstRightOfRefusalMatch);
   }
 }
-
 /// Data-driven expectations for [DealMatchResult] scenario rows.
 class DealMatchExpectation {
-  const DealMatchExpectation({
-    this.filledDeals,
-    this.filledDealsLength,
-    this.filledDealsEmpty = false,
-    this.filledDealExpectations,
-    this.filledDealCommodityIds,
-    this.frrFilledDeal,
-    this.nonFrrFilledDeal,
-    this.unfilledOffersByFactionId,
-    this.unfilledBidsByFactionId,
-    this.unfilledBidsPinsByFactionId,
-    this.unfilledOffersEmpty = false,
-    this.unfilledBidsEmpty = false,
-    this.activityByCommodityId,
-    this.filledDealQuantityByCommodityId,
-    this.firstFilledDeal,
-    this.resultEqualsEmpty = false,
-    this.activityNotesByCommodityId,
-    this.activityNotesEmptyForCommodities,
-    this.activityPriceChangePercent,
-    this.custom,
-  });
-
+  const DealMatchExpectation({this.filledDeals, this.filledDealsLength, this.filledDealsEmpty = false, this.filledDealExpectations, this.filledDealCommodityIds, this.frrFilledDeal, this.nonFrrFilledDeal, this.unfilledOffersByFactionId, this.unfilledBidsByFactionId, this.unfilledBidsPinsByFactionId, this.unfilledOffersEmpty = false, this.unfilledBidsEmpty = false, this.activityByCommodityId, this.filledDealQuantityByCommodityId, this.firstFilledDeal, this.resultEqualsEmpty = false, this.activityNotesByCommodityId, this.activityNotesEmptyForCommodities, this.activityPriceChangePercent, this.custom});
   final List<FilledDeal>? filledDeals;
   final int? filledDealsLength;
   final bool filledDealsEmpty;
@@ -98,11 +60,7 @@ class DealMatchExpectation {
   final Map<CommodityId, double>? activityPriceChangePercent;
   final void Function(DealMatchResult result)? custom;
 }
-
-void assertDealMatchExpectation(
-  DealMatchResult result,
-  DealMatchExpectation expectation,
-) {
+void assertDealMatchExpectation(DealMatchResult result, DealMatchExpectation expectation) {
   if (expectation.filledDealsEmpty) {
     expect(result.filledDeals, isEmpty);
   }
@@ -113,33 +71,20 @@ void assertDealMatchExpectation(
     expect(result.filledDeals, expectation.filledDeals);
   }
   if (expectation.filledDealExpectations != null) {
-    expect(
-      result.filledDeals,
-      hasLength(expectation.filledDealExpectations!.length),
-    );
+    expect(result.filledDeals, hasLength(expectation.filledDealExpectations!.length));
     for (var i = 0; i < expectation.filledDealExpectations!.length; i++) {
-      _assertFilledDealExpectation(
-        result.filledDeals[i],
-        expectation.filledDealExpectations![i],
-      );
+      _assertFilledDealExpectation(result.filledDeals[i], expectation.filledDealExpectations![i]);
     }
   }
   if (expectation.filledDealCommodityIds != null) {
-    expect(
-      result.filledDeals.map((d) => d.commodityId).toList(),
-      expectation.filledDealCommodityIds,
-    );
+    expect(result.filledDeals.map((d) => d.commodityId).toList(), expectation.filledDealCommodityIds);
   }
   if (expectation.frrFilledDeal != null) {
-    final frrDeal = result.filledDeals.firstWhere(
-      (d) => d.isFirstRightOfRefusalMatch,
-    );
+    final frrDeal = result.filledDeals.firstWhere((d) => d.isFirstRightOfRefusalMatch);
     _assertFilledDealExpectation(frrDeal, expectation.frrFilledDeal!);
   }
   if (expectation.nonFrrFilledDeal != null) {
-    final regularDeal = result.filledDeals.firstWhere(
-      (d) => !d.isFirstRightOfRefusalMatch,
-    );
+    final regularDeal = result.filledDeals.firstWhere((d) => !d.isFirstRightOfRefusalMatch);
     _assertFilledDealExpectation(regularDeal, expectation.nonFrrFilledDeal!);
   }
   if (expectation.unfilledOffersEmpty) {
@@ -149,50 +94,35 @@ void assertDealMatchExpectation(
     expect(result.unfilledBidsByFactionId, isEmpty);
   }
   if (expectation.unfilledOffersByFactionId != null) {
-    expect(
-      result.unfilledOffersByFactionId,
-      expectation.unfilledOffersByFactionId,
-    );
+    expect(result.unfilledOffersByFactionId, expectation.unfilledOffersByFactionId);
   }
   if (expectation.unfilledBidsByFactionId != null) {
-    expect(
-      result.unfilledBidsByFactionId,
-      expectation.unfilledBidsByFactionId,
-    );
+    expect(result.unfilledBidsByFactionId, expectation.unfilledBidsByFactionId);
   }
   if (expectation.unfilledBidsPinsByFactionId != null) {
-    for (final MapEntry(:key, :value)
-        in expectation.unfilledBidsPinsByFactionId!.entries) {
+    for (final MapEntry(:key, :value) in expectation.unfilledBidsPinsByFactionId!.entries) {
       expect(result.unfilledBidsByFactionId[key], value);
     }
   }
   if (expectation.activityByCommodityId != null) {
-    for (final MapEntry(:key, :value)
-        in expectation.activityByCommodityId!.entries) {
+    for (final MapEntry(:key, :value) in expectation.activityByCommodityId!.entries) {
       expect(result.activityByCommodityId[key], value);
     }
   }
   if (expectation.filledDealQuantityByCommodityId != null) {
-    for (final MapEntry(:key, :value)
-        in expectation.filledDealQuantityByCommodityId!.entries) {
-      final deal = result.filledDeals.firstWhere(
-        (d) => d.commodityId == key,
-      );
+    for (final MapEntry(:key, :value) in expectation.filledDealQuantityByCommodityId!.entries) {
+      final deal = result.filledDeals.firstWhere((d) => d.commodityId == key);
       expect(deal.quantity, value);
     }
   }
   if (expectation.firstFilledDeal != null) {
-    _assertFilledDealExpectation(
-      result.filledDeals.first,
-      expectation.firstFilledDeal!,
-    );
+    _assertFilledDealExpectation(result.filledDeals.first, expectation.firstFilledDeal!);
   }
   if (expectation.resultEqualsEmpty) {
     expect(result, equals(DealMatchResult.empty));
   }
   if (expectation.activityNotesByCommodityId != null) {
-    for (final MapEntry(:key, :value)
-        in expectation.activityNotesByCommodityId!.entries) {
+    for (final MapEntry(:key, :value) in expectation.activityNotesByCommodityId!.entries) {
       final activity = result.activityByCommodityId[key];
       expect(activity, isNotNull);
       expect(activity!.notes, value);
@@ -206,10 +136,10 @@ void assertDealMatchExpectation(
     }
   }
   if (expectation.activityPriceChangePercent != null) {
-    for (final MapEntry(:key, :value)
-        in expectation.activityPriceChangePercent!.entries) {
+    for (final MapEntry(:key, :value) in expectation.activityPriceChangePercent!.entries) {
       expect(result.activityByCommodityId[key]!.priceChangePercent, value);
     }
   }
   expectation.custom?.call(result);
 }
+// dart format on

@@ -16,19 +16,15 @@ mixin _OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(kDialogueOvertureAsset);
-      final project = YarnProject();
-      project.parse(text);
-      if (!project.nodes.containsKey(_kOvertureNode)) {
-        throw StateError(
-          'Overture node "$_kOvertureNode" not found in $kDialogueOvertureAsset',
-        );
-      }
-      final view = _createOvertureDialogueView(log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
+      final session = await loadYarnDialogueSession(
+        bundle: bundle,
+        assetPath: kDialogueOvertureAsset,
+        logger: log,
+        createView: _createOvertureDialogueView,
+        requiredNodes: const [_kOvertureNode],
       );
+      final view = session.view;
+      final runner = session.runner;
       view.onStateChanged = (line, choice) {
         if (mounted) setState(() {});
       };

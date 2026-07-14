@@ -75,6 +75,10 @@ class GameIdsWithIntroShownNotifier extends Notifier<Set<String>> {
   void markShown(String gameId) {
     state = {...state, gameId};
   }
+
+  void clear() {
+    state = <String>{};
+  }
 }
 
 final gameIdsWithIntroShownProvider =

@@ -30,153 +30,33 @@ List<BuildUnitOrder> _suggestCivilianBuildsDefault({required Game game}) {
   final view = buildPlayerView(game, buildCivilianTopology, 'p1');
   return suggestBuildOrders(view, game, buildCivilianTopology, const Orders());
 }
+// dart format off
 
-void osbcsRunIncludesAffordableWhenFlagTrue() {
-  final game = buildCivilianValidationGame(treasury: 2000, paper: 2);
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  final civilians = _civilianUnitTypes(suggestions);
-  expect(
-    civilians,
-    containsAll(<String>[
-      kUnitTypeBuilder,
-      kUnitTypeEngineer,
-      kUnitTypeExplorer,
-    ]),
-    reason:
-        'Builder/Engineer/Explorer cost 1000 cash + 2 paper and are '
-        'affordable with treasury 2000 + paper 2',
-  );
-}
+void osbcsRunIncludesAffordableWhenFlagTrue() {final game = buildCivilianValidationGame(treasury: 2000,paper: 2); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); final civilians = _civilianUnitTypes(suggestions); expect(civilians,containsAll(<String>[kUnitTypeBuilder,kUnitTypeEngineer,kUnitTypeExplorer,]),reason: 'Builder/Engineer/Explorer cost 1000 cash + 2 paper and are ' 'affordable with treasury 2000 + paper 2',);}
 
-void osbcsRunDeterministicallySortedByUnitType() {
-  final game = buildCivilianValidationGame(treasury: 2000, paper: 2);
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  final unitTypes = suggestions.map((o) => o.unitType).toList();
-  final sorted = [...unitTypes]..sort();
-  expect(unitTypes, sorted);
-}
+void osbcsRunDeterministicallySortedByUnitType() {final game = buildCivilianValidationGame(treasury: 2000,paper: 2); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); final unitTypes = suggestions.map((o) => o.unitType).toList(); final sorted = [...unitTypes]..sort(); expect(unitTypes,sorted);}
 
-void osbcsRunDefaultOmitsCivilianCandidates() {
-  final game = buildCivilianValidationGame(treasury: 2000, paper: 2);
-  final defaulted = _suggestCivilianBuildsDefault(game: game);
-  final explicitFalse = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: false,
-  );
-  expect(_civilianUnitTypes(defaulted), isEmpty);
-  expect(
-    defaulted.map((o) => o.unitType).toList(),
-    explicitFalse.map((o) => o.unitType).toList(),
-  );
-}
+void osbcsRunDefaultOmitsCivilianCandidates() {final game = buildCivilianValidationGame(treasury: 2000,paper: 2); final defaulted = _suggestCivilianBuildsDefault(game: game); final explicitFalse = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: false,); expect(_civilianUnitTypes(defaulted),isEmpty); expect(defaulted.map((o) => o.unitType).toList(),explicitFalse.map((o) => o.unitType).toList(),);}
 
-void osbcsRunMerchantExcludedWithoutTech() {
-  final game = buildCivilianValidationGame(treasury: 3000, paper: 4);
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  expect(_civilianUnitTypes(suggestions), isNot(contains(kUnitTypeMerchant)));
-}
+void osbcsRunMerchantExcludedWithoutTech() {final game = buildCivilianValidationGame(treasury: 3000,paper: 4); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); expect(_civilianUnitTypes(suggestions),isNot(contains(kUnitTypeMerchant)));}
 
-void osbcsRunMerchantIncludedWhenUnlocked() {
-  final game = buildCivilianValidationGame(
-    treasury: 3000,
-    paper: 4,
-    techUnlocked: const {kTechIdMerchantCompanies: true},
-  );
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  expect(_civilianUnitTypes(suggestions), contains(kUnitTypeMerchant));
-}
+void osbcsRunMerchantIncludedWhenUnlocked() {final game = buildCivilianValidationGame(treasury: 3000,paper: 4,techUnlocked: const {kTechIdMerchantCompanies: true},); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); expect(_civilianUnitTypes(suggestions),contains(kUnitTypeMerchant));}
 
-void osbcsRunIdenticalInputsIdenticalEnumeration() {
-  final game = buildCivilianValidationGame(treasury: 3000, paper: 4);
-  final first = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  final second = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  expect(
-    first.map((o) => o.unitType).toList(),
-    second.map((o) => o.unitType).toList(),
-  );
-}
+void osbcsRunIdenticalInputsIdenticalEnumeration() {final game = buildCivilianValidationGame(treasury: 3000,paper: 4); final first = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); final second = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); expect(first.map((o) => o.unitType).toList(),second.map((o) => o.unitType).toList(),);}
 
-void osbcsRunNoCandidatesWhenTreasuryZero() {
-  final game = buildCivilianValidationGame(treasury: 0, paper: 4);
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  expect(_civilianUnitTypes(suggestions), isEmpty);
-}
+void osbcsRunNoCandidatesWhenTreasuryZero() {final game = buildCivilianValidationGame(treasury: 0,paper: 4); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); expect(_civilianUnitTypes(suggestions),isEmpty);}
 
-void osbcsRunNoCandidatesWhenPaperBelowMinimum() {
-  final game = buildCivilianValidationGame(treasury: 5000, paper: 1);
-  final suggestions = _suggestCivilianBuildsWithFlag(
-    game: game,
-    includeCivilianBuilds: true,
-  );
-  expect(_civilianUnitTypes(suggestions), isEmpty);
-}
+void osbcsRunNoCandidatesWhenPaperBelowMinimum() {final game = buildCivilianValidationGame(treasury: 5000,paper: 1); final suggestions = _suggestCivilianBuildsWithFlag(game: game,includeCivilianBuilds: true,); expect(_civilianUnitTypes(suggestions),isEmpty);}
 
 /// Scenarios for suggestBuildOrders civilian enumeration (Refs #3793).
 List<RunnableScenario>
-suggestBuildOrdersCivilianEnumerationScenarios() => const [
-  RunnableScenario(
-    label:
-        'AC1: includes affordable civilian candidates when includeCivilianBuilds is true',
-    run: osbcsRunIncludesAffordableWhenFlagTrue,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC1: emitted civilian candidates are deterministically sorted by unitType',
-    run: osbcsRunDeterministicallySortedByUnitType,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call',
-    run: osbcsRunDefaultOmitsCivilianCandidates,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC5: Merchant excluded when merchant_companies is not unlocked',
-    run: osbcsRunMerchantExcludedWithoutTech,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label:
-        'AC5: Merchant included when merchant_companies is unlocked and affordable',
-    run: osbcsRunMerchantIncludedWhenUnlocked,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC9: identical inputs produce identical civilian enumeration',
-    run: osbcsRunIdenticalInputsIdenticalEnumeration,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC12: no civilian candidates when treasury is zero',
-    run: osbcsRunNoCandidatesWhenTreasuryZero,
-    refs: '#3793',
-  ),
-  RunnableScenario(
-    label: 'AC12: no civilian candidates when paper is below the minimum cost',
-    run: osbcsRunNoCandidatesWhenPaperBelowMinimum,
-    refs: '#3793',
-  ),
+suggestBuildOrdersCivilianEnumerationScenarios() => [
+  rs('AC1: includes affordable civilian candidates when includeCivilianBuilds is true', osbcsRunIncludesAffordableWhenFlagTrue, '#3793'),
+  rs('AC1: emitted civilian candidates are deterministically sorted by unitType', osbcsRunDeterministicallySortedByUnitType, '#3793'),
+  rs('AC1b: default (flag omitted) emits no civilian candidates and equals the explicit false call', osbcsRunDefaultOmitsCivilianCandidates, '#3793'),
+  rs('AC5: Merchant excluded when merchant_companies is not unlocked', osbcsRunMerchantExcludedWithoutTech, '#3793'),
+  rs('AC5: Merchant included when merchant_companies is unlocked and affordable', osbcsRunMerchantIncludedWhenUnlocked, '#3793'),
+  rs('AC9: identical inputs produce identical civilian enumeration', osbcsRunIdenticalInputsIdenticalEnumeration, '#3793'),
+  rs('AC12: no civilian candidates when treasury is zero', osbcsRunNoCandidatesWhenTreasuryZero, '#3793'),
+  rs('AC12: no civilian candidates when paper is below the minimum cost', osbcsRunNoCandidatesWhenPaperBelowMinimum, '#3793'),
 ];

@@ -5,5 +5,6 @@ void main() {
     'applyTradeInterception',
     applyTradeInterceptionScenarios(),
     runApplyTradeInterceptionScenario,
+    labelOf: (s) => s.label,
   );
 }

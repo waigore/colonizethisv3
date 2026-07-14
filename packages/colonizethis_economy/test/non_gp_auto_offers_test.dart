@@ -20,8 +20,8 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 
 void main() {
   group('computeNonGreatPowerAutoOffers (SPEC AC: minor/tribe auto-sell)', () {
-    for (final scenario in nonGpAutoOffersScenarios()) {
-      test(scenario.label, () => runNonGpAutoOffersScenario(scenario));
-    }
+    runLabeledScenarios(nonGpAutoOffersScenarios(), (scenario) {
+      runNonGpAutoOffersScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

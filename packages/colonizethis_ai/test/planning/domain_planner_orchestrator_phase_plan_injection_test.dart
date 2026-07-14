@@ -91,31 +91,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'warmonger',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(atWarWith: [_minorId]),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> below the observer quota; one invadable minor
-    // frontier so the natural-dispatch EXPAND conquest pass has somewhere
-    // to march.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      invadableProvinceIdsSorted: [_owMinorProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _minorId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    },
-  );
-}
-
 void main() {
   group('runDomainPlannersWithOutcome phasePlan injection', () {
     test(
@@ -128,7 +103,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -143,16 +118,18 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509300),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         expect(
@@ -178,7 +155,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -191,17 +168,19 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: PhasePlanOutcome.defaultDevelop),
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509300),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+            options: OrchestratorOptions(phasePlan: PhasePlanOutcome.defaultDevelop),
+          ),
         );
 
         expect(
@@ -240,7 +219,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         final naturalPlan = runPhasePlanners(
           game: game,
@@ -249,30 +228,34 @@ void main() {
         );
 
         final ordersInternal = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509301),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509301),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         ).orders;
 
         final ordersExternal = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509301),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: naturalPlan),
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509301),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+            options: OrchestratorOptions(phasePlan: naturalPlan),
+          ),
         ).orders;
 
         expect(
@@ -334,7 +317,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
 
         final naturalPlan = runPhasePlanners(
           game: game,
@@ -343,18 +326,20 @@ void main() {
         );
 
         DomainPlannerOutcome runOnce() => runDomainPlannersWithOutcome(
-              game: game,
-              topology: topology,
-              nationId: _nationId,
-              view: view,
-              snapshot: snapshot,
-              config: _aiConfig,
-              primaryGoal: StrategicGoal.conquer,
-              seeds: AISeedBundle.fromTurnSeed(2509302),
-              suggestionAPI: _conquestCandidateApi,
-              economyPlan: _economyPlan,
-              options: OrchestratorOptions(phasePlan: naturalPlan),
-            );
+          DomainPlannerInput(
+                game: game,
+                topology: topology,
+                nationId: _nationId,
+                view: view,
+                snapshot: snapshot,
+                config: _aiConfig,
+                primaryGoal: StrategicGoal.conquer,
+                seeds: AISeedBundle.fromTurnSeed(2509302),
+                suggestionAPI: _conquestCandidateApi,
+                economyPlan: _economyPlan,
+                options: OrchestratorOptions(phasePlan: naturalPlan),
+          ),
+        );
 
         final first = runOnce();
         final second = runOnce();

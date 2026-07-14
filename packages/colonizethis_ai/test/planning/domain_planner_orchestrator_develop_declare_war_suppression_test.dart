@@ -46,115 +46,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _gpOwnedNwProvince = 'newWorld|gp1_nw0';
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
-
-// Uses kGp1OwProvincesAtQuota from domain_planner_orchestrator_test_support.dart
-// (Refs #3941). COLONIAL vs DEVELOP is driven by NW tribe visibility.
-/// DEVELOP scenario: every `newWorld|` province is GP-owned so
-/// `hasColonialAcquisitionTargets` is false and the snapshot has no
-/// invadable/adjacent colonial targets. Combined with `oldWorldProvincesOwned
-/// >= 10` this places the GP in DEVELOP per `observerGoalPhaseFor`.
-Game _developScenarioGame() {
-  return Game(
-    id: 'g-2509-develop-declare-war-suppress',
-    worldState: WorldState(
-      // Turn 140 keeps us past the turn-120 COLONIAL-lite safeguard window
-      // and inside the DEVELOP improvement-first horizon toward turn 150.
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _gpOwnedNwProvince,
-            regionId: 'newWorld',
-            ownerId: _nationId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army for gp1 keeps `regimentCountForPlayer` > 0 and
-      // avoids the zero-regiment stalemate peace paths firing alongside the
-      // declare-war contract this file pins. Mirrors the guard used in the
-      // EXPAND/COLONIAL two-GP peace and overture suppression pins.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-  );
-}
-
-/// COLONIAL scenario: a tribe still owns a sea-reachable `newWorld|`
-/// province, so `hasColonialAcquisitionTargets` is true and the GP enters
-/// COLONIAL per `observerGoalPhaseFor`. The negative-control fixture
-/// exercises the orchestrator on the SAME fake API to verify the DEVELOP
-/// filter is not over-applied in COLONIAL.
-Game _colonialScenarioGame() {
-  return Game(
-    id: 'g-2509-develop-declare-war-suppress-colonial-control',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 130),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-  );
-}
+const String _nationId = kOrchestratorGp1NationId;
+const String _tribeId = kOrchestratorTribeId;
 
 // Fake API surfaces one `declareWar(tribe1)` candidate via
 // `suggestDeclareWarOrders` — the path under test for the SPEC DEVELOP
@@ -197,61 +90,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _developSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    // At war with the tribe so the declare-war candidate is structurally
-    // a candidate (DEVELOP suppression must drop a candidate the planner
-    // would otherwise consider, not merely one without a valid target).
-    threats: ThreatSummary(atWarWith: [_tribeId]),
-    opportunities: OpportunitySummary(),
-    // 11 OW provinces -> past EXPAND quota. Empty colonial summary +
-    // GP-owned NW -> DEVELOP.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(newWorldProvincesOwned: 1),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    },
-  );
-}
-
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(atWarWith: [_tribeId]),
-    opportunities: OpportunitySummary(),
-    // 11 OW provinces + invadable NW -> COLONIAL.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    },
-  );
-}
-
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
       in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
@@ -262,10 +100,15 @@ List<String> _declareWarTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners DEVELOP-phase declareWar suppression', () {
     test('DEVELOP drops declareWar toward at-war tribe candidate', () {
-      final game = _developScenarioGame();
+      final game = buildOrchestratorDevelopGpOwnedNwScenarioGame(
+        id: 'g-2509-develop-declare-war-suppress',
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _developSnapshot();
+      final snapshot = buildOrchestratorDevelopNoColonialTargetsSnapshot(
+        atWarWith: const [_tribeId],
+        tribeRelationScore: 10,
+      );
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -278,16 +121,18 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.diplomacy,
-        seeds: AISeedBundle.fromTurnSeed(2509330),
-        suggestionAPI: _tribeDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.diplomacy,
+          seeds: AISeedBundle.fromTurnSeed(2509330),
+          suggestionAPI: _tribeDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       expect(
@@ -311,10 +156,18 @@ void main() {
     test(
       'COLONIAL allows declareWar toward the same at-war tribe candidate',
       () {
-        final game = _colonialScenarioGame();
+        final game = buildOrchestratorGp1TribeNwScenarioGame(
+          id: 'g-2509-develop-declare-war-suppress-colonial-control',
+          gp1OwProvinces: kGp1OwProvincesAtQuota,
+          turnNumber: 130,
+        );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _colonialSnapshot();
+        final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(
+          atWarWith: const [_tribeId],
+          tribeRelationScore: 10,
+          tribeRelationState: RelationState.atWar,
+        );
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -329,16 +182,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509331),
-          suggestionAPI: _tribeDeclareWarApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509331),
+            suggestionAPI: _tribeDeclareWarApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         expect(
@@ -355,22 +210,29 @@ void main() {
     );
 
     test('emits identical diplomatic orders for identical DEVELOP inputs', () {
-      final game = _developScenarioGame();
+      final game = buildOrchestratorDevelopGpOwnedNwScenarioGame(
+        id: 'g-2509-develop-declare-war-suppress',
+      );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _developSnapshot();
+      final snapshot = buildOrchestratorDevelopNoColonialTargetsSnapshot(
+        atWarWith: const [_tribeId],
+        tribeRelationScore: 10,
+      );
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.diplomacy,
-        seeds: AISeedBundle.fromTurnSeed(turnSeed),
-        suggestionAPI: _tribeDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.diplomacy,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _tribeDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       final firstRun = runOnce(2509332);

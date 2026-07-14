@@ -12,7 +12,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_all
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'production_panel_test_fixtures.dart';
+import 'support/production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
 void main() {

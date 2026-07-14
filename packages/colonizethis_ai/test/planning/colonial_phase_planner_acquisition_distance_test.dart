@@ -19,103 +19,22 @@
 // iteration order is the only thing that picks one tribe over the
 // other.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _nearTribe = 'tribeNear';
-const String _farTribe = 'tribeFar';
+import '../support/colonial_acquisition_test_support.dart';
+
+const String _gp1 = kColonialPhaseGp1;
+const String _nearTribe = kColonialAcquisitionNearTribe;
+const String _farTribe = kColonialAcquisitionFarTribe;
 
 // `_farProvince` sorts ascending before `_nearProvince` so the
 // lex-sorted iteration picks the far tribe and the distance-sorted
 // iteration picks the near tribe -- making the iteration-order
 // divergence directly observable in the planner output.
-const String _nearProvince = 'newWorld|near_a';
-const String _farProvince = 'newWorld|far_b';
-
-Game _acquisitionGame({
-  int activePlayerTreasury = 100000,
-  List<Province> newWorldProvinces = const [
-    Province(id: _nearProvince, regionId: 'newWorld', ownerId: _nearTribe),
-    Province(id: _farProvince, regionId: 'newWorld', ownerId: _farTribe),
-  ],
-}) {
-  return Game(
-    id: 'g-2509-colonial-acquisition-distance',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 130, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: newWorldProvinces),
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: activePlayerTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [
-      Tribe(id: _nearTribe, displayName: 'Near'),
-      Tribe(id: _farTribe, displayName: 'Far'),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: _gp1,
-        targetId: _nearTribe,
-        stage: OvertureStage.nap,
-        sinceTurn: 100,
-      ),
-      OvertureState(
-        gpId: _gp1,
-        targetId: _farTribe,
-        stage: OvertureStage.nap,
-        sinceTurn: 100,
-      ),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _gp1,
-        factionId2: _nearTribe,
-        score: 60,
-        level: RelationLevel.friendly,
-      ),
-      DiplomacyRelation(
-        factionId1: _gp1,
-        factionId2: _farTribe,
-        score: 60,
-        level: RelationLevel.friendly,
-      ),
-    ],
-  );
-}
-
-AIWorldSnapshot _acquisitionSnapshot({
-  required List<String> invadableNwLex,
-  List<String> invadableNwByDistance = const [],
-  String playerId = _gp1,
-  int treasury = 100000,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: invadableNwLex,
-      invadableNewWorldProvinceIdsByDistance: invadableNwByDistance,
-    ),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
+const String _nearProvince = kColonialAcquisitionNearProvince;
+const String _farProvince = kColonialAcquisitionFarProvince;
 
 void main() {
   group('planColonialAcquisition iteration order', () {
@@ -127,9 +46,9 @@ void main() {
       // first because it is closer to owned territory. The planner
       // must surface the near tribe per the spec wording "sorted
       // by adjacency distance to owned territory".
-      final game = _acquisitionGame();
-      final snapshot = _acquisitionSnapshot(
-        invadableNwLex: const [_farProvince, _nearProvince],
+      final game = buildColonialAcquisitionDistanceGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_farProvince, _nearProvince],
         invadableNwByDistance: const [_nearProvince, _farProvince],
       );
 
@@ -148,9 +67,9 @@ void main() {
       // the lex-sorted iteration over
       // `invadableNewWorldProvinceIdsSorted` to keep existing
       // synthetic fixtures deterministic.
-      final game = _acquisitionGame();
-      final snapshot = _acquisitionSnapshot(
-        invadableNwLex: const [_farProvince, _nearProvince],
+      final game = buildColonialAcquisitionDistanceGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_farProvince, _nearProvince],
         // intentionally empty
       );
 
@@ -169,9 +88,9 @@ void main() {
 
     test('determinism (Must-have #7): identical distance-sorted inputs '
         'produce identical targets across repeated calls', () {
-      final game = _acquisitionGame();
-      final snapshot = _acquisitionSnapshot(
-        invadableNwLex: const [_farProvince, _nearProvince],
+      final game = buildColonialAcquisitionDistanceGame();
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_farProvince, _nearProvince],
         invadableNwByDistance: const [_nearProvince, _farProvince],
       );
 
@@ -232,8 +151,8 @@ void main() {
           Tribe(id: _farTribe, displayName: 'Far'),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNwLex: const [_farProvince, _nearProvince],
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_farProvince, _nearProvince],
         invadableNwByDistance: const [_nearProvince, _farProvince],
       );
 

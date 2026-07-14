@@ -3,6 +3,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const cspOw = 'oldWorld';
 const cspCapitalProvinceId = 'oldWorld|P1';
 const cspCapitalTileKey = 'oldWorld|P1|0|1';
@@ -32,27 +34,8 @@ Game cspExplorerGame({
         if (otherOwnedProvinceId != null)
           otherOwnedProvinceId: ['oldWorld|P2|0|0'],
       };
-  return Game(
+  return ordersOwRegionGame(
     id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: provinces.isNotEmpty
-            ? provinces
-            : [
-                Province(id: capitalProvinceId, regionId: cspOw, ownerId: 'p1'),
-                if (otherOwnedProvinceId != null)
-                  Province(
-                    id: otherOwnedProvinceId,
-                    regionId: cspOw,
-                    ownerId: 'p1',
-                  ),
-              ],
-        units: [],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {cspOw: tileMap},
-    ),
     players: [
       Player(
         id: 'p1',
@@ -65,6 +48,21 @@ Game cspExplorerGame({
         treasury: explorerEcon.buildTreasuryCost + extraTreasury,
       ),
     ],
+    oldWorld: RegionData(
+      provinces: provinces.isNotEmpty
+          ? provinces
+          : [
+              Province(id: capitalProvinceId, regionId: cspOw, ownerId: 'p1'),
+              if (otherOwnedProvinceId != null)
+                Province(
+                  id: otherOwnedProvinceId,
+                  regionId: cspOw,
+                  ownerId: 'p1',
+                ),
+            ],
+      units: const [],
+    ),
+    tileKeysByRegionAndProvince: {cspOw: tileMap},
   );
 }
 

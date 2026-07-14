@@ -140,4 +140,4 @@ Catalog folder: **Move Army Dialog** (registered in `app/lib/widgetbook/catalog.
 
 1. **Default — grouped destinations:** Minimal `Game`, `MapTopology`, and `Army` fixture wired so the dialog shows both `Your provinces` and `Invasion targets` sections with at least one invasion destination, plus an empty `Orders()` draft and a fresh `AppEventBus`.
 
-Automated widget tests: `app/test/move_dialogs_specs_test.dart`.
+Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`).

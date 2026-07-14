@@ -22,6 +22,37 @@ WorldState ordersPhaseWorldState({
   );
 }
 
+/// Orders-phase [Game] for connectivity / blockade scenario pins (Refs #3968).
+Game ordersPhaseGame({
+  String id = 'g1',
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  List<Fleet> fleets = const [],
+  List<Player> players = const [],
+  List<MinorNation> minorNations = const [],
+  List<Tribe> tribes = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  TileMapState? tileState,
+  Map<String, String> portsByProvinceSeaboard = const {},
+  int turnNumber = 1,
+}) {
+  return Game(
+    id: id,
+    worldState: ordersPhaseWorldState(
+      turnNumber: turnNumber,
+      oldWorld: RegionData(provinces: oldWorldProvinces),
+      newWorld: RegionData(provinces: newWorldProvinces),
+      fleets: fleets,
+      tileState: tileState,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+    ),
+    players: players,
+    minorNations: minorNations,
+    tribes: tribes,
+    diplomacyRelations: diplomacyRelations,
+  );
+}
+
 /// Dual-region GP game with linked sea ports (blockade/connectivity scenarios).
 ({
   Game game,
@@ -61,22 +92,15 @@ WorldState ordersPhaseWorldState({
     '$ow|$owProvinceId|$owSeaId': '$ow|$owProvinceId|0|0',
     '$nw|$nwProvinceId|$nwSeaId': '$nw|$nwProvinceId|0|0',
   };
-  final game = Game(
-    id: 'g1',
-    worldState: ordersPhaseWorldState(
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|$owProvinceId', regionId: ow, ownerId: playerId),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: [
-          Province(id: '$nw|$nwProvinceId', regionId: nw, ownerId: playerId),
-        ],
-      ),
-      tileState: tileState,
-      portsByProvinceSeaboard: ports,
-    ),
+  final game = ordersPhaseGame(
+    oldWorldProvinces: [
+      Province(id: '$ow|$owProvinceId', regionId: ow, ownerId: playerId),
+    ],
+    newWorldProvinces: [
+      Province(id: '$nw|$nwProvinceId', regionId: nw, ownerId: playerId),
+    ],
+    tileState: tileState,
+    portsByProvinceSeaboard: ports,
     players: [
       Player(
         id: playerId,

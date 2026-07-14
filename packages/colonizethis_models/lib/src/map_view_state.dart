@@ -1,4 +1,8 @@
 class MapViewState {
+  /// Model / legacy defaults. Constructor and [fromJson] missing-field
+  /// fallbacks keep [showPlayersBar] **true** so legacy saves without the
+  /// field stay visible. New campaigns set `showPlayersBar: false` only in
+  /// standard game setup (`game_setup_create_initial_game.dart`; Refs #3986).
   const MapViewState({
     this.zoomMultiplier = 1.0,
     this.showProvinceOverlay = true,

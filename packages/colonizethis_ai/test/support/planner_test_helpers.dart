@@ -64,19 +64,21 @@ Orders runDomainPlannersInTest({
   final resolvedSnapshot =
       snapshot ?? AIWorldSnapshot.fromPlayerView(resolvedView);
   return runDomainPlanners(
-    game: game,
-    topology: topology,
-    nationId: nationId,
-    view: resolvedView,
-    snapshot: resolvedSnapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: AISeedBundle.fromTurnSeed(turnSeed),
-    suggestionAPI: suggestionAPI,
-    economyPlan: economyPlan,
-    options: OrchestratorOptions(
-      tileMapByRegion: tileMapByRegion,
-      onStagedPlannerProgress: onStagedPlannerProgress,
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: nationId,
+      view: resolvedView,
+      snapshot: resolvedSnapshot,
+      config: config,
+      primaryGoal: primaryGoal,
+      seeds: AISeedBundle.fromTurnSeed(turnSeed),
+      suggestionAPI: suggestionAPI,
+      economyPlan: economyPlan,
+      options: OrchestratorOptions(
+        tileMapByRegion: tileMapByRegion,
+        onStagedPlannerProgress: onStagedPlannerProgress,
+      ),
     ),
   );
 }

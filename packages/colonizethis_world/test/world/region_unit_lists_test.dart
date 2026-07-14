@@ -38,6 +38,46 @@ void main() {
     });
   });
 
+  group('RegionUnitListsAccess.replaceUnitInRegion / moveUnitAcrossRegions', () {
+    final owUnit = Unit(
+      id: 'u-ow',
+      type: 'settler',
+      ownerId: 'p1',
+      locationProvinceId: '$kRegionOldWorld|a',
+    );
+    final nwUnit = Unit(
+      id: 'u-nw',
+      type: 'settler',
+      ownerId: 'p1',
+      locationProvinceId: '$kRegionNewWorld|a',
+    );
+
+    test('replaceUnitInRegion updates only the matching same-region unit', () {
+      final moved = owUnit.copyWith(locationProvinceId: '$kRegionOldWorld|b');
+      final lists = (ow: [owUnit], nw: [nwUnit]);
+      final next = lists.replaceUnitInRegion(
+        kRegionOldWorld,
+        'u-ow',
+        moved,
+      );
+      expect(next.ow.single.locationProvinceId, '$kRegionOldWorld|b');
+      expect(next.nw, [nwUnit]);
+    });
+
+    test('moveUnitAcrossRegions removes from both and appends to dest', () {
+      final moved = owUnit.copyWith(locationProvinceId: '$kRegionNewWorld|b');
+      final lists = (ow: [owUnit], nw: [nwUnit]);
+      final next = lists.moveUnitAcrossRegions(
+        'u-ow',
+        moved,
+        kRegionNewWorld,
+      );
+      expect(next.ow, isEmpty);
+      expect(next.nw.map((u) => u.id), ['u-nw', 'u-ow']);
+      expect(next.nw.last.locationProvinceId, '$kRegionNewWorld|b');
+    });
+  });
+
   group('WorldStateRegionUnitLists.mutableRegionUnitLists', () {
     test('returns independent mutable copies of both region unit lists', () {
       final owUnit = Unit(

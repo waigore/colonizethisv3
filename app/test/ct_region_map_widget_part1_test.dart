@@ -10,12 +10,12 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
 
-import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,
-        CtRegionMapComponent,
         extractionIndicatorDisplaySizePx,
         extractionIndicatorRectsForIconRect,
         isCellUnderFleetRevealHalo,
@@ -32,39 +32,17 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons,
         visibilityForTerrainForMapCell;
-import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
-import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/ct_region_map_game.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
-CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
-  final finder = find.byWidgetPredicate(
-    (w) => w.runtimeType.toString().startsWith('GameWidget<'),
-  );
-  expect(finder, findsOneWidget);
-  final gameWidget = tester.widget(finder);
-  final game = (gameWidget as dynamic).game as CtRegionMapGame;
-  return game.debugMapComponentForTest;
-}
 
 void main() {
   suppressLogsForTests();
 
   group('CtRegionMap (Flame map widget)', () {
-    setUpAll(() async {
-      // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
-      // pump() is not enough when tests run alone (e.g. CI --total-shards).
-      await terrainTilesetCache.load();
-      await transportOverlayTilesetCache.load();
-      await resourceIconCache.load();
-      await civilianIconCache.load();
-      await townIconCache.load();
-      await provinceLabelIconCache.load();
-    });
+    setUpAll(warmCtRegionMapCachesForTests);
 
     testWidgets(
       'land-base fog application skips feature terrains to prevent double darkening',
@@ -626,6 +604,10 @@ void main() {
           'assets/images/terrain/tile_plains_grain.png',
           'assets/images/terrain/tile_plains_meat.png',
           'assets/images/terrain/tile_plains_horses.png',
+          'assets/images/terrain/tile_plains_sugar_cane.png',
+          'assets/images/terrain/tile_plains_tobacco.png',
+          'assets/images/terrain/tile_plains_cotton.png',
+          'assets/images/terrain/tile_plains_spices.png',
           'assets/images/terrain/tile_hardwood_forest.png',
           'assets/images/terrain/tile_hardwood_forest_timber.png',
           'assets/images/terrain/tile_scrub_forest.png',
@@ -723,6 +705,22 @@ void main() {
           terrainVariantTileKey(
             terrain: TerrainType.plains,
             resourceId: 'horses',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'sugarCane',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'tobacco',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'cotton',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'spices',
           )!,
           // Forest: non-timber should keep canonical default.
           featureOverlayTileKey(
@@ -954,111 +952,5 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
-
-    testWidgets(
-      'supports drag-to-pan gesture without throwing',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-
-        await tester.drag(mapFinder, const Offset(40, 20));
-        await tester.pump();
-
-        // Widget remains mounted after pan.
-        expect(mapFinder, findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'hover and tap callbacks fire for visible tiles',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        String? lastProvinceId;
-        String? lastTileKey;
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            onProvinceHovered: (id) => lastProvinceId = id,
-            onTileHovered: (key) => lastTileKey = key,
-          ),
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-
-        // Move mouse over the center of the map.
-        final center = tester.getCenter(mapFinder);
-        final gesture = await tester.createGesture(
-          kind: PointerDeviceKind.mouse,
-        );
-        await gesture.addPointer();
-        await gesture.moveTo(center);
-        await tester.pump();
-
-        expect(lastProvinceId, isNotNull);
-        expect(lastTileKey, isNotNull);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'centerOnTileKey triggers centering logic without throwing',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        final landCell = region.cells.firstWhere((c) => !c.isSea);
-        final tileKey =
-            '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(region: region, centerOnTileKey: tileKey),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'didUpdateWidget propagates updated props into game',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            visibilityMode: CtMapVisibilityMode.full,
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-          ),
-        );
-        await tester.pump();
-
-        // Rebuild with changed visibility, political overlay, and base layer display mode.
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            showPoliticalOverlay: false,
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            playerViewForResources: ctRegionMapTestPlayerView,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-
   });
 }

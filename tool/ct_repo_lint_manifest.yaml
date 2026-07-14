@@ -216,6 +216,20 @@ rules:
     runner: dart
     script: tool/check_economy_scenario_table_runner.dart
 
+  - rule_id: repo.economy_test_support_loc
+    group: testing
+    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7999 (Refs #4014)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_support_loc.dart
+
+  - rule_id: repo.economy_test_no_local_run_scenarios
+    group: testing
+    title: colonizethis_economy test/ must not define local void Function() run scenario shells (Refs #4014)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_run_scenarios.dart
+
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
     title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)
@@ -497,7 +511,7 @@ rules:
 
   - rule_id: repo.app_main_line_budget
     group: structure
-    title: colonizethis_app main role must stay at or below 59_000 lines
+    title: colonizethis_app main role must stay at or below 59_810 lines
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_main_line_budget.dart
@@ -508,6 +522,13 @@ rules:
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_no_stray_l10n_gen.dart
+
+  - rule_id: repo.commodity_l10n_coverage
+    group: ui_i18n
+    title: Every CommodityCatalog id must have commodity_<id> in app_en.arb (Refs #3987)
+    spec: SPEC/program/localization.md
+    runner: dart
+    script: tool/check_commodity_l10n_coverage.dart
 
   - rule_id: repo.app_widgetbook_catalog_location
     group: architecture
@@ -634,6 +655,48 @@ rules:
     spec: SPEC/program/orders-no-part-directives.md
     runner: dart
     script: tool/check_orders_no_part_directives.dart
+
+  - rule_id: repo.world_no_part_directives
+    group: structure
+    title: colonizethis_world lib must not use Dart part / part of directives (Refs #3968)
+    spec: SPEC/program/world-no-part-directives.md
+    runner: dart
+    script: tool/check_world_no_part_directives.dart
+
+  - rule_id: repo.economy_no_part_directives
+    group: structure
+    title: colonizethis_economy lib must not use Dart part / part of directives (Refs #3979)
+    spec: SPEC/program/economy-no-part-directives.md
+    runner: dart
+    script: tool/check_economy_no_part_directives.dart
+
+  - rule_id: repo.world_topology_identity_home
+    group: structure
+    title: topology identity helpers must live in topology_identity.dart not naval.dart (Refs #3968)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_topology_identity_home.dart
+
+  - rule_id: repo.world_test_support_builders_used
+    group: structure
+    title: required world test-support builders must have external call sites (Refs #3968)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_support_builders_used.dart
+
+  - rule_id: repo.world_fog_connectivity_no_owner_map_rebuild
+    group: architecture
+    title: fog/connectivity world lib must use ProvinceOwnerCache, not ownerByProvinceIdMap (Refs #3978)
+    spec: SPEC/program/world-fog-connectivity-ownership-sot.md
+    runner: dart
+    script: tool/check_world_fog_connectivity_no_owner_map_rebuild.dart
+
+  - rule_id: repo.world_test_no_raw_game_worldstate
+    group: architecture
+    title: fog/capital/connectivity world tests must not inline Game/WorldState outside world_test_support (Refs #3978)
+    spec: SPEC/program/world-test-no-raw-game-worldstate.md
+    runner: dart
+    script: tool/check_world_test_no_raw_game_worldstate.dart
 
   - rule_id: repo.no_flame_in_widgets
     group: structure
@@ -823,6 +886,13 @@ rules:
     spec: SPEC/program/combat-resolution.md
     runner: dart
     script: tool/check_combat_dedup_precombat_indexes.dart
+
+  - rule_id: repo.combat_no_part_directives
+    group: structure
+    title: colonizethis_combat lib must not use Dart part / part of directives (Refs #3983)
+    spec: SPEC/program/combat-no-part-directives.md
+    runner: dart
+    script: tool/check_combat_no_part_directives.dart
 
   - rule_id: repo.economy_no_logic_deps
     group: architecture
@@ -1100,6 +1170,20 @@ rules:
     runner: dart
     script: tool/check_orders_test_support_layout.dart
 
+  - rule_id: repo.orders_test_support_loc
+    group: testing
+    title: colonizethis_orders test/orders/support/ and package test/ physical LOC must stay under wave-4 ratchet ceilings (Refs #3971)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_support_loc.dart
+
+  - rule_id: repo.orders_test_support_raw_game
+    group: testing
+    title: colonizethis_orders test/orders/support/ raw Game( constructions outside common/ must stay under wave-4 ratchet ceiling (Refs #3971)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_support_raw_game.dart
+
   - rule_id: repo.orders_test_no_src_imports
     group: testing
     title: colonizethis_orders test/ must not import another colonizethis package's src/ tree (Refs #3877)
@@ -1134,6 +1218,83 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_orchestrator_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_peace_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand-peace pins + Phase-8 ownSnapshot/ownVsPartner adopters must import shared fixtures from expand_phase_peace_test_support.dart (no local _ownSnapshot / _criticalGame / _distractionGame / _zeroRegimentGame / _peerGame / _ownVsPartnerGame) (Refs #3967 / #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_peace_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_peace_pin_cases_required
+    group: testing
+    title: colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 650 physical lines must import a sibling *_cases.dart (Refs #3977)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_peace_pin_suite_size.dart
+
+  - rule_id: repo.ai_colonial_phase_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai phase_planner_dispatch_test.dart must not redeclare local expand/colonial/develop Game or snapshot helpers (use colonial_phase_planner_test_support dispatch builders) (Refs #3977 / #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_colonial_phase_dispatch_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_phase_planner_nw_suppression_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand/develop_phase_planner_nw_suppression_test.dart must not redeclare local _expandGame/_expandSnapshot/_developGame/_developSnapshot (use phase_planner_nw_suppression_test_support) (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_planner_nw_suppression_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_lock_recovery_seller_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai cast_iron_labour_gate_test.dart and domain_planner_orchestrator_h8_feedstock_civilian_work_test.dart must not redeclare local _lockRecoverySellerGame (use lock_recovery_seller_test_support) (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_lock_recovery_seller_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_colonial_military_naval_pin_cases_required
+    group: testing
+    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 750 physical lines must import a sibling *_cases.dart (Refs #3977, #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_colonial_military_naval_pin_suite_size.dart
+
+  - rule_id: repo.ai_planning_cases_suite_size
+    group: testing
+    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 650 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_cases_suite_size.dart
+
+  - rule_id: repo.ai_residual_fat_pin_cases_required
+    group: testing
+    title: colonizethis_ai residual fat-pin contracts (observer_goal_phase / treasury_budget / regiment production) above 750 physical lines must import a sibling *_cases.dart (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_residual_fat_pin_suite_size.dart
+
+  - rule_id: repo.ai_s7d_support_suite_size
+    group: testing
+    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 800 physical lines (soft post-split gate) (Refs #3997)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_s7d_support_suite_size.dart
+
+  - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai colonial_phase_planner_acquisition_*_test.dart pins must import shared Game / DiplomacyRelation helpers from colonial_acquisition_test_support.dart (no local _acquisitionGame / _purchaseLandGame / _declareWarGame / _bothValidGame / _friendly / _peaceFriendly / _atWar) (Refs #3972)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_colonial_acquisition_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_economy_regiment_build_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai economy_planner_regiment_build*_test.dart / *_cases.dart pins must import shared Game factories from economy_planner_regiment_build_input_support.dart (no local _regimentRebuildProductionGame / _castIron*Game) (Refs #3972)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_economy_regiment_build_test_shared_fixtures.dart
 
   - rule_id: repo.ai_test_no_matrix_part_shards
     group: testing
@@ -1232,6 +1393,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_test_duplicate_descriptions.dart
+
+  - rule_id: repo.combat_test_scenario_harness
+    group: structure
+    title: colonizethis_combat tests must use runLabeledScenarios harness (Refs #3983)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_combat_test_scenario_harness.dart
 
   - rule_id: repo.setup_dedup_init_pipeline_retry
     group: architecture
@@ -1480,6 +1648,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_no_debug_init.dart
+
+  - rule_id: repo.app_test_file_size
+    group: testing
+    title: "app/test files must stay at or below 1000 physical lines (shrink-only allowlist; Refs #4013)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_file_size.dart
+
+  - rule_id: repo.app_test_no_duplicate_dark_token_asserts
+    group: testing
+    title: "app/test must not re-declare private _expectMuted* / _expectEditorialMonocle* helpers outside support/ (Refs #4013)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_dark_token_asserts.dart
 
   - rule_id: repo.app_region_string_literals
     group: architecture

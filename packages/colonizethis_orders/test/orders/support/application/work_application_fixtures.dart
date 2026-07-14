@@ -1,9 +1,10 @@
-// Shared fixtures for work-order application / completion scenarios (Refs #3949).
+// Shared fixtures for work-order application / completion scenarios (Refs #3949 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
 import 'orders_application_test_support.dart';
 
 /// Canonical OW ids used across application expectation bodies.
@@ -17,6 +18,7 @@ abstract final class WorkAppIds {
   static const purchaseLandGrainCost = 15 * 10; // grain base price 10
 }
 
+// dart format off
 Unit workAppUnit({
   required String type,
   String id = 'u1',
@@ -27,34 +29,13 @@ Unit workAppUnit({
   CurrentWork? currentWork,
   String? originTileKey,
   String? assignedTileKey,
-}) {
-  return Unit(
-    id: id,
-    type: type,
-    ownerId: ownerId,
-    locationProvinceId: locationProvinceId ?? WorkAppIds.provinceId,
-    tileKey: tileKey ?? WorkAppIds.tileKey,
-    status: status,
-    currentWork: currentWork,
-    originTileKey: originTileKey,
-    assignedTileKey: assignedTileKey,
-  );
-}
+}) => Unit(id: id, type: type, ownerId: ownerId, locationProvinceId: locationProvinceId ?? WorkAppIds.provinceId, tileKey: tileKey ?? WorkAppIds.tileKey, status: status, currentWork: currentWork, originTileKey: originTileKey, assignedTileKey: assignedTileKey);
 
-Province workAppOwnedProvince({
-  String ownerId = 'p1',
-  int fortLevel = 0,
-  int townDevelopmentLevel = 0,
-  String? id,
-}) {
-  return Province(
-    id: id ?? WorkAppIds.provinceId,
-    regionId: WorkAppIds.ow,
-    ownerId: ownerId,
-    fortLevel: fortLevel,
-    townDevelopmentLevel: townDevelopmentLevel,
-  );
-}
+Province workAppOwnedProvince({String ownerId = 'p1', int fortLevel = 0, int townDevelopmentLevel = 0, String? id}) =>
+    Province(id: id ?? WorkAppIds.provinceId, regionId: WorkAppIds.ow, ownerId: ownerId, fortLevel: fortLevel, townDevelopmentLevel: townDevelopmentLevel);
+
+CapitalTile workAppCapitalTile({int x = 0, int y = 0, String provinceId = WorkAppIds.provinceId}) =>
+    CapitalTile(regionId: WorkAppIds.ow, provinceId: provinceId, x: x, y: y);
 
 Player workAppPlayer({
   String id = 'p1',
@@ -65,18 +46,7 @@ Player workAppPlayer({
   String? capitalProvinceId,
   CapitalTile? capitalTile,
   String displayName = 'P1',
-}) {
-  return Player(
-    id: id,
-    displayName: displayName,
-    isHuman: isHuman,
-    treasury: treasury,
-    stockpile: stockpile ?? const Stockpile(),
-    techUnlocked: techUnlocked ?? const {},
-    capitalProvinceId: capitalProvinceId,
-    capitalTile: capitalTile,
-  );
-}
+}) => Player(id: id, displayName: displayName, isHuman: isHuman, treasury: treasury, stockpile: stockpile ?? const Stockpile(), techUnlocked: techUnlocked ?? const {}, capitalProvinceId: capitalProvinceId, capitalTile: capitalTile);
 
 Game workAppOwnedGame({
   required List<Unit> units,
@@ -96,73 +66,39 @@ Game workAppOwnedGame({
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, String>? portsByProvinceSeaboard,
 }) {
-  return Game(
+  final base = ordersOwRegionGame(
     id: 'g',
-    globalGameSeed: globalGameSeed,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(
-        provinces: provinces ?? [workAppOwnedProvince()],
-        units: units,
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey ?? const {},
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
-      tileState: tileState ?? const TileMapState(),
-      playerVisibilityByTile: playerVisibilityByTile ?? const {},
-      portsByProvinceSeaboard: portsByProvinceSeaboard ?? const {},
-    ),
+    turnNumber: turnNumber,
     players: players ?? const [OrdersApplicationTestSupport.defaultPlayer],
+    oldWorld: RegionData(provinces: provinces ?? [workAppOwnedProvince()], units: units),
+    resourceByTileKey: resourceByTileKey,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
+    tileState: tileState,
+    playerVisibilityByTile: playerVisibilityByTile,
+    portsByProvinceSeaboard: portsByProvinceSeaboard,
     minorNations: minorNations ?? const [],
     overtureStates: overtureStates ?? const [],
     diplomacyRelations: diplomacyRelations ?? const [],
-    aiControlByGpId: aiControlByGpId ?? const {},
+  );
+  if (globalGameSeed == null && (aiControlByGpId == null || aiControlByGpId.isEmpty) && lastHumanCompletedResearchCategory == null && lastHumanResearchCategoryCompletionTurn == null) {
+    return base;
+  }
+  return base.copyWith(
+    globalGameSeed: globalGameSeed,
+    aiControlByGpId: aiControlByGpId,
     lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
-    lastHumanResearchCategoryCompletionTurn:
-        lastHumanResearchCategoryCompletionTurn,
+    lastHumanResearchCategoryCompletionTurn: lastHumanResearchCategoryCompletionTurn,
   );
 }
 
-Orders workAppSingleWorkOrder({
-  required String target,
-  String unitId = 'u1',
-  String playerId = 'p1',
-  String? targetTileKey,
-}) {
-  return Orders(
-    workOrdersByPlayerId: {
-      playerId: [
-        WorkOrder(
-          unitId: unitId,
-          target: target,
-          targetTileKey: targetTileKey ?? WorkAppIds.tileKey,
-        ),
-      ],
-    },
-  );
-}
+Orders workAppSingleWorkOrder({required String target, String unitId = 'u1', String playerId = 'p1', String? targetTileKey}) =>
+    Orders(workOrdersByPlayerId: {playerId: [WorkOrder(unitId: unitId, target: target, targetTileKey: targetTileKey ?? WorkAppIds.tileKey)]});
 
-Orders workAppProcessWorkOrders({Iterable<String> playerIds = const ['p1']}) {
-  return Orders(
-    buildUnitOrdersByPlayerId: {
-      for (final id in playerIds) id: <BuildUnitOrder>[],
-    },
-  );
-}
+Orders workAppProcessWorkOrders({Iterable<String> playerIds = const ['p1']}) =>
+    Orders(buildUnitOrdersByPlayerId: {for (final id in playerIds) id: <BuildUnitOrder>[]});
 
-CurrentWork workAppCurrentWork({
-  required String workTarget,
-  String? tileKey,
-  int totalTurns = 1,
-  int remainingTurns = 1,
-}) {
-  return CurrentWork(
-    workTarget: workTarget,
-    tileKey: tileKey ?? WorkAppIds.tileKey,
-    totalTurns: totalTurns,
-    remainingTurns: remainingTurns,
-  );
-}
+CurrentWork workAppCurrentWork({required String workTarget, String? tileKey, int totalTurns = 1, int remainingTurns = 1}) =>
+    CurrentWork(workTarget: workTarget, tileKey: tileKey ?? WorkAppIds.tileKey, totalTurns: totalTurns, remainingTurns: remainingTurns);
 
 Unit workAppWorkingUnit({
   required String type,
@@ -174,110 +110,43 @@ Unit workAppWorkingUnit({
   String? originTileKey,
   String? assignedTileKey,
   String? tileKey,
-}) {
-  return workAppUnit(
-    id: id,
-    type: type,
-    ownerId: ownerId,
-    tileKey: tileKey,
-    status: UnitStatus.working,
-    currentWork: workAppCurrentWork(
-      workTarget: workTarget,
-      tileKey: tileKey,
-      totalTurns: totalTurns,
-      remainingTurns: remainingTurns,
-    ),
-    originTileKey: originTileKey,
-    assignedTileKey: assignedTileKey,
-  );
-}
-
-Unit workAppPurchaseLandMerchant({
-  String id = 'merchant1',
-  String ownerId = 'p1',
 }) => workAppUnit(
   id: id,
-  type: kUnitTypeMerchant,
+  type: type,
   ownerId: ownerId,
-  locationProvinceId: WorkAppIds.minorProvinceId,
-  tileKey: WorkAppIds.tileKeyMinor,
+  tileKey: tileKey,
+  status: UnitStatus.working,
+  currentWork: workAppCurrentWork(workTarget: workTarget, tileKey: tileKey, totalTurns: totalTurns, remainingTurns: remainingTurns),
+  originTileKey: originTileKey,
+  assignedTileKey: assignedTileKey,
 );
 
-Game workAppSingleGpPurchaseLandGame({
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-  int treasuryExtra = 100,
-}) => workAppPurchaseLandGame(
-  units: [workAppPurchaseLandMerchant()],
-  players: [
-    workAppPlayer(treasury: WorkAppIds.purchaseLandGrainCost + treasuryExtra),
-  ],
-  overtureStates: overtureStates,
-  diplomacyRelations: diplomacyRelations,
-);
+Unit workAppPurchaseLandMerchant({String id = 'merchant1', String ownerId = 'p1'}) =>
+    workAppUnit(id: id, type: kUnitTypeMerchant, ownerId: ownerId, locationProvinceId: WorkAppIds.minorProvinceId, tileKey: WorkAppIds.tileKeyMinor);
 
-Orders workAppPurchaseLandOrders({
-  String unitId = 'merchant1',
-  String playerId = 'p1',
-}) => workAppSingleWorkOrder(
-  unitId: unitId,
-  playerId: playerId,
-  target: kWorkTargetPurchaseLand,
-  targetTileKey: WorkAppIds.tileKeyMinor,
-);
+Game workAppSingleGpPurchaseLandGame({List<OvertureState> overtureStates = const [], List<DiplomacyRelation> diplomacyRelations = const [], int treasuryExtra = 100}) =>
+    workAppPurchaseLandGame(units: [workAppPurchaseLandMerchant()], players: [workAppPlayer(treasury: WorkAppIds.purchaseLandGrainCost + treasuryExtra)], overtureStates: overtureStates, diplomacyRelations: diplomacyRelations);
 
-/// Home + minor province purchase-land setup (merchant on minor tile).
+Orders workAppPurchaseLandOrders({String unitId = 'merchant1', String playerId = 'p1'}) =>
+    workAppSingleWorkOrder(unitId: unitId, playerId: playerId, target: kWorkTargetPurchaseLand, targetTileKey: WorkAppIds.tileKeyMinor);
+
 Game workAppPurchaseLandGame({
   required List<Unit> units,
   required List<Player> players,
   List<OvertureState> overtureStates = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  return workAppOwnedGame(
-    units: units,
-    provinces: [
-      workAppOwnedProvince(),
-      const Province(
-        id: WorkAppIds.minorProvinceId,
-        regionId: WorkAppIds.ow,
-        ownerId: 'minor1',
-      ),
-    ],
-    players: players,
-    resourceByTileKey: const {WorkAppIds.tileKeyMinor: 'grain'},
-    tileKeysByRegionAndProvince: const {
-      WorkAppIds.ow: {
-        WorkAppIds.provinceId: [WorkAppIds.tileKey],
-        WorkAppIds.minorProvinceId: [WorkAppIds.tileKeyMinor],
-      },
-    },
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-  );
-}
+}) => workAppOwnedGame(
+  units: units,
+  provinces: [workAppOwnedProvince(), const Province(id: WorkAppIds.minorProvinceId, regionId: WorkAppIds.ow, ownerId: 'minor1')],
+  players: players,
+  resourceByTileKey: const {WorkAppIds.tileKeyMinor: 'grain'},
+  tileKeysByRegionAndProvince: const {WorkAppIds.ow: {WorkAppIds.provinceId: [WorkAppIds.tileKey], WorkAppIds.minorProvinceId: [WorkAppIds.tileKeyMinor]}},
+  minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+  overtureStates: overtureStates,
+  diplomacyRelations: diplomacyRelations,
+);
 
-TileMapResult workAppSimpleTileMap() {
-  return TileMapResult(
-    width: 3,
-    height: 3,
-    grid: const [
-      ['P1', 'P1', 'P1'],
-      ['P1', 'P1', 'P1'],
-      ['P1', 'P1', 'P1'],
-    ],
-  );
-}
+TileMapResult workAppSimpleTileMap() => TileMapResult(width: 3, height: 3, grid: const [['P1', 'P1', 'P1'], ['P1', 'P1', 'P1'], ['P1', 'P1', 'P1']]);
 
-TileMapResult workAppRailMap() {
-  return TileMapResult(
-    width: 1,
-    height: 1,
-    grid: const [
-      ['P1'],
-    ],
-    terrainGrid: [
-      [TerrainType.plains],
-    ],
-  );
-}
+TileMapResult workAppRailMap() => TileMapResult(width: 1, height: 1, grid: const [['P1']], terrainGrid: [[TerrainType.plains]]);
+// dart format on

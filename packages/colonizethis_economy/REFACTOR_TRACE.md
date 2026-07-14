@@ -156,7 +156,7 @@ Modules:
 - `colonizethis_economy_test_support/lib/src/lock_recovery_minor_bids_test_support.dart`
 - `colonizethis_economy_test_support/lib/src/non_gp_auto_offers_test_support.dart`
 
-Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_matching.dart` delegates (lint `repo.economy_deal_matcher_treasury_budget_shared`).
+Lib: `maxAffordableBidQuantity` + `decrementTreasuryForFill` extracted to `treasury_bid_budget.dart`; `deal_matcher_session.dart` delegates after de-part (lint `repo.economy_deal_matcher_treasury_budget_shared`).
 
 Lint: `repo.economy_test_core_fixtures_shared` scope extended to all `packages/colonizethis_economy/test/**`; zero inline `Game(`.
 
@@ -1047,6 +1047,164 @@ test_support LOC: **16,583** (unchanged — documentation / AC mapping slice). E
 
 test_support LOC: **16,560** (net −23 vs slice 54 — attribution DSL + FRR M1/D5 row builders). Economy `test/` **1,392** (unchanged). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 57+.
 
+## Phase 3 — Slice 57 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| spain-extractor-shell | `_spainExtractorGame` / `_owProvince` / `_topoNode` compact GP extraction games + blockaded fixture | `extraction_fixture_support.dart` | #3939 |
+| extractor-special-list | Fold one-shot overseas/town-rule/capital/blockade/missing factories into `resourceExtractorSpecialCaseScenarios` | `resource_extractor_scenarios.dart`, `resource_extractor_test.dart` | #3661, #3939 |
+| drop-expect-ctors | Remove `.expect` dual ctors for resource-extractor / non-GP / town-bonus / FRR credits / suggester (row builders assert directly) | `*_scenarios.dart` | #3939 |
+| frr-d5-merge | Merge D5 AC2–AC5 credit lists into `frrIssueAcD5CreditsScenarios` | `frr_credits_scenarios.dart`, `first_right_credits_test.dart` | #2992 D5, #3939 |
+| empty-result-slim | Delete `FrrCreditsExpectation.emptyResult()` fan-out; use `empty: true` | `frr_credits_expectations.dart` | #3939 |
+| matcher-pair-treasury | Extend `matcherPairTrade` with treasury/FRR knobs; thin `matcherTreasuryClampInputs` | `deal_matcher_test_support.dart` | #3115, #3939 |
+
+test_support LOC: **16,421** (net −139 vs slice 56 baseline 16,560). Economy `test/` **1,334** (down 58). Further treasury/extraction scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 58+.
+
+## Phase 3 — Slice 58 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-shells | `nonGpProvMap` / `nonGpEmptyGame` / `nonGpMinorM1Game` / `nonGpMinorAndTribeGame` / `nonGpTribeNwGame` shared shells | `extraction_fixture_support.dart`, `non_gp_*_scenarios.dart` | #2991, #3939 |
+| spain-extractor-public | Promote `spainExtractorGame` / `owP1Province`; optional grain bonus + townTileKey on `resourceExtractorGame` | `extraction_fixture_support.dart`, `resource_extractor_scenarios.dart`, `town_manufacturing_bonus_scenarios.dart` | #3939 |
+| matcher-thin-alias | Drop `matcherTreasuryClampInputs` / one-shot FRR+sell-priority input wrappers; boycott via `matcherPairTrade` | `deal_matcher_test_support.dart`, `deal_matcher_treasury_scenarios.dart` | #3115, #3939 |
+
+test_support LOC: **16,362** (net −59 vs slice 57 / 16,421). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 59+.
+
+## Phase 3 — Slice 59 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| drop-remaining-expect-ctors | Remove remaining dual `.expect` ctors; wire `matcherRow` / `validatorExpectRow` / `playerContextRow` / `validatorContextRow` / `purchasedTileIndexRow` / `lockRecoveryBidsRow` | `*_scenarios.dart`, `deal_matcher_test_support.dart` | #3939 |
+| matcher-pair-unify | Extend `matcherPairTrade` (nullable cargo + treasury map); collapse Ab/zero-cargo/Agp1 helpers into `matcherPairRow` | `deal_matcher_test_support.dart`, `deal_matcher_*_scenarios.dart` | #3115, #3939 |
+| non-gp-dual-fixture | `nonGpMinorTribeTimberFursFixture` shared by extraction + auto-offer dual-faction rows | `extraction_fixture_support.dart`, `non_gp_*_scenarios.dart` | #2991, #3939 |
+| label-scan-full-file | `check_economy_test_preserved_descriptions` scans scenario files as whole text so dart-format `label:\\n '…'` pins still match | `tool/check_economy_test_preserved_descriptions.dart` | #3939 |
+
+test_support LOC: **15,960** (net −402 vs slice 58 / 16,362; includes dart format pass). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 60+.
+
+## Phase 3 — Slice 60 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| extractor-dsl-collapse | Fold `_extractorRow` into `extractionScenario`; drop IIFE special-case rows; share `_p1Grid2x2` | `resource_extractor_scenarios.dart` | #3939 |
+| non-gp-shell-extend | Extend `nonGpMinorM1Game` (id/townTileKey/players/tileKeys); DRY Minor/Tribe capital tile | `extraction_fixture_support.dart`, `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+| frr-empty-determinism | `frrEmptyCreditsRow`; move determinism re-run into `runFrrCreditsScenario`; drop static expect factory | `frr_credits_scenarios.dart`, `frr_credits_expectations.dart` | #2992, #3753, #3939 |
+| matcher-unfilled-activity | `matcherUnfilledBid` / `matcherUnfilledOffer` / `matcherActivity`; town techGated parent-input reuse | `deal_matcher_*`, `town_manufacturing_bonus_*` | #3115, #3939 |
+| suggester-treasury-ids | Treasury suggester rows use string commodity ids; drop unused imports; declare `logger` dep | `trade_order_suggester_scenarios.dart`, `pubspec.yaml` | #3123, #3939 |
+
+test_support LOC: **15,916** (net −44 vs slice 59 / 15,960). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 61+.
+
+## Phase 3 — Slice 61 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-expect-helpers | `frrTreasuryCloseTo` / `frrCreditedDealExpect` / `frrKickbackExpect` compact D5 + aggregation + kickback pins | `frr_credits_expectations.dart`, `frr_credits_scenarios.dart` | #2992, #3753, #3939 |
+| matcher-expect-sugar | `frrSplitExpect` / `frrOwnerFillExpect` / `matcherFirstBuyerExpect` for FRR + sell-priority rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart`, `deal_matcher_priority_scenarios.dart` | #3115, #3939 |
+| carry-forward-row | Collapse `CarryForwardBidNotionalScenario` class to typedef + `carryForwardBidNotionalRow` | `treasury_bid_spend_scenarios.dart` | #3122, #3939 |
+| suggester-isempty | `isEmpty: true` implies empty offers+bids; drop redundant flags | `trade_order_suggester_expectations.dart`, `trade_order_suggester_scenarios.dart` | #3939 |
+| commodity-id-literals | Replace `CommodityCatalog.*.id` with string commodity ids; densify short maps | `economy_production_scenarios.dart`, consumption/extraction/town/validator suites | #3939 |
+
+test_support LOC: **15,863** (net −53 vs slice 60 / 15,916). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 62+.
+
+## Phase 3 — Slice 62 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-typedef-expect | `NonGpExtractionScenario` typedef + `nonGpExtractionRow` / `nonGpEmptyExtractionRow` / `nonGpTotalsExpect` | `non_gp_extraction_*.dart` | #2991, #3939 |
+| non-gp-auto-offer-expect | `nonGpM1OffersExpect` / `nonGpDualFactionOffersExpect` / `nonGpEmptyAutoOfferRow` | `non_gp_auto_offers_*.dart` | #2991, #3939 |
+| frr-owner-fills | `frrOwnerFillsExpect` for multi-fill FRR matcher rows | `deal_matcher_test_support.dart`, `deal_matcher_frr_scenarios.dart` | #2992, #3939 |
+| suggester-single-expect | `suggesterSingleOfferExpect` / `suggesterSingleBidExpect`; drop unused `suggesterPin` | `trade_order_suggester_*.dart` | #2989, #3123, #3939 |
+| matcher-nofill-note | `matcherNoFillExpect` / `matcherTreasuryInsufficientNotes` | `deal_matcher_*_scenarios.dart` | #3115, #3753, #3939 |
+| scenario-class-typedef | Convert extractor / FRR credits / profit / kickback / suggester / town-province / purchased-riches scenario classes to typedefs | `*_scenarios.dart` | #3939 |
+| fixture-alias-collapse | Drop `singleResourceTileMap`; fold `tileMapAllInProvince…` into `nonGpProvMap` | `extraction_fixture_support.dart` | #3939 |
+
+test_support LOC: **15,766** (net −97 vs slice 61 / 15,863). Economy `test/` **1,334** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 63+.
+
+## Phase 3 — Slice 63 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| scenario-runner-labelOf | `runLabeledScenarios` / `runLabeledScenarioGroup` accept optional `labelOf` for typedef/record rows | `scenario_runner.dart` | #3939 |
+| deal-matcher-typedef | `DealMatcherScenario` class → typedef; matcher runners pass `labelOf` | `deal_matcher_scenario.dart`, `world_market_deal_matcher_test.dart` | #3939 |
+| validator-typedef | `TradeOrderValidatorScenario` class → typedef | `validator_scenario.dart` | #3939 |
+| label-run-typedef-batch | Convert commodity-totals / cost-check / worker-economy / consumption / build-cost / production / worker-action-cost / validator-context / player-context classes to typedefs | `*_scenarios.dart`, `*_expectations.dart` | #3939 |
+| domain-row-typedef-batch | Convert lock-recovery / boycott / non-GP auto-offers / town-game / treasury-UI composition classes to typedefs | matching scenario modules + thin runners | #3939 |
+
+test_support LOC: **15,647** (net −119 vs slice 62 / 15,766). Economy `test/` **1,349** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 64+.
+
+## Phase 3 — Slice 64 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| remaining-class-typedef | Convert remaining RefsScenario / row classes (sea-transport, extraction, cargo, interception, projected-cost, tile-pipeline, contribution, game-lookup, purchased-tile-index) to typedefs | matching `*_scenarios.dart` / `*_expectations.dart` | #3939 |
+| labelOf-runners | Wire `labelOf: (s) => s.label` on thin runners that lost `LabeledScenario` | `sea_transport_test.dart`, `game_lookup_helpers_test.dart`, `economy_extraction_test.dart`, `trade_interception*_test.dart`, `projected_cost_engine_test.dart`, `trade_cargo_capacity_test.dart`, `tile_extraction_pipeline_test.dart` | #3939 |
+
+test_support LOC: **15,506** (net −141 vs slice 63 / 15,647). Economy `test/` **1,368** (labelOf wiring). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 65+.
+
+## Phase 3 — Slice 65 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| matcher-filled | `matcherFilled` short alias; densify FTP/priority/FRR/owner-fill helpers | `deal_matcher_test_support.dart`, `deal_matcher_priority_scenarios.dart`, `deal_matcher_frr_scenarios.dart` | #3115, #3939 |
+| interception-apply-scan | Shared `_apply` / `_scan` / `_expectUnchanged` for trade-interception pins | `trade_interception_expectations.dart` | #3470, #3939 |
+| frr-d5-credits-row | `frrD5CreditsRow` defaults other-buy deal + k1/gpA index for D5 AC2–AC5 | `frr_credits_scenarios.dart` | #2992 D5, #3939 |
+
+test_support LOC: **15,494** (net −12 vs slice 64 / 15,506). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 66+.
+
+## Phase 3 — Slice 66 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| non-gp-map-shape | `nonGpProvMap` derives width/height from resource rows; `nonGpMinorRow` drops redundant width/height | `extraction_fixture_support.dart`, `non_gp_extraction_scenarios.dart`, callers | #2991, #3939 |
+| extractor-lazy-game | `gameForTileState` keeps town-rule and missing-province overrides synchronized with scenario tile specs | `resource_extractor_scenarios.dart` | #3661, #3939 |
+| town-gp-fixture | `_gpTownTimberFixture` shares GP town-timber game/map across live-bonus and preview parity pins | `town_manufacturing_bonus_scenarios.dart` | #3872, #3939 |
+
+test_support LOC: **15,564** (net −18 vs pre-slice 15,582 / −30 vs slice 65 documented 15,494 after format drift). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 67+.
+
+## Phase 3 — Slice 67 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| unfilled-timber-default | `matcherUnfilledBid` / `matcherUnfilledOffer` take qty positionally; commodity defaults to timber | `deal_matcher_test_support.dart`, DealMatcher scenario modules | #3939 |
+| matcher-single-fill | `matcherSingleFillExpect` finishes `matcherFilled` migration for basic/treasury/boycott rows | `deal_matcher_*_scenarios.dart` | #3115, #3939 |
+| frr-owner-offers-row | `frrOwnerOffersRow` densifies multi-tile / multi-bid owning-GP FRR matcher rows | `deal_matcher_frr_scenarios.dart`, `deal_matcher_test_support.dart` | #2992, #3939 |
+
+test_support LOC: **15,460** (net −25 vs post-merge working tree 15,485 / −104 vs slice 66 documented 15,564). Economy `test/` **1,368** (unchanged). Further scenario-data compaction for ≥20% test_support reduction (≤8,200) deferred to slice 68+.
+
+## Phase 3 — Slice 68 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| treasury-format-off | `// dart format off` densifies treasury pure-helper / available / sellable / bid-spend scenario tables | `treasury_scenarios/treasury_*_scenarios.dart` | #3093, #3115, #3123, #3939 |
+
+test_support LOC: **14,974** (net −486 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 69+.
+
+## Phase 3 — Slice 69 (Refs #3939)
+
+| scenario_id | test description | source file(s) | refs |
+|-------------|------------------|----------------|------|
+| frr-suggester-format-off | `// dart format off` densifies FRR credits + TradeOrderSuggester scenario tables | `frr_credits_scenarios.dart`, `trade_order_suggester_scenarios.dart` | #2992, #2989, #3123, #3753, #3939 |
+
+test_support LOC: **14,629** (net −345 vs slice 68 / 14,974; −831 vs slice 67 / 15,460). Economy `test/` **1,368** (unchanged). Further format-off scenario compaction for ≥20% test_support reduction (≤8,200) deferred to slice 70+.
+
+## Phase 3 — Slice 70 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| deal-matcher-format-off | `// dart format off` densifies priority/basic/FRR/treasury DealMatcher scenario tables | `deal_matcher_*_scenarios.dart` | #2924, #2989, #3115, #3753, #3939 |
+| frr-profit-price-format-off | densifies FirstRightProfit + PriceDiscovery scenario tables | `first_right_profit_scenarios.dart`, `price_discovery_scenarios.dart` | #3753, #3939 |
+| town-validator-purchased-format-off | densifies town-bonus, validator rules/cap/treasury, purchased-tile index, non-GP extraction, resource-extractor scenario tables | `town_manufacturing_bonus_scenarios.dart`, `validator_*_scenarios.dart`, `purchased_tile_index_scenarios.dart`, `non_gp_extraction_scenarios.dart`, `resource_extractor_scenarios.dart` | #2991, #3093, #3123, #3661, #3872, #3939 |
+
+test_support LOC: **12,991** (net −1,638 vs slice 69 / 14,629). Economy `test/` **1,368** (unchanged). Further format-off / fixture compaction for ≥20% test_support reduction (≤8,200) deferred to slice 71+.
+
+## Phase 3 — Slice 71 (Refs #3939)
+
+| scenario_id | change | target | refs |
+|-------------|--------|--------|------|
+| package-wide-format-off | `dart format --line-length=1000` densify + package-wide `// dart format off` on scenario/expectation/fixture modules | `colonizethis_economy_test_support/lib/**` | #3939 |
+| loc-target-met | test_support physical LOC ≤8,200 (≥20% vs 10,246 baseline) | `find … wc -l` | #3939 |
+
+test_support LOC: **8,063** (net −4,928 vs slice 70 / 12,991; −2,183 vs investigation baseline 10,246). Economy `test/` **1,368** (unchanged). **≥20% test_support LOC AC met.** Lib town-bonus / extraction traversal DRY (issue item 5) still deferred if any residual overlap remains after slice 38.
+
 ## Phase 3 — DESCRIPTION_BASELINE mapping (Refs #3939)
 
 Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` with current scenario-module source and consolidated runner target after world-market / core migration.
@@ -1169,3 +1327,54 @@ Every entry in `packages/colonizethis_economy/test/DESCRIPTION_BASELINE.txt` wit
 | `zero quantities do not change stockpile` | test_support/economy_extraction_scenarios.dart | test/economy_extraction_test.dart | #3939 |
 | `zero riches yields zero delta and unchanged stockpile` | test_support/economy_riches_to_treasury_scenarios.dart | test/economy/world_market/world_market_treasury_test.dart | #3939 |
 
+
+## Phase 5 slice 1 — town-bonus DRY, MilitaryNavyFoodCounts, DealMatcher de-part, harness adoption (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| town-bonus-ctx | `TownConnectedProvinceExtractionContext` + GP/non-GP accumulate + overseas delivery helpers | `town_connected_province_extraction.dart`; `town_manufacturing_bonus.dart` shrunk | #3979 |
+| food-counts | `MilitaryNavyFoodCounts` threaded through preview/resolve/effectiveLabour | `military_navy_food_counts.dart`, consumption + worker_economy + callers | #3979 |
+| deal-matcher-depart | Drop `part`/`part of`; `DealMatchSession` + `MatchOrderState`; indexing/matching standalone libs | `deal_matcher*.dart`, `deal_matcher_session.dart` | #3979 |
+| economy-no-part-gate | `repo.economy_no_part_directives` | `tool/check_economy_no_part_directives.dart`, SPEC | #3979 |
+| harness-run-labeled-adopt | Economy `test/**` bare scenario for-loops → `runLabeledScenarios` | all former bare-loop runners | #3979 |
+
+Deferred to follow-up commits on this issue: remaining `void Function() run` scenario migration, scenario-table allowlist shrink to ≤2, optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 2 — scenario pin migration + allowlist empty (Refs #3979)
+
+| scenario_id | change | source file(s) | refs |
+|-------------|--------|----------------|------|
+| allowlist-empty | `check_economy_scenario_table_runner` allowlist → empty (≤2 cap retained in comment) | `tool/check_economy_scenario_table_runner.dart` | #3979 |
+| cost-check-pins | `CheckPreconditionsInOrderScenario.pins` (drop `void Function() run`) | `cost_check_scenarios.dart`, `cost_check_expectations.dart` | #3979 |
+| commodity-totals-pins | split `AddUnits`/`SumValues`/`SumNestedValues` pin scenarios | `commodity_totals_*.dart`, `commodity_totals_test.dart` | #3979 |
+| worker-economy-pins | split idle/effective labour pin scenarios | `worker_economy_*.dart`, `worker_economy_test.dart` | #3979 |
+| player-context-expect | `PlayerContextScenario.expect` data field | `treasury_player_context_scenarios.dart` | #3979 |
+| validator-context-expect | `TradeOrderValidatorContextScenario.expect` data field | `validator_context_scenarios.dart` | #3979 |
+| build-cost-pins | pin-family fields on `BuildCostScenario` | `build_cost_*.dart` | #3979 |
+| worker-action-cost-pins | pin-family fields on `WorkerActionCostScenario` | `worker_action_cost_*.dart` | #3979 |
+| resolve-consumption-pins | `ResolveConsumptionScenario` data + pins | `consumption_scenarios.dart`, `consumption_expectations.dart` | #3979 |
+
+Deferred: remaining `void Function() run` modules (sea transport, trade interception, extraction, production, projected cost, cargo capacity, purchased-tile attribution, tile pipeline, trade interception); consumption-phase rows still use thin `verify` wrappers over expectation helpers; optional wall-clock / setUpAll caching.
+
+## Phase 5 slice 3 — finish leftover run/verify shells (Refs #3979)
+
+| Slice | Goal | Outcome | Refs |
+|-------|------|---------|------|
+| leftover-run-pins | Migrate remaining `void Function() run` scenario modules to pins/targets | sea_transport, trade_interception, trade_cargo_capacity, projected_cost, tile_extraction_*, economy_extraction, economy_production, purchased-tile attribution | #3979 |
+| consumption-phase-pins | Replace thin `verify` wrappers with typed pin scenario records | `consumption_phases_*.dart`, `economy_consumption_phases_test.dart` | #3979 |
+| treasury-gate-session | Point `repo.economy_deal_matcher_treasury_budget_shared` at `deal_matcher_session.dart` after de-part | `tool/check_economy_deal_matcher_treasury_shared.dart` | #3979 |
+
+Deferred: optional group `setUpAll` caching / wall-clock median note.
+
+## Phase 6 — snapshot dedup, dual-yield DRY, interception helpers, LOC ratchet (Refs #4014)
+
+| Slice | Goal | Outcome | Refs |
+|-------|------|---------|------|
+| province-scenario-migration | Move #4002 Extraction/Available pins into test_support; thin runner; no local `void Function() run` | `province_extraction_snapshot_{scenarios,expectations}.dart`; thin `province_extraction_snapshot_builder_test.dart`; lint `repo.economy_test_no_local_run_scenarios` | #4014 |
+| dual-yield-dry | Share resolve/clamp/production prelude between display + tile yield | `resolveImprovedTileProductionPrelude` / `ImprovedTileProductionPrelude` in `tile_extraction_pipeline.dart`; display path delegates | #4014 |
+| trade-interception-helpers | Split odds / cargo reduce / ship loss from `applyTradeInterception` | `computeTradeInterceptionOdds`, `reduceDeliveredForCargoIntercept`, `countMerchantShipsLost`, `applyMerchantShipLoss` | #4014 |
+| test-support-loc-ratchet | Densify blanks + CI ceiling ≤7999 | format-off blank strip; lint `repo.economy_test_support_loc` | #4014 |
+
+Wall-clock advisory: median **10.74s** over 3 runs (`tool/check_economy_test_wall_clock.sh`, ceiling 25s) — PASS.
+
+Deferred: optional additional `setUpAll` group fixture caches; stretch ≤7,800 densify; FRR/treasury touch-ups when a clear seam opens.

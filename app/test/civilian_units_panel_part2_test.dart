@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;
@@ -30,50 +30,6 @@ void main() {
     game = buildCivilianPanelTestGame();
     humanPlayerIdWithUnits = game.players.first.id;
   });
-
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    Orders currentOrders = const Orders(),
-    Map<String, List<String>> availableWorkTargets = const {},
-    AppEventBus? bus,
-    bool explorerOnly = false,
-    bool builderOnly = false,
-    String? prospectShortcutTargetTileKey,
-    String? exploreShortcutTargetTileKey,
-    String? buildImprovementShortcutTargetTileKey,
-  }) {
-    final resolvedBus = bus ?? AppEventBus.create();
-    final navigatorKey = GlobalKey<NavigatorState>();
-    return ProviderScope(
-      overrides: [
-        availableWorkTargetIdsForUnitProvider.overrideWith(
-          (ref, unitId) => availableWorkTargets[unitId] ?? const [],
-        ),
-      ],
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: CivilianPanelBusDialogHost(
-            bus: resolvedBus,
-            navigatorKey: navigatorKey,
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              currentOrders: currentOrders,
-              bus: resolvedBus,
-              explorerOnly: explorerOnly,
-              builderOnly: builderOnly,
-              prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  buildImprovementShortcutTargetTileKey,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   group('CivilianUnitsPanel', () {
     testWidgets(
@@ -116,7 +72,7 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
         await tester.pumpWidget(
-          buildPanel(game: miniGame, humanPlayerId: human, bus: bus),
+          buildCivilianPanel(game: miniGame, humanPlayerId: human, bus: bus),
         );
         await tester.pumpAndSettle();
 
@@ -282,7 +238,7 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: gameWithPending,
             humanPlayerId: human,
             currentOrders: orders,
@@ -319,7 +275,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -335,7 +291,7 @@ void main() {
         if (availableWorkTargets.isEmpty) return;
 
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             bus: bus,
@@ -383,7 +339,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -406,7 +362,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             bus: bus,
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
@@ -465,7 +421,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -483,7 +439,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             bus: bus,
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
@@ -535,7 +491,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -634,7 +590,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork != null,
         );
         if (workingCivilians.isEmpty) return;
@@ -687,10 +643,4 @@ void main() {
       },
     );
   });
-}
-
-bool _isCivilian(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
 }

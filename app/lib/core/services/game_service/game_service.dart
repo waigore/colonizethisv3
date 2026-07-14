@@ -58,23 +58,111 @@ class GameService {
   /// Optional strip for session-only observe control overrides before persist.
   Game Function(Game)? prepareGameForPersistence;
 
+  /// Clears map cache and turn-trace sessions. SPEC/program/save-load-session-clear.md.
+  void clearSessionCaches() {
+    _mapCache.clear();
+    _turnTraceSessionsByGameId.clear();
+  }
+
+  /// Whether [gameId] is present in the in-memory map cache (tests / diagnostics).
+  bool hasMapCacheEntry(String gameId) => _mapCache.containsKey(gameId);
+
+  /// Count of in-memory map-cache entries (tests / diagnostics).
+  int get mapCacheEntryCount => _mapCache.length;
+
+  /// Count of turn-trace sessions (tests / diagnostics).
+  int get turnTraceSessionCount => _turnTraceSessionsByGameId.length;
+
+  /// Cache-only map fingerprint for session-clear isolation tests.
+  String? cachedMapContentFingerprint(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached == null) return null;
+    final ids = cached.tileMapByRegion.keys.toList()..sort();
+    return [
+      for (final id in ids)
+        () {
+          final m = cached.tileMapByRegion[id]!;
+          final sig = m.grid.fold<int>(
+            0,
+            (s, row) => row.fold<int>(s, Object.hash),
+          );
+          return '$id:${m.width}x${m.height}:$sig';
+        }(),
+    ].join('|');
+  }
+
+  /// Seeds a turn-trace session for tests (no export / resolution).
+  void debugSeedTurnTraceSession(String gameId) =>
+      _turnTraceSessionsByGameId.putIfAbsent(
+        gameId,
+        () => _TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
+      );
+
   /// Loads game by id. Returns null if not found or required map data is missing/invalid.
   Game? loadGame(String gameId) => _gameServiceLoadGame(this, gameId);
+
+  /// Loads game plus mid-turn draft envelope fields.
+  GameSaveSession? loadGameSession(String gameId) =>
+      _gameServiceLoadGameSession(this, gameId);
 
   /// Returns map data for [gameId] from cache or storage.
   GameMapData? getMapData(String gameId) => _gameServiceGetMapData(this, gameId);
 
-  /// Saves game to storage.
+  /// Saves game to storage (empty mid-turn drafts unless [saveGameSession] is used).
   void saveGame(Game game) => _gameServiceSaveGame(this, game);
+
+  /// Saves a named (or same-id) slot from the live [sessionGame], writing Hive
+  /// key / embedded [Game.id] as [saveGameId], including mid-turn drafts.
+  /// When [mirrorAutoSave] is true, also mirrors drafts into the auto-save slot
+  /// using the live session id inside the auto-save JSON.
+  void saveGameSession({
+    required Game sessionGame,
+    required String saveGameId,
+    Orders draftOrders = const Orders(),
+    Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
+    String? displayName,
+    bool mirrorAutoSave = true,
+  }) =>
+      _gameServiceSaveGameSession(
+        this,
+        sessionGame: sessionGame,
+        saveGameId: saveGameId,
+        draftOrders: draftOrders,
+        productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+        displayName: displayName,
+        mirrorAutoSave: mirrorAutoSave,
+      );
 
   /// Lists all saved game ids.
   List<String> listGameIds() => _gameServiceListGameIds(this);
+
+  /// Manual saves plus optional auto-save row for the load dialog.
+  List<LoadableSaveEntry> listLoadableSaves() =>
+      _gameServiceListLoadableSaves(this);
+
+  /// Count of manual named saves (auto-save excluded).
+  int manualSaveCount() => _adapter.manualSaveCount(_box);
+
+  /// Whether a new sanitized manual id may be created (count < [kMaxManualSaves]).
+  bool canCreateNewManualSave() => _adapter.canCreateNewManualSave(_box);
+
+  /// Deletes a manual save or the auto-save slot (game + map keys).
+  void deleteSave(String storageId) {
+    _adapter.delete(_box, storageId);
+    if (storageId != kAutoSaveSlotId) {
+      _mapCache.remove(storageId);
+    }
+  }
 
   /// Whether the Hive auto-save slot is playable.
   bool hasValidAutoSave() => _gameServiceHasValidAutoSave(this);
 
   /// Loads the auto-save slot into memory cache under [Game.id].
   Game? loadAutoSaveGame() => _gameServiceLoadAutoSaveGame(this);
+
+  /// Loads auto-save with mid-turn draft fields.
+  GameSaveSession? loadAutoSaveSession() =>
+      _gameServiceLoadAutoSaveSession(this);
 
   /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
   /// or a pending result: [TurnResolutionPendingOvertures], [TurnResolutionPendingIntervention],

@@ -35,18 +35,42 @@ part 'diplomatic_candidate_scoring_establish_overture.dart';
 
 final _log = packageLogger();
 
+/// Bundles inputs for [computeDiplomaticCandidateScores] (Refs #3977 AC5).
+final class DiplomaticCandidateScoringInput {
+  const DiplomaticCandidateScoringInput({
+    required this.candidates,
+    required this.nationId,
+    required this.game,
+    required this.snapshot,
+    required this.config,
+    this.primaryGoal,
+    this.sameTurnPriorDiplomaticOrders,
+    this.phasePlan,
+  });
+
+  final List<DiplomaticOrder> candidates;
+  final String nationId;
+  final Game game;
+  final AIWorldSnapshot snapshot;
+  final AIConfig config;
+  final StrategicGoal? primaryGoal;
+  final Orders? sameTurnPriorDiplomaticOrders;
+  final PhasePlanOutcome? phasePlan;
+}
+
 /// Pre-weighted-random scores for diplomatic order candidates (0 = suppressed).
 /// Exposed for deterministic tests; [runDomainPlanners] uses the same values.
-List<int> computeDiplomaticCandidateScores({
-  required List<DiplomaticOrder> candidates,
-  required String nationId,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  StrategicGoal? primaryGoal,
-  Orders? sameTurnPriorDiplomaticOrders,
-  PhasePlanOutcome? phasePlan,
-}) {
+List<int> computeDiplomaticCandidateScores(
+  DiplomaticCandidateScoringInput input,
+) {
+  final candidates = input.candidates;
+  final nationId = input.nationId;
+  final game = input.game;
+  final snapshot = input.snapshot;
+  final config = input.config;
+  final primaryGoal = input.primaryGoal;
+  final sameTurnPriorDiplomaticOrders = input.sameTurnPriorDiplomaticOrders;
+  final phasePlan = input.phasePlan;
   final agendaId = config.hiddenAgendaId;
   final thresholds = resolveThresholds(
     config.personalityId,
@@ -92,6 +116,7 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+
   final warDesireForTarget = memoizedWarDesire;
 
   return candidates.map((o) {
@@ -144,24 +169,26 @@ List<int> computeDiplomaticCandidateScores({
         break;
       case DiplomaticOrderType.declareWar:
         s = _scoreDeclareWarDiplomaticOrder(
-          order: o,
-          nationId: nationId,
-          game: game,
-          snapshot: snapshot,
-          agendaId: agendaId,
-          thresholds: thresholds,
-          maxRelationForDeclareWar: maxRelationForDeclareWar,
-          behindVictoryPace: behindVictoryPace,
-          suppressGpDeclareWar: suppressGpDeclareWar,
-          invadableOwners: invadableOwners,
-          provinceOwner: provinceOwner,
-          warCooldownTurns: warCooldownTurns,
-          currentTurn: currentTurn,
-          anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
-          primaryGoal: primaryGoal,
-          warDesireForTarget: warDesireForTarget,
+          _DeclareWarTargetContext.build(
+            order: o,
+            nationId: nationId,
+            game: game,
+            snapshot: snapshot,
+            agendaId: agendaId,
+            thresholds: thresholds,
+            maxRelationForDeclareWar: maxRelationForDeclareWar,
+            behindVictoryPace: behindVictoryPace,
+            suppressGpDeclareWar: suppressGpDeclareWar,
+            invadableOwners: invadableOwners,
+            provinceOwner: provinceOwner,
+            warCooldownTurns: warCooldownTurns,
+            currentTurn: currentTurn,
+            anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
+            primaryGoal: primaryGoal,
+            warDesireForTarget: warDesireForTarget,
+            phasePlan: phasePlan,
+          ),
           sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-          phasePlan: phasePlan,
         );
         break;
       case DiplomaticOrderType.establishOverture:

@@ -69,47 +69,27 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'warmonger',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(atWarWith: [_minorId]),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      invadableProvinceIdsSorted: [_owMinorProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _minorId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _minorId,
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    },
-  );
-}
-
 DomainPlannerOutcome _runForPhase(PhasePlanOutcome plan) {
   final game = buildOrchestratorExpandMinorWarScenarioGame(
     id: 'g-2832-orchestrator-domain-gates',
   );
   const topology = MapTopology(nodes: [], edges: []);
   final view = buildPlayerView(game, topology, _nationId);
-  final snapshot = _expandSnapshot();
+  final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
   return runDomainPlannersWithOutcome(
-    game: game,
-    topology: topology,
-    nationId: _nationId,
-    view: view,
-    snapshot: snapshot,
-    config: _aiConfig,
-    primaryGoal: StrategicGoal.conquer,
-    seeds: AISeedBundle.fromTurnSeed(2832100),
-    suggestionAPI: _conquestCandidateApi,
-    economyPlan: _economyPlan,
-    options: OrchestratorOptions(phasePlan: plan),
+    DomainPlannerInput(
+      game: game,
+      topology: topology,
+      nationId: _nationId,
+      view: view,
+      snapshot: snapshot,
+      config: _aiConfig,
+      primaryGoal: StrategicGoal.conquer,
+      seeds: AISeedBundle.fromTurnSeed(2832100),
+      suggestionAPI: _conquestCandidateApi,
+      economyPlan: _economyPlan,
+      options: OrchestratorOptions(phasePlan: plan),
+    ),
   );
 }
 
@@ -137,7 +117,7 @@ void main() {
   );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+        final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
           ObserverGoalPhase.expand,
@@ -148,16 +128,18 @@ void main() {
         );
 
         final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2832200),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2832200),
+            suggestionAPI: _conquestCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final gates = outcome.domainGateData;
@@ -197,7 +179,7 @@ void main() {
   );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
       final ctx = PlannerContext(
         nationId: _nationId,
         view: view,

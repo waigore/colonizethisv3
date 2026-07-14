@@ -28,7 +28,7 @@ The widget is wrapped in a `PopScope(canPop: false)` so the system back gesture 
 ## Trigger conditions
 
 - **Entry:** `Routes.game` (`/game`) per `app/lib/config/routes.dart`. Pushed via `NavigateToRouteEvent(Routes.game)` from [`shell-screen.md`](shell-screen.md) (New Game / Resume game / Load game) and from the new-game setup flow.
-- **Bus gating:** While `turnResolutionBlockingProvider == true`, only `OpenPauseMenuPanelEvent` and `ClosePanelEvent` may open per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress. The screen wires the pause button to that gate (see ACs).
+- **Bus gating:** While `turnResolutionBlockingProvider == true`, only `ClosePanelEvent` may open/dismiss panels per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Turn resolution in progress; pause is disabled ([save-load-session-clear.md](../program/save-load-session-clear.md)).
 - **Lifecycle:** The screen is destroyed when `NavigateToShellEvent` triggers a pop back to `Routes.shell`; pending in-memory state is cleared by the bus handler, not by this widget.
 
 ---
@@ -88,7 +88,7 @@ The screen never paints chrome around the map / Flame canvas itself; layout for 
 | Pending overtures | `pendingDiplomacy is PendingDiplomacyOvertures && offers.isNotEmpty` | Wraps the content in `OvertureDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeOvertureDecisions` and applies the result via `applyTurnResolutionResult(ref, result)`. |
 | Pending interventions | `pendingDiplomacy is PendingDiplomacyIntervention && prompts.isNotEmpty` | Wraps the content in `InterventionDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeInterventionDecisions`. |
 | Pending call-to-arms | `pendingDiplomacy is PendingDiplomacyCallToArms && pending.isNotEmpty` | Wraps the content in `CallToArmsDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeCallToArmsDecisions`. |
-| Turn resolution in progress | `turnResolutionBlockingProvider == true` | Next turn button is disabled (`onPressed == null`); the pause button still works (allowed gating); per [`app-ui-wiring.md`](../program/app-ui-wiring.md) the Processing Turn dialog is shown by the next-turn handler, not this widget. |
+| Turn resolution in progress | `turnResolutionBlockingProvider == true` | Next turn button is disabled (`onPressed == null`); the pause button is disabled (`onPressed == null`); per [`app-ui-wiring.md`](../program/app-ui-wiring.md) the Processing Turn dialog is shown by the next-turn handler, not this widget. |
 | Exit confirm | Android back / `PopScope.onPopInvoked` | Local `showDialog` (`useRootNavigator: true`) opens the Exit-to-Main-Menu `CtDialogShell`; on confirm the screen emits `NavigateToShellEvent`. |
 
 The pending-diplomacy variants are mutually exclusive — exactly one wrapper is used per build pass, matching the `switch` order: overtures, interventions, call-to-arms.
@@ -109,7 +109,7 @@ The pending-diplomacy variants are mutually exclusive — exactly one wrapper is
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
-| Pause menu (`IconButton`) | `game != null`; allowed while `turnResolutionBlockingProvider` | `OpenPauseMenuPanelEvent` | Opens pause panel per [`app-ui-wiring.md`](../program/app-ui-wiring.md). |
+| Pause menu (`IconButton` / top-bar pause) | `game != null` and `!turnResolutionBlockingProvider` | `OpenPauseMenuPanelEvent` | Opens pause panel per [`app-ui-wiring.md`](../program/app-ui-wiring.md). Disabled while turn resolution blocks. |
 | Next turn (`CtNinePatchButton`) | `!turnResolutionBlockingProvider && allowsFullTurnResolution(game)` | Local `_runFlameCanvasNextTurn` | Confirmation dialog → processing dialog → `turnResolutionRunnerProvider.startResolution` → `applyTurnResolutionResult`; sets/clears `turnResolutionBlockingProvider`. |
 | Android back / `PopScope` | Always (`canPop: false`) | `NavigateToShellEvent` on exit confirm | Local exit `CtDialogShell`; no direct `popUntil`. |
 | Intro dismiss | `GameStartIntroOverlay` active | `gameIdsWithIntroShownProvider.markShown(game.id)` | Removes intro wrapper. |
@@ -154,14 +154,14 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 
 - Given `GameScreen` is mounted, no victory is set, and `turnResolutionBlockingProvider == true`,
   When `GameScreen.build` runs,
-  Then the Next turn `CtNinePatchButton` is rendered with `onPressed == null` (disabled) and the pause `IconButton` remains enabled (gating allows pause-menu opens per [`app-ui-wiring.md`](../program/app-ui-wiring.md)).
+  Then the Next turn `CtNinePatchButton` is rendered with `onPressed == null` (disabled) and the pause control is also disabled (`onPressed == null`) per [`save-load-session-clear.md`](../program/save-load-session-clear.md).
 
 - Given the Next turn `CtNinePatchButton` is rendered in its disabled state (`onPressed == null`) — either inside [`GameTopBar`](../../app/lib/features/game/widgets/shell/game_top_bar.dart) on the map view or in the `GameScreen` fallback Flame-canvas branch,
   When the widget tree is inspected,
   Then the disabled wrapper is an `Opacity` widget whose `opacity` resolves to `0.35` (matching `.next-turn.disabled { opacity: 0.35 }` in [`mockups/GAME10001-game-screen.html`](mockups/GAME10001-game-screen.html) and issue #2861 R1), and the `CtNinePatchButton` instance is constructed with an explicit `disabledOpacity: 0.35` argument overriding the catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`). The pause `IconButton` and other `CtNinePatchButton` call sites without an explicit override continue to use the catalog-default `0.4` (regression guard).
 
-- Given `GameScreen` is mounted with a bus listener subscribed to `OpenPauseMenuPanelEvent`,
-  When the user taps the pause `IconButton`,
+- Given `GameScreen` is mounted with a bus listener subscribed to `OpenPauseMenuPanelEvent` and `turnResolutionBlockingProvider == false`,
+  When the user taps the pause control,
   Then the screen emits exactly one `OpenPauseMenuPanelEvent` on the supplied bus.
 
 - Given `GameScreen` is mounted with `currentGameProvider == game` and `introShownIds` does not contain `game.id`,

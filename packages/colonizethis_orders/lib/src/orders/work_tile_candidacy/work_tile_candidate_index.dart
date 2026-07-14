@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../build_rail_work_rules.dart';
+import '../diplomatic_access_helpers.dart';
 import '../order_work_constants.dart';
 import '../orders_application_helpers.dart';
 
@@ -208,10 +209,7 @@ void _addMinorTribeTownTilesForEmbassyUpgrade(_WorkTilePrefilterSession c) {
       final ownerId = province.ownerId;
       if (ownerId == null || ownerId == c.playerId) continue;
       if (!factionMembership.isMinorOrTribe(ownerId)) continue;
-      final rel = getRelation(c.game, c.playerId, ownerId);
-      if (rel?.atWar == true) continue;
-      final overture = getOverture(c.game, c.playerId, ownerId);
-      if (overture == null || !overture.hasEmbassy) continue;
+      if (!hasPeaceTimeEmbassy(c.game, c.playerId, ownerId)) continue;
       final townTileKey = province.townTileKey;
       if (townTileKey == null || townTileKey.isEmpty) continue;
       c.result.add(townTileKey);

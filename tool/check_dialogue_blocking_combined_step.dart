@@ -44,6 +44,11 @@ const String _ctBody = 'CtDialogueLineChoiceBody';
 const Set<String> _canonicalBasenames = <String>{
   'ct_dialogue_view.dart',
   'ct_dialogue_line_choice_body.dart',
+  // Shared Yarn load/parse/runner bootstrap constructs CtDialogueView for
+  // overlay hosts (Refs #4013); overlays retain their own createView factories
+  // so the adoption/golden-registry gates still see CtDialogueView( on each
+  // `*_overlay.dart` library.
+  'yarn_dialogue_bootstrap.dart',
 };
 
 /// Blocking diplomacy overlay that intentionally does not use `CtDialogueView`

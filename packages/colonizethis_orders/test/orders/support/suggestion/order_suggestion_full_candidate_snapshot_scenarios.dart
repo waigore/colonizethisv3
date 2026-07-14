@@ -53,10 +53,6 @@ void osfcsRunStableSnapshot() {
 }
 
 List<RunnableScenario>
-orderSuggestionFullCandidateSnapshotScenarios() => const [
-  RunnableScenario(
-    label:
-        'suggestWorkOrders full-candidate snapshot remains stable (Refs #2133 AC8)',
-    run: osfcsRunStableSnapshot,
-  ),
+orderSuggestionFullCandidateSnapshotScenarios() => [
+  rs('suggestWorkOrders full-candidate snapshot remains stable (Refs #2133 AC8)', osfcsRunStableSnapshot),
 ];

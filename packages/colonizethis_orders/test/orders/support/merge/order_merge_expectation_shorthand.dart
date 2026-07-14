@@ -44,3 +44,28 @@ BuildUnitOrder omPeasantLevies(String spawnProvinceId) => BuildUnitOrder(
   isMilitary: true,
   spawnProvinceId: spawnProvinceId,
 );
+
+DiplomaticOrder omDeclareWar(String targetFactionId) => DiplomaticOrder(
+  type: DiplomaticOrderType.declareWar,
+  targetFactionId: targetFactionId,
+);
+
+Orders omWorks(String playerId, List<WorkOrder> orders) =>
+    Orders(workOrdersByPlayerId: {playerId: orders});
+
+WorkOrder omRoadWork(String unitId, String tileKey) => WorkOrder(
+  unitId: unitId,
+  target: kWorkTargetBuildRoad,
+  targetTileKey: tileKey,
+);
+
+TradeOrder omTradeOrder(
+  String commodityId,
+  TradeOrderType type,
+  int quantity,
+) => TradeOrder(
+  commodityId: commodityId,
+  type: type,
+  quantity: quantity,
+  priority: 2,
+);

@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_ui_helpers.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,12 +25,18 @@ void main() {
   });
 
   group('commodityDisplayName', () {
-    test('returns catalog display name for known commodity', () {
-      expect(commodityDisplayName('castIron'), 'Cast iron');
+    final l10n = AppLocalizationsEn();
+
+    test('returns localized display name for known commodity', () {
+      expect(commodityDisplayName(l10n, 'castIron'), 'Cast iron');
+      expect(commodityDisplayName(l10n, 'sugarCane'), 'Sugar cane');
     });
 
     test('returns input id for unknown commodity', () {
-      expect(commodityDisplayName('unknown_commodity'), 'unknown_commodity');
+      expect(
+        commodityDisplayName(l10n, 'unknown_commodity'),
+        'unknown_commodity',
+      );
     });
   });
 

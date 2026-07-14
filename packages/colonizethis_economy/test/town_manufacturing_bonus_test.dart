@@ -54,16 +54,15 @@ void main() {
   });
 
   group('computeTownManufacturingBonusForProvince', () {
-    for (final scenario in townManufacturingBonusProvinceScenarios()) {
-      test(scenario.label, () {
-        runTownManufacturingBonusProvinceScenario(scenario);
-      });
-    }
+    runLabeledScenarios(townManufacturingBonusProvinceScenarios(), (scenario) {
+      runTownManufacturingBonusProvinceScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   runLabeledScenarioGroup(
     'computeTownManufacturingBonusForGame',
     townManufacturingBonusGameScenarios(),
     runTownManufacturingBonusGameScenario,
+    labelOf: (s) => s.label,
   );
 }

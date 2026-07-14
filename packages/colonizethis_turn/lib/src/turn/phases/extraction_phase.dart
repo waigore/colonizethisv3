@@ -30,7 +30,14 @@ Game runExtractionPhase(
   Map<String, int>? overseasShippedTonnageOut,
 }) {
   if (extractedByPlayerId.isNotEmpty) {
-    return applyExtractionForPlayers(state, extractedByPlayerId);
+    // Scripted override: clear tile-accurate province Extraction snapshots.
+    // SPEC/program/province-extraction-snapshot.md. Refs #4002.
+    final cleared = state.copyWith(
+      worldState: state.worldState.copyWith(
+        lastTurnProvinceExtractionByProvinceId: const {},
+      ),
+    );
+    return applyExtractionForPlayers(cleared, extractedByPlayerId);
   }
   if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
     return state;
@@ -40,21 +47,32 @@ Game runExtractionPhase(
     tileMapByRegion: tileMapByRegion,
     topology: topology,
   );
+  int techCapForPlayerAndResource(String playerId, String resourceId) {
+    final player = state.playerById(playerId);
+    return extractionCapForResourceForUnlocked(
+      player?.techUnlocked,
+      resourceId,
+    );
+  }
+
+  int techCapForPlayer(String playerId) {
+    final player = state.playerById(playerId);
+    return extractionCapForUnlocked(player?.techUnlocked);
+  }
+
   final extraction = computeExtraction(
     game: state,
     tileMapByRegion: tileMapByRegion,
     connectivityResult: connectivity,
-    techCapForPlayerAndResource: (playerId, resourceId) {
-      final player = state.playerById(playerId);
-      return extractionCapForResourceForUnlocked(
-        player?.techUnlocked,
-        resourceId,
-      );
-    },
-    techCapForPlayer: (playerId) {
-      final player = state.playerById(playerId);
-      return extractionCapForUnlocked(player?.techUnlocked);
-    },
+    techCapForPlayerAndResource: techCapForPlayerAndResource,
+    techCapForPlayer: techCapForPlayer,
+  );
+  final provinceSnapshots = computeProvinceExtractionSnapshots(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    connectivityResult: connectivity,
+    techCapForPlayerAndResource: techCapForPlayerAndResource,
+    techCapForPlayer: techCapForPlayer,
   );
   final nonGpConnectivity = resolveNonGreatPowerConnectivity(
     game: state,
@@ -125,7 +143,12 @@ Game runExtractionPhase(
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
-  return currentState.withPlayers(updatedPlayers);
+  final withPlayers = currentState.withPlayers(updatedPlayers);
+  return withPlayers.copyWith(
+    worldState: withPlayers.worldState.copyWith(
+      lastTurnProvinceExtractionByProvinceId: provinceSnapshots,
+    ),
+  );
 }
 
 void _recordOverseasShippedTonnage(
@@ -150,8 +173,7 @@ TurnPhaseStepOutcome extractionTurnPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) =>
-    economyPhaseHandlerFromStep(
-      runEconomyExtractionStep,
-      recordOverseasTonnage: true,
-    )(acc, config, turn);
+) => economyPhaseHandlerFromStep(
+  runEconomyExtractionStep,
+  recordOverseasTonnage: true,
+)(acc, config, turn);
