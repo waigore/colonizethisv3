@@ -82,7 +82,7 @@ const String _capitalProvince = 'oldWorld|p_320_capital';
 /// the real `showDialog` flow because the contract under test is the
 /// dialog's own [CtDialogShell] layout at the narrow viewport, not the
 /// barrier / overlay route plumbing (which is already covered by
-/// `move_dialogs_specs_test.dart`).
+/// `move_dialogs_specs_part*_test.dart`).
 Future<void> _pumpDialog(
   WidgetTester tester,
   Widget dialog, {
