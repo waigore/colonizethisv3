@@ -1,12 +1,12 @@
-// Widget tests that verify CtMainMenu screen functionality against SPEC/ui
-// acceptance criteria. The NewGameLeaderSelectionDialog acceptance criteria
-// live in `new_game_leader_selection_dialog_part1_test.dart`.
-// Screen contract: SPEC/ui/main-menu.md.
+// Pins SPEC/ui/main-menu.md acceptance criteria (part 2):
+// pixelArt chrome (collage, footer Quit, wood-panel gradients), scroll brackets,
+// and responsive ≤430 dp body padding / letter-spacing.
+// Split under repo.app_test_file_size (Refs #4013).
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
@@ -15,346 +15,20 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
-/// Locates the `CtNinePatchButton` ancestor of the menu label [label] so
-/// tests can drive press gestures against the wood-panel surface itself.
-Finder _woodPanelButtonFinderFor(String label) {
-  return find.ancestor(
-    of: find.text(label),
-    matching: find.byType(CtNinePatchButton),
-  );
-}
-
-/// Returns the gradient-painting `DecoratedBox` painted by the
-/// `CtNinePatchButton` whose label is [label]. The button paints exactly
-/// one such box (the surface), so the finder is unambiguous.
-DecoratedBox _findGradientSurfaceFor(WidgetTester tester, String label) {
-  final Finder boxes = find.descendant(
-    of: _woodPanelButtonFinderFor(label),
-    matching: find.byWidgetPredicate(
-      (Widget w) =>
-          w is DecoratedBox &&
-          w.decoration is BoxDecoration &&
-          (w.decoration as BoxDecoration).gradient != null,
-    ),
-  );
-  expect(
-    boxes,
-    findsAtLeastNWidgets(1),
-    reason:
-        'CtNinePatchButton for "$label" must paint a gradient surface '
-        'DecoratedBox',
-  );
-  return tester.widget<DecoratedBox>(boxes.first);
-}
+import 'support/screen_spec_acceptance_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  group('CtMainMenu — SPEC/ui/main-menu.md acceptance criteria', () {
-    Widget buildMainMenu({
-      MainMenuState state = MainMenuState.default_,
-      MainMenuVariant variant = MainMenuVariant.plain,
-      bool resumeGameVisible = false,
-      VoidCallback? onResumeGame,
-      required VoidCallback onNewGame,
-      required VoidCallback onLoadGame,
-      required VoidCallback onSettings,
-      required VoidCallback onQuit,
-    }) {
-      return MaterialApp(
-        theme: AppThemes.colonial,
-        home: CtMainMenu(
-          variant: variant,
-          state: state,
-          version: formatDebugAwareVersion('v1.0.0'),
-          onNewGame: onNewGame,
-          resumeGameVisible: resumeGameVisible,
-          onResumeGame: onResumeGame,
-          onLoadGame: onLoadGame,
-          onSettings: onSettings,
-          onQuit: onQuit,
-        ),
-      );
-    }
-
-    testWidgets('AC Visibility: displays New Game, Load Game, Settings, Quit', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('New Game'), findsOneWidget);
-      expect(find.text('Load Game'), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Quit'), findsOneWidget);
-    });
-
-    testWidgets('AC Resume game: hidden when resumeGameVisible is false', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Resume game'), findsNothing);
-    });
-
-    testWidgets('AC Resume game: shown below New Game when resumeGameVisible', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          resumeGameVisible: true,
-          onResumeGame: () {},
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Resume game'), findsOneWidget);
-    });
-
-    testWidgets('AC Resume game: tap invokes onResumeGame', (
-      WidgetTester tester,
-    ) async {
-      var called = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          resumeGameVisible: true,
-          onResumeGame: () => called = true,
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Resume game'));
-      await tester.pumpAndSettle();
-      expect(called, isTrue);
-    });
-
-    testWidgets('AC Visibility: displays version in footer', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text(formatDebugAwareVersion('v1.0.0')), findsOneWidget);
-    });
-
-    testWidgets(
-      'AC Load Game: when noSaves, Load Game stays enabled',
-      (WidgetTester tester) async {
-        var loadCalled = false;
-        await tester.pumpWidget(
-          buildMainMenu(
-            state: MainMenuState.noSaves,
-            onNewGame: () {},
-            onLoadGame: () => loadCalled = true,
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Load Game'));
-        await tester.pumpAndSettle();
-        expect(loadCalled, isTrue);
-      },
-    );
-
-    testWidgets('AC Load Game: when default, Load Game is enabled', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final tooltipFinder = find.ancestor(
-        of: find.text('Load Game'),
-        matching: find.byType(Tooltip),
-      );
-      expect(tooltipFinder, findsOneWidget);
-      expect(tester.widget<Tooltip>(tooltipFinder).message, '');
-    });
-
-    testWidgets('AC After victory: shows subtitle', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildMainMenu(
-          state: MainMenuState.afterVictory,
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('Congratulations, you won your last game.'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('AC Navigation: tapping New Game invokes onNewGame', (
-      WidgetTester tester,
-    ) async {
-      var called = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () => called = true,
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('New Game'));
-      await tester.pumpAndSettle();
-      expect(called, isTrue);
-    });
-
-    testWidgets('AC Navigation: tapping Load Game invokes onLoadGame', (
-      WidgetTester tester,
-    ) async {
-      var called = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () => called = true,
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Load Game'));
-      await tester.pumpAndSettle();
-      expect(called, isTrue);
-    });
-
-    testWidgets('AC Navigation: tapping Settings invokes onSettings', (
-      WidgetTester tester,
-    ) async {
-      var called = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () => called = true,
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
-      expect(called, isTrue);
-    });
-
-    testWidgets('AC Navigation: tapping Quit invokes onQuit', (
-      WidgetTester tester,
-    ) async {
-      var called = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () => called = true,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Quit'));
-      await tester.pumpAndSettle();
-      expect(called, isTrue);
-    });
-
-    testWidgets('Coverage: pixelArt variant builds and navigation works', (
-      WidgetTester tester,
-    ) async {
-      var newGameCalled = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          variant: MainMenuVariant.pixelArt,
-          onNewGame: () => newGameCalled = true,
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('New Game'), findsOneWidget);
-      expect(find.text('Load Game'), findsOneWidget);
-      await tester.tap(find.text('New Game'));
-      await tester.pumpAndSettle();
-      expect(newGameCalled, isTrue);
-    });
-
-    testWidgets('Coverage: pixelArt noSaves uses pixel-art Load Game button', (
-      WidgetTester tester,
-    ) async {
-      var loadCalled = false;
-      await tester.pumpWidget(
-        buildMainMenu(
-          variant: MainMenuVariant.pixelArt,
-          state: MainMenuState.noSaves,
-          onNewGame: () {},
-          onLoadGame: () => loadCalled = true,
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Load Game'));
-      await tester.pumpAndSettle();
-      expect(loadCalled, isTrue);
-    });
-
+  group('CtMainMenu — SPEC/ui/main-menu.md acceptance criteria (part 2)', () {
     testWidgets(
       'AC Variant rendering (pixelArt): collage, compass rose, fleur-de-lis, brass divider all present',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             onNewGame: () {},
             onLoadGame: () {},
@@ -379,7 +53,7 @@ void main() {
       (WidgetTester tester) async {
         var called = false;
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             onNewGame: () {},
             onLoadGame: () {},
@@ -389,23 +63,19 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final Finder quitChip = find.byKey(
-          const Key(kMainMenuFooterQuitKey),
-        );
+        final Finder quitChip = find.byKey(const Key(kMainMenuFooterQuitKey));
         expect(quitChip, findsOneWidget);
 
         final RenderBox box = tester.renderObject<RenderBox>(quitChip);
         expect(
           box.size.height,
           lessThan(48),
-          reason:
-              'Footer Quit chip must be smaller than 48 dp primary buttons',
+          reason: 'Footer Quit chip must be smaller than 48 dp primary buttons',
         );
         expect(
           box.size.height,
           greaterThanOrEqualTo(kMainMenuFooterQuitMinHeight),
-          reason:
-              'Footer Quit chip must clear the 44 dp accessibility minimum',
+          reason: 'Footer Quit chip must clear the 44 dp accessibility minimum',
         );
 
         final Finder quitInsideNinePatch = find.descendant(
@@ -426,37 +96,34 @@ void main() {
       },
     );
 
-    testWidgets(
-      'AC 9 (pixelArt) Footer Quit foreground: label uses '
-      'EditorialMonoclePalette.muted token, not --fg',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('AC 9 (pixelArt) Footer Quit foreground: label uses '
+        'EditorialMonoclePalette.muted token, not --fg', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildScreenSpecMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        final Finder quitChip = find.byKey(
-          const Key(kMainMenuFooterQuitKey),
-        );
-        final Text quitLabel = tester.widget<Text>(
-          find.descendant(of: quitChip, matching: find.text('Quit')),
-        );
-        expect(quitLabel.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
+      final Finder quitChip = find.byKey(const Key(kMainMenuFooterQuitKey));
+      final Text quitLabel = tester.widget<Text>(
+        find.descendant(of: quitChip, matching: find.text('Quit')),
+      );
+      expect(quitLabel.style?.color, EditorialMonoclePalette.muted);
+    });
 
     testWidgets(
       'AC Variant rendering (plain) Footer Quit: plain variant does not '
       'render the pixelArt Quit chip key (chip is pixelArt-only)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -480,7 +147,7 @@ void main() {
       '(--surface-lite → --surface → --bg-deep) in the rest state',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             onNewGame: () {},
             onLoadGame: () {},
@@ -490,10 +157,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final DecoratedBox surface = _findGradientSurfaceFor(
-          tester,
-          'New Game',
-        );
+        final DecoratedBox surface = findGradientSurfaceFor(tester, 'New Game');
         final BoxDecoration decoration = surface.decoration as BoxDecoration;
         final LinearGradient gradient = decoration.gradient! as LinearGradient;
         expect(
@@ -514,7 +178,7 @@ void main() {
       'gradient reverts to the rest CtGradients.woodPanelButtonGradient',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             onNewGame: () {},
             onLoadGame: () {},
@@ -524,16 +188,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final Finder newGameButton = _woodPanelButtonFinderFor('New Game');
+        final Finder newGameButton = woodPanelButtonFinderFor('New Game');
         final Offset center = tester.getCenter(newGameButton);
         final TestGesture gesture = await tester.startGesture(center);
         await tester.pump();
         await tester.pumpAndSettle();
 
-        final DecoratedBox pressed = _findGradientSurfaceFor(
-          tester,
-          'New Game',
-        );
+        final DecoratedBox pressed = findGradientSurfaceFor(tester, 'New Game');
         final BoxDecoration pressedDecoration =
             pressed.decoration as BoxDecoration;
         final LinearGradient pressedGradient =
@@ -549,7 +210,7 @@ void main() {
         await gesture.up();
         await tester.pumpAndSettle();
 
-        final DecoratedBox released = _findGradientSurfaceFor(
+        final DecoratedBox released = findGradientSurfaceFor(
           tester,
           'New Game',
         );
@@ -588,10 +249,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final DecoratedBox restSurface = _findGradientSurfaceFor(
-          tester,
-          'Quit',
-        );
+        final DecoratedBox restSurface = findGradientSurfaceFor(tester, 'Quit');
         final BoxDecoration restDecoration =
             restSurface.decoration as BoxDecoration;
         final LinearGradient restGradient =
@@ -605,16 +263,13 @@ void main() {
         );
 
         final Offset center = tester.getCenter(
-          _woodPanelButtonFinderFor('Quit'),
+          woodPanelButtonFinderFor('Quit'),
         );
         final TestGesture gesture = await tester.startGesture(center);
         await tester.pump();
         await tester.pumpAndSettle();
 
-        final DecoratedBox pressed = _findGradientSurfaceFor(
-          tester,
-          'Quit',
-        );
+        final DecoratedBox pressed = findGradientSurfaceFor(tester, 'Quit');
         final BoxDecoration pressedDecoration =
             pressed.decoration as BoxDecoration;
         final LinearGradient pressedGradient =
@@ -636,7 +291,7 @@ void main() {
       'AC Variant rendering (plain): no SVG collage, compass rose, fleur-de-lis, or brass divider',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -661,7 +316,7 @@ void main() {
       'AC Variant rendering (pixelArt): scroll-bracket gutters flank the buttons region',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             onNewGame: () {},
             onLoadGame: () {},
@@ -690,12 +345,8 @@ void main() {
           of: rightBracket,
           matching: find.byType(Stack),
         );
-        final Set<Element> leftStacks = leftStackAncestors
-            .evaluate()
-            .toSet();
-        final Set<Element> rightStacks = rightStackAncestors
-            .evaluate()
-            .toSet();
+        final Set<Element> leftStacks = leftStackAncestors.evaluate().toSet();
+        final Set<Element> rightStacks = rightStackAncestors.evaluate().toSet();
         expect(
           leftStacks.intersection(rightStacks).isNotEmpty,
           isTrue,
@@ -709,7 +360,7 @@ void main() {
       'AC Variant rendering (plain): no scroll-bracket gutters (negative)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -733,7 +384,7 @@ void main() {
       'AC Variant rendering (pixelArt + resumeGameVisible): scroll brackets still flank the resized buttons region',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildMainMenu(
+          buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
             resumeGameVisible: true,
             onResumeGame: () {},
@@ -758,33 +409,12 @@ void main() {
 
     // SPEC/ui/main-menu.md § Responsive rules; SPEC/ui/mockups/SHEL10002-main-menu.html
     // `@media (max-width: 430px)`. Refs #2870 S6.
-    Future<void> pumpAtSize(
-      WidgetTester tester, {
-      required Size size,
-      required MainMenuVariant variant,
-    }) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(size);
-      await tester.pumpWidget(
-        MediaQuery(
-          data: MediaQueryData(size: size),
-          child: buildMainMenu(
-            variant: variant,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-    }
 
     testWidgets('AC Narrow ≤ 430 dp (plain): menu body padding compacts to '
         'EdgeInsets.symmetric(horizontal: 12, vertical: 24)', (
       WidgetTester tester,
     ) async {
-      await pumpAtSize(
+      await pumpScreenSpecMainMenuAtSize(
         tester,
         size: const Size(360, 640),
         variant: MainMenuVariant.plain,
@@ -798,7 +428,7 @@ void main() {
 
     testWidgets('AC Wide > 430 dp (plain): menu body padding stays at default '
         'EdgeInsets.symmetric(horizontal: 24)', (WidgetTester tester) async {
-      await pumpAtSize(
+      await pumpScreenSpecMainMenuAtSize(
         tester,
         size: const Size(800, 600),
         variant: MainMenuVariant.plain,
@@ -814,7 +444,7 @@ void main() {
         'button label letter-spacing reduces to narrow constant', (
       WidgetTester tester,
     ) async {
-      await pumpAtSize(
+      await pumpScreenSpecMainMenuAtSize(
         tester,
         size: const Size(360, 640),
         variant: MainMenuVariant.pixelArt,
@@ -849,7 +479,7 @@ void main() {
       'AC Wide > 430 dp (pixelArt): menu body padding stays default and '
       'button label letter-spacing stays at default constant',
       (WidgetTester tester) async {
-        await pumpAtSize(
+        await pumpScreenSpecMainMenuAtSize(
           tester,
           size: const Size(800, 600),
           variant: MainMenuVariant.pixelArt,
@@ -883,7 +513,7 @@ void main() {
       'AC Narrow ≤ 430 dp (plain): button label Text widgets carry no '
       'explicit letter-spacing override (letter-spacing rule is pixelArt-only)',
       (WidgetTester tester) async {
-        await pumpAtSize(
+        await pumpScreenSpecMainMenuAtSize(
           tester,
           size: const Size(360, 640),
           variant: MainMenuVariant.plain,
@@ -913,7 +543,7 @@ void main() {
     testWidgets(
       'AC ≤ 430 dp boundary: viewport exactly at 430 dp is treated as narrow',
       (WidgetTester tester) async {
-        await pumpAtSize(
+        await pumpScreenSpecMainMenuAtSize(
           tester,
           size: const Size(kMainMenuNarrowBreakpoint, 640),
           variant: MainMenuVariant.plain,
@@ -929,7 +559,7 @@ void main() {
     testWidgets('AC > 430 dp boundary: viewport 431 dp is treated as wide', (
       WidgetTester tester,
     ) async {
-      await pumpAtSize(
+      await pumpScreenSpecMainMenuAtSize(
         tester,
         size: const Size(kMainMenuNarrowBreakpoint + 1, 640),
         variant: MainMenuVariant.plain,
