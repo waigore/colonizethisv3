@@ -100,7 +100,9 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             pendingOvertures: offers,
             onDecisions: (decisions) {
               applyDiplomacyResumeDecisions(
-                ref: ref,
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
                 resume: (service, orders) => service.resumeOvertureDecisions(
                   game!,
                   offers,
@@ -118,7 +120,9 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             prompts: prompts,
             onDecisions: (decisions) {
               applyDiplomacyResumeDecisions(
-                ref: ref,
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
                 resume: (service, orders) =>
                     service.resumeInterventionDecisions(
                   game!,
@@ -135,7 +139,9 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             pending: pending,
             onDecisions: (decisions) {
               applyDiplomacyResumeDecisions(
-                ref: ref,
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
                 resume: (service, orders) =>
                     service.resumeCallToArmsDecisions(
                   game!,
