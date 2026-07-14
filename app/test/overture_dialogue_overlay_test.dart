@@ -354,8 +354,7 @@ void main() {
     );
 
     testWidgets(
-      'phase 2 renders Accept + Reject CtToggleSwitch widgets per row with '
-      'the canonical --success / --danger glow tokens',
+      'phase 2: Accept/Reject CtToggleSwitch glow tokens; only Submit is nine-patch',
       (WidgetTester tester) async {
         await pumpOverlay(tester, offers: _twoStageGp2Offers);
 
@@ -375,60 +374,33 @@ void main() {
           expect(reject.value, isFalse);
           expect(reject.onGlowColor, EditorialMonoclePalette.danger);
         }
-      },
-    );
 
-    testWidgets(
-      'no CtNinePatchButton descendants paint the Accept / Reject affordances '
-      'inside the per-offer row (negative regression guard for R22)',
-      (WidgetTester tester) async {
-        await pumpOverlay(tester);
-
-        // Submit is the only CtNinePatchButton expected in phase 2 (Accept /
-        // Reject are now CtToggleSwitch per #2867 R22).
+        // Submit is the only CtNinePatchButton in phase 2 (Accept/Reject are
+        // CtToggleSwitch per #2867 R22).
         final Iterable<CtNinePatchButton> buttons = tester
             .widgetList<CtNinePatchButton>(find.byType(CtNinePatchButton));
         expect(buttons, hasLength(1));
-        final CtNinePatchButton only = buttons.single;
-        expect(only.key, const ValueKey<String>('overtureSubmitButton'));
+        expect(
+          buttons.single.key,
+          const ValueKey<String>('overtureSubmitButton'),
+        );
       },
     );
 
     testWidgets(
-      'tapping the Accept toggle commits decision=true and turns Reject off',
+      'Accept/Reject toggles are mutually exclusive (on turns the other off)',
       (WidgetTester tester) async {
         await pumpOverlay(tester);
 
         await tester.tap(acceptToggleAt(0));
         await tester.pump();
-
-        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
-          acceptToggleAt(0),
-        );
-        expect(accept.value, isTrue);
-        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
-          rejectToggleAt(0),
-        );
-        expect(reject.value, isFalse);
-      },
-    );
-
-    testWidgets(
-      'tapping the Reject toggle commits decision=false and turns Accept off',
-      (WidgetTester tester) async {
-        await pumpOverlay(tester);
+        expect(tester.widget<CtToggleSwitch>(acceptToggleAt(0)).value, isTrue);
+        expect(tester.widget<CtToggleSwitch>(rejectToggleAt(0)).value, isFalse);
 
         await tester.tap(rejectToggleAt(0));
         await tester.pump();
-
-        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
-          rejectToggleAt(0),
-        );
-        expect(reject.value, isTrue);
-        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
-          acceptToggleAt(0),
-        );
-        expect(accept.value, isFalse);
+        expect(tester.widget<CtToggleSwitch>(rejectToggleAt(0)).value, isTrue);
+        expect(tester.widget<CtToggleSwitch>(acceptToggleAt(0)).value, isFalse);
       },
     );
 

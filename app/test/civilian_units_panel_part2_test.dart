@@ -122,79 +122,57 @@ void main() {
 
   group('CivilianUnitsPanel', () {
     testWidgets(
-      'AC: per-row locate icon emits LocateMapTileEvent without ClosePanelEvent',
+      'AC: locate icon emits LocateMapTileEvent (full-list and tile-scoped)',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianSingleUnitOwGame(
-          id: 'g_civ_locate_icon',
-          humanId: human,
-          unitId: 'civ1',
-          unitType: kUnitTypeBuilder,
-          tileKey: tileKey,
-        );
-        var closeCount = 0;
-        LocateMapTileEvent? locateEvent;
-        final bus = AppEventBus.create();
-        bus.on<ClosePanelEvent>().listen((_) => closeCount++);
-        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
-        await tester.pumpWidget(
-          buildCivilianPanel(game: miniGame, humanPlayerId: human, bus: bus),
-        );
-        await tester.pumpAndSettle();
+        Future<void> runLocateCase({
+          required Widget Function(AppEventBus bus) host,
+          required Matcher locateMatcher,
+          required int locateIndex,
+        }) async {
+          var closeCount = 0;
+          LocateMapTileEvent? locateEvent;
+          final bus = AppEventBus.create();
+          bus.on<ClosePanelEvent>().listen((_) => closeCount++);
+          bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+          await tester.pumpWidget(host(bus));
+          await tester.pumpAndSettle();
+          final locateIcons = find.byType(CtCircularLocateButton);
+          expect(locateIcons, locateMatcher);
+          final locatePressed = tester
+              .widget<CtCircularLocateButton>(locateIcons.at(locateIndex))
+              .onPressed;
+          expect(locatePressed, isNotNull);
+          locatePressed!();
+          await tester.pump();
+          expect(closeCount, 0);
+          expect(locateEvent, isNotNull);
+          expect(locateEvent!.tileKey, tileKey);
+          expect(locateEvent!.regionId, 'oldWorld');
+        }
 
-        // R30 (#3514): Locate is the rightmost circular CtCircularLocateButton
-        // (icon-only) in the action cluster per SPEC/ui/civilian-units-panel.md.
-        final locateBtn = find.byType(CtCircularLocateButton);
-        expect(locateBtn, findsOneWidget);
-        final locatePressed = tester
-            .widget<CtCircularLocateButton>(locateBtn.first)
-            .onPressed;
-        expect(locatePressed, isNotNull);
-        locatePressed!();
-        await tester.pump();
-
-        expect(closeCount, 0);
-        expect(locateEvent, isNotNull);
-        expect(locateEvent!.tileKey, tileKey);
-        expect(locateEvent!.regionId, 'oldWorld');
-      },
-    );
-
-    testWidgets(
-      'AC: tile-scoped locate icon on non-selected row emits LocateMapTileEvent',
-      (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianOwUnitsGame(
-          id: 'g_civ_locate_tile_scope',
-          humanId: human,
-          units: [
-            civilianIdleUnit(
-              id: 'civ_a',
-              type: kUnitTypeBuilder,
-              ownerId: human,
-              provinceId: 'oldWorld|p1',
+        // Full-list: single Locate in the action cluster (R30 / #3514).
+        await runLocateCase(
+          host: (bus) => buildCivilianPanel(
+            game: buildCivilianSingleUnitOwGame(
+              id: 'g_civ_locate_icon',
+              humanId: human,
+              unitId: 'civ1',
+              unitType: kUnitTypeBuilder,
               tileKey: tileKey,
             ),
-            civilianIdleUnit(
-              id: 'civ_b',
-              type: kUnitTypeEngineer,
-              ownerId: human,
-              provinceId: 'oldWorld|p1',
-              tileKey: tileKey,
-            ),
-          ],
+            humanPlayerId: human,
+            bus: bus,
+          ),
+          locateMatcher: findsOneWidget,
+          locateIndex: 0,
         );
-        var closeCount = 0;
-        LocateMapTileEvent? locateEvent;
-        final bus = AppEventBus.create();
-        bus.on<ClosePanelEvent>().listen((_) => closeCount++);
-        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
-        await tester.pumpWidget(
-          ProviderScope(
+        // Tile-scoped: every visible row exposes Locate, including non-selected.
+        await runLocateCase(
+          host: (bus) => ProviderScope(
             overrides: [
               availableWorkTargetIdsForUnitProvider.overrideWith(
                 (ref, _) => const <String>[],
@@ -203,7 +181,26 @@ void main() {
             child: MaterialApp(
               home: Scaffold(
                 body: CivilianUnitsPanel(
-                  game: miniGame,
+                  game: buildCivilianOwUnitsGame(
+                    id: 'g_civ_locate_tile_scope',
+                    humanId: human,
+                    units: [
+                      civilianIdleUnit(
+                        id: 'civ_a',
+                        type: kUnitTypeBuilder,
+                        ownerId: human,
+                        provinceId: 'oldWorld|p1',
+                        tileKey: tileKey,
+                      ),
+                      civilianIdleUnit(
+                        id: 'civ_b',
+                        type: kUnitTypeEngineer,
+                        ownerId: human,
+                        provinceId: 'oldWorld|p1',
+                        tileKey: tileKey,
+                      ),
+                    ],
+                  ),
                   humanPlayerId: human,
                   currentOrders: const Orders(),
                   bus: bus,
@@ -213,26 +210,9 @@ void main() {
               ),
             ),
           ),
+          locateMatcher: findsNWidgets(2),
+          locateIndex: 1,
         );
-        await tester.pumpAndSettle();
-
-        // R30 (#3514): every visible row exposes a circular
-        // CtCircularLocateButton in the action cluster (per
-        // SPEC/ui/civilian-units-panel.md), even rows that are not the
-        // tile-scope selection.
-        final locateIcons = find.byType(CtCircularLocateButton);
-        expect(locateIcons, findsNWidgets(2));
-        final locatePressed = tester
-            .widget<CtCircularLocateButton>(locateIcons.at(1))
-            .onPressed;
-        expect(locatePressed, isNotNull);
-        locatePressed!();
-        await tester.pump();
-
-        expect(closeCount, 0);
-        expect(locateEvent, isNotNull);
-        expect(locateEvent!.tileKey, tileKey);
-        expect(locateEvent!.regionId, 'oldWorld');
       },
     );
 
@@ -352,71 +332,45 @@ void main() {
     );
 
     testWidgets(
-      'Cancel on pending row shows confirm dialog; Yes emits RemovePendingWorkOrderRequestedEvent',
+      'Cancel on pending row: Yes removes order; No dismisses without remove',
       (WidgetTester tester) async {
         final idleCivilian = _firstIdleCivilian(game, humanPlayerIdWithUnits);
         if (idleCivilian == null) return;
 
-        RemovePendingWorkOrderRequestedEvent? removeEvent;
-        final bus = AppEventBus.create();
-        bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
-          removeEvent = e;
-        });
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            bus: bus,
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            currentOrders: _pendingExploreOrders(
-              humanPlayerIdWithUnits,
-              idleCivilian,
+        Future<RemovePendingWorkOrderRequestedEvent?> confirmPending(
+          String answer,
+        ) async {
+          RemovePendingWorkOrderRequestedEvent? removeEvent;
+          final bus = AppEventBus.create();
+          bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
+            removeEvent = e;
+          });
+          await tester.pumpWidget(
+            buildCivilianPanel(
+              bus: bus,
+              game: game,
+              humanPlayerId: humanPlayerIdWithUnits,
+              currentOrders: _pendingExploreOrders(
+                humanPlayerIdWithUnits,
+                idleCivilian,
+              ),
             ),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
+          // R30 (#3514): pending rows expose Cancel + circular Locate.
+          await _invokePendingCancel(tester, idleCivilian);
+          expect(find.text('Cancel work order?'), findsOneWidget);
+          await tester.tap(find.text(answer));
+          await tester.pumpAndSettle();
+          return removeEvent;
+        }
 
-        // R30 (#3514): pending rows expose the destructive Cancel pill
-        // (CtDangerTextButton) + circular Locate in the action cluster.
-        await _invokePendingCancel(tester, idleCivilian);
-        expect(find.text('Cancel work order?'), findsOneWidget);
-        await tester.tap(find.text('Yes'));
-        await tester.pumpAndSettle();
+        final removed = await confirmPending('Yes');
+        expect(removed, isNotNull);
+        expect(removed!.playerId, humanPlayerIdWithUnits);
+        expect(removed.index, 0);
 
-        expect(removeEvent, isNotNull);
-        expect(removeEvent!.playerId, humanPlayerIdWithUnits);
-        expect(removeEvent!.index, 0);
-      },
-    );
-
-    testWidgets(
-      'Cancel on pending row then No dismisses dialog without RemovePendingWorkOrder event',
-      (WidgetTester tester) async {
-        final idleCivilian = _firstIdleCivilian(game, humanPlayerIdWithUnits);
-        if (idleCivilian == null) return;
-
-        RemovePendingWorkOrderRequestedEvent? removeEvent;
-        final bus = AppEventBus.create();
-        bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
-          removeEvent = e;
-        });
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            bus: bus,
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            currentOrders: _pendingExploreOrders(
-              humanPlayerIdWithUnits,
-              idleCivilian,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        await _invokePendingCancel(tester, idleCivilian);
-        await tester.tap(find.text('No'));
-        await tester.pumpAndSettle();
-
-        expect(removeEvent, isNull);
+        expect(await confirmPending('No'), isNull);
       },
     );
 

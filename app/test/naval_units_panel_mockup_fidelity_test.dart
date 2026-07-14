@@ -220,7 +220,7 @@ void main() {
     'R27 — Locate is the rightmost action and emits LocateMapTileEvent',
     () {
       testWidgets(
-        'Locate icon-only button is the rightmost child of the actions cluster',
+        'Locate is rightmost on channel fleet; Home Fleet is Split + Locate',
         (WidgetTester tester) async {
           await tester.pumpWidget(_hostPanel(game));
           await tester.pumpAndSettle();
@@ -229,8 +229,7 @@ void main() {
             ExpansionTile,
             'Fleet channel_fleet',
           );
-
-          final tooltips = tester
+          final channelTips = tester
               .widgetList<Tooltip>(
                 find.descendant(
                   of: channelTile,
@@ -245,19 +244,11 @@ void main() {
               )
               .toList(growable: false);
 
-          // Move, Split, Locate.
-          expect(tooltips.length, 3);
-          expect(tooltips.first.message, 'Move');
-          expect(tooltips[1].message, 'Split');
-          expect(
-            tooltips.last.message,
+          expect(channelTips.map((t) => t.message).toList(), [
+            'Move',
+            'Split',
             'Locate fleet',
-            reason: 'Locate must be the rightmost action (R27)',
-          );
-
-          // Locate renders as the circular icon-only CtCircularLocateButton
-          // (R27 mockup `.locate-btn`; issue #3514). Its internal Tooltip
-          // ('Locate fleet') subtree contains no Text label.
+          ]);
           expect(
             find.descendant(
               of: channelTile,
@@ -267,44 +258,36 @@ void main() {
           );
           expect(
             find.descendant(
-              of: find.byWidget(tooltips.last),
+              of: find.byWidget(channelTips.last),
               matching: find.byType(Text),
             ),
             findsNothing,
             reason: 'Locate must be icon-only (R27 mockup `.locate-btn`)',
           );
+
+          final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
+          final homeTips = tester
+              .widgetList<Tooltip>(
+                find.descendant(of: homeTile, matching: find.byType(Tooltip)),
+              )
+              .where(
+                (t) =>
+                    t.message == 'Move' ||
+                    t.message == 'Split' ||
+                    t.message == 'Locate fleet',
+              )
+              .toList(growable: false);
+          expect(homeTips.map((t) => t.message).toList(), [
+            'Split',
+            'Locate fleet',
+          ]);
         },
       );
-
-      testWidgets('Home Fleet shows Split + Locate (no Move)', (
-        WidgetTester tester,
-      ) async {
-        await tester.pumpWidget(_hostPanel(game));
-        await tester.pumpAndSettle();
-
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        final tooltips = tester
-            .widgetList<Tooltip>(
-              find.descendant(of: homeTile, matching: find.byType(Tooltip)),
-            )
-            .where(
-              (t) =>
-                  t.message == 'Move' ||
-                  t.message == 'Split' ||
-                  t.message == 'Locate fleet',
-            )
-            .toList(growable: false);
-
-        expect(tooltips.map((t) => t.message).toList(), [
-          'Split',
-          'Locate fleet',
-        ]);
-      });
     },
   );
 
   group('R28 — (in port) / (at sea) location qualifier', () {
-    testWidgets('In-port fleet appends localised `(in port)` qualifier', (
+    testWidgets('In-port and at-sea fleets append localised qualifiers', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(_hostPanel(game));
@@ -317,14 +300,6 @@ void main() {
             'R28: in-port fleet location must end with the localised '
             '`(in port)` qualifier',
       );
-    });
-
-    testWidgets('At-sea fleet appends localised `(at sea)` qualifier', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(_hostPanel(game));
-      await tester.pumpAndSettle();
-
       expect(
         find.text('Old World — Bay of Biscay (at sea)'),
         findsOneWidget,
@@ -337,7 +312,7 @@ void main() {
 
   group('R29 — expanded composition Table + cargo + single summary line', () {
     testWidgets(
-      'Home Fleet expanded view renders a Table, cargo line, and a single summary',
+      'Home Fleet expanded: Table rows, cargo, summary; non-home omits cargo',
       (WidgetTester tester) async {
         await tester.pumpWidget(_hostPanel(game));
         await tester.pumpAndSettle();
@@ -346,14 +321,18 @@ void main() {
         await tester.tap(homeTile);
         await tester.pumpAndSettle();
 
-        // Composition table widget (one per expanded row).
+        final tableFinder = find.descendant(
+          of: homeTile,
+          matching: find.byType(Table),
+        );
         expect(
-          find.descendant(of: homeTile, matching: find.byType(Table)),
+          tableFinder,
           findsOneWidget,
           reason: 'R29: expanded view must render a Table widget',
         );
+        // Two ship types in the Home Fleet (carrack + frigate).
+        expect(tester.widget<Table>(tableFinder).children.length, 2);
 
-        // Single composition summary line.
         expect(
           find.text('Total ships: 2 · Warships: 1 · Merchants: 1'),
           findsOneWidget,
@@ -361,13 +340,10 @@ void main() {
               'R29: composition summary must be a single Text widget, not '
               'three separate ListTiles',
         );
-        // Verify the legacy per-stat lines are gone (no `Warships: 1` /
-        // `Merchants: 1` standalone Text widgets).
         expect(find.text('1 warships'), findsNothing);
         expect(find.text('1 merchants'), findsNothing);
         expect(find.text('Total ships: 2'), findsNothing);
 
-        // Home Fleet cargo line uses the `_holds` localisation key.
         expect(
           find.textContaining('Cargo capacity:'),
           findsOneWidget,
@@ -378,17 +354,7 @@ void main() {
           findsOneWidget,
           reason: 'R29: cargo line uses the `holds` localisation key',
         );
-
-        // Strength line retained.
         expect(find.textContaining('Strength:'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'Non-home fleet expanded view does NOT render a cargo capacity line',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(_hostPanel(game));
-        await tester.pumpAndSettle();
 
         final channelTile = find.widgetWithText(
           ExpansionTile,
@@ -407,7 +373,6 @@ void main() {
               'R29: per mockup, non-home fleets do not render a cargo line '
               'in the expanded view',
         );
-
         expect(
           find.descendant(
             of: channelTile,
@@ -417,25 +382,6 @@ void main() {
         );
       },
     );
-
-    testWidgets('Composition Table row count matches ship-type count', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(_hostPanel(game));
-      await tester.pumpAndSettle();
-
-      final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
-      await tester.tap(homeTile);
-      await tester.pumpAndSettle();
-
-      final tableFinder = find.descendant(
-        of: homeTile,
-        matching: find.byType(Table),
-      );
-      final Table table = tester.widget<Table>(tableFinder);
-      // Two ship types in the Home Fleet (carrack + frigate).
-      expect(table.children.length, 2);
-    });
   });
 
   group('FleetExpansionTile API surface', () {

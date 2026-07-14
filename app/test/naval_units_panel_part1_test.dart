@@ -136,51 +136,16 @@ void main() {
       find.widgetWithText(ExpansionTile, label);
 
   group('NavalUnitsPanel', () {
-    testWidgets('AC: Panel shows title Naval Units', (
-      WidgetTester tester,
-    ) async {
-      await pumpNaval(tester);
-
-      expect(find.text('Naval Units'), findsOneWidget);
-      if (find.byType(ExpansionTile).evaluate().isNotEmpty) {
-        expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
-      }
-    });
-
-    testWidgets('header Combine renders as a primary CtActionTextButton pill '
-        '(no CtNinePatchButton header chrome) — #3514 owner decisions #5/#15', (
-      WidgetTester tester,
-    ) async {
-      await pumpNaval(tester);
-
-      final combine = find.ancestor(
-        of: find.text('Combine'),
-        matching: find.byType(CtActionTextButton),
-      );
-      expect(combine, findsOneWidget);
-      expect(tester.widget<CtActionTextButton>(combine.first).primary, isTrue);
-      expect(
-        find.ancestor(
-          of: find.text('Combine'),
-          matching: find.byType(CtNinePatchButton),
-        ),
-        findsNothing,
-      );
-    });
-
     testWidgets(
-      'AC: When human player has no fleets, panel does not crash and shows either empty or Home Fleet only',
-      (WidgetTester tester) async {
-        await pumpNaval(tester, humanPlayerId: humanPlayerIdWithNoFleets);
-
-        expect(find.byType(CtPanel), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AC: When player has fleets, panel shows at least one fleet row',
+      'AC: title, CtPanel wrap, fleet rows, and header Combine chrome',
       (WidgetTester tester) async {
         await pumpNaval(tester);
+
+        expect(find.text('Naval Units'), findsOneWidget);
+        expect(find.byType(CtPanel), findsOneWidget);
+        if (find.byType(ExpansionTile).evaluate().isNotEmpty) {
+          expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
+        }
 
         final fleets = game.worldState.fleets
             .where(
@@ -197,14 +162,31 @@ void main() {
             isTrue,
           );
         }
+
+        final combine = find.ancestor(
+          of: find.text('Combine'),
+          matching: find.byType(CtActionTextButton),
+        );
+        expect(combine, findsOneWidget);
+        expect(tester.widget<CtActionTextButton>(combine.first).primary, isTrue);
+        expect(
+          find.ancestor(
+            of: find.text('Combine'),
+            matching: find.byType(CtNinePatchButton),
+          ),
+          findsNothing,
+        );
       },
     );
 
-    testWidgets('AC: Panel is wrapped in CtPanel', (WidgetTester tester) async {
-      await pumpNaval(tester);
+    testWidgets(
+      'AC: When human player has no fleets, panel does not crash and shows either empty or Home Fleet only',
+      (WidgetTester tester) async {
+        await pumpNaval(tester, humanPlayerId: humanPlayerIdWithNoFleets);
 
-      expect(find.byType(CtPanel), findsOneWidget);
-    });
+        expect(find.byType(CtPanel), findsOneWidget);
+      },
+    );
 
     testWidgets('AC: Wide viewport scales naval panel beyond fixed 400 width', (
       WidgetTester tester,

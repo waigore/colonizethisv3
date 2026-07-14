@@ -178,10 +178,8 @@ void main() {
       );
 
       // Refs #2869 R14 + SPEC/ui/quick-battle-deployment-view.md § Layout.
-      // Pins that group-row text resolves to the canonical `--muted` token
-      // explicitly rather than relying on theme inheritance.
       testWidgets(
-        'group-row text resolves to --muted under dark editorial-monocle theme',
+        'group-row text resolves to --muted under dark and fallback themes',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             combatUiSpecsDarkFrame(
@@ -195,21 +193,18 @@ void main() {
               ),
             ),
           );
-
-          final Text attackerRow = tester.widget<Text>(
-            find.text('Center Front: 3 units (Cohesion 3)'),
+          expect(
+            tester
+                .widget<Text>(find.text('Center Front: 3 units (Cohesion 3)'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          final Text defenderRow = tester.widget<Text>(
-            find.text('Center Front: 1 units'),
+          expect(
+            tester.widget<Text>(find.text('Center Front: 1 units')).style?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
-          expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
-        },
-      );
 
-      testWidgets(
-        'group-row text resolves to --muted under fallback Material theme',
-        (WidgetTester tester) async {
           await tester.pumpWidget(
             combatUiSpecsFrame(
               _deploymentView(
@@ -219,11 +214,13 @@ void main() {
               ),
             ),
           );
-
-          final Text row = tester.widget<Text>(
-            find.text('Center Front: 1 units (Cohesion 2)'),
+          expect(
+            tester
+                .widget<Text>(find.text('Center Front: 1 units (Cohesion 2)'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(row.style?.color, EditorialMonoclePalette.muted);
         },
       );
     },
@@ -301,10 +298,8 @@ void main() {
       });
 
       // Refs #2869 R17 + SPEC/ui/quick-battle-action-selector.md § Layout.
-      // Pins that the CP indicator text resolves to the `--muted` token
-      // explicitly under both the dark theme and the fallback theme.
       testWidgets(
-        'CP indicator resolves to --muted under dark editorial-monocle theme',
+        'CP indicator resolves to --muted under dark and fallback themes',
         (WidgetTester tester) async {
           await _pumpSelector(
             tester,
@@ -312,27 +307,22 @@ void main() {
             onActionSelected: (_) {},
             dark: true,
           );
-
-          final Text label = tester.widget<Text>(
-            find.textContaining('Command Points: 3'),
-          );
-          expect(label.style?.color, EditorialMonoclePalette.muted);
-        },
-      );
-
-      testWidgets(
-        'CP indicator resolves to --muted under fallback Material theme',
-        (WidgetTester tester) async {
-          await _pumpSelector(
-            tester,
-            cpRemaining: 0,
-            onActionSelected: (_) {},
+          expect(
+            tester
+                .widget<Text>(find.textContaining('Command Points: 3'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
 
-          final Text label = tester.widget<Text>(
-            find.textContaining('Command Points: 0'),
+          await _pumpSelector(tester, cpRemaining: 0, onActionSelected: (_) {});
+          expect(
+            tester
+                .widget<Text>(find.textContaining('Command Points: 0'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(label.style?.color, EditorialMonoclePalette.muted);
         },
       );
     },
@@ -340,45 +330,33 @@ void main() {
 
   group('CombatModeChoiceDialog (SPEC/ui/combat-mode-choice-dialog.md)', () {
     testWidgets(
-      'regular province emits autoResolve on Auto-Resolve and pops the route',
+      'regular province emits autoResolve / quickBattle and pops on Auto-Resolve',
       (WidgetTester tester) async {
-        final (bus, received) = _listenCombatModes();
-        await _openCombatModeChoice(
-          tester,
-          bus: bus,
-          provinceName: 'Lisbon',
-          isCapitalSiege: false,
-        );
+        for (final case_ in <(String, CombatMode)>[
+          ('Auto-Resolve', CombatMode.autoResolve),
+          ('Quick Battle', CombatMode.quickBattle),
+        ]) {
+          final (bus, received) = _listenCombatModes();
+          await _openCombatModeChoice(
+            tester,
+            bus: bus,
+            provinceName: 'Lisbon',
+            isCapitalSiege: false,
+          );
+          expect(find.textContaining('Lisbon'), findsOneWidget);
+          expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+          expect(find.textContaining('Quick Battle'), findsOneWidget);
 
-        expect(find.textContaining('Lisbon'), findsOneWidget);
-        expect(find.textContaining('Auto-Resolve'), findsOneWidget);
-        expect(find.textContaining('Quick Battle'), findsOneWidget);
-
-        await tester.tap(find.textContaining('Auto-Resolve'));
-        await tester.pumpAndSettle();
-
-        expect(received, [CombatMode.autoResolve]);
-        // Dialog popped — the underlying open button is visible again.
-        expect(find.text('open'), findsOneWidget);
+          await tester.tap(find.textContaining(case_.$1));
+          await tester.pumpAndSettle();
+          expect(received, [case_.$2]);
+          if (case_.$2 == CombatMode.autoResolve) {
+            // Dialog popped — the underlying open button is visible again.
+            expect(find.text('open'), findsOneWidget);
+          }
+        }
       },
     );
-
-    testWidgets('regular province emits quickBattle on Quick Battle', (
-      WidgetTester tester,
-    ) async {
-      final (bus, received) = _listenCombatModes();
-      await _openCombatModeChoice(
-        tester,
-        bus: bus,
-        provinceName: 'Lisbon',
-        isCapitalSiege: false,
-      );
-
-      await tester.tap(find.textContaining('Quick Battle'));
-      await tester.pumpAndSettle();
-
-      expect(received, [CombatMode.quickBattle]);
-    });
 
     testWidgets('capital siege variant only renders Quick Battle button', (
       WidgetTester tester,
@@ -404,7 +382,7 @@ void main() {
     });
 
     testWidgets(
-      'dark editorial-monocle chrome: title resolves to --accent + 0.05 letter-spacing',
+      'dark editorial-monocle chrome: Lisbon regular + Madrid capital siege',
       (WidgetTester tester) async {
         await _pumpDarkCombatModeChoice(
           tester,
@@ -415,71 +393,36 @@ void main() {
         final Text title = tester.widget<Text>(find.textContaining('Lisbon'));
         expect(title.style?.color, EditorialMonoclePalette.accent);
         expect(title.style?.letterSpacing, 0.05);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: regular body text resolves to --muted',
-      (WidgetTester tester) async {
-        await _pumpDarkCombatModeChoice(
-          tester,
-          provinceName: 'Lisbon',
-          isCapitalSiege: false,
-        );
 
         final Text body = tester.widget<Text>(find.text('Choose combat mode:'));
         expect(body.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
 
-    testWidgets(
-      'dark editorial-monocle chrome: capital-siege body text resolves to --muted',
-      (WidgetTester tester) async {
+        expect(
+          tester.widget<Text>(find.text('Auto-Resolve')).style?.color,
+          EditorialMonoclePalette.muted,
+        );
+        expect(
+          tester.widget<Text>(find.text('Quick Battle')).style?.color,
+          EditorialMonoclePalette.accent,
+        );
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(ElevatedButton), findsNothing);
+        expect(find.byType(OutlinedButton), findsNothing);
+        expect(find.byType(FilledButton), findsNothing);
+
         await _pumpDarkCombatModeChoice(
           tester,
           provinceName: 'Madrid',
           isCapitalSiege: true,
         );
-
-        final Finder bodyFinder = find.text(
+        final Finder siegeBody = find.text(
           'Capital siege — Quick Battle only (no auto-resolve).',
         );
-        expect(bodyFinder, findsOneWidget);
-        final Text body = tester.widget<Text>(bodyFinder);
-        expect(body.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: Quick Battle label resolves to --accent, Auto-Resolve label resolves to --muted',
-      (WidgetTester tester) async {
-        await _pumpDarkCombatModeChoice(
-          tester,
-          provinceName: 'Lisbon',
-          isCapitalSiege: false,
+        expect(siegeBody, findsOneWidget);
+        expect(
+          tester.widget<Text>(siegeBody).style?.color,
+          EditorialMonoclePalette.muted,
         );
-
-        final Text autoLabel = tester.widget<Text>(find.text('Auto-Resolve'));
-        expect(autoLabel.style?.color, EditorialMonoclePalette.muted);
-
-        final Text qbLabel = tester.widget<Text>(find.text('Quick Battle'));
-        expect(qbLabel.style?.color, EditorialMonoclePalette.accent);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: regular variant has exactly one CtDialogShell and zero Material action buttons',
-      (WidgetTester tester) async {
-        await _pumpDarkCombatModeChoice(
-          tester,
-          provinceName: 'Lisbon',
-          isCapitalSiege: false,
-        );
-
-        expect(find.byType(CtDialogShell), findsOneWidget);
-        expect(find.byType(ElevatedButton), findsNothing);
-        expect(find.byType(OutlinedButton), findsNothing);
-        expect(find.byType(FilledButton), findsNothing);
       },
     );
   });
