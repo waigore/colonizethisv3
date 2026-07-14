@@ -354,6 +354,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
@@ -448,6 +450,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
@@ -513,6 +517,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
