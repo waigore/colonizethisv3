@@ -44,4 +44,21 @@ void main() {
     await pumpDiplomacyPanelBuilt(tester);
     expect(find.byType(DiplomacyPanel), findsOneWidget);
   });
+
+  testWidgets('buildDiplomacyPanelShell hosts DiplomacyPanel without dialog host', (
+    WidgetTester tester,
+  ) async {
+    final bus = AppEventBus.create();
+    await tester.pumpWidget(
+      buildDiplomacyPanelShell(
+        game: buildDiplomacyPanelTestGame(),
+        humanPlayerId: kPanelTestHumanPlayerId,
+        topology: const MapTopology(),
+        bus: bus,
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(DiplomacyPanel), findsOneWidget);
+    expect(find.byType(DiplomacyPanelBusDialogHost), findsNothing);
+  });
 }

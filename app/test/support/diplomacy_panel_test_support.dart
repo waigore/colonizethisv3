@@ -221,6 +221,31 @@ Widget buildDiplomacyPanel({
   );
 }
 
+/// Bare [DiplomacyPanel] host without [DiplomacyPanelBusDialogHost].
+///
+/// Use when the suite auto-answers [ConfirmDialogEvent] via a direct bus
+/// listener (e.g. `diplomacy_panel_orders_test`) instead of routing confirms
+/// through a test AlertDialog (Refs #4013).
+Widget buildDiplomacyPanelShell({
+  required Game game,
+  required String humanPlayerId,
+  required MapTopology topology,
+  Orders currentOrders = const Orders(),
+  required AppEventBus bus,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: DiplomacyPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        currentOrders: currentOrders,
+        bus: bus,
+      ),
+    ),
+  );
+}
+
 /// Responsive-layout variant: pins [viewportSize] via inner [MediaQuery].
 Widget wrapDiplomacyPanelAtViewport({
   required Game game,

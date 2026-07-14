@@ -1,12 +1,10 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
+
+import 'support/new_game_leader_selection_dialog_test_support.dart';
 
 const Key _kSlotPickersStackedColumnKey = ValueKey<String>(
   'newGameLeaderDialogSlotPickersColumn',
@@ -26,61 +24,12 @@ void main() {
   // + § Acceptance Criteria narrow-viewport stacking AC; mirrors
   // `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
   group('NewGameLeaderSelectionDialog narrow slot stacking', () {
-    Future<void> pumpDialogAt(
-      WidgetTester tester, {
-      required Size surfaceSize,
-    }) async {
-      addTearDown(tester.view.reset);
-      tester.view.physicalSize = surfaceSize;
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    final base = GameSetupConfig.defaultConfig;
-                    final naming = defaultNamingConfig;
-                    final initial = <String, String>{};
-                    for (final gpId in base.selectedGreatPowerIds) {
-                      final gp = naming.gpById(gpId);
-                      if (gp != null && gp.leaderVariants.isNotEmpty) {
-                        initial[gpId] = gp.defaultLeaderVariantId;
-                      }
-                    }
-                    showDialog<void>(
-                      context: context,
-                      builder: (ctx) => NewGameLeaderSelectionDialog(
-                        baseConfig: base,
-                        naming: naming,
-                        initialLeaderByGpId: initial,
-                        blessedProfileNames: const [],
-                        onCancel: () => Navigator.of(ctx).pop(),
-                        onConfirmed: (_, _, _, _, _, _, _) {},
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-    }
-
     testWidgets('wide viewport (>= 540 dp): slot bodies render side-by-side row, '
         'no stacked column body, no exception', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(800, 1300));
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        surfaceSize: const Size(800, 1300),
+      );
 
       expect(tester.takeException(), isNull);
       expect(
@@ -106,7 +55,10 @@ void main() {
 
     testWidgets('narrow viewport (< 540 dp): slot bodies render stacked column, '
         'no side-by-side row body, no exception', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(480, 1300));
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        surfaceSize: const Size(480, 1300),
+      );
 
       expect(tester.takeException(), isNull);
       expect(
@@ -134,7 +86,10 @@ void main() {
 
     testWidgets('boundary: viewport exactly at 540 dp uses wide row body '
         '(breakpoint is strict <)', (WidgetTester tester) async {
-      await pumpDialogAt(tester, surfaceSize: const Size(540, 1300));
+      await pumpNewGameLeaderSelectionDialog(
+        tester,
+        surfaceSize: const Size(540, 1300),
+      );
 
       expect(tester.takeException(), isNull);
       expect(
