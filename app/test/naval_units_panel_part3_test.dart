@@ -1,5 +1,6 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -14,19 +15,108 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'support/widget_test_assets.dart';
 
+const String _mergePort = 'oldWorld|mergeport';
+
+Future<void> _pumpNaval(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  AppEventBus? bus,
+  MapTopology topology = const MapTopology(),
+}) async {
+  await tester.pumpWidget(
+    buildNavalPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      topology: topology,
+      bus: bus,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 Future<void> _tapFleetCheckboxes(
   WidgetTester tester,
-  Iterable<String> fleetLabels,
-) async {
+  Iterable<String> fleetLabels, {
+  bool scroll = false,
+}) async {
   for (final label in fleetLabels) {
-    final tile = find.widgetWithText(ExpansionTile, label);
-    expect(tile, findsOneWidget);
-    final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+    late final Finder cb;
+    if (scroll) {
+      final title = find.text(label);
+      await tester.scrollUntilVisible(title, 120);
+      await tester.pumpAndSettle();
+      final tile = find.ancestor(of: title, matching: find.byType(ExpansionTile));
+      cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+      await tester.scrollUntilVisible(cb, 120);
+      await tester.pumpAndSettle();
+    } else {
+      final tile = find.widgetWithText(ExpansionTile, label);
+      expect(tile, findsOneWidget);
+      cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+    }
     await tester.ensureVisible(cb);
     await tester.tap(cb);
     await tester.pumpAndSettle();
   }
 }
+
+Future<void> _tapCombine(WidgetTester tester) async {
+  final combine = find.widgetWithText(CtActionTextButton, 'Combine');
+  await tester.scrollUntilVisible(combine, 120);
+  await tester.pumpAndSettle();
+  await tester.tap(combine);
+  await tester.pumpAndSettle();
+}
+
+void _expectCombineEnabled(WidgetTester tester, {required bool enabled}) {
+  expect(
+    tester
+        .widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
+        )
+        .enabled,
+    enabled,
+  );
+}
+
+(AppEventBus, NavalFleetsUpdatedEvent? Function()) _wireFleetsUpdated() {
+  NavalFleetsUpdatedEvent? updated;
+  final bus = AppEventBus.create();
+  addTearDown(bus.on<NavalFleetsUpdatedEvent>().listen((e) => updated = e).cancel);
+  return (bus, () => updated);
+}
+
+Fleet _pf(
+  String id,
+  String humanId,
+  String shipId,
+  String typeId, {
+  FleetMission mission = FleetMission.none,
+}) => Fleet(
+  id: id,
+  ownerId: humanId,
+  regionId: 'oldWorld',
+  inPortAtProvinceId: _mergePort,
+  ships: [ShipInstance(id: shipId, typeId: typeId)],
+  mission: mission,
+);
+
+Game _mergePortGame({
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  required List<Fleet> fleets,
+  bool playerHasCapital = true,
+  int nextShipInstanceSeq = 3,
+}) => buildNavalPanelCapitalMergePortFleetsGame(
+  humanId: humanId,
+  gameId: gameId,
+  displayName: displayName,
+  playerHasCapital: playerHasCapital,
+  nextShipInstanceSeq: nextShipInstanceSeq,
+  fleets: fleets,
+);
 
 void main() {
   suppressLogsForTests();
@@ -72,22 +162,19 @@ void main() {
         addTearDown(subTransfer.cancel);
         addTearDown(subUpdated.cancel);
 
-        await tester.pumpWidget(
-          buildNavalPanel(
-            game: gameState,
-            humanPlayerId: humanId,
-            topology: topology,
-            bus: bus,
-          ),
+        await _pumpNaval(
+          tester,
+          game: gameState,
+          humanPlayerId: humanId,
+          topology: topology,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         await _tapFleetCheckboxes(tester, [
           'Home Fleet',
           'Fleet sea_source',
         ]);
-        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
-        await tester.pumpAndSettle();
+        await _tapCombine(tester);
 
         final moveOneFluyte = find.byKey(
           CtTransferListKeys.leftMoveOne('fluyte'),
@@ -101,13 +188,10 @@ void main() {
           'Transfer',
         );
         expect(confirmTransfer, findsOneWidget);
-        expect(
-          tester.widget<CtNinePatchButton>(confirmTransfer).enabled,
-          isTrue,
-        );
         final confirmTransferButton = tester.widget<CtNinePatchButton>(
           confirmTransfer,
         );
+        expect(confirmTransferButton.enabled, isTrue);
         expect(confirmTransferButton.onPressed, isNotNull);
         confirmTransferButton.onPressed!.call();
         await tester.pumpAndSettle();
@@ -145,29 +229,22 @@ void main() {
             ),
           ],
         );
-        final topology = buildNavalCapitalAdjacentSeaTopology(
-          seaZoneId: 'zone_far',
-          includeEdge: false,
-        );
 
-        await tester.pumpWidget(
-          buildNavalPanel(
-            game: gameNonAdjacent,
-            humanPlayerId: humanId,
-            topology: topology,
+        await _pumpNaval(
+          tester,
+          game: gameNonAdjacent,
+          humanPlayerId: humanId,
+          topology: buildNavalCapitalAdjacentSeaTopology(
+            seaZoneId: 'zone_far',
+            includeEdge: false,
           ),
         );
-        await tester.pumpAndSettle();
 
         await _tapFleetCheckboxes(tester, [
           'Home Fleet',
           'Fleet sea_far',
         ]);
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isFalse);
+        _expectCombineEnabled(tester, enabled: false);
       },
     );
 
@@ -225,28 +302,19 @@ void main() {
           nextShipInstanceSeq: 3,
         );
 
-        final bus = AppEventBus.create();
-        NavalFleetsUpdatedEvent? updated;
-        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          updated = e;
-        });
-        addTearDown(sub.cancel);
-
-        await tester.pumpWidget(
-          buildNavalPanel(game: sameSeaGame, humanPlayerId: humanId, bus: bus),
+        final (bus, latest) = _wireFleetsUpdated();
+        await _pumpNaval(
+          tester,
+          game: sameSeaGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         await _tapFleetCheckboxes(tester, ['Fleet sea_1', 'Fleet sea_2']);
+        _expectCombineEnabled(tester, enabled: true);
+        await _tapCombine(tester);
 
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isTrue);
-
-        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
-        await tester.pumpAndSettle();
-
+        final updated = latest();
         expect(updated, isNotNull);
         final fleetsAfter = updated!.game.worldState.fleets;
         expect(fleetsAfter.length, 1);
@@ -262,50 +330,29 @@ void main() {
       'AC: Combining two non-home fleets clears non-none missions on survivor',
       (WidgetTester tester) async {
         const humanId = 'gp_mission_clear';
-        const mergePort = 'oldWorld|mergeport';
 
-        final missionGame = buildNavalPanelCapitalMergePortFleetsGame(
+        final missionGame = _mergePortGame(
           humanId: humanId,
           gameId: 'g_mission_clear',
           displayName: 'Mission clear tester',
-          nextShipInstanceSeq: 3,
           fleets: [
-            Fleet(
-              id: 'm1',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ms1', typeId: 'carrack')],
-              mission: FleetMission.patrol,
-            ),
-            Fleet(
-              id: 'm2',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ms2', typeId: 'fluyte')],
-              mission: FleetMission.blockade,
-            ),
+            _pf('m1', humanId, 'ms1', 'carrack', mission: FleetMission.patrol),
+            _pf('m2', humanId, 'ms2', 'fluyte', mission: FleetMission.blockade),
           ],
         );
 
-        final bus = AppEventBus.create();
-        NavalFleetsUpdatedEvent? updated;
-        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          updated = e;
-        });
-        addTearDown(sub.cancel);
-
-        await tester.pumpWidget(
-          buildNavalPanel(game: missionGame, humanPlayerId: humanId, bus: bus),
+        final (bus, latest) = _wireFleetsUpdated();
+        await _pumpNaval(
+          tester,
+          game: missionGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         await _tapFleetCheckboxes(tester, ['Fleet m1', 'Fleet m2']);
+        await _tapCombine(tester);
 
-        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
-        await tester.pumpAndSettle();
-
+        final updated = latest();
         expect(updated, isNotNull);
         final merged = updated!.game.worldState.fleets.firstWhere(
           (f) => f.id == 'm1',
@@ -318,44 +365,22 @@ void main() {
       'AC: Partial row selection shows indeterminate header; header tap selects all',
       (WidgetTester tester) async {
         const humanId = 'gp_partial_header';
-        const mergePort = 'oldWorld|mergeport';
 
         // No capital => no synthetic Home Fleet row; select-all stays one locality.
-        final partialGame = buildNavalPanelCapitalMergePortFleetsGame(
+        final partialGame = _mergePortGame(
           humanId: humanId,
           gameId: 'g_partial_header',
           displayName: 'Partial header tester',
           playerHasCapital: false,
           nextShipInstanceSeq: 4,
           fleets: [
-            Fleet(
-              id: 'p1',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ps1', typeId: 'carrack')],
-            ),
-            Fleet(
-              id: 'p2',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ps2', typeId: 'fluyte')],
-            ),
-            Fleet(
-              id: 'p3',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ps3', typeId: 'carrack')],
-            ),
+            _pf('p1', humanId, 'ps1', 'carrack'),
+            _pf('p2', humanId, 'ps2', 'fluyte'),
+            _pf('p3', humanId, 'ps3', 'carrack'),
           ],
         );
 
-        await tester.pumpWidget(
-          buildNavalPanel(game: partialGame, humanPlayerId: humanId),
-        );
-        await tester.pumpAndSettle();
+        await _pumpNaval(tester, game: partialGame, humanPlayerId: humanId);
 
         final headerCheckboxFinder = find.descendant(
           of: find.byType(NavalUnitsPanel),
@@ -384,10 +409,7 @@ void main() {
           expect(tester.widget<Checkbox>(cb).value, isTrue);
         }
 
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isTrue);
+        _expectCombineEnabled(tester, enabled: true);
       },
     );
 
@@ -395,75 +417,35 @@ void main() {
       'AC: Three-fleet combine survivor is first in panel order regardless of check order',
       (WidgetTester tester) async {
         const humanId = 'gp_reverse_check';
-        const mergePort = 'oldWorld|mergeport';
 
-        final revGame = buildNavalPanelCapitalMergePortFleetsGame(
+        final revGame = _mergePortGame(
           humanId: humanId,
           gameId: 'g_reverse_check',
           displayName: 'Reverse check tester',
           nextShipInstanceSeq: 4,
           fleets: [
-            Fleet(
-              id: 'r1',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'rs1', typeId: 'carrack')],
-            ),
-            Fleet(
-              id: 'r2',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'rs2', typeId: 'fluyte')],
-            ),
-            Fleet(
-              id: 'r3',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'rs3', typeId: 'carrack')],
-            ),
+            _pf('r1', humanId, 'rs1', 'carrack'),
+            _pf('r2', humanId, 'rs2', 'fluyte'),
+            _pf('r3', humanId, 'rs3', 'carrack'),
           ],
         );
 
-        final bus = AppEventBus.create();
-        NavalFleetsUpdatedEvent? updated;
-        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          updated = e;
-        });
-        addTearDown(sub.cancel);
-
-        await tester.pumpWidget(
-          buildNavalPanel(game: revGame, humanPlayerId: humanId, bus: bus),
+        final (bus, latest) = _wireFleetsUpdated();
+        await _pumpNaval(
+          tester,
+          game: revGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
-        for (final label in ['Fleet r3', 'Fleet r2', 'Fleet r1']) {
-          final titleFinder = find.text(label);
-          await tester.scrollUntilVisible(titleFinder, 120);
-          await tester.pumpAndSettle();
-          final tile = find.ancestor(
-            of: titleFinder,
-            matching: find.byType(ExpansionTile),
-          );
-          final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
-          await tester.scrollUntilVisible(cb, 120);
-          await tester.pumpAndSettle();
-          await tester.ensureVisible(cb);
-          await tester.tap(cb);
-          await tester.pumpAndSettle();
-        }
-
-        final combineFinder = find.widgetWithText(
-          CtActionTextButton,
-          'Combine',
+        await _tapFleetCheckboxes(
+          tester,
+          ['Fleet r3', 'Fleet r2', 'Fleet r1'],
+          scroll: true,
         );
-        await tester.scrollUntilVisible(combineFinder, 120);
-        await tester.pumpAndSettle();
-        await tester.tap(combineFinder);
-        await tester.pumpAndSettle();
+        await _tapCombine(tester);
 
+        final updated = latest();
         expect(updated, isNotNull);
         final fleetsAfter = updated!.game.worldState.fleets;
         expect(fleetsAfter.length, 1);
@@ -477,31 +459,16 @@ void main() {
       'AC: Updating game prunes combine selection to fleets that still exist',
       (WidgetTester tester) async {
         const humanId = 'gp_prune_sel';
-        const mergePort = 'oldWorld|mergeport';
 
-        Game gameWithKeepDrop(String keep, String drop) =>
-            buildNavalPanelCapitalMergePortFleetsGame(
-              humanId: humanId,
-              gameId: 'g_prune_two',
-              displayName: 'Prune tester',
-              nextShipInstanceSeq: 3,
-              fleets: [
-                Fleet(
-                  id: keep,
-                  ownerId: humanId,
-                  regionId: 'oldWorld',
-                  inPortAtProvinceId: mergePort,
-                  ships: const [ShipInstance(id: 'ks1', typeId: 'carrack')],
-                ),
-                Fleet(
-                  id: drop,
-                  ownerId: humanId,
-                  regionId: 'oldWorld',
-                  inPortAtProvinceId: mergePort,
-                  ships: const [ShipInstance(id: 'ks2', typeId: 'fluyte')],
-                ),
-              ],
-            );
+        Game gameWithKeepDrop(String keep, String drop) => _mergePortGame(
+          humanId: humanId,
+          gameId: 'g_prune_two',
+          displayName: 'Prune tester',
+          fleets: [
+            _pf(keep, humanId, 'ks1', 'carrack'),
+            _pf(drop, humanId, 'ks2', 'fluyte'),
+          ],
+        );
 
         final gameTwo = gameWithKeepDrop('stays', 'removed');
         final gameOne = gameTwo.copyWith(
@@ -513,35 +480,19 @@ void main() {
           ),
         );
 
-        await tester.pumpWidget(
-          buildNavalPanel(game: gameTwo, humanPlayerId: humanId),
-        );
-        await tester.pumpAndSettle();
-
+        await _pumpNaval(tester, game: gameTwo, humanPlayerId: humanId);
         await _tapFleetCheckboxes(tester, ['Fleet stays', 'Fleet removed']);
 
-        await tester.pumpWidget(
-          buildNavalPanel(game: gameOne, humanPlayerId: humanId),
-        );
-        await tester.pump();
-        await tester.pumpAndSettle();
+        await _pumpNaval(tester, game: gameOne, humanPlayerId: humanId);
 
         final tileStays = find.widgetWithText(ExpansionTile, 'Fleet stays');
         final staysCb = find.descendant(
           of: tileStays,
           matching: find.byType(Checkbox),
         );
-        final removedFinder = find.widgetWithText(
-          ExpansionTile,
-          'Fleet removed',
-        );
-        expect(removedFinder, findsNothing);
+        expect(find.widgetWithText(ExpansionTile, 'Fleet removed'), findsNothing);
         expect(tester.widget<Checkbox>(staysCb).value, isTrue);
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isFalse);
+        _expectCombineEnabled(tester, enabled: false);
       },
     );
 
@@ -549,65 +500,43 @@ void main() {
       'AC: Collapsed rows keep inline Split action while checkbox selection works',
       (WidgetTester tester) async {
         const humanId = 'gp_collapsed_cb';
-        const mergePort = 'oldWorld|mergeport';
 
-        final collapsedGame = buildNavalPanelCapitalMergePortFleetsGame(
+        final collapsedGame = _mergePortGame(
           humanId: humanId,
           gameId: 'g_collapsed_cb',
           displayName: 'Collapsed cb tester',
-          nextShipInstanceSeq: 3,
           fleets: [
-            Fleet(
-              id: 'col_a',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'cs1', typeId: 'carrack')],
-            ),
-            Fleet(
-              id: 'col_b',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'cs2', typeId: 'fluyte')],
-            ),
+            _pf('col_a', humanId, 'cs1', 'carrack'),
+            _pf('col_b', humanId, 'cs2', 'fluyte'),
           ],
         );
 
-        final bus = AppEventBus.create();
-        NavalFleetsUpdatedEvent? updated;
-        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          updated = e;
-        });
-        addTearDown(sub.cancel);
-
-        await tester.pumpWidget(
-          buildNavalPanel(game: collapsedGame, humanPlayerId: humanId, bus: bus),
+        final (bus, latest) = _wireFleetsUpdated();
+        await _pumpNaval(
+          tester,
+          game: collapsedGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final tileA = find.widgetWithText(ExpansionTile, 'Fleet col_a');
         final tileB = find.widgetWithText(ExpansionTile, 'Fleet col_b');
-
-        expect(
-          find.descendant(of: tileA, matching: find.byTooltip('Split')),
-          findsOne,
-        );
-        expect(
-          find.descendant(of: tileB, matching: find.byTooltip('Split')),
-          findsOne,
-        );
+        for (final tile in [tileA, tileB]) {
+          expect(
+            find.descendant(of: tile, matching: find.byTooltip('Split')),
+            findsOne,
+          );
+        }
 
         await _tapFleetCheckboxes(tester, ['Fleet col_a', 'Fleet col_b']);
-
         expect(
           find.descendant(of: tileA, matching: find.byTooltip('Split')),
           findsOne,
         );
 
-        await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
-        await tester.pumpAndSettle();
+        await _tapCombine(tester);
 
+        final updated = latest();
         expect(updated, isNotNull);
         final fleetsAfter = updated!.game.worldState.fleets;
         final merged = fleetsAfter.firstWhere((f) => f.id == 'col_a');

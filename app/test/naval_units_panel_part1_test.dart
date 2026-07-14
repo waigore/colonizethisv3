@@ -94,6 +94,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> expandAndExpectSplit(
+    WidgetTester tester,
+    Finder fleetFinder,
+  ) async {
+    await expandFleetTile(tester, fleetFinder);
+    expect(
+      find.descendant(of: fleetFinder, matching: find.byTooltip('Split')),
+      findsOneWidget,
+    );
+  }
+
   Future<void> confirmSplitMovingFirstShip(
     WidgetTester tester,
     Fleet targetFleet,
@@ -106,6 +117,23 @@ void main() {
     await tester.tap(confirmSplit);
     await tester.pumpAndSettle();
   }
+
+  (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireSplitUpdated({
+    required Game Function() gameSnapshot,
+  }) {
+    NavalFleetsUpdatedEvent? fleetEvent;
+    final bus = AppEventBus.create();
+    addTearDown(
+      bus.on<NavalFleetsUpdatedEvent>().listen((e) => fleetEvent = e).cancel,
+    );
+    addTearDown(
+      wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot).cancel,
+    );
+    return (bus, () => fleetEvent);
+  }
+
+  Finder fleetTile(String label) =>
+      find.widgetWithText(ExpansionTile, label);
 
   group('NavalUnitsPanel', () {
     testWidgets('AC: Panel shows title Naval Units', (
@@ -255,11 +283,9 @@ void main() {
           humanPlayerId: humanId,
         );
 
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
+        final homeTile = fleetTile('Home Fleet');
         expect(homeTile, findsOneWidget);
-        await tester.tap(homeTile);
-        await tester.pumpAndSettle();
-
+        await expandFleetTile(tester, homeTile);
         expect(find.text('Carrack'), findsOneWidget);
         expect(find.text('×1'), findsAtLeastNWidgets(1));
         expect(find.textContaining('carrack:'), findsNothing);
@@ -301,12 +327,9 @@ void main() {
         expect(find.text('OLD WORLD'), findsAtLeastNWidgets(1));
         expect(find.text('NEW WORLD'), findsAtLeastNWidgets(1));
 
-        Finder tileFinder = find.widgetWithText(
-          ExpansionTile,
-          'Fleet test_new_world_fleet',
-        );
+        Finder tileFinder = fleetTile('Fleet test_new_world_fleet');
         if (tileFinder.evaluate().isEmpty) {
-          tileFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
+          tileFinder = fleetTile('Home Fleet');
         }
         if (!await tapLocateOnFleet(tester, tileFinder)) return;
         if (events.isEmpty) return;
@@ -333,7 +356,7 @@ void main() {
 
         await pumpNaval(tester, gameOverride: gameWithoutHome, bus: bus);
 
-        expect(find.widgetWithText(ExpansionTile, 'Home Fleet'), findsNothing);
+        expect(fleetTile('Home Fleet'), findsNothing);
         expect(events, isEmpty);
       },
     );
@@ -345,21 +368,18 @@ void main() {
         final seaFleet = game.worldState.fleets.firstWhere(
           (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty && f.isAtSea,
         );
-        final portsEntry = game.worldState.portsByProvinceSeaboard.entries
-            .firstWhere((e) => e.key.split('|').length >= 2);
-        final expectedTileKey = portsEntry.value;
+        final expectedTileKey = game
+            .worldState
+            .portsByProvinceSeaboard
+            .entries
+            .firstWhere((e) => e.key.split('|').length >= 2)
+            .value;
 
         final (bus, events) = wireLocateBus();
         await pumpNaval(tester, humanPlayerId: humanId, bus: bus);
-
-        final fleetTileFinder = find.widgetWithText(
-          ExpansionTile,
-          navalFleetTileLabel(seaFleet, humanId),
-        );
-        expect(fleetTileFinder, findsOneWidget);
-
-        if (!await tapLocateOnFleet(tester, fleetTileFinder)) return;
-
+        final tile = fleetTile(navalFleetTileLabel(seaFleet, humanId));
+        expect(tile, findsOneWidget);
+        if (!await tapLocateOnFleet(tester, tile)) return;
         expect(events.last.tileKey, expectedTileKey);
         expect(events.last.regionId, seaFleet.regionId);
       },
@@ -384,25 +404,16 @@ void main() {
         inPortAtProvinceId: target.province.id,
         seaZoneId: null,
       );
-      final gameWithPort = withNavalPanelExtraFleets(game, [portFleet]);
-
       final (bus, events) = wireLocateBus();
-
       await pumpNaval(
         tester,
-        gameOverride: gameWithPort,
+        gameOverride: withNavalPanelExtraFleets(game, [portFleet]),
         humanPlayerId: humanId,
         bus: bus,
       );
-
-      final fleetTileFinder = find.widgetWithText(
-        ExpansionTile,
-        'Fleet ${portFleet.id}',
-      );
-      expect(fleetTileFinder, findsOneWidget);
-
-      if (!await tapLocateOnFleet(tester, fleetTileFinder)) return;
-
+      final tile = fleetTile('Fleet ${portFleet.id}');
+      expect(tile, findsOneWidget);
+      if (!await tapLocateOnFleet(tester, tile)) return;
       expect(events.last.tileKey, target.tileKey);
       expect(events.last.regionId, portFleet.regionId);
     });
@@ -410,50 +421,30 @@ void main() {
     testWidgets('AC: Split button is shown for Home Fleet with ships', (
       WidgetTester tester,
     ) async {
-      final humanId = humanPlayerIdWithFleets;
-
-      await pumpNaval(tester, humanPlayerId: humanId);
-
-      final homeFleetFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-      expect(homeFleetFinder, findsOneWidget);
-
-      await expandFleetTile(tester, homeFleetFinder);
-
-      expect(
-        find.descendant(of: homeFleetFinder, matching: find.byTooltip('Split')),
-        findsOneWidget,
-      );
+      await pumpNaval(tester, humanPlayerId: humanPlayerIdWithFleets);
+      final home = fleetTile('Home Fleet');
+      expect(home, findsOneWidget);
+      await expandAndExpectSplit(tester, home);
     });
 
     testWidgets(
       'AC: Home Fleet row has a checkbox; Combine is only in the panel header',
       (WidgetTester tester) async {
-        final humanId = humanPlayerIdWithFleets;
-
-        await pumpNaval(tester, humanPlayerId: humanId);
-
-        final homeFleetFinder = find.widgetWithText(
-          ExpansionTile,
-          'Home Fleet',
-        );
-        expect(homeFleetFinder, findsOneWidget);
-
+        await pumpNaval(tester, humanPlayerId: humanPlayerIdWithFleets);
+        final home = fleetTile('Home Fleet');
+        expect(home, findsOneWidget);
         expect(
-          find.descendant(of: homeFleetFinder, matching: find.byType(Checkbox)),
+          find.descendant(of: home, matching: find.byType(Checkbox)),
           findsOneWidget,
         );
-
-        final combineButtons = find.widgetWithText(
-          CtActionTextButton,
-          'Combine',
+        expect(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
+          findsOneWidget,
         );
-        expect(combineButtons, findsOneWidget);
-
-        await expandFleetTile(tester, homeFleetFinder);
-
+        await expandFleetTile(tester, home);
         expect(
           find.descendant(
-            of: homeFleetFinder,
+            of: home,
             matching: find.widgetWithText(CtActionTextButton, 'Combine'),
           ),
           findsNothing,
@@ -466,7 +457,6 @@ void main() {
     ) async {
       final humanId = humanPlayerIdWithFleets;
       final homeId = homeFleetIdFor(humanId);
-
       final playerFleets = game.worldState.fleets
           .where(
             (f) =>
@@ -476,21 +466,10 @@ void main() {
           )
           .toList();
       expect(playerFleets, isNotEmpty);
-
       await pumpNaval(tester, humanPlayerId: humanId);
-
-      final fleetFinder = find.widgetWithText(
-        ExpansionTile,
-        navalFleetTileLabel(playerFleets.first, humanId),
-      );
-      expect(fleetFinder, findsOneWidget);
-
-      await expandFleetTile(tester, fleetFinder);
-
-      expect(
-        find.descendant(of: fleetFinder, matching: find.byTooltip('Split')),
-        findsOneWidget,
-      );
+      final fleet = fleetTile(navalFleetTileLabel(playerFleets.first, humanId));
+      expect(fleet, findsOneWidget);
+      await expandAndExpectSplit(tester, fleet);
     });
 
     testWidgets(
@@ -500,12 +479,9 @@ void main() {
         final homeId = homeFleetIdFor(humanId);
         await pumpNaval(tester, humanPlayerId: humanId);
 
-        final homeFleetFinder = find.widgetWithText(
-          ExpansionTile,
-          'Home Fleet',
-        );
-        expect(homeFleetFinder, findsOneWidget);
-        await expandAndTapSplit(tester, homeFleetFinder);
+        final home = fleetTile('Home Fleet');
+        expect(home, findsOneWidget);
+        await expandAndTapSplit(tester, home);
         expect(find.text('Split Fleet'), findsOneWidget);
         await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
@@ -516,10 +492,7 @@ void main() {
               f.shipTypeIds.isNotEmpty &&
               f.id != homeId,
         );
-        final nonHomeFinder = find.widgetWithText(
-          ExpansionTile,
-          navalFleetTileLabel(nonHome, humanId),
-        );
+        final nonHomeFinder = fleetTile(navalFleetTileLabel(nonHome, humanId));
         expect(nonHomeFinder, findsOneWidget);
         await expandAndTapSplit(tester, nonHomeFinder);
         expect(find.text('Split Fleet'), findsOneWidget);
@@ -536,9 +509,7 @@ void main() {
           ),
           isNotEmpty,
         );
-
         await pumpNaval(tester, humanPlayerId: humanId);
-
         expect(
           find.widgetWithText(CtActionTextButton, 'Combine'),
           findsOneWidget,
@@ -550,34 +521,17 @@ void main() {
       'AC: NavalFleetsUpdatedEvent is emitted when fleet split completes',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-
-        final bus = AppEventBus.create();
-        NavalFleetsUpdatedEvent? fleetEvent;
-        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          fleetEvent = e;
-        });
-        addTearDown(sub.cancel);
-        final subSplit = wireNavalSplitForWidgetTest(
-          bus: bus,
-          gameSnapshot: () => game,
-        );
-        addTearDown(subSplit.cancel);
-
+        final (bus, latest) = wireSplitUpdated(gameSnapshot: () => game);
         final targetFleet = game.worldState.fleets.firstWhere(
           (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
         );
-        final tileLabel = navalFleetTileLabel(targetFleet, humanId);
-
         await pumpNaval(tester, humanPlayerId: humanId, bus: bus);
-
-        final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
-        expect(fleetFinder, findsOneWidget);
-
-        await expandAndTapSplit(tester, fleetFinder);
+        final fleet = fleetTile(navalFleetTileLabel(targetFleet, humanId));
+        expect(fleet, findsOneWidget);
+        await expandAndTapSplit(tester, fleet);
         await confirmSplitMovingFirstShip(tester, targetFleet);
-
-        expect(fleetEvent, isNotNull);
-        expect(fleetEvent!.game.worldState.fleets, isNotEmpty);
+        expect(latest(), isNotNull);
+        expect(latest()!.game.worldState.fleets, isNotEmpty);
       },
     );
 
@@ -585,10 +539,10 @@ void main() {
       'split event can drive external watcher updates (cross-panel style)',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        final bus = AppEventBus.create();
         final observedFleetCount = ValueNotifier<int>(
           game.worldState.fleets.length,
         );
+        final bus = AppEventBus.create();
         final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
           observedFleetCount.value = e.game.worldState.fleets.length;
         });
@@ -605,8 +559,6 @@ void main() {
         final targetFleet = game.worldState.fleets.firstWhere(
           (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
         );
-        final tileLabel = navalFleetTileLabel(targetFleet, humanId);
-
         await pumpNaval(
           tester,
           widget: buildNavalPanelWithFleetCountWatcher(
@@ -616,17 +568,14 @@ void main() {
             observedFleetCount: observedFleetCount,
           ),
         );
-
         expect(
           find.text('observed-fleet-count:${game.worldState.fleets.length}'),
           findsOneWidget,
         );
-
-        final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
-        expect(fleetFinder, findsOneWidget);
-        await expandAndTapSplit(tester, fleetFinder);
+        final fleet = fleetTile(navalFleetTileLabel(targetFleet, humanId));
+        expect(fleet, findsOneWidget);
+        await expandAndTapSplit(tester, fleet);
         await confirmSplitMovingFirstShip(tester, targetFleet);
-
         expect(
           find.text(
             'observed-fleet-count:${game.worldState.fleets.length + 1}',

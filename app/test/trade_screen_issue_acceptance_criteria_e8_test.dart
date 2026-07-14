@@ -163,6 +163,69 @@ void _expectCargoSaturated(WidgetTester tester) {
   expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
 }
 
+void _expectTradeTopBarChrome(WidgetTester tester) {
+  final topBarFinder = find.byKey(TradeScreen.topBarKey);
+  expect(topBarFinder, findsOneWidget);
+  final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
+  expect(topBar.title, TradeScreen.topBarTitle);
+  expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
+}
+
+void _expectMarketDealBookTabs(WidgetTester tester) {
+  expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+  final stripFinder = find.descendant(
+    of: find.byKey(TradeScreen.tabsBodyKey),
+    matching: find.byType(CtTabStrip),
+  );
+  expect(stripFinder, findsOneWidget);
+  final CtTabStrip strip = tester.widget<CtTabStrip>(stripFinder);
+  expect(strip.tabLabels, <String>[
+    TradeScreen.marketTabLabel,
+    TradeScreen.dealBookTabLabel,
+  ]);
+  expect(
+    find.descendant(
+      of: find.byKey(TradeScreen.tabsBodyKey),
+      matching: find.byType(CtPanel),
+    ),
+    findsOneWidget,
+  );
+}
+
+void _expectDealBookTotals(
+  WidgetTester tester, {
+  required String bidsTotal,
+  required String offersTotal,
+}) {
+  expect(
+    tester.widget<Text>(find.byKey(TradeScreen.dealBookBidsTotalsKey)).data,
+    bidsTotal,
+  );
+  expect(
+    tester.widget<Text>(find.byKey(TradeScreen.dealBookOffersTotalsKey)).data,
+    offersTotal,
+  );
+}
+
+void _expectObserveModeBlocksMarket(WidgetTester tester) {
+  expect(find.byType(TradeScreen), findsOneWidget);
+  expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+  final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
+  expect(observePanelFinder, findsOneWidget);
+  // ignore: avoid_hardcoded_strings_in_widgets
+  expect(
+    tester.widget<ObserveModeNotDefinedPanel>(observePanelFinder).title,
+    'Trade',
+  );
+  expect(find.byKey(TradeScreen.tabsBodyKey), findsNothing);
+  expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
+  expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+  expect(find.byType(CtTabStrip), findsNothing);
+  expect(find.byKey(TradeScreen.marketRowBidChipKey(_timber)), findsNothing);
+  expect(find.byKey(TradeScreen.marketRowOfferChipKey(_timber)), findsNothing);
+  expect(find.byKey(TradeScreen.marketRowIncrementKey(_timber)), findsNothing);
+}
+
 WorldMarketState _partialTimberDealBookMarket() {
   return WorldMarketState(
     prices: const <CommodityId, int>{},
@@ -324,31 +387,8 @@ void main() {
 
         expect(find.byType(TradeScreen), findsOneWidget);
         expect(find.byType(AppBar), findsNothing);
-
-        final topBarFinder = find.byKey(TradeScreen.topBarKey);
-        expect(topBarFinder, findsOneWidget);
-        final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-        expect(topBar.title, TradeScreen.topBarTitle);
-        expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
-
-        expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
-        final stripFinder = find.descendant(
-          of: find.byKey(TradeScreen.tabsBodyKey),
-          matching: find.byType(CtTabStrip),
-        );
-        expect(stripFinder, findsOneWidget);
-        final CtTabStrip strip = tester.widget<CtTabStrip>(stripFinder);
-        expect(strip.tabLabels, <String>[
-          TradeScreen.marketTabLabel,
-          TradeScreen.dealBookTabLabel,
-        ]);
-        expect(
-          find.descendant(
-            of: find.byKey(TradeScreen.tabsBodyKey),
-            matching: find.byType(CtPanel),
-          ),
-          findsOneWidget,
-        );
+        _expectTradeTopBarChrome(tester);
+        _expectMarketDealBookTabs(tester);
       },
     );
 
@@ -499,12 +539,11 @@ void main() {
       );
       // ignore: avoid_hardcoded_strings_in_widgets
       expect(find.text('timber — qty 5 (priority 1)'), findsOneWidget);
-
-      final Text bidsTotals = tester.widget<Text>(
-        find.byKey(TradeScreen.dealBookBidsTotalsKey),
+      _expectDealBookTotals(
+        tester,
+        bidsTotal: '${TradeScreen.dealBookTotalSpentLabel}: 40',
+        offersTotal: '${TradeScreen.dealBookTotalReceivedLabel}: 0',
       );
-      expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 40');
-
       expect(
         find.byKey(
           TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 0),
@@ -519,11 +558,6 @@ void main() {
       );
       // ignore: avoid_hardcoded_strings_in_widgets
       expect(find.text('fabric — qty 3 (priority 1)'), findsOneWidget);
-
-      final Text offersTotals = tester.widget<Text>(
-        find.byKey(TradeScreen.dealBookOffersTotalsKey),
-      );
-      expect(offersTotals.data, '${TradeScreen.dealBookTotalReceivedLabel}: 0');
       expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
       expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsNothing);
     });
@@ -611,33 +645,7 @@ void main() {
         'stepper buttons are mounted, but the dark CtTopBar chrome '
         'still paints', (tester) async {
       await openTradeFromRouteHost(tester, globalObserve: true);
-
-      expect(find.byType(TradeScreen), findsOneWidget);
-      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-
-      final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
-      expect(observePanelFinder, findsOneWidget);
-      final ObserveModeNotDefinedPanel observePanel = tester
-          .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
-      // ignore: avoid_hardcoded_strings_in_widgets
-      expect(observePanel.title, 'Trade');
-
-      expect(find.byKey(TradeScreen.tabsBodyKey), findsNothing);
-      expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
-      expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
-      expect(find.byType(CtTabStrip), findsNothing);
-      expect(
-        find.byKey(TradeScreen.marketRowBidChipKey(_timber)),
-        findsNothing,
-      );
-      expect(
-        find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        findsNothing,
-      );
-      expect(
-        find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        findsNothing,
-      );
+      _expectObserveModeBlocksMarket(tester);
     });
 
     testWidgets('Per-GP observe variant (canMutateViaUi == false, not global '
