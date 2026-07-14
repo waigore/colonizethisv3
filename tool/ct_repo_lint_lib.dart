@@ -66,6 +66,9 @@ import 'check_setup_dedup_faction_capital_collect.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
 import 'check_setup_dedup_gp_ow_tile_scans.dart';
 import 'check_setup_dedup_grid_bfs_coord_keys.dart';
+import 'check_setup_dedup_raise_road_at_least.dart';
+import 'check_setup_dedup_road_tile_key_maps.dart';
+import 'check_setup_dedup_seaboard_nearest_tile.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
 import 'check_setup_test_default_init_options.dart';
@@ -1036,6 +1039,12 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupTopologyAdjacency(repoRoot);
     case 'repo.setup_dedup_faction_capital_collect':
       return runCheckSetupDedupFactionCapitalCollect(repoRoot);
+    case 'repo.setup_dedup_raise_road_at_least':
+      return runCheckSetupDedupRaiseRoadAtLeast(repoRoot);
+    case 'repo.setup_dedup_road_tile_key_maps':
+      return runCheckSetupDedupRoadTileKeyMaps(repoRoot);
+    case 'repo.setup_dedup_seaboard_nearest_tile':
+      return runCheckSetupDedupSeaboardNearestTile(repoRoot);
     case 'repo.setup_test_default_init_options':
       return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':

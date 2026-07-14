@@ -1478,6 +1478,27 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_faction_capital_collect.dart
 
+  - rule_id: repo.setup_dedup_raise_road_at_least
+    group: architecture
+    title: setup raise-road-at-least must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_raise_road_at_least.dart
+
+  - rule_id: repo.setup_dedup_road_tile_key_maps
+    group: architecture
+    title: setup coord/owned tile-key road helpers must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_road_tile_key_maps.dart
+
+  - rule_id: repo.setup_dedup_seaboard_nearest_tile
+    group: architecture
+    title: setup nearest-seaboard tile selection must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_seaboard_nearest_tile.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)
