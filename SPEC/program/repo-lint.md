@@ -302,7 +302,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 | `ct_region_map_widget_test` | 4 | Combined physical lines ~2018 ≫1000 |
 | `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1785 ≫1000 |
 | `military_units_panel_test` | army/display/split siblings | Combined physical lines ~1079 ≫1000 |
-| `civilian_units_panel_test` | 3 | Combined physical lines ~1585 ≫1000 |
+| `civilian_units_panel_test` | 3 | Combined physical lines ~1471 ≫1000 |
 
 **Seed-42 demo fixtures (Refs #3847):** `province_overlay_demo_data.dart`, Widgetbook catalog builders, and `debug_init_game.dart` (`getDebugInitGameResult()`) load committed seed-42 JSON via `packages/colonizethis_app_fixtures` (`test_support/seed42_fixture_loader.dart`, `seed42_init_game_result.dart`, `map_view_serialization.dart`) instead of the ~7–11 s procedural generator on VM/desktop (web falls back when fixtures are unavailable).
 
