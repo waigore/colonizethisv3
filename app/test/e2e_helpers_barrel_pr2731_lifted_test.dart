@@ -1,6 +1,6 @@
 // Pins AC1 barrel re-exports for helpers lifted on PR #2731 (Refs #2336).
 //
-// Kept in a sibling file so `e2e_helpers_barrel_test.dart` stays under the
+// Kept in a sibling file so `e2e_helpers_barrel_part1_test.dart` stays under the
 // `dart_file_non_comment_line_size` cap (`tool/ct_repo_lint.dart`).
 library;
 

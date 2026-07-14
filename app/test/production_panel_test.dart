@@ -25,61 +25,6 @@ import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
 import 'production_panel_test_fixtures.dart';
 
-/// Holds allocation map in state so [ProductionPanel] rebuilds after each change
-/// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
-class _ProductionPanelTestWrapper extends StatefulWidget {
-  const _ProductionPanelTestWrapper({
-    required this.displayGame,
-    required this.player,
-    required this.initialDesiredOutput,
-    required this.netDeltasByCommodity,
-    required this.onDesiredOutputChanged,
-    this.onOpenCommodityBreakdown,
-    this.currentOrders,
-  });
-
-  final Game displayGame;
-  final Player player;
-  final Map<String, int> initialDesiredOutput;
-  final Map<String, int> netDeltasByCommodity;
-  final ValueChanged<Map<String, int>> onDesiredOutputChanged;
-  final VoidCallback? onOpenCommodityBreakdown;
-  final Orders? currentOrders;
-
-  @override
-  State<_ProductionPanelTestWrapper> createState() =>
-      _ProductionPanelTestWrapperState();
-}
-
-class _ProductionPanelTestWrapperState
-    extends State<_ProductionPanelTestWrapper> {
-  late Map<String, int> _desiredOutput;
-
-  @override
-  void initState() {
-    super.initState();
-    _desiredOutput = Map<String, int>.from(widget.initialDesiredOutput);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ProductionPanel(
-      game: widget.displayGame,
-      player: widget.player,
-      desiredOutputByRecipe: _desiredOutput,
-      netDeltasByCommodity: widget.netDeltasByCommodity,
-      onDesiredOutputChanged: (next) {
-        setState(() {
-          _desiredOutput = Map<String, int>.from(next);
-        });
-        widget.onDesiredOutputChanged(next);
-      },
-      onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
-      currentOrders: widget.currentOrders,
-    );
-  }
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -122,7 +67,7 @@ void main() {
           body: SizedBox(
             width: width,
             height: height,
-            child: _ProductionPanelTestWrapper(
+            child: ProductionPanelTestWrapper(
               displayGame: displayGame,
               player: player,
               initialDesiredOutput: desiredOutputByRecipe,

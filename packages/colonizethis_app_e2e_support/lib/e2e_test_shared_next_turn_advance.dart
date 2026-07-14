@@ -50,7 +50,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 /// short-circuit + processing-dialog race-gate),
 /// `app/test/e2e_advance_one_human_turn_test.dart` (early-advance /
 /// confirm-then-advance / timeout branches),
-/// `app/test/e2e_helpers_barrel_test.dart` (AC1 barrel re-export
+/// `app/test/e2e_helpers_barrel_part1_test.dart` (AC1 barrel re-export
 /// contract), and `app/test/e2e_perf_log_markers_test.dart`
 /// (`next_turn_wall_clock` / `next_turn_advance` / `next_turn_taps`
 /// `E2E_TIMING` / `E2E_COUNTER` markers). All four pin files continue

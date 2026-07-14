@@ -45,6 +45,15 @@ void main() {
   );
 
   test(
+    'buildNavalPanelHomeFleetOnlyGame keeps only the in-port home fleet',
+    () {
+      final game = buildNavalPanelHomeFleetOnlyGame();
+      expect(game.worldState.fleets, hasLength(1));
+      expect(game.worldState.fleets.single.inPortAtProvinceId, isNotNull);
+    },
+  );
+
+  test(
     'wireNavalSplitForWidgetTest applies the split and re-emits the update',
     () async {
       final bus = AppEventBus.create();

@@ -17,14 +17,8 @@ const String _appTestsRelativePath = 'app/test';
 /// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4013).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
 const List<String> appTestFileSizeAllowlistForTests = [
-  'app/test/app_event_handler_scope_test.dart',
   'app/test/ct_region_map_widget_part1_test.dart',
   'app/test/ct_region_map_widget_part2_test.dart',
-  'app/test/dialogs_320dp_min_viewport_test.dart',
-  'app/test/e2e_helpers_barrel_test.dart',
-  'app/test/naval_units_panel_part1_test.dart',
-  'app/test/new_game_leader_selection_dialog_test.dart',
-  'app/test/production_panel_test.dart',
 ];
 
 int runCheckAppTestFileSize(
@@ -64,9 +58,7 @@ int runCheckAppTestFileSize(
   }
   if (stale.isNotEmpty) {
     final sorted = stale.toList()..sort();
-    logE(
-      'check_app_test_file_size: stale allowlist entries (must shrink):',
-    );
+    logE('check_app_test_file_size: stale allowlist entries (must shrink):');
     for (final entry in sorted) {
       logE(' - $entry');
     }

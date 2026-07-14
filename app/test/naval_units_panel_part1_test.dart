@@ -1,7 +1,6 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -15,7 +14,6 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
 import 'support/naval_units_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
 void main() {
@@ -28,22 +26,7 @@ void main() {
 
   setUpAll(() async {
     await setUpNinePatchAssets();
-
-    // Refs #3656: lightweight hand-built fixture replaces the ~11s procedural
-    // map generation of getDebugInitGameResult(); this family asserts only on
-    // fleets/provinces/ports/sea-zone names, which the fixture provides.
-    //
-    // Like the original demo game, the human starts with a single Home Fleet so
-    // the panel renders exactly one fleet row by default (the global
-    // `find.byTooltip('Split')` assertions expect one). The tests that need a
-    // second non-home/sea/port fleet inject it themselves via `copyWith`.
-    final base = buildNavalPanelTestGame();
-    final homeFleet = base.worldState.fleets.firstWhere(
-      (f) => f.inPortAtProvinceId != null,
-    );
-    game = base.copyWith(
-      worldState: base.worldState.copyWith(fleets: [homeFleet]),
-    );
+    game = buildNavalPanelHomeFleetOnlyGame();
     humanPlayerIdWithFleets = game.players.isNotEmpty
         ? game.players.first.id
         : 'gp1';
@@ -217,59 +200,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const humanId = 'gp_named_sea';
-      const capProvince = 'oldWorld|cap1';
-      const zoneId = 'zone_alpha';
-      final namedSeaGame = Game(
-        id: 'named-sea',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'cap1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Capital',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'sea_named',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: zoneId,
-              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-            ),
-          ],
-          seaZoneDisplayNameById: const {
-            'oldWorld|zone_alpha': 'Caribbean Sea',
-          },
-          portsByProvinceSeaboard: const {
-            'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
-          },
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              capProvince: ['oldWorld|cap1|0|0'],
-            },
-          },
-        ),
-        players: const [
-          Player(
-            id: humanId,
-            displayName: 'Named Sea Tester',
-            isHuman: true,
-            capitalProvinceId: capProvince,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capProvince,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
+      final namedSeaGame = buildNavalPanelNamedSeaZoneGame(humanId: humanId);
       await tester.pumpWidget(
         buildNavalPanel(game: namedSeaGame, humanPlayerId: humanId),
       );
@@ -281,53 +212,7 @@ void main() {
       'AC: expanded composition lists ship display names not raw ids',
       (WidgetTester tester) async {
         const humanId = 'gp_ship_display';
-        const capProvince = 'oldWorld|cap1';
-        final homeId = homeFleetIdFor(humanId);
-        final shipLabelGame = Game(
-          id: 'g_ship_labels',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'cap1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  displayName: 'Capital',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: homeId,
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capProvince,
-                ships: const [ShipInstance(id: 'h1', typeId: 'carrack')],
-              ),
-            ],
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                capProvince: ['oldWorld|cap1|0|0'],
-              },
-            },
-          ),
-          players: const [
-            Player(
-              id: humanId,
-              displayName: 'Ship Label Tester',
-              isHuman: true,
-              capitalProvinceId: capProvince,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: capProvince,
-                x: 0,
-                y: 0,
-              ),
-            ),
-          ],
-        );
+        final shipLabelGame = buildNavalPanelShipLabelGame(humanId: humanId);
 
         await tester.pumpWidget(
           buildNavalPanel(game: shipLabelGame, humanPlayerId: humanId),
@@ -659,7 +544,11 @@ void main() {
       });
 
       await tester.pumpWidget(
-        buildNavalPanel(game: gameWithExtraFleets, humanPlayerId: humanId, bus: bus),
+        buildNavalPanel(
+          game: gameWithExtraFleets,
+          humanPlayerId: humanId,
+          bus: bus,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -687,7 +576,9 @@ void main() {
     ) async {
       final humanId = humanPlayerIdWithFleets;
 
-      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(
+        buildNavalPanel(game: game, humanPlayerId: humanId),
+      );
       await tester.pumpAndSettle();
 
       final homeFleetFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
@@ -714,7 +605,9 @@ void main() {
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
 
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
@@ -767,7 +660,9 @@ void main() {
 
       final baseFleet = playerFleets.first;
 
-      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpWidget(
+        buildNavalPanel(game: game, humanPlayerId: humanId),
+      );
       await tester.pumpAndSettle();
 
       final fleetFinder = find.widgetWithText(
@@ -787,7 +682,9 @@ void main() {
       'AC: Expanding home/non-home fleet and tapping Split opens Split Fleet dialog',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         final homeFleetFinder = find.widgetWithText(
@@ -848,7 +745,9 @@ void main() {
             .toList();
         if (playerFleets.isEmpty) return;
 
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpWidget(
+          buildNavalPanel(game: game, humanPlayerId: humanId),
+        );
         await tester.pumpAndSettle();
 
         expect(

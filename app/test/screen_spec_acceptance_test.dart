@@ -1,6 +1,6 @@
 // Widget tests that verify CtMainMenu screen functionality against SPEC/ui
 // acceptance criteria. The NewGameLeaderSelectionDialog acceptance criteria
-// live in `new_game_leader_selection_dialog_test.dart`.
+// live in `new_game_leader_selection_dialog_part1_test.dart`.
 // Screen contract: SPEC/ui/main-menu.md.
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
