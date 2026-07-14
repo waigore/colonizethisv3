@@ -25,8 +25,6 @@ import 'check_app_textstyle_fontsize_fallback.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
-import 'check_colonizethis_map_lib_pipe_split.dart';
-import 'check_tile_map_inline_cardinal_directions.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
@@ -37,20 +35,6 @@ import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
-import 'check_map_lib_file_size.dart';
-import 'check_map_gen_no_image_import.dart';
-import 'check_map_gen_stage_protocol.dart';
-import 'check_map_no_partfile_classes.dart';
-import 'check_map_grid_cell_iteration_central.dart';
-import 'check_map_grid_ops_central.dart';
-import 'check_map_public_barrel_surface.dart';
-import 'check_map_region_data_access_central.dart';
-import 'check_map_test_minimal_game_shared.dart';
-import 'check_map_test_no_duplicate_view_fixtures.dart';
-import 'check_map_test_run_generation_harness.dart';
-import 'check_map_test_shared_topology_fixtures.dart';
-import 'check_map_test_view_builder_file_count.dart';
-import 'check_map_region_dispatch_central.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
@@ -104,6 +88,7 @@ import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
+import 'ct_repo_lint_map_dispatch.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -791,7 +776,7 @@ int? _tryRunDartRuleInProcess({
     return logicResult;
   }
 
-  final int? mapResult = _tryRunMapRuleInProcess(
+  final int? mapResult = tryRunMapRuleInProcess(
     ruleId: rule.ruleId,
     repoRoot: repoRoot,
   );
@@ -1018,11 +1003,6 @@ int? _tryRunLogicRuleInProcess({
   }
 }
 
-/// Dispatch helper for `colonizethis_map` package manifest rules. Keeps the
-/// main `_tryRunDartRuleInProcess` switch under the
-/// `repo.dart_long_string_switches` 49-case ceiling as new map-scoped rules are
-/// added (Refs #3574). Returns `null` for non-map rule ids so the caller falls
-/// back to the generic dispatch.
 /// Dispatch helper for the `repo.setup_*` dedup manifest rules added for #3740.
 /// Keeps the main `_tryRunDartRuleInProcess` switch under the
 /// `repo.dart_long_string_switches` 49-case ceiling (mirrors the map/app/logic
@@ -1049,48 +1029,6 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':
       return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
-    default:
-      return null;
-  }
-}
-
-int? _tryRunMapRuleInProcess({
-  required String ruleId,
-  required String repoRoot,
-}) {
-  switch (ruleId) {
-    case 'repo.colonizethis_map_lib_pipe_split':
-      return runCheckColonizethisMapLibPipeSplit(repoRoot);
-    case 'repo.tile_map_inline_cardinal_directions':
-      return runCheckTileMapInlineCardinalDirections(repoRoot);
-    case 'repo.map_gen_no_image_import':
-      return runCheckMapGenNoImageImport(repoRoot);
-    case 'repo.map_grid_ops_central':
-      return runCheckMapGridOpsCentral(repoRoot);
-    case 'repo.map_grid_cell_iteration_central':
-      return runCheckMapGridCellIterationCentral(repoRoot);
-    case 'repo.map_gen_stage_protocol':
-      return runCheckMapGenStageProtocol(repoRoot);
-    case 'repo.map_gen_no_new_partfiles':
-      return runCheckMapGenNoNewPartfiles(repoRoot);
-    case 'repo.map_lib_file_size':
-      return runCheckMapLibFileSize(repoRoot);
-    case 'repo.map_public_barrel_surface':
-      return runCheckMapPublicBarrelSurface(repoRoot);
-    case 'repo.map_region_data_access_central':
-      return runCheckMapRegionDataAccessCentral(repoRoot);
-    case 'repo.map_region_dispatch_central':
-      return runCheckMapRegionDispatchCentral(repoRoot);
-    case 'repo.map_test_no_duplicate_view_fixtures':
-      return runCheckMapTestNoDuplicateViewFixtures(repoRoot);
-    case 'repo.map_test_view_builder_file_count':
-      return runCheckMapTestViewBuilderFileCount(repoRoot);
-    case 'repo.map_test_shared_topology_fixtures':
-      return runCheckMapTestSharedTopologyFixtures(repoRoot);
-    case 'repo.map_test_run_generation_harness':
-      return runCheckMapTestRunGenerationHarness(repoRoot);
-    case 'repo.map_test_minimal_game_shared':
-      return runCheckMapTestMinimalGameShared(repoRoot);
     default:
       return null;
   }
